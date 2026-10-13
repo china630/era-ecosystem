@@ -98,10 +98,7 @@ async function applyCatalogCodeCanon(prisma, organizationId = seedOrgId()) {
         where: { diagnosticServiceId: oldSvc.id },
         data: { diagnosticServiceId: newSvc.id },
       });
-      await prisma.diagnosticService.update({
-        where: { id: oldSvc.id },
-        data: { active: false },
-      });
+      await prisma.diagnosticService.delete({ where: { id: oldSvc.id } });
       counts.diagnosticMerged += 1;
     }
 
@@ -174,6 +171,67 @@ async function applyCatalogCodeCanon(prisma, organizationId = seedOrgId()) {
   }
 
   console.log("[catalog-code-canon] apply", organizationId, JSON.stringify(counts));
+  return counts;
+}
+
+/**
+ * Retire pre-canon DiagnosticServiceTemplate rows (ECG-12 beside CARDIO-ECG).
+ * JSON upsert inserts the canon code and leaves the old template in place;
+ * a later copy-if-empty then creates a second org service.
+ */
+async function applyCatalogCodeCanonToTemplates(prisma) {
+  const map = loadCatalogCodeCanonMap();
+  const entries = Object.entries(map).filter(([from, to]) => from && to && from !== to);
+  const counts = { renamed: 0, dropped: 0, includesRewritten: 0 };
+
+  for (const [from, to] of entries) {
+    const oldT = await prisma.diagnosticServiceTemplate.findUnique({ where: { code: from } });
+    if (!oldT) continue;
+    const newT = await prisma.diagnosticServiceTemplate.findUnique({ where: { code: to } });
+    if (!newT) {
+      await prisma.diagnosticServiceTemplate.update({
+        where: { id: oldT.id },
+        data: {
+          code: to,
+          serviceCode: oldT.serviceCode === from ? to : map[oldT.serviceCode] || oldT.serviceCode,
+        },
+      });
+      counts.renamed += 1;
+      continue;
+    }
+    await prisma.diagnosticServiceTemplate.delete({ where: { id: oldT.id } });
+    counts.dropped += 1;
+  }
+
+  const withIncludes = await prisma.diagnosticServiceTemplate.findMany({
+    where: { includesJson: { not: null } },
+    select: { id: true, includesJson: true, serviceCode: true, code: true },
+  });
+  for (const row of withIncludes) {
+    let arr;
+    try {
+      arr = JSON.parse(row.includesJson);
+    } catch {
+      arr = null;
+    }
+    const nextIncludes = Array.isArray(arr)
+      ? arr.map((c) => (typeof c === "string" && map[c]) || c)
+      : null;
+    const nextServiceCode = map[row.serviceCode] || row.serviceCode;
+    const includesChanged =
+      nextIncludes && JSON.stringify(nextIncludes) !== JSON.stringify(arr);
+    if (!includesChanged && nextServiceCode === row.serviceCode) continue;
+    await prisma.diagnosticServiceTemplate.update({
+      where: { id: row.id },
+      data: {
+        ...(includesChanged ? { includesJson: JSON.stringify(nextIncludes) } : {}),
+        ...(nextServiceCode !== row.serviceCode ? { serviceCode: nextServiceCode } : {}),
+      },
+    });
+    if (includesChanged) counts.includesRewritten += 1;
+  }
+
+  console.log("[catalog-code-canon] templates", JSON.stringify(counts));
   return counts;
 }
 
@@ -294,8 +352,25 @@ async function upsertAnalyteTemplate(prisma, serviceId, analyte, sortOrder) {
   });
 }
 
-/** Copy-if-empty templates → org (CJS path for Nafta seed). */
+function canonServiceCode(map, code) {
+  return (code && map[code]) || code;
+}
+
+function canonIncludesJson(map, includesJson) {
+  if (!includesJson) return includesJson;
+  let arr;
+  try {
+    arr = JSON.parse(includesJson);
+  } catch {
+    return includesJson;
+  }
+  if (!Array.isArray(arr)) return includesJson;
+  return JSON.stringify(arr.map((c) => (typeof c === "string" ? canonServiceCode(map, c) : c)));
+}
+
+/** Copy missing template services into the org. Does not refill analytes on an existing service. */
 async function copyDiagnosticTemplatesToOrg(prisma, organizationId) {
+  const map = loadCatalogCodeCanonMap();
   const templates = await prisma.modalityTemplate.findMany({
     where: { active: true },
     orderBy: { sortOrder: "asc" },
@@ -326,36 +401,34 @@ async function copyDiagnosticTemplatesToOrg(prisma, organizationId) {
       });
     }
     for (const st of mt.services) {
-      let service = await prisma.diagnosticService.findUnique({
-        where: { organizationId_code: { organizationId, code: st.code } },
+      const code = canonServiceCode(map, st.code);
+      const serviceCode = canonServiceCode(map, st.serviceCode);
+      const service = await prisma.diagnosticService.findUnique({
+        where: { organizationId_code: { organizationId, code } },
       });
-      if (!service) {
-        service = await prisma.diagnosticService.create({
-          data: {
-            organizationId,
-            code: st.code,
-            modalityId: modality.id,
-            category: st.category,
-            kind: st.kind,
-            titleEn: st.titleEn,
-            titleRu: st.titleRu,
-            titleAz: st.titleAz,
-            serviceCode: st.serviceCode,
-            fieldsJson: st.fieldsJson,
-            includesJson: st.includesJson,
-            sortOrder: st.sortOrder,
-            active: st.active,
-          },
-        });
-      }
+      if (service) continue;
+      const created = await prisma.diagnosticService.create({
+        data: {
+          organizationId,
+          code,
+          modalityId: modality.id,
+          category: st.category,
+          kind: st.kind,
+          titleEn: st.titleEn,
+          titleRu: st.titleRu,
+          titleAz: st.titleAz,
+          serviceCode,
+          fieldsJson: st.fieldsJson,
+          includesJson: canonIncludesJson(map, st.includesJson),
+          sortOrder: st.sortOrder,
+          active: st.active,
+        },
+      });
       for (const at of st.analytes) {
-        const existingA = await prisma.diagnosticAnalyte.findUnique({
-          where: { serviceId_code: { serviceId: service.id, code: at.code } },
-        });
-        if (existingA) continue;
         await prisma.diagnosticAnalyte.create({
           data: {
-            serviceId: service.id,
+            organizationId,
+            serviceId: created.id,
             code: at.code,
             unit: at.unit,
             labelEn: at.labelEn,
@@ -496,8 +569,8 @@ async function seedDiagnosticBase(prisma) {
   }
 
   counts.dictionary = await seedAnalyteDictionary(prisma);
-
-  return { layer: "base", ...counts };
+  const canon = await applyCatalogCodeCanonToTemplates(prisma);
+  return { layer: "base", ...counts, canon };
 }
 
 /** Upsert the unscoped analyte dictionary. Does not delete codes missing from the file. */
@@ -599,6 +672,7 @@ module.exports = {
   requireSeedOrgId,
   loadCatalogCodeCanonMap,
   applyCatalogCodeCanon,
+  applyCatalogCodeCanonToTemplates,
   seedDiagnosticBase,
   seedDiagnosticNafta,
   seedAnalyteDictionary,

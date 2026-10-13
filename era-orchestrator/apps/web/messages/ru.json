@@ -677,6 +677,7 @@
     "wfAttendance": "Посещаемость",
     "wfFloor": "Доска пола",
     "wfRequests": "Заявки",
+    "wfHrSettings": "Кадровые настройки",
     "wfMe": "Мой кабинет"
   },
   "headerStrip": {
@@ -1155,6 +1156,11 @@
     "loading": "Загрузка…",
     "empty": "Нет активных employment.",
     "colPerson": "Сотрудник",
+    "colFin": "FIN",
+    "colContractEnd": "Конец договора",
+    "colRegime": "Режим",
+    "openEnded": "Бессрочный",
+    "regimeEmpty": "Не задан",
     "colOrgUnit": "Подразделение",
     "colPosition": "Должность",
     "colHireDate": "Дата",
@@ -1278,6 +1284,21 @@
     "hireWithoutFinConfirm": "Принять без FIN? Сопоставление личности будет слабее.",
     "enableCabinet": "Включить телефонный кабинет",
     "chipIdentity": "Личные данные",
+    "chipDocuments": "Документы",
+    "idCardTitle": "Удостоверение личности",
+    "passportTitle": "Паспорт",
+    "docSeries": "Серия",
+    "docNumber": "Номер",
+    "docIssuedBy": "Кем выдан",
+    "docIssuedOn": "Дата выдачи",
+    "docExpiresOn": "Срок",
+    "docCountry": "Страна выдачи",
+    "regime": {
+      "FIVE_DAY": "5-дневка",
+      "SIX_DAY": "6-дневка",
+      "MEDICAL": "Медицинский",
+      "CUSTOM": "Свой"
+    },
     "chipContacts": "Контакты",
     "chipJob": "Трудоустройство",
     "chipAccess": "Права доступа",
@@ -1555,6 +1576,9 @@
     "colPerson": "Сотрудник",
     "colKind": "Тип",
     "colPeriod": "Период",
+    "colDays": "Дни",
+    "colStep": "Шаг",
+    "correct": "Исправить",
     "colStatus": "Статус",
     "colActions": "Действия",
     "open": "Открыть",
@@ -1591,7 +1615,8 @@
       "SUBMITTED": "На согласовании",
       "APPROVED": "Утверждено",
       "REJECTED": "Отклонено",
-      "CANCELLED": "Отменено"
+      "CANCELLED": "Отменено",
+      "SUPERSEDED": "Заменено"
     }
   },
   "workforceVacation": {
@@ -1625,11 +1650,20 @@
     "addLine": "Добавить строку",
     "removeLine": "Удалить строку",
     "moreActions": "Ещё",
+    "edit": "Править строки",
+    "save": "Сохранить",
+    "colStep": "Шаг",
+    "cancelReason": "Причина отмены",
+    "correct": "Исправить",
+    "cancel": "Отменить",
+    "confirmCorrect": "Вернуть утверждённый график в черновик? Текущие строки сохранятся как ревизия.",
+    "confirmCancel": "Отменить этот утверждённый график отпусков?",
     "status": {
       "DRAFT": "Черновик",
       "SUBMITTED": "Отправлен",
       "APPROVED": "Утверждён",
-      "REJECTED": "Отклонён"
+      "REJECTED": "Отклонён",
+      "CANCELLED": "Отменён"
     }
   },
   "workforceOrders": {
@@ -1768,6 +1802,19 @@
     "typeEmpty": "Пусто",
     "cellApproved": "Утверждено (только чтение)",
     "colPerson": "Сотрудник",
+    "colNorm": "Факт / норма",
+    "calWorkDays": "Рабочие дни",
+    "calOffDays": "Нерабочие",
+    "calHolidays": "Праздники",
+    "dayType": {
+      "working": "Рабочий день",
+      "weekend": "Выходной",
+      "holiday": "Праздник",
+      "transferred_rest": "Перенесённый выходной",
+      "transferred_working": "Перенесённый рабочий",
+      "mourning": "День траура",
+      "shortened": "Сокращённый день"
+    },
     "loading": "Загрузка…",
     "loadFailed": "Не удалось загрузить табель",
     "empty": "Нет активных трудоустройств.",
@@ -2198,6 +2245,48 @@
     "paid": "Оплачиваемый",
     "unpaid": "Неоплачиваемый",
     "announce": "Опубликовать объявление",
-    "publish": "Опубликовать"
+    "publish": "Опубликовать",
+    "step": "Шаг",
+    "history": "Последние решения",
+    "rejectReason": "Причина отклонения",
+    "proxyTitle": "Аванс за сотрудника",
+    "proxyEmployee": "Сотрудник",
+    "proxyAmount": "Сумма (AZN)",
+    "proxyNote": "Примечание",
+    "proxySubmit": "Подать аванс"
+  },
+  "workforceHrSettings": {
+    "title": "Кадровые настройки",
+    "subtitle": "Недельные нормы часов и маршруты согласования по оргструктуре.",
+    "hoursTitle": "Часы в неделю",
+    "hoursHint": "Пока организация не задала норму, оставьте пустым. Пустая норма в табеле не выдумывается.",
+    "fiveDay": "5-дневная неделя (часы)",
+    "sixDay": "6-дневная неделя (часы)",
+    "medical": "Медицинский режим (часы)",
+    "custom": "Свой режим (часы)",
+    "advanceTitle": "Авансы",
+    "advancePercent": "Максимум, % от оклада",
+    "advanceAmount": "Максимальная сумма (AZN)",
+    "advanceOpen": "Максимум открытых авансов",
+    "advanceProxy": "HR может подать аванс за сотрудника",
+    "saveSettings": "Сохранить",
+    "stepKind": "Шаг",
+    "orgUnit": "Подразделение",
+    "position": "Должность",
+    "pick": "Выберите…",
+    "addStep": "Добавить шаг",
+    "removeStep": "Удалить",
+    "saveRoute": "Сохранить маршрут",
+    "kind": {
+      "FULL_DAY": "Полный день",
+      "HOURLY": "Почасовой",
+      "ADVANCE": "Аванс",
+      "VACATION": "График отпуска"
+    },
+    "step": {
+      "REQUESTER_MANAGER": "Руководитель заявителя",
+      "ORG_UNIT_HEAD": "Руководитель подразделения",
+      "POSITION_IN_UNIT": "Должность в подразделении"
+    }
   }
 }

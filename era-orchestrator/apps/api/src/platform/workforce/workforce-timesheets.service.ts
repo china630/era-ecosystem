@@ -5,6 +5,7 @@ import {
   GoneException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   WORKFORCE_TIMESHEET_APPROVED,
@@ -21,6 +22,14 @@ import {
 } from "@era365/database";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../../prisma/prisma.service";
+import { CatalogGatewayService } from "../catalog/catalog-gateway.service";
+import {
+  monthHourNorm,
+  summarizeCalendar,
+  weeklyHoursForRegime,
+  type CalendarDayInput,
+  type WorkRegime,
+} from "./workforce-calendar-norm";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
@@ -128,6 +137,7 @@ export class WorkforceTimesheetsService {
     private readonly audit: WorkforceAuditService,
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly employments: WorkforceEmploymentsService,
+    @Optional() private readonly catalog?: CatalogGatewayService,
   ) {}
 
   async handleBatchImported(raw: unknown): Promise<{ created: number }> {
@@ -686,8 +696,49 @@ export class WorkforceTimesheetsService {
       },
       orderBy: [{ employmentId: "asc" }, { workDate: "asc" }],
     });
+    const calendar = await this.calendarFor(organizationId, ts.year, ts.month);
+    const settings = await this.prisma.workforceOrgSettings?.findUnique?.({
+      where: { organizationId },
+    });
+    const hourSettings = settings
+      ? {
+          fiveDayWeeklyHours: settings.fiveDayWeeklyHours
+            ? Number(settings.fiveDayWeeklyHours)
+            : null,
+          sixDayWeeklyHours: settings.sixDayWeeklyHours
+            ? Number(settings.sixDayWeeklyHours)
+            : null,
+          medicalWeeklyHours: settings.medicalWeeklyHours
+            ? Number(settings.medicalWeeklyHours)
+            : null,
+          customWeeklyHours: settings.customWeeklyHours
+            ? Number(settings.customWeeklyHours)
+            : null,
+        }
+      : null;
+    const norms: Record<
+      string,
+      { factHours: number; normHours: number | null; regime: string | null }
+    > = {};
+    for (const emp of employments) {
+      const regime = (emp.workRegime ?? null) as WorkRegime | null;
+      const factHours = entries
+        .filter((e) => e.employmentId === emp.id && e.type === WorkforceTimesheetEntryType.WORK)
+        .reduce((sum, e) => sum + Number(e.hours), 0);
+      norms[emp.id] = {
+        regime,
+        factHours: Math.round(factHours * 100) / 100,
+        normHours: monthHourNorm(
+          regime,
+          weeklyHoursForRegime(regime, hourSettings),
+          calendar.days,
+        ),
+      };
+    }
     return {
       timesheet: ts,
+      calendar,
+      norms,
       employments,
       orgUnitOptions,
       /** Lightweight roster for filters/batch (not limited to the grid page). */
@@ -706,6 +757,27 @@ export class WorkforceTimesheetsService {
         workDate: isoDay(e.workDate),
       })),
     };
+  }
+
+  private async calendarFor(organizationId: string, year: number, month: number) {
+    const { lastDay } = monthBoundsUtc(year, month);
+    const from = isoDay(dayDateUtc(year, month, 1));
+    const to = isoDay(dayDateUtc(year, month, lastDay));
+    let hubDays: CalendarDayInput[] = [];
+    if (this.catalog) {
+      try {
+        const cal = (await this.catalog.getCalendarDaysRange(
+          "AZ",
+          from,
+          to,
+          organizationId,
+        )) as { days?: CalendarDayInput[] };
+        hubDays = cal.days ?? [];
+      } catch {
+        hubDays = [];
+      }
+    }
+    return summarizeCalendar(year, month, hubDays);
   }
 
   private async ensureSheet(

@@ -124,6 +124,9 @@ import { CatalogGatewayModule } from "../catalog/catalog-gateway.module";
 import { WorkforceFitnessController } from "./workforce-fitness.controller";
 
 import { WorkforceFitnessService } from "./workforce-fitness.service";
+import { WorkforceApprovalService } from "./workforce-approval.service";
+import { WorkforceHrSettingsService } from "./workforce-hr-settings.service";
+import { WorkforceHrSettingsController } from "./workforce-hr-settings.controller";
 
 @Module({
 
@@ -198,6 +201,7 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
     WorkforceRequestsController,
 
     WorkforceFitnessController,
+    WorkforceHrSettingsController,
 
   ],
 
@@ -264,6 +268,8 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
     WorkforceSelfService,
 
     WorkforceFitnessService,
+    WorkforceApprovalService,
+    WorkforceHrSettingsService,
 
   ],
 

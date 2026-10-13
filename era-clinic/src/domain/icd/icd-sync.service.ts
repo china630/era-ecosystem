@@ -2,28 +2,32 @@ import { prisma } from "@/lib/prisma";
 import { platformCatalogGet } from "@era/satellite-kit";
 import { ICD10_VERSION } from "@/domain/icd/icd-catalog";
 
+export type Icd10GatewayRow = {
+  code: string;
+  kind: string;
+  chapterCode: string;
+  blockCode: string;
+  parentCode: string | null;
+  titleEn: string;
+  titleRu: string | null;
+  titleAz: string | null;
+  searchText: string;
+  selectable: boolean;
+  active: boolean;
+};
+
 export type Icd10GatewayPage = {
   version: string;
-  items: Array<{
-    code: string;
-    kind: string;
-    chapterCode: string;
-    blockCode: string;
-    parentCode: string | null;
-    titleEn: string;
-    titleRu: string;
-    titleAz: string | null;
-    searchText: string;
-    selectable: boolean;
-    active: boolean;
-  }>;
+  items: Icd10GatewayRow[];
   total?: number;
   nextCursor?: string | null;
 };
 
-async function reloadFromBundledDump() {
+type LoadResult = { skipped: boolean; version?: string; loaded?: number; retired?: number };
+
+async function upsertCatalog(opts: { force: boolean; catalog?: { version: string; rows: Icd10GatewayRow[] } }) {
   const { loadIcd10 } = await import("../../../prisma/load-icd10.cjs");
-  return loadIcd10(prisma as any, { force: true });
+  return (await loadIcd10(prisma as any, opts)) as LoadResult;
 }
 
 export async function getLocalIcd10Version() {
@@ -37,52 +41,26 @@ export async function getLocalIcd10Version() {
   };
 }
 
-/** Pull catalog from orchestrator gateway; fall back to bundled WHO dump. */
+/**
+ * Pull the full catalog from the orchestrator gateway; fall back to the bundled WHO dump.
+ * Upsert by code only — diagnoses are never deleted.
+ */
 export async function syncIcd10FromGatewayOrFile() {
-  const remote = await platformCatalogGet<Icd10GatewayPage>("/icd10?take=1");
-  if (!remote?.version) {
-    return finishBundledFallback();
-  }
-  const page = await platformCatalogGet<Icd10GatewayPage>(`/icd10?take=50000`);
-  if (!page?.items?.length) {
+  const page = await platformCatalogGet<Icd10GatewayPage>("/icd10?take=50000&selectable=0");
+  if (!page?.version || !page.items?.length || page.nextCursor) {
     return finishBundledFallback();
   }
 
-  await prisma.admissionDiagnosis.deleteMany();
-  await prisma.visitDiagnosis.deleteMany();
-  await prisma.clinicalDiagnosis.deleteMany();
-  await prisma.icdCode.deleteMany();
-
-  const batchSize = 800;
-  for (let i = 0; i < page.items.length; i += batchSize) {
-    const slice = page.items.slice(i, i + batchSize).map((r) => ({
-      code: r.code,
-      kind: r.kind as "CHAPTER" | "BLOCK" | "CATEGORY" | "LEAF",
-      chapterCode: r.chapterCode,
-      blockCode: r.blockCode,
-      parentCode: r.parentCode,
-      titleEn: r.titleEn,
-      titleRu: r.titleRu,
-      titleAz: r.titleAz,
-      searchText: r.searchText,
-      selectable: r.selectable,
-      active: r.active,
-    }));
-    await prisma.icdCode.createMany({ data: slice });
-  }
-
+  const loaded = await upsertCatalog({
+    force: true,
+    catalog: { version: page.version, rows: page.items },
+  });
   await markIcdSource("orchestrator", page.version);
-
-  return {
-    skipped: false,
-    loaded: page.items.length,
-    version: page.version,
-    source: "orchestrator",
-  };
+  return { ...loaded, source: "orchestrator" };
 }
 
 async function finishBundledFallback() {
-  const loaded = await reloadFromBundledDump();
+  const loaded = await upsertCatalog({ force: true });
   if (!loaded.skipped && loaded.version) {
     await markIcdSource("bundled", loaded.version);
   }

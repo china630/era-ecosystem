@@ -50,6 +50,13 @@ export class UpdateWorkforceAbsenceDto {
   note?: string;
 }
 
+export class CancelWorkforceAbsenceDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  reason?: string;
+}
+
 export class RejectWorkforceAbsenceDto {
   @IsOptional()
   @IsString()

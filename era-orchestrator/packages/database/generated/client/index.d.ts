@@ -304,6 +304,31 @@ export type Permission = $Result.DefaultSelection<Prisma.$PermissionPayload>
  */
 export type RolePermission = $Result.DefaultSelection<Prisma.$RolePermissionPayload>
 /**
+ * Model WorkforceOrgSettings
+ * Org-level HR knobs. Empty hour/limit fields mean "not set" — the timesheet does not invent a norm.
+ */
+export type WorkforceOrgSettings = $Result.DefaultSelection<Prisma.$WorkforceOrgSettingsPayload>
+/**
+ * Model WorkforceApprovalRoute
+ * Approval chain for one request kind. Steps point at org structure, never at a person name.
+ */
+export type WorkforceApprovalRoute = $Result.DefaultSelection<Prisma.$WorkforceApprovalRoutePayload>
+/**
+ * Model WorkforceApprovalStep
+ * 
+ */
+export type WorkforceApprovalStep = $Result.DefaultSelection<Prisma.$WorkforceApprovalStepPayload>
+/**
+ * Model WorkforceApprovalDecision
+ * 
+ */
+export type WorkforceApprovalDecision = $Result.DefaultSelection<Prisma.$WorkforceApprovalDecisionPayload>
+/**
+ * Model WorkforceVacationPlanRevision
+ * Frozen copy of an approved vacation plan before a correction is resubmitted.
+ */
+export type WorkforceVacationPlanRevision = $Result.DefaultSelection<Prisma.$WorkforceVacationPlanRevisionPayload>
+/**
  * Model Organization
  * 
  */
@@ -803,10 +828,50 @@ export const WorkforceAbsenceStatus: {
   SUBMITTED: 'SUBMITTED',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  SUPERSEDED: 'SUPERSEDED'
 };
 
 export type WorkforceAbsenceStatus = (typeof WorkforceAbsenceStatus)[keyof typeof WorkforceAbsenceStatus]
+
+
+export const WorkforceWorkRegime: {
+  FIVE_DAY: 'FIVE_DAY',
+  SIX_DAY: 'SIX_DAY',
+  MEDICAL: 'MEDICAL',
+  CUSTOM: 'CUSTOM'
+};
+
+export type WorkforceWorkRegime = (typeof WorkforceWorkRegime)[keyof typeof WorkforceWorkRegime]
+
+
+export const WorkforceApprovalRequestKind: {
+  FULL_DAY: 'FULL_DAY',
+  HOURLY: 'HOURLY',
+  ADVANCE: 'ADVANCE',
+  VACATION: 'VACATION'
+};
+
+export type WorkforceApprovalRequestKind = (typeof WorkforceApprovalRequestKind)[keyof typeof WorkforceApprovalRequestKind]
+
+
+export const WorkforceApprovalStepKind: {
+  REQUESTER_MANAGER: 'REQUESTER_MANAGER',
+  ORG_UNIT_HEAD: 'ORG_UNIT_HEAD',
+  POSITION_IN_UNIT: 'POSITION_IN_UNIT'
+};
+
+export type WorkforceApprovalStepKind = (typeof WorkforceApprovalStepKind)[keyof typeof WorkforceApprovalStepKind]
+
+
+export const WorkforceApprovalOutcome: {
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  CORRECTION: 'CORRECTION'
+};
+
+export type WorkforceApprovalOutcome = (typeof WorkforceApprovalOutcome)[keyof typeof WorkforceApprovalOutcome]
 
 
 export const WorkforceTimesheetEntryStatus: {
@@ -912,7 +977,8 @@ export const WorkforceVacationPlanStatus: {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
 };
 
 export type WorkforceVacationPlanStatus = (typeof WorkforceVacationPlanStatus)[keyof typeof WorkforceVacationPlanStatus]
@@ -1189,6 +1255,22 @@ export const WorkforceAbsenceKind: typeof $Enums.WorkforceAbsenceKind
 export type WorkforceAbsenceStatus = $Enums.WorkforceAbsenceStatus
 
 export const WorkforceAbsenceStatus: typeof $Enums.WorkforceAbsenceStatus
+
+export type WorkforceWorkRegime = $Enums.WorkforceWorkRegime
+
+export const WorkforceWorkRegime: typeof $Enums.WorkforceWorkRegime
+
+export type WorkforceApprovalRequestKind = $Enums.WorkforceApprovalRequestKind
+
+export const WorkforceApprovalRequestKind: typeof $Enums.WorkforceApprovalRequestKind
+
+export type WorkforceApprovalStepKind = $Enums.WorkforceApprovalStepKind
+
+export const WorkforceApprovalStepKind: typeof $Enums.WorkforceApprovalStepKind
+
+export type WorkforceApprovalOutcome = $Enums.WorkforceApprovalOutcome
+
+export const WorkforceApprovalOutcome: typeof $Enums.WorkforceApprovalOutcome
 
 export type WorkforceTimesheetEntryStatus = $Enums.WorkforceTimesheetEntryStatus
 
@@ -2002,6 +2084,56 @@ export class PrismaClient<
     * ```
     */
   get rolePermission(): Prisma.RolePermissionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceOrgSettings`: Exposes CRUD operations for the **WorkforceOrgSettings** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceOrgSettings
+    * const workforceOrgSettings = await prisma.workforceOrgSettings.findMany()
+    * ```
+    */
+  get workforceOrgSettings(): Prisma.WorkforceOrgSettingsDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceApprovalRoute`: Exposes CRUD operations for the **WorkforceApprovalRoute** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceApprovalRoutes
+    * const workforceApprovalRoutes = await prisma.workforceApprovalRoute.findMany()
+    * ```
+    */
+  get workforceApprovalRoute(): Prisma.WorkforceApprovalRouteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceApprovalStep`: Exposes CRUD operations for the **WorkforceApprovalStep** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceApprovalSteps
+    * const workforceApprovalSteps = await prisma.workforceApprovalStep.findMany()
+    * ```
+    */
+  get workforceApprovalStep(): Prisma.WorkforceApprovalStepDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceApprovalDecision`: Exposes CRUD operations for the **WorkforceApprovalDecision** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceApprovalDecisions
+    * const workforceApprovalDecisions = await prisma.workforceApprovalDecision.findMany()
+    * ```
+    */
+  get workforceApprovalDecision(): Prisma.WorkforceApprovalDecisionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceVacationPlanRevision`: Exposes CRUD operations for the **WorkforceVacationPlanRevision** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceVacationPlanRevisions
+    * const workforceVacationPlanRevisions = await prisma.workforceVacationPlanRevision.findMany()
+    * ```
+    */
+  get workforceVacationPlanRevision(): Prisma.WorkforceVacationPlanRevisionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.organization`: Exposes CRUD operations for the **Organization** model.
@@ -2874,6 +3006,11 @@ export namespace Prisma {
     Role: 'Role',
     Permission: 'Permission',
     RolePermission: 'RolePermission',
+    WorkforceOrgSettings: 'WorkforceOrgSettings',
+    WorkforceApprovalRoute: 'WorkforceApprovalRoute',
+    WorkforceApprovalStep: 'WorkforceApprovalStep',
+    WorkforceApprovalDecision: 'WorkforceApprovalDecision',
+    WorkforceVacationPlanRevision: 'WorkforceVacationPlanRevision',
     Organization: 'Organization',
     ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
     ClinicCutoverPolicy: 'ClinicCutoverPolicy',
@@ -2927,7 +3064,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -7223,6 +7360,376 @@ export namespace Prisma {
           }
         }
       }
+      WorkforceOrgSettings: {
+        payload: Prisma.$WorkforceOrgSettingsPayload<ExtArgs>
+        fields: Prisma.WorkforceOrgSettingsFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceOrgSettingsFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceOrgSettingsFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceOrgSettingsFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceOrgSettingsFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceOrgSettingsFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceOrgSettingsCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceOrgSettingsCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceOrgSettingsCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceOrgSettingsDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>
+          }
+          update: {
+            args: Prisma.WorkforceOrgSettingsUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceOrgSettingsDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceOrgSettingsUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceOrgSettingsUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceOrgSettingsUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceOrgSettingsPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceOrgSettingsAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceOrgSettings>
+          }
+          groupBy: {
+            args: Prisma.WorkforceOrgSettingsGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceOrgSettingsGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceOrgSettingsCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceOrgSettingsCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceApprovalRoute: {
+        payload: Prisma.$WorkforceApprovalRoutePayload<ExtArgs>
+        fields: Prisma.WorkforceApprovalRouteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceApprovalRouteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceApprovalRouteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceApprovalRouteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceApprovalRouteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceApprovalRouteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceApprovalRouteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceApprovalRouteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceApprovalRouteCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceApprovalRouteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>
+          }
+          update: {
+            args: Prisma.WorkforceApprovalRouteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceApprovalRouteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceApprovalRouteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceApprovalRouteUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceApprovalRouteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalRoutePayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceApprovalRouteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceApprovalRoute>
+          }
+          groupBy: {
+            args: Prisma.WorkforceApprovalRouteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceApprovalRouteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceApprovalRouteCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceApprovalRouteCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceApprovalStep: {
+        payload: Prisma.$WorkforceApprovalStepPayload<ExtArgs>
+        fields: Prisma.WorkforceApprovalStepFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceApprovalStepFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceApprovalStepFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceApprovalStepFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceApprovalStepFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceApprovalStepFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceApprovalStepCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceApprovalStepCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceApprovalStepCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceApprovalStepDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>
+          }
+          update: {
+            args: Prisma.WorkforceApprovalStepUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceApprovalStepDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceApprovalStepUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceApprovalStepUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceApprovalStepUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalStepPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceApprovalStepAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceApprovalStep>
+          }
+          groupBy: {
+            args: Prisma.WorkforceApprovalStepGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceApprovalStepGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceApprovalStepCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceApprovalStepCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceApprovalDecision: {
+        payload: Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>
+        fields: Prisma.WorkforceApprovalDecisionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceApprovalDecisionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceApprovalDecisionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceApprovalDecisionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceApprovalDecisionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceApprovalDecisionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceApprovalDecisionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceApprovalDecisionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceApprovalDecisionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceApprovalDecisionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>
+          }
+          update: {
+            args: Prisma.WorkforceApprovalDecisionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceApprovalDecisionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceApprovalDecisionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceApprovalDecisionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceApprovalDecisionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceApprovalDecisionPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceApprovalDecisionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceApprovalDecision>
+          }
+          groupBy: {
+            args: Prisma.WorkforceApprovalDecisionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceApprovalDecisionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceApprovalDecisionCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceApprovalDecisionCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceVacationPlanRevision: {
+        payload: Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>
+        fields: Prisma.WorkforceVacationPlanRevisionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceVacationPlanRevisionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceVacationPlanRevisionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceVacationPlanRevisionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceVacationPlanRevisionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceVacationPlanRevisionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceVacationPlanRevisionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceVacationPlanRevisionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceVacationPlanRevisionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceVacationPlanRevisionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>
+          }
+          update: {
+            args: Prisma.WorkforceVacationPlanRevisionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceVacationPlanRevisionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceVacationPlanRevisionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceVacationPlanRevisionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceVacationPlanRevisionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanRevisionPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceVacationPlanRevisionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceVacationPlanRevision>
+          }
+          groupBy: {
+            args: Prisma.WorkforceVacationPlanRevisionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceVacationPlanRevisionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceVacationPlanRevisionCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceVacationPlanRevisionCountAggregateOutputType> | number
+          }
+        }
+      }
       Organization: {
         payload: Prisma.$OrganizationPayload<ExtArgs>
         fields: Prisma.OrganizationFieldRefs
@@ -10201,6 +10708,11 @@ export namespace Prisma {
     role?: RoleOmit
     permission?: PermissionOmit
     rolePermission?: RolePermissionOmit
+    workforceOrgSettings?: WorkforceOrgSettingsOmit
+    workforceApprovalRoute?: WorkforceApprovalRouteOmit
+    workforceApprovalStep?: WorkforceApprovalStepOmit
+    workforceApprovalDecision?: WorkforceApprovalDecisionOmit
+    workforceVacationPlanRevision?: WorkforceVacationPlanRevisionOmit
     organization?: OrganizationOmit
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOmit
     clinicCutoverPolicy?: ClinicCutoverPolicyOmit
@@ -10499,6 +11011,7 @@ export namespace Prisma {
     commercialLinks: number
     vacationPlans: number
     responsiblePlaces: number
+    approvalSteps: number
   }
 
   export type OrgUnitCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10508,6 +11021,7 @@ export namespace Prisma {
     commercialLinks?: boolean | OrgUnitCountOutputTypeCountCommercialLinksArgs
     vacationPlans?: boolean | OrgUnitCountOutputTypeCountVacationPlansArgs
     responsiblePlaces?: boolean | OrgUnitCountOutputTypeCountResponsiblePlacesArgs
+    approvalSteps?: boolean | OrgUnitCountOutputTypeCountApprovalStepsArgs
   }
 
   // Custom InputTypes
@@ -10563,6 +11077,13 @@ export namespace Prisma {
     where?: WorkforcePlaceWhereInput
   }
 
+  /**
+   * OrgUnitCountOutputType without action
+   */
+  export type OrgUnitCountOutputTypeCountApprovalStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalStepWhereInput
+  }
+
 
   /**
    * Count Type WorkforcePositionCountOutputType
@@ -10571,11 +11092,13 @@ export namespace Prisma {
   export type WorkforcePositionCountOutputType = {
     employments: number
     roleTemplates: number
+    approvalSteps: number
   }
 
   export type WorkforcePositionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     employments?: boolean | WorkforcePositionCountOutputTypeCountEmploymentsArgs
     roleTemplates?: boolean | WorkforcePositionCountOutputTypeCountRoleTemplatesArgs
+    approvalSteps?: boolean | WorkforcePositionCountOutputTypeCountApprovalStepsArgs
   }
 
   // Custom InputTypes
@@ -10601,6 +11124,13 @@ export namespace Prisma {
    */
   export type WorkforcePositionCountOutputTypeCountRoleTemplatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SatelliteRoleTemplateWhereInput
+  }
+
+  /**
+   * WorkforcePositionCountOutputType without action
+   */
+  export type WorkforcePositionCountOutputTypeCountApprovalStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalStepWhereInput
   }
 
 
@@ -11118,10 +11648,12 @@ export namespace Prisma {
 
   export type WorkforceVacationPlanCountOutputType = {
     lines: number
+    revisions: number
   }
 
   export type WorkforceVacationPlanCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     lines?: boolean | WorkforceVacationPlanCountOutputTypeCountLinesArgs
+    revisions?: boolean | WorkforceVacationPlanCountOutputTypeCountRevisionsArgs
   }
 
   // Custom InputTypes
@@ -11140,6 +11672,13 @@ export namespace Prisma {
    */
   export type WorkforceVacationPlanCountOutputTypeCountLinesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkforceVacationPlanLineWhereInput
+  }
+
+  /**
+   * WorkforceVacationPlanCountOutputType without action
+   */
+  export type WorkforceVacationPlanCountOutputTypeCountRevisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanRevisionWhereInput
   }
 
 
@@ -11268,6 +11807,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type WorkforceApprovalRouteCountOutputType
+   */
+
+  export type WorkforceApprovalRouteCountOutputType = {
+    steps: number
+  }
+
+  export type WorkforceApprovalRouteCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    steps?: boolean | WorkforceApprovalRouteCountOutputTypeCountStepsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WorkforceApprovalRouteCountOutputType without action
+   */
+  export type WorkforceApprovalRouteCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRouteCountOutputType
+     */
+    select?: WorkforceApprovalRouteCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalRouteCountOutputType without action
+   */
+  export type WorkforceApprovalRouteCountOutputTypeCountStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalStepWhereInput
+  }
+
+
+  /**
    * Count Type OrganizationCountOutputType
    */
 
@@ -11315,6 +11885,8 @@ export namespace Prisma {
     workforceAnnouncements: number
     workforceFitnessRecords: number
     workforceMigrationSteps: number
+    workforceApprovalRoutes: number
+    workforceApprovalDecisions: number
     orgUnitCommercialLinks: number
     clinicCutoverAsHotel: number
     fiscalHardwareDevices: number
@@ -11367,6 +11939,8 @@ export namespace Prisma {
     workforceAnnouncements?: boolean | OrganizationCountOutputTypeCountWorkforceAnnouncementsArgs
     workforceFitnessRecords?: boolean | OrganizationCountOutputTypeCountWorkforceFitnessRecordsArgs
     workforceMigrationSteps?: boolean | OrganizationCountOutputTypeCountWorkforceMigrationStepsArgs
+    workforceApprovalRoutes?: boolean | OrganizationCountOutputTypeCountWorkforceApprovalRoutesArgs
+    workforceApprovalDecisions?: boolean | OrganizationCountOutputTypeCountWorkforceApprovalDecisionsArgs
     orgUnitCommercialLinks?: boolean | OrganizationCountOutputTypeCountOrgUnitCommercialLinksArgs
     clinicCutoverAsHotel?: boolean | OrganizationCountOutputTypeCountClinicCutoverAsHotelArgs
     fiscalHardwareDevices?: boolean | OrganizationCountOutputTypeCountFiscalHardwareDevicesArgs
@@ -11685,6 +12259,20 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountWorkforceMigrationStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkforceMigrationStepWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountWorkforceApprovalRoutesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalRouteWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountWorkforceApprovalDecisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalDecisionWhereInput
   }
 
   /**
@@ -29649,6 +30237,7 @@ export namespace Prisma {
     commercialLinks?: boolean | OrgUnit$commercialLinksArgs<ExtArgs>
     vacationPlans?: boolean | OrgUnit$vacationPlansArgs<ExtArgs>
     responsiblePlaces?: boolean | OrgUnit$responsiblePlacesArgs<ExtArgs>
+    approvalSteps?: boolean | OrgUnit$approvalStepsArgs<ExtArgs>
     _count?: boolean | OrgUnitCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["orgUnit"]>
 
@@ -29711,6 +30300,7 @@ export namespace Prisma {
     commercialLinks?: boolean | OrgUnit$commercialLinksArgs<ExtArgs>
     vacationPlans?: boolean | OrgUnit$vacationPlansArgs<ExtArgs>
     responsiblePlaces?: boolean | OrgUnit$responsiblePlacesArgs<ExtArgs>
+    approvalSteps?: boolean | OrgUnit$approvalStepsArgs<ExtArgs>
     _count?: boolean | OrgUnitCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrgUnitIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -29736,6 +30326,7 @@ export namespace Prisma {
       commercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
       vacationPlans: Prisma.$WorkforceVacationPlanPayload<ExtArgs>[]
       responsiblePlaces: Prisma.$WorkforcePlacePayload<ExtArgs>[]
+      approvalSteps: Prisma.$WorkforceApprovalStepPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -30152,6 +30743,7 @@ export namespace Prisma {
     commercialLinks<T extends OrgUnit$commercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$commercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     vacationPlans<T extends OrgUnit$vacationPlansArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$vacationPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     responsiblePlaces<T extends OrgUnit$responsiblePlacesArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$responsiblePlacesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePlacePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    approvalSteps<T extends OrgUnit$approvalStepsArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$approvalStepsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -30772,6 +31364,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkforcePlaceScalarFieldEnum | WorkforcePlaceScalarFieldEnum[]
+  }
+
+  /**
+   * OrgUnit.approvalSteps
+   */
+  export type OrgUnit$approvalStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    where?: WorkforceApprovalStepWhereInput
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceApprovalStepScalarFieldEnum | WorkforceApprovalStepScalarFieldEnum[]
   }
 
   /**
@@ -32142,6 +32758,7 @@ export namespace Prisma {
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     employments?: boolean | WorkforcePosition$employmentsArgs<ExtArgs>
     roleTemplates?: boolean | WorkforcePosition$roleTemplatesArgs<ExtArgs>
+    approvalSteps?: boolean | WorkforcePosition$approvalStepsArgs<ExtArgs>
     _count?: boolean | WorkforcePositionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforcePosition"]>
 
@@ -32185,6 +32802,7 @@ export namespace Prisma {
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     employments?: boolean | WorkforcePosition$employmentsArgs<ExtArgs>
     roleTemplates?: boolean | WorkforcePosition$roleTemplatesArgs<ExtArgs>
+    approvalSteps?: boolean | WorkforcePosition$approvalStepsArgs<ExtArgs>
     _count?: boolean | WorkforcePositionCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkforcePositionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -32200,6 +32818,7 @@ export namespace Prisma {
       orgUnit: Prisma.$OrgUnitPayload<ExtArgs>
       employments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       roleTemplates: Prisma.$SatelliteRoleTemplatePayload<ExtArgs>[]
+      approvalSteps: Prisma.$WorkforceApprovalStepPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -32607,6 +33226,7 @@ export namespace Prisma {
     orgUnit<T extends OrgUnitDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnitDefaultArgs<ExtArgs>>): Prisma__OrgUnitClient<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     employments<T extends WorkforcePosition$employmentsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$employmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     roleTemplates<T extends WorkforcePosition$roleTemplatesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$roleTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteRoleTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    approvalSteps<T extends WorkforcePosition$approvalStepsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$approvalStepsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -33090,6 +33710,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SatelliteRoleTemplateScalarFieldEnum | SatelliteRoleTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforcePosition.approvalSteps
+   */
+  export type WorkforcePosition$approvalStepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    where?: WorkforceApprovalStepWhereInput
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceApprovalStepScalarFieldEnum | WorkforceApprovalStepScalarFieldEnum[]
   }
 
   /**
@@ -38694,6 +39338,8 @@ export namespace Prisma {
     globalPersonId: string | null
     status: $Enums.WorkforceEmploymentStatus | null
     hireDate: Date | null
+    contractEndDate: Date | null
+    workRegime: $Enums.WorkforceWorkRegime | null
     financeEmployeeId: string | null
     commercialOrganizationId: string | null
     platformUserId: string | null
@@ -38712,6 +39358,8 @@ export namespace Prisma {
     globalPersonId: string | null
     status: $Enums.WorkforceEmploymentStatus | null
     hireDate: Date | null
+    contractEndDate: Date | null
+    workRegime: $Enums.WorkforceWorkRegime | null
     financeEmployeeId: string | null
     commercialOrganizationId: string | null
     platformUserId: string | null
@@ -38730,6 +39378,8 @@ export namespace Prisma {
     globalPersonId: number
     status: number
     hireDate: number
+    contractEndDate: number
+    workRegime: number
     financeEmployeeId: number
     commercialOrganizationId: number
     platformUserId: number
@@ -38750,6 +39400,8 @@ export namespace Prisma {
     globalPersonId?: true
     status?: true
     hireDate?: true
+    contractEndDate?: true
+    workRegime?: true
     financeEmployeeId?: true
     commercialOrganizationId?: true
     platformUserId?: true
@@ -38768,6 +39420,8 @@ export namespace Prisma {
     globalPersonId?: true
     status?: true
     hireDate?: true
+    contractEndDate?: true
+    workRegime?: true
     financeEmployeeId?: true
     commercialOrganizationId?: true
     platformUserId?: true
@@ -38786,6 +39440,8 @@ export namespace Prisma {
     globalPersonId?: true
     status?: true
     hireDate?: true
+    contractEndDate?: true
+    workRegime?: true
     financeEmployeeId?: true
     commercialOrganizationId?: true
     platformUserId?: true
@@ -38877,6 +39533,8 @@ export namespace Prisma {
     globalPersonId: string
     status: $Enums.WorkforceEmploymentStatus
     hireDate: Date
+    contractEndDate: Date | null
+    workRegime: $Enums.WorkforceWorkRegime | null
     financeEmployeeId: string | null
     commercialOrganizationId: string | null
     platformUserId: string | null
@@ -38912,6 +39570,8 @@ export namespace Prisma {
     globalPersonId?: boolean
     status?: boolean
     hireDate?: boolean
+    contractEndDate?: boolean
+    workRegime?: boolean
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
@@ -38952,6 +39612,8 @@ export namespace Prisma {
     globalPersonId?: boolean
     status?: boolean
     hireDate?: boolean
+    contractEndDate?: boolean
+    workRegime?: boolean
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
@@ -38974,6 +39636,8 @@ export namespace Prisma {
     globalPersonId?: boolean
     status?: boolean
     hireDate?: boolean
+    contractEndDate?: boolean
+    workRegime?: boolean
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
@@ -38996,6 +39660,8 @@ export namespace Prisma {
     globalPersonId?: boolean
     status?: boolean
     hireDate?: boolean
+    contractEndDate?: boolean
+    workRegime?: boolean
     financeEmployeeId?: boolean
     commercialOrganizationId?: boolean
     platformUserId?: boolean
@@ -39005,7 +39671,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WorkforceEmploymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "workforceScopeId" | "orgUnitId" | "positionId" | "globalPersonId" | "status" | "hireDate" | "financeEmployeeId" | "commercialOrganizationId" | "platformUserId" | "satelliteStaffLogin" | "satelliteStaffPin" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceEmployment"]>
+  export type WorkforceEmploymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "workforceScopeId" | "orgUnitId" | "positionId" | "globalPersonId" | "status" | "hireDate" | "contractEndDate" | "workRegime" | "financeEmployeeId" | "commercialOrganizationId" | "platformUserId" | "satelliteStaffLogin" | "satelliteStaffPin" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceEmployment"]>
   export type WorkforceEmploymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -39077,6 +39743,11 @@ export namespace Prisma {
       globalPersonId: string
       status: $Enums.WorkforceEmploymentStatus
       hireDate: Date
+      /**
+       * Empty = open-ended contract.
+       */
+      contractEndDate: Date | null
+      workRegime: $Enums.WorkforceWorkRegime | null
       financeEmployeeId: string | null
       commercialOrganizationId: string | null
       platformUserId: string | null
@@ -39542,6 +40213,8 @@ export namespace Prisma {
     readonly globalPersonId: FieldRef<"WorkforceEmployment", 'String'>
     readonly status: FieldRef<"WorkforceEmployment", 'WorkforceEmploymentStatus'>
     readonly hireDate: FieldRef<"WorkforceEmployment", 'DateTime'>
+    readonly contractEndDate: FieldRef<"WorkforceEmployment", 'DateTime'>
+    readonly workRegime: FieldRef<"WorkforceEmployment", 'WorkforceWorkRegime'>
     readonly financeEmployeeId: FieldRef<"WorkforceEmployment", 'String'>
     readonly commercialOrganizationId: FieldRef<"WorkforceEmployment", 'String'>
     readonly platformUserId: FieldRef<"WorkforceEmployment", 'String'>
@@ -40377,8 +41050,18 @@ export namespace Prisma {
 
   export type AggregateWorkforceAbsence = {
     _count: WorkforceAbsenceCountAggregateOutputType | null
+    _avg: WorkforceAbsenceAvgAggregateOutputType | null
+    _sum: WorkforceAbsenceSumAggregateOutputType | null
     _min: WorkforceAbsenceMinAggregateOutputType | null
     _max: WorkforceAbsenceMaxAggregateOutputType | null
+  }
+
+  export type WorkforceAbsenceAvgAggregateOutputType = {
+    currentStepOrder: number | null
+  }
+
+  export type WorkforceAbsenceSumAggregateOutputType = {
+    currentStepOrder: number | null
   }
 
   export type WorkforceAbsenceMinAggregateOutputType = {
@@ -40401,6 +41084,9 @@ export namespace Prisma {
     rejectionReason: string | null
     source: string | null
     sourceRef: string | null
+    currentStepOrder: number | null
+    correctionOfId: string | null
+    cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -40425,6 +41111,9 @@ export namespace Prisma {
     rejectionReason: string | null
     source: string | null
     sourceRef: string | null
+    currentStepOrder: number | null
+    correctionOfId: string | null
+    cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -40449,11 +41138,22 @@ export namespace Prisma {
     rejectionReason: number
     source: number
     sourceRef: number
+    currentStepOrder: number
+    correctionOfId: number
+    cancelReason: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
+
+  export type WorkforceAbsenceAvgAggregateInputType = {
+    currentStepOrder?: true
+  }
+
+  export type WorkforceAbsenceSumAggregateInputType = {
+    currentStepOrder?: true
+  }
 
   export type WorkforceAbsenceMinAggregateInputType = {
     id?: true
@@ -40475,6 +41175,9 @@ export namespace Prisma {
     rejectionReason?: true
     source?: true
     sourceRef?: true
+    currentStepOrder?: true
+    correctionOfId?: true
+    cancelReason?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -40499,6 +41202,9 @@ export namespace Prisma {
     rejectionReason?: true
     source?: true
     sourceRef?: true
+    currentStepOrder?: true
+    correctionOfId?: true
+    cancelReason?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -40523,6 +41229,9 @@ export namespace Prisma {
     rejectionReason?: true
     source?: true
     sourceRef?: true
+    currentStepOrder?: true
+    correctionOfId?: true
+    cancelReason?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -40566,6 +41275,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceAbsenceAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceAbsenceSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: WorkforceAbsenceMinAggregateInputType
@@ -40596,6 +41317,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: WorkforceAbsenceCountAggregateInputType | true
+    _avg?: WorkforceAbsenceAvgAggregateInputType
+    _sum?: WorkforceAbsenceSumAggregateInputType
     _min?: WorkforceAbsenceMinAggregateInputType
     _max?: WorkforceAbsenceMaxAggregateInputType
   }
@@ -40620,9 +41343,14 @@ export namespace Prisma {
     rejectionReason: string | null
     source: string
     sourceRef: string | null
+    currentStepOrder: number
+    correctionOfId: string | null
+    cancelReason: string | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceAbsenceCountAggregateOutputType | null
+    _avg: WorkforceAbsenceAvgAggregateOutputType | null
+    _sum: WorkforceAbsenceSumAggregateOutputType | null
     _min: WorkforceAbsenceMinAggregateOutputType | null
     _max: WorkforceAbsenceMaxAggregateOutputType | null
   }
@@ -40661,6 +41389,9 @@ export namespace Prisma {
     rejectionReason?: boolean
     source?: boolean
     sourceRef?: boolean
+    currentStepOrder?: boolean
+    correctionOfId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -40686,6 +41417,9 @@ export namespace Prisma {
     rejectionReason?: boolean
     source?: boolean
     sourceRef?: boolean
+    currentStepOrder?: boolean
+    correctionOfId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -40711,6 +41445,9 @@ export namespace Prisma {
     rejectionReason?: boolean
     source?: boolean
     sourceRef?: boolean
+    currentStepOrder?: boolean
+    correctionOfId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -40736,11 +41473,14 @@ export namespace Prisma {
     rejectionReason?: boolean
     source?: boolean
     sourceRef?: boolean
+    currentStepOrder?: boolean
+    correctionOfId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceAbsenceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "kind" | "startDate" | "endDate" | "note" | "status" | "submittedAt" | "approvedAt" | "rejectedAt" | "cancelledAt" | "submittedByUserId" | "approvedByUserId" | "rejectedByUserId" | "cancelledByUserId" | "rejectionReason" | "source" | "sourceRef" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAbsence"]>
+  export type WorkforceAbsenceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "kind" | "startDate" | "endDate" | "note" | "status" | "submittedAt" | "approvedAt" | "rejectedAt" | "cancelledAt" | "submittedByUserId" | "approvedByUserId" | "rejectedByUserId" | "cancelledByUserId" | "rejectionReason" | "source" | "sourceRef" | "currentStepOrder" | "correctionOfId" | "cancelReason" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAbsence"]>
   export type WorkforceAbsenceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
   }
@@ -40779,6 +41519,15 @@ export namespace Prisma {
        */
       source: string
       sourceRef: string | null
+      /**
+       * 0-based index into the org-structure approval route. Unused when no route is configured.
+       */
+      currentStepOrder: number
+      /**
+       * Approved row this request corrects. The original stays until this one is approved.
+       */
+      correctionOfId: string | null
+      cancelReason: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceAbsence"]>
@@ -41224,6 +41973,9 @@ export namespace Prisma {
     readonly rejectionReason: FieldRef<"WorkforceAbsence", 'String'>
     readonly source: FieldRef<"WorkforceAbsence", 'String'>
     readonly sourceRef: FieldRef<"WorkforceAbsence", 'String'>
+    readonly currentStepOrder: FieldRef<"WorkforceAbsence", 'Int'>
+    readonly correctionOfId: FieldRef<"WorkforceAbsence", 'String'>
+    readonly cancelReason: FieldRef<"WorkforceAbsence", 'String'>
     readonly createdAt: FieldRef<"WorkforceAbsence", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceAbsence", 'DateTime'>
   }
@@ -50293,11 +51045,13 @@ export namespace Prisma {
   export type WorkforceHourlyLeaveRequestAvgAggregateOutputType = {
     startMinute: number | null
     endMinute: number | null
+    currentStepOrder: number | null
   }
 
   export type WorkforceHourlyLeaveRequestSumAggregateOutputType = {
     startMinute: number | null
     endMinute: number | null
+    currentStepOrder: number | null
   }
 
   export type WorkforceHourlyLeaveRequestMinAggregateOutputType = {
@@ -50315,6 +51069,7 @@ export namespace Prisma {
     decidedAt: Date | null
     decidedByUserId: string | null
     rejectionReason: string | null
+    currentStepOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -50334,6 +51089,7 @@ export namespace Prisma {
     decidedAt: Date | null
     decidedByUserId: string | null
     rejectionReason: string | null
+    currentStepOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -50353,6 +51109,7 @@ export namespace Prisma {
     decidedAt: number
     decidedByUserId: number
     rejectionReason: number
+    currentStepOrder: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -50362,11 +51119,13 @@ export namespace Prisma {
   export type WorkforceHourlyLeaveRequestAvgAggregateInputType = {
     startMinute?: true
     endMinute?: true
+    currentStepOrder?: true
   }
 
   export type WorkforceHourlyLeaveRequestSumAggregateInputType = {
     startMinute?: true
     endMinute?: true
+    currentStepOrder?: true
   }
 
   export type WorkforceHourlyLeaveRequestMinAggregateInputType = {
@@ -50384,6 +51143,7 @@ export namespace Prisma {
     decidedAt?: true
     decidedByUserId?: true
     rejectionReason?: true
+    currentStepOrder?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -50403,6 +51163,7 @@ export namespace Prisma {
     decidedAt?: true
     decidedByUserId?: true
     rejectionReason?: true
+    currentStepOrder?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -50422,6 +51183,7 @@ export namespace Prisma {
     decidedAt?: true
     decidedByUserId?: true
     rejectionReason?: true
+    currentStepOrder?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -50528,6 +51290,7 @@ export namespace Prisma {
     decidedAt: Date | null
     decidedByUserId: string | null
     rejectionReason: string | null
+    currentStepOrder: number
     createdAt: Date
     updatedAt: Date
     _count: WorkforceHourlyLeaveRequestCountAggregateOutputType | null
@@ -50566,6 +51329,7 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -50587,6 +51351,7 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -50608,6 +51373,7 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -50629,11 +51395,12 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceHourlyLeaveRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "workDate" | "startMinute" | "endMinute" | "paid" | "note" | "status" | "submittedAt" | "submittedByUserId" | "decidedAt" | "decidedByUserId" | "rejectionReason" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceHourlyLeaveRequest"]>
+  export type WorkforceHourlyLeaveRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "workDate" | "startMinute" | "endMinute" | "paid" | "note" | "status" | "submittedAt" | "submittedByUserId" | "decidedAt" | "decidedByUserId" | "rejectionReason" | "currentStepOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceHourlyLeaveRequest"]>
   export type WorkforceHourlyLeaveRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -50668,6 +51435,7 @@ export namespace Prisma {
       decidedAt: Date | null
       decidedByUserId: string | null
       rejectionReason: string | null
+      currentStepOrder: number
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceHourlyLeaveRequest"]>
@@ -51109,6 +51877,7 @@ export namespace Prisma {
     readonly decidedAt: FieldRef<"WorkforceHourlyLeaveRequest", 'DateTime'>
     readonly decidedByUserId: FieldRef<"WorkforceHourlyLeaveRequest", 'String'>
     readonly rejectionReason: FieldRef<"WorkforceHourlyLeaveRequest", 'String'>
+    readonly currentStepOrder: FieldRef<"WorkforceHourlyLeaveRequest", 'Int'>
     readonly createdAt: FieldRef<"WorkforceHourlyLeaveRequest", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceHourlyLeaveRequest", 'DateTime'>
   }
@@ -51544,10 +52313,12 @@ export namespace Prisma {
 
   export type WorkforceAdvanceRequestAvgAggregateOutputType = {
     amountAzn: Decimal | null
+    currentStepOrder: number | null
   }
 
   export type WorkforceAdvanceRequestSumAggregateOutputType = {
     amountAzn: Decimal | null
+    currentStepOrder: number | null
   }
 
   export type WorkforceAdvanceRequestMinAggregateOutputType = {
@@ -51562,6 +52333,7 @@ export namespace Prisma {
     decidedAt: Date | null
     decidedByUserId: string | null
     rejectionReason: string | null
+    currentStepOrder: number | null
     financeQueuedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -51579,6 +52351,7 @@ export namespace Prisma {
     decidedAt: Date | null
     decidedByUserId: string | null
     rejectionReason: string | null
+    currentStepOrder: number | null
     financeQueuedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -51596,6 +52369,7 @@ export namespace Prisma {
     decidedAt: number
     decidedByUserId: number
     rejectionReason: number
+    currentStepOrder: number
     financeQueuedAt: number
     createdAt: number
     updatedAt: number
@@ -51605,10 +52379,12 @@ export namespace Prisma {
 
   export type WorkforceAdvanceRequestAvgAggregateInputType = {
     amountAzn?: true
+    currentStepOrder?: true
   }
 
   export type WorkforceAdvanceRequestSumAggregateInputType = {
     amountAzn?: true
+    currentStepOrder?: true
   }
 
   export type WorkforceAdvanceRequestMinAggregateInputType = {
@@ -51623,6 +52399,7 @@ export namespace Prisma {
     decidedAt?: true
     decidedByUserId?: true
     rejectionReason?: true
+    currentStepOrder?: true
     financeQueuedAt?: true
     createdAt?: true
     updatedAt?: true
@@ -51640,6 +52417,7 @@ export namespace Prisma {
     decidedAt?: true
     decidedByUserId?: true
     rejectionReason?: true
+    currentStepOrder?: true
     financeQueuedAt?: true
     createdAt?: true
     updatedAt?: true
@@ -51657,6 +52435,7 @@ export namespace Prisma {
     decidedAt?: true
     decidedByUserId?: true
     rejectionReason?: true
+    currentStepOrder?: true
     financeQueuedAt?: true
     createdAt?: true
     updatedAt?: true
@@ -51761,6 +52540,7 @@ export namespace Prisma {
     decidedAt: Date | null
     decidedByUserId: string | null
     rejectionReason: string | null
+    currentStepOrder: number
     financeQueuedAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -51797,6 +52577,7 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     financeQueuedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -51816,6 +52597,7 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     financeQueuedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -51835,6 +52617,7 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     financeQueuedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -51854,12 +52637,13 @@ export namespace Prisma {
     decidedAt?: boolean
     decidedByUserId?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
     financeQueuedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceAdvanceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "amountAzn" | "note" | "status" | "submittedAt" | "submittedByUserId" | "decidedAt" | "decidedByUserId" | "rejectionReason" | "financeQueuedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAdvanceRequest"]>
+  export type WorkforceAdvanceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "amountAzn" | "note" | "status" | "submittedAt" | "submittedByUserId" | "decidedAt" | "decidedByUserId" | "rejectionReason" | "currentStepOrder" | "financeQueuedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAdvanceRequest"]>
   export type WorkforceAdvanceRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -51891,6 +52675,7 @@ export namespace Prisma {
       decidedAt: Date | null
       decidedByUserId: string | null
       rejectionReason: string | null
+      currentStepOrder: number
       financeQueuedAt: Date | null
       createdAt: Date
       updatedAt: Date
@@ -52330,6 +53115,7 @@ export namespace Prisma {
     readonly decidedAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
     readonly decidedByUserId: FieldRef<"WorkforceAdvanceRequest", 'String'>
     readonly rejectionReason: FieldRef<"WorkforceAdvanceRequest", 'String'>
+    readonly currentStepOrder: FieldRef<"WorkforceAdvanceRequest", 'Int'>
     readonly financeQueuedAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
     readonly createdAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
@@ -64383,10 +65169,12 @@ export namespace Prisma {
 
   export type WorkforceVacationPlanAvgAggregateOutputType = {
     year: number | null
+    currentStepOrder: number | null
   }
 
   export type WorkforceVacationPlanSumAggregateOutputType = {
     year: number | null
+    currentStepOrder: number | null
   }
 
   export type WorkforceVacationPlanMinAggregateOutputType = {
@@ -64401,6 +65189,10 @@ export namespace Prisma {
     approvedAt: Date | null
     rejectedAt: Date | null
     rejectionReason: string | null
+    currentStepOrder: number | null
+    cancelledAt: Date | null
+    cancelledByUserId: string | null
+    cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -64417,6 +65209,10 @@ export namespace Prisma {
     approvedAt: Date | null
     rejectedAt: Date | null
     rejectionReason: string | null
+    currentStepOrder: number | null
+    cancelledAt: Date | null
+    cancelledByUserId: string | null
+    cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -64433,6 +65229,10 @@ export namespace Prisma {
     approvedAt: number
     rejectedAt: number
     rejectionReason: number
+    currentStepOrder: number
+    cancelledAt: number
+    cancelledByUserId: number
+    cancelReason: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -64441,10 +65241,12 @@ export namespace Prisma {
 
   export type WorkforceVacationPlanAvgAggregateInputType = {
     year?: true
+    currentStepOrder?: true
   }
 
   export type WorkforceVacationPlanSumAggregateInputType = {
     year?: true
+    currentStepOrder?: true
   }
 
   export type WorkforceVacationPlanMinAggregateInputType = {
@@ -64459,6 +65261,10 @@ export namespace Prisma {
     approvedAt?: true
     rejectedAt?: true
     rejectionReason?: true
+    currentStepOrder?: true
+    cancelledAt?: true
+    cancelledByUserId?: true
+    cancelReason?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -64475,6 +65281,10 @@ export namespace Prisma {
     approvedAt?: true
     rejectedAt?: true
     rejectionReason?: true
+    currentStepOrder?: true
+    cancelledAt?: true
+    cancelledByUserId?: true
+    cancelReason?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -64491,6 +65301,10 @@ export namespace Prisma {
     approvedAt?: true
     rejectedAt?: true
     rejectionReason?: true
+    currentStepOrder?: true
+    cancelledAt?: true
+    cancelledByUserId?: true
+    cancelReason?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -64594,6 +65408,10 @@ export namespace Prisma {
     approvedAt: Date | null
     rejectedAt: Date | null
     rejectionReason: string | null
+    currentStepOrder: number
+    cancelledAt: Date | null
+    cancelledByUserId: string | null
+    cancelReason: string | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceVacationPlanCountAggregateOutputType | null
@@ -64629,11 +65447,16 @@ export namespace Prisma {
     approvedAt?: boolean
     rejectedAt?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
+    cancelledAt?: boolean
+    cancelledByUserId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
     lines?: boolean | WorkforceVacationPlan$linesArgs<ExtArgs>
+    revisions?: boolean | WorkforceVacationPlan$revisionsArgs<ExtArgs>
     _count?: boolean | WorkforceVacationPlanCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceVacationPlan"]>
 
@@ -64649,6 +65472,10 @@ export namespace Prisma {
     approvedAt?: boolean
     rejectedAt?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
+    cancelledAt?: boolean
+    cancelledByUserId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -64667,6 +65494,10 @@ export namespace Prisma {
     approvedAt?: boolean
     rejectedAt?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
+    cancelledAt?: boolean
+    cancelledByUserId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
@@ -64685,15 +65516,20 @@ export namespace Prisma {
     approvedAt?: boolean
     rejectedAt?: boolean
     rejectionReason?: boolean
+    currentStepOrder?: boolean
+    cancelledAt?: boolean
+    cancelledByUserId?: boolean
+    cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceVacationPlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "year" | "orgUnitId" | "status" | "submittedByUserId" | "approvedByUserId" | "submittedAt" | "approvedAt" | "rejectedAt" | "rejectionReason" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceVacationPlan"]>
+  export type WorkforceVacationPlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "year" | "orgUnitId" | "status" | "submittedByUserId" | "approvedByUserId" | "submittedAt" | "approvedAt" | "rejectedAt" | "rejectionReason" | "currentStepOrder" | "cancelledAt" | "cancelledByUserId" | "cancelReason" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceVacationPlan"]>
   export type WorkforceVacationPlanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
     lines?: boolean | WorkforceVacationPlan$linesArgs<ExtArgs>
+    revisions?: boolean | WorkforceVacationPlan$revisionsArgs<ExtArgs>
     _count?: boolean | WorkforceVacationPlanCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkforceVacationPlanIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -64711,6 +65547,7 @@ export namespace Prisma {
       workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
       orgUnit: Prisma.$OrgUnitPayload<ExtArgs> | null
       lines: Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>[]
+      revisions: Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -64724,6 +65561,10 @@ export namespace Prisma {
       approvedAt: Date | null
       rejectedAt: Date | null
       rejectionReason: string | null
+      currentStepOrder: number
+      cancelledAt: Date | null
+      cancelledByUserId: string | null
+      cancelReason: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceVacationPlan"]>
@@ -65123,6 +65964,7 @@ export namespace Prisma {
     workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     orgUnit<T extends WorkforceVacationPlan$orgUnitArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlan$orgUnitArgs<ExtArgs>>): Prisma__OrgUnitClient<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     lines<T extends WorkforceVacationPlan$linesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlan$linesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    revisions<T extends WorkforceVacationPlan$revisionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlan$revisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -65163,6 +66005,10 @@ export namespace Prisma {
     readonly approvedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
     readonly rejectedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
     readonly rejectionReason: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly currentStepOrder: FieldRef<"WorkforceVacationPlan", 'Int'>
+    readonly cancelledAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
+    readonly cancelledByUserId: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly cancelReason: FieldRef<"WorkforceVacationPlan", 'String'>
     readonly createdAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
   }
@@ -65606,6 +66452,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkforceVacationPlanLineScalarFieldEnum | WorkforceVacationPlanLineScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlan.revisions
+   */
+  export type WorkforceVacationPlan$revisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    where?: WorkforceVacationPlanRevisionWhereInput
+    orderBy?: WorkforceVacationPlanRevisionOrderByWithRelationInput | WorkforceVacationPlanRevisionOrderByWithRelationInput[]
+    cursor?: WorkforceVacationPlanRevisionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceVacationPlanRevisionScalarFieldEnum | WorkforceVacationPlanRevisionScalarFieldEnum[]
   }
 
   /**
@@ -80246,6 +81116,5696 @@ export namespace Prisma {
 
 
   /**
+   * Model WorkforceOrgSettings
+   */
+
+  export type AggregateWorkforceOrgSettings = {
+    _count: WorkforceOrgSettingsCountAggregateOutputType | null
+    _avg: WorkforceOrgSettingsAvgAggregateOutputType | null
+    _sum: WorkforceOrgSettingsSumAggregateOutputType | null
+    _min: WorkforceOrgSettingsMinAggregateOutputType | null
+    _max: WorkforceOrgSettingsMaxAggregateOutputType | null
+  }
+
+  export type WorkforceOrgSettingsAvgAggregateOutputType = {
+    fiveDayWeeklyHours: Decimal | null
+    sixDayWeeklyHours: Decimal | null
+    medicalWeeklyHours: Decimal | null
+    customWeeklyHours: Decimal | null
+    advanceMaxPercent: Decimal | null
+    advanceMaxAmount: Decimal | null
+    advanceMaxOpen: number | null
+  }
+
+  export type WorkforceOrgSettingsSumAggregateOutputType = {
+    fiveDayWeeklyHours: Decimal | null
+    sixDayWeeklyHours: Decimal | null
+    medicalWeeklyHours: Decimal | null
+    customWeeklyHours: Decimal | null
+    advanceMaxPercent: Decimal | null
+    advanceMaxAmount: Decimal | null
+    advanceMaxOpen: number | null
+  }
+
+  export type WorkforceOrgSettingsMinAggregateOutputType = {
+    organizationId: string | null
+    fiveDayWeeklyHours: Decimal | null
+    sixDayWeeklyHours: Decimal | null
+    medicalWeeklyHours: Decimal | null
+    customWeeklyHours: Decimal | null
+    advanceMaxPercent: Decimal | null
+    advanceMaxAmount: Decimal | null
+    advanceMaxOpen: number | null
+    advanceAllowHrProxy: boolean | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceOrgSettingsMaxAggregateOutputType = {
+    organizationId: string | null
+    fiveDayWeeklyHours: Decimal | null
+    sixDayWeeklyHours: Decimal | null
+    medicalWeeklyHours: Decimal | null
+    customWeeklyHours: Decimal | null
+    advanceMaxPercent: Decimal | null
+    advanceMaxAmount: Decimal | null
+    advanceMaxOpen: number | null
+    advanceAllowHrProxy: boolean | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceOrgSettingsCountAggregateOutputType = {
+    organizationId: number
+    fiveDayWeeklyHours: number
+    sixDayWeeklyHours: number
+    medicalWeeklyHours: number
+    customWeeklyHours: number
+    advanceMaxPercent: number
+    advanceMaxAmount: number
+    advanceMaxOpen: number
+    advanceAllowHrProxy: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceOrgSettingsAvgAggregateInputType = {
+    fiveDayWeeklyHours?: true
+    sixDayWeeklyHours?: true
+    medicalWeeklyHours?: true
+    customWeeklyHours?: true
+    advanceMaxPercent?: true
+    advanceMaxAmount?: true
+    advanceMaxOpen?: true
+  }
+
+  export type WorkforceOrgSettingsSumAggregateInputType = {
+    fiveDayWeeklyHours?: true
+    sixDayWeeklyHours?: true
+    medicalWeeklyHours?: true
+    customWeeklyHours?: true
+    advanceMaxPercent?: true
+    advanceMaxAmount?: true
+    advanceMaxOpen?: true
+  }
+
+  export type WorkforceOrgSettingsMinAggregateInputType = {
+    organizationId?: true
+    fiveDayWeeklyHours?: true
+    sixDayWeeklyHours?: true
+    medicalWeeklyHours?: true
+    customWeeklyHours?: true
+    advanceMaxPercent?: true
+    advanceMaxAmount?: true
+    advanceMaxOpen?: true
+    advanceAllowHrProxy?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceOrgSettingsMaxAggregateInputType = {
+    organizationId?: true
+    fiveDayWeeklyHours?: true
+    sixDayWeeklyHours?: true
+    medicalWeeklyHours?: true
+    customWeeklyHours?: true
+    advanceMaxPercent?: true
+    advanceMaxAmount?: true
+    advanceMaxOpen?: true
+    advanceAllowHrProxy?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceOrgSettingsCountAggregateInputType = {
+    organizationId?: true
+    fiveDayWeeklyHours?: true
+    sixDayWeeklyHours?: true
+    medicalWeeklyHours?: true
+    customWeeklyHours?: true
+    advanceMaxPercent?: true
+    advanceMaxAmount?: true
+    advanceMaxOpen?: true
+    advanceAllowHrProxy?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceOrgSettingsAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceOrgSettings to aggregate.
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceOrgSettings to fetch.
+     */
+    orderBy?: WorkforceOrgSettingsOrderByWithRelationInput | WorkforceOrgSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceOrgSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceOrgSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceOrgSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceOrgSettings
+    **/
+    _count?: true | WorkforceOrgSettingsCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceOrgSettingsAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceOrgSettingsSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceOrgSettingsMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceOrgSettingsMaxAggregateInputType
+  }
+
+  export type GetWorkforceOrgSettingsAggregateType<T extends WorkforceOrgSettingsAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceOrgSettings]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceOrgSettings[P]>
+      : GetScalarType<T[P], AggregateWorkforceOrgSettings[P]>
+  }
+
+
+
+
+  export type WorkforceOrgSettingsGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceOrgSettingsWhereInput
+    orderBy?: WorkforceOrgSettingsOrderByWithAggregationInput | WorkforceOrgSettingsOrderByWithAggregationInput[]
+    by: WorkforceOrgSettingsScalarFieldEnum[] | WorkforceOrgSettingsScalarFieldEnum
+    having?: WorkforceOrgSettingsScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceOrgSettingsCountAggregateInputType | true
+    _avg?: WorkforceOrgSettingsAvgAggregateInputType
+    _sum?: WorkforceOrgSettingsSumAggregateInputType
+    _min?: WorkforceOrgSettingsMinAggregateInputType
+    _max?: WorkforceOrgSettingsMaxAggregateInputType
+  }
+
+  export type WorkforceOrgSettingsGroupByOutputType = {
+    organizationId: string
+    fiveDayWeeklyHours: Decimal | null
+    sixDayWeeklyHours: Decimal | null
+    medicalWeeklyHours: Decimal | null
+    customWeeklyHours: Decimal | null
+    advanceMaxPercent: Decimal | null
+    advanceMaxAmount: Decimal | null
+    advanceMaxOpen: number | null
+    advanceAllowHrProxy: boolean
+    updatedAt: Date
+    _count: WorkforceOrgSettingsCountAggregateOutputType | null
+    _avg: WorkforceOrgSettingsAvgAggregateOutputType | null
+    _sum: WorkforceOrgSettingsSumAggregateOutputType | null
+    _min: WorkforceOrgSettingsMinAggregateOutputType | null
+    _max: WorkforceOrgSettingsMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceOrgSettingsGroupByPayload<T extends WorkforceOrgSettingsGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceOrgSettingsGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceOrgSettingsGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceOrgSettingsGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceOrgSettingsGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceOrgSettingsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    fiveDayWeeklyHours?: boolean
+    sixDayWeeklyHours?: boolean
+    medicalWeeklyHours?: boolean
+    customWeeklyHours?: boolean
+    advanceMaxPercent?: boolean
+    advanceMaxAmount?: boolean
+    advanceMaxOpen?: boolean
+    advanceAllowHrProxy?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceOrgSettings"]>
+
+  export type WorkforceOrgSettingsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    fiveDayWeeklyHours?: boolean
+    sixDayWeeklyHours?: boolean
+    medicalWeeklyHours?: boolean
+    customWeeklyHours?: boolean
+    advanceMaxPercent?: boolean
+    advanceMaxAmount?: boolean
+    advanceMaxOpen?: boolean
+    advanceAllowHrProxy?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceOrgSettings"]>
+
+  export type WorkforceOrgSettingsSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    fiveDayWeeklyHours?: boolean
+    sixDayWeeklyHours?: boolean
+    medicalWeeklyHours?: boolean
+    customWeeklyHours?: boolean
+    advanceMaxPercent?: boolean
+    advanceMaxAmount?: boolean
+    advanceMaxOpen?: boolean
+    advanceAllowHrProxy?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceOrgSettings"]>
+
+  export type WorkforceOrgSettingsSelectScalar = {
+    organizationId?: boolean
+    fiveDayWeeklyHours?: boolean
+    sixDayWeeklyHours?: boolean
+    medicalWeeklyHours?: boolean
+    customWeeklyHours?: boolean
+    advanceMaxPercent?: boolean
+    advanceMaxAmount?: boolean
+    advanceMaxOpen?: boolean
+    advanceAllowHrProxy?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceOrgSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "fiveDayWeeklyHours" | "sixDayWeeklyHours" | "medicalWeeklyHours" | "customWeeklyHours" | "advanceMaxPercent" | "advanceMaxAmount" | "advanceMaxOpen" | "advanceAllowHrProxy" | "updatedAt", ExtArgs["result"]["workforceOrgSettings"]>
+  export type WorkforceOrgSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceOrgSettingsIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceOrgSettingsIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceOrgSettingsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceOrgSettings"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      fiveDayWeeklyHours: Prisma.Decimal | null
+      sixDayWeeklyHours: Prisma.Decimal | null
+      medicalWeeklyHours: Prisma.Decimal | null
+      customWeeklyHours: Prisma.Decimal | null
+      advanceMaxPercent: Prisma.Decimal | null
+      advanceMaxAmount: Prisma.Decimal | null
+      advanceMaxOpen: number | null
+      advanceAllowHrProxy: boolean
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceOrgSettings"]>
+    composites: {}
+  }
+
+  type WorkforceOrgSettingsGetPayload<S extends boolean | null | undefined | WorkforceOrgSettingsDefaultArgs> = $Result.GetResult<Prisma.$WorkforceOrgSettingsPayload, S>
+
+  type WorkforceOrgSettingsCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceOrgSettingsFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceOrgSettingsCountAggregateInputType | true
+    }
+
+  export interface WorkforceOrgSettingsDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceOrgSettings'], meta: { name: 'WorkforceOrgSettings' } }
+    /**
+     * Find zero or one WorkforceOrgSettings that matches the filter.
+     * @param {WorkforceOrgSettingsFindUniqueArgs} args - Arguments to find a WorkforceOrgSettings
+     * @example
+     * // Get one WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceOrgSettingsFindUniqueArgs>(args: SelectSubset<T, WorkforceOrgSettingsFindUniqueArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceOrgSettings that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceOrgSettingsFindUniqueOrThrowArgs} args - Arguments to find a WorkforceOrgSettings
+     * @example
+     * // Get one WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceOrgSettingsFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceOrgSettingsFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceOrgSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsFindFirstArgs} args - Arguments to find a WorkforceOrgSettings
+     * @example
+     * // Get one WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceOrgSettingsFindFirstArgs>(args?: SelectSubset<T, WorkforceOrgSettingsFindFirstArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceOrgSettings that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsFindFirstOrThrowArgs} args - Arguments to find a WorkforceOrgSettings
+     * @example
+     * // Get one WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceOrgSettingsFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceOrgSettingsFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceOrgSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.findMany()
+     * 
+     * // Get first 10 WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const workforceOrgSettingsWithOrganizationIdOnly = await prisma.workforceOrgSettings.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends WorkforceOrgSettingsFindManyArgs>(args?: SelectSubset<T, WorkforceOrgSettingsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceOrgSettings.
+     * @param {WorkforceOrgSettingsCreateArgs} args - Arguments to create a WorkforceOrgSettings.
+     * @example
+     * // Create one WorkforceOrgSettings
+     * const WorkforceOrgSettings = await prisma.workforceOrgSettings.create({
+     *   data: {
+     *     // ... data to create a WorkforceOrgSettings
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceOrgSettingsCreateArgs>(args: SelectSubset<T, WorkforceOrgSettingsCreateArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceOrgSettings.
+     * @param {WorkforceOrgSettingsCreateManyArgs} args - Arguments to create many WorkforceOrgSettings.
+     * @example
+     * // Create many WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceOrgSettingsCreateManyArgs>(args?: SelectSubset<T, WorkforceOrgSettingsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceOrgSettings and returns the data saved in the database.
+     * @param {WorkforceOrgSettingsCreateManyAndReturnArgs} args - Arguments to create many WorkforceOrgSettings.
+     * @example
+     * // Create many WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceOrgSettings and only return the `organizationId`
+     * const workforceOrgSettingsWithOrganizationIdOnly = await prisma.workforceOrgSettings.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceOrgSettingsCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceOrgSettingsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceOrgSettings.
+     * @param {WorkforceOrgSettingsDeleteArgs} args - Arguments to delete one WorkforceOrgSettings.
+     * @example
+     * // Delete one WorkforceOrgSettings
+     * const WorkforceOrgSettings = await prisma.workforceOrgSettings.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceOrgSettings
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceOrgSettingsDeleteArgs>(args: SelectSubset<T, WorkforceOrgSettingsDeleteArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceOrgSettings.
+     * @param {WorkforceOrgSettingsUpdateArgs} args - Arguments to update one WorkforceOrgSettings.
+     * @example
+     * // Update one WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceOrgSettingsUpdateArgs>(args: SelectSubset<T, WorkforceOrgSettingsUpdateArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceOrgSettings.
+     * @param {WorkforceOrgSettingsDeleteManyArgs} args - Arguments to filter WorkforceOrgSettings to delete.
+     * @example
+     * // Delete a few WorkforceOrgSettings
+     * const { count } = await prisma.workforceOrgSettings.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceOrgSettingsDeleteManyArgs>(args?: SelectSubset<T, WorkforceOrgSettingsDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceOrgSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceOrgSettingsUpdateManyArgs>(args: SelectSubset<T, WorkforceOrgSettingsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceOrgSettings and returns the data updated in the database.
+     * @param {WorkforceOrgSettingsUpdateManyAndReturnArgs} args - Arguments to update many WorkforceOrgSettings.
+     * @example
+     * // Update many WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceOrgSettings and only return the `organizationId`
+     * const workforceOrgSettingsWithOrganizationIdOnly = await prisma.workforceOrgSettings.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceOrgSettingsUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceOrgSettingsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceOrgSettings.
+     * @param {WorkforceOrgSettingsUpsertArgs} args - Arguments to update or create a WorkforceOrgSettings.
+     * @example
+     * // Update or create a WorkforceOrgSettings
+     * const workforceOrgSettings = await prisma.workforceOrgSettings.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceOrgSettings
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceOrgSettings we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceOrgSettingsUpsertArgs>(args: SelectSubset<T, WorkforceOrgSettingsUpsertArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceOrgSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsCountArgs} args - Arguments to filter WorkforceOrgSettings to count.
+     * @example
+     * // Count the number of WorkforceOrgSettings
+     * const count = await prisma.workforceOrgSettings.count({
+     *   where: {
+     *     // ... the filter for the WorkforceOrgSettings we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceOrgSettingsCountArgs>(
+      args?: Subset<T, WorkforceOrgSettingsCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceOrgSettingsCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceOrgSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceOrgSettingsAggregateArgs>(args: Subset<T, WorkforceOrgSettingsAggregateArgs>): Prisma.PrismaPromise<GetWorkforceOrgSettingsAggregateType<T>>
+
+    /**
+     * Group by WorkforceOrgSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceOrgSettingsGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceOrgSettingsGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceOrgSettingsGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceOrgSettingsGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceOrgSettingsGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceOrgSettingsGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceOrgSettings model
+   */
+  readonly fields: WorkforceOrgSettingsFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceOrgSettings.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceOrgSettingsClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceOrgSettings model
+   */
+  interface WorkforceOrgSettingsFieldRefs {
+    readonly organizationId: FieldRef<"WorkforceOrgSettings", 'String'>
+    readonly fiveDayWeeklyHours: FieldRef<"WorkforceOrgSettings", 'Decimal'>
+    readonly sixDayWeeklyHours: FieldRef<"WorkforceOrgSettings", 'Decimal'>
+    readonly medicalWeeklyHours: FieldRef<"WorkforceOrgSettings", 'Decimal'>
+    readonly customWeeklyHours: FieldRef<"WorkforceOrgSettings", 'Decimal'>
+    readonly advanceMaxPercent: FieldRef<"WorkforceOrgSettings", 'Decimal'>
+    readonly advanceMaxAmount: FieldRef<"WorkforceOrgSettings", 'Decimal'>
+    readonly advanceMaxOpen: FieldRef<"WorkforceOrgSettings", 'Int'>
+    readonly advanceAllowHrProxy: FieldRef<"WorkforceOrgSettings", 'Boolean'>
+    readonly updatedAt: FieldRef<"WorkforceOrgSettings", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceOrgSettings findUnique
+   */
+  export type WorkforceOrgSettingsFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceOrgSettings to fetch.
+     */
+    where: WorkforceOrgSettingsWhereUniqueInput
+  }
+
+  /**
+   * WorkforceOrgSettings findUniqueOrThrow
+   */
+  export type WorkforceOrgSettingsFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceOrgSettings to fetch.
+     */
+    where: WorkforceOrgSettingsWhereUniqueInput
+  }
+
+  /**
+   * WorkforceOrgSettings findFirst
+   */
+  export type WorkforceOrgSettingsFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceOrgSettings to fetch.
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceOrgSettings to fetch.
+     */
+    orderBy?: WorkforceOrgSettingsOrderByWithRelationInput | WorkforceOrgSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceOrgSettings.
+     */
+    cursor?: WorkforceOrgSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceOrgSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceOrgSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceOrgSettings.
+     */
+    distinct?: WorkforceOrgSettingsScalarFieldEnum | WorkforceOrgSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceOrgSettings findFirstOrThrow
+   */
+  export type WorkforceOrgSettingsFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceOrgSettings to fetch.
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceOrgSettings to fetch.
+     */
+    orderBy?: WorkforceOrgSettingsOrderByWithRelationInput | WorkforceOrgSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceOrgSettings.
+     */
+    cursor?: WorkforceOrgSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceOrgSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceOrgSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceOrgSettings.
+     */
+    distinct?: WorkforceOrgSettingsScalarFieldEnum | WorkforceOrgSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceOrgSettings findMany
+   */
+  export type WorkforceOrgSettingsFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceOrgSettings to fetch.
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceOrgSettings to fetch.
+     */
+    orderBy?: WorkforceOrgSettingsOrderByWithRelationInput | WorkforceOrgSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceOrgSettings.
+     */
+    cursor?: WorkforceOrgSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceOrgSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceOrgSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceOrgSettings.
+     */
+    distinct?: WorkforceOrgSettingsScalarFieldEnum | WorkforceOrgSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceOrgSettings create
+   */
+  export type WorkforceOrgSettingsCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceOrgSettings.
+     */
+    data: XOR<WorkforceOrgSettingsCreateInput, WorkforceOrgSettingsUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceOrgSettings createMany
+   */
+  export type WorkforceOrgSettingsCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceOrgSettings.
+     */
+    data: WorkforceOrgSettingsCreateManyInput | WorkforceOrgSettingsCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceOrgSettings createManyAndReturn
+   */
+  export type WorkforceOrgSettingsCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceOrgSettings.
+     */
+    data: WorkforceOrgSettingsCreateManyInput | WorkforceOrgSettingsCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceOrgSettings update
+   */
+  export type WorkforceOrgSettingsUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceOrgSettings.
+     */
+    data: XOR<WorkforceOrgSettingsUpdateInput, WorkforceOrgSettingsUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceOrgSettings to update.
+     */
+    where: WorkforceOrgSettingsWhereUniqueInput
+  }
+
+  /**
+   * WorkforceOrgSettings updateMany
+   */
+  export type WorkforceOrgSettingsUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceOrgSettings.
+     */
+    data: XOR<WorkforceOrgSettingsUpdateManyMutationInput, WorkforceOrgSettingsUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceOrgSettings to update
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * Limit how many WorkforceOrgSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceOrgSettings updateManyAndReturn
+   */
+  export type WorkforceOrgSettingsUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceOrgSettings.
+     */
+    data: XOR<WorkforceOrgSettingsUpdateManyMutationInput, WorkforceOrgSettingsUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceOrgSettings to update
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * Limit how many WorkforceOrgSettings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceOrgSettings upsert
+   */
+  export type WorkforceOrgSettingsUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceOrgSettings to update in case it exists.
+     */
+    where: WorkforceOrgSettingsWhereUniqueInput
+    /**
+     * In case the WorkforceOrgSettings found by the `where` argument doesn't exist, create a new WorkforceOrgSettings with this data.
+     */
+    create: XOR<WorkforceOrgSettingsCreateInput, WorkforceOrgSettingsUncheckedCreateInput>
+    /**
+     * In case the WorkforceOrgSettings was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceOrgSettingsUpdateInput, WorkforceOrgSettingsUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceOrgSettings delete
+   */
+  export type WorkforceOrgSettingsDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceOrgSettings to delete.
+     */
+    where: WorkforceOrgSettingsWhereUniqueInput
+  }
+
+  /**
+   * WorkforceOrgSettings deleteMany
+   */
+  export type WorkforceOrgSettingsDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceOrgSettings to delete
+     */
+    where?: WorkforceOrgSettingsWhereInput
+    /**
+     * Limit how many WorkforceOrgSettings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceOrgSettings without action
+   */
+  export type WorkforceOrgSettingsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceApprovalRoute
+   */
+
+  export type AggregateWorkforceApprovalRoute = {
+    _count: WorkforceApprovalRouteCountAggregateOutputType | null
+    _min: WorkforceApprovalRouteMinAggregateOutputType | null
+    _max: WorkforceApprovalRouteMaxAggregateOutputType | null
+  }
+
+  export type WorkforceApprovalRouteMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: $Enums.WorkforceApprovalRequestKind | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceApprovalRouteMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: $Enums.WorkforceApprovalRequestKind | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceApprovalRouteCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    kind: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceApprovalRouteMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceApprovalRouteMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceApprovalRouteCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceApprovalRouteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceApprovalRoute to aggregate.
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalRoutes to fetch.
+     */
+    orderBy?: WorkforceApprovalRouteOrderByWithRelationInput | WorkforceApprovalRouteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceApprovalRouteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalRoutes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalRoutes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceApprovalRoutes
+    **/
+    _count?: true | WorkforceApprovalRouteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceApprovalRouteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceApprovalRouteMaxAggregateInputType
+  }
+
+  export type GetWorkforceApprovalRouteAggregateType<T extends WorkforceApprovalRouteAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceApprovalRoute]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceApprovalRoute[P]>
+      : GetScalarType<T[P], AggregateWorkforceApprovalRoute[P]>
+  }
+
+
+
+
+  export type WorkforceApprovalRouteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalRouteWhereInput
+    orderBy?: WorkforceApprovalRouteOrderByWithAggregationInput | WorkforceApprovalRouteOrderByWithAggregationInput[]
+    by: WorkforceApprovalRouteScalarFieldEnum[] | WorkforceApprovalRouteScalarFieldEnum
+    having?: WorkforceApprovalRouteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceApprovalRouteCountAggregateInputType | true
+    _min?: WorkforceApprovalRouteMinAggregateInputType
+    _max?: WorkforceApprovalRouteMaxAggregateInputType
+  }
+
+  export type WorkforceApprovalRouteGroupByOutputType = {
+    id: string
+    organizationId: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceApprovalRouteCountAggregateOutputType | null
+    _min: WorkforceApprovalRouteMinAggregateOutputType | null
+    _max: WorkforceApprovalRouteMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceApprovalRouteGroupByPayload<T extends WorkforceApprovalRouteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceApprovalRouteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceApprovalRouteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceApprovalRouteGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceApprovalRouteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceApprovalRouteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    steps?: boolean | WorkforceApprovalRoute$stepsArgs<ExtArgs>
+    _count?: boolean | WorkforceApprovalRouteCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalRoute"]>
+
+  export type WorkforceApprovalRouteSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalRoute"]>
+
+  export type WorkforceApprovalRouteSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalRoute"]>
+
+  export type WorkforceApprovalRouteSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceApprovalRouteOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "kind" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceApprovalRoute"]>
+  export type WorkforceApprovalRouteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    steps?: boolean | WorkforceApprovalRoute$stepsArgs<ExtArgs>
+    _count?: boolean | WorkforceApprovalRouteCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type WorkforceApprovalRouteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceApprovalRouteIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceApprovalRoutePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceApprovalRoute"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      steps: Prisma.$WorkforceApprovalStepPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      kind: $Enums.WorkforceApprovalRequestKind
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceApprovalRoute"]>
+    composites: {}
+  }
+
+  type WorkforceApprovalRouteGetPayload<S extends boolean | null | undefined | WorkforceApprovalRouteDefaultArgs> = $Result.GetResult<Prisma.$WorkforceApprovalRoutePayload, S>
+
+  type WorkforceApprovalRouteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceApprovalRouteFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceApprovalRouteCountAggregateInputType | true
+    }
+
+  export interface WorkforceApprovalRouteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceApprovalRoute'], meta: { name: 'WorkforceApprovalRoute' } }
+    /**
+     * Find zero or one WorkforceApprovalRoute that matches the filter.
+     * @param {WorkforceApprovalRouteFindUniqueArgs} args - Arguments to find a WorkforceApprovalRoute
+     * @example
+     * // Get one WorkforceApprovalRoute
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceApprovalRouteFindUniqueArgs>(args: SelectSubset<T, WorkforceApprovalRouteFindUniqueArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceApprovalRoute that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceApprovalRouteFindUniqueOrThrowArgs} args - Arguments to find a WorkforceApprovalRoute
+     * @example
+     * // Get one WorkforceApprovalRoute
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceApprovalRouteFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceApprovalRouteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceApprovalRoute that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteFindFirstArgs} args - Arguments to find a WorkforceApprovalRoute
+     * @example
+     * // Get one WorkforceApprovalRoute
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceApprovalRouteFindFirstArgs>(args?: SelectSubset<T, WorkforceApprovalRouteFindFirstArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceApprovalRoute that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteFindFirstOrThrowArgs} args - Arguments to find a WorkforceApprovalRoute
+     * @example
+     * // Get one WorkforceApprovalRoute
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceApprovalRouteFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceApprovalRouteFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceApprovalRoutes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceApprovalRoutes
+     * const workforceApprovalRoutes = await prisma.workforceApprovalRoute.findMany()
+     * 
+     * // Get first 10 WorkforceApprovalRoutes
+     * const workforceApprovalRoutes = await prisma.workforceApprovalRoute.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceApprovalRouteWithIdOnly = await prisma.workforceApprovalRoute.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceApprovalRouteFindManyArgs>(args?: SelectSubset<T, WorkforceApprovalRouteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceApprovalRoute.
+     * @param {WorkforceApprovalRouteCreateArgs} args - Arguments to create a WorkforceApprovalRoute.
+     * @example
+     * // Create one WorkforceApprovalRoute
+     * const WorkforceApprovalRoute = await prisma.workforceApprovalRoute.create({
+     *   data: {
+     *     // ... data to create a WorkforceApprovalRoute
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceApprovalRouteCreateArgs>(args: SelectSubset<T, WorkforceApprovalRouteCreateArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceApprovalRoutes.
+     * @param {WorkforceApprovalRouteCreateManyArgs} args - Arguments to create many WorkforceApprovalRoutes.
+     * @example
+     * // Create many WorkforceApprovalRoutes
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceApprovalRouteCreateManyArgs>(args?: SelectSubset<T, WorkforceApprovalRouteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceApprovalRoutes and returns the data saved in the database.
+     * @param {WorkforceApprovalRouteCreateManyAndReturnArgs} args - Arguments to create many WorkforceApprovalRoutes.
+     * @example
+     * // Create many WorkforceApprovalRoutes
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceApprovalRoutes and only return the `id`
+     * const workforceApprovalRouteWithIdOnly = await prisma.workforceApprovalRoute.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceApprovalRouteCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceApprovalRouteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceApprovalRoute.
+     * @param {WorkforceApprovalRouteDeleteArgs} args - Arguments to delete one WorkforceApprovalRoute.
+     * @example
+     * // Delete one WorkforceApprovalRoute
+     * const WorkforceApprovalRoute = await prisma.workforceApprovalRoute.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceApprovalRoute
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceApprovalRouteDeleteArgs>(args: SelectSubset<T, WorkforceApprovalRouteDeleteArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceApprovalRoute.
+     * @param {WorkforceApprovalRouteUpdateArgs} args - Arguments to update one WorkforceApprovalRoute.
+     * @example
+     * // Update one WorkforceApprovalRoute
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceApprovalRouteUpdateArgs>(args: SelectSubset<T, WorkforceApprovalRouteUpdateArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceApprovalRoutes.
+     * @param {WorkforceApprovalRouteDeleteManyArgs} args - Arguments to filter WorkforceApprovalRoutes to delete.
+     * @example
+     * // Delete a few WorkforceApprovalRoutes
+     * const { count } = await prisma.workforceApprovalRoute.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceApprovalRouteDeleteManyArgs>(args?: SelectSubset<T, WorkforceApprovalRouteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceApprovalRoutes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceApprovalRoutes
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceApprovalRouteUpdateManyArgs>(args: SelectSubset<T, WorkforceApprovalRouteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceApprovalRoutes and returns the data updated in the database.
+     * @param {WorkforceApprovalRouteUpdateManyAndReturnArgs} args - Arguments to update many WorkforceApprovalRoutes.
+     * @example
+     * // Update many WorkforceApprovalRoutes
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceApprovalRoutes and only return the `id`
+     * const workforceApprovalRouteWithIdOnly = await prisma.workforceApprovalRoute.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceApprovalRouteUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceApprovalRouteUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceApprovalRoute.
+     * @param {WorkforceApprovalRouteUpsertArgs} args - Arguments to update or create a WorkforceApprovalRoute.
+     * @example
+     * // Update or create a WorkforceApprovalRoute
+     * const workforceApprovalRoute = await prisma.workforceApprovalRoute.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceApprovalRoute
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceApprovalRoute we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceApprovalRouteUpsertArgs>(args: SelectSubset<T, WorkforceApprovalRouteUpsertArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceApprovalRoutes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteCountArgs} args - Arguments to filter WorkforceApprovalRoutes to count.
+     * @example
+     * // Count the number of WorkforceApprovalRoutes
+     * const count = await prisma.workforceApprovalRoute.count({
+     *   where: {
+     *     // ... the filter for the WorkforceApprovalRoutes we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceApprovalRouteCountArgs>(
+      args?: Subset<T, WorkforceApprovalRouteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceApprovalRouteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceApprovalRoute.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceApprovalRouteAggregateArgs>(args: Subset<T, WorkforceApprovalRouteAggregateArgs>): Prisma.PrismaPromise<GetWorkforceApprovalRouteAggregateType<T>>
+
+    /**
+     * Group by WorkforceApprovalRoute.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalRouteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceApprovalRouteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceApprovalRouteGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceApprovalRouteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceApprovalRouteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceApprovalRouteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceApprovalRoute model
+   */
+  readonly fields: WorkforceApprovalRouteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceApprovalRoute.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceApprovalRouteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    steps<T extends WorkforceApprovalRoute$stepsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceApprovalRoute$stepsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceApprovalRoute model
+   */
+  interface WorkforceApprovalRouteFieldRefs {
+    readonly id: FieldRef<"WorkforceApprovalRoute", 'String'>
+    readonly organizationId: FieldRef<"WorkforceApprovalRoute", 'String'>
+    readonly kind: FieldRef<"WorkforceApprovalRoute", 'WorkforceApprovalRequestKind'>
+    readonly createdAt: FieldRef<"WorkforceApprovalRoute", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceApprovalRoute", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceApprovalRoute findUnique
+   */
+  export type WorkforceApprovalRouteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalRoute to fetch.
+     */
+    where: WorkforceApprovalRouteWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalRoute findUniqueOrThrow
+   */
+  export type WorkforceApprovalRouteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalRoute to fetch.
+     */
+    where: WorkforceApprovalRouteWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalRoute findFirst
+   */
+  export type WorkforceApprovalRouteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalRoute to fetch.
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalRoutes to fetch.
+     */
+    orderBy?: WorkforceApprovalRouteOrderByWithRelationInput | WorkforceApprovalRouteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceApprovalRoutes.
+     */
+    cursor?: WorkforceApprovalRouteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalRoutes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalRoutes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalRoutes.
+     */
+    distinct?: WorkforceApprovalRouteScalarFieldEnum | WorkforceApprovalRouteScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalRoute findFirstOrThrow
+   */
+  export type WorkforceApprovalRouteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalRoute to fetch.
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalRoutes to fetch.
+     */
+    orderBy?: WorkforceApprovalRouteOrderByWithRelationInput | WorkforceApprovalRouteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceApprovalRoutes.
+     */
+    cursor?: WorkforceApprovalRouteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalRoutes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalRoutes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalRoutes.
+     */
+    distinct?: WorkforceApprovalRouteScalarFieldEnum | WorkforceApprovalRouteScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalRoute findMany
+   */
+  export type WorkforceApprovalRouteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalRoutes to fetch.
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalRoutes to fetch.
+     */
+    orderBy?: WorkforceApprovalRouteOrderByWithRelationInput | WorkforceApprovalRouteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceApprovalRoutes.
+     */
+    cursor?: WorkforceApprovalRouteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalRoutes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalRoutes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalRoutes.
+     */
+    distinct?: WorkforceApprovalRouteScalarFieldEnum | WorkforceApprovalRouteScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalRoute create
+   */
+  export type WorkforceApprovalRouteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceApprovalRoute.
+     */
+    data: XOR<WorkforceApprovalRouteCreateInput, WorkforceApprovalRouteUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceApprovalRoute createMany
+   */
+  export type WorkforceApprovalRouteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceApprovalRoutes.
+     */
+    data: WorkforceApprovalRouteCreateManyInput | WorkforceApprovalRouteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceApprovalRoute createManyAndReturn
+   */
+  export type WorkforceApprovalRouteCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceApprovalRoutes.
+     */
+    data: WorkforceApprovalRouteCreateManyInput | WorkforceApprovalRouteCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalRoute update
+   */
+  export type WorkforceApprovalRouteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceApprovalRoute.
+     */
+    data: XOR<WorkforceApprovalRouteUpdateInput, WorkforceApprovalRouteUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceApprovalRoute to update.
+     */
+    where: WorkforceApprovalRouteWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalRoute updateMany
+   */
+  export type WorkforceApprovalRouteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceApprovalRoutes.
+     */
+    data: XOR<WorkforceApprovalRouteUpdateManyMutationInput, WorkforceApprovalRouteUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceApprovalRoutes to update
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * Limit how many WorkforceApprovalRoutes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceApprovalRoute updateManyAndReturn
+   */
+  export type WorkforceApprovalRouteUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceApprovalRoutes.
+     */
+    data: XOR<WorkforceApprovalRouteUpdateManyMutationInput, WorkforceApprovalRouteUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceApprovalRoutes to update
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * Limit how many WorkforceApprovalRoutes to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalRoute upsert
+   */
+  export type WorkforceApprovalRouteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceApprovalRoute to update in case it exists.
+     */
+    where: WorkforceApprovalRouteWhereUniqueInput
+    /**
+     * In case the WorkforceApprovalRoute found by the `where` argument doesn't exist, create a new WorkforceApprovalRoute with this data.
+     */
+    create: XOR<WorkforceApprovalRouteCreateInput, WorkforceApprovalRouteUncheckedCreateInput>
+    /**
+     * In case the WorkforceApprovalRoute was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceApprovalRouteUpdateInput, WorkforceApprovalRouteUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceApprovalRoute delete
+   */
+  export type WorkforceApprovalRouteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceApprovalRoute to delete.
+     */
+    where: WorkforceApprovalRouteWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalRoute deleteMany
+   */
+  export type WorkforceApprovalRouteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceApprovalRoutes to delete
+     */
+    where?: WorkforceApprovalRouteWhereInput
+    /**
+     * Limit how many WorkforceApprovalRoutes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceApprovalRoute.steps
+   */
+  export type WorkforceApprovalRoute$stepsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    where?: WorkforceApprovalStepWhereInput
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceApprovalStepScalarFieldEnum | WorkforceApprovalStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalRoute without action
+   */
+  export type WorkforceApprovalRouteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceApprovalStep
+   */
+
+  export type AggregateWorkforceApprovalStep = {
+    _count: WorkforceApprovalStepCountAggregateOutputType | null
+    _avg: WorkforceApprovalStepAvgAggregateOutputType | null
+    _sum: WorkforceApprovalStepSumAggregateOutputType | null
+    _min: WorkforceApprovalStepMinAggregateOutputType | null
+    _max: WorkforceApprovalStepMaxAggregateOutputType | null
+  }
+
+  export type WorkforceApprovalStepAvgAggregateOutputType = {
+    stepOrder: number | null
+  }
+
+  export type WorkforceApprovalStepSumAggregateOutputType = {
+    stepOrder: number | null
+  }
+
+  export type WorkforceApprovalStepMinAggregateOutputType = {
+    id: string | null
+    routeId: string | null
+    stepOrder: number | null
+    kind: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId: string | null
+    positionId: string | null
+  }
+
+  export type WorkforceApprovalStepMaxAggregateOutputType = {
+    id: string | null
+    routeId: string | null
+    stepOrder: number | null
+    kind: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId: string | null
+    positionId: string | null
+  }
+
+  export type WorkforceApprovalStepCountAggregateOutputType = {
+    id: number
+    routeId: number
+    stepOrder: number
+    kind: number
+    orgUnitId: number
+    positionId: number
+    _all: number
+  }
+
+
+  export type WorkforceApprovalStepAvgAggregateInputType = {
+    stepOrder?: true
+  }
+
+  export type WorkforceApprovalStepSumAggregateInputType = {
+    stepOrder?: true
+  }
+
+  export type WorkforceApprovalStepMinAggregateInputType = {
+    id?: true
+    routeId?: true
+    stepOrder?: true
+    kind?: true
+    orgUnitId?: true
+    positionId?: true
+  }
+
+  export type WorkforceApprovalStepMaxAggregateInputType = {
+    id?: true
+    routeId?: true
+    stepOrder?: true
+    kind?: true
+    orgUnitId?: true
+    positionId?: true
+  }
+
+  export type WorkforceApprovalStepCountAggregateInputType = {
+    id?: true
+    routeId?: true
+    stepOrder?: true
+    kind?: true
+    orgUnitId?: true
+    positionId?: true
+    _all?: true
+  }
+
+  export type WorkforceApprovalStepAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceApprovalStep to aggregate.
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalSteps to fetch.
+     */
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceApprovalSteps
+    **/
+    _count?: true | WorkforceApprovalStepCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceApprovalStepAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceApprovalStepSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceApprovalStepMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceApprovalStepMaxAggregateInputType
+  }
+
+  export type GetWorkforceApprovalStepAggregateType<T extends WorkforceApprovalStepAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceApprovalStep]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceApprovalStep[P]>
+      : GetScalarType<T[P], AggregateWorkforceApprovalStep[P]>
+  }
+
+
+
+
+  export type WorkforceApprovalStepGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalStepWhereInput
+    orderBy?: WorkforceApprovalStepOrderByWithAggregationInput | WorkforceApprovalStepOrderByWithAggregationInput[]
+    by: WorkforceApprovalStepScalarFieldEnum[] | WorkforceApprovalStepScalarFieldEnum
+    having?: WorkforceApprovalStepScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceApprovalStepCountAggregateInputType | true
+    _avg?: WorkforceApprovalStepAvgAggregateInputType
+    _sum?: WorkforceApprovalStepSumAggregateInputType
+    _min?: WorkforceApprovalStepMinAggregateInputType
+    _max?: WorkforceApprovalStepMaxAggregateInputType
+  }
+
+  export type WorkforceApprovalStepGroupByOutputType = {
+    id: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId: string | null
+    positionId: string | null
+    _count: WorkforceApprovalStepCountAggregateOutputType | null
+    _avg: WorkforceApprovalStepAvgAggregateOutputType | null
+    _sum: WorkforceApprovalStepSumAggregateOutputType | null
+    _min: WorkforceApprovalStepMinAggregateOutputType | null
+    _max: WorkforceApprovalStepMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceApprovalStepGroupByPayload<T extends WorkforceApprovalStepGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceApprovalStepGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceApprovalStepGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceApprovalStepGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceApprovalStepGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceApprovalStepSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    routeId?: boolean
+    stepOrder?: boolean
+    kind?: boolean
+    orgUnitId?: boolean
+    positionId?: boolean
+    route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
+    position?: boolean | WorkforceApprovalStep$positionArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalStep"]>
+
+  export type WorkforceApprovalStepSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    routeId?: boolean
+    stepOrder?: boolean
+    kind?: boolean
+    orgUnitId?: boolean
+    positionId?: boolean
+    route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
+    position?: boolean | WorkforceApprovalStep$positionArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalStep"]>
+
+  export type WorkforceApprovalStepSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    routeId?: boolean
+    stepOrder?: boolean
+    kind?: boolean
+    orgUnitId?: boolean
+    positionId?: boolean
+    route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
+    position?: boolean | WorkforceApprovalStep$positionArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalStep"]>
+
+  export type WorkforceApprovalStepSelectScalar = {
+    id?: boolean
+    routeId?: boolean
+    stepOrder?: boolean
+    kind?: boolean
+    orgUnitId?: boolean
+    positionId?: boolean
+  }
+
+  export type WorkforceApprovalStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "routeId" | "stepOrder" | "kind" | "orgUnitId" | "positionId", ExtArgs["result"]["workforceApprovalStep"]>
+  export type WorkforceApprovalStepInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
+    position?: boolean | WorkforceApprovalStep$positionArgs<ExtArgs>
+  }
+  export type WorkforceApprovalStepIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
+    position?: boolean | WorkforceApprovalStep$positionArgs<ExtArgs>
+  }
+  export type WorkforceApprovalStepIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
+    position?: boolean | WorkforceApprovalStep$positionArgs<ExtArgs>
+  }
+
+  export type $WorkforceApprovalStepPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceApprovalStep"
+    objects: {
+      route: Prisma.$WorkforceApprovalRoutePayload<ExtArgs>
+      orgUnit: Prisma.$OrgUnitPayload<ExtArgs> | null
+      position: Prisma.$WorkforcePositionPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      routeId: string
+      stepOrder: number
+      kind: $Enums.WorkforceApprovalStepKind
+      orgUnitId: string | null
+      positionId: string | null
+    }, ExtArgs["result"]["workforceApprovalStep"]>
+    composites: {}
+  }
+
+  type WorkforceApprovalStepGetPayload<S extends boolean | null | undefined | WorkforceApprovalStepDefaultArgs> = $Result.GetResult<Prisma.$WorkforceApprovalStepPayload, S>
+
+  type WorkforceApprovalStepCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceApprovalStepFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceApprovalStepCountAggregateInputType | true
+    }
+
+  export interface WorkforceApprovalStepDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceApprovalStep'], meta: { name: 'WorkforceApprovalStep' } }
+    /**
+     * Find zero or one WorkforceApprovalStep that matches the filter.
+     * @param {WorkforceApprovalStepFindUniqueArgs} args - Arguments to find a WorkforceApprovalStep
+     * @example
+     * // Get one WorkforceApprovalStep
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceApprovalStepFindUniqueArgs>(args: SelectSubset<T, WorkforceApprovalStepFindUniqueArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceApprovalStep that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceApprovalStepFindUniqueOrThrowArgs} args - Arguments to find a WorkforceApprovalStep
+     * @example
+     * // Get one WorkforceApprovalStep
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceApprovalStepFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceApprovalStepFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceApprovalStep that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepFindFirstArgs} args - Arguments to find a WorkforceApprovalStep
+     * @example
+     * // Get one WorkforceApprovalStep
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceApprovalStepFindFirstArgs>(args?: SelectSubset<T, WorkforceApprovalStepFindFirstArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceApprovalStep that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepFindFirstOrThrowArgs} args - Arguments to find a WorkforceApprovalStep
+     * @example
+     * // Get one WorkforceApprovalStep
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceApprovalStepFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceApprovalStepFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceApprovalSteps that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceApprovalSteps
+     * const workforceApprovalSteps = await prisma.workforceApprovalStep.findMany()
+     * 
+     * // Get first 10 WorkforceApprovalSteps
+     * const workforceApprovalSteps = await prisma.workforceApprovalStep.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceApprovalStepWithIdOnly = await prisma.workforceApprovalStep.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceApprovalStepFindManyArgs>(args?: SelectSubset<T, WorkforceApprovalStepFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceApprovalStep.
+     * @param {WorkforceApprovalStepCreateArgs} args - Arguments to create a WorkforceApprovalStep.
+     * @example
+     * // Create one WorkforceApprovalStep
+     * const WorkforceApprovalStep = await prisma.workforceApprovalStep.create({
+     *   data: {
+     *     // ... data to create a WorkforceApprovalStep
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceApprovalStepCreateArgs>(args: SelectSubset<T, WorkforceApprovalStepCreateArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceApprovalSteps.
+     * @param {WorkforceApprovalStepCreateManyArgs} args - Arguments to create many WorkforceApprovalSteps.
+     * @example
+     * // Create many WorkforceApprovalSteps
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceApprovalStepCreateManyArgs>(args?: SelectSubset<T, WorkforceApprovalStepCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceApprovalSteps and returns the data saved in the database.
+     * @param {WorkforceApprovalStepCreateManyAndReturnArgs} args - Arguments to create many WorkforceApprovalSteps.
+     * @example
+     * // Create many WorkforceApprovalSteps
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceApprovalSteps and only return the `id`
+     * const workforceApprovalStepWithIdOnly = await prisma.workforceApprovalStep.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceApprovalStepCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceApprovalStepCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceApprovalStep.
+     * @param {WorkforceApprovalStepDeleteArgs} args - Arguments to delete one WorkforceApprovalStep.
+     * @example
+     * // Delete one WorkforceApprovalStep
+     * const WorkforceApprovalStep = await prisma.workforceApprovalStep.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceApprovalStep
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceApprovalStepDeleteArgs>(args: SelectSubset<T, WorkforceApprovalStepDeleteArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceApprovalStep.
+     * @param {WorkforceApprovalStepUpdateArgs} args - Arguments to update one WorkforceApprovalStep.
+     * @example
+     * // Update one WorkforceApprovalStep
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceApprovalStepUpdateArgs>(args: SelectSubset<T, WorkforceApprovalStepUpdateArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceApprovalSteps.
+     * @param {WorkforceApprovalStepDeleteManyArgs} args - Arguments to filter WorkforceApprovalSteps to delete.
+     * @example
+     * // Delete a few WorkforceApprovalSteps
+     * const { count } = await prisma.workforceApprovalStep.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceApprovalStepDeleteManyArgs>(args?: SelectSubset<T, WorkforceApprovalStepDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceApprovalSteps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceApprovalSteps
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceApprovalStepUpdateManyArgs>(args: SelectSubset<T, WorkforceApprovalStepUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceApprovalSteps and returns the data updated in the database.
+     * @param {WorkforceApprovalStepUpdateManyAndReturnArgs} args - Arguments to update many WorkforceApprovalSteps.
+     * @example
+     * // Update many WorkforceApprovalSteps
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceApprovalSteps and only return the `id`
+     * const workforceApprovalStepWithIdOnly = await prisma.workforceApprovalStep.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceApprovalStepUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceApprovalStepUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceApprovalStep.
+     * @param {WorkforceApprovalStepUpsertArgs} args - Arguments to update or create a WorkforceApprovalStep.
+     * @example
+     * // Update or create a WorkforceApprovalStep
+     * const workforceApprovalStep = await prisma.workforceApprovalStep.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceApprovalStep
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceApprovalStep we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceApprovalStepUpsertArgs>(args: SelectSubset<T, WorkforceApprovalStepUpsertArgs<ExtArgs>>): Prisma__WorkforceApprovalStepClient<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceApprovalSteps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepCountArgs} args - Arguments to filter WorkforceApprovalSteps to count.
+     * @example
+     * // Count the number of WorkforceApprovalSteps
+     * const count = await prisma.workforceApprovalStep.count({
+     *   where: {
+     *     // ... the filter for the WorkforceApprovalSteps we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceApprovalStepCountArgs>(
+      args?: Subset<T, WorkforceApprovalStepCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceApprovalStepCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceApprovalStep.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceApprovalStepAggregateArgs>(args: Subset<T, WorkforceApprovalStepAggregateArgs>): Prisma.PrismaPromise<GetWorkforceApprovalStepAggregateType<T>>
+
+    /**
+     * Group by WorkforceApprovalStep.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalStepGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceApprovalStepGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceApprovalStepGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceApprovalStepGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceApprovalStepGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceApprovalStepGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceApprovalStep model
+   */
+  readonly fields: WorkforceApprovalStepFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceApprovalStep.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceApprovalStepClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    route<T extends WorkforceApprovalRouteDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceApprovalRouteDefaultArgs<ExtArgs>>): Prisma__WorkforceApprovalRouteClient<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    orgUnit<T extends WorkforceApprovalStep$orgUnitArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceApprovalStep$orgUnitArgs<ExtArgs>>): Prisma__OrgUnitClient<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    position<T extends WorkforceApprovalStep$positionArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceApprovalStep$positionArgs<ExtArgs>>): Prisma__WorkforcePositionClient<$Result.GetResult<Prisma.$WorkforcePositionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceApprovalStep model
+   */
+  interface WorkforceApprovalStepFieldRefs {
+    readonly id: FieldRef<"WorkforceApprovalStep", 'String'>
+    readonly routeId: FieldRef<"WorkforceApprovalStep", 'String'>
+    readonly stepOrder: FieldRef<"WorkforceApprovalStep", 'Int'>
+    readonly kind: FieldRef<"WorkforceApprovalStep", 'WorkforceApprovalStepKind'>
+    readonly orgUnitId: FieldRef<"WorkforceApprovalStep", 'String'>
+    readonly positionId: FieldRef<"WorkforceApprovalStep", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceApprovalStep findUnique
+   */
+  export type WorkforceApprovalStepFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalStep to fetch.
+     */
+    where: WorkforceApprovalStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalStep findUniqueOrThrow
+   */
+  export type WorkforceApprovalStepFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalStep to fetch.
+     */
+    where: WorkforceApprovalStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalStep findFirst
+   */
+  export type WorkforceApprovalStepFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalStep to fetch.
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalSteps to fetch.
+     */
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceApprovalSteps.
+     */
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalSteps.
+     */
+    distinct?: WorkforceApprovalStepScalarFieldEnum | WorkforceApprovalStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalStep findFirstOrThrow
+   */
+  export type WorkforceApprovalStepFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalStep to fetch.
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalSteps to fetch.
+     */
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceApprovalSteps.
+     */
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalSteps.
+     */
+    distinct?: WorkforceApprovalStepScalarFieldEnum | WorkforceApprovalStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalStep findMany
+   */
+  export type WorkforceApprovalStepFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalSteps to fetch.
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalSteps to fetch.
+     */
+    orderBy?: WorkforceApprovalStepOrderByWithRelationInput | WorkforceApprovalStepOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceApprovalSteps.
+     */
+    cursor?: WorkforceApprovalStepWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalSteps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalSteps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalSteps.
+     */
+    distinct?: WorkforceApprovalStepScalarFieldEnum | WorkforceApprovalStepScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalStep create
+   */
+  export type WorkforceApprovalStepCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceApprovalStep.
+     */
+    data: XOR<WorkforceApprovalStepCreateInput, WorkforceApprovalStepUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceApprovalStep createMany
+   */
+  export type WorkforceApprovalStepCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceApprovalSteps.
+     */
+    data: WorkforceApprovalStepCreateManyInput | WorkforceApprovalStepCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceApprovalStep createManyAndReturn
+   */
+  export type WorkforceApprovalStepCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceApprovalSteps.
+     */
+    data: WorkforceApprovalStepCreateManyInput | WorkforceApprovalStepCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalStep update
+   */
+  export type WorkforceApprovalStepUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceApprovalStep.
+     */
+    data: XOR<WorkforceApprovalStepUpdateInput, WorkforceApprovalStepUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceApprovalStep to update.
+     */
+    where: WorkforceApprovalStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalStep updateMany
+   */
+  export type WorkforceApprovalStepUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceApprovalSteps.
+     */
+    data: XOR<WorkforceApprovalStepUpdateManyMutationInput, WorkforceApprovalStepUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceApprovalSteps to update
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * Limit how many WorkforceApprovalSteps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceApprovalStep updateManyAndReturn
+   */
+  export type WorkforceApprovalStepUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceApprovalSteps.
+     */
+    data: XOR<WorkforceApprovalStepUpdateManyMutationInput, WorkforceApprovalStepUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceApprovalSteps to update
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * Limit how many WorkforceApprovalSteps to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalStep upsert
+   */
+  export type WorkforceApprovalStepUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceApprovalStep to update in case it exists.
+     */
+    where: WorkforceApprovalStepWhereUniqueInput
+    /**
+     * In case the WorkforceApprovalStep found by the `where` argument doesn't exist, create a new WorkforceApprovalStep with this data.
+     */
+    create: XOR<WorkforceApprovalStepCreateInput, WorkforceApprovalStepUncheckedCreateInput>
+    /**
+     * In case the WorkforceApprovalStep was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceApprovalStepUpdateInput, WorkforceApprovalStepUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceApprovalStep delete
+   */
+  export type WorkforceApprovalStepDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceApprovalStep to delete.
+     */
+    where: WorkforceApprovalStepWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalStep deleteMany
+   */
+  export type WorkforceApprovalStepDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceApprovalSteps to delete
+     */
+    where?: WorkforceApprovalStepWhereInput
+    /**
+     * Limit how many WorkforceApprovalSteps to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceApprovalStep.orgUnit
+   */
+  export type WorkforceApprovalStep$orgUnitArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgUnit
+     */
+    select?: OrgUnitSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrgUnit
+     */
+    omit?: OrgUnitOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgUnitInclude<ExtArgs> | null
+    where?: OrgUnitWhereInput
+  }
+
+  /**
+   * WorkforceApprovalStep.position
+   */
+  export type WorkforceApprovalStep$positionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePosition
+     */
+    select?: WorkforcePositionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePosition
+     */
+    omit?: WorkforcePositionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePositionInclude<ExtArgs> | null
+    where?: WorkforcePositionWhereInput
+  }
+
+  /**
+   * WorkforceApprovalStep without action
+   */
+  export type WorkforceApprovalStepDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalStep
+     */
+    select?: WorkforceApprovalStepSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalStep
+     */
+    omit?: WorkforceApprovalStepOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalStepInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceApprovalDecision
+   */
+
+  export type AggregateWorkforceApprovalDecision = {
+    _count: WorkforceApprovalDecisionCountAggregateOutputType | null
+    _avg: WorkforceApprovalDecisionAvgAggregateOutputType | null
+    _sum: WorkforceApprovalDecisionSumAggregateOutputType | null
+    _min: WorkforceApprovalDecisionMinAggregateOutputType | null
+    _max: WorkforceApprovalDecisionMaxAggregateOutputType | null
+  }
+
+  export type WorkforceApprovalDecisionAvgAggregateOutputType = {
+    stepOrder: number | null
+  }
+
+  export type WorkforceApprovalDecisionSumAggregateOutputType = {
+    stepOrder: number | null
+  }
+
+  export type WorkforceApprovalDecisionMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    entityType: string | null
+    entityId: string | null
+    stepOrder: number | null
+    stepKind: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId: string | null
+    orgUnitName: string | null
+    outcome: $Enums.WorkforceApprovalOutcome | null
+    actorUserId: string | null
+    reason: string | null
+    createdAt: Date | null
+  }
+
+  export type WorkforceApprovalDecisionMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    entityType: string | null
+    entityId: string | null
+    stepOrder: number | null
+    stepKind: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId: string | null
+    orgUnitName: string | null
+    outcome: $Enums.WorkforceApprovalOutcome | null
+    actorUserId: string | null
+    reason: string | null
+    createdAt: Date | null
+  }
+
+  export type WorkforceApprovalDecisionCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    entityType: number
+    entityId: number
+    stepOrder: number
+    stepKind: number
+    orgUnitId: number
+    orgUnitName: number
+    outcome: number
+    actorUserId: number
+    reason: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type WorkforceApprovalDecisionAvgAggregateInputType = {
+    stepOrder?: true
+  }
+
+  export type WorkforceApprovalDecisionSumAggregateInputType = {
+    stepOrder?: true
+  }
+
+  export type WorkforceApprovalDecisionMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    entityType?: true
+    entityId?: true
+    stepOrder?: true
+    stepKind?: true
+    orgUnitId?: true
+    orgUnitName?: true
+    outcome?: true
+    actorUserId?: true
+    reason?: true
+    createdAt?: true
+  }
+
+  export type WorkforceApprovalDecisionMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    entityType?: true
+    entityId?: true
+    stepOrder?: true
+    stepKind?: true
+    orgUnitId?: true
+    orgUnitName?: true
+    outcome?: true
+    actorUserId?: true
+    reason?: true
+    createdAt?: true
+  }
+
+  export type WorkforceApprovalDecisionCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    entityType?: true
+    entityId?: true
+    stepOrder?: true
+    stepKind?: true
+    orgUnitId?: true
+    orgUnitName?: true
+    outcome?: true
+    actorUserId?: true
+    reason?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type WorkforceApprovalDecisionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceApprovalDecision to aggregate.
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalDecisions to fetch.
+     */
+    orderBy?: WorkforceApprovalDecisionOrderByWithRelationInput | WorkforceApprovalDecisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceApprovalDecisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalDecisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalDecisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceApprovalDecisions
+    **/
+    _count?: true | WorkforceApprovalDecisionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceApprovalDecisionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceApprovalDecisionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceApprovalDecisionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceApprovalDecisionMaxAggregateInputType
+  }
+
+  export type GetWorkforceApprovalDecisionAggregateType<T extends WorkforceApprovalDecisionAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceApprovalDecision]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceApprovalDecision[P]>
+      : GetScalarType<T[P], AggregateWorkforceApprovalDecision[P]>
+  }
+
+
+
+
+  export type WorkforceApprovalDecisionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceApprovalDecisionWhereInput
+    orderBy?: WorkforceApprovalDecisionOrderByWithAggregationInput | WorkforceApprovalDecisionOrderByWithAggregationInput[]
+    by: WorkforceApprovalDecisionScalarFieldEnum[] | WorkforceApprovalDecisionScalarFieldEnum
+    having?: WorkforceApprovalDecisionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceApprovalDecisionCountAggregateInputType | true
+    _avg?: WorkforceApprovalDecisionAvgAggregateInputType
+    _sum?: WorkforceApprovalDecisionSumAggregateInputType
+    _min?: WorkforceApprovalDecisionMinAggregateInputType
+    _max?: WorkforceApprovalDecisionMaxAggregateInputType
+  }
+
+  export type WorkforceApprovalDecisionGroupByOutputType = {
+    id: string
+    organizationId: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId: string | null
+    orgUnitName: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason: string | null
+    createdAt: Date
+    _count: WorkforceApprovalDecisionCountAggregateOutputType | null
+    _avg: WorkforceApprovalDecisionAvgAggregateOutputType | null
+    _sum: WorkforceApprovalDecisionSumAggregateOutputType | null
+    _min: WorkforceApprovalDecisionMinAggregateOutputType | null
+    _max: WorkforceApprovalDecisionMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceApprovalDecisionGroupByPayload<T extends WorkforceApprovalDecisionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceApprovalDecisionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceApprovalDecisionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceApprovalDecisionGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceApprovalDecisionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceApprovalDecisionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    stepOrder?: boolean
+    stepKind?: boolean
+    orgUnitId?: boolean
+    orgUnitName?: boolean
+    outcome?: boolean
+    actorUserId?: boolean
+    reason?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalDecision"]>
+
+  export type WorkforceApprovalDecisionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    stepOrder?: boolean
+    stepKind?: boolean
+    orgUnitId?: boolean
+    orgUnitName?: boolean
+    outcome?: boolean
+    actorUserId?: boolean
+    reason?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalDecision"]>
+
+  export type WorkforceApprovalDecisionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    stepOrder?: boolean
+    stepKind?: boolean
+    orgUnitId?: boolean
+    orgUnitName?: boolean
+    outcome?: boolean
+    actorUserId?: boolean
+    reason?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceApprovalDecision"]>
+
+  export type WorkforceApprovalDecisionSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    stepOrder?: boolean
+    stepKind?: boolean
+    orgUnitId?: boolean
+    orgUnitName?: boolean
+    outcome?: boolean
+    actorUserId?: boolean
+    reason?: boolean
+    createdAt?: boolean
+  }
+
+  export type WorkforceApprovalDecisionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "entityType" | "entityId" | "stepOrder" | "stepKind" | "orgUnitId" | "orgUnitName" | "outcome" | "actorUserId" | "reason" | "createdAt", ExtArgs["result"]["workforceApprovalDecision"]>
+  export type WorkforceApprovalDecisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceApprovalDecisionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceApprovalDecisionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceApprovalDecisionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceApprovalDecision"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      entityType: string
+      entityId: string
+      stepOrder: number
+      stepKind: $Enums.WorkforceApprovalStepKind | null
+      orgUnitId: string | null
+      orgUnitName: string | null
+      outcome: $Enums.WorkforceApprovalOutcome
+      actorUserId: string
+      reason: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["workforceApprovalDecision"]>
+    composites: {}
+  }
+
+  type WorkforceApprovalDecisionGetPayload<S extends boolean | null | undefined | WorkforceApprovalDecisionDefaultArgs> = $Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload, S>
+
+  type WorkforceApprovalDecisionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceApprovalDecisionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceApprovalDecisionCountAggregateInputType | true
+    }
+
+  export interface WorkforceApprovalDecisionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceApprovalDecision'], meta: { name: 'WorkforceApprovalDecision' } }
+    /**
+     * Find zero or one WorkforceApprovalDecision that matches the filter.
+     * @param {WorkforceApprovalDecisionFindUniqueArgs} args - Arguments to find a WorkforceApprovalDecision
+     * @example
+     * // Get one WorkforceApprovalDecision
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceApprovalDecisionFindUniqueArgs>(args: SelectSubset<T, WorkforceApprovalDecisionFindUniqueArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceApprovalDecision that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceApprovalDecisionFindUniqueOrThrowArgs} args - Arguments to find a WorkforceApprovalDecision
+     * @example
+     * // Get one WorkforceApprovalDecision
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceApprovalDecisionFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceApprovalDecisionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceApprovalDecision that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionFindFirstArgs} args - Arguments to find a WorkforceApprovalDecision
+     * @example
+     * // Get one WorkforceApprovalDecision
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceApprovalDecisionFindFirstArgs>(args?: SelectSubset<T, WorkforceApprovalDecisionFindFirstArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceApprovalDecision that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionFindFirstOrThrowArgs} args - Arguments to find a WorkforceApprovalDecision
+     * @example
+     * // Get one WorkforceApprovalDecision
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceApprovalDecisionFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceApprovalDecisionFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceApprovalDecisions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceApprovalDecisions
+     * const workforceApprovalDecisions = await prisma.workforceApprovalDecision.findMany()
+     * 
+     * // Get first 10 WorkforceApprovalDecisions
+     * const workforceApprovalDecisions = await prisma.workforceApprovalDecision.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceApprovalDecisionWithIdOnly = await prisma.workforceApprovalDecision.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceApprovalDecisionFindManyArgs>(args?: SelectSubset<T, WorkforceApprovalDecisionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceApprovalDecision.
+     * @param {WorkforceApprovalDecisionCreateArgs} args - Arguments to create a WorkforceApprovalDecision.
+     * @example
+     * // Create one WorkforceApprovalDecision
+     * const WorkforceApprovalDecision = await prisma.workforceApprovalDecision.create({
+     *   data: {
+     *     // ... data to create a WorkforceApprovalDecision
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceApprovalDecisionCreateArgs>(args: SelectSubset<T, WorkforceApprovalDecisionCreateArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceApprovalDecisions.
+     * @param {WorkforceApprovalDecisionCreateManyArgs} args - Arguments to create many WorkforceApprovalDecisions.
+     * @example
+     * // Create many WorkforceApprovalDecisions
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceApprovalDecisionCreateManyArgs>(args?: SelectSubset<T, WorkforceApprovalDecisionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceApprovalDecisions and returns the data saved in the database.
+     * @param {WorkforceApprovalDecisionCreateManyAndReturnArgs} args - Arguments to create many WorkforceApprovalDecisions.
+     * @example
+     * // Create many WorkforceApprovalDecisions
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceApprovalDecisions and only return the `id`
+     * const workforceApprovalDecisionWithIdOnly = await prisma.workforceApprovalDecision.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceApprovalDecisionCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceApprovalDecisionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceApprovalDecision.
+     * @param {WorkforceApprovalDecisionDeleteArgs} args - Arguments to delete one WorkforceApprovalDecision.
+     * @example
+     * // Delete one WorkforceApprovalDecision
+     * const WorkforceApprovalDecision = await prisma.workforceApprovalDecision.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceApprovalDecision
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceApprovalDecisionDeleteArgs>(args: SelectSubset<T, WorkforceApprovalDecisionDeleteArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceApprovalDecision.
+     * @param {WorkforceApprovalDecisionUpdateArgs} args - Arguments to update one WorkforceApprovalDecision.
+     * @example
+     * // Update one WorkforceApprovalDecision
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceApprovalDecisionUpdateArgs>(args: SelectSubset<T, WorkforceApprovalDecisionUpdateArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceApprovalDecisions.
+     * @param {WorkforceApprovalDecisionDeleteManyArgs} args - Arguments to filter WorkforceApprovalDecisions to delete.
+     * @example
+     * // Delete a few WorkforceApprovalDecisions
+     * const { count } = await prisma.workforceApprovalDecision.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceApprovalDecisionDeleteManyArgs>(args?: SelectSubset<T, WorkforceApprovalDecisionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceApprovalDecisions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceApprovalDecisions
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceApprovalDecisionUpdateManyArgs>(args: SelectSubset<T, WorkforceApprovalDecisionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceApprovalDecisions and returns the data updated in the database.
+     * @param {WorkforceApprovalDecisionUpdateManyAndReturnArgs} args - Arguments to update many WorkforceApprovalDecisions.
+     * @example
+     * // Update many WorkforceApprovalDecisions
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceApprovalDecisions and only return the `id`
+     * const workforceApprovalDecisionWithIdOnly = await prisma.workforceApprovalDecision.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceApprovalDecisionUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceApprovalDecisionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceApprovalDecision.
+     * @param {WorkforceApprovalDecisionUpsertArgs} args - Arguments to update or create a WorkforceApprovalDecision.
+     * @example
+     * // Update or create a WorkforceApprovalDecision
+     * const workforceApprovalDecision = await prisma.workforceApprovalDecision.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceApprovalDecision
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceApprovalDecision we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceApprovalDecisionUpsertArgs>(args: SelectSubset<T, WorkforceApprovalDecisionUpsertArgs<ExtArgs>>): Prisma__WorkforceApprovalDecisionClient<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceApprovalDecisions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionCountArgs} args - Arguments to filter WorkforceApprovalDecisions to count.
+     * @example
+     * // Count the number of WorkforceApprovalDecisions
+     * const count = await prisma.workforceApprovalDecision.count({
+     *   where: {
+     *     // ... the filter for the WorkforceApprovalDecisions we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceApprovalDecisionCountArgs>(
+      args?: Subset<T, WorkforceApprovalDecisionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceApprovalDecisionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceApprovalDecision.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceApprovalDecisionAggregateArgs>(args: Subset<T, WorkforceApprovalDecisionAggregateArgs>): Prisma.PrismaPromise<GetWorkforceApprovalDecisionAggregateType<T>>
+
+    /**
+     * Group by WorkforceApprovalDecision.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceApprovalDecisionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceApprovalDecisionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceApprovalDecisionGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceApprovalDecisionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceApprovalDecisionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceApprovalDecisionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceApprovalDecision model
+   */
+  readonly fields: WorkforceApprovalDecisionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceApprovalDecision.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceApprovalDecisionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceApprovalDecision model
+   */
+  interface WorkforceApprovalDecisionFieldRefs {
+    readonly id: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly organizationId: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly entityType: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly entityId: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly stepOrder: FieldRef<"WorkforceApprovalDecision", 'Int'>
+    readonly stepKind: FieldRef<"WorkforceApprovalDecision", 'WorkforceApprovalStepKind'>
+    readonly orgUnitId: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly orgUnitName: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly outcome: FieldRef<"WorkforceApprovalDecision", 'WorkforceApprovalOutcome'>
+    readonly actorUserId: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly reason: FieldRef<"WorkforceApprovalDecision", 'String'>
+    readonly createdAt: FieldRef<"WorkforceApprovalDecision", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceApprovalDecision findUnique
+   */
+  export type WorkforceApprovalDecisionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalDecision to fetch.
+     */
+    where: WorkforceApprovalDecisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalDecision findUniqueOrThrow
+   */
+  export type WorkforceApprovalDecisionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalDecision to fetch.
+     */
+    where: WorkforceApprovalDecisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalDecision findFirst
+   */
+  export type WorkforceApprovalDecisionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalDecision to fetch.
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalDecisions to fetch.
+     */
+    orderBy?: WorkforceApprovalDecisionOrderByWithRelationInput | WorkforceApprovalDecisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceApprovalDecisions.
+     */
+    cursor?: WorkforceApprovalDecisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalDecisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalDecisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalDecisions.
+     */
+    distinct?: WorkforceApprovalDecisionScalarFieldEnum | WorkforceApprovalDecisionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalDecision findFirstOrThrow
+   */
+  export type WorkforceApprovalDecisionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalDecision to fetch.
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalDecisions to fetch.
+     */
+    orderBy?: WorkforceApprovalDecisionOrderByWithRelationInput | WorkforceApprovalDecisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceApprovalDecisions.
+     */
+    cursor?: WorkforceApprovalDecisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalDecisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalDecisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalDecisions.
+     */
+    distinct?: WorkforceApprovalDecisionScalarFieldEnum | WorkforceApprovalDecisionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalDecision findMany
+   */
+  export type WorkforceApprovalDecisionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceApprovalDecisions to fetch.
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceApprovalDecisions to fetch.
+     */
+    orderBy?: WorkforceApprovalDecisionOrderByWithRelationInput | WorkforceApprovalDecisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceApprovalDecisions.
+     */
+    cursor?: WorkforceApprovalDecisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceApprovalDecisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceApprovalDecisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceApprovalDecisions.
+     */
+    distinct?: WorkforceApprovalDecisionScalarFieldEnum | WorkforceApprovalDecisionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceApprovalDecision create
+   */
+  export type WorkforceApprovalDecisionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceApprovalDecision.
+     */
+    data: XOR<WorkforceApprovalDecisionCreateInput, WorkforceApprovalDecisionUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceApprovalDecision createMany
+   */
+  export type WorkforceApprovalDecisionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceApprovalDecisions.
+     */
+    data: WorkforceApprovalDecisionCreateManyInput | WorkforceApprovalDecisionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceApprovalDecision createManyAndReturn
+   */
+  export type WorkforceApprovalDecisionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceApprovalDecisions.
+     */
+    data: WorkforceApprovalDecisionCreateManyInput | WorkforceApprovalDecisionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalDecision update
+   */
+  export type WorkforceApprovalDecisionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceApprovalDecision.
+     */
+    data: XOR<WorkforceApprovalDecisionUpdateInput, WorkforceApprovalDecisionUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceApprovalDecision to update.
+     */
+    where: WorkforceApprovalDecisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalDecision updateMany
+   */
+  export type WorkforceApprovalDecisionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceApprovalDecisions.
+     */
+    data: XOR<WorkforceApprovalDecisionUpdateManyMutationInput, WorkforceApprovalDecisionUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceApprovalDecisions to update
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * Limit how many WorkforceApprovalDecisions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceApprovalDecision updateManyAndReturn
+   */
+  export type WorkforceApprovalDecisionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceApprovalDecisions.
+     */
+    data: XOR<WorkforceApprovalDecisionUpdateManyMutationInput, WorkforceApprovalDecisionUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceApprovalDecisions to update
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * Limit how many WorkforceApprovalDecisions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceApprovalDecision upsert
+   */
+  export type WorkforceApprovalDecisionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceApprovalDecision to update in case it exists.
+     */
+    where: WorkforceApprovalDecisionWhereUniqueInput
+    /**
+     * In case the WorkforceApprovalDecision found by the `where` argument doesn't exist, create a new WorkforceApprovalDecision with this data.
+     */
+    create: XOR<WorkforceApprovalDecisionCreateInput, WorkforceApprovalDecisionUncheckedCreateInput>
+    /**
+     * In case the WorkforceApprovalDecision was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceApprovalDecisionUpdateInput, WorkforceApprovalDecisionUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceApprovalDecision delete
+   */
+  export type WorkforceApprovalDecisionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceApprovalDecision to delete.
+     */
+    where: WorkforceApprovalDecisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceApprovalDecision deleteMany
+   */
+  export type WorkforceApprovalDecisionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceApprovalDecisions to delete
+     */
+    where?: WorkforceApprovalDecisionWhereInput
+    /**
+     * Limit how many WorkforceApprovalDecisions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceApprovalDecision without action
+   */
+  export type WorkforceApprovalDecisionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceVacationPlanRevision
+   */
+
+  export type AggregateWorkforceVacationPlanRevision = {
+    _count: WorkforceVacationPlanRevisionCountAggregateOutputType | null
+    _min: WorkforceVacationPlanRevisionMinAggregateOutputType | null
+    _max: WorkforceVacationPlanRevisionMaxAggregateOutputType | null
+  }
+
+  export type WorkforceVacationPlanRevisionMinAggregateOutputType = {
+    id: string | null
+    planId: string | null
+    createdByUserId: string | null
+    createdAt: Date | null
+  }
+
+  export type WorkforceVacationPlanRevisionMaxAggregateOutputType = {
+    id: string | null
+    planId: string | null
+    createdByUserId: string | null
+    createdAt: Date | null
+  }
+
+  export type WorkforceVacationPlanRevisionCountAggregateOutputType = {
+    id: number
+    planId: number
+    snapshotJson: number
+    createdByUserId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type WorkforceVacationPlanRevisionMinAggregateInputType = {
+    id?: true
+    planId?: true
+    createdByUserId?: true
+    createdAt?: true
+  }
+
+  export type WorkforceVacationPlanRevisionMaxAggregateInputType = {
+    id?: true
+    planId?: true
+    createdByUserId?: true
+    createdAt?: true
+  }
+
+  export type WorkforceVacationPlanRevisionCountAggregateInputType = {
+    id?: true
+    planId?: true
+    snapshotJson?: true
+    createdByUserId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type WorkforceVacationPlanRevisionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceVacationPlanRevision to aggregate.
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanRevisions to fetch.
+     */
+    orderBy?: WorkforceVacationPlanRevisionOrderByWithRelationInput | WorkforceVacationPlanRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceVacationPlanRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceVacationPlanRevisions
+    **/
+    _count?: true | WorkforceVacationPlanRevisionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceVacationPlanRevisionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceVacationPlanRevisionMaxAggregateInputType
+  }
+
+  export type GetWorkforceVacationPlanRevisionAggregateType<T extends WorkforceVacationPlanRevisionAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceVacationPlanRevision]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceVacationPlanRevision[P]>
+      : GetScalarType<T[P], AggregateWorkforceVacationPlanRevision[P]>
+  }
+
+
+
+
+  export type WorkforceVacationPlanRevisionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanRevisionWhereInput
+    orderBy?: WorkforceVacationPlanRevisionOrderByWithAggregationInput | WorkforceVacationPlanRevisionOrderByWithAggregationInput[]
+    by: WorkforceVacationPlanRevisionScalarFieldEnum[] | WorkforceVacationPlanRevisionScalarFieldEnum
+    having?: WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceVacationPlanRevisionCountAggregateInputType | true
+    _min?: WorkforceVacationPlanRevisionMinAggregateInputType
+    _max?: WorkforceVacationPlanRevisionMaxAggregateInputType
+  }
+
+  export type WorkforceVacationPlanRevisionGroupByOutputType = {
+    id: string
+    planId: string
+    snapshotJson: JsonValue
+    createdByUserId: string
+    createdAt: Date
+    _count: WorkforceVacationPlanRevisionCountAggregateOutputType | null
+    _min: WorkforceVacationPlanRevisionMinAggregateOutputType | null
+    _max: WorkforceVacationPlanRevisionMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceVacationPlanRevisionGroupByPayload<T extends WorkforceVacationPlanRevisionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceVacationPlanRevisionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceVacationPlanRevisionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceVacationPlanRevisionGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceVacationPlanRevisionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceVacationPlanRevisionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    planId?: boolean
+    snapshotJson?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlanRevision"]>
+
+  export type WorkforceVacationPlanRevisionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    planId?: boolean
+    snapshotJson?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlanRevision"]>
+
+  export type WorkforceVacationPlanRevisionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    planId?: boolean
+    snapshotJson?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlanRevision"]>
+
+  export type WorkforceVacationPlanRevisionSelectScalar = {
+    id?: boolean
+    planId?: boolean
+    snapshotJson?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+  }
+
+  export type WorkforceVacationPlanRevisionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "planId" | "snapshotJson" | "createdByUserId" | "createdAt", ExtArgs["result"]["workforceVacationPlanRevision"]>
+  export type WorkforceVacationPlanRevisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+  }
+  export type WorkforceVacationPlanRevisionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+  }
+  export type WorkforceVacationPlanRevisionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceVacationPlanRevisionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceVacationPlanRevision"
+    objects: {
+      plan: Prisma.$WorkforceVacationPlanPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      planId: string
+      snapshotJson: Prisma.JsonValue
+      createdByUserId: string
+      createdAt: Date
+    }, ExtArgs["result"]["workforceVacationPlanRevision"]>
+    composites: {}
+  }
+
+  type WorkforceVacationPlanRevisionGetPayload<S extends boolean | null | undefined | WorkforceVacationPlanRevisionDefaultArgs> = $Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload, S>
+
+  type WorkforceVacationPlanRevisionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceVacationPlanRevisionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceVacationPlanRevisionCountAggregateInputType | true
+    }
+
+  export interface WorkforceVacationPlanRevisionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceVacationPlanRevision'], meta: { name: 'WorkforceVacationPlanRevision' } }
+    /**
+     * Find zero or one WorkforceVacationPlanRevision that matches the filter.
+     * @param {WorkforceVacationPlanRevisionFindUniqueArgs} args - Arguments to find a WorkforceVacationPlanRevision
+     * @example
+     * // Get one WorkforceVacationPlanRevision
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceVacationPlanRevisionFindUniqueArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionFindUniqueArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceVacationPlanRevision that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceVacationPlanRevisionFindUniqueOrThrowArgs} args - Arguments to find a WorkforceVacationPlanRevision
+     * @example
+     * // Get one WorkforceVacationPlanRevision
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceVacationPlanRevisionFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceVacationPlanRevision that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionFindFirstArgs} args - Arguments to find a WorkforceVacationPlanRevision
+     * @example
+     * // Get one WorkforceVacationPlanRevision
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceVacationPlanRevisionFindFirstArgs>(args?: SelectSubset<T, WorkforceVacationPlanRevisionFindFirstArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceVacationPlanRevision that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionFindFirstOrThrowArgs} args - Arguments to find a WorkforceVacationPlanRevision
+     * @example
+     * // Get one WorkforceVacationPlanRevision
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceVacationPlanRevisionFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceVacationPlanRevisionFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceVacationPlanRevisions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceVacationPlanRevisions
+     * const workforceVacationPlanRevisions = await prisma.workforceVacationPlanRevision.findMany()
+     * 
+     * // Get first 10 WorkforceVacationPlanRevisions
+     * const workforceVacationPlanRevisions = await prisma.workforceVacationPlanRevision.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceVacationPlanRevisionWithIdOnly = await prisma.workforceVacationPlanRevision.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceVacationPlanRevisionFindManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanRevisionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceVacationPlanRevision.
+     * @param {WorkforceVacationPlanRevisionCreateArgs} args - Arguments to create a WorkforceVacationPlanRevision.
+     * @example
+     * // Create one WorkforceVacationPlanRevision
+     * const WorkforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.create({
+     *   data: {
+     *     // ... data to create a WorkforceVacationPlanRevision
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceVacationPlanRevisionCreateArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionCreateArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceVacationPlanRevisions.
+     * @param {WorkforceVacationPlanRevisionCreateManyArgs} args - Arguments to create many WorkforceVacationPlanRevisions.
+     * @example
+     * // Create many WorkforceVacationPlanRevisions
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceVacationPlanRevisionCreateManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanRevisionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceVacationPlanRevisions and returns the data saved in the database.
+     * @param {WorkforceVacationPlanRevisionCreateManyAndReturnArgs} args - Arguments to create many WorkforceVacationPlanRevisions.
+     * @example
+     * // Create many WorkforceVacationPlanRevisions
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceVacationPlanRevisions and only return the `id`
+     * const workforceVacationPlanRevisionWithIdOnly = await prisma.workforceVacationPlanRevision.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceVacationPlanRevisionCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceVacationPlanRevisionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceVacationPlanRevision.
+     * @param {WorkforceVacationPlanRevisionDeleteArgs} args - Arguments to delete one WorkforceVacationPlanRevision.
+     * @example
+     * // Delete one WorkforceVacationPlanRevision
+     * const WorkforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceVacationPlanRevision
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceVacationPlanRevisionDeleteArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionDeleteArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceVacationPlanRevision.
+     * @param {WorkforceVacationPlanRevisionUpdateArgs} args - Arguments to update one WorkforceVacationPlanRevision.
+     * @example
+     * // Update one WorkforceVacationPlanRevision
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceVacationPlanRevisionUpdateArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionUpdateArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceVacationPlanRevisions.
+     * @param {WorkforceVacationPlanRevisionDeleteManyArgs} args - Arguments to filter WorkforceVacationPlanRevisions to delete.
+     * @example
+     * // Delete a few WorkforceVacationPlanRevisions
+     * const { count } = await prisma.workforceVacationPlanRevision.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceVacationPlanRevisionDeleteManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanRevisionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceVacationPlanRevisions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceVacationPlanRevisions
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceVacationPlanRevisionUpdateManyArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceVacationPlanRevisions and returns the data updated in the database.
+     * @param {WorkforceVacationPlanRevisionUpdateManyAndReturnArgs} args - Arguments to update many WorkforceVacationPlanRevisions.
+     * @example
+     * // Update many WorkforceVacationPlanRevisions
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceVacationPlanRevisions and only return the `id`
+     * const workforceVacationPlanRevisionWithIdOnly = await prisma.workforceVacationPlanRevision.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceVacationPlanRevisionUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceVacationPlanRevision.
+     * @param {WorkforceVacationPlanRevisionUpsertArgs} args - Arguments to update or create a WorkforceVacationPlanRevision.
+     * @example
+     * // Update or create a WorkforceVacationPlanRevision
+     * const workforceVacationPlanRevision = await prisma.workforceVacationPlanRevision.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceVacationPlanRevision
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceVacationPlanRevision we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceVacationPlanRevisionUpsertArgs>(args: SelectSubset<T, WorkforceVacationPlanRevisionUpsertArgs<ExtArgs>>): Prisma__WorkforceVacationPlanRevisionClient<$Result.GetResult<Prisma.$WorkforceVacationPlanRevisionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceVacationPlanRevisions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionCountArgs} args - Arguments to filter WorkforceVacationPlanRevisions to count.
+     * @example
+     * // Count the number of WorkforceVacationPlanRevisions
+     * const count = await prisma.workforceVacationPlanRevision.count({
+     *   where: {
+     *     // ... the filter for the WorkforceVacationPlanRevisions we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceVacationPlanRevisionCountArgs>(
+      args?: Subset<T, WorkforceVacationPlanRevisionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceVacationPlanRevisionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceVacationPlanRevision.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceVacationPlanRevisionAggregateArgs>(args: Subset<T, WorkforceVacationPlanRevisionAggregateArgs>): Prisma.PrismaPromise<GetWorkforceVacationPlanRevisionAggregateType<T>>
+
+    /**
+     * Group by WorkforceVacationPlanRevision.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanRevisionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceVacationPlanRevisionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceVacationPlanRevisionGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceVacationPlanRevisionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceVacationPlanRevisionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceVacationPlanRevisionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceVacationPlanRevision model
+   */
+  readonly fields: WorkforceVacationPlanRevisionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceVacationPlanRevision.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceVacationPlanRevisionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    plan<T extends WorkforceVacationPlanDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlanDefaultArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceVacationPlanRevision model
+   */
+  interface WorkforceVacationPlanRevisionFieldRefs {
+    readonly id: FieldRef<"WorkforceVacationPlanRevision", 'String'>
+    readonly planId: FieldRef<"WorkforceVacationPlanRevision", 'String'>
+    readonly snapshotJson: FieldRef<"WorkforceVacationPlanRevision", 'Json'>
+    readonly createdByUserId: FieldRef<"WorkforceVacationPlanRevision", 'String'>
+    readonly createdAt: FieldRef<"WorkforceVacationPlanRevision", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceVacationPlanRevision findUnique
+   */
+  export type WorkforceVacationPlanRevisionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanRevision to fetch.
+     */
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanRevision findUniqueOrThrow
+   */
+  export type WorkforceVacationPlanRevisionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanRevision to fetch.
+     */
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanRevision findFirst
+   */
+  export type WorkforceVacationPlanRevisionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanRevision to fetch.
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanRevisions to fetch.
+     */
+    orderBy?: WorkforceVacationPlanRevisionOrderByWithRelationInput | WorkforceVacationPlanRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceVacationPlanRevisions.
+     */
+    cursor?: WorkforceVacationPlanRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlanRevisions.
+     */
+    distinct?: WorkforceVacationPlanRevisionScalarFieldEnum | WorkforceVacationPlanRevisionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlanRevision findFirstOrThrow
+   */
+  export type WorkforceVacationPlanRevisionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanRevision to fetch.
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanRevisions to fetch.
+     */
+    orderBy?: WorkforceVacationPlanRevisionOrderByWithRelationInput | WorkforceVacationPlanRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceVacationPlanRevisions.
+     */
+    cursor?: WorkforceVacationPlanRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlanRevisions.
+     */
+    distinct?: WorkforceVacationPlanRevisionScalarFieldEnum | WorkforceVacationPlanRevisionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlanRevision findMany
+   */
+  export type WorkforceVacationPlanRevisionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanRevisions to fetch.
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanRevisions to fetch.
+     */
+    orderBy?: WorkforceVacationPlanRevisionOrderByWithRelationInput | WorkforceVacationPlanRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceVacationPlanRevisions.
+     */
+    cursor?: WorkforceVacationPlanRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlanRevisions.
+     */
+    distinct?: WorkforceVacationPlanRevisionScalarFieldEnum | WorkforceVacationPlanRevisionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlanRevision create
+   */
+  export type WorkforceVacationPlanRevisionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceVacationPlanRevision.
+     */
+    data: XOR<WorkforceVacationPlanRevisionCreateInput, WorkforceVacationPlanRevisionUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceVacationPlanRevision createMany
+   */
+  export type WorkforceVacationPlanRevisionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceVacationPlanRevisions.
+     */
+    data: WorkforceVacationPlanRevisionCreateManyInput | WorkforceVacationPlanRevisionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceVacationPlanRevision createManyAndReturn
+   */
+  export type WorkforceVacationPlanRevisionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceVacationPlanRevisions.
+     */
+    data: WorkforceVacationPlanRevisionCreateManyInput | WorkforceVacationPlanRevisionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlanRevision update
+   */
+  export type WorkforceVacationPlanRevisionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceVacationPlanRevision.
+     */
+    data: XOR<WorkforceVacationPlanRevisionUpdateInput, WorkforceVacationPlanRevisionUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceVacationPlanRevision to update.
+     */
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanRevision updateMany
+   */
+  export type WorkforceVacationPlanRevisionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceVacationPlanRevisions.
+     */
+    data: XOR<WorkforceVacationPlanRevisionUpdateManyMutationInput, WorkforceVacationPlanRevisionUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceVacationPlanRevisions to update
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * Limit how many WorkforceVacationPlanRevisions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceVacationPlanRevision updateManyAndReturn
+   */
+  export type WorkforceVacationPlanRevisionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceVacationPlanRevisions.
+     */
+    data: XOR<WorkforceVacationPlanRevisionUpdateManyMutationInput, WorkforceVacationPlanRevisionUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceVacationPlanRevisions to update
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * Limit how many WorkforceVacationPlanRevisions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlanRevision upsert
+   */
+  export type WorkforceVacationPlanRevisionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceVacationPlanRevision to update in case it exists.
+     */
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+    /**
+     * In case the WorkforceVacationPlanRevision found by the `where` argument doesn't exist, create a new WorkforceVacationPlanRevision with this data.
+     */
+    create: XOR<WorkforceVacationPlanRevisionCreateInput, WorkforceVacationPlanRevisionUncheckedCreateInput>
+    /**
+     * In case the WorkforceVacationPlanRevision was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceVacationPlanRevisionUpdateInput, WorkforceVacationPlanRevisionUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceVacationPlanRevision delete
+   */
+  export type WorkforceVacationPlanRevisionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceVacationPlanRevision to delete.
+     */
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanRevision deleteMany
+   */
+  export type WorkforceVacationPlanRevisionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceVacationPlanRevisions to delete
+     */
+    where?: WorkforceVacationPlanRevisionWhereInput
+    /**
+     * Limit how many WorkforceVacationPlanRevisions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceVacationPlanRevision without action
+   */
+  export type WorkforceVacationPlanRevisionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanRevision
+     */
+    select?: WorkforceVacationPlanRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanRevision
+     */
+    omit?: WorkforceVacationPlanRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanRevisionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Organization
    */
 
@@ -80671,6 +87231,9 @@ export namespace Prisma {
     workforceAnnouncements?: boolean | Organization$workforceAnnouncementsArgs<ExtArgs>
     workforceFitnessRecords?: boolean | Organization$workforceFitnessRecordsArgs<ExtArgs>
     workforceMigrationSteps?: boolean | Organization$workforceMigrationStepsArgs<ExtArgs>
+    workforceOrgSettings?: boolean | Organization$workforceOrgSettingsArgs<ExtArgs>
+    workforceApprovalRoutes?: boolean | Organization$workforceApprovalRoutesArgs<ExtArgs>
+    workforceApprovalDecisions?: boolean | Organization$workforceApprovalDecisionsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
@@ -80827,6 +87390,9 @@ export namespace Prisma {
     workforceAnnouncements?: boolean | Organization$workforceAnnouncementsArgs<ExtArgs>
     workforceFitnessRecords?: boolean | Organization$workforceFitnessRecordsArgs<ExtArgs>
     workforceMigrationSteps?: boolean | Organization$workforceMigrationStepsArgs<ExtArgs>
+    workforceOrgSettings?: boolean | Organization$workforceOrgSettingsArgs<ExtArgs>
+    workforceApprovalRoutes?: boolean | Organization$workforceApprovalRoutesArgs<ExtArgs>
+    workforceApprovalDecisions?: boolean | Organization$workforceApprovalDecisionsArgs<ExtArgs>
     orgUnitCommercialLinks?: boolean | Organization$orgUnitCommercialLinksArgs<ExtArgs>
     elektrawebBridgePolicy?: boolean | Organization$elektrawebBridgePolicyArgs<ExtArgs>
     clinicCutoverPolicy?: boolean | Organization$clinicCutoverPolicyArgs<ExtArgs>
@@ -80898,6 +87464,9 @@ export namespace Prisma {
       workforceAnnouncements: Prisma.$WorkforceAnnouncementPayload<ExtArgs>[]
       workforceFitnessRecords: Prisma.$WorkforceFitnessRecordPayload<ExtArgs>[]
       workforceMigrationSteps: Prisma.$WorkforceMigrationStepPayload<ExtArgs>[]
+      workforceOrgSettings: Prisma.$WorkforceOrgSettingsPayload<ExtArgs> | null
+      workforceApprovalRoutes: Prisma.$WorkforceApprovalRoutePayload<ExtArgs>[]
+      workforceApprovalDecisions: Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>[]
       orgUnitCommercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
       elektrawebBridgePolicy: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs> | null
       clinicCutoverPolicy: Prisma.$ClinicCutoverPolicyPayload<ExtArgs> | null
@@ -81385,6 +87954,9 @@ export namespace Prisma {
     workforceAnnouncements<T extends Organization$workforceAnnouncementsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAnnouncementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAnnouncementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceFitnessRecords<T extends Organization$workforceFitnessRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceFitnessRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceFitnessRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceMigrationSteps<T extends Organization$workforceMigrationStepsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceMigrationStepsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceMigrationStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    workforceOrgSettings<T extends Organization$workforceOrgSettingsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceOrgSettingsArgs<ExtArgs>>): Prisma__WorkforceOrgSettingsClient<$Result.GetResult<Prisma.$WorkforceOrgSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    workforceApprovalRoutes<T extends Organization$workforceApprovalRoutesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceApprovalRoutesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalRoutePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    workforceApprovalDecisions<T extends Organization$workforceApprovalDecisionsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceApprovalDecisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalDecisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     orgUnitCommercialLinks<T extends Organization$orgUnitCommercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, Organization$orgUnitCommercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     elektrawebBridgePolicy<T extends Organization$elektrawebBridgePolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$elektrawebBridgePolicyArgs<ExtArgs>>): Prisma__ElektrawebBridgePolicyClient<$Result.GetResult<Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     clinicCutoverPolicy<T extends Organization$clinicCutoverPolicyArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clinicCutoverPolicyArgs<ExtArgs>>): Prisma__ClinicCutoverPolicyClient<$Result.GetResult<Prisma.$ClinicCutoverPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -82901,6 +89473,73 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkforceMigrationStepScalarFieldEnum | WorkforceMigrationStepScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.workforceOrgSettings
+   */
+  export type Organization$workforceOrgSettingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceOrgSettings
+     */
+    select?: WorkforceOrgSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceOrgSettings
+     */
+    omit?: WorkforceOrgSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceOrgSettingsInclude<ExtArgs> | null
+    where?: WorkforceOrgSettingsWhereInput
+  }
+
+  /**
+   * Organization.workforceApprovalRoutes
+   */
+  export type Organization$workforceApprovalRoutesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalRoute
+     */
+    select?: WorkforceApprovalRouteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalRoute
+     */
+    omit?: WorkforceApprovalRouteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalRouteInclude<ExtArgs> | null
+    where?: WorkforceApprovalRouteWhereInput
+    orderBy?: WorkforceApprovalRouteOrderByWithRelationInput | WorkforceApprovalRouteOrderByWithRelationInput[]
+    cursor?: WorkforceApprovalRouteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceApprovalRouteScalarFieldEnum | WorkforceApprovalRouteScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.workforceApprovalDecisions
+   */
+  export type Organization$workforceApprovalDecisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceApprovalDecision
+     */
+    select?: WorkforceApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceApprovalDecision
+     */
+    omit?: WorkforceApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceApprovalDecisionInclude<ExtArgs> | null
+    where?: WorkforceApprovalDecisionWhereInput
+    orderBy?: WorkforceApprovalDecisionOrderByWithRelationInput | WorkforceApprovalDecisionOrderByWithRelationInput[]
+    cursor?: WorkforceApprovalDecisionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceApprovalDecisionScalarFieldEnum | WorkforceApprovalDecisionScalarFieldEnum[]
   }
 
   /**
@@ -125699,6 +132338,8 @@ export namespace Prisma {
     globalPersonId: 'globalPersonId',
     status: 'status',
     hireDate: 'hireDate',
+    contractEndDate: 'contractEndDate',
+    workRegime: 'workRegime',
     financeEmployeeId: 'financeEmployeeId',
     commercialOrganizationId: 'commercialOrganizationId',
     platformUserId: 'platformUserId',
@@ -125731,6 +132372,9 @@ export namespace Prisma {
     rejectionReason: 'rejectionReason',
     source: 'source',
     sourceRef: 'sourceRef',
+    currentStepOrder: 'currentStepOrder',
+    correctionOfId: 'correctionOfId',
+    cancelReason: 'cancelReason',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -125882,6 +132526,7 @@ export namespace Prisma {
     decidedAt: 'decidedAt',
     decidedByUserId: 'decidedByUserId',
     rejectionReason: 'rejectionReason',
+    currentStepOrder: 'currentStepOrder',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -125901,6 +132546,7 @@ export namespace Prisma {
     decidedAt: 'decidedAt',
     decidedByUserId: 'decidedByUserId',
     rejectionReason: 'rejectionReason',
+    currentStepOrder: 'currentStepOrder',
     financeQueuedAt: 'financeQueuedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -126063,6 +132709,10 @@ export namespace Prisma {
     approvedAt: 'approvedAt',
     rejectedAt: 'rejectedAt',
     rejectionReason: 'rejectionReason',
+    currentStepOrder: 'currentStepOrder',
+    cancelledAt: 'cancelledAt',
+    cancelledByUserId: 'cancelledByUserId',
+    cancelReason: 'cancelReason',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -126271,6 +132921,74 @@ export namespace Prisma {
   };
 
   export type RolePermissionScalarFieldEnum = (typeof RolePermissionScalarFieldEnum)[keyof typeof RolePermissionScalarFieldEnum]
+
+
+  export const WorkforceOrgSettingsScalarFieldEnum: {
+    organizationId: 'organizationId',
+    fiveDayWeeklyHours: 'fiveDayWeeklyHours',
+    sixDayWeeklyHours: 'sixDayWeeklyHours',
+    medicalWeeklyHours: 'medicalWeeklyHours',
+    customWeeklyHours: 'customWeeklyHours',
+    advanceMaxPercent: 'advanceMaxPercent',
+    advanceMaxAmount: 'advanceMaxAmount',
+    advanceMaxOpen: 'advanceMaxOpen',
+    advanceAllowHrProxy: 'advanceAllowHrProxy',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceOrgSettingsScalarFieldEnum = (typeof WorkforceOrgSettingsScalarFieldEnum)[keyof typeof WorkforceOrgSettingsScalarFieldEnum]
+
+
+  export const WorkforceApprovalRouteScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    kind: 'kind',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceApprovalRouteScalarFieldEnum = (typeof WorkforceApprovalRouteScalarFieldEnum)[keyof typeof WorkforceApprovalRouteScalarFieldEnum]
+
+
+  export const WorkforceApprovalStepScalarFieldEnum: {
+    id: 'id',
+    routeId: 'routeId',
+    stepOrder: 'stepOrder',
+    kind: 'kind',
+    orgUnitId: 'orgUnitId',
+    positionId: 'positionId'
+  };
+
+  export type WorkforceApprovalStepScalarFieldEnum = (typeof WorkforceApprovalStepScalarFieldEnum)[keyof typeof WorkforceApprovalStepScalarFieldEnum]
+
+
+  export const WorkforceApprovalDecisionScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    entityType: 'entityType',
+    entityId: 'entityId',
+    stepOrder: 'stepOrder',
+    stepKind: 'stepKind',
+    orgUnitId: 'orgUnitId',
+    orgUnitName: 'orgUnitName',
+    outcome: 'outcome',
+    actorUserId: 'actorUserId',
+    reason: 'reason',
+    createdAt: 'createdAt'
+  };
+
+  export type WorkforceApprovalDecisionScalarFieldEnum = (typeof WorkforceApprovalDecisionScalarFieldEnum)[keyof typeof WorkforceApprovalDecisionScalarFieldEnum]
+
+
+  export const WorkforceVacationPlanRevisionScalarFieldEnum: {
+    id: 'id',
+    planId: 'planId',
+    snapshotJson: 'snapshotJson',
+    createdByUserId: 'createdByUserId',
+    createdAt: 'createdAt'
+  };
+
+  export type WorkforceVacationPlanRevisionScalarFieldEnum = (typeof WorkforceVacationPlanRevisionScalarFieldEnum)[keyof typeof WorkforceVacationPlanRevisionScalarFieldEnum]
 
 
   export const OrganizationScalarFieldEnum: {
@@ -127195,6 +133913,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'WorkforceWorkRegime'
+   */
+  export type EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceWorkRegime'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceWorkRegime[]'
+   */
+  export type ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceWorkRegime[]'>
+    
+
+
+  /**
    * Reference to a field of type 'WorkforceAbsenceKind'
    */
   export type EnumWorkforceAbsenceKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceAbsenceKind'>
@@ -127485,6 +134217,48 @@ export namespace Prisma {
    * Reference to a field of type 'PermissionCategory[]'
    */
   export type ListEnumPermissionCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PermissionCategory[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalRequestKind'
+   */
+  export type EnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalRequestKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalRequestKind[]'
+   */
+  export type ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalRequestKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalStepKind'
+   */
+  export type EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalStepKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalStepKind[]'
+   */
+  export type ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalStepKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalOutcome'
+   */
+  export type EnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalOutcome'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalOutcome[]'
+   */
+  export type ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalOutcome[]'>
     
 
 
@@ -129029,6 +135803,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkListRelationFilter
     vacationPlans?: WorkforceVacationPlanListRelationFilter
     responsiblePlaces?: WorkforcePlaceListRelationFilter
+    approvalSteps?: WorkforceApprovalStepListRelationFilter
   }
 
   export type OrgUnitOrderByWithRelationInput = {
@@ -129052,6 +135827,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
     vacationPlans?: WorkforceVacationPlanOrderByRelationAggregateInput
     responsiblePlaces?: WorkforcePlaceOrderByRelationAggregateInput
+    approvalSteps?: WorkforceApprovalStepOrderByRelationAggregateInput
   }
 
   export type OrgUnitWhereUniqueInput = Prisma.AtLeast<{
@@ -129079,6 +135855,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkListRelationFilter
     vacationPlans?: WorkforceVacationPlanListRelationFilter
     responsiblePlaces?: WorkforcePlaceListRelationFilter
+    approvalSteps?: WorkforceApprovalStepListRelationFilter
   }, "id" | "workforceScopeId_parentId_name">
 
   export type OrgUnitOrderByWithAggregationInput = {
@@ -129203,6 +135980,7 @@ export namespace Prisma {
     orgUnit?: XOR<OrgUnitScalarRelationFilter, OrgUnitWhereInput>
     employments?: WorkforceEmploymentListRelationFilter
     roleTemplates?: SatelliteRoleTemplateListRelationFilter
+    approvalSteps?: WorkforceApprovalStepListRelationFilter
   }
 
   export type WorkforcePositionOrderByWithRelationInput = {
@@ -129217,6 +135995,7 @@ export namespace Prisma {
     orgUnit?: OrgUnitOrderByWithRelationInput
     employments?: WorkforceEmploymentOrderByRelationAggregateInput
     roleTemplates?: SatelliteRoleTemplateOrderByRelationAggregateInput
+    approvalSteps?: WorkforceApprovalStepOrderByRelationAggregateInput
   }
 
   export type WorkforcePositionWhereUniqueInput = Prisma.AtLeast<{
@@ -129235,6 +136014,7 @@ export namespace Prisma {
     orgUnit?: XOR<OrgUnitScalarRelationFilter, OrgUnitWhereInput>
     employments?: WorkforceEmploymentListRelationFilter
     roleTemplates?: SatelliteRoleTemplateListRelationFilter
+    approvalSteps?: WorkforceApprovalStepListRelationFilter
   }, "id" | "orgUnitId_name">
 
   export type WorkforcePositionOrderByWithAggregationInput = {
@@ -129659,6 +136439,8 @@ export namespace Prisma {
     globalPersonId?: UuidFilter<"WorkforceEmployment"> | string
     status?: EnumWorkforceEmploymentStatusFilter<"WorkforceEmployment"> | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFilter<"WorkforceEmployment"> | Date | string
+    contractEndDate?: DateTimeNullableFilter<"WorkforceEmployment"> | Date | string | null
+    workRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforceEmployment"> | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
@@ -129698,6 +136480,8 @@ export namespace Prisma {
     globalPersonId?: SortOrder
     status?: SortOrder
     hireDate?: SortOrder
+    contractEndDate?: SortOrderInput | SortOrder
+    workRegime?: SortOrderInput | SortOrder
     financeEmployeeId?: SortOrderInput | SortOrder
     commercialOrganizationId?: SortOrderInput | SortOrder
     platformUserId?: SortOrderInput | SortOrder
@@ -129740,6 +136524,8 @@ export namespace Prisma {
     globalPersonId?: UuidFilter<"WorkforceEmployment"> | string
     status?: EnumWorkforceEmploymentStatusFilter<"WorkforceEmployment"> | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFilter<"WorkforceEmployment"> | Date | string
+    contractEndDate?: DateTimeNullableFilter<"WorkforceEmployment"> | Date | string | null
+    workRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforceEmployment"> | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
@@ -129779,6 +136565,8 @@ export namespace Prisma {
     globalPersonId?: SortOrder
     status?: SortOrder
     hireDate?: SortOrder
+    contractEndDate?: SortOrderInput | SortOrder
+    workRegime?: SortOrderInput | SortOrder
     financeEmployeeId?: SortOrderInput | SortOrder
     commercialOrganizationId?: SortOrderInput | SortOrder
     platformUserId?: SortOrderInput | SortOrder
@@ -129803,6 +136591,8 @@ export namespace Prisma {
     globalPersonId?: UuidWithAggregatesFilter<"WorkforceEmployment"> | string
     status?: EnumWorkforceEmploymentStatusWithAggregatesFilter<"WorkforceEmployment"> | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeWithAggregatesFilter<"WorkforceEmployment"> | Date | string
+    contractEndDate?: DateTimeNullableWithAggregatesFilter<"WorkforceEmployment"> | Date | string | null
+    workRegime?: EnumWorkforceWorkRegimeNullableWithAggregatesFilter<"WorkforceEmployment"> | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
@@ -129835,6 +136625,9 @@ export namespace Prisma {
     rejectionReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
     source?: StringFilter<"WorkforceAbsence"> | string
     sourceRef?: StringNullableFilter<"WorkforceAbsence"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceAbsence"> | number
+    correctionOfId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
+    cancelReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
@@ -129860,6 +136653,9 @@ export namespace Prisma {
     rejectionReason?: SortOrderInput | SortOrder
     source?: SortOrder
     sourceRef?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
+    correctionOfId?: SortOrderInput | SortOrder
+    cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     employment?: WorkforceEmploymentOrderByWithRelationInput
@@ -129888,6 +136684,9 @@ export namespace Prisma {
     rejectionReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
     source?: StringFilter<"WorkforceAbsence"> | string
     sourceRef?: StringNullableFilter<"WorkforceAbsence"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceAbsence"> | number
+    correctionOfId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
+    cancelReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
@@ -129913,11 +136712,16 @@ export namespace Prisma {
     rejectionReason?: SortOrderInput | SortOrder
     source?: SortOrder
     sourceRef?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
+    correctionOfId?: SortOrderInput | SortOrder
+    cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceAbsenceCountOrderByAggregateInput
+    _avg?: WorkforceAbsenceAvgOrderByAggregateInput
     _max?: WorkforceAbsenceMaxOrderByAggregateInput
     _min?: WorkforceAbsenceMinOrderByAggregateInput
+    _sum?: WorkforceAbsenceSumOrderByAggregateInput
   }
 
   export type WorkforceAbsenceScalarWhereWithAggregatesInput = {
@@ -129943,6 +136747,9 @@ export namespace Prisma {
     rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
     source?: StringWithAggregatesFilter<"WorkforceAbsence"> | string
     sourceRef?: StringNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
+    currentStepOrder?: IntWithAggregatesFilter<"WorkforceAbsence"> | number
+    correctionOfId?: UuidNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
+    cancelReason?: StringNullableWithAggregatesFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceAbsence"> | Date | string
   }
@@ -130669,6 +137476,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableFilter<"WorkforceHourlyLeaveRequest"> | Date | string | null
     decidedByUserId?: UuidNullableFilter<"WorkforceHourlyLeaveRequest"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceHourlyLeaveRequest"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceHourlyLeaveRequest"> | number
     createdAt?: DateTimeFilter<"WorkforceHourlyLeaveRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceHourlyLeaveRequest"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -130690,6 +137498,7 @@ export namespace Prisma {
     decidedAt?: SortOrderInput | SortOrder
     decidedByUserId?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -130714,6 +137523,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableFilter<"WorkforceHourlyLeaveRequest"> | Date | string | null
     decidedByUserId?: UuidNullableFilter<"WorkforceHourlyLeaveRequest"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceHourlyLeaveRequest"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceHourlyLeaveRequest"> | number
     createdAt?: DateTimeFilter<"WorkforceHourlyLeaveRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceHourlyLeaveRequest"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -130735,6 +137545,7 @@ export namespace Prisma {
     decidedAt?: SortOrderInput | SortOrder
     decidedByUserId?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceHourlyLeaveRequestCountOrderByAggregateInput
@@ -130762,6 +137573,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceHourlyLeaveRequest"> | Date | string | null
     decidedByUserId?: UuidNullableWithAggregatesFilter<"WorkforceHourlyLeaveRequest"> | string | null
     rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceHourlyLeaveRequest"> | string | null
+    currentStepOrder?: IntWithAggregatesFilter<"WorkforceHourlyLeaveRequest"> | number
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceHourlyLeaveRequest"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceHourlyLeaveRequest"> | Date | string
   }
@@ -130781,6 +137593,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     decidedByUserId?: UuidNullableFilter<"WorkforceAdvanceRequest"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceAdvanceRequest"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
@@ -130800,6 +137613,7 @@ export namespace Prisma {
     decidedAt?: SortOrderInput | SortOrder
     decidedByUserId?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -130822,6 +137636,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     decidedByUserId?: UuidNullableFilter<"WorkforceAdvanceRequest"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceAdvanceRequest"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
@@ -130841,6 +137656,7 @@ export namespace Prisma {
     decidedAt?: SortOrderInput | SortOrder
     decidedByUserId?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -130866,6 +137682,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string | null
     decidedByUserId?: UuidNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | string | null
     rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | string | null
+    currentStepOrder?: IntWithAggregatesFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string
@@ -131669,11 +138486,16 @@ export namespace Prisma {
     approvedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectionReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceVacationPlan"> | number
+    cancelledAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    cancelledByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    cancelReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
     createdAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
     workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
     orgUnit?: XOR<OrgUnitNullableScalarRelationFilter, OrgUnitWhereInput> | null
     lines?: WorkforceVacationPlanLineListRelationFilter
+    revisions?: WorkforceVacationPlanRevisionListRelationFilter
   }
 
   export type WorkforceVacationPlanOrderByWithRelationInput = {
@@ -131688,11 +138510,16 @@ export namespace Prisma {
     approvedAt?: SortOrderInput | SortOrder
     rejectedAt?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    cancelledByUserId?: SortOrderInput | SortOrder
+    cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     workforceScope?: WorkforceScopeOrderByWithRelationInput
     orgUnit?: OrgUnitOrderByWithRelationInput
     lines?: WorkforceVacationPlanLineOrderByRelationAggregateInput
+    revisions?: WorkforceVacationPlanRevisionOrderByRelationAggregateInput
   }
 
   export type WorkforceVacationPlanWhereUniqueInput = Prisma.AtLeast<{
@@ -131711,11 +138538,16 @@ export namespace Prisma {
     approvedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectionReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceVacationPlan"> | number
+    cancelledAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    cancelledByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    cancelReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
     createdAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
     workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
     orgUnit?: XOR<OrgUnitNullableScalarRelationFilter, OrgUnitWhereInput> | null
     lines?: WorkforceVacationPlanLineListRelationFilter
+    revisions?: WorkforceVacationPlanRevisionListRelationFilter
   }, "id" | "workforceScopeId_year_orgUnitId">
 
   export type WorkforceVacationPlanOrderByWithAggregationInput = {
@@ -131730,6 +138562,10 @@ export namespace Prisma {
     approvedAt?: SortOrderInput | SortOrder
     rejectedAt?: SortOrderInput | SortOrder
     rejectionReason?: SortOrderInput | SortOrder
+    currentStepOrder?: SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    cancelledByUserId?: SortOrderInput | SortOrder
+    cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceVacationPlanCountOrderByAggregateInput
@@ -131754,6 +138590,10 @@ export namespace Prisma {
     approvedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
+    currentStepOrder?: IntWithAggregatesFilter<"WorkforceVacationPlan"> | number
+    cancelledAt?: DateTimeNullableWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string | null
+    cancelledByUserId?: UuidNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
+    cancelReason?: StringNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string
   }
@@ -132790,6 +139630,363 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"RolePermission"> | Date | string
   }
 
+  export type WorkforceOrgSettingsWhereInput = {
+    AND?: WorkforceOrgSettingsWhereInput | WorkforceOrgSettingsWhereInput[]
+    OR?: WorkforceOrgSettingsWhereInput[]
+    NOT?: WorkforceOrgSettingsWhereInput | WorkforceOrgSettingsWhereInput[]
+    organizationId?: UuidFilter<"WorkforceOrgSettings"> | string
+    fiveDayWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: IntNullableFilter<"WorkforceOrgSettings"> | number | null
+    advanceAllowHrProxy?: BoolFilter<"WorkforceOrgSettings"> | boolean
+    updatedAt?: DateTimeFilter<"WorkforceOrgSettings"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type WorkforceOrgSettingsOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    fiveDayWeeklyHours?: SortOrderInput | SortOrder
+    sixDayWeeklyHours?: SortOrderInput | SortOrder
+    medicalWeeklyHours?: SortOrderInput | SortOrder
+    customWeeklyHours?: SortOrderInput | SortOrder
+    advanceMaxPercent?: SortOrderInput | SortOrder
+    advanceMaxAmount?: SortOrderInput | SortOrder
+    advanceMaxOpen?: SortOrderInput | SortOrder
+    advanceAllowHrProxy?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type WorkforceOrgSettingsWhereUniqueInput = Prisma.AtLeast<{
+    organizationId?: string
+    AND?: WorkforceOrgSettingsWhereInput | WorkforceOrgSettingsWhereInput[]
+    OR?: WorkforceOrgSettingsWhereInput[]
+    NOT?: WorkforceOrgSettingsWhereInput | WorkforceOrgSettingsWhereInput[]
+    fiveDayWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: IntNullableFilter<"WorkforceOrgSettings"> | number | null
+    advanceAllowHrProxy?: BoolFilter<"WorkforceOrgSettings"> | boolean
+    updatedAt?: DateTimeFilter<"WorkforceOrgSettings"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "organizationId">
+
+  export type WorkforceOrgSettingsOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    fiveDayWeeklyHours?: SortOrderInput | SortOrder
+    sixDayWeeklyHours?: SortOrderInput | SortOrder
+    medicalWeeklyHours?: SortOrderInput | SortOrder
+    customWeeklyHours?: SortOrderInput | SortOrder
+    advanceMaxPercent?: SortOrderInput | SortOrder
+    advanceMaxAmount?: SortOrderInput | SortOrder
+    advanceMaxOpen?: SortOrderInput | SortOrder
+    advanceAllowHrProxy?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceOrgSettingsCountOrderByAggregateInput
+    _avg?: WorkforceOrgSettingsAvgOrderByAggregateInput
+    _max?: WorkforceOrgSettingsMaxOrderByAggregateInput
+    _min?: WorkforceOrgSettingsMinOrderByAggregateInput
+    _sum?: WorkforceOrgSettingsSumOrderByAggregateInput
+  }
+
+  export type WorkforceOrgSettingsScalarWhereWithAggregatesInput = {
+    AND?: WorkforceOrgSettingsScalarWhereWithAggregatesInput | WorkforceOrgSettingsScalarWhereWithAggregatesInput[]
+    OR?: WorkforceOrgSettingsScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceOrgSettingsScalarWhereWithAggregatesInput | WorkforceOrgSettingsScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"WorkforceOrgSettings"> | string
+    fiveDayWeeklyHours?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: IntNullableWithAggregatesFilter<"WorkforceOrgSettings"> | number | null
+    advanceAllowHrProxy?: BoolWithAggregatesFilter<"WorkforceOrgSettings"> | boolean
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceOrgSettings"> | Date | string
+  }
+
+  export type WorkforceApprovalRouteWhereInput = {
+    AND?: WorkforceApprovalRouteWhereInput | WorkforceApprovalRouteWhereInput[]
+    OR?: WorkforceApprovalRouteWhereInput[]
+    NOT?: WorkforceApprovalRouteWhereInput | WorkforceApprovalRouteWhereInput[]
+    id?: UuidFilter<"WorkforceApprovalRoute"> | string
+    organizationId?: UuidFilter<"WorkforceApprovalRoute"> | string
+    kind?: EnumWorkforceApprovalRequestKindFilter<"WorkforceApprovalRoute"> | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFilter<"WorkforceApprovalRoute"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceApprovalRoute"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    steps?: WorkforceApprovalStepListRelationFilter
+  }
+
+  export type WorkforceApprovalRouteOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    steps?: WorkforceApprovalStepOrderByRelationAggregateInput
+  }
+
+  export type WorkforceApprovalRouteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_kind?: WorkforceApprovalRouteOrganizationIdKindCompoundUniqueInput
+    AND?: WorkforceApprovalRouteWhereInput | WorkforceApprovalRouteWhereInput[]
+    OR?: WorkforceApprovalRouteWhereInput[]
+    NOT?: WorkforceApprovalRouteWhereInput | WorkforceApprovalRouteWhereInput[]
+    organizationId?: UuidFilter<"WorkforceApprovalRoute"> | string
+    kind?: EnumWorkforceApprovalRequestKindFilter<"WorkforceApprovalRoute"> | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFilter<"WorkforceApprovalRoute"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceApprovalRoute"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    steps?: WorkforceApprovalStepListRelationFilter
+  }, "id" | "organizationId_kind">
+
+  export type WorkforceApprovalRouteOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceApprovalRouteCountOrderByAggregateInput
+    _max?: WorkforceApprovalRouteMaxOrderByAggregateInput
+    _min?: WorkforceApprovalRouteMinOrderByAggregateInput
+  }
+
+  export type WorkforceApprovalRouteScalarWhereWithAggregatesInput = {
+    AND?: WorkforceApprovalRouteScalarWhereWithAggregatesInput | WorkforceApprovalRouteScalarWhereWithAggregatesInput[]
+    OR?: WorkforceApprovalRouteScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceApprovalRouteScalarWhereWithAggregatesInput | WorkforceApprovalRouteScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceApprovalRoute"> | string
+    organizationId?: UuidWithAggregatesFilter<"WorkforceApprovalRoute"> | string
+    kind?: EnumWorkforceApprovalRequestKindWithAggregatesFilter<"WorkforceApprovalRoute"> | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceApprovalRoute"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceApprovalRoute"> | Date | string
+  }
+
+  export type WorkforceApprovalStepWhereInput = {
+    AND?: WorkforceApprovalStepWhereInput | WorkforceApprovalStepWhereInput[]
+    OR?: WorkforceApprovalStepWhereInput[]
+    NOT?: WorkforceApprovalStepWhereInput | WorkforceApprovalStepWhereInput[]
+    id?: UuidFilter<"WorkforceApprovalStep"> | string
+    routeId?: UuidFilter<"WorkforceApprovalStep"> | string
+    stepOrder?: IntFilter<"WorkforceApprovalStep"> | number
+    kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
+    positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
+    route?: XOR<WorkforceApprovalRouteScalarRelationFilter, WorkforceApprovalRouteWhereInput>
+    orgUnit?: XOR<OrgUnitNullableScalarRelationFilter, OrgUnitWhereInput> | null
+    position?: XOR<WorkforcePositionNullableScalarRelationFilter, WorkforcePositionWhereInput> | null
+  }
+
+  export type WorkforceApprovalStepOrderByWithRelationInput = {
+    id?: SortOrder
+    routeId?: SortOrder
+    stepOrder?: SortOrder
+    kind?: SortOrder
+    orgUnitId?: SortOrderInput | SortOrder
+    positionId?: SortOrderInput | SortOrder
+    route?: WorkforceApprovalRouteOrderByWithRelationInput
+    orgUnit?: OrgUnitOrderByWithRelationInput
+    position?: WorkforcePositionOrderByWithRelationInput
+  }
+
+  export type WorkforceApprovalStepWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    routeId_stepOrder?: WorkforceApprovalStepRouteIdStepOrderCompoundUniqueInput
+    AND?: WorkforceApprovalStepWhereInput | WorkforceApprovalStepWhereInput[]
+    OR?: WorkforceApprovalStepWhereInput[]
+    NOT?: WorkforceApprovalStepWhereInput | WorkforceApprovalStepWhereInput[]
+    routeId?: UuidFilter<"WorkforceApprovalStep"> | string
+    stepOrder?: IntFilter<"WorkforceApprovalStep"> | number
+    kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
+    positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
+    route?: XOR<WorkforceApprovalRouteScalarRelationFilter, WorkforceApprovalRouteWhereInput>
+    orgUnit?: XOR<OrgUnitNullableScalarRelationFilter, OrgUnitWhereInput> | null
+    position?: XOR<WorkforcePositionNullableScalarRelationFilter, WorkforcePositionWhereInput> | null
+  }, "id" | "routeId_stepOrder">
+
+  export type WorkforceApprovalStepOrderByWithAggregationInput = {
+    id?: SortOrder
+    routeId?: SortOrder
+    stepOrder?: SortOrder
+    kind?: SortOrder
+    orgUnitId?: SortOrderInput | SortOrder
+    positionId?: SortOrderInput | SortOrder
+    _count?: WorkforceApprovalStepCountOrderByAggregateInput
+    _avg?: WorkforceApprovalStepAvgOrderByAggregateInput
+    _max?: WorkforceApprovalStepMaxOrderByAggregateInput
+    _min?: WorkforceApprovalStepMinOrderByAggregateInput
+    _sum?: WorkforceApprovalStepSumOrderByAggregateInput
+  }
+
+  export type WorkforceApprovalStepScalarWhereWithAggregatesInput = {
+    AND?: WorkforceApprovalStepScalarWhereWithAggregatesInput | WorkforceApprovalStepScalarWhereWithAggregatesInput[]
+    OR?: WorkforceApprovalStepScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceApprovalStepScalarWhereWithAggregatesInput | WorkforceApprovalStepScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceApprovalStep"> | string
+    routeId?: UuidWithAggregatesFilter<"WorkforceApprovalStep"> | string
+    stepOrder?: IntWithAggregatesFilter<"WorkforceApprovalStep"> | number
+    kind?: EnumWorkforceApprovalStepKindWithAggregatesFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalStep"> | string | null
+    positionId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalStep"> | string | null
+  }
+
+  export type WorkforceApprovalDecisionWhereInput = {
+    AND?: WorkforceApprovalDecisionWhereInput | WorkforceApprovalDecisionWhereInput[]
+    OR?: WorkforceApprovalDecisionWhereInput[]
+    NOT?: WorkforceApprovalDecisionWhereInput | WorkforceApprovalDecisionWhereInput[]
+    id?: UuidFilter<"WorkforceApprovalDecision"> | string
+    organizationId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    entityType?: StringFilter<"WorkforceApprovalDecision"> | string
+    entityId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    stepOrder?: IntFilter<"WorkforceApprovalDecision"> | number
+    stepKind?: EnumWorkforceApprovalStepKindNullableFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: UuidNullableFilter<"WorkforceApprovalDecision"> | string | null
+    orgUnitName?: StringNullableFilter<"WorkforceApprovalDecision"> | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalOutcome
+    actorUserId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    reason?: StringNullableFilter<"WorkforceApprovalDecision"> | string | null
+    createdAt?: DateTimeFilter<"WorkforceApprovalDecision"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type WorkforceApprovalDecisionOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    stepOrder?: SortOrder
+    stepKind?: SortOrderInput | SortOrder
+    orgUnitId?: SortOrderInput | SortOrder
+    orgUnitName?: SortOrderInput | SortOrder
+    outcome?: SortOrder
+    actorUserId?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type WorkforceApprovalDecisionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WorkforceApprovalDecisionWhereInput | WorkforceApprovalDecisionWhereInput[]
+    OR?: WorkforceApprovalDecisionWhereInput[]
+    NOT?: WorkforceApprovalDecisionWhereInput | WorkforceApprovalDecisionWhereInput[]
+    organizationId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    entityType?: StringFilter<"WorkforceApprovalDecision"> | string
+    entityId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    stepOrder?: IntFilter<"WorkforceApprovalDecision"> | number
+    stepKind?: EnumWorkforceApprovalStepKindNullableFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: UuidNullableFilter<"WorkforceApprovalDecision"> | string | null
+    orgUnitName?: StringNullableFilter<"WorkforceApprovalDecision"> | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalOutcome
+    actorUserId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    reason?: StringNullableFilter<"WorkforceApprovalDecision"> | string | null
+    createdAt?: DateTimeFilter<"WorkforceApprovalDecision"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id">
+
+  export type WorkforceApprovalDecisionOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    stepOrder?: SortOrder
+    stepKind?: SortOrderInput | SortOrder
+    orgUnitId?: SortOrderInput | SortOrder
+    orgUnitName?: SortOrderInput | SortOrder
+    outcome?: SortOrder
+    actorUserId?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: WorkforceApprovalDecisionCountOrderByAggregateInput
+    _avg?: WorkforceApprovalDecisionAvgOrderByAggregateInput
+    _max?: WorkforceApprovalDecisionMaxOrderByAggregateInput
+    _min?: WorkforceApprovalDecisionMinOrderByAggregateInput
+    _sum?: WorkforceApprovalDecisionSumOrderByAggregateInput
+  }
+
+  export type WorkforceApprovalDecisionScalarWhereWithAggregatesInput = {
+    AND?: WorkforceApprovalDecisionScalarWhereWithAggregatesInput | WorkforceApprovalDecisionScalarWhereWithAggregatesInput[]
+    OR?: WorkforceApprovalDecisionScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceApprovalDecisionScalarWhereWithAggregatesInput | WorkforceApprovalDecisionScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceApprovalDecision"> | string
+    organizationId?: UuidWithAggregatesFilter<"WorkforceApprovalDecision"> | string
+    entityType?: StringWithAggregatesFilter<"WorkforceApprovalDecision"> | string
+    entityId?: UuidWithAggregatesFilter<"WorkforceApprovalDecision"> | string
+    stepOrder?: IntWithAggregatesFilter<"WorkforceApprovalDecision"> | number
+    stepKind?: EnumWorkforceApprovalStepKindNullableWithAggregatesFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalDecision"> | string | null
+    orgUnitName?: StringNullableWithAggregatesFilter<"WorkforceApprovalDecision"> | string | null
+    outcome?: EnumWorkforceApprovalOutcomeWithAggregatesFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalOutcome
+    actorUserId?: UuidWithAggregatesFilter<"WorkforceApprovalDecision"> | string
+    reason?: StringNullableWithAggregatesFilter<"WorkforceApprovalDecision"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceApprovalDecision"> | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionWhereInput = {
+    AND?: WorkforceVacationPlanRevisionWhereInput | WorkforceVacationPlanRevisionWhereInput[]
+    OR?: WorkforceVacationPlanRevisionWhereInput[]
+    NOT?: WorkforceVacationPlanRevisionWhereInput | WorkforceVacationPlanRevisionWhereInput[]
+    id?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    planId?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    snapshotJson?: JsonFilter<"WorkforceVacationPlanRevision">
+    createdByUserId?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    createdAt?: DateTimeFilter<"WorkforceVacationPlanRevision"> | Date | string
+    plan?: XOR<WorkforceVacationPlanScalarRelationFilter, WorkforceVacationPlanWhereInput>
+  }
+
+  export type WorkforceVacationPlanRevisionOrderByWithRelationInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    snapshotJson?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    plan?: WorkforceVacationPlanOrderByWithRelationInput
+  }
+
+  export type WorkforceVacationPlanRevisionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WorkforceVacationPlanRevisionWhereInput | WorkforceVacationPlanRevisionWhereInput[]
+    OR?: WorkforceVacationPlanRevisionWhereInput[]
+    NOT?: WorkforceVacationPlanRevisionWhereInput | WorkforceVacationPlanRevisionWhereInput[]
+    planId?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    snapshotJson?: JsonFilter<"WorkforceVacationPlanRevision">
+    createdByUserId?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    createdAt?: DateTimeFilter<"WorkforceVacationPlanRevision"> | Date | string
+    plan?: XOR<WorkforceVacationPlanScalarRelationFilter, WorkforceVacationPlanWhereInput>
+  }, "id">
+
+  export type WorkforceVacationPlanRevisionOrderByWithAggregationInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    snapshotJson?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    _count?: WorkforceVacationPlanRevisionCountOrderByAggregateInput
+    _max?: WorkforceVacationPlanRevisionMaxOrderByAggregateInput
+    _min?: WorkforceVacationPlanRevisionMinOrderByAggregateInput
+  }
+
+  export type WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput = {
+    AND?: WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput | WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput[]
+    OR?: WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput | WorkforceVacationPlanRevisionScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceVacationPlanRevision"> | string
+    planId?: UuidWithAggregatesFilter<"WorkforceVacationPlanRevision"> | string
+    snapshotJson?: JsonWithAggregatesFilter<"WorkforceVacationPlanRevision">
+    createdByUserId?: UuidWithAggregatesFilter<"WorkforceVacationPlanRevision"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlanRevision"> | Date | string
+  }
+
   export type OrganizationWhereInput = {
     AND?: OrganizationWhereInput | OrganizationWhereInput[]
     OR?: OrganizationWhereInput[]
@@ -132865,6 +140062,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementListRelationFilter
     workforceFitnessRecords?: WorkforceFitnessRecordListRelationFilter
     workforceMigrationSteps?: WorkforceMigrationStepListRelationFilter
+    workforceOrgSettings?: XOR<WorkforceOrgSettingsNullableScalarRelationFilter, WorkforceOrgSettingsWhereInput> | null
+    workforceApprovalRoutes?: WorkforceApprovalRouteListRelationFilter
+    workforceApprovalDecisions?: WorkforceApprovalDecisionListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
@@ -132950,6 +140150,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementOrderByRelationAggregateInput
     workforceFitnessRecords?: WorkforceFitnessRecordOrderByRelationAggregateInput
     workforceMigrationSteps?: WorkforceMigrationStepOrderByRelationAggregateInput
+    workforceOrgSettings?: WorkforceOrgSettingsOrderByWithRelationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteOrderByRelationAggregateInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionOrderByRelationAggregateInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOrderByWithRelationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyOrderByWithRelationInput
@@ -133038,6 +140241,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementListRelationFilter
     workforceFitnessRecords?: WorkforceFitnessRecordListRelationFilter
     workforceMigrationSteps?: WorkforceMigrationStepListRelationFilter
+    workforceOrgSettings?: XOR<WorkforceOrgSettingsNullableScalarRelationFilter, WorkforceOrgSettingsWhereInput> | null
+    workforceApprovalRoutes?: WorkforceApprovalRouteListRelationFilter
+    workforceApprovalDecisions?: WorkforceApprovalDecisionListRelationFilter
     orgUnitCommercialLinks?: OrgUnitCommercialLinkListRelationFilter
     elektrawebBridgePolicy?: XOR<ElektrawebBridgePolicyNullableScalarRelationFilter, ElektrawebBridgePolicyWhereInput> | null
     clinicCutoverPolicy?: XOR<ClinicCutoverPolicyNullableScalarRelationFilter, ClinicCutoverPolicyWhereInput> | null
@@ -137353,6 +144559,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateInput = {
@@ -137373,6 +144580,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUpdateInput = {
@@ -137393,6 +144601,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateInput = {
@@ -137413,6 +144622,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitCreateManyInput = {
@@ -137532,6 +144742,7 @@ export namespace Prisma {
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionUncheckedCreateInput = {
@@ -137545,6 +144756,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionUpdateInput = {
@@ -137558,6 +144770,7 @@ export namespace Prisma {
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforcePositionUncheckedUpdateInput = {
@@ -137571,6 +144784,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforcePositionCreateManyInput = {
@@ -138021,6 +145235,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -138060,6 +145276,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -138091,6 +145309,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -138130,6 +145350,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -138165,6 +145387,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -138179,6 +145403,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -138197,6 +145423,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -138225,6 +145453,9 @@ export namespace Prisma {
     rejectionReason?: string | null
     source?: string
     sourceRef?: string | null
+    currentStepOrder?: number
+    correctionOfId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutAbsencesInput
@@ -138250,6 +145481,9 @@ export namespace Prisma {
     rejectionReason?: string | null
     source?: string
     sourceRef?: string | null
+    currentStepOrder?: number
+    correctionOfId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -138273,6 +145507,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutAbsencesNestedInput
@@ -138298,6 +145535,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138322,6 +145562,9 @@ export namespace Prisma {
     rejectionReason?: string | null
     source?: string
     sourceRef?: string | null
+    currentStepOrder?: number
+    correctionOfId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -138345,6 +145588,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138369,6 +145615,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -139155,6 +146404,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceHourlyLeaveRequestsInput
@@ -139176,6 +146426,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -139193,6 +146444,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceHourlyLeaveRequestsNestedInput
@@ -139214,6 +146466,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -139233,6 +146486,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -139250,6 +146504,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -139269,6 +146524,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -139283,6 +146539,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -139302,6 +146559,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -139317,6 +146575,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -139336,6 +146595,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -139353,6 +146613,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -139368,6 +146629,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -139385,6 +146647,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -140194,11 +147457,16 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
     orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
     lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+    revisions?: WorkforceVacationPlanRevisionCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanUncheckedCreateInput = {
@@ -140213,9 +147481,14 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+    revisions?: WorkforceVacationPlanRevisionUncheckedCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanUpdateInput = {
@@ -140228,11 +147501,16 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
     orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
     lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+    revisions?: WorkforceVacationPlanRevisionUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanUncheckedUpdateInput = {
@@ -140247,9 +147525,14 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
+    revisions?: WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanCreateManyInput = {
@@ -140264,6 +147547,10 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -140278,6 +147565,10 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -140294,6 +147585,10 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -141457,6 +148752,374 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceOrgSettingsCreateInput = {
+    fiveDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: number | null
+    advanceAllowHrProxy?: boolean
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceOrgSettingsInput
+  }
+
+  export type WorkforceOrgSettingsUncheckedCreateInput = {
+    organizationId: string
+    fiveDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: number | null
+    advanceAllowHrProxy?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceOrgSettingsUpdateInput = {
+    fiveDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
+    advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceOrgSettingsNestedInput
+  }
+
+  export type WorkforceOrgSettingsUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fiveDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
+    advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceOrgSettingsCreateManyInput = {
+    organizationId: string
+    fiveDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: number | null
+    advanceAllowHrProxy?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceOrgSettingsUpdateManyMutationInput = {
+    fiveDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
+    advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceOrgSettingsUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fiveDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
+    advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalRouteCreateInput = {
+    id?: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceApprovalRoutesInput
+    steps?: WorkforceApprovalStepCreateNestedManyWithoutRouteInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    steps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutRouteInput
+  }
+
+  export type WorkforceApprovalRouteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceApprovalRoutesNestedInput
+    steps?: WorkforceApprovalStepUpdateManyWithoutRouteNestedInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    steps?: WorkforceApprovalStepUncheckedUpdateManyWithoutRouteNestedInput
+  }
+
+  export type WorkforceApprovalRouteCreateManyInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceApprovalRouteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalRouteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalStepCreateInput = {
+    id?: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
+    orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
+    position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateInput = {
+    id?: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId?: string | null
+    positionId?: string | null
+  }
+
+  export type WorkforceApprovalStepUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
+    orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
+    position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routeId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    positionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type WorkforceApprovalStepCreateManyInput = {
+    id?: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId?: string | null
+    positionId?: string | null
+  }
+
+  export type WorkforceApprovalStepUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routeId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    positionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type WorkforceApprovalDecisionCreateInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind?: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: string | null
+    orgUnitName?: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason?: string | null
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceApprovalDecisionsInput
+  }
+
+  export type WorkforceApprovalDecisionUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind?: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: string | null
+    orgUnitName?: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type WorkforceApprovalDecisionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceApprovalDecisionsNestedInput
+  }
+
+  export type WorkforceApprovalDecisionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalDecisionCreateManyInput = {
+    id?: string
+    organizationId: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind?: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: string | null
+    orgUnitName?: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type WorkforceApprovalDecisionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalDecisionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionCreateInput = {
+    id?: string
+    snapshotJson: JsonNullValueInput | InputJsonValue
+    createdByUserId: string
+    createdAt?: Date | string
+    plan: WorkforceVacationPlanCreateNestedOneWithoutRevisionsInput
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedCreateInput = {
+    id?: string
+    planId: string
+    snapshotJson: JsonNullValueInput | InputJsonValue
+    createdByUserId: string
+    createdAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    plan?: WorkforceVacationPlanUpdateOneRequiredWithoutRevisionsNestedInput
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionCreateManyInput = {
+    id?: string
+    planId: string
+    snapshotJson: JsonNullValueInput | InputJsonValue
+    createdByUserId: string
+    createdAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationCreateInput = {
     id?: string
     name: string
@@ -141526,6 +149189,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -141611,6 +149277,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -141690,6 +149359,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -141775,6 +149447,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -146362,11 +154037,21 @@ export namespace Prisma {
     none?: WorkforcePlaceWhereInput
   }
 
+  export type WorkforceApprovalStepListRelationFilter = {
+    every?: WorkforceApprovalStepWhereInput
+    some?: WorkforceApprovalStepWhereInput
+    none?: WorkforceApprovalStepWhereInput
+  }
+
   export type WorkforcePositionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type WorkforcePlaceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceApprovalStepOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -146827,6 +154512,13 @@ export namespace Prisma {
     not?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel> | $Enums.WorkforceEmploymentStatus
   }
 
+  export type EnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+  }
+
   export type WorkforceAbsenceListRelationFilter = {
     every?: WorkforceAbsenceWhereInput
     some?: WorkforceAbsenceWhereInput
@@ -146971,6 +154663,8 @@ export namespace Prisma {
     globalPersonId?: SortOrder
     status?: SortOrder
     hireDate?: SortOrder
+    contractEndDate?: SortOrder
+    workRegime?: SortOrder
     financeEmployeeId?: SortOrder
     commercialOrganizationId?: SortOrder
     platformUserId?: SortOrder
@@ -146989,6 +154683,8 @@ export namespace Prisma {
     globalPersonId?: SortOrder
     status?: SortOrder
     hireDate?: SortOrder
+    contractEndDate?: SortOrder
+    workRegime?: SortOrder
     financeEmployeeId?: SortOrder
     commercialOrganizationId?: SortOrder
     platformUserId?: SortOrder
@@ -147007,6 +154703,8 @@ export namespace Prisma {
     globalPersonId?: SortOrder
     status?: SortOrder
     hireDate?: SortOrder
+    contractEndDate?: SortOrder
+    workRegime?: SortOrder
     financeEmployeeId?: SortOrder
     commercialOrganizationId?: SortOrder
     platformUserId?: SortOrder
@@ -147024,6 +154722,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
   }
 
   export type EnumWorkforceAbsenceKindFilter<$PrismaModel = never> = {
@@ -147060,8 +154768,15 @@ export namespace Prisma {
     rejectionReason?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrder
+    currentStepOrder?: SortOrder
+    correctionOfId?: SortOrder
+    cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type WorkforceAbsenceAvgOrderByAggregateInput = {
+    currentStepOrder?: SortOrder
   }
 
   export type WorkforceAbsenceMaxOrderByAggregateInput = {
@@ -147084,6 +154799,9 @@ export namespace Prisma {
     rejectionReason?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrder
+    currentStepOrder?: SortOrder
+    correctionOfId?: SortOrder
+    cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -147108,8 +154826,15 @@ export namespace Prisma {
     rejectionReason?: SortOrder
     source?: SortOrder
     sourceRef?: SortOrder
+    currentStepOrder?: SortOrder
+    correctionOfId?: SortOrder
+    cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type WorkforceAbsenceSumOrderByAggregateInput = {
+    currentStepOrder?: SortOrder
   }
 
   export type EnumWorkforceAbsenceKindWithAggregatesFilter<$PrismaModel = never> = {
@@ -147784,6 +155509,7 @@ export namespace Prisma {
     decidedAt?: SortOrder
     decidedByUserId?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -147791,6 +155517,7 @@ export namespace Prisma {
   export type WorkforceHourlyLeaveRequestAvgOrderByAggregateInput = {
     startMinute?: SortOrder
     endMinute?: SortOrder
+    currentStepOrder?: SortOrder
   }
 
   export type WorkforceHourlyLeaveRequestMaxOrderByAggregateInput = {
@@ -147808,6 +155535,7 @@ export namespace Prisma {
     decidedAt?: SortOrder
     decidedByUserId?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -147827,6 +155555,7 @@ export namespace Prisma {
     decidedAt?: SortOrder
     decidedByUserId?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -147834,6 +155563,7 @@ export namespace Prisma {
   export type WorkforceHourlyLeaveRequestSumOrderByAggregateInput = {
     startMinute?: SortOrder
     endMinute?: SortOrder
+    currentStepOrder?: SortOrder
   }
 
   export type EnumWorkforceSelfRequestStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -147858,6 +155588,7 @@ export namespace Prisma {
     decidedAt?: SortOrder
     decidedByUserId?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -147865,6 +155596,7 @@ export namespace Prisma {
 
   export type WorkforceAdvanceRequestAvgOrderByAggregateInput = {
     amountAzn?: SortOrder
+    currentStepOrder?: SortOrder
   }
 
   export type WorkforceAdvanceRequestMaxOrderByAggregateInput = {
@@ -147879,6 +155611,7 @@ export namespace Prisma {
     decidedAt?: SortOrder
     decidedByUserId?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -147896,6 +155629,7 @@ export namespace Prisma {
     decidedAt?: SortOrder
     decidedByUserId?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -147903,6 +155637,7 @@ export namespace Prisma {
 
   export type WorkforceAdvanceRequestSumOrderByAggregateInput = {
     amountAzn?: SortOrder
+    currentStepOrder?: SortOrder
   }
 
   export type WorkforceAnnouncementCountOrderByAggregateInput = {
@@ -148387,6 +156122,16 @@ export namespace Prisma {
     not?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel> | $Enums.WorkforceVacationPlanStatus
   }
 
+  export type WorkforceVacationPlanRevisionListRelationFilter = {
+    every?: WorkforceVacationPlanRevisionWhereInput
+    some?: WorkforceVacationPlanRevisionWhereInput
+    none?: WorkforceVacationPlanRevisionWhereInput
+  }
+
+  export type WorkforceVacationPlanRevisionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type WorkforceVacationPlanWorkforceScopeIdYearOrgUnitIdCompoundUniqueInput = {
     workforceScopeId: string
     year: number
@@ -148405,12 +156150,17 @@ export namespace Prisma {
     approvedAt?: SortOrder
     rejectedAt?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
+    cancelledAt?: SortOrder
+    cancelledByUserId?: SortOrder
+    cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type WorkforceVacationPlanAvgOrderByAggregateInput = {
     year?: SortOrder
+    currentStepOrder?: SortOrder
   }
 
   export type WorkforceVacationPlanMaxOrderByAggregateInput = {
@@ -148425,6 +156175,10 @@ export namespace Prisma {
     approvedAt?: SortOrder
     rejectedAt?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
+    cancelledAt?: SortOrder
+    cancelledByUserId?: SortOrder
+    cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -148441,12 +156195,17 @@ export namespace Prisma {
     approvedAt?: SortOrder
     rejectedAt?: SortOrder
     rejectionReason?: SortOrder
+    currentStepOrder?: SortOrder
+    cancelledAt?: SortOrder
+    cancelledByUserId?: SortOrder
+    cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type WorkforceVacationPlanSumOrderByAggregateInput = {
     year?: SortOrder
+    currentStepOrder?: SortOrder
   }
 
   export type EnumWorkforceVacationPlanStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -149196,6 +156955,287 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type WorkforceOrgSettingsCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    fiveDayWeeklyHours?: SortOrder
+    sixDayWeeklyHours?: SortOrder
+    medicalWeeklyHours?: SortOrder
+    customWeeklyHours?: SortOrder
+    advanceMaxPercent?: SortOrder
+    advanceMaxAmount?: SortOrder
+    advanceMaxOpen?: SortOrder
+    advanceAllowHrProxy?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceOrgSettingsAvgOrderByAggregateInput = {
+    fiveDayWeeklyHours?: SortOrder
+    sixDayWeeklyHours?: SortOrder
+    medicalWeeklyHours?: SortOrder
+    customWeeklyHours?: SortOrder
+    advanceMaxPercent?: SortOrder
+    advanceMaxAmount?: SortOrder
+    advanceMaxOpen?: SortOrder
+  }
+
+  export type WorkforceOrgSettingsMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    fiveDayWeeklyHours?: SortOrder
+    sixDayWeeklyHours?: SortOrder
+    medicalWeeklyHours?: SortOrder
+    customWeeklyHours?: SortOrder
+    advanceMaxPercent?: SortOrder
+    advanceMaxAmount?: SortOrder
+    advanceMaxOpen?: SortOrder
+    advanceAllowHrProxy?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceOrgSettingsMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    fiveDayWeeklyHours?: SortOrder
+    sixDayWeeklyHours?: SortOrder
+    medicalWeeklyHours?: SortOrder
+    customWeeklyHours?: SortOrder
+    advanceMaxPercent?: SortOrder
+    advanceMaxAmount?: SortOrder
+    advanceMaxOpen?: SortOrder
+    advanceAllowHrProxy?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceOrgSettingsSumOrderByAggregateInput = {
+    fiveDayWeeklyHours?: SortOrder
+    sixDayWeeklyHours?: SortOrder
+    medicalWeeklyHours?: SortOrder
+    customWeeklyHours?: SortOrder
+    advanceMaxPercent?: SortOrder
+    advanceMaxAmount?: SortOrder
+    advanceMaxOpen?: SortOrder
+  }
+
+  export type EnumWorkforceApprovalRequestKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalRequestKind | EnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel> | $Enums.WorkforceApprovalRequestKind
+  }
+
+  export type WorkforceApprovalRouteOrganizationIdKindCompoundUniqueInput = {
+    organizationId: string
+    kind: $Enums.WorkforceApprovalRequestKind
+  }
+
+  export type WorkforceApprovalRouteCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceApprovalRouteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceApprovalRouteMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumWorkforceApprovalRequestKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalRequestKind | EnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalRequestKindWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalRequestKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceApprovalStepKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind
+  }
+
+  export type WorkforceApprovalRouteScalarRelationFilter = {
+    is?: WorkforceApprovalRouteWhereInput
+    isNot?: WorkforceApprovalRouteWhereInput
+  }
+
+  export type WorkforcePositionNullableScalarRelationFilter = {
+    is?: WorkforcePositionWhereInput | null
+    isNot?: WorkforcePositionWhereInput | null
+  }
+
+  export type WorkforceApprovalStepRouteIdStepOrderCompoundUniqueInput = {
+    routeId: string
+    stepOrder: number
+  }
+
+  export type WorkforceApprovalStepCountOrderByAggregateInput = {
+    id?: SortOrder
+    routeId?: SortOrder
+    stepOrder?: SortOrder
+    kind?: SortOrder
+    orgUnitId?: SortOrder
+    positionId?: SortOrder
+  }
+
+  export type WorkforceApprovalStepAvgOrderByAggregateInput = {
+    stepOrder?: SortOrder
+  }
+
+  export type WorkforceApprovalStepMaxOrderByAggregateInput = {
+    id?: SortOrder
+    routeId?: SortOrder
+    stepOrder?: SortOrder
+    kind?: SortOrder
+    orgUnitId?: SortOrder
+    positionId?: SortOrder
+  }
+
+  export type WorkforceApprovalStepMinOrderByAggregateInput = {
+    id?: SortOrder
+    routeId?: SortOrder
+    stepOrder?: SortOrder
+    kind?: SortOrder
+    orgUnitId?: SortOrder
+    positionId?: SortOrder
+  }
+
+  export type WorkforceApprovalStepSumOrderByAggregateInput = {
+    stepOrder?: SortOrder
+  }
+
+  export type EnumWorkforceApprovalStepKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepKindWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceApprovalStepKindNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind | null
+  }
+
+  export type EnumWorkforceApprovalOutcomeFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalOutcome | EnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel> | $Enums.WorkforceApprovalOutcome
+  }
+
+  export type WorkforceApprovalDecisionCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    stepOrder?: SortOrder
+    stepKind?: SortOrder
+    orgUnitId?: SortOrder
+    orgUnitName?: SortOrder
+    outcome?: SortOrder
+    actorUserId?: SortOrder
+    reason?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WorkforceApprovalDecisionAvgOrderByAggregateInput = {
+    stepOrder?: SortOrder
+  }
+
+  export type WorkforceApprovalDecisionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    stepOrder?: SortOrder
+    stepKind?: SortOrder
+    orgUnitId?: SortOrder
+    orgUnitName?: SortOrder
+    outcome?: SortOrder
+    actorUserId?: SortOrder
+    reason?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WorkforceApprovalDecisionMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    stepOrder?: SortOrder
+    stepKind?: SortOrder
+    orgUnitId?: SortOrder
+    orgUnitName?: SortOrder
+    outcome?: SortOrder
+    actorUserId?: SortOrder
+    reason?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WorkforceApprovalDecisionSumOrderByAggregateInput = {
+    stepOrder?: SortOrder
+  }
+
+  export type EnumWorkforceApprovalStepKindNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceApprovalStepKindNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceApprovalOutcomeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalOutcome | EnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalOutcomeWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalOutcome
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel>
+  }
+
+  export type WorkforceVacationPlanRevisionCountOrderByAggregateInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    snapshotJson?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanRevisionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanRevisionMinOrderByAggregateInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
   export type EnumOrgOperatingModeFilter<$PrismaModel = never> = {
     equals?: $Enums.OrgOperatingMode | EnumOrgOperatingModeFieldRefInput<$PrismaModel>
     in?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
@@ -149394,6 +157434,23 @@ export namespace Prisma {
     none?: WorkforceMigrationStepWhereInput
   }
 
+  export type WorkforceOrgSettingsNullableScalarRelationFilter = {
+    is?: WorkforceOrgSettingsWhereInput | null
+    isNot?: WorkforceOrgSettingsWhereInput | null
+  }
+
+  export type WorkforceApprovalRouteListRelationFilter = {
+    every?: WorkforceApprovalRouteWhereInput
+    some?: WorkforceApprovalRouteWhereInput
+    none?: WorkforceApprovalRouteWhereInput
+  }
+
+  export type WorkforceApprovalDecisionListRelationFilter = {
+    every?: WorkforceApprovalDecisionWhereInput
+    some?: WorkforceApprovalDecisionWhereInput
+    none?: WorkforceApprovalDecisionWhereInput
+  }
+
   export type ElektrawebBridgePolicyNullableScalarRelationFilter = {
     is?: ElektrawebBridgePolicyWhereInput | null
     isNot?: ElektrawebBridgePolicyWhereInput | null
@@ -149558,6 +157615,14 @@ export namespace Prisma {
   }
 
   export type WorkforceMigrationStepOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceApprovalRouteOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceApprovalDecisionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -152510,6 +160575,13 @@ export namespace Prisma {
     connect?: WorkforcePlaceWhereUniqueInput | WorkforcePlaceWhereUniqueInput[]
   }
 
+  export type WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput> | WorkforceApprovalStepCreateWithoutOrgUnitInput[] | WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput | WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput[]
+    createMany?: WorkforceApprovalStepCreateManyOrgUnitInputEnvelope
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+  }
+
   export type OrgUnitUncheckedCreateNestedManyWithoutParentInput = {
     create?: XOR<OrgUnitCreateWithoutParentInput, OrgUnitUncheckedCreateWithoutParentInput> | OrgUnitCreateWithoutParentInput[] | OrgUnitUncheckedCreateWithoutParentInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutParentInput | OrgUnitCreateOrConnectWithoutParentInput[]
@@ -152550,6 +160622,13 @@ export namespace Prisma {
     connectOrCreate?: WorkforcePlaceCreateOrConnectWithoutResponsibleOrgUnitInput | WorkforcePlaceCreateOrConnectWithoutResponsibleOrgUnitInput[]
     createMany?: WorkforcePlaceCreateManyResponsibleOrgUnitInputEnvelope
     connect?: WorkforcePlaceWhereUniqueInput | WorkforcePlaceWhereUniqueInput[]
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput> | WorkforceApprovalStepCreateWithoutOrgUnitInput[] | WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput | WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput[]
+    createMany?: WorkforceApprovalStepCreateManyOrgUnitInputEnvelope
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
   }
 
   export type EnumOrgUnitStatusFieldUpdateOperationsInput = {
@@ -152668,6 +160747,20 @@ export namespace Prisma {
     deleteMany?: WorkforcePlaceScalarWhereInput | WorkforcePlaceScalarWhereInput[]
   }
 
+  export type WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput> | WorkforceApprovalStepCreateWithoutOrgUnitInput[] | WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput | WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput[]
+    upsert?: WorkforceApprovalStepUpsertWithWhereUniqueWithoutOrgUnitInput | WorkforceApprovalStepUpsertWithWhereUniqueWithoutOrgUnitInput[]
+    createMany?: WorkforceApprovalStepCreateManyOrgUnitInputEnvelope
+    set?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    disconnect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    delete?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutOrgUnitInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutOrgUnitInput[]
+    updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutOrgUnitInput | WorkforceApprovalStepUpdateManyWithWhereWithoutOrgUnitInput[]
+    deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+  }
+
   export type OrgUnitUncheckedUpdateManyWithoutParentNestedInput = {
     create?: XOR<OrgUnitCreateWithoutParentInput, OrgUnitUncheckedCreateWithoutParentInput> | OrgUnitCreateWithoutParentInput[] | OrgUnitUncheckedCreateWithoutParentInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutParentInput | OrgUnitCreateOrConnectWithoutParentInput[]
@@ -152752,6 +160845,20 @@ export namespace Prisma {
     deleteMany?: WorkforcePlaceScalarWhereInput | WorkforcePlaceScalarWhereInput[]
   }
 
+  export type WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput> | WorkforceApprovalStepCreateWithoutOrgUnitInput[] | WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput | WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput[]
+    upsert?: WorkforceApprovalStepUpsertWithWhereUniqueWithoutOrgUnitInput | WorkforceApprovalStepUpsertWithWhereUniqueWithoutOrgUnitInput[]
+    createMany?: WorkforceApprovalStepCreateManyOrgUnitInputEnvelope
+    set?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    disconnect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    delete?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutOrgUnitInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutOrgUnitInput[]
+    updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutOrgUnitInput | WorkforceApprovalStepUpdateManyWithWhereWithoutOrgUnitInput[]
+    deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+  }
+
   export type OrganizationCreateNestedOneWithoutOrgUnitCommercialLinksInput = {
     create?: XOR<OrganizationCreateWithoutOrgUnitCommercialLinksInput, OrganizationUncheckedCreateWithoutOrgUnitCommercialLinksInput>
     connectOrCreate?: OrganizationCreateOrConnectWithoutOrgUnitCommercialLinksInput
@@ -152820,6 +160927,13 @@ export namespace Prisma {
     connect?: SatelliteRoleTemplateWhereUniqueInput | SatelliteRoleTemplateWhereUniqueInput[]
   }
 
+  export type WorkforceApprovalStepCreateNestedManyWithoutPositionInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutPositionInput, WorkforceApprovalStepUncheckedCreateWithoutPositionInput> | WorkforceApprovalStepCreateWithoutPositionInput[] | WorkforceApprovalStepUncheckedCreateWithoutPositionInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutPositionInput | WorkforceApprovalStepCreateOrConnectWithoutPositionInput[]
+    createMany?: WorkforceApprovalStepCreateManyPositionInputEnvelope
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+  }
+
   export type WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutPositionInput, WorkforceEmploymentUncheckedCreateWithoutPositionInput> | WorkforceEmploymentCreateWithoutPositionInput[] | WorkforceEmploymentUncheckedCreateWithoutPositionInput[]
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutPositionInput | WorkforceEmploymentCreateOrConnectWithoutPositionInput[]
@@ -152832,6 +160946,13 @@ export namespace Prisma {
     connectOrCreate?: SatelliteRoleTemplateCreateOrConnectWithoutPositionInput | SatelliteRoleTemplateCreateOrConnectWithoutPositionInput[]
     createMany?: SatelliteRoleTemplateCreateManyPositionInputEnvelope
     connect?: SatelliteRoleTemplateWhereUniqueInput | SatelliteRoleTemplateWhereUniqueInput[]
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutPositionInput, WorkforceApprovalStepUncheckedCreateWithoutPositionInput> | WorkforceApprovalStepCreateWithoutPositionInput[] | WorkforceApprovalStepUncheckedCreateWithoutPositionInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutPositionInput | WorkforceApprovalStepCreateOrConnectWithoutPositionInput[]
+    createMany?: WorkforceApprovalStepCreateManyPositionInputEnvelope
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
   }
 
   export type OrgUnitUpdateOneRequiredWithoutPositionsNestedInput = {
@@ -152870,6 +160991,20 @@ export namespace Prisma {
     deleteMany?: SatelliteRoleTemplateScalarWhereInput | SatelliteRoleTemplateScalarWhereInput[]
   }
 
+  export type WorkforceApprovalStepUpdateManyWithoutPositionNestedInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutPositionInput, WorkforceApprovalStepUncheckedCreateWithoutPositionInput> | WorkforceApprovalStepCreateWithoutPositionInput[] | WorkforceApprovalStepUncheckedCreateWithoutPositionInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutPositionInput | WorkforceApprovalStepCreateOrConnectWithoutPositionInput[]
+    upsert?: WorkforceApprovalStepUpsertWithWhereUniqueWithoutPositionInput | WorkforceApprovalStepUpsertWithWhereUniqueWithoutPositionInput[]
+    createMany?: WorkforceApprovalStepCreateManyPositionInputEnvelope
+    set?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    disconnect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    delete?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput[]
+    updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput | WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput[]
+    deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+  }
+
   export type WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutPositionInput, WorkforceEmploymentUncheckedCreateWithoutPositionInput> | WorkforceEmploymentCreateWithoutPositionInput[] | WorkforceEmploymentUncheckedCreateWithoutPositionInput[]
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutPositionInput | WorkforceEmploymentCreateOrConnectWithoutPositionInput[]
@@ -152896,6 +161031,20 @@ export namespace Prisma {
     update?: SatelliteRoleTemplateUpdateWithWhereUniqueWithoutPositionInput | SatelliteRoleTemplateUpdateWithWhereUniqueWithoutPositionInput[]
     updateMany?: SatelliteRoleTemplateUpdateManyWithWhereWithoutPositionInput | SatelliteRoleTemplateUpdateManyWithWhereWithoutPositionInput[]
     deleteMany?: SatelliteRoleTemplateScalarWhereInput | SatelliteRoleTemplateScalarWhereInput[]
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutPositionInput, WorkforceApprovalStepUncheckedCreateWithoutPositionInput> | WorkforceApprovalStepCreateWithoutPositionInput[] | WorkforceApprovalStepUncheckedCreateWithoutPositionInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutPositionInput | WorkforceApprovalStepCreateOrConnectWithoutPositionInput[]
+    upsert?: WorkforceApprovalStepUpsertWithWhereUniqueWithoutPositionInput | WorkforceApprovalStepUpsertWithWhereUniqueWithoutPositionInput[]
+    createMany?: WorkforceApprovalStepCreateManyPositionInputEnvelope
+    set?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    disconnect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    delete?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput[]
+    updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput | WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput[]
+    deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
   }
 
   export type WorkforcePositionCreateNestedOneWithoutRoleTemplatesInput = {
@@ -153300,6 +161449,10 @@ export namespace Prisma {
 
   export type EnumWorkforceEmploymentStatusFieldUpdateOperationsInput = {
     set?: $Enums.WorkforceEmploymentStatus
+  }
+
+  export type NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceWorkRegime | null
   }
 
   export type OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput = {
@@ -155128,11 +163281,25 @@ export namespace Prisma {
     connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
   }
 
+  export type WorkforceVacationPlanRevisionCreateNestedManyWithoutPlanInput = {
+    create?: XOR<WorkforceVacationPlanRevisionCreateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanRevisionCreateWithoutPlanInput[] | WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput | WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanRevisionCreateManyPlanInputEnvelope
+    connect?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+  }
+
   export type WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput = {
     create?: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanLineCreateWithoutPlanInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput[]
     connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput | WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput[]
     createMany?: WorkforceVacationPlanLineCreateManyPlanInputEnvelope
     connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedCreateNestedManyWithoutPlanInput = {
+    create?: XOR<WorkforceVacationPlanRevisionCreateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanRevisionCreateWithoutPlanInput[] | WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput | WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanRevisionCreateManyPlanInputEnvelope
+    connect?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
   }
 
   export type EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput = {
@@ -155171,6 +163338,20 @@ export namespace Prisma {
     deleteMany?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
   }
 
+  export type WorkforceVacationPlanRevisionUpdateManyWithoutPlanNestedInput = {
+    create?: XOR<WorkforceVacationPlanRevisionCreateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanRevisionCreateWithoutPlanInput[] | WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput | WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput[]
+    upsert?: WorkforceVacationPlanRevisionUpsertWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanRevisionUpsertWithWhereUniqueWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanRevisionCreateManyPlanInputEnvelope
+    set?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    delete?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    connect?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    update?: WorkforceVacationPlanRevisionUpdateWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanRevisionUpdateWithWhereUniqueWithoutPlanInput[]
+    updateMany?: WorkforceVacationPlanRevisionUpdateManyWithWhereWithoutPlanInput | WorkforceVacationPlanRevisionUpdateManyWithWhereWithoutPlanInput[]
+    deleteMany?: WorkforceVacationPlanRevisionScalarWhereInput | WorkforceVacationPlanRevisionScalarWhereInput[]
+  }
+
   export type WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput = {
     create?: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanLineCreateWithoutPlanInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput[]
     connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput | WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput[]
@@ -155183,6 +163364,20 @@ export namespace Prisma {
     update?: WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput[]
     updateMany?: WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput | WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput[]
     deleteMany?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanNestedInput = {
+    create?: XOR<WorkforceVacationPlanRevisionCreateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanRevisionCreateWithoutPlanInput[] | WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput | WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput[]
+    upsert?: WorkforceVacationPlanRevisionUpsertWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanRevisionUpsertWithWhereUniqueWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanRevisionCreateManyPlanInputEnvelope
+    set?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    delete?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    connect?: WorkforceVacationPlanRevisionWhereUniqueInput | WorkforceVacationPlanRevisionWhereUniqueInput[]
+    update?: WorkforceVacationPlanRevisionUpdateWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanRevisionUpdateWithWhereUniqueWithoutPlanInput[]
+    updateMany?: WorkforceVacationPlanRevisionUpdateManyWithWhereWithoutPlanInput | WorkforceVacationPlanRevisionUpdateManyWithWhereWithoutPlanInput[]
+    deleteMany?: WorkforceVacationPlanRevisionScalarWhereInput | WorkforceVacationPlanRevisionScalarWhereInput[]
   }
 
   export type WorkforceVacationPlanCreateNestedOneWithoutLinesInput = {
@@ -155535,6 +163730,166 @@ export namespace Prisma {
     update?: XOR<XOR<PermissionUpdateToOneWithWhereWithoutRolesInput, PermissionUpdateWithoutRolesInput>, PermissionUncheckedUpdateWithoutRolesInput>
   }
 
+  export type OrganizationCreateNestedOneWithoutWorkforceOrgSettingsInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceOrgSettingsInput, OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceOrgSettingsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutWorkforceOrgSettingsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceOrgSettingsInput, OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceOrgSettingsInput
+    upsert?: OrganizationUpsertWithoutWorkforceOrgSettingsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutWorkforceOrgSettingsInput, OrganizationUpdateWithoutWorkforceOrgSettingsInput>, OrganizationUncheckedUpdateWithoutWorkforceOrgSettingsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutWorkforceApprovalRoutesInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceApprovalRoutesInput, OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceApprovalRoutesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type WorkforceApprovalStepCreateNestedManyWithoutRouteInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutRouteInput, WorkforceApprovalStepUncheckedCreateWithoutRouteInput> | WorkforceApprovalStepCreateWithoutRouteInput[] | WorkforceApprovalStepUncheckedCreateWithoutRouteInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutRouteInput | WorkforceApprovalStepCreateOrConnectWithoutRouteInput[]
+    createMany?: WorkforceApprovalStepCreateManyRouteInputEnvelope
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateNestedManyWithoutRouteInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutRouteInput, WorkforceApprovalStepUncheckedCreateWithoutRouteInput> | WorkforceApprovalStepCreateWithoutRouteInput[] | WorkforceApprovalStepUncheckedCreateWithoutRouteInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutRouteInput | WorkforceApprovalStepCreateOrConnectWithoutRouteInput[]
+    createMany?: WorkforceApprovalStepCreateManyRouteInputEnvelope
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+  }
+
+  export type EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceApprovalRequestKind
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutWorkforceApprovalRoutesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceApprovalRoutesInput, OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceApprovalRoutesInput
+    upsert?: OrganizationUpsertWithoutWorkforceApprovalRoutesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutWorkforceApprovalRoutesInput, OrganizationUpdateWithoutWorkforceApprovalRoutesInput>, OrganizationUncheckedUpdateWithoutWorkforceApprovalRoutesInput>
+  }
+
+  export type WorkforceApprovalStepUpdateManyWithoutRouteNestedInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutRouteInput, WorkforceApprovalStepUncheckedCreateWithoutRouteInput> | WorkforceApprovalStepCreateWithoutRouteInput[] | WorkforceApprovalStepUncheckedCreateWithoutRouteInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutRouteInput | WorkforceApprovalStepCreateOrConnectWithoutRouteInput[]
+    upsert?: WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput | WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput[]
+    createMany?: WorkforceApprovalStepCreateManyRouteInputEnvelope
+    set?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    disconnect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    delete?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutRouteInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutRouteInput[]
+    updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutRouteInput | WorkforceApprovalStepUpdateManyWithWhereWithoutRouteInput[]
+    deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateManyWithoutRouteNestedInput = {
+    create?: XOR<WorkforceApprovalStepCreateWithoutRouteInput, WorkforceApprovalStepUncheckedCreateWithoutRouteInput> | WorkforceApprovalStepCreateWithoutRouteInput[] | WorkforceApprovalStepUncheckedCreateWithoutRouteInput[]
+    connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutRouteInput | WorkforceApprovalStepCreateOrConnectWithoutRouteInput[]
+    upsert?: WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput | WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput[]
+    createMany?: WorkforceApprovalStepCreateManyRouteInputEnvelope
+    set?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    disconnect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    delete?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+    update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutRouteInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutRouteInput[]
+    updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutRouteInput | WorkforceApprovalStepUpdateManyWithWhereWithoutRouteInput[]
+    deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+  }
+
+  export type WorkforceApprovalRouteCreateNestedOneWithoutStepsInput = {
+    create?: XOR<WorkforceApprovalRouteCreateWithoutStepsInput, WorkforceApprovalRouteUncheckedCreateWithoutStepsInput>
+    connectOrCreate?: WorkforceApprovalRouteCreateOrConnectWithoutStepsInput
+    connect?: WorkforceApprovalRouteWhereUniqueInput
+  }
+
+  export type OrgUnitCreateNestedOneWithoutApprovalStepsInput = {
+    create?: XOR<OrgUnitCreateWithoutApprovalStepsInput, OrgUnitUncheckedCreateWithoutApprovalStepsInput>
+    connectOrCreate?: OrgUnitCreateOrConnectWithoutApprovalStepsInput
+    connect?: OrgUnitWhereUniqueInput
+  }
+
+  export type WorkforcePositionCreateNestedOneWithoutApprovalStepsInput = {
+    create?: XOR<WorkforcePositionCreateWithoutApprovalStepsInput, WorkforcePositionUncheckedCreateWithoutApprovalStepsInput>
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutApprovalStepsInput
+    connect?: WorkforcePositionWhereUniqueInput
+  }
+
+  export type EnumWorkforceApprovalStepKindFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceApprovalStepKind
+  }
+
+  export type WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput = {
+    create?: XOR<WorkforceApprovalRouteCreateWithoutStepsInput, WorkforceApprovalRouteUncheckedCreateWithoutStepsInput>
+    connectOrCreate?: WorkforceApprovalRouteCreateOrConnectWithoutStepsInput
+    upsert?: WorkforceApprovalRouteUpsertWithoutStepsInput
+    connect?: WorkforceApprovalRouteWhereUniqueInput
+    update?: XOR<XOR<WorkforceApprovalRouteUpdateToOneWithWhereWithoutStepsInput, WorkforceApprovalRouteUpdateWithoutStepsInput>, WorkforceApprovalRouteUncheckedUpdateWithoutStepsInput>
+  }
+
+  export type OrgUnitUpdateOneWithoutApprovalStepsNestedInput = {
+    create?: XOR<OrgUnitCreateWithoutApprovalStepsInput, OrgUnitUncheckedCreateWithoutApprovalStepsInput>
+    connectOrCreate?: OrgUnitCreateOrConnectWithoutApprovalStepsInput
+    upsert?: OrgUnitUpsertWithoutApprovalStepsInput
+    disconnect?: OrgUnitWhereInput | boolean
+    delete?: OrgUnitWhereInput | boolean
+    connect?: OrgUnitWhereUniqueInput
+    update?: XOR<XOR<OrgUnitUpdateToOneWithWhereWithoutApprovalStepsInput, OrgUnitUpdateWithoutApprovalStepsInput>, OrgUnitUncheckedUpdateWithoutApprovalStepsInput>
+  }
+
+  export type WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput = {
+    create?: XOR<WorkforcePositionCreateWithoutApprovalStepsInput, WorkforcePositionUncheckedCreateWithoutApprovalStepsInput>
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutApprovalStepsInput
+    upsert?: WorkforcePositionUpsertWithoutApprovalStepsInput
+    disconnect?: WorkforcePositionWhereInput | boolean
+    delete?: WorkforcePositionWhereInput | boolean
+    connect?: WorkforcePositionWhereUniqueInput
+    update?: XOR<XOR<WorkforcePositionUpdateToOneWithWhereWithoutApprovalStepsInput, WorkforcePositionUpdateWithoutApprovalStepsInput>, WorkforcePositionUncheckedUpdateWithoutApprovalStepsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutWorkforceApprovalDecisionsInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceApprovalDecisionsInput, OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceApprovalDecisionsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceApprovalStepKind | null
+  }
+
+  export type EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceApprovalOutcome
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutWorkforceApprovalDecisionsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceApprovalDecisionsInput, OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceApprovalDecisionsInput
+    upsert?: OrganizationUpsertWithoutWorkforceApprovalDecisionsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutWorkforceApprovalDecisionsInput, OrganizationUpdateWithoutWorkforceApprovalDecisionsInput>, OrganizationUncheckedUpdateWithoutWorkforceApprovalDecisionsInput>
+  }
+
+  export type WorkforceVacationPlanCreateNestedOneWithoutRevisionsInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutRevisionsInput, WorkforceVacationPlanUncheckedCreateWithoutRevisionsInput>
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutRevisionsInput
+    connect?: WorkforceVacationPlanWhereUniqueInput
+  }
+
+  export type WorkforceVacationPlanUpdateOneRequiredWithoutRevisionsNestedInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutRevisionsInput, WorkforceVacationPlanUncheckedCreateWithoutRevisionsInput>
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutRevisionsInput
+    upsert?: WorkforceVacationPlanUpsertWithoutRevisionsInput
+    connect?: WorkforceVacationPlanWhereUniqueInput
+    update?: XOR<XOR<WorkforceVacationPlanUpdateToOneWithWhereWithoutRevisionsInput, WorkforceVacationPlanUpdateWithoutRevisionsInput>, WorkforceVacationPlanUncheckedUpdateWithoutRevisionsInput>
+  }
+
   export type OrganizationCreateactiveModulesInput = {
     set: string[]
   }
@@ -155844,6 +164199,26 @@ export namespace Prisma {
     connectOrCreate?: WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput | WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput[]
     createMany?: WorkforceMigrationStepCreateManyOrganizationInputEnvelope
     connect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+  }
+
+  export type WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<WorkforceOrgSettingsCreateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: WorkforceOrgSettingsCreateOrConnectWithoutOrganizationInput
+    connect?: WorkforceOrgSettingsWhereUniqueInput
+  }
+
+  export type WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceApprovalRouteCreateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalRouteCreateWithoutOrganizationInput[] | WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput | WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalRouteCreateManyOrganizationInputEnvelope
+    connect?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+  }
+
+  export type WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceApprovalDecisionCreateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalDecisionCreateWithoutOrganizationInput[] | WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput | WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalDecisionCreateManyOrganizationInputEnvelope
+    connect?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
   }
 
   export type OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput = {
@@ -156223,6 +164598,26 @@ export namespace Prisma {
     connectOrCreate?: WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput | WorkforceMigrationStepCreateOrConnectWithoutOrganizationInput[]
     createMany?: WorkforceMigrationStepCreateManyOrganizationInputEnvelope
     connect?: WorkforceMigrationStepWhereUniqueInput | WorkforceMigrationStepWhereUniqueInput[]
+  }
+
+  export type WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<WorkforceOrgSettingsCreateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: WorkforceOrgSettingsCreateOrConnectWithoutOrganizationInput
+    connect?: WorkforceOrgSettingsWhereUniqueInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceApprovalRouteCreateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalRouteCreateWithoutOrganizationInput[] | WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput | WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalRouteCreateManyOrganizationInputEnvelope
+    connect?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+  }
+
+  export type WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceApprovalDecisionCreateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalDecisionCreateWithoutOrganizationInput[] | WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput | WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalDecisionCreateManyOrganizationInputEnvelope
+    connect?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
   }
 
   export type OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -156910,6 +165305,44 @@ export namespace Prisma {
     update?: WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput | WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: WorkforceMigrationStepScalarWhereInput | WorkforceMigrationStepScalarWhereInput[]
+  }
+
+  export type WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceOrgSettingsCreateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: WorkforceOrgSettingsCreateOrConnectWithoutOrganizationInput
+    upsert?: WorkforceOrgSettingsUpsertWithoutOrganizationInput
+    disconnect?: WorkforceOrgSettingsWhereInput | boolean
+    delete?: WorkforceOrgSettingsWhereInput | boolean
+    connect?: WorkforceOrgSettingsWhereUniqueInput
+    update?: XOR<XOR<WorkforceOrgSettingsUpdateToOneWithWhereWithoutOrganizationInput, WorkforceOrgSettingsUpdateWithoutOrganizationInput>, WorkforceOrgSettingsUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceApprovalRouteCreateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalRouteCreateWithoutOrganizationInput[] | WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput | WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceApprovalRouteUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalRouteUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalRouteCreateManyOrganizationInputEnvelope
+    set?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    disconnect?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    delete?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    connect?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    update?: WorkforceApprovalRouteUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalRouteUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceApprovalRouteUpdateManyWithWhereWithoutOrganizationInput | WorkforceApprovalRouteUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceApprovalRouteScalarWhereInput | WorkforceApprovalRouteScalarWhereInput[]
+  }
+
+  export type WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceApprovalDecisionCreateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalDecisionCreateWithoutOrganizationInput[] | WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput | WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceApprovalDecisionUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalDecisionUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalDecisionCreateManyOrganizationInputEnvelope
+    set?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    disconnect?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    delete?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    connect?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    update?: WorkforceApprovalDecisionUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalDecisionUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceApprovalDecisionUpdateManyWithWhereWithoutOrganizationInput | WorkforceApprovalDecisionUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceApprovalDecisionScalarWhereInput | WorkforceApprovalDecisionScalarWhereInput[]
   }
 
   export type OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput = {
@@ -157656,6 +166089,44 @@ export namespace Prisma {
     update?: WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceMigrationStepUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput | WorkforceMigrationStepUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: WorkforceMigrationStepScalarWhereInput | WorkforceMigrationStepScalarWhereInput[]
+  }
+
+  export type WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceOrgSettingsCreateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: WorkforceOrgSettingsCreateOrConnectWithoutOrganizationInput
+    upsert?: WorkforceOrgSettingsUpsertWithoutOrganizationInput
+    disconnect?: WorkforceOrgSettingsWhereInput | boolean
+    delete?: WorkforceOrgSettingsWhereInput | boolean
+    connect?: WorkforceOrgSettingsWhereUniqueInput
+    update?: XOR<XOR<WorkforceOrgSettingsUpdateToOneWithWhereWithoutOrganizationInput, WorkforceOrgSettingsUpdateWithoutOrganizationInput>, WorkforceOrgSettingsUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceApprovalRouteCreateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalRouteCreateWithoutOrganizationInput[] | WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput | WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceApprovalRouteUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalRouteUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalRouteCreateManyOrganizationInputEnvelope
+    set?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    disconnect?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    delete?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    connect?: WorkforceApprovalRouteWhereUniqueInput | WorkforceApprovalRouteWhereUniqueInput[]
+    update?: WorkforceApprovalRouteUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalRouteUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceApprovalRouteUpdateManyWithWhereWithoutOrganizationInput | WorkforceApprovalRouteUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceApprovalRouteScalarWhereInput | WorkforceApprovalRouteScalarWhereInput[]
+  }
+
+  export type WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceApprovalDecisionCreateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput> | WorkforceApprovalDecisionCreateWithoutOrganizationInput[] | WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput | WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceApprovalDecisionUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalDecisionUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceApprovalDecisionCreateManyOrganizationInputEnvelope
+    set?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    disconnect?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    delete?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    connect?: WorkforceApprovalDecisionWhereUniqueInput | WorkforceApprovalDecisionWhereUniqueInput[]
+    update?: WorkforceApprovalDecisionUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceApprovalDecisionUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceApprovalDecisionUpdateManyWithWhereWithoutOrganizationInput | WorkforceApprovalDecisionUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceApprovalDecisionScalarWhereInput | WorkforceApprovalDecisionScalarWhereInput[]
   }
 
   export type OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -159839,6 +168310,13 @@ export namespace Prisma {
     not?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel> | $Enums.WorkforceEmploymentStatus
   }
 
+  export type NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+  }
+
   export type NestedEnumWorkforceEmploymentStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceEmploymentStatus | EnumWorkforceEmploymentStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceEmploymentStatus[] | ListEnumWorkforceEmploymentStatusFieldRefInput<$PrismaModel>
@@ -159847,6 +168325,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceAbsenceKindFilter<$PrismaModel = never> = {
@@ -160254,6 +168742,74 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPermissionCategoryFilter<$PrismaModel>
     _max?: NestedEnumPermissionCategoryFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalRequestKind | EnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel> | $Enums.WorkforceApprovalRequestKind
+  }
+
+  export type NestedEnumWorkforceApprovalRequestKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalRequestKind | EnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalRequestKind[] | ListEnumWorkforceApprovalRequestKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalRequestKindWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalRequestKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalRequestKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind
+  }
+
+  export type NestedEnumWorkforceApprovalStepKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepKindWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind | null
+  }
+
+  export type NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalOutcome | EnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel> | $Enums.WorkforceApprovalOutcome
+  }
+
+  export type NestedEnumWorkforceApprovalStepKindNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceApprovalStepKindNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceApprovalOutcomeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalOutcome | EnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalOutcome[] | ListEnumWorkforceApprovalOutcomeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalOutcomeWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalOutcome
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalOutcomeFilter<$PrismaModel>
   }
 
   export type NestedEnumOrgOperatingModeFilter<$PrismaModel = never> = {
@@ -160742,6 +169298,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -160826,6 +169385,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -160920,6 +169482,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -161004,6 +169569,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -161320,6 +169888,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -161404,6 +169975,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -161541,6 +170115,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -161625,6 +170202,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -161703,6 +170283,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -161787,6 +170370,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -161881,6 +170467,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -161965,6 +170554,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -162358,6 +170950,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -162442,6 +171037,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -162563,6 +171161,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -162647,6 +171248,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -162758,6 +171362,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -162842,6 +171449,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -162963,6 +171573,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -163047,6 +171660,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -163158,6 +171774,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -163242,6 +171861,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -163336,6 +171958,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -163420,6 +172045,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -163498,6 +172126,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -163582,6 +172213,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -163676,6 +172310,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -163760,6 +172397,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -163787,6 +172427,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutWorkforceScopeInput = {
@@ -163806,6 +172447,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutWorkforceScopeInput = {
@@ -163823,6 +172465,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -163860,6 +172504,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -163960,10 +172606,15 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
     lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+    revisions?: WorkforceVacationPlanRevisionCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput = {
@@ -163977,9 +172628,14 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+    revisions?: WorkforceVacationPlanRevisionUncheckedCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput = {
@@ -164151,6 +172807,8 @@ export namespace Prisma {
     globalPersonId?: UuidFilter<"WorkforceEmployment"> | string
     status?: EnumWorkforceEmploymentStatusFilter<"WorkforceEmployment"> | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFilter<"WorkforceEmployment"> | Date | string
+    contractEndDate?: DateTimeNullableFilter<"WorkforceEmployment"> | Date | string | null
+    workRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforceEmployment"> | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     commercialOrganizationId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
@@ -164248,6 +172906,10 @@ export namespace Prisma {
     approvedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
     rejectionReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceVacationPlan"> | number
+    cancelledAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    cancelledByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    cancelReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
     createdAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
   }
@@ -164381,6 +173043,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutChildrenInput = {
@@ -164400,6 +173063,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutChildrenInput = {
@@ -164424,6 +173088,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutParentInput = {
@@ -164443,6 +173108,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutParentInput = {
@@ -164460,6 +173126,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -164498,6 +173166,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -164538,6 +173208,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionUncheckedCreateWithoutOrgUnitInput = {
@@ -164550,6 +173221,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionCreateOrConnectWithoutOrgUnitInput = {
@@ -164567,6 +173239,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -164604,6 +173278,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -164678,10 +173354,15 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
     lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+    revisions?: WorkforceVacationPlanRevisionCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput = {
@@ -164695,9 +173376,14 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+    revisions?: WorkforceVacationPlanRevisionUncheckedCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput = {
@@ -164755,6 +173441,32 @@ export namespace Prisma {
 
   export type WorkforcePlaceCreateManyResponsibleOrgUnitInputEnvelope = {
     data: WorkforcePlaceCreateManyResponsibleOrgUnitInput | WorkforcePlaceCreateManyResponsibleOrgUnitInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceApprovalStepCreateWithoutOrgUnitInput = {
+    id?: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
+    position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput = {
+    id?: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    positionId?: string | null
+  }
+
+  export type WorkforceApprovalStepCreateOrConnectWithoutOrgUnitInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    create: XOR<WorkforceApprovalStepCreateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput>
+  }
+
+  export type WorkforceApprovalStepCreateManyOrgUnitInputEnvelope = {
+    data: WorkforceApprovalStepCreateManyOrgUnitInput | WorkforceApprovalStepCreateManyOrgUnitInput[]
     skipDuplicates?: boolean
   }
 
@@ -164825,6 +173537,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutChildrenInput = {
@@ -164844,6 +173557,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUpsertWithWhereUniqueWithoutParentInput = {
@@ -164878,6 +173592,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -164916,6 +173632,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -165054,6 +173772,34 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"WorkforcePlace"> | Date | string
   }
 
+  export type WorkforceApprovalStepUpsertWithWhereUniqueWithoutOrgUnitInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    update: XOR<WorkforceApprovalStepUpdateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedUpdateWithoutOrgUnitInput>
+    create: XOR<WorkforceApprovalStepCreateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedCreateWithoutOrgUnitInput>
+  }
+
+  export type WorkforceApprovalStepUpdateWithWhereUniqueWithoutOrgUnitInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    data: XOR<WorkforceApprovalStepUpdateWithoutOrgUnitInput, WorkforceApprovalStepUncheckedUpdateWithoutOrgUnitInput>
+  }
+
+  export type WorkforceApprovalStepUpdateManyWithWhereWithoutOrgUnitInput = {
+    where: WorkforceApprovalStepScalarWhereInput
+    data: XOR<WorkforceApprovalStepUpdateManyMutationInput, WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitInput>
+  }
+
+  export type WorkforceApprovalStepScalarWhereInput = {
+    AND?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+    OR?: WorkforceApprovalStepScalarWhereInput[]
+    NOT?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+    id?: UuidFilter<"WorkforceApprovalStep"> | string
+    routeId?: UuidFilter<"WorkforceApprovalStep"> | string
+    stepOrder?: IntFilter<"WorkforceApprovalStep"> | number
+    kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
+    positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
+  }
+
   export type OrganizationCreateWithoutOrgUnitCommercialLinksInput = {
     id?: string
     name: string
@@ -165123,6 +173869,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -165207,6 +173956,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -165271,6 +174023,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutCommercialLinksInput = {
@@ -165290,6 +174043,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutCommercialLinksInput = {
@@ -165377,6 +174131,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -165461,6 +174218,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -165537,6 +174297,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutCommercialLinksInput = {
@@ -165556,6 +174317,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitCreateWithoutPositionsInput = {
@@ -165575,6 +174337,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutPositionsInput = {
@@ -165594,6 +174357,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutPositionsInput = {
@@ -165606,6 +174370,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -165643,6 +174409,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -165709,6 +174477,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkforceApprovalStepCreateWithoutPositionInput = {
+    id?: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
+    orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateWithoutPositionInput = {
+    id?: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId?: string | null
+  }
+
+  export type WorkforceApprovalStepCreateOrConnectWithoutPositionInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    create: XOR<WorkforceApprovalStepCreateWithoutPositionInput, WorkforceApprovalStepUncheckedCreateWithoutPositionInput>
+  }
+
+  export type WorkforceApprovalStepCreateManyPositionInputEnvelope = {
+    data: WorkforceApprovalStepCreateManyPositionInput | WorkforceApprovalStepCreateManyPositionInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrgUnitUpsertWithoutPositionsInput = {
     update: XOR<OrgUnitUpdateWithoutPositionsInput, OrgUnitUncheckedUpdateWithoutPositionsInput>
     create: XOR<OrgUnitCreateWithoutPositionsInput, OrgUnitUncheckedCreateWithoutPositionsInput>
@@ -165737,6 +174531,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutPositionsInput = {
@@ -165756,6 +174551,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithWhereUniqueWithoutPositionInput = {
@@ -165804,6 +174600,22 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"SatelliteRoleTemplate"> | Date | string
   }
 
+  export type WorkforceApprovalStepUpsertWithWhereUniqueWithoutPositionInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    update: XOR<WorkforceApprovalStepUpdateWithoutPositionInput, WorkforceApprovalStepUncheckedUpdateWithoutPositionInput>
+    create: XOR<WorkforceApprovalStepCreateWithoutPositionInput, WorkforceApprovalStepUncheckedCreateWithoutPositionInput>
+  }
+
+  export type WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    data: XOR<WorkforceApprovalStepUpdateWithoutPositionInput, WorkforceApprovalStepUncheckedUpdateWithoutPositionInput>
+  }
+
+  export type WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput = {
+    where: WorkforceApprovalStepScalarWhereInput
+    data: XOR<WorkforceApprovalStepUpdateManyMutationInput, WorkforceApprovalStepUncheckedUpdateManyWithoutPositionInput>
+  }
+
   export type WorkforcePositionCreateWithoutRoleTemplatesInput = {
     id?: string
     name: string
@@ -165814,6 +174626,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionUncheckedCreateWithoutRoleTemplatesInput = {
@@ -165826,6 +174639,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionCreateOrConnectWithoutRoleTemplatesInput = {
@@ -165854,6 +174668,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforcePositionUncheckedUpdateWithoutRoleTemplatesInput = {
@@ -165866,6 +174681,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforceEmploymentCreateWithoutRoleBindingsInput = {
@@ -165873,6 +174689,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -165911,6 +174729,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -165986,6 +174806,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -166024,6 +174846,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -166089,6 +174913,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -166127,6 +174953,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -166213,6 +175041,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -166251,6 +175081,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -166349,6 +175181,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -166387,6 +175221,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -166472,6 +175308,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -166510,6 +175348,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -166603,6 +175443,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -166687,6 +175530,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -166752,6 +175598,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutEmploymentsInput = {
@@ -166771,6 +175618,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutEmploymentsInput = {
@@ -166788,6 +175636,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionUncheckedCreateWithoutEmploymentsInput = {
@@ -166800,6 +175649,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
   }
 
   export type WorkforcePositionCreateOrConnectWithoutEmploymentsInput = {
@@ -166826,6 +175676,9 @@ export namespace Prisma {
     rejectionReason?: string | null
     source?: string
     sourceRef?: string | null
+    currentStepOrder?: number
+    correctionOfId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -166849,6 +175702,9 @@ export namespace Prisma {
     rejectionReason?: string | null
     source?: string
     sourceRef?: string | null
+    currentStepOrder?: number
+    correctionOfId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -166880,6 +175736,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutManagerEmploymentInput = {
@@ -166899,6 +175756,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutManagerEmploymentInput = {
@@ -167345,6 +176203,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceHourlyLeaveRequestsInput
@@ -167364,6 +176223,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -167388,6 +176248,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -167405,6 +176266,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -167565,6 +176427,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -167649,6 +176514,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -167726,6 +176594,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutEmploymentsInput = {
@@ -167745,6 +176614,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type WorkforcePositionUpsertWithoutEmploymentsInput = {
@@ -167768,6 +176638,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforcePositionUncheckedUpdateWithoutEmploymentsInput = {
@@ -167780,6 +176651,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforceAbsenceUpsertWithWhereUniqueWithoutEmploymentInput = {
@@ -167821,6 +176693,9 @@ export namespace Prisma {
     rejectionReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
     source?: StringFilter<"WorkforceAbsence"> | string
     sourceRef?: StringNullableFilter<"WorkforceAbsence"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceAbsence"> | number
+    correctionOfId?: UuidNullableFilter<"WorkforceAbsence"> | string | null
+    cancelReason?: StringNullableFilter<"WorkforceAbsence"> | string | null
     createdAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAbsence"> | Date | string
   }
@@ -168202,6 +177077,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableFilter<"WorkforceHourlyLeaveRequest"> | Date | string | null
     decidedByUserId?: UuidNullableFilter<"WorkforceHourlyLeaveRequest"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceHourlyLeaveRequest"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceHourlyLeaveRequest"> | number
     createdAt?: DateTimeFilter<"WorkforceHourlyLeaveRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceHourlyLeaveRequest"> | Date | string
   }
@@ -168237,6 +177113,7 @@ export namespace Prisma {
     decidedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     decidedByUserId?: UuidNullableFilter<"WorkforceAdvanceRequest"> | string | null
     rejectionReason?: StringNullableFilter<"WorkforceAdvanceRequest"> | string | null
+    currentStepOrder?: IntFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
@@ -168310,6 +177187,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -168348,6 +177227,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -168394,6 +177275,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -168432,6 +177315,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -168525,6 +177410,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -168609,6 +177497,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -168761,6 +177652,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -168845,6 +177739,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -168901,6 +177798,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -168939,6 +177838,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -169016,6 +177917,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -169054,6 +177957,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -169147,6 +178052,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -169231,6 +178139,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -169263,6 +178174,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutResponsiblePlacesInput = {
@@ -169282,6 +178194,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutResponsiblePlacesInput = {
@@ -169528,6 +178441,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -169612,6 +178528,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -169650,6 +178569,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutResponsiblePlacesInput = {
@@ -169669,6 +178589,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type WorkforceShiftAssignmentUpsertWithWhereUniqueWithoutPlaceInput = {
@@ -169820,6 +178741,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -169904,6 +178828,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -170095,6 +179022,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -170179,6 +179109,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -170322,6 +179255,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -170406,6 +179342,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -170426,6 +179365,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -170464,6 +179405,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -170573,6 +179516,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -170657,6 +179603,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -170683,6 +179632,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -170721,6 +179672,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -170814,6 +179767,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -170898,6 +179854,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -170994,6 +179953,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -171032,6 +179993,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -171173,6 +180136,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -171257,6 +180223,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -171371,6 +180340,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -171409,6 +180380,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -171533,6 +180506,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -171617,6 +180593,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -171760,6 +180739,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -171844,6 +180826,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -171977,6 +180962,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -172061,6 +181049,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -172081,6 +181072,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -172119,6 +181112,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -172228,6 +181223,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -172312,6 +181310,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -172338,6 +181339,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -172376,6 +181379,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -172469,6 +181474,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -172553,6 +181561,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -172573,6 +181584,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -172611,6 +181624,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -172720,6 +181735,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -172804,6 +181822,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -172830,6 +181851,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -172868,6 +181891,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -172961,6 +181986,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -173045,6 +182073,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -173163,6 +182194,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -173247,6 +182281,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -173301,6 +182338,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -173339,6 +182378,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -173414,6 +182455,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -173452,6 +182495,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -173545,6 +182590,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -173629,6 +182677,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -173649,6 +182700,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -173687,6 +182740,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -173796,6 +182851,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -173880,6 +182938,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -173906,6 +182967,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -173944,6 +183007,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -174037,6 +183102,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -174121,6 +183189,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -174273,6 +183344,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -174357,6 +183431,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -174478,6 +183555,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -174562,6 +183642,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -174714,6 +183797,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -174798,6 +183884,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -175044,6 +184133,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -175128,6 +184220,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -175316,6 +184411,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -175400,6 +184498,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -175517,6 +184618,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -175555,6 +184658,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -175667,6 +184772,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -175705,6 +184812,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -175798,6 +184907,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -175882,6 +184994,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -175972,6 +185087,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -176010,6 +185127,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -176146,6 +185265,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -176230,6 +185352,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -176338,6 +185463,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -176376,6 +185503,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -176502,6 +185631,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -176586,6 +185718,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -176606,6 +185741,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -176644,6 +185781,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -176831,6 +185970,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -176915,6 +186057,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -176941,6 +186086,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -176979,6 +186126,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -177144,6 +186293,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutVacationPlansInput = {
@@ -177163,6 +186313,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
     responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutVacationPlansInput = {
@@ -177197,6 +186348,30 @@ export namespace Prisma {
 
   export type WorkforceVacationPlanLineCreateManyPlanInputEnvelope = {
     data: WorkforceVacationPlanLineCreateManyPlanInput | WorkforceVacationPlanLineCreateManyPlanInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceVacationPlanRevisionCreateWithoutPlanInput = {
+    id?: string
+    snapshotJson: JsonNullValueInput | InputJsonValue
+    createdByUserId: string
+    createdAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput = {
+    id?: string
+    snapshotJson: JsonNullValueInput | InputJsonValue
+    createdByUserId: string
+    createdAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionCreateOrConnectWithoutPlanInput = {
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+    create: XOR<WorkforceVacationPlanRevisionCreateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanRevisionCreateManyPlanInputEnvelope = {
+    data: WorkforceVacationPlanRevisionCreateManyPlanInput | WorkforceVacationPlanRevisionCreateManyPlanInput[]
     skipDuplicates?: boolean
   }
 
@@ -177267,6 +186442,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutVacationPlansInput = {
@@ -177286,6 +186462,7 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutPlanInput = {
@@ -177304,6 +186481,33 @@ export namespace Prisma {
     data: XOR<WorkforceVacationPlanLineUpdateManyMutationInput, WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanInput>
   }
 
+  export type WorkforceVacationPlanRevisionUpsertWithWhereUniqueWithoutPlanInput = {
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+    update: XOR<WorkforceVacationPlanRevisionUpdateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedUpdateWithoutPlanInput>
+    create: XOR<WorkforceVacationPlanRevisionCreateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedCreateWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanRevisionUpdateWithWhereUniqueWithoutPlanInput = {
+    where: WorkforceVacationPlanRevisionWhereUniqueInput
+    data: XOR<WorkforceVacationPlanRevisionUpdateWithoutPlanInput, WorkforceVacationPlanRevisionUncheckedUpdateWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanRevisionUpdateManyWithWhereWithoutPlanInput = {
+    where: WorkforceVacationPlanRevisionScalarWhereInput
+    data: XOR<WorkforceVacationPlanRevisionUpdateManyMutationInput, WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanRevisionScalarWhereInput = {
+    AND?: WorkforceVacationPlanRevisionScalarWhereInput | WorkforceVacationPlanRevisionScalarWhereInput[]
+    OR?: WorkforceVacationPlanRevisionScalarWhereInput[]
+    NOT?: WorkforceVacationPlanRevisionScalarWhereInput | WorkforceVacationPlanRevisionScalarWhereInput[]
+    id?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    planId?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    snapshotJson?: JsonFilter<"WorkforceVacationPlanRevision">
+    createdByUserId?: UuidFilter<"WorkforceVacationPlanRevision"> | string
+    createdAt?: DateTimeFilter<"WorkforceVacationPlanRevision"> | Date | string
+  }
+
   export type WorkforceVacationPlanCreateWithoutLinesInput = {
     id?: string
     year: number
@@ -177314,10 +186518,15 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
     orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
+    revisions?: WorkforceVacationPlanRevisionCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanUncheckedCreateWithoutLinesInput = {
@@ -177332,8 +186541,13 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    revisions?: WorkforceVacationPlanRevisionUncheckedCreateNestedManyWithoutPlanInput
   }
 
   export type WorkforceVacationPlanCreateOrConnectWithoutLinesInput = {
@@ -177346,6 +186560,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -177384,6 +186600,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -177435,10 +186653,15 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
     orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
+    revisions?: WorkforceVacationPlanRevisionUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanUncheckedUpdateWithoutLinesInput = {
@@ -177453,8 +186676,13 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revisions?: WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutVacationPlanLinesInput = {
@@ -177473,6 +186701,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -177511,6 +186741,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -177574,6 +186806,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -177612,6 +186846,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -177697,6 +186933,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -177735,6 +186973,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -177828,6 +187068,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -177912,6 +187155,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -178006,6 +187252,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -178090,6 +187339,9 @@ export namespace Prisma {
     workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -178297,6 +187549,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -178381,6 +187636,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -178556,6 +187814,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -178640,6 +187901,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -178925,6 +188189,1416 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationCreateWithoutWorkforceOrgSettingsInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceOrgSettingsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceOrgSettingsInput, OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput>
+  }
+
+  export type OrganizationUpsertWithoutWorkforceOrgSettingsInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceOrgSettingsInput, OrganizationUncheckedUpdateWithoutWorkforceOrgSettingsInput>
+    create: XOR<OrganizationCreateWithoutWorkforceOrgSettingsInput, OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceOrgSettingsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceOrgSettingsInput, OrganizationUncheckedUpdateWithoutWorkforceOrgSettingsInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceOrgSettingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceOrgSettingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutWorkforceApprovalRoutesInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceApprovalRoutesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceApprovalRoutesInput, OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput>
+  }
+
+  export type WorkforceApprovalStepCreateWithoutRouteInput = {
+    id?: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
+    position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
+  }
+
+  export type WorkforceApprovalStepUncheckedCreateWithoutRouteInput = {
+    id?: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId?: string | null
+    positionId?: string | null
+  }
+
+  export type WorkforceApprovalStepCreateOrConnectWithoutRouteInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    create: XOR<WorkforceApprovalStepCreateWithoutRouteInput, WorkforceApprovalStepUncheckedCreateWithoutRouteInput>
+  }
+
+  export type WorkforceApprovalStepCreateManyRouteInputEnvelope = {
+    data: WorkforceApprovalStepCreateManyRouteInput | WorkforceApprovalStepCreateManyRouteInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutWorkforceApprovalRoutesInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceApprovalRoutesInput, OrganizationUncheckedUpdateWithoutWorkforceApprovalRoutesInput>
+    create: XOR<OrganizationCreateWithoutWorkforceApprovalRoutesInput, OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceApprovalRoutesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceApprovalRoutesInput, OrganizationUncheckedUpdateWithoutWorkforceApprovalRoutesInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceApprovalRoutesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceApprovalRoutesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    update: XOR<WorkforceApprovalStepUpdateWithoutRouteInput, WorkforceApprovalStepUncheckedUpdateWithoutRouteInput>
+    create: XOR<WorkforceApprovalStepCreateWithoutRouteInput, WorkforceApprovalStepUncheckedCreateWithoutRouteInput>
+  }
+
+  export type WorkforceApprovalStepUpdateWithWhereUniqueWithoutRouteInput = {
+    where: WorkforceApprovalStepWhereUniqueInput
+    data: XOR<WorkforceApprovalStepUpdateWithoutRouteInput, WorkforceApprovalStepUncheckedUpdateWithoutRouteInput>
+  }
+
+  export type WorkforceApprovalStepUpdateManyWithWhereWithoutRouteInput = {
+    where: WorkforceApprovalStepScalarWhereInput
+    data: XOR<WorkforceApprovalStepUpdateManyMutationInput, WorkforceApprovalStepUncheckedUpdateManyWithoutRouteInput>
+  }
+
+  export type WorkforceApprovalRouteCreateWithoutStepsInput = {
+    id?: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceApprovalRoutesInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedCreateWithoutStepsInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceApprovalRouteCreateOrConnectWithoutStepsInput = {
+    where: WorkforceApprovalRouteWhereUniqueInput
+    create: XOR<WorkforceApprovalRouteCreateWithoutStepsInput, WorkforceApprovalRouteUncheckedCreateWithoutStepsInput>
+  }
+
+  export type OrgUnitCreateWithoutApprovalStepsInput = {
+    id?: string
+    name: string
+    code?: string | null
+    status?: $Enums.OrgUnitStatus
+    sortOrder?: number
+    managerUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutOrgUnitsInput
+    parent?: OrgUnitCreateNestedOneWithoutChildrenInput
+    children?: OrgUnitCreateNestedManyWithoutParentInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutManagedOrgUnitsInput
+    positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
+    responsiblePlaces?: WorkforcePlaceCreateNestedManyWithoutResponsibleOrgUnitInput
+  }
+
+  export type OrgUnitUncheckedCreateWithoutApprovalStepsInput = {
+    id?: string
+    workforceScopeId: string
+    parentId?: string | null
+    name: string
+    code?: string | null
+    status?: $Enums.OrgUnitStatus
+    sortOrder?: number
+    managerEmploymentId?: string | null
+    managerUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    children?: OrgUnitUncheckedCreateNestedManyWithoutParentInput
+    positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
+    responsiblePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutResponsibleOrgUnitInput
+  }
+
+  export type OrgUnitCreateOrConnectWithoutApprovalStepsInput = {
+    where: OrgUnitWhereUniqueInput
+    create: XOR<OrgUnitCreateWithoutApprovalStepsInput, OrgUnitUncheckedCreateWithoutApprovalStepsInput>
+  }
+
+  export type WorkforcePositionCreateWithoutApprovalStepsInput = {
+    id?: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionUncheckedCreateWithoutApprovalStepsInput = {
+    id?: string
+    orgUnitId: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionCreateOrConnectWithoutApprovalStepsInput = {
+    where: WorkforcePositionWhereUniqueInput
+    create: XOR<WorkforcePositionCreateWithoutApprovalStepsInput, WorkforcePositionUncheckedCreateWithoutApprovalStepsInput>
+  }
+
+  export type WorkforceApprovalRouteUpsertWithoutStepsInput = {
+    update: XOR<WorkforceApprovalRouteUpdateWithoutStepsInput, WorkforceApprovalRouteUncheckedUpdateWithoutStepsInput>
+    create: XOR<WorkforceApprovalRouteCreateWithoutStepsInput, WorkforceApprovalRouteUncheckedCreateWithoutStepsInput>
+    where?: WorkforceApprovalRouteWhereInput
+  }
+
+  export type WorkforceApprovalRouteUpdateToOneWithWhereWithoutStepsInput = {
+    where?: WorkforceApprovalRouteWhereInput
+    data: XOR<WorkforceApprovalRouteUpdateWithoutStepsInput, WorkforceApprovalRouteUncheckedUpdateWithoutStepsInput>
+  }
+
+  export type WorkforceApprovalRouteUpdateWithoutStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceApprovalRoutesNestedInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedUpdateWithoutStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgUnitUpsertWithoutApprovalStepsInput = {
+    update: XOR<OrgUnitUpdateWithoutApprovalStepsInput, OrgUnitUncheckedUpdateWithoutApprovalStepsInput>
+    create: XOR<OrgUnitCreateWithoutApprovalStepsInput, OrgUnitUncheckedCreateWithoutApprovalStepsInput>
+    where?: OrgUnitWhereInput
+  }
+
+  export type OrgUnitUpdateToOneWithWhereWithoutApprovalStepsInput = {
+    where?: OrgUnitWhereInput
+    data: XOR<OrgUnitUpdateWithoutApprovalStepsInput, OrgUnitUncheckedUpdateWithoutApprovalStepsInput>
+  }
+
+  export type OrgUnitUpdateWithoutApprovalStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutOrgUnitsNestedInput
+    parent?: OrgUnitUpdateOneWithoutChildrenNestedInput
+    children?: OrgUnitUpdateManyWithoutParentNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutManagedOrgUnitsNestedInput
+    positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
+    responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+  }
+
+  export type OrgUnitUncheckedUpdateWithoutApprovalStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    children?: OrgUnitUncheckedUpdateManyWithoutParentNestedInput
+    positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
+    responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+  }
+
+  export type WorkforcePositionUpsertWithoutApprovalStepsInput = {
+    update: XOR<WorkforcePositionUpdateWithoutApprovalStepsInput, WorkforcePositionUncheckedUpdateWithoutApprovalStepsInput>
+    create: XOR<WorkforcePositionCreateWithoutApprovalStepsInput, WorkforcePositionUncheckedCreateWithoutApprovalStepsInput>
+    where?: WorkforcePositionWhereInput
+  }
+
+  export type WorkforcePositionUpdateToOneWithWhereWithoutApprovalStepsInput = {
+    where?: WorkforcePositionWhereInput
+    data: XOR<WorkforcePositionUpdateWithoutApprovalStepsInput, WorkforcePositionUncheckedUpdateWithoutApprovalStepsInput>
+  }
+
+  export type WorkforcePositionUpdateWithoutApprovalStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUncheckedUpdateWithoutApprovalStepsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+  }
+
+  export type OrganizationCreateWithoutWorkforceApprovalDecisionsInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceApprovalDecisionsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceApprovalDecisionsInput, OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput>
+  }
+
+  export type OrganizationUpsertWithoutWorkforceApprovalDecisionsInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceApprovalDecisionsInput, OrganizationUncheckedUpdateWithoutWorkforceApprovalDecisionsInput>
+    create: XOR<OrganizationCreateWithoutWorkforceApprovalDecisionsInput, OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceApprovalDecisionsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceApprovalDecisionsInput, OrganizationUncheckedUpdateWithoutWorkforceApprovalDecisionsInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceApprovalDecisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceApprovalDecisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type WorkforceVacationPlanCreateWithoutRevisionsInput = {
+    id?: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
+    orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
+    lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateWithoutRevisionsInput = {
+    id?: string
+    workforceScopeId: string
+    year: number
+    orgUnitId?: string | null
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanCreateOrConnectWithoutRevisionsInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    create: XOR<WorkforceVacationPlanCreateWithoutRevisionsInput, WorkforceVacationPlanUncheckedCreateWithoutRevisionsInput>
+  }
+
+  export type WorkforceVacationPlanUpsertWithoutRevisionsInput = {
+    update: XOR<WorkforceVacationPlanUpdateWithoutRevisionsInput, WorkforceVacationPlanUncheckedUpdateWithoutRevisionsInput>
+    create: XOR<WorkforceVacationPlanCreateWithoutRevisionsInput, WorkforceVacationPlanUncheckedCreateWithoutRevisionsInput>
+    where?: WorkforceVacationPlanWhereInput
+  }
+
+  export type WorkforceVacationPlanUpdateToOneWithWhereWithoutRevisionsInput = {
+    where?: WorkforceVacationPlanWhereInput
+    data: XOR<WorkforceVacationPlanUpdateWithoutRevisionsInput, WorkforceVacationPlanUncheckedUpdateWithoutRevisionsInput>
+  }
+
+  export type WorkforceVacationPlanUpdateWithoutRevisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
+    orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
+    lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateWithoutRevisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
   }
 
   export type UsageMeterEventCreateWithoutOrganizationInput = {
@@ -179855,6 +190529,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -179892,6 +190568,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -180341,6 +191019,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutHourlyLeaveRequestsInput
@@ -180360,6 +191039,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -180384,6 +191064,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -180401,6 +191082,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -180511,6 +191193,99 @@ export namespace Prisma {
 
   export type WorkforceMigrationStepCreateManyOrganizationInputEnvelope = {
     data: WorkforceMigrationStepCreateManyOrganizationInput | WorkforceMigrationStepCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceOrgSettingsCreateWithoutOrganizationInput = {
+    fiveDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: number | null
+    advanceAllowHrProxy?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput = {
+    fiveDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: number | null
+    advanceAllowHrProxy?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceOrgSettingsCreateOrConnectWithoutOrganizationInput = {
+    where: WorkforceOrgSettingsWhereUniqueInput
+    create: XOR<WorkforceOrgSettingsCreateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteCreateWithoutOrganizationInput = {
+    id?: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    steps?: WorkforceApprovalStepCreateNestedManyWithoutRouteInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    steps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutRouteInput
+  }
+
+  export type WorkforceApprovalRouteCreateOrConnectWithoutOrganizationInput = {
+    where: WorkforceApprovalRouteWhereUniqueInput
+    create: XOR<WorkforceApprovalRouteCreateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteCreateManyOrganizationInputEnvelope = {
+    data: WorkforceApprovalRouteCreateManyOrganizationInput | WorkforceApprovalRouteCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceApprovalDecisionCreateWithoutOrganizationInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind?: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: string | null
+    orgUnitName?: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind?: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: string | null
+    orgUnitName?: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type WorkforceApprovalDecisionCreateOrConnectWithoutOrganizationInput = {
+    where: WorkforceApprovalDecisionWhereUniqueInput
+    create: XOR<WorkforceApprovalDecisionCreateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalDecisionCreateManyOrganizationInputEnvelope = {
+    data: WorkforceApprovalDecisionCreateManyOrganizationInput | WorkforceApprovalDecisionCreateManyOrganizationInput[]
     skipDuplicates?: boolean
   }
 
@@ -180770,6 +191545,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -180854,6 +191632,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -180937,6 +191718,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -181020,6 +191804,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -182294,6 +193081,102 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"WorkforceMigrationStep"> | Date | string
   }
 
+  export type WorkforceOrgSettingsUpsertWithoutOrganizationInput = {
+    update: XOR<WorkforceOrgSettingsUpdateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<WorkforceOrgSettingsCreateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedCreateWithoutOrganizationInput>
+    where?: WorkforceOrgSettingsWhereInput
+  }
+
+  export type WorkforceOrgSettingsUpdateToOneWithWhereWithoutOrganizationInput = {
+    where?: WorkforceOrgSettingsWhereInput
+    data: XOR<WorkforceOrgSettingsUpdateWithoutOrganizationInput, WorkforceOrgSettingsUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceOrgSettingsUpdateWithoutOrganizationInput = {
+    fiveDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
+    advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceOrgSettingsUncheckedUpdateWithoutOrganizationInput = {
+    fiveDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    sixDayWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    medicalWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    customWeeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxPercent?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
+    advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalRouteUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceApprovalRouteWhereUniqueInput
+    update: XOR<WorkforceApprovalRouteUpdateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<WorkforceApprovalRouteCreateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceApprovalRouteWhereUniqueInput
+    data: XOR<WorkforceApprovalRouteUpdateWithoutOrganizationInput, WorkforceApprovalRouteUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteUpdateManyWithWhereWithoutOrganizationInput = {
+    where: WorkforceApprovalRouteScalarWhereInput
+    data: XOR<WorkforceApprovalRouteUpdateManyMutationInput, WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalRouteScalarWhereInput = {
+    AND?: WorkforceApprovalRouteScalarWhereInput | WorkforceApprovalRouteScalarWhereInput[]
+    OR?: WorkforceApprovalRouteScalarWhereInput[]
+    NOT?: WorkforceApprovalRouteScalarWhereInput | WorkforceApprovalRouteScalarWhereInput[]
+    id?: UuidFilter<"WorkforceApprovalRoute"> | string
+    organizationId?: UuidFilter<"WorkforceApprovalRoute"> | string
+    kind?: EnumWorkforceApprovalRequestKindFilter<"WorkforceApprovalRoute"> | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFilter<"WorkforceApprovalRoute"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceApprovalRoute"> | Date | string
+  }
+
+  export type WorkforceApprovalDecisionUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceApprovalDecisionWhereUniqueInput
+    update: XOR<WorkforceApprovalDecisionUpdateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<WorkforceApprovalDecisionCreateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalDecisionUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceApprovalDecisionWhereUniqueInput
+    data: XOR<WorkforceApprovalDecisionUpdateWithoutOrganizationInput, WorkforceApprovalDecisionUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalDecisionUpdateManyWithWhereWithoutOrganizationInput = {
+    where: WorkforceApprovalDecisionScalarWhereInput
+    data: XOR<WorkforceApprovalDecisionUpdateManyMutationInput, WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type WorkforceApprovalDecisionScalarWhereInput = {
+    AND?: WorkforceApprovalDecisionScalarWhereInput | WorkforceApprovalDecisionScalarWhereInput[]
+    OR?: WorkforceApprovalDecisionScalarWhereInput[]
+    NOT?: WorkforceApprovalDecisionScalarWhereInput | WorkforceApprovalDecisionScalarWhereInput[]
+    id?: UuidFilter<"WorkforceApprovalDecision"> | string
+    organizationId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    entityType?: StringFilter<"WorkforceApprovalDecision"> | string
+    entityId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    stepOrder?: IntFilter<"WorkforceApprovalDecision"> | number
+    stepKind?: EnumWorkforceApprovalStepKindNullableFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: UuidNullableFilter<"WorkforceApprovalDecision"> | string | null
+    orgUnitName?: StringNullableFilter<"WorkforceApprovalDecision"> | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFilter<"WorkforceApprovalDecision"> | $Enums.WorkforceApprovalOutcome
+    actorUserId?: UuidFilter<"WorkforceApprovalDecision"> | string
+    reason?: StringNullableFilter<"WorkforceApprovalDecision"> | string | null
+    createdAt?: DateTimeFilter<"WorkforceApprovalDecision"> | Date | string
+  }
+
   export type OrgUnitCommercialLinkUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: OrgUnitCommercialLinkWhereUniqueInput
     update: XOR<OrgUnitCommercialLinkUpdateWithoutOrganizationInput, OrgUnitCommercialLinkUncheckedUpdateWithoutOrganizationInput>
@@ -182561,6 +193444,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -182645,6 +193531,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -182868,6 +193757,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -182952,6 +193844,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -183046,6 +193941,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -183130,6 +194028,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -183208,6 +194109,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
@@ -183292,6 +194196,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
@@ -183375,6 +194282,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -183459,6 +194369,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -183553,6 +194466,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
@@ -183637,6 +194553,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
@@ -183726,6 +194645,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -183810,6 +194732,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -183888,6 +194813,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -183972,6 +194900,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -184066,6 +194997,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -184150,6 +195084,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -184370,6 +195307,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -184453,6 +195393,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -184795,6 +195738,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -184878,6 +195824,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -185191,6 +196140,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -185275,6 +196227,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -185399,6 +196354,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -185483,6 +196441,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -185616,6 +196577,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -185700,6 +196664,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -185870,6 +196837,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -185954,6 +196924,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -186382,6 +197355,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -186466,6 +197442,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -186599,6 +197578,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -186683,6 +197665,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -186806,6 +197791,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -186890,6 +197878,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -187023,6 +198014,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -187107,6 +198101,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -187230,6 +198227,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -187314,6 +198314,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -187447,6 +198450,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -187531,6 +198537,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -187654,6 +198663,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -187738,6 +198750,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -187878,6 +198893,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -187962,6 +198980,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -188056,6 +199077,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -188140,6 +199164,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -188295,6 +199322,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -188379,6 +199409,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -188551,6 +199584,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -188635,6 +199671,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -188776,6 +199815,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -188860,6 +199902,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -188938,6 +199983,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -189022,6 +200070,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -189155,6 +200206,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -189239,6 +200293,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -189362,6 +200419,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -189446,6 +200506,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -189540,6 +200603,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -189624,6 +200690,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -189702,6 +200771,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -189786,6 +200858,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -189948,6 +201023,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -190032,6 +201110,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -190142,6 +201223,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -190226,6 +201310,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -190381,6 +201468,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -190465,6 +201555,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -190590,6 +201683,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -190674,6 +201770,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -190820,6 +201919,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -190904,6 +202006,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -191046,6 +202151,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -191130,6 +202238,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -191224,6 +202335,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -191308,6 +202422,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -191386,6 +202503,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -191470,6 +202590,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -191564,6 +202687,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -191648,6 +202774,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -191726,6 +202855,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -191810,6 +202942,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -191904,6 +203039,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -191988,6 +203126,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -192066,6 +203207,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -192150,6 +203294,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -192244,6 +203391,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -192328,6 +203478,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -192406,6 +203559,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -192490,6 +203646,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -192584,6 +203743,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -192668,6 +203830,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -192746,6 +203911,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -192830,6 +203998,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -192924,6 +204095,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -193008,6 +204182,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -193160,6 +204337,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -193244,6 +204424,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -193369,6 +204552,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -193453,6 +204639,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -193602,6 +204791,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
@@ -193686,6 +204878,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
@@ -193811,6 +205006,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -193895,6 +205093,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -194125,6 +205326,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -194162,6 +205365,10 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -194222,6 +205429,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutWorkforceScopeInput = {
@@ -194241,6 +205449,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateManyWithoutWorkforceScopeInput = {
@@ -194261,6 +205470,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194298,6 +205509,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194332,6 +205545,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194402,10 +205617,15 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
     lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+    revisions?: WorkforceVacationPlanRevisionUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanUncheckedUpdateWithoutWorkforceScopeInput = {
@@ -194419,9 +205639,14 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
+    revisions?: WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeInput = {
@@ -194435,6 +205660,10 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -194587,6 +205816,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -194616,6 +205847,10 @@ export namespace Prisma {
     approvedAt?: Date | string | null
     rejectedAt?: Date | string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
+    cancelledAt?: Date | string | null
+    cancelledByUserId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -194635,6 +205870,14 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceApprovalStepCreateManyOrgUnitInput = {
+    id?: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    positionId?: string | null
+  }
+
   export type OrgUnitUpdateWithoutParentInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -194652,6 +205895,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutParentInput = {
@@ -194671,6 +205915,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateManyWithoutParentInput = {
@@ -194696,6 +205941,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforcePositionUncheckedUpdateWithoutOrgUnitInput = {
@@ -194708,6 +205954,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
   }
 
   export type WorkforcePositionUncheckedUpdateManyWithoutOrgUnitInput = {
@@ -194725,6 +205972,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194762,6 +206011,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194796,6 +206047,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194842,10 +206095,15 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
     lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+    revisions?: WorkforceVacationPlanRevisionUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanUncheckedUpdateWithoutOrgUnitInput = {
@@ -194859,9 +206117,14 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
+    revisions?: WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanNestedInput
   }
 
   export type WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitInput = {
@@ -194875,6 +206138,10 @@ export namespace Prisma {
     approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -194932,6 +206199,30 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceApprovalStepUpdateWithoutOrgUnitInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
+    position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateWithoutOrgUnitInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routeId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    positionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routeId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    positionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type WorkforceEmploymentCreateManyPositionInput = {
     id?: string
     organizationId: string
@@ -194940,6 +206231,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -194959,11 +206252,21 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceApprovalStepCreateManyPositionInput = {
+    id?: string
+    routeId: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId?: string | null
+  }
+
   export type WorkforceEmploymentUpdateWithoutPositionInput = {
     id?: StringFieldUpdateOperationsInput | string
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -195001,6 +206304,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -195035,6 +206340,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -195072,6 +206379,30 @@ export namespace Prisma {
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalStepUpdateWithoutPositionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
+    orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateWithoutPositionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routeId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateManyWithoutPositionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routeId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type WorkforceRoleBindingCreateManyManualGrantInput = {
@@ -195153,6 +206484,9 @@ export namespace Prisma {
     rejectionReason?: string | null
     source?: string
     sourceRef?: string | null
+    currentStepOrder?: number
+    correctionOfId?: string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -195332,6 +206666,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -195347,6 +206682,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -195394,6 +206730,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -195417,6 +206756,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -195440,6 +206782,9 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
+    correctionOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -195461,6 +206806,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutManagerEmploymentInput = {
@@ -195480,6 +206826,7 @@ export namespace Prisma {
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateManyWithoutManagerEmploymentInput = {
@@ -195956,6 +207303,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceHourlyLeaveRequestsNestedInput
@@ -195975,6 +207323,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -195993,6 +207342,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -196007,6 +207357,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -196024,6 +207375,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -196040,6 +207392,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -196894,6 +208247,13 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceVacationPlanRevisionCreateManyPlanInput = {
+    id?: string
+    snapshotJson: JsonNullValueInput | InputJsonValue
+    createdByUserId: string
+    createdAt?: Date | string
+  }
+
   export type WorkforceVacationPlanLineUpdateWithoutPlanInput = {
     id?: StringFieldUpdateOperationsInput | string
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -196922,6 +208282,27 @@ export namespace Prisma {
     days?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUpdateWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedUpdateWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanRevisionUncheckedUpdateManyWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrganizationBundleCreateManyBundleInput = {
@@ -197066,6 +208447,38 @@ export namespace Prisma {
   export type RolePermissionUncheckedUpdateManyWithoutPermissionInput = {
     roleId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalStepCreateManyRouteInput = {
+    id?: string
+    stepOrder: number
+    kind: $Enums.WorkforceApprovalStepKind
+    orgUnitId?: string | null
+    positionId?: string | null
+  }
+
+  export type WorkforceApprovalStepUpdateWithoutRouteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
+    position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateWithoutRouteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    positionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type WorkforceApprovalStepUncheckedUpdateManyWithoutRouteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UsageMeterEventCreateManyOrganizationInput = {
@@ -197380,6 +208793,8 @@ export namespace Prisma {
     globalPersonId: string
     status?: $Enums.WorkforceEmploymentStatus
     hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: string | null
     commercialOrganizationId?: string | null
     platformUserId?: string | null
@@ -197534,6 +208949,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -197549,6 +208965,7 @@ export namespace Prisma {
     decidedAt?: Date | string | null
     decidedByUserId?: string | null
     rejectionReason?: string | null
+    currentStepOrder?: number
     financeQueuedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -197585,6 +209002,27 @@ export namespace Prisma {
     summaryJson?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type WorkforceApprovalRouteCreateManyOrganizationInput = {
+    id?: string
+    kind: $Enums.WorkforceApprovalRequestKind
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceApprovalDecisionCreateManyOrganizationInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    stepOrder: number
+    stepKind?: $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: string | null
+    orgUnitName?: string | null
+    outcome: $Enums.WorkforceApprovalOutcome
+    actorUserId: string
+    reason?: string | null
+    createdAt?: Date | string
   }
 
   export type OrgUnitCommercialLinkCreateManyOrganizationInput = {
@@ -198605,6 +210043,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -198642,6 +210082,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -198676,6 +210118,8 @@ export namespace Prisma {
     globalPersonId?: StringFieldUpdateOperationsInput | string
     status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
     hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
     commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -199119,6 +210563,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutHourlyLeaveRequestsNestedInput
@@ -199138,6 +210583,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -199156,6 +210602,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -199170,6 +210617,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -199187,6 +210635,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -199203,6 +210652,7 @@ export namespace Prisma {
     decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decidedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -199307,6 +210757,71 @@ export namespace Prisma {
     summaryJson?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalRouteUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    steps?: WorkforceApprovalStepUpdateManyWithoutRouteNestedInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    steps?: WorkforceApprovalStepUncheckedUpdateManyWithoutRouteNestedInput
+  }
+
+  export type WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumWorkforceApprovalRequestKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalRequestKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalDecisionUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalDecisionUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    stepOrder?: IntFieldUpdateOperationsInput | number
+    stepKind?: NullableEnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind | null
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    orgUnitName?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: EnumWorkforceApprovalOutcomeFieldUpdateOperationsInput | $Enums.WorkforceApprovalOutcome
+    actorUserId?: StringFieldUpdateOperationsInput | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrgUnitCommercialLinkUpdateWithoutOrganizationInput = {
@@ -199483,6 +210998,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -199566,6 +211084,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -199986,6 +211507,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -200069,6 +211593,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
@@ -200282,6 +211809,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
@@ -200365,6 +211895,9 @@ export namespace Prisma {
     workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
     elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
     clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput

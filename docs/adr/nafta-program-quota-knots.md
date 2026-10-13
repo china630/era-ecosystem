@@ -52,7 +52,7 @@ Composition edits must **not** rewrite the contract of stays already opened.
 | **One current** | Partial unique index `("organizationId", code) WHERE is_current` — at most one sellable row per code. |
 | **Snapshot prefer** | Assign reads `entitlementSnapshot` whenever present (including empty `members` = frozen empty/heuristic). Null snapshot only until backfill. |
 | **Backfill** | Migration / `POST ?action=backfill-snapshots` fills null snapshots from the pinned template. |
-| **Seed / import** | Skip or `ensureWritableCurrentTemplate` (bump) before mutating a current row that has instances. |
+| **Seed / import** | Skip or `ensureWritableCurrentTemplate` (bump) before mutating a current row that has instances. `prisma/seed-data/pkg-standart.json` is the live current PKG-STANDART composition (droplet snapshot 2026-10-13, v9). Re-seed replaces an unpinned current row and leaves a pinned row alone. The retired PDF bath grid (`NAFTALAN_BATH` 4/5/6…) is not seeded. |
 | **GC** | `POST ?action=purge-retired` deletes retired versions with **zero** `ProgramInstance` pins. |
 | **Support UX** | Admin: show retired toggle + version badge; package-assign shows `code · vN` pin. |
 | **Pin** | `ProgramInstance.templateId` stays on the version used at instantiate (or at last explicit package **code** change). Night-only recalc must **not** re-point to latest. |

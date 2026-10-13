@@ -253,6 +253,14 @@ export function OrchSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
+            href={wf("/workspace/workforce/hr-settings")}
+            label={t("wfHrSettings")}
+            isActive={pathname.startsWith("/workspace/workforce/hr-settings")}
+            icon={Settings}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
             href={wf("/workspace/workforce/vacation-plans")}
             label={t("wfVacationPlans")}
             isActive={pathname.startsWith("/workspace/workforce/vacation-plans")}

@@ -677,6 +677,7 @@
     "wfAttendance": "Davamiyyət",
     "wfFloor": "Doska",
     "wfRequests": "Sorğular",
+    "wfHrSettings": "Kadr tənzimləri",
     "wfMe": "Kabinetim"
   },
   "headerStrip": {
@@ -1155,6 +1156,11 @@
     "loading": "Yüklənir…",
     "empty": "Aktiv işəgötürmə yoxdur.",
     "colPerson": "Şəxs",
+    "colFin": "FIN",
+    "colContractEnd": "Müqavilənin sonu",
+    "colRegime": "İş rejimi",
+    "openEnded": "Müddətsiz",
+    "regimeEmpty": "Seçilməyib",
     "colOrgUnit": "Org vahidi",
     "colPosition": "Vəzifə",
     "colHireDate": "Tarix",
@@ -1278,6 +1284,21 @@
     "hireWithoutFinConfirm": "FIN olmadan qəbul? Şəxsiyyət tutuşması zəif olacaq.",
     "enableCabinet": "Telefon kabinetini aç",
     "chipIdentity": "Şəxsi məlumat",
+    "chipDocuments": "Sənədlər",
+    "idCardTitle": "Şəxsiyyət vəsiqəsi",
+    "passportTitle": "Pasport",
+    "docSeries": "Seriya",
+    "docNumber": "Nömrə",
+    "docIssuedBy": "Verən orqan",
+    "docIssuedOn": "Verilmə tarixi",
+    "docExpiresOn": "Bitmə tarixi",
+    "docCountry": "Verən ölkə",
+    "regime": {
+      "FIVE_DAY": "5 günlük",
+      "SIX_DAY": "6 günlük",
+      "MEDICAL": "Həkim",
+      "CUSTOM": "Xüsusi"
+    },
     "chipContacts": "Əlaqə",
     "chipJob": "İşəgötürmə",
     "chipAccess": "Giriş hüquqları",
@@ -1555,6 +1576,9 @@
     "colPerson": "Şəxs",
     "colKind": "Növ",
     "colPeriod": "Dövr",
+    "colDays": "Gün",
+    "colStep": "Mərhələ",
+    "correct": "Düzəliş",
     "colStatus": "Status",
     "colActions": "Əməliyyat",
     "open": "Aç",
@@ -1591,7 +1615,8 @@
       "SUBMITTED": "Göndərilib",
       "APPROVED": "Təsdiqlənib",
       "REJECTED": "Rədd edilib",
-      "CANCELLED": "Ləğv edilib"
+      "CANCELLED": "Ləğv edilib",
+      "SUPERSEDED": "Əvəz olunub"
     }
   },
   "workforceVacation": {
@@ -1625,11 +1650,20 @@
     "addLine": "Sətir əlavə et",
     "removeLine": "Sətiri sil",
     "moreActions": "Digər",
+    "edit": "Sətirləri düzəlt",
+    "save": "Saxla",
+    "colStep": "Mərhələ",
+    "cancelReason": "Ləğv səbəbi",
+    "correct": "Düzəliş",
+    "cancel": "Ləğv et",
+    "confirmCorrect": "Təsdiqlənmiş plan qaralama kimi yenidən açılsın? Cari sətirlər reviziya kimi saxlanılır.",
+    "confirmCancel": "Bu təsdiqlənmiş məzuniyyət planı ləğv edilsin?",
     "status": {
       "DRAFT": "Qaralama",
       "SUBMITTED": "Göndərilib",
       "APPROVED": "Təsdiqlənib",
-      "REJECTED": "Rədd edilib"
+      "REJECTED": "Rədd edilib",
+      "CANCELLED": "Ləğv edilib"
     }
   },
   "workforceOrders": {
@@ -1768,6 +1802,19 @@
     "typeEmpty": "Boş",
     "cellApproved": "Təsdiqlənib (yalnız oxu)",
     "colPerson": "Şəxs",
+    "colNorm": "Fakt / norma",
+    "calWorkDays": "İş günü",
+    "calOffDays": "Qeyri-iş",
+    "calHolidays": "Bayram",
+    "dayType": {
+      "working": "İş günü",
+      "weekend": "Həftəsonu",
+      "holiday": "Bayram",
+      "transferred_rest": "Köçürülmüş istirahət",
+      "transferred_working": "Köçürülmüş iş günü",
+      "mourning": "Hüzn günü",
+      "shortened": "Qısaldılmış gün"
+    },
     "loading": "Yüklənir…",
     "loadFailed": "Tabel yüklənmədi",
     "empty": "Aktiv əməkdaş yoxdur.",
@@ -2198,6 +2245,48 @@
     "paid": "Ödənişli",
     "unpaid": "Ödənişsiz",
     "announce": "Elan dərc et",
-    "publish": "Dərc et"
+    "publish": "Dərc et",
+    "step": "Mərhələ",
+    "history": "Son qərarlar",
+    "rejectReason": "İmtina səbəbi",
+    "proxyTitle": "İşçi adından avans",
+    "proxyEmployee": "İşçi",
+    "proxyAmount": "Məbləğ (AZN)",
+    "proxyNote": "Qeyd",
+    "proxySubmit": "Avansı göndər"
+  },
+  "workforceHrSettings": {
+    "title": "Kadr tənzimləri",
+    "subtitle": "Həftəlik saat norması və təsdiq marşrutları — təşkilat strukturuna görə.",
+    "hoursTitle": "Həftəlik saat",
+    "hoursHint": "Təşkilat normanı yazana qədər boş saxlayın. Boş norma tabeldə uydurulmur.",
+    "fiveDay": "5 günlük həftə (saat)",
+    "sixDay": "6 günlük həftə (saat)",
+    "medical": "Həkim rejimi (saat)",
+    "custom": "Xüsusi rejim (saat)",
+    "advanceTitle": "Avans",
+    "advancePercent": "Əməkhaqqının maksimum faizi",
+    "advanceAmount": "Maksimum məbləğ (AZN)",
+    "advanceOpen": "Açıq avansların maksimumu",
+    "advanceProxy": "HR işçi adından avans göndərə bilər",
+    "saveSettings": "Saxla",
+    "stepKind": "Addım",
+    "orgUnit": "Struktur vahidi",
+    "position": "Vəzifə",
+    "pick": "Seçin…",
+    "addStep": "Addım əlavə et",
+    "removeStep": "Sil",
+    "saveRoute": "Marşrutu saxla",
+    "kind": {
+      "FULL_DAY": "Tam günlük",
+      "HOURLY": "Saatlıq",
+      "ADVANCE": "Avans",
+      "VACATION": "Məzuniyyət planı"
+    },
+    "step": {
+      "REQUESTER_MANAGER": "Rəhbər",
+      "ORG_UNIT_HEAD": "Vahidin rəhbəri",
+      "POSITION_IN_UNIT": "Vahiddə vəzifə"
+    }
   }
 }

@@ -2,11 +2,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { requireSeedOrgId } from "../prisma/seed-physio-catalog-lib";
 
-const { loadIcd10 } = require("../prisma/load-icd10.cjs") as {
+const { loadIcd10, ICD10_VERSION } = require("../prisma/load-icd10.cjs") as {
   loadIcd10: (
     prisma: unknown,
     opts?: { force?: boolean },
   ) => Promise<{ skipped?: boolean; existing?: number }>;
+  ICD10_VERSION: string;
 };
 
 describe("clinic satellite db:seed scripts", () => {
@@ -27,18 +28,49 @@ describe("clinic satellite db:seed scripts", () => {
     expect(demo).toContain("seed-intake-blocks");
   });
 
-  it("loadIcd10 skips when rows exist and force is off", async () => {
-    const prisma = {
-      icdCode: { count: async () => 42, deleteMany: jest.fn(), createMany: jest.fn() },
-      clinicalDiagnosis: { count: jest.fn() },
-      visitDiagnosis: { count: jest.fn() },
-      admissionDiagnosis: { count: jest.fn() },
-      tenant: { updateMany: jest.fn() },
+  function mockPrisma(storedVersion: string | null) {
+    const tx = {
+      $executeRawUnsafe: jest.fn(async () => 0),
+      $queryRawUnsafe: jest.fn(async () => []),
     };
+    return {
+      tx,
+      icdCode: { count: jest.fn(async () => 42), deleteMany: jest.fn(), createMany: jest.fn() },
+      clinicalDiagnosis: { deleteMany: jest.fn() },
+      visitDiagnosis: { deleteMany: jest.fn() },
+      admissionDiagnosis: { deleteMany: jest.fn() },
+      tenant: {
+        findFirst: jest.fn(async () => ({ icd10Version: storedVersion })),
+        updateMany: jest.fn(),
+      },
+      $transaction: jest.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)),
+    };
+  }
+
+  it("loadIcd10 skips when the stored version is current", async () => {
+    const prisma = mockPrisma(ICD10_VERSION);
     const r = await loadIcd10(prisma);
     expect(r.skipped).toBe(true);
-    expect(prisma.icdCode.deleteMany).not.toHaveBeenCalled();
-    expect(prisma.icdCode.createMany).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("loadIcd10 upserts by code and never deletes diagnoses", async () => {
+    const prisma = mockPrisma("WHO-ICD-10-2019");
+    const r = await loadIcd10(prisma);
+    expect(r.skipped).toBe(false);
+    const sql = prisma.tx.$executeRawUnsafe.mock.calls.map((c) => String((c as unknown[])[0]));
+    expect(sql.some((s) => s.includes("ON CONFLICT (code) DO UPDATE"))).toBe(true);
+    expect(sql.some((s) => s.includes("SET active = false"))).toBe(true);
+    expect(sql.every((s) => !/TRUNCATE|DELETE FROM "(Clinical|Visit|Admission)Diagnosis"/i.test(s))).toBe(true);
+    const del = sql.filter((s) => /DELETE/i.test(s));
+    expect(del).toHaveLength(1);
+    expect(del[0]).toMatch(/DELETE FROM "IcdCode"[\s\S]*NOT EXISTS[\s\S]*ClinicalDiagnosis[\s\S]*VisitDiagnosis[\s\S]*AdmissionDiagnosis/);
+    for (const m of [prisma.icdCode, prisma.clinicalDiagnosis, prisma.visitDiagnosis, prisma.admissionDiagnosis]) {
+      expect(m.deleteMany).not.toHaveBeenCalled();
+    }
+    expect(prisma.tenant.updateMany).toHaveBeenCalledWith({
+      data: expect.objectContaining({ icd10Version: ICD10_VERSION }),
+    });
   });
 
   it("requireSeedOrgId fails without a real org (no demo-org)", () => {

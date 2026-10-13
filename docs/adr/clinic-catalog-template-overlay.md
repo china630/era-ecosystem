@@ -17,7 +17,7 @@ Clinic SHARED pool needs one satellite ICD / base physio / base diagnostic catal
 
 3. **Org overlay** — existing `PhysioSite` / `PhysioListItem` / `Modality` / `DiagnosticService` (+ aliases, imaging phrases, prices). Org extras, retire, WO aliases, `PKG-NAFTA-INTAKE`, commercial prices. Filled by: **Connect / bind / first login copy-if-empty** from templates; **admin import** (Nafta Excel); optional `db:seed:demo` / `:nafta` scripts (never droplet entrypoint).
 
-4. **Connect copy-if-empty** — after organization bind and on staff login / SSO (same moment as `ensureSystemClinicRoles`), copy missing template codes into the org overlay. Do not overwrite SatAdmin edits. Org id comes from bind / SSO payload, not compose.
+4. **Connect copy-if-empty** — organization bind, staff provision, and staff login / SSO call `ensureClinicCatalogIfEmpty` (same moment as `ensureSystemClinicRoles`). If the org already has a physio site and a modality, the call does nothing. A full copy runs only for an empty overlay: it inserts missing services and copies analytes only onto a service created in that same pass. It does not add analytes to a panel SatAdmin already has, and it does not insert a pre-canon alias (`ECG-12`) when the canon code (`CARDIO-ECG`) is the template identity. `db:seed` retires alias rows on `diagnostic_service_template` via `catalog-code-canon.map.json`. Org id comes from bind / SSO payload, not compose.
 
 5. **Entrypoint** — compose `RUN_SEED: ${CLINIC_RUN_SEED:-false}` stays **false** on droplet. `db:seed` = satellite templates + ICD only. `db:seed:demo` = old kitchen sink (vnext tenant, Nafta prices, sanatorium week, intake-blocks seed script, planning-rules seed, lab-usg demo). Full `db:seed` after cutover is **forbidden**.
 

@@ -83,7 +83,7 @@
       "default": "./dist/billing/billing-status-route.js"
     },
     "./tailwind-content": "./tailwind-content.js",
-    "./icd10/generate": "./icd10/generate-icd10.cjs"
+    "./icd10/catalog": "./icd10/catalog.cjs"
   },
   "sideEffects": false,
   "scripts": {
