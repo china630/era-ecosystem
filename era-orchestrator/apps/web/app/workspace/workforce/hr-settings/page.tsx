@@ -158,7 +158,7 @@ export default function WorkforceHrSettingsPage() {
   if (gated) return <WorkforceGate />;
 
   const hourField = (
-    key: keyof Settings,
+    key: Exclude<keyof Settings, "advanceAllowHrProxy">,
     label: string,
   ) => (
     <label className="block text-[13px] font-medium text-[#34495E]">
