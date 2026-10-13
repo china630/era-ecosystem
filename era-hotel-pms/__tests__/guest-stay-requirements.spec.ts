@@ -15,6 +15,7 @@ function guest(partial: Record<string, unknown> = {}) {
     firstName: 'Ali',
     lastName: 'Mammadov',
     nationality: 'AZ',
+    sex: 'M',
     birthDate: new Date('1990-04-01T00:00:00.000Z'),
     phone: '+994501112233',
     documents: [] as Array<{ docType: string; docNumber: string }>,
@@ -24,19 +25,19 @@ function guest(partial: Record<string, unknown> = {}) {
 }
 
 describe('guest stay requirements', () => {
-  it('requires name, gender, birth date and nationality', () => {
+  it('requires only a first and last name to save a guest', () => {
     expect(
       guestIdentityGaps({
         firstName: 'Ali',
         lastName: 'Mammadov',
-        sex: 'M',
-        birthDate: '1990-04-01',
-        nationality: 'AZ',
+        sex: '',
+        birthDate: '',
+        nationality: '',
       }),
     ).toEqual([]);
     expect(
       guestIdentityGaps({ firstName: ' ', lastName: '', sex: '', birthDate: '', nationality: '' }),
-    ).toEqual(['firstName', 'lastName', 'sex', 'birthDate', 'nationality']);
+    ).toEqual(['firstName', 'lastName']);
   });
 
   it('treats a guest under 18 as a minor from the birth date', () => {
@@ -51,13 +52,13 @@ describe('guest stay requirements', () => {
   it('requires a phone only for an AZ adult, and a document for everyone', () => {
     expect(
       operationalGaps(
-        { name: 'Ali', nationality: 'AZ', birthDate: '1990-01-01', phone: '', documents: [] },
+        { name: 'Ali', sex: 'M', nationality: 'AZ', birthDate: '1990-01-01', phone: '', documents: [] },
         TODAY,
       ),
     ).toEqual(['phone', 'document']);
     expect(
       operationalGaps(
-        { name: 'Ali', nationality: 'AZ', birthDate: '', phone: '', documents: [] },
+        { name: 'Ali', sex: 'M', nationality: 'AZ', birthDate: '', phone: '', documents: [] },
         TODAY,
       ),
     ).toEqual(['birthDate', 'phone', 'document']);
@@ -65,6 +66,7 @@ describe('guest stay requirements', () => {
       operationalGaps(
         {
           name: 'Child',
+          sex: 'F',
           nationality: 'AZ',
           birthDate: '2016-01-01',
           documents: [{ docType: 'FIN', docNumber: 'ABC1234' }],
@@ -76,6 +78,7 @@ describe('guest stay requirements', () => {
       operationalGaps(
         {
           name: 'Ivan',
+          sex: 'M',
           nationality: 'RU',
           birthDate: '1980-01-01',
           idCardNo: 'FIN1',
@@ -86,7 +89,7 @@ describe('guest stay requirements', () => {
     ).toEqual([]);
     expect(
       operationalGaps(
-        { name: 'Ivan', nationality: 'RU', birthDate: '2015-01-01', idCardNo: 'FIN1' },
+        { name: 'Ivan', sex: 'M', nationality: 'RU', birthDate: '2015-01-01', idCardNo: 'FIN1' },
         TODAY,
       ),
     ).toEqual(['document']);
@@ -105,6 +108,7 @@ describe('guest stay requirements', () => {
             nationality: 'AZ',
             birthDate: new Date('1990-04-01T00:00:00.000Z'),
             age: null,
+            sex: 'M',
             idCardNo: null,
             passportNo: 'AA1234567',
             departedAt: null,
@@ -148,5 +152,14 @@ describe('guest stay requirements', () => {
       TODAY,
     );
     expect(gaps).toEqual([{ name: 'Ali Mammadov', gaps: ['phone'] }]);
+  });
+
+  it('asks for gender and citizenship only when they are missing at check-in', () => {
+    expect(
+      operationalGaps(
+        { name: 'Ali', sex: '', nationality: '', birthDate: '1990-01-01' },
+        TODAY,
+      ),
+    ).toEqual(['sex', 'nationality']);
   });
 });

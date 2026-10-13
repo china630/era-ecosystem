@@ -4,25 +4,11 @@
  */
 import type { PrismaClient } from "@prisma/client";
 
-const STARTER_GL_BY_TOKEN: Record<string, string> = {
-  ROOM: "601",
-  FOOD: "602",
-  MEDICAL: "603",
-  PKG: "601",
-  TREATMENT: "604",
-  BOARD: "605",
-  TRANSFER: "606",
-  TOUR: "606",
-};
+/** Operating revenue stays on 601 until a subaccount is saved. Does not use 602–606. */
+const OPENING_GL_ACCOUNT = "601";
 
-const UNLISTED_GL_ACCOUNT = "601";
-
-export function starterGlAccount(code: string, name: string): string {
-  for (const token of [code, name]) {
-    const hit = STARTER_GL_BY_TOKEN[token.trim().toUpperCase()];
-    if (hit) return hit;
-  }
-  return UNLISTED_GL_ACCOUNT;
+export function starterGlAccount(_code: string, _name: string): string {
+  return OPENING_GL_ACCOUNT;
 }
 
 /** Insert a mapping when the revenue code has none. Does not overwrite a saved account. */

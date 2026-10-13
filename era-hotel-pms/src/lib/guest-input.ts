@@ -17,13 +17,16 @@ export const createGuestSchema = z
     middleName: z.string().trim().optional().nullable(),
     lastName: z.string().trim().min(1, 'Last name is required'),
     title: z.string().trim().optional().nullable(),
-    sex: z.string().trim().min(1, 'Gender is required'),
+    sex: z.string().trim().optional().nullable(),
     email: z.string().trim().optional().nullable(),
     birthDate: z
-      .string()
-      .trim()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Birth date is required'),
-    nationality: guestNationalitySchema.default('AZ'),
+      .union([z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal('')])
+      .optional()
+      .nullable(),
+    nationality: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() ? value : 'AZ'),
+      guestNationalitySchema,
+    ),
     nationalIdFin: z.string().trim().optional().nullable(),
     passportNumber: z.string().trim().optional().nullable(),
     phone: z.string().trim().optional().nullable(),
@@ -38,7 +41,8 @@ export function normalizeGuestInput(input: CreateGuestInput) {
   const firstName = input.firstName?.trim() || null;
   const middleName = input.middleName?.trim() || null;
   const lastName = input.lastName?.trim() || null;
-  const birthDate = input.birthDate?.trim() ? new Date(input.birthDate.trim()) : null;
+  const birthDate =
+    input.birthDate && input.birthDate.trim() ? new Date(input.birthDate.trim()) : null;
   return {
     fullName: guestComposedFullName({ firstName, middleName, lastName, fullName: input.fullName }),
     firstName,

@@ -192,6 +192,16 @@ export async function patchGuestFull(
     await assertGuestGenderChangeAllowed(id, sex);
   }
 
+  const nextFirst = firstName !== undefined ? firstName : existing?.firstName;
+  const nextMiddle = middleName !== undefined ? middleName : existing?.middleName;
+  const nextLast = lastName !== undefined ? lastName : existing?.lastName;
+  const nameChanged = Boolean(
+    existing &&
+      ((nextFirst ?? '') !== (existing.firstName ?? '') ||
+        (nextMiddle ?? '') !== (existing.middleName ?? '') ||
+        (nextLast ?? '') !== (existing.lastName ?? '')),
+  );
+
   await prisma.guest.update({
     where: { id },
     data: {
@@ -215,10 +225,16 @@ export async function patchGuestFull(
       bonusPercent:
         bonusPercent === undefined
           ? undefined
-          : bonusPercent === null
+          :       bonusPercent === null
             ? null
             : toDecimal(bonusPercent),
     },
   });
+  if (nameChanged) {
+    const { syncGuestNameToOpenStays } = await import('@/lib/services/guest-name-sync.service');
+    await syncGuestNameToOpenStays(id).catch((error) =>
+      console.error('Open-stay name sync failed', error),
+    );
+  }
   return getGuestFull(id);
 }

@@ -145,6 +145,7 @@ function personDocLine(
   row: {
     firstName: string;
     lastName: string;
+    sex?: string;
     nationality: string;
     birthDate: string;
     age: string;
@@ -153,16 +154,24 @@ function personDocLine(
     guestId?: string;
     departedAt?: string | null;
   },
-  profile: { phone?: string | null; documents?: Array<{ docType?: string | null; docNumber?: string | null }> } | null,
+  profile: {
+    sex?: string | null;
+    nationality?: string | null;
+    phone?: string | null;
+    documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
+  } | null,
   today: string,
   t: (key: string) => string,
 ): string | null {
   if (row.departedAt) return null;
   if (!(row.firstName.trim() || row.lastName.trim())) return null;
+  const sex = row.sex?.trim() || profile?.sex?.trim() || '';
+  const nationality = row.nationality?.trim() || profile?.nationality?.trim() || '';
   const gaps = operationalGaps(
     {
       name: [row.firstName, row.lastName].filter((part) => part.trim()).join(' '),
-      nationality: row.nationality || 'AZ',
+      sex: sex || null,
+      nationality: nationality || null,
       birthDate: row.birthDate || null,
       age: row.age.trim() ? Number(row.age) : null,
       phone: profile?.phone ?? null,
@@ -1376,6 +1385,8 @@ export function ReservationCardEditor({
     const master = data?.guest as
       | {
           id?: string;
+          sex?: string | null;
+          nationality?: string | null;
           phone?: string | null;
           documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
         }
@@ -1386,6 +1397,8 @@ export function ReservationCardEditor({
             guestId?: string | null;
             guest?: {
               id?: string;
+              sex?: string | null;
+              nationality?: string | null;
               phone?: string | null;
               documents?: Array<{ docType?: string | null; docNumber?: string | null }>;
             } | null;

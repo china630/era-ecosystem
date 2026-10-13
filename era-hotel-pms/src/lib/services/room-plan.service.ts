@@ -14,6 +14,8 @@ export const PLAN_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION', 'CHECKED_OUT'] 
 export const UNASSIGNED_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
 export async function getRoomPlan(input?: { from?: Date; days?: number }) {
+  const { repairLiveStayDoors } = await import('@/lib/services/stay-slice.service');
+  await repairLiveStayDoors().catch((error) => console.error('stay door repair', error));
   const days = input?.days ?? 14;
   const fromKey = hotelDateKey(input?.from ?? new Date());
   const from = parseHotelNoon(fromKey);

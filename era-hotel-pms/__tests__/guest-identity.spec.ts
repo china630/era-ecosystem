@@ -88,6 +88,16 @@ describe('guest-identity', () => {
     expect(
       createGuestSchema.safeParse({ fullName: 'X', nationality: 'Russia', passportNumber: '1' }).success,
     ).toBe(false);
+    const booking = createGuestSchema.safeParse({
+      fullName: 'Olga Myznikova',
+      firstName: 'Olga',
+      lastName: 'Myznikova',
+      sex: null,
+      birthDate: null,
+      nationality: '',
+    });
+    expect(booking.success).toBe(true);
+    expect(booking.success && booking.data.nationality).toBe('AZ');
   });
 
   it('createGuest links transient identity without persisting FIN/passport', async () => {

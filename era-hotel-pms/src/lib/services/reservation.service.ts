@@ -737,6 +737,16 @@ export async function assignRoom(reservationId: string, roomId: string) {
       notes: 'CARD_ASSIGN',
       reasonCode: 'CARD_ASSIGN',
     });
+    if (fromRoomId) {
+      const { moveStayDoor } = await import('./stay-slice.service');
+      await moveStayDoor({
+        reservationId,
+        fromRoomId,
+        toRoomId: roomId,
+        status: reservation.status,
+        checkIn: reservation.checkInDate,
+      });
+    }
   }
   return updated;
 }
@@ -1300,6 +1310,16 @@ export async function updateReservationSchedule(
       },
       include: { room: true, guest: true, ratePlan: true, roomType: true },
     });
+    if (reservation.roomId && reservation.roomId !== newRoomId) {
+      const { moveStayDoor } = await import('./stay-slice.service');
+      await moveStayDoor({
+        reservationId: id,
+        fromRoomId: reservation.roomId,
+        toRoomId: newRoomId,
+        status: reservation.status,
+        checkIn: newCheckIn,
+      });
+    }
     if (
       input.checkOutDate &&
       input.checkOutDate.getTime() !== reservation.checkOutDate.getTime()
@@ -1328,6 +1348,16 @@ export async function updateReservationSchedule(
     },
     include: { room: true, guest: true, ratePlan: true, roomType: true },
   });
+  if (reservation.roomId && reservation.roomId !== newRoomId) {
+    const { moveStayDoor } = await import('./stay-slice.service');
+    await moveStayDoor({
+      reservationId: id,
+      fromRoomId: reservation.roomId,
+      toRoomId: newRoomId,
+      status: reservation.status,
+      checkIn: newCheckIn,
+    });
+  }
 
   if (
     input.checkOutDate &&

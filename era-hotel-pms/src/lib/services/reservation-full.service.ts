@@ -347,14 +347,6 @@ export async function patchReservationFull(
     throw new Error('Cannot clear the room after check-in');
   }
 
-  if (
-    existing.status === 'IN_HOUSE' &&
-    data.roomId !== undefined &&
-    (data.roomId === null || data.roomId === '')
-  ) {
-    throw new Error('Cannot clear the room after check-in');
-  }
-
   let assignShareBedIndex: number | null | undefined;
   let doorShareResolved = false;
   const effectiveRoomId =
@@ -517,6 +509,16 @@ export async function patchReservationFull(
       status: existing.status,
       reasonCode,
     });
+    if (existing.roomId) {
+      const { moveStayDoor } = await import('@/lib/services/stay-slice.service');
+      await moveStayDoor({
+        reservationId: id,
+        fromRoomId: existing.roomId,
+        toRoomId: data.roomId,
+        status: existing.status,
+        checkIn: checkIn,
+      });
+    }
   }
 
   if (notes) {
@@ -876,6 +878,8 @@ export async function listReservationsForGrid(
   // Legacy: bare guestId string.
   const opts: ListReservationsForGridQuery =
     typeof input === 'string' ? { guestId: input } : (input ?? {});
+  const { alignAllOpenStayNames } = await import('@/lib/services/guest-name-sync.service');
+  await alignAllOpenStayNames().catch((error) => console.error('guest name align', error));
   const { page, pageSize, skip } = normalizeListPagination(
     opts.page,
     opts.pageSize,
