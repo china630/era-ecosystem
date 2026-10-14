@@ -31,6 +31,7 @@ import { TransferEmploymentDto } from "./dto/workforce-org.dto";
 import { HireWorkforceEmploymentDto } from "./dto/workforce-provision.dto";
 import { ReprovisionEmploymentDto } from "./dto/workforce-reprovision.dto";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
+import { WorkforceExportService } from "./workforce-export.service";
 import { WorkforceOrgScopeService } from "./workforce-org-scope.service";
 import { WorkforceProvisionService } from "./workforce-provision.service";
 
@@ -55,6 +56,7 @@ export class WorkforceEmploymentsController {
     private readonly employments: WorkforceEmploymentsService,
     private readonly orgScope: WorkforceOrgScopeService,
     private readonly provision: WorkforceProvisionService,
+    private readonly cadre: WorkforceExportService,
   ) {}
 
   @Get()
@@ -122,6 +124,16 @@ export class WorkforceEmploymentsController {
     @Body() dto: HireWorkforceEmploymentDto,
   ) {
     return this.provision.hire(organizationId, user.sub, dto);
+  }
+
+  @Get(":id/pay-snapshot")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
+  @ApiOperation({ summary: "Contract gross and last posted payslip net from Finance" })
+  paySnapshot(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+  ) {
+    return this.cadre.paySnapshot(organizationId, id);
   }
 
   @Get(":id")

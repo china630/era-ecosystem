@@ -42,6 +42,27 @@ export class WorkforceExportController {
     return res.send(csv);
   }
 
+  @Get("cadre")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_EXPORT)
+  @ApiOperation({
+    summary: "One-way cadre Excel (FIN and ID series/number are access-logged)",
+  })
+  async cadre(
+    @OrganizationId() organizationId: string,
+    @Res() res: Response,
+  ) {
+    const body = await this.exportService.exportCadreXlsx(organizationId);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="workforce-cadre.xlsx"',
+    );
+    return res.send(body);
+  }
+
   @Get("absences")
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_EXPORT)
   @ApiOperation({ summary: "Export approved absences CSV for period" })

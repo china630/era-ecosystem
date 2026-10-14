@@ -53,7 +53,12 @@ type CalendarSummary = {
   holidays: number;
   days: CalendarDay[];
 };
-type NormCell = { factHours: number; normHours: number | null; regime: string | null };
+type NormCell = {
+  factHours: number;
+  normHours: number | null;
+  deltaHours?: number | null;
+  regime: string | null;
+};
 
 type EmpOpt = {
   id: string;
@@ -202,6 +207,7 @@ export default function TimesheetsPage() {
   const [entries, setEntries] = useState<TsEntry[]>([]);
   const [calendar, setCalendar] = useState<CalendarSummary | null>(null);
   const [norms, setNorms] = useState<Record<string, NormCell>>({});
+  const [shiftCodes, setShiftCodes] = useState<Record<string, Record<string, string>>>({});
   const [loading, setLoading] = useState(true);
   const [gated, setGated] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -287,6 +293,7 @@ export default function TimesheetsPage() {
       pageSize?: number;
       calendar?: CalendarSummary;
       norms?: Record<string, NormCell>;
+      shiftCodes?: Record<string, Record<string, string>>;
     }) => {
       setTimesheet(j.timesheet);
       setEmployments(j.employments ?? []);
@@ -294,6 +301,7 @@ export default function TimesheetsPage() {
       setEntries(j.entries ?? []);
       setCalendar(j.calendar ?? null);
       setNorms(j.norms ?? {});
+      setShiftCodes(j.shiftCodes ?? {});
       if (j.employmentOptions) setEmploymentOptions(j.employmentOptions);
       if (j.orgUnitOptions) setOrgUnitOptions(j.orgUnitOptions);
       if (typeof j.employmentTotal === "number") setEmploymentTotal(j.employmentTotal);
@@ -701,7 +709,9 @@ export default function TimesheetsPage() {
                   </td>
                   <td className={`whitespace-nowrap border-r border-[#D5DADF] text-xs ${DATA_TABLE_TD_CLASS}`}>
                     {norms[emp.id]?.normHours != null
-                      ? `${norms[emp.id].factHours} / ${norms[emp.id].normHours}`
+                      ? `${norms[emp.id].factHours} / ${norms[emp.id].normHours}${
+                          norms[emp.id].deltaHours != null ? ` (${norms[emp.id].deltaHours})` : ""
+                        }`
                       : norms[emp.id]
                         ? String(norms[emp.id].factHours)
                         : "—"}
@@ -781,6 +791,11 @@ export default function TimesheetsPage() {
                           }`}
                         >
                           <span className="block">{cellCode(typ)}</span>
+                          {shiftCodes[emp.id]?.[dayIso] ? (
+                            <span className="mt-0.5 block text-[8px] font-semibold leading-tight text-[#5D6D7E]">
+                              {shiftCodes[emp.id][dayIso]}
+                            </span>
+                          ) : null}
                           {src === "faceid" ? (
                             <span className="block text-[9px] font-semibold uppercase tracking-wide text-[#0B6E99]">
                               {t("sourceFaceid")}

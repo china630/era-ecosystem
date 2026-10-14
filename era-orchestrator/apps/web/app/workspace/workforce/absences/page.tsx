@@ -79,6 +79,8 @@ type AbsenceRow = {
   endDate: string;
   note: string;
   employmentId: string;
+  workYear?: { from: string; to: string } | null;
+  vacationDaysBalance?: number | null;
   employment: { globalPersonId: string };
 };
 
@@ -95,6 +97,8 @@ type AbsenceDetail = {
     stepKind: string | null;
     orgUnitName: string | null;
   };
+  workYear?: { from: string; to: string } | null;
+  vacationDaysBalance?: number | null;
   rejectionReason?: string | null;
   person?: { displayName: string | null; accessDenied: boolean } | null;
 };
@@ -464,6 +468,8 @@ export default function WorkforceAbsencesPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colKind")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPeriod")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colDays")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colWorkYear")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colBalance")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colActions")}</th>
               </tr>
@@ -473,7 +479,7 @@ export default function WorkforceAbsencesPage() {
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td
                     className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                    colSpan={6}
+                    colSpan={8}
                   >
                     {loading ? t("loading") : t("empty")}
                   </td>
@@ -497,6 +503,14 @@ export default function WorkforceAbsencesPage() {
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
                       {calendarDayCount(r.startDate, r.endDate)}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums whitespace-nowrap`}>
+                      {r.workYear
+                        ? t("workYearValue", { from: r.workYear.from, to: r.workYear.to })
+                        : "—"}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} tabular-nums`}>
+                      {r.vacationDaysBalance != null ? String(r.vacationDaysBalance) : "—"}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {t(`status.${r.status}` as "status.DRAFT")}
@@ -653,6 +667,12 @@ export default function WorkforceAbsencesPage() {
               {bakuDateDisplay(detail.startDate)} — {bakuDateDisplay(detail.endDate)}
               {" · "}
               {calendarDayCount(detail.startDate, detail.endDate)} {t("colDays")}
+              {detail.workYear
+                ? ` · ${t("workYearValue", { from: detail.workYear.from, to: detail.workYear.to })}`
+                : ""}
+              {detail.vacationDaysBalance != null
+                ? ` · ${t("colBalance")} ${detail.vacationDaysBalance}`
+                : ""}
             </p>
             {detail.approval?.configured ? (
               <p className="text-[13px]">

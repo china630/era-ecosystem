@@ -504,6 +504,13 @@ enum WorkforceApprovalStepKind {
   POSITION_IN_UNIT
 }
 
+/// Which requester positions a route step applies to. Existing steps stay ALWAYS.
+enum WorkforceApprovalStepAudience {
+  ALWAYS
+  LEADERSHIP
+  ORDINARY
+}
+
 enum WorkforceApprovalOutcome {
   APPROVED
   REJECTED
@@ -701,6 +708,10 @@ model WorkforcePosition {
   name        String
   code        String?
   totalSlots  Int                   @default(1) @map("total_slots")
+  leadership  Boolean               @default(false)
+  tariffAzn   Decimal?              @map("tariff_azn") @db.Decimal(19, 4)
+  defaultWorkRegime WorkforceWorkRegime? @map("default_work_regime")
+  weeklyHours Decimal?              @map("weekly_hours") @db.Decimal(6, 2)
   status      OrgUnitStatus         @default(ACTIVE)
   createdAt   DateTime              @default(now()) @map("created_at")
   updatedAt   DateTime              @updatedAt @map("updated_at")
@@ -1120,6 +1131,8 @@ model WorkforceAdvanceRequest {
   rejectionReason   String?                     @map("rejection_reason")
   currentStepOrder  Int                         @default(0) @map("current_step_order")
   financeQueuedAt   DateTime?                   @map("finance_queued_at") @db.Timestamptz(6)
+  exceedsLimit      Boolean                     @default(false) @map("exceeds_limit")
+  plannedPayDate    DateTime?                   @map("planned_pay_date") @db.Date
   createdAt         DateTime                    @default(now()) @map("created_at")
   updatedAt         DateTime                    @updatedAt @map("updated_at")
   organization      Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -1635,6 +1648,9 @@ model WorkforceOrgSettings {
   advanceMaxAmount     Decimal? @map("advance_max_amount") @db.Decimal(19, 4)
   advanceMaxOpen       Int?     @map("advance_max_open")
   advanceAllowHrProxy  Boolean  @default(false) @map("advance_allow_hr_proxy")
+  advancePayDay        Int?     @map("advance_pay_day")
+  allowEmployeeSubmit  Boolean  @default(true) @map("allow_employee_submit")
+  allowManagerSubmit   Boolean  @default(false) @map("allow_manager_submit")
   updatedAt            DateTime @updatedAt @map("updated_at")
   organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -1660,6 +1676,8 @@ model WorkforceApprovalStep {
   routeId     String                     @map("route_id") @db.Uuid
   stepOrder   Int                        @map("step_order")
   kind        WorkforceApprovalStepKind
+  appliesTo   WorkforceApprovalStepAudience @default(ALWAYS) @map("applies_to")
+  canExceedAdvanceCap Boolean              @default(false) @map("can_exceed_advance_cap")
   orgUnitId   String?                    @map("org_unit_id") @db.Uuid
   positionId  String?                    @map("position_id") @db.Uuid
   route       WorkforceApprovalRoute     @relation(fields: [routeId], references: [id], onDelete: Cascade)

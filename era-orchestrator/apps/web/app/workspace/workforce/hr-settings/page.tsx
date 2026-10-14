@@ -18,8 +18,15 @@ import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
 
 const ROUTE_KINDS = ["FULL_DAY", "HOURLY", "ADVANCE", "VACATION"] as const;
 const STEP_KINDS = ["REQUESTER_MANAGER", "ORG_UNIT_HEAD", "POSITION_IN_UNIT"] as const;
+const AUDIENCES = ["ALWAYS", "LEADERSHIP", "ORDINARY"] as const;
 
-type Step = { kind: string; orgUnitId: string; positionId: string };
+type Step = {
+  kind: string;
+  orgUnitId: string;
+  positionId: string;
+  appliesTo: string;
+  canExceedAdvanceCap: boolean;
+};
 type Settings = {
   fiveDayWeeklyHours: number | null;
   sixDayWeeklyHours: number | null;
@@ -29,6 +36,9 @@ type Settings = {
   advanceMaxAmount: number | null;
   advanceMaxOpen: number | null;
   advanceAllowHrProxy: boolean;
+  advancePayDay: number | null;
+  allowEmployeeSubmit: boolean;
+  allowManagerSubmit: boolean;
 };
 
 const EMPTY_SETTINGS: Settings = {
@@ -40,6 +50,9 @@ const EMPTY_SETTINGS: Settings = {
   advanceMaxAmount: null,
   advanceMaxOpen: null,
   advanceAllowHrProxy: false,
+  advancePayDay: null,
+  allowEmployeeSubmit: true,
+  allowManagerSubmit: false,
 };
 
 function numOrNull(value: string): number | null {
@@ -96,6 +109,8 @@ export default function WorkforceHrSettingsPage() {
         kind: step.kind,
         orgUnitId: step.orgUnitId ?? "",
         positionId: step.positionId ?? "",
+        appliesTo: step.appliesTo || "ALWAYS",
+        canExceedAdvanceCap: step.canExceedAdvanceCap === true,
       }));
     }
     setRoutes(next);
@@ -143,6 +158,8 @@ export default function WorkforceHrSettingsPage() {
             kind: step.kind,
             orgUnitId: step.orgUnitId || undefined,
             positionId: step.positionId || undefined,
+            appliesTo: step.appliesTo || "ALWAYS",
+            canExceedAdvanceCap: step.canExceedAdvanceCap === true,
           })),
         }),
       });
@@ -158,7 +175,9 @@ export default function WorkforceHrSettingsPage() {
   if (gated) return <WorkforceGate />;
 
   const hourField = (
-    key: Exclude<keyof Settings, "advanceAllowHrProxy">,
+    key: {
+      [K in keyof Settings]: Settings[K] extends boolean ? never : K;
+    }[keyof Settings],
     label: string,
   ) => (
     <label className="block text-[13px] font-medium text-[#34495E]">
@@ -203,6 +222,45 @@ export default function WorkforceHrSettingsPage() {
             }
           />
           {t("advanceProxy")}
+        </label>
+        <label className="block text-[13px] font-medium text-[#34495E]">
+          {t("advancePayDay")}
+          <input
+            className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+            inputMode="numeric"
+            value={settings.advancePayDay ?? ""}
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              if (!raw) {
+                setSettings((prev) => ({ ...prev, advancePayDay: null }));
+                return;
+              }
+              const n = Math.floor(Number(raw));
+              if (n >= 1 && n <= 31) {
+                setSettings((prev) => ({ ...prev, advancePayDay: n }));
+              }
+            }}
+          />
+        </label>
+        <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+          <input
+            type="checkbox"
+            checked={settings.allowEmployeeSubmit}
+            onChange={(e) =>
+              setSettings((prev) => ({ ...prev, allowEmployeeSubmit: e.target.checked }))
+            }
+          />
+          {t("allowEmployeeSubmit")}
+        </label>
+        <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+          <input
+            type="checkbox"
+            checked={settings.allowManagerSubmit}
+            onChange={(e) =>
+              setSettings((prev) => ({ ...prev, allowManagerSubmit: e.target.checked }))
+            }
+          />
+          {t("allowManagerSubmit")}
         </label>
         <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void saveSettings()}>
           {t("saveSettings")}
@@ -264,6 +322,38 @@ export default function WorkforceHrSettingsPage() {
                   emptyLabel={t("pick")}
                 />
               ) : null}
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("audience")}
+                value={step.appliesTo || "ALWAYS"}
+                onChange={(next) =>
+                  setRoutes((prev) => {
+                    const copy = [...(prev[kind] ?? [])];
+                    copy[index] = { ...copy[index], appliesTo: String(next) };
+                    return { ...prev, [kind]: copy };
+                  })
+                }
+                options={AUDIENCES.map((value) => ({
+                  value,
+                  label: t(`audienceKind.${value}` as "audienceKind.ALWAYS"),
+                }))}
+              />
+              {kind === "ADVANCE" ? (
+                <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+                  <input
+                    type="checkbox"
+                    checked={step.canExceedAdvanceCap === true}
+                    onChange={(e) =>
+                      setRoutes((prev) => {
+                        const copy = [...(prev[kind] ?? [])];
+                        copy[index] = { ...copy[index], canExceedAdvanceCap: e.target.checked };
+                        return { ...prev, [kind]: copy };
+                      })
+                    }
+                  />
+                  {t("canExceed")}
+                </label>
+              ) : null}
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -285,7 +375,16 @@ export default function WorkforceHrSettingsPage() {
               onClick={() =>
                 setRoutes((prev) => ({
                   ...prev,
-                  [kind]: [...(prev[kind] ?? []), { kind: "REQUESTER_MANAGER", orgUnitId: "", positionId: "" }],
+                  [kind]: [
+                    ...(prev[kind] ?? []),
+                    {
+                      kind: "REQUESTER_MANAGER",
+                      orgUnitId: "",
+                      positionId: "",
+                      appliesTo: "ALWAYS",
+                      canExceedAdvanceCap: false,
+                    },
+                  ],
                 }))
               }
             >

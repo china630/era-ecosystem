@@ -1159,8 +1159,12 @@
     "colFin": "FIN",
     "colContractEnd": "Müqavilənin sonu",
     "colRegime": "İş rejimi",
+    "grossSalary": "Müqavilə maaşı (gross)",
+    "netPayslip": "Son keçirilmiş maaş (net)",
+    "payEmpty": "Maliyyədə hələ yoxdur",
     "openEnded": "Müddətsiz",
     "regimeEmpty": "Seçilməyib",
+    "regimeHint": "Boşdursa, vəzifənin rejimi götürülür. Yalnız bu işçi fərqlənəndə doldurun.",
     "colOrgUnit": "Org vahidi",
     "colPosition": "Vəzifə",
     "colHireDate": "Tarix",
@@ -1433,6 +1437,8 @@
     "timesheetTitle": "Təsdiqlənmiş tabel",
     "timesheetHint": "Təsdiqlənmiş saatlar (tikinti / CP)",
     "downloadRoster": "Heyəti yüklə (CSV)",
+    "downloadCadre": "Kadr Excelini yüklə",
+    "cadreHint": "Biristiqamətli fayl: SAA, doğum tarixi, FİN, şəxsiyyət vəsiqəsinin seriya və nömrəsi, vəzifə, şöbə, işə qəbul, müqavilə sonu, gross, net. Hər yükləmə giriş jurnalına yazılır.",
     "downloadAbsences": "Yoxluqları yüklə (CSV)",
     "downloadTimesheet": "Tabeli yüklə (CSV)",
     "downloading": "Yüklənir…",
@@ -1530,6 +1536,19 @@
     "fieldName": "Vəzifə adı",
     "fieldCode": "Kod",
     "fieldSlots": "Slot sayı",
+    "fieldLeadership": "Rəhbər vəzifə",
+    "fieldTariff": "Aylıq tarif (AZN)",
+    "fieldRegime": "İş rejimi",
+    "fieldWeeklyHours": "Həftəlik saat",
+    "regimeEmpty": "Təyin edilməyib",
+    "regimeHint": "Boşdursa, vəzifənin rejimi götürülür. Yalnız bu işçi fərqlənəndə doldurun.",
+    "colTariff": "Tarif",
+    "regime": {
+      "FIVE_DAY": "5 günlük",
+      "SIX_DAY": "6 günlük",
+      "MEDICAL": "Tibbi",
+      "CUSTOM": "Xüsusi"
+    },
     "create": "Vəzifə yarat",
     "addPosition": "Vəzifə əlavə et",
     "createTitle": "Yeni vəzifə",
@@ -1577,6 +1596,9 @@
     "colKind": "Növ",
     "colPeriod": "Dövr",
     "colDays": "Gün",
+    "colWorkYear": "İş ili",
+    "colBalance": "Qalıq gün",
+    "workYearValue": "{from} — {to}",
     "colStep": "Mərhələ",
     "correct": "Düzəliş",
     "colStatus": "Status",
@@ -1737,6 +1759,15 @@
     "colOrgUnit": "Şöbə",
     "colOccupied": "Məşğul",
     "colVacant": "Boş",
+    "colTariff": "Tarif (AZN)",
+    "colRegime": "Rejim",
+    "colWeeklyHours": "Həftəlik saat",
+    "regime": {
+      "FIVE_DAY": "5 günlük",
+      "SIX_DAY": "6 günlük",
+      "MEDICAL": "Tibbi",
+      "CUSTOM": "Xüsusi"
+    },
     "showSlots": "Ştat",
     "hideSlots": "Gizlət",
     "loading": "Yüklənir…",
@@ -2253,7 +2284,25 @@
     "proxyEmployee": "İşçi",
     "proxyAmount": "Məbləğ (AZN)",
     "proxyNote": "Qeyd",
-    "proxySubmit": "Avansı göndər"
+    "proxySubmit": "Avansı göndər",
+    "submittedByHr": "HR daxil edib",
+    "submittedByEmployee": "İşçi",
+    "managerKind": "Sorğu",
+    "managerAbsence": "Yoxluq növü",
+    "managerDate": "Tarix",
+    "managerFrom": "Başlanğıc (dəqiqə)",
+    "managerTo": "Son (dəqiqə)",
+    "onBehalfKind": {
+      "FULL_DAY": "Tam gün",
+      "HOURLY": "Saatlıq",
+      "ADVANCE": "Avans"
+    },
+    "exceedsLimit": "Faiz limitindən yuxarı",
+    "plannedPay": "Plan ödəniş {date}",
+    "managerTitle": "Vahidimdəki işçi üçün məzuniyyət",
+    "managerStart": "Başlanğıc",
+    "managerEnd": "Son",
+    "managerSubmit": "Məzuniyyəti göndər"
   },
   "workforceHrSettings": {
     "title": "Kadr tənzimləri",
@@ -2269,6 +2318,11 @@
     "advanceAmount": "Maksimum məbləğ (AZN)",
     "advanceOpen": "Açıq avansların maksimumu",
     "advanceProxy": "HR işçi adından avans göndərə bilər",
+    "advancePayDay": "Avansın ödəniş günü",
+    "allowEmployeeSubmit": "İşçi öz sorğusunu göndərə bilər",
+    "allowManagerSubmit": "Vahid rəhbəri öz vahidi üçün sorğu göndərə bilər",
+    "audience": "Addım kimə şamil olunur",
+    "canExceed": "Bu addım faiz limitindən yuxarı avansı təsdiq edə bilər",
     "saveSettings": "Saxla",
     "stepKind": "Addım",
     "orgUnit": "Struktur vahidi",
@@ -2287,6 +2341,11 @@
       "REQUESTER_MANAGER": "Rəhbər",
       "ORG_UNIT_HEAD": "Vahidin rəhbəri",
       "POSITION_IN_UNIT": "Vahiddə vəzifə"
+    },
+    "audienceKind": {
+      "ALWAYS": "Həmişə",
+      "LEADERSHIP": "Yalnız rəhbər vəzifələr",
+      "ORDINARY": "Yalnız adi vəzifələr"
     }
   }
 }

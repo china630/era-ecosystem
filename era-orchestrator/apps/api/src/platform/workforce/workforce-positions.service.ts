@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { WORKFORCE_POSITION_UPSERTED } from "@era/contracts";
-import { OrgUnitStatus, WorkforceEmploymentStatus } from "@era365/database";
+import { OrgUnitStatus, Prisma, WorkforceEmploymentStatus } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
@@ -106,6 +106,10 @@ export class WorkforcePositionsService {
         name: dto.name.trim(),
         code: dto.code?.trim() || null,
         totalSlots: dto.totalSlots ?? 1,
+        leadership: dto.leadership === true,
+        tariffAzn: money(dto.tariffAzn),
+        defaultWorkRegime: dto.defaultWorkRegime ?? null,
+        weeklyHours: money(dto.weeklyHours),
       },
     });
     await this.audit.log({
@@ -150,6 +154,12 @@ export class WorkforcePositionsService {
         ...(dto.name != null ? { name: dto.name.trim() } : {}),
         ...(dto.code !== undefined ? { code: dto.code?.trim() || null } : {}),
         ...(dto.totalSlots != null ? { totalSlots: dto.totalSlots } : {}),
+        ...(dto.leadership !== undefined ? { leadership: dto.leadership === true } : {}),
+        ...(dto.tariffAzn !== undefined ? { tariffAzn: money(dto.tariffAzn) } : {}),
+        ...(dto.defaultWorkRegime !== undefined
+          ? { defaultWorkRegime: dto.defaultWorkRegime ?? null }
+          : {}),
+        ...(dto.weeklyHours !== undefined ? { weeklyHours: money(dto.weeklyHours) } : {}),
       },
     });
     await this.audit.log({
@@ -203,4 +213,9 @@ export class WorkforcePositionsService {
       },
     });
   }
+}
+
+function money(value: number | null | undefined): Prisma.Decimal | null {
+  if (value == null || !(value > 0)) return null;
+  return new Prisma.Decimal(value);
 }

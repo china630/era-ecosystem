@@ -24,6 +24,8 @@ import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
 import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
 import { WorkforceApprovalService } from "./workforce-approval.service";
+import { FinanceWorkforceMirrorClient } from "./finance-workforce-mirror.client";
+import { workYearContaining } from "./workforce-calendar-norm";
 import type {
   CreateWorkforceAbsenceDto,
   ListWorkforceAbsencesQueryDto,
@@ -51,6 +53,7 @@ export class WorkforceAbsencesService {
     @Inject(forwardRef(() => WorkforcePersonnelOrdersService))
     private readonly personnelOrders: WorkforcePersonnelOrdersService,
     @Optional() private readonly approval?: WorkforceApprovalService,
+    @Optional() private readonly finance?: FinanceWorkforceMirrorClient,
   ) {}
 
   async list(
@@ -63,7 +66,7 @@ export class WorkforceAbsencesService {
       ? parseDateOnly(query.dateFrom)
       : undefined;
     const dateTo = query.dateTo ? parseDateOnly(query.dateTo) : undefined;
-    return this.prisma.workforceAbsence.findMany({
+    const rows = await this.prisma.workforceAbsence.findMany({
       where: {
         organizationId,
         ...(query.employmentId ? { employmentId: query.employmentId } : {}),
@@ -82,6 +85,7 @@ export class WorkforceAbsencesService {
       include: { employment: { include: { orgUnit: true, position: true } } },
       orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
     });
+    return this.withVacationReadout(organizationId, rows);
   }
 
   async getOne(organizationId: string, id: string) {
@@ -91,7 +95,48 @@ export class WorkforceAbsencesService {
       include: { employment: true },
     });
     if (!row) throw new NotFoundException("Absence not found");
-    return row;
+    const [enriched] = await this.withVacationReadout(organizationId, [row]);
+    return enriched;
+  }
+
+  private async withVacationReadout<
+    T extends {
+      kind: WorkforceAbsenceKind | string;
+      employmentId: string;
+      startDate: Date;
+      employment?: { hireDate?: Date | null } | null;
+    },
+  >(organizationId: string, rows: T[]) {
+    const balances = new Map<string, number | null>();
+    if (this.finance) {
+      const ids = [
+        ...new Set(
+          rows
+            .filter((row) => row.kind === WorkforceAbsenceKind.VACATION)
+            .map((row) => row.employmentId),
+        ),
+      ];
+      await Promise.all(
+        ids.map(async (id) => {
+          const mirror = await this.finance!.fetchEmploymentMirror(organizationId, id);
+          balances.set(id, mirror.vacationDaysBalance);
+        }),
+      );
+    }
+    return rows.map((row) => ({
+      ...row,
+      workYear:
+        row.kind === WorkforceAbsenceKind.VACATION
+          ? workYearContaining(
+              row.employment?.hireDate ? isoDay(row.employment.hireDate) : null,
+              isoDay(row.startDate),
+            )
+          : null,
+      vacationDaysBalance:
+        row.kind === WorkforceAbsenceKind.VACATION
+          ? balances.get(row.employmentId) ?? null
+          : null,
+    }));
   }
 
   async create(

@@ -1897,6 +1897,41 @@ export class MdmService {
     return out;
   }
 
+  /** ID series and number for the cadre Excel. One access log per batch. */
+  async batchHrExportIdCards(
+    personIds: string[],
+    organizationId: string,
+  ): Promise<Record<string, { series: string; number: string }>> {
+    const ids = [...new Set(personIds.map((id) => id.trim()).filter(Boolean))];
+    const out: Record<string, { series: string; number: string }> = {};
+    for (const id of ids) out[id] = { series: "", number: "" };
+    if (ids.length === 0) return out;
+    const grants = await this.mdm.personAccessGrant.findMany({
+      where: { granteeOrgId: organizationId, personId: { in: ids } },
+      select: { personId: true },
+    });
+    const allowed = grants.map((g) => g.personId);
+    if (allowed.length === 0) return out;
+    const rows = await this.mdm.personIdentityDocument.findMany({
+      where: { personId: { in: allowed }, kind: "ID_CARD" },
+    });
+    for (const row of rows) {
+      out[row.personId] = {
+        series: row.seriesCipher ? decryptText(row.seriesCipher) ?? "" : "",
+        number: row.numberCipher ? decryptText(row.numberCipher) ?? "" : "",
+      };
+    }
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId: allowed[0],
+        actorOrgId: organizationId,
+        action: "WORKFORCE_HR_ID_EXPORT",
+        metaJson: JSON.stringify({ count: allowed.length }),
+      },
+    });
+    return out;
+  }
+
   async listIdentityDocuments(personId: string, requesterOrgId: string) {
     const canonical = await this.resolveCanonicalPersonId(personId);
     const gate = await this.assertPersonAccessGrant(canonical, requesterOrgId);

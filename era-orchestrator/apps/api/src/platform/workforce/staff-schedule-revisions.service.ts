@@ -28,6 +28,10 @@ type SnapshotRow = {
   totalSlots: number;
   occupied: number;
   vacant: number;
+  tariffAzn: number | null;
+  weeklyHours: number | null;
+  defaultWorkRegime: string | null;
+  leadership: boolean;
 };
 
 @Injectable()
@@ -84,6 +88,10 @@ export class StaffScheduleRevisionsService {
         totalSlots: p.totalSlots,
         occupied,
         vacant: Math.max(0, p.totalSlots - occupied),
+        tariffAzn: p.tariffAzn != null ? Number(p.tariffAzn) : null,
+        weeklyHours: p.weeklyHours != null ? Number(p.weeklyHours) : null,
+        defaultWorkRegime: p.defaultWorkRegime,
+        leadership: p.leadership,
       };
     });
   }
@@ -200,7 +208,7 @@ export class StaffScheduleRevisionsService {
     doc.fontSize(9);
     for (const r of snapshot) {
       doc.text(
-        `${r.orgUnitName} | ${r.name}${r.code ? ` (${r.code})` : ""} | slots ${r.totalSlots} | occupied ${r.occupied} | vacant ${r.vacant}`,
+        `${r.orgUnitName} | ${r.name}${r.code ? ` (${r.code})` : ""} | slots ${r.totalSlots} | occupied ${r.occupied} | vacant ${r.vacant}${r.tariffAzn != null ? ` | tariff ${r.tariffAzn}` : ""}${r.defaultWorkRegime ? ` | ${r.defaultWorkRegime}` : ""}${r.weeklyHours != null ? ` | ${r.weeklyHours}h` : ""}`,
       );
     }
     doc.end();
