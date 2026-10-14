@@ -302,46 +302,6 @@ export function ReservationCardFolioTab({
     return ledger;
   }, [accounts, deletedRows, focusGuestId, folioFocus, ledger]);
 
-  const deletedRows = useMemo(() => {
-    const rows: LedgerRow[] = [];
-    for (const folio of accounts) {
-      for (const payment of folio.payments ?? []) {
-        if (!payment.id || !payment.voidedAt) continue;
-        rows.push({
-          id: `void-${payment.id}`,
-          folioId: folio.id,
-          folioType: folio.type,
-          folioStatus: folio.status,
-          kind: 'payment',
-          description: payment.voidReason?.trim() || tf('deletePayment'),
-          code: payment.paymentMethod,
-          amount: -Number(payment.amount),
-          paymentId: payment.id,
-          paymentKind: payment.kind,
-          voidedAt: payment.voidedAt,
-          voidReason: payment.voidReason,
-        });
-      }
-    }
-    return rows;
-  }, [accounts, tf]);
-
-  const focusGuestId = folioFocus.startsWith('guest:') ? folioFocus.slice('guest:'.length) : '';
-  const visibleRows = useMemo(() => {
-    if (folioFocus === 'deleted') return deletedRows;
-    if (folioFocus === 'agency') return ledger.filter((row) => row.folioType === 'AGENCY');
-    if (folioFocus === 'company') return ledger.filter((row) => row.folioType === 'COMPANY');
-    if (focusGuestId) {
-      const folioIds = new Set(
-        accounts
-          .filter((folio) => folio.type === 'GUEST' && folio.reservationGuestId === focusGuestId)
-          .map((folio) => folio.id),
-      );
-      return ledger.filter((row) => folioIds.has(row.folioId));
-    }
-    return ledger;
-  }, [accounts, deletedRows, focusGuestId, folioFocus, ledger]);
-
   const closable = accounts.filter((f) => {
     if (f.status !== 'OPEN') return false;
     if (Math.abs(accountBalance(f)) >= 0.01) return false;

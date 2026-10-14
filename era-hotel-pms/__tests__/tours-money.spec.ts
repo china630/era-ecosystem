@@ -23,6 +23,10 @@ jest.mock('@era/satellite-kit/orchestrator-gateway', () => ({
   satelliteOrganizationId: () => 'org-1',
 }));
 
+jest.mock('@/lib/satellite-audit', () => ({
+  recordHotelAudit: jest.fn(),
+}));
+
 jest.mock('@/lib/services/folio.service', () => ({
   folioBalance: jest.fn(() => 0),
   postCharge: jest.fn(),
@@ -145,7 +149,7 @@ describe('tour money', () => {
     });
     db.tourBooking.update.mockResolvedValue({ id: 'b2', status: 'CANCELLED' });
     await removeTourBooking('b2');
-    expect(voidCharge).toHaveBeenCalledWith('ch2');
+    expect(voidCharge).toHaveBeenCalledWith('ch2', 'Tour booking removed');
   });
 
   it('allocates payment to the TOUR charge', async () => {

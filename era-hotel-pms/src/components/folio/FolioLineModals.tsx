@@ -135,69 +135,6 @@ export function FolioDeletePaymentModal({
   );
 }
 
-export function FolioDeletePaymentModal({
-  open,
-  onClose,
-  onDone,
-  paymentId,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onDone?: () => void;
-  paymentId: string | null;
-}) {
-  const t = useTranslations('folio');
-  const tc = useTranslations('common');
-  const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (open) setReason('');
-  }, [open]);
-
-  async function submit() {
-    if (!paymentId || !reason.trim()) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/folios/payments/${paymentId}/void`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showApiError(data, tc('error'));
-        return;
-      }
-      showSuccess(t('deletePaymentSuccess'));
-      onDone?.();
-      onClose();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <EraModal
-      open={open}
-      title={t('deletePaymentTitle')}
-      onClose={onClose}
-      footer={
-        <EraModalFooter
-          onCancel={onClose}
-          onSubmit={() => void submit()}
-          busy={busy}
-          submitDisabled={!reason.trim()}
-          submitLabel={t('deletePayment')}
-        />
-      }
-    >
-      <p className="m-0 mb-2 text-[13px] text-[#34495E]">{t('deletePaymentHint')}</p>
-      <FieldTextarea label={t('refundReason')} value={reason} onChange={(e) => setReason(e.target.value)} />
-    </EraModal>
-  );
-}
-
 export function FolioPayLineModal({
   open,
   onClose,
@@ -267,7 +204,6 @@ export function FolioPayLineModal({
           onCancel={onClose}
           onSubmit={() => void submit()}
           busy={busy}
-          submitDisabled={method === 'CARD' && !bankTerminalId.trim()}
           submitLabel={t('pay')}
           submitDisabled={method === 'CARD' && bankTerminals.length > 0 && !bankTerminalId.trim()}
         />
