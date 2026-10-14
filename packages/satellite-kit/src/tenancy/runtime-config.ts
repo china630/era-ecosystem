@@ -113,6 +113,11 @@ export type RuntimeConfigHandlerOptions = {
     organizationId: string,
     policy: ClinicCutoverSyncPayload,
   ) => Promise<void>;
+  /** Persist KKM / bank POS rows for this organization (hotel cashier list). */
+  onFiscalDevices?: (
+    organizationId: string,
+    devices: import("../integration/fiscal-device-hydrate").FiscalDeviceSyncRow[],
+  ) => Promise<void>;
   /** Per-org snapshot on SHARED (edition / modules). Process-wide memory stays unstamped. */
   onSharedOrgSnapshot?: (
     organizationId: string,
@@ -222,6 +227,9 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
         "../integration/fiscal-device-hydrate"
       );
       hydrateFiscalDevicesFromSync(body.organizationId, body.fiscalDevices);
+      if (opts.onFiscalDevices) {
+        await opts.onFiscalDevices(body.organizationId, body.fiscalDevices);
+      }
     }
     if (body.organizationId && opts.onSharedOrgSnapshot) {
       await opts.onSharedOrgSnapshot(body.organizationId, {

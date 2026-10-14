@@ -22,6 +22,7 @@ type ReportDef = {
   code: string;
   labelKey:
     | 'reportInhouseDaily'
+    | 'reportPoliceList'
     | 'reportCancelledToday'
     | 'reportCreatedToday'
     | 'reportFolioTransactions'
@@ -53,6 +54,15 @@ export default function NightAuditReportsHubPage() {
         code: '01',
         labelKey: 'reportInhouseDaily',
         href: (d) => `/night-audit/inhouse-daily?date=${d}`,
+        group: 'p0',
+      },
+      {
+        code: '19',
+        labelKey: 'reportPoliceList',
+        href: (d) => {
+          const def = getReportBySlug('police-list');
+          return def ? reportHref(def, { from: d, to: d }) : '/reports?report=police-list';
+        },
         group: 'p0',
       },
       {
@@ -176,6 +186,7 @@ export default function NightAuditReportsHubPage() {
     { slug: 'annual-occupancy', label: 'A-07 Annual Occupancy' },
     { slug: 'folio-transactions', label: 'B-04 Folio Txns' },
     { slug: 'department-revenues', label: 'B-05 Dept Revenues' },
+    { slug: 'police-list', label: t('reportPoliceList') },
   ];
 
   return (

@@ -73,12 +73,12 @@ Short sidebar (Elektraweb shape); EOD report pack is a **hub**, not 20 menu rows
 |-----------|-----|-------------|
 | End of day | `/night-audit` | Close-day console: business date, pre-check gates, polish preview, Run NA |
 | EOD reports | `/night-audit/reports` | Closed-date hub: **nightly pack** members (deep links to `/reports/*`) + Download ZIP; NA-only ops grids stay here |
-| EOD logs | `/night-audit/logs` | NA run history (who / when / steps / errors) — single log screen |
+| EOD logs | `/night-audit/logs` | NA run history (when / steps / errors). The run row does not store an operator. |
 | Reservation updates | `/night-audit/reservation-updates` | Not a night-audit menu row. Linked from the EOD pack. Reservation changes in the audit window |
 | End of year | `/night-audit/year-end` | Year close/open (Last/First day). **In menu now**; implement when asked at year-end |
 
 **Inside EOD reports hub (not sidebar):**  
-Management pack (hotel-configured, Nafta default = 8 PDFs) — links to `/reports/*` + ZIP. Spec: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md).  
+Management pack (hotel-configured, Nafta default = 9 PDFs, including the police list) — links to `/reports/*` + ZIP. A saved pack that is still the previous eight slugs is rewritten to include `police-list` on the next pack read. Spec: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md).  
 NA ops grids remain here: cancelled / created / room-price / no-show / room-move / VIP / reservation updates / EOD logs.  
 Police/official guest → Migration; POS product sales → F&B.
 

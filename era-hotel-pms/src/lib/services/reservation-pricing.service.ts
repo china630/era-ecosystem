@@ -10,6 +10,7 @@ import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
+import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
 import { findRevenueCodeByToken, matchesAnyRevenueToken } from '@/lib/revenue-code-token';
 import {
   applyLoadBasedAdjustment,
@@ -48,13 +49,17 @@ async function closedNightKeys(reservationId: string): Promise<{ bizKey: string;
   const bizKey = hotelDateKey(await getCurrentBusinessDate());
   const charges = await prisma.folioCharge.findMany({
     where: { folio: { reservationId } },
-    select: { businessDate: true, revenueCode: { select: { code: true, name: true } } },
+    select: {
+      businessDate: true,
+      description: true,
+      revenueCode: { select: { code: true, name: true } },
+    },
   });
   const posted = new Set<string>();
   for (const charge of charges) {
-    if (matchesAnyRevenueToken(charge.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ'])) {
-      posted.add(hotelDateKey(charge.businessDate));
-    }
+    if (!matchesAnyRevenueToken(charge.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ'])) continue;
+    const noted = parseRoomChargeNote(charge.description ?? '');
+    posted.add(noted?.date ?? hotelDateKey(charge.businessDate));
   }
   return { bizKey, posted };
 }
@@ -535,7 +540,7 @@ export async function chargeAllRoomNights(reservationId: string) {
       ),
     );
     if (already) {
-      skipped.push(biz.toISOString().slice(0, 10));
+      skipped.push(hotelDateKey(biz));
       continue;
     }
     await postCharge({
@@ -543,10 +548,10 @@ export async function chargeAllRoomNights(reservationId: string) {
       revenueCodeId: revenueRoom.id,
       amount: decimalToNumber(row.amount),
       qty: 1,
-      description: `Room charge ${biz.toISOString().slice(0, 10)}`,
+      description: roomChargeNote('manual-room', hotelDateKey(biz)),
       businessDate: biz,
     });
-    postedNights.push(biz.toISOString().slice(0, 10));
+    postedNights.push(hotelDateKey(biz));
   }
 
   return { posted: postedNights, skipped };

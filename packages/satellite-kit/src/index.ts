@@ -332,6 +332,10 @@ export {
   type SatelliteFiscalizeOutcome,
   type SatelliteFiscalizeSkipped,
 } from "./integration/satellite-fiscal";
+export {
+  hydrateFiscalDevicesFromSync,
+  type FiscalDeviceSyncRow,
+} from "./integration/fiscal-device-hydrate";
 export { reportPosStationCapacity } from "./integration/report-pos-station-capacity";
 export { reportClinicCapacity } from "./integration/report-clinic-capacity";
 export {

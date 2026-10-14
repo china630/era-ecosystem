@@ -202,7 +202,8 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status | Blocker / gap |
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------------|
-| HOT-CASH-01 | Folio settle multi-method (CASH/CARD/COMPANY/LOYALTY/DEPOSIT/BANK_TRANSFER) | KKM policy | Y settle | Y `/folio/[id]` | — | — | — | SHIPPED | UAT-SMOKE §3/§27; BANK_TRANSFER ops tender + bankReference; match in Finance |
+| HOT-CASH-01 | Folio settle multi-method (CASH/CARD/COMPANY/LOYALTY/DEPOSIT/BANK_TRANSFER) | KKM policy | Y settle | Y `/folio/[id]` | — | — | — | SHIPPED | UAT-SMOKE §3/§27; BANK_TRANSFER ops tender + bankReference; match in Finance. Card now requires an explicit BANK_POS pick |
+| HOT-FOLIO-DESK | Guest personal debt, missed nights, folio transfer, stay journal, persisted bank terminals | ADR hotel-folio-desk | Y | Y folio card | — | — | hub devices | API | UI is on the folio card. No UAT-SMOKE step yet — not SHIPPED |
 | HOT-CASH-02 | Unified front-cash pending hub (F&B/clinic walk-in) | ADR settlement hub | Y | Y `/front-cash/pending` | — | — | — | SHIPPED | UAT-SMOKE §6b; not clinic cashier |
 | HOT-CASH-06 | Front cash journal + shift Z packet + close shift | MENU-IA | Y `/api/front-cash/transactions` | Y `/front-cash/transactions` | — | — | — | SHIPPED | UAT-SMOKE §28; ops Z print (not fiscal KKM Z) |
 | HOT-CASH-03 | Folio deposit hold / apply / refund HELD | H-BL-10/41 | Y deposits | Y folio settle DEPOSIT | — | — | — | SHIPPED | UAT-SMOKE §27; apply@check-in + settle/CO |
@@ -223,7 +224,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | HOT-NA-04 | Reservation updates (action filter + CSV) | MENU-IA | Y `…/reservation-updates` | Y UI filter+CSV | — | — | — | SHIPPED | UAT-SMOKE §28; classify heuristics on audit text |
 | HOT-NA-05 | End of year close / open | ADR year-end | Y preview API | Y `/night-audit/year-end` | — | — | — | STUB | ADR `hotel-year-end-calendar`; POST `YEAR_END_NOT_ENABLED` |
 | HOT-RPT-01 | Management reports catalog + `/reports` workspace (EW WA0058/59) | [catalog](../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) | Y `/api/reports/{slug}/layout` + `/pdf` + `/xlsx` | Y `/reports` (category and slug URLs redirect) | Y `/settings/policies#letterhead` (print letterhead + logo) | — | — | API | W1–W3 one workspace + PDF/Excel; one `ReportLayout` per slug for screen/PDF/Excel (Elektra family sections); letterhead on every export; Start/End + radios; em dash when room/bed capacity is 0; email cron HEADLESS; no UAT evidence → not SHIPPED |
-| HOT-RPT-02 | Configurable nightly management pack + ZIP | catalog §6 | Y `/api/reports/pack/download` | Y `/reports/nightly-pack` + NA deep link | Y `/settings/report-pack` | — | — | API | ZIP + SatAdmin; cron sends ZIP link (HEADLESS); not SHIPPED |
+| HOT-RPT-02 | Configurable nightly management pack + ZIP | catalog §6 | Y `/api/reports/pack/download` | Y `/reports/nightly-pack` + NA deep link | Y `/settings/report-pack` | — | — | API | ZIP + SatAdmin; default pack is nine PDFs including police-list; a saved legacy eight-slug pack is upgraded on read; cron sends ZIP link (HEADLESS); not SHIPPED |
 | HOT-XFER-01 | Transfers (airport / fleet → folio + cancel + routing) | module map | Y | Y `/transfers` | — | — | — | SHIPPED | Charge via postCharge routing; cancel/void; UAT transfers |
 | HOT-TOUR-01 | Guest group tours (Nafta weekend roster + TOUR folio) | [ADR hotel-guest-tours](./adr/hotel-guest-tours.md) | Y `/api/tours/*` `/api/fleet/*` `/api/folios/charges/[chargeId]/pay` | Y `/tours` `/tours/[id]` `/tours/[id]/print` | Y `/fleet` | — | — | SHIPPED | SKU `hotel_transfers`. UAT-SMOKE §14b. City ledger ≠ Paid. DispatchVehicle not merged. |
 | HOT-BEO-01 | Banquets / BEO MVP + day sheet print | H-BL-31 | Y day-sheet | Y `/banquets*` | — | — | — | SHIPPED | UAT-SMOKE §15; not full Opera S&C |
@@ -511,6 +512,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-15 | HOT-FOLIO-DESK API: guest personal debt, missed nights, folio transfer, stay journal, persisted bank terminals. Card payment requires an explicit BANK_POS pick. No SHIPPED / Pilot / ga changes. |
 | 2026-10-14 | CP-WF-HR-01 stays API: cadre Excel (FIN + ID logged), card gross/net from Finance, vacation work year + Finance balance, route audience and over-limit step, position tariff/hours, shift code from roster plan. No SHIPPED / Pilot / ga changes. |
 | 2026-10-13 | CP-WF-HR-01 API: employment list SAA + full FIN; Sənədlər in MDM; contract end and work regime; timesheet calendar from data-hub and hour norm only when org weekly hours are set; approval routes by org structure; absence/vacation correction and cancel. No SHIPPED / Pilot / ga changes. |
 | 2026-10-13 | Clinic ICD-10 (CLI-39…42): synthetic generator removed; `IcdCode` now built from original sources only — WHO ICD-10 2019 codes/EN, RU Minzdrav NSI 1005 v2.27, AZ XBT-10 2012 (missing translations `NULL`, display fallback). Loader and SatAdmin/gateway Sync upsert by code; unreferenced non-catalog rows deleted, diagnoses never deleted. ADR clinic-icd10-catalog amended. No SHIPPED / Pilot / ga changes. |

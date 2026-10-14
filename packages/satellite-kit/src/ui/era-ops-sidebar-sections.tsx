@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "./design-system";
 import {
@@ -24,19 +24,37 @@ function branchContains(
   return item.children?.some((child) => branchContains(child, pathname, search)) ?? false;
 }
 
+type RailMode = {
+  /** Desktop icon rail. Flyout children keep their labels. */
+  collapsed: boolean;
+  flyoutId: string | null;
+  setFlyoutId: (id: string | null) => void;
+};
+
+const RailModeContext = createContext<RailMode>({
+  collapsed: false,
+  flyoutId: null,
+  setFlyoutId: () => undefined,
+});
+
 function NavLink({ item }: { item: EraOpsNavItem }) {
+  const { collapsed } = useContext(RailModeContext);
+  const iconOnly = collapsed;
   const Icon = item.icon;
-  const className = item.active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
+  const className = [
+    item.active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS,
+    iconOnly ? "lg:justify-center lg:gap-0 lg:px-2" : "",
+  ].join(" ");
   const content = (
     <>
       {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
-      <span className="truncate">{item.label}</span>
+      <span className={iconOnly ? "truncate lg:sr-only" : "truncate"}>{item.label}</span>
     </>
   );
 
   if (item.onClick) {
     return (
-      <button type="button" onClick={item.onClick} className={`${className} w-full`}>
+      <button type="button" title={iconOnly ? item.label : undefined} onClick={item.onClick} className={`${className} w-full`}>
         {content}
       </button>
     );
@@ -47,6 +65,7 @@ function NavLink({ item }: { item: EraOpsNavItem }) {
       <a
         href={item.href}
         className={className}
+        title={iconOnly ? item.label : undefined}
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -58,7 +77,7 @@ function NavLink({ item }: { item: EraOpsNavItem }) {
   if (!item.href) return null;
 
   return (
-    <Link href={item.href} className={className}>
+    <Link href={item.href} className={className} title={iconOnly ? item.label : undefined}>
       {content}
     </Link>
   );
@@ -76,6 +95,7 @@ function NavBranch({
   open?: boolean;
   onToggle?: () => void;
 }) {
+  const { collapsed } = useContext(RailModeContext);
   const kids = (item.children ?? []).filter((child) => !child.hidden);
   if (kids.length === 0) {
     const active = item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
@@ -92,14 +112,15 @@ function NavBranch({
         type="button"
         aria-expanded={expanded}
         onClick={onToggle}
-        className={`${active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS} w-full text-left`}
+        title={collapsed ? item.label : undefined}
+        className={`${active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS} w-full text-left ${collapsed ? "lg:justify-center lg:px-2" : ""}`}
       >
         {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
-        <span className="flex-1 truncate">{item.label}</span>
+        <span className={collapsed ? "flex-1 truncate lg:sr-only" : "flex-1 truncate"}>{item.label}</span>
         {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <ChevronDown className={`h-3.5 w-3.5 shrink-0 ${collapsed ? "lg:hidden" : ""}`} aria-hidden />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${collapsed ? "lg:hidden" : ""}`} aria-hidden />
         )}
       </button>
       {expanded ? (
@@ -137,14 +158,6 @@ function CollapsibleSection({
   onToggle: () => void;
 }) {
   const visibleItems = section.items.filter((item) => !item.hidden);
-  if (visibleItems.length === 0) return null;
-
-  if (section.flat && visibleItems.length === 1) {
-    const item = visibleItems[0]!;
-    const active = item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
-    return <NavLink item={{ ...item, active }} />;
-  }
-
   const routeBranch = visibleItems.find(
     (item) =>
       (item.children ?? []).some((child) => !child.hidden) &&
@@ -155,48 +168,91 @@ function CollapsibleSection({
   useEffect(() => {
     setOpenBranch(routeBranchKey);
   }, [pathname, routeBranchKey]);
+  const rail = useContext(RailModeContext);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const setFlyoutId = rail.setFlyoutId;
+  const flyoutOpen = rail.collapsed && rail.flyoutId === section.id;
+
+  useEffect(() => {
+    if (!flyoutOpen) return;
+    const onDoc = (event: MouseEvent) => {
+      if (rootRef.current?.contains(event.target as Node)) return;
+      setFlyoutId(null);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [flyoutOpen, setFlyoutId]);
+
+  if (visibleItems.length === 0) return null;
+
+  if (section.flat && visibleItems.length === 1) {
+    const item = visibleItems[0]!;
+    const active = item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
+    return <NavLink item={{ ...item, active }} />;
+  }
+
   const Icon = section.icon;
 
+  const branches = visibleItems.map((item) => {
+    const branchKey = item.id ?? item.label;
+    const nested = (item.children ?? []).some((child) => !child.hidden);
+    return (
+      <NavBranch
+        key={item.id ?? item.href ?? item.label}
+        item={item}
+        bestHref={bestHref}
+        open={nested ? openBranch === branchKey : undefined}
+        onToggle={
+          nested
+            ? () =>
+                setOpenBranch((current) => (current === branchKey ? null : branchKey))
+            : undefined
+        }
+      />
+    );
+  });
+
   return (
-    <div className="flex flex-col gap-0">
+    <div className="relative flex flex-col gap-0" ref={rootRef}>
       <button
         type="button"
-        aria-expanded={open}
-        onClick={onToggle}
-        className="flex w-full items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-left text-[#7F8C8D] transition hover:border-[#D5DADF] hover:bg-[#F8F9FA]"
+        aria-expanded={rail.collapsed ? flyoutOpen : open}
+        aria-label={section.title}
+        title={rail.collapsed ? section.title : undefined}
+        onClick={() => {
+          if (rail.collapsed) {
+            rail.setFlyoutId(flyoutOpen ? null : section.id);
+            return;
+          }
+          onToggle();
+        }}
+        className={`flex w-full items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-left text-[#7F8C8D] transition hover:border-[#D5DADF] hover:bg-[#F8F9FA] ${rail.collapsed ? "lg:justify-center lg:px-2" : ""}`}
       >
         {Icon ? (
           <Icon className="h-4 w-4 shrink-0 text-[#7F8C8D]" aria-hidden />
         ) : null}
-        <span className="flex-1 truncate text-[13px] font-semibold">{section.title}</span>
+        <span className={rail.collapsed ? "flex-1 truncate text-[13px] font-semibold lg:sr-only" : "flex-1 truncate text-[13px] font-semibold"}>
+          {section.title}
+        </span>
         {open ? (
-          <ChevronDown className="h-4 w-4 shrink-0 text-[#BDC3C7]" aria-hidden />
+          <ChevronDown className={`h-4 w-4 shrink-0 text-[#BDC3C7] ${rail.collapsed ? "lg:hidden" : ""}`} aria-hidden />
         ) : (
-          <ChevronRight className="h-4 w-4 shrink-0 text-[#BDC3C7]" aria-hidden />
+          <ChevronRight className={`h-4 w-4 shrink-0 text-[#BDC3C7] ${rail.collapsed ? "lg:hidden" : ""}`} aria-hidden />
         )}
       </button>
-      {open ? (
+      {flyoutOpen ? (
+        <RailModeContext.Provider value={{ ...rail, collapsed: false }}>
+          <div className="absolute left-full top-0 z-[60] ml-1 hidden min-w-[13rem] flex-col gap-0.5 rounded-lg border border-[#D5DADF] bg-white p-2 shadow-lg lg:flex">
+            <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {section.title}
+            </p>
+            {branches}
+          </div>
+        </RailModeContext.Provider>
+      ) : null}
+      {open && !rail.collapsed ? (
         <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-[#ECF0F1] pl-2">
-          {visibleItems.map((item) => {
-            const branchKey = item.id ?? item.label;
-            const nested = (item.children ?? []).some((child) => !child.hidden);
-            return (
-              <NavBranch
-                key={item.id ?? item.href ?? item.label}
-                item={item}
-                bestHref={bestHref}
-                open={nested ? openBranch === branchKey : undefined}
-                onToggle={
-                  nested
-                    ? () =>
-                        setOpenBranch((current) =>
-                          current === branchKey ? null : branchKey,
-                        )
-                    : undefined
-                }
-              />
-            );
-          })}
+          {branches}
         </div>
       ) : null}
     </div>
@@ -214,10 +270,13 @@ function sectionOwnsPath(
 export function EraOpsSidebarSections({
   sections,
   topItems = [],
+  collapsed = false,
 }: {
   sections: EraOpsNavSection[];
   /** Standalone links above collapsible sections (e.g. Finance-style Home / Əsas). */
   topItems?: EraOpsNavItem[];
+  /** Desktop icon rail. Group click opens a flyout; labels stay on the flyout. */
+  collapsed?: boolean;
   /** Ignored. Highlight is the single longest matching href, so a parent cannot stay lit. */
   resolveActive?: (pathname: string, href: string) => boolean;
 }) {
@@ -233,12 +292,29 @@ export function EraOpsSidebarSections({
     visibleSections.find((section) => sectionOwnsPath(section, pathname, search))?.id ??
     null;
   const [openId, setOpenId] = useState<string | null>(routeSectionId);
+  const [flyoutId, setFlyoutId] = useState<string | null>(null);
+  const [desktop, setDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     setOpenId(routeSectionId);
+    setFlyoutId(null);
   }, [pathname, routeSectionId]);
 
+  const rail = useMemo<RailMode>(
+    () => ({ collapsed: collapsed && desktop, flyoutId, setFlyoutId }),
+    [collapsed, desktop, flyoutId],
+  );
+
   return (
+    <RailModeContext.Provider value={rail}>
     <div className="flex flex-1 flex-col gap-2 py-1">
       {topItems.map((item) => (
         <NavLink
@@ -263,5 +339,6 @@ export function EraOpsSidebarSections({
         />
       ))}
     </div>
+    </RailModeContext.Provider>
   );
 }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
+import { reservationPaymentMethodSchema } from '@/lib/reservation-full-patch.schema';
 import {
   addStayToBooking,
   listBookingStays,
@@ -29,7 +30,7 @@ const addStaySchema = z.object({
   mealPlanId: z.string().uuid().optional(),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT', 'LOYALTY_POINTS']),
+  paymentMethod: reservationPaymentMethodSchema,
   agencyId: z.string().uuid().optional(),
   companyId: z.string().uuid().optional(),
   salesContractId: z.string().uuid().optional(),
@@ -66,7 +67,11 @@ export async function POST(request: Request, ctx: Ctx) {
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await ctx.params;
     const body = addStaySchema.parse(await request.json());
-    const stay = await addStayToBooking({ groupId: id, ...body });
+    const stay = await addStayToBooking({
+      groupId: id,
+      ...body,
+      paymentMethod: body.paymentMethod ?? null,
+    });
     return jsonOk(serialize(stay), 201);
   } catch (err) {
     return handleRouteError(err);

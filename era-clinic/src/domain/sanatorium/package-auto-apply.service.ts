@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nightsBetween } from "@/lib/program-quota";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import {
   parseEntitlementSnapshot,
@@ -27,6 +28,14 @@ export type AutoApplyResult =
     };
 
 type SnapshotProc = EntitlementSnapshot["procedures"][number];
+
+function stayNightsForAdopt(startsOn: unknown, endsOn: unknown): number | null {
+  if (startsOn == null || endsOn == null) return null;
+  const start = startsOn instanceof Date ? startsOn : new Date(String(startsOn));
+  const end = endsOn instanceof Date ? endsOn : new Date(String(endsOn));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return nightsBetween(start, end) || 1;
+}
 
 const VISIT_TITLES: Record<string, string> = {
   "VISIT-SANATORIUM-INTAKE": "Sanatorium intake / doctor exam",
@@ -304,7 +313,23 @@ export async function applyPackageAutoBlocks(
 
   let axesRewritten = false;
   if (instance && opts.trigger === "MANUAL_RETRY") {
-    if (currentTemplate?.procedures.length) {
+    const nights = stayNightsForAdopt(instance.startsOn, instance.endsOn);
+    if (nights != null) {
+      const { recalcProgramQuotas } = await import("@/lib/sanatorium-scheduler.service");
+      await recalcProgramQuotas(instance.id, { nights, adoptCurrentVersion: true });
+      const refreshed = await prisma.programInstance.findUnique({
+        where: { id: instance.id },
+        select: { entitlementSnapshot: true, template: { include: { procedures: true } } },
+      });
+      const refreshedSnap = refreshed
+        ? parseEntitlementSnapshot(refreshed.entitlementSnapshot)
+        : null;
+      if (refreshedSnap) {
+        snap = refreshedSnap;
+        axesRewritten = true;
+      }
+    }
+    if (!axesRewritten && currentTemplate?.procedures.length) {
       snap = {
         ...snap,
         procedures: overlayTemplateAxes(snap.procedures, currentTemplate.procedures),

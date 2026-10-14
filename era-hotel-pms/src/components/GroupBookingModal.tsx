@@ -146,7 +146,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [guestRep, setGuestRep] = useState('');
   const [paidBy, setPaidBy] = useState('');
   const [folioMode, setFolioMode] = useState<'INDIVIDUAL' | 'MASTER' | 'SPLIT'>('MASTER');
-  const [paymentMethod, setPaymentMethod] = useState('CARD');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [lines, setLines] = useState<StayLine[]>([newLine()]);
   const [busy, setBusy] = useState(false);
 
@@ -232,7 +232,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     setGuestRep('');
     setPaidBy('');
     setFolioMode('MASTER');
-    setPaymentMethod('CARD');
+    setPaymentMethod('');
     setLines([newLine()]);
     setAvlByType({});
 
@@ -537,7 +537,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
         guestRep: guestRep.trim() || undefined,
         paidBy: paidBy.trim() || undefined,
         folioMode,
-        paymentMethod,
+        paymentMethod: paymentMethod || null,
         checkInDate: checkIn,
         checkOutDate: checkOut,
         lines: resolved.map((l) => ({

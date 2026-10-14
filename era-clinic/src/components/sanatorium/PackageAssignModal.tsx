@@ -22,6 +22,7 @@ import {
 } from "@/components/physio/PhysioSiteChips";
 import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
+import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
@@ -157,26 +158,6 @@ function fingerprintFromPhysio(p: PhysioChipsValue): string {
     siteIds: [...(p.siteIds ?? [])].sort(),
     siteLaterality: p.siteLaterality ?? {},
   });
-}
-
-function paramsLabelFromPhysio(
-  p: PhysioChipsValue,
-  catalog: PhysioCatalogSite[],
-): string {
-  const parts: string[] = [];
-  const byId = new Map(catalog.map((s) => [s.id, s]));
-  const siteNames = (p.hideSitePicker ? [] : p.siteIds ?? [])
-    .map((id) => byId.get(id)?.titleEn || byId.get(id)?.titleRu || byId.get(id)?.code)
-    .filter(Boolean);
-  if (siteNames.length) parts.push(siteNames.join(", "));
-  if (p.siteApplyMode && !p.hideSitePicker) parts.push(p.siteApplyMode);
-  if (p.physioFields && typeof p.physioFields === "object") {
-    for (const [k, v] of Object.entries(p.physioFields)) {
-      if (v != null && String(v).trim()) parts.push(`${k}: ${String(v)}`);
-    }
-  }
-  if (p.note?.trim()) parts.push(p.note.trim());
-  return parts.join(" · ");
 }
 
 function gateToPhysio(code: string, name: string, note = ""): PhysioChipsValue {
@@ -651,7 +632,7 @@ export function PackageAssignModal({
         ? "TOGETHER"
         : formPhysio.siteApplyMode) as "TURN" | "TOGETHER" | null,
       siteLaterality: formPhysio.siteLaterality,
-      paramsLabel: paramsLabelFromPhysio({ ...formPhysio, siteIds }, catalog),
+      paramsLabel: paramsLabelFromPhysio({ ...formPhysio, siteIds }, catalog, locale, { programs, substances }),
     };
   }
 
@@ -703,7 +684,7 @@ export function PackageAssignModal({
         siteIds: occupancy,
         siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
         siteLaterality: formPhysio.siteLaterality,
-        paramsLabel: paramsLabelFromPhysio({ ...formPhysio, siteIds: occupancy }, catalog),
+        paramsLabel: paramsLabelFromPhysio({ ...formPhysio, siteIds: occupancy }, catalog, locale, { programs, substances }),
       },
     ]);
     closeForm();
@@ -842,7 +823,7 @@ export function PackageAssignModal({
           siteIds: formPhysio.siteIds,
           siteApplyMode: formPhysio.siteApplyMode,
           siteLaterality: formPhysio.siteLaterality,
-          paramsLabel: paramsLabelFromPhysio(formPhysio, catalog),
+          paramsLabel: paramsLabelFromPhysio(formPhysio, catalog, locale, { programs, substances }),
         },
       ];
     } else {
@@ -1194,7 +1175,7 @@ export function PackageAssignModal({
       onClose={() => {
         if (!busy) onClose();
       }}
-      maxWidthClass="max-w-4xl w-full max-h-[90vh]"
+      maxWidthClass="max-w-2xl w-full max-h-[90vh]"
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">

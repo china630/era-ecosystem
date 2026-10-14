@@ -37,7 +37,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ chargeId: stri
       return jsonOk(serialize(applied));
     }
     return jsonOk(
-      serialize(await payFolioCharge(chargeId, body.paymentMethod, body.bankTerminalId)),
+      serialize(await payFolioCharge(chargeId, body.paymentMethod, body.bankTerminalId, session.sub)),
     );
   } catch (e) {
     return handleRouteError(e);

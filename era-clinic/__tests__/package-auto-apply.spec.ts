@@ -5,7 +5,7 @@ jest.mock("@/lib/prisma", () => ({
     visitServiceLine: { findFirst: jest.fn(), create: jest.fn() },
     visit: { create: jest.fn() },
     labOrder: { findFirst: jest.fn() },
-    programInstance: { update: jest.fn() },
+    programInstance: { update: jest.fn(), findUnique: jest.fn() },
     programTemplate: { findFirst: jest.fn() },
   },
 }));
@@ -16,6 +16,10 @@ jest.mock("@/domain/lab/lab-order-write.service", () => ({
 
 jest.mock("@/domain/sanatorium/entitlement-usage.service", () => ({
   syncEntitlementUsage: jest.fn().mockResolvedValue(0),
+}));
+
+jest.mock("@/lib/sanatorium-scheduler.service", () => ({
+  recalcProgramQuotas: jest.fn().mockResolvedValue({}),
 }));
 
 jest.mock("@/domain/sanatorium/entitlement-charge.service", () => ({
@@ -34,6 +38,7 @@ jest.mock("@/domain/sanatorium/entitlement-charge.service", () => ({
 }));
 
 import { prisma } from "@/lib/prisma";
+import { recalcProgramQuotas } from "@/lib/sanatorium-scheduler.service";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import {
   applyPackageAutoBlocks,
@@ -49,7 +54,7 @@ const mocked = prisma as unknown as {
   visitServiceLine: { findFirst: jest.Mock; create: jest.Mock };
   visit: { create: jest.Mock };
   labOrder: { findFirst: jest.Mock };
-  programInstance: { update: jest.Mock };
+  programInstance: { update: jest.Mock; findUnique: jest.Mock };
   programTemplate: { findFirst: jest.Mock };
 };
 
@@ -100,6 +105,7 @@ describe("applyPackageAutoBlocks", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mocked.programInstance.update.mockResolvedValue({});
+    mocked.programInstance.findUnique.mockResolvedValue(null);
     mocked.programTemplate.findFirst.mockResolvedValue(null);
     mocked.visitServiceLine.findFirst.mockResolvedValue(null);
     mocked.labOrder.findFirst.mockResolvedValue(null);
@@ -412,6 +418,10 @@ describe("applyPackageAutoBlocks", () => {
     const r = await applyPackageAutoBlocks("ep1", { trigger: "MANUAL_RETRY" });
     if ("skipped" in r) return;
     expect(r.createdLabCodes).toEqual(["ALT"]);
+    expect(recalcProgramQuotas).toHaveBeenCalledWith(
+      "pi1",
+      expect.objectContaining({ adoptCurrentVersion: true, nights: 14 }),
+    );
     expect(mocked.programInstance.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -553,6 +563,8 @@ function episodeWithBlock(block: {
         members: [],
       },
       procedureLines: [],
+      startsOn: new Date("2026-10-01T00:00:00.000Z"),
+      endsOn: new Date("2026-10-15T00:00:00.000Z"),
       template: { version: 1, procedures: [] },
     },
   };

@@ -843,6 +843,9 @@
     "completeCheckupSchedule": "Завершить чекап и запланировать",
     "checkupPendingHint": "Сохраните анамнез и хотя бы одну жалобу (МКБ/анализы необязательны), затем запланируйте программу. Процедуры дня 1 — после этапа врача, не ждать диагностику.",
     "registerWalkIn": "Walk-in регистрация",
+    "applyOpenPackages": "Применить пакеты",
+    "applyOpenPackagesDone": "Открытые курсы обновлены: {count}",
+    "applyOpenPackagesPartial": "Не обновлены: {count}",
     "closeWalkIn": "Закрыть",
     "closeWalkInConfirm": "Закрыть walk-in курс? Только если нет активных процедур и открытых лабораторий.",
     "closeWalkInOk": "Walk-in курс закрыт",
@@ -1609,7 +1612,10 @@
     "packageSummaryTitle": "Пакет / размещение",
     "packageProgram": "Программа",
     "packageRoom": "Номер",
-    "packageOrigin": "Источник"
+    "packageOrigin": "Источник",
+    "stayCheckIn": "Заезд",
+    "stayCheckOut": "Выезд",
+    "stayNights": "Ночей"
   },
   "patientTimeline": {
     "title": "Клинический таймлайн",

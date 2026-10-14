@@ -298,7 +298,7 @@ export async function removeTourBooking(id: string) {
   if (booking.status === 'PAID') throw new Error('Cannot remove a paid tour booking');
   if (booking.status === 'CANCELLED') return booking;
   if (booking.folioChargeId) {
-    await voidCharge(booking.folioChargeId);
+    await voidCharge(booking.folioChargeId, 'Tour booking removed');
   }
   return prisma.tourBooking.update({
     where: { id },
@@ -310,6 +310,7 @@ export async function payFolioCharge(
   chargeId: string,
   paymentMethod: PaymentMethod,
   bankTerminalId?: string,
+  createdByUserId?: string,
 ) {
   const charge = await prisma.folioCharge.findUnique({
     where: { id: chargeId },
@@ -324,7 +325,9 @@ export async function payFolioCharge(
     folioId: charge.folioId,
     amount,
     paymentMethod,
-    bankTerminalId: paymentMethod === 'CARD' ? bankTerminalId : undefined,
+    bankTerminalId:
+      paymentMethod === 'CARD' || paymentMethod.startsWith('CARD_') ? bankTerminalId : undefined,
+    createdByUserId,
   });
   await prisma.folioPaymentAllocation.create({
     data: { paymentId: payment.id, chargeId: charge.id, amount: toDecimal(amount) },
@@ -339,6 +342,15 @@ export async function payFolioCharge(
       data: { status: 'PAID', folioPaymentId: payment.id },
     });
   }
+  const { recordHotelAudit } = await import('@/lib/satellite-audit');
+  await recordHotelAudit({ userId: createdByUserId }, 'Reservation', charge.folio.reservationId, 'PAYMENT', {
+    reservationId: charge.folio.reservationId,
+    paymentId: payment.id,
+    amount,
+    paymentMethod,
+    bankTerminalId: bankTerminalId ?? null,
+    chargeId: charge.id,
+  });
   return payment;
 }
 

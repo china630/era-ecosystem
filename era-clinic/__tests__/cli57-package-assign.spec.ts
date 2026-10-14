@@ -182,12 +182,12 @@ describe("CLI-57 package assign helpers", () => {
       sites: [{ site: { titleEn: "Lumbar" } }],
     });
     expect(label).toContain("Lumbar");
-    expect(label).toContain("TURN");
-    expect(label).toContain("intensity: MEDIUM");
+    expect(label).toContain("növbəli");
+    expect(label).toContain("orta");
     expect(label).toContain("soft");
     expect(paramsLinesFromOrder({
       physioFields: { naftalanFill: "TAM", dayBlock: 2 },
-    })).toEqual(["naftalanFill: TAM", "dayBlock: 2"]);
+    })).toEqual(["2 gün", "tam"]);
   });
 
   it("assignedAggGroupKey merges batches and param fingerprints for the same SKU", () => {

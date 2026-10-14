@@ -1,6 +1,7 @@
 import type { GuestLedgerRow, InHouseResult, MainCurrentResult } from '@/lib/services/reports/guest-ledger.report';
+import type { PoliceListResult } from '@/lib/services/reports/police-list.report';
 import type { LayoutColumn, LayoutRow, LayoutSection, ReportLayout } from '../layout';
-import { col, colLabel, row, section, secTitle, sum, type LayoutCtx } from './common';
+import { col, colLabel, row, section, secTitle, sum, valueLabel, type LayoutCtx } from './common';
 
 function ledgerColumns(ctx: LayoutCtx, withRate: boolean): LayoutColumn[] {
   return [
@@ -55,6 +56,32 @@ function ledgerRows(ctx: LayoutCtx, items: GuestLedgerRow[], withRate: boolean):
     );
   }
   return rows;
+}
+
+export function buildPoliceListLayout(slug: string, data: PoliceListResult, ctx: LayoutCtx): ReportLayout {
+  const columns = [
+    col(ctx, 'room', 'text', 0.7),
+    col(ctx, 'firstName', 'text', 1.3),
+    col(ctx, 'surname', 'text', 1.4),
+    col(ctx, 'nationality', 'text', 0.8),
+    col(ctx, 'idNo', 'text', 1.3),
+    col(ctx, 'sex', 'text', 0.8),
+    col(ctx, 'birthDate', 'date', 1),
+    col(ctx, 'birthPlace', 'text', 1.4),
+  ];
+  const rows = data.rows.map((r) =>
+    row([
+      r.roomNumber,
+      r.firstName,
+      r.surname,
+      r.nationality,
+      r.idNo,
+      valueLabel(ctx, 'sex', r.sex),
+      r.birthDate,
+      r.birthPlace,
+    ]),
+  );
+  return { slug, sections: [section('policeList', columns, rows)] };
 }
 
 export function buildInHouseLayout(slug: string, data: InHouseResult, ctx: LayoutCtx): ReportLayout {

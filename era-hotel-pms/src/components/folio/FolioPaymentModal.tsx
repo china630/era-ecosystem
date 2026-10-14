@@ -150,9 +150,8 @@ export function FolioPaymentModal({
     amountN > 0 &&
     (asDeposit || Boolean(folio)) &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
-    (method !== 'CARD' || bankTerminals.length === 0 || bankTerminalId.trim().length > 0) &&
+    (method !== 'CARD' || (bankTerminals.length > 0 && bankTerminalId.trim().length > 0)) &&
     (method !== 'DEPOSIT' || balance > 0.01);
-
   async function submit() {
     if (!canSubmit || !activeStayId) return;
     setBusy(true);
@@ -281,7 +280,10 @@ export function FolioPaymentModal({
               label={t('bankTerminal')}
               value={bankTerminalId}
               onChange={(v) => setBankTerminalId(String(v ?? ''))}
-              options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+              options={[
+                { value: '', label: t('pickTerminal') },
+                ...bankTerminals.map((row) => ({ value: row.id, label: row.label })),
+              ]}
               emptyLabel={null}
             />
           ) : (

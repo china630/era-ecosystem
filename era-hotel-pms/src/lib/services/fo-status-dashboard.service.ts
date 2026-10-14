@@ -174,7 +174,7 @@ export async function getFoStatusDashboard(
       channel,
       folios: openFolios,
       billTo: row.agency ? 'AGENCY' : row.company ? 'COMPANY' : 'GUEST',
-      paymentMethod: row.paymentMethod,
+      paymentMethod: row.paymentMethod ?? '',
       totalAmount: decimalToNumber(row.totalAmount),
     };
   });

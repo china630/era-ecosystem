@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { DatePicker, SECONDARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { getPackDefaults } from '@/lib/reports/catalog';
+import { getPackDefaults, getReportBySlug } from '@/lib/reports/catalog';
 import { resolveDateMode } from '@/lib/reports/period';
 import type { ReportLayout } from '@/lib/reports/layout';
 import { reportFileName } from '@/lib/reports/locale';
@@ -63,9 +63,26 @@ export default function NightlyPackPage() {
 
     const anchor = bakuCivilUtcDate(date);
     void (async () => {
+      let reports = getPackDefaults();
+      try {
+        const packRes = await fetch(`/api/reports/pack?businessDate=${encodeURIComponent(date)}`, {
+          signal: controller.signal,
+        });
+        const packBody = (await packRes.json().catch(() => null)) as {
+          reports?: { slug: string }[];
+        } | null;
+        if (packRes.ok && Array.isArray(packBody?.reports)) {
+          reports = packBody.reports
+            .map((item) => getReportBySlug(item.slug))
+            .filter((item): item is NonNullable<typeof item> => Boolean(item));
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+      }
+      if (controller.signal.aborted) return;
       const next: PackBlock[] = [];
       await Promise.all(
-        getPackDefaults().map(async (report, index) => {
+        reports.map(async (report, index) => {
           const range = resolveDateMode(report.dateMode, anchor);
           const qs = new URLSearchParams({
             from: hotelDateKey(range.from),

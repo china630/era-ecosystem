@@ -10,7 +10,8 @@ export async function GET(request: Request) {
     const session = await getSatelliteSession();
     assertAnyPermission(session, [PERMISSIONS.SCREEN_NIGHT_AUDIT, PERMISSIONS.NIGHT_AUDIT_RUN]);
     const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') ?? '5', 10);
+    const requested = parseInt(url.searchParams.get('limit') ?? '5', 10);
+    const limit = Number.isFinite(requested) ? Math.min(200, Math.max(1, requested)) : 5;
     const runs = await listNightAuditRuns(limit);
     return jsonOk(serialize(runs));
   } catch (err) {

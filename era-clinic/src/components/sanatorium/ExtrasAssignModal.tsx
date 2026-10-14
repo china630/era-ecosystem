@@ -20,6 +20,7 @@ import {
 } from "@/components/physio/PhysioSiteChips";
 import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
+import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
 
 type ProcOption = { value: string; label: string; name: string; amount?: number };
 
@@ -99,26 +100,6 @@ function gateToPhysio(code: string, name: string): PhysioChipsValue {
     siteApplyMode: gate.forceSiteTogether ? "TOGETHER" : null,
     physioFields: gate.hideSitePicker ? { naftalanFill: "TAM" } : {},
   };
-}
-
-function paramsLabelFromPhysio(
-  p: PhysioChipsValue,
-  catalog: PhysioCatalogSite[],
-): string {
-  const parts: string[] = [];
-  const byId = new Map(catalog.map((s) => [s.id, s]));
-  const siteNames = (p.hideSitePicker ? [] : p.siteIds ?? [])
-    .map((id) => byId.get(id)?.titleEn || byId.get(id)?.code)
-    .filter(Boolean);
-  if (siteNames.length) parts.push(siteNames.join(", "));
-  if (p.siteApplyMode && !p.hideSitePicker) parts.push(p.siteApplyMode);
-  if (p.physioFields && typeof p.physioFields === "object") {
-    for (const [k, v] of Object.entries(p.physioFields)) {
-      if (v != null && String(v).trim()) parts.push(`${k}: ${String(v)}`);
-    }
-  }
-  if (p.note?.trim()) parts.push(p.note.trim());
-  return parts.join(" · ");
 }
 
 /** Paid-extra prescribe form. The card opens PackageAssignModal, which writes quota and extras together. */
@@ -250,6 +231,8 @@ export function ExtrasAssignModal({
         paramsLabel: paramsLabelFromPhysio(
           { ...formPhysio, siteIds: occupancy },
           catalog,
+          locale,
+          { programs, substances },
         ),
       },
     ]);

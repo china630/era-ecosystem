@@ -1,13 +1,24 @@
 export function computeGuestFolioBalance(
   folios: Array<{
     type: string;
-    charges: Array<{ amount: number | string }>;
-    payments?: Array<{ amount: number | string }>;
+    charges: Array<{ amount: number | string; qty?: number | null }>;
+    payments?: Array<{ amount: number | string; kind?: string | null; voidedAt?: string | Date | null }>;
   }>,
 ): number {
-  const guest = folios.find((f) => f.type === 'GUEST') ?? folios[0];
-  if (!guest) return 0;
-  const charges = guest.charges.reduce((s, c) => s + Number(c.amount), 0);
-  const payments = (guest.payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
-  return Math.round((charges - payments) * 100) / 100;
+  const guestFolios = folios.filter((folio) => folio.type === 'GUEST');
+  const source = guestFolios.length > 0 ? guestFolios : folios.slice(0, 1);
+  let net = 0;
+  for (const folio of source) {
+    for (const charge of folio.charges) {
+      const qty = charge.qty == null ? 1 : Number(charge.qty);
+      net += Number(charge.amount) * (Number.isFinite(qty) ? qty : 1);
+    }
+    for (const payment of folio.payments ?? []) {
+      if (payment.voidedAt) continue;
+      const amount = Number(payment.amount);
+      if (!Number.isFinite(amount)) continue;
+      net -= payment.kind === 'REFUND' ? -amount : amount;
+    }
+  }
+  return Math.round(net * 100) / 100;
 }

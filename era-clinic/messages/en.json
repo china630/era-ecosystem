@@ -868,6 +868,9 @@
     "completeCheckupSchedule": "Complete checkup & schedule program",
     "checkupPendingHint": "Save anamnesis and at least one complaint (ICD/labs optional), then schedule the treatment program. Day-1 procedures start after the doctor stage — do not wait for diagnostics.",
     "registerWalkIn": "Register walk-in",
+    "applyOpenPackages": "Apply packages",
+    "applyOpenPackagesDone": "Open courses updated: {count}",
+    "applyOpenPackagesPartial": "Not updated: {count}",
     "closeWalkIn": "Close",
     "closeWalkInConfirm": "Close this walk-in care course? Only when no live procedures or open labs remain.",
     "closeWalkInOk": "Walk-in course closed",
@@ -1621,7 +1624,10 @@
     "packageSummaryTitle": "Package / stay",
     "packageProgram": "Program",
     "packageRoom": "Room",
-    "packageOrigin": "Origin"
+    "packageOrigin": "Origin",
+    "stayCheckIn": "Check-in",
+    "stayCheckOut": "Check-out",
+    "stayNights": "Nights"
   },
   "patientTimeline": {
     "title": "Clinical timeline",

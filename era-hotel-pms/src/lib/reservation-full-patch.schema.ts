@@ -1,5 +1,22 @@
 import { z } from 'zod';
 
+/** Empty select value is "not specified". Omitted stays omitted so a patch that does not send the field does not clear it. */
+export const reservationPaymentMethodSchema = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z
+    .enum([
+      'CASH',
+      'CARD',
+      'COMPANY_ACCOUNT',
+      'LOYALTY_POINTS',
+      'DEPOSIT',
+      'BANK_TRANSFER',
+      'EPOINT',
+    ])
+    .nullable()
+    .optional(),
+);
+
 /** Shared PATCH body schema for reservation full card (also validated in API route). */
 export const reservationFullPatchSchema = z.object({
   roomTypeId: z.string().uuid().optional(),
@@ -15,7 +32,7 @@ export const reservationFullPatchSchema = z.object({
   guestId: z.string().uuid().optional(),
   checkInDate: z.coerce.date().optional(),
   checkOutDate: z.coerce.date().optional(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']).optional(),
+  paymentMethod: reservationPaymentMethodSchema,
   voucherNo: z.string().nullable().optional(),
   partyBillingMode: z.enum(['PRIMARY', 'EQUAL']).optional(),
   roomCount: z.number().int().min(1).optional(),

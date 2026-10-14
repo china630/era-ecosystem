@@ -240,6 +240,24 @@ function nightlyForChargedType(
   return (peer ?? matches[0]).pricePerNight ?? null;
 }
 
+function auditDetail(changes: unknown): string {
+  if (!changes || typeof changes !== 'object') return '';
+  const row = changes as Record<string, unknown>;
+  const bits: string[] = [];
+  if (row.amount != null) bits.push(String(row.amount));
+  if (typeof row.note === 'string' && row.note.trim()) bits.push(row.note.trim());
+  if (typeof row.reason === 'string' && row.reason.trim()) bits.push(row.reason.trim());
+  if (typeof row.paymentMethod === 'string') bits.push(row.paymentMethod);
+  if (row.fields && typeof row.fields === 'object') {
+    bits.push(
+      Object.entries(row.fields as Record<string, { from?: unknown; to?: unknown }>)
+        .map(([key, value]) => `${key}: ${String(value?.from ?? '—')} → ${String(value?.to ?? '—')}`)
+        .join('; '),
+    );
+  }
+  return bits.length ? ` — ${bits.join(' · ')}` : '';
+}
+
 function stayMoveReason(
   code: string | null | undefined,
   note: string | null | undefined,
@@ -261,8 +279,12 @@ function StayJournal({
   notes,
   changes,
   tariffChanges,
+  createdAt,
+  audit,
 }: {
   notes: Record<string, string>;
+  createdAt?: string | null;
+  audit: Array<{ id: string; action: string; createdAt: string; actor: string | null; changes: unknown }>;
   changes: Array<{
     id: string;
     effectiveAt: string;
@@ -284,11 +306,26 @@ function StayJournal({
     String(b.effectiveAt).localeCompare(String(a.effectiveAt)),
   );
   const noteLines = Object.entries(notes).filter(([, value]) => value.trim());
-  if (moves.length === 0 && tariffs.length === 0 && noteLines.length === 0) {
+  const createdLine =
+    createdAt && !audit.some((row) => row.action === 'CREATE')
+      ? t('stayCreated', { at: bakuDateTimeDisplay(createdAt) })
+      : null;
+  if (moves.length === 0 && tariffs.length === 0 && noteLines.length === 0 && audit.length === 0 && !createdLine) {
     return <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalEmpty')}</p>;
   }
   return (
     <div className="space-y-3 text-[13px] text-[#34495E]">
+      {createdLine ? <p className="m-0">{createdLine}</p> : null}
+      {audit.length > 0 ? (
+        <ul className="m-0 list-none space-y-1 p-0">
+          {audit.map((row) => (
+            <li key={row.id}>
+              {bakuDateTimeDisplay(row.createdAt)} — {row.actor ?? '—'} — {row.action}
+              {auditDetail(row.changes)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {moves.length > 0 ? (
         <ul className="m-0 list-none space-y-1 p-0">
           {moves.map((c) => (
@@ -412,6 +449,9 @@ export function ReservationCardEditor({
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [stayAudit, setStayAudit] = useState<
+    Array<{ id: string; action: string; createdAt: string; actor: string | null; changes: unknown }>
+  >([]);
   const [scanPaxIndex, setScanPaxIndex] = useState<number | null>(null);
   const [allergenCount, setAllergenCount] = useState(0);
   const staysBarRef = useRef<HTMLDivElement | null>(null);
@@ -461,7 +501,7 @@ export function ReservationCardEditor({
   const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
   const [guestId, setGuestId] = useState('');
   const [guestOptions, setGuestOptions] = useState<SelectOption[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState('CARD');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [creditLimitAzn, setCreditLimitAzn] = useState('');
   const [quoteText, setQuoteText] = useState<string | null>(null);
   const [sellable, setSellable] = useState<{
@@ -575,6 +615,7 @@ export function ReservationCardEditor({
     setDiscountPercent(json.discountPercent != null ? String(json.discountPercent) : '');
     setDiscountActive(Boolean(json.discountActive) || Number(json.discountPercent) > 0);
     setCreditLimitAzn(json.creditLimitAzn != null ? String(json.creditLimitAzn) : '');
+    setPaymentMethod(typeof json.paymentMethod === 'string' ? json.paymentMethod : '');
     setPricingBusinessDate(
       typeof json.pricingBusinessDate === 'string' ? json.pricingBusinessDate.slice(0, 10) : null,
     );
@@ -811,6 +852,17 @@ export function ReservationCardEditor({
     }
   }, []);
 
+  useEffect(() => {
+    if (!historyOpen || !reservationId) return;
+    void fetch(`/api/reservations/${reservationId}/journal`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        const payload = body?.data ?? body;
+        setStayAudit(Array.isArray(payload?.entries) ? payload.entries : []);
+      })
+      .catch(() => setStayAudit([]));
+  }, [historyOpen, reservationId]);
+
   const loadSeq = useRef(0);
   const load = useCallback(async () => {
     if (!reservationId) return;
@@ -831,7 +883,7 @@ export function ReservationCardEditor({
           const deps = (await depRes.json()) as Array<{ amount?: number; status?: string }>;
           const held = Array.isArray(deps)
             ? deps
-                .filter((d) => d.status === 'HELD' || d.status === 'APPLIED')
+                .filter((d) => d.status === 'HELD')
                 .reduce((s, d) => s + Number(d.amount ?? 0), 0)
             : 0;
           setDepositHeldTotal(Math.round(held * 100) / 100);
@@ -933,7 +985,7 @@ export function ReservationCardEditor({
       setTab('guests');
       setQuoteText(null);
       setSellable(null);
-      // Reset commercial fields; keep FO ops defaults (14:00 / 12:00, adults=0, CARD)
+      // Reset commercial fields; keep FO ops defaults (14:00 / 12:00, adults=0). Payment method stays empty.
       setCheckIn('');
       setCheckOut('');
       setCheckInTime('14:00');
@@ -978,7 +1030,7 @@ export function ReservationCardEditor({
       setRatePlanId('');
       setGuestId('');
       setPax([]);
-      setPaymentMethod('CARD');
+      setPaymentMethod('');
       setCreditLimitAzn('');
       setNotes({});
       setDailyRates([]);
@@ -1941,8 +1993,8 @@ export function ReservationCardEditor({
         if (!roomTypeId) missing.push(tb('roomType'));
         if (!ratePlanId) missing.push(t('packageOrRate'));
         if (!guestId) missing.push(t('pickGuestRequired'));
-        if (!checkIn) missing.push(t('checkIn'));
-        if (!checkOut) missing.push(t('checkOut'));
+        if (!checkIn) missing.push(tb('checkIn'));
+        if (!checkOut) missing.push(tb('checkOut'));
         if (missing.length > 0) {
           showApiError(
             { error: t('missingRequired', { fields: missing.join(', ') }) },
@@ -1971,7 +2023,7 @@ export function ReservationCardEditor({
             partyBillingMode,
             checkInDate: mergeDateTime(checkIn, checkInTime),
             checkOutDate: mergeDateTime(checkOut, checkOutTime),
-            paymentMethod,
+            paymentMethod: paymentMethod || null,
             adults: Math.max(0, Number(adults) || 0),
             children11_6: Number(children11_6) || 0,
             children5_2: Number(children5_2) || 0,
@@ -2093,6 +2145,7 @@ export function ReservationCardEditor({
         body: JSON.stringify({
           checkInDate: mergeDateTime(checkIn, checkInTime),
           checkOutDate: mergeDateTime(checkOut, checkOutTime),
+          paymentMethod: paymentMethod || null,
           voucherNo: voucherNo || null,
           adults: partyAdults,
           agencyId: parties.agencyId,
@@ -3003,6 +3056,8 @@ export function ReservationCardEditor({
       >
         <StayJournal
           notes={notes}
+          createdAt={typeof data?.createdAt === 'string' ? data.createdAt : null}
+          audit={stayAudit}
           changes={
             Array.isArray(data?.roomChanges)
               ? (data.roomChanges as Array<{

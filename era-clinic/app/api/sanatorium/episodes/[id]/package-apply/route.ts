@@ -10,7 +10,7 @@ import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { applyPackageAutoBlocks } from "@/domain/sanatorium/package-auto-apply.service";
 
 /**
- * Manual retry of package auto-apply (OPEN / doctor-gated blocks).
+ * Super-admin: move the course onto the current package version, then create missing auto visits and labs.
  * Permission: api:procedures.confirm
  */
 export async function POST(

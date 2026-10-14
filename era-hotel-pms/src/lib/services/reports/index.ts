@@ -9,6 +9,7 @@ import {
 } from './flash.report';
 import { queryMonthlyDailyAnalysis } from './monthly-daily-analysis.report';
 import { queryInHouse, queryMainCurrent } from './guest-ledger.report';
+import { queryPoliceList } from './police-list.report';
 import { queryAnnualOccupancy } from './annual-occupancy.report';
 import {
   queryOccupancyGraph,
@@ -77,6 +78,7 @@ const QUERY_MAP: Record<string, (from: string, to: string, extras?: ReportQueryE
   'department-revenues': queryDepartmentRevenues,
   'daily-management': (_from, to) => queryDailyManagement(to),
   'in-house': (_from, to) => queryInHouse(to),
+  'police-list': (_from, to) => queryPoliceList(to),
   'monthly-daily-analysis': (from, to) => queryMonthlyDailyAnalysis(from, to),
   'annual-occupancy': (from, to) => queryAnnualOccupancy(from, to),
 
