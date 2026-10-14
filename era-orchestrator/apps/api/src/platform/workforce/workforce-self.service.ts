@@ -30,7 +30,9 @@ import { WorkforceAbsencesService } from "./workforce-absences.service";
 import { FinanceWorkforceMirrorClient } from "./finance-workforce-mirror.client";
 import { WorkforceApprovalService } from "./workforce-approval.service";
 import { WorkforceHrSettingsService } from "./workforce-hr-settings.service";
-import { todayBakuYmd, bakuDateKey } from "@era/satellite-kit/time";
+import { CatalogGatewayService } from "../catalog/catalog-gateway.service";
+import { nextPlannedPayDate, type CalendarDayInput } from "./workforce-calendar-norm";
+import { addBakuDays, todayBakuYmd, bakuDateKey } from "@era/satellite-kit/time";
 
 const SELF_ROLE_CODE = "WORKFORCE_SELF";
 const SELF_PERMS = JSON.stringify([
@@ -54,6 +56,7 @@ export class WorkforceSelfService {
     private readonly financeMirror: FinanceWorkforceMirrorClient,
     @Optional() private readonly approval?: WorkforceApprovalService,
     @Optional() private readonly hrSettings?: WorkforceHrSettingsService,
+    @Optional() private readonly catalog?: CatalogGatewayService,
   ) {}
 
   /** Active employments linked to this platform user (multi-VÖEN switch). */
@@ -98,6 +101,74 @@ export class WorkforceSelfService {
       throw new ForbiddenException("Employment is not yours");
     }
     return emp;
+  }
+
+  private async assertEmployeeSubmitAllowed(organizationId: string) {
+    const settings = await this.prisma.workforceOrgSettings?.findUnique?.({
+      where: { organizationId },
+    });
+    if (settings && settings.allowEmployeeSubmit === false) {
+      throw new ForbiddenException({
+        code: "EMPLOYEE_SUBMIT_DISABLED",
+        message: "Employee self-submit is turned off",
+      });
+    }
+  }
+
+  private async assertManagerOfUnit(
+    organizationId: string,
+    actorUserId: string,
+    orgUnitId: string,
+  ) {
+    const actor = await this.prisma.workforceEmployment.findFirst({
+      where: {
+        organizationId,
+        platformUserId: actorUserId,
+        status: WorkforceEmploymentStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+    let unitId: string | null = orgUnitId;
+    for (let guard = 0; unitId && guard < 24; guard += 1) {
+      const currentId: string = unitId;
+      const unit = await this.prisma.orgUnit.findFirst({
+        where: { id: currentId },
+        select: { parentId: true, managerEmploymentId: true, managerUserId: true },
+      });
+      if (!unit) break;
+      if (unit.managerUserId === actorUserId) return;
+      if (actor && unit.managerEmploymentId === actor.id) return;
+      unitId = unit.parentId;
+    }
+    throw new ForbiddenException({
+      code: "MANAGER_SUBMIT_FORBIDDEN",
+      message: "Only the unit manager may file this request",
+    });
+  }
+
+  private async plannedAdvancePayDate(organizationId: string): Promise<Date | null> {
+    const settings = await this.prisma.workforceOrgSettings?.findUnique?.({
+      where: { organizationId },
+    });
+    const payDay = settings?.advancePayDay;
+    if (payDay == null || payDay < 1 || payDay > 31) return null;
+    const today = todayBakuYmd();
+    const end = addBakuDays(today, 45);
+    let hubDays: CalendarDayInput[] = [];
+    if (this.catalog) {
+      try {
+        const cal = (await this.catalog.getCalendarDaysRange(
+          "AZ",
+          today,
+          end,
+          organizationId,
+        )) as { days?: CalendarDayInput[] };
+        hubDays = cal.days ?? [];
+      } catch {
+        hubDays = [];
+      }
+    }
+    return new Date(`${nextPlannedPayDate(today, payDay, hubDays)}T00:00:00.000Z`);
   }
 
   async cabinetContext(organizationId: string, userId: string) {
@@ -146,6 +217,7 @@ export class WorkforceSelfService {
     },
   ) {
     await this.assertOwnEmployment(organizationId, userId, dto.employmentId);
+    await this.assertEmployeeSubmitAllowed(organizationId);
     return this.absences.create(organizationId, userId, {
       employmentId: dto.employmentId,
       kind: dto.kind,
@@ -169,6 +241,7 @@ export class WorkforceSelfService {
     },
   ) {
     await this.assertOwnEmployment(organizationId, userId, dto.employmentId);
+    await this.assertEmployeeSubmitAllowed(organizationId);
     if (
       !Number.isInteger(dto.startMinute) ||
       !Number.isInteger(dto.endMinute) ||
@@ -246,16 +319,17 @@ export class WorkforceSelfService {
     dto: { employmentId: string; amountAzn: number; note?: string },
   ) {
     await this.assertOwnEmployment(organizationId, userId, dto.employmentId);
+    await this.assertEmployeeSubmitAllowed(organizationId);
     if (!(dto.amountAzn > 0)) {
       throw new BadRequestException("amountAzn must be positive");
     }
-    if (this.hrSettings) {
-      await this.hrSettings.assertAdvanceAllowed(
-        organizationId,
-        dto.employmentId,
-        dto.amountAzn,
-      );
-    }
+    const exceedsLimit = this.hrSettings
+      ? await this.hrSettings.assertAdvanceAllowed(
+          organizationId,
+          dto.employmentId,
+          dto.amountAzn,
+        )
+      : false;
     const row = await this.prisma.workforceAdvanceRequest.create({
       data: {
         organizationId,
@@ -264,6 +338,8 @@ export class WorkforceSelfService {
         note: (dto.note ?? "").trim(),
         status: WorkforceSelfRequestStatus.SUBMITTED,
         submittedByUserId: userId,
+        exceedsLimit,
+        plannedPayDate: await this.plannedAdvancePayDate(organizationId),
       },
     });
     await this.audit.log({
@@ -304,13 +380,13 @@ export class WorkforceSelfService {
       },
     });
     if (!employment) throw new NotFoundException("Active employment required");
-    if (this.hrSettings) {
-      await this.hrSettings.assertAdvanceAllowed(
-        organizationId,
-        dto.employmentId,
-        dto.amountAzn,
-      );
-    }
+    const exceedsLimit = this.hrSettings
+      ? await this.hrSettings.assertAdvanceAllowed(
+          organizationId,
+          dto.employmentId,
+          dto.amountAzn,
+        )
+      : false;
     const row = await this.prisma.workforceAdvanceRequest.create({
       data: {
         organizationId,
@@ -319,6 +395,8 @@ export class WorkforceSelfService {
         note: (dto.note ?? "").trim(),
         status: WorkforceSelfRequestStatus.SUBMITTED,
         submittedByUserId: actorUserId,
+        exceedsLimit,
+        plannedPayDate: await this.plannedAdvancePayDate(organizationId),
       },
     });
     await this.audit.log({
@@ -330,6 +408,150 @@ export class WorkforceSelfService {
       payload: { amountAzn: dto.amountAzn, proxy: true },
     });
     return row;
+  }
+
+  /** Unit manager files a request for someone in their unit. HR screens stay separate. */
+  async submitOnBehalf(
+    organizationId: string,
+    actorUserId: string,
+    dto: {
+      kind: "FULL_DAY" | "HOURLY" | "ADVANCE";
+      employmentId: string;
+      absenceKind?: WorkforceAbsenceKind;
+      startDate?: string;
+      endDate?: string;
+      workDate?: string;
+      startMinute?: number;
+      endMinute?: number;
+      paid?: boolean;
+      amountAzn?: number;
+      note?: string;
+    },
+  ) {
+    await this.entitlement.assertWorkforceHub(organizationId);
+    const settings = await this.prisma.workforceOrgSettings.findUnique({
+      where: { organizationId },
+    });
+    if (!settings?.allowManagerSubmit) {
+      throw new ForbiddenException({
+        code: "MANAGER_SUBMIT_DISABLED",
+        message: "Manager submit is turned off for this organization",
+      });
+    }
+    const employment = await this.prisma.workforceEmployment.findFirst({
+      where: {
+        id: dto.employmentId,
+        organizationId,
+        status: WorkforceEmploymentStatus.ACTIVE,
+      },
+    });
+    if (!employment) throw new NotFoundException("Active employment required");
+    await this.assertManagerOfUnit(organizationId, actorUserId, employment.orgUnitId);
+    if (dto.kind === "ADVANCE") {
+      if (!(dto.amountAzn && dto.amountAzn > 0)) {
+        throw new BadRequestException("amountAzn must be positive");
+      }
+      const exceedsLimit = this.hrSettings
+        ? await this.hrSettings.assertAdvanceAllowed(
+            organizationId,
+            dto.employmentId,
+            dto.amountAzn,
+          )
+        : false;
+      const row = await this.prisma.workforceAdvanceRequest.create({
+        data: {
+          organizationId,
+          employmentId: dto.employmentId,
+          amountAzn: new Prisma.Decimal(dto.amountAzn),
+          note: (dto.note ?? "").trim(),
+          status: WorkforceSelfRequestStatus.SUBMITTED,
+          submittedByUserId: actorUserId,
+          exceedsLimit,
+          plannedPayDate: await this.plannedAdvancePayDate(organizationId),
+        },
+      });
+      await this.audit.log({
+        organizationId,
+        actorUserId,
+        action: "ADVANCE_SUBMITTED",
+        entityType: "ADVANCE_REQUEST",
+        entityId: row.id,
+        payload: { amountAzn: dto.amountAzn, manager: true },
+      });
+      return row;
+    }
+    if (dto.kind === "HOURLY") {
+      if (
+        !dto.workDate ||
+        dto.startMinute == null ||
+        dto.endMinute == null ||
+        dto.endMinute <= dto.startMinute
+      ) {
+        throw new BadRequestException("Invalid hourly leave");
+      }
+      const row = await this.prisma.workforceHourlyLeaveRequest.create({
+        data: {
+          organizationId,
+          employmentId: dto.employmentId,
+          workDate: parseYmd(dto.workDate),
+          startMinute: dto.startMinute ?? 0,
+          endMinute: dto.endMinute ?? 0,
+          paid: dto.paid === true,
+          note: (dto.note ?? "").trim(),
+          status: WorkforceSelfRequestStatus.SUBMITTED,
+          submittedByUserId: actorUserId,
+        },
+      });
+      await this.audit.log({
+        organizationId,
+        actorUserId,
+        action: "HOURLY_LEAVE_SUBMITTED",
+        entityType: "HOURLY_LEAVE",
+        entityId: row.id,
+        payload: { manager: true, workDate: dto.workDate },
+      });
+      return row;
+    }
+    if (!dto.startDate || !dto.endDate || !dto.absenceKind) {
+      throw new BadRequestException("startDate, endDate and absenceKind required");
+    }
+    return this.absences.create(organizationId, actorUserId, {
+      employmentId: dto.employmentId,
+      kind: dto.absenceKind,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      note: dto.note,
+      submit: true,
+    });
+  }
+
+  async labelSubmitters(organizationId: string, userIds: string[]) {
+    const ids = [...new Set(userIds.filter(Boolean))];
+    const out: Record<string, { label: string; hr: boolean }> = {};
+    if (ids.length === 0) return out;
+    const emps = await this.prisma.workforceEmployment.findMany({
+      where: {
+        organizationId,
+        platformUserId: { in: ids },
+        status: WorkforceEmploymentStatus.ACTIVE,
+      },
+      select: { platformUserId: true, globalPersonId: true },
+    });
+    const profiles = await this.mdm.batchGetPersonOpsProfile(
+      emps.map((row) => row.globalPersonId),
+      organizationId,
+    );
+    for (const id of ids) {
+      const emp = emps.find((row) => row.platformUserId === id);
+      const profile = emp ? profiles[emp.globalPersonId] : null;
+      const saa = [profile?.lastName, profile?.firstName, profile?.middleName]
+        .map((part) => (part ?? "").trim())
+        .filter(Boolean)
+        .join(" ");
+      const label = saa || String(profile?.displayName ?? "").trim();
+      out[id] = { label, hr: !emp };
+    }
+    return out;
   }
 
   async listAnnouncements(organizationId: string, userId: string, employmentId: string) {
@@ -814,6 +1036,7 @@ export class WorkforceSelfService {
     if (row.status !== WorkforceSelfRequestStatus.SUBMITTED) {
       throw new BadRequestException("Request is not SUBMITTED");
     }
+    let approvedStep: number | null = row.currentStepOrder ?? 0;
     if (this.approval) {
       const gate = await this.approval.gate({
         organizationId,
@@ -830,7 +1053,22 @@ export class WorkforceSelfService {
           data: { currentStepOrder: gate.nextStep },
         });
       }
+      approvedStep = gate.stepOrder;
     }
+    if (row.exceedsLimit) {
+      if (!this.approval || approvedStep == null) {
+        throw new BadRequestException({
+          code: "ADVANCE_OVER_LIMIT_STEP",
+          message: "This advance is over the percent cap and needs the exception step",
+        });
+      }
+      await this.approval.assertExceedStepReached({
+        organizationId,
+        employmentId: row.employmentId,
+        stepOrder: approvedStep,
+      });
+    }
+    const plannedPayDate = await this.plannedAdvancePayDate(organizationId);
 
     let financeQueuedAt: Date | null = null;
     if (row.employment.financeEmployeeId) {
@@ -854,6 +1092,7 @@ export class WorkforceSelfService {
         decidedAt: new Date(),
         decidedByUserId: actorUserId,
         financeQueuedAt,
+        plannedPayDate,
       },
     });
     await this.audit.log({

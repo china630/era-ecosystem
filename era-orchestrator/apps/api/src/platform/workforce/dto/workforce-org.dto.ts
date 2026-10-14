@@ -1,13 +1,16 @@
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
   Min,
+  ValidateIf,
 } from "class-validator";
-import { OrgCommercialLinkMode } from "@era365/database";
+import { OrgCommercialLinkMode, WorkforceWorkRegime } from "@era365/database";
 
 export class BootstrapWorkforceScopeDto {
   @IsOptional()
@@ -82,6 +85,25 @@ export class CreateWorkforcePositionDto {
   @IsInt()
   @Min(1)
   totalSlots?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  leadership?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  tariffAzn?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsEnum(WorkforceWorkRegime)
+  defaultWorkRegime?: WorkforceWorkRegime | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  weeklyHours?: number | null;
 }
 
 export class UpdateWorkforcePositionDto {
@@ -99,6 +121,25 @@ export class UpdateWorkforcePositionDto {
   @IsInt()
   @Min(1)
   totalSlots?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  leadership?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  tariffAzn?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsEnum(WorkforceWorkRegime)
+  defaultWorkRegime?: WorkforceWorkRegime | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  weeklyHours?: number | null;
 }
 
 export class UpsertCommercialLinkDto {

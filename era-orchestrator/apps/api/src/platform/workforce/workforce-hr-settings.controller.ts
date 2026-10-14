@@ -4,6 +4,7 @@ import {
   IsArray,
   IsBoolean,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsUUID,
@@ -60,6 +61,19 @@ class HrSettingsBody {
   @IsOptional()
   @IsBoolean()
   advanceAllowHrProxy?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsInt()
+  advancePayDay?: number | null;
+
+  @IsOptional()
+  @IsBoolean()
+  allowEmployeeSubmit?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowManagerSubmit?: boolean;
 }
 
 class RouteStepBody {
@@ -73,6 +87,14 @@ class RouteStepBody {
   @IsOptional()
   @IsUUID()
   positionId?: string | null;
+
+  @IsOptional()
+  @IsIn(["ALWAYS", "LEADERSHIP", "ORDINARY"])
+  appliesTo?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  canExceedAdvanceCap?: boolean;
 }
 
 class SaveRouteBody {

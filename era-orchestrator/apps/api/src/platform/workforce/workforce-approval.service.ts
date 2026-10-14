@@ -13,6 +13,7 @@ import {
 import { PrismaService } from "../../prisma/prisma.service";
 import {
   resolveRequesterManager,
+  stepApplies,
   type OrgUnitNode,
   type ResolvedAssignee,
 } from "./workforce-approval.resolve";
@@ -28,7 +29,7 @@ export type ApprovalLabel = {
 };
 
 type GateResult =
-  | { action: "final" }
+  | { action: "final"; stepOrder: number | null }
   | { action: "advance"; nextStep: number };
 
 @Injectable()
@@ -51,7 +52,7 @@ export class WorkforceApprovalService {
     entityId: string;
   }): Promise<GateResult> {
     const placed = await this.placeActor(input);
-    if (!placed) return { action: "final" };
+    if (!placed) return { action: "final", stepOrder: null };
     await this.record({
       organizationId: input.organizationId,
       entityType: input.entityType,
@@ -63,8 +64,33 @@ export class WorkforceApprovalService {
       outcome: WorkforceApprovalOutcome.APPROVED,
       actorUserId: input.actorUserId,
     });
-    if (!placed.hasLater) return { action: "final" };
+    if (!placed.hasLater) return { action: "final", stepOrder: placed.stepOrder };
     return { action: "advance", nextStep: placed.nextStep };
+  }
+
+  /**
+   * Over-limit advances may finish only after an applicable step that has
+   * canExceedAdvanceCap. Throws when that step was never reached.
+   */
+  async assertExceedStepReached(input: {
+    organizationId: string;
+    employmentId: string;
+    stepOrder: number;
+  }): Promise<void> {
+    const loaded = await this.applicableSteps(
+      input.organizationId,
+      WorkforceApprovalRequestKind.ADVANCE,
+      input.employmentId,
+    );
+    const covered = loaded.steps.some(
+      (step) => step.canExceedAdvanceCap && step.stepOrder <= input.stepOrder,
+    );
+    if (!covered) {
+      throw new BadRequestException({
+        code: "ADVANCE_OVER_LIMIT_STEP",
+        message: "This advance is over the percent cap and needs the exception step",
+      });
+    }
   }
 
   /** Null when the org has no route — any permitted HR user may decide. */
@@ -82,11 +108,16 @@ export class WorkforceApprovalService {
     hasLater: boolean;
     nextStep: number;
   } | null> {
-    const route = await this.loadRoute(input.organizationId, input.kind);
-    const steps = route?.steps ?? [];
+    const loaded = await this.applicableSteps(
+      input.organizationId,
+      input.kind,
+      input.employmentId,
+    );
+    if (!loaded.configured) return null;
+    const steps = loaded.steps;
     if (steps.length === 0) return null;
     const index = Math.max(0, input.stepOrder);
-    const step = steps.find((s) => s.stepOrder === index) ?? steps[index];
+    const step = steps.find((s) => s.stepOrder >= index);
     if (!step) return null;
     const assignees = await this.assignees(
       input.organizationId,
@@ -183,9 +214,9 @@ export class WorkforceApprovalService {
     employmentId: string,
     stepOrder: number,
   ): Promise<ApprovalLabel> {
-    const route = await this.loadRoute(organizationId, kind);
-    const steps = route?.steps ?? [];
-    if (steps.length === 0) {
+    const loaded = await this.applicableSteps(organizationId, kind, employmentId);
+    const steps = loaded.steps;
+    if (!loaded.configured) {
       return {
         configured: false,
         stepOrder,
@@ -194,7 +225,9 @@ export class WorkforceApprovalService {
         orgUnitName: null,
       };
     }
-    const step = steps.find((s) => s.stepOrder === stepOrder) ?? steps[stepOrder];
+    const step =
+      steps.find((s) => s.stepOrder >= stepOrder) ??
+      null;
     if (!step) {
       return {
         configured: true,
@@ -226,6 +259,29 @@ export class WorkforceApprovalService {
       orderBy: { createdAt: "desc" },
       take: 40,
     });
+  }
+
+  private async positionLeadership(employmentId: string): Promise<boolean> {
+    const emp = await this.prisma.workforceEmployment.findFirst({
+      where: { id: employmentId },
+      select: { position: { select: { leadership: true } } },
+    });
+    return emp?.position?.leadership === true;
+  }
+
+  private async applicableSteps(
+    organizationId: string,
+    kind: WorkforceApprovalRequestKind,
+    employmentId: string,
+  ) {
+    const route = await this.loadRoute(organizationId, kind);
+    const steps = route?.steps ?? [];
+    if (steps.length === 0) return { configured: false, steps };
+    const leadership = await this.positionLeadership(employmentId);
+    return {
+      configured: true,
+      steps: steps.filter((step) => stepApplies(step.appliesTo, leadership)),
+    };
   }
 
   private async loadRoute(

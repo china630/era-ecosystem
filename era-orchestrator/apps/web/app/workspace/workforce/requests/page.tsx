@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CatalogField,
+  DatePicker,
   EraListWorkspace,
   LIST_PAGE_SHELL_CLASS,
   PageHeader,
@@ -23,6 +24,7 @@ type Queue = {
     kind: string;
     startDate: string;
     endDate: string;
+    submittedByUserId?: string | null;
     employment: { id: string; globalPersonId: string };
   }>;
   hourly: Array<{
@@ -31,12 +33,16 @@ type Queue = {
     startMinute: number;
     endMinute: number;
     paid: boolean;
+    submittedByUserId?: string | null;
     employment: { id: string; globalPersonId: string };
   }>;
   advances: Array<{
     id: string;
     amountAzn: string | number;
     note: string;
+    exceedsLimit?: boolean;
+    plannedPayDate?: string | null;
+    submittedByUserId?: string | null;
     employment: { id: string; globalPersonId: string };
   }>;
   persons?: Record<string, { displayName?: string | null }>;
@@ -54,17 +60,32 @@ type Queue = {
     reason: string | null;
     createdAt: string;
   }>;
+  submitters?: Record<string, { label: string; hr: boolean }>;
 };
 
 export default function WorkforceRequestsPage() {
   const { ready } = useRequireAuth();
   const t = useTranslations("workforceRequests");
+  const tCommon = useTranslations("common");
+  const tAbsence = useTranslations("workforceAbsences");
   const [data, setData] = useState<Queue | null>(null);
   const [notEntitled, setNotEntitled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [proxyOn, setProxyOn] = useState(false);
+  const [managerOn, setManagerOn] = useState(false);
+  const [mgrEmp, setMgrEmp] = useState("");
+  const [mgrKind, setMgrKind] = useState("FULL_DAY");
+  const [mgrAbsence, setMgrAbsence] = useState("VACATION");
+  const [mgrStart, setMgrStart] = useState("");
+  const [mgrEnd, setMgrEnd] = useState("");
+  const [mgrDate, setMgrDate] = useState("");
+  const [mgrFromMin, setMgrFromMin] = useState("540");
+  const [mgrToMin, setMgrToMin] = useState("720");
+  const [mgrPaid, setMgrPaid] = useState(true);
+  const [mgrAmount, setMgrAmount] = useState("");
+  const [mgrNote, setMgrNote] = useState("");
   const [proxyEmp, setProxyEmp] = useState("");
   const [proxyAmount, setProxyAmount] = useState("");
   const [proxyNote, setProxyNote] = useState("");
@@ -86,11 +107,13 @@ export default function WorkforceRequestsPage() {
     const settingsRes = await wfFetch("/hr-settings");
     if (settingsRes.ok) {
       const body = (await settingsRes.json()) as {
-        settings?: { advanceAllowHrProxy?: boolean };
+        settings?: { advanceAllowHrProxy?: boolean; allowManagerSubmit?: boolean };
       };
       const allowed = Boolean(body.settings?.advanceAllowHrProxy);
+      const manager = Boolean(body.settings?.allowManagerSubmit);
       setProxyOn(allowed);
-      if (allowed) {
+      setManagerOn(manager);
+      if (allowed || manager) {
         const empRes = await wfFetch("/employments?status=ACTIVE");
         if (empRes.ok) {
           const roster = (await empRes.json()) as {
@@ -151,6 +174,20 @@ export default function WorkforceRequestsPage() {
 
   const name = (gid: string) =>
     data?.persons?.[gid]?.displayName ?? gid.slice(0, 8);
+  const entered = (userId?: string | null) => {
+    if (!userId) return t("submittedByHr");
+    const row = data?.submitters?.[userId];
+    if (!row || row.hr) return t("submittedByHr");
+    return row.label || t("submittedByEmployee");
+  };
+  const chain = (id: string) =>
+    [...(data?.history ?? [])]
+      .filter((row) => row.entityId === id)
+      .reverse()
+      .map((row) =>
+        [row.outcome, row.orgUnitName].filter(Boolean).join(" · "),
+      )
+      .join(" → ");
   const stepLabel = (id: string) => {
     const step = data?.approval?.[id];
     if (!step?.configured) return null;
@@ -184,6 +221,8 @@ export default function WorkforceRequestsPage() {
               {String(a.startDate).slice(0, 10)} – {String(a.endDate).slice(0, 10)}
             </span>
             {stepLabel(a.id) ? <span>{stepLabel(a.id)}</span> : null}
+            <span className="text-[#7F8C8D]">{entered(a.submittedByUserId)}</span>
+            {chain(a.id) ? <span className="text-[11px] text-[#7F8C8D]">{chain(a.id)}</span> : null}
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -213,6 +252,8 @@ export default function WorkforceRequestsPage() {
             </span>
             <span>{h.paid ? t("paid") : t("unpaid")}</span>
             {stepLabel(h.id) ? <span>{stepLabel(h.id)}</span> : null}
+            <span className="text-[#7F8C8D]">{entered(h.submittedByUserId)}</span>
+            {chain(h.id) ? <span className="text-[11px] text-[#7F8C8D]">{chain(h.id)}</span> : null}
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -239,6 +280,12 @@ export default function WorkforceRequestsPage() {
             <span>{Number(a.amountAzn).toFixed(2)} AZN</span>
             <span>{a.note}</span>
             {stepLabel(a.id) ? <span>{stepLabel(a.id)}</span> : null}
+            <span className="text-[#7F8C8D]">{entered(a.submittedByUserId)}</span>
+            {chain(a.id) ? <span className="text-[11px] text-[#7F8C8D]">{chain(a.id)}</span> : null}
+            {a.exceedsLimit ? <span>{t("exceedsLimit")}</span> : null}
+            {a.plannedPayDate ? (
+              <span>{t("plannedPay", { date: String(a.plannedPayDate).slice(0, 10) })}</span>
+            ) : null}
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -336,6 +383,183 @@ export default function WorkforceRequestsPage() {
             }
           >
             {t("proxySubmit")}
+          </button>
+        </section>
+      ) : null}
+
+      {managerOn ? (
+        <section className="mt-6 max-w-lg space-y-2">
+          <h2 className="font-semibold">{t("managerTitle")}</h2>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("managerKind")}
+            value={mgrKind}
+            onChange={(next) => setMgrKind(String(next))}
+            options={[
+              { value: "FULL_DAY", label: t("onBehalfKind.FULL_DAY") },
+              { value: "HOURLY", label: t("onBehalfKind.HOURLY") },
+              { value: "ADVANCE", label: t("onBehalfKind.ADVANCE") },
+            ]}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("proxyEmployee")}
+            value={mgrEmp}
+            onChange={(next) => setMgrEmp(String(next))}
+            options={proxyPeople}
+            emptyLabel={t("proxyEmployee")}
+          />
+          {mgrKind === "FULL_DAY" ? (
+            <>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("managerAbsence")}
+                value={mgrAbsence}
+                onChange={(next) => setMgrAbsence(String(next))}
+                options={[
+                  "VACATION",
+                  "SICK",
+                  "UNPAID",
+                  "SOCIAL_LEAVE",
+                  "EDUCATIONAL_LEAVE",
+                  "BUSINESS_TRIP",
+                  "ADMINISTRATIVE",
+                ].map((value) => ({
+                  value,
+                  label: tAbsence(`kind.${value}` as "kind.VACATION"),
+                }))}
+              />
+              <DatePicker
+                label={t("managerStart")}
+                value={mgrStart}
+                onChange={setMgrStart}
+                placeholder={tCommon("datePlaceholder")}
+              />
+              <DatePicker
+                label={t("managerEnd")}
+                value={mgrEnd}
+                onChange={setMgrEnd}
+                placeholder={tCommon("datePlaceholder")}
+              />
+            </>
+          ) : null}
+          {mgrKind === "HOURLY" ? (
+            <>
+              <DatePicker
+                label={t("managerDate")}
+                value={mgrDate}
+                onChange={setMgrDate}
+                placeholder={tCommon("datePlaceholder")}
+              />
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("managerFrom")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+                  inputMode="numeric"
+                  value={mgrFromMin}
+                  onChange={(e) => setMgrFromMin(e.target.value)}
+                />
+              </label>
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("managerTo")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+                  inputMode="numeric"
+                  value={mgrToMin}
+                  onChange={(e) => setMgrToMin(e.target.value)}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+                <input
+                  type="checkbox"
+                  checked={mgrPaid}
+                  onChange={(e) => setMgrPaid(e.target.checked)}
+                />
+                {t("paid")}
+              </label>
+            </>
+          ) : null}
+          {mgrKind === "ADVANCE" ? (
+            <>
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("proxyAmount")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+                  inputMode="decimal"
+                  value={mgrAmount}
+                  onChange={(e) => setMgrAmount(e.target.value)}
+                />
+              </label>
+              <label className="block text-[13px] font-medium text-[#34495E]">
+                {t("proxyNote")}
+                <input
+                  className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+                  value={mgrNote}
+                  onChange={(e) => setMgrNote(e.target.value)}
+                />
+              </label>
+            </>
+          ) : null}
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={
+              busy ||
+              !mgrEmp ||
+              (mgrKind === "FULL_DAY" && (!mgrStart || !mgrEnd)) ||
+              (mgrKind === "HOURLY" && (!mgrDate || !(Number(mgrToMin) > Number(mgrFromMin)))) ||
+              (mgrKind === "ADVANCE" && !(Number(mgrAmount) > 0))
+            }
+            onClick={() =>
+              void (async () => {
+                setBusy(true);
+                try {
+                  const body =
+                    mgrKind === "HOURLY"
+                      ? {
+                          kind: "HOURLY",
+                          employmentId: mgrEmp,
+                          workDate: mgrDate,
+                          startMinute: Number(mgrFromMin),
+                          endMinute: Number(mgrToMin),
+                          paid: mgrPaid,
+                          note: mgrNote,
+                        }
+                      : mgrKind === "ADVANCE"
+                        ? {
+                            kind: "ADVANCE",
+                            employmentId: mgrEmp,
+                            amountAzn: Number(mgrAmount),
+                            note: mgrNote,
+                          }
+                        : {
+                            kind: "FULL_DAY",
+                            employmentId: mgrEmp,
+                            absenceKind: mgrAbsence,
+                            startDate: mgrStart,
+                            endDate: mgrEnd,
+                            note: mgrNote,
+                          };
+                  const res = await wfFetch("/requests/on-behalf", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                  });
+                  if (!res.ok) throw new Error(await res.text());
+                  setMgrStart("");
+                  setMgrEnd("");
+                  setMgrAmount("");
+                  setMgrNote("");
+                  await load();
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                } finally {
+                  setBusy(false);
+                }
+              })()
+            }
+          >
+            {t("managerSubmit")}
           </button>
         </section>
       ) : null}

@@ -26,8 +26,18 @@ Approval must not be stored as a person's surname. Weekly hour numbers are an or
 
 7. **After approval.** An approved absence is not overwritten. Correction creates a new `SUBMITTED` row (`correctionOfId`). When that row is finally approved, the original becomes `SUPERSEDED`. Cancel is a separate action with a reason and unlocks the timesheet. A vacation plan cannot have a second row for the same unit and year, so correction snapshots the lines and returns the plan to `DRAFT`. Cancel sets `CANCELLED`.
 
+## Addendum (2026-10-14)
+
+1. **Card and Excel.** The employment card shows contract gross and the last posted payslip net, both read from Finance when the card opens. Gross is `Employee.salary` (tariff plus supplement). Net is the latest posted payslip, walking back at most six Baku months; it stays empty until a payslip is posted. Neither number is stored on `WorkforceEmployment`. The one-way Excel (`GET …/export/cadre`) has SAA, birth date, FIN, ID series and number, position, department, hire date, contract end, gross, and net. Each file writes `WORKFORCE_HR_FIN_LIST` and `WORKFORCE_HR_ID_EXPORT`. CSV roster export is unchanged and still has no FIN.
+
+2. **Vacation readout.** The absence screen shows the work year that contains the start date, computed from `hireDate`. Remaining days are `vacationDaysBalance` from the Finance mirror. Control plane does not keep a second balance. Approved vacation still reaches Finance by the existing event.
+
+3. **Routes.** A position has a leadership flag. Each step has an audience `ALWAYS`, `LEADERSHIP`, or `ORDINARY` (existing steps stay `ALWAYS`) and, for advances, `canExceedAdvanceCap`. Steps that do not match the requester's position are skipped. An amount above the percent cap is accepted only when an applicable step has that flag; otherwise the API returns `ADVANCE_PERCENT_LIMIT`. The absolute amount cap and the open-count cap stay hard. Submit sources are three settings: employee self (default on), unit manager (default off, `POST …/requests/on-behalf`), and HR proxy (unchanged). The advance pay day is an org setting. If that calendar day is non-working, `plannedPayDate` moves to the previous working day (data-hub, Saturday/Sunday only as fallback). Finance still pays; the control plane only stores the planned date. Each request shows the subject, who entered it (`submittedByUserId`, resolved to an employment name or “HR”), and the decision history.
+
+4. **Hours and tariff.** A position stores `tariffAzn`, `defaultWorkRegime`, and `weeklyHours`, including vacant slots. Those fields are copied into `StaffScheduleRevision.snapshotJson`. An employment `workRegime` is set only when it differs from the position. Resolution is employment regime, else position regime. Weekly hours are the position hours, else the org hours for that regime. If the regime is unresolved, the hour norm stays null. The timesheet row shows fact, norm, and the difference. Under the day letter, a short shift code is shown only when the existing roster plan resolves a shift for that person and day.
+
 ## Consequences
 
 - Coverage `CP-WF-HR-01` is API until a UI UAT-SMOKE pass. Ştat and the month filter are unchanged.
-- Nafta chain names, extra cadre fields, and Excel round-trip stay out of this wave.
+- Nafta opening numbers are not loaded in this wave. The cadre Excel is one-way.
 - Calendar-day count is the number shown on absences. Working-day leave math is a later choice.

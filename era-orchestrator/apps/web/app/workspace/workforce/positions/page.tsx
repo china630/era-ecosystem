@@ -37,6 +37,10 @@ type PositionRow = {
   name: string;
   code: string | null;
   totalSlots: number;
+  leadership?: boolean;
+  tariffAzn?: string | number | null;
+  defaultWorkRegime?: string | null;
+  weeklyHours?: string | number | null;
   status?: string;
   orgUnit: { id: string; name: string };
   _count?: { employments: number };
@@ -63,6 +67,10 @@ export default function PositionsPage() {
   const [formName, setFormName] = useState("");
   const [formCode, setFormCode] = useState("");
   const [formSlots, setFormSlots] = useState(1);
+  const [formLeadership, setFormLeadership] = useState(false);
+  const [formTariff, setFormTariff] = useState("");
+  const [formRegime, setFormRegime] = useState("");
+  const [formHours, setFormHours] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [archiveRow, setArchiveRow] = useState<PositionRow | null>(null);
 
@@ -117,6 +125,10 @@ export default function PositionsPage() {
     setFormName("");
     setFormCode("");
     setFormSlots(1);
+    setFormLeadership(false);
+    setFormTariff("");
+    setFormRegime("");
+    setFormHours("");
     setFormError(null);
     setEditState({ mode: "create" });
   }
@@ -126,6 +138,10 @@ export default function PositionsPage() {
     setFormName(row.name);
     setFormCode(row.code ?? "");
     setFormSlots(row.totalSlots);
+    setFormLeadership(row.leadership === true);
+    setFormTariff(row.tariffAzn != null ? String(row.tariffAzn) : "");
+    setFormRegime(row.defaultWorkRegime ?? "");
+    setFormHours(row.weeklyHours != null ? String(row.weeklyHours) : "");
     setFormError(null);
     setEditState({ mode: "edit", row });
   }
@@ -144,6 +160,10 @@ export default function PositionsPage() {
               name: formName.trim(),
               code: formCode.trim() || null,
               totalSlots: formSlots,
+              leadership: formLeadership,
+              tariffAzn: formTariff.trim() ? Number(formTariff) : null,
+              defaultWorkRegime: formRegime || null,
+              weeklyHours: formHours.trim() ? Number(formHours) : null,
             }),
           })
         : await wfFetch(`positions/${editState.row.id}`, {
@@ -152,6 +172,10 @@ export default function PositionsPage() {
               name: formName.trim(),
               code: formCode.trim() || null,
               totalSlots: formSlots,
+              leadership: formLeadership,
+              tariffAzn: formTariff.trim() ? Number(formTariff) : null,
+              defaultWorkRegime: formRegime || null,
+              weeklyHours: formHours.trim() ? Number(formHours) : null,
             }),
           });
     setBusy(false);
@@ -253,6 +277,7 @@ export default function PositionsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colName")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colCode")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colTariff")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colSlots")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("colActions")}</th>
               </tr>
@@ -262,7 +287,7 @@ export default function PositionsPage() {
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td
                     className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                    colSpan={6}
+                    colSpan={7}
                   >
                     {loading ? t("loading") : t("empty")}
                   </td>
@@ -289,6 +314,14 @@ export default function PositionsPage() {
                       {(r.status ?? "ACTIVE") === "ARCHIVED"
                         ? t("statusArchived")
                         : t("statusActive")}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
+                      {r.tariffAzn != null && r.tariffAzn !== "" ? String(r.tariffAzn) : "—"}
+                      {r.leadership ? (
+                        <span className="mt-0.5 block text-[11px] font-normal text-[#7F8C8D]">
+                          {t("fieldLeadership")}
+                        </span>
+                      ) : null}
                     </td>
                     <td
                       className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums ${
@@ -407,6 +440,43 @@ export default function PositionsPage() {
               className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
               value={formSlots}
               onChange={(e) => setFormSlots(Number(e.target.value))}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+            <input
+              type="checkbox"
+              checked={formLeadership}
+              onChange={(e) => setFormLeadership(e.target.checked)}
+            />
+            {t("fieldLeadership")}
+          </label>
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("fieldTariff")}
+            <input
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              inputMode="decimal"
+              value={formTariff}
+              onChange={(e) => setFormTariff(e.target.value)}
+            />
+          </label>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("fieldRegime")}
+            value={formRegime}
+            onChange={(next) => setFormRegime(String(next))}
+            options={["FIVE_DAY", "SIX_DAY", "MEDICAL", "CUSTOM"].map((value) => ({
+              value,
+              label: t(`regime.${value}` as "regime.FIVE_DAY"),
+            }))}
+            emptyLabel={t("regimeEmpty")}
+          />
+          <label className="block text-[13px] font-medium text-[#34495E]">
+            {t("fieldWeeklyHours")}
+            <input
+              className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+              inputMode="decimal"
+              value={formHours}
+              onChange={(e) => setFormHours(e.target.value)}
             />
           </label>
           {formError ? <p className="text-sm text-red-700">{formError}</p> : null}

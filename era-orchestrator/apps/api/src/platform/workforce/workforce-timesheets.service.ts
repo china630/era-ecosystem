@@ -25,11 +25,11 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { CatalogGatewayService } from "../catalog/catalog-gateway.service";
 import {
   monthHourNorm,
+  resolveRegimeHours,
   summarizeCalendar,
-  weeklyHoursForRegime,
   type CalendarDayInput,
-  type WorkRegime,
 } from "./workforce-calendar-norm";
+import { WorkforceRosterService } from "./workforce-roster.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
@@ -138,6 +138,7 @@ export class WorkforceTimesheetsService {
     private readonly satelliteEvents: SatelliteEventsService,
     private readonly employments: WorkforceEmploymentsService,
     @Optional() private readonly catalog?: CatalogGatewayService,
+    @Optional() private readonly roster?: WorkforceRosterService,
   ) {}
 
   async handleBatchImported(raw: unknown): Promise<{ created: number }> {
@@ -718,27 +719,40 @@ export class WorkforceTimesheetsService {
       : null;
     const norms: Record<
       string,
-      { factHours: number; normHours: number | null; regime: string | null }
+      {
+        factHours: number;
+        normHours: number | null;
+        deltaHours: number | null;
+        regime: string | null;
+      }
     > = {};
     for (const emp of employments) {
-      const regime = (emp.workRegime ?? null) as WorkRegime | null;
+      const resolved = resolveRegimeHours({
+        employmentRegime: emp.workRegime,
+        positionRegime: emp.position?.defaultWorkRegime ?? null,
+        positionWeeklyHours:
+          emp.position?.weeklyHours != null ? Number(emp.position.weeklyHours) : null,
+        org: hourSettings,
+      });
       const factHours = entries
         .filter((e) => e.employmentId === emp.id && e.type === WorkforceTimesheetEntryType.WORK)
         .reduce((sum, e) => sum + Number(e.hours), 0);
+      const fact = Math.round(factHours * 100) / 100;
+      const normHours = monthHourNorm(resolved.regime, resolved.weeklyHours, calendar.days);
       norms[emp.id] = {
-        regime,
-        factHours: Math.round(factHours * 100) / 100,
-        normHours: monthHourNorm(
-          regime,
-          weeklyHoursForRegime(regime, hourSettings),
-          calendar.days,
-        ),
+        regime: resolved.regime,
+        factHours: fact,
+        normHours,
+        deltaHours:
+          normHours == null ? null : Math.round((fact - normHours) * 100) / 100,
       };
     }
+    const shiftCodes = await this.shiftCodesFor(organizationId, ts.year, ts.month);
     return {
       timesheet: ts,
       calendar,
       norms,
+      shiftCodes,
       employments,
       orgUnitOptions,
       /** Lightweight roster for filters/batch (not limited to the grid page). */
@@ -757,6 +771,31 @@ export class WorkforceTimesheetsService {
         workDate: isoDay(e.workDate),
       })),
     };
+  }
+
+  /** Shift code from the existing roster plan. No assignment means no caption. */
+  private async shiftCodesFor(
+    organizationId: string,
+    year: number,
+    month: number,
+  ): Promise<Record<string, Record<string, string>>> {
+    const out: Record<string, Record<string, string>> = {};
+    if (!this.roster) return out;
+    try {
+      const preview = await this.roster.previewMonth(organizationId, year, month);
+      for (const row of preview.rows) {
+        const byDay: Record<string, string> = {};
+        for (const cell of row.cells) {
+          if (!cell.shiftTypeCode || cell.type !== "WORK") continue;
+          const ymd = `${year}-${String(month).padStart(2, "0")}-${String(cell.day).padStart(2, "0")}`;
+          byDay[ymd] = cell.shiftTypeCode;
+        }
+        if (Object.keys(byDay).length > 0) out[row.employmentId] = byDay;
+      }
+    } catch {
+      return {};
+    }
+    return out;
   }
 
   private async calendarFor(organizationId: string, year: number, month: number) {

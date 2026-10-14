@@ -6,6 +6,17 @@ export type OrgUnitNode = {
   managerUserId: string | null;
 };
 
+/** Skip a step whose audience does not match the requester position. */
+export function stepApplies(
+  audience: string | null | undefined,
+  leadership: boolean,
+): boolean {
+  if (!audience || audience === "ALWAYS") return true;
+  if (audience === "LEADERSHIP") return leadership;
+  if (audience === "ORDINARY") return !leadership;
+  return true;
+}
+
 export type ResolvedAssignee = {
   employmentId: string | null;
   userId: string | null;

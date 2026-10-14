@@ -1,8 +1,12 @@
 import {
   monthHourNorm,
+  nextPlannedPayDate,
+  resolveRegimeHours,
   summarizeCalendar,
   weeklyHoursForRegime,
+  workYearContaining,
 } from "./workforce-calendar-norm";
+import { stepApplies } from "./workforce-approval.resolve";
 import { resolveRequesterManager } from "./workforce-approval.resolve";
 
 describe("workforce calendar norm", () => {
@@ -26,6 +30,50 @@ describe("workforce calendar norm", () => {
     const norm = monthHourNorm("FIVE_DAY", 40, days);
     expect(norm).not.toBeNull();
     expect(norm!).toBeGreaterThan(0);
+  });
+
+  it("does not invent a regime, and prefers position hours", () => {
+    expect(
+      resolveRegimeHours({
+        employmentRegime: null,
+        positionRegime: null,
+        positionWeeklyHours: 40,
+        org: { fiveDayWeeklyHours: 40 },
+      }).regime,
+    ).toBeNull();
+    const resolved = resolveRegimeHours({
+      employmentRegime: "SIX_DAY",
+      positionRegime: "FIVE_DAY",
+      positionWeeklyHours: 36,
+      org: { sixDayWeeklyHours: 40 },
+    });
+    expect(resolved).toEqual({ regime: "SIX_DAY", weeklyHours: 36 });
+  });
+
+  it("labels the hire-date work year that contains the start", () => {
+    expect(workYearContaining("2020-03-15", "2026-03-14")).toEqual({
+      from: "2025-03-15",
+      to: "2026-03-14",
+    });
+    expect(workYearContaining("2020-03-15", "2026-03-15")).toEqual({
+      from: "2026-03-15",
+      to: "2027-03-14",
+    });
+  });
+
+  it("moves a non-working pay day to the previous working day", () => {
+    expect(
+      nextPlannedPayDate("2026-10-01", 18, [
+        { date: "2026-10-18", dayType: "holiday", isWorking: false },
+        { date: "2026-10-17", dayType: "weekend", isWorking: false },
+      ]),
+    ).toBe("2026-10-16");
+  });
+
+  it("skips leadership-only steps for an ordinary position", () => {
+    expect(stepApplies("LEADERSHIP", false)).toBe(false);
+    expect(stepApplies("ORDINARY", false)).toBe(true);
+    expect(stepApplies("ALWAYS", true)).toBe(true);
   });
 });
 
