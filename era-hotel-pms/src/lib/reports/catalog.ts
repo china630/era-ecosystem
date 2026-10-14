@@ -25,6 +25,7 @@ export const REPORT_CATALOG: ReportDef[] = [
   { slug: 'annual-occupancy',       category: 'occupancy', titleKey: 'reportsPdf.annualOccupancy',      dateMode: 'year_to_closed',  phase: 'P0', delivery: 'BOTH', packDefault: true,  packOrder: 6 },
   { slug: 'folio-transactions',     category: 'financial', titleKey: 'reportsPdf.folioTransactions',    dateMode: 'business_date',   phase: 'P0', delivery: 'BOTH', packDefault: true,  packOrder: 7 },
   { slug: 'department-revenues',    category: 'financial', titleKey: 'reportsPdf.departmentRevenues',   dateMode: 'business_date',   phase: 'P0', delivery: 'BOTH', packDefault: true,  packOrder: 8 },
+  { slug: 'police-list',            category: 'daily',     titleKey: 'reportsPdf.policeList',           dateMode: 'business_date',   phase: 'P0', delivery: 'BOTH', packDefault: true,  packOrder: 9, landscape: true },
 
   // ── P1 analysis / occupancy ──
   { slug: 'occupancy-graph',          category: 'occupancy', titleKey: 'reportsPdf.occupancyGraph',          dateMode: 'range',           phase: 'P1', delivery: 'BOTH', packDefault: false },
@@ -96,6 +97,27 @@ export function getPackDefaults(): ReportDef[] {
   return REPORT_CATALOG
     .filter((r) => r.packDefault)
     .sort((a, b) => (a.packOrder ?? 99) - (b.packOrder ?? 99));
+}
+
+/** Pack that shipped before the police list. A hotel that saved exactly these eight gets the ninth. */
+export const LEGACY_NIGHT_AUDIT_PACK_SLUGS = [
+  'daily-management',
+  'trial-balance-period',
+  'cash-report',
+  'monthly-daily-analysis',
+  'in-house',
+  'annual-occupancy',
+  'folio-transactions',
+  'department-revenues',
+] as const;
+
+export function upgradeLegacyNightAuditPack(slugs: string[]): { slugs: string[]; changed: boolean } {
+  if (slugs.includes('police-list')) return { slugs, changed: false };
+  const legacy = new Set<string>(LEGACY_NIGHT_AUDIT_PACK_SLUGS);
+  if (slugs.length === legacy.size && slugs.every((slug) => legacy.has(slug))) {
+    return { slugs: [...slugs, 'police-list'], changed: true };
+  }
+  return { slugs, changed: false };
 }
 
 export interface PackEligibleReport {

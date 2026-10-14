@@ -88,6 +88,8 @@ enum PaymentMethod {
   CL_AGENCY
   /** Guest folio settled onto the company city ledger. */
   CL_COMPANY
+  /** Guest left with a personal debt. Not cash and not city ledger. */
+  GUEST_DEBT
 }
 
 enum FolioPaymentKind {
@@ -1506,7 +1508,8 @@ model Reservation {
   checkInDate   DateTime
   checkOutDate  DateTime
   status        ReservationStatus @default(CONFIRMED)
-  paymentMethod PaymentMethod
+  /** Unset until the desk picks a tender. Not defaulted to cash or card. */
+  paymentMethod PaymentMethod?
   totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
   creditLimitAzn Decimal?         @db.Decimal(12, 2)
   voucherNo     String?
@@ -2357,6 +2360,8 @@ model FolioPayment {
   bankReference   String?
   /** Acquirer chosen at payment time. Night audit sends it beside the card amount. */
   bankTerminalId  String?          @map("bank_terminal_id")
+  /** Staff user who posted the payment. Shown on the cash journal. */
+  createdByUserId String?          @map("created_by_user_id")
   /** Removed from the live folio. The row stays for the Deleted tab and the voids report. */
   voidedAt        DateTime?
   voidReason      String?
@@ -2370,6 +2375,39 @@ model FolioPayment {
   @@index([settlementId])
   @@index([refundOfPaymentId])
   @@index([organizationId])
+}
+
+/// Personal debt left by a guest at check-out. Not the agency city ledger.
+model GuestDebtEntry {
+  id              String   @id @default(uuid())
+  organizationId  String
+  reservationId   String
+  guestId         String
+  amount          Decimal  @db.Decimal(12, 2)
+  note            String
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId, guestId])
+  @@index([reservationId])
+}
+
+/// Mirror of orchestrator BANK_POS / KKM rows so every hotel process can list them.
+model FiscalDeviceMirror {
+  id             String   @id
+  organizationId String
+  kind           String
+  providerId     String
+  label          String
+  outletCode     String?
+  registerCode   String?
+  serial         String?
+  endpoint       String?
+  status         String
+  isOrgDefault   Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId, kind])
 }
 
 model FolioPaymentAllocation {

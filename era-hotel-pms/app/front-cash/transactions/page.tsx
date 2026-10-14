@@ -34,6 +34,8 @@ type TxRow = {
   amount: number | string;
   paymentMethod: string;
   kind: string;
+  cashierName?: string | null;
+  bankTerminalId?: string | null;
   folioType: string;
   reservationId: string;
   guestName: string | null;
@@ -320,6 +322,8 @@ export default function FrontCashTransactionsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colRoom')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colKind')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colMethod')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colCashier')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colTerminal')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('amount')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
               </tr>
@@ -337,6 +341,8 @@ export default function FrontCashTransactionsPage() {
                     {r.folioType ? ` · ${r.folioType}` : ''}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.paymentMethod}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.cashierName ?? tc('dash')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{r.bankTerminalId ?? tc('dash')}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     {Number(r.amount).toFixed(2)} {tc('azn')}
                   </td>
@@ -353,7 +359,7 @@ export default function FrontCashTransactionsPage() {
               ))}
               {payments.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                  <td colSpan={9} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
                     {t('transactionsEmpty')}
                   </td>
                 </tr>

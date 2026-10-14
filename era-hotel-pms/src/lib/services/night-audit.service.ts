@@ -5,6 +5,7 @@ import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { ReservationStatus } from '@prisma/client';
 import { postCharge } from '@/lib/services/folio.service';
+import { roomChargeNote } from '@/lib/folio-charge-note';
 import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
 import { assertNoOpenPosShifts, getPosShiftStatus } from '@/lib/services/pms-bridge.service';
@@ -406,9 +407,8 @@ async function executeLockedNightAudit() {
         ),
       );
       if (!alreadyPosted) {
-        const daily = res.dailyRates.find(
-          (d) => d.stayDate.toISOString().slice(0, 10) === date.toISOString().slice(0, 10),
-        );
+        const nightKey = hotelDateKey(date);
+        const daily = res.dailyRates.find((d) => hotelDateKey(d.stayDate) === nightKey);
         let amount: number;
         try {
           amount = daily
@@ -437,7 +437,7 @@ async function executeLockedNightAudit() {
           revenueCodeId: revenueRoom.id,
           amount,
           qty: 1,
-          description: `Night audit room charge ${date.toISOString().slice(0, 10)}`,
+          description: roomChargeNote('night-audit', hotelDateKey(date)),
           businessDate: date,
         });
         steps.push(`Step 3: Room charge posted (${amount} AZN) — reservation ${res.id}`);

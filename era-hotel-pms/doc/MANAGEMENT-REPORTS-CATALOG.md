@@ -112,7 +112,7 @@ Primary home: sidebar **Reports** (All reports, Nightly pack, occupancy grid, bo
 
 ```
 Reports                         /reports                    list + shared period + PDF/Excel
-├── Nightly pack                /reports/nightly-pack       eight forms + ZIP for the closed date
+├── Nightly pack                /reports/nightly-pack       nine forms + ZIP for the closed date
 ├── Occupancy grid              /reports/occupancy/grid     not a catalog slug
 └── Booking analytics           /reports/analytics          sources, cancellations, demographics
 ```
@@ -164,8 +164,9 @@ Reception downloads **one ZIP** after Night Audit. ERA does not email/WhatsApp; 
 | 06 | `annual-occupancy` | Annual Occupancy | `/reports/occupancy/annual` | `year_to_closed` | `AnnualOccupancy.pdf` |
 | 07 | `folio-transactions` | Folio Transactions | `/reports/financial/folio-transactions` | `business_date` | ERA `/night-audit/reports/folio-transactions` |
 | 08 | `department-revenues` | Departman gelirləri | `/reports/financial/department-revenues` | `business_date` (+ Today/Month/Year columns) | `DailyDepartmentSummary.pdf` |
+| 09 | `police-list` | Police list (Polis siyahısı) | `/reports?report=police-list` | `business_date` | EW 19-Police List: in-house people (room, name, surname, nationality, document, sex, birth date, birth place). Also linked from `/night-audit/reports`. |
 
-Pack membership and order are **per hotel** (`NightAuditReportPackConfig`). Nafta ships with the eight rows above enabled. Other catalog reports can be added to the pack later without new menu IA.
+Pack membership and order are **per hotel** (`NightAuditReportPackConfig`). Nafta ships with the nine rows above enabled. A profile that still stores the previous eight slugs is rewritten to include `police-list` the next time the pack is read. Other catalog reports can be added to the pack later without new menu IA.
 
 **APIs (W1 live):**
 

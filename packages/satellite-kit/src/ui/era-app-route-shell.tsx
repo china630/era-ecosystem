@@ -65,6 +65,15 @@ export function EraAppRouteShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  useEffect(() => {
+    const stored = window.localStorage.getItem("era.sidebar.collapsed");
+    if (stored === "1") setSidebarCollapsed(true);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("era.sidebar.collapsed", sidebarCollapsed ? "1" : "0");
+  }, [sidebarCollapsed]);
+
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
 
   useEffect(() => {
@@ -92,8 +101,7 @@ export function EraAppRouteShell({
     })),
   }));
 
-  const usesSectionNav = Boolean(sections?.length);
-  const effectiveSidebarCollapsed = usesSectionNav ? false : sidebarCollapsed;
+  const effectiveSidebarCollapsed = sidebarCollapsed;
 
   return (
     <EraAppShellLayout
@@ -118,20 +126,18 @@ export function EraAppRouteShell({
           mobileNavOpen={mobileNavOpen}
           sidebarCollapsed={effectiveSidebarCollapsed}
           header={
-            <div className="flex items-center justify-between gap-2">
-              <p className="truncate text-[13px] font-semibold text-[#34495E]">
+            <div className={`flex items-center gap-2 ${effectiveSidebarCollapsed ? "lg:justify-center" : "justify-between"}`}>
+              <p className={`truncate text-[13px] font-semibold text-[#34495E] ${effectiveSidebarCollapsed ? "lg:sr-only" : ""}`}>
                 {brandTitle}
               </p>
-              {!usesSectionNav ? (
-                <button
-                  type="button"
-                  className="hidden rounded-lg border border-[#D5DADF] px-2 py-1 text-[11px] text-[#7F8C8D] hover:bg-[#F4F5F7] lg:inline"
-                  onClick={() => setSidebarCollapsed((v) => !v)}
-                  aria-label="Toggle sidebar"
-                >
-                  {sidebarCollapsed ? "»" : "«"}
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="hidden rounded-lg border border-[#D5DADF] px-2 py-1 text-[11px] text-[#7F8C8D] hover:bg-[#F4F5F7] lg:inline"
+                onClick={() => setSidebarCollapsed((v) => !v)}
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? "»" : "«"}
+              </button>
             </div>
           }
           footer={sidebarFooter}
@@ -140,10 +146,11 @@ export function EraAppRouteShell({
             <EraOpsSidebarSections
               sections={sections}
               topItems={items}
+              collapsed={effectiveSidebarCollapsed}
               resolveActive={resolveActive}
             />
           ) : (
-            <EraOpsSidebarNav items={items} />
+            <EraOpsSidebarNav items={items} collapsed={effectiveSidebarCollapsed} />
           )}
         </EraAppSidebar>
       }

@@ -60,7 +60,7 @@ export async function addStayToBooking(input: {
   mealPlanId?: string;
   checkInDate: Date;
   checkOutDate: Date;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | null;
   agencyId?: string;
   companyId?: string;
   salesContractId?: string;
@@ -114,7 +114,7 @@ export async function createGroupBookingWithStays(input: {
   guestId: string;
   ratePlanId: string;
   mealPlanId?: string;
-  paymentMethod?: PaymentMethod;
+  paymentMethod?: PaymentMethod | null;
   sourceId?: string;
   salesContractId?: string;
   booker?: string;
@@ -161,7 +161,7 @@ export async function createGroupBookingWithStays(input: {
         groupId: group.id,
         checkInDate: stayIn,
         checkOutDate: stayOut,
-        paymentMethod: input.paymentMethod ?? 'CARD',
+        paymentMethod: input.paymentMethod ?? null,
         adults: line.adults,
         children11_6: line.children11_6,
         children5_2: line.children5_2,

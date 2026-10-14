@@ -15,6 +15,7 @@ import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.s
 import { createFiscalDocumentsOnCheckout, issueFolioInvoice } from '@/lib/services/fiscal-document.service';
 import { getReservation } from '@/lib/services/reservation.service';
 import { releaseDoorAfterShareDeparture } from '@/lib/services/share-assignment.service';
+import { recordHotelAudit } from '@/lib/satellite-audit';
 
 export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
@@ -32,6 +33,9 @@ export async function checkoutReservation(
   id: string,
   opts?: {
     transferToCityLedger?: boolean;
+    transferToGuestDebt?: boolean;
+    guestDebtNote?: string;
+    createdByUserId?: string;
     discountAmount?: number;
     discountDescription?: string;
     unusedNightsRefundMethod?: 'CASH' | 'CARD';
@@ -102,6 +106,45 @@ export async function checkoutReservation(
     where: { reservationId: id, status: 'OPEN' },
     include: { charges: true, payments: true },
   });
+
+  if (opts?.transferToGuestDebt) {
+    const note = opts.guestDebtNote?.trim() ?? '';
+    if (!note) throw new Error('GUEST_DEBT_NOTE_REQUIRED');
+    const stay = await prisma.reservation.findUnique({
+      where: { id },
+      select: { guestId: true },
+    });
+    if (!stay) throw new Error('Reservation not found');
+    const { postPayment } = await import('@/lib/services/folio.service');
+    const posted: Array<{ folioId: string; amount: number }> = [];
+    for (const folio of openFolios) {
+      if (folio.type !== 'GUEST') continue;
+      const bal = folioBalance(folio.charges, folio.payments);
+      if (bal <= 0.01) continue;
+      const amount = Math.round(bal * 100) / 100;
+      await postPayment({
+        folioId: folio.id,
+        amount,
+        paymentMethod: 'GUEST_DEBT',
+        createdByUserId: opts.createdByUserId,
+      });
+      await prisma.guestDebtEntry.create({
+        data: {
+          organizationId: folio.organizationId,
+          reservationId: id,
+          guestId: stay.guestId,
+          amount: toDecimal(amount),
+          note,
+          createdByUserId: opts.createdByUserId ?? null,
+        },
+      });
+      posted.push({ folioId: folio.id, amount });
+    }
+    await recordHotelAudit({ userId: opts.createdByUserId }, 'Reservation', id, 'GUEST_DEBT', {
+      note,
+      lines: posted,
+    });
+  }
 
   const arCandidates = openFolios.filter((f) => {
     if (f.type !== 'COMPANY' && f.type !== 'AGENCY') return false;

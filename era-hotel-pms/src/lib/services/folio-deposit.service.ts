@@ -147,7 +147,14 @@ export async function payoutDepositRemainder(
     where: { status: 'OPEN' },
     orderBy: { openedAt: 'desc' },
   });
-  const terminal = paymentMethod === 'CARD' ? bankTerminalId?.trim() || cashShift?.bankTerminalId || undefined : undefined;
+  if (paymentMethod === 'CARD') {
+    const { ensureFiscalDevices } = await import('@/lib/fiscal-device-mirror');
+    await ensureFiscalDevices(orgId);
+    const { listDevicesForSatellite } = await import('@era/satellite-kit');
+    const terminals = listDevicesForSatellite({ organizationId: orgId, kind: 'BANK_POS' });
+    if (terminals.length > 0 && !bankTerminalId?.trim()) throw new Error('BANK_TERMINAL_REQUIRED');
+  }
+  const terminal = paymentMethod === 'CARD' ? bankTerminalId?.trim() || undefined : undefined;
   const receipt = await fiscalizeForSatellite(
     {
       documentRef: depositId,

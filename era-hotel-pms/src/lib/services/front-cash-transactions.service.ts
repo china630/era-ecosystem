@@ -87,6 +87,15 @@ export async function listFrontCashJournal(opts: {
     }),
   ]);
 
+  const cashierIds = [...new Set(payments.map((p) => p.createdByUserId).filter((id): id is string => Boolean(id)))];
+  const cashiers = cashierIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: cashierIds } },
+        select: { id: true, fullName: true },
+      })
+    : [];
+  const cashierNames = new Map(cashiers.map((user) => [user.id, user.fullName]));
+
   const paymentRows = payments.map((p) => ({
     id: p.id,
     createdAt: p.createdAt,
@@ -95,6 +104,8 @@ export async function listFrontCashJournal(opts: {
     kind: p.kind,
     refundReason: p.refundReason,
     bankReference: p.bankReference,
+    bankTerminalId: p.bankTerminalId,
+    cashierName: p.createdByUserId ? cashierNames.get(p.createdByUserId) ?? null : null,
     fiscalReceiptId: p.fiscalReceiptId,
     folioId: p.folioId,
     folioType: p.folio.type,

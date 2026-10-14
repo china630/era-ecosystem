@@ -133,6 +133,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations are modals on the reservation card Folio tab |
 | `/front-cash/desk` | `GET/POST /api/front-cash/desk` | Day position by department × tender; close time. No open-shift button |
 | `/front-cash/transactions` | `GET /api/front-cash/transactions?from&to&cashShiftId` | Cash journal tabs + Z modal (HOT-CASH-06) |
+| `/front-cash/guest-debt` | `GET /api/front-cash/guest-debt` | Personal guest debt left at checkout. Not the agency city ledger |
 | `/front-cash/agency-ledger` | agency ledger + statement lines + `GET/POST /api/agencies/[id]/city-ledger-snapshot` | Agency CL (HOT-CL-03); Finance re-push (HOT-CL-04) |
 | `/front-cash/company-ledger` | `GET /api/companies` + ledger + `GET /api/companies/[id]/settlement` + statement lines | Company CL (HOT-CL-06); no commission; no Finance snapshot yet |
 | `/agency/ledger` | `GET /api/agency/ledger` (session-scoped) | Portal own CL statement (HOT-AGP-04); read-only |
@@ -172,7 +173,7 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 | Finance AR terms/aging/match | HOT-CL-05 | H-BL-48 |
 | Early unused-nights refund | HOT-CO-04 | H-BL-49 |
 
-**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `POST /api/folios/settle` (DEPOSIT/discount), `POST /api/folios/payments/[id]/refund`, `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: reservation card Folio tab modals (`/folio/[id]` redirects there), chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`.
+**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, `transferToGuestDebt` + note, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `GET|POST /api/reservations/[id]/missed-nights` (night auditor only; posts onto the open business date), `GET /api/reservations/[id]/journal`, `POST /api/folios/settle` (DEPOSIT/discount, FIFO allocation), `POST /api/folios/charges/[chargeId]/transfer`, `POST /api/folios/charges/[chargeId]/void` (reason required), `POST /api/folios/payments/[id]/refund` (reason required), `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`. UI: reservation card Folio tab modals (`/folio/[id]` redirects there), chessboard confirm, `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate`. Card tender requires an explicit bank terminal once BANK_POS rows exist. ADR: `docs/adr/hotel-folio-desk.md`.
 
 **UAT:** `doc/UAT-SMOKE.md` §27 P5 FO money. Unused-nights refund: §33.
 
@@ -207,7 +208,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | `/reports/analytics` | booking analytics API | Under Reports (not a catalog slug, no PDF). Booking sources, cancellations, guest demographics |
 | `/reports/guest-dedup` | `GET /api/admin/guest-dedup/summary`, `POST /api/admin/guest-dedup/merge`, `POST /api/admin/guest-dedup/dismiss` | Duplicate guest cards (same phone or same registry person). Cards show name, phone, birth date, citizenship, document, stays. Keep-this-card merges the others (blank fields copy; reservations follow). Not-the-same-people hides the group. Two different registry people need a second button, no typed FIN. Read = `REPORTS_READ`; merge and dismiss = `RESERVATIONS_WRITE` |
 | `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Under Reports (not Tools). Room-type occupancy grid, color legend (not a catalog slug) |
-| `/reports/nightly-pack` | `GET /api/reports/{slug}/layout`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: eight forms for the last closed audit (each on its `resolveDateMode` ending on that day), ZIP for that date |
+| `/reports/nightly-pack` | `GET /api/reports/{slug}/layout`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: nine forms for the last closed audit (each on its `resolveDateMode` ending on that day), including `police-list`, ZIP for that date |
 | `/settings/policies#reports` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership. `/settings/report-pack` redirects here |
 | `/settings/policies#letterhead` | `GET/PUT /api/hotel/profile`, `GET/POST/DELETE /api/hotel/profile/logo` | Print letterhead (name, address, phone, email, website, logo) on every report PDF/Excel and the HK floor sheet. Logo file under `HOTEL_DATA_DIR` (default `./data`). Write = `MASTER_DATA_MANAGE`. PUT is partial: an omitted field keeps its value, an empty string clears it. First save without a profile takes the active room count as `roomCapacity` and `HOTEL_PROPERTY_CODE` as the property code |
 

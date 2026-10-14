@@ -42,7 +42,8 @@ import type {
 const LOG_DIR = join(process.cwd(), 'logs');
 const LOG_FILE = join(LOG_DIR, 'failed-events.log');
 
-function mapPaymentMethod(method: PaymentMethod): SatellitePaymentMethod {
+function mapPaymentMethod(method: PaymentMethod | null): SatellitePaymentMethod {
+  if (!method) return 'CASH';
   return method as SatellitePaymentMethod;
 }
 

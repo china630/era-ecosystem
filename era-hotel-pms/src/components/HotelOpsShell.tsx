@@ -360,6 +360,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: Banknote,
               anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.SCREEN_FOLIO],
             },
+            {
+              id: 'fc-guest-debt',
+              href: '/front-cash/guest-debt',
+              labelKey: 'guestDebtJournal',
+              icon: Banknote,
+              anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_FOLIO],
+            },
           ]),
         },
         {

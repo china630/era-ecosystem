@@ -211,6 +211,9 @@ export async function confirmBanquetEvent(
     const folio = await prisma.folio.findUnique({ where: { id: depositFolioId } });
     if (!folio) throw new Error('Master folio required to post deposit');
     const reservation = event.reservation!;
+    if (!reservation.paymentMethod) {
+      throw new Error('Payment method is not set on the stay');
+    }
     const payment = await postPayment({
       folioId: folio.id,
       amount: advance,

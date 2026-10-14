@@ -15,7 +15,9 @@ export async function GET(request: Request) {
       | undefined;
     const { listDevicesForSatellite, resolveDefaultDevicesForSatellite } =
       await import("@era/satellite-kit");
+    const { ensureFiscalDevices } = await import("@/lib/fiscal-device-mirror");
     const organizationId = session.organizationId;
+    await ensureFiscalDevices(organizationId);
     return NextResponse.json({
       devices: listDevicesForSatellite({
         organizationId,

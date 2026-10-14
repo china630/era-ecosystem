@@ -4,6 +4,7 @@ import { serialize } from '@/lib/serialize';
 import { createReservation, listReservations } from '@/lib/services/reservation.service';
 import { collectStayOperationalGaps } from '@/lib/services/stay-operational-readiness.service';
 import type { ReservationStatus } from '@prisma/client';
+import { reservationPaymentMethodSchema } from '@/lib/reservation-full-patch.schema';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -22,7 +23,7 @@ const createSchema = z.object({
   salesContractId: z.string().uuid().optional(),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']),
+  paymentMethod: reservationPaymentMethodSchema,
   partyBillingMode: z.enum(['PRIMARY', 'EQUAL']).optional(),
   adults: z.number().int().min(0).optional(),
   children11_6: z.number().int().min(0).optional(),
@@ -100,6 +101,10 @@ export async function POST(request: Request) {
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = createSchema.parse(await request.json());
     const reservation = await createReservation(body);
+    const { recordHotelAudit } = await import('@/lib/satellite-audit');
+    await recordHotelAudit({ userId: session?.sub, request }, 'Reservation', reservation.id, 'CREATE', {
+      reservationId: reservation.id,
+    });
     const operationalGaps = await collectStayOperationalGaps(reservation.id);
     return jsonOk(serialize({ ...reservation, operationalGaps }), 201);
   } catch (err) {

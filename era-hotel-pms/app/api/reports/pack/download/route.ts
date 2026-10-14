@@ -3,38 +3,16 @@ import { jsonError, handleRouteError } from '@/lib/api-utils';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { getPackDefaults, getReportBySlug, validatePackSlugs } from '@/lib/reports/catalog';
+import { getReportBySlug, validatePackSlugs } from '@/lib/reports/catalog';
+import { resolveNightAuditPackSlugs } from '@/lib/reports/night-audit-pack';
 import { parseReportLangParam, reportFileName } from '@/lib/reports/locale';
 import { reportPdfT } from '@/lib/reports/pdf-i18n';
 import { renderLayoutPdf } from '@/lib/services/reports/pdf-renderers';
 import { queryReportLayout, reportPeriodLabel } from '@/lib/services/reports/report-output';
-import { prisma } from '@/lib/prisma';
 import { getReportLetterhead } from '@/lib/services/hotel-letterhead.service';
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { resolveDateMode } from '@/lib/reports/period';
-
-interface PackConfig {
-  enabled: boolean;
-  slugs: string[];
-}
-
-async function resolvePackSlugs(): Promise<string[]> {
-  const profile = await prisma.hotelProfile.findFirst({
-    select: { policyJson: true },
-  });
-
-  if (profile?.policyJson) {
-    try {
-      const policy = JSON.parse(profile.policyJson);
-      const pack = policy.nightAuditReportPack as PackConfig | undefined;
-      if (pack && pack.enabled === false) return [];
-      if (pack?.enabled && Array.isArray(pack.slugs)) return pack.slugs;
-    } catch { /* use defaults */ }
-  }
-
-  return getPackDefaults().map((r) => r.slug);
-}
 
 export async function GET(request: Request) {
   try {
@@ -48,7 +26,7 @@ export async function GET(request: Request) {
     const lang = parseReportLangParam(request);
     if (!lang.ok) return jsonError(lang.message, 400);
 
-    const slugs = await resolvePackSlugs();
+    const slugs = await resolveNightAuditPackSlugs();
     const pack = validatePackSlugs(slugs);
     if (!pack.ok) return jsonError(pack.message, 400);
 

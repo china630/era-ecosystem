@@ -279,7 +279,14 @@ export async function applyOrganizationBind(opts: {
 }): Promise<{ organizationId: string }> {
   const organizationId = opts.organizationId.trim();
   setRuntimeOrganizationId(organizationId);
-  writeOrganizationBindFile(organizationId, opts.boundBy);
+  try {
+    writeOrganizationBindFile(organizationId, opts.boundBy);
+  } catch (err) {
+    console.warn(
+      "Organization bind file was not written",
+      err instanceof Error ? err.message : err,
+    );
+  }
   if (opts.prisma) {
     await saveOrganizationBindToDb(opts.prisma, organizationId, opts.boundBy);
   }

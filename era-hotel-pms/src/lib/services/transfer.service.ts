@@ -165,7 +165,7 @@ export async function cancelTransfer(id: string, reason?: string) {
       });
       if (charge) {
         const { voidCharge } = await import('@/lib/services/folio.service');
-        await voidCharge(charge.id);
+        await voidCharge(charge.id, reason?.trim() || 'Transfer cancelled');
       }
     }
   }

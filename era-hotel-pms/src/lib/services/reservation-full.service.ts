@@ -76,7 +76,7 @@ const fullInclude = {
   },
   folios: {
     include: {
-      charges: { include: { revenueCode: true } },
+      charges: { include: { revenueCode: true, paymentAllocations: true } },
       payments: true,
     },
   },
@@ -181,6 +181,7 @@ export async function patchReservationFull(
     guestId?: string;
     checkInDate?: Date;
     checkOutDate?: Date;
+    paymentMethod?: import('@prisma/client').PaymentMethod | null;
     voucherNo?: string | null;
     roomCount?: number;
     adults?: number;

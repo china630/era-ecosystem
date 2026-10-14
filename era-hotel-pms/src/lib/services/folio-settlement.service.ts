@@ -42,12 +42,39 @@ export type SettlementLine = {
   authorizationId?: string;
 };
 
+async function allocatePaymentFifo(folioId: string, paymentId: string, amount: number) {
+  const charges = await prisma.folioCharge.findMany({
+    where: { folioId },
+    orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
+    include: { paymentAllocations: true },
+  });
+  let left = amount;
+  for (const charge of charges) {
+    if (left <= 0.009) break;
+    const gross = decimalToNumber(charge.amount) * charge.qty;
+    if (gross <= 0.009) continue;
+    const already = charge.paymentAllocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+    const open = gross - already;
+    if (open <= 0.009) continue;
+    const take = Math.min(open, left);
+    await prisma.folioPaymentAllocation.create({
+      data: {
+        paymentId,
+        chargeId: charge.id,
+        amount: toDecimal(Math.round(take * 100) / 100),
+      },
+    });
+    left -= take;
+  }
+}
+
 export async function settleFolio(input: {
   folioId: string;
   lines: SettlementLine[];
   discountAmount?: number;
   discountDescription?: string;
   applyDeposits?: boolean;
+  createdByUserId?: string;
 }) {
   const folio = await prisma.folio.findUnique({
     where: { id: input.folioId },
@@ -132,7 +159,9 @@ export async function settleFolio(input: {
         registerRef: line.registerRef,
         bankReference: line.bankReference,
         bankTerminalId: line.bankTerminalId,
+        createdByUserId: input.createdByUserId,
       });
+      await allocatePaymentFifo(refreshed.id, payment.id, line.amount);
 
       await tx.folioPayment.update({
         where: { id: payment.id },
@@ -144,6 +173,16 @@ export async function settleFolio(input: {
       where: { id: settlement.id },
       data: { status: 'COMPLETED', completedAt: new Date() },
     });
+  });
+
+  const { recordHotelAudit } = await import('@/lib/satellite-audit');
+  await recordHotelAudit({ userId: input.createdByUserId }, 'Reservation', refreshed.reservationId, 'PAYMENT', {
+    reservationId: refreshed.reservationId,
+    lines: cashLines.map((line) => ({
+      method: line.method,
+      amount: line.amount,
+      bankTerminalId: line.bankTerminalId ?? null,
+    })),
   });
 
   const { syncTourBookingsAfterFolioSettle, usedGuestTender } = await import(

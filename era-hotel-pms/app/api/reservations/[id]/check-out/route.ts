@@ -9,6 +9,8 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 const bodySchema = z
   .object({
     transferToCityLedger: z.boolean().optional(),
+    transferToGuestDebt: z.boolean().optional(),
+    guestDebtNote: z.string().max(500).optional(),
     discountAmount: z.number().positive().optional(),
     discountDescription: z.string().max(200).optional(),
     unusedNightsRefundMethod: z.enum(['CASH', 'CARD']).optional(),
@@ -25,14 +27,12 @@ export async function POST(
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_CHECKOUT);
     const { id } = await params;
-    let opts: z.infer<typeof bodySchema> = undefined;
-    try {
-      const raw = await request.json();
-      opts = bodySchema.parse(raw);
-    } catch {
-      opts = undefined;
-    }
-    const result = await checkoutReservation(id, opts ?? undefined);
+    const rawText = await request.text();
+    const parsed = rawText.trim() ? bodySchema.parse(JSON.parse(rawText)) : undefined;
+    const result = await checkoutReservation(id, {
+      ...(parsed ?? {}),
+      createdByUserId: session?.sub,
+    });
     return jsonOk(serialize(result));
   } catch (err) {
     return handleRouteError(err);

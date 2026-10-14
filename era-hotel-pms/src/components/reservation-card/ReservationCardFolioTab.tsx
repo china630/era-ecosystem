@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
@@ -23,12 +23,16 @@ import { FolioInvoiceModal } from '@/components/folio/FolioInvoiceModal';
 import {
   FolioCloseModal,
   FolioDeletePaymentModal,
+  FolioMissedNightsModal,
   FolioPayLineModal,
   FolioRefundModal,
+  FolioTransferModal,
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
 import { ReservationCardAuthorizationsPanel } from '@/components/reservation-card/ReservationCardAuthorizationsPanel';
+import { displayRoomChargeNote } from '@/lib/folio-charge-note';
+import { revenueLabel } from '@/lib/folio-article-summary';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { accountBalance, type FolioParty, type PayerGuest } from '@/lib/folio-payer';
@@ -47,7 +51,13 @@ export type FolioAccount = {
     businessDate?: string;
     paxNo?: number | null;
     invoiceRef?: string | null;
-    revenueCode?: { code: string };
+    revenueCode?: {
+      code: string;
+      name?: string | null;
+      nameAz?: string | null;
+      nameRu?: string | null;
+      nameEn?: string | null;
+    };
   }>;
   payments?: Array<{
     id?: string;
@@ -57,6 +67,7 @@ export type FolioAccount = {
     voidedAt?: string | null;
     voidReason?: string | null;
     refundReason?: string | null;
+    refundOfPaymentId?: string | null;
   }>;
 };
 
@@ -73,6 +84,8 @@ type LedgerRow = Record<string, unknown> & {
   chargeId?: string;
   paymentId?: string;
   paymentKind?: string | null;
+  refundable?: boolean;
+  refundMax?: number;
   voidedAt?: string | null;
   voidReason?: string | null;
 };
@@ -80,6 +93,41 @@ type LedgerRow = Record<string, unknown> & {
 function paxLabel(row: PaxRow, fallback: string): string {
   const name = [row.firstName, row.middleName, row.lastName].filter(Boolean).join(' ').trim();
   return name || fallback;
+}
+
+function FolioRowMenu({
+  label,
+  items,
+}: {
+  label: string;
+  items: Array<{ id: string; label: string; run: () => void }>;
+}) {
+  const [open, setOpen] = useState(false);
+  if (items.length === 0) return null;
+  return (
+    <span className="relative inline-block">
+      <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setOpen((value) => !value)}>
+        {label}
+      </button>
+      {open ? (
+        <span className="absolute right-0 z-20 mt-1 flex min-w-[180px] flex-col rounded border border-[#D5DADF] bg-white p-1 shadow">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="px-2 py-1 text-left text-[12px] hover:bg-[#F4F6F7]"
+              onClick={() => {
+                setOpen(false);
+                item.run();
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 function partyOf(tab: FolioSubTab): FolioParty {
@@ -120,7 +168,9 @@ export function ReservationCardFolioTab({
   const t = useTranslations('reservationCard');
   const tf = useTranslations('folio');
   const tc = useTranslations('common');
+  const tPay = useTranslations('paymentMethod');
   const tFiscal = useTranslations('fiscalStatus');
+  const locale = useLocale();
   const { can } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -132,6 +182,8 @@ export function ReservationCardFolioTab({
   const [refund, setRefund] = useState<{ id: string; max: number; folioStatus: string } | null>(null);
   const [closeId, setCloseId] = useState<string | null>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
+  const [transferId, setTransferId] = useState<string | null>(null);
+  const [missedOpen, setMissedOpen] = useState(false);
   const [folioFocus, setFolioFocus] = useState<string>('all');
 
   const namedPax = useMemo(
@@ -159,7 +211,19 @@ export function ReservationCardFolioTab({
       if (folioTab === 'guest' && folio.type !== 'GUEST') continue;
       if (folioTab === 'agency' && folio.type !== 'AGENCY') continue;
       if (folioTab === 'company' && folio.type !== 'COMPANY') continue;
+      const refunded = new Map<string, number>();
+      for (const payment of folio.payments ?? []) {
+        if (payment.voidedAt || payment.kind !== 'REFUND' || !payment.refundOfPaymentId) continue;
+        refunded.set(
+          payment.refundOfPaymentId,
+          (refunded.get(payment.refundOfPaymentId) ?? 0) + Number(payment.amount),
+        );
+      }
       for (const charge of folio.charges) {
+        const raw = charge.description ?? '—';
+        const note = displayRoomChargeNote(raw, (kind, date) =>
+          kind === 'night-audit' ? tf('nightAuditNote', { date }) : tf('manualRoomNote', { date }),
+        );
         rows.push({
           id: charge.id,
           folioId: folio.id,
@@ -167,9 +231,9 @@ export function ReservationCardFolioTab({
           folioStatus: folio.status,
           kind: 'charge',
           description: (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
-            ? `${charge.description ?? '—'} · received`
-            : (charge.description ?? '—'),
-          code: charge.revenueCode?.code ?? '—',
+            ? `${note} · received`
+            : note,
+          code: revenueLabel(charge.revenueCode, locale),
           amount: Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)),
           paxNo: charge.paxNo,
           chargeId: charge.id,
@@ -178,6 +242,7 @@ export function ReservationCardFolioTab({
       for (const payment of folio.payments ?? []) {
         if (!payment.id) continue;
         if (payment.voidedAt) continue;
+        const refundMax = Math.max(0, Number(payment.amount) - (refunded.get(payment.id) ?? 0));
         rows.push({
           id: `pay-${payment.id}`,
           folioId: folio.id,
@@ -185,15 +250,17 @@ export function ReservationCardFolioTab({
           folioStatus: folio.status,
           kind: 'payment',
           description: payment.kind === 'REFUND' ? tf('refund') : tf('ledgerPayment'),
-          code: payment.paymentMethod,
+          code: tPay(payment.paymentMethod as 'CASH'),
           amount: payment.kind === 'REFUND' ? Number(payment.amount) : -Number(payment.amount),
           paymentId: payment.id,
           paymentKind: payment.kind,
+          refundable: payment.kind !== 'REFUND' && refundMax > 0.01,
+          refundMax,
         });
       }
     }
     return rows;
-  }, [accounts, folioTab, tf]);
+  }, [accounts, folioTab, locale, tPay, tf]);
 
   const deletedRows = useMemo(() => {
     const rows: LedgerRow[] = [];
@@ -281,42 +348,40 @@ export function ReservationCardFolioTab({
         key: 'actions',
         header: tf('actions'),
         render: (row) => (
-          <span className="flex flex-wrap gap-1">
-            {row.kind === 'charge' && can(PERMISSIONS.FOLIO_VOID) ? (
-              <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setVoidId(row.chargeId ?? null)}>
-                {tf('void')}
-              </button>
-            ) : null}
-            {row.kind === 'charge' && can(PERMISSIONS.FOLIO_PAYMENT) && row.folioType === 'GUEST' && row.folioStatus === 'OPEN' ? (
-              <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setPayLineId(row.chargeId ?? null)}>
-                {tf('pay')}
-              </button>
-            ) : null}
-            {row.kind === 'payment' && can(PERMISSIONS.FOLIO_VOID) && row.paymentKind !== 'REFUND' && row.paymentId ? (
-              <button
-                type="button"
-                className={GHOST_BUTTON_CLASS}
-                onClick={() => setDeletePaymentId(row.paymentId ?? null)}
-              >
-                {tf('deletePayment')}
-              </button>
-            ) : null}
-            {row.kind === 'payment' && can(PERMISSIONS.FOLIO_PAYMENT) && row.paymentKind !== 'REFUND' && row.paymentId ? (
-              <button
-                type="button"
-                className={GHOST_BUTTON_CLASS}
-                onClick={() =>
-                  setRefund({
-                    id: row.paymentId!,
-                    max: Math.abs(row.amount),
-                    folioStatus: row.folioStatus,
-                  })
-                }
-              >
-                {tf('refund')}
-              </button>
-            ) : null}
-          </span>
+          <FolioRowMenu
+            label={tf('rowMenu')}
+            items={[
+              ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_VOID)
+                ? [{ id: 'void', label: tf('void'), run: () => setVoidId(row.chargeId ?? null) }]
+                : []),
+              ...(row.kind === 'charge' &&
+              can(PERMISSIONS.FOLIO_PAYMENT) &&
+              row.folioType === 'GUEST' &&
+              row.folioStatus === 'OPEN'
+                ? [{ id: 'pay', label: tf('pay'), run: () => setPayLineId(row.chargeId ?? null) }]
+                : []),
+              ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_CHARGE) && row.folioStatus === 'OPEN'
+                ? [{ id: 'transfer', label: tf('transfer'), run: () => setTransferId(row.chargeId ?? null) }]
+                : []),
+              ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_VOID) && row.paymentKind !== 'REFUND' && row.paymentId
+                ? [{ id: 'delete', label: tf('deletePayment'), run: () => setDeletePaymentId(row.paymentId ?? null) }]
+                : []),
+              ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_PAYMENT) && row.refundable && row.paymentId
+                ? [
+                    {
+                      id: 'refund',
+                      label: tf('refund'),
+                      run: () =>
+                        setRefund({
+                          id: row.paymentId!,
+                          max: row.refundMax ?? Math.abs(row.amount),
+                          folioStatus: row.folioStatus,
+                        }),
+                    },
+                  ]
+                : []),
+            ]}
+          />
         ),
       },
     ];
@@ -347,6 +412,11 @@ export function ReservationCardFolioTab({
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <button type="button" className={DANGER_BUTTON_CLASS} onClick={() => setPayOpen(true)}>
           {t('getPayment')}
+        </button>
+      ) : null}
+      {can(PERMISSIONS.NIGHT_AUDIT_RUN) ? (
+        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setMissedOpen(true)}>
+          {tf('missedNights')}
         </button>
       ) : null}
       <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setInvoiceOpen(true)}>
@@ -422,6 +492,18 @@ export function ReservationCardFolioTab({
         open={Boolean(deletePaymentId)}
         paymentId={deletePaymentId}
         onClose={() => setDeletePaymentId(null)}
+        onDone={onChanged}
+      />
+      <FolioTransferModal
+        open={Boolean(transferId)}
+        chargeId={transferId}
+        onClose={() => setTransferId(null)}
+        onDone={onChanged}
+      />
+      <FolioMissedNightsModal
+        open={missedOpen}
+        reservationId={reservationId}
+        onClose={() => setMissedOpen(false)}
         onDone={onChanged}
       />
       <FolioCloseModal open={Boolean(closeId)} folioId={closeId} onClose={() => setCloseId(null)} onDone={onChanged} />

@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CatalogField,
   Field,
+  FieldTextarea,
   SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { folioArticleSummary } from '@/lib/folio-article-summary';
 import { accountBalance } from '@/lib/folio-payer';
 
 const TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'DEPOSIT', 'LOYALTY_POINTS', 'COMPANY_ACCOUNT'] as const;
@@ -18,8 +20,25 @@ type FolioRow = {
   id: string;
   type: string;
   status: string;
-  charges: Array<{ amount: number | string; qty?: number | null }>;
-  payments?: Array<{ amount: number | string; kind?: string | null }>;
+  charges: Array<{
+    id?: string;
+    amount: number | string;
+    qty?: number | null;
+    businessDate?: string;
+    revenueCode?: {
+      code?: string | null;
+      name?: string | null;
+      nameAz?: string | null;
+      nameRu?: string | null;
+      nameEn?: string | null;
+    } | null;
+    paymentAllocations?: Array<{ amount: number | string }>;
+  }>;
+  payments?: Array<{
+    amount: number | string;
+    kind?: string | null;
+    voidedAt?: string | null;
+  }>;
 };
 
 type EarlyPreview = {
@@ -47,9 +66,12 @@ export function FolioCheckoutModal({
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
   const tHk = useTranslations('housekeeping');
+  const locale = useLocale();
   const guest = folios.find((f) => f.type === 'GUEST' && f.status === 'OPEN') ?? folios.find((f) => f.type === 'GUEST');
   const balance = guest ? accountBalance(guest) : 0;
-  const [transferToCl, setTransferToCl] = useState(true);
+  const [transferToCl, setTransferToCl] = useState(false);
+  const [guestMode, setGuestMode] = useState<'PAY' | 'DEBT'>('PAY');
+  const [guestDebtNote, setGuestDebtNote] = useState('');
   const [heldDeposits, setHeldDeposits] = useState(0);
   const [applyDeposits, setApplyDeposits] = useState(true);
   const [discountAmount, setDiscountAmount] = useState('');
@@ -70,7 +92,9 @@ export function FolioCheckoutModal({
 
   useEffect(() => {
     if (!open) return;
-    setTransferToCl(true);
+    setTransferToCl(false);
+    setGuestMode('PAY');
+    setGuestDebtNote('');
     void fetch('/api/fiscal/devices?kind=BANK_POS')
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
@@ -105,19 +129,43 @@ export function FolioCheckoutModal({
     }
   }, [open, reservationId, guest?.id]);
 
+  const summary = useMemo(() => {
+    if (!guest) return null;
+    const allocatedByChargeId: Record<string, number> = {};
+    for (const charge of guest.charges) {
+      if (!charge.id) continue;
+      allocatedByChargeId[charge.id] = (charge.paymentAllocations ?? []).reduce(
+        (sum, row) => sum + Number(row.amount),
+        0,
+      );
+    }
+    return folioArticleSummary({
+      charges: guest.charges.map((charge) => ({ ...charge, id: charge.id ?? '' })),
+      payments: guest.payments ?? [],
+      locale,
+      allocatedByChargeId,
+    });
+  }, [guest, locale]);
+
+  const terminalOptions = [
+    { value: '', label: t('pickTerminal') },
+    ...bankTerminals.map((row) => ({ value: row.id, label: row.label })),
+  ];
+
   async function settleThenCheckout() {
     const cardMissingTerminal =
-      (lines.some((line) => line.method === 'CARD' && Number(line.amount) > 0 && !line.bankTerminalId.trim()) ||
-        (early?.applicable &&
-          early.guestCashRefund > 0 &&
-          refundMethod === 'CARD' &&
-          !refundTerminal.trim())) &&
-      bankTerminals.length > 0;
+      (guestMode === 'PAY' &&
+        lines.some((line) => line.method === 'CARD' && Number(line.amount) > 0 && !line.bankTerminalId.trim())) ||
+      (early?.applicable && early.guestCashRefund > 0 && refundMethod === 'CARD' && !refundTerminal.trim());
     if (cardMissingTerminal) {
       showApiError({ error: t('bankTerminal') }, tc('error'));
       return false;
     }
-    if (guest && balance > 0.01 && !transferToCl) {
+    if (guestMode === 'DEBT' && balance > 0.01 && !guestDebtNote.trim()) {
+      showApiError({ error: t('guestDebtNote') }, tc('error'));
+      return false;
+    }
+    if (guest && balance > 0.01 && guestMode === 'PAY') {
       const tender = lines
         .map((l) => ({
           method: l.method,
@@ -152,6 +200,8 @@ export function FolioCheckoutModal({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         transferToCityLedger: transferToCl,
+        transferToGuestDebt: guestMode === 'DEBT' && balance > 0.01,
+        guestDebtNote: guestMode === 'DEBT' ? guestDebtNote.trim() : undefined,
         discountAmount: discountAmount ? Number(discountAmount) : undefined,
         unusedNightsRefundMethod: early?.applicable && early.guestCashRefund > 0 ? refundMethod : undefined,
         unusedNightsBankTerminalId:
@@ -215,21 +265,68 @@ export function FolioCheckoutModal({
             {t('totalBalance')} <strong>{balance.toFixed(2)} AZN</strong>{' '}
             {Math.abs(balance) < 0.01 ? t('readyCheckout') : t('paymentRequired')}
           </p>
+          {summary && summary.rows.length > 0 ? (
+            <table className="w-full border-collapse text-[12px]">
+              <thead>
+                <tr className="text-left text-[#7F8C8D]">
+                  <th className="py-1 pr-2 font-medium">{t('summaryArticle')}</th>
+                  <th className="py-1 pr-2 text-right font-medium">{t('summaryCharged')}</th>
+                  <th className="py-1 pr-2 text-right font-medium">{t('summaryPaid')}</th>
+                  <th className="py-1 text-right font-medium">{t('summaryDebt')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.rows.map((row) => (
+                  <tr key={row.key}>
+                    <td className="py-1 pr-2">{row.label}</td>
+                    <td className="py-1 pr-2 text-right font-mono">{row.charged.toFixed(2)}</td>
+                    <td className="py-1 pr-2 text-right font-mono">{row.paid.toFixed(2)}</td>
+                    <td className="py-1 text-right font-mono">{row.debt.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr className="font-semibold">
+                  <td className="py-1 pr-2">{t('summaryTotal')}</td>
+                  <td className="py-1 pr-2 text-right font-mono">{summary.charged.toFixed(2)}</td>
+                  <td className="py-1 pr-2 text-right font-mono">{summary.paid.toFixed(2)}</td>
+                  <td className="py-1 text-right font-mono">{summary.debt.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          ) : null}
+          <CatalogField
+            kind="OPS_HOT"
+            label={t('guestSettlement')}
+            value={guestMode}
+            onChange={(v) => setGuestMode(String(v) === 'DEBT' ? 'DEBT' : 'PAY')}
+            options={[
+              { value: 'PAY', label: t('payGuestFirst') },
+              { value: 'DEBT', label: t('guestDebt') },
+            ]}
+            emptyLabel={null}
+          />
           <CatalogField
             kind="OPS_HOT"
             label={t('checkoutMode')}
-            value={transferToCl ? 'CL' : 'GUEST'}
+            value={transferToCl ? 'CL' : 'KEEP'}
             onChange={(v) => setTransferToCl(String(v) === 'CL')}
             options={[
+              { value: 'KEEP', label: t('keepAgencyOpen') },
               { value: 'CL', label: t('leaveOnCityLedger') },
-              { value: 'GUEST', label: t('payGuestFirst') },
             ]}
             emptyLabel={null}
           />
           <p className="m-0 text-[12px] text-[#7F8C8D]">
-            {transferToCl ? t('leaveOnCityLedgerHint') : t('payGuestFirstHint')}
+            {guestMode === 'DEBT' ? t('guestDebtHint') : t('payGuestFirstHint')}
+            {transferToCl ? ` ${t('leaveOnCityLedgerHint')}` : ''}
           </p>
-          {!transferToCl && balance > 0.01 && guest ? (
+          {guestMode === 'DEBT' && balance > 0.01 ? (
+            <FieldTextarea
+              label={t('guestDebtNote')}
+              value={guestDebtNote}
+              onChange={(e) => setGuestDebtNote(e.target.value)}
+            />
+          ) : null}
+          {guestMode === 'PAY' && balance > 0.01 && guest ? (
             <div className="space-y-2">
               {lines.map((line, idx) => (
                 <div key={idx} className="flex flex-wrap items-end gap-2">
@@ -256,7 +353,8 @@ export function FolioCheckoutModal({
                       setLines(next);
                     }}
                   />
-                  {line.method === 'CARD' && bankTerminals.length > 0 ? (
+                  {line.method === 'CARD' ? (
+                    bankTerminals.length > 0 ? (
                     <CatalogField
                       kind="CLOSED_SMALL"
                       label={t('bankTerminal')}
@@ -266,9 +364,12 @@ export function FolioCheckoutModal({
                         next[idx] = { ...next[idx]!, bankTerminalId: String(v ?? '') };
                         setLines(next);
                       }}
-                      options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+                      options={terminalOptions}
                       emptyLabel={null}
                     />
+                    ) : (
+                      <p className="m-0 text-[12px] text-amber-800">{t('noBankTerminal')}</p>
+                    )
                   ) : null}
                   {line.method === 'BANK_TRANSFER' ? (
                     <Field
@@ -300,6 +401,22 @@ export function FolioCheckoutModal({
                 {t('applyHeldDeposits')}
                 {heldDeposits > 0 ? ` (${heldDeposits.toFixed(2)} AZN)` : ''}
               </label>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() =>
+                  setLines((prev) => [
+                    {
+                      method: prev[0]?.method ?? 'CASH',
+                      amount: balance > 0 ? balance.toFixed(2) : '',
+                      bankReference: prev[0]?.bankReference ?? '',
+                      bankTerminalId: prev[0]?.bankTerminalId ?? '',
+                    },
+                  ])
+                }
+              >
+                {t('payAll')}
+              </button>
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -337,7 +454,7 @@ export function FolioCheckoutModal({
                       label={t('bankTerminal')}
                       value={refundTerminal}
                       onChange={(v) => setRefundTerminal(String(v ?? ''))}
-                      options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+                      options={terminalOptions}
                       emptyLabel={null}
                     />
                   ) : null}
@@ -382,7 +499,7 @@ export function FolioCheckoutModal({
             busy={busy}
             onSubmit={() => {
               if (!remainder) return;
-              if (remainderMethod === 'CARD' && bankTerminals.length > 0 && !remainderTerminal.trim()) {
+              if (remainderMethod === 'CARD' && !remainderTerminal.trim()) {
                 showApiError({ error: t('bankTerminal') }, tc('error'));
                 return;
               }
@@ -433,7 +550,7 @@ export function FolioCheckoutModal({
               label={t('bankTerminal')}
               value={remainderTerminal}
               onChange={(v) => setRemainderTerminal(String(v ?? ''))}
-              options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+              options={terminalOptions}
               emptyLabel={null}
             />
           ) : null}
