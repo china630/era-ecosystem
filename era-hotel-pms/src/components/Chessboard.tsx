@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  CatalogField,
+  FieldTextarea,
   LIST_PAGE_SHELL_CLASS,
   showApiError,
   showSuccess,
@@ -87,6 +89,8 @@ export default function Chessboard() {
   const tCard = useTranslations('reservationCard');
   const tCommon = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
+  const tf = useTranslations('folio');
+  const tPay = useTranslations('paymentMethod');
 
   const roomStatusLabel = (status: RoomStatus) => tRoom(status);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -104,7 +108,7 @@ export default function Chessboard() {
     guest: string;
     balance: number;
   } | null>(null);
-  const [checkoutLeaveOnCl, setCheckoutLeaveOnCl] = useState(true);
+  const [checkoutLeaveOnCl, setCheckoutLeaveOnCl] = useState(false);
   const [earlyCheckout, setEarlyCheckout] = useState<{
     applicable: boolean;
     unusedNights: number;
@@ -113,6 +117,19 @@ export default function Chessboard() {
     guestCashRefund: number;
   } | null>(null);
   const [unusedNightsRefundMethod, setUnusedNightsRefundMethod] = useState<'CASH' | 'CARD'>('CASH');
+  const [guestDebt, setGuestDebt] = useState(false);
+  const [guestDebtNote, setGuestDebtNote] = useState('');
+  const [refundTerminal, setRefundTerminal] = useState('');
+  const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
+  useEffect(() => {
+    if (!checkoutPrompt) return;
+    void fetch('/api/fiscal/devices?kind=BANK_POS')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { devices?: { id: string; label: string }[] } | null) => {
+        setBankTerminals(body?.devices ?? []);
+      })
+      .catch(() => setBankTerminals([]));
+  }, [checkoutPrompt]);
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -350,7 +367,10 @@ export default function Chessboard() {
         onCheckIn={(id) => runAction(`/api/reservations/${id}/check-in`)}
         onCheckOut={(id) => {
           const res = selected?.reservations.find((r) => r.id === id);
-          setCheckoutLeaveOnCl(true);
+          setCheckoutLeaveOnCl(false);
+          setGuestDebt(false);
+          setGuestDebtNote('');
+          setRefundTerminal('');
           setUnusedNightsRefundMethod('CASH');
           setEarlyCheckout(null);
           setCheckoutPrompt({
@@ -399,14 +419,29 @@ export default function Chessboard() {
             busy={busy}
             onSubmit={() => {
               if (!checkoutPrompt) return;
+              const cardRefund =
+                earlyCheckout?.applicable &&
+                earlyCheckout.guestCashRefund > 0 &&
+                unusedNightsRefundMethod === 'CARD';
+              if (cardRefund && !refundTerminal.trim()) {
+                showApiError({ error: tf('bankTerminal') }, tCommon('error'));
+                return;
+              }
+              if (guestDebt && !guestDebtNote.trim()) {
+                showApiError({ error: tf('guestDebtNote') }, tCommon('error'));
+                return;
+              }
               const id = checkoutPrompt.id;
               setCheckoutPrompt(null);
               void runAction(`/api/reservations/${id}/check-out`, 'POST', {
                 transferToCityLedger: checkoutLeaveOnCl,
+                transferToGuestDebt: guestDebt,
+                guestDebtNote: guestDebt ? guestDebtNote.trim() : undefined,
                 unusedNightsRefundMethod:
                   earlyCheckout?.applicable && earlyCheckout.guestCashRefund > 0
                     ? unusedNightsRefundMethod
                     : undefined,
+                unusedNightsBankTerminalId: cardRefund ? refundTerminal.trim() : undefined,
               });
               setEarlyCheckout(null);
             }}
@@ -437,52 +472,68 @@ export default function Chessboard() {
                 {t('earlyCheckoutCash', { amount: earlyCheckout.guestCashRefund.toFixed(2) })}
               </p>
               {earlyCheckout.guestCashRefund > 0 ? (
-                <label className="flex items-center gap-2">
-                  <span>{t('earlyCheckoutTender')}</span>
-                  <select
+                <>
+                  <CatalogField
+                    kind="OPS_HOT"
+                    label={t('earlyCheckoutTender')}
                     value={unusedNightsRefundMethod}
-                    onChange={(e) =>
-                      setUnusedNightsRefundMethod(e.target.value as 'CASH' | 'CARD')
-                    }
-                    className="rounded border border-[#BDC3C7] px-2 py-1"
-                  >
-                    <option value="CASH">CASH</option>
-                    <option value="CARD">CARD</option>
-                  </select>
-                </label>
+                    onChange={(v) => setUnusedNightsRefundMethod(String(v) === 'CARD' ? 'CARD' : 'CASH')}
+                    options={[
+                      { value: 'CASH', label: tPay('CASH') },
+                      { value: 'CARD', label: tPay('CARD') },
+                    ]}
+                    emptyLabel={null}
+                  />
+                  {unusedNightsRefundMethod === 'CARD' ? (
+                    bankTerminals.length > 0 ? (
+                      <CatalogField
+                        kind="CLOSED_SMALL"
+                        label={tf('bankTerminal')}
+                        value={refundTerminal}
+                        onChange={(v) => setRefundTerminal(String(v ?? ''))}
+                        options={[
+                          { value: '', label: tf('pickTerminal') },
+                          ...bankTerminals.map((row) => ({ value: row.id, label: row.label })),
+                        ]}
+                        emptyLabel={null}
+                      />
+                    ) : (
+                      <p className="m-0 text-[12px] text-amber-800">{tf('noBankTerminal')}</p>
+                    )
+                  ) : null}
+                </>
               ) : null}
             </div>
           ) : null}
-          <div className="space-y-2">
-            <label className="flex items-start gap-2">
-              <input
-                type="radio"
-                name="chessCheckoutCl"
-                checked={checkoutLeaveOnCl}
-                onChange={() => setCheckoutLeaveOnCl(true)}
-              />
-              <span>
-                <span className="font-medium">{t('leaveOnCityLedger')}</span>
-                <span className="mt-0.5 block text-[12px] text-[#7F8C8D]">
-                  {t('leaveOnCityLedgerHint')}
-                </span>
-              </span>
-            </label>
-            <label className="flex items-start gap-2">
-              <input
-                type="radio"
-                name="chessCheckoutCl"
-                checked={!checkoutLeaveOnCl}
-                onChange={() => setCheckoutLeaveOnCl(false)}
-              />
-              <span>
-                <span className="font-medium">{t('payGuestFirst')}</span>
-                <span className="mt-0.5 block text-[12px] text-[#7F8C8D]">
-                  {t('payGuestFirstHint')}
-                </span>
-              </span>
-            </label>
-          </div>
+          <CatalogField
+            kind="OPS_HOT"
+            label={tf('guestSettlement')}
+            value={guestDebt ? 'DEBT' : 'PAY'}
+            onChange={(v) => setGuestDebt(String(v) === 'DEBT')}
+            options={[
+              { value: 'PAY', label: tf('payGuestFirst') },
+              { value: 'DEBT', label: tf('guestDebt') },
+            ]}
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="OPS_HOT"
+            label={tf('checkoutMode')}
+            value={checkoutLeaveOnCl ? 'CL' : 'KEEP'}
+            onChange={(v) => setCheckoutLeaveOnCl(String(v) === 'CL')}
+            options={[
+              { value: 'KEEP', label: tf('keepAgencyOpen') },
+              { value: 'CL', label: tf('leaveOnCityLedger') },
+            ]}
+            emptyLabel={null}
+          />
+          {guestDebt ? (
+            <FieldTextarea
+              label={tf('guestDebtNote')}
+              value={guestDebtNote}
+              onChange={(e) => setGuestDebtNote(e.target.value)}
+            />
+          ) : null}
         </div>
       </EraModal>
 

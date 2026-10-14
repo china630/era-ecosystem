@@ -1160,8 +1160,12 @@
     "colFin": "FIN",
     "colContractEnd": "Contract end",
     "colRegime": "Work regime",
+    "grossSalary": "Contract salary (gross)",
+    "netPayslip": "Last posted payslip (net)",
+    "payEmpty": "Not in Finance yet",
     "openEnded": "Open-ended",
     "regimeEmpty": "Not set",
+    "regimeHint": "Leave empty to use the position regime. Set it only when this person differs.",
     "colOrgUnit": "Org unit",
     "colPosition": "Position",
     "colHireDate": "Hire date",
@@ -1434,6 +1438,8 @@
     "timesheetTitle": "Approved timesheet",
     "timesheetHint": "Construction / CP approved hours",
     "downloadRoster": "Download roster CSV",
+    "downloadCadre": "Download cadre Excel",
+    "cadreHint": "One-way file: name, birth date, FIN, ID series and number, position, department, hire date, contract end, gross, net. Each download is written to the access log.",
     "downloadAbsences": "Download absences CSV",
     "downloadTimesheet": "Download timesheet CSV",
     "downloading": "Downloading…",
@@ -1531,6 +1537,18 @@
     "fieldName": "Position name",
     "fieldCode": "Code",
     "fieldSlots": "Total slots",
+    "fieldLeadership": "Leadership",
+    "fieldTariff": "Monthly tariff (AZN)",
+    "fieldRegime": "Default work regime",
+    "fieldWeeklyHours": "Weekly hours",
+    "regimeEmpty": "Not set",
+    "colTariff": "Tariff",
+    "regime": {
+      "FIVE_DAY": "5-day",
+      "SIX_DAY": "6-day",
+      "MEDICAL": "Medical",
+      "CUSTOM": "Custom"
+    },
     "create": "Create position",
     "addPosition": "Add position",
     "createTitle": "New position",
@@ -1578,6 +1596,9 @@
     "colKind": "Kind",
     "colPeriod": "Period",
     "colDays": "Days",
+    "colWorkYear": "Work year",
+    "colBalance": "Remaining days",
+    "workYearValue": "{from} — {to}",
     "colStep": "Step",
     "correct": "Correct",
     "colStatus": "Status",
@@ -1738,6 +1759,15 @@
     "colOrgUnit": "Org unit",
     "colOccupied": "Occupied",
     "colVacant": "Vacant",
+    "colTariff": "Tariff (AZN)",
+    "colRegime": "Regime",
+    "colWeeklyHours": "Weekly hours",
+    "regime": {
+      "FIVE_DAY": "5-day",
+      "SIX_DAY": "6-day",
+      "MEDICAL": "Medical",
+      "CUSTOM": "Custom"
+    },
     "showSlots": "Slots",
     "hideSlots": "Hide",
     "loading": "Loading…",
@@ -2256,7 +2286,25 @@
     "proxyEmployee": "Employee",
     "proxyAmount": "Amount (AZN)",
     "proxyNote": "Note",
-    "proxySubmit": "Submit advance"
+    "proxySubmit": "Submit advance",
+    "submittedByHr": "Entered by HR",
+    "submittedByEmployee": "Employee",
+    "managerKind": "Request",
+    "managerAbsence": "Absence kind",
+    "managerDate": "Date",
+    "managerFrom": "From minute",
+    "managerTo": "To minute",
+    "onBehalfKind": {
+      "FULL_DAY": "Full day",
+      "HOURLY": "Hourly",
+      "ADVANCE": "Advance"
+    },
+    "exceedsLimit": "Over the percent cap",
+    "plannedPay": "Planned pay {date}",
+    "managerTitle": "Vacation for someone in my unit",
+    "managerStart": "Start",
+    "managerEnd": "End",
+    "managerSubmit": "Submit vacation"
   },
   "workforceHrSettings": {
     "title": "HR settings",
@@ -2272,6 +2320,11 @@
     "advanceAmount": "Max amount (AZN)",
     "advanceOpen": "Max open advances",
     "advanceProxy": "HR may submit an advance for an employee",
+    "advancePayDay": "Advance pay day of month",
+    "allowEmployeeSubmit": "Employee may submit their own request",
+    "allowManagerSubmit": "Unit manager may submit for people in the unit",
+    "audience": "Who this step applies to",
+    "canExceed": "This step may approve an advance over the percent cap",
     "saveSettings": "Save settings",
     "stepKind": "Step",
     "orgUnit": "Org unit",
@@ -2290,6 +2343,11 @@
       "REQUESTER_MANAGER": "Requester's manager",
       "ORG_UNIT_HEAD": "Head of org unit",
       "POSITION_IN_UNIT": "Position in unit"
+    },
+    "audienceKind": {
+      "ALWAYS": "Always",
+      "LEADERSHIP": "Leadership positions only",
+      "ORDINARY": "Ordinary positions only"
     }
   }
 }

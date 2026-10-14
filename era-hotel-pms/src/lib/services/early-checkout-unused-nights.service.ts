@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
 import { postCharge, postPayment, voidCharge } from '@/lib/services/folio.service';
 import { matchesAnyRevenueToken, revenueTokenMatches } from '@/lib/revenue-code-token';
 
@@ -161,7 +162,8 @@ export async function previewEarlyCheckoutUnusedNights(
       const code = charge.revenueCode.code;
       if (!isLodgingCode(charge.revenueCode, packageCodes)) continue;
 
-      const bizKey = charge.businessDate ? hotelDateKey(charge.businessDate) : null;
+      const noted = parseRoomChargeNote(charge.description ?? '');
+      const bizKey = noted?.date ?? (charge.businessDate ? hotelDateKey(charge.businessDate) : null);
       const qty = charge.qty ?? 1;
       const lineTotal = roundMoney(decimalToNumber(charge.amount) * qty);
 
@@ -274,21 +276,24 @@ export async function applyEarlyCheckoutUnusedNights(
     if (plan.kind === 'void') {
       const still = await prisma.folioCharge.findUnique({ where: { id: plan.chargeId } });
       if (!still) continue;
-      await voidCharge(plan.chargeId);
+      await voidCharge(plan.chargeId, opts?.reason?.trim() || 'Early checkout unused nights');
     } else {
       const still = await prisma.folioCharge.findUnique({
         where: { id: plan.chargeId },
         include: { folio: true },
       });
       if (!still || still.folio.status !== 'OPEN') continue;
-      await voidCharge(plan.chargeId);
+      await voidCharge(plan.chargeId, opts?.reason?.trim() || 'Early checkout unused nights');
       if (plan.remainingQty > 0 && plan.remainingAmount > 0) {
+        const noted = parseRoomChargeNote(plan.description);
         await postCharge({
           reservationId,
           revenueCodeId: plan.revenueCodeId,
           amount: plan.unitAmount,
           qty: plan.remainingQty,
-          description: `${plan.description} (early CO remaining)`,
+          description: noted
+            ? roomChargeNote(noted.kind, noted.date)
+            : `${plan.description} (early CO remaining)`,
         });
       }
     }

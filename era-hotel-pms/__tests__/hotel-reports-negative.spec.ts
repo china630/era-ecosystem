@@ -1,4 +1,10 @@
-import { getReportBySlug, getPackDefaults, reportHref, validatePackSlugs } from '@/lib/reports/catalog';
+import {
+  getReportBySlug,
+  getPackDefaults,
+  reportHref,
+  upgradeLegacyNightAuditPack,
+  validatePackSlugs,
+} from '@/lib/reports/catalog';
 import { parseReportLangParam, resolveReportLocale } from '@/lib/reports/locale';
 import { resolveDateMode } from '@/lib/reports/period';
 
@@ -16,7 +22,7 @@ describe('hotel reports negative paths (HOT-RPT)', () => {
 
     it('resolves P0 nightly pack slugs', () => {
       const pack = getPackDefaults();
-      expect(pack).toHaveLength(8);
+      expect(pack).toHaveLength(9);
       expect(pack.map((r) => r.slug)).toEqual([
         'daily-management',
         'trial-balance-period',
@@ -26,6 +32,7 @@ describe('hotel reports negative paths (HOT-RPT)', () => {
         'annual-occupancy',
         'folio-transactions',
         'department-revenues',
+        'police-list',
       ]);
     });
   });
@@ -67,6 +74,24 @@ describe('hotel reports negative paths (HOT-RPT)', () => {
       if (!result.ok) expect(result.message).toMatch(/no enabled members/);
     });
 
+    it('adds the police list to a saved eight-file pack', () => {
+      const legacy = [
+        'department-revenues',
+        'daily-management',
+        'trial-balance-period',
+        'cash-report',
+        'monthly-daily-analysis',
+        'in-house',
+        'annual-occupancy',
+        'folio-transactions',
+      ];
+      const upgraded = upgradeLegacyNightAuditPack(legacy);
+      expect(upgraded.changed).toBe(true);
+      expect(upgraded.slugs).toEqual([...legacy, 'police-list']);
+      expect(upgradeLegacyNightAuditPack(upgraded.slugs).changed).toBe(false);
+      expect(upgradeLegacyNightAuditPack([...legacy, 'cash-report']).changed).toBe(false);
+    });
+
     it('rejects unknown pack slug', () => {
       const result = validatePackSlugs(['daily-management', 'ghost-report']);
       expect(result.ok).toBe(false);
@@ -83,7 +108,7 @@ describe('hotel reports negative paths (HOT-RPT)', () => {
       expect(href.split('?').length).toBe(2);
     });
 
-    it('accepts Nafta default eight', () => {
+    it('accepts the Nafta default pack', () => {
       expect(validatePackSlugs(getPackDefaults().map((r) => r.slug)).ok).toBe(true);
     });
   });

@@ -11,6 +11,18 @@ import {
   dispatchFolioChargeVoided,
   dispatchFolioPaymentReceived,
 } from '@/lib/integration/event-dispatcher';
+import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+
+const ROOM_REVENUE_CODES = new Set(['ROOM', 'ACCOM', 'LODGING', 'STAY']);
+
+function chargeDescriptionForPost(code: string, description: string, businessDate: Date): string {
+  const trimmed = description.trim();
+  if (!ROOM_REVENUE_CODES.has(code.trim().toUpperCase())) return trimmed;
+  if (trimmed.includes('(early CO remaining)')) return trimmed;
+  if (parseRoomChargeNote(trimmed)) return trimmed;
+  return roomChargeNote('manual-room', hotelDateKey(businessDate));
+}
 
 function fireAndForgetDispatch(promise: Promise<unknown>) {
   promise.catch((err) => console.error('Outbound dispatch failed', err));
@@ -147,6 +159,9 @@ export async function postCharge(input: {
 
   if (!folio) throw new Error('Open folio missing after ensure');
 
+  const businessDate = input.businessDate ?? new Date();
+  const description = chargeDescriptionForPost(revenueCode.code, input.description, businessDate);
+
   const charge = await prisma.folioCharge.create({
     data: {
       folioId: folio.id,
@@ -155,8 +170,8 @@ export async function postCharge(input: {
       amount: toDecimal(input.amount),
       qty: input.qty ?? 1,
       sku: input.sku?.trim() || null,
-      description: input.description,
-      businessDate: input.businessDate ?? new Date(),
+      description,
+      businessDate,
       externalRef: input.externalRef,
       invoiceRef: input.invoiceRef,
     },
@@ -182,7 +197,7 @@ export async function postCharge(input: {
         amount: toDecimal(-input.amount),
         qty: input.qty ?? 1,
         sku: input.sku?.trim() || null,
-        description: `${input.description} (house use)`,
+        description: `${description} (house use)`,
         businessDate: input.businessDate ?? new Date(),
         externalRef: `house-use:${charge.id}`,
       },
@@ -200,6 +215,7 @@ export async function postPayment(input: {
   registerRef?: string;
   bankReference?: string;
   bankTerminalId?: string;
+  createdByUserId?: string;
   kind?: 'PAYMENT' | 'REFUND';
   refundOfPaymentId?: string;
   refundReason?: string;
@@ -225,6 +241,17 @@ export async function postPayment(input: {
   const liveFiscal = process.env.ERA_FISCAL_LIVE === "true";
   const orgId = requestOrganizationId();
 
+  const cardTender = input.paymentMethod === 'CARD' || input.paymentMethod.startsWith('CARD_');
+  if (kind === 'PAYMENT' && cardTender) {
+    const { ensureFiscalDevices } = await import('@/lib/fiscal-device-mirror');
+    await ensureFiscalDevices(orgId);
+    const { listDevicesForSatellite } = await import('@era/satellite-kit');
+    const terminals = listDevicesForSatellite({ organizationId: orgId, kind: 'BANK_POS' });
+    if (terminals.length > 0 && !input.bankTerminalId?.trim()) {
+      throw new Error('BANK_TERMINAL_REQUIRED');
+    }
+  }
+
   if (kind === 'PAYMENT' && ['CASH', 'CARD'].includes(input.paymentMethod)) {
     const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
     try {
@@ -240,7 +267,7 @@ export async function postPayment(input: {
           registerRef: input.registerRef,
           organizationId: orgId,
           fiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
-          bankTerminalId: cashShift?.bankTerminalId ?? undefined,
+          bankTerminalId: input.bankTerminalId?.trim() || cashShift?.bankTerminalId || undefined,
           shiftFiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
           shiftBankTerminalId: cashShift?.bankTerminalId ?? undefined,
           lines: [
@@ -309,6 +336,7 @@ export async function postPayment(input: {
       registerRef: input.registerRef,
       bankReference: input.bankReference,
       bankTerminalId: input.bankTerminalId,
+      createdByUserId: input.createdByUserId ?? null,
       businessDate: await getCurrentBusinessDate(),
       fiscalReceiptId,
       fiscalQrPayload,
@@ -428,6 +456,7 @@ export async function voidFolioPayment(input: { paymentId: string; reason: strin
     where: { id: payment.id },
     data: { voidedAt: new Date(), voidReason: reason },
   });
+  await prisma.folioPaymentAllocation.deleteMany({ where: { paymentId: payment.id } });
   await recalcReservationTotal(payment.folio.reservationId);
   return updated;
 }
@@ -454,6 +483,43 @@ export async function listVoidedFolioPayments() {
       },
     },
   });
+}
+
+export async function listGuestDebtJournal() {
+  const rows = await prisma.guestDebtEntry.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 300,
+  });
+  const guestIds = [...new Set(rows.map((row) => row.guestId))];
+  const reservationIds = [...new Set(rows.map((row) => row.reservationId))];
+  const userIds = [...new Set(rows.map((row) => row.createdByUserId).filter((id): id is string => Boolean(id)))];
+  const [guests, reservations, users] = await Promise.all([
+    guestIds.length
+      ? prisma.guest.findMany({ where: { id: { in: guestIds } }, select: { id: true, fullName: true } })
+      : [],
+    reservationIds.length
+      ? prisma.reservation.findMany({
+          where: { id: { in: reservationIds } },
+          select: { id: true, room: { select: { roomNumber: true } } },
+        })
+      : [],
+    userIds.length
+      ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, fullName: true } })
+      : [],
+  ]);
+  const guestName = new Map(guests.map((guest) => [guest.id, guest.fullName]));
+  const roomNumber = new Map(reservations.map((stay) => [stay.id, stay.room?.roomNumber ?? null]));
+  const actor = new Map(users.map((user) => [user.id, user.fullName]));
+  return rows.map((row) => ({
+    id: row.id,
+    createdAt: row.createdAt,
+    amount: row.amount,
+    note: row.note,
+    reservationId: row.reservationId,
+    guestName: guestName.get(row.guestId) ?? null,
+    roomNumber: roomNumber.get(row.reservationId) ?? null,
+    actor: row.createdByUserId ? actor.get(row.createdByUserId) ?? null : null,
+  }));
 }
 
 async function recalcReservationTotal(reservationId: string) {
@@ -554,7 +620,9 @@ export async function postDiscount(input: {
   });
 }
 
-export async function voidCharge(chargeId: string) {
+export async function voidCharge(chargeId: string, reason?: string) {
+  const voidReason = reason?.trim() ?? '';
+  if (!voidReason) throw new Error('VOID_REASON_REQUIRED');
   const charge = await prisma.folioCharge.findUnique({
     where: { id: chargeId },
     include: {
@@ -634,7 +702,7 @@ export async function voidCharge(chargeId: string) {
           amount: row.amount,
           qty: -row.qty,
           sku: row.sku,
-          description: `Void ${row.description}`,
+          description: `Void ${row.description} — ${voidReason}`,
           businessDate: openDate,
           externalRef: `void-${row.id}`,
         },
@@ -682,7 +750,7 @@ export async function listFolios(reservationId?: string) {
   return prisma.folio.findMany({
     where: reservationId ? { reservationId } : undefined,
     include: {
-      charges: { include: { revenueCode: true, department: true } },
+      charges: { include: { revenueCode: true, department: true, paymentAllocations: true } },
       payments: true,
       fiscalDocuments: true,
       reservation: { include: { guest: true, room: true } },

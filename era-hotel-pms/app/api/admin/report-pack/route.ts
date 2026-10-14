@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { REPORT_CATALOG } from '@/lib/reports/catalog';
+import { REPORT_CATALOG, upgradeLegacyNightAuditPack } from '@/lib/reports/catalog';
 
 const DEFAULT_NAFTA_SLUGS = [
   'daily-management',
@@ -16,6 +16,7 @@ const DEFAULT_NAFTA_SLUGS = [
   'annual-occupancy',
   'folio-transactions',
   'department-revenues',
+  'police-list',
 ] as const;
 
 function allowedSlugsSet(): Set<string> {
@@ -55,9 +56,20 @@ export async function GET() {
     const allowed = allowedSlugsSet();
 
     const rawEnabled = typeof pack?.enabled === 'boolean' ? (pack.enabled as boolean) : true;
-    const rawSlugs = Array.isArray(pack?.slugs) ? (pack.slugs as string[]) : [...DEFAULT_NAFTA_SLUGS];
+    const storedSlugs = Array.isArray(pack?.slugs) ? (pack.slugs as string[]) : [...DEFAULT_NAFTA_SLUGS];
+    const upgraded = upgradeLegacyNightAuditPack(storedSlugs);
+    if (upgraded.changed && pack?.enabled !== false) {
+      const nextPolicy = {
+        ...(policy as Record<string, unknown>),
+        nightAuditReportPack: { enabled: true, slugs: upgraded.slugs },
+      };
+      await prisma.hotelProfile.update({
+        where: { id: profile.id },
+        data: { policyJson: JSON.stringify(nextPolicy) },
+      });
+    }
 
-    const nextSlugs = uniquePreserveOrder(rawSlugs);
+    const nextSlugs = uniquePreserveOrder(upgraded.slugs);
     const unknown = nextSlugs.find((s) => !allowed.has(s));
     if (unknown) {
       return jsonOk(serialize({ enabled: true, slugs: [...DEFAULT_NAFTA_SLUGS], reportIds: [...DEFAULT_NAFTA_SLUGS] }));

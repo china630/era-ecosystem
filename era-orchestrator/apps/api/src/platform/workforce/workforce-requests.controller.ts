@@ -7,7 +7,18 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { IsNumber, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
+import {
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+  ValidateIf,
+} from "class-validator";
+import { WorkforceAbsenceKind } from "@era365/database";
 import { RequirePermissions } from "../../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../../auth/cp-permissions";
@@ -43,6 +54,53 @@ class HrProxyAdvanceDto {
 
   @IsNumber()
   amountAzn!: number;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+class OnBehalfDto {
+  @IsIn(["FULL_DAY", "HOURLY", "ADVANCE"])
+  kind!: "FULL_DAY" | "HOURLY" | "ADVANCE";
+
+  @IsUUID()
+  employmentId!: string;
+
+  @IsOptional()
+  @IsEnum(WorkforceAbsenceKind)
+  absenceKind?: WorkforceAbsenceKind;
+
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  workDate?: string;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  startMinute?: number;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  endMinute?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  paid?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsNumber()
+  amountAzn?: number;
 
   @IsOptional()
   @IsString()
@@ -108,7 +166,26 @@ export class WorkforceRequestsController {
       );
     }
     const history = await this.approval.recent(organizationId);
-    return { ...queue, persons, approval, history };
+    const submitters = await this.self.labelSubmitters(
+      organizationId,
+      [
+        ...queue.absences.map((row) => row.submittedByUserId),
+        ...queue.hourly.map((row) => row.submittedByUserId),
+        ...queue.advances.map((row) => row.submittedByUserId),
+      ].filter((id): id is string => Boolean(id)),
+    );
+    return { ...queue, persons, approval, history, submitters };
+  }
+
+  @Post("requests/on-behalf")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_READ)
+  @ApiOperation({ summary: "Unit manager files a request for an employee in their unit" })
+  onBehalf(
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: OnBehalfDto,
+  ) {
+    return this.self.submitOnBehalf(organizationId, user.sub, dto);
   }
 
   @Post("requests/advance")

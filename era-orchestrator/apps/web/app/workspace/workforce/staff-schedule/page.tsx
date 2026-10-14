@@ -51,6 +51,9 @@ type SnapshotRow = {
   totalSlots: number;
   occupied: number;
   vacant: number;
+  tariffAzn?: number | null;
+  weeklyHours?: number | null;
+  defaultWorkRegime?: string | null;
 };
 
 export default function StaffSchedulePage() {
@@ -347,6 +350,9 @@ export default function StaffSchedulePage() {
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrgUnit")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOccupied")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colVacant")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTariff")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRegime")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colWeeklyHours")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -354,7 +360,7 @@ export default function StaffSchedulePage() {
                     <tr className={DATA_TABLE_TR_CLASS}>
                       <td
                         className={`${DATA_TABLE_TD_CLASS} py-8 text-center text-[#7F8C8D]`}
-                        colSpan={4}
+                        colSpan={7}
                       >
                         {t("snapshotEmpty")}
                       </td>
@@ -368,6 +374,17 @@ export default function StaffSchedulePage() {
                         {s.occupied}/{s.totalSlots}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{s.vacant}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {s.tariffAzn != null ? String(s.tariffAzn) : "—"}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {s.defaultWorkRegime
+                          ? t(`regime.${s.defaultWorkRegime}` as "regime.FIVE_DAY")
+                          : "—"}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {s.weeklyHours != null ? String(s.weeklyHours) : "—"}
+                      </td>
                     </tr>
                     ))
                   )}

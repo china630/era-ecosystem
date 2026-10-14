@@ -22,6 +22,11 @@ import {
   isWoProcedureCode,
 } from "@/lib/import/seed-catalog-match";
 import { parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import {
+  formatLateralityLabel,
+  formatPhysioFieldsPrint,
+  type PhysioOrderFields,
+} from "@/domain/physio/physio-order-fields";
 
 export class PackageAssignError extends Error {
   constructor(
@@ -324,34 +329,79 @@ function newBatchId(): string {
   return `batch_${randomBytes(8).toString("hex")}`;
 }
 
-export function paramsLinesFromOrder(o: {
-  note?: string | null;
-  bodyPart?: string | null;
-  siteApplyMode?: string | null;
-  physioFields?: unknown;
-  sites?: Array<{
-    siteId?: string;
-    laterality?: string | null;
-    site?: { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null } | null;
-  }>;
-}): string[] {
+function uiLang(locale: string | undefined): "en" | "az" | "ru" {
+  if (locale?.startsWith("ru")) return "ru";
+  if (locale?.startsWith("en")) return "en";
+  return "az";
+}
+
+function bilingualTitle(
+  lang: "en" | "az" | "ru",
+  row: { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null; code?: string | null },
+): string {
+  const en = row.titleEn?.trim() ?? "";
+  const local =
+    (lang === "ru" ? row.titleRu : lang === "en" ? row.titleEn : row.titleAz)?.trim() ||
+    en ||
+    row.code?.trim() ||
+    "";
+  if (local && en && local !== en) return `${local} (${en})`;
+  return local;
+}
+
+const APPLY_MODE_LABEL: Record<"en" | "az" | "ru", Record<string, string>> = {
+  en: { TURN: "in turn", TOGETHER: "together" },
+  az: { TURN: "növbəli", TOGETHER: "eyni vaxtda" },
+  ru: { TURN: "по очереди", TOGETHER: "одновременно" },
+};
+
+export function paramsLinesFromOrder(
+  o: {
+    note?: string | null;
+    bodyPart?: string | null;
+    siteApplyMode?: string | null;
+    physioFields?: unknown;
+    sites?: Array<{
+      siteId?: string;
+      laterality?: string | null;
+      site?: { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null } | null;
+    }>;
+  },
+  opts?: {
+    locale?: string;
+    /** PhysioListItem id → titles, for deviceProgramId / substanceId. */
+    listTitles?: Map<string, { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null }>;
+  },
+): string[] {
+  const lang = uiLang(opts?.locale);
   const parts: string[] = [];
   const siteNames = (o.sites ?? [])
     .map((s) => {
-      const title = s.site?.titleEn || s.site?.titleRu || s.site?.titleAz;
+      const title = s.site ? bilingualTitle(lang, s.site) : "";
       const lat = (s as { laterality?: string | null }).laterality;
       if (!title) return null;
-      return lat ? `${title} (${lat})` : title;
+      const side = lat ? formatLateralityLabel(lang, lat === "LEFT" || lat === "RIGHT" || lat === "BOTH" ? lat : null) : "";
+      return side ? `${title}, ${side}` : title;
     })
     .filter((x): x is string => Boolean(x));
   if (siteNames.length) parts.push(siteNames.join(", "));
-  if (o.siteApplyMode) parts.push(String(o.siteApplyMode));
+  if (o.siteApplyMode) {
+    parts.push(APPLY_MODE_LABEL[lang][o.siteApplyMode] ?? String(o.siteApplyMode));
+  }
   if (o.bodyPart) parts.push(o.bodyPart);
-  if (o.physioFields && typeof o.physioFields === "object") {
-    const pf = o.physioFields as Record<string, unknown>;
-    for (const [k, v] of Object.entries(pf)) {
-      if (v != null && String(v).trim()) parts.push(`${k}: ${String(v)}`);
-    }
+  if (o.physioFields && typeof o.physioFields === "object" && !Array.isArray(o.physioFields)) {
+    const pf = { ...(o.physioFields as Record<string, unknown>) };
+    if (pf.dayBlock != null) pf.dayBlock = String(pf.dayBlock);
+    const programId = typeof pf.deviceProgramId === "string" ? pf.deviceProgramId : "";
+    const substanceId = typeof pf.substanceId === "string" ? pf.substanceId : "";
+    const program = programId ? opts?.listTitles?.get(programId) : undefined;
+    const substance = substanceId ? opts?.listTitles?.get(substanceId) : undefined;
+    parts.push(
+      ...formatPhysioFieldsPrint(lang, pf as PhysioOrderFields, {
+        program: program ? bilingualTitle(lang, program) : null,
+        substance: substance ? bilingualTitle(lang, substance) : null,
+      }),
+    );
   }
   if (o.note?.trim()) parts.push(o.note.trim());
   return parts;
@@ -359,8 +409,9 @@ export function paramsLinesFromOrder(o: {
 
 export function paramsLabelFromOrder(
   o: Parameters<typeof paramsLinesFromOrder>[0],
+  opts?: Parameters<typeof paramsLinesFromOrder>[1],
 ): string {
-  return paramsLinesFromOrder(o).join(" · ");
+  return paramsLinesFromOrder(o, opts).join(" · ");
 }
 
 /** Unique param lines from one or more "a · b" labels (right-column cards). */
@@ -704,6 +755,23 @@ export async function getPackageAssignSnapshot(
     }
   }
 
+  const listIds = new Set<string>();
+  for (const o of orders) {
+    const pf = o.physioFields;
+    if (!pf || typeof pf !== "object" || Array.isArray(pf)) continue;
+    const rec = pf as Record<string, unknown>;
+    if (typeof rec.deviceProgramId === "string") listIds.add(rec.deviceProgramId);
+    if (typeof rec.substanceId === "string") listIds.add(rec.substanceId);
+  }
+  const listTitles = new Map<string, { titleEn: string; titleRu: string; titleAz: string }>();
+  if (listIds.size > 0) {
+    const items = await prisma.physioListItem.findMany({
+      where: { id: { in: [...listIds] } },
+      select: { id: true, titleEn: true, titleRu: true, titleAz: true },
+    });
+    for (const item of items) listTitles.set(item.id, item);
+  }
+
   const batchMap = new Map<string, PackageAssignedAgg>();
   for (const o of orders) {
     const consumed = (CONSUMED as readonly string[]).includes(o.status);
@@ -717,7 +785,7 @@ export async function getPackageAssignSnapshot(
     const prev = batchMap.get(key);
     const nextLines = mergeParamLines([
       prev?.paramsLabel ?? "",
-      paramsLabelFromOrder(o),
+      paramsLabelFromOrder(o, { locale, listTitles }),
     ]);
     if (prev) {
       prev.qty += 1;
@@ -1326,6 +1394,50 @@ export async function adjustPackageAssign(
     await syncQuotaUsed(instance.id, episodeId, code);
   }
   return { cancelled: cancellable.length };
+}
+
+/**
+ * After a package version lowers a quota, cancel the latest SCHEDULED/PROPOSED
+ * sessions until planned + realized fits the new total. CHECKED_IN and COMPLETED stay.
+ */
+export async function cancelExcessPlannedSessions(instanceId: string): Promise<number> {
+  const instance = await prisma.programInstance.findUnique({
+    where: { id: instanceId },
+    select: { episodeId: true, procedureLines: { select: { procedureCode: true, quotaTotal: true } } },
+  });
+  if (!instance) return 0;
+  let cancelled = 0;
+  for (const line of instance.procedureLines) {
+    const codeWhere = {
+      clinicalEpisodeId: instance.episodeId,
+      inPackage: true,
+      OR: [
+        { packageQuotaCode: line.procedureCode },
+        { packageQuotaCode: null, procedureCode: line.procedureCode },
+      ],
+    };
+    const locked = await prisma.procedureOrder.count({
+      where: { ...codeWhere, status: { in: ["COMPLETED", "CHECKED_IN"] } },
+    });
+    const keepPlanned = Math.max(0, line.quotaTotal - locked);
+    const planned = await prisma.procedureOrder.findMany({
+      where: { ...codeWhere, status: { in: ["SCHEDULED", "PROPOSED"] } },
+      orderBy: { scheduledAt: "desc" },
+      select: { id: true },
+    });
+    const drop = planned.slice(0, Math.max(0, planned.length - keepPlanned));
+    if (drop.length === 0) continue;
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: drop.map((row) => row.id) } },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason: "package_quota_shrunk",
+      },
+    });
+    cancelled += drop.length;
+  }
+  return cancelled;
 }
 
 /**

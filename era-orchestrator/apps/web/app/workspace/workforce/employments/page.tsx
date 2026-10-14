@@ -398,6 +398,12 @@ export default function WorkforceEmploymentsPage() {
     "identity" | "documents" | "contacts" | "job" | "access" | "fitness"
   >("identity");
   const [cardContractEnd, setCardContractEnd] = useState("");
+  const [cardPay, setCardPay] = useState<{
+    gross: number | null;
+    net: string | null;
+    netYear: number | null;
+    netMonth: number | null;
+  } | null>(null);
   const [cardRegime, setCardRegime] = useState("");
   const [idCard, setIdCard] = useState({
     series: "",
@@ -1257,6 +1263,7 @@ export default function WorkforceEmploymentsPage() {
     setCabinetMsg(null);
     setCardTab("identity");
     setCardContractEnd(emp.contractEndDate ? String(emp.contractEndDate).slice(0, 10) : "");
+    setCardPay(null);
     setCardRegime(emp.workRegime ?? "");
     setDocsLoaded(false);
     setIdCard({ series: "", number: "", issuedBy: "", issuedOn: "", expiresOn: "" });
@@ -1273,14 +1280,24 @@ export default function WorkforceEmploymentsPage() {
     setCardKin([]);
     setCardFinance(Boolean(emp.platformUserId));
 
-    const [opsRes, hrRes, docsRes, ordersRes, fitnessRes] = await Promise.all([
+    const [opsRes, hrRes, docsRes, ordersRes, fitnessRes, payRes] = await Promise.all([
       mdmWorkforceFetch(`${emp.globalPersonId}/ops-profile`),
       mdmWorkforceFetch(`${emp.globalPersonId}/hr-profile`),
       mdmWorkforceFetch(`${emp.globalPersonId}/identity-documents`),
       workforceFetch(`personnel-orders?employmentId=${encodeURIComponent(emp.id)}`),
       workforceFetch(`employments/${emp.id}/fitness`),
+      workforceFetch(`employments/${emp.id}/pay-snapshot`),
     ]);
     setBusy(false);
+    if (payRes.ok) {
+      const pay = (await payRes.json()) as {
+        gross: number | null;
+        net: string | null;
+        netYear: number | null;
+        netMonth: number | null;
+      };
+      setCardPay(pay);
+    }
     if (docsRes.ok) {
       setDocsLoaded(true);
       const body = (await docsRes.json()) as {
@@ -2800,6 +2817,32 @@ export default function WorkforceEmploymentsPage() {
                 placeholder={t("openEnded")}
                 fluid
               />
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("grossSalary")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={cardPay?.gross != null ? String(cardPay.gross) : ""}
+                  placeholder={t("payEmpty")}
+                  readOnly
+                />
+              </label>
+              <label className="block min-w-0 text-[13px] font-medium text-[#34495E]">
+                {t("netPayslip")}
+                <input
+                  className={FIELD_INPUT_CLASS}
+                  value={
+                    cardPay?.net
+                      ? `${cardPay.net}${
+                          cardPay.netYear && cardPay.netMonth
+                            ? ` (${cardPay.netYear}-${String(cardPay.netMonth).padStart(2, "0")})`
+                            : ""
+                        }`
+                      : ""
+                  }
+                  placeholder={t("payEmpty")}
+                  readOnly
+                />
+              </label>
               <CatalogField
                 kind="CLOSED_SMALL"
                 className="min-w-0"
@@ -2813,6 +2856,7 @@ export default function WorkforceEmploymentsPage() {
                 emptyLabel={t("regimeEmpty")}
               />
             </div>
+            <p className="text-xs text-[#7F8C8D]">{t("regimeHint")}</p>
             {actionEmp?.status === "ACTIVE" ? (
               <button
                 type="button"

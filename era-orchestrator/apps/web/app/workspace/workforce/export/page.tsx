@@ -186,6 +186,19 @@ export default function WorkforceExportImportPage() {
             >
               {busy === "roster" ? t("downloading") : t("downloadRoster")}
             </button>
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} mt-3`}
+              disabled={busy === "cadre"}
+              onClick={() =>
+                void run("cadre", () =>
+                  downloadExport("export/cadre", "workforce-cadre.xlsx"),
+                )
+              }
+            >
+              {busy === "cadre" ? t("downloading") : t("downloadCadre")}
+            </button>
+            <p className="mt-2 text-xs text-[#7F8C8D]">{t("cadreHint")}</p>
           </div>
           <div className={`${CARD_CONTAINER_CLASS} p-4`}>
             <h3 className="text-sm font-semibold text-[#34495E]">{t("absencesTitle")}</h3>

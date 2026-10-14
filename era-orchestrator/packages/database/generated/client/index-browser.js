@@ -330,6 +330,10 @@ exports.Prisma.WorkforcePositionScalarFieldEnum = {
   name: 'name',
   code: 'code',
   totalSlots: 'totalSlots',
+  leadership: 'leadership',
+  tariffAzn: 'tariffAzn',
+  defaultWorkRegime: 'defaultWorkRegime',
+  weeklyHours: 'weeklyHours',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -583,6 +587,8 @@ exports.Prisma.WorkforceAdvanceRequestScalarFieldEnum = {
   rejectionReason: 'rejectionReason',
   currentStepOrder: 'currentStepOrder',
   financeQueuedAt: 'financeQueuedAt',
+  exceedsLimit: 'exceedsLimit',
+  plannedPayDate: 'plannedPayDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -893,6 +899,9 @@ exports.Prisma.WorkforceOrgSettingsScalarFieldEnum = {
   advanceMaxAmount: 'advanceMaxAmount',
   advanceMaxOpen: 'advanceMaxOpen',
   advanceAllowHrProxy: 'advanceAllowHrProxy',
+  advancePayDay: 'advancePayDay',
+  allowEmployeeSubmit: 'allowEmployeeSubmit',
+  allowManagerSubmit: 'allowManagerSubmit',
   updatedAt: 'updatedAt'
 };
 
@@ -909,6 +918,8 @@ exports.Prisma.WorkforceApprovalStepScalarFieldEnum = {
   routeId: 'routeId',
   stepOrder: 'stepOrder',
   kind: 'kind',
+  appliesTo: 'appliesTo',
+  canExceedAdvanceCap: 'canExceedAdvanceCap',
   orgUnitId: 'orgUnitId',
   positionId: 'positionId'
 };
@@ -1513,6 +1524,13 @@ exports.OrgCommercialLinkMode = exports.$Enums.OrgCommercialLinkMode = {
   SUBTREE: 'SUBTREE'
 };
 
+exports.WorkforceWorkRegime = exports.$Enums.WorkforceWorkRegime = {
+  FIVE_DAY: 'FIVE_DAY',
+  SIX_DAY: 'SIX_DAY',
+  MEDICAL: 'MEDICAL',
+  CUSTOM: 'CUSTOM'
+};
+
 exports.RoleBindingSource = exports.$Enums.RoleBindingSource = {
   TEMPLATE: 'TEMPLATE',
   MANUAL_GRANT: 'MANUAL_GRANT',
@@ -1533,13 +1551,6 @@ exports.WorkforceProvisionState = exports.$Enums.WorkforceProvisionState = {
 exports.WorkforceEmploymentStatus = exports.$Enums.WorkforceEmploymentStatus = {
   ACTIVE: 'ACTIVE',
   TERMINATED: 'TERMINATED'
-};
-
-exports.WorkforceWorkRegime = exports.$Enums.WorkforceWorkRegime = {
-  FIVE_DAY: 'FIVE_DAY',
-  SIX_DAY: 'SIX_DAY',
-  MEDICAL: 'MEDICAL',
-  CUSTOM: 'CUSTOM'
 };
 
 exports.WorkforceAbsenceKind = exports.$Enums.WorkforceAbsenceKind = {
@@ -1710,6 +1721,12 @@ exports.WorkforceApprovalStepKind = exports.$Enums.WorkforceApprovalStepKind = {
   REQUESTER_MANAGER: 'REQUESTER_MANAGER',
   ORG_UNIT_HEAD: 'ORG_UNIT_HEAD',
   POSITION_IN_UNIT: 'POSITION_IN_UNIT'
+};
+
+exports.WorkforceApprovalStepAudience = exports.$Enums.WorkforceApprovalStepAudience = {
+  ALWAYS: 'ALWAYS',
+  LEADERSHIP: 'LEADERSHIP',
+  ORDINARY: 'ORDINARY'
 };
 
 exports.WorkforceApprovalOutcome = exports.$Enums.WorkforceApprovalOutcome = {

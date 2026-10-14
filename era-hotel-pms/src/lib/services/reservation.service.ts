@@ -124,7 +124,7 @@ export async function createReservation(input: {
   groupId?: string;
   checkInDate: Date;
   checkOutDate: Date;
-  paymentMethod: PaymentMethod;
+  paymentMethod?: PaymentMethod | null;
   adults?: number;
   children11_6?: number;
   children5_2?: number;
@@ -458,7 +458,7 @@ export async function createReservation(input: {
         groupId: input.groupId,
         checkInDate: input.checkInDate,
         checkOutDate: input.checkOutDate,
-        paymentMethod: input.paymentMethod,
+        paymentMethod: input.paymentMethod ?? null,
         totalAmount,
         /** Variant A: one Reservation = one room stay */
         roomCount: 1,

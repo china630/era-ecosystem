@@ -10,6 +10,7 @@ export async function refundFolioPayment(input: {
   paymentId: string;
   amount?: number;
   reason?: string;
+  createdByUserId?: string;
 }) {
   const original = await prisma.folioPayment.findUnique({
     where: { id: input.paymentId },
@@ -46,7 +47,12 @@ export async function refundFolioPayment(input: {
     bankTerminalId: original.bankTerminalId ?? undefined,
     kind: 'REFUND',
     refundOfPaymentId: original.id,
-    refundReason: input.reason ?? 'Payment refund',
+    createdByUserId: input.createdByUserId,
+    refundReason: (() => {
+      const reason = input.reason?.trim() ?? '';
+      if (!reason) throw new Error('REFUND_REASON_REQUIRED');
+      return reason;
+    })(),
     registerRef: `refund:${original.id}`,
   });
 }

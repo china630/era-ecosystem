@@ -1159,8 +1159,12 @@
     "colFin": "FIN",
     "colContractEnd": "Конец договора",
     "colRegime": "Режим",
+    "grossSalary": "Оклад по договору (gross)",
+    "netPayslip": "Последний проведённый расчёт (net)",
+    "payEmpty": "В финансах ещё нет",
     "openEnded": "Бессрочный",
     "regimeEmpty": "Не задан",
+    "regimeHint": "Пусто — берётся режим должности. Заполняйте, только если у этого человека другой.",
     "colOrgUnit": "Подразделение",
     "colPosition": "Должность",
     "colHireDate": "Дата",
@@ -1433,6 +1437,8 @@
     "timesheetTitle": "Утверждённый табель",
     "timesheetHint": "Утверждённые часы (стройка / CP)",
     "downloadRoster": "Скачать штат (CSV)",
+    "downloadCadre": "Скачать кадровый Excel",
+    "cadreHint": "Файл только на выгрузку: ФИО, дата рождения, FIN, серия и номер удостоверения, должность, отдел, приём, конец договора, gross, net. Каждая выгрузка пишется в журнал доступа.",
     "downloadAbsences": "Скачать отсутствия (CSV)",
     "downloadTimesheet": "Скачать табель (CSV)",
     "downloading": "Скачивание…",
@@ -1530,6 +1536,18 @@
     "fieldName": "Название должности",
     "fieldCode": "Код",
     "fieldSlots": "Ставок",
+    "fieldLeadership": "Руководящая должность",
+    "fieldTariff": "Месячный тариф (AZN)",
+    "fieldRegime": "Режим по умолчанию",
+    "fieldWeeklyHours": "Часов в неделю",
+    "regimeEmpty": "Не задан",
+    "colTariff": "Тариф",
+    "regime": {
+      "FIVE_DAY": "5-дневка",
+      "SIX_DAY": "6-дневка",
+      "MEDICAL": "Медицинский",
+      "CUSTOM": "Особый"
+    },
     "create": "Создать должность",
     "addPosition": "Добавить должность",
     "createTitle": "Новая должность",
@@ -1577,6 +1595,9 @@
     "colKind": "Тип",
     "colPeriod": "Период",
     "colDays": "Дни",
+    "colWorkYear": "Рабочий год",
+    "colBalance": "Остаток дней",
+    "workYearValue": "{from} — {to}",
     "colStep": "Шаг",
     "correct": "Исправить",
     "colStatus": "Статус",
@@ -1737,6 +1758,15 @@
     "colOrgUnit": "Подразделение",
     "colOccupied": "Занято",
     "colVacant": "Вакантно",
+    "colTariff": "Тариф (AZN)",
+    "colRegime": "Режим",
+    "colWeeklyHours": "Часов в неделю",
+    "regime": {
+      "FIVE_DAY": "5-дневка",
+      "SIX_DAY": "6-дневка",
+      "MEDICAL": "Медицинский",
+      "CUSTOM": "Особый"
+    },
     "showSlots": "Штат",
     "hideSlots": "Скрыть",
     "loading": "Загрузка…",
@@ -2253,7 +2283,25 @@
     "proxyEmployee": "Сотрудник",
     "proxyAmount": "Сумма (AZN)",
     "proxyNote": "Примечание",
-    "proxySubmit": "Подать аванс"
+    "proxySubmit": "Подать аванс",
+    "submittedByHr": "Ввёл HR",
+    "submittedByEmployee": "Сотрудник",
+    "managerKind": "Заявка",
+    "managerAbsence": "Вид отсутствия",
+    "managerDate": "Дата",
+    "managerFrom": "С минуты",
+    "managerTo": "По минуту",
+    "onBehalfKind": {
+      "FULL_DAY": "Полный день",
+      "HOURLY": "Почасовая",
+      "ADVANCE": "Аванс"
+    },
+    "exceedsLimit": "Выше процентного лимита",
+    "plannedPay": "Плановая выплата {date}",
+    "managerTitle": "Отпуск за сотрудника моего подразделения",
+    "managerStart": "Начало",
+    "managerEnd": "Конец",
+    "managerSubmit": "Подать отпуск"
   },
   "workforceHrSettings": {
     "title": "Кадровые настройки",
@@ -2269,6 +2317,11 @@
     "advanceAmount": "Максимальная сумма (AZN)",
     "advanceOpen": "Максимум открытых авансов",
     "advanceProxy": "HR может подать аванс за сотрудника",
+    "advancePayDay": "День выплаты аванса",
+    "allowEmployeeSubmit": "Сотрудник может подать заявку сам",
+    "allowManagerSubmit": "Руководитель подразделения может подать заявку за своих",
+    "audience": "На кого действует шаг",
+    "canExceed": "Этот шаг может согласовать аванс выше процента",
     "saveSettings": "Сохранить",
     "stepKind": "Шаг",
     "orgUnit": "Подразделение",
@@ -2287,6 +2340,11 @@
       "REQUESTER_MANAGER": "Руководитель заявителя",
       "ORG_UNIT_HEAD": "Руководитель подразделения",
       "POSITION_IN_UNIT": "Должность в подразделении"
+    },
+    "audienceKind": {
+      "ALWAYS": "Всегда",
+      "LEADERSHIP": "Только руководящие должности",
+      "ORDINARY": "Только рядовые должности"
     }
   }
 }

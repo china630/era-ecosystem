@@ -1,8 +1,11 @@
 import { Type } from "class-transformer";
 import {
+  Allow,
   IsArray,
+  IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
@@ -70,4 +73,33 @@ export class RuntimeConfigBodyDto {
   @IsString()
   @MaxLength(200)
   updatedBy?: string;
+
+  /** Hotel/clinic sync fields. Finance stores the bind and ignores the hardware list. */
+  @IsOptional()
+  @Allow()
+  fiscalDevices?: unknown;
+
+  @IsOptional()
+  @Allow()
+  elektrawebBridge?: unknown;
+
+  @IsOptional()
+  @Allow()
+  clinicCutover?: unknown;
+
+  @IsOptional()
+  @Allow()
+  loginHostnames?: unknown;
+
+  @IsOptional()
+  @IsInt()
+  publicOrgNumber?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  revokePublicOrgNumber?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  vendorBridgesEnabled?: boolean;
 }

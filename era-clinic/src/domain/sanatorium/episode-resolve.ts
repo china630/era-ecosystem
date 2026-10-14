@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nightsBetween } from "@/lib/program-quota";
 
 export type EpisodeListItem = {
   id: string;
@@ -9,6 +10,9 @@ export type EpisodeListItem = {
   reservationId: string | null;
   openedAt: string;
   closedAt: string | null;
+  stayStartsOn: string | null;
+  stayEndsOn: string | null;
+  stayNights: number | null;
   anamnesisText: string | null;
   anamnesisUpdatedAt: string | null;
   anamnesisByPractitioner: { fullName: string; specialty: string | null } | null;
@@ -53,6 +57,7 @@ export async function listPatientEpisodes(
       anamnesisText: true,
       anamnesisUpdatedAt: true,
       anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
+      programInstance: { select: { startsOn: true, endsOn: true } },
     },
   });
   return rows.map((r) => ({
@@ -64,6 +69,11 @@ export async function listPatientEpisodes(
     reservationId: r.reservationId,
     openedAt: r.openedAt.toISOString(),
     closedAt: r.closedAt?.toISOString() ?? null,
+    stayStartsOn: r.programInstance?.startsOn.toISOString() ?? null,
+    stayEndsOn: r.programInstance?.endsOn.toISOString() ?? null,
+    stayNights: r.programInstance
+      ? nightsBetween(r.programInstance.startsOn, r.programInstance.endsOn)
+      : null,
     anamnesisText: r.anamnesisText,
     anamnesisUpdatedAt: r.anamnesisUpdatedAt?.toISOString() ?? null,
     anamnesisByPractitioner: r.anamnesisByPractitioner,

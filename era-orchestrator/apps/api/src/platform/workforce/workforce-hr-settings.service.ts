@@ -2,15 +2,18 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@era365/database";
 import {
   WorkforceApprovalRequestKind,
+  WorkforceApprovalStepAudience,
   WorkforceApprovalStepKind,
   WorkforceSelfRequestStatus,
 } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { FinanceWorkforceMirrorClient } from "./finance-workforce-mirror.client";
 import { WorkforceScopeService } from "./workforce-scope.service";
+import { stepApplies } from "./workforce-approval.resolve";
 
 const KINDS = new Set<string>(Object.values(WorkforceApprovalRequestKind));
 const STEP_KINDS = new Set<string>(Object.values(WorkforceApprovalStepKind));
+const AUDIENCES = new Set(["ALWAYS", "LEADERSHIP", "ORDINARY"]);
 
 export type HrSettingsInput = {
   fiveDayWeeklyHours?: number | null;
@@ -21,12 +24,17 @@ export type HrSettingsInput = {
   advanceMaxAmount?: number | null;
   advanceMaxOpen?: number | null;
   advanceAllowHrProxy?: boolean;
+  advancePayDay?: number | null;
+  allowEmployeeSubmit?: boolean;
+  allowManagerSubmit?: boolean;
 };
 
 export type RouteStepInput = {
   kind: string;
   orgUnitId?: string | null;
   positionId?: string | null;
+  appliesTo?: string | null;
+  canExceedAdvanceCap?: boolean;
 };
 
 function dec(value: number | null | undefined): Prisma.Decimal | null {
@@ -62,6 +70,9 @@ export class WorkforceHrSettingsService {
             advanceMaxAmount: num(settings.advanceMaxAmount),
             advanceMaxOpen: settings.advanceMaxOpen,
             advanceAllowHrProxy: settings.advanceAllowHrProxy,
+            advancePayDay: settings.advancePayDay,
+            allowEmployeeSubmit: settings.allowEmployeeSubmit,
+            allowManagerSubmit: settings.allowManagerSubmit,
           }
         : emptySettings(),
       routes: routes.map((route) => ({
@@ -70,6 +81,8 @@ export class WorkforceHrSettingsService {
           kind: step.kind,
           orgUnitId: step.orgUnitId,
           positionId: step.positionId,
+          appliesTo: step.appliesTo,
+          canExceedAdvanceCap: step.canExceedAdvanceCap,
         })),
       })),
     };
@@ -88,6 +101,14 @@ export class WorkforceHrSettingsService {
           ? Math.floor(input.advanceMaxOpen)
           : null,
       advanceAllowHrProxy: input.advanceAllowHrProxy === true,
+      advancePayDay:
+        input.advancePayDay != null &&
+        input.advancePayDay >= 1 &&
+        input.advancePayDay <= 31
+          ? Math.floor(input.advancePayDay)
+          : null,
+      allowEmployeeSubmit: input.allowEmployeeSubmit !== false,
+      allowManagerSubmit: input.allowManagerSubmit === true,
     };
     await this.prisma.workforceOrgSettings.upsert({
       where: { organizationId },
@@ -126,9 +147,14 @@ export class WorkforceHrSettingsService {
       if (step.kind === WorkforceApprovalStepKind.POSITION_IN_UNIT && !positionId) {
         throw new BadRequestException("Position is required for this step");
       }
+      const appliesTo = AUDIENCES.has(step.appliesTo ?? "")
+        ? (step.appliesTo as "ALWAYS" | "LEADERSHIP" | "ORDINARY")
+        : "ALWAYS";
       return {
         stepOrder: index,
         kind: step.kind as WorkforceApprovalStepKind,
+        appliesTo: appliesTo as WorkforceApprovalStepAudience,
+        canExceedAdvanceCap: step.canExceedAdvanceCap === true,
         orgUnitId:
           step.kind === WorkforceApprovalStepKind.REQUESTER_MANAGER ? null : orgUnitId,
         positionId:
@@ -163,11 +189,11 @@ export class WorkforceHrSettingsService {
     organizationId: string,
     employmentId: string,
     amountAzn: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const settings = await this.prisma.workforceOrgSettings.findUnique({
       where: { organizationId },
     });
-    if (!settings) return;
+    if (!settings) return false;
     if (
       settings.advanceMaxAmount != null &&
       amountAzn > Number(settings.advanceMaxAmount)
@@ -210,12 +236,42 @@ export class WorkforceHrSettingsService {
       }
       const cap = (mirror.salary * Number(settings.advanceMaxPercent)) / 100;
       if (amountAzn > cap) {
-        throw new BadRequestException({
-          code: "ADVANCE_PERCENT_LIMIT",
-          message: "Advance amount is above the salary percent limit",
-        });
+        const allowed = await this.routeCanExceedPercent(organizationId, employmentId);
+        if (!allowed) {
+          throw new BadRequestException({
+            code: "ADVANCE_PERCENT_LIMIT",
+            message: "Advance amount is above the salary percent limit",
+          });
+        }
+        return true;
       }
     }
+    return false;
+  }
+
+  private async routeCanExceedPercent(
+    organizationId: string,
+    employmentId: string,
+  ): Promise<boolean> {
+    const [route, employment] = await Promise.all([
+      this.prisma.workforceApprovalRoute.findUnique({
+        where: {
+          organizationId_kind: {
+            organizationId,
+            kind: WorkforceApprovalRequestKind.ADVANCE,
+          },
+        },
+        include: { steps: true },
+      }),
+      this.prisma.workforceEmployment.findFirst({
+        where: { id: employmentId, organizationId },
+        select: { position: { select: { leadership: true } } },
+      }),
+    ]);
+    const leadership = employment?.position?.leadership === true;
+    return (route?.steps ?? []).some(
+      (step) => step.canExceedAdvanceCap && stepApplies(step.appliesTo, leadership),
+    );
   }
 }
 
@@ -234,5 +290,8 @@ function emptySettings() {
     advanceMaxAmount: null as number | null,
     advanceMaxOpen: null as number | null,
     advanceAllowHrProxy: false,
+    advancePayDay: null as number | null,
+    allowEmployeeSubmit: true,
+    allowManagerSubmit: false,
   };
 }

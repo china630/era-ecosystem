@@ -26,7 +26,7 @@ import {
   buildThreeYearOccLayout,
   buildThreeYearRevLayout,
 } from './occupancy';
-import { buildInHouseLayout, buildMainCurrentLayout } from './guests';
+import { buildInHouseLayout, buildMainCurrentLayout, buildPoliceListLayout } from './guests';
 import {
   buildAgencyAnalysisLayout,
   buildAgencyForecastMonthLayout,
@@ -91,6 +91,7 @@ export const REPORT_LAYOUT_BUILDERS: Record<string, Builder> = {
   'three-year-rev': buildThreeYearRevLayout,
   // Guest lists
   'in-house': buildInHouseLayout,
+  'police-list': buildPoliceListLayout,
   'main-current': buildMainCurrentLayout,
   // Analysis
   sales: buildSalesLayout,

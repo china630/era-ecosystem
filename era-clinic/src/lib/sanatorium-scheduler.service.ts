@@ -132,6 +132,8 @@ export async function recalcProgramQuotas(
     programCode?: string;
     endsOn?: Date;
     reservationId?: string | null;
+    /** Manual package apply: pin the course to the current template version of the same code. */
+    adoptCurrentVersion?: boolean;
   },
 ) {
   const instance = await prisma.programInstance.findUnique({
@@ -142,8 +144,9 @@ export async function recalcProgramQuotas(
 
   const code = opts.programCode ?? instance.programCode;
   const packageCodeChanged = Boolean(opts.programCode && opts.programCode !== instance.programCode);
+  const adoptCurrent = Boolean(opts.adoptCurrentVersion) || packageCodeChanged;
 
-  let template = packageCodeChanged
+  let template = adoptCurrent
     ? await findCurrentProgramTemplate(code)
     : await prisma.programTemplate.findUnique({
         where: { id: instance.templateId },
@@ -230,7 +233,7 @@ export async function recalcProgramQuotas(
     where: { id: instanceId },
     data: {
       programCode: code,
-      ...(packageCodeChanged
+      ...(adoptCurrent
         ? { templateId: template.id, entitlementSnapshot: snapshot }
         : instance.entitlementSnapshot
           ? {}
@@ -244,6 +247,13 @@ export async function recalcProgramQuotas(
       "@/domain/sanatorium/package-assign.service"
     );
     await cancelFutureScheduledPastEnd(instanceId, opts.endsOn);
+  }
+
+  if (opts.adoptCurrentVersion) {
+    const { cancelExcessPlannedSessions } = await import(
+      "@/domain/sanatorium/package-assign.service"
+    );
+    await cancelExcessPlannedSessions(instanceId);
   }
 
   if (packageCodeChanged) {

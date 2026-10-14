@@ -843,6 +843,9 @@
     "completeCheckupSchedule": "Checkup tamamla və planla",
     "checkupPendingHint": "Şikayət və anamnez əlavə edin (ICD/analizlər məcburi deyil), sonra proqramı planlayın. Birinci gün prosedurları həkim mərhələsindən sonra başlayır — diaqnostikanı gözləməyin.",
     "registerWalkIn": "Walk-in qeydiyyat",
+    "applyOpenPackages": "Paketləri tətbiq et",
+    "applyOpenPackagesDone": "Açıq kurslar yeniləndi: {count}",
+    "applyOpenPackagesPartial": "Yenilənmədi: {count}",
     "closeWalkIn": "Bağla",
     "closeWalkInConfirm": "Walk-in kursu bağlansın? Yalnız canlı prosedur və açıq lab olmadıqda.",
     "closeWalkInOk": "Walk-in kurs bağlandı",
@@ -1609,7 +1612,10 @@
     "packageSummaryTitle": "Paket / yerləşmə",
     "packageProgram": "Proqram",
     "packageRoom": "Otaq",
-    "packageOrigin": "Mənbə"
+    "packageOrigin": "Mənbə",
+    "stayCheckIn": "Giriş",
+    "stayCheckOut": "Çıxış",
+    "stayNights": "Gecə"
   },
   "patientTimeline": {
     "title": "Klinik vaxt xətti",

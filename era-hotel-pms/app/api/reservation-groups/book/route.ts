@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
+import { reservationPaymentMethodSchema } from '@/lib/reservation-full-patch.schema';
 import { createGroupBookingWithStays } from '@/lib/services/booking-stays.service';
 import { collectStayOperationalGaps } from '@/lib/services/stay-operational-readiness.service';
 import { getSatelliteSession } from '@/lib/auth/session';
@@ -31,7 +32,7 @@ const schema = z.object({
   guestId: z.string().uuid(),
   ratePlanId: z.string().uuid(),
   mealPlanId: z.string().uuid().optional(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']).optional(),
+  paymentMethod: reservationPaymentMethodSchema,
   sourceId: z.string().uuid().optional(),
   salesContractId: z.string().uuid().optional(),
   booker: z.string().optional(),

@@ -864,6 +864,15 @@ export const WorkforceApprovalStepKind: {
 export type WorkforceApprovalStepKind = (typeof WorkforceApprovalStepKind)[keyof typeof WorkforceApprovalStepKind]
 
 
+export const WorkforceApprovalStepAudience: {
+  ALWAYS: 'ALWAYS',
+  LEADERSHIP: 'LEADERSHIP',
+  ORDINARY: 'ORDINARY'
+};
+
+export type WorkforceApprovalStepAudience = (typeof WorkforceApprovalStepAudience)[keyof typeof WorkforceApprovalStepAudience]
+
+
 export const WorkforceApprovalOutcome: {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
@@ -1267,6 +1276,10 @@ export const WorkforceApprovalRequestKind: typeof $Enums.WorkforceApprovalReques
 export type WorkforceApprovalStepKind = $Enums.WorkforceApprovalStepKind
 
 export const WorkforceApprovalStepKind: typeof $Enums.WorkforceApprovalStepKind
+
+export type WorkforceApprovalStepAudience = $Enums.WorkforceApprovalStepAudience
+
+export const WorkforceApprovalStepAudience: typeof $Enums.WorkforceApprovalStepAudience
 
 export type WorkforceApprovalOutcome = $Enums.WorkforceApprovalOutcome
 
@@ -32547,10 +32560,14 @@ export namespace Prisma {
 
   export type WorkforcePositionAvgAggregateOutputType = {
     totalSlots: number | null
+    tariffAzn: Decimal | null
+    weeklyHours: Decimal | null
   }
 
   export type WorkforcePositionSumAggregateOutputType = {
     totalSlots: number | null
+    tariffAzn: Decimal | null
+    weeklyHours: Decimal | null
   }
 
   export type WorkforcePositionMinAggregateOutputType = {
@@ -32559,6 +32576,10 @@ export namespace Prisma {
     name: string | null
     code: string | null
     totalSlots: number | null
+    leadership: boolean | null
+    tariffAzn: Decimal | null
+    defaultWorkRegime: $Enums.WorkforceWorkRegime | null
+    weeklyHours: Decimal | null
     status: $Enums.OrgUnitStatus | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -32570,6 +32591,10 @@ export namespace Prisma {
     name: string | null
     code: string | null
     totalSlots: number | null
+    leadership: boolean | null
+    tariffAzn: Decimal | null
+    defaultWorkRegime: $Enums.WorkforceWorkRegime | null
+    weeklyHours: Decimal | null
     status: $Enums.OrgUnitStatus | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -32581,6 +32606,10 @@ export namespace Prisma {
     name: number
     code: number
     totalSlots: number
+    leadership: number
+    tariffAzn: number
+    defaultWorkRegime: number
+    weeklyHours: number
     status: number
     createdAt: number
     updatedAt: number
@@ -32590,10 +32619,14 @@ export namespace Prisma {
 
   export type WorkforcePositionAvgAggregateInputType = {
     totalSlots?: true
+    tariffAzn?: true
+    weeklyHours?: true
   }
 
   export type WorkforcePositionSumAggregateInputType = {
     totalSlots?: true
+    tariffAzn?: true
+    weeklyHours?: true
   }
 
   export type WorkforcePositionMinAggregateInputType = {
@@ -32602,6 +32635,10 @@ export namespace Prisma {
     name?: true
     code?: true
     totalSlots?: true
+    leadership?: true
+    tariffAzn?: true
+    defaultWorkRegime?: true
+    weeklyHours?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -32613,6 +32650,10 @@ export namespace Prisma {
     name?: true
     code?: true
     totalSlots?: true
+    leadership?: true
+    tariffAzn?: true
+    defaultWorkRegime?: true
+    weeklyHours?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -32624,6 +32665,10 @@ export namespace Prisma {
     name?: true
     code?: true
     totalSlots?: true
+    leadership?: true
+    tariffAzn?: true
+    defaultWorkRegime?: true
+    weeklyHours?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -32722,6 +32767,10 @@ export namespace Prisma {
     name: string
     code: string | null
     totalSlots: number
+    leadership: boolean
+    tariffAzn: Decimal | null
+    defaultWorkRegime: $Enums.WorkforceWorkRegime | null
+    weeklyHours: Decimal | null
     status: $Enums.OrgUnitStatus
     createdAt: Date
     updatedAt: Date
@@ -32752,6 +32801,10 @@ export namespace Prisma {
     name?: boolean
     code?: boolean
     totalSlots?: boolean
+    leadership?: boolean
+    tariffAzn?: boolean
+    defaultWorkRegime?: boolean
+    weeklyHours?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -32768,6 +32821,10 @@ export namespace Prisma {
     name?: boolean
     code?: boolean
     totalSlots?: boolean
+    leadership?: boolean
+    tariffAzn?: boolean
+    defaultWorkRegime?: boolean
+    weeklyHours?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -32780,6 +32837,10 @@ export namespace Prisma {
     name?: boolean
     code?: boolean
     totalSlots?: boolean
+    leadership?: boolean
+    tariffAzn?: boolean
+    defaultWorkRegime?: boolean
+    weeklyHours?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -32792,12 +32853,16 @@ export namespace Prisma {
     name?: boolean
     code?: boolean
     totalSlots?: boolean
+    leadership?: boolean
+    tariffAzn?: boolean
+    defaultWorkRegime?: boolean
+    weeklyHours?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforcePositionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orgUnitId" | "name" | "code" | "totalSlots" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePosition"]>
+  export type WorkforcePositionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orgUnitId" | "name" | "code" | "totalSlots" | "leadership" | "tariffAzn" | "defaultWorkRegime" | "weeklyHours" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePosition"]>
   export type WorkforcePositionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     employments?: boolean | WorkforcePosition$employmentsArgs<ExtArgs>
@@ -32826,6 +32891,10 @@ export namespace Prisma {
       name: string
       code: string | null
       totalSlots: number
+      leadership: boolean
+      tariffAzn: Prisma.Decimal | null
+      defaultWorkRegime: $Enums.WorkforceWorkRegime | null
+      weeklyHours: Prisma.Decimal | null
       status: $Enums.OrgUnitStatus
       createdAt: Date
       updatedAt: Date
@@ -33261,6 +33330,10 @@ export namespace Prisma {
     readonly name: FieldRef<"WorkforcePosition", 'String'>
     readonly code: FieldRef<"WorkforcePosition", 'String'>
     readonly totalSlots: FieldRef<"WorkforcePosition", 'Int'>
+    readonly leadership: FieldRef<"WorkforcePosition", 'Boolean'>
+    readonly tariffAzn: FieldRef<"WorkforcePosition", 'Decimal'>
+    readonly defaultWorkRegime: FieldRef<"WorkforcePosition", 'WorkforceWorkRegime'>
+    readonly weeklyHours: FieldRef<"WorkforcePosition", 'Decimal'>
     readonly status: FieldRef<"WorkforcePosition", 'OrgUnitStatus'>
     readonly createdAt: FieldRef<"WorkforcePosition", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforcePosition", 'DateTime'>
@@ -52335,6 +52408,8 @@ export namespace Prisma {
     rejectionReason: string | null
     currentStepOrder: number | null
     financeQueuedAt: Date | null
+    exceedsLimit: boolean | null
+    plannedPayDate: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -52353,6 +52428,8 @@ export namespace Prisma {
     rejectionReason: string | null
     currentStepOrder: number | null
     financeQueuedAt: Date | null
+    exceedsLimit: boolean | null
+    plannedPayDate: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -52371,6 +52448,8 @@ export namespace Prisma {
     rejectionReason: number
     currentStepOrder: number
     financeQueuedAt: number
+    exceedsLimit: number
+    plannedPayDate: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -52401,6 +52480,8 @@ export namespace Prisma {
     rejectionReason?: true
     currentStepOrder?: true
     financeQueuedAt?: true
+    exceedsLimit?: true
+    plannedPayDate?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -52419,6 +52500,8 @@ export namespace Prisma {
     rejectionReason?: true
     currentStepOrder?: true
     financeQueuedAt?: true
+    exceedsLimit?: true
+    plannedPayDate?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -52437,6 +52520,8 @@ export namespace Prisma {
     rejectionReason?: true
     currentStepOrder?: true
     financeQueuedAt?: true
+    exceedsLimit?: true
+    plannedPayDate?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -52542,6 +52627,8 @@ export namespace Prisma {
     rejectionReason: string | null
     currentStepOrder: number
     financeQueuedAt: Date | null
+    exceedsLimit: boolean
+    plannedPayDate: Date | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceAdvanceRequestCountAggregateOutputType | null
@@ -52579,6 +52666,8 @@ export namespace Prisma {
     rejectionReason?: boolean
     currentStepOrder?: boolean
     financeQueuedAt?: boolean
+    exceedsLimit?: boolean
+    plannedPayDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -52599,6 +52688,8 @@ export namespace Prisma {
     rejectionReason?: boolean
     currentStepOrder?: boolean
     financeQueuedAt?: boolean
+    exceedsLimit?: boolean
+    plannedPayDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -52619,6 +52710,8 @@ export namespace Prisma {
     rejectionReason?: boolean
     currentStepOrder?: boolean
     financeQueuedAt?: boolean
+    exceedsLimit?: boolean
+    plannedPayDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -52639,11 +52732,13 @@ export namespace Prisma {
     rejectionReason?: boolean
     currentStepOrder?: boolean
     financeQueuedAt?: boolean
+    exceedsLimit?: boolean
+    plannedPayDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceAdvanceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "amountAzn" | "note" | "status" | "submittedAt" | "submittedByUserId" | "decidedAt" | "decidedByUserId" | "rejectionReason" | "currentStepOrder" | "financeQueuedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAdvanceRequest"]>
+  export type WorkforceAdvanceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "employmentId" | "amountAzn" | "note" | "status" | "submittedAt" | "submittedByUserId" | "decidedAt" | "decidedByUserId" | "rejectionReason" | "currentStepOrder" | "financeQueuedAt" | "exceedsLimit" | "plannedPayDate" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAdvanceRequest"]>
   export type WorkforceAdvanceRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
@@ -52677,6 +52772,8 @@ export namespace Prisma {
       rejectionReason: string | null
       currentStepOrder: number
       financeQueuedAt: Date | null
+      exceedsLimit: boolean
+      plannedPayDate: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceAdvanceRequest"]>
@@ -53117,6 +53214,8 @@ export namespace Prisma {
     readonly rejectionReason: FieldRef<"WorkforceAdvanceRequest", 'String'>
     readonly currentStepOrder: FieldRef<"WorkforceAdvanceRequest", 'Int'>
     readonly financeQueuedAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
+    readonly exceedsLimit: FieldRef<"WorkforceAdvanceRequest", 'Boolean'>
+    readonly plannedPayDate: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
     readonly createdAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceAdvanceRequest", 'DateTime'>
   }
@@ -81135,6 +81234,7 @@ export namespace Prisma {
     advanceMaxPercent: Decimal | null
     advanceMaxAmount: Decimal | null
     advanceMaxOpen: number | null
+    advancePayDay: number | null
   }
 
   export type WorkforceOrgSettingsSumAggregateOutputType = {
@@ -81145,6 +81245,7 @@ export namespace Prisma {
     advanceMaxPercent: Decimal | null
     advanceMaxAmount: Decimal | null
     advanceMaxOpen: number | null
+    advancePayDay: number | null
   }
 
   export type WorkforceOrgSettingsMinAggregateOutputType = {
@@ -81157,6 +81258,9 @@ export namespace Prisma {
     advanceMaxAmount: Decimal | null
     advanceMaxOpen: number | null
     advanceAllowHrProxy: boolean | null
+    advancePayDay: number | null
+    allowEmployeeSubmit: boolean | null
+    allowManagerSubmit: boolean | null
     updatedAt: Date | null
   }
 
@@ -81170,6 +81274,9 @@ export namespace Prisma {
     advanceMaxAmount: Decimal | null
     advanceMaxOpen: number | null
     advanceAllowHrProxy: boolean | null
+    advancePayDay: number | null
+    allowEmployeeSubmit: boolean | null
+    allowManagerSubmit: boolean | null
     updatedAt: Date | null
   }
 
@@ -81183,6 +81290,9 @@ export namespace Prisma {
     advanceMaxAmount: number
     advanceMaxOpen: number
     advanceAllowHrProxy: number
+    advancePayDay: number
+    allowEmployeeSubmit: number
+    allowManagerSubmit: number
     updatedAt: number
     _all: number
   }
@@ -81196,6 +81306,7 @@ export namespace Prisma {
     advanceMaxPercent?: true
     advanceMaxAmount?: true
     advanceMaxOpen?: true
+    advancePayDay?: true
   }
 
   export type WorkforceOrgSettingsSumAggregateInputType = {
@@ -81206,6 +81317,7 @@ export namespace Prisma {
     advanceMaxPercent?: true
     advanceMaxAmount?: true
     advanceMaxOpen?: true
+    advancePayDay?: true
   }
 
   export type WorkforceOrgSettingsMinAggregateInputType = {
@@ -81218,6 +81330,9 @@ export namespace Prisma {
     advanceMaxAmount?: true
     advanceMaxOpen?: true
     advanceAllowHrProxy?: true
+    advancePayDay?: true
+    allowEmployeeSubmit?: true
+    allowManagerSubmit?: true
     updatedAt?: true
   }
 
@@ -81231,6 +81346,9 @@ export namespace Prisma {
     advanceMaxAmount?: true
     advanceMaxOpen?: true
     advanceAllowHrProxy?: true
+    advancePayDay?: true
+    allowEmployeeSubmit?: true
+    allowManagerSubmit?: true
     updatedAt?: true
   }
 
@@ -81244,6 +81362,9 @@ export namespace Prisma {
     advanceMaxAmount?: true
     advanceMaxOpen?: true
     advanceAllowHrProxy?: true
+    advancePayDay?: true
+    allowEmployeeSubmit?: true
+    allowManagerSubmit?: true
     updatedAt?: true
     _all?: true
   }
@@ -81344,6 +81465,9 @@ export namespace Prisma {
     advanceMaxAmount: Decimal | null
     advanceMaxOpen: number | null
     advanceAllowHrProxy: boolean
+    advancePayDay: number | null
+    allowEmployeeSubmit: boolean
+    allowManagerSubmit: boolean
     updatedAt: Date
     _count: WorkforceOrgSettingsCountAggregateOutputType | null
     _avg: WorkforceOrgSettingsAvgAggregateOutputType | null
@@ -81376,6 +81500,9 @@ export namespace Prisma {
     advanceMaxAmount?: boolean
     advanceMaxOpen?: boolean
     advanceAllowHrProxy?: boolean
+    advancePayDay?: boolean
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceOrgSettings"]>
@@ -81390,6 +81517,9 @@ export namespace Prisma {
     advanceMaxAmount?: boolean
     advanceMaxOpen?: boolean
     advanceAllowHrProxy?: boolean
+    advancePayDay?: boolean
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceOrgSettings"]>
@@ -81404,6 +81534,9 @@ export namespace Prisma {
     advanceMaxAmount?: boolean
     advanceMaxOpen?: boolean
     advanceAllowHrProxy?: boolean
+    advancePayDay?: boolean
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceOrgSettings"]>
@@ -81418,10 +81551,13 @@ export namespace Prisma {
     advanceMaxAmount?: boolean
     advanceMaxOpen?: boolean
     advanceAllowHrProxy?: boolean
+    advancePayDay?: boolean
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceOrgSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "fiveDayWeeklyHours" | "sixDayWeeklyHours" | "medicalWeeklyHours" | "customWeeklyHours" | "advanceMaxPercent" | "advanceMaxAmount" | "advanceMaxOpen" | "advanceAllowHrProxy" | "updatedAt", ExtArgs["result"]["workforceOrgSettings"]>
+  export type WorkforceOrgSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "fiveDayWeeklyHours" | "sixDayWeeklyHours" | "medicalWeeklyHours" | "customWeeklyHours" | "advanceMaxPercent" | "advanceMaxAmount" | "advanceMaxOpen" | "advanceAllowHrProxy" | "advancePayDay" | "allowEmployeeSubmit" | "allowManagerSubmit" | "updatedAt", ExtArgs["result"]["workforceOrgSettings"]>
   export type WorkforceOrgSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
@@ -81447,6 +81583,9 @@ export namespace Prisma {
       advanceMaxAmount: Prisma.Decimal | null
       advanceMaxOpen: number | null
       advanceAllowHrProxy: boolean
+      advancePayDay: number | null
+      allowEmployeeSubmit: boolean
+      allowManagerSubmit: boolean
       updatedAt: Date
     }, ExtArgs["result"]["workforceOrgSettings"]>
     composites: {}
@@ -81881,6 +82020,9 @@ export namespace Prisma {
     readonly advanceMaxAmount: FieldRef<"WorkforceOrgSettings", 'Decimal'>
     readonly advanceMaxOpen: FieldRef<"WorkforceOrgSettings", 'Int'>
     readonly advanceAllowHrProxy: FieldRef<"WorkforceOrgSettings", 'Boolean'>
+    readonly advancePayDay: FieldRef<"WorkforceOrgSettings", 'Int'>
+    readonly allowEmployeeSubmit: FieldRef<"WorkforceOrgSettings", 'Boolean'>
+    readonly allowManagerSubmit: FieldRef<"WorkforceOrgSettings", 'Boolean'>
     readonly updatedAt: FieldRef<"WorkforceOrgSettings", 'DateTime'>
   }
     
@@ -83419,6 +83561,8 @@ export namespace Prisma {
     routeId: string | null
     stepOrder: number | null
     kind: $Enums.WorkforceApprovalStepKind | null
+    appliesTo: $Enums.WorkforceApprovalStepAudience | null
+    canExceedAdvanceCap: boolean | null
     orgUnitId: string | null
     positionId: string | null
   }
@@ -83428,6 +83572,8 @@ export namespace Prisma {
     routeId: string | null
     stepOrder: number | null
     kind: $Enums.WorkforceApprovalStepKind | null
+    appliesTo: $Enums.WorkforceApprovalStepAudience | null
+    canExceedAdvanceCap: boolean | null
     orgUnitId: string | null
     positionId: string | null
   }
@@ -83437,6 +83583,8 @@ export namespace Prisma {
     routeId: number
     stepOrder: number
     kind: number
+    appliesTo: number
+    canExceedAdvanceCap: number
     orgUnitId: number
     positionId: number
     _all: number
@@ -83456,6 +83604,8 @@ export namespace Prisma {
     routeId?: true
     stepOrder?: true
     kind?: true
+    appliesTo?: true
+    canExceedAdvanceCap?: true
     orgUnitId?: true
     positionId?: true
   }
@@ -83465,6 +83615,8 @@ export namespace Prisma {
     routeId?: true
     stepOrder?: true
     kind?: true
+    appliesTo?: true
+    canExceedAdvanceCap?: true
     orgUnitId?: true
     positionId?: true
   }
@@ -83474,6 +83626,8 @@ export namespace Prisma {
     routeId?: true
     stepOrder?: true
     kind?: true
+    appliesTo?: true
+    canExceedAdvanceCap?: true
     orgUnitId?: true
     positionId?: true
     _all?: true
@@ -83570,6 +83724,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap: boolean
     orgUnitId: string | null
     positionId: string | null
     _count: WorkforceApprovalStepCountAggregateOutputType | null
@@ -83598,6 +83754,8 @@ export namespace Prisma {
     routeId?: boolean
     stepOrder?: boolean
     kind?: boolean
+    appliesTo?: boolean
+    canExceedAdvanceCap?: boolean
     orgUnitId?: boolean
     positionId?: boolean
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
@@ -83610,6 +83768,8 @@ export namespace Prisma {
     routeId?: boolean
     stepOrder?: boolean
     kind?: boolean
+    appliesTo?: boolean
+    canExceedAdvanceCap?: boolean
     orgUnitId?: boolean
     positionId?: boolean
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
@@ -83622,6 +83782,8 @@ export namespace Prisma {
     routeId?: boolean
     stepOrder?: boolean
     kind?: boolean
+    appliesTo?: boolean
+    canExceedAdvanceCap?: boolean
     orgUnitId?: boolean
     positionId?: boolean
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
@@ -83634,11 +83796,13 @@ export namespace Prisma {
     routeId?: boolean
     stepOrder?: boolean
     kind?: boolean
+    appliesTo?: boolean
+    canExceedAdvanceCap?: boolean
     orgUnitId?: boolean
     positionId?: boolean
   }
 
-  export type WorkforceApprovalStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "routeId" | "stepOrder" | "kind" | "orgUnitId" | "positionId", ExtArgs["result"]["workforceApprovalStep"]>
+  export type WorkforceApprovalStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "routeId" | "stepOrder" | "kind" | "appliesTo" | "canExceedAdvanceCap" | "orgUnitId" | "positionId", ExtArgs["result"]["workforceApprovalStep"]>
   export type WorkforceApprovalStepInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
     orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
@@ -83667,6 +83831,8 @@ export namespace Prisma {
       routeId: string
       stepOrder: number
       kind: $Enums.WorkforceApprovalStepKind
+      appliesTo: $Enums.WorkforceApprovalStepAudience
+      canExceedAdvanceCap: boolean
       orgUnitId: string | null
       positionId: string | null
     }, ExtArgs["result"]["workforceApprovalStep"]>
@@ -84099,6 +84265,8 @@ export namespace Prisma {
     readonly routeId: FieldRef<"WorkforceApprovalStep", 'String'>
     readonly stepOrder: FieldRef<"WorkforceApprovalStep", 'Int'>
     readonly kind: FieldRef<"WorkforceApprovalStep", 'WorkforceApprovalStepKind'>
+    readonly appliesTo: FieldRef<"WorkforceApprovalStep", 'WorkforceApprovalStepAudience'>
+    readonly canExceedAdvanceCap: FieldRef<"WorkforceApprovalStep", 'Boolean'>
     readonly orgUnitId: FieldRef<"WorkforceApprovalStep", 'String'>
     readonly positionId: FieldRef<"WorkforceApprovalStep", 'String'>
   }
@@ -132247,6 +132415,10 @@ export namespace Prisma {
     name: 'name',
     code: 'code',
     totalSlots: 'totalSlots',
+    leadership: 'leadership',
+    tariffAzn: 'tariffAzn',
+    defaultWorkRegime: 'defaultWorkRegime',
+    weeklyHours: 'weeklyHours',
     status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -132548,6 +132720,8 @@ export namespace Prisma {
     rejectionReason: 'rejectionReason',
     currentStepOrder: 'currentStepOrder',
     financeQueuedAt: 'financeQueuedAt',
+    exceedsLimit: 'exceedsLimit',
+    plannedPayDate: 'plannedPayDate',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -132933,6 +133107,9 @@ export namespace Prisma {
     advanceMaxAmount: 'advanceMaxAmount',
     advanceMaxOpen: 'advanceMaxOpen',
     advanceAllowHrProxy: 'advanceAllowHrProxy',
+    advancePayDay: 'advancePayDay',
+    allowEmployeeSubmit: 'allowEmployeeSubmit',
+    allowManagerSubmit: 'allowManagerSubmit',
     updatedAt: 'updatedAt'
   };
 
@@ -132955,6 +133132,8 @@ export namespace Prisma {
     routeId: 'routeId',
     stepOrder: 'stepOrder',
     kind: 'kind',
+    appliesTo: 'appliesTo',
+    canExceedAdvanceCap: 'canExceedAdvanceCap',
     orgUnitId: 'orgUnitId',
     positionId: 'positionId'
   };
@@ -133857,6 +134036,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'WorkforceWorkRegime'
+   */
+  export type EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceWorkRegime'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceWorkRegime[]'
+   */
+  export type ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceWorkRegime[]'>
+    
+
+
+  /**
    * Reference to a field of type 'RoleBindingSource'
    */
   export type EnumRoleBindingSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleBindingSource'>
@@ -133909,20 +134102,6 @@ export namespace Prisma {
    * Reference to a field of type 'WorkforceEmploymentStatus[]'
    */
   export type ListEnumWorkforceEmploymentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceEmploymentStatus[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'WorkforceWorkRegime'
-   */
-  export type EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceWorkRegime'>
-    
-
-
-  /**
-   * Reference to a field of type 'WorkforceWorkRegime[]'
-   */
-  export type ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceWorkRegime[]'>
     
 
 
@@ -134245,6 +134424,20 @@ export namespace Prisma {
    * Reference to a field of type 'WorkforceApprovalStepKind[]'
    */
   export type ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalStepKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalStepAudience'
+   */
+  export type EnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalStepAudience'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceApprovalStepAudience[]'
+   */
+  export type ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceApprovalStepAudience[]'>
     
 
 
@@ -135974,6 +136167,10 @@ export namespace Prisma {
     name?: StringFilter<"WorkforcePosition"> | string
     code?: StringNullableFilter<"WorkforcePosition"> | string | null
     totalSlots?: IntFilter<"WorkforcePosition"> | number
+    leadership?: BoolFilter<"WorkforcePosition"> | boolean
+    tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
@@ -135989,6 +136186,10 @@ export namespace Prisma {
     name?: SortOrder
     code?: SortOrderInput | SortOrder
     totalSlots?: SortOrder
+    leadership?: SortOrder
+    tariffAzn?: SortOrderInput | SortOrder
+    defaultWorkRegime?: SortOrderInput | SortOrder
+    weeklyHours?: SortOrderInput | SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136008,6 +136209,10 @@ export namespace Prisma {
     name?: StringFilter<"WorkforcePosition"> | string
     code?: StringNullableFilter<"WorkforcePosition"> | string | null
     totalSlots?: IntFilter<"WorkforcePosition"> | number
+    leadership?: BoolFilter<"WorkforcePosition"> | boolean
+    tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
@@ -136023,6 +136228,10 @@ export namespace Prisma {
     name?: SortOrder
     code?: SortOrderInput | SortOrder
     totalSlots?: SortOrder
+    leadership?: SortOrder
+    tariffAzn?: SortOrderInput | SortOrder
+    defaultWorkRegime?: SortOrderInput | SortOrder
+    weeklyHours?: SortOrderInput | SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136042,6 +136251,10 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"WorkforcePosition"> | string
     code?: StringNullableWithAggregatesFilter<"WorkforcePosition"> | string | null
     totalSlots?: IntWithAggregatesFilter<"WorkforcePosition"> | number
+    leadership?: BoolWithAggregatesFilter<"WorkforcePosition"> | boolean
+    tariffAzn?: DecimalNullableWithAggregatesFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: EnumWorkforceWorkRegimeNullableWithAggregatesFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: DecimalNullableWithAggregatesFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusWithAggregatesFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeWithAggregatesFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforcePosition"> | Date | string
@@ -137595,6 +137808,8 @@ export namespace Prisma {
     rejectionReason?: StringNullableFilter<"WorkforceAdvanceRequest"> | string | null
     currentStepOrder?: IntFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
+    exceedsLimit?: BoolFilter<"WorkforceAdvanceRequest"> | boolean
+    plannedPayDate?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -137615,6 +137830,8 @@ export namespace Prisma {
     rejectionReason?: SortOrderInput | SortOrder
     currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrderInput | SortOrder
+    exceedsLimit?: SortOrder
+    plannedPayDate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -137638,6 +137855,8 @@ export namespace Prisma {
     rejectionReason?: StringNullableFilter<"WorkforceAdvanceRequest"> | string | null
     currentStepOrder?: IntFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
+    exceedsLimit?: BoolFilter<"WorkforceAdvanceRequest"> | boolean
+    plannedPayDate?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -137658,6 +137877,8 @@ export namespace Prisma {
     rejectionReason?: SortOrderInput | SortOrder
     currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrderInput | SortOrder
+    exceedsLimit?: SortOrder
+    plannedPayDate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceAdvanceRequestCountOrderByAggregateInput
@@ -137684,6 +137905,8 @@ export namespace Prisma {
     rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | string | null
     currentStepOrder?: IntWithAggregatesFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string | null
+    exceedsLimit?: BoolWithAggregatesFilter<"WorkforceAdvanceRequest"> | boolean
+    plannedPayDate?: DateTimeNullableWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceAdvanceRequest"> | Date | string
   }
@@ -139643,6 +139866,9 @@ export namespace Prisma {
     advanceMaxAmount?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: IntNullableFilter<"WorkforceOrgSettings"> | number | null
     advanceAllowHrProxy?: BoolFilter<"WorkforceOrgSettings"> | boolean
+    advancePayDay?: IntNullableFilter<"WorkforceOrgSettings"> | number | null
+    allowEmployeeSubmit?: BoolFilter<"WorkforceOrgSettings"> | boolean
+    allowManagerSubmit?: BoolFilter<"WorkforceOrgSettings"> | boolean
     updatedAt?: DateTimeFilter<"WorkforceOrgSettings"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
@@ -139657,6 +139883,9 @@ export namespace Prisma {
     advanceMaxAmount?: SortOrderInput | SortOrder
     advanceMaxOpen?: SortOrderInput | SortOrder
     advanceAllowHrProxy?: SortOrder
+    advancePayDay?: SortOrderInput | SortOrder
+    allowEmployeeSubmit?: SortOrder
+    allowManagerSubmit?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
   }
@@ -139674,6 +139903,9 @@ export namespace Prisma {
     advanceMaxAmount?: DecimalNullableFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: IntNullableFilter<"WorkforceOrgSettings"> | number | null
     advanceAllowHrProxy?: BoolFilter<"WorkforceOrgSettings"> | boolean
+    advancePayDay?: IntNullableFilter<"WorkforceOrgSettings"> | number | null
+    allowEmployeeSubmit?: BoolFilter<"WorkforceOrgSettings"> | boolean
+    allowManagerSubmit?: BoolFilter<"WorkforceOrgSettings"> | boolean
     updatedAt?: DateTimeFilter<"WorkforceOrgSettings"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "organizationId">
@@ -139688,6 +139920,9 @@ export namespace Prisma {
     advanceMaxAmount?: SortOrderInput | SortOrder
     advanceMaxOpen?: SortOrderInput | SortOrder
     advanceAllowHrProxy?: SortOrder
+    advancePayDay?: SortOrderInput | SortOrder
+    allowEmployeeSubmit?: SortOrder
+    allowManagerSubmit?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceOrgSettingsCountOrderByAggregateInput
     _avg?: WorkforceOrgSettingsAvgOrderByAggregateInput
@@ -139709,6 +139944,9 @@ export namespace Prisma {
     advanceMaxAmount?: DecimalNullableWithAggregatesFilter<"WorkforceOrgSettings"> | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: IntNullableWithAggregatesFilter<"WorkforceOrgSettings"> | number | null
     advanceAllowHrProxy?: BoolWithAggregatesFilter<"WorkforceOrgSettings"> | boolean
+    advancePayDay?: IntNullableWithAggregatesFilter<"WorkforceOrgSettings"> | number | null
+    allowEmployeeSubmit?: BoolWithAggregatesFilter<"WorkforceOrgSettings"> | boolean
+    allowManagerSubmit?: BoolWithAggregatesFilter<"WorkforceOrgSettings"> | boolean
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceOrgSettings"> | Date | string
   }
 
@@ -139779,6 +140017,8 @@ export namespace Prisma {
     routeId?: UuidFilter<"WorkforceApprovalStep"> | string
     stepOrder?: IntFilter<"WorkforceApprovalStep"> | number
     kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFilter<"WorkforceApprovalStep"> | boolean
     orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     route?: XOR<WorkforceApprovalRouteScalarRelationFilter, WorkforceApprovalRouteWhereInput>
@@ -139791,6 +140031,8 @@ export namespace Prisma {
     routeId?: SortOrder
     stepOrder?: SortOrder
     kind?: SortOrder
+    appliesTo?: SortOrder
+    canExceedAdvanceCap?: SortOrder
     orgUnitId?: SortOrderInput | SortOrder
     positionId?: SortOrderInput | SortOrder
     route?: WorkforceApprovalRouteOrderByWithRelationInput
@@ -139807,6 +140049,8 @@ export namespace Prisma {
     routeId?: UuidFilter<"WorkforceApprovalStep"> | string
     stepOrder?: IntFilter<"WorkforceApprovalStep"> | number
     kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFilter<"WorkforceApprovalStep"> | boolean
     orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     route?: XOR<WorkforceApprovalRouteScalarRelationFilter, WorkforceApprovalRouteWhereInput>
@@ -139819,6 +140063,8 @@ export namespace Prisma {
     routeId?: SortOrder
     stepOrder?: SortOrder
     kind?: SortOrder
+    appliesTo?: SortOrder
+    canExceedAdvanceCap?: SortOrder
     orgUnitId?: SortOrderInput | SortOrder
     positionId?: SortOrderInput | SortOrder
     _count?: WorkforceApprovalStepCountOrderByAggregateInput
@@ -139836,6 +140082,8 @@ export namespace Prisma {
     routeId?: UuidWithAggregatesFilter<"WorkforceApprovalStep"> | string
     stepOrder?: IntWithAggregatesFilter<"WorkforceApprovalStep"> | number
     kind?: EnumWorkforceApprovalStepKindWithAggregatesFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceWithAggregatesFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolWithAggregatesFilter<"WorkforceApprovalStep"> | boolean
     orgUnitId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalStep"> | string | null
   }
@@ -144736,6 +144984,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -144751,6 +145003,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -144764,6 +145020,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -144779,6 +145039,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -144793,6 +145057,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -144803,6 +145071,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -144814,6 +145086,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -146541,6 +146817,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceAdvanceRequestsInput
@@ -146561,6 +146839,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -146577,6 +146857,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceAdvanceRequestsNestedInput
@@ -146597,6 +146879,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -146615,6 +146899,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -146631,6 +146917,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -146649,6 +146937,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -148761,6 +149051,9 @@ export namespace Prisma {
     advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: number | null
     advanceAllowHrProxy?: boolean
+    advancePayDay?: number | null
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceOrgSettingsInput
   }
@@ -148775,6 +149068,9 @@ export namespace Prisma {
     advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: number | null
     advanceAllowHrProxy?: boolean
+    advancePayDay?: number | null
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: Date | string
   }
 
@@ -148787,6 +149083,9 @@ export namespace Prisma {
     advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
     advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    advancePayDay?: NullableIntFieldUpdateOperationsInput | number | null
+    allowEmployeeSubmit?: BoolFieldUpdateOperationsInput | boolean
+    allowManagerSubmit?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceOrgSettingsNestedInput
   }
@@ -148801,6 +149100,9 @@ export namespace Prisma {
     advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
     advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    advancePayDay?: NullableIntFieldUpdateOperationsInput | number | null
+    allowEmployeeSubmit?: BoolFieldUpdateOperationsInput | boolean
+    allowManagerSubmit?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -148814,6 +149116,9 @@ export namespace Prisma {
     advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: number | null
     advanceAllowHrProxy?: boolean
+    advancePayDay?: number | null
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: Date | string
   }
 
@@ -148826,6 +149131,9 @@ export namespace Prisma {
     advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
     advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    advancePayDay?: NullableIntFieldUpdateOperationsInput | number | null
+    allowEmployeeSubmit?: BoolFieldUpdateOperationsInput | boolean
+    allowManagerSubmit?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -148839,6 +149147,9 @@ export namespace Prisma {
     advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
     advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    advancePayDay?: NullableIntFieldUpdateOperationsInput | number | null
+    allowEmployeeSubmit?: BoolFieldUpdateOperationsInput | boolean
+    allowManagerSubmit?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -148905,6 +149216,8 @@ export namespace Prisma {
     id?: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
     orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
     position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
@@ -148915,6 +149228,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -148923,6 +149238,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
     orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
     position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
@@ -148933,6 +149250,8 @@ export namespace Prisma {
     routeId?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -148942,6 +149261,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -148950,6 +149271,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type WorkforceApprovalStepUncheckedUpdateManyInput = {
@@ -148957,6 +149280,8 @@ export namespace Prisma {
     routeId?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -154168,6 +154493,24 @@ export namespace Prisma {
     _max?: NestedEnumOrgCommercialLinkModeFilter<$PrismaModel>
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type EnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+  }
+
   export type OrgUnitScalarRelationFilter = {
     is?: OrgUnitWhereInput
     isNot?: OrgUnitWhereInput
@@ -154194,6 +154537,10 @@ export namespace Prisma {
     name?: SortOrder
     code?: SortOrder
     totalSlots?: SortOrder
+    leadership?: SortOrder
+    tariffAzn?: SortOrder
+    defaultWorkRegime?: SortOrder
+    weeklyHours?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -154201,6 +154548,8 @@ export namespace Prisma {
 
   export type WorkforcePositionAvgOrderByAggregateInput = {
     totalSlots?: SortOrder
+    tariffAzn?: SortOrder
+    weeklyHours?: SortOrder
   }
 
   export type WorkforcePositionMaxOrderByAggregateInput = {
@@ -154209,6 +154558,10 @@ export namespace Prisma {
     name?: SortOrder
     code?: SortOrder
     totalSlots?: SortOrder
+    leadership?: SortOrder
+    tariffAzn?: SortOrder
+    defaultWorkRegime?: SortOrder
+    weeklyHours?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -154220,6 +154573,10 @@ export namespace Prisma {
     name?: SortOrder
     code?: SortOrder
     totalSlots?: SortOrder
+    leadership?: SortOrder
+    tariffAzn?: SortOrder
+    defaultWorkRegime?: SortOrder
+    weeklyHours?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -154227,6 +154584,34 @@ export namespace Prisma {
 
   export type WorkforcePositionSumOrderByAggregateInput = {
     totalSlots?: SortOrder
+    tariffAzn?: SortOrder
+    weeklyHours?: SortOrder
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
   }
 
   export type WorkforcePositionScalarRelationFilter = {
@@ -154512,13 +154897,6 @@ export namespace Prisma {
     not?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel> | $Enums.WorkforceEmploymentStatus
   }
 
-  export type EnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
-  }
-
   export type WorkforceAbsenceListRelationFilter = {
     every?: WorkforceAbsenceWhereInput
     some?: WorkforceAbsenceWhereInput
@@ -154722,16 +155100,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
-  }
-
-  export type EnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
-    _max?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
   }
 
   export type EnumWorkforceAbsenceKindFilter<$PrismaModel = never> = {
@@ -155071,17 +155439,6 @@ export namespace Prisma {
     not?: NestedEnumWorkforcePlaceStatusFilter<$PrismaModel> | $Enums.WorkforcePlaceStatus
   }
 
-  export type DecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-  }
-
   export type WorkforceAttendanceDeviceListRelationFilter = {
     every?: WorkforceAttendanceDeviceWhereInput
     some?: WorkforceAttendanceDeviceWhereInput
@@ -155167,22 +155524,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforcePlaceStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforcePlaceStatusFilter<$PrismaModel>
-  }
-
-  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type EnumWorkforceAttendanceDeviceStatusFilter<$PrismaModel = never> = {
@@ -155590,6 +155931,8 @@ export namespace Prisma {
     rejectionReason?: SortOrder
     currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrder
+    exceedsLimit?: SortOrder
+    plannedPayDate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -155613,6 +155956,8 @@ export namespace Prisma {
     rejectionReason?: SortOrder
     currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrder
+    exceedsLimit?: SortOrder
+    plannedPayDate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -155631,6 +155976,8 @@ export namespace Prisma {
     rejectionReason?: SortOrder
     currentStepOrder?: SortOrder
     financeQueuedAt?: SortOrder
+    exceedsLimit?: SortOrder
+    plannedPayDate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -156965,6 +157312,9 @@ export namespace Prisma {
     advanceMaxAmount?: SortOrder
     advanceMaxOpen?: SortOrder
     advanceAllowHrProxy?: SortOrder
+    advancePayDay?: SortOrder
+    allowEmployeeSubmit?: SortOrder
+    allowManagerSubmit?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -156976,6 +157326,7 @@ export namespace Prisma {
     advanceMaxPercent?: SortOrder
     advanceMaxAmount?: SortOrder
     advanceMaxOpen?: SortOrder
+    advancePayDay?: SortOrder
   }
 
   export type WorkforceOrgSettingsMaxOrderByAggregateInput = {
@@ -156988,6 +157339,9 @@ export namespace Prisma {
     advanceMaxAmount?: SortOrder
     advanceMaxOpen?: SortOrder
     advanceAllowHrProxy?: SortOrder
+    advancePayDay?: SortOrder
+    allowEmployeeSubmit?: SortOrder
+    allowManagerSubmit?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -157001,6 +157355,9 @@ export namespace Prisma {
     advanceMaxAmount?: SortOrder
     advanceMaxOpen?: SortOrder
     advanceAllowHrProxy?: SortOrder
+    advancePayDay?: SortOrder
+    allowEmployeeSubmit?: SortOrder
+    allowManagerSubmit?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -157012,6 +157369,7 @@ export namespace Prisma {
     advanceMaxPercent?: SortOrder
     advanceMaxAmount?: SortOrder
     advanceMaxOpen?: SortOrder
+    advancePayDay?: SortOrder
   }
 
   export type EnumWorkforceApprovalRequestKindFilter<$PrismaModel = never> = {
@@ -157067,6 +157425,13 @@ export namespace Prisma {
     not?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind
   }
 
+  export type EnumWorkforceApprovalStepAudienceFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepAudience | EnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel> | $Enums.WorkforceApprovalStepAudience
+  }
+
   export type WorkforceApprovalRouteScalarRelationFilter = {
     is?: WorkforceApprovalRouteWhereInput
     isNot?: WorkforceApprovalRouteWhereInput
@@ -157087,6 +157452,8 @@ export namespace Prisma {
     routeId?: SortOrder
     stepOrder?: SortOrder
     kind?: SortOrder
+    appliesTo?: SortOrder
+    canExceedAdvanceCap?: SortOrder
     orgUnitId?: SortOrder
     positionId?: SortOrder
   }
@@ -157100,6 +157467,8 @@ export namespace Prisma {
     routeId?: SortOrder
     stepOrder?: SortOrder
     kind?: SortOrder
+    appliesTo?: SortOrder
+    canExceedAdvanceCap?: SortOrder
     orgUnitId?: SortOrder
     positionId?: SortOrder
   }
@@ -157109,6 +157478,8 @@ export namespace Prisma {
     routeId?: SortOrder
     stepOrder?: SortOrder
     kind?: SortOrder
+    appliesTo?: SortOrder
+    canExceedAdvanceCap?: SortOrder
     orgUnitId?: SortOrder
     positionId?: SortOrder
   }
@@ -157125,6 +157496,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
     _max?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforceApprovalStepAudienceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepAudience | EnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepAudienceWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalStepAudience
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel>
   }
 
   export type EnumWorkforceApprovalStepKindNullableFilter<$PrismaModel = never> = {
@@ -160955,6 +161336,18 @@ export namespace Prisma {
     connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
   }
 
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceWorkRegime | null
+  }
+
   export type OrgUnitUpdateOneRequiredWithoutPositionsNestedInput = {
     create?: XOR<OrgUnitCreateWithoutPositionsInput, OrgUnitUncheckedCreateWithoutPositionsInput>
     connectOrCreate?: OrgUnitCreateOrConnectWithoutPositionsInput
@@ -161449,10 +161842,6 @@ export namespace Prisma {
 
   export type EnumWorkforceEmploymentStatusFieldUpdateOperationsInput = {
     set?: $Enums.WorkforceEmploymentStatus
-  }
-
-  export type NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput = {
-    set?: $Enums.WorkforceWorkRegime | null
   }
 
   export type OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput = {
@@ -162143,14 +162532,6 @@ export namespace Prisma {
 
   export type EnumWorkforcePlaceStatusFieldUpdateOperationsInput = {
     set?: $Enums.WorkforcePlaceStatus
-  }
-
-  export type NullableDecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string | null
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type OrganizationUpdateOneRequiredWithoutWorkforcePlacesNestedInput = {
@@ -163824,6 +164205,10 @@ export namespace Prisma {
 
   export type EnumWorkforceApprovalStepKindFieldUpdateOperationsInput = {
     set?: $Enums.WorkforceApprovalStepKind
+  }
+
+  export type EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceApprovalStepAudience
   }
 
   export type WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput = {
@@ -168252,6 +168637,50 @@ export namespace Prisma {
     _max?: NestedEnumOrgCommercialLinkModeFilter<$PrismaModel>
   }
 
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
+  }
+
   export type NestedEnumRoleBindingSourceFilter<$PrismaModel = never> = {
     equals?: $Enums.RoleBindingSource | EnumRoleBindingSourceFieldRefInput<$PrismaModel>
     in?: $Enums.RoleBindingSource[] | ListEnumRoleBindingSourceFieldRefInput<$PrismaModel>
@@ -168310,13 +168739,6 @@ export namespace Prisma {
     not?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel> | $Enums.WorkforceEmploymentStatus
   }
 
-  export type NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
-  }
-
   export type NestedEnumWorkforceEmploymentStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceEmploymentStatus | EnumWorkforceEmploymentStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceEmploymentStatus[] | ListEnumWorkforceEmploymentStatusFieldRefInput<$PrismaModel>
@@ -168325,16 +168747,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforceEmploymentStatusFilter<$PrismaModel>
-  }
-
-  export type NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
-    _max?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceAbsenceKindFilter<$PrismaModel = never> = {
@@ -168429,17 +168841,6 @@ export namespace Prisma {
     not?: NestedEnumWorkforcePlaceStatusFilter<$PrismaModel> | $Enums.WorkforcePlaceStatus
   }
 
-  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-  }
-
   export type NestedEnumWorkforcePlaceStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforcePlaceStatus | EnumWorkforcePlaceStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforcePlaceStatus[] | ListEnumWorkforcePlaceStatusFieldRefInput<$PrismaModel>
@@ -168448,22 +168849,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforcePlaceStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforcePlaceStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceAttendanceDeviceStatusFilter<$PrismaModel = never> = {
@@ -168768,6 +169153,13 @@ export namespace Prisma {
     not?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel> | $Enums.WorkforceApprovalStepKind
   }
 
+  export type NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepAudience | EnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel> | $Enums.WorkforceApprovalStepAudience
+  }
+
   export type NestedEnumWorkforceApprovalStepKindWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceApprovalStepKind | EnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
     in?: $Enums.WorkforceApprovalStepKind[] | ListEnumWorkforceApprovalStepKindFieldRefInput<$PrismaModel>
@@ -168776,6 +169168,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
     _max?: NestedEnumWorkforceApprovalStepKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforceApprovalStepAudienceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceApprovalStepAudience | EnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceApprovalStepAudience[] | ListEnumWorkforceApprovalStepAudienceFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceApprovalStepAudienceWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceApprovalStepAudience
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceApprovalStepAudienceFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceApprovalStepKindNullableFilter<$PrismaModel = never> = {
@@ -173203,6 +173605,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -173216,6 +173622,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -173448,6 +173858,8 @@ export namespace Prisma {
     id?: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
     position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
   }
@@ -173457,6 +173869,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     positionId?: string | null
   }
 
@@ -173684,6 +174098,10 @@ export namespace Prisma {
     name?: StringFilter<"WorkforcePosition"> | string
     code?: StringNullableFilter<"WorkforcePosition"> | string | null
     totalSlots?: IntFilter<"WorkforcePosition"> | number
+    leadership?: BoolFilter<"WorkforcePosition"> | boolean
+    tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
@@ -173796,6 +174214,8 @@ export namespace Prisma {
     routeId?: UuidFilter<"WorkforceApprovalStep"> | string
     stepOrder?: IntFilter<"WorkforceApprovalStep"> | number
     kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFilter<"WorkforceApprovalStep"> | boolean
     orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
   }
@@ -174481,6 +174901,8 @@ export namespace Prisma {
     id?: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
     orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
   }
@@ -174490,6 +174912,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnitId?: string | null
   }
 
@@ -174621,6 +175045,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -174635,6 +175063,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -174663,6 +175095,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -174677,6 +175113,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -175631,6 +176071,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -175645,6 +176089,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -176250,6 +176698,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutWorkforceAdvanceRequestsInput
@@ -176268,6 +176718,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -176633,6 +177085,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -176647,6 +177103,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -177115,6 +177575,8 @@ export namespace Prisma {
     rejectionReason?: StringNullableFilter<"WorkforceAdvanceRequest"> | string | null
     currentStepOrder?: IntFilter<"WorkforceAdvanceRequest"> | number
     financeQueuedAt?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
+    exceedsLimit?: BoolFilter<"WorkforceAdvanceRequest"> | boolean
+    plannedPayDate?: DateTimeNullableFilter<"WorkforceAdvanceRequest"> | Date | string | null
     createdAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceAdvanceRequest"> | Date | string
   }
@@ -188720,6 +189182,8 @@ export namespace Prisma {
     id?: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
     position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
   }
@@ -188728,6 +189192,8 @@ export namespace Prisma {
     id?: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -189008,6 +189474,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -189022,6 +189492,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -189128,6 +189602,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -189142,6 +189620,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -191066,6 +191548,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     employment: WorkforceEmploymentCreateNestedOneWithoutAdvanceRequestsInput
@@ -191084,6 +191568,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -191205,6 +191691,9 @@ export namespace Prisma {
     advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: number | null
     advanceAllowHrProxy?: boolean
+    advancePayDay?: number | null
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: Date | string
   }
 
@@ -191217,6 +191706,9 @@ export namespace Prisma {
     advanceMaxAmount?: Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: number | null
     advanceAllowHrProxy?: boolean
+    advancePayDay?: number | null
+    allowEmployeeSubmit?: boolean
+    allowManagerSubmit?: boolean
     updatedAt?: Date | string
   }
 
@@ -193101,6 +193593,9 @@ export namespace Prisma {
     advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
     advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    advancePayDay?: NullableIntFieldUpdateOperationsInput | number | null
+    allowEmployeeSubmit?: BoolFieldUpdateOperationsInput | boolean
+    allowManagerSubmit?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -193113,6 +193608,9 @@ export namespace Prisma {
     advanceMaxAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     advanceMaxOpen?: NullableIntFieldUpdateOperationsInput | number | null
     advanceAllowHrProxy?: BoolFieldUpdateOperationsInput | boolean
+    advancePayDay?: NullableIntFieldUpdateOperationsInput | number | null
+    allowEmployeeSubmit?: BoolFieldUpdateOperationsInput | boolean
+    allowManagerSubmit?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -205803,6 +206301,10 @@ export namespace Prisma {
     name: string
     code?: string | null
     totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -205875,6 +206377,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     positionId?: string | null
   }
 
@@ -205936,6 +206440,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -205949,6 +206457,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -205962,6 +206474,10 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
     totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -206203,6 +206719,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
     position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
   }
@@ -206212,6 +206730,8 @@ export namespace Prisma {
     routeId?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -206220,6 +206740,8 @@ export namespace Prisma {
     routeId?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -206257,6 +206779,8 @@ export namespace Prisma {
     routeId: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnitId?: string | null
   }
 
@@ -206385,6 +206909,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
     orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
   }
@@ -206394,6 +206920,8 @@ export namespace Prisma {
     routeId?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -206402,6 +206930,8 @@ export namespace Prisma {
     routeId?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -206684,6 +207214,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -207359,6 +207891,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceAdvanceRequestsNestedInput
@@ -207377,6 +207911,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -207394,6 +207930,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -208453,6 +208991,8 @@ export namespace Prisma {
     id?: string
     stepOrder: number
     kind: $Enums.WorkforceApprovalStepKind
+    appliesTo?: $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: boolean
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -208461,6 +209001,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
     position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
   }
@@ -208469,6 +209011,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -208477,6 +209021,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stepOrder?: IntFieldUpdateOperationsInput | number
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
+    appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
+    canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -208967,6 +209513,8 @@ export namespace Prisma {
     rejectionReason?: string | null
     currentStepOrder?: number
     financeQueuedAt?: Date | string | null
+    exceedsLimit?: boolean
+    plannedPayDate?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -210619,6 +211167,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     employment?: WorkforceEmploymentUpdateOneRequiredWithoutAdvanceRequestsNestedInput
@@ -210637,6 +211187,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -210654,6 +211206,8 @@ export namespace Prisma {
     rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     currentStepOrder?: IntFieldUpdateOperationsInput | number
     financeQueuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    exceedsLimit?: BoolFieldUpdateOperationsInput | boolean
+    plannedPayDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

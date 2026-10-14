@@ -463,6 +463,8 @@ export class SatelliteOrgBindSyncService {
     );
     return {
       ...bind,
+      ok: bind.ok && runtime.ok,
+      error: runtime.ok ? bind.error : runtime.error ?? "runtime-config failed",
       runtimeConfigOk: runtime.ok,
       runtimeConfigError: runtime.error,
     };
