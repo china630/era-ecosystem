@@ -25,6 +25,7 @@ import {
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
 import { EraModal } from '@/components/EraModal';
+import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import {
   ReservationCardActions,
@@ -515,6 +516,7 @@ export function ReservationCardEditor({
   const [guestCardOpenIdReader, setGuestCardOpenIdReader] = useState(false);
   const [notesAlertOpen, setNotesAlertOpen] = useState(false);
   const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(null);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [earlyCheckoutPreview, setEarlyCheckoutPreview] = useState<{
     applicable?: boolean;
     unusedNights?: number;
@@ -1572,33 +1574,6 @@ export function ReservationCardEditor({
     }
   }
 
-  async function confirmEarlyStayCheckout(onDate = false) {
-    if (!reservationId) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/reservations/${reservationId}/check-out`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unusedNightsRefundMethod:
-            earlyCheckoutPreview?.applicable && (earlyCheckoutPreview.guestCashRefund ?? 0) > 0
-              ? 'CASH'
-              : undefined,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        showApiError(json, tc('failed'));
-        return;
-      }
-      showSuccess(onDate ? t('checkOutDone') : t('earlyStayCheckoutDone'));
-      setPendingStayAction(null);
-      await load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function breakShare() {
     if (!reservationId) return;
     setBusy(true);
@@ -2528,7 +2503,10 @@ export function ReservationCardEditor({
                 const kind = pendingStayAction;
                 if (kind === 'earlyCheckIn') void confirmCheckIn(true);
                 else if (kind === 'checkIn') void confirmCheckIn(false);
-                else void confirmEarlyStayCheckout(kind === 'checkOut');
+                else {
+                  setPendingStayAction(null);
+                  setCheckoutModalOpen(true);
+                }
               }}
             >
               {stayActionLabel}
@@ -3048,6 +3026,14 @@ export function ReservationCardEditor({
           applyPaxChange(attached.pax);
         }}
       />
+      {reservationId ? (
+        <FolioCheckoutModal
+          open={checkoutModalOpen}
+          reservationId={reservationId}
+          onClose={() => setCheckoutModalOpen(false)}
+          onDone={() => void load()}
+        />
+      ) : null}
       <EraModal
         open={historyOpen}
         title={t('stayJournal')}

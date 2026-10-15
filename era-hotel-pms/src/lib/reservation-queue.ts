@@ -5,6 +5,7 @@ export const RESERVATION_QUEUE_CODES = [
   'bookings',
   'dueIn',
   'inHouse',
+  'realizedArrivals',
   'dueOut',
   'departed',
   'noShow',
@@ -22,7 +23,7 @@ export function isReservationQueue(value: string | null | undefined): value is R
 
 /** Queues whose window is already one civil day. The date pickers do not apply. */
 export function queueIgnoresDates(queue: ReservationQueue): boolean {
-  return queue === 'dueIn' || queue === 'dueOut';
+  return queue === 'dueIn' || queue === 'dueOut' || queue === 'realizedArrivals';
 }
 
 function dayStart(ymd: string): Date {
@@ -83,6 +84,13 @@ export function reservationQueueWhere(input: {
     if (dateFrom) and.push({ checkOutDate: { gt: dayStart(dateFrom) } });
     if (dateTo) and.push({ checkInDate: { lte: dayEnd(dateTo) } });
     return { AND: and };
+  }
+
+  if (queue === 'realizedArrivals') {
+    return {
+      status: 'IN_HOUSE',
+      stay: { is: { actualCheckIn: { gte: dayStart(today), lte: dayEnd(today) } } },
+    };
   }
 
   if (queue === 'dueOut') {

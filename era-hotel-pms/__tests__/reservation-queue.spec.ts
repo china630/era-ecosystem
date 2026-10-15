@@ -39,4 +39,23 @@ describe('reservationQueueWhere', () => {
       lte: new Date('2026-10-10T23:59:59.999+04:00'),
     });
   });
+
+  it('realized arrivals are in-house guests whose actual check-in was today', () => {
+    const where = reservationQueueWhere({
+      queue: 'realizedArrivals',
+      today,
+      dateFrom: '2026-01-01',
+      dateTo: '2026-12-31',
+    });
+    expect(where.status).toBe('IN_HOUSE');
+    expect(where.checkInDate).toBeUndefined();
+    expect(where.stay).toEqual({
+      is: {
+        actualCheckIn: {
+          gte: new Date('2026-10-10T00:00:00.000+04:00'),
+          lte: new Date('2026-10-10T23:59:59.999+04:00'),
+        },
+      },
+    });
+  });
 });

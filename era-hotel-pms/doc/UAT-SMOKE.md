@@ -259,6 +259,7 @@ Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d
 
 ### Lists & cards
 9. `/fo/reservations`: notes column is **penultimate** (before Res. ID); notes search field + **With notes** filter; `/fo/reservations/notes` → `?hasNotes=1`.
+9a. `/fo/reservations` → chip **Realized arrivals** sits right after In-house. Check a guest in today → the stay appears there; a guest checked in yesterday does not. The date pickers are hidden on this chip.
 10. **+** on vacant rack tile opens reservation create with `roomId`; create/edit share toolbar + bottom bar chrome.
 11. Guest card: stats bar, CRM + Reservation Details button grids (not three links only).
 
@@ -424,6 +425,7 @@ Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-cor
 UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR`; guest folio still requires zero balance.
+1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. Stay with no debt → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists.
 2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error.
 3. **Deposit on settle:** HELD deposit → `/folio/[id]` settle wizard → Apply deposits / method DEPOSIT → balance reduces; deposit APPLIED.
 4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.

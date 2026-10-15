@@ -478,7 +478,6 @@ export function ReservationCardFolioTab({
         onClose={() => setCheckoutOpen(false)}
         onDone={onChanged}
         reservationId={reservationId}
-        folios={accounts}
       />
       <FolioVoidModal open={Boolean(voidId)} chargeId={voidId} onClose={() => setVoidId(null)} onDone={onChanged} />
       <FolioPayLineModal

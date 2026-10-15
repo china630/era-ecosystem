@@ -1,12 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
   Field,
+  FieldSection,
   FieldTextarea,
   SECONDARY_BUTTON_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
+  parseApiError,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -14,12 +24,24 @@ import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { folioArticleSummary } from '@/lib/folio-article-summary';
 import { accountBalance } from '@/lib/folio-payer';
 
-const TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'DEPOSIT', 'LOYALTY_POINTS', 'COMPANY_ACCOUNT'] as const;
+const GUEST_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
+const PAYER_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER'] as const;
 
 type FolioRow = {
   id: string;
   type: string;
   status: string;
+  reservationGuest?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    guest?: { fullName?: string | null } | null;
+  } | null;
+  reservation?: {
+    guest?: { fullName?: string | null } | null;
+    room?: { roomNumber?: string | null } | null;
+    agency?: { name?: string | null } | null;
+    company?: { name?: string | null } | null;
+  } | null;
   charges: Array<{
     id?: string;
     amount: number | string;
@@ -49,61 +71,116 @@ type EarlyPreview = {
   guestCashRefund: number;
 };
 
+type Choice = '' | 'PAY' | 'DEBT' | 'CL';
+
+type TenderLine = { method: string; amount: string; bankReference: string; bankTerminalId: string };
+
+type DebtBlock = {
+  folio: FolioRow;
+  party: 'GUEST' | 'AGENCY' | 'COMPANY';
+  title: string;
+  debt: number;
+};
+
+function emptyLine(amount = ''): TenderLine {
+  return { method: '', amount, bankReference: '', bankTerminalId: '' };
+}
+
+function money(n: number): string {
+  return n.toFixed(2);
+}
+
+/**
+ * The one check-out dialog (folio tab, room rack, card stay action).
+ * Each debtor folio gets its own block. Nothing is preselected; submit waits for a choice per block.
+ */
 export function FolioCheckoutModal({
   open,
   onClose,
   onDone,
   reservationId,
-  folios,
 }: {
   open: boolean;
   onClose: () => void;
   onDone?: () => void;
   reservationId: string;
-  folios: FolioRow[];
 }) {
   const t = useTranslations('folio');
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
   const tHk = useTranslations('housekeeping');
   const locale = useLocale();
-  const guest = folios.find((f) => f.type === 'GUEST' && f.status === 'OPEN') ?? folios.find((f) => f.type === 'GUEST');
-  const balance = guest ? accountBalance(guest) : 0;
-  const [transferToCl, setTransferToCl] = useState(false);
-  const [guestMode, setGuestMode] = useState<'PAY' | 'DEBT'>('PAY');
+  const [folios, setFolios] = useState<FolioRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [choices, setChoices] = useState<Record<string, Choice>>({});
+  const [lines, setLines] = useState<Record<string, TenderLine[]>>({});
   const [guestDebtNote, setGuestDebtNote] = useState('');
   const [heldDeposits, setHeldDeposits] = useState(0);
   const [applyDeposits, setApplyDeposits] = useState(true);
   const [discountAmount, setDiscountAmount] = useState('');
-  const [lines, setLines] = useState<
-    { method: string; amount: string; bankReference: string; bankTerminalId: string }[]
-  >([{ method: 'CASH', amount: '', bankReference: '', bankTerminalId: '' }]);
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [early, setEarly] = useState<EarlyPreview | null>(null);
-  const [refundMethod, setRefundMethod] = useState('CASH');
+  const [refundMethod, setRefundMethod] = useState('');
   const [refundTerminal, setRefundTerminal] = useState('');
   const [refundReason, setRefundReason] = useState('');
+  const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [remainder, setRemainder] = useState<{ ids: string[]; amount: number } | null>(null);
-  const [remainderMethod, setRemainderMethod] = useState('CASH');
+  const [remainderMethod, setRemainderMethod] = useState('');
   const [remainderTerminal, setRemainderTerminal] = useState('');
   const [laundry, setLaundry] = useState<Array<{ id: string; guestName: string }>>([]);
   const [laundryScan, setLaundryScan] = useState('');
 
+  const loadFolios = useCallback(async () => {
+    setLoading(true);
+    setLoadFailed(false);
+    try {
+      const res = await fetch(`/api/folios?reservationId=${encodeURIComponent(reservationId)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(parseApiError(data, tc('loadError')));
+      const rows = (Array.isArray(data) ? data : (data.data ?? [])) as FolioRow[];
+      setFolios(rows);
+      return rows;
+    } catch {
+      setLoadFailed(true);
+      setFolios([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [reservationId, tc]);
+
   useEffect(() => {
-    if (!open) return;
-    setTransferToCl(false);
-    setGuestMode('PAY');
+    if (!open || !reservationId) return;
+    setChoices({});
+    setLines({});
     setGuestDebtNote('');
+    setDiscountAmount('');
+    setApplyDeposits(true);
+    setHeldDeposits(0);
+    setEarly(null);
+    setRefundMethod('');
+    setRefundTerminal('');
+    setRefundReason('');
+    setError('');
+    void loadFolios().then((rows) => {
+      const guest = rows.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
+      if (!guest) return;
+      void fetch(`/api/folios/settle?folioId=${guest.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const payload = data.data ?? data;
+          if (payload?.heldDeposits != null) setHeldDeposits(Number(payload.heldDeposits));
+        })
+        .catch(() => null);
+    });
     void fetch('/api/fiscal/devices?kind=BANK_POS')
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
         setBankTerminals(body?.devices ?? []);
       })
       .catch(() => setBankTerminals([]));
-    setEarly(null);
-    setRefundMethod('CASH');
-    setRefundReason('');
     void fetch(`/api/reservations/${reservationId}/early-checkout-preview`)
       .then((r) => r.json())
       .then((data) => {
@@ -118,355 +195,447 @@ export function FolioCheckoutModal({
         });
       })
       .catch(() => null);
-    if (guest) {
-      void fetch(`/api/folios/settle?folioId=${guest.id}`)
-        .then((r) => r.json())
-        .then((data) => {
-          const payload = data.data ?? data;
-          if (payload?.heldDeposits != null) setHeldDeposits(Number(payload.heldDeposits));
-        })
-        .catch(() => null);
-    }
-  }, [open, reservationId, guest?.id]);
+  }, [open, reservationId, loadFolios]);
 
-  const summary = useMemo(() => {
-    if (!guest) return null;
-    const allocatedByChargeId: Record<string, number> = {};
-    for (const charge of guest.charges) {
-      if (!charge.id) continue;
-      allocatedByChargeId[charge.id] = (charge.paymentAllocations ?? []).reduce(
-        (sum, row) => sum + Number(row.amount),
-        0,
-      );
-    }
-    return folioArticleSummary({
-      charges: guest.charges.map((charge) => ({ ...charge, id: charge.id ?? '' })),
-      payments: guest.payments ?? [],
-      locale,
-      allocatedByChargeId,
-    });
-  }, [guest, locale]);
+  const stayGuest = folios[0]?.reservation?.guest?.fullName?.trim() ?? '';
+  const stayRoom = folios[0]?.reservation?.room?.roomNumber?.trim() ?? '';
 
-  const terminalOptions = [
-    { value: '', label: t('pickTerminal') },
-    ...bankTerminals.map((row) => ({ value: row.id, label: row.label })),
-  ];
-
-  async function settleThenCheckout() {
-    const cardMissingTerminal =
-      (guestMode === 'PAY' &&
-        lines.some((line) => line.method === 'CARD' && Number(line.amount) > 0 && !line.bankTerminalId.trim())) ||
-      (early?.applicable && early.guestCashRefund > 0 && refundMethod === 'CARD' && !refundTerminal.trim());
-    if (cardMissingTerminal) {
-      showApiError({ error: t('bankTerminal') }, tc('error'));
-      return false;
-    }
-    if (guestMode === 'DEBT' && balance > 0.01 && !guestDebtNote.trim()) {
-      showApiError({ error: t('guestDebtNote') }, tc('error'));
-      return false;
-    }
-    if (guest && balance > 0.01 && guestMode === 'PAY') {
-      const tender = lines
-        .map((l) => ({
-          method: l.method,
-          amount: Number(l.amount),
-          bankReference: l.method === 'BANK_TRANSFER' && l.bankReference.trim() ? l.bankReference.trim() : undefined,
-          bankTerminalId: l.method === 'CARD' ? l.bankTerminalId.trim() || undefined : undefined,
-        }))
-        .filter((l) => l.amount > 0);
-      if (tender.length === 0 && applyDeposits && heldDeposits > 0.01) {
-        tender.push({ method: 'DEPOSIT', amount: heldDeposits, bankReference: undefined, bankTerminalId: undefined });
-      }
-      if (tender.length > 0) {
-        const res = await fetch('/api/folios/settle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            folioId: guest.id,
-            lines: tender,
-            applyDeposits,
-            discountAmount: discountAmount ? Number(discountAmount) : undefined,
-          }),
+  const blocks = useMemo<DebtBlock[]>(() => {
+    const out: DebtBlock[] = [];
+    for (const folio of folios) {
+      if (folio.status !== 'OPEN') continue;
+      const debt = accountBalance(folio);
+      if (debt <= 0.01) continue;
+      if (folio.type === 'GUEST') {
+        const rg = folio.reservationGuest;
+        const own =
+          rg?.guest?.fullName?.trim() || [rg?.firstName, rg?.lastName].filter(Boolean).join(' ').trim();
+        out.push({
+          folio,
+          party: 'GUEST',
+          title: t('checkoutGuestBlock', { name: own || stayGuest || '—' }),
+          debt,
         });
-        const data = await res.json();
-        if (!res.ok) {
-          showApiError(data, tc('error'));
-          return false;
-        }
+      } else if (folio.type === 'AGENCY' || folio.type === 'COMPANY') {
+        const name =
+          (folio.type === 'AGENCY'
+            ? folio.reservation?.agency?.name
+            : folio.reservation?.company?.name
+          )?.trim() || '—';
+        out.push({
+          folio,
+          party: folio.type,
+          title:
+            folio.type === 'AGENCY'
+              ? t('checkoutAgencyBlock', { name })
+              : t('checkoutCompanyBlock', { name }),
+          debt,
+        });
+      }
+    }
+    return out.sort((a, b) => (a.party === 'GUEST' ? 0 : 1) - (b.party === 'GUEST' ? 0 : 1));
+  }, [folios, stayGuest, t]);
+
+  const firstGuestBlockId = blocks.find((b) => b.party === 'GUEST')?.folio.id;
+  const anyGuestDebt = blocks.some((b) => choices[b.folio.id] === 'DEBT');
+  const allChosen = blocks.every((b) => Boolean(choices[b.folio.id]));
+  const refundNeeded = Boolean(early?.applicable && early.guestCashRefund > 0);
+
+  const terminalOptions = bankTerminals.map((row) => ({ value: row.id, label: row.label }));
+
+  function linesOf(block: DebtBlock): TenderLine[] {
+    return lines[block.folio.id] ?? [emptyLine(money(block.debt))];
+  }
+
+  function setLine(block: DebtBlock, idx: number, patch: Partial<TenderLine>) {
+    const next = [...linesOf(block)];
+    next[idx] = { ...next[idx]!, ...patch };
+    setLines((prev) => ({ ...prev, [block.folio.id]: next }));
+  }
+
+  function validate(): string | null {
+    if (!allChosen) return t('checkoutPickChoice');
+    for (const block of blocks) {
+      const choice = choices[block.folio.id];
+      if (choice !== 'PAY') continue;
+      const rows = linesOf(block).filter((l) => Number(l.amount) > 0);
+      if (rows.some((l) => !l.method)) return t('checkoutPickMethod');
+      if (rows.some((l) => l.method === 'CARD' && !l.bankTerminalId)) return t('checkoutPickTerminal');
+      const paid = rows.reduce((s, l) => s + Number(l.amount), 0);
+      const isFirstGuest = block.folio.id === firstGuestBlockId;
+      const deposits = isFirstGuest && applyDeposits ? heldDeposits : 0;
+      const discount = isFirstGuest && discountAmount ? Number(discountAmount) : 0;
+      if (paid + deposits + discount + 0.01 < block.debt) {
+        return t('checkoutTenderShort', {
+          name: block.title,
+          paid: money(paid + deposits + discount),
+          due: money(block.debt),
+        });
+      }
+    }
+    if (anyGuestDebt && !guestDebtNote.trim()) return t('checkoutDebtReasonRequired');
+    if (refundNeeded) {
+      if (!refundMethod) return t('checkoutPickRefundMethod');
+      if (refundMethod === 'CARD' && !refundTerminal) return t('checkoutPickTerminal');
+    }
+    return null;
+  }
+
+  async function settleBlock(block: DebtBlock): Promise<string | null> {
+    const isFirstGuest = block.folio.id === firstGuestBlockId;
+    const tender = linesOf(block)
+      .map((l) => ({
+        method: l.method,
+        amount: Number(l.amount),
+        bankReference: l.method === 'BANK_TRANSFER' && l.bankReference.trim() ? l.bankReference.trim() : undefined,
+        bankTerminalId: l.method === 'CARD' ? l.bankTerminalId || undefined : undefined,
+      }))
+      .filter((l) => l.amount > 0 && l.method);
+    if (tender.length === 0 && isFirstGuest && applyDeposits && heldDeposits > 0.01) {
+      tender.push({
+        method: 'DEPOSIT',
+        amount: Math.min(heldDeposits, block.debt),
+        bankReference: undefined,
+        bankTerminalId: undefined,
+      });
+    }
+    if (tender.length === 0) return null;
+    const res = await fetch('/api/folios/settle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        folioId: block.folio.id,
+        lines: tender,
+        applyDeposits: isFirstGuest ? applyDeposits : false,
+        discountAmount: isFirstGuest && discountAmount ? Number(discountAmount) : undefined,
+      }),
+    });
+    if (res.ok) return null;
+    return `${block.title}: ${parseApiError(await res.json().catch(() => null), tc('error'))}`;
+  }
+
+  async function submit() {
+    const problem = validate();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError('');
+    for (const block of blocks) {
+      if (choices[block.folio.id] !== 'PAY') continue;
+      const failed = await settleBlock(block);
+      if (failed) {
+        setError(failed);
+        await loadFolios();
+        return;
       }
     }
     const res = await fetch(`/api/reservations/${reservationId}/check-out`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        transferToCityLedger: transferToCl,
-        transferToGuestDebt: guestMode === 'DEBT' && balance > 0.01,
-        guestDebtNote: guestMode === 'DEBT' ? guestDebtNote.trim() : undefined,
-        discountAmount: discountAmount ? Number(discountAmount) : undefined,
-        unusedNightsRefundMethod: early?.applicable && early.guestCashRefund > 0 ? refundMethod : undefined,
-        unusedNightsBankTerminalId:
-          early?.applicable && early.guestCashRefund > 0 && refundMethod === 'CARD'
-            ? refundTerminal.trim() || undefined
-            : undefined,
+        transferToCityLedger: blocks.some((b) => choices[b.folio.id] === 'CL'),
+        transferToGuestDebt: anyGuestDebt,
+        guestDebtNote: anyGuestDebt ? guestDebtNote.trim() : undefined,
+        unusedNightsRefundMethod: refundNeeded ? refundMethod : undefined,
+        unusedNightsBankTerminalId: refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
         unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
       }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     const payload = data.data ?? data;
     if (res.ok) {
       const held = payload.depositRemainder as { heldAmount?: number; heldIds?: string[] } | undefined;
       const heldAmount = Number(held?.heldAmount ?? 0);
       const heldIds = Array.isArray(held?.heldIds) ? held.heldIds : [];
+      onDone?.();
+      onClose();
       if (heldAmount > 0.01 && heldIds.length > 0) {
         setRemainder({ ids: heldIds, amount: heldAmount });
-        setRemainderMethod('CASH');
-        onDone?.();
-        onClose();
-        return true;
+        setRemainderMethod('');
+        setRemainderTerminal('');
+        return;
       }
       showSuccess(
         payload.cityLedgerTransferred?.length
           ? t('checkoutClSuccess', { count: payload.cityLedgerTransferred.length })
           : t('checkoutSuccess'),
       );
-      onDone?.();
-      onClose();
-      return true;
+      return;
     }
     if (payload.code === 'LAUNDRY_OPEN' && Array.isArray(payload.tickets)) {
       setLaundry(payload.tickets);
       onClose();
-      return false;
+      return;
     }
-    showApiError(data, tc('error'));
-    return false;
+    setError(parseApiError(data, tc('error')));
+    await loadFolios();
   }
+
+  function renderSummary(folio: FolioRow) {
+    const allocatedByChargeId: Record<string, number> = {};
+    for (const charge of folio.charges) {
+      if (!charge.id) continue;
+      allocatedByChargeId[charge.id] = (charge.paymentAllocations ?? []).reduce(
+        (sum, row) => sum + Number(row.amount),
+        0,
+      );
+    }
+    const summary = folioArticleSummary({
+      charges: folio.charges.map((charge) => ({ ...charge, id: charge.id ?? '' })),
+      payments: folio.payments ?? [],
+      locale,
+      allocatedByChargeId,
+    });
+    const rows = summary.rows.filter((row) => Math.abs(row.debt) > 0.01);
+    if (rows.length === 0) return null;
+    return (
+      <table className={DATA_TABLE_CLASS}>
+        <thead>
+          <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+            <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('summaryArticle')}</th>
+            <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('summaryCharged')}</th>
+            <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('summaryPaid')}</th>
+            <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('summaryDebt')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key} className={DATA_TABLE_TR_CLASS}>
+              <td className={DATA_TABLE_TD_CLASS}>{row.label}</td>
+              <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{money(row.charged)}</td>
+              <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{money(row.paid)}</td>
+              <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{money(row.debt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
+  function renderTender(block: DebtBlock) {
+    const isGuest = block.party === 'GUEST';
+    const isFirstGuest = block.folio.id === firstGuestBlockId;
+    const tenders = isGuest ? GUEST_TENDERS : PAYER_TENDERS;
+    const rows = linesOf(block);
+    return (
+      <div className="space-y-2">
+        {rows.map((line, idx) => (
+          <div key={idx} className="flex flex-wrap items-end gap-2">
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('method')}
+              required
+              value={line.method}
+              onChange={(v) => setLine(block, idx, { method: String(v ?? '') })}
+              options={tenders.map((m) => ({ value: m, label: tPay(m) }))}
+              emptyLabel={t('checkoutPickMethod')}
+            />
+            <Field
+              label={tc('amount')}
+              preset="amount"
+              type="number"
+              value={line.amount}
+              onChange={(e) => setLine(block, idx, { amount: e.target.value })}
+            />
+            {line.method === 'CARD' ? (
+              terminalOptions.length > 0 ? (
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t('bankTerminal')}
+                  required
+                  value={line.bankTerminalId}
+                  onChange={(v) => setLine(block, idx, { bankTerminalId: String(v ?? '') })}
+                  options={terminalOptions}
+                  emptyLabel={t('pickTerminal')}
+                />
+              ) : (
+                <p className={`m-0 text-[12px] ${TEXT_DANGER_CLASS}`}>{t('noBankTerminal')}</p>
+              )
+            ) : null}
+            {line.method === 'BANK_TRANSFER' ? (
+              <Field
+                label={t('bankReference')}
+                preset="longText"
+                value={line.bankReference}
+                onChange={(e) => setLine(block, idx, { bankReference: e.target.value })}
+              />
+            ) : null}
+          </div>
+        ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() =>
+              setLines((prev) => ({ ...prev, [block.folio.id]: [...linesOf(block), emptyLine()] }))
+            }
+          >
+            {t('addTenderLine')}
+          </button>
+        </div>
+        {isFirstGuest ? (
+          <div className="flex flex-wrap items-end gap-3">
+            <Field
+              label={t('discountAzn')}
+              preset="amount"
+              type="number"
+              value={discountAmount}
+              onChange={(e) => setDiscountAmount(e.target.value)}
+            />
+            {heldDeposits > 0.01 ? (
+              <label className="inline-flex items-center gap-1.5 pb-2 text-[12px]">
+                <input
+                  type="checkbox"
+                  checked={applyDeposits}
+                  onChange={(e) => setApplyDeposits(e.target.checked)}
+                />
+                {t('applyHeldDeposits')} ({money(heldDeposits)} AZN)
+              </label>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const subtitle = [stayGuest, stayRoom].filter(Boolean).join(' · ') || undefined;
 
   return (
     <>
       <EraModal
         open={open}
         title={t('checkOut')}
+        subtitle={subtitle}
         onClose={onClose}
+        maxWidthClass="max-w-3xl"
         footer={
           <EraModalFooter
             onCancel={onClose}
             onSubmit={() => {
               setBusy(true);
-              void settleThenCheckout().finally(() => setBusy(false));
+              void submit().finally(() => setBusy(false));
             }}
             busy={busy}
+            submitDisabled={loading || loadFailed || !allChosen}
             submitLabel={t('confirmCheckout')}
           />
         }
       >
-        <div className="space-y-3 text-[13px] text-[#34495E]">
-          <p className="m-0">
-            {t('totalBalance')} <strong>{balance.toFixed(2)} AZN</strong>{' '}
-            {Math.abs(balance) < 0.01 ? t('readyCheckout') : t('paymentRequired')}
-          </p>
-          {summary && summary.rows.length > 0 ? (
-            <table className="w-full border-collapse text-[12px]">
-              <thead>
-                <tr className="text-left text-[#7F8C8D]">
-                  <th className="py-1 pr-2 font-medium">{t('summaryArticle')}</th>
-                  <th className="py-1 pr-2 text-right font-medium">{t('summaryCharged')}</th>
-                  <th className="py-1 pr-2 text-right font-medium">{t('summaryPaid')}</th>
-                  <th className="py-1 text-right font-medium">{t('summaryDebt')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.rows.map((row) => (
-                  <tr key={row.key}>
-                    <td className="py-1 pr-2">{row.label}</td>
-                    <td className="py-1 pr-2 text-right font-mono">{row.charged.toFixed(2)}</td>
-                    <td className="py-1 pr-2 text-right font-mono">{row.paid.toFixed(2)}</td>
-                    <td className="py-1 text-right font-mono">{row.debt.toFixed(2)}</td>
-                  </tr>
-                ))}
-                <tr className="font-semibold">
-                  <td className="py-1 pr-2">{t('summaryTotal')}</td>
-                  <td className="py-1 pr-2 text-right font-mono">{summary.charged.toFixed(2)}</td>
-                  <td className="py-1 pr-2 text-right font-mono">{summary.paid.toFixed(2)}</td>
-                  <td className="py-1 text-right font-mono">{summary.debt.toFixed(2)}</td>
-                </tr>
-              </tbody>
-            </table>
+        <div className="space-y-3 text-[13px]">
+          {loading ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{tc('loading')}</p> : null}
+          {loadFailed ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{tc('loadError')}</p> : null}
+          {!loading && !loadFailed && blocks.length === 0 ? (
+            <p className="m-0">{t('checkoutNoDebt')}</p>
           ) : null}
-          <CatalogField
-            kind="OPS_HOT"
-            label={t('guestSettlement')}
-            value={guestMode}
-            onChange={(v) => setGuestMode(String(v) === 'DEBT' ? 'DEBT' : 'PAY')}
-            options={[
-              { value: 'PAY', label: t('payGuestFirst') },
-              { value: 'DEBT', label: t('guestDebt') },
-            ]}
-            emptyLabel={null}
-          />
-          <CatalogField
-            kind="OPS_HOT"
-            label={t('checkoutMode')}
-            value={transferToCl ? 'CL' : 'KEEP'}
-            onChange={(v) => setTransferToCl(String(v) === 'CL')}
-            options={[
-              { value: 'KEEP', label: t('keepAgencyOpen') },
-              { value: 'CL', label: t('leaveOnCityLedger') },
-            ]}
-            emptyLabel={null}
-          />
-          <p className="m-0 text-[12px] text-[#7F8C8D]">
-            {guestMode === 'DEBT' ? t('guestDebtHint') : t('payGuestFirstHint')}
-            {transferToCl ? ` ${t('leaveOnCityLedgerHint')}` : ''}
-          </p>
-          {guestMode === 'DEBT' && balance > 0.01 ? (
+          {blocks.map((block) => {
+            const choice = choices[block.folio.id] ?? '';
+            const isGuest = block.party === 'GUEST';
+            return (
+              <FieldSection
+                key={block.folio.id}
+                title={block.title}
+                badge={`${money(block.debt)} AZN`}
+              >
+                <div className="space-y-3">
+                  {renderSummary(block.folio)}
+                  <CatalogField
+                    kind="OPS_HOT"
+                    label={t('checkoutChoice')}
+                    required
+                    value={choice}
+                    onChange={(v) => {
+                      setError('');
+                      setChoices((prev) => ({ ...prev, [block.folio.id]: String(v ?? '') as Choice }));
+                    }}
+                    options={
+                      isGuest
+                        ? [
+                            { value: 'PAY', label: t('checkoutPayNow') },
+                            { value: 'DEBT', label: t('checkoutLeaveGuestDebt') },
+                          ]
+                        : [
+                            { value: 'PAY', label: t('checkoutPayNow') },
+                            { value: 'CL', label: t('checkoutToCityLedger') },
+                          ]
+                    }
+                    emptyLabel={null}
+                  />
+                  {choice ? (
+                    <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {choice === 'PAY'
+                        ? isGuest
+                          ? t('checkoutGuestPayHint')
+                          : t('checkoutPayerPayHint')
+                        : choice === 'DEBT'
+                          ? t('checkoutGuestDebtHint')
+                          : t('checkoutClHint')}
+                    </p>
+                  ) : null}
+                  {choice === 'PAY' ? renderTender(block) : null}
+                </div>
+              </FieldSection>
+            );
+          })}
+          {anyGuestDebt ? (
             <FieldTextarea
               label={t('guestDebtNote')}
+              required
               value={guestDebtNote}
               onChange={(e) => setGuestDebtNote(e.target.value)}
             />
           ) : null}
-          {guestMode === 'PAY' && balance > 0.01 && guest ? (
-            <div className="space-y-2">
-              {lines.map((line, idx) => (
-                <div key={idx} className="flex flex-wrap items-end gap-2">
-                  <CatalogField
-                    kind="CLOSED_SMALL"
-                    label={t('method')}
-                    value={line.method}
-                    onChange={(v) => {
-                      const next = [...lines];
-                      next[idx] = { ...next[idx]!, method: String(v ?? 'CASH') };
-                      setLines(next);
-                    }}
-                    options={TENDERS.map((m) => ({ value: m, label: tPay(m) }))}
-                    emptyLabel={null}
-                  />
-                  <Field
-                    label={tc('amount')}
-                    preset="amount"
-                    type="number"
-                    value={line.amount}
-                    onChange={(e) => {
-                      const next = [...lines];
-                      next[idx] = { ...next[idx]!, amount: e.target.value };
-                      setLines(next);
-                    }}
-                  />
-                  {line.method === 'CARD' ? (
-                    bankTerminals.length > 0 ? (
-                    <CatalogField
-                      kind="CLOSED_SMALL"
-                      label={t('bankTerminal')}
-                      value={line.bankTerminalId}
-                      onChange={(v) => {
-                        const next = [...lines];
-                        next[idx] = { ...next[idx]!, bankTerminalId: String(v ?? '') };
-                        setLines(next);
-                      }}
-                      options={terminalOptions}
-                      emptyLabel={null}
-                    />
-                    ) : (
-                      <p className="m-0 text-[12px] text-amber-800">{t('noBankTerminal')}</p>
-                    )
-                  ) : null}
-                  {line.method === 'BANK_TRANSFER' ? (
-                    <Field
-                      label={t('bankReference')}
-                      preset="longText"
-                      value={line.bankReference}
-                      onChange={(e) => {
-                        const next = [...lines];
-                        next[idx] = { ...next[idx]!, bankReference: e.target.value };
-                        setLines(next);
-                      }}
-                    />
-                  ) : null}
-                </div>
-              ))}
-              <Field
-                label={t('discountAzn')}
-                preset="amount"
-                type="number"
-                value={discountAmount}
-                onChange={(e) => setDiscountAmount(e.target.value)}
-              />
-              <label className="inline-flex items-center gap-1.5 text-[12px]">
-                <input
-                  type="checkbox"
-                  checked={applyDeposits}
-                  onChange={(e) => setApplyDeposits(e.target.checked)}
-                />
-                {t('applyHeldDeposits')}
-                {heldDeposits > 0 ? ` (${heldDeposits.toFixed(2)} AZN)` : ''}
-              </label>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() =>
-                  setLines((prev) => [
-                    {
-                      method: prev[0]?.method ?? 'CASH',
-                      amount: balance > 0 ? balance.toFixed(2) : '',
-                      bankReference: prev[0]?.bankReference ?? '',
-                      bankTerminalId: prev[0]?.bankTerminalId ?? '',
-                    },
-                  ])
-                }
-              >
-                {t('payAll')}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() =>
-                  setLines([...lines, { method: 'CASH', amount: '', bankReference: '', bankTerminalId: '' }])
-                }
-              >
-                {t('addTenderLine')}
-              </button>
-            </div>
-          ) : null}
           {early?.applicable ? (
-            <div className="space-y-1 rounded border border-[#D5DADF] bg-[#F8FAFC] p-3">
-              <p className="m-0 font-medium">{t('earlyCheckoutTitle')}</p>
-              <p className="m-0">{t('earlyCheckoutNights', { count: early.unusedNights })}</p>
-              <p className="m-0">{t('earlyCheckoutGross', { amount: early.unusedSellGross.toFixed(2) })}</p>
-              <p className="m-0">{t('earlyCheckoutVat', { amount: early.vatWithheld.toFixed(2) })}</p>
-              <p className="m-0">{t('earlyCheckoutCash', { amount: early.guestCashRefund.toFixed(2) })}</p>
-              {early.guestCashRefund > 0 ? (
-                <>
-                  <CatalogField
-                    kind="OPS_HOT"
-                    label={t('earlyCheckoutTender')}
-                    value={refundMethod}
-                    onChange={(v) => setRefundMethod(String(v ?? 'CASH'))}
-                    options={[
-                      { value: 'CASH', label: tPay('CASH') },
-                      { value: 'CARD', label: tPay('CARD') },
-                    ]}
-                    emptyLabel={null}
-                  />
-                  {refundMethod === 'CARD' && bankTerminals.length > 0 ? (
+            <FieldSection title={t('earlyCheckoutTitle')}>
+              <div className="space-y-1">
+                <p className="m-0">{t('earlyCheckoutNights', { count: early.unusedNights })}</p>
+                <p className="m-0">{t('earlyCheckoutGross', { amount: money(early.unusedSellGross) })}</p>
+                <p className="m-0">{t('earlyCheckoutVat', { amount: money(early.vatWithheld) })}</p>
+                <p className="m-0">{t('earlyCheckoutCash', { amount: money(early.guestCashRefund) })}</p>
+                {refundNeeded ? (
+                  <div className="flex flex-wrap items-end gap-2 pt-2">
                     <CatalogField
-                      kind="CLOSED_SMALL"
-                      label={t('bankTerminal')}
-                      value={refundTerminal}
-                      onChange={(v) => setRefundTerminal(String(v ?? ''))}
-                      options={terminalOptions}
+                      kind="OPS_HOT"
+                      label={t('earlyCheckoutTender')}
+                      required
+                      value={refundMethod}
+                      onChange={(v) => setRefundMethod(String(v ?? ''))}
+                      options={[
+                        { value: 'CASH', label: tPay('CASH') },
+                        { value: 'CARD', label: tPay('CARD') },
+                      ]}
                       emptyLabel={null}
                     />
-                  ) : null}
-                  <Field
-                    label={t('earlyCheckoutReason')}
-                    preset="shortText"
-                    value={refundReason}
-                    onChange={(e) => setRefundReason(e.target.value)}
-                  />
-                </>
-              ) : null}
-            </div>
+                    {refundMethod === 'CARD' ? (
+                      terminalOptions.length > 0 ? (
+                        <CatalogField
+                          kind="CLOSED_SMALL"
+                          label={t('bankTerminal')}
+                          required
+                          value={refundTerminal}
+                          onChange={(v) => setRefundTerminal(String(v ?? ''))}
+                          options={terminalOptions}
+                          emptyLabel={t('pickTerminal')}
+                        />
+                      ) : (
+                        <p className={`m-0 text-[12px] ${TEXT_DANGER_CLASS}`}>{t('noBankTerminal')}</p>
+                      )
+                    ) : null}
+                    <Field
+                      label={t('earlyCheckoutReason')}
+                      preset="longText"
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </FieldSection>
+          ) : null}
+          {error ? (
+            <p className={`m-0 ${TEXT_DANGER_CLASS}`} role="alert">
+              {error}
+            </p>
           ) : null}
         </div>
       </EraModal>
@@ -497,12 +666,9 @@ export function FolioCheckoutModal({
             cancelLabel={t('depositCarry')}
             submitLabel={t('depositPayout')}
             busy={busy}
+            submitDisabled={!remainderMethod || (remainderMethod === 'CARD' && !remainderTerminal)}
             onSubmit={() => {
               if (!remainder) return;
-              if (remainderMethod === 'CARD' && !remainderTerminal.trim()) {
-                showApiError({ error: t('bankTerminal') }, tc('error'));
-                return;
-              }
               setBusy(true);
               void Promise.all(
                 remainder.ids.map((depositId) =>
@@ -513,8 +679,7 @@ export function FolioCheckoutModal({
                       depositId,
                       action: 'payout',
                       paymentMethod: remainderMethod,
-                      bankTerminalId:
-                        remainderMethod === 'CARD' ? remainderTerminal.trim() || undefined : undefined,
+                      bankTerminalId: remainderMethod === 'CARD' ? remainderTerminal || undefined : undefined,
                     }),
                   }).then(async (res) => {
                     if (!res.ok) throw await res.json();
@@ -532,26 +697,28 @@ export function FolioCheckoutModal({
         }
       >
         <div className="space-y-2">
-          <p className="m-0 text-[13px]">{t('depositRemainderHint', { amount: (remainder?.amount ?? 0).toFixed(2) })}</p>
+          <p className="m-0 text-[13px]">{t('depositRemainderHint', { amount: money(remainder?.amount ?? 0) })}</p>
           <CatalogField
             kind="OPS_HOT"
             label={t('method')}
+            required
             value={remainderMethod}
-            onChange={(v) => setRemainderMethod(String(v ?? 'CASH'))}
+            onChange={(v) => setRemainderMethod(String(v ?? ''))}
             options={[
               { value: 'CASH', label: tPay('CASH') },
               { value: 'CARD', label: tPay('CARD') },
             ]}
             emptyLabel={null}
           />
-          {remainderMethod === 'CARD' && bankTerminals.length > 0 ? (
+          {remainderMethod === 'CARD' && terminalOptions.length > 0 ? (
             <CatalogField
               kind="CLOSED_SMALL"
               label={t('bankTerminal')}
+              required
               value={remainderTerminal}
               onChange={(v) => setRemainderTerminal(String(v ?? ''))}
               options={terminalOptions}
-              emptyLabel={null}
+              emptyLabel={t('pickTerminal')}
             />
           ) : null}
         </div>

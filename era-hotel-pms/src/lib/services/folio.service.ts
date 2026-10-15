@@ -753,7 +753,15 @@ export async function listFolios(reservationId?: string) {
       charges: { include: { revenueCode: true, department: true, paymentAllocations: true } },
       payments: true,
       fiscalDocuments: true,
-      reservation: { include: { guest: true, room: true } },
+      reservationGuest: { select: { firstName: true, lastName: true, guest: { select: { fullName: true } } } },
+      reservation: {
+        include: {
+          guest: true,
+          room: true,
+          agency: { select: { id: true, name: true } },
+          company: { select: { id: true, name: true } },
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
