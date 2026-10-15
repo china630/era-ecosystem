@@ -19,9 +19,9 @@ Clinic scope: `DiagnosticService.active` + catalog favorites (`only` hides the r
 |-------|------:|
 | Modalities | 9 |
 | Study templates (imaging / functional / endoscopy) | 85 |
-| Lab panels | 48 |
-| Lab analytes (panel copies) | 362 |
-| Analyte dictionary (unique codes) | 310 |
+| Lab panels | 51 |
+| Lab analytes (panel copies) | 496 |
+| Analyte dictionary (unique codes) | 333 |
 | Visit templates | 13 |
 | Check-up packages | 8 |
 
@@ -88,6 +88,8 @@ Also: mammography, DXA
 | Allergy | `LAB-ALLERGY`, `LAB-ALLERGY-FOOD`, `LAB-ALLERGY-INH`, `LAB-ALLERGY-PED` |
 | Specialty | `LAB-RHEUMA`, `LAB-TUMOR`, `LAB-TUMOR-EXT`, `LAB-VITAMIN`, `LAB-TRACE`, `LAB-IG`, `LAB-HOMOC`, `LAB-CELIAC` |
 | Micro / GI / gyn | `LAB-URINE-CULT`, `LAB-MICRO-CULT`, `LAB-STOOL`, `LAB-COPROG`, `LAB-SPUTUM`, `LAB-GYN-SMEAR`, `LAB-HPV`, `LAB-CYTOLOGY`, `LAB-HISTO`, `LAB-SEMEN`, `LAB-BG`, `LAB-DRUG-SCR` |
+
+`LAB-CBC` and `LAB-URINE` are whole panels on every open package. The urine blank profile `Sidiyin ümumi analizi` maps the 19 Nafta rows; opening that analyte grid writes the blank's reference ranges and order. A lab print skips rows with an empty value. USG narrative blanks wait for their own file. Analyte order in the service grid moves with the up and down arrows on **Sıra nömrəsi**.
 
 ---
 

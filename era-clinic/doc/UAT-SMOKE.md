@@ -448,3 +448,14 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 9. `/sanatorium` list rows: light sky tint when care team assigned; light red tint when not.
 10. If episode has no `programCode`, proposed stays empty until package is set (walk-in Select / hotel product).
 
+## Bath day series, clinic days, Word lab blanks (CLI-58 / 59 / 60) — SCREEN
+
+**Status:** SCREEN. Not SHIPPED until these steps pass on a pilot org. Migration `20261015120000_day_series_calendar_blanks` must be applied first.
+
+1. `/admin/procedure-rules` → **Day series** tab lists NAFTALAN / HYDRO / IODINE (created by the planning import only when missing) → edit members → Save.
+2. `/sanatorium` → patient card → package modal → **Bath calendar** shows the series grid for the stay → change one cell → Save → reopen: the cell is kept.
+3. `/admin/settings` → **Clinic days** → close one civil day → schedule recalc preview lists moved sessions → Apply (super-admin only).
+4. `/admin/lis-profiles` → **Word blank** mapper → upload a `.docx`, map analytes to cells → Save.
+5. Open lab order → results step → pick the blank profile → upload a filled `.docx` from the lab → mapped analyte values appear in the result lines → Save.
+6. Apply any package → the course has `LAB-CBC` and `LAB-URINE`; urine reference shows U-SG 1010–1030 and U-PH 6.0–7.4.
+

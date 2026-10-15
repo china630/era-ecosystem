@@ -701,11 +701,14 @@ model DiagnosticAnalyte {
   section        String?
   valueType      AnalyteValueType     @default(NUMERIC) @map("value_type")
   sortOrder      Int                  @default(0) @map("sort_order")
+  cardId         String?              @map("card_id")
+  card           AnalyteCard?         @relation(fields: [cardId], references: [id], onDelete: SetNull)
   valueOptions   AnalyteValueOption[]
 
   @@unique([serviceId, code])
   @@index([serviceId])
   @@index([organizationId])
+  @@index([cardId])
 }
 
 /// Trilingual allowed values for QUALITATIVE analytes (store code in LabResult.value).
@@ -1417,6 +1420,112 @@ model ProcedureRotationRule {
   @@unique([organizationId, code])
   @@index([active])
   @@index([organizationId])
+}
+
+/// Bath procedures that share one day-block calendar. Marks are per procedure, not hardcoded in the UI.
+model ProcedureDaySeries {
+  id             String                     @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  active         Boolean                    @default(true)
+  /// When true, a rest day of another series may take a procedure from this series.
+  fillsRestDays  Boolean                    @default(false) @map("fills_rest_days")
+  sortOrder      Int                        @default(0) @map("sort_order")
+  members        ProcedureDaySeriesMember[]
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId, active])
+  @@map("procedure_day_series")
+}
+
+model ProcedureDaySeriesMember {
+  id             String             @id @default(cuid())
+  organizationId String
+  seriesId       String             @map("series_id")
+  series         ProcedureDaySeries @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  procedureCode  String             @map("procedure_code")
+  shortMark      String             @map("short_mark")
+  sortOrder      Int                @default(0) @map("sort_order")
+
+  @@unique([seriesId, procedureCode])
+  @@index([organizationId, procedureCode])
+  @@map("procedure_day_series_member")
+}
+
+/// One civil day opened or closed on top of the production calendar.
+model ClinicDayOverride {
+  id             String   @id @default(cuid())
+  organizationId String
+  dayYmd         String   @map("day_ymd")
+  closed         Boolean
+  endHour        Int?     @map("end_hour")
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, dayYmd])
+  @@index([organizationId])
+  @@map("clinic_day_override")
+}
+
+enum LabBlankKind {
+  TABLE
+  NARRATIVE
+}
+
+/// Word (or later narrative) blank. Row labels map to analyte codes. The file is not hardcoded to one clinic.
+model LabBlankProfile {
+  id             String        @id @default(cuid())
+  organizationId String
+  name           String
+  kind           LabBlankKind  @default(TABLE)
+  serviceCode    String?       @map("service_code")
+  active         Boolean       @default(true)
+  rows           LabBlankRow[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@unique([organizationId, name])
+  @@index([organizationId, active])
+  @@map("lab_blank_profile")
+}
+
+model LabBlankRow {
+  id             String           @id @default(cuid())
+  organizationId String
+  profileId      String           @map("profile_id")
+  profile        LabBlankProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  sourceLabel    String           @map("source_label")
+  analyteCode    String           @map("analyte_code")
+  sortOrder      Int              @default(0) @map("sort_order")
+
+  @@unique([profileId, sourceLabel])
+  @@index([organizationId])
+  @@map("lab_blank_row")
+}
+
+/// Shared analyte card. Several panel rows may point at one card so TSH is not defined twice.
+model AnalyteCard {
+  id             String              @id @default(cuid())
+  organizationId String
+  code           String
+  labelEn        String              @map("label_en")
+  labelRu        String              @map("label_ru")
+  labelAz        String              @map("label_az")
+  unit           String?
+  valueType      AnalyteValueType    @default(NUMERIC) @map("value_type")
+  refMin         String?             @map("ref_min")
+  refMax         String?             @map("ref_max")
+  analytes       DiagnosticAnalyte[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("analyte_card")
 }
 
 /// Quota-preserving substitute when original is contraindicated

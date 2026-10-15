@@ -459,6 +459,29 @@ export async function applyPackageAutoBlocks(
   }
 
   if (instance) {
+    for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
+      if (createdLabCodes.includes(code) || skippedLabCodes.includes(code)) continue;
+      if (await hasLabOrder(patientRefId, episodeId, code)) {
+        skippedLabCodes.push(code);
+        continue;
+      }
+      try {
+        await createLabOrderWithItems({
+          patientRefId,
+          clinicalEpisodeId: episodeId,
+          codes: [code],
+          source: "IN_HOUSE",
+          fasting: false,
+          patientOrigin,
+        });
+        createdLabCodes.push(code);
+      } catch {
+        skippedLabCodes.push(code);
+      }
+    }
+  }
+
+  if (instance) {
     for (const quotaCode of quotaCodesTouched) {
       await syncEntitlementUsage({
         instanceId: instance.id,

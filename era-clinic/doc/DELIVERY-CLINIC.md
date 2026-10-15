@@ -160,6 +160,9 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 
 - [x] Billing router: `WALK_IN` → finance event; `IN_HOUSE` → hotel `room-charge` MEDICAL
 - [x] Nafta dual-run extra tickets: `/reception/extra-tickets` + hotel Elektraweb outbox at issue (not `COMPLETED`); nurse `TICKET_REQUIRED`. HOT-06 remains HEADLESS.
+- [~] CLI-58 SCREEN: bath day series (`/admin/procedure-rules` tab) + per-course bath calendar in the package modal; `planning-rules` import creates missing series only; migration `20261015120000_day_series_calendar_blanks`; UAT open — not SHIPPED
+- [~] CLI-59 SCREEN: clinic calendar day open/close (`/admin/settings`) + super-admin schedule recalc preview/apply; UAT open — not SHIPPED
+- [~] CLI-60 SCREEN: Word lab blanks (`/admin/lis-profiles` mapper; lab order reads a filled `.docx` into result lines); `LAB-CBC` + `LAB-URINE` on every package apply; urine U-SG 1010–1030, U-PH 6.0–7.4; UAT open — not SHIPPED
 - [~] CLI-57 SCREEN: package balance assign modal + extras `PENDING_PAY`→Pay→folio→plan→ticket×3; `inPackage` flag; walk-in extras-only; Replace+FO manager; day-1 auto ≤3; UAT open — not SHIPPED
 - [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
 - [~] Wave A dual-run (CLI-50 SCREEN): episode always opens without hotel `programCode`; staff Select `PKG-STANDART|PREMIUM|DERMO|DETOKS` on `/sanatorium`; `?episode=` opens treatment chart; ADR [nafta-medical-sku-dual-run.md](../../docs/adr/nafta-medical-sku-dual-run.md)

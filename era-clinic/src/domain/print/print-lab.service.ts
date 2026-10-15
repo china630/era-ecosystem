@@ -115,6 +115,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
           );
         }
       }
+      if (!String(value ?? "").trim() || value === "-" || value === "—" || value === "1") continue;
       const label = analyte
         ? pickL10n(
             {

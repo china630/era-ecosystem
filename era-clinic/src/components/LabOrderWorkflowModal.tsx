@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 import {
@@ -11,6 +11,8 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
+  CatalogField,
+  MODAL_INPUT_CLASS,
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -179,7 +181,20 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
   const [metaValues, setMetaValues] = useState<Record<string, string>>({});
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [resultLines, setResultLines] = useState<ResultLineState[]>([]);
+  const [blankProfiles, setBlankProfiles] = useState<Array<{ id: string; name: string }>>([]);
+  const [blankProfileId, setBlankProfileId] = useState("");
+  const blankFileRef = useRef<HTMLInputElement>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  useEffect(() => {
+    if (!resultsModalOpen) return;
+    void fetch("/api/lab-orders/blank-profiles")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!json) return;
+        const rows = (json.data ?? json) as Array<{ id: string; name: string }>;
+        if (Array.isArray(rows)) setBlankProfiles(rows);
+      });
+  }, [resultsModalOpen]);
   const [printNotice, setPrintNotice] = useState("");
   const [printOpen, setPrintOpen] = useState(false);
 
@@ -624,6 +639,67 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
           />
         }
       >
+        <div className="mb-3 flex flex-wrap items-end gap-2">
+          <CatalogField
+            kind="CLOSED_MEDIUM"
+            label={t("loadWord")}
+            value={blankProfileId}
+            onChange={(value) => setBlankProfileId(String(value ?? ""))}
+            options={[
+              { value: "", label: "—" },
+              ...blankProfiles.map((profile) => ({ value: profile.id, label: profile.name })),
+            ]}
+          />
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={!orderId || !blankProfileId}
+            onClick={() => blankFileRef.current?.click()}
+          >
+            {t("loadWord")}
+          </button>
+          <input
+            ref={blankFileRef}
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            className={`hidden ${MODAL_INPUT_CLASS}`}
+            aria-label={t("loadWord")}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file || !orderId || !blankProfileId) return;
+              const reader = new FileReader();
+              reader.onload = () => {
+                const raw = String(reader.result ?? "");
+                const docxBase64 = raw.includes(",") ? raw.split(",")[1] ?? "" : raw;
+                void fetch(`/api/lab-orders/${orderId}/blank`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ profileId: blankProfileId, docxBase64 }),
+                })
+                  .then(async (res) => ({ ok: res.ok, json: await res.json() }))
+                  .then(({ ok, json }) => {
+                    if (!ok) {
+                      showApiError(json, t("loadWord"));
+                      return;
+                    }
+                    const rows = (json.data?.rows ?? json.rows ?? []) as Array<{
+                      analyteCode: string | null;
+                      value: string;
+                      applied: boolean;
+                    }>;
+                    setResultLines((lines) =>
+                      lines.map((line) => {
+                        const hit = rows.find((row) => row.applied && row.analyteCode === line.code);
+                        return hit ? { ...line, value: hit.value } : line;
+                      }),
+                    );
+                  });
+              };
+              reader.readAsDataURL(file);
+            }}
+          />
+        </div>
         <form id={resultsFormId} onSubmit={(e) => void saveResults(e)}>
           <TemplateResultForm
             item={catalogItem}

@@ -174,7 +174,7 @@ describe("applyPackageAutoBlocks", () => {
         codes: ["CARDIO-ECG"],
       }),
     );
-    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
     expect(r.autoApplyState).toBe("APPLIED");
   });
 
@@ -312,7 +312,7 @@ describe("applyPackageAutoBlocks", () => {
       }),
     );
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
   });
 
   it("AUTO lab stored as PROCEDURE_ORDER still creates a lab order", async () => {
@@ -329,7 +329,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["LAB-CBC"]);
+    expect(r.createdLabCodes).toEqual(["LAB-CBC", "LAB-URINE"]);
     expect(createLabOrderWithItems).toHaveBeenCalled();
   });
 
@@ -348,8 +348,8 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual([]);
-    expect(createLabOrderWithItems).not.toHaveBeenCalled();
+    expect(r.createdLabCodes).toEqual(["LAB-CBC", "LAB-URINE"]);
+    expect(createLabOrderWithItems).toHaveBeenCalled();
   });
 
   it("CARE_TEAM retries a day-1 exam that was waiting on a doctor", async () => {
@@ -387,7 +387,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
   });
 
   it("MANUAL_RETRY reads current template axes and creates a day-1 lab", async () => {
@@ -417,7 +417,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "MANUAL_RETRY" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["ALT"]);
+    expect(r.createdLabCodes).toEqual(["ALT", "LAB-CBC", "LAB-URINE"]);
     expect(recalcProgramQuotas).toHaveBeenCalledWith(
       "pi1",
       expect.objectContaining({ adoptCurrentVersion: true, nights: 14 }),
@@ -470,7 +470,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["LAB-CBC"]);
+    expect(r.createdLabCodes).toEqual(["LAB-CBC", "LAB-URINE"]);
     expect(createLabOrderWithItems).toHaveBeenCalled();
   });
 

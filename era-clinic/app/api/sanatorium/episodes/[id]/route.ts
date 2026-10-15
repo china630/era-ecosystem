@@ -24,6 +24,7 @@ import {
   episodeCareTeamDenied,
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
+import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 
 const complaintSchema = z.object({ text: z.string().min(1) });
 const diagnosisSchema = z.object({
@@ -77,7 +78,12 @@ export async function GET(
       );
       episode.programInstance.procedureLines = lines;
     }
-    return jsonOk(episode);
+    let hotelStay: { startsOn: string; endsOn: string } | null = null;
+    if (episode && !episode.programInstance && episode.reservationId) {
+      const window = await lookupHotelStayWindow(episode.reservationId);
+      if (window) hotelStay = { startsOn: window.checkInDate, endsOn: window.checkOutDate };
+    }
+    return jsonOk(episode ? { ...episode, hotelStay } : episode);
   } catch (err) {
     return handleRouteError(err);
   }

@@ -10,6 +10,10 @@
 
 **Entitlement blocks (CLI-51 amend):** each package line is a **block** (`ProgramTemplateProcedure` code = balance key). Optional `ProgramTemplateBlockMember` lists SKUs that may burn that block (`ProcedureType` for treatment families; diagnostic catalog for LAB/EXAM). A LAB block lists catalog kinds `lab_panel`, `imaging`, and `functional` (blood panels, ultrasound, ECG) and still fulfills as `LAB_ORDER`. EXAM lists `visit` only. Knot matrix stores **qty per block** at PDF night columns only (interpolate for other stays). Admin edit modal is wide with physio / bath / paraffin / lab / exam blocks. **`fulfillment` is derived from block kind** (İcra is not a separate admin control). Membership picker is cascaded by kind — not the full treatment catalog on a lab block.
 
+The bath calendar passes the chosen days. The planner picks a free cabin and hour inside that day and stops at the day's end hour (Saturday 13:00). A day with no free slot stays in the quota. A mode change redraws automatic cells around manual baths and already checked-in or completed sessions. Sitz-then-full marks the first session sitting (`OTURAQ`) and the rest full (`TAM`).
+
+Stay check-in, check-out, and nights come from `ProgramInstance.startsOn` / `endsOn`. If the hotel lifecycle event never wrote a package and the course still has a `reservationId`, opening the patient card or the sanatorium chart reads the hotel stay once (`/api/internal/v1/stays/by-external-ref`) and shows those dates. A failed hotel call leaves the dates empty.
+
 **Versioning:** composition save creates `version+1` and retires the previous row (`isCurrent=false`). A new check-in pins `ProgramInstance.templateId` and freezes `entitlementSnapshot` at that version. Night-only recalc keeps that pin. Super-admin package apply (`MANUAL_RETRY` and the open-course bulk button) moves the course onto the current template, recomputes knot quotas, and cancels the latest future `SCHEDULED`/`PROPOSED` sessions that no longer fit. `COMPLETED` and `CHECKED_IN` stay.
 
 ---

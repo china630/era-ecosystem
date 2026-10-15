@@ -80,6 +80,9 @@ type EpisodeOption = {
   programCode: string | null;
   roomNumber: string | null;
   patientOrigin: string;
+  stayStartsOn?: string | null;
+  stayEndsOn?: string | null;
+  stayNights?: number | null;
 };
 
 const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
@@ -93,6 +96,13 @@ const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
   O_NEG: "O-",
   UNKNOWN: "—",
 };
+
+function formatStayDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+}
 
 function maskPersonId(id: string | null | undefined): string {
   if (!id) return "—";
@@ -186,6 +196,7 @@ export function PatientCardBody({
     }
     showSuccess(t("retryPackageDone"));
     setClinicalRefreshKey((n) => n + 1);
+    await loadEpisodes();
   }
 
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
@@ -591,6 +602,18 @@ export function PatientCardBody({
                 <p>
                   <span className="font-medium">{t("packageOrigin")}:</span>{" "}
                   {selectedEpisode.patientOrigin}
+                </p>
+                <p>
+                  <span className="font-medium">{t("stayCheckIn")}:</span>{" "}
+                  {formatStayDate(selectedEpisode.stayStartsOn)}
+                </p>
+                <p>
+                  <span className="font-medium">{t("stayCheckOut")}:</span>{" "}
+                  {formatStayDate(selectedEpisode.stayEndsOn)}
+                </p>
+                <p>
+                  <span className="font-medium">{t("stayNights")}:</span>{" "}
+                  {selectedEpisode.stayNights ?? "—"}
                 </p>
               </div>
             </section>
