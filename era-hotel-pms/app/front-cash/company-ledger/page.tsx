@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   DatePicker,
@@ -64,6 +64,7 @@ function todayIso() {
 export default function CompanyLedgerPage() {
   const { can } = useAuth();
   const searchParams = useSearchParams();
+  const embedded = (usePathname() ?? '').startsWith('/front-cash/debts');
   const t = useTranslations('reports');
   const tc = useTranslations('common');
   const [companies, setCompanies] = useState<Party[]>([]);
@@ -159,7 +160,7 @@ export default function CompanyLedgerPage() {
 
   return (
     <>
-      <PageHeader title={t('companyLedgerTitle')} subtitle={t('companyLedgerSubtitle')} />
+      {embedded ? null : <PageHeader title={t('companyLedgerTitle')} subtitle={t('companyLedgerSubtitle')} />}
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {

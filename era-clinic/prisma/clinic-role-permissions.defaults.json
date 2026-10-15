@@ -127,6 +127,7 @@
     "api:appointments.write",
     "api:cashier",
     "api:catalog.read",
+    "api:hotel.revenue_codes",
     "api:icd.read",
     "api:identity.guest_qr",
     "api:inpatient",

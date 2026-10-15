@@ -82,7 +82,12 @@ type ChargeRow = {
   amount: Decimal;
   qty: number;
   businessDate: Date;
-  revenueCode: { code: string; name?: string | null; department: { code: string } | null };
+  revenueCode: {
+    code: string;
+    name?: string | null;
+    systemRole: string | null;
+    department: { code: string } | null;
+  };
 };
 
 function chargeLineTotal(c: Pick<ChargeRow, 'amount' | 'qty'>): number {
@@ -105,11 +110,7 @@ function bucketCharges(rows: ChargeRow[]) {
   let other = 0;
   for (const c of rows) {
     const amt = chargeLineTotal(c);
-    const bucket = revenueFlashBucket(
-      c.revenueCode.code,
-      c.revenueCode.department?.code,
-      c.revenueCode.name,
-    );
+    const bucket = revenueFlashBucket(c.revenueCode, c.revenueCode.department?.code);
     if (bucket === 'room') room += amt;
     else if (bucket === 'fb') fb += amt;
     else if (bucket === 'spa') spa += amt;

@@ -22,8 +22,12 @@ export interface OutboundSettings {
   requireZeroBalanceOnCheckout: boolean;
 }
 
+/**
+ * External ERP webhook (customer's own accounting). Off until an org turns it
+ * on in Settings → Integration; ERA finance never uses this channel.
+ */
 export const DEFAULT_OUTBOUND_SETTINGS: OutboundSettings = {
-  enabled: true,
+  enabled: false,
   realtime: {
     chargePosted: true,
     paymentReceived: true,

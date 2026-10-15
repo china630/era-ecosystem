@@ -590,7 +590,7 @@ export function PatientCardBody({
               <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
                 {t("packageSummaryTitle")}
               </h2>
-              <div className={`${CARD_CONTAINER_CLASS} space-y-1 p-4 text-sm`}>
+              <div className={`${CARD_CONTAINER_CLASS} grid grid-cols-1 gap-3 p-4 text-sm sm:grid-cols-3`}>
                 <p>
                   <span className="font-medium">{t("packageProgram")}:</span>{" "}
                   {selectedEpisode.programCode ?? "—"}

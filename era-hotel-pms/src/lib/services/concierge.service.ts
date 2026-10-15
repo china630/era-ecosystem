@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 import type { ConciergeOrderStatus } from '@prisma/client';
 
@@ -62,15 +62,13 @@ export async function completeConciergeOrder(orderId: string) {
     });
   }
 
-  const foodCode = await findRevenueCodeByToken('FOOD');
-  if (foodCode) {
-    await postCharge({
-      reservationId: order.reservationId,
-      revenueCodeId: foodCode.id,
-      amount: decimalToNumber(order.product.price),
-      description: `Concierge: ${order.product.name}`,
-    });
-  }
+  const foodCode = await requireRevenueCodeByRole('FOOD');
+  await postCharge({
+    reservationId: order.reservationId,
+    revenueCodeId: foodCode.id,
+    amount: decimalToNumber(order.product.price),
+    description: `Concierge: ${order.product.name}`,
+  });
 
   return prisma.conciergeOrder.update({
     where: { id: orderId },

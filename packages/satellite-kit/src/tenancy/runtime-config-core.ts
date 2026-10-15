@@ -32,10 +32,19 @@ function readConfigFile(): SatelliteRuntimeConfig | null {
   }
 }
 
+/**
+ * File is a boot cache only — DB wins on boot. A read-only image (`/app` not
+ * writable) must not fail Sync, so a write error is logged and swallowed.
+ */
 export function writeRuntimeConfigFile(cfg: SatelliteRuntimeConfig): void {
   const filePath = runtimeConfigFilePath();
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(cfg, null, 2)}\n`, "utf8");
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, `${JSON.stringify(cfg, null, 2)}\n`, "utf8");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[runtime-config] file cache not written (${filePath}): ${message}`);
+  }
 }
 
 function compactDefined(cfg: SatelliteRuntimeConfig): SatelliteRuntimeConfig {

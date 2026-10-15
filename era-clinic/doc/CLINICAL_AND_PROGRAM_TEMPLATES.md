@@ -45,6 +45,12 @@ Access matrix (`/admin/access`): labels for both keys; legacy templates key remo
 
 ---
 
+## Stay dates and bath seating
+
+Giriş, Çıxış and Gecə on the course card, the treatment card, the bath calendar and package recalculation use the hotel stay when the episode has a reservation. The program window is the fallback. Opening a package from the clinic, including the checkup form, passes those hotel dates into the program instance. When the hotel stay is known, that form does not ask for a start date.
+
+A bath whose procedure code is in an active day series is seated one session per planned stay day (from today forward), into a free cabin and a free attendant. A day that cannot take the session stays on the toast with the date and the reason. Sessions that already seated are not cancelled. Procedures outside a day series still use the minute-grid placer.
+
 ## Future debt (not in this wave)
 
 | Item | Notes |

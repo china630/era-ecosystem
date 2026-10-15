@@ -150,7 +150,7 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
     }
     if (dryRun) return "created";
     if (!category) throw new Error("Category missing");
-    let revenueCode: string | null = outlet.revenueCenterCode?.trim() || null;
+    let revenueCode: string | null = null;
     const revenueName = row.revenueName?.trim();
     if (revenueName) {
       const { listHotelRevenueCodes, resolveHotelRevenueKey, resolveCatalogOrganizationId } =

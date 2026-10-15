@@ -86,7 +86,10 @@ export async function POST(
       for (const line of activeLines) {
         const sku = line.plu?.trim();
         if (!sku) return jsonError(`Finance SKU is required for ${line.description}`, 400);
-        const lineKey = `${receipt.id}:${line.id}`;
+        const { retailReceiptLineRef } = await import(
+          "@era/satellite-kit/integration/folio-charge-ref"
+        );
+        const lineKey = retailReceiptLineRef(receipt.id, line.id);
         const revenueCode = await revenueCodeForSaleLine({
           plu: sku,
           outletRevenueCode: receipt.outlet.revenueCode,
@@ -125,7 +128,9 @@ export async function POST(
           amount: Number(line.lineTotal),
           description: `${line.qty}x ${line.description}`,
           payerLabel: body.customerPhone?.trim() || receipt.outlet.code,
-          idempotencyKey: `retail-${receipt.id}-${line.id}`,
+          idempotencyKey: (
+            await import("@era/satellite-kit/integration/folio-charge-ref")
+          ).retailPendingLineRef(receipt.id, line.id),
           sku,
           qty: line.qty,
           revenueCode,

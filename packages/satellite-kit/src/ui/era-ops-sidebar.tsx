@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { EraOpsNavItem, EraOpsSidebarProps } from "./era-ops-types";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "./design-system";
+import { isRailFlyoutTarget, RailFlyout } from "./rail-flyout";
 import { bestMatchingNavHref, collectNavHrefs, isBestNavHref } from "./nav-href-match";
 
 function NavItemGroup({
@@ -31,6 +32,7 @@ function NavItemGroup({
     if (!flyout) return;
     const onDoc = (event: MouseEvent) => {
       if (rootRef.current?.contains(event.target as Node)) return;
+      if (isRailFlyoutTarget(event.target)) return;
       setFlyout(false);
     };
     document.addEventListener("mousedown", onDoc);
@@ -61,12 +63,12 @@ function NavItemGroup({
         {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
       </button>
       {flyout && collapsed ? (
-        <div className="absolute left-full top-0 z-[60] ml-1 hidden min-w-[13rem] flex-col gap-0.5 rounded-lg border border-[#D5DADF] bg-white p-2 shadow-lg lg:flex">
+        <RailFlyout open anchorRef={rootRef}>
           <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
             {item.label}
           </p>
           {links}
-        </div>
+        </RailFlyout>
       ) : null}
       <div className={collapsed ? "lg:hidden" : ""}>
         <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">

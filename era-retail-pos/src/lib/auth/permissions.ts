@@ -3,6 +3,7 @@
  * A role is a package of grants; a door checks a grant, never a role name.
  * Edge-safe: no Prisma, no Node crypto.
  */
+import { HOTEL_REVENUE_CODES_PERMISSION } from "@era/satellite-kit/integration/hotel-revenue-route";
 
 export const PERMISSIONS = {
   SCREEN_HOME: "screen:home",
@@ -22,6 +23,8 @@ export const PERMISSIONS = {
   FISCAL_DEVICES: "api:fiscal.devices",
   UPLOADS: "api:uploads",
   INTEGRATIONS_STOCK: "api:integrations.stock",
+
+  HOTEL_REVENUE_CODES: HOTEL_REVENUE_CODES_PERMISSION,
 
   ADMIN_IMPORT: "admin:import",
   ADMIN_SETTINGS: "admin:settings",
@@ -119,6 +122,7 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     id: "admin",
     labelKey: "groups.admin",
     permissions: [
+      PERMISSIONS.HOTEL_REVENUE_CODES,
       PERMISSIONS.ADMIN_IMPORT,
       PERMISSIONS.ADMIN_SETTINGS,
       PERMISSIONS.ACCESS_MANAGE,

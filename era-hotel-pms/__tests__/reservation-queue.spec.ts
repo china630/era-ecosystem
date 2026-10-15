@@ -1,4 +1,4 @@
-import { reservationQueueWhere } from '@/lib/reservation-queue';
+import { RESERVATION_QUEUE_CODES, reservationQueueWhere } from '@/lib/reservation-queue';
 
 describe('reservationQueueWhere', () => {
   const today = '2026-10-10';
@@ -57,5 +57,12 @@ describe('reservationQueueWhere', () => {
         },
       },
     });
+  });
+
+  it('all sits before no-show and cancel and drops those statuses', () => {
+    expect(RESERVATION_QUEUE_CODES.indexOf('all')).toBeLessThan(RESERVATION_QUEUE_CODES.indexOf('noShow'));
+    expect(RESERVATION_QUEUE_CODES.indexOf('all')).toBeLessThan(RESERVATION_QUEUE_CODES.indexOf('cancel'));
+    const where = reservationQueueWhere({ queue: 'all', today });
+    expect(where.status).toEqual({ notIn: ['NO_SHOW', 'CANCELLED'] });
   });
 });

@@ -140,6 +140,7 @@
     "stockCheck": "Сток",
     "replenishment": "Пополнение",
     "import": "Импорт cutover",
+    "catalog": "Коды дохода",
     "settings": "Настройки",
     "executive": "Executive",
     "access": "Доступ и роли",
@@ -250,6 +251,7 @@
       "screen_settings": "Настройки магазина",
       "screen_admin_access": "Экран доступа",
       "api_receipts_sell": "Продажа (чеки, оплата, возвраты, промо)",
+      "api_hotel_revenue_codes": "Коды дохода отеля",
       "api_receipts_void_line": "Аннулировать чек или строку",
       "api_shifts_open": "Открыть смену",
       "api_shifts_close": "Закрыть смену",
@@ -264,5 +266,27 @@
       "admin_settings": "Интеграции точки",
       "admin_access_manage": "Управление ролями и доступом"
     }
+  },
+  "catalogAdmin": {
+    "title": "Коды дохода",
+    "subtitle": "Точка, категория, затем товар. Пустой товар берёт категорию, затем точку.",
+    "outletTitle": "Точка",
+    "outlet": "Точка",
+    "categoryTitle": "Категория",
+    "category": "Категория",
+    "productTitle": "Товар",
+    "product": "Товар",
+    "code": "Код",
+    "name": "Название",
+    "revenueCode": "Код дохода отеля",
+    "addCategory": "Добавить категорию",
+    "noCategory": "Без категории",
+    "save": "Сохранить",
+    "saved": "Сохранено",
+    "saveFailed": "Не сохранилось",
+    "empty": "Для этой организации нет активных кодов дохода отеля.",
+    "unavailable": "Каталог кодов дохода отеля недоступен.",
+    "notLinked": "Организация отеля не связана.",
+    "forbidden": "Эта сессия не может читать коды дохода отеля."
   }
 }

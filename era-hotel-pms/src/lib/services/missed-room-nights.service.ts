@@ -3,15 +3,17 @@ import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { decimalToNumber } from '@/lib/decimal';
 import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
 import { prisma } from '@/lib/prisma';
-import { matchesAnyRevenueToken, findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import {
+  requireRevenueCodeByRole,
+  revenueRoleIn,
+  STAY_NIGHT_ROLES,
+} from '@/lib/revenue-code-token';
 import { recordHotelAudit } from '@/lib/satellite-audit';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
 
 export type MissedNight = { date: string; amount: number };
-
-const ROOM_TOKENS = ['ROOM', 'PKG', 'RATE_ADJ'];
 
 export async function listMissedRoomNights(reservationId: string): Promise<{
   nights: MissedNight[];
@@ -30,7 +32,7 @@ export async function listMissedRoomNights(reservationId: string): Promise<{
   const posted = new Set<string>();
   for (const folio of res.folios) {
     for (const charge of folio.charges) {
-      if (!matchesAnyRevenueToken(charge.revenueCode, ROOM_TOKENS)) continue;
+      if (!revenueRoleIn(charge.revenueCode, STAY_NIGHT_ROLES)) continue;
       if (charge.qty < 0 || decimalToNumber(charge.amount) <= 0) continue;
       if ((charge.description ?? '').startsWith('Void ')) continue;
       const noted = parseRoomChargeNote(charge.description ?? '');
@@ -71,8 +73,7 @@ export async function postMissedRoomNights(reservationId: string, actorUserId?: 
   }
   const preview = await listMissedRoomNights(reservationId);
   if (preview.nights.length === 0) return preview;
-  const revenueRoom = await findRevenueCodeByToken('ROOM');
-  if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
+  const revenueRoom = await requireRevenueCodeByRole('ROOM');
   const openDate = await getCurrentBusinessDate();
   for (const night of preview.nights) {
     await postCharge({

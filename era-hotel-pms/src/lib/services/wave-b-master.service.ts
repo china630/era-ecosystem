@@ -1,6 +1,6 @@
 import { requestFinanceCardIfMissing } from '@/lib/integration/finance-card-request';
 import { prisma } from '@/lib/prisma';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 
 export async function listPromotionCodes() {
@@ -220,18 +220,15 @@ export async function postMinibar(input: {
 
   if (stay?.id) {
     const { postCharge } = await import('@/lib/services/folio.service');
-    const fb = await findRevenueCodeByToken('MINIBAR');
-    const code = fb ?? (await findRevenueCodeByToken('ROOM'));
-    if (code) {
-      await postCharge({
-        reservationId: stay.id,
-        revenueCodeId: code.id,
-        amount: decimalToNumber(item.price) * input.qty,
-        qty: input.qty,
-        sku: item.financeSku,
-        description: `Minibar ${item.code}`,
-      });
-    }
+    const code = await requireRevenueCodeByRole('MINIBAR');
+    await postCharge({
+      reservationId: stay.id,
+      revenueCodeId: code.id,
+      amount: decimalToNumber(item.price) * input.qty,
+      qty: input.qty,
+      sku: item.financeSku,
+      description: `Minibar ${item.code}`,
+    });
   }
   return posting;
 }

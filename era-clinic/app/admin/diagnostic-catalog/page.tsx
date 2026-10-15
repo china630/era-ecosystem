@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { loadHotelRevenueCodes } from "@/lib/hotel-revenue-client";
 import {
   SortableTh,
   sortRows,
@@ -193,20 +194,13 @@ export default function DiagnosticCatalogAdminPage() {
   const [financeServiceOptions, setFinanceServiceOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [financeSkuPinned, setFinanceSkuPinned] = useState<{ value: string; label: string } | null>(null);
   const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
+  const [revenueNotice, setRevenueNotice] = useState("");
   useEffect(() => {
     if (!modalOpen) return;
-    void fetch("/api/admin/hotel-revenue-codes")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((body: { data?: { codes?: { code: string; name: string }[] }; codes?: { code: string; name: string }[] } | null) => {
-        const codes = body?.data?.codes ?? body?.codes ?? [];
-        setRevenueOptions(
-          codes.map((row) => ({
-            value: row.code,
-            label: row.name ? `${row.code} — ${row.name}` : row.code,
-          })),
-        );
-      })
-      .catch(() => setRevenueOptions([]));
+    void loadHotelRevenueCodes().then((loaded) => {
+      setRevenueOptions(loaded.options);
+      setRevenueNotice(loaded.notice ? tc(loaded.notice) : "");
+    });
   }, [modalOpen]);
   const [financeServiceQ, setFinanceServiceQ] = useState("");
   const debouncedFinanceServiceQ = useDebouncedValue(financeServiceQ, 300);
@@ -838,7 +832,7 @@ export default function DiagnosticCatalogAdminPage() {
     const next = [...analytes];
     const [row] = next.splice(index, 1);
     next.splice(nextIndex, 0, row);
-    await Promise.all(
+    const responses = await Promise.all(
       next.map((item, itemIndex) => {
         const sortOrder = itemIndex + 1;
         if (item.sortOrder === sortOrder) return null;
@@ -849,6 +843,10 @@ export default function DiagnosticCatalogAdminPage() {
         });
       }),
     );
+    const failed = responses.find((res) => res && !res.ok);
+    if (failed) {
+      showApiError(await failed.json().catch(() => ({})), tc("failed"));
+    }
     await loadAnalytes(selectedServiceId);
   }
 
@@ -1361,6 +1359,7 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
+              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
               <CatalogField
                 kind="SEARCHABLE"
                 label={t("hotelRevenueCode")}
@@ -1485,6 +1484,7 @@ export default function DiagnosticCatalogAdminPage() {
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
               />
+              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
               <CatalogField
                 kind="SEARCHABLE"
                 label={t("hotelRevenueCode")}
@@ -1581,7 +1581,6 @@ export default function DiagnosticCatalogAdminPage() {
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <div className="flex items-center gap-1">
-                          <span>{row.sortOrder}</span>
                           <button
                             type="button"
                             className={TABLE_ROW_ICON_BTN_CLASS}
@@ -1589,8 +1588,9 @@ export default function DiagnosticCatalogAdminPage() {
                             disabled={index === 0}
                             onClick={() => void moveAnalyte(index, -1)}
                           >
-                            <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
                           </button>
+                          <span>{row.sortOrder}</span>
                           <button
                             type="button"
                             className={TABLE_ROW_ICON_BTN_CLASS}
@@ -1598,7 +1598,7 @@ export default function DiagnosticCatalogAdminPage() {
                             disabled={index === analytes.length - 1}
                             onClick={() => void moveAnalyte(index, 1)}
                           >
-                            <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                           </button>
                         </div>
                       </td>

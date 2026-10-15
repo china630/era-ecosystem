@@ -107,6 +107,7 @@ export default function MenuAdminPanel() {
   const [itemForm, setItemForm] = useState<ItemForm>(emptyItemForm());
   const [financeSkuOptions, setFinanceSkuOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [revenueOptions, setRevenueOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [revenueNotice, setRevenueNotice] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyTitle, setHistoryTitle] = useState("");
   const [priceHistory, setPriceHistory] = useState<PriceRow[]>([]);
@@ -134,35 +135,51 @@ export default function MenuAdminPanel() {
   }, [load]);
 
   useEffect(() => {
-    if (itemModal == null) return;
+    if (itemModal == null && catModal == null) return;
     let cancelled = false;
     void (async () => {
-      const res = await fetch("/api/admin/finance-products?limit=50");
-      if (!res.ok || cancelled) return;
-      const parsed = await res.json().catch(() => null);
-      const payload = (parsed?.data ?? parsed) as {
-        items?: Array<{ value: string; label: string }>;
-      } | null;
-      if (!cancelled) setFinanceSkuOptions(payload?.items ?? []);
+      if (itemModal != null) {
+        const res = await fetch("/api/admin/finance-products?limit=50");
+        if (res.ok && !cancelled) {
+          const parsed = await res.json().catch(() => null);
+          const payload = (parsed?.data ?? parsed) as {
+            items?: Array<{ value: string; label: string }>;
+          } | null;
+          setFinanceSkuOptions(payload?.items ?? []);
+        }
+      }
       const revenueRes = await fetch("/api/admin/hotel-revenue-codes");
-      if (!revenueRes.ok || cancelled) return;
+      if (cancelled) return;
+      if (!revenueRes.ok) {
+        setRevenueOptions([]);
+        setRevenueNotice(
+          revenueRes.status === 403
+            ? t("revenueForbidden")
+            : revenueRes.status === 409
+              ? t("revenueNotLinked")
+              : t("revenueUnavailable"),
+        );
+        return;
+      }
       const revenueParsed = await revenueRes.json().catch(() => null);
       const revenueBody = (revenueParsed?.data ?? revenueParsed) as {
         codes?: Array<{ code: string; name: string }>;
       } | null;
       if (!cancelled) {
+        const codes = revenueBody?.codes ?? [];
         setRevenueOptions(
-          (revenueBody?.codes ?? []).map((row) => ({
+          codes.map((row) => ({
             value: row.code,
             label: row.name ? `${row.code} — ${row.name}` : row.code,
           })),
         );
+        setRevenueNotice(codes.length === 0 ? t("revenueEmpty") : "");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [itemModal]);
+  }, [itemModal, catModal, t]);
 
   useEffect(() => {
     setSelectedCategoryId((prev) =>
@@ -263,8 +280,7 @@ export default function MenuAdminPanel() {
     setEditingItemId(null);
     setShowDetails(false);
     const id = categoryId || categories[0]?.id || "";
-    const cat = categories.find((row) => row.id === id);
-    setItemForm({ ...emptyItemForm(id), revenueCode: cat?.revenueCode ?? "" });
+    setItemForm(emptyItemForm(id));
     setItemModal("create");
   }
 
@@ -564,6 +580,7 @@ export default function MenuAdminPanel() {
           value={catDraft.code}
           onChange={(e) => setCatDraft((d) => ({ ...d, code: e.target.value }))}
         />
+        {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
         <CatalogField
           kind={"SEARCHABLE" as CatalogFieldKind}
           label={t("revenueCode")}
@@ -666,6 +683,7 @@ export default function MenuAdminPanel() {
               }))
             }
           />
+          {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
           <CatalogField
             kind="SEARCHABLE"
             label={t("revenueCode")}

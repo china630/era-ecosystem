@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { Power, PowerOff, Save } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -12,7 +13,10 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
+  GHOST_BUTTON_CLASS,
   useDebouncedValue,
+  CatalogField,
+  type CatalogOption,
   Field,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
@@ -26,12 +30,26 @@ import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { REVENUE_CODE_ROLES } from '@/lib/revenue-code-match';
+import { revenueLabel } from '@/lib/folio-article-summary';
+
+const ICON_BTN = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
+
+function glAccountProblem(value: string): 'empty' | 'hyphen' | null {
+  const next = value.trim();
+  if (!next) return 'empty';
+  if (next.includes('-')) return 'hyphen';
+  return null;
+}
 
 function PosBridgeTestModal({
   open,
+  revenueCode,
   onClose,
 }: {
   open: boolean;
+  /** Code that carries the FOOD role; empty when none is assigned. */
+  revenueCode: string;
   onClose: () => void;
 }) {
   const t = useTranslations('integration');
@@ -49,7 +67,7 @@ function PosBridgeTestModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomNumber,
-          revenueCode: 'FOOD',
+          revenueCode,
           amount: parseFloat(amount),
           description: t('posBridgeDescription'),
           outletCode: 'RESTAURANT',
@@ -118,48 +136,139 @@ interface OutboundLog {
   createdAt: string;
 }
 
+interface GlRevenueCode {
+  id: string;
+  code: string;
+  name: string;
+  nameAz?: string | null;
+  nameRu?: string | null;
+  nameEn?: string | null;
+  systemRole: string | null;
+  active: boolean;
+}
+
 interface GlMapping {
   id: string;
   glAccountCode: string;
-  revenueCode: { id: string; code: string; name: string };
+  revenueCode: GlRevenueCode;
 }
+
+type GlMappingPatch = { glAccountCode?: string; systemRole?: string | null };
 
 function GlMappingRow({
   mapping,
+  displayName,
+  roleOptions,
   onSave,
+  onToggleActive,
 }: {
   mapping: GlMapping;
-  onSave: (revenueCodeId: string, glAccountCode: string) => Promise<void>;
+  displayName: string;
+  roleOptions: CatalogOption[];
+  onSave: (revenueCodeId: string, patch: GlMappingPatch) => Promise<void>;
+  onToggleActive: (revenueCodeId: string, active: boolean) => Promise<void>;
 }) {
+  const t = useTranslations('integration');
   const tc = useTranslations('common');
+  const savedRole = mapping.revenueCode.systemRole ?? '';
   const [code, setCode] = useState(mapping.glAccountCode);
+  const [role, setRole] = useState(savedRole);
   const [busy, setBusy] = useState(false);
+  const active = mapping.revenueCode.active;
 
   useEffect(() => {
     setCode(mapping.glAccountCode);
   }, [mapping.glAccountCode]);
+  useEffect(() => {
+    setRole(savedRole);
+  }, [savedRole]);
+
+  const glChanged = code.trim() !== mapping.glAccountCode;
+  const roleChanged = role !== savedRole;
+  const accountProblem = glChanged ? glAccountProblem(code) : null;
+
+  async function saveRow(includeRole: boolean) {
+    if (busy) return;
+    if (glChanged && accountProblem === 'hyphen') {
+      showApiError({ error: t('glAccountDot') });
+      return;
+    }
+    if (glChanged && accountProblem === 'empty') {
+      showApiError({ error: t('glAccountRequired') });
+      return;
+    }
+    const patch: GlMappingPatch = {
+      ...(glChanged ? { glAccountCode: code.trim() } : {}),
+      ...(includeRole && roleChanged ? { systemRole: role || null } : {}),
+    };
+    if (patch.glAccountCode === undefined && patch.systemRole === undefined) return;
+    setBusy(true);
+    await onSave(mapping.revenueCode.id, patch);
+    setBusy(false);
+  }
 
   return (
-    <tr className={DATA_TABLE_TR_CLASS}>
+    <tr className={`${DATA_TABLE_TR_CLASS} ${active ? '' : 'text-[#95A5A6]'}`}>
+      <td className={DATA_TABLE_TD_CLASS}>{mapping.revenueCode.code}</td>
+      <td className={DATA_TABLE_TD_CLASS}>{displayName}</td>
       <td className={DATA_TABLE_TD_CLASS}>
-        {mapping.revenueCode.code} — {mapping.revenueCode.name}
+        <CatalogField
+          kind="CLOSED_MEDIUM"
+          widthPreset="select"
+          className="[&_label]:!sr-only"
+          label={t('systemRole')}
+          value={role}
+          onChange={(next) => setRole(String(next))}
+          options={roleOptions}
+        />
       </td>
       <td className={DATA_TABLE_TD_CLASS}>
-        <Field label={tc('code')} preset="code" value={code} onChange={(e) => setCode(e.target.value)} />
-      </td>
-      <td className={DATA_TABLE_TD_CLASS}>
-        <button
-          type="button"
-          className={SECONDARY_BUTTON_CLASS}
-          disabled={busy || code === mapping.glAccountCode}
-          onClick={async () => {
-            setBusy(true);
-            await onSave(mapping.revenueCode.id, code);
-            setBusy(false);
+        <Field
+          label={t('glAccount')}
+          preset="code"
+          className="[&_label]:!sr-only"
+          aria-label={t('glAccount')}
+          inputClassName={code.trim() ? undefined : 'bg-[#F4F6F7]'}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            void saveRow(false);
           }}
-        >
-          {tc('save')}
-        </button>
+        />
+      </td>
+      <td className={DATA_TABLE_TD_CLASS}>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            className={ICON_BTN}
+            title={tc('save')}
+            aria-label={tc('save')}
+            disabled={busy || (!glChanged && !roleChanged)}
+            onClick={() => void saveRow(true)}
+          >
+            <Save className="h-4 w-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={ICON_BTN}
+            title={active ? t('glDeactivate') : t('glActivate')}
+            aria-label={active ? t('glDeactivate') : t('glActivate')}
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              await onToggleActive(mapping.revenueCode.id, !active);
+              setBusy(false);
+            }}
+          >
+            {active ? (
+              <Power className="h-4 w-4" aria-hidden />
+            ) : (
+              <PowerOff className="h-4 w-4" aria-hidden />
+            )}
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -180,7 +289,22 @@ export default function IntegrationAdminPage() {
   const tc = useTranslations('common');
   const [settings, setSettings] = useState<OutboundSettings | null>(null);
   const [logs, setLogs] = useState<OutboundLog[]>([]);
+  const locale = useLocale();
   const [glMappings, setGlMappings] = useState<GlMapping[]>([]);
+  const [glCodeQ, setGlCodeQ] = useState('');
+  const [glNameQ, setGlNameQ] = useState('');
+  const [glAccountQ, setGlAccountQ] = useState('');
+  const [glActivity, setGlActivity] = useState('active');
+  const [glAccountPresence, setGlAccountPresence] = useState('all');
+  const debouncedGlCode = useDebouncedValue(glCodeQ, 300);
+  const debouncedGlName = useDebouncedValue(glNameQ, 300);
+  const debouncedGlAccount = useDebouncedValue(glAccountQ, 300);
+  const roleOptions: CatalogOption[] = REVENUE_CODE_ROLES.map((role) => ({
+    value: role,
+    label: `${role} — ${t(`revenueRole.${role}`)}`,
+  }));
+  const foodRevenueCode =
+    glMappings.find((m) => m.revenueCode.systemRole === 'FOOD')?.revenueCode.code ?? '';
   const [busy, setBusy] = useState(false);
   const [logQ, setLogQ] = useState('');
   const debouncedLogQ = useDebouncedValue(logQ, 300);
@@ -188,6 +312,16 @@ export default function IntegrationAdminPage() {
   const searchParams = useSearchParams();
   const viewParam = searchParams.get('view');
   const view = viewParam === 'gl' || viewParam === 'journal' ? viewParam : 'events';
+  const visibleLogs = useMemo(() => {
+    const q = debouncedLogQ.trim().toLowerCase();
+    if (!q) return logs;
+    return logs.filter(
+      (l) =>
+        l.eventType.toLowerCase().includes(q) ||
+        l.status.toLowerCase().includes(q) ||
+        (l.lastError ?? '').toLowerCase().includes(q),
+    );
+  }, [logs, debouncedLogQ]);
 
   const load = useCallback(async () => {
     const [sRes, lRes, glRes] = await Promise.all([
@@ -239,11 +373,11 @@ export default function IntegrationAdminPage() {
     await load();
   }
 
-  async function saveGlMapping(revenueCodeId: string, glAccountCode: string) {
+  async function saveGlMapping(revenueCodeId: string, patch: GlMappingPatch) {
     const res = await fetch('/api/master/revenue-gl-mappings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ revenueCodeId, glAccountCode }),
+      body: JSON.stringify({ revenueCodeId, ...patch }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -251,8 +385,86 @@ export default function IntegrationAdminPage() {
       return;
     }
     showSuccess(t('glMappingSaved'));
-    await load();
+    if (patch.systemRole !== undefined) {
+      await load();
+      return;
+    }
+    if (patch.glAccountCode !== undefined) {
+      const account = patch.glAccountCode;
+      setGlMappings((rows) =>
+        rows.map((row) =>
+          row.revenueCode.id === revenueCodeId ? { ...row, glAccountCode: account } : row,
+        ),
+      );
+    }
   }
+
+  async function setRevenueActive(revenueCodeId: string, active: boolean) {
+    const current = glMappings.find((row) => row.revenueCode.id === revenueCodeId);
+    if (!active && current?.revenueCode.systemRole) {
+      showApiError({ error: t('glDeactivateRole') });
+      return;
+    }
+    const res = await fetch(`/api/master/revenue-codes/${revenueCodeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      showApiError(data, tc('updateFailed'));
+      return;
+    }
+    showSuccess(tc('success'));
+    setGlMappings((rows) =>
+      rows.map((row) =>
+        row.revenueCode.id === revenueCodeId
+          ? { ...row, revenueCode: { ...row.revenueCode, active } }
+          : row,
+      ),
+    );
+  }
+
+  const activityOptions: CatalogOption[] = [
+    { value: 'active', label: t('glActive') },
+    { value: 'inactive', label: t('glInactive') },
+    { value: 'all', label: t('glAll') },
+  ];
+  const accountPresenceOptions: CatalogOption[] = [
+    { value: 'all', label: t('glAll') },
+    { value: 'mapped', label: t('glMapped') },
+    { value: 'unmapped', label: t('glUnmapped') },
+  ];
+  const visibleGlMappings = useMemo(() => {
+    const codeQ = debouncedGlCode.trim().toLowerCase();
+    const nameQ = debouncedGlName.trim().toLowerCase();
+    const accountQ = debouncedGlAccount.trim().toLowerCase();
+    return glMappings.filter((row) => {
+      const revenue = row.revenueCode;
+      if (glActivity === 'active' && !revenue.active) return false;
+      if (glActivity === 'inactive' && revenue.active) return false;
+      const hasAccount = row.glAccountCode.trim() !== '';
+      if (glAccountPresence === 'mapped' && !hasAccount) return false;
+      if (glAccountPresence === 'unmapped' && hasAccount) return false;
+      if (codeQ && !revenue.code.toLowerCase().includes(codeQ)) return false;
+      if (accountQ && !row.glAccountCode.toLowerCase().includes(accountQ)) return false;
+      if (nameQ) {
+        const names = [revenue.name, revenue.nameAz, revenue.nameRu, revenue.nameEn]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join(' ')
+          .toLowerCase();
+        if (!names.includes(nameQ)) return false;
+      }
+      return true;
+    });
+  }, [
+    glMappings,
+    debouncedGlCode,
+    debouncedGlName,
+    debouncedGlAccount,
+    glActivity,
+    glAccountPresence,
+  ]);
 
   if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
@@ -327,14 +539,16 @@ export default function IntegrationAdminPage() {
           />
           {t('globalEnabled')}
         </label>
+        <p className="m-0 text-[13px] text-[#7F8C8D]">{t('webhookHint')}</p>
         <p className="text-xs font-semibold uppercase text-[#7F8C8D]">{t('realtimeFolio')}</p>
         {(Object.keys(REALTIME_EVENT_KEYS) as (keyof typeof REALTIME_EVENT_KEYS)[]).map((key) => (
           <label key={key} className="flex items-center gap-2">
             <input
               type="checkbox"
-              className={MODAL_CHECKBOX_CLASS}
-              checked={settings.realtime[key]}
-              onChange={(e) => toggle(key, e.target.checked)}
+            className={MODAL_CHECKBOX_CLASS}
+            checked={settings.enabled && settings.realtime[key]}
+            disabled={!settings.enabled}
+            onChange={(e) => toggle(key, e.target.checked)}
             />
             {t(REALTIME_EVENT_KEYS[key])}
           </label>
@@ -343,7 +557,8 @@ export default function IntegrationAdminPage() {
           <input
             type="checkbox"
             className={MODAL_CHECKBOX_CLASS}
-            checked={settings.cityLedgerSnapshot}
+            checked={settings.enabled && settings.cityLedgerSnapshot}
+            disabled={!settings.enabled}
             onChange={(e) => toggle('cityLedgerSnapshot', e.target.checked)}
           />
           {t('eventCityLedger')}
@@ -352,7 +567,8 @@ export default function IntegrationAdminPage() {
           <input
             type="checkbox"
             className={MODAL_CHECKBOX_CLASS}
-            checked={settings.masterDataSync}
+            checked={settings.enabled && settings.masterDataSync}
+            disabled={!settings.enabled}
             onChange={(e) => toggle('masterDataSync', e.target.checked)}
           />
           {t('eventMasterData')}
@@ -361,7 +577,8 @@ export default function IntegrationAdminPage() {
           <input
             type="checkbox"
             className={MODAL_CHECKBOX_CLASS}
-            checked={settings.nightAuditClosed}
+            checked={settings.enabled && settings.nightAuditClosed}
+            disabled={!settings.enabled}
             onChange={(e) => toggle('nightAuditClosed', e.target.checked)}
           />
           {t('eventNightAudit')}
@@ -400,25 +617,78 @@ export default function IntegrationAdminPage() {
 
       {view === 'gl' ? (
       <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('glMappingTitle')}</h2>
-        <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('glMappingHint')}</p>
+        <EraListFilterBar
+          resetLabel={tc('filterReset')}
+          className="mb-3"
+          onReset={() => {
+            setGlCodeQ('');
+            setGlNameQ('');
+            setGlAccountQ('');
+            setGlActivity('active');
+            setGlAccountPresence('all');
+          }}
+        >
+          <Field
+            label={t('glCode')}
+            preset="code"
+            value={glCodeQ}
+            onChange={(e) => setGlCodeQ(e.target.value)}
+          />
+          <Field
+            label={t('glName')}
+            preset="shortText"
+            value={glNameQ}
+            onChange={(e) => setGlNameQ(e.target.value)}
+          />
+          <Field
+            label={t('glAccount')}
+            preset="code"
+            value={glAccountQ}
+            onChange={(e) => setGlAccountQ(e.target.value)}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('glStatus')}
+            value={glActivity}
+            onChange={(next) => setGlActivity(String(next))}
+            options={activityOptions}
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('glAccountPresence')}
+            value={glAccountPresence}
+            onChange={(next) => setGlAccountPresence(String(next))}
+            options={accountPresenceOptions}
+            emptyLabel={null}
+          />
+        </EraListFilterBar>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('revenueCode')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('glCode')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('glName')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('systemRole')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('glAccount')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('glActions')}</th>
               </tr>
             </thead>
             <tbody>
-              {glMappings.map((m) => (
-                <GlMappingRow key={m.id} mapping={m} onSave={saveGlMapping} />
+              {visibleGlMappings.map((m) => (
+                <GlMappingRow
+                  key={m.revenueCode.id}
+                  mapping={m}
+                  displayName={revenueLabel(m.revenueCode, locale)}
+                  roleOptions={roleOptions}
+                  onSave={saveGlMapping}
+                  onToggleActive={setRevenueActive}
+                />
               ))}
-              {glMappings.length === 0 && (
+              {visibleGlMappings.length === 0 && (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={3} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
-                    {t('noGlMappings')}
+                  <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                    {glMappings.length === 0 ? t('noGlMappings') : t('glNoMatch')}
                   </td>
                 </tr>
               )}
@@ -448,24 +718,14 @@ export default function IntegrationAdminPage() {
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('time')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>Event</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('event')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('status')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('attempts')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('error')}</th>
               </tr>
             </thead>
             <tbody>
-              {logs
-              .filter((l) => {
-                const q = debouncedLogQ.trim().toLowerCase();
-                if (!q) return true;
-                return (
-                  l.eventType.toLowerCase().includes(q) ||
-                  l.status.toLowerCase().includes(q) ||
-                  (l.lastError ?? '').toLowerCase().includes(q)
-                );
-              })
-              .map((l) => (
+              {visibleLogs.map((l) => (
                 <tr key={l.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(l.createdAt)}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} max-w-[10rem] truncate`}>
@@ -478,7 +738,7 @@ export default function IntegrationAdminPage() {
                   </td>
                 </tr>
               ))}
-              {logs.length === 0 && (
+              {visibleLogs.length === 0 && (
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
                     {t('noEvents')}
@@ -491,7 +751,11 @@ export default function IntegrationAdminPage() {
       </section>
       ) : null}
 
-      <PosBridgeTestModal open={posModalOpen} onClose={() => setPosModalOpen(false)} />
+      <PosBridgeTestModal
+        open={posModalOpen}
+        revenueCode={foodRevenueCode}
+        onClose={() => setPosModalOpen(false)}
+      />
     </>
   );
 }

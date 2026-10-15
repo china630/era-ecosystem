@@ -233,27 +233,28 @@ export default function PosShiftPanel() {
 
   return (
     <div className={`${CARD_CLASS} mb-3 shrink-0 p-3`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-end gap-4">
+      <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-3">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:gap-4 lg:flex-1 lg:flex-wrap">
           {loading ? (
             <p className="text-sm text-[#7F8C8D]">{tc("loading", { defaultValue: "Loading…" })}</p>
           ) : shift ? (
             <>
-              <div className="min-w-[7rem]">
-                <p className="text-sm font-semibold text-[#2C3E50]">{shift.outlet.code}</p>
-                <p className="text-xs text-[#7F8C8D]">
+              <div className="min-w-0 sm:min-w-[7rem]">
+                <p className="truncate text-sm font-semibold text-[#2C3E50]">{shift.outlet.code}</p>
+                <p className="truncate text-xs text-[#7F8C8D]">
                   {bakuTimeLabel(shift.openedAt)}
                   {shift.openedBy ? ` · ${shift.openedBy}` : ""}
+                  <span className="lg:hidden"> · {tc("azn")}</span>
                 </p>
               </div>
-              <div className="w-16 text-center">
-                <p className="text-[11px] text-[#7F8C8D]">{t("float")}</p>
-                <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
-                  {Number(shift.openingCash).toFixed(2)}
-                </p>
-              </div>
-              <div className="flex items-end gap-1">
-                <span className="pb-0.5 text-[10px] text-[#7F8C8D]">{tc("azn")}</span>
+              <span className="hidden self-end pb-0.5 text-[10px] text-[#7F8C8D] lg:inline">{tc("azn")}</span>
+              <div className="grid min-w-0 flex-1 grid-cols-5 gap-x-1 text-center">
+                <div>
+                  <p className="text-[11px] leading-tight text-[#7F8C8D]">{t("float")}</p>
+                  <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
+                    {Number(shift.openingCash).toFixed(2)}
+                  </p>
+                </div>
                 {(
                   [
                     [ts("cash"), shift.till?.cash],
@@ -261,15 +262,15 @@ export default function PosShiftPanel() {
                     [ts("transfer"), shift.till?.transfer],
                   ] as const
                 ).map(([label, amount]) => (
-                  <div key={label} className="w-16 text-center">
-                    <p className="text-[11px] text-[#7F8C8D]">{label}</p>
+                  <div key={label} className="min-w-0">
+                    <p className="text-[11px] leading-tight text-[#7F8C8D]">{label}</p>
                     <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
                       {(amount ?? 0).toFixed(2)}
                     </p>
                   </div>
                 ))}
-                <div className="w-14 text-center">
-                  <p className="text-[11px] text-[#7F8C8D]">{t("openShort")}</p>
+                <div className="min-w-0">
+                  <p className="text-[11px] leading-tight text-[#7F8C8D]">{t("openShort")}</p>
                   <p className="text-sm font-semibold tabular-nums text-[#2C3E50]">
                     {shift.till?.openChecks ?? 0}
                   </p>
@@ -280,7 +281,7 @@ export default function PosShiftPanel() {
             <p className="text-sm text-[#7F8C8D]">{t("noShift")}</p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!shift && none && (
             <button
               type="button"

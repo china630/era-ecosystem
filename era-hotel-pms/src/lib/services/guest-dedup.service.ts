@@ -13,13 +13,27 @@ export type GuestDedupSummary = {
   suspectedDuplicateGuests: number;
 };
 
+export type DedupMatchType =
+  | 'PHONE'
+  | 'GLOBAL_PERSON_ID'
+  | 'PASSPORT'
+  | 'FIN'
+  | 'EMAIL'
+  | 'NAME_BIRTH'
+  | 'LAST_BIRTH'
+  | 'LAST_PHONE'
+  | 'DOC_CITIZENSHIP';
+
 export type DedupGuestCard = {
   id: string;
   fullName: string;
+  firstName: string | null;
+  lastName: string | null;
   birthDate: string | null;
   sex: string | null;
   nationality: string | null;
   phone: string | null;
+  email: string | null;
   passportNo: string | null;
   fin: string | null;
   linked: boolean;
@@ -29,7 +43,7 @@ export type DedupGuestCard = {
 
 export type DuplicateGroup = {
   key: string;
-  matchType: 'PHONE' | 'GLOBAL_PERSON_ID';
+  matchType: DedupMatchType;
   guestIds: string[];
   labels: string[];
   needsPersonMerge: boolean;
@@ -109,26 +123,55 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
     select: {
       id: true,
       fullName: true,
+      firstName: true,
+      lastName: true,
+      birthDate: true,
+      email: true,
       phone: true,
+      nationality: true,
       globalPersonId: true,
+      documents: { select: { docType: true, docNumber: true, nationality: true } },
     },
   });
 
-  const byPhone = new Map<string, typeof guests>();
-  const byPerson = new Map<string, typeof guests>();
+  const buckets = new Map<string, { matchType: DedupMatchType; key: string; ids: string[] }>();
+  function add(matchType: DedupMatchType, key: string, guestId: string) {
+    const bucketKey = `${matchType}:${key}`;
+    const bucket = buckets.get(bucketKey) ?? { matchType, key, ids: [] };
+    if (!bucket.ids.includes(guestId)) bucket.ids.push(guestId);
+    buckets.set(bucketKey, bucket);
+  }
+  function docKey(docs: Array<{ docType: string; docNumber: string }>, kinds: Set<string>) {
+    const raw = docs.find(
+      (row) => kinds.has(String(row.docType ?? '').toUpperCase()) && row.docNumber.trim(),
+    )?.docNumber;
+    return raw ? raw.replace(/[\s-]/g, '').toUpperCase() : '';
+  }
 
   for (const g of guests) {
     const phone = g.phone?.replace(/\s+/g, '').trim();
-    if (phone && phone.length >= 9) {
-      const list = byPhone.get(phone) ?? [];
-      list.push(g);
-      byPhone.set(phone, list);
-    }
+    if (phone && phone.length >= 9) add('PHONE', phone, g.id);
     const pid = g.globalPersonId?.trim();
-    if (pid) {
-      const list = byPerson.get(pid) ?? [];
-      list.push(g);
-      byPerson.set(pid, list);
+    if (pid) add('GLOBAL_PERSON_ID', pid, g.id);
+    const passport = docKey(g.documents, GUEST_PASSPORT_DOC_TYPES);
+    if (passport.length >= 4) add('PASSPORT', passport, g.id);
+    const fin = docKey(g.documents, GUEST_FIN_DOC_TYPES);
+    if (fin.length >= 5) add('FIN', fin, g.id);
+    const email = g.email?.trim().toLowerCase();
+    if (email?.includes('@')) add('EMAIL', email, g.id);
+    const birth = g.birthDate ? ymdParam(g.birthDate) : '';
+    const last = (g.lastName ?? '').trim().toLowerCase();
+    const first = (g.firstName ?? '').trim().toLowerCase();
+    const name = last && first ? `${last}|${first}` : (g.fullName ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (birth && name) add('NAME_BIRTH', `${name}|${birth}`, g.id);
+    if (birth && last.length >= 2) add('LAST_BIRTH', `${last}|${birth}`, g.id);
+    const phoneTail = (g.phone ?? '').replace(/\D/g, '').slice(-9);
+    if (last.length >= 2 && phoneTail.length === 9) add('LAST_PHONE', `${last}|${phoneTail}`, g.id);
+    const citizenship = (g.nationality ?? '').trim().toUpperCase();
+    for (const doc of g.documents) {
+      const number = doc.docNumber.replace(/[\s-]/g, '').toUpperCase();
+      const country = (doc.nationality ?? citizenship).trim().toUpperCase();
+      if (number.length >= 4 && country) add('DOC_CITIZENSHIP', `${number}|${country}`, g.id);
     }
   }
 
@@ -138,25 +181,14 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
     guestIds: string[];
     labels: string[];
   }> = [];
-  for (const [key, list] of byPhone) {
-    if (list.length > 1) {
-      groups.push({
-        key,
-        matchType: 'PHONE',
-        guestIds: list.map((g) => g.id),
-        labels: list.map((g) => g.fullName ?? g.id),
-      });
-    }
-  }
-  for (const [key, list] of byPerson) {
-    if (list.length > 1) {
-      groups.push({
-        key,
-        matchType: 'GLOBAL_PERSON_ID',
-        guestIds: list.map((g) => g.id),
-        labels: list.map((g) => g.fullName ?? g.id),
-      });
-    }
+  for (const bucket of buckets.values()) {
+    if (bucket.ids.length < 2) continue;
+    groups.push({
+      key: bucket.key,
+      matchType: bucket.matchType,
+      guestIds: bucket.ids,
+      labels: [],
+    });
   }
 
   const dismissed = await prisma.guestDedupDismissal.findMany({
@@ -175,10 +207,13 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
         select: {
           id: true,
           fullName: true,
+          firstName: true,
+          lastName: true,
           birthDate: true,
           sex: true,
           nationality: true,
           phone: true,
+          email: true,
           globalPersonId: true,
           documents: { select: { docType: true, docNumber: true } },
         },
@@ -214,7 +249,10 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
     cards.set(person.id, {
       id: person.id,
       fullName: person.fullName,
+      firstName: person.firstName,
+      lastName: person.lastName,
       birthDate: person.birthDate ? ymdParam(person.birthDate) : null,
+      email: person.email,
       sex: person.sex,
       nationality: person.nationality,
       phone: person.phone,

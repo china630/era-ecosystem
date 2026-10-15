@@ -263,7 +263,9 @@ async function notifyClinicPaidVoid(pending: {
     body: JSON.stringify({
       organizationId: pending.sourceOrgId,
       orderId: pending.sourceRef,
-      externalTicketId: `clinic-ticket-${pending.sourceRef}`,
+      externalTicketId: (
+        await import('@era/satellite-kit/integration/folio-charge-ref')
+      ).clinicProcedureTicketRef(pending.sourceRef),
     }),
   }).catch(() => null);
   if (!res?.ok) return;

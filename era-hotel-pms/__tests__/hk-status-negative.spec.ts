@@ -3,7 +3,7 @@ import {
   computeRackDisplayState,
   rackNumberTextClass,
 } from '@/lib/room-rack-display';
-import { canAssignDoor, projectLegacyStatus, roomWriteFromAxes } from '@/lib/room-state';
+import { canAssignDoor, canBookDoor, projectLegacyStatus, roomWriteFromAxes } from '@/lib/room-state';
 
 describe('HK status / assignable proof (AC-HOT-HK)', () => {
   it('DIRTY rooms are cleaning on rack and not assignable for quick book', () => {
@@ -17,6 +17,12 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
     for (const status of ['CLEAN', 'INSPECTED', 'AVAILABLE'] as const) {
       expect(canQuickBookRoom({ status, rackDisplayState: 'vacant' })).toBe(true);
     }
+  });
+
+  it('a dirty in-service door can be reserved and still cannot be checked in', () => {
+    const room = { status: 'DIRTY' as const, hkCondition: 'DIRTY' as const, inventoryStatus: 'IN_SERVICE' as const };
+    expect(canBookDoor(room, false)).toBe(true);
+    expect(canAssignDoor(room, false)).toBe(false);
   });
 
   it('Pickup is not assignable', () => {

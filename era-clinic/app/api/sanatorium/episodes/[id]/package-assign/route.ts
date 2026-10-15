@@ -36,7 +36,7 @@ const assignSchema = z.object({
 
 function mapAssignError(err: unknown) {
   if (err instanceof PackageAssignError) {
-    return jsonError(err.message, err.status, { code: err.code });
+    return jsonError(err.message, err.status, { code: err.code, misses: err.misses });
   }
   return null;
 }

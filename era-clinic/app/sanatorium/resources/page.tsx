@@ -89,6 +89,7 @@ export default function SanatoriumResourcesPage() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [resourceFilter, setResourceFilter] = useState("");
   const [patientFilter, setPatientFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState("");
   const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("full");
   const [dragOrderId, setDragOrderId] = useState<string | null>(null);
   const [placing, setPlacing] = useState<{
@@ -260,6 +261,12 @@ export default function SanatoriumResourcesPage() {
         onChange={(e) => setResourceFilter(e.target.value)}
       />
       <Field
+        label={t("filterRoom")}
+        preset="shortText"
+        value={roomFilter}
+        onChange={(e) => setRoomFilter(e.target.value)}
+      />
+      <Field
         label={t("filterPatient")}
         preset="shortText"
         value={patientFilter}
@@ -286,6 +293,7 @@ export default function SanatoriumResourcesPage() {
       resources={resources}
       resourceFilter={resourceFilter}
       patientFilter={patientFilter}
+      roomFilter={roomFilter}
       timeHorizon={timeHorizon}
       labels={{
         free: t("free"),

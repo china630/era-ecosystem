@@ -795,9 +795,32 @@ export function PackageAssignModal({
     });
   }
 
-  function assignSaveMessage(payload: { code?: unknown; error?: unknown }): string {
+  function placeMissText(
+    misses: Array<{ ymd?: string; reason?: string }> | undefined,
+  ): string {
+    if (!misses?.length) return "";
+    return misses
+      .map((miss) => {
+        const reason =
+          miss.reason === "no_staff"
+            ? tPhysio("packageAssignMissNoStaff")
+            : miss.reason === "no_cabin"
+              ? tPhysio("packageAssignMissNoCabin")
+              : tPhysio("packageAssignMissNoDay");
+        return tPhysio("packageAssignMiss", { date: miss.ymd || "—", reason });
+      })
+      .join("; ");
+  }
+
+  function assignSaveMessage(payload: {
+    code?: unknown;
+    error?: unknown;
+    misses?: Array<{ ymd?: string; reason?: string }>;
+  }): string {
     const code = typeof payload.code === "string" ? payload.code : null;
     const serverError = typeof payload.error === "string" ? payload.error.trim() : "";
+    const misses = placeMissText(payload.misses);
+    if (misses) return misses;
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
     if (code === "PLACE_FAILED") return tPhysio("packageAssignPlaceFailed");
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
@@ -912,6 +935,8 @@ export function PackageAssignModal({
           return;
         }
         const payload = d.data ?? d;
+        const missText = placeMissText(payload.misses);
+        if (missText) showApiError({ error: missText });
         if (payload.softWarn) setSoftWarn(String(payload.softWarn));
       }
       if (extras.length > 0 && !clinicalLock) {
@@ -1176,7 +1201,7 @@ export function PackageAssignModal({
       onClose={() => {
         if (!busy) onClose();
       }}
-      maxWidthClass="max-w-2xl w-full max-h-[90vh]"
+      maxWidthClass="max-w-4xl w-full max-h-[90vh]"
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
@@ -1199,7 +1224,6 @@ export function PackageAssignModal({
         </div>
       }
     >
-      <BathCalendarPanel episodeId={episodeId} />
       {packagePin ? (
         <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
           {tPhysio("packageAssignPinnedVersion", { pin: packagePin })}
@@ -1654,6 +1678,9 @@ export function PackageAssignModal({
                       }
                     />
                   </div>
+                  {/NAFTALAN|VANN|BATH/i.test(formCode) ? (
+                    <BathCalendarPanel episodeId={episodeId} procedureCode={formCode} />
+                  ) : null}
                 </>
               ) : (
                 <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>

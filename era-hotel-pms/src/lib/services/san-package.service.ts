@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { scaleLinesToSell } from '@/lib/services/door-type.policy';
 import { resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 import { NightlyPriceMissingError } from '@/lib/pricing/own-nightly-price';
@@ -56,8 +56,6 @@ export async function postNightlyPackageCharges(
   }
 
   const lines = ratePlan.packageLines;
-  const pkgCode = await findRevenueCodeByToken('PKG');
-
   let sellAmount: number;
   let mainSkuCode: string | null = null;
   const pax = await prisma.reservationGuest.findMany({
@@ -125,16 +123,17 @@ export async function postNightlyPackageCharges(
           amount: decimalToNumber(l.amount),
           description: `Package ${l.revenueCode.name} ${businessDate.toISOString().slice(0, 10)}`,
         }))
-      : pkgCode
-        ? [
+      : await (async () => {
+          const pkgCode = await requireRevenueCodeByRole('PKG');
+          return [
             {
               revenueCodeId: pkgCode.id,
-              code: 'PKG',
+              code: pkgCode.code,
               amount: decimalToNumber(ratePlan.pricePerNight),
               description: `Medical package ${businessDate.toISOString().slice(0, 10)}`,
             },
-          ]
-        : [];
+          ];
+        })();
 
   const scaled = scaleLinesToSell(rawLines, sellAmount);
   const chargeLines = rawLines.map((line, i) => ({ ...line, amount: scaled[i] ?? line.amount }));

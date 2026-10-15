@@ -140,6 +140,7 @@
     "stockCheck": "Stok",
     "replenishment": "Tamamlama",
     "import": "Cutover import",
+    "catalog": "Gəlir kodları",
     "settings": "Parametrlər",
     "executive": "Executive",
     "access": "Giriş və rollar",
@@ -250,6 +251,7 @@
       "screen_settings": "Mağaza ayarları",
       "screen_admin_access": "Giriş hüquqları ekranı",
       "api_receipts_sell": "Satış (çeklər, ödəniş, qaytarma, promo)",
+      "api_hotel_revenue_codes": "Otel gəlir kodları",
       "api_receipts_void_line": "Çeki və ya sətri ləğv et",
       "api_shifts_open": "Növbəni aç",
       "api_shifts_close": "Növbəni bağla",
@@ -264,5 +266,27 @@
       "admin_settings": "Satış nöqtəsi inteqrasiyaları",
       "admin_access_manage": "Rolları və girişi idarə et"
     }
+  },
+  "catalogAdmin": {
+    "title": "Gəlir kodları",
+    "subtitle": "Nöqtə, kateqoriya, sonra məhsul. Boş məhsul kateqoriyanı, sonra nöqtəni götürür.",
+    "outletTitle": "Nöqtə",
+    "outlet": "Nöqtə",
+    "categoryTitle": "Kateqoriya",
+    "category": "Kateqoriya",
+    "productTitle": "Məhsul",
+    "product": "Məhsul",
+    "code": "Kod",
+    "name": "Ad",
+    "revenueCode": "Otel gəlir kodu",
+    "addCategory": "Kateqoriya əlavə et",
+    "noCategory": "Kateqoriya yoxdur",
+    "save": "Saxla",
+    "saved": "Saxlanıldı",
+    "saveFailed": "Saxlanılmadı",
+    "empty": "Bu təşkilat üçün aktiv otel gəlir kodu yoxdur.",
+    "unavailable": "Otel gəlir kataloqu əlçatan deyil.",
+    "notLinked": "Otel təşkilatı bağlanmayıb.",
+    "forbidden": "Bu sessiya otel gəlir kodlarını oxuya bilmir."
   }
 }

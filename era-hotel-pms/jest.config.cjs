@@ -5,6 +5,8 @@ module.exports = {
   modulePathIgnorePatterns: ["<rootDir>/.next/"],
   moduleNameMapper: {
     "^@era/satellite-kit$": "<rootDir>/__tests__/mocks/satellite-kit.ts",
+    "^@era/satellite-kit/integration/folio-charge-ref$":
+      "<rootDir>/../packages/satellite-kit/src/integration/folio-charge-ref.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {

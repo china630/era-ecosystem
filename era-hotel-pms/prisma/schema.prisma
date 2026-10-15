@@ -778,6 +778,8 @@ model RevenueCode {
   nameEn           String?
   taxTag       String?
   active       Boolean            @default(true)
+  /// Stable key services post by (ROOM, PKG, …) — see `REVENUE_CODE_ROLES`.
+  systemRole   String?
   departmentId String?
   department   Department?        @relation(fields: [departmentId], references: [id])
   charges      FolioCharge[]
@@ -789,6 +791,7 @@ model RevenueCode {
   addOns        AddOn[]           @relation("AddOnRevenue")
   eventOrderLines EventOrderLine[]
   @@unique([organizationId, code])
+  @@unique([organizationId, systemRole])
   @@index([organizationId])
 }
 
@@ -2379,17 +2382,33 @@ model FolioPayment {
 
 /// Personal debt left by a guest at check-out. Not the agency city ledger.
 model GuestDebtEntry {
-  id              String   @id @default(uuid())
+  id              String             @id @default(uuid())
   organizationId  String
   reservationId   String
   guestId         String
-  amount          Decimal  @db.Decimal(12, 2)
+  amount          Decimal            @db.Decimal(12, 2)
   note            String
-  createdByUserId String?  @map("created_by_user_id")
-  createdAt       DateTime @default(now())
+  createdByUserId String?            @map("created_by_user_id")
+  createdAt       DateTime           @default(now())
+  payments        GuestDebtPayment[]
 
   @@index([organizationId, guestId])
   @@index([reservationId])
+}
+
+model GuestDebtPayment {
+  id              String          @id @default(uuid())
+  organizationId  String
+  entryId         String
+  entry           GuestDebtEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  amount          Decimal         @db.Decimal(12, 2)
+  paymentMethod   PaymentMethod
+  bankTerminalId  String?
+  createdByUserId String?         @map("created_by_user_id")
+  createdAt       DateTime        @default(now())
+
+  @@index([organizationId, entryId])
+  @@index([createdAt])
 }
 
 /// Mirror of orchestrator BANK_POS / KKM rows so every hotel process can list them.

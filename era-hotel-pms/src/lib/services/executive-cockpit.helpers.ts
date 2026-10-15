@@ -1,5 +1,5 @@
 import { bakuDayBounds, bakuYmd } from '@era/satellite-kit/time';
-import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
+import { revenueRoleIn, revenueRoleIs } from '@/lib/revenue-code-match';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 export type HotelStatusLevel = 'NORMAL' | 'RISK' | 'CRITICAL';
@@ -64,21 +64,23 @@ export function computeHotelStatus(input: {
   return 'NORMAL';
 }
 
-/** Map revenue code → Daily Flash bucket. Numeric Elektra keys match on name. */
+/** Map revenue code → Daily Flash bucket: system role first, then the code's department. */
 export function revenueFlashBucket(
-  code: string,
+  row: { systemRole: string | null },
   departmentCode?: string | null,
-  name?: string | null,
 ): 'room' | 'fb' | 'spa' | 'medical' | 'other' {
-  const row = { code, name };
   const dept = (departmentCode ?? '').toUpperCase();
-  // TOUR is ACC-department but excursion P&L — do not inherit the ACC→room catch-all.
-  if (matchesAnyRevenueToken(row, ['TOUR'])) return 'other';
-  if (matchesAnyRevenueToken(row, ['ROOM', 'PKG', 'TRANSFER']) || dept === 'ACC') return 'room';
-  if (matchesAnyRevenueToken(row, ['FOOD', 'BOARD', 'MINIBAR']) || dept === 'REST') return 'fb';
-  if (matchesAnyRevenueToken(row, ['TREATMENT']) || (code ?? '').toUpperCase().includes('SPA') || (name ?? '').toUpperCase().includes('SPA')) {
-    return 'spa';
+  // TOUR is ACC-department but excursion P&L; city tax is a liability, not revenue.
+  if (revenueRoleIn(row, ['TOUR', 'CITY_TAX'])) return 'other';
+  if (revenueRoleIn(row, ['ROOM', 'PKG', 'RATE_ADJ', 'EARLY_CI', 'LATE_CO', 'TRANSFER'])) {
+    return 'room';
   }
-  if (matchesAnyRevenueToken(row, ['MEDICAL', 'MED']) || dept === 'MED') return 'medical';
+  if (revenueRoleIn(row, ['FOOD', 'BOARD', 'MINIBAR', 'BANQUET'])) return 'fb';
+  if (revenueRoleIs(row, 'TREATMENT')) return 'spa';
+  if (revenueRoleIs(row, 'MEDICAL')) return 'medical';
+  if (dept === 'ACC') return 'room';
+  if (dept === 'REST') return 'fb';
+  if (dept === 'SPA') return 'spa';
+  if (dept === 'MED') return 'medical';
   return 'other';
 }

@@ -68,6 +68,8 @@ type LabOrder = {
   resultDate?: string | null;
   visitId?: string | null;
   patientRef: { refCode: string; fullName: string };
+  episode?: { roomNumber?: string | null } | null;
+  visit?: { roomNumber?: string | null } | null;
   items?: LabOrderItem[];
 };
 
@@ -91,6 +93,7 @@ function StatusDot({ status, label }: { status: string; label: string }) {
 
 type ListFilters = {
   q: string;
+  room: string;
   status: string;
   criticalOnly: boolean;
   modality: string;
@@ -102,6 +105,7 @@ type ListFilters = {
 
 const emptyFilters: ListFilters = {
   q: "",
+  room: "",
   status: "",
   criticalOnly: false,
   modality: "",
@@ -216,6 +220,7 @@ export default function LabOrdersPage() {
       if (f.criticalOnly) params.set("criticalOnly", "true");
       if (f.modality) params.set("modality", f.modality);
       if (f.q.trim()) params.set("q", f.q.trim());
+      if (f.room.trim()) params.set("room", f.room.trim());
       if (f.dateFrom) params.set("dateFrom", f.dateFrom);
       if (f.dateTo) params.set("dateTo", f.dateTo);
       if (f.sort && f.sortDir) {
@@ -413,6 +418,11 @@ export default function LabOrdersPage() {
         ),
       },
       {
+        key: "room",
+        header: t("colRoom"),
+        render: (order) => order.episode?.roomNumber || order.visit?.roomNumber || "—",
+      },
+      {
         key: "services",
         header: t("colServices"),
         render: (order) => (
@@ -528,6 +538,12 @@ export default function LabOrdersPage() {
               </label>
             }
           >
+            <Field
+              label={t("roomFilter")}
+              preset="shortText"
+              value={filters.room}
+              onChange={(e) => patchFilters({ room: e.target.value })}
+            />
             <Field
               label={t("patientFilter")}
               preset="shortText"

@@ -211,6 +211,12 @@ export async function updateRevenueCode(
 ) {
   const { targetFolioType, ...codeData } = input;
   return prisma.$transaction(async (tx) => {
+    if (input.active === false) {
+      const existing = await tx.revenueCode.findUnique({ where: { id } });
+      if (existing?.systemRole) {
+        throw new Error('Clear the system role before deactivating this code.');
+      }
+    }
     await tx.revenueCode.update({ where: { id }, data: codeData });
     if (targetFolioType !== undefined) {
       if (targetFolioType) {

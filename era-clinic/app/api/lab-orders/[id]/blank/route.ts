@@ -7,10 +7,10 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { previewBlankForOrder } from "@/domain/lab/blank-apply";
+import { previewWordForOrder } from "@/domain/lab/blank-apply";
 
 const bodySchema = z.object({
-  profileId: z.string().min(1),
+  profileId: z.string().min(1).optional(),
   docxBase64: z.string().min(1),
 });
 
@@ -23,8 +23,17 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const body = bodySchema.parse(await req.json());
     const docx = Buffer.from(body.docxBase64, "base64");
     if (docx.length < 4) return jsonError("Empty file", 400);
-    const rows = await previewBlankForOrder({ orderId: id, profileId: body.profileId, docx });
-    return jsonOk({ rows });
+    const preview = await previewWordForOrder({
+      orderId: id,
+      docx,
+      profileId: body.profileId,
+    });
+    if (!preview) return jsonError("Order not found", 404);
+    if (preview.mode === "missing") return jsonError("No Word blank for this panel", 404, { code: "NO_BLANK" });
+    if (preview.mode === "fields" && Object.keys(preview.fields).length === 0) {
+      return jsonError("No panel fields in this file", 422, { code: "NO_USM_FIELDS" });
+    }
+    return jsonOk(preview);
   } catch (err) {
     return handleRouteError(err);
   }

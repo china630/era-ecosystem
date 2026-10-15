@@ -434,6 +434,7 @@
       "detachFailed": "Отвязка не удалась ({status})",
       "copied": "Скопировано {id}",
       "bridgeSaved": "Политика Elektraweb сохранена",
+      "policySavedNotDelivered": "Сохранено в оркестраторе, но не дошло до: {targets}. Нажмите Sync после исправления.",
       "bridgeSaveFailed": "Не удалось сохранить мост ({status}){detail}",
       "cutoverSaved": "Clinic cutover сохранён",
       "cutoverSaveFailed": "Не удалось сохранить cutover ({status}){detail}",

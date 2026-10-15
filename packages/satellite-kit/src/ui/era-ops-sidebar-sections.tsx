@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "./design-system";
+import { isRailFlyoutTarget, RailFlyout } from "./rail-flyout";
 import {
   bestMatchingNavHref,
   collectSectionHrefs,
@@ -177,6 +178,7 @@ function CollapsibleSection({
     if (!flyoutOpen) return;
     const onDoc = (event: MouseEvent) => {
       if (rootRef.current?.contains(event.target as Node)) return;
+      if (isRailFlyoutTarget(event.target)) return;
       setFlyoutId(null);
     };
     document.addEventListener("mousedown", onDoc);
@@ -242,12 +244,12 @@ function CollapsibleSection({
       </button>
       {flyoutOpen ? (
         <RailModeContext.Provider value={{ ...rail, collapsed: false }}>
-          <div className="absolute left-full top-0 z-[60] ml-1 hidden min-w-[13rem] flex-col gap-0.5 rounded-lg border border-[#D5DADF] bg-white p-2 shadow-lg lg:flex">
+          <RailFlyout open anchorRef={rootRef}>
             <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
               {section.title}
             </p>
             {branches}
-          </div>
+          </RailFlyout>
         </RailModeContext.Provider>
       ) : null}
       {open && !rail.collapsed ? (

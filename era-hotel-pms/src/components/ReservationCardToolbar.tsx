@@ -31,6 +31,7 @@ export type ReservationCardToolbarProps = {
   onStayAction?: () => void;
   voidKind?: 'cancel' | 'noShow' | null;
   onVoidStay?: (kind: 'cancel' | 'noShow') => void;
+  onRestore?: () => void;
   onEarlyCheckIn?: () => void;
   onSave?: () => void;
   onClose?: () => void;
@@ -72,6 +73,7 @@ export function ReservationCardActions({
   onStayAction,
   voidKind,
   onVoidStay,
+  onRestore,
   onEarlyCheckIn,
   showLock = true,
   showClose = false,
@@ -215,6 +217,16 @@ export function ReservationCardActions({
         </div>
       ) : null}
 
+      {showFooter && onRestore ? (
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy || loading || isLocked}
+          onClick={onRestore}
+        >
+          {t('restoreStay')}
+        </button>
+      ) : null}
       {showFooter && voidKind && onVoidStay ? (
         <button
           type="button"

@@ -7,7 +7,11 @@ import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { quoteBookingRate } from '@/lib/services/contract-pricing.service';
 import { postCharge } from '@/lib/services/folio.service';
-import { findRevenueCodeByToken, matchesAnyRevenueToken } from '@/lib/revenue-code-token';
+import {
+  requireRevenueCodeByRole,
+  revenueRoleIn,
+  STAY_NIGHT_ROLES,
+} from '@/lib/revenue-code-token';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { replaceSlicesFromDate, resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 import { recalcReservationDailyRates } from '@/lib/services/reservation-pricing.service';
@@ -145,7 +149,7 @@ export async function previewStayAmendment(input: {
     f.charges.some(
       (c) =>
         isoDate(c.businessDate) === todayKey &&
-        matchesAnyRevenueToken(c.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ']),
+        revenueRoleIn(c.revenueCode, STAY_NIGHT_ROLES),
     ),
   );
   const tonight = nights.find((n) => n.date === todayKey);
@@ -222,23 +226,19 @@ export async function applyStayAmendment(input: {
   }
 
   if (preview.folioImpact === 'DIFFERENCE_LINE' && preview.differenceAmount !== 0) {
-    const adj =
-      (await findRevenueCodeByToken('RATE_ADJ')) ??
-      (await findRevenueCodeByToken('ROOM'));
-    if (adj) {
-      const externalRef = rateAdjExternalRef(input.reservationId, isoDate(biz));
-      const existing = await prisma.folioCharge.findFirst({ where: { externalRef } });
-      if (!existing) {
-        await postCharge({
-          reservationId: input.reservationId,
-          revenueCodeId: adj.id,
-          amount: preview.differenceAmount,
-          qty: 1,
-          description: `RATE_ADJ ${isoDate(biz)}`,
-          businessDate: dateOnlyUtc(biz),
-          externalRef,
-        });
-      }
+    const adj = await requireRevenueCodeByRole('RATE_ADJ');
+    const externalRef = rateAdjExternalRef(input.reservationId, isoDate(biz));
+    const existing = await prisma.folioCharge.findFirst({ where: { externalRef } });
+    if (!existing) {
+      await postCharge({
+        reservationId: input.reservationId,
+        revenueCodeId: adj.id,
+        amount: preview.differenceAmount,
+        qty: 1,
+        description: `RATE_ADJ ${isoDate(biz)}`,
+        businessDate: dateOnlyUtc(biz),
+        externalRef,
+      });
     }
   }
 
