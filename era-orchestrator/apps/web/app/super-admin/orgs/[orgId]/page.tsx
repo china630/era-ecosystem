@@ -132,6 +132,21 @@ async function noticeFromFailedResponse(res: Response): Promise<string> {
   return "";
 }
 
+/** Comma list of satellites that did not accept the pushed policy; empty when all did. */
+async function undeliveredSatellites(res: Response): Promise<string> {
+  try {
+    const body = (await res.json()) as {
+      delivery?: Array<{ satelliteKey: string; ok: boolean }>;
+    };
+    return (body.delivery ?? [])
+      .filter((d) => !d.ok)
+      .map((d) => d.satelliteKey)
+      .join(", ");
+  } catch {
+    return "";
+  }
+}
+
 export default function SuperAdminOrgHubPage() {
   const params = useParams();
   const orgId = String(params.orgId ?? "");
@@ -361,7 +376,12 @@ export default function SuperAdminOrgHubPage() {
         });
         return;
       }
-      setBridgeNotice({ kind: "ok", text: t("bridgeSaved") });
+      const missed = await undeliveredSatellites(res);
+      setBridgeNotice(
+        missed
+          ? { kind: "err", text: t("policySavedNotDelivered", { targets: missed }) }
+          : { kind: "ok", text: t("bridgeSaved") },
+      );
       await reload();
     } finally {
       setSavingBridge(false);
@@ -393,7 +413,12 @@ export default function SuperAdminOrgHubPage() {
         });
         return;
       }
-      setCutoverNotice({ kind: "ok", text: t("cutoverSaved") });
+      const missed = await undeliveredSatellites(res);
+      setCutoverNotice(
+        missed
+          ? { kind: "err", text: t("policySavedNotDelivered", { targets: missed }) }
+          : { kind: "ok", text: t("cutoverSaved") },
+      );
       await reload();
     } finally {
       setSavingCutover(false);

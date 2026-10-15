@@ -434,6 +434,7 @@
       "detachFailed": "Ayırma alınmadı ({status})",
       "copied": "Kopyalandı {id}",
       "bridgeSaved": "Elektraweb körpü siyasəti saxlanıldı",
+      "policySavedNotDelivered": "Orkestratorda saxlanıldı, lakin bunlara çatmadı: {targets}. Düzəldikdən sonra Sync basın.",
       "bridgeSaveFailed": "Körpü saxlanılmadı ({status}){detail}",
       "cutoverSaved": "Clinic cutover saxlanıldı",
       "cutoverSaveFailed": "Cutover saxlanılmadı ({status}){detail}",

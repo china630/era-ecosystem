@@ -434,6 +434,7 @@
       "detachFailed": "Detach failed ({status})",
       "copied": "Copied {id}",
       "bridgeSaved": "Elektraweb bridge policy saved",
+      "policySavedNotDelivered": "Saved in the orchestrator, but not delivered to: {targets}. Press Sync once fixed.",
       "bridgeSaveFailed": "Bridge save failed ({status}){detail}",
       "cutoverSaved": "Clinic cutover policy saved",
       "cutoverSaveFailed": "Cutover save failed ({status}){detail}",
