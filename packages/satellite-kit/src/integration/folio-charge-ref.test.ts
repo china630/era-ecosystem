@@ -20,7 +20,9 @@ test("clinic ticket ref is stable and ignores a pay prefix on read", () => {
     ref,
   });
   assert.equal(parseFolioChargeRef(`pay-${ref}`)?.ref, ref);
-  assert.equal(parseFolioChargeRef("pay-clinic-ticket-ord1")?.orderId, "ord1");
+  const prefixed = parseFolioChargeRef("pay-clinic-ticket-ord1");
+  assert.equal(prefixed?.source, "clinic");
+  if (prefixed?.source === "clinic") assert.equal(prefixed.orderId, "ord1");
 });
 
 test("fnb, retail, and prescription refs keep their stored spelling", () => {
