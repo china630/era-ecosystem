@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CatalogField, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import {
+  CatalogField,
+  Field,
+  MODAL_CHECKBOX_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from "@era/satellite-kit/ui";
 
 type Member = { procedureCode: string; shortMark: string };
 type Series = { id: string; code: string; name: string; fillsRestDays: boolean; members: Member[] };
@@ -61,14 +69,8 @@ export function DaySeriesPanel({ procedureOptions }: { procedureOptions: Array<{
         ))}
       </ul>
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="text-[12px] text-[#7F8C8D]">
-          {t("daySeriesCode")}
-          <input className="mt-1 w-full rounded border px-2 py-1 text-[13px]" value={code} onChange={(e) => setCode(e.target.value)} />
-        </label>
-        <label className="text-[12px] text-[#7F8C8D]">
-          {t("daySeriesName")}
-          <input className="mt-1 w-full rounded border px-2 py-1 text-[13px]" value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
+        <Field preset="code" label={t("daySeriesCode")} value={code} onChange={(e) => setCode(e.target.value)} />
+        <Field preset="shortText" label={t("daySeriesName")} value={name} onChange={(e) => setName(e.target.value)} />
         <CatalogField
           kind="SEARCHABLE"
           label={t("daySeriesProcedure")}
@@ -76,13 +78,15 @@ export function DaySeriesPanel({ procedureOptions }: { procedureOptions: Array<{
           onChange={(value) => setProcedureCode(String(value ?? ""))}
           options={procedureOptions}
         />
-        <label className="text-[12px] text-[#7F8C8D]">
-          {t("daySeriesMark")}
-          <input className="mt-1 w-full rounded border px-2 py-1 text-[13px]" value={shortMark} onChange={(e) => setShortMark(e.target.value)} />
-        </label>
+        <Field
+          preset="code"
+          label={t("daySeriesMark")}
+          value={shortMark}
+          onChange={(e) => setShortMark(e.target.value)}
+        />
       </div>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={fillsRestDays} onChange={(e) => setFillsRestDays(e.target.checked)} />
+        <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={fillsRestDays} onChange={(e) => setFillsRestDays(e.target.checked)} />
         {t("daySeriesFillsRest")}
       </label>
       <div className="flex gap-2">

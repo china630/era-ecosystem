@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CatalogField, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import {
+  CatalogField,
+  DatePicker,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 
 export function ClinicDayPanel() {
   const t = useTranslations("adminSettings");
+  const tc = useTranslations("common");
   const { auth } = useClinicAuth();
   const [dayYmd, setDayYmd] = useState("");
   const [closed, setClosed] = useState(true);
@@ -57,9 +65,7 @@ export function ClinicDayPanel() {
     <section className="mt-4 space-y-2 rounded-lg border border-[#D5DADF] bg-white p-4">
       <h2 className="text-sm font-medium">{t("recalcSchedule")}</h2>
       <div className="flex flex-wrap items-end gap-2">
-        <label className="text-[12px] text-[#7F8C8D]">
-          <input className="mt-1 block rounded border px-2 py-1" type="date" value={dayYmd} onChange={(e) => setDayYmd(e.target.value)} />
-        </label>
+        <DatePicker label={tc("date")} placeholder={tc("datePlaceholder")} value={dayYmd} onChange={setDayYmd} />
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("closedWeekdays")}

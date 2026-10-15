@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   CatalogField,
+  MODAL_INPUT_CLASS,
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -182,6 +183,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
   const [resultLines, setResultLines] = useState<ResultLineState[]>([]);
   const [blankProfiles, setBlankProfiles] = useState<Array<{ id: string; name: string }>>([]);
   const [blankProfileId, setBlankProfileId] = useState("");
+  const blankFileRef = useRef<HTMLInputElement>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   useEffect(() => {
     if (!resultsModalOpen) return;
@@ -648,12 +650,23 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
               ...blankProfiles.map((profile) => ({ value: profile.id, label: profile.name })),
             ]}
           />
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={!orderId || !blankProfileId}
+            onClick={() => blankFileRef.current?.click()}
+          >
+            {t("loadWord")}
+          </button>
           <input
+            ref={blankFileRef}
             type="file"
             accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            className={`hidden ${MODAL_INPUT_CLASS}`}
             aria-label={t("loadWord")}
             onChange={(event) => {
               const file = event.target.files?.[0];
+              event.target.value = "";
               if (!file || !orderId || !blankProfileId) return;
               const reader = new FileReader();
               reader.onload = () => {
@@ -664,8 +677,12 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ profileId: blankProfileId, docxBase64 }),
                 })
-                  .then((res) => res.json())
-                  .then((json) => {
+                  .then(async (res) => ({ ok: res.ok, json: await res.json() }))
+                  .then(({ ok, json }) => {
+                    if (!ok) {
+                      showApiError(json, t("loadWord"));
+                      return;
+                    }
                     const rows = (json.data?.rows ?? json.rows ?? []) as Array<{
                       analyteCode: string | null;
                       value: string;

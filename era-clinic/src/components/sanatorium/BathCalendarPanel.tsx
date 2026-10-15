@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CatalogField, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { CatalogField, Field, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
 
 type Day = { ymd: string; working: boolean; endHour: number };
 type Member = { procedureCode: string; shortMark: string };
@@ -158,17 +158,15 @@ export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
             { value: "SITZ_THEN_FULL", label: t("bathCalendarSitz") },
           ]}
         />
-        <label className="text-[12px] text-[#7F8C8D]">
-          {t("bathCalendarQty")}
-          <input
-            className="mt-1 w-full rounded border border-[#D5DADF] px-2 py-1 text-[13px] text-[#2C3E50]"
-            type="number"
-            min={0}
-            max={60}
-            value={qty}
-            onChange={(event) => setQty(Number(event.target.value) || 0)}
-          />
-        </label>
+        <Field
+          preset="count"
+          label={t("bathCalendarQty")}
+          type="number"
+          min={0}
+          max={60}
+          value={qty}
+          onChange={(event) => setQty(Number(event.target.value) || 0)}
+        />
       </div>
       <div className="flex flex-wrap gap-1">
         {snap.days.map((day) => {

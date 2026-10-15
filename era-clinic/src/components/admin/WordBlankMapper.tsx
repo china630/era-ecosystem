@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CatalogField, PRIMARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import {
+  CatalogField,
+  Field,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from "@era/satellite-kit/ui";
 import { URINE_BLANK_ROWS } from "@/domain/lab/urine-blank-rows";
 
 type Row = { label: string; value: string; norm: string; analyteCode: string };
@@ -15,6 +23,7 @@ export function WordBlankMapper() {
   const [rows, setRows] = useState<Row[]>([]);
   const [options, setOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void (async () => {
@@ -73,8 +82,8 @@ export function WordBlankMapper() {
   return (
     <section className="mt-4 space-y-3 rounded-lg border border-[#D5DADF] bg-white p-4">
       <h2 className="text-sm font-medium">{t("loadWord")}</h2>
-      <div className="flex flex-wrap gap-2">
-        <input className="rounded border px-2 py-1 text-sm" placeholder={tc("name")} value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="flex flex-wrap items-end gap-2">
+        <Field preset="shortText" label={tc("name")} value={name} onChange={(e) => setName(e.target.value)} />
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("loadWord")}
@@ -85,12 +94,18 @@ export function WordBlankMapper() {
             { value: "NARRATIVE", label: "NARRATIVE" },
           ]}
         />
+        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={() => fileRef.current?.click()}>
+          {t("loadWord")}
+        </button>
         <input
+          ref={fileRef}
           type="file"
           accept=".docx"
+          className={`hidden ${MODAL_INPUT_CLASS}`}
           aria-label={t("loadWord")}
           onChange={(event) => {
             const file = event.target.files?.[0];
+            event.target.value = "";
             if (file) void readFile(file);
           }}
         />
