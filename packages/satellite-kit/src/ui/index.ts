@@ -124,6 +124,11 @@ export {
   type OpsNavStatus,
 } from "./use-ops-nav-profile";
 export { EraAppRouteShell, type EraAppRouteShellProps } from "./era-app-route-shell";
+export {
+  ERA_SIDEBAR_COLLAPSED_KEY,
+  readSidebarCollapsed,
+  writeSidebarCollapsed,
+} from "./sidebar-collapsed";
 export { SatelliteBillingBanner } from "./satellite-billing-banner";
 export { EraDataGrid } from "./era-data-grid";
 export {

@@ -27,7 +27,11 @@ Void nightly lodging (`ROOM` / package / `PKG`…) on unused `businessDate`s on 
 
 ### D4 — Tender
 
-Default **CASH**; CARD only if cashier selects. Reason optional/manager.
+API default **CASH** when the field is omitted. The check-out dialog has no preselected tender: the cashier must pick CASH or CARD (CARD needs a terminal). Reason optional/manager.
+
+### D4a — Payer folio and pay-now (2026-10-15)
+
+A COMPANY/AGENCY folio with unused-night lodging shows its debt **after** the reversal. Pay-now is not offered on that folio in the dialog, because settle checks the pre-void balance; the desk transfers it to City Ledger and takes the payment from the account. The server payer-debt preflight (`PAYER_DEBT_UNRESOLVED`) subtracts the same planned reversal (`earlyReversalByFolio`).
 
 ### D5 — Placement in checkout
 

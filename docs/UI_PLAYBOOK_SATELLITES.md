@@ -11,7 +11,7 @@ Authenticated routes use the **Finance-aligned shell** from `@era/satellite-kit/
 | Piece | Component | Notes |
 |-------|-----------|--------|
 | Root body | `APP_SHELL_CLASS` | Full viewport, `#EBEDF0` background |
-| Route wrapper | **`EraAppRouteShell`** | Mobile drawer, sidebar collapse, bare public paths |
+| Route wrapper | **`EraAppRouteShell`** | Mobile drawer, sidebar collapse, bare public paths. Finance and orchestrator use the same `EraAppShellLayout` + `EraAppSidebar`; collapse is remembered in `era.sidebar.collapsed` (legacy `erafinance_sidebar_collapsed` is read once). |
 | Header | **`EraAppHeader`** | Fixed top bar; slots for left cluster + right profile cluster |
 | Sidebar | **`EraAppSidebar`** | **`17.5rem`** expanded; **`overflow-x-hidden`**; collapsible sections via `EraOpsSidebarSections` |
 | Main | `EraOpsContent` inside shell | Padding = **`APP_MAIN_CONTENT_PADDED_CLASS`** (same as orch/finance `APP_MAIN_CONTENT_CLASS`); no `max-w-*` on ops screens |
