@@ -205,7 +205,6 @@ export function FolioPayLineModal({
           busy={busy}
           submitDisabled={method === 'CARD' && !bankTerminalId.trim()}
           submitLabel={t('pay')}
-          submitDisabled={method === 'CARD' && bankTerminals.length > 0 && !bankTerminalId.trim()}
         />
       }
     >
