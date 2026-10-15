@@ -23,6 +23,7 @@ import {
 import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
+import { BathCalendarPanel } from "@/components/sanatorium/BathCalendarPanel";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
@@ -1198,6 +1199,7 @@ export function PackageAssignModal({
         </div>
       }
     >
+      <BathCalendarPanel episodeId={episodeId} />
       {packagePin ? (
         <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
           {tPhysio("packageAssignPinnedVersion", { pin: packagePin })}

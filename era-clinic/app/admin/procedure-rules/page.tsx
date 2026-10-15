@@ -20,6 +20,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { DaySeriesPanel } from '@/components/admin/DaySeriesPanel';
 
 type CompatRule = {
   id: string;
@@ -57,7 +58,7 @@ type SubstitutionRule = {
 
 const COMPAT_RULE_TYPES = ['FORBID_SAME_DAY', 'MIN_HOURS_GAP', 'FORBID_SEQUENCE'] as const;
 const SEQ_KINDS = ['SEQUENCE_GAP', 'MUTUAL_EXCLUSION'] as const;
-type TabId = 'compat' | 'sequence' | 'rotation' | 'substitution';
+type TabId = 'compat' | 'sequence' | 'rotation' | 'substitution' | 'daySeries';
 
 export default function ProcedureRulesPage() {
   const t = useTranslations('procedureRules');
@@ -323,6 +324,7 @@ export default function ProcedureRulesPage() {
             ['sequence', t('sequenceTab')],
             ['rotation', t('rotationTab')],
             ['substitution', t('substitutionTab')],
+            ['daySeries', t('daySeriesTab')],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -419,6 +421,7 @@ export default function ProcedureRulesPage() {
               </button>
             </div>
           ))}
+        {tab === 'daySeries' ? <DaySeriesPanel procedureOptions={procedureOptions} /> : null}
         {tab === 'substitution' && substitutionRules.length === 0 ? (
           <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t('empty')}</p>
         ) : null}

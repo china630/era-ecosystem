@@ -13,7 +13,6 @@ export interface SatelliteHotelReservationCompletedEvent {
     amountNet: number;
     guestVoen: string | null;
     currency: "AZN";
-    paymentMethod: string;
     items: Array<{ sku: string; qty: number; price: number; itemType?: string }>;
   };
 }
@@ -35,7 +34,6 @@ export const satelliteHotelReservationCompletedSchema = z.object({
     amountNet: z.number(),
     guestVoen: z.string().nullable(),
     currency: z.literal("AZN"),
-    paymentMethod: z.string().min(1),
     items: z.array(reservationCompletedItemSchema),
   }),
 });

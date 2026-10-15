@@ -96,7 +96,6 @@ export function FolioPaymentModal({
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
         const devices = body?.devices ?? [];
         setBankTerminals(devices.map((row) => ({ id: row.id, label: row.label })));
-        setBankTerminalId((current) => current || devices[0]?.id || '');
       })
       .catch(() => setBankTerminals([]));
   }, [open]);

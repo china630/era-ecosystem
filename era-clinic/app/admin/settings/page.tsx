@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { ClinicDayPanel } from "@/components/admin/ClinicDayPanel";
 import {
   ALL_CLINIC_PRESETS,
   CLINIC_PRESET,
@@ -288,6 +289,7 @@ export default function ClinicAdminSettingsPage() {
           </Link>
         }
       />
+      <ClinicDayPanel />
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
           <tr className={DATA_TABLE_HEAD_ROW_CLASS}>

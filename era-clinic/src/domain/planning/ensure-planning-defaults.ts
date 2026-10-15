@@ -124,6 +124,37 @@ function needsExtendedHour(code: string, name: string): boolean {
   return EXTENDED_HOUR_PATTERNS.some((re) => re.test(hay));
 }
 
+/** Bath day series. Created only when the org has no series with that code; edits in /admin/procedure-rules stay. */
+const DAY_SERIES = [
+  {
+    code: "NAFTALAN",
+    name: "Naftalan baths",
+    fillsRestDays: false,
+    sortOrder: 0,
+    members: [
+      { procedureCode: "SVC-NAFTALAN-VANNASI-QADIN", shortMark: "Нж" },
+      { procedureCode: "SVC-NAFTALAN-VANNASI-KISI", shortMark: "Нм" },
+      { procedureCode: "SVC-APLIKASIYA-NAFTALAN-QADIN", shortMark: "Аж" },
+      { procedureCode: "SVC-APLIKASIYA-NAFTALAN-KISI", shortMark: "Ам" },
+      { procedureCode: "SVC-4-KAMERALI-NAFTALAN-VANNASI", shortMark: "4К" },
+    ],
+  },
+  {
+    code: "HYDRO",
+    name: "Hydromassage",
+    fillsRestDays: true,
+    sortOrder: 1,
+    members: [{ procedureCode: "SVC-HIDROMASAJ-VANNASI", shortMark: "Г" }],
+  },
+  {
+    code: "IODINE",
+    name: "Iodine-bromine",
+    fillsRestDays: true,
+    sortOrder: 2,
+    members: [{ procedureCode: "SVC-YOD-BROM-VANNASI", shortMark: "Й" }],
+  },
+];
+
 export type EnsurePlanningDefaultsResult = {
   organizationId: string;
   bodyPartUpdates: number;
@@ -131,15 +162,46 @@ export type EnsurePlanningDefaultsResult = {
   rotations: number;
   substitutions: number;
   cabinPoolLinks: number;
+  daySeries: number;
 };
 
+type PlanningDb = Pick<PrismaClient, "procedureDaySeries" | "procedureDaySeriesMember">;
+
 export async function ensurePlanningDefaults(
-  _db: unknown,
+  db: PlanningDb,
   organizationId: string,
 ): Promise<EnsurePlanningDefaultsResult> {
   const orgId = organizationId.trim();
   if (!orgId || orgId === "demo-org") {
     throw new Error("organizationId required for ensurePlanningDefaults");
+  }
+  let daySeries = 0;
+  for (const series of DAY_SERIES) {
+    const existing = await db.procedureDaySeries.findUnique({
+      where: { organizationId_code: { organizationId: orgId, code: series.code } },
+      select: { id: true },
+    });
+    if (existing) continue;
+    const saved = await db.procedureDaySeries.create({
+      data: {
+        organizationId: orgId,
+        code: series.code,
+        name: series.name,
+        fillsRestDays: series.fillsRestDays,
+        sortOrder: series.sortOrder,
+        active: true,
+      },
+    });
+    await db.procedureDaySeriesMember.createMany({
+      data: series.members.map((member, index) => ({
+        organizationId: orgId,
+        seriesId: saved.id,
+        procedureCode: member.procedureCode,
+        shortMark: member.shortMark,
+        sortOrder: index,
+      })),
+    });
+    daySeries += 1;
   }
   return {
     organizationId: orgId,
@@ -148,5 +210,6 @@ export async function ensurePlanningDefaults(
     rotations: 0,
     substitutions: 0,
     cabinPoolLinks: 0,
+    daySeries,
   };
 }

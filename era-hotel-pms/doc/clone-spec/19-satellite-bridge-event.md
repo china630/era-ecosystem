@@ -25,7 +25,6 @@
     "guestVoen": null,
     "amountNet": 540,
     "currency": "AZN",
-    "paymentMethod": "CARD",
     "breakdown": [
       { "itemType": "ACCOMMODATION", "sku": "ROOM-101", "qty": 3, "price": 120 },
       { "itemType": "RESTAURANT", "sku": "extra-uuid", "qty": 2, "price": 45 }
@@ -36,6 +35,8 @@
 
 **Без** accounting terms: нет счетов, дебета/кредита, GL.
 
+The payload carries no payment method. The reservation-level method is optional booking intent and does not match how the stay was paid. Real tenders reach finance through the night-audit day document (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` `paymentLines`) and `SATELLITE_HOTEL_FOLIO_PAYMENT_RECEIVED`.
+
 ## Mapping → логический контракт ERP (18)
 
 | Satellite | ERP (логически) |
@@ -43,7 +44,6 @@
 | `SATELLITE_HOTEL_RESERVATION_COMPLETED` | **E3** `payment_received` + строки для **E2** invoice |
 | `payload.breakdown[]` | Строки выручки по кодам (маппинг в bridge) |
 | `guestVoen` | `counterparty_tax_id` для B2B |
-| `paymentMethod` | Способ оплаты в ERP |
 | `correlationId` | Идемпотентность (§18.4) |
 | `hotelId` | `property_code` |
 

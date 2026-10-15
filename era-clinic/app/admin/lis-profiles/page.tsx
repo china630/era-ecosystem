@@ -24,6 +24,7 @@ import {
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
+import { WordBlankMapper } from "@/components/admin/WordBlankMapper";
 
 type LisProfile = {
   id: string;
@@ -300,6 +301,7 @@ export default function LisProfilesAdminPage() {
         </form>
       </div>
 
+      <WordBlankMapper />
       <ModalShell
         open={modalOpen}
         title={editingId ? t("editProfile") : t("addProfile")}

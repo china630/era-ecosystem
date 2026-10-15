@@ -42,8 +42,7 @@ import type {
 const LOG_DIR = join(process.cwd(), 'logs');
 const LOG_FILE = join(LOG_DIR, 'failed-events.log');
 
-function mapPaymentMethod(method: PaymentMethod | null): SatellitePaymentMethod {
-  if (!method) return 'CASH';
+function mapPaymentMethod(method: PaymentMethod): SatellitePaymentMethod {
   return method as SatellitePaymentMethod;
 }
 
@@ -109,7 +108,6 @@ export async function buildReservationCompletedEvent(
       guestVoen: reservation.guest.voen,
       amountNet,
       currency: 'AZN',
-      paymentMethod: mapPaymentMethod(reservation.paymentMethod),
       breakdown: items,
     },
   };

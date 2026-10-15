@@ -1,3 +1,4 @@
+import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { prisma } from "@/lib/prisma";
 import { nightsBetween } from "@/lib/program-quota";
 
@@ -60,25 +61,39 @@ export async function listPatientEpisodes(
       programInstance: { select: { startsOn: true, endsOn: true } },
     },
   });
-  return rows.map((r) => ({
-    id: r.id,
-    status: r.status,
-    patientOrigin: r.patientOrigin,
-    programCode: r.programCode,
-    roomNumber: r.roomNumber,
-    reservationId: r.reservationId,
-    openedAt: r.openedAt.toISOString(),
-    closedAt: r.closedAt?.toISOString() ?? null,
-    stayStartsOn: r.programInstance?.startsOn.toISOString() ?? null,
-    stayEndsOn: r.programInstance?.endsOn.toISOString() ?? null,
-    stayNights: r.programInstance
-      ? nightsBetween(r.programInstance.startsOn, r.programInstance.endsOn)
-      : null,
-    anamnesisText: r.anamnesisText,
-    anamnesisUpdatedAt: r.anamnesisUpdatedAt?.toISOString() ?? null,
-    anamnesisByPractitioner: r.anamnesisByPractitioner,
-    label: formatEpisodeLabel(r),
-  }));
+  const hotelWindows = new Map<string, { checkInDate: string; checkOutDate: string }>();
+  await Promise.all(
+    rows
+      .filter((r) => !r.programInstance && r.reservationId)
+      .map(async (r) => {
+        const window = await lookupHotelStayWindow(r.reservationId!);
+        if (window) hotelWindows.set(r.id, window);
+      }),
+  );
+  return rows.map((r) => {
+    const hotel = hotelWindows.get(r.id);
+    const startsOn = r.programInstance?.startsOn ?? (hotel ? new Date(hotel.checkInDate) : null);
+    const endsOn = r.programInstance?.endsOn ?? (hotel ? new Date(hotel.checkOutDate) : null);
+    const datesOk =
+      startsOn != null && endsOn != null && !Number.isNaN(startsOn.getTime()) && !Number.isNaN(endsOn.getTime());
+    return {
+      id: r.id,
+      status: r.status,
+      patientOrigin: r.patientOrigin,
+      programCode: r.programCode,
+      roomNumber: r.roomNumber,
+      reservationId: r.reservationId,
+      openedAt: r.openedAt.toISOString(),
+      closedAt: r.closedAt?.toISOString() ?? null,
+      stayStartsOn: datesOk ? startsOn.toISOString() : null,
+      stayEndsOn: datesOk ? endsOn.toISOString() : null,
+      stayNights: datesOk ? nightsBetween(startsOn, endsOn) : null,
+      anamnesisText: r.anamnesisText,
+      anamnesisUpdatedAt: r.anamnesisUpdatedAt?.toISOString() ?? null,
+      anamnesisByPractitioner: r.anamnesisByPractitioner,
+      label: formatEpisodeLabel(r),
+    };
+  });
 }
 
 /**

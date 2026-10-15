@@ -103,6 +103,15 @@ export const HOTEL_LOOKUP_DEFAULTS: HotelLookupDefault[] = [
   },
   {
     kind: 'RESERVATION_QUEUE',
+    code: 'realizedArrivals',
+    name: 'Realized arrivals',
+    nameEn: 'Realized arrivals',
+    nameAz: 'Bu gün gələnlər',
+    nameRu: 'Заехавшие сегодня',
+    sortOrder: 35,
+  },
+  {
+    kind: 'RESERVATION_QUEUE',
     code: 'dueOut',
     name: 'Departing today',
     nameEn: 'Departing today',

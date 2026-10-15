@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { APP_MAIN_CONTENT_CLASS, EraAppShellLayout } from "@era/satellite-kit/ui";
+import {
+  APP_MAIN_CONTENT_CLASS,
+  EraAppShellLayout,
+  readSidebarCollapsed,
+  writeSidebarCollapsed,
+} from "@era/satellite-kit/ui";
 import { useAuth } from "../lib/auth-context";
 import { isBarePublicWebPath } from "../lib/public-routes";
 import { OrchHeader } from "./layout/orch-header";
 import { OrchSidebar } from "./layout/orch-sidebar";
-
-const SIDEBAR_COLLAPSED_KEY = "erafinance_sidebar_collapsed";
 
 function usesAppShell(pathname: string, token: string | null): boolean {
   if (!isBarePublicWebPath(pathname)) return true;
@@ -24,6 +27,7 @@ export function ControlPlaneShell({ children }: { children: React.ReactNode }) {
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarReady, setSidebarReady] = useState(false);
 
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
   const toggleMobileNav = useCallback(() => setMobileNavOpen((v) => !v), []);
@@ -33,16 +37,14 @@ export function ControlPlaneShell({ children }: { children: React.ReactNode }) {
   }, [pathname, closeMobileNav]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") {
-      setSidebarCollapsed(true);
-    }
+    setSidebarCollapsed(readSidebarCollapsed());
+    setSidebarReady(true);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? "1" : "0");
-  }, [sidebarCollapsed]);
+    if (!sidebarReady) return;
+    writeSidebarCollapsed(sidebarCollapsed);
+  }, [sidebarCollapsed, sidebarReady]);
 
   useEffect(() => {
     if (!mobileNavOpen) {

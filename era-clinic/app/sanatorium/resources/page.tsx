@@ -21,6 +21,7 @@ import {
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
+import { useClinicAuth } from "@/hooks/useClinicAuth";
 import {
   ResourceDayMatrix,
   cabinLabel,
@@ -79,7 +80,9 @@ function chipLabel(ymd: string, today: string): string {
 }
 
 export default function SanatoriumResourcesPage() {
+  const { auth } = useClinicAuth();
   const t = useTranslations("sanatoriumResources");
+  const tSettings = useTranslations("adminSettings");
   const tc = useTranslations("common");
   const locale = useLocale();
   const [date, setDate] = useState(() => bakuYmd());
@@ -365,7 +368,43 @@ export default function SanatoriumResourcesPage() {
     <>
       {!fullscreen ? (
         <>
-          <PageHeader title={t("title")} subtitle={t("subtitle")} />
+          <PageHeader
+            title={t("title")}
+            subtitle={t("subtitle")}
+            actions={
+              auth?.isPlatformSuperAdmin ? <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => {
+                  void fetch("/api/admin/schedule-recalc", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ apply: false }),
+                  })
+                    .then((res) => res.json())
+                    .then((data) => {
+                      if (!data || data.error) {
+                        showApiError(data, t("title"));
+                        return;
+                      }
+                      const count = (data.data?.moves ?? data.moves ?? []).length;
+                      if (count === 0) {
+                        showSuccess(tSettings("recalcScheduleDone", { count }));
+                        return;
+                      }
+                      if (!window.confirm(tSettings("recalcScheduleDone", { count }))) return;
+                      void fetch("/api/admin/schedule-recalc", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ apply: true }),
+                      }).then(() => showSuccess(tSettings("recalcScheduleDone", { count })));
+                    });
+                }}
+              >
+                {tSettings("recalcSchedule")}
+              </button> : null
+            }
+          />
           {closedHint}
           {placingBar}
           {filters}

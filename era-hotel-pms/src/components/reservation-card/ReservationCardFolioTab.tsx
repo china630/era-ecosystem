@@ -30,7 +30,6 @@ import {
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
-import { ReservationCardAuthorizationsPanel } from '@/components/reservation-card/ReservationCardAuthorizationsPanel';
 import { displayRoomChargeNote } from '@/lib/folio-charge-note';
 import { revenueLabel } from '@/lib/folio-article-summary';
 import { useAuth } from '@/hooks/useAuth';
@@ -145,7 +144,7 @@ export function ReservationCardFolioTab({
   displayCurrency = 'AZN',
   canPostCharges = false,
   canCheckOut = false,
-  fiscalDocuments = [],
+  fiscalDocuments: _fiscalDocuments = [],
   onFolioTab,
   onChanged,
 }: {
@@ -169,10 +168,8 @@ export function ReservationCardFolioTab({
   const tf = useTranslations('folio');
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
-  const tFiscal = useTranslations('fiscalStatus');
   const locale = useLocale();
   const { can } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
@@ -478,7 +475,6 @@ export function ReservationCardFolioTab({
         onClose={() => setCheckoutOpen(false)}
         onDone={onChanged}
         reservationId={reservationId}
-        folios={accounts}
       />
       <FolioVoidModal open={Boolean(voidId)} chargeId={voidId} onClose={() => setVoidId(null)} onDone={onChanged} />
       <FolioPayLineModal
@@ -512,22 +508,6 @@ export function ReservationCardFolioTab({
 
   return (
     <div className="space-y-3" data-testid="reservation-folio-tab">
-      <div>
-        <button
-          type="button"
-          className={`${SECONDARY_BUTTON_CLASS} text-[12px]`}
-          aria-expanded={authOpen}
-          onClick={() => setAuthOpen((v) => !v)}
-        >
-          {authOpen ? t('cardAuth.hide') : t('cardAuth.show')}
-        </button>
-        {authOpen ? (
-          <div className="mt-2">
-            <ReservationCardAuthorizationsPanel reservationId={reservationId} />
-          </div>
-        ) : null}
-      </div>
-
       <div className={CHIP_GROUP_CLASS} role="tablist">
         <button
           type="button"
@@ -618,18 +598,6 @@ export function ReservationCardFolioTab({
           {cashBar}
         </>
       )}
-
-      {fiscalDocuments.length > 0 ? (
-        <div className="rounded-lg border border-[#D5DADF] bg-[#F8FAFC] p-2 text-[13px]">
-          <p className="m-0 font-semibold text-[#34495E]">{tf('fiscalTitle')}</p>
-          {fiscalDocuments.map((doc) => (
-            <p key={doc.id} className="m-0 text-[#34495E]">
-              {doc.invoiceNumber ?? doc.id.slice(0, 8)} — {tFiscal(doc.fiscalStatus as 'PENDING')}
-              {doc.rejectionReason ? ` — ${doc.rejectionReason}` : ''}
-            </p>
-          ))}
-        </div>
-      ) : null}
 
       {closable.length > 0 && can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <div className="flex flex-wrap gap-2">

@@ -48,6 +48,8 @@ export async function GET(request: Request) {
       },
       select: {
         id: true,
+        checkInDate: true,
+        checkOutDate: true,
         guest: { select: { globalPersonId: true } },
         paxGuests: {
           select: {
@@ -74,6 +76,8 @@ export async function GET(request: Request) {
       found: true,
       reservationId: stay.id,
       globalPersonId,
+      checkInDate: stay.checkInDate.toISOString(),
+      checkOutDate: stay.checkOutDate.toISOString(),
     });
   } catch (err) {
     return handleRouteError(err);

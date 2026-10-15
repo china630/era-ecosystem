@@ -5,6 +5,7 @@ import {
   listAnalytes,
   createAnalyte,
 } from "@/domain/catalog/diagnostic-catalog-admin.service";
+import { alignUrinePanel } from "@/domain/lab/urine-blank";
 
 const createSchema = z.object({
   code: z.string().min(1),
@@ -38,6 +39,7 @@ export async function GET(
     const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     const { id } = await ctx.params;
+    await alignUrinePanel(id);
     return jsonOk(await listAnalytes(id));
   } catch (err) {
     return handleRouteError(err);

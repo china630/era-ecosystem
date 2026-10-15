@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   SortableTh,
@@ -831,6 +831,27 @@ export default function DiagnosticCatalogAdminPage() {
     await loadServices();
   }
 
+  async function moveAnalyte(index: number, delta: number) {
+    if (!selectedServiceId) return;
+    const nextIndex = index + delta;
+    if (nextIndex < 0 || nextIndex >= analytes.length) return;
+    const next = [...analytes];
+    const [row] = next.splice(index, 1);
+    next.splice(nextIndex, 0, row);
+    await Promise.all(
+      next.map((item, itemIndex) => {
+        const sortOrder = itemIndex + 1;
+        if (item.sortOrder === sortOrder) return null;
+        return fetch(`/api/admin/diagnostic-catalog/services/${selectedServiceId}/analytes/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sortOrder }),
+        });
+      }),
+    );
+    await loadAnalytes(selectedServiceId);
+  }
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "modalities", label: t("tabModalities") },
     { id: "services", label: t("tabServices") },
@@ -1534,7 +1555,7 @@ export default function DiagnosticCatalogAdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {analytes.map((row) => (
+                  {analytes.map((row, index) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
@@ -1558,7 +1579,29 @@ export default function DiagnosticCatalogAdminPage() {
                           ? row.valueOptions.map((opt) => opt.code).join(", ")
                           : "—"}
                       </td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.sortOrder}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="flex items-center gap-1">
+                          <span>{row.sortOrder}</span>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("sortOrder")}
+                            disabled={index === 0}
+                            onClick={() => void moveAnalyte(index, -1)}
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("sortOrder")}
+                            disabled={index === analytes.length - 1}
+                            onClick={() => void moveAnalyte(index, 1)}
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                        </div>
+                      </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <div className="flex gap-1">
                           <button
