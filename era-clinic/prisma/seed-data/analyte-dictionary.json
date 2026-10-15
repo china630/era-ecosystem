@@ -2819,8 +2819,8 @@
         "az": "pH"
       },
       "valueType": "NUMERIC",
-      "refMin": "5.0",
-      "refMax": "7.5"
+      "refMin": "6.0",
+      "refMax": "7.4"
     },
     {
       "code": "U-PRO",
@@ -2858,8 +2858,8 @@
         "az": "Xüsusi çəki"
       },
       "valueType": "NUMERIC",
-      "refMin": "1.005",
-      "refMax": "1.030"
+      "refMin": "1010",
+      "refMax": "1030"
     },
     {
       "code": "U-URO",

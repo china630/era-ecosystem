@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuCivilUtcDate, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import {
   CHIP_GROUP_CLASS,
@@ -144,6 +145,7 @@ type Episode = {
     }>;
   }[];
   programInstance?: ProgramInstance | null;
+  hotelStay?: { startsOn: string; endsOn: string } | null;
 };
 
 type ProgramTemplate = {
@@ -185,6 +187,21 @@ function civilYmd(value: string): string | null {
   return m?.[1] ?? null;
 }
 
+function formatStayDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+}
+
+function stayNights(program: { startsOn: string; endsOn: string }): number {
+  const a = new Date(program.startsOn);
+  const b = new Date(program.endsOn);
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
+  const start = Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate());
+  const end = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate());
+  return Math.max(0, Math.round((end - start) / 86_400_000));
+}
+
 function daysRemaining(endsOn: string): number {
   const ymd = civilYmd(endsOn);
   if (!ymd) return 0;
@@ -211,6 +228,8 @@ export default function SanatoriumPage() {
   const tc = useTranslations("common");
   const tp = useTranslations("patientRegistry");
   const locale = useLocale();
+  const { auth } = useClinicAuth();
+  const isSuperAdmin = Boolean(auth?.isPlatformSuperAdmin);
   const [procedureTypeNames, setProcedureTypeNames] = useState<Map<string, string>>(new Map());
   const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
@@ -984,6 +1003,9 @@ export default function SanatoriumPage() {
   );
 
   const program = selected?.programInstance;
+  const stayWindow = program
+    ? { startsOn: program.startsOn, endsOn: program.endsOn }
+    : selected?.hotelStay ?? null;
   const proceduresUnlocked =
     Boolean(selected?.anamnesisText?.trim()) &&
     (selected?.complaints.length ?? 0) > 0 &&
@@ -994,16 +1016,50 @@ export default function SanatoriumPage() {
     Boolean(selected?.anamnesisText?.trim()) &&
     selected!.complaints.length > 0;
 
+  async function applyOpenPackages() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/sanatorium/package-apply-open", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, t("failed"));
+        return;
+      }
+      showSuccess(t("applyOpenPackagesDone", { count: data.updated ?? 0 }));
+      if (Array.isArray(data.failed) && data.failed.length > 0) {
+        showApiError(
+          { error: t("applyOpenPackagesPartial", { count: data.failed.length }) },
+          t("failed"),
+        );
+      }
+      await loadList();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
           title={t("title")}
           actions={
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden />
-              {t("registerWalkIn")}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {isSuperAdmin ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={busy}
+                  onClick={() => void applyOpenPackages()}
+                >
+                  {t("applyOpenPackages")}
+                </button>
+              ) : null}
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
+                <Plus className="h-4 w-4" aria-hidden />
+                {t("registerWalkIn")}
+              </button>
+            </div>
           }
         />
       </div>
@@ -1106,17 +1162,23 @@ export default function SanatoriumPage() {
         {selected ? (
           <div className="space-y-4 text-[13px]">
 
-            {program ? (
+            {program || stayWindow ? (
               <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
                 <div className="flex flex-wrap gap-4">
-                  <span>
-                    <strong>{t("programSummary")}:</strong> {program.programCode}
-                  </span>
-                  <span>
-                    {t("daysRemaining")}: {daysRemaining(program.endsOn)}
-                  </span>
+                  {program ? (
+                    <span>
+                      <strong>{t("programSummary")}:</strong> {program.programCode}
+                    </span>
+                  ) : null}
+                  {stayWindow ? (
+                    <span>
+                      {tCard("stayCheckIn")}: {formatStayDate(stayWindow.startsOn)} · {tCard("stayCheckOut")}:{" "}
+                      {formatStayDate(stayWindow.endsOn)} · {tCard("stayNights")}: {stayNights(stayWindow)}
+                      {program ? ` · ${t("daysRemaining")}: ${daysRemaining(program.endsOn)}` : ""}
+                    </span>
+                  ) : null}
                 </div>
-                <div>
+                {program ? <div>
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <h3 className="font-semibold">{t("programQuota")}</h3>
                     {proceduresUnlocked ? (
@@ -1179,7 +1241,7 @@ export default function SanatoriumPage() {
                       : {pendingExtras.length}
                     </p>
                   ) : null}
-                </div>
+                </div> : null}
               </div>
             ) : selected.patientOrigin === "WALK_IN" ? (
               proceduresUnlocked ? (

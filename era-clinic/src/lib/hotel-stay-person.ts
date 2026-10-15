@@ -31,6 +31,41 @@ async function hotelOrganizationId(): Promise<string | null> {
   }
 }
 
+/** Check-in / check-out for a clinic reservation id. Fail-soft. */
+export async function lookupHotelStayWindow(
+  reservationId: string,
+): Promise<{ checkInDate: string; checkOutDate: string } | null> {
+  const externalRef = reservationId.trim();
+  if (!externalRef) return null;
+  const token = serviceToken();
+  const organizationId = await hotelOrganizationId();
+  if (!token || !organizationId) return null;
+
+  const qs = new URLSearchParams({ externalRef, organizationId });
+  try {
+    const res = await fetch(`${hotelBaseUrl()}/api/internal/v1/stays/by-external-ref?${qs}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-service-token": token,
+        "x-era-organization-id": organizationId,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      data?: { checkInDate?: string | null; checkOutDate?: string | null };
+      checkInDate?: string | null;
+      checkOutDate?: string | null;
+    };
+    const checkInDate = data.data?.checkInDate ?? data.checkInDate;
+    const checkOutDate = data.data?.checkOutDate ?? data.checkOutDate;
+    if (!checkInDate || !checkOutDate) return null;
+    return { checkInDate, checkOutDate };
+  } catch {
+    return null;
+  }
+}
+
 /** Fail-soft: hotel not up / stay missing → null (MDM resolve still runs). */
 export async function lookupHotelStayGlobalPerson(input: {
   hotelResNo: string;
