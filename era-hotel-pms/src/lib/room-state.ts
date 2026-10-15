@@ -91,6 +91,21 @@ export function canAssignDoor(
   return HK_ASSIGNABLE.includes(axes.hkCondition);
 }
 
+/** Pre-arrival booking may hold a dirty door. Check-in still uses `canAssignDoor`. */
+export function canBookDoor(
+  room: {
+    status: RoomStatus;
+    hkCondition?: RoomHkCondition | null;
+    inventoryStatus?: RoomInventoryStatus | null;
+  },
+  occupied: boolean,
+): boolean {
+  const axes = resolveAxes(room);
+  if (axes.inventoryStatus !== 'IN_SERVICE') return false;
+  if (occupied) return false;
+  return true;
+}
+
 export function isHkNotReady(room: {
   status: RoomStatus;
   inventoryStatus?: RoomInventoryStatus | null;

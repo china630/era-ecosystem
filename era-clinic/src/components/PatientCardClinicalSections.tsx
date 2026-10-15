@@ -459,6 +459,8 @@ export function PatientCardClinicalSections({
 
   return (
     <div className="space-y-6">
+      {!planOpen ? (
+      <>
       {resultsPreview.length > 0 ? (
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -680,19 +682,33 @@ export function PatientCardClinicalSections({
                       method: "POST",
                     })
                       .then(async (res) => {
+                        const d = await res.json();
+                        const misses = Array.isArray(d.misses) ? d.misses : [];
+                        const missText = misses
+                          .map((miss: { ymd?: string; reason?: string }) => {
+                            const reason =
+                              miss.reason === "no_staff"
+                                ? t("packageAssignMissNoStaff")
+                                : miss.reason === "no_cabin"
+                                  ? t("packageAssignMissNoCabin")
+                                  : t("packageAssignMissNoDay");
+                            return t("packageAssignMiss", { date: miss.ymd || "—", reason });
+                          })
+                          .join("; ");
                         if (!res.ok) {
-                          const d = await res.json();
                           const names = typeof d.error === "string" ? d.error : "";
                           showApiError(
                             {
                               error:
-                                d.code === "NO_CABIN"
+                                missText ||
+                                (d.code === "NO_CABIN"
                                   ? t("packageAssignNoCabin", { names })
-                                  : (packageAssignBlockText(t, d.code) ?? names) || tc("failed"),
+                                  : (packageAssignBlockText(t, d.code) ?? names) || tc("failed")),
                             },
                           );
                           return;
                         }
+                        if (missText) showApiError({ error: missText });
                         const q = `?${new URLSearchParams({
                           ...(episodeId ? { episode: episodeId } : {}),
                           locale,
@@ -782,6 +798,8 @@ export function PatientCardClinicalSections({
           />
         </>
       ) : null}
+      </>
+      ) : null}
 
       <ModalShell
         open={historyOpen}
@@ -847,7 +865,7 @@ export function PatientCardClinicalSections({
           onPlanClose?.();
         }}
         closeLabel={tc("close")}
-        maxWidthClass="max-w-4xl"
+        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
         headerActions={
           <button
             type="button"

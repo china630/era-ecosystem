@@ -1,4 +1,23 @@
 import { prisma } from '@/lib/prisma';
+import type { RevenueCodeRole } from '@/lib/revenue-code-match';
+
+/**
+ * One code per role in an org: assigning a role takes it off the code that had it.
+ * `null` clears the role from this code.
+ */
+export async function setRevenueCodeRole(revenueCodeId: string, role: RevenueCodeRole | null) {
+  return prisma.$transaction(async (tx) => {
+    const code = await tx.revenueCode.findUnique({ where: { id: revenueCodeId } });
+    if (!code) throw new Error('Revenue code not found');
+    if (role) {
+      await tx.revenueCode.updateMany({
+        where: { systemRole: role, NOT: { id: revenueCodeId } },
+        data: { systemRole: null },
+      });
+    }
+    return tx.revenueCode.update({ where: { id: revenueCodeId }, data: { systemRole: role } });
+  });
+}
 
 export async function listRevenueGlMappings() {
   const codes = await prisma.revenueCode.findMany({ orderBy: { code: 'asc' } });
@@ -40,15 +59,10 @@ export async function upsertRevenueGlMapping(revenueCodeId: string, glAccountCod
 export async function resolveGlAccountCode(
   revenueCode: string,
 ): Promise<{ glAccountCode: string; unmapped: boolean }> {
-  const token = revenueCode.trim();
-  if (!token) return { glAccountCode: '', unmapped: true };
+  const code = revenueCode.trim();
+  if (!code) return { glAccountCode: '', unmapped: true };
   const row = await prisma.hotelRevenueGlMapping.findFirst({
-    where: {
-      OR: [
-        { revenueCode: { code: token } },
-        { revenueCode: { name: { equals: token, mode: 'insensitive' } } },
-      ],
-    },
+    where: { revenueCode: { code } },
   });
   if (!row?.glAccountCode.trim()) return { glAccountCode: '', unmapped: true };
   return { glAccountCode: row.glAccountCode.trim(), unmapped: false };

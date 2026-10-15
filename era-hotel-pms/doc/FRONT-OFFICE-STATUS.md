@@ -22,6 +22,8 @@
 
 **Product verdict:** FO **CSV parity** including Guest CRM P0+P1 and Reservation Details. **G6/G7 Done**; omnichannel STUB Partial. **R7 Done** (Wave D). Medical/finance via satellite deep links only.
 
+**2026-10-15 desk rules:** before check-in the door can be cleared or a dirty in-service room can be reserved; check-in still requires clean or inspected. Cancel before arrival does not change housekeeping. Cancel asks for a reason; no-show does not. A cancelled stay can be restored onto a free type and door. Reservation list Hamısı excludes no-show and cancel. A manually posted room night (including a past Elektra night) locks that rate-grid row and does not close the hotel day; a medical rate posts the package lines for that night. Cancel reason is the CANCEL_NOTE on the stay. Front cash zero rows are reception, plus cafe, clinic, and shop when that code exists on the department catalog; a paid settlement line still adds its source with the catalog name. Each of those points is crossed with each tender and each card terminal.
+
 ---
 
 ## 1. Global header (all industry satellites)
@@ -99,6 +101,8 @@
 | B2 | CRM 50+ buttons | **Done (P0–P1)** | P2/P3 visible-disabled per [GUEST-CRM-ELECTRAWEB.md](./GUEST-CRM-ELECTRAWEB.md) |
 | B9 | CRM omnichannel | **Done (platform notify)** + **Partial (vendor STUB)** | WhatsApp/email/SMS via `trySendPlatformNotification`; Twilio/SendGrid not wired |
 | B3–B8 | Reservation/guest/rack tails | **Done** | Waves E–G |
+| B10 | External ERP webhook (`EXTERNAL_INTEGRATION_URL`, Settings → Integration) | **Off by default — rework needed** | Kept for customers with their own accounting. Before use: one document per day instead of per-charge posts, numeric revenue code + system role in payloads, per-org URL/secret, retry for folio events — [22-outbound-integration-policy.md](./clone-spec/22-outbound-integration-policy.md) |
+| B11 | Nafta test data cleanup | **Open** | 11 test hotel invoices sent to finance before the cutover (finance skipped them: no counterparty VÖEN; processed-event marks stay). Remove the test invoices in the hotel before go-live |
 
 ---
 

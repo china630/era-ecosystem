@@ -56,6 +56,7 @@ export function ReservationCardPricingTab({
   tariffNightly,
   businessDate,
   postedDates,
+  onPostNight,
   onDailyRates,
   onManualRate,
   onDiscountPercent,
@@ -72,6 +73,7 @@ export function ReservationCardPricingTab({
   tariffNightly: number | null;
   businessDate: string | null;
   postedDates: string[];
+  onPostNight?: (ymd: string) => void;
   onDailyRates: (rows: DailyRateRow[]) => void;
   onManualRate: (value: string) => void;
   onDiscountPercent: (value: string) => void;
@@ -328,7 +330,19 @@ export function ReservationCardPricingTab({
                       : 'border-t border-[#D5DADF]';
                 return (
                   <tr key={row.stayDate} className={rowClass} data-night-kind={kind}>
-                    <td className="p-2">{row.stayDate.slice(0, 10)}</td>
+                    <td className="p-2">
+                      <span>{row.stayDate.slice(0, 10)}</span>
+                      {onPostNight && kind !== 'posted' && !isCreate && (!businessDate || row.stayDate.slice(0, 10) <= businessDate) ? (
+                        <button
+                          type="button"
+                          className="ml-2 text-[11px] text-[#2980B9] hover:underline disabled:opacity-40"
+                          disabled={busy || isLocked}
+                          onClick={() => onPostNight(row.stayDate.slice(0, 10))}
+                        >
+                          {t('postNight')}
+                        </button>
+                      ) : null}
+                    </td>
                     <td className="p-2 text-right text-[#7F8C8D]">{money(tariffOf(row))}</td>
                     <td className="p-2 text-right">
                       <input

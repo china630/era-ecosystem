@@ -242,7 +242,7 @@ export default function ReservationsListPage() {
             type="button"
             role="tab"
             aria-selected={queue === code}
-            className={queue === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+            className={`${queue === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS} inline-flex w-[9.5rem] items-center justify-center text-center`}
             onClick={() => {
               setQueue(code);
               setOverdue(false);
@@ -310,12 +310,17 @@ export default function ReservationsListPage() {
         toolbar={(() => {
           const selected = rows.find((row) => row.id === selectedId);
           const selectedNotes = (selected?.notes ?? []).filter((note) => (note.text ?? '').trim());
-          if (selectedNotes.length === 0) return undefined;
           return (
-            <ReservationNoteLine
-              className="mb-1 rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2.5 py-1 text-[12px] leading-5 text-[#34495E]"
-              notes={selectedNotes}
-            />
+            <div className="mb-1 h-8 shrink-0 overflow-hidden">
+              {selectedNotes.length > 0 ? (
+                <ReservationNoteLine
+                  className="m-0 h-8 overflow-hidden rounded-md border border-[#D5DADF] bg-[#F8F9FA] px-2.5 py-1.5 text-[12px] leading-5 text-[#34495E]"
+                  notes={selectedNotes}
+                />
+              ) : (
+                <div className="h-8 rounded-md border border-transparent" aria-hidden />
+              )}
+            </div>
           );
         })()}
         table={

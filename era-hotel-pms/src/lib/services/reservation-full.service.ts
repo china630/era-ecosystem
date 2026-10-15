@@ -8,6 +8,7 @@ import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios, reconcilePartyFolios } from '@/lib/services/booking-folio.service';
 import { isReservationQueue, reservationQueueWhere } from '@/lib/reservation-queue';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
+import { STAY_NIGHT_ROLES } from '@/lib/revenue-code-match';
 import { normalizeListPagination } from '@era/satellite-kit';
 import type { PartyBillingMode, Prisma, ReservationStatus } from '@prisma/client';
 
@@ -381,7 +382,7 @@ export async function patchReservationFull(
       throw new Error('Guest names incomplete — fill real names before assign');
     }
 
-    const { assertRoomShareAssignable, roomStatusAllowedForShareAssign, reservationIsOta } =
+    const { assertRoomShareAssignable, roomStatusAllowedForBooking, roomStatusAllowedForShareAssign, reservationIsOta } =
       await import('@/lib/services/share-assignment.service');
     const room = await prisma.room.findUnique({ where: { id: effectiveRoomId } });
     if (!room) throw new Error('Room not found');
@@ -420,9 +421,15 @@ export async function patchReservationFull(
       nextShareEligible = true;
       nextShareGender = resolvedGender ?? nextShareGender;
     }
-    if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
+    const doorOk =
+      existing.status === 'IN_HOUSE'
+        ? roomStatusAllowedForShareAssign(room, joiningPool)
+        : roomStatusAllowedForBooking(room, joiningPool);
+    if (!doorOk) {
       throw new Error(
-        `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
+        existing.status === 'IN_HOUSE'
+          ? `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`
+          : `Room ${room.roomNumber} is ${room.status}; out of service and cannot be reserved`,
       );
     }
   } else if (data.roomId === null) {
@@ -485,6 +492,17 @@ export async function patchReservationFull(
         : {}),
     },
   });
+
+  if (data.roomId === null && existing.roomId && existing.status !== 'IN_HOUSE') {
+    const { moveStayDoor } = await import('@/lib/services/stay-slice.service');
+    await moveStayDoor({
+      reservationId: id,
+      fromRoomId: existing.roomId,
+      toRoomId: null,
+      status: existing.status,
+      checkIn,
+    });
+  }
 
   if (
     data.roomId !== undefined &&
@@ -665,7 +683,7 @@ export async function patchReservationFull(
     const postedCharges = await prisma.folioCharge.findMany({
       where: {
         folio: { reservationId: id },
-        revenueCode: { code: { in: ['ROOM', 'PKG', 'RATE_ADJ'] } },
+        revenueCode: { systemRole: { in: [...STAY_NIGHT_ROLES] } },
       },
       select: { businessDate: true },
     });

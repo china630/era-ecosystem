@@ -544,11 +544,21 @@ export async function completeCheckupAndSchedule(input: {
     data: { checkupCompletedAt: new Date(), programCode },
   });
 
+  const { lookupHotelStayWindow } = await import("@/lib/hotel-stay-person");
+  const { nightsBetween } = await import("@/lib/program-quota");
+  const hotel = episode.reservationId
+    ? await lookupHotelStayWindow(episode.reservationId)
+    : null;
+  const checkIn = input.startsOn ?? (hotel ? new Date(hotel.checkInDate) : new Date());
+  const checkOut = hotel ? new Date(hotel.checkOutDate) : undefined;
   const instance = await instantiateProgramFromTemplate({
     episodeId: episode.id,
     programCode,
     reservationId: episode.reservationId ?? undefined,
-    startsOn: input.startsOn ?? new Date(),
+    startsOn: checkIn,
+    checkInDate: hotel ? checkIn : undefined,
+    checkOutDate: checkOut,
+    nights: hotel && checkOut ? nightsBetween(checkIn, checkOut) || undefined : undefined,
   });
   return instance;
 }

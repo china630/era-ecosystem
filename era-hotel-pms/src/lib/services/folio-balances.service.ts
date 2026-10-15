@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { folioBalance } from '@/lib/services/folio.service';
 import { decimalToNumber } from '@/lib/decimal';
-import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
+import { revenueRoleIs } from '@/lib/revenue-code-match';
 
 export type FolioBalanceTab =
   | 'inHouse'
@@ -40,9 +40,8 @@ export function passesFolioBalanceTab(
   return true;
 }
 
-function isRoomRevenue(row: { code?: string | null; name?: string | null } | undefined): boolean {
-  if (!row) return false;
-  return matchesAnyRevenueToken(row, ['ROOM', 'LODGING']);
+function isRoomRevenue(row: { systemRole: string | null } | undefined): boolean {
+  return revenueRoleIs(row, 'ROOM');
 }
 
 export async function listReservationFolioBalances(
@@ -88,7 +87,7 @@ export async function listReservationFolioBalances(
       room: { select: { roomNumber: true } },
       folios: {
         include: {
-          charges: { include: { revenueCode: { select: { code: true, name: true } } } },
+          charges: { include: { revenueCode: { select: { code: true, name: true, systemRole: true } } } },
           payments: true,
           reservationGuest: { select: { firstName: true, lastName: true, sortOrder: true } },
         },

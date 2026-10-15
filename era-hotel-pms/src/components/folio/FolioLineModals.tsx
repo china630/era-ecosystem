@@ -389,7 +389,10 @@ export function FolioTransferModal({
   const [targetReservationId, setTargetReservationId] = useState('');
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
-  const [targets, setTargets] = useState<{ value: string; label: string }[]>([]);
+  const [targets, setTargets] = useState<
+    { value: string; label: string; guests: { id: string; name: string }[] }[]
+  >([]);
+  const [targetGuestId, setTargetGuestId] = useState('');
   const [targetError, setTargetError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -398,6 +401,7 @@ export function FolioTransferModal({
     setScope('WITHIN');
     setTargetFolioType('GUEST');
     setTargetReservationId('');
+    setTargetGuestId('');
     setNote('');
     setQuery('');
     setTargets([]);
@@ -417,13 +421,16 @@ export function FolioTransferModal({
           const rows = (await r.json()) as {
             reservationId: string;
             roomNumber: string;
-            guests: { name: string }[];
+            guests: { id: string; name: string }[];
           }[];
           setTargetError('');
           setTargets(
             (Array.isArray(rows) ? rows : []).map((row) => ({
               value: row.reservationId,
-              label: [row.roomNumber, row.guests[0]?.name].filter(Boolean).join(' · '),
+              label: [row.roomNumber, row.guests.map((g) => g.name).filter(Boolean).join(', ')]
+                .filter(Boolean)
+                .join(' · '),
+              guests: (row.guests ?? []).filter((g) => g.id && g.id !== 'primary-guest'),
             })),
           );
         })
@@ -447,6 +454,10 @@ export function FolioTransferModal({
           note: note.trim(),
           targetFolioType,
           targetReservationId: scope === 'OTHER' ? targetReservationId : undefined,
+          targetReservationGuestId:
+            scope === 'OTHER' && targetFolioType === 'GUEST' && targetGuestId
+              ? targetGuestId
+              : undefined,
         }),
       });
       const data = await res.json();
@@ -472,7 +483,14 @@ export function FolioTransferModal({
           onCancel={onClose}
           onSubmit={() => void submit()}
           busy={busy}
-          submitDisabled={!note.trim() || (scope === 'OTHER' && !targetReservationId)}
+          submitDisabled={
+            !note.trim() ||
+            (scope === 'OTHER' && !targetReservationId) ||
+            (scope === 'OTHER' &&
+              targetFolioType === 'GUEST' &&
+              (targets.find((row) => row.value === targetReservationId)?.guests.length ?? 0) > 1 &&
+              !targetGuestId)
+          }
           submitLabel={t('transfer')}
         />
       }
@@ -506,9 +524,25 @@ export function FolioTransferModal({
             kind="SEARCHABLE"
             label={t('transferOther')}
             value={targetReservationId}
-            onChange={(v) => setTargetReservationId(String(v))}
+            onChange={(v) => {
+              const next = String(v);
+              setTargetReservationId(next);
+              const stay = targets.find((row) => row.value === next);
+              setTargetGuestId(stay?.guests.length === 1 ? stay.guests[0]!.id : '');
+            }}
             onQueryChange={setQuery}
             options={targets}
+          />
+        ) : null}
+        {scope === 'OTHER' && targetFolioType === 'GUEST' && targetReservationId ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('transferGuest')}
+            value={targetGuestId}
+            onChange={(v) => setTargetGuestId(String(v ?? ''))}
+            options={(targets.find((row) => row.value === targetReservationId)?.guests ?? []).map(
+              (guest) => ({ value: guest.id, label: guest.name }),
+            )}
           />
         ) : null}
         {scope === 'OTHER' && targetError ? (

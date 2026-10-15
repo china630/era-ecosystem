@@ -38,6 +38,12 @@ export default function AdminSettingsPage() {
   const [presets, setPresets] = useState<PresetState | null>(null);
   const [presetOpen, setPresetOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<string[]>([]);
+  const [outlets, setOutlets] = useState<Array<{ id: string; code: string; name: string; revenueCenterCode: string }>>([]);
+  const [outletId, setOutletId] = useState("");
+  const [revenueOptions, setRevenueOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [revenueNotice, setRevenueNotice] = useState("");
+  const [revenueOpen, setRevenueOpen] = useState(false);
+  const [revenueDraft, setRevenueDraft] = useState("");
 
   useEffect(() => {
     void fetch("/api/settings/business-day")
@@ -46,13 +52,63 @@ export default function AdminSettingsPage() {
         if (typeof d?.businessDayStart === "string") setDayStart(d.businessDayStart);
       })
       .catch(() => undefined);
+    void fetch("/api/outlets")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const rows = Array.isArray(d?.outlets) ? d.outlets : [];
+        setOutlets(rows);
+        setOutletId((prev) => prev || rows[0]?.id || "");
+      })
+      .catch(() => undefined);
+    void fetch("/api/admin/hotel-revenue-codes")
+      .then(async (r) => {
+        const body = await r.json().catch(() => null);
+        if (!r.ok) {
+          setRevenueOptions([]);
+          setRevenueNotice(
+            r.status === 403
+              ? t("revenueForbidden")
+              : r.status === 409
+                ? t("revenueNotLinked")
+                : t("revenueUnavailable"),
+          );
+          return;
+        }
+        const codes = (body?.codes ?? body?.data?.codes ?? []) as Array<{ code: string; name: string }>;
+        setRevenueOptions(
+          codes.map((row) => ({
+            value: row.code,
+            label: row.name ? `${row.code} — ${row.name}` : row.code,
+          })),
+        );
+        setRevenueNotice(codes.length === 0 ? t("revenueEmpty") : "");
+      })
+      .catch(() => setRevenueNotice(t("revenueUnavailable")));
     void fetch("/api/settings/presets")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d && Array.isArray(d.enabledPresets)) setPresets(d as PresetState);
       })
       .catch(() => undefined);
-  }, []);
+  }, [t]);
+
+  async function saveOutletRevenue() {
+    const res = await fetch(`/api/outlets/${outletId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revenueCenterCode: revenueDraft.trim() }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("save"));
+      return;
+    }
+    setOutlets((rows) =>
+      rows.map((row) => (row.id === outletId ? { ...row, revenueCenterCode: revenueDraft.trim() } : row)),
+    );
+    setRevenueOpen(false);
+    showSuccess(t("saved"));
+  }
 
   async function saveDayStart() {
     const res = await fetch("/api/settings/business-day", {
@@ -112,6 +168,26 @@ export default function AdminSettingsPage() {
         </thead>
         <tbody>
           <tr>
+            <td className="p-3 font-medium">{t("outletRevenue")}</td>
+            <td className="p-3">
+              {outlets.find((row) => row.id === outletId)?.revenueCenterCode || "—"}
+              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
+            </td>
+            <td className="p-3 text-right">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={!outletId}
+                onClick={() => {
+                  setRevenueDraft(outlets.find((row) => row.id === outletId)?.revenueCenterCode ?? "");
+                  setRevenueOpen(true);
+                }}
+              >
+                {t("edit")}
+              </button>
+            </td>
+          </tr>
+          <tr>
             <td className="p-3 font-medium">{t("businessDayStart")}</td>
             <td className="p-3">
               {dayStart}
@@ -164,6 +240,35 @@ export default function AdminSettingsPage() {
           ) : null}
         </tbody>
       </table>
+      <ModalShell open={revenueOpen} title={t("outletRevenue")} onClose={() => setRevenueOpen(false)}>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("outletName")}
+          options={outlets.map((row) => ({ value: row.id, label: `${row.code} — ${row.name}` }))}
+          value={outletId}
+          onChange={(next) => {
+            const id = String(next ?? "");
+            setOutletId(id);
+            setRevenueDraft(outlets.find((row) => row.id === id)?.revenueCenterCode ?? "");
+          }}
+        />
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("outletRevenue")}
+          options={
+            revenueDraft && !revenueOptions.some((option) => option.value === revenueDraft)
+              ? [{ value: revenueDraft, label: revenueDraft }, ...revenueOptions]
+              : revenueOptions
+          }
+          value={revenueDraft}
+          onChange={(next) => setRevenueDraft(String(next ?? ""))}
+        />
+        <ModalFooter
+          onCancel={() => setRevenueOpen(false)}
+          onSubmit={() => void saveOutletRevenue()}
+          submitLabel={t("save")}
+        />
+      </ModalShell>
       <ModalShell open={dayOpen} title={t("businessDayStart")} onClose={() => setDayOpen(false)}>
         <Field
           label={t("businessDayStart")}

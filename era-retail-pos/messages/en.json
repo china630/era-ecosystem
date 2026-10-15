@@ -10,6 +10,7 @@
     "replenishment": "Replenishment",
     "settings": "Settings",
     "import": "Cutover import",
+    "catalog": "Revenue codes",
     "executive": "Executive",
     "access": "Access and roles",
     "accounts": "Accounts",
@@ -279,6 +280,7 @@
       "screen_settings": "Store settings",
       "screen_admin_access": "Access screen",
       "api_receipts_sell": "Sell (receipts, payment, returns, promo)",
+      "api_hotel_revenue_codes": "Hotel revenue codes",
       "api_receipts_void_line": "Void a receipt or a line",
       "api_shifts_open": "Open shift",
       "api_shifts_close": "Close shift",
@@ -293,5 +295,27 @@
       "admin_settings": "Outlet integrations",
       "admin_access_manage": "Manage roles and access"
     }
+  },
+  "catalogAdmin": {
+    "title": "Revenue codes",
+    "subtitle": "Outlet, category, then product. An empty product uses the category, then the outlet.",
+    "outletTitle": "Outlet",
+    "outlet": "Outlet",
+    "categoryTitle": "Category",
+    "category": "Category",
+    "productTitle": "Product",
+    "product": "Product",
+    "code": "Code",
+    "name": "Name",
+    "revenueCode": "Hotel revenue code",
+    "addCategory": "Add category",
+    "noCategory": "No category",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Could not save",
+    "empty": "No active hotel revenue codes for this organization.",
+    "unavailable": "Hotel revenue catalog is unavailable.",
+    "notLinked": "Hotel organization is not linked.",
+    "forbidden": "This session cannot read hotel revenue codes."
   }
 }

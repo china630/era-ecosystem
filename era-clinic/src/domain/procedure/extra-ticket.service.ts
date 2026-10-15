@@ -34,7 +34,7 @@ export async function listExtrasAwaitingTicket(organizationId?: string | null) {
         },
       ],
     },
-    include: { patientRef: true },
+    include: { patientRef: true, clinicalEpisode: { select: { roomNumber: true } } },
     orderBy: { scheduledAt: "asc" },
     take: 200,
   });

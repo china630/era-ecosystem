@@ -19,7 +19,7 @@ import {
   resolveProcedureCharge,
 } from "@/domain/procedure/procedure-charge.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import { postHotelRoomCharge, tryResolveSellableSku } from "@/lib/billing-router";
+import { postHotelRoomCharge, revenueCodeForServiceLine, tryResolveSellableSku } from "@/lib/billing-router";
 import {
   extraTicketIdForOrder,
   extraTicketPrintPath,
@@ -300,7 +300,7 @@ export async function payAndScheduleExtras(
           reservationId: order.reservationId,
           amount,
           description,
-          externalTicketId: `pay-${ticketId}`,
+          externalTicketId: ticketId,
           procedureCode: order.procedureCode,
           qty: order.quantity,
         });
@@ -319,7 +319,7 @@ export async function payAndScheduleExtras(
         amount,
         description,
         payerLabel: order.patientRef.fullName,
-        idempotencyKey: `pay-${ticketId}`,
+        idempotencyKey: ticketId,
         sku,
         qty: order.quantity,
       });
@@ -447,6 +447,7 @@ export async function cancelPaidExtraWithFolioReverse(
   if (order.reservationId) {
     try {
       const productSku = await tryResolveSellableSku(order.procedureCode);
+      const revenueCode = await revenueCodeForServiceLine(order.procedureCode);
       await postHotelRoomCharge({
         reservationId: order.reservationId,
         amount: -amount,
@@ -454,6 +455,7 @@ export async function cancelPaidExtraWithFolioReverse(
         externalTicketId: `rev-${order.extraTicketId ?? order.id}`,
         productSku: productSku ?? undefined,
         qty: order.quantity,
+        revenueCode,
       });
     } catch (err) {
       console.error("[extras] folio reverse failed", orderId, err);
@@ -493,8 +495,16 @@ export async function applyHotelVoidToExtra(input: {
         })
       : null;
   if (!order) return { cancelled: false, reason: "not_found" };
-  if (["COMPLETED", "CANCELLED", "NO_SHOW", "CHECKED_IN"].includes(order.status)) {
+  if (["COMPLETED", "CANCELLED", "CHECKED_IN"].includes(order.status)) {
     return { cancelled: false, reason: "received" };
+  }
+  if (order.status === "NO_SHOW") {
+    const { getClinicSettings } = await import("@/domain/settings/settings.service");
+    const settings = await getClinicSettings();
+    if (settings.noShowKeepsCharge) return { cancelled: false, reason: "received" };
+  }
+  if (order.status === "SCHEDULED" || order.status === "PROPOSED") {
+    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: order.id } });
   }
   await prisma.procedureOrder.update({
     where: { id: order.id },

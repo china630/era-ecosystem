@@ -6,12 +6,16 @@ import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.se
 import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
 import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
-import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
+import { getNightlyRoomChargeForDate, quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
-import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
-import { findRevenueCodeByToken, matchesAnyRevenueToken } from '@/lib/revenue-code-token';
+import { parsePackageNight, parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
+import {
+  requireRevenueCodeByRole,
+  revenueRoleIn,
+  STAY_NIGHT_ROLES,
+} from '@/lib/revenue-code-token';
 import {
   applyLoadBasedAdjustment,
   computeChildNightlyAddon,
@@ -52,14 +56,19 @@ async function closedNightKeys(reservationId: string): Promise<{ bizKey: string;
     select: {
       businessDate: true,
       description: true,
-      revenueCode: { select: { code: true, name: true } },
+      revenueCode: { select: { code: true, name: true, systemRole: true } },
     },
   });
   const posted = new Set<string>();
   for (const charge of charges) {
-    if (!matchesAnyRevenueToken(charge.revenueCode, ['ROOM', 'PKG', 'RATE_ADJ'])) continue;
-    const noted = parseRoomChargeNote(charge.description ?? '');
-    posted.add(noted?.date ?? hotelDateKey(charge.businessDate));
+    const description = charge.description ?? '';
+    const noted = parseRoomChargeNote(description);
+    const packageNight = parsePackageNight(description);
+    if (noted?.date) posted.add(noted.date);
+    else if (packageNight) posted.add(packageNight);
+    else if (revenueRoleIn(charge.revenueCode, STAY_NIGHT_ROLES)) {
+      posted.add(hotelDateKey(charge.businessDate));
+    }
   }
   return { bizKey, posted };
 }
@@ -502,8 +511,7 @@ export async function chargeAllRoomNights(reservationId: string) {
       : { posted: [key], skipped: [] as string[] };
   }
 
-  const revenueRoom = await findRevenueCodeByToken('ROOM');
-  if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
+  const revenueRoom = await requireRevenueCodeByRole('ROOM');
 
   let rates = res.dailyRates;
   if (rates.length === 0) {
@@ -555,6 +563,51 @@ export async function chargeAllRoomNights(reservationId: string) {
   }
 
   return { posted: postedNights, skipped };
+}
+
+/** Post one stay night, including a past night brought over from Elektra. Does not close the hotel day. */
+export async function postRoomNight(reservationId: string, ymd: string) {
+  const res = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { dailyRates: true, ratePlan: { select: { medicalFlag: true } } },
+  });
+  if (!res) throw new Error('Reservation not found');
+  if (res.isLocked) throw new Error('Reservation is locked');
+  if (!['CONFIRMED', 'IN_HOUSE'].includes(res.status)) {
+    throw new Error('Room night posts on an open stay');
+  }
+  const start = hotelDateKey(res.checkInDate);
+  const end = hotelDateKey(res.checkOutDate);
+  if (ymd < start || ymd >= end) throw new Error('Night is outside the stay');
+  const bizKey = hotelDateKey(await getCurrentBusinessDate());
+  if (ymd > bizKey) throw new Error('A future night is posted by night audit');
+
+  const closed = await closedNightKeys(reservationId);
+  if (closed.posted.has(ymd)) return { posted: [] as string[], skipped: [ymd] };
+
+  if (res.ratePlan.medicalFlag) {
+    const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
+    const result = await postNightlyPackageCharges(reservationId, bakuCivilUtcDate(ymd));
+    return result.skipped
+      ? { posted: [] as string[], skipped: [ymd] }
+      : { posted: [ymd], skipped: [] as string[] };
+  }
+
+  const revenueRoom = await requireRevenueCodeByRole('ROOM');
+  const row = res.dailyRates.find((rate) => hotelDateKey(rate.stayDate) === ymd);
+  let amount = row ? decimalToNumber(row.amount) : 0;
+  if (!row) {
+    amount = await getNightlyRoomChargeForDate(reservationId, bakuCivilUtcDate(ymd));
+  }
+  await postCharge({
+    reservationId,
+    revenueCodeId: revenueRoom.id,
+    amount,
+    qty: 1,
+    description: roomChargeNote('manual-room', ymd),
+    businessDate: bakuCivilUtcDate(ymd),
+  });
+  return { posted: [ymd], skipped: [] as string[] };
 }
 
 export async function listDailyRates(reservationId: string) {

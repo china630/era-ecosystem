@@ -36,6 +36,7 @@ export const middleware = createSatelliteStaffMiddleware<NextRequest>({
     "/api/booking",
     "/api/cron",
     "/api/internal/v1/extras/hotel-void",
+    "/api/internal/v1/stay-procedures",
     "/api/capacity/summary",
   ],
   // Route checks CLINIC_BRIDGE_SECRET, then reads the caller's org header.

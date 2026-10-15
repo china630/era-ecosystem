@@ -175,32 +175,32 @@ async function main() {
   });
 
   const revRoom = await prisma.revenueCode.create({
-    data: { code: 'ROOM', name: 'Room revenue', taxTag: '18%', departmentId: deptAcc.id },
+    data: { code: 'ROOM', systemRole: 'ROOM', name: 'Room revenue', taxTag: '18%', departmentId: deptAcc.id },
   });
   const revFood = await prisma.revenueCode.create({
-    data: { code: 'FOOD', name: 'Food & beverage', taxTag: '18%', departmentId: deptRest.id },
+    data: { code: 'FOOD', systemRole: 'FOOD', name: 'Food & beverage', taxTag: '18%', departmentId: deptRest.id },
   });
   const revMedical = await prisma.revenueCode.create({
-    data: { code: 'MEDICAL', name: 'Medical procedures', departmentId: deptMed.id },
+    data: { code: 'MEDICAL', systemRole: 'MEDICAL', name: 'Medical procedures', departmentId: deptMed.id },
   });
   const revPkg = await prisma.revenueCode.create({
-    data: { code: 'PKG', name: 'Medical package bundle', departmentId: deptMed.id },
+    data: { code: 'PKG', systemRole: 'PKG', name: 'Medical package bundle', departmentId: deptMed.id },
   });
   const revTreatment = await prisma.revenueCode.create({
-    data: { code: 'TREATMENT', name: 'Included treatment', departmentId: deptMed.id },
+    data: { code: 'TREATMENT', systemRole: 'TREATMENT', name: 'Included treatment', departmentId: deptMed.id },
   });
   const revBoard = await prisma.revenueCode.create({
-    data: { code: 'BOARD', name: 'Included board', departmentId: deptRest.id },
+    data: { code: 'BOARD', systemRole: 'BOARD', name: 'Included board', departmentId: deptRest.id },
   });
   // Same SKU hotel_transfers / ACC department; distinct P&L articles (airport vs excursion).
   const revTransfer = await prisma.revenueCode.create({
-    data: { code: 'TRANSFER', name: 'Airport transfer', taxTag: '18%', departmentId: deptAcc.id },
+    data: { code: 'TRANSFER', systemRole: 'TRANSFER', name: 'Airport transfer', taxTag: '18%', departmentId: deptAcc.id },
   });
   const revTour = await prisma.revenueCode.create({
-    data: { code: 'TOUR', name: 'Guest tour', taxTag: '18%', departmentId: deptAcc.id },
+    data: { code: 'TOUR', systemRole: 'TOUR', name: 'Guest tour', taxTag: '18%', departmentId: deptAcc.id },
   });
   await prisma.revenueCode.create({
-    data: { code: 'RATE_ADJ', name: 'Same-day rate adjustment', taxTag: '18%', departmentId: deptAcc.id },
+    data: { code: 'RATE_ADJ', systemRole: 'RATE_ADJ', name: 'Same-day rate adjustment', taxTag: '18%', departmentId: deptAcc.id },
   });
 
   await prisma.folioRoutingRule.create({

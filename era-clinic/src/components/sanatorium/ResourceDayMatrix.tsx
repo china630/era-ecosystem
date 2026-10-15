@@ -12,6 +12,7 @@ export type MatrixSlot = {
   lunch?: boolean;
   procedureOrderId?: string;
   patientName?: string;
+  roomNumber?: string;
   procedureName?: string;
   status?: string;
   patientRefId?: string;
@@ -85,6 +86,7 @@ type Props = {
   onDragStart?: (orderId: string) => void;
   resourceFilter?: string;
   patientFilter?: string;
+  roomFilter?: string;
   timeHorizon?: TimeHorizon;
   dayStartHour?: number;
   /** CSS width per time column (appointments use wider cols). Default 1.75rem. */
@@ -139,29 +141,48 @@ function patientMatches(slot: MatrixSlot, query: string): boolean {
   );
 }
 
-function rowHasPatient(row: MatrixResourceRow, patientQuery: string): boolean {
-  const q = patientQuery.trim();
+function roomMatches(slot: MatrixSlot, query: string): boolean {
+  const q = query.trim().toLowerCase();
   if (!q) return true;
+  return (slot.roomNumber ?? "").toLowerCase().includes(q);
+}
+
+function rowHasPatient(row: MatrixResourceRow, patientQuery: string, roomQuery: string): boolean {
+  const patient = patientQuery.trim();
+  const room = roomQuery.trim();
+  if (!patient && !room) return true;
   return row.slots.some(
-    (s) => !s.lunch && (s.occupied || s.blocked) && patientMatches(s, q),
+    (s) =>
+      !s.lunch &&
+      (s.occupied || s.blocked) &&
+      patientMatches(s, patient) &&
+      roomMatches(s, room),
   );
 }
 
 /** Keep only bars for the matched patient; clear other bookings on the row. */
-function applyPatientFilter(row: MatrixResourceRow, patientQuery: string): MatrixResourceRow {
-  const q = patientQuery.trim().toLowerCase();
-  if (!q) return row;
+function applyPatientFilter(
+  row: MatrixResourceRow,
+  patientQuery: string,
+  roomQuery: string,
+): MatrixResourceRow {
+  const patient = patientQuery.trim();
+  const room = roomQuery.trim();
+  if (!patient && !room) return row;
   return {
     ...row,
     slots: row.slots.map((slot) => {
       if (slot.lunch) return slot;
-      if (!(slot.occupied || slot.blocked) || patientMatches(slot, q)) return slot;
+      if (!(slot.occupied || slot.blocked) || (patientMatches(slot, patient) && roomMatches(slot, room))) {
+        return slot;
+      }
       return {
         ...slot,
         occupied: false,
         blocked: false,
         procedureOrderId: undefined,
         patientName: undefined,
+        roomNumber: undefined,
         procedureName: undefined,
         procedureCode: undefined,
         status: undefined,
@@ -256,6 +277,7 @@ export function ResourceDayMatrix({
   onDragStart,
   resourceFilter = "",
   patientFilter = "",
+  roomFilter = "",
   timeHorizon = "full",
   dayStartHour = 9,
   slotColumnWidth = "1.75rem",
@@ -268,8 +290,8 @@ export function ResourceDayMatrix({
       if (!q) return true;
       return r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q);
     })
-    .filter((row) => rowHasPatient(row, patientQuery))
-    .map((row) => applyPatientFilter(row, patientFilter));
+    .filter((row) => rowHasPatient(row, patientQuery, roomFilter))
+    .map((row) => applyPatientFilter(row, patientFilter, roomFilter));
 
   const baseSlots = filtered[0]?.slots ?? resources[0]?.slots ?? [];
   const timeSlots = filterSlotsByHorizon(baseSlots, date, timeHorizon, dayStartHour);
@@ -406,7 +428,10 @@ export function ResourceDayMatrix({
                             })
                           }
                         >
-                          <div className="truncate font-semibold">{shortName(slot.patientName)}</div>
+                          <div className="truncate font-semibold">
+                            {shortName(slot.patientName)}
+                            {slot.roomNumber ? ` · ${slot.roomNumber}` : ""}
+                          </div>
                           <div className={`truncate ${TEXT_MUTED_CLASS}`}>
                             {slot.procedureName ?? slot.procedureCode ?? ""}
                             {slot.status ? ` · ${slot.status}` : ""}

@@ -208,6 +208,18 @@ describe("API door: strip one grant → 403", () => {
     },
   );
 
+  it("hotel revenue codes use the shared key, not the admin blanket", () => {
+    expect(apiRoutePermissions("/api/admin/hotel-revenue-codes")).toEqual([
+      PERMISSIONS.HOTEL_REVENUE_CODES,
+    ]);
+    expect(() =>
+      assertApiRouteGrant(session([PERMISSIONS.ACCESS_MANAGE]), "/api/admin/hotel-revenue-codes"),
+    ).toThrow(expect.objectContaining({ status: 403 }));
+    expect(() =>
+      assertApiRouteGrant(session([PERMISSIONS.HOTEL_REVENUE_CODES]), "/api/admin/hotel-revenue-codes"),
+    ).not.toThrow();
+  });
+
   it("an API path outside the catalog denies; a missing path denies; session-only and non-API paths pass", () => {
     expect(apiRoutePermissions("/api/not-a-route")).toBeNull();
     expect(() => assertApiRouteGrant(session(ALL_PERMISSIONS as string[]), "/api/not-a-route")).toThrow(

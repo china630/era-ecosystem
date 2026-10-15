@@ -89,7 +89,7 @@ Also: mammography, DXA
 | Specialty | `LAB-RHEUMA`, `LAB-TUMOR`, `LAB-TUMOR-EXT`, `LAB-VITAMIN`, `LAB-TRACE`, `LAB-IG`, `LAB-HOMOC`, `LAB-CELIAC` |
 | Micro / GI / gyn | `LAB-URINE-CULT`, `LAB-MICRO-CULT`, `LAB-STOOL`, `LAB-COPROG`, `LAB-SPUTUM`, `LAB-GYN-SMEAR`, `LAB-HPV`, `LAB-CYTOLOGY`, `LAB-HISTO`, `LAB-SEMEN`, `LAB-BG`, `LAB-DRUG-SCR` |
 
-`LAB-CBC` and `LAB-URINE` are whole panels on every open package. The urine blank profile `Sidiyin ümumi analizi` maps the 19 Nafta rows; opening that analyte grid writes the blank's reference ranges and order. A lab print skips rows with an empty value. USG narrative blanks wait for their own file. Analyte order in the service grid moves with the up and down arrows on **Sıra nömrəsi**.
+`LAB-CBC` and `LAB-URINE` are whole panels on every open package. The urine blank profile `Sidiyin ümumi analizi` maps the 19 Nafta rows; opening that analyte grid writes the blank's reference ranges and order. A lab print skips rows with an empty value. The result window loads a Word file from the button beside the close control. A lab panel uses the blank whose `serviceCode` is that order. `USG-ABD` reads the abdomen narrative (female or male organs follow patient sex; both ovaries share one field). `USG-THYROID` reads the thyroid narrative. Study title, date, and the sample radiologist line are not copied into the result. Analyte order in the service grid moves with the left and right arrows on **Sıra nömrəsi**.
 
 ---
 

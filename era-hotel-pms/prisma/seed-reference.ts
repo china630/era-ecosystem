@@ -30,14 +30,15 @@ function requireSeedOrgId(): string {
 }
 
 const REVENUE_CODES = [
-  { code: "ROOM", name: "Room", taxTag: "18%" },
-  { code: "FOOD", name: "Food", taxTag: "18%" },
-  { code: "BEVERAGE", name: "Beverage", taxTag: "18%" },
-  { code: "MEDICAL", name: "Medical", taxTag: "18%" },
-  { code: "LAUNDRY", name: "Laundry", taxTag: "18%" },
-  { code: "TRANSFER", name: "Airport transfer", taxTag: "18%" },
-  { code: "TOUR", name: "Guest tour", taxTag: "18%" },
-  { code: "RATE_ADJ", name: "Same-day rate adjustment", taxTag: "18%" },
+  { code: "ROOM", systemRole: "ROOM", name: "Room", taxTag: "18%" },
+  { code: "FOOD", systemRole: "FOOD", name: "Food", taxTag: "18%" },
+  { code: "BEVERAGE", systemRole: null, name: "Beverage", taxTag: "18%" },
+  { code: "MEDICAL", systemRole: "MEDICAL", name: "Medical", taxTag: "18%" },
+  { code: "LAUNDRY", systemRole: "LAUNDRY", name: "Laundry", taxTag: "18%" },
+  { code: "TRANSFER", systemRole: "TRANSFER", name: "Airport transfer", taxTag: "18%" },
+  { code: "TOUR", systemRole: "TOUR", name: "Guest tour", taxTag: "18%" },
+  { code: "RATE_ADJ", systemRole: "RATE_ADJ", name: "Same-day rate adjustment", taxTag: "18%" },
+  { code: "DISCOUNT", systemRole: "DISCOUNT", name: "Discount", taxTag: null },
 ];
 
 const BED_TYPES = [

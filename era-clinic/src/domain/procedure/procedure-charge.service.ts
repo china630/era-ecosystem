@@ -9,7 +9,12 @@ import {
   DEFAULT_OVER_QUOTA_AZN,
   resolveEntitlementCharge,
 } from "@/domain/sanatorium/entitlement-charge.service";
-import { postHotelRoomCharge, resolveBillingTarget, resolveSellableSku } from "@/lib/billing-router";
+import {
+  postHotelRoomCharge,
+  resolveBillingTarget,
+  resolveSellableSku,
+  revenueCodeForServiceLine,
+} from "@/lib/billing-router";
 import { isSameDayFourthOrLater } from "@/lib/sanatorium-day1";
 
 export type ProcedureChargeContext = {
@@ -193,10 +198,7 @@ export async function postProcedureFolioCharge(input: {
   hotelOrganizationId?: string;
 }): Promise<void> {
   const productSku = await resolveSellableSku(input.procedureCode);
-  const procedure = await prisma.procedureType.findFirst({
-    where: { code: input.procedureCode },
-    select: { hotelRevenueCode: true },
-  });
+  const revenueCode = await revenueCodeForServiceLine(input.procedureCode);
   await postHotelRoomCharge({
     reservationId: input.reservationId,
     roomNumber: input.roomNumber,
@@ -205,7 +207,7 @@ export async function postProcedureFolioCharge(input: {
     externalTicketId: input.externalTicketId,
     productSku,
     qty: input.qty ?? 1,
-    revenueCode: procedure?.hotelRevenueCode ?? undefined,
+    revenueCode,
     hotelOrganizationId: input.hotelOrganizationId,
   });
 }

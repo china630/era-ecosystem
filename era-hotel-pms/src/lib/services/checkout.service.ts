@@ -76,9 +76,15 @@ export async function checkoutReservation(
     unusedNightsRefundMethod?: 'CASH' | 'CARD';
     unusedNightsBankTerminalId?: string;
     unusedNightsReason?: string;
+    procedureCreditRefundMethod?: 'CASH' | 'CARD';
+    procedureCreditBankTerminalId?: string;
   },
 ): Promise<CheckoutResult> {
   const existing = await getReservation(id);
+  if (existing.ratePlan.medicalFlag) {
+    const { assertClinicCheckoutClear } = await import('@/lib/integration/clinic-checkout-gate');
+    await assertClinicCheckoutClear(id);
+  }
   if (existing.status !== 'IN_HOUSE') {
     throw new Error('Check-out is only allowed for IN_HOUSE reservations');
   }
@@ -203,6 +209,12 @@ export async function checkoutReservation(
       await assertCanTransferToCityLedger(id, f.id, bal);
     }
   } else {
+    const { refundGuestCredit } = await import('@/lib/services/folio-credit-refund');
+    await refundGuestCredit(id, {
+      method: opts?.procedureCreditRefundMethod,
+      bankTerminalId: opts?.procedureCreditBankTerminalId,
+      reason: 'Paid procedure removed before checkout',
+    });
     await assertZeroBalance(id);
   }
 

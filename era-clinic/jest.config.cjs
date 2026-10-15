@@ -10,6 +10,10 @@ module.exports = {
     "^@era/satellite-kit$": "<rootDir>/__tests__/mocks/satellite-kit.ts",
     "^@era/satellite-kit/integration/person-identity.client$":
       "<rootDir>/../packages/satellite-kit/src/integration/person-identity.client.ts",
+    "^@era/satellite-kit/integration/hotel-revenue-route$":
+      "<rootDir>/../packages/satellite-kit/src/integration/hotel-revenue-route.ts",
+    "^@era/satellite-kit/integration/folio-charge-ref$":
+      "<rootDir>/../packages/satellite-kit/src/integration/folio-charge-ref.ts",
   },
   transform: {
     "^.+\\.tsx?$": [

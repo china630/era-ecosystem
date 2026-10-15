@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { usesBarCalendar } from '@/lib/pricing/own-nightly-price';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
@@ -103,10 +103,7 @@ export async function postEarlyCheckInFee(reservationId: string, checkInTime?: s
   const preview = await previewEarlyLateFees(reservationId, { checkInTime });
   if (preview.earlyFee <= 0) return { posted: false, amount: 0 };
 
-  const code =
-    (await findRevenueCodeByToken('EARLY_CI')) ??
-    (await findRevenueCodeByToken('ROOM'));
-  if (!code) throw new Error('Revenue code not configured');
+  const code = await requireRevenueCodeByRole('EARLY_CI');
 
   const bizDate = await getCurrentBusinessDate();
   await postCharge({
@@ -123,10 +120,7 @@ export async function postLateCheckOutFee(reservationId: string, checkOutTime?: 
   const preview = await previewEarlyLateFees(reservationId, { checkOutTime });
   if (preview.lateFee <= 0) return { posted: false, amount: 0 };
 
-  const code =
-    (await findRevenueCodeByToken('LATE_CO')) ??
-    (await findRevenueCodeByToken('ROOM'));
-  if (!code) throw new Error('Revenue code not configured');
+  const code = await requireRevenueCodeByRole('LATE_CO');
 
   const bizDate = await getCurrentBusinessDate();
   await postCharge({

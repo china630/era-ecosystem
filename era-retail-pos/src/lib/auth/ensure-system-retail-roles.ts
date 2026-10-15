@@ -1,5 +1,7 @@
 import {
   PERMISSION_CATALOG_VERSION,
+  PERMISSIONS,
+  ROLE_CODES,
   ROLE_TEMPLATES,
   SYSTEM_ROLE_CODES,
   SYSTEM_ROLE_NAMES,
@@ -8,6 +10,7 @@ import {
 import {
   cutoverTemplateCode,
   isSystemRoleCode,
+  parsePermissions,
   permissionsForRole,
   resolveRoleCode,
   roleNeedsCutoverTemplate,
@@ -81,6 +84,11 @@ export async function ensureSystemRoles(db: unknown, organizationId: string): Pr
     if (!row.name?.trim()) data.name = SYSTEM_ROLE_NAMES[code];
     if (roleNeedsCutoverTemplate(row)) {
       data.permissionsJson = serializePermissions(ROLE_TEMPLATES[code]);
+    } else if (code === ROLE_CODES.OUTLET_ADMIN) {
+      const current = parsePermissions(row.permissionsJson);
+      if (current.length > 0 && !current.includes(PERMISSIONS.HOTEL_REVENUE_CODES)) {
+        data.permissionsJson = serializePermissions([...current, PERMISSIONS.HOTEL_REVENUE_CODES]);
+      }
     }
     if ((row.permissionCatalogVersion ?? 0) < PERMISSION_CATALOG_VERSION) {
       data.permissionCatalogVersion = PERMISSION_CATALOG_VERSION;

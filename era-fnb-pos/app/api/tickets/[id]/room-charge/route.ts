@@ -15,6 +15,7 @@ import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
+import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
 
 const bodySchema = z
   .object({
@@ -37,7 +38,11 @@ export async function POST(
 
     const ticket = await prisma.ticket.findUnique({
       where: { id },
-      include: { outlet: true, table: true, lines: { include: { menuItem: true } } },
+      include: {
+        outlet: true,
+        table: true,
+        lines: { include: { menuItem: { include: { category: true } } } },
+      },
     });
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
@@ -110,16 +115,22 @@ export async function POST(
     let result: { ok: boolean; status: number; body: unknown } | null = null;
     for (const line of ticket.lines) {
       const productSku = line.menuItem?.financeSku?.trim() ?? "";
-      const revenueCode =
-        line.menuItem?.revenueCode?.trim() || ticket.outlet.revenueCenterCode?.trim() || "";
-      if (!revenueCode) {
+      let revenueCode = "";
+      try {
+        revenueCode = resolveHotelRevenueCode({
+          product: line.menuItem?.revenueCode,
+          category: line.menuItem?.category?.revenueCode,
+          satellite: ticket.outlet.revenueCenterCode,
+        });
+      } catch {
         return NextResponse.json(
           { error: `Revenue code is required for ${line.description}` },
           { status: 400 },
         );
       }
       const lineAmount = Number(line.qty) * Number(line.unitPriceAzn);
-      const lineKey = `${ticket.id}:${line.id}`;
+      const { fnbTicketLineRef } = await import("@era/satellite-kit/integration/folio-charge-ref");
+      const lineKey = fnbTicketLineRef(ticket.id, line.id);
       result = await postRoomCharge(
         {
           reservationId,

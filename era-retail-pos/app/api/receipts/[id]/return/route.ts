@@ -86,7 +86,11 @@ export async function POST(
           plu: sku,
           outletRevenueCode: original.outlet.revenueCode,
         });
+        const { retailRoomReturnRef, retailReturnLineRef } = await import(
+          "@era/satellite-kit/integration/folio-charge-ref"
+        );
         if (original.reservationId || original.roomNumber) {
+          const roomKey = retailRoomReturnRef(returnReceipt.id, line.id);
           const charge = await postRoomCharge(
             {
               reservationId: original.reservationId ?? undefined,
@@ -97,9 +101,9 @@ export async function POST(
               productSku: sku,
               description: line.description,
               outletCode: original.outlet.code,
-              externalTicketId: `return:${returnReceipt.id}:${line.id}`,
+              externalTicketId: roomKey,
             },
-            `return:${returnReceipt.id}:${line.id}`,
+            roomKey,
           );
           if (!charge.ok) {
             return jsonError(`Hotel folio return failed: ${charge.status}`, 502);
@@ -110,7 +114,7 @@ export async function POST(
             amount: Number(line.lineTotal),
             description: line.description,
             payerLabel: original.outlet.code,
-            idempotencyKey: `retail-return-${returnReceipt.id}-${line.id}`,
+            idempotencyKey: retailReturnLineRef(returnReceipt.id, line.id),
             sku,
             qty: line.qty,
             revenueCode,

@@ -198,6 +198,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-HK-04 | Skip/Sleep discrepancy + HK forecast | Y | Y `/hk/discrepancy` `/hk/forecast` | API | SCREEN; Sleep ≠ SO; heads/linen/deep counts |
 | HOT-HK-05 | Linen/deep hotel policy | Y | Y `/settings/hk-policy` | API | SCREEN; no per-stay override; not SHIPPED |
 | HOT-HK-06 | HK consumption → day document | Y | Y `/hk/consumption` | API | Zero-price sku+qty; not a folio line; linen schedule does not post; UAT §34.12 unsigned — not SHIPPED |
+| HOT-REV-01 | Revenue code system role + numeric BOCC codes → NAS 601.BB.CCC / 521.01 | [ADR](./adr/hotel-revenue-code-resolution.md) | Y SatAdmin `/settings/integration?view=gl` (role + GL per code) | API | Hotel posts by role, satellites by exact code; no name match. Nafta data applied 2026-10-15 via `scripts/ops/nafta-revenue-*`; night audit with new codes not yet run — not SHIPPED |
 
 ### Hotel FO money / City Ledger / adjacent (2026-08-03 audit)
 

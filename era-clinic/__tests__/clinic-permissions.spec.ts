@@ -4,6 +4,7 @@ import {
   routePermission,
   routePermissions,
   adminApiRoutePermission,
+  adminApiRoutePermissions,
   migrateStoredPermissions,
   effectiveRolePermissions,
   permissionsJsonNeedsTemplate,
@@ -117,6 +118,12 @@ describe("clinic default permissions", () => {
       CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
     );
     expect(adminApiRoutePermission("/api/admin/clinical-templates")).toBeNull();
+    expect(adminApiRoutePermission("/api/admin/hotel-revenue-codes")).toBe(
+      CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
+    );
+    expect(adminApiRoutePermissions("/api/admin/hotel-revenue-codes")).toEqual([
+      CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
+    ]);
   });
 
   it("CLINIC_ADMIN defaults include program templates and not legacy templates key", () => {

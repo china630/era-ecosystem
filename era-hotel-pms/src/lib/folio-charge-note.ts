@@ -8,6 +8,13 @@ export function roomChargeNote(kind: RoomChargeNoteKind, ymd: string): string {
   return `${kind}:${ymd}`;
 }
 
+const PACKAGE_NIGHT = /^(?:Package .+|Medical package) (\d{4}-\d{2}-\d{2})$/;
+
+/** Date stamped on a medical package line (`Package … YYYY-MM-DD`). */
+export function parsePackageNight(description: string): string | null {
+  return PACKAGE_NIGHT.exec(description.trim())?.[1] ?? null;
+}
+
 export function parseRoomChargeNote(
   description: string,
 ): { kind: RoomChargeNoteKind; date: string } | null {

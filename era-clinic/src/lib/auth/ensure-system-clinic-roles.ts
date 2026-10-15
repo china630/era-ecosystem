@@ -7,8 +7,11 @@ import {
   type ClinicRoleCode,
 } from "@/lib/clinic-roles";
 import {
+  CLINIC_PERMISSION,
+  parseRolePermissions,
   permissionsJsonForRole,
   permissionsJsonNeedsTemplate,
+  serializeRolePermissions,
 } from "@/lib/auth/clinic-permissions";
 
 type RoleDb = Pick<PrismaClient, "role">;
@@ -69,6 +72,14 @@ async function upsertSystemRole(
   }
   if (permissionsJsonNeedsTemplate(existing.permissionsJson)) {
     patch.permissionsJson = templateJson;
+  } else if (code === CLINIC_ROLE.CLINIC_ADMIN) {
+    const current = parseRolePermissions(existing.permissionsJson);
+    if (current.length > 0 && !current.includes(CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES)) {
+      patch.permissionsJson = serializeRolePermissions([
+        ...current,
+        CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
+      ]);
+    }
   }
   // Keep display name if already set; only fill blank.
   if (!existing.name?.trim()) {

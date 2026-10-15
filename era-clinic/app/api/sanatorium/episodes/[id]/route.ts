@@ -79,7 +79,7 @@ export async function GET(
       episode.programInstance.procedureLines = lines;
     }
     let hotelStay: { startsOn: string; endsOn: string } | null = null;
-    if (episode && !episode.programInstance && episode.reservationId) {
+    if (episode?.reservationId) {
       const window = await lookupHotelStayWindow(episode.reservationId);
       if (window) hotelStay = { startsOn: window.checkInDate, endsOn: window.checkOutDate };
     }

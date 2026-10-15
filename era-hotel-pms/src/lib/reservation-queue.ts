@@ -8,9 +8,9 @@ export const RESERVATION_QUEUE_CODES = [
   'realizedArrivals',
   'dueOut',
   'departed',
+  'all',
   'noShow',
   'cancel',
-  'all',
 ] as const;
 
 export type ReservationQueue = (typeof RESERVATION_QUEUE_CODES)[number];
@@ -116,5 +116,8 @@ export function reservationQueueWhere(input: {
   }
 
   const range = arrivalRange(dateFrom, dateTo);
-  return range ? { checkInDate: range } : {};
+  return {
+    status: { notIn: ['NO_SHOW', 'CANCELLED'] },
+    ...(range ? { checkInDate: range } : {}),
+  };
 }

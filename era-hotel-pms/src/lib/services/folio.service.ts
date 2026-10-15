@@ -4,7 +4,7 @@ import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import type { FolioType, PaymentMethod } from '@prisma/client';
 import {
   dispatchFolioChargePosted,
@@ -14,15 +14,13 @@ import {
 import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 
-const ROOM_REVENUE_CODES = new Set(['ROOM', 'ACCOM', 'LODGING', 'STAY']);
-
 function chargeDescriptionForPost(
-  code: string,
+  systemRole: string | null,
   description: string,
   businessDate: Date,
 ): string {
   const trimmed = description.trim();
-  if (!ROOM_REVENUE_CODES.has(code.trim().toUpperCase())) return trimmed;
+  if (systemRole !== 'ROOM') return trimmed;
   if (trimmed.includes('(early CO remaining)')) return trimmed;
   if (parseRoomChargeNote(trimmed)) return trimmed;
   return roomChargeNote('manual-room', hotelDateKey(businessDate));
@@ -164,7 +162,7 @@ export async function postCharge(input: {
   if (!folio) throw new Error('Open folio missing after ensure');
 
   const businessDate = input.businessDate ?? new Date();
-  const description = chargeDescriptionForPost(revenueCode.code, input.description, businessDate);
+  const description = chargeDescriptionForPost(revenueCode.systemRole, input.description, businessDate);
 
   const charge = await prisma.folioCharge.create({
     data: {
@@ -428,8 +426,7 @@ async function mirrorCityLedgerCharge(input: {
         status: 'OPEN',
       },
     }));
-  const revenue = await findRevenueCodeByToken('ROOM');
-  if (!revenue) throw new Error('ROOM revenue code missing');
+  const revenue = await requireRevenueCodeByRole('ROOM');
   await prisma.folioCharge.create({
     data: {
       organizationId,
@@ -490,10 +487,14 @@ export async function listVoidedFolioPayments() {
   });
 }
 
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
 export async function listGuestDebtJournal() {
   const rows = await prisma.guestDebtEntry.findMany({
     orderBy: { createdAt: 'desc' },
-    take: 300,
+    include: { payments: { select: { amount: true } } },
   });
   const guestIds = [...new Set(rows.map((row) => row.guestId))];
   const reservationIds = [...new Set(rows.map((row) => row.reservationId))];
@@ -515,16 +516,94 @@ export async function listGuestDebtJournal() {
   const guestName = new Map(guests.map((guest) => [guest.id, guest.fullName]));
   const roomNumber = new Map(reservations.map((stay) => [stay.id, stay.room?.roomNumber ?? null]));
   const actor = new Map(users.map((user) => [user.id, user.fullName]));
-  return rows.map((row) => ({
-    id: row.id,
-    createdAt: row.createdAt,
-    amount: row.amount,
-    note: row.note,
-    reservationId: row.reservationId,
-    guestName: guestName.get(row.guestId) ?? null,
-    roomNumber: roomNumber.get(row.reservationId) ?? null,
-    actor: row.createdByUserId ? actor.get(row.createdByUserId) ?? null : null,
-  }));
+  return rows.map((row) => {
+    const amount = decimalToNumber(row.amount);
+    const paid = round2(row.payments.reduce((sum, payment) => sum + decimalToNumber(payment.amount), 0));
+    return {
+      id: row.id,
+      createdAt: row.createdAt,
+      amount,
+      paid,
+      remaining: round2(amount - paid),
+      note: row.note,
+      reservationId: row.reservationId,
+      guestName: guestName.get(row.guestId) ?? null,
+      roomNumber: roomNumber.get(row.reservationId) ?? null,
+      actor: row.createdByUserId ? actor.get(row.createdByUserId) ?? null : null,
+    };
+  });
+}
+
+const GUEST_DEBT_PAY_METHODS = new Set<PaymentMethod>(['CASH', 'CARD', 'BANK_TRANSFER']);
+
+/** Take money against a personal debt left at checkout. Does not reopen the folio. */
+export async function payGuestDebt(input: {
+  entryId: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  bankTerminalId?: string | null;
+  createdByUserId?: string | null;
+}) {
+  if (!GUEST_DEBT_PAY_METHODS.has(input.paymentMethod)) {
+    throw new Error('Payment method is not accepted for a guest debt');
+  }
+  const amount = round2(input.amount);
+  if (!(amount > 0)) throw new Error('Amount must be positive');
+  if (input.paymentMethod === 'CARD' && !input.bankTerminalId) {
+    throw new Error('Card payment needs a terminal');
+  }
+  const organizationId = requestOrganizationId();
+  const paid = await prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "GuestDebtEntry"
+      WHERE id = ${input.entryId} AND "organizationId" = ${organizationId}
+      FOR UPDATE
+    `;
+    if (!locked.length) throw new Error('Guest debt not found');
+    const entry = await tx.guestDebtEntry.findUnique({
+      where: { id: input.entryId },
+      include: { payments: { select: { amount: true } } },
+    });
+    if (!entry) throw new Error('Guest debt not found');
+    const already = entry.payments.reduce(
+      (sum: number, row: { amount: Parameters<typeof decimalToNumber>[0] }) =>
+        sum + decimalToNumber(row.amount),
+      0,
+    );
+    const remaining = round2(decimalToNumber(entry.amount) - already);
+    if (amount - remaining > 0.001) throw new Error('Amount is above the remaining debt');
+    const payment = await tx.guestDebtPayment.create({
+      data: {
+        organizationId: entry.organizationId,
+        entryId: entry.id,
+        amount: toDecimal(amount),
+        paymentMethod: input.paymentMethod,
+        bankTerminalId: input.paymentMethod === 'CARD' ? input.bankTerminalId ?? null : null,
+        createdByUserId: input.createdByUserId ?? null,
+      },
+    });
+    return {
+      id: payment.id,
+      reservationId: entry.reservationId,
+      bankTerminalId: payment.bankTerminalId,
+      remaining: round2(remaining - amount),
+    };
+  });
+  const { recordHotelAudit } = await import('@/lib/satellite-audit');
+  await recordHotelAudit(
+    { userId: input.createdByUserId },
+    'Reservation',
+    paid.reservationId,
+    'GUEST_DEBT_PAY',
+    {
+      entryId: input.entryId,
+      paymentId: paid.id,
+      amount,
+      paymentMethod: input.paymentMethod,
+      bankTerminalId: paid.bankTerminalId,
+    },
+  );
+  return { id: paid.id, remaining: paid.remaining };
 }
 
 async function recalcReservationTotal(reservationId: string) {
@@ -607,13 +686,7 @@ export async function postDiscount(input: {
   folioId?: string;
 }) {
   if (input.amount <= 0) throw new Error('Discount amount must be positive');
-  let code = await findRevenueCodeByToken('DISCOUNT');
-  if (!code) {
-    code = await prisma.revenueCode.create({
-      data: { code: 'DISCOUNT', name: 'Discount', active: true },
-    });
-  }
-  if (!code) throw new Error('DISCOUNT revenue code missing');
+  const code = await requireRevenueCodeByRole('DISCOUNT');
   return postCharge({
     reservationId: input.reservationId,
     revenueCodeId: code.id,
@@ -638,8 +711,10 @@ export async function voidCharge(chargeId: string, reason?: string) {
     throw new Error('Procedure already received — void refused');
   }
   if (charge.folio.status !== 'OPEN') throw new Error('Cannot void charge on closed folio');
-  if (charge.externalRef?.startsWith('pay-clinic-ticket-')) {
-    const orderId = charge.externalRef.slice('pay-clinic-ticket-'.length).replace(/^pay-/, '');
+  const { parseFolioChargeRef } = await import('@era/satellite-kit/integration/folio-charge-ref');
+  const clinicCharge = parseFolioChargeRef(charge.externalRef);
+  if (clinicCharge?.source === 'clinic') {
+    const orderId = clinicCharge.orderId;
     const clinicBase = (
       process.env.CLINIC_URL ??
       process.env.ERA_CLINIC_URL ??
@@ -654,8 +729,8 @@ export async function voidCharge(chargeId: string, reason?: string) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          organizationId: charge.invoiceRef?.trim() || charge.organizationId,
-          externalTicketId: charge.externalRef.replace(/^pay-/, ''),
+          organizationId: charge.organizationId,
+          externalTicketId: clinicCharge.ref,
           orderId,
         }),
       }).catch(() => null);

@@ -96,7 +96,9 @@ export default function Chessboard() {
   const [selected, setSelected] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [revenueCodes, setRevenueCodes] = useState<{ id: string; code: string }[]>([]);
+  const [revenueCodes, setRevenueCodes] = useState<
+    { id: string; code: string; systemRole: string | null; active?: boolean }[]
+  >([]);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [editReservationId, setEditReservationId] = useState<string | null>(null);
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
@@ -119,7 +121,8 @@ export default function Chessboard() {
       }
       setRooms(roomsData);
       setArrivals(arrivalsRes.ok ? arrivalsData : []);
-      setRevenueCodes(revRes.ok ? revData : []);
+      const revRows = Array.isArray(revData) ? revData : [];
+      setRevenueCodes(revRes.ok ? revRows.filter((row) => row.active !== false) : []);
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tCommon('loadError') });
     } finally {
@@ -131,7 +134,7 @@ export default function Chessboard() {
     load();
   }, [load]);
 
-  const foodCode = revenueCodes.find((r) => r.code === 'FOOD');
+  const foodCode = revenueCodes.find((r) => r.systemRole === 'FOOD');
 
   async function runAction(path: string, method = 'POST', body?: object) {
     setBusy(true);

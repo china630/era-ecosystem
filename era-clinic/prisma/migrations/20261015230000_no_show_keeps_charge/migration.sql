@@ -1,0 +1,1 @@
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "no_show_keeps_charge" BOOLEAN NOT NULL DEFAULT true;

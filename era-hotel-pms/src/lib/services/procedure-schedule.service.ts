@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 import { isProcedureIncludedInPackage } from '@/lib/services/san-package.service';
 
@@ -147,8 +147,7 @@ export async function finishAppointment(id: string, auditNote?: string) {
   let folioChargeId: string | null = null;
 
   if (!included) {
-    const medicalCode = await findRevenueCodeByToken('MEDICAL');
-    if (!medicalCode) throw new Error('Revenue code MEDICAL not configured');
+    const medicalCode = await requireRevenueCodeByRole('MEDICAL');
     const charge = await postCharge({
       reservationId: appt.reservationId,
       revenueCodeId: medicalCode.id,

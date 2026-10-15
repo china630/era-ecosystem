@@ -125,7 +125,7 @@ jobs:
             echo "IMAGE_TAG=${{ steps.tag.outputs.value }}"
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
             echo "ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json"
-            echo "ELEKTRAWEB_BRIDGE_ENABLED=1"
+            echo "ELEKTRAWEB_BRIDGE_ENABLED=0"
           } > "${GITHUB_WORKSPACE}/era.droplet.env"
 
       - name: Copy env to droplet

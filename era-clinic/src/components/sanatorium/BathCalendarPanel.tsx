@@ -18,10 +18,18 @@ type Order = {
 
 type Snapshot = { days: Day[]; series: Series[]; orders: Order[] };
 
-export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
-  const t = useTranslations("patientCard");
+export function BathCalendarPanel({
+  episodeId,
+  procedureCode: lockedCode,
+}: {
+  episodeId: string;
+  /** When set, the calendar belongs to this bath row. */
+  procedureCode?: string | null;
+}) {
+  const t = useTranslations("patientRegistry");
   const [snap, setSnap] = useState<Snapshot | null>(null);
-  const [procedureCode, setProcedureCode] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [procedureCode, setProcedureCode] = useState(lockedCode ?? "");
   const [mode, setMode] = useState("2");
   const [bathSequence, setBathSequence] = useState("");
   const [qty, setQty] = useState(5);
@@ -31,13 +39,18 @@ export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/bath-calendar`);
-    if (!res.ok) return;
+    if (!res.ok) {
+      setLoadFailed(true);
+      setSnap(null);
+      return;
+    }
+    setLoadFailed(false);
     const json = await res.json();
     const data = (json.data ?? json) as Snapshot;
     setSnap(data);
-    const first = data.series[0]?.members[0]?.procedureCode ?? "";
-    setProcedureCode((current) => current || first);
-  }, [episodeId]);
+    const first = lockedCode || data.series[0]?.members[0]?.procedureCode || "";
+    setProcedureCode(first);
+  }, [episodeId, lockedCode]);
 
   useEffect(() => {
     void load();
@@ -61,6 +74,34 @@ export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
     }
     return map;
   }, [snap]);
+
+  if (!lockedCode && !procedureCode) return null;
+
+  const inSeries =
+    !lockedCode ||
+    (snap?.series ?? []).some((series) =>
+      series.members.some((member) => member.procedureCode === lockedCode),
+    );
+  const blockedReason = loadFailed
+    ? t("bathCalendarLoadFailed")
+    : !snap
+      ? null
+      : snap.series.length === 0
+        ? t("bathCalendarNoSeries")
+        : snap.days.length === 0
+          ? t("bathCalendarNoStay")
+          : lockedCode && !inSeries
+            ? t("bathCalendarNotInSeries")
+            : null;
+
+  if (blockedReason) {
+    return (
+      <section className="mb-3 rounded-lg border border-[#D5DADF] p-3">
+        <h4 className="text-sm font-medium">{t("bathCalendarTitle")}</h4>
+        <p className="mt-1 text-[12px] text-[#7F8C8D]">{blockedReason}</p>
+      </section>
+    );
+  }
 
   if (!snap || snap.series.length === 0 || snap.days.length === 0) return null;
 
@@ -111,10 +152,11 @@ export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
         showApiError(data, t("bathCalendarFailed"));
         return;
       }
-      const saved = (data.data ?? data) as { unplaced?: number };
+      const saved = (data.data ?? data) as { unplaced?: number; unplacedDays?: string[] };
+      const dates = (saved.unplacedDays ?? []).join(", ");
       showSuccess(
         saved.unplaced
-          ? t("bathCalendarUnplaced", { count: saved.unplaced })
+          ? t("bathCalendarUnplaced", { count: saved.unplaced, dates: dates || "—" })
           : t("bathCalendarSaved"),
       );
       setManualBaths([]);
@@ -128,7 +170,8 @@ export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
   return (
     <section className="mb-3 space-y-2 rounded-lg border border-[#D5DADF] p-3">
       <h4 className="text-sm font-medium">{t("bathCalendarTitle")}</h4>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-2 sm:grid-cols-2 ${lockedCode ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
+        {lockedCode ? null : (
         <CatalogField
           kind="SEARCHABLE"
           label={t("bathCalendarProcedure")}
@@ -136,6 +179,7 @@ export function BathCalendarPanel({ episodeId }: { episodeId: string }) {
           onChange={(value) => setProcedureCode(String(value ?? ""))}
           options={options}
         />
+        )}
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("bathCalendarMode")}

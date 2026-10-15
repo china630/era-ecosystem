@@ -2,6 +2,7 @@
  * F&B Variant A permission catalog (catalogVersion 1).
  * Keys: api: / screen: / admin: only — role name grants nothing.
  */
+import { HOTEL_REVENUE_CODES_PERMISSION } from "@era/satellite-kit/integration/hotel-revenue-route";
 import type { FnbEdition } from "@/lib/fnb-edition";
 
 export const PERMISSIONS = {
@@ -48,6 +49,7 @@ export const PERMISSIONS = {
   KDS_BUMP: "api:kds.bump",
   MENU_SOLD_OUT: "api:menu.sold_out",
   MENU_MANAGE: "api:menu.manage",
+  HOTEL_REVENUE_CODES: HOTEL_REVENUE_CODES_PERMISSION,
   TABLES_MANAGE: "api:tables.manage",
   OUTLETS_MANAGE: "api:outlets.manage",
   SHIFTS_OPEN: "api:shifts.open",
@@ -157,6 +159,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     labelKey: "groupAdmin",
     permissions: [
       PERMISSIONS.MENU_MANAGE,
+      PERMISSIONS.HOTEL_REVENUE_CODES,
       PERMISSIONS.TABLES_MANAGE,
       PERMISSIONS.OUTLETS_MANAGE,
       PERMISSIONS.ADMIN_DAILY_MENU,

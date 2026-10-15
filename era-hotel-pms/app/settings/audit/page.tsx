@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
 const AUDIT_ENTITY_TYPES = [
+  'Reservation',
   'FolioCharge',
   'RoomType',
   'Role',
@@ -30,6 +31,7 @@ const AUDIT_ENTITY_TYPES = [
   'HotelPolicy',
   'PricingComponent',
   'RatePlanSellVersion',
+  'PriceSeason',
   'CityLedgerSnapshot',
   'OpsWipe',
 ] as const;

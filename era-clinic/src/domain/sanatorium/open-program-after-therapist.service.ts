@@ -66,11 +66,21 @@ export async function tryOpenProgramAfterTherapistStage(
   if (!programCode) return { opened: false, reason: "NO_PROGRAM_CODE" };
 
   try {
+    const { lookupHotelStayWindow } = await import("@/lib/hotel-stay-person");
+    const { nightsBetween } = await import("@/lib/program-quota");
+    const hotel = episode.reservationId
+      ? await lookupHotelStayWindow(episode.reservationId)
+      : null;
+    const checkIn = hotel ? new Date(hotel.checkInDate) : new Date();
+    const checkOut = hotel ? new Date(hotel.checkOutDate) : undefined;
     await instantiateProgramFromTemplate({
       episodeId,
       programCode,
       reservationId: episode.reservationId ?? undefined,
-      startsOn: new Date(),
+      startsOn: checkIn,
+      checkInDate: hotel ? checkIn : undefined,
+      checkOutDate: checkOut,
+      nights: hotel && checkOut ? nightsBetween(checkIn, checkOut) || undefined : undefined,
     });
     await prisma.clinicalEpisode.update({
       where: { id: episodeId },

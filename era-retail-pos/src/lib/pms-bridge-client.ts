@@ -36,7 +36,7 @@ function bridgeHeaders(hotelOrganizationId?: string): Record<string, string> {
   return headers;
 }
 
-async function hotelOrganizationId(): Promise<string> {
+export async function hotelOrganizationId(): Promise<string> {
   const { resolveOperatingMode, resolveSettlementPolicy } = await import("@era/satellite-kit");
   const { requestOrganizationId } = await import("@/lib/request-organization");
   const orgId = requestOrganizationId();

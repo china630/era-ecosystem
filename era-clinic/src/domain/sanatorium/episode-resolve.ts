@@ -64,7 +64,7 @@ export async function listPatientEpisodes(
   const hotelWindows = new Map<string, { checkInDate: string; checkOutDate: string }>();
   await Promise.all(
     rows
-      .filter((r) => !r.programInstance && r.reservationId)
+      .filter((r) => r.reservationId)
       .map(async (r) => {
         const window = await lookupHotelStayWindow(r.reservationId!);
         if (window) hotelWindows.set(r.id, window);
@@ -72,8 +72,12 @@ export async function listPatientEpisodes(
   );
   return rows.map((r) => {
     const hotel = hotelWindows.get(r.id);
-    const startsOn = r.programInstance?.startsOn ?? (hotel ? new Date(hotel.checkInDate) : null);
-    const endsOn = r.programInstance?.endsOn ?? (hotel ? new Date(hotel.checkOutDate) : null);
+    const startsOn = hotel
+      ? new Date(hotel.checkInDate)
+      : (r.programInstance?.startsOn ?? null);
+    const endsOn = hotel
+      ? new Date(hotel.checkOutDate)
+      : (r.programInstance?.endsOn ?? null);
     const datesOk =
       startsOn != null && endsOn != null && !Number.isNaN(startsOn.getTime()) && !Number.isNaN(endsOn.getTime());
     return {

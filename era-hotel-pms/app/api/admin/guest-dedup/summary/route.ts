@@ -11,9 +11,19 @@ export async function GET() {
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const [summary, groups] = await Promise.all([
       getGuestDedupSummary(),
-      listDuplicateGroups(100),
+      listDuplicateGroups(200),
     ]);
-    return jsonOk(serialize({ summary, groups }));
+    const guestIds = new Set(groups.flatMap((group) => group.guestIds));
+    return jsonOk(
+      serialize({
+        summary: {
+          ...summary,
+          suspectedDuplicateGroups: groups.length,
+          suspectedDuplicateGuests: guestIds.size,
+        },
+        groups,
+      }),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

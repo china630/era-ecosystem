@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { parseFolioChargeRef } from '@era/satellite-kit/integration/folio-charge-ref';
 import { prisma } from '@/lib/prisma';
 import { enterRequestTenant } from '@/lib/request-organization';
+
+/** Canonical key plus a stored `pay-` row from before the shared contract. */
+function chargeRefCandidates(externalRef: string): string[] {
+  const raw = externalRef.trim();
+  const parsed = parseFolioChargeRef(raw);
+  const out = new Set<string>([raw]);
+  if (parsed?.ref) out.add(parsed.ref);
+  if (parsed?.source === 'clinic') out.add(`pay-${parsed.ref}`);
+  return [...out];
+}
 
 const bodySchema = z.object({
   organizationId: z.string().uuid(),
@@ -24,7 +35,7 @@ export async function POST(request: Request) {
   const body = bodySchema.parse(await request.json());
   enterRequestTenant(body.organizationId);
   const charge = await prisma.folioCharge.findFirst({
-    where: { externalRef: body.externalRef },
+    where: { externalRef: { in: chargeRefCandidates(body.externalRef) } },
   });
   if (!charge) return NextResponse.json({ error: 'Charge not found' }, { status: 404 });
   if (!charge.serviceReceivedAt) {

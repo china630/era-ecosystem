@@ -53,6 +53,7 @@ export type FolioAccount = {
     revenueCode?: {
       code: string;
       name?: string | null;
+      systemRole?: string | null;
       nameAz?: string | null;
       nameRu?: string | null;
       nameEn?: string | null;

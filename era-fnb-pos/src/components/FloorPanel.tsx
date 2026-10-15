@@ -844,10 +844,10 @@ export default function FloorPanel() {
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-hidden">
+        <div className="flex flex-col gap-3 pb-4 lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:pb-0">
           <PosShiftPanel />
-          <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:overflow-hidden lg:grid-cols-[16rem_minmax(0,1fr)_24rem]">
-          <div className="flex min-h-0 flex-col gap-2 overflow-hidden">
+          <div className="grid items-start gap-3 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden lg:grid-cols-[16rem_minmax(0,1fr)_24rem]">
+          <div className="flex flex-col gap-2 lg:min-h-0 lg:overflow-hidden">
             {!hotelMode && (
               <button
                 type="button"
@@ -858,7 +858,7 @@ export default function FloorPanel() {
               </button>
             )}
             {halls.multiple ? (
-              <div className="flex max-h-[4.5rem] shrink-0 flex-wrap gap-1 overflow-y-auto">
+              <div className="flex shrink-0 flex-wrap gap-1 lg:max-h-[4.5rem] lg:overflow-y-auto">
                 {[
                   { key: null as string | null, label: t("allZones") },
                   ...(halls.hasBlank ? [{ key: "", label: t("zoneMain") }] : []),
@@ -873,7 +873,7 @@ export default function FloorPanel() {
                       type="button"
                       onClick={() => setHallFilter(hall.key)}
                       title={label}
-                      className={`inline-flex h-8 max-w-[7.25rem] items-center gap-1 rounded-full px-2.5 text-xs font-semibold ${
+                      className={`inline-flex h-8 max-w-[11rem] items-center gap-1 rounded-full px-2.5 text-xs font-semibold lg:max-w-[7.25rem] ${
                         selected ? "bg-[#2980B9] text-white" : "bg-white text-[#34495E] ring-1 ring-[#D5DADF]"
                       }`}
                     >
@@ -892,7 +892,7 @@ export default function FloorPanel() {
                 })}
               </div>
             ) : null}
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+            <div className="space-y-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             {!hotelMode && openChips.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {openChips.map((chip) => (
@@ -926,24 +926,24 @@ export default function FloorPanel() {
                 { id: "occupied", label: t("statusOccupied"), swatchClassName: "bg-[#EBEDF0]" },
               ]}
             />
-            <div className="grid gap-2">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
               {tables.length === 0 && (
-                <p className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("noTables")}</p>
+                <p className={`${CARD_CLASS} col-span-2 p-4 text-sm text-[#7F8C8D] lg:col-span-1`}>{t("noTables")}</p>
               )}
               {tables.length > 0 && visibleTables.length === 0 && (
-                <p className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>{t("noTablesInZone")}</p>
+                <p className={`${CARD_CLASS} col-span-2 p-4 text-sm text-[#7F8C8D] lg:col-span-1`}>{t("noTablesInZone")}</p>
               )}
               {visibleTables.map((table) => (
                 <button
                   key={table.id}
                   type="button"
                   onClick={() => selectTable(table)}
-                  className={`${CARD_CLASS} flex h-24 w-full flex-col p-3 text-left transition hover:border-[#2980B9] ${
+                  className={`${CARD_CLASS} flex min-h-24 w-full flex-col p-3 text-left transition hover:border-[#2980B9] lg:h-24 ${
                     table.status === "OCCUPIED" ? "border-[#2980B9] bg-[#EAF3FB]" : ""
                   } ${draft?.kind === "table" && draft.tableId === table.id ? "border-[#2980B9]" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-base font-semibold leading-5">{table.name}</span>
+                    <span className="min-w-0 line-clamp-2 text-base font-semibold leading-5">{table.name}</span>
                     <span
                       className={`shrink-0 rounded-lg px-2 py-0.5 text-xs font-semibold ${
                         table.status === "OCCUPIED"
@@ -972,13 +972,13 @@ export default function FloorPanel() {
             </div>
           </div>
 
-          <div className={`${CARD_CLASS} grid min-h-0 gap-3 overflow-hidden p-3 lg:grid-cols-[12rem_minmax(0,1fr)]`}>
-            <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+          <div className={`${CARD_CLASS} grid gap-3 p-3 lg:min-h-0 lg:overflow-hidden lg:grid-cols-[12rem_minmax(0,1fr)]`}>
+            <div className="flex gap-2 overflow-x-auto lg:min-h-0 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto">
               {menuCategories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
-                  className={`rounded-md px-3 py-2.5 text-left text-base font-semibold ${
+                  className={`shrink-0 rounded-md px-3 py-2.5 text-left text-base font-semibold whitespace-nowrap lg:whitespace-normal ${
                     !query && cat.id === activeCategoryId
                       ? "bg-[#2980B9] text-white"
                       : "bg-[#F4F6F7] text-[#2C3E50]"
@@ -992,7 +992,7 @@ export default function FloorPanel() {
                 </button>
               ))}
             </div>
-            <div className="flex min-h-0 flex-col">
+            <div className="flex min-w-0 flex-col lg:min-h-0">
             <input
               type="search"
               value={menuQuery}
@@ -1000,8 +1000,8 @@ export default function FloorPanel() {
               placeholder={t("menuSearch")}
               className={`${INPUT_CLASS} mb-3 w-full shrink-0`}
             />
-            <div className="min-h-0 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="lg:min-h-0 lg:overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               {visibleDishes.map((m) => (
                 <div key={m.id} className="relative">
                 <button
@@ -1036,7 +1036,7 @@ export default function FloorPanel() {
             </div>
           </div>
 
-          <div className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden p-4`}>
+          <div className={`${CARD_CLASS} flex flex-col p-4 lg:min-h-0 lg:overflow-hidden`}>
             <p className="text-xs font-semibold uppercase tracking-wide text-[#7F8C8D]">
               {t("ticketTitle")}
             </p>
@@ -1055,7 +1055,7 @@ export default function FloorPanel() {
             {checkOpen ? (
               <>
                 <p className="mt-1 text-base font-semibold">{heading || t("ticketTitle")}</p>
-                <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div className="mt-3 flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-hidden">
                   {ticketLines.length === 0 ? (
                     <p className="text-sm text-[#7F8C8D]">{t("ticketEmpty")}</p>
                   ) : (
@@ -1108,31 +1108,31 @@ export default function FloorPanel() {
                 </div>
                 {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
                   <div className="mt-3 shrink-0 space-y-2">
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:justify-end">
                       <button
                         type="button"
-                        className="rounded bg-[#27AE60] px-3 py-2 text-sm text-white"
+                        className="w-full rounded bg-[#27AE60] px-3 py-2 text-sm text-white lg:w-auto"
                         onClick={() => void pay("CASH")}
                       >
                         {t("payCash")}
                       </button>
                       <button
                         type="button"
-                        className="rounded bg-[#2980B9] px-3 py-2 text-sm text-white"
+                        className="w-full rounded bg-[#2980B9] px-3 py-2 text-sm text-white lg:w-auto"
                         onClick={() => void pay("CARD")}
                       >
                         {t("payCard")}
                       </button>
                       <button
                         type="button"
-                        className="rounded bg-[#1A5276] px-3 py-2 text-sm text-white"
+                        className="w-full rounded bg-[#1A5276] px-3 py-2 text-sm text-white lg:w-auto"
                         onClick={() => void pay("TRANSFER")}
                       >
                         {t("payTransfer")}
                       </button>
                       <button
                         type="button"
-                        className="rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B]"
+                        className="w-full rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B] lg:w-auto"
                         onClick={() => void cancelTicket()}
                       >
                         {t("cancelTicket")}
