@@ -1,3 +1,5 @@
+import { clinicProcedureTicketRef } from "@era/satellite-kit/integration/folio-charge-ref";
+
 /** Dual-run policy flag. Paid extras post to the hotel folio, not the Elektraweb SPA map. */
 export async function isClinicElektrawebDualRun(
   organizationId?: string | null,
@@ -9,7 +11,7 @@ export async function isClinicElektrawebDualRun(
 }
 
 export function extraTicketIdForOrder(orderId: string): string {
-  return `clinic-ticket-${orderId}`;
+  return clinicProcedureTicketRef(orderId);
 }
 
 /** Print link carries the ticket org: the print page binds the tenant from it. */

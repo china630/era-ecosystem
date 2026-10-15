@@ -28,6 +28,12 @@ import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
+function sameChargeRef(stored: string | null | undefined, folioRef: string | null): boolean {
+  if (!stored || !folioRef) return false;
+  const norm = (value: string) => value.trim().replace(/^pay-/, '');
+  return norm(stored) === norm(folioRef);
+}
+
 const GUEST_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
 const PAYER_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER'] as const;
 
@@ -48,6 +54,8 @@ type FolioRow = {
   } | null;
   charges: Array<{
     id?: string;
+    externalRef?: string | null;
+    description?: string | null;
     amount: number | string;
     qty?: number | null;
     businessDate?: string;
@@ -65,6 +73,24 @@ type FolioRow = {
     kind?: string | null;
     voidedAt?: string | null;
   }>;
+};
+
+type ClinicProcedure = {
+  orderId: string;
+  procedureName: string;
+  amount: number;
+  scheduledAt: string;
+  status: 'in_plan' | 'arrived' | 'no_show' | 'completed' | 'cancelled';
+  folioRef: string | null;
+  inPackage: boolean;
+};
+
+type ClinicCheckout = {
+  medical: boolean;
+  unavailable?: boolean;
+  paid?: ClinicProcedure[];
+  packageSessions?: ClinicProcedure[];
+  blocksCheckout?: boolean;
 };
 
 type EarlyPreview = {
@@ -138,6 +164,7 @@ export function FolioCheckoutModal({
   const [remainder, setRemainder] = useState<{ ids: string[]; amount: number } | null>(null);
   const [remainderMethod, setRemainderMethod] = useState('');
   const [remainderTerminal, setRemainderTerminal] = useState('');
+  const [clinic, setClinic] = useState<ClinicCheckout | null>(null);
   const [laundry, setLaundry] = useState<Array<{ id: string; guestName: string }>>([]);
   const [laundryScan, setLaundryScan] = useState('');
 
@@ -173,6 +200,14 @@ export function FolioCheckoutModal({
     setRefundTerminal('');
     setRefundReason('');
     setError('');
+    setClinic(null);
+    void fetch(`/api/reservations/${reservationId}/clinic-checkout`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        const payload = (body?.data ?? body) as ClinicCheckout | null;
+        setClinic(payload);
+      })
+      .catch(() => setClinic(null));
     void loadFolios().then((rows) => {
       const guest = rows.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
       if (!guest) return;
@@ -256,7 +291,15 @@ export function FolioCheckoutModal({
   const firstGuestBlockId = blocks.find((b) => b.party === 'GUEST')?.folio.id;
   const anyGuestDebt = blocks.some((b) => choices[b.folio.id] === 'DEBT');
   const allChosen = blocks.every((b) => Boolean(choices[b.folio.id]));
-  const refundNeeded = Boolean(early?.applicable && early.guestCashRefund > 0);
+  const procedureCredit = useMemo(() => {
+    return folios
+      .filter((folio) => folio.type === 'GUEST' && folio.status === 'OPEN')
+      .reduce((sum, folio) => sum + Math.max(0, -accountBalance(folio)), 0);
+  }, [folios]);
+  const refundNeeded = Boolean(
+    (early?.applicable && early.guestCashRefund > 0) || procedureCredit > 0.01,
+  );
+  const blocksCheckout = Boolean(clinic?.medical && clinic.blocksCheckout);
 
   const terminalOptions = bankTerminals.map((row) => ({ value: row.id, label: row.label }));
 
@@ -363,6 +406,9 @@ export function FolioCheckoutModal({
         unusedNightsRefundMethod: refundNeeded ? refundMethod : undefined,
         unusedNightsBankTerminalId: refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
         unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
+        procedureCreditRefundMethod: procedureCredit > 0.01 ? (refundMethod as 'CASH' | 'CARD') : undefined,
+        procedureCreditBankTerminalId:
+          procedureCredit > 0.01 && refundMethod === 'CARD' ? refundTerminal : undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -541,12 +587,76 @@ export function FolioCheckoutModal({
               void submit().finally(() => setBusy(false));
             }}
             busy={busy}
-            submitDisabled={loading || loadFailed || !allChosen}
+            submitDisabled={loading || loadFailed || !allChosen || blocksCheckout}
             submitLabel={t('confirmCheckout')}
           />
         }
       >
         <div className="space-y-3 text-[13px]">
+          {clinic?.medical ? (
+            <div className="space-y-2">
+              {clinic.unavailable ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicUnavailable')}</p> : null}
+              {blocksCheckout ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicBlocksCheckout')}</p> : null}
+              <p className="m-0 font-medium">{t('clinicPaidTitle')}</p>
+              <table className={DATA_TABLE_CLASS}>
+                <tbody>
+                  {(clinic.paid ?? []).map((row) => {
+                    const charge = folios
+                      .flatMap((folio) => folio.charges)
+                      .find((item) => sameChargeRef(item.externalRef, row.folioRef));
+                    return (
+                      <tr key={row.orderId} className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{money(row.amount)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{t(`clinicStatus_${row.status}`)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {row.status === 'in_plan' && charge?.id ? (
+                            <button
+                              type="button"
+                              className="underline"
+                              onClick={() => {
+                                const reason = t('clinicVoid');
+                                void fetch(`/api/folios/charges/${charge.id}/void`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ reason }),
+                                }).then(async (res) => {
+                                  if (!res.ok) {
+                                    showApiError(await res.json().catch(() => null), tc('error'));
+                                    return;
+                                  }
+                                  await loadFolios();
+                                  const again = await fetch(`/api/reservations/${reservationId}/clinic-checkout`);
+                                  const body = await again.json().catch(() => null);
+                                  setClinic((body?.data ?? body) as ClinicCheckout);
+                                });
+                              }}
+                            >
+                              {t('clinicVoid')}
+                            </button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="m-0 font-medium">{t('clinicPackageTitle')}</p>
+              <table className={DATA_TABLE_CLASS}>
+                <tbody>
+                  {(clinic.packageSessions ?? []).map((row) => (
+                    <tr key={row.orderId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{t(`clinicStatus_${row.status}`)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {procedureCredit > 0.01 ? (
+            <p className="m-0">{t('procedureCreditHint', { amount: money(procedureCredit) })}</p>
+          ) : null}
           {loading ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{tc('loading')}</p> : null}
           {loadFailed ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{tc('loadError')}</p> : null}
           {!loading && !loadFailed && blocks.length === 0 ? (
@@ -656,6 +766,33 @@ export function FolioCheckoutModal({
                 ) : null}
               </div>
             </FieldSection>
+          ) : null}
+          {procedureCredit > 0.01 && !early?.applicable ? (
+            <div className="flex flex-wrap items-end gap-2">
+              <CatalogField
+                kind="OPS_HOT"
+                label={t('earlyCheckoutTender')}
+                required
+                value={refundMethod}
+                onChange={(v) => setRefundMethod(String(v ?? ''))}
+                options={[
+                  { value: 'CASH', label: tPay('CASH') },
+                  { value: 'CARD', label: tPay('CARD') },
+                ]}
+                emptyLabel={null}
+              />
+              {refundMethod === 'CARD' && terminalOptions.length > 0 ? (
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t('bankTerminal')}
+                  required
+                  value={refundTerminal}
+                  onChange={(v) => setRefundTerminal(String(v ?? ''))}
+                  options={terminalOptions}
+                  emptyLabel={t('pickTerminal')}
+                />
+              ) : null}
+            </div>
           ) : null}
           {error ? (
             <p className={`m-0 ${TEXT_DANGER_CLASS}`} role="alert">

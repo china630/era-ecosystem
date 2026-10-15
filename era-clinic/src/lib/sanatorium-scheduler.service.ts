@@ -20,8 +20,18 @@ export async function instantiateProgramFromTemplate(input: {
   const template = await findCurrentProgramTemplate(input.programCode);
   if (!template) throw new Error(`Program template ${input.programCode} not found`);
 
-  const checkIn = input.checkInDate ?? input.startsOn;
+  let checkIn = input.checkInDate ?? input.startsOn;
+  let hotelOut: Date | undefined;
+  if (input.reservationId) {
+    const { lookupHotelStayWindow } = await import("@/lib/hotel-stay-person");
+    const hotel = await lookupHotelStayWindow(input.reservationId);
+    if (hotel) {
+      checkIn = new Date(hotel.checkInDate);
+      hotelOut = new Date(hotel.checkOutDate);
+    }
+  }
   const checkOut =
+    hotelOut ??
     input.checkOutDate ??
     (() => {
       const startYmd = bakuDateKey(input.startsOn);
@@ -30,9 +40,12 @@ export async function instantiateProgramFromTemplate(input: {
       const mm = String(minute).padStart(2, "0");
       return parseBakuDateTime(addBakuDays(startYmd, template.durationDays), `${hh}:${mm}`);
     })();
+  const hotelNights = hotelOut ? nightsBetween(checkIn, hotelOut) : 0;
   const nights =
-    input.nights ??
-    (nightsBetween(checkIn, checkOut) || template.durationDays);
+    hotelNights ||
+    input.nights ||
+    nightsBetween(checkIn, checkOut) ||
+    template.durationDays;
 
   const endsOn = checkOut;
 
@@ -130,6 +143,7 @@ export async function recalcProgramQuotas(
   opts: {
     nights: number;
     programCode?: string;
+    startsOn?: Date;
     endsOn?: Date;
     reservationId?: string | null;
     /** Manual package apply: pin the course to the current template version of the same code. */
@@ -238,6 +252,7 @@ export async function recalcProgramQuotas(
         : instance.entitlementSnapshot
           ? {}
           : { entitlementSnapshot: snapshot }),
+      ...(opts.startsOn ? { startsOn: opts.startsOn } : {}),
       ...(opts.endsOn ? { endsOn: opts.endsOn } : {}),
     },
   });

@@ -22,6 +22,7 @@ import {
   isEffectiveShare,
   reservationIsOta,
   resolveDoorAssignment,
+  roomStatusAllowedForBooking,
   roomStatusAllowedForShareAssign,
   syncShareGenderFromGuest,
   validateShareCandidate,
@@ -338,7 +339,7 @@ export async function createReservation(input: {
       });
     }
     shareBedIndex = door.shareBedIndex;
-    if (!roomStatusAllowedForShareAssign(room, door.joiningPool)) {
+    if (!roomStatusAllowedForBooking(room, door.joiningPool)) {
       throw new Error('Room is not available for booking');
     }
   }
@@ -708,9 +709,9 @@ export async function assignRoom(reservationId: string, roomId: string) {
         guestGender: reservation.guest.sex,
       },
     });
-  if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
+  if (!roomStatusAllowedForBooking(room, joiningPool)) {
     throw new Error(
-      `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
+      `Room ${room.roomNumber} is ${room.status}; out of service and cannot be reserved`,
     );
   }
   await assertNamedGuestsFreeOnStay(reservationId);
@@ -1078,11 +1079,13 @@ export async function checkInReservation(
   });
 }
 
-export async function cancelReservation(id: string, noShow = false) {
+export async function cancelReservation(id: string, noShow = false, reason?: string) {
   const reservation = await getReservation(id);
   if (['CHECKED_OUT', 'CANCELLED'].includes(reservation.status)) {
     throw new Error('Reservation already closed');
   }
+  const cancelReason = reason?.trim() ?? '';
+  if (!noShow && !cancelReason) throw new Error('CANCEL_REASON_REQUIRED');
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({
@@ -1093,6 +1096,18 @@ export async function cancelReservation(id: string, noShow = false) {
       },
       include: { room: true, guest: true },
     });
+    if (!noShow) {
+      await tx.reservationNote.upsert({
+        where: { reservationId_noteType: { reservationId: id, noteType: 'CANCEL_NOTE' } },
+        create: {
+          organizationId: reservation.organizationId,
+          reservationId: id,
+          noteType: 'CANCEL_NOTE',
+          text: cancelReason,
+        },
+        update: { text: cancelReason },
+      });
+    }
     if (reservation.roomId) {
       const { releaseDoorAfterShareDeparture } = await import(
         '@/lib/services/share-assignment.service'
@@ -1106,6 +1121,76 @@ export async function cancelReservation(id: string, noShow = false) {
     }
     return updated;
   });
+}
+
+/** Put a cancelled stay back on the books. The door and type must still be free, or the desk picks another. */
+export async function restoreReservation(
+  id: string,
+  input: { roomId?: string | null; roomTypeId?: string },
+) {
+  const reservation = await getReservation(id);
+  if (reservation.status !== 'CANCELLED') {
+    throw new Error('Only a cancelled reservation can be restored');
+  }
+  const roomTypeId = input.roomTypeId || reservation.roomTypeId;
+  const roomId = input.roomId === undefined ? reservation.roomId : input.roomId;
+
+  let shareBedIndex: number | null = null;
+  if (roomId) {
+    const room = await prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) throw new Error('Room not found');
+    if (room.roomTypeId !== roomTypeId) {
+      throw new Error('Room does not match the room type');
+    }
+    const door = await assertRoomShareAssignable({
+      roomId,
+      checkIn: reservation.checkInDate,
+      checkOut: reservation.checkOutDate,
+      excludeReservationId: id,
+      candidate: {
+        shareEligible: reservation.shareEligible,
+        shareGender: reservation.shareGender,
+        adults: reservation.adults,
+        isOta: await reservationIsOta(id),
+        guestGender: reservation.guest.sex,
+      },
+    });
+    if (!roomStatusAllowedForBooking(room, door.joiningPool)) {
+      throw new Error(`Room ${room.roomNumber} is not available`);
+    }
+    shareBedIndex = door.shareBedIndex;
+  }
+
+  await assertShareInventory(roomTypeId, reservation.checkInDate, reservation.checkOutDate, {
+    id,
+    shareEligible: reservation.shareEligible,
+    shareGender: reservation.shareGender,
+    adults: reservation.adults,
+    roomId: roomId ?? null,
+  });
+
+  const updated = await prisma.reservation.update({
+    where: { id },
+    data: {
+      status: 'CONFIRMED',
+      roomTypeId,
+      roomId: roomId ?? null,
+      shareBedIndex,
+    },
+    include: { room: true, guest: true, ratePlan: true, roomType: true },
+  });
+
+  if (reservation.roomId && reservation.roomId !== (roomId ?? null)) {
+    const { moveStayDoor } = await import('./stay-slice.service');
+    await moveStayDoor({
+      reservationId: id,
+      fromRoomId: reservation.roomId,
+      toRoomId: roomId ?? null,
+      status: 'CONFIRMED',
+      checkIn: reservation.checkInDate,
+    });
+  }
+  return updated;
 }
 
 const SCHEDULABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
@@ -1288,7 +1373,11 @@ export async function updateReservationSchedule(
         excludeReservationId: id,
         candidate,
       });
-    if (!roomStatusAllowedForShareAssign(room, joiningPool)) {
+    const doorOk =
+      reservation.status === 'IN_HOUSE'
+        ? roomStatusAllowedForShareAssign(room, joiningPool)
+        : roomStatusAllowedForBooking(room, joiningPool);
+    if (!doorOk) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
     await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {

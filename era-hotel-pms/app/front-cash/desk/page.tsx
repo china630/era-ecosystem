@@ -23,7 +23,9 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 
 type Row = {
   payingDepartment: string;
+  payingDepartmentName?: string;
   tender: string;
+  tenderName?: string;
   userLabel: string;
   currency: string;
   moneyTaken: number;
@@ -137,8 +139,13 @@ export default function FrontCashDeskPage() {
               ) : (
                 rows.map((row) => (
                   <tr key={`${row.payingDepartment}-${row.tender}`} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.payingDepartment}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.tender}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.payingDepartmentName ?? row.payingDepartment}
+                      {row.payingDepartmentName && row.payingDepartmentName !== row.payingDepartment
+                        ? ` (${row.payingDepartment})`
+                        : ''}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.tenderName ?? row.tender}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.userLabel}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.currency}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{money(row.moneyTaken)}</td>
@@ -151,7 +158,7 @@ export default function FrontCashDeskPage() {
                     <td className={DATA_TABLE_TD_CLASS}>
                       {row.closedAt ? (
                         bakuDateTimeDisplay(row.closedAt)
-                      ) : can(PERMISSIONS.CASH_SHIFT) ? (
+                      ) : row.balance !== 0 && can(PERMISSIONS.CASH_SHIFT) ? (
                         <button
                           type="button"
                           className={SECONDARY_BUTTON_CLASS}

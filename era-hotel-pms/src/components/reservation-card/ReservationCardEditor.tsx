@@ -23,8 +23,10 @@ import {
   operationalGaps,
 } from '@/lib/guest-stay-requirements';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
-import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
-import { EraModal } from '@/components/EraModal';
+import { revenueRoleIn, STAY_NIGHT_ROLES } from '@/lib/revenue-code-match';
+import { parsePackageNight, parseRoomChargeNote } from '@/lib/folio-charge-note';
+import { CatalogField, FieldTextarea } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import {
@@ -79,7 +81,7 @@ import {
   stayActionForPlane,
   type StayActionKind,
 } from '@/lib/stay-window-plane';
-import { canAssignDoor } from '@/lib/room-state';
+import { canAssignDoor, canBookDoor } from '@/lib/room-state';
 import { canJoinOccupiedDoor } from '@/lib/share-door-join';
 import type {
   AgencyOption,
@@ -515,6 +517,11 @@ export function ReservationCardEditor({
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [guestCardOpenIdReader, setGuestCardOpenIdReader] = useState(false);
   const [notesAlertOpen, setNotesAlertOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [restoreTypeId, setRestoreTypeId] = useState('');
+  const [restoreRoomId, setRestoreRoomId] = useState('');
   const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(null);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [earlyCheckoutPreview, setEarlyCheckoutPreview] = useState<{
@@ -1414,6 +1421,27 @@ export function ReservationCardEditor({
     }
   }
 
+  async function postOneNight(ymd: string) {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/pricing/post-night`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: ymd.slice(0, 10) }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('failed'));
+        return;
+      }
+      showSuccess(t('postNightDone'));
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function toggleLock() {
     if (!reservationId) return;
     const res = await fetch(`/api/reservations/${reservationId}/lock`, {
@@ -1485,21 +1513,55 @@ export function ReservationCardEditor({
     setPendingStayAction(kind);
   }
 
-  async function voidStay(kind: 'cancel' | 'noShow') {
+  async function voidStay(kind: 'cancel' | 'noShow', reason?: string) {
     if (!reservationId) return;
+    if (kind === 'cancel' && !reason?.trim()) {
+      setCancelReason('');
+      setCancelOpen(true);
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/cancel`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noShow: kind === 'noShow' }),
+        body: JSON.stringify({
+          noShow: kind === 'noShow',
+          reason: kind === 'cancel' ? reason?.trim() : undefined,
+        }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         showApiError(json, tc('error'));
         return;
       }
+      setCancelOpen(false);
       showSuccess(kind === 'noShow' ? t('noShowDone') : t('cancelDone'));
+      applyJson(json as Record<string, unknown>);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function restoreStay() {
+    if (!reservationId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomTypeId: restoreTypeId || undefined,
+          roomId: restoreRoomId || null,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      setRestoreOpen(false);
+      showSuccess(t('restoreDone'));
       applyJson(json as Record<string, unknown>);
     } finally {
       setBusy(false);
@@ -1936,11 +1998,7 @@ export function ReservationCardEditor({
           adults: Number(adults) || 1,
           pax,
         });
-      if (
-        namesBlocked &&
-        pendingRoomId &&
-        pendingRoomId !== roomId
-      ) {
+      if (namesBlocked && pendingRoomId && pendingRoomId !== roomId) {
         showApiError({ error: tb('namesIncomplete') }, tc('failed'));
         return;
       }
@@ -2129,9 +2187,7 @@ export function ReservationCardEditor({
           sourceId: sourceId || null,
           partyBillingMode,
           roomTypeId: roomTypeId || undefined,
-          ...(namesBlocked
-            ? {}
-            : { roomId: pendingRoomId || null }),
+          ...(pendingRoomId === roomId ? {} : { roomId: pendingRoomId || null }),
           ...(doorChanged && moveReasonCode ? { moveReasonCode } : {}),
           mealPlanId: mealPlanId || null,
           roomCount: Number(roomCount) || 1,
@@ -2262,9 +2318,10 @@ export function ReservationCardEditor({
     const currentAssigned = roomId;
     const list = rooms.filter((r) => {
       if (r.roomTypeId && r.roomTypeId !== typeId) return false;
+      const doorGate = status === 'IN_HOUSE' ? canAssignDoor : canBookDoor;
       if (
         r.status &&
-        !canAssignDoor(
+        !doorGate(
           {
             status: r.status as 'AVAILABLE' | 'CLEAN' | 'INSPECTED' | 'DIRTY' | 'OCCUPIED' | 'OOO' | 'OOS' | 'MAINTENANCE',
             hkCondition: r.hkCondition as 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED' | undefined,
@@ -2318,6 +2375,7 @@ export function ReservationCardEditor({
     shareEligible,
     adults,
     guestGender,
+    status,
   ]);
 
   /** Drop pending door when physical category no longer matches. */
@@ -2428,6 +2486,14 @@ export function ReservationCardEditor({
         ? preArrivalVoidKind({ checkIn, status, todayKey: todayBakuYmd() })
         : null,
     onVoidStay: (kind: 'cancel' | 'noShow') => void voidStay(kind),
+    onRestore:
+      status === 'CANCELLED'
+        ? () => {
+            setRestoreTypeId(roomTypeId);
+            setRestoreRoomId(roomId);
+            setRestoreOpen(true);
+          }
+        : undefined,
     onSave: () => void save(),
     onConfirmCheckIn: isCreate ? undefined : () => void confirmCheckIn(),
     onHistory: reservationId ? () => setHistoryOpen(true) : undefined,
@@ -2798,14 +2864,29 @@ export function ReservationCardEditor({
                   businessDate={pricingBusinessDate}
                   postedDates={folios.flatMap((folio) =>
                     folio.charges
-                      .filter((charge) =>
-                        matchesAnyRevenueToken(charge.revenueCode ?? {}, ['ROOM', 'PKG', 'RATE_ADJ']),
-                      )
-                      .map((charge) =>
-                        charge.businessDate ? hotelDateKey(charge.businessDate) : '',
-                      )
+                      .map((charge) => {
+                        const description = charge.description ?? '';
+                        const noted = parseRoomChargeNote(description);
+                        if (noted?.date) return noted.date;
+                        const packageNight = parsePackageNight(description);
+                        if (packageNight) return packageNight;
+                        if (
+                          !revenueRoleIn(
+                            { systemRole: charge.revenueCode?.systemRole ?? null },
+                            STAY_NIGHT_ROLES,
+                          )
+                        ) {
+                          return '';
+                        }
+                        return charge.businessDate ? hotelDateKey(charge.businessDate) : '';
+                      })
                       .filter(Boolean),
                   )}
+                  onPostNight={
+                    status === 'CONFIRMED' || status === 'IN_HOUSE'
+                      ? (ymd) => void postOneNight(ymd)
+                      : undefined
+                  }
                   onDailyRates={setDailyRates}
                   onManualRate={setManualDailyRate}
                   onDiscountPercent={setDiscountPercent}
@@ -3067,6 +3148,91 @@ export function ReservationCardEditor({
               : []
           }
         />
+      </EraModal>
+      <EraModal
+        open={cancelOpen}
+        title={t('cancelReasonTitle')}
+        onClose={() => setCancelOpen(false)}
+        maxWidthClass="max-w-md"
+        footer={
+          <EraModalFooter
+            onCancel={() => setCancelOpen(false)}
+            busy={busy}
+            submitDisabled={!cancelReason.trim()}
+            submitLabel={t('cancelStay')}
+            onSubmit={() => void voidStay('cancel', cancelReason)}
+          />
+        }
+      >
+        <FieldTextarea
+          label={t('cancelReason')}
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          rows={3}
+        />
+      </EraModal>
+      <EraModal
+        open={restoreOpen}
+        title={t('restoreStay')}
+        onClose={() => setRestoreOpen(false)}
+        maxWidthClass="max-w-md"
+        footer={
+          <EraModalFooter
+            onCancel={() => setRestoreOpen(false)}
+            busy={busy}
+            submitDisabled={!restoreTypeId}
+            submitLabel={t('restoreStay')}
+            onSubmit={() => void restoreStay()}
+          />
+        }
+      >
+        <div className="space-y-3">
+          <p className="m-0 text-[13px] text-[#7F8C8D]">{t('restoreHint')}</p>
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('roomType')}
+            value={restoreTypeId}
+            onChange={(v) => {
+              setRestoreTypeId(String(v ?? ''));
+              setRestoreRoomId('');
+            }}
+            options={roomTypes.map((row) => ({ value: row.id, label: row.label }))}
+            emptyLabel={null}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('roomNo')}
+            value={restoreRoomId}
+            onChange={(v) => setRestoreRoomId(String(v ?? ''))}
+            options={rooms
+              .filter((r) => {
+                if (restoreTypeId && r.roomTypeId && r.roomTypeId !== restoreTypeId) return false;
+                if (
+                  r.status &&
+                  !canBookDoor(
+                    {
+                      status: r.status as 'AVAILABLE' | 'CLEAN' | 'INSPECTED' | 'DIRTY' | 'OCCUPIED' | 'OOO' | 'OOS' | 'MAINTENANCE',
+                      hkCondition: r.hkCondition as 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED' | undefined,
+                      inventoryStatus: r.inventoryStatus as 'IN_SERVICE' | 'OOS' | 'OOO' | undefined,
+                    },
+                    false,
+                  )
+                ) {
+                  return false;
+                }
+                const taken = (r.reservations ?? []).some((res) => {
+                  if (reservationId && res.id === reservationId) return false;
+                  if (!['CONFIRMED', 'IN_HOUSE', 'OPTION'].includes(res.status)) return false;
+                  const a = res.checkInDate.slice(0, 10);
+                  const b = res.checkOutDate.slice(0, 10);
+                  return Boolean(checkIn && checkOut && a < checkOut && b > checkIn);
+                });
+                return !taken;
+              })
+              .map((r) => ({ value: r.id, label: r.roomNumber }))}
+            emptyLabel="—"
+          />
+        </div>
       </EraModal>
       <EraModal
         open={notesAlertOpen}

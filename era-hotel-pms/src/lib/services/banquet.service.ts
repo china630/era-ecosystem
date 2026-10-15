@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { createPosReservation } from '@/lib/services/pos.service';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { postCharge, postPayment } from '@/lib/services/folio.service';
 import {
   computeEventPlannedRevenue,
@@ -185,20 +185,15 @@ export async function confirmBanquetEvent(
     : ['COMPANY', 'AGENCY', 'GUEST'];
 
   if (event.reservationId && planned > 0) {
-    // Prefer BANQUET code so F&B extras on other codes do not look like package double-post
-    const banquetCode =
-      (await findRevenueCodeByToken('BANQUET')) ??
-      (await findRevenueCodeByToken('FB')) ??
-      (await findRevenueCodeByToken('ROOM'));
-    if (banquetCode) {
-      const charge = await postCharge({
-        reservationId: event.reservationId,
-        amount: planned,
-        description: `BEO package ${event.eventName}`,
-        revenueCodeId: banquetCode.id,
-      });
-      masterFolioId = charge.folio.id;
-    }
+    // BANQUET role so F&B extras on other codes do not look like package double-post
+    const banquetCode = await requireRevenueCodeByRole('BANQUET');
+    const charge = await postCharge({
+      reservationId: event.reservationId,
+      amount: planned,
+      description: `BEO package ${event.eventName}`,
+      revenueCodeId: banquetCode.id,
+    });
+    masterFolioId = charge.folio.id;
   } else if (!masterFolioId && event.reservationId) {
     const master = await resolveMasterFolio(event.reservationId, preferredOrder);
     masterFolioId = master?.id ?? null;

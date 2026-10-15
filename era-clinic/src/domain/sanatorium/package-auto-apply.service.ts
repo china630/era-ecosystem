@@ -1,3 +1,4 @@
+import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { prisma } from "@/lib/prisma";
 import { nightsBetween } from "@/lib/program-quota";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
@@ -313,10 +314,19 @@ export async function applyPackageAutoBlocks(
 
   let axesRewritten = false;
   if (instance && opts.trigger === "MANUAL_RETRY") {
-    const nights = stayNightsForAdopt(instance.startsOn, instance.endsOn);
+    const hotel = episode.reservationId
+      ? await lookupHotelStayWindow(episode.reservationId)
+      : null;
+    const stayStart = hotel ? new Date(hotel.checkInDate) : instance.startsOn;
+    const stayEnd = hotel ? new Date(hotel.checkOutDate) : instance.endsOn;
+    const nights = stayNightsForAdopt(stayStart, stayEnd);
     if (nights != null) {
       const { recalcProgramQuotas } = await import("@/lib/sanatorium-scheduler.service");
-      await recalcProgramQuotas(instance.id, { nights, adoptCurrentVersion: true });
+      await recalcProgramQuotas(instance.id, {
+        nights,
+        adoptCurrentVersion: true,
+        ...(hotel ? { startsOn: stayStart, endsOn: stayEnd } : {}),
+      });
       const refreshed = await prisma.programInstance.findUnique({
         where: { id: instance.id },
         select: { entitlementSnapshot: true, template: { include: { procedures: true } } },

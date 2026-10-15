@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { CatalogField, Field, showApiError, showSuccess } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
-type RevenueCode = { id: string; code: string; name?: string | null };
+type RevenueCode = { id: string; code: string; name?: string | null; active?: boolean };
 
 export function FolioChargeModal({
   open,
@@ -34,7 +34,7 @@ export function FolioChargeModal({
       .then((r) => r.json())
       .then((data) => {
         const rows = (data.data ?? data) as RevenueCode[];
-        const list = Array.isArray(rows) ? rows : [];
+        const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
         setCodes(list);
         setRevenueCodeId(list[0]?.id ?? '');
       })

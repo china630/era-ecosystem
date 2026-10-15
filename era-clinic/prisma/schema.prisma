@@ -81,6 +81,8 @@ model Tenant {
   doctorBonusPercentWalkIn       Float                    @default(0) @map("doctor_bonus_percent_walk_in")
   /// Hotel RevenueCode.code posted on clinic folio charges (Nafta: 23 AMBULATOR). Empty refuses the charge.
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
+  /// Paid no-show keeps the folio charge (default). False lets the hotel void it.
+  noShowKeepsCharge              Boolean                  @default(true) @map("no_show_keeps_charge")
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)

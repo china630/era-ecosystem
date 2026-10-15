@@ -1,3 +1,4 @@
+import { HOTEL_REVENUE_CODES_PERMISSION, sharedApiPermission } from "@era/satellite-kit/integration/hotel-revenue-route";
 import {
   CLINIC_ROLE,
   type ClinicRoleCode,
@@ -72,6 +73,7 @@ export const CLINIC_PERMISSION = {
   API_ICD_READ: "api:icd.read",
   API_QUEUE: "api:queue",
   API_CATALOG_READ: "api:catalog.read",
+  API_HOTEL_REVENUE_CODES: HOTEL_REVENUE_CODES_PERMISSION,
   API_IDENTITY_GUEST_QR: "api:identity.guest_qr",
   /** List/detail: all episodes (else assigned-to-self practitioner). */
   SCOPE_EPISODES_ALL: "scope:episodes.all",
@@ -650,6 +652,12 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
 
 function matchAdminApiPrefix(pathname: string) {
   const path = pathname.split("?")[0] ?? pathname;
+  if (sharedApiPermission(path) === HOTEL_REVENUE_CODES_PERMISSION) {
+    return {
+      prefix: path,
+      permission: CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
+    };
+  }
   let best: (typeof ADMIN_API_PREFIX_PERMISSIONS)[number] | null = null;
   for (const row of ADMIN_API_PREFIX_PERMISSIONS) {
     if (path === row.prefix || path.startsWith(`${row.prefix}/`)) {

@@ -291,8 +291,22 @@ model ProductPrice {
   @@index([organizationId, productId, createdAt])
 }
 
+model ProductCategory {
+  id             String         @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  /// Default hotel revenue article for products in this category.
+  revenueCode    String?        @map("revenue_code")
+  createdAt      DateTime       @default(now())
+  products       ProductCache[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
 model ProductCache {
-  id             String   @id @default(cuid())
+  id             String           @id @default(cuid())
   organizationId String
   sku            String
   barcode        String?
@@ -300,12 +314,15 @@ model ProductCache {
   unitPrice          Decimal  @db.Decimal(12, 2)
   /// NAS revenue account from the parent Finance SKU card
   revenueAccountCode String?
-  /// Revenue article. Falls back to the outlet default.
+  /// Revenue article. Empty falls through to the category, then the outlet.
   revenueCode        String?  @map("revenue_code")
+  categoryId         String?
+  category           ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   syncedAt           DateTime @default(now())
 
   @@unique([organizationId, sku])
   @@index([barcode])
   @@index([sku])
+  @@index([categoryId])
   @@index([organizationId])
 }

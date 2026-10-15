@@ -130,6 +130,15 @@ export const HOTEL_LOOKUP_DEFAULTS: HotelLookupDefault[] = [
   },
   {
     kind: 'RESERVATION_QUEUE',
+    code: 'all',
+    name: 'All',
+    nameEn: 'All',
+    nameAz: 'Hamısı',
+    nameRu: 'Все',
+    sortOrder: 55,
+  },
+  {
+    kind: 'RESERVATION_QUEUE',
     code: 'noShow',
     name: 'No-show',
     nameEn: 'No-show',
@@ -145,15 +154,6 @@ export const HOTEL_LOOKUP_DEFAULTS: HotelLookupDefault[] = [
     nameAz: 'Ləğv',
     nameRu: 'Отмена',
     sortOrder: 70,
-  },
-  {
-    kind: 'RESERVATION_QUEUE',
-    code: 'all',
-    name: 'All',
-    nameEn: 'All',
-    nameAz: 'Hamısı',
-    nameRu: 'Все',
-    sortOrder: 80,
   },
   ...ISO_COUNTRIES.map((country, index) => ({
     kind: 'NATIONALITY',

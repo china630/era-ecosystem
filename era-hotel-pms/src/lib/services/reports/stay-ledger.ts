@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { civilDay, civilWindow, eachCivilDay, vatRateFromTag } from '@/lib/reports/civil-days';
+import { revenueRoleIs } from '@/lib/revenue-code-match';
 
 export const SOLD_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT'] as const;
 
@@ -181,6 +182,7 @@ export async function loadRevenueCodes(): Promise<Map<string, RevenueCodeInfo>> 
       id: true,
       code: true,
       name: true,
+      systemRole: true,
       taxTag: true,
       department: { select: { code: true, name: true } },
       _count: { select: { ratePlansRoom: true } },
@@ -198,7 +200,10 @@ export async function loadRevenueCodes(): Promise<Map<string, RevenueCodeInfo>> 
           departmentCode,
           departmentName: c.department?.name ?? 'Other',
           vatRate: vatRateFromTag(c.taxTag),
-          isRoom: ROOM_DEPARTMENT_CODES.has(departmentCode.toUpperCase()) || c._count.ratePlansRoom > 0,
+          isRoom:
+            revenueRoleIs(c, 'ROOM') ||
+            ROOM_DEPARTMENT_CODES.has(departmentCode.toUpperCase()) ||
+            c._count.ratePlansRoom > 0,
         },
       ];
     }),

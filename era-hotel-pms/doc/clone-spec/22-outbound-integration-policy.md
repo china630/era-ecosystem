@@ -1,5 +1,9 @@
 # 22. Исходящие события PMS → ERP (политика и настройки)
 
+> **Status (2026-10-15):** this channel is the **external ERP webhook** only (a customer's own accounting, e.g. 1C). ERA finance never uses it — finance receives the night-audit day document through the orchestrator gateway. Default is now **off** (`enabled: false`); an org turns it on in Settings → Integration and sets the URL.
+>
+> **Rework needed before any customer uses it:** real-time per-charge posting contradicts the one-document-per-day model; payloads carry token revenue codes instead of numeric codes + system role; there is no per-org URL secret store or delivery retry for folio events. Track in `era-hotel-pms/doc/FRONT-OFFICE-STATUS.md`.
+
 > Решение по **C4** (чеклист 13): **real-time** по операциям folio + **E1** агрегат после night audit.  
 > Nafta не блокирует — каждый канал можно **отключить** в настройках отеля.
 

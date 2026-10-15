@@ -13,7 +13,7 @@ When the user asks for **git commit + PR workflow**, read and follow:
 
 | Phrase | Skill action |
 |--------|----------------|
-| **полный коммит**, **коммит всех сателлит**, **full commit**, **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит** | Full wave: orchestrator → data-hub → mdm → rest; **`npm run ship:prepush`**; then PR dev → wait CI → merge → PR master → merge |
+| **полный коммит**, **коммит всех сателлит**, **full commit**, **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит** | Full wave: orchestrator → data-hub → mdm → rest; **`npm run ship:prepush`**; then PR dev → wait CI → merge → return this folder to `origin/dev` → PR master → merge → return to `origin/dev` again |
 | **шип оркестратор**, **шип hotel**, **шип clinic**, **шип finance**, … | Scoped commit + PR → **dev only**; wait path-filtered images + deploy. **Do not** promote master unless asked. |
 | **собери образы …** / **задеплой …** | `era-ship.ps1 -PublishImages` / `-PublishDeploy` (manual GHCR dispatch) |
 | **коммит оркестратор** | Scope `orchestrator` only |
@@ -32,5 +32,7 @@ When the user asks for **git commit + PR workflow**, read and follow:
 - PowerShell: use `era-ship.ps1` from `.cursor/skills/era-git-ship/scripts/`.
 - **Before `git push` / `-PublishDev`:** `npm run ship:prepush` (quality-gates + scoped `test`/`build`). Not before each commit. Docker/Prisma health is not a substitute. On FAIL: fix, new commit, do not push. **PASS + dirty tree:** commit generate/build output, clear `ERA_SHIP_GATES_DONE`, re-run gates; never push while porcelain remains except `never_commit`. Never `-SkipGates` unless the user said so.
 - Merge PRs by **number** from `gh pr create` URL. Do not `gh pr view` with no args. `dev`→`master`: retry `gh pr merge <n>` if protection still has queued checks; do not treat stale `checks --watch` green as mergeable.
+- **Before any commit:** this folder must contain `origin/dev` (`git fetch origin dev`; `git merge-base --is-ancestor origin/dev HEAD`). If not: do not commit and do not open a second clone or worktree. Reconcile uncommitted work against `origin/dev` here first.
+- **After merge into `dev`:** in this same folder, `git checkout dev` and `git pull origin dev`. Ship is not finished until `git rev-parse HEAD` equals `origin/dev` and `git status` is clean. Do not stop on the side branch. Master promotion does not replace this.
 
 Path buckets: `.cursor/skills/era-git-ship/manifests.yaml`

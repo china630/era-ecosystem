@@ -2,7 +2,7 @@ import type { PaymentMethod, TourBookingStatus, TourDepartureStatus } from '@pri
 import { requestOrganizationId } from '@/lib/request-organization';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { folioBalance, postCharge, postPayment, voidCharge } from '@/lib/services/folio.service';
 
 export const TRANSFER_OCCUPANCY_MS = 90 * 60 * 1000;
@@ -15,9 +15,7 @@ export class TourConflictError extends Error {
 }
 
 async function tourRevenue() {
-  const code = await findRevenueCodeByToken('TOUR');
-  if (!code) throw new Error('Revenue code TOUR is not configured');
-  return code;
+  return requireRevenueCodeByRole('TOUR');
 }
 
 function orgId() {

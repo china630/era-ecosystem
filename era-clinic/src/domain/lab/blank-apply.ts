@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { extractBlankTable, isFilledBlankValue, type BlankTableRow } from "@/domain/lab/blank-docx";
+import { extractBlankTable, extractDocxParagraphs, isFilledBlankValue, type BlankTableRow } from "@/domain/lab/blank-docx";
+import { parseUsmSections, usmBlankKind, usmFieldsOmitted } from "@/domain/lab/usm-blank";
 
 export type BlankPreviewRow = {
   label: string;
@@ -54,6 +55,56 @@ function mappedRow(
   const filled = isFilledBlankValue(row.value);
   const applied = Boolean(analyteCode && filled && allowed.has(analyteCode));
   return { label: row.label, value: row.value, norm: row.norm, analyteCode, applied };
+}
+
+/**
+ * Lab panels use the blank whose serviceCode is this order.
+ * Ultrasound panels use the narrative headings for that study. Patient sex drops the other abdomen organs.
+ */
+export async function previewWordForOrder(input: {
+  orderId: string;
+  docx: Buffer;
+  profileId?: string;
+}): Promise<
+  | { mode: "rows"; rows: BlankPreviewRow[] }
+  | { mode: "fields"; fields: Record<string, string>; omit: string[] }
+  | { mode: "missing" }
+  | null
+> {
+  const order = await prisma.labOrder.findUnique({
+    where: { id: input.orderId },
+    include: {
+      patientRef: { select: { sex: true } },
+      items: { select: { serviceCode: true } },
+    },
+  });
+  if (!order) return null;
+  const serviceCode = order.items[0]?.serviceCode ?? "";
+  const kind = usmBlankKind(serviceCode);
+  if (kind) {
+    return {
+      mode: "fields",
+      fields: parseUsmSections(extractDocxParagraphs(input.docx), {
+        kind,
+        sex: order.patientRef.sex,
+      }),
+      omit: usmFieldsOmitted(order.patientRef.sex),
+    };
+  }
+  const codes = order.items.map((item) => item.serviceCode).filter(Boolean);
+  const profile = input.profileId
+    ? await prisma.labBlankProfile.findUnique({ where: { id: input.profileId } })
+    : await prisma.labBlankProfile.findFirst({
+        where: { active: true, serviceCode: serviceCode ? serviceCode : { in: codes } },
+        orderBy: { name: "asc" },
+      });
+  if (!profile) return { mode: "missing" };
+  const rows = await previewBlankForOrder({
+    orderId: input.orderId,
+    profileId: profile.id,
+    docx: input.docx,
+  });
+  return { mode: "rows", rows };
 }
 
 export async function saveBlankProfile(input: {

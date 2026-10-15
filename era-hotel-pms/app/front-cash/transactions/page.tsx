@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -36,10 +36,18 @@ type TxRow = {
   kind: string;
   cashierName?: string | null;
   bankTerminalId?: string | null;
+  fiscalReceiptId?: string | null;
   folioType: string;
   reservationId: string;
+  resNo?: string | null;
   guestName: string | null;
+  surname?: string | null;
   roomNumber: string | null;
+  agencyName?: string | null;
+  departmentCode?: string | null;
+  currency?: string | null;
+  rate?: number | null;
+  note?: string | null;
 };
 
 type DepositRow = {
@@ -161,6 +169,19 @@ export default function FrontCashTransactionsPage() {
   }
 
   const payments = journal?.payments ?? [];
+  const paymentGroups = (() => {
+    const byCashier = new Map<string, Map<string, TxRow[]>>();
+    for (const row of payments) {
+      const cashier = row.cashierName?.trim() || '—';
+      const department = row.departmentCode?.trim() || '—';
+      const deptMap = byCashier.get(cashier) ?? new Map<string, TxRow[]>();
+      const list = deptMap.get(department) ?? [];
+      list.push(row);
+      deptMap.set(department, list);
+      byCashier.set(cashier, deptMap);
+    }
+    return [...byCashier.entries()];
+  })();
   const deposits = journal?.deposits ?? [];
   const pending = journal?.pending;
   const totals = journal?.totalsByMethod ?? [];
@@ -318,48 +339,74 @@ export default function FrontCashTransactionsPage() {
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colTime')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colGuest')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colAgency')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colResNo')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colSurname')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colRoom')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colKind')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colMethod')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colCashier')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colTerminal')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colDoc')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colNote')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colCurrency')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colRate')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('amount')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {payments.map((r) => (
-                <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {bakuDateTimeDisplay(r.createdAt)}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.guestName ?? tc('dash')}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.roomNumber ?? tc('dash')}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {r.kind}
-                    {r.folioType ? ` · ${r.folioType}` : ''}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.paymentMethod}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.cashierName ?? tc('dash')}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.bankTerminalId ?? tc('dash')}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    {Number(r.amount).toFixed(2)} {tc('azn')}
-                  </td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <button
-                      type="button"
-                      className="text-[#2980B9] hover:underline"
-                      onClick={() => setFolioReservationId(r.reservationId)}
-                    >
-                      {t('openFolio')}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {paymentGroups.map(([cashier, departments]) => {
+                const count = [...departments.values()].reduce((sum, rows) => sum + rows.length, 0);
+                return (
+                  <Fragment key={cashier}>
+                    <tr className="bg-[#F4F6F7]">
+                      <td colSpan={12} className={`${DATA_TABLE_TD_CLASS} font-semibold`}>
+                        {cashier} ({count})
+                      </td>
+                    </tr>
+                    {[...departments.entries()].map(([department, rows]) => (
+                      <Fragment key={`${cashier}-${department}`}>
+                        <tr className="bg-[#FBFCFC]">
+                          <td colSpan={12} className={`${DATA_TABLE_TD_CLASS} pl-4 text-[#7F8C8D]`}>
+                            {department} ({rows.length})
+                          </td>
+                        </tr>
+                        {rows.map((r) => (
+                          <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                            <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(r.createdAt)}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.agencyName ?? tc('dash')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.resNo ?? tc('dash')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.surname || r.guestName || tc('dash')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.roomNumber ?? tc('dash')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.paymentMethod}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.fiscalReceiptId ?? tc('dash')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.note ?? tc('dash')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.currency ?? 'AZN'}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{r.rate ?? 1}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>
+                              {Number(r.amount).toFixed(2)} {tc('azn')}
+                            </td>
+                            <td className={DATA_TABLE_TD_CLASS}>
+                              {r.reservationId ? (
+                                <button
+                                  type="button"
+                                  className="text-[#2980B9] hover:underline"
+                                  onClick={() => setFolioReservationId(r.reservationId)}
+                                >
+                                  {t('openFolio')}
+                                </button>
+                              ) : (
+                                tc('dash')
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </Fragment>
+                );
+              })}
               {payments.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={9} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                  <td colSpan={12} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
                     {t('transactionsEmpty')}
                   </td>
                 </tr>

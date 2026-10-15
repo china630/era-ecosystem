@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
+  DatePicker,
+  Field,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -22,13 +25,27 @@ type Summary = {
   suspectedDuplicateGuests: number;
 };
 
+type MatchType =
+  | 'PHONE'
+  | 'GLOBAL_PERSON_ID'
+  | 'PASSPORT'
+  | 'FIN'
+  | 'EMAIL'
+  | 'NAME_BIRTH'
+  | 'LAST_BIRTH'
+  | 'LAST_PHONE'
+  | 'DOC_CITIZENSHIP';
+
 type GuestCard = {
   id: string;
   fullName: string;
+  firstName: string | null;
+  lastName: string | null;
   birthDate: string | null;
   sex: string | null;
   nationality: string | null;
   phone: string | null;
+  email: string | null;
   passportNo: string | null;
   fin: string | null;
   linked: boolean;
@@ -38,7 +55,7 @@ type GuestCard = {
 
 type Group = {
   key: string;
-  matchType: 'PHONE' | 'GLOBAL_PERSON_ID';
+  matchType: MatchType;
   guestIds: string[];
   needsPersonMerge: boolean;
   guests: GuestCard[];
@@ -57,6 +74,11 @@ export default function GuestDedupReportPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [pending, setPending] = useState<PendingMerge | null>(null);
   const [busy, setBusy] = useState(false);
+  const [matchFilter, setMatchFilter] = useState('all');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const visibleGroups = groups.filter(
+    (group) => matchFilter === 'all' || group.matchType === matchFilter,
+  );
 
   const load = useCallback(() => {
     void fetch('/api/admin/guest-dedup/summary')
@@ -177,20 +199,77 @@ export default function GuestDedupReportPage() {
           </div>
         </section>
       )}
+      <CatalogField
+        kind="CLOSED_SMALL"
+        label={t('matchAll')}
+        value={matchFilter}
+        onChange={(next) => setMatchFilter(String(next))}
+        emptyLabel={null}
+        options={[
+          { value: 'all', label: t('matchAll') },
+          ...([
+            'PHONE',
+            'PASSPORT',
+            'FIN',
+            'EMAIL',
+            'NAME_BIRTH',
+            'LAST_BIRTH',
+            'LAST_PHONE',
+            'DOC_CITIZENSHIP',
+            'GLOBAL_PERSON_ID',
+          ] as const).map(
+            (code) => ({ value: code, label: t(`match.${code}`) }),
+          ),
+        ]}
+      />
       <section className="space-y-3">
-        {groups.map((group) => (
+        {visibleGroups.map((group) => (
           <article
             key={`${group.matchType}-${group.key}`}
             className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}
           >
             <h2 className="m-0 text-[13px] font-semibold text-[#34495E]">
-              {group.matchType === 'PHONE' ? t('samePhone') : t('samePerson')}
-              {group.matchType === 'PHONE' ? ` · ${group.key}` : ''}
+              {t(`match.${group.matchType}`)}
+              {group.matchType === 'NAME_BIRTH' || group.matchType === 'GLOBAL_PERSON_ID'
+                ? ''
+                : ` · ${group.key}`}
             </h2>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {group.guests.map((guest) => (
                 <div key={guest.id} className="space-y-2 rounded border border-[#ECEFF1] p-3 text-[13px]">
                   <div className="font-semibold text-[#2C3E50]">{guest.fullName}</div>
+                  {canMerge && editingId === guest.id ? (
+                    <GuestEditForm
+                      guest={guest}
+                      busy={busy}
+                      onCancel={() => setEditingId(null)}
+                      onSave={async (body) => {
+                        setBusy(true);
+                        try {
+                          const res = await fetch(`/api/guests/${guest.id}/full`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (!res.ok) {
+                            showApiError(data);
+                            return;
+                          }
+                          showSuccess(t('guestSaved'));
+                          setEditingId(null);
+                          load();
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    />
+                  ) : null}
+                  {canMerge && editingId !== guest.id ? (
+                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setEditingId(guest.id)}>
+                      {t('editGuest')}
+                    </button>
+                  ) : null}
                   <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] text-[#34495E]">
                     <dt className="text-[#7F8C8D]">{t('birth')}</dt>
                     <dd className="m-0">{guest.birthDate || '—'}</dd>
@@ -243,10 +322,68 @@ export default function GuestDedupReportPage() {
             ) : null}
           </article>
         ))}
-        {groups.length === 0 ? (
+        {visibleGroups.length === 0 ? (
           <p className="text-[13px] text-[#7F8C8D]">{t('empty')}</p>
         ) : null}
       </section>
     </>
+  );
+}
+
+function GuestEditForm({
+  guest,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  guest: GuestCard;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (body: {
+    firstName: string;
+    lastName: string;
+    phone: string | null;
+    birthDate: string | null;
+  }) => Promise<void>;
+}) {
+  const t = useTranslations('guestDedup');
+  const tc = useTranslations('common');
+  const [lastName, setLastName] = useState(guest.lastName ?? '');
+  const [firstName, setFirstName] = useState(guest.firstName ?? '');
+  const [phone, setPhone] = useState(guest.phone ?? '');
+  const [birthDate, setBirthDate] = useState(guest.birthDate ?? '');
+  return (
+    <div className="space-y-2">
+      <Field label={t('lastName')} preset="shortText" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+      <Field label={t('firstName')} preset="shortText" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+      <Field label={t('phone')} preset="shortText" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <DatePicker
+        label={t('birth')}
+        value={birthDate}
+        onChange={setBirthDate}
+        placeholder={tc('datePlaceholder')}
+        openCalendarLabel={tc('openCalendar')}
+      />
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={busy}
+          onClick={() =>
+            void onSave({
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              phone: phone.trim() || null,
+              birthDate: birthDate || null,
+            })
+          }
+        >
+          {t('saveGuest')}
+        </button>
+        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={onCancel}>
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
   );
 }

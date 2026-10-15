@@ -7,7 +7,7 @@ import type { FolioType, PaymentMethod, Reservation } from '@prisma/client';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
-import { matchesAnyRevenueToken } from '@/lib/revenue-code-match';
+import { revenueRoleIn, revenueRoleIs, STAY_NIGHT_ROLES } from '@/lib/revenue-code-match';
 import { getElektrawebBridgePolicy } from '@/lib/integration/elektraweb-bridge/config';
 import { getPropertyCode } from '@/lib/services/hotel.service';
 import { getRedis, OUTBOUND_RETRY_QUEUE, IDEMPOTENCY_PREFIX } from '@/lib/redis';
@@ -46,13 +46,12 @@ function mapPaymentMethod(method: PaymentMethod): SatellitePaymentMethod {
   return method as SatellitePaymentMethod;
 }
 
-function mapRevenueToItemType(row: { code: string; name?: string | null }): BreakdownItemType {
-  const blob = `${row.code} ${row.name ?? ''}`.toUpperCase();
-  if (matchesAnyRevenueToken(row, ['ROOM'])) return 'ACCOMMODATION';
-  if (matchesAnyRevenueToken(row, ['FOOD'])) return 'FOOD';
-  if (matchesAnyRevenueToken(row, ['MEDICAL'])) return 'MEDICAL';
-  if (matchesAnyRevenueToken(row, ['MINIBAR']) || blob.includes('MINIBAR')) return 'MINIBAR';
-  if (matchesAnyRevenueToken(row, ['LAUNDRY']) || blob.includes('LAUNDRY')) return 'LAUNDRY';
+function mapRevenueToItemType(row: { systemRole: string | null }): BreakdownItemType {
+  if (revenueRoleIn(row, STAY_NIGHT_ROLES)) return 'ACCOMMODATION';
+  if (revenueRoleIs(row, 'FOOD')) return 'FOOD';
+  if (revenueRoleIs(row, 'MEDICAL')) return 'MEDICAL';
+  if (revenueRoleIs(row, 'MINIBAR')) return 'MINIBAR';
+  if (revenueRoleIs(row, 'LAUNDRY')) return 'LAUNDRY';
   return 'RESTAURANT';
 }
 
@@ -66,7 +65,7 @@ type ReservationWithFolios = Reservation & {
     charges: Array<{
       qty: number;
       amount: { toNumber(): number };
-      revenueCode: { code: string; name?: string | null };
+      revenueCode: { code: string; name?: string | null; systemRole: string | null };
     }>;
     payments: Array<{ amount: { toNumber(): number } }>;
   }>;

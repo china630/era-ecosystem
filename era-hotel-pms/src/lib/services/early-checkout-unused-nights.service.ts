@@ -3,10 +3,9 @@ import { decimalToNumber } from '@/lib/decimal';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
 import { postCharge, postPayment, voidCharge } from '@/lib/services/folio.service';
-import { matchesAnyRevenueToken, revenueTokenMatches } from '@/lib/revenue-code-token';
+import { LODGING_ROLES, revenueRoleIn, revenueRoleIs } from '@/lib/revenue-code-match';
 
 const VAT_RATE = 0.18;
-const LODGING_CODES = new Set(['ROOM', 'PKG', 'TREATMENT', 'BOARD', 'ACCOM']);
 
 export type UnusedNightsChargePlan =
   | {
@@ -77,11 +76,11 @@ function eachHotelNightKeys(fromKey: string, toKeyExclusive: string): string[] {
 }
 
 function isLodgingCode(
-  row: { code: string; name?: string | null },
+  row: { code: string; systemRole: string | null },
   packageCodes: Set<string>,
 ): boolean {
-  if (packageCodes.has(row.code) || (row.name != null && packageCodes.has(row.name))) return true;
-  return matchesAnyRevenueToken(row, [...LODGING_CODES]);
+  if (packageCodes.has(row.code)) return true;
+  return revenueRoleIn(row, LODGING_ROLES);
 }
 
 /**
@@ -189,7 +188,7 @@ export async function previewEarlyCheckoutUnusedNights(
       // Non-medical accommodation lump (qty > 1, not night-keyed to unused set)
       if (
         !medical &&
-        revenueTokenMatches(charge.revenueCode, 'ROOM') &&
+        revenueRoleIs(charge.revenueCode, 'ROOM') &&
         qty > 1 &&
         (!bizKey || !unusedDates.includes(bizKey))
       ) {

@@ -1003,9 +1003,9 @@ export default function SanatoriumPage() {
   );
 
   const program = selected?.programInstance;
-  const stayWindow = program
-    ? { startsOn: program.startsOn, endsOn: program.endsOn }
-    : selected?.hotelStay ?? null;
+  const stayWindow =
+    selected?.hotelStay ??
+    (program ? { startsOn: program.startsOn, endsOn: program.endsOn } : null);
   const proceduresUnlocked =
     Boolean(selected?.anamnesisText?.trim()) &&
     (selected?.complaints.length ?? 0) > 0 &&
@@ -1027,8 +1027,19 @@ export default function SanatoriumPage() {
       }
       showSuccess(t("applyOpenPackagesDone", { count: data.updated ?? 0 }));
       if (Array.isArray(data.failed) && data.failed.length > 0) {
+        const names = data.failed
+          .map((row: { name?: string } | string) =>
+            typeof row === "string" ? row : row.name || "",
+          )
+          .filter(Boolean)
+          .join(", ");
         showApiError(
-          { error: t("applyOpenPackagesPartial", { count: data.failed.length }) },
+          {
+            error: t("applyOpenPackagesPartial", {
+              count: data.failed.length,
+              names: names || String(data.failed.length),
+            }),
+          },
           t("failed"),
         );
       }
@@ -1157,7 +1168,7 @@ export default function SanatoriumPage() {
         title={t("treatmentChart")}
         subtitle={selected?.patientRef?.fullName}
         onClose={() => setChartModalOpen(false)}
-        maxWidthClass="max-w-2xl"
+        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
       >
         {selected ? (
           <div className="space-y-4 text-[13px]">
@@ -1172,9 +1183,9 @@ export default function SanatoriumPage() {
                   ) : null}
                   {stayWindow ? (
                     <span>
-                      {tCard("stayCheckIn")}: {formatStayDate(stayWindow.startsOn)} · {tCard("stayCheckOut")}:{" "}
-                      {formatStayDate(stayWindow.endsOn)} · {tCard("stayNights")}: {stayNights(stayWindow)}
-                      {program ? ` · ${t("daysRemaining")}: ${daysRemaining(program.endsOn)}` : ""}
+                      {tp("stayCheckIn")}: {formatStayDate(stayWindow.startsOn)} · {tp("stayCheckOut")}:{" "}
+                      {formatStayDate(stayWindow.endsOn)} · {tp("stayNights")}: {stayNights(stayWindow)}
+                      {` · ${t("daysRemaining")}: ${daysRemaining(stayWindow.endsOn)}`}
                     </span>
                   ) : null}
                 </div>
@@ -1543,7 +1554,9 @@ export default function SanatoriumPage() {
             onSubmit={() =>
               void postAction("complete-checkup", {
                 programCode: programCode || selected?.programCode || undefined,
-                startsOn: parseBakuDateTime(programStartsOn, "09:00:00").toISOString(),
+                ...(selected?.hotelStay
+                  ? {}
+                  : { startsOn: parseBakuDateTime(programStartsOn, "09:00:00").toISOString() }),
               })
             }
             busy={busy}
@@ -1567,13 +1580,20 @@ export default function SanatoriumPage() {
               </option>
             ))}
           </FieldSelect>
-          <DatePicker
-            label={t("startsOn")}
-            value={programStartsOn}
-            onChange={setProgramStartsOn}
-            placeholder={tc("datePlaceholder")}
-            openCalendarLabel={tc("openCalendar")}
-          />
+          {selected?.hotelStay ? (
+            <p className="text-[13px] self-end">
+              {tp("stayCheckIn")}: {formatStayDate(selected.hotelStay.startsOn)} · {tp("stayCheckOut")}:{" "}
+              {formatStayDate(selected.hotelStay.endsOn)}
+            </p>
+          ) : (
+            <DatePicker
+              label={t("startsOn")}
+              value={programStartsOn}
+              onChange={setProgramStartsOn}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+          )}
         </div>
       </ModalShell>
 

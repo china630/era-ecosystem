@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { localizedDepartmentName } from "@/domain/catalog/department-label";
+import { loadHotelRevenueCodes } from "@/lib/hotel-revenue-client";
 import {
   SortableTh,
   sortRows,
@@ -65,6 +66,7 @@ export default function DepartmentsAdminPage() {
   const [pageSize, setPageSize] = useState(25);
   const [q, setQ] = useState("");
   const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
+  const [revenueNotice, setRevenueNotice] = useState("");
   const [sort, setSort] = useState<ColumnSort | null>(null);
 
   const visibleRows = useMemo(() => {
@@ -105,13 +107,10 @@ export default function DepartmentsAdminPage() {
 
   useEffect(() => {
     void load();
-    void fetch("/api/admin/hotel-revenue-codes")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((body: { data?: { codes?: { code: string; name: string }[] }; codes?: { code: string; name: string }[] } | null) => {
-        const codes = body?.data?.codes ?? body?.codes ?? [];
-        setRevenueOptions(codes.map((row) => ({ value: row.code, label: `${row.code} — ${row.name}` })));
-      })
-      .catch(() => setRevenueOptions([]));
+    void loadHotelRevenueCodes().then((loaded) => {
+      setRevenueOptions(loaded.options);
+      setRevenueNotice(loaded.notice ? tc(loaded.notice) : "");
+    });
   }, [load]);
 
   function openRow(row: DeptRow | null) {
@@ -390,6 +389,7 @@ export default function DepartmentsAdminPage() {
             value={draft.nameRu}
             onChange={(e) => setDraft({ ...draft, nameRu: e.target.value })}
           />
+          {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
           <CatalogField
             kind="SEARCHABLE"
             label={t("hotelRevenueCode")}

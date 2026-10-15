@@ -20,12 +20,16 @@ import {
 
 const STATUSES: StayStatus[] = ['OPTION', 'CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT', 'CANCELLED', 'NO_SHOW'];
 
-function chargeKind(code: string, name: string | null, department: string | null): ChargeSlice['kind'] {
-  const bucket = revenueFlashBucket(code, department, name);
+function chargeKind(
+  code: string,
+  systemRole: string | null,
+  department: string | null,
+): ChargeSlice['kind'] {
+  const bucket = revenueFlashBucket({ systemRole }, department);
   if (bucket === 'room') return 'room';
   if (bucket === 'fb') {
-    const blob = `${code} ${name ?? ''}`.toUpperCase();
-    if (/(BEV|BAR|DRINK|WINE|BEER|ALCO)/.test(blob)) return 'beverage';
+    // F&B codes are 4xCC: 02 beverages, 03 alcohol. Hotel 1002 is board and stays food.
+    if (/^4\d(02|03)$/.test(code.trim())) return 'beverage';
     return 'food';
   }
   return 'other';
@@ -112,7 +116,14 @@ export async function getFoStatusDashboard(
       select: {
         amount: true,
         qty: true,
-        revenueCode: { select: { code: true, name: true, taxTag: true, department: { select: { code: true } } } },
+        revenueCode: {
+          select: {
+            code: true,
+            taxTag: true,
+            systemRole: true,
+            department: { select: { code: true } },
+          },
+        },
       },
     }),
     prisma.reservationDailyRate.findMany({
@@ -187,7 +198,11 @@ export async function getFoStatusDashboard(
   }));
 
   const chargeSlices: ChargeSlice[] = charges.map((c) => ({
-    kind: chargeKind(c.revenueCode.code, c.revenueCode.name, c.revenueCode.department?.code ?? null),
+    kind: chargeKind(
+      c.revenueCode.code,
+      c.revenueCode.systemRole,
+      c.revenueCode.department?.code ?? null,
+    ),
     gross: decimalToNumber(c.amount) * (c.qty ?? 1),
     vatRate: vatRateFromTag(c.revenueCode.taxTag),
   }));

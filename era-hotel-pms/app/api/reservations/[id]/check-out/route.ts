@@ -16,6 +16,8 @@ const bodySchema = z
     unusedNightsRefundMethod: z.enum(['CASH', 'CARD']).optional(),
     unusedNightsBankTerminalId: z.string().min(1).max(64).optional(),
     unusedNightsReason: z.string().max(500).optional(),
+    procedureCreditRefundMethod: z.enum(['CASH', 'CARD']).optional(),
+    procedureCreditBankTerminalId: z.string().min(1).max(64).optional(),
   })
   .optional();
 

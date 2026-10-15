@@ -13,6 +13,7 @@ import {
   type ColumnSort,
 } from "@/components/sortable-column-header";
 import { PHYSIO_ORDER_FIELD_CODES } from "@/domain/physio/physio-order-fields";
+import { loadHotelRevenueCodes } from "@/lib/hotel-revenue-client";
 import { inferPhysioTypeGate } from "@/domain/physio/physio-type-gate";
 import {
   applyPhysicalResourcePool,
@@ -229,6 +230,7 @@ export default function MasterDataPage() {
   const [financeProductOptions, setFinanceProductOptions] = useState<FinanceProductOption[]>([]);
   const [financeServiceOptions, setFinanceServiceOptions] = useState<FinanceProductOption[]>([]);
   const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
+  const [revenueNotice, setRevenueNotice] = useState("");
   const [financeProductQ, setFinanceProductQ] = useState("");
   const debouncedFinanceQ = useDebouncedValue(financeProductQ, 300);
   const [financeServiceQ, setFinanceServiceQ] = useState("");
@@ -315,18 +317,10 @@ export default function MasterDataPage() {
 
   useEffect(() => {
     if (!modalOpen || tab !== "procedureTypes") return;
-    void fetch("/api/admin/hotel-revenue-codes")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((body: { data?: { codes?: { code: string; name: string }[] }; codes?: { code: string; name: string }[] } | null) => {
-        const codes = body?.data?.codes ?? body?.codes ?? [];
-        setRevenueOptions(
-          codes.map((row) => ({
-            value: row.code,
-            label: row.name ? `${row.code} — ${row.name}` : row.code,
-          })),
-        );
-      })
-      .catch(() => setRevenueOptions([]));
+    void loadHotelRevenueCodes().then((loaded) => {
+      setRevenueOptions(loaded.options);
+      setRevenueNotice(loaded.notice ? tc(loaded.notice) : "");
+    });
   }, [modalOpen, tab]);
 
   useEffect(() => {
@@ -1465,6 +1459,7 @@ export default function MasterDataPage() {
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
               />
+              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
               <CatalogField
                 kind="SEARCHABLE"
                 label={t("hotelRevenueCode")}

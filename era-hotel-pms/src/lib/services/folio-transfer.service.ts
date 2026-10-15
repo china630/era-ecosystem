@@ -4,11 +4,34 @@ import { recordHotelAudit } from '@/lib/satellite-audit';
 import { ensureOpenFolio } from '@/lib/services/booking-folio.service';
 import type { FolioType } from '@prisma/client';
 
+async function ensureGuestFolio(reservationId: string, reservationGuestId: string) {
+  const existing = await prisma.folio.findFirst({
+    where: { reservationGuestId },
+  });
+  if (existing) {
+    if (existing.status !== 'OPEN' || existing.reservationId !== reservationId) {
+      throw new Error('Guest folio is closed');
+    }
+    return existing;
+  }
+  const { requestOrganizationId } = await import('@/lib/request-organization');
+  return prisma.folio.create({
+    data: {
+      organizationId: requestOrganizationId(),
+      reservationId,
+      reservationGuestId,
+      type: 'GUEST',
+      status: 'OPEN',
+    },
+  });
+}
+
 export async function transferFolioCharge(input: {
   chargeId: string;
   note: string;
   targetFolioType?: FolioType;
   targetReservationId?: string;
+  targetReservationGuestId?: string | null;
   actorUserId?: string;
 }) {
   const note = input.note.trim();
@@ -37,7 +60,11 @@ export async function transferFolioCharge(input: {
     throw new Error('Target stay is not open');
   }
 
-  const target = await ensureOpenFolio(targetReservationId, targetType);
+  const guestId = input.targetReservationGuestId?.trim() || '';
+  const target =
+    targetType === 'GUEST' && guestId
+      ? await ensureGuestFolio(targetReservationId, guestId)
+      : await ensureOpenFolio(targetReservationId, targetType);
   await prisma.folioCharge.update({
     where: { id: charge.id },
     data: { folioId: target.id },

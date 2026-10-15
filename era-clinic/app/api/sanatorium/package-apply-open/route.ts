@@ -25,17 +25,20 @@ export async function POST() {
         status: "OPEN",
         programInstance: { isNot: null },
       },
-      select: { id: true },
+      select: { id: true, patientRef: { select: { fullName: true } } },
     });
 
     let updated = 0;
-    const failed: string[] = [];
+    const failed: Array<{ id: string; name: string }> = [];
     for (const episode of episodes) {
       try {
         await applyPackageAutoBlocks(episode.id, { trigger: "MANUAL_RETRY" });
         updated += 1;
       } catch {
-        failed.push(episode.id);
+        failed.push({
+          id: episode.id,
+          name: episode.patientRef?.fullName?.trim() || episode.id,
+        });
       }
     }
     return jsonOk({ updated, failed });

@@ -60,6 +60,7 @@ export async function POST(request: Request) {
             outletId: created.id,
             name: cat.name,
             code: cat.code,
+            revenueCode: cat.revenueCode,
             sortOrder: cat.sortOrder,
           },
         });

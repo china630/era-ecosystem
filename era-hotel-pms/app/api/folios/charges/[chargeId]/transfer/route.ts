@@ -10,6 +10,7 @@ const bodySchema = z.object({
   note: z.string().trim().min(1).max(500),
   targetFolioType: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
   targetReservationId: z.string().uuid().optional(),
+  targetReservationGuestId: z.string().uuid().optional(),
 });
 
 export async function POST(
@@ -28,6 +29,7 @@ export async function POST(
           note: body.note,
           targetFolioType: body.targetFolioType,
           targetReservationId: body.targetReservationId,
+          targetReservationGuestId: body.targetReservationGuestId,
           actorUserId: session?.sub,
         }),
       ),

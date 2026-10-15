@@ -23,6 +23,7 @@ import {
   mergeLoginHostnamesForOrg,
   type LoginHostnameSyncRow,
 } from "./login-hostname-persist";
+import { enterSatelliteTenant } from "./satellite-tenant-context";
 
 const elektrawebBridgeSchema = z.object({
   inboundEnabled: z.boolean(),
@@ -174,6 +175,10 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       const message = err instanceof Error ? err.message : "Invalid body";
       return NextResponse.json({ error: message }, { status: 400 });
     }
+    // Service-token caller: the body org is the config subject. Without it the
+    // tenant Prisma extension rejects every query inside this request.
+    const subjectOrgId = body.organizationId?.trim();
+    if (subjectOrgId) enterSatelliteTenant({ organizationId: subjectOrgId });
     const prisma = opts.getPrisma?.() ?? null;
     const topology =
       body.deploymentTopology ?? satelliteRuntimeConfig().deploymentTopology;

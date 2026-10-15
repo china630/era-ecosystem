@@ -6,12 +6,12 @@ import {
 
 describe('executive-cockpit helpers', () => {
   it('classifies revenue codes into flash buckets', () => {
-    expect(revenueFlashBucket('ROOM', 'ACC')).toBe('room');
-    expect(revenueFlashBucket('TRANSFER', 'ACC')).toBe('room');
-    expect(revenueFlashBucket('TOUR', 'ACC')).toBe('other');
-    expect(revenueFlashBucket('FOOD', 'REST')).toBe('fb');
-    expect(revenueFlashBucket('TREATMENT', 'MED')).toBe('spa');
-    expect(revenueFlashBucket('MEDICAL', 'MED')).toBe('medical');
+    expect(revenueFlashBucket({ systemRole: 'ROOM' }, 'ACC')).toBe('room');
+    expect(revenueFlashBucket({ systemRole: 'TRANSFER' }, 'ACC')).toBe('room');
+    expect(revenueFlashBucket({ systemRole: 'TOUR' }, 'ACC')).toBe('other');
+    expect(revenueFlashBucket({ systemRole: 'FOOD' }, 'REST')).toBe('fb');
+    expect(revenueFlashBucket({ systemRole: 'TREATMENT' }, 'MED')).toBe('spa');
+    expect(revenueFlashBucket({ systemRole: 'MEDICAL' }, 'MED')).toBe('medical');
   });
 
   it('computes occupancy deviation in percentage points', () => {

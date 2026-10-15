@@ -33,6 +33,7 @@ export class PackageAssignError extends Error {
     message: string,
     public code: string,
     public status = 409,
+    public misses: Array<{ ymd: string; procedureCode: string; reason: string }> = [],
   ) {
     super(message);
     this.name = "PackageAssignError";
@@ -859,7 +860,12 @@ export async function assignPackageProcedures(
   episodeId: string,
   lines: AssignLineInput[],
   opts?: { confirmedByUserId?: string; softWarnOnly?: boolean },
-): Promise<{ placed: number; softWarn: string | null; orderIds: string[] }> {
+): Promise<{
+  placed: number;
+  softWarn: string | null;
+  orderIds: string[];
+  misses?: Array<{ ymd: string; procedureCode: string; reason: string }>;
+}> {
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
   const packageSnap = await getPackageAssignSnapshot(episodeId);
@@ -987,7 +993,7 @@ export async function assignPackageProcedures(
     (await getSchedulingSettings()).dailyPackageProcedureCap,
   );
   const distinctCodes = new Set(resolved.map((l) => l.procedureCode)).size;
-  const softWarn =
+  let softWarn =
     distinctCodes > packageCap
       ? `Daily in-package cap is ${packageCap} distinct codes; batch has ${distinctCodes} (remainder places from next work day)`
       : null;
@@ -1050,42 +1056,64 @@ export async function assignPackageProcedures(
     }
   }
 
-  const placement = await placeConfirmedProcedures(createdIds, {
+  const { seatBathSeriesOrders } = await import("@/domain/planning/bath-calendar.service");
+  const bathSeat = await seatBathSeriesOrders(createdIds);
+  const genericIds = createdIds.filter((id) => !bathSeat.handledIds.includes(id));
+  const placement = await placeConfirmedProcedures(genericIds, {
     confirmedByUserId: opts?.confirmedByUserId,
   });
-  const placed = placement.placed;
+  const placed = placement.placed + bathSeat.placedIds.length;
 
-  if (placed < createdIds.length) {
-    const stillProposed = await prisma.procedureOrder.findMany({
-      where: { id: { in: createdIds }, status: "PROPOSED" },
-      select: { id: true, procedureCode: true, procedureName: true },
+  const stillProposed = await prisma.procedureOrder.findMany({
+    where: { id: { in: createdIds }, status: "PROPOSED" },
+    select: { id: true, procedureCode: true, procedureName: true },
+  });
+  const genericStill = stillProposed.filter((row) => !bathSeat.handledIds.includes(row.id));
+  const bathStill = stillProposed.filter((row) => bathSeat.handledIds.includes(row.id));
+  if (bathStill.length > 0) {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: bathStill.map((row) => row.id) } },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason: "place_failed_bath_day",
+      },
     });
-    if (stillProposed.length > 0) {
-      const codes = [...new Set(stillProposed.map((o) => o.procedureCode))].join(", ");
-      await prisma.procedureOrder.updateMany({
-        where: { id: { in: stillProposed.map((o) => o.id) } },
-        data: {
-          status: "CANCELLED",
-          cancelledAt: new Date(),
-          cancelReason:
-            placement.missingCabinNames.length > 0
-              ? "place_failed_no_cabinet"
-              : "place_failed_no_slot_or_resource",
-        },
-      });
-      if (placement.missingCabinNames.length > 0) {
-        throw new PackageAssignError(
-          placement.missingCabinNames.join(", "),
-          "NO_CABIN",
-          409,
-        );
-      }
-      throw new PackageAssignError(
-        `Could not place ${stillProposed.length} of ${createdIds.length} session(s) (${codes}). Check procedure resources, staff skills, and schedule capacity.`,
-        "PLACE_FAILED",
-        409,
-      );
+  }
+  if (genericStill.length > 0) {
+    const codes = [...new Set(genericStill.map((o) => o.procedureCode))].join(", ");
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: genericStill.map((o) => o.id) } },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason:
+          placement.missingCabinNames.length > 0
+            ? "place_failed_no_cabinet"
+            : "place_failed_no_slot_or_resource",
+      },
+    });
+    if (placement.missingCabinNames.length > 0) {
+      throw new PackageAssignError(placement.missingCabinNames.join(", "), "NO_CABIN", 409);
     }
+    throw new PackageAssignError(
+      `Could not place ${genericStill.length} of ${createdIds.length} session(s) (${codes}). Check procedure resources, staff skills, and schedule capacity.`,
+      "PLACE_FAILED",
+      409,
+    );
+  }
+  if (bathSeat.missed.length > 0 && bathSeat.placedIds.length === 0 && genericIds.length === 0) {
+    throw new PackageAssignError(
+      bathSeat.missed.map((miss) => `${miss.ymd || "—"} ${miss.procedureCode} ${miss.reason}`).join("; "),
+      "PLACE_FAILED",
+      409,
+      bathSeat.missed,
+    );
+  }
+  if (bathSeat.missed.length > 0) {
+    softWarn = [softWarn, bathSeat.missed.map((miss) => miss.ymd || miss.reason).join(", ")]
+      .filter(Boolean)
+      .join(" · ");
   }
 
   const codes = [...new Set(resolved.map((l) => l.quotaCode))];
@@ -1093,7 +1121,12 @@ export async function assignPackageProcedures(
     await syncQuotaUsed(instance.id, episodeId, code);
   }
 
-  return { placed, softWarn, orderIds: createdIds };
+  return {
+    placed,
+    softWarn,
+    orderIds: createdIds,
+    ...(bathSeat.missed.length > 0 ? { misses: bathSeat.missed } : {}),
+  };
 }
 
 async function syncQuotaUsed(instanceId: string, episodeId: string, quotaCode: string) {

@@ -66,6 +66,7 @@ const querySchema = z.object({
   modality: z.string().optional(),
   patientRefId: z.string().optional(),
   q: z.string().optional(),
+  room: z.string().optional(),
   sort: z.enum(["patient", "status", "amount", "created"]).optional(),
   sortDir: z.enum(["asc", "desc"]).optional(),
   includeCancelled: z
@@ -92,6 +93,7 @@ export async function GET(req: Request) {
       modality: url.searchParams.get("modality") ?? undefined,
       patientRefId: url.searchParams.get("patientRefId") ?? undefined,
       q: url.searchParams.get("q") ?? undefined,
+      room: url.searchParams.get("room") ?? undefined,
       sort: url.searchParams.get("sort") ?? undefined,
       sortDir: url.searchParams.get("sortDir") ?? undefined,
       includeCancelled: url.searchParams.get("includeCancelled") ?? undefined,
@@ -148,6 +150,15 @@ export async function GET(req: Request) {
         items: { some: { results: { some: { flag: "CRITICAL" } } } },
       });
     }
+    if (query.room?.trim()) {
+      const room = query.room.trim();
+      conditions.push({
+        OR: [
+          { episode: { roomNumber: { contains: room, mode: "insensitive" } } },
+          { visit: { roomNumber: { contains: room, mode: "insensitive" } } },
+        ],
+      });
+    }
     if (query.q?.trim()) {
       const needle = query.q.trim();
       conditions.push({
@@ -171,6 +182,7 @@ export async function GET(req: Request) {
         include: {
           patientRef: true,
           visit: true,
+          episode: { select: { roomNumber: true } },
           items: {
             include: {
               diagnosticService: { include: { modality: true } },

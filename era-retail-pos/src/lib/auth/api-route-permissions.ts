@@ -1,3 +1,4 @@
+import { sharedApiPermission } from "@era/satellite-kit/integration/hotel-revenue-route";
 import { PERMISSIONS as P, type Permission } from "@/lib/auth/permissions";
 import { firstRouteMatch, matchesAnyRoute, type RouteRule } from "@/lib/auth/route-match";
 
@@ -30,6 +31,12 @@ export const HANDLER_GATE_EXCEPTIONS: readonly string[] = [
 
 /** Any-of grants per staff API. Unlisted paths deny. */
 export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
+  ["/api/admin/product-categories", [P.HOTEL_REVENUE_CODES]],
+  ["/api/admin/product-categories/*", [P.HOTEL_REVENUE_CODES]],
+  ["/api/admin/products", [P.HOTEL_REVENUE_CODES]],
+  ["/api/admin/products/*", [P.HOTEL_REVENUE_CODES]],
+  ["/api/admin/outlets", [P.HOTEL_REVENUE_CODES]],
+  ["/api/admin/outlets/*", [P.HOTEL_REVENUE_CODES]],
   ["/api/admin/**", [P.ACCESS_MANAGE]],
   ["/api/receipts/*/lines/*/void", [P.RECEIPTS_VOID_LINE]],
   ["/api/receipts/*/void", [P.RECEIPTS_VOID_LINE]],
@@ -60,5 +67,7 @@ export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
 /** Grants for a staff API, `"auth"` for session-only routes, null when the route is not in the catalog. */
 export function apiRoutePermissions(pathname: string): readonly Permission[] | "auth" | null {
   if (matchesAnyRoute(AUTH_ONLY_API_ROUTES, pathname)) return "auth";
+  const shared = sharedApiPermission(pathname);
+  if (shared === P.HOTEL_REVENUE_CODES) return [P.HOTEL_REVENUE_CODES];
   return firstRouteMatch(API_ROUTE_RULES, pathname);
 }

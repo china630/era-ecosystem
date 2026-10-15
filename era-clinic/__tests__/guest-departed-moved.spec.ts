@@ -5,7 +5,11 @@ jest.mock("@/lib/prisma", () => ({
       updateMany: jest.fn(),
     },
     procedureOrder: {
+      findMany: jest.fn(),
       updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    resourceBooking: {
       deleteMany: jest.fn(),
     },
     visit: {
@@ -33,7 +37,11 @@ const mockedEpisodes = prisma.clinicalEpisode as unknown as {
   updateMany: jest.Mock;
 };
 const mockedOrders = prisma.procedureOrder as unknown as {
+  findMany: jest.Mock;
   updateMany: jest.Mock;
+  deleteMany: jest.Mock;
+};
+const mockedBookings = prisma.resourceBooking as unknown as {
   deleteMany: jest.Mock;
 };
 const mockedVisits = prisma.visit as unknown as {
@@ -48,8 +56,10 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
   it("handleGuestDeparted closes only matched OPEN episode", async () => {
     mockedEpisodes.findMany.mockResolvedValue([{ id: "ep-spouse" }]);
     mockedEpisodes.updateMany.mockResolvedValue({ count: 1 });
-    mockedOrders.updateMany.mockResolvedValue({ count: 0 });
+    mockedOrders.findMany.mockResolvedValue([{ id: "ord-1" }]);
+    mockedOrders.updateMany.mockResolvedValue({ count: 1 });
     mockedOrders.deleteMany.mockResolvedValue({ count: 0 });
+    mockedBookings.deleteMany.mockResolvedValue({ count: 1 });
 
     await handleGuestDeparted({
       type: SATELLITE_HOTEL_GUEST_DEPARTED,

@@ -21,6 +21,25 @@ import {
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
 
+async function stampHotelFolioReceived(externalRef: string) {
+  const hotelBase = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
+  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
+  const { getClinicHotelOrganizationId } = await import("@/domain/physio/clinic-cutover.service");
+  const hotelOrg =
+    (await getClinicHotelOrganizationId()) ||
+    process.env.ERA_HOTEL_ORGANIZATION_ID?.trim() ||
+    "";
+  if (!token || !hotelOrg) return;
+  await fetch(`${hotelBase}/api/internal/v1/folio-charges/received`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ organizationId: hotelOrg, externalRef }),
+  }).catch(() => null);
+}
+
 export {
   isWithinCheckInWindow,
   addMinutes,
@@ -345,28 +364,7 @@ export async function checkInProcedureOrder(
   });
 
   if (order.reservationId && order.extraTicketId) {
-    const hotelBase = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
-    const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
-    const { getClinicHotelOrganizationId } = await import(
-      "@/domain/physio/clinic-cutover.service"
-    );
-    const hotelOrg =
-      (await getClinicHotelOrganizationId()) ||
-      process.env.ERA_HOTEL_ORGANIZATION_ID?.trim() ||
-      "";
-    if (token && hotelOrg) {
-      await fetch(`${hotelBase}/api/internal/v1/folio-charges/received`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          organizationId: hotelOrg,
-          externalRef: `pay-${order.extraTicketId}`,
-        }),
-      }).catch(() => null);
-    }
+    await stampHotelFolioReceived(order.extraTicketId);
   }
 
   await recordClinicAudit(
@@ -414,6 +412,12 @@ export async function markProcedureNoShow(orderId: string, actor: AttendanceActo
     },
     include: { patientRef: true, resourceBooking: true },
   });
+
+  const { getClinicSettings } = await import("@/domain/settings/settings.service");
+  const clinicSettings = await getClinicSettings();
+  if (clinicSettings.noShowKeepsCharge && order.reservationId && order.extraTicketId) {
+    await stampHotelFolioReceived(order.extraTicketId);
+  }
 
   await recordClinicAudit(
     { userId: actor.userId },

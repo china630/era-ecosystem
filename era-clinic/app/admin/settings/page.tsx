@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ClinicDayPanel } from "@/components/admin/ClinicDayPanel";
+import { loadHotelRevenueCodes } from "@/lib/hotel-revenue-client";
 import {
   ALL_CLINIC_PRESETS,
   CLINIC_PRESET,
@@ -63,6 +64,7 @@ type SchedulingDefaults = {
   doctorBonusPercentInHouse: number;
   doctorBonusPercentWalkIn: number;
   hotelFolioRevenueCode: string;
+  noShowKeepsCharge: boolean;
 };
 
 const CARD_DEFAULTS: CardLimits = {
@@ -92,6 +94,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   doctorBonusPercentInHouse: 0,
   doctorBonusPercentWalkIn: 0,
   hotelFolioRevenueCode: "",
+  noShowKeepsCharge: true,
 };
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -99,6 +102,7 @@ const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 export default function ClinicAdminSettingsPage() {
   const t = useTranslations("adminSettings");
   const [revenueOptions, setRevenueOptions] = useState<{ value: string; label: string }[]>([]);
+  const [revenueNotice, setRevenueNotice] = useState("");
   const tc = useTranslations("common");
   const tNav = useTranslations("nav");
   const [clinicName, setClinicName] = useState("");
@@ -170,6 +174,7 @@ export default function ClinicAdminSettingsPage() {
           doctorBonusPercentWalkIn: Number(row.doctorBonusPercentWalkIn ?? 0),
           hotelFolioRevenueCode:
             row.hotelFolioRevenueCode ?? SCHED_DEFAULTS.hotelFolioRevenueCode,
+          noShowKeepsCharge: row.noShowKeepsCharge !== false,
         };
         setSchedDefaults(sched);
         setDraftSched(sched);
@@ -177,19 +182,11 @@ export default function ClinicAdminSettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/admin/hotel-revenue-codes")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((body: { codes?: { code: string; name: string }[] } | null) => {
-        const codes = body?.codes ?? [];
-        setRevenueOptions(
-          codes.map((row) => ({
-            value: row.code,
-            label: row.name ? `${row.code} — ${row.name}` : row.code,
-          })),
-        );
-      })
-      .catch(() => setRevenueOptions([]));
-  }, []);
+    void loadHotelRevenueCodes().then((loaded) => {
+      setRevenueOptions(loaded.options);
+      setRevenueNotice(loaded.notice ? tc(loaded.notice) : "");
+    });
+  }, [tc]);
 
   function togglePreset(code: ClinicPresetCode) {
     setDraftPresets((prev) => {
@@ -265,6 +262,7 @@ export default function ClinicAdminSettingsPage() {
         ),
         hotelFolioRevenueCode:
           row.hotelFolioRevenueCode ?? draftSched.hotelFolioRevenueCode,
+        noShowKeepsCharge: row.noShowKeepsCharge !== false,
       });
       setOpen(false);
       showSuccess(tc("saved"));
@@ -473,6 +471,7 @@ export default function ClinicAdminSettingsPage() {
               </div>
             </div>
           </fieldset>
+          {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
           <CatalogField
             kind="SEARCHABLE"
             label={t("hotelFolioRevenueCode")}
@@ -547,6 +546,16 @@ export default function ClinicAdminSettingsPage() {
               <option value="CODE">CODE</option>
               <option value="MANUAL">MANUAL</option>
             </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draftSched.noShowKeepsCharge}
+              onChange={(e) =>
+                setDraftSched((prev) => ({ ...prev, noShowKeepsCharge: e.target.checked }))
+              }
+            />
+            {t("noShowKeepsCharge")}
           </label>
           <CatalogField
             kind="CLOSED_SMALL"

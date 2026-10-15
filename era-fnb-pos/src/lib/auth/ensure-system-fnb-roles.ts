@@ -123,6 +123,11 @@ async function upsertSystemRole(
 
   if (permissionsJsonNeedsTemplate(existing.permissionsJson)) {
     patch.permissionsJson = templateJson;
+  } else if (existing.code === ROLE_CODES.MANAGER) {
+    const current = parsePermissions(existing.permissionsJson);
+    if (current.length > 0 && !current.includes(PERMISSIONS.HOTEL_REVENUE_CODES)) {
+      patch.permissionsJson = serializePermissions([...current, PERMISSIONS.HOTEL_REVENUE_CODES]);
+    }
   }
   if (!existing.name?.trim()) {
     patch.name = name;
@@ -145,8 +150,11 @@ async function upsertSystemRole(
     }
     if (existing.code === ROLE_CODES.MANAGER) {
       const current = parsePermissions(existing.permissionsJson);
-      if (current.length > 0 && !current.includes(PERMISSIONS.SCREEN_SALES)) {
-        patch.permissionsJson = serializePermissions([...current, PERMISSIONS.SCREEN_SALES]);
+      const extra = [PERMISSIONS.SCREEN_SALES, PERMISSIONS.HOTEL_REVENUE_CODES].filter(
+        (permission) => current.length > 0 && !current.includes(permission),
+      );
+      if (extra.length > 0) {
+        patch.permissionsJson = serializePermissions([...current, ...extra]);
       }
     }
   }

@@ -7,7 +7,7 @@ import {
   parseHotelNoon,
   reservationStayOverlaps,
 } from '@/lib/hotel-calendar';
-import { canAssignDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
+import { canAssignDoor, canBookDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 import type { ReservationStatus } from '@prisma/client';
 import { normalizeShareGender, type ShareGender } from '@/lib/share-gender';
 
@@ -871,19 +871,39 @@ export async function assertRoomShareAssignable(input: {
   };
 }
 
-export function roomStatusAllowedForShareAssign(
-  room: { status: string; hkCondition?: string | null; inventoryStatus?: string | null },
-  joiningPool: boolean,
-): boolean {
-  const r = {
+function roomAxes(room: {
+  status: string;
+  hkCondition?: string | null;
+  inventoryStatus?: string | null;
+}) {
+  return {
     status: room.status as import('@prisma/client').RoomStatus,
     hkCondition: room.hkCondition as import('@/lib/room-state').RoomHkCondition | undefined,
     inventoryStatus: room.inventoryStatus as import('@/lib/room-state').RoomInventoryStatus | undefined,
   };
+}
+
+export function roomStatusAllowedForShareAssign(
+  room: { status: string; hkCondition?: string | null; inventoryStatus?: string | null },
+  joiningPool: boolean,
+): boolean {
+  const r = roomAxes(room);
   if (joiningPool) {
     return resolveAxes(r).inventoryStatus === 'IN_SERVICE';
   }
   return canAssignDoor(r, false);
+}
+
+/** Arrival not yet done: a dirty in-service door can be reserved. */
+export function roomStatusAllowedForBooking(
+  room: { status: string; hkCondition?: string | null; inventoryStatus?: string | null },
+  joiningPool: boolean,
+): boolean {
+  const r = roomAxes(room);
+  if (joiningPool) {
+    return resolveAxes(r).inventoryStatus === 'IN_SERVICE';
+  }
+  return canBookDoor(r, false);
 }
 
 export async function countRemainingInHouseOnDoor(roomId: string, excludeReservationId: string) {
@@ -988,6 +1008,7 @@ export async function releaseDoorAfterShareDeparture(
     input.excludeReservationId,
   );
   if (othersInHouse === 0 && othersAssigned === 0) {
+    if (!input.wasInHouse) return { doorCleared: true };
     await tx.room.update({
       where: { id: input.roomId },
       data: roomWriteFromAxes('DIRTY', 'IN_SERVICE'),

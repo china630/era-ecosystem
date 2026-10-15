@@ -3,7 +3,7 @@ import { getCalendarDaysRange } from '@era/satellite-kit';
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { PDF_FONT_UNICODE, registerUnicodeFonts } from '@/lib/reports/pdf-font';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 import { roomWriteFromAxes } from '@/lib/room-state';
 import type { HkJobType, HkRosterCellKind, HkVisitOutcome } from '@prisma/client';
@@ -840,8 +840,7 @@ export async function deliverLaundryTicket(input: {
       data: { amount: toDecimal(amt) },
     });
   }
-  const rev = await findRevenueCodeByToken('LAUNDRY');
-  if (!rev) throw new Error('LAUNDRY revenue code missing');
+  const rev = await requireRevenueCodeByRole('LAUNDRY');
   const dept =
     (await prisma.department.findFirst({ where: { code: 'LAUNDRY' } })) ??
     (await prisma.department.findFirst({ where: { code: 'HK' } }));

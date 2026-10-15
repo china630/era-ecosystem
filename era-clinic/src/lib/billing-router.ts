@@ -3,6 +3,7 @@ import {
   type PatientOrigin,
 } from "@era/contracts";
 import {
+  HotelRevenueCatalogError,
   listHotelRevenueCodes,
   resolveHotelRevenueKey,
   resolveOperatingMode,
@@ -10,6 +11,7 @@ import {
   shouldDeferWalkInToHub,
   shouldRouteRevenueToParent,
 } from "@era/satellite-kit";
+import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -155,31 +157,60 @@ export async function completeVisitBilling(visitId: string) {
   return { channel: "finance" as const };
 }
 
-async function revenueCodeForServiceLine(
+export async function revenueCodeForServiceLine(
   serviceCode: string,
   explicit?: string | null,
 ): Promise<string> {
-  const given = explicit?.trim();
-  if (given) return resolveHotelFolioRevenueCode(given);
+  const tenant = await getDefaultTenant();
+  const satellite = tenant.hotelFolioRevenueCode;
+  if (explicit?.trim()) {
+    return resolveHotelFolioRevenueCode(
+      resolveHotelRevenueCode({ product: explicit, satellite }),
+    );
+  }
   const procedure = await prisma.procedureType.findFirst({
     where: { code: serviceCode },
     select: { hotelRevenueCode: true },
   });
-  if (procedure?.hotelRevenueCode?.trim()) {
-    return resolveHotelFolioRevenueCode(procedure.hotelRevenueCode);
+  const catalog = await prisma.serviceCatalogCache.findFirst({
+    where: { code: serviceCode },
+    select: {
+      hotelRevenueCode: true,
+      departmentRef: { select: { hotelRevenueCode: true } },
+    },
+  });
+  if (procedure) {
+    return resolveHotelFolioRevenueCode(
+      resolveHotelRevenueCode({
+        product: procedure.hotelRevenueCode,
+        category: catalog?.departmentRef?.hotelRevenueCode,
+        satellite,
+      }),
+    );
   }
   const diagnostic = await prisma.diagnosticService.findFirst({
     where: { OR: [{ code: serviceCode }, { serviceCode }] },
-    select: { hotelRevenueCode: true },
+    select: {
+      hotelRevenueCode: true,
+      modality: { select: { hotelRevenueCode: true } },
+    },
   });
-  if (diagnostic?.hotelRevenueCode?.trim()) {
-    return resolveHotelFolioRevenueCode(diagnostic.hotelRevenueCode);
+  if (diagnostic) {
+    return resolveHotelFolioRevenueCode(
+      resolveHotelRevenueCode({
+        product: diagnostic.hotelRevenueCode,
+        category: diagnostic.modality?.hotelRevenueCode,
+        satellite,
+      }),
+    );
   }
-  const catalog = await prisma.serviceCatalogCache.findFirst({
-    where: { code: serviceCode },
-    select: { hotelRevenueCode: true },
-  });
-  return resolveHotelFolioRevenueCode(catalog?.hotelRevenueCode);
+  return resolveHotelFolioRevenueCode(
+    resolveHotelRevenueCode({
+      product: catalog?.hotelRevenueCode,
+      category: catalog?.departmentRef?.hotelRevenueCode,
+      satellite,
+    }),
+  );
 }
 
 export async function postClinicHotelLines(input: {
@@ -257,7 +288,15 @@ export async function resolveHotelFolioRevenueCode(explicit?: string | null): Pr
   if (!shouldRouteRevenueToParent(mode) || !hotelOrg) {
     return given;
   }
-  const rows = await listHotelRevenueCodes(hotelOrg);
+  let rows: Awaited<ReturnType<typeof listHotelRevenueCodes>>;
+  try {
+    rows = await listHotelRevenueCodes(hotelOrg);
+  } catch (err) {
+    if (err instanceof HotelRevenueCatalogError) {
+      throw new Error("Hotel revenue catalog is unavailable");
+    }
+    throw err;
+  }
   if (rows.length === 0) {
     throw new Error("Hotel revenue catalog is unavailable");
   }

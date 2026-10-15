@@ -45,6 +45,7 @@ export async function GET() {
         patientRefId: o.patientRefId,
         patientName: o.patientRef.fullName,
         refCode: o.patientRef.refCode,
+        roomNumber: o.clinicalEpisode?.roomNumber ?? null,
         extraTicketIssuedAt: o.extraTicketIssuedAt,
       })),
     });

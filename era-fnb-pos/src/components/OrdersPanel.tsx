@@ -403,8 +403,8 @@ export default function OrdersPanel() {
   }
 
   return (
-    <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-2">
-      <div className="min-h-0 space-y-3 overflow-y-auto">
+    <div className="grid items-start gap-4 pb-4 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden lg:pb-0 lg:grid-cols-2">
+      <div className="space-y-3 lg:min-h-0 lg:overflow-y-auto">
         <h2 className="text-sm font-semibold text-[#34495E]">{t("openTickets")}</h2>
         {loading ? (
           <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>
@@ -443,7 +443,7 @@ export default function OrdersPanel() {
         )}
       </div>
 
-      <div className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden p-4`}>
+      <div className={`${CARD_CLASS} flex flex-col p-4 lg:min-h-0 lg:overflow-hidden`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("ticketActions")}</h2>
         {!selected ? (
           <p className="text-sm text-[#7F8C8D]">
@@ -464,7 +464,7 @@ export default function OrdersPanel() {
               {ticketLabel(selected, t("channelTakeaway"), t("channelWalkIn"))}
               {selected.dayNo ? ` #${selected.dayNo}` : ""}
             </p>
-            <div className="mb-2 flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="mb-2 flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-hidden">
               <CheckLines
                 lines={selected.lines.filter((l) => l.kitchenStatus !== "VOID")}
                 onQty={(line, qty) => void changeQty(line.id, qty)}

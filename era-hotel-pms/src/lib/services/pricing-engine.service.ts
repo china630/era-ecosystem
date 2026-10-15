@@ -1,6 +1,6 @@
 import type { RatePlan } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { countNights } from '@/lib/decimal';
 import {
   assembleQuote,
@@ -138,8 +138,7 @@ async function resolveRoomRevenueCode(ratePlan: ResolvedRatePlan): Promise<strin
     return ratePlan.roomRevenueCode.code;
   }
 
-  const fallback = await findRevenueCodeByToken('ROOM');
-  return fallback?.code ?? 'ROOM';
+  return (await requireRevenueCodeByRole('ROOM')).code;
 }
 
 async function loadAddOnsForQuote(

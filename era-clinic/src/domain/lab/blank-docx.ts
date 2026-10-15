@@ -48,6 +48,19 @@ export type BlankTableRow = {
   norm: string;
 };
 
+/** Paragraphs in document order. A narrative USM blank is headings plus the sentences under them. */
+export function extractDocxParagraphs(docx: Buffer): string[] {
+  const xml = readZipEntry(docx, "word/document.xml");
+  if (!xml) return [];
+  const text = xml.toString("utf8");
+  const paragraphs: string[] = [];
+  for (const paragraph of text.split(/<\/w:p>/)) {
+    const line = cellText(paragraph);
+    if (line) paragraphs.push(line);
+  }
+  return paragraphs;
+}
+
 /** Table rows from a docx. Drawing coordinates and the footer are ignored. */
 export function extractBlankTable(docx: Buffer): BlankTableRow[] {
   const xml = readZipEntry(docx, "word/document.xml");

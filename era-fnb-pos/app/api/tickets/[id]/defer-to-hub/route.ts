@@ -11,6 +11,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { handleRouteError } from "@/lib/api-utils";
+import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
 
 export async function POST(
   _request: Request,
@@ -25,7 +26,11 @@ export async function POST(
     const { id } = await params;
     const ticket = await prisma.ticket.findUnique({
       where: { id },
-      include: { table: true, outlet: true, lines: { include: { menuItem: true } } },
+      include: {
+        table: true,
+        outlet: true,
+        lines: { include: { menuItem: { include: { category: true } } } },
+      },
     });
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
@@ -65,9 +70,14 @@ export async function POST(
 
     const pendingIds: string[] = [];
     for (const line of ticket.lines) {
-      const revenueCode =
-        line.menuItem?.revenueCode?.trim() || ticket.outlet.revenueCenterCode?.trim() || "";
-      if (!revenueCode) {
+      let revenueCode = "";
+      try {
+        revenueCode = resolveHotelRevenueCode({
+          product: line.menuItem?.revenueCode,
+          category: line.menuItem?.category?.revenueCode,
+          satellite: ticket.outlet.revenueCenterCode,
+        });
+      } catch {
         return NextResponse.json(
           { error: `Revenue code is required for ${line.description}` },
           { status: 400 },

@@ -41,6 +41,14 @@ jest.mock("@era/satellite-kit", () => ({
   }),
   shouldRouteRevenueToParent: jest.fn().mockReturnValue(false),
   shouldDeferWalkInToHub: jest.fn().mockReturnValue(false),
+  HotelRevenueCatalogError: class HotelRevenueCatalogError extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.code = code;
+      this.name = "HotelRevenueCatalogError";
+    }
+  },
   listHotelRevenueCodes: jest.fn().mockResolvedValue([{ code: "AMB", name: "Ambulator" }]),
   resolveHotelRevenueKey: jest.fn((_rows: unknown, token: string) => token ?? null),
   resolveSatelliteTenantOrgId: jest.fn().mockReturnValue("org1"),
@@ -116,6 +124,17 @@ describe("billing-router", () => {
     const { completeVisitBilling } = await import("@/lib/billing-router");
     const result = await completeVisitBilling("v2");
     expect(result.channel).toBe("hotel_folio");
+  });
+
+  it("uses the department code when the procedure code is empty", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.procedureType.findFirst.mockResolvedValue({ hotelRevenueCode: null });
+    prisma.serviceCatalogCache.findFirst.mockResolvedValue({
+      hotelRevenueCode: null,
+      departmentRef: { hotelRevenueCode: "14" },
+    });
+    const { revenueCodeForServiceLine } = await import("@/lib/billing-router");
+    await expect(revenueCodeForServiceLine("MASSAGE")).resolves.toBe("14");
   });
 
   it("uses the catalog service code when financeSku is empty", async () => {

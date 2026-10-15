@@ -13,6 +13,7 @@ export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/pos", [P.SCREEN_POS]],
   ["/stock-check", [P.SCREEN_STOCK_CHECK]],
   ["/settings", [P.SCREEN_SETTINGS]],
+  ["/admin/catalog", [P.HOTEL_REVENUE_CODES]],
   ["/admin/import", [P.ADMIN_IMPORT]],
   ["/admin/supplier-match", [P.ADMIN_IMPORT]],
   ["/admin/replenishment", [P.ADMIN_IMPORT]],

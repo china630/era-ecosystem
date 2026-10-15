@@ -155,16 +155,11 @@ function toServicePersistData<T extends Partial<ServiceInput>>(
 }
 
 export async function createService(ctx: AuditCtx, data: ServiceInput) {
-  let hotelRevenueCode = data.hotelRevenueCode?.trim() || null;
-  if (!hotelRevenueCode) {
-    const modality = await prisma.modality.findUnique({
-      where: { id: data.modalityId },
-      select: { hotelRevenueCode: true },
-    });
-    hotelRevenueCode = modality?.hotelRevenueCode?.trim() || null;
-  }
   const row = await prisma.diagnosticService.create({
-    data: toServicePersistData({ ...data, hotelRevenueCode }),
+    data: toServicePersistData({
+      ...data,
+      hotelRevenueCode: data.hotelRevenueCode?.trim() || null,
+    }),
   });
   await audit(ctx, "diagnosticService", row.id, "CREATE", data);
   invalidateDiagnosticCatalogCache();

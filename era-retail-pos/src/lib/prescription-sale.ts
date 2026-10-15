@@ -54,7 +54,8 @@ async function postMoney(row: QueueRow, sign: 1 | -1) {
     });
     const amount = sign * line.lineTotal;
     const qty = sign * line.qty;
-    const key = `${sign < 0 ? "rx-return" : "rx"}:${row.id}:${line.sku}`;
+    const { retailPrescriptionRef } = await import("@era/satellite-kit/integration/folio-charge-ref");
+    const key = retailPrescriptionRef(row.id, line.sku, sign < 0);
     if (row.reservationId) {
       const charge = await postRoomCharge(
         {

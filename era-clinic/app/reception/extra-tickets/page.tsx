@@ -34,6 +34,7 @@ type ExtraRow = {
   patientRefId: string;
   patientName: string;
   refCode: string;
+  roomNumber?: string | null;
   status?: string;
 };
 
@@ -41,6 +42,7 @@ type PatientGroup = {
   patientRefId: string;
   patientName: string;
   refCode: string;
+  roomNumber: string;
   items: ExtraRow[];
   total: number;
 };
@@ -55,6 +57,7 @@ export default function ExtraTicketsPage() {
   const [lockHint, setLockHint] = useState(false);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
+  const [room, setRoom] = useState("");
   const [origin, setOrigin] = useState("");
   const qDebounced = useDebouncedValue(q, 300);
 
@@ -80,13 +83,15 @@ export default function ExtraTicketsPage() {
 
   const filtered = useMemo(() => {
     const needle = qDebounced.trim().toLowerCase();
+    const roomNeedle = room.trim().toLowerCase();
     return rows.filter((r) => {
       if (origin && r.patientOrigin !== origin) return false;
+      if (roomNeedle && !(r.roomNumber ?? "").toLowerCase().includes(roomNeedle)) return false;
       if (!needle) return true;
       const hay = `${r.patientName} ${r.refCode} ${r.procedureName}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [rows, origin, qDebounced]);
+  }, [rows, origin, qDebounced, room]);
 
   const groups = useMemo(() => {
     const map = new Map<string, ExtraRow[]>();
@@ -103,6 +108,7 @@ export default function ExtraTicketsPage() {
         patientRefId,
         patientName: first.patientName,
         refCode: first.refCode,
+        roomNumber: [...new Set(items.map((row) => row.roomNumber?.trim()).filter(Boolean))].join(", "),
         items,
         total: items.reduce((sum, row) => sum + Number(row.amountNet || 0), 0),
       });
@@ -268,6 +274,12 @@ export default function ExtraTicketsPage() {
             }
           >
             <Field
+              label={t("filterRoom")}
+              preset="shortText"
+              value={room}
+              onChange={(e) => setRoom(e.target.value)}
+            />
+            <Field
               label={t("filterSearch")}
               preset="shortText"
               value={q}
@@ -290,6 +302,7 @@ export default function ExtraTicketsPage() {
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS} />
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patient")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("filterRoom")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedure")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("amount")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("origin")}</th>
@@ -416,6 +429,7 @@ function PatientBlock({
             </span>
           </button>
         </td>
+        <td className={DATA_TABLE_TD_CLASS}>{group.roomNumber || "—"}</td>
         <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>{procedureCountLabel}</td>
         <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
           {group.total.toFixed(2)} AZN
@@ -437,6 +451,7 @@ function PatientBlock({
                   onChange={() => onToggleProcedure(row)}
                 />
               </td>
+              <td className={DATA_TABLE_TD_CLASS}>{row.roomNumber || "—"}</td>
               <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
               <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
                 {Number(row.amountNet).toFixed(2)} AZN

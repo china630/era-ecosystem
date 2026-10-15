@@ -52,8 +52,8 @@ export function CheckLines({
     </colgroup>
   );
   return (
-    <div className={discount ? "flex min-h-0 flex-1 flex-col" : undefined}>
-    <div className={discount ? "min-h-0 flex-1 overflow-x-hidden overflow-y-auto" : undefined}>
+    <div className={discount ? "flex flex-col lg:min-h-0 lg:flex-1" : undefined}>
+    <div className={discount ? "overflow-x-auto lg:min-h-0 lg:flex-1 lg:overflow-y-auto" : undefined}>
     <table className={`w-full text-sm ${discount ? "table-fixed" : ""}`}>
       {discount ? cols : null}
       <thead className="sticky top-0 bg-white">

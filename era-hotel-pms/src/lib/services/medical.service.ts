@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal } from '@/lib/decimal';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { postCharge } from '@/lib/services/folio.service';
 
 export async function createAlert(input: {
@@ -44,8 +44,7 @@ export async function postProcedureToFolio(
   reservationId: string,
   input: { code: string; name: string; amount: number },
 ) {
-  const medicalCode = await findRevenueCodeByToken('MEDICAL');
-  if (!medicalCode) throw new Error('Revenue code MEDICAL not configured');
+  const medicalCode = await requireRevenueCodeByRole('MEDICAL');
 
   await prisma.medicalProcedure.create({
     data: { reservationId, code: input.code, name: input.name, amount: toDecimal(input.amount) },

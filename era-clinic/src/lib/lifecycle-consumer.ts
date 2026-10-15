@@ -97,30 +97,49 @@ export async function handleGuestCheckedIn(
   return ensureEpisodeAndProgram(event);
 }
 
+/** Close OPEN episodes for a stay that the hotel has already checked out. */
+export async function closeOpenEpisodesForReservation(reservationId: string) {
+  const id = reservationId.trim();
+  if (!id) return { closed: 0, cancelled: 0 };
+  const episodes = await prisma.clinicalEpisode.findMany({
+    where: { reservationId: id, status: "OPEN" },
+    select: { id: true },
+  });
+  if (episodes.length === 0) return { closed: 0, cancelled: 0 };
+  const episodeIds = episodes.map((row) => row.id);
+  await prisma.clinicalEpisode.updateMany({
+    where: { id: { in: episodeIds } },
+    data: { status: "CLOSED", closedAt: new Date() },
+  });
+  const live = await prisma.procedureOrder.findMany({
+    where: {
+      status: { in: ["SCHEDULED", "CHECKED_IN"] },
+      OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }],
+    },
+    select: { id: true },
+  });
+  const orderIds = live.map((row) => row.id);
+  if (orderIds.length > 0) {
+    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: orderIds } } });
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: orderIds } },
+      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
+    });
+  }
+  await prisma.procedureOrder.deleteMany({
+    where: {
+      status: "PENDING_PAY",
+      OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }],
+    },
+  });
+  return { closed: episodes.length, cancelled: orderIds.length };
+}
+
 export async function handleGuestCheckedOut(
   event: SatelliteHotelGuestCheckedOutEvent,
 ) {
   enterRequestTenant(event.organizationId);
-  const p = event.payload;
-  // Wave E: close ALL OPEN episodes for the reservation (both spouses) — stay checkout only
-  await prisma.clinicalEpisode.updateMany({
-    where: { reservationId: p.reservationId, status: "OPEN" },
-    data: { status: "CLOSED", closedAt: new Date() },
-  });
-  await prisma.procedureOrder.updateMany({
-    where: {
-      reservationId: p.reservationId,
-      status: { in: ["SCHEDULED", "CHECKED_IN"] },
-    },
-    data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
-  });
-  // CLI-57: purge unpaid extras on check-out
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      reservationId: p.reservationId,
-      status: "PENDING_PAY",
-    },
-  });
+  await closeOpenEpisodesForReservation(event.payload.reservationId);
 }
 
 /** Person-level Depart guest — close only that pax episode (ADR hotel-reservation-card-and-party-ops D4/D6). */
@@ -156,17 +175,25 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
     where: { id: { in: targetIds } },
     data: { status: "CLOSED", closedAt: new Date() },
   });
-  await prisma.procedureOrder.updateMany({
+  const departed = await prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: { in: targetIds },
       status: { in: ["SCHEDULED", "CHECKED_IN"] },
     },
-    data: {
-      status: "CANCELLED",
-      cancelledAt: new Date(),
-      cancelReason: "hotel_guest_departed",
-    },
+    select: { id: true },
   });
+  const departedIds = departed.map((row) => row.id);
+  if (departedIds.length > 0) {
+    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: departedIds } } });
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: departedIds } },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason: "hotel_guest_departed",
+      },
+    });
+  }
   await prisma.procedureOrder.deleteMany({
     where: {
       clinicalEpisodeId: { in: targetIds },

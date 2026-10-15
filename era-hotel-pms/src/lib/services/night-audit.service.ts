@@ -6,7 +6,7 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { ReservationStatus } from '@prisma/client';
 import { postCharge } from '@/lib/services/folio.service';
 import { roomChargeNote } from '@/lib/folio-charge-note';
-import { findRevenueCodeByToken } from '@/lib/revenue-code-token';
+import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
 import { assertNoOpenPosShifts, getPosShiftStatus } from '@/lib/services/pms-bridge.service';
 import { withNightAuditPosting } from '@/lib/night-audit-posting';
@@ -351,8 +351,7 @@ async function executeLockedNightAudit() {
       `Step 2d: Trial balance — charges ${trialCharges.toFixed(2)} / payments ${trialPays.toFixed(2)} AZN`,
     );
 
-    const revenueRoom = await findRevenueCodeByToken('ROOM');
-    if (!revenueRoom) throw new Error('Revenue code ROOM not configured');
+    const revenueRoom = await requireRevenueCodeByRole('ROOM');
 
     const inHouse = await prisma.reservation.findMany({
       where: { status: 'IN_HOUSE' },
