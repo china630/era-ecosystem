@@ -153,7 +153,7 @@ Cookie `era_clinic_presets` + [middleware.ts](../../middleware.ts) · nav regist
 - GET|POST /api/sanatorium/episodes/[id]/bath-calendar — day-series bath grid for the open course
 - POST /api/admin/schedule-recalc — super-admin preview or apply of the stay graph after a clinic-day change
 - POST /api/admin/clinic-days — open or close one civil day
-- GET|POST|PUT /api/admin/lab-blank-profiles — Word blank mapping; GET /api/lab-orders/blank-profiles; POST /api/lab-orders/[id]/blank fills the open order
+- GET|POST|PUT /api/admin/lab-blank-profiles — Word blank mapping; GET /api/lab-orders/blank-profiles; POST /api/lab-orders/[id]/blank reads a filled `.docx` into the order result lines (preview, no write)
 - Cutover report: `scripts/nafta-cutover/rebuild-intake.cjs` (cards `slices.diagnostics`); map `src/lib/import/nafta-intake-map.ts`
 
 ## ICD-10 catalog (CLI-39…42)
