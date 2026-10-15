@@ -554,14 +554,8 @@ export async function payGuestDebt(input: {
   }
   const organizationId = requestOrganizationId();
   const paid = await prisma.$transaction(async (tx) => {
-    const locked = await tx.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM "GuestDebtEntry"
-      WHERE id = ${input.entryId} AND "organizationId" = ${organizationId}
-      FOR UPDATE
-    `;
-    if (!locked.length) throw new Error('Guest debt not found');
-    const entry = await tx.guestDebtEntry.findUnique({
-      where: { id: input.entryId },
+    const entry = await tx.guestDebtEntry.findFirst({
+      where: { id: input.entryId, organizationId },
       include: { payments: { select: { amount: true } } },
     });
     if (!entry) throw new Error('Guest debt not found');
@@ -588,7 +582,7 @@ export async function payGuestDebt(input: {
       bankTerminalId: payment.bankTerminalId,
       remaining: round2(remaining - amount),
     };
-  });
+  }, { isolationLevel: 'Serializable' });
   const { recordHotelAudit } = await import('@/lib/satellite-audit');
   await recordHotelAudit(
     { userId: input.createdByUserId },
