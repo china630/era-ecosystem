@@ -8,6 +8,7 @@ jest.mock('@/lib/prisma', () => ({
       update: jest.fn(),
     },
     room: { findUnique: jest.fn() },
+    roomChangePlan: { create: jest.fn() },
     roomType: { findUnique: jest.fn() },
   },
 }));
@@ -132,7 +133,7 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
       await expect(assignRoom('r1', 'room1')).rejects.toThrow(/names incomplete/);
     });
 
-    it('blocks assign to DIRTY room', async () => {
+    it('reserves a dirty in-service door before arrival', async () => {
       const { prisma } = jest.requireMock('@/lib/prisma');
       prisma.reservation.findUnique.mockResolvedValue({
         id: 'r1',
@@ -154,8 +155,36 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         roomType: { adultCapacity: 2 },
       });
       prisma.reservation.findMany.mockResolvedValue([]);
+      prisma.reservation.update.mockResolvedValue({ id: 'r1', roomId: 'room1' });
+      prisma.roomChangePlan.create.mockResolvedValue({ id: 'plan1' });
       const { assignRoom } = await import('@/lib/services/reservation.service');
-      await expect(assignRoom('r1', 'room1')).rejects.toThrow(/DIRTY/);
+      await expect(assignRoom('r1', 'room1')).resolves.toMatchObject({ id: 'r1' });
+    });
+
+    it('blocks assign to an out-of-order door', async () => {
+      const { prisma } = jest.requireMock('@/lib/prisma');
+      prisma.reservation.findUnique.mockResolvedValue({
+        id: 'r1',
+        status: 'CONFIRMED',
+        roomTypeId: 'rt1',
+        adults: 1,
+        shareEligible: false,
+        shareGender: null,
+        guest: { fullName: 'Ali Mammadov' },
+        paxGuests: [{ firstName: 'Ali', lastName: 'Mammadov', isPrimary: true }],
+        checkInDate: new Date('2026-08-10'),
+        checkOutDate: new Date('2026-08-12'),
+      });
+      prisma.room.findUnique.mockResolvedValue({
+        id: 'room1',
+        roomNumber: '402',
+        roomTypeId: 'rt1',
+        status: 'OOO',
+        roomType: { adultCapacity: 2 },
+      });
+      prisma.reservation.findMany.mockResolvedValue([]);
+      const { assignRoom } = await import('@/lib/services/reservation.service');
+      await expect(assignRoom('r1', 'room1')).rejects.toThrow(/out of service/);
     });
   });
 
