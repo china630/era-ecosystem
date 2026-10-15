@@ -425,7 +425,7 @@ Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-cor
 UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR`; guest folio still requires zero balance.
-1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. Stay with no debt → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists.
+1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. Stay with no debt → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists. Guest with a HELD deposit and "Apply deposits" on → the prefilled amount is the debt less the deposit; an amount above that is refused in the dialog. User without folio payment right (Night auditor) → "Pay now" is not offered, a hint explains why.
 2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error.
 3. **Deposit on settle:** HELD deposit → `/folio/[id]` settle wizard → Apply deposits / method DEPOSIT → balance reduces; deposit APPLIED.
 4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
@@ -491,7 +491,8 @@ UI paths — required before SHIPPED bump for HOT-AGP-01/02/03. Module `hotel_ag
 UI paths (OpsUI) — ADR: [hotel-early-checkout-unused-nights.md](../../docs/adr/hotel-early-checkout-unused-nights.md).
 
 1. Prepaid / posted stay with night-audit lodging for N nights; open check-out **before** planned `checkOutDate` (folio page or chessboard).
-2. Confirm modal shows unused nights, unused gross, VAT 18% withheld, **cash to guest** = net; tender default **CASH** (CARD optional).
+2. The check-out dialog shows unused nights, unused gross, VAT 18% withheld, **cash to guest** = net. No refund tender is preselected: pick CASH or CARD (CARD needs a terminal); submit without a pick shows an error.
+2a. Agency/company payer on the stay: its block shows the debt **after** the unused-night reversal, and only **Transfer to City Ledger** is offered (with a hint).
 3. Confirm → unused night charges voided (or lump partially reversed); GUEST refund payment = net; COMPANY/AGENCY AR reduced without agency cash payout.
 4. Negative: departure on/after planned checkout → no unused-nights block (H-BL-09 hour fees still apply if policy).
 5. Clinic leftover procedures cancel via `GUEST_CHECKED_OUT` — no clinic cash payout.

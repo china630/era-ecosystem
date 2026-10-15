@@ -163,7 +163,6 @@ export function FolioPayLineModal({
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
         const devices = body?.devices ?? [];
         setBankTerminals(devices);
-        setBankTerminalId(devices[0]?.id ?? '');
       })
       .catch(() => setBankTerminals([]));
   }, [open]);
@@ -204,6 +203,7 @@ export function FolioPayLineModal({
           onCancel={onClose}
           onSubmit={() => void submit()}
           busy={busy}
+          submitDisabled={method === 'CARD' && !bankTerminalId.trim()}
           submitLabel={t('pay')}
           submitDisabled={method === 'CARD' && bankTerminals.length > 0 && !bankTerminalId.trim()}
         />

@@ -11,6 +11,7 @@ jest.mock('@/lib/satellite-audit', () => ({ recordHotelAudit: jest.fn() }));
 
 import { Prisma } from '@prisma/client';
 import { assertPayerDebtResolved } from '@/lib/services/checkout.service';
+import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 
 const d = (n: number) => new Prisma.Decimal(n);
 
@@ -38,5 +39,25 @@ describe('assertPayerDebtResolved', () => {
     expect(() =>
       assertPayerDebtResolved([folio('GUEST', 478, 0), folio('AGENCY', 300, 300)], undefined),
     ).not.toThrow();
+  });
+
+  it('counts lodging that early checkout will void on the payer folio', () => {
+    const agency = { ...folio('AGENCY', 500, 300), id: 'ag1' };
+    expect(() => assertPayerDebtResolved([agency], undefined, { ag1: 200 })).not.toThrow();
+    expect(() => assertPayerDebtResolved([agency], undefined, { ag1: 150 })).toThrow(
+      /still owes 50\.00 AZN/,
+    );
+  });
+});
+
+describe('earlyReversalByFolio', () => {
+  it('sums void and partial-lump gross per folio', () => {
+    expect(
+      earlyReversalByFolio([
+        { kind: 'void', folioId: 'a', amount: 100 },
+        { kind: 'partial_lump', folioId: 'a', voidAmount: 50 },
+        { kind: 'void', folioId: 'b', amount: 20 },
+      ]),
+    ).toEqual({ a: 150, b: 20 });
   });
 });

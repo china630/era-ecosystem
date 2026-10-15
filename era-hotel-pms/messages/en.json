@@ -241,7 +241,7 @@
     "ageUnknown": "Unknown",
     "repeatGuests": "Repeat guests",
     "firstStay": "First stay",
-    "folioTypes": "Payment methods",
+    "folioTypes": "Today's expected folio types",
     "folioGuest": "Guest",
     "folioCompany": "Company",
     "folioAgency": "Agency",
@@ -781,6 +781,9 @@
     "checkoutPickMethod": "Choose a method",
     "checkoutPickTerminal": "Choose the bank terminal for the card payment.",
     "checkoutTenderShort": "{name}: payment {paid} AZN does not cover the debt {due} AZN.",
+    "checkoutTenderOver": "{name}: payment {paid} AZN is more than the amount due {due} AZN.",
+    "checkoutPayerEarlyHint": "Early check-out reduces this folio for unused nights. Transfer it to City Ledger; take the payment from the account after check-out.",
+    "checkoutNoPaymentRight": "You have no right to take payments. Leave the debt on the guest or transfer it to City Ledger.",
     "checkoutDebtReasonRequired": "Write why the guest leaves with a debt.",
     "checkoutPickRefundMethod": "Choose how to refund the unused nights."
   },

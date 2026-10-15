@@ -13,6 +13,7 @@ import {
   Field,
   FieldSection,
   FieldTextarea,
+  MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
@@ -23,6 +24,9 @@ import {
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { folioArticleSummary } from '@/lib/folio-article-summary';
 import { accountBalance } from '@/lib/folio-payer';
+import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
+import { useAuth } from '@/hooks/useAuth';
+import { PERMISSIONS } from '@/lib/auth/permissions';
 
 const GUEST_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
 const PAYER_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER'] as const;
@@ -69,6 +73,7 @@ type EarlyPreview = {
   unusedSellGross: number;
   vatWithheld: number;
   guestCashRefund: number;
+  reversalByFolio: Record<string, number>;
 };
 
 type Choice = '' | 'PAY' | 'DEBT' | 'CL';
@@ -80,6 +85,8 @@ type DebtBlock = {
   party: 'GUEST' | 'AGENCY' | 'COMPANY';
   title: string;
   debt: number;
+  /** Early checkout voids lodging on this payer folio; settle would see the pre-void balance. */
+  pendingReversal: boolean;
 };
 
 function emptyLine(amount = ''): TenderLine {
@@ -110,6 +117,8 @@ export function FolioCheckoutModal({
   const tPay = useTranslations('paymentMethod');
   const tHk = useTranslations('housekeeping');
   const locale = useLocale();
+  const { can } = useAuth();
+  const canPay = can(PERMISSIONS.FOLIO_PAYMENT);
   const [folios, setFolios] = useState<FolioRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -192,6 +201,9 @@ export function FolioCheckoutModal({
           unusedSellGross: Number(payload.unusedSellGross) || 0,
           vatWithheld: Number(payload.vatWithheld) || 0,
           guestCashRefund: Number(payload.guestCashRefund) || 0,
+          reversalByFolio: payload.applicable
+            ? earlyReversalByFolio(Array.isArray(payload.chargePlans) ? payload.chargePlans : [])
+            : {},
         });
       })
       .catch(() => null);
@@ -204,7 +216,10 @@ export function FolioCheckoutModal({
     const out: DebtBlock[] = [];
     for (const folio of folios) {
       if (folio.status !== 'OPEN') continue;
-      const debt = accountBalance(folio);
+      const isPayer = folio.type === 'AGENCY' || folio.type === 'COMPANY';
+      // Guest unused nights come back as a refund after check-out; payer unused nights only shrink AR.
+      const reversed = isPayer && early?.applicable ? (early.reversalByFolio[folio.id] ?? 0) : 0;
+      const debt = Math.round((accountBalance(folio) - reversed) * 100) / 100;
       if (debt <= 0.01) continue;
       if (folio.type === 'GUEST') {
         const rg = folio.reservationGuest;
@@ -215,6 +230,7 @@ export function FolioCheckoutModal({
           party: 'GUEST',
           title: t('checkoutGuestBlock', { name: own || stayGuest || '—' }),
           debt,
+          pendingReversal: false,
         });
       } else if (folio.type === 'AGENCY' || folio.type === 'COMPANY') {
         const name =
@@ -230,11 +246,12 @@ export function FolioCheckoutModal({
               ? t('checkoutAgencyBlock', { name })
               : t('checkoutCompanyBlock', { name }),
           debt,
+          pendingReversal: reversed > 0.01,
         });
       }
     }
     return out.sort((a, b) => (a.party === 'GUEST' ? 0 : 1) - (b.party === 'GUEST' ? 0 : 1));
-  }, [folios, stayGuest, t]);
+  }, [folios, early, stayGuest, t]);
 
   const firstGuestBlockId = blocks.find((b) => b.party === 'GUEST')?.folio.id;
   const anyGuestDebt = blocks.some((b) => choices[b.folio.id] === 'DEBT');
@@ -243,8 +260,16 @@ export function FolioCheckoutModal({
 
   const terminalOptions = bankTerminals.map((row) => ({ value: row.id, label: row.label }));
 
+  /** What tender lines must cover: debt less held deposits and discount on the first guest folio. */
+  function tenderDue(block: DebtBlock): number {
+    if (block.folio.id !== firstGuestBlockId) return block.debt;
+    const deposits = applyDeposits ? heldDeposits : 0;
+    const discount = discountAmount ? Number(discountAmount) || 0 : 0;
+    return Math.max(0, Math.round((block.debt - deposits - discount) * 100) / 100);
+  }
+
   function linesOf(block: DebtBlock): TenderLine[] {
-    return lines[block.folio.id] ?? [emptyLine(money(block.debt))];
+    return lines[block.folio.id] ?? [emptyLine(money(tenderDue(block)))];
   }
 
   function setLine(block: DebtBlock, idx: number, patch: Partial<TenderLine>) {
@@ -258,19 +283,17 @@ export function FolioCheckoutModal({
     for (const block of blocks) {
       const choice = choices[block.folio.id];
       if (choice !== 'PAY') continue;
+      if (!canPay || block.pendingReversal) return t('checkoutPickChoice');
       const rows = linesOf(block).filter((l) => Number(l.amount) > 0);
       if (rows.some((l) => !l.method)) return t('checkoutPickMethod');
       if (rows.some((l) => l.method === 'CARD' && !l.bankTerminalId)) return t('checkoutPickTerminal');
       const paid = rows.reduce((s, l) => s + Number(l.amount), 0);
-      const isFirstGuest = block.folio.id === firstGuestBlockId;
-      const deposits = isFirstGuest && applyDeposits ? heldDeposits : 0;
-      const discount = isFirstGuest && discountAmount ? Number(discountAmount) : 0;
-      if (paid + deposits + discount + 0.01 < block.debt) {
-        return t('checkoutTenderShort', {
-          name: block.title,
-          paid: money(paid + deposits + discount),
-          due: money(block.debt),
-        });
+      const due = tenderDue(block);
+      if (paid + 0.01 < due) {
+        return t('checkoutTenderShort', { name: block.title, paid: money(paid), due: money(due) });
+      }
+      if (paid > due + 0.01) {
+        return t('checkoutTenderOver', { name: block.title, paid: money(paid), due: money(due) });
       }
     }
     if (anyGuestDebt && !guestDebtNote.trim()) return t('checkoutDebtReasonRequired');
@@ -487,6 +510,7 @@ export function FolioCheckoutModal({
               <label className="inline-flex items-center gap-1.5 pb-2 text-[12px]">
                 <input
                   type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
                   checked={applyDeposits}
                   onChange={(e) => setApplyDeposits(e.target.checked)}
                 />
@@ -531,6 +555,7 @@ export function FolioCheckoutModal({
           {blocks.map((block) => {
             const choice = choices[block.folio.id] ?? '';
             const isGuest = block.party === 'GUEST';
+            const payAllowed = canPay && !block.pendingReversal;
             return (
               <FieldSection
                 key={block.folio.id}
@@ -548,19 +573,19 @@ export function FolioCheckoutModal({
                       setError('');
                       setChoices((prev) => ({ ...prev, [block.folio.id]: String(v ?? '') as Choice }));
                     }}
-                    options={
+                    options={[
+                      ...(payAllowed ? [{ value: 'PAY', label: t('checkoutPayNow') }] : []),
                       isGuest
-                        ? [
-                            { value: 'PAY', label: t('checkoutPayNow') },
-                            { value: 'DEBT', label: t('checkoutLeaveGuestDebt') },
-                          ]
-                        : [
-                            { value: 'PAY', label: t('checkoutPayNow') },
-                            { value: 'CL', label: t('checkoutToCityLedger') },
-                          ]
-                    }
+                        ? { value: 'DEBT', label: t('checkoutLeaveGuestDebt') }
+                        : { value: 'CL', label: t('checkoutToCityLedger') },
+                    ]}
                     emptyLabel={null}
                   />
+                  {!canPay ? (
+                    <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{t('checkoutNoPaymentRight')}</p>
+                  ) : block.pendingReversal ? (
+                    <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{t('checkoutPayerEarlyHint')}</p>
+                  ) : null}
                   {choice ? (
                     <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
                       {choice === 'PAY'

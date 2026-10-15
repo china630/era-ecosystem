@@ -245,7 +245,7 @@
     "others": "Прочие",
     "repeatGuests": "Повторные гости",
     "firstStay": "Первый визит",
-    "folioTypes": "Способ оплаты",
+    "folioTypes": "Ожидаемые типы фолио",
     "todayReservations": "Брони за сегодня",
     "sales": "Продажи",
     "cancellations": "Отмены",
@@ -782,6 +782,9 @@
     "checkoutPickMethod": "Выберите способ",
     "checkoutPickTerminal": "Выберите банковский терминал для оплаты картой.",
     "checkoutTenderShort": "{name}: оплата {paid} AZN не покрывает долг {due} AZN.",
+    "checkoutTenderOver": "{name}: оплата {paid} AZN больше суммы к оплате {due} AZN.",
+    "checkoutPayerEarlyHint": "Ранний выезд уменьшит этот фолио на неиспользованные ночи. Переведите его в City Ledger; оплату примите со счёта после выезда.",
+    "checkoutNoPaymentRight": "У вас нет права принимать оплату. Оставьте долг на госте или переведите в City Ledger.",
     "checkoutDebtReasonRequired": "Укажите, почему гость уезжает с долгом.",
     "checkoutPickRefundMethod": "Выберите, как вернуть деньги за неиспользованные ночи."
   },

@@ -16,7 +16,11 @@ import { hotelDateKey } from '@/lib/hotel-calendar';
 
 const ROOM_REVENUE_CODES = new Set(['ROOM', 'ACCOM', 'LODGING', 'STAY']);
 
-function chargeDescriptionForPost(code: string, description: string, businessDate: Date): string {
+function chargeDescriptionForPost(
+  code: string,
+  description: string,
+  businessDate: Date,
+): string {
   const trimmed = description.trim();
   if (!ROOM_REVENUE_CODES.has(code.trim().toUpperCase())) return trimmed;
   if (trimmed.includes('(early CO remaining)')) return trimmed;
@@ -241,7 +245,8 @@ export async function postPayment(input: {
   const liveFiscal = process.env.ERA_FISCAL_LIVE === "true";
   const orgId = requestOrganizationId();
 
-  const cardTender = input.paymentMethod === 'CARD' || input.paymentMethod.startsWith('CARD_');
+  const cardTender =
+    input.paymentMethod === 'CARD' || input.paymentMethod.startsWith('CARD_');
   if (kind === 'PAYMENT' && cardTender) {
     const { ensureFiscalDevices } = await import('@/lib/fiscal-device-mirror');
     await ensureFiscalDevices(orgId);
@@ -523,14 +528,12 @@ export async function listGuestDebtJournal() {
 }
 
 async function recalcReservationTotal(reservationId: string) {
-  const folios = await prisma.folio.findMany({
-    where: { reservationId, status: { not: 'VOID' } },
-    include: { charges: true, payments: true },
+  const rates = await prisma.reservationDailyRate.findMany({
+    where: { reservationId },
+    select: { amount: true },
   });
-  let total = 0;
-  for (const f of folios) {
-    total += folioBalance(f.charges, f.payments);
-  }
+  if (rates.length === 0) return;
+  const total = rates.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
   await prisma.reservation.update({
     where: { id: reservationId },
     data: { totalAmount: toDecimal(Math.max(0, total)) },

@@ -241,7 +241,7 @@
     "ageUnknown": "Naməlum",
     "repeatGuests": "Təkrar qonaqlar",
     "firstStay": "İlk qalış",
-    "folioTypes": "Ödəniş üsulu",
+    "folioTypes": "Bu gün gözlənilən folio növləri",
     "folioGuest": "Qonaq",
     "folioCompany": "Şirkət",
     "folioAgency": "Agentlik",
@@ -782,6 +782,9 @@
     "checkoutPickMethod": "Üsul seçin",
     "checkoutPickTerminal": "Kart ödənişi üçün bank terminalını seçin.",
     "checkoutTenderShort": "{name}: ödəniş {paid} AZN borcu ({due} AZN) bağlamır.",
+    "checkoutTenderOver": "{name}: ödəniş {paid} AZN ödəniləcək məbləğdən ({due} AZN) çoxdur.",
+    "checkoutPayerEarlyHint": "Erkən çıxış istifadə olunmamış gecələr üçün bu folionu azaldır. Onu City Ledger-ə köçürün; ödənişi çıxışdan sonra hesabdan qəbul edin.",
+    "checkoutNoPaymentRight": "Ödəniş qəbul etmək hüququnuz yoxdur. Borcu qonaqda saxlayın və ya City Ledger-ə köçürün.",
     "checkoutDebtReasonRequired": "Qonağın niyə borcla getdiyini yazın.",
     "checkoutPickRefundMethod": "İstifadə olunmamış gecələrin qaytarılma üsulunu seçin."
   },
