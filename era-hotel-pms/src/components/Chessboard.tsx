@@ -3,13 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  CatalogField,
-  FieldTextarea,
   LIST_PAGE_SHELL_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
-import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import RoomInfoModal from '@/components/RoomInfoModal';
 import RoomRackView from '@/components/RoomRackView';
@@ -89,8 +87,6 @@ export default function Chessboard() {
   const tCard = useTranslations('reservationCard');
   const tCommon = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
-  const tf = useTranslations('folio');
-  const tPay = useTranslations('paymentMethod');
 
   const roomStatusLabel = (status: RoomStatus) => tRoom(status);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -103,33 +99,7 @@ export default function Chessboard() {
   const [revenueCodes, setRevenueCodes] = useState<{ id: string; code: string }[]>([]);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [editReservationId, setEditReservationId] = useState<string | null>(null);
-  const [checkoutPrompt, setCheckoutPrompt] = useState<{
-    id: string;
-    guest: string;
-    balance: number;
-  } | null>(null);
-  const [checkoutLeaveOnCl, setCheckoutLeaveOnCl] = useState(false);
-  const [earlyCheckout, setEarlyCheckout] = useState<{
-    applicable: boolean;
-    unusedNights: number;
-    unusedSellGross: number;
-    vatWithheld: number;
-    guestCashRefund: number;
-  } | null>(null);
-  const [unusedNightsRefundMethod, setUnusedNightsRefundMethod] = useState<'CASH' | 'CARD'>('CASH');
-  const [guestDebt, setGuestDebt] = useState(false);
-  const [guestDebtNote, setGuestDebtNote] = useState('');
-  const [refundTerminal, setRefundTerminal] = useState('');
-  const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
-  useEffect(() => {
-    if (!checkoutPrompt) return;
-    void fetch('/api/fiscal/devices?kind=BANK_POS')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body: { devices?: { id: string; label: string }[] } | null) => {
-        setBankTerminals(body?.devices ?? []);
-      })
-      .catch(() => setBankTerminals([]));
-  }, [checkoutPrompt]);
+  const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -365,35 +335,7 @@ export default function Chessboard() {
         canCharge={can(PERMISSIONS.FOLIO_CHARGE)}
         foodCodeId={foodCode?.id}
         onCheckIn={(id) => runAction(`/api/reservations/${id}/check-in`)}
-        onCheckOut={(id) => {
-          const res = selected?.reservations.find((r) => r.id === id);
-          setCheckoutLeaveOnCl(false);
-          setGuestDebt(false);
-          setGuestDebtNote('');
-          setRefundTerminal('');
-          setUnusedNightsRefundMethod('CASH');
-          setEarlyCheckout(null);
-          setCheckoutPrompt({
-            id,
-            guest: res?.guest.fullName ?? '',
-            balance: Number(res?.totalAmount ?? 0),
-          });
-          void fetch(`/api/reservations/${id}/early-checkout-preview`)
-            .then((r) => r.json())
-            .then((data) => {
-              const payload = data.data ?? data;
-              if (payload?.applicable) {
-                setEarlyCheckout({
-                  applicable: true,
-                  unusedNights: Number(payload.unusedNights) || 0,
-                  unusedSellGross: Number(payload.unusedSellGross) || 0,
-                  vatWithheld: Number(payload.vatWithheld) || 0,
-                  guestCashRefund: Number(payload.guestCashRefund) || 0,
-                });
-              }
-            })
-            .catch(() => undefined);
-        }}
+        onCheckOut={(id) => setCheckoutId(id)}
         onAddCharge={(id, revenueCodeId) =>
           runAction(`/api/reservations/${id}/extras`, 'POST', {
             revenueCodeId,
@@ -409,133 +351,15 @@ export default function Chessboard() {
         }}
       />
 
-      <EraModal
-        open={Boolean(checkoutPrompt)}
-        title={t('checkoutModalTitle')}
-        onClose={() => setCheckoutPrompt(null)}
-        footer={
-          <EraModalFooter
-            onCancel={() => setCheckoutPrompt(null)}
-            busy={busy}
-            onSubmit={() => {
-              if (!checkoutPrompt) return;
-              const cardRefund =
-                earlyCheckout?.applicable &&
-                earlyCheckout.guestCashRefund > 0 &&
-                unusedNightsRefundMethod === 'CARD';
-              if (cardRefund && !refundTerminal.trim()) {
-                showApiError({ error: tf('bankTerminal') }, tCommon('error'));
-                return;
-              }
-              if (guestDebt && !guestDebtNote.trim()) {
-                showApiError({ error: tf('guestDebtNote') }, tCommon('error'));
-                return;
-              }
-              const id = checkoutPrompt.id;
-              setCheckoutPrompt(null);
-              void runAction(`/api/reservations/${id}/check-out`, 'POST', {
-                transferToCityLedger: checkoutLeaveOnCl,
-                transferToGuestDebt: guestDebt,
-                guestDebtNote: guestDebt ? guestDebtNote.trim() : undefined,
-                unusedNightsRefundMethod:
-                  earlyCheckout?.applicable && earlyCheckout.guestCashRefund > 0
-                    ? unusedNightsRefundMethod
-                    : undefined,
-                unusedNightsBankTerminalId: cardRefund ? refundTerminal.trim() : undefined,
-              });
-              setEarlyCheckout(null);
-            }}
-            submitLabel={t('confirmCheckout')}
-          />
-        }
-      >
-        <div className="space-y-3 text-[13px] text-[#34495E]">
-          {checkoutPrompt?.guest ? <p className="m-0 font-medium">{checkoutPrompt.guest}</p> : null}
-          <p className="m-0">
-            {t('checkoutBalancePreview', {
-              amount: (checkoutPrompt?.balance ?? 0).toFixed(2),
-            })}
-          </p>
-          {earlyCheckout?.applicable ? (
-            <div className="space-y-1 rounded border border-[#BDC3C7] bg-[#F8F9F9] p-2">
-              <p className="m-0 font-medium">{t('earlyCheckoutTitle')}</p>
-              <p className="m-0">
-                {t('earlyCheckoutNights', { count: earlyCheckout.unusedNights })}
-              </p>
-              <p className="m-0">
-                {t('earlyCheckoutGross', { amount: earlyCheckout.unusedSellGross.toFixed(2) })}
-              </p>
-              <p className="m-0">
-                {t('earlyCheckoutVat', { amount: earlyCheckout.vatWithheld.toFixed(2) })}
-              </p>
-              <p className="m-0">
-                {t('earlyCheckoutCash', { amount: earlyCheckout.guestCashRefund.toFixed(2) })}
-              </p>
-              {earlyCheckout.guestCashRefund > 0 ? (
-                <>
-                  <CatalogField
-                    kind="OPS_HOT"
-                    label={t('earlyCheckoutTender')}
-                    value={unusedNightsRefundMethod}
-                    onChange={(v) => setUnusedNightsRefundMethod(String(v) === 'CARD' ? 'CARD' : 'CASH')}
-                    options={[
-                      { value: 'CASH', label: tPay('CASH') },
-                      { value: 'CARD', label: tPay('CARD') },
-                    ]}
-                    emptyLabel={null}
-                  />
-                  {unusedNightsRefundMethod === 'CARD' ? (
-                    bankTerminals.length > 0 ? (
-                      <CatalogField
-                        kind="CLOSED_SMALL"
-                        label={tf('bankTerminal')}
-                        value={refundTerminal}
-                        onChange={(v) => setRefundTerminal(String(v ?? ''))}
-                        options={[
-                          { value: '', label: tf('pickTerminal') },
-                          ...bankTerminals.map((row) => ({ value: row.id, label: row.label })),
-                        ]}
-                        emptyLabel={null}
-                      />
-                    ) : (
-                      <p className="m-0 text-[12px] text-amber-800">{tf('noBankTerminal')}</p>
-                    )
-                  ) : null}
-                </>
-              ) : null}
-            </div>
-          ) : null}
-          <CatalogField
-            kind="OPS_HOT"
-            label={tf('guestSettlement')}
-            value={guestDebt ? 'DEBT' : 'PAY'}
-            onChange={(v) => setGuestDebt(String(v) === 'DEBT')}
-            options={[
-              { value: 'PAY', label: tf('payGuestFirst') },
-              { value: 'DEBT', label: tf('guestDebt') },
-            ]}
-            emptyLabel={null}
-          />
-          <CatalogField
-            kind="OPS_HOT"
-            label={tf('checkoutMode')}
-            value={checkoutLeaveOnCl ? 'CL' : 'KEEP'}
-            onChange={(v) => setCheckoutLeaveOnCl(String(v) === 'CL')}
-            options={[
-              { value: 'KEEP', label: tf('keepAgencyOpen') },
-              { value: 'CL', label: tf('leaveOnCityLedger') },
-            ]}
-            emptyLabel={null}
-          />
-          {guestDebt ? (
-            <FieldTextarea
-              label={tf('guestDebtNote')}
-              value={guestDebtNote}
-              onChange={(e) => setGuestDebtNote(e.target.value)}
-            />
-          ) : null}
-        </div>
-      </EraModal>
+      <FolioCheckoutModal
+        open={Boolean(checkoutId)}
+        reservationId={checkoutId ?? ''}
+        onClose={() => setCheckoutId(null)}
+        onDone={() => {
+          setSelected(null);
+          void load();
+        }}
+      />
 
       <ReservationCardModal
         open={bookingModalOpen}

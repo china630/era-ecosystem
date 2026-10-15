@@ -18,7 +18,7 @@ import { InAppNotificationBell } from "../components/notifications/in-app-notifi
 import { ExternalAuditEngagementBanner } from "../components/audit-hub/ExternalAuditEngagementBanner";
 import { AuditEngagementSessionProvider } from "../lib/audit-engagement-session";
 import { CompanySelectBlockingModal } from "../components/companies/company-select-blocking-modal";
-import { APP_MAIN_CONTENT_CLASS } from "@era/satellite-kit/ui";
+import { APP_MAIN_CONTENT_CLASS, EraAppShellLayout, readSidebarCollapsed, writeSidebarCollapsed } from "@era/satellite-kit/ui";
 
 const quickActionItemClass =
   "block px-3 py-2 text-sm text-gray-700 hover:bg-action/10 hover:text-primary rounded-md mx-1";
@@ -486,16 +486,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, [token]);
+  const [sidebarReady, setSidebarReady] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem("erafinance_sidebar_collapsed") === "1") {
-      setSidebarCollapsed(true);
-    }
+    setSidebarCollapsed(readSidebarCollapsed());
+    setSidebarReady(true);
   }, []);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("erafinance_sidebar_collapsed", sidebarCollapsed ? "1" : "0");
-  }, [sidebarCollapsed]);
+    if (!sidebarReady) return;
+    writeSidebarCollapsed(sidebarCollapsed);
+  }, [sidebarCollapsed, sidebarReady]);
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
@@ -583,68 +582,60 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuditEngagementSessionProvider>
-    <div className="min-h-screen overflow-x-hidden bg-[#EBEDF0]">
-      {mobileNavOpen ? (
-        <button
-          type="button"
-          className="fixed inset-0 z-[45] cursor-default bg-black/40 lg:hidden"
-          aria-label="Close menu"
-          onClick={closeMobileNav}
-        />
-      ) : null}
-
-      <MainSidebar
+      <EraAppShellLayout
+        className="min-h-screen"
         mobileNavOpen={mobileNavOpen}
-        onNavClick={closeMobileNav}
-        navSections={navSections}
-        lockedManufacturing={lockedManufacturing}
-        lockedFixedAssets={lockedFixedAssets}
-        lockedIfrsMapping={lockedIfrsMapping}
-        lockedBankingPro={lockedBankingPro}
-        lockedAuditHub={lockedAuditHub}
-        lockedCompliancePro={lockedCompliancePro}
-        token={token}
-        user={user}
-        canPostAccounting={canPostAccounting}
-        canViewHoldingReports={canViewHoldingReports}
         sidebarCollapsed={sidebarCollapsed}
-        onToggleSidebarCollapsed={() => setSidebarCollapsed((v) => !v)}
-        partnerNavVisible={partnerNavVisible}
-      />
-
-      <div
-        className={[
-          "min-w-0 pt-16 transition-[padding] duration-200 ease-out",
-          sidebarCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-[17.5rem]",
-        ].join(" ")}
+        onCloseMobileNav={closeMobileNav}
+        sidebar={
+          <MainSidebar
+            mobileNavOpen={mobileNavOpen}
+            onNavClick={closeMobileNav}
+            navSections={navSections}
+            lockedManufacturing={lockedManufacturing}
+            lockedFixedAssets={lockedFixedAssets}
+            lockedIfrsMapping={lockedIfrsMapping}
+            lockedBankingPro={lockedBankingPro}
+            lockedAuditHub={lockedAuditHub}
+            lockedCompliancePro={lockedCompliancePro}
+            token={token}
+            user={user}
+            canPostAccounting={canPostAccounting}
+            canViewHoldingReports={canViewHoldingReports}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebarCollapsed={() => setSidebarCollapsed((v) => !v)}
+            partnerNavVisible={partnerNavVisible}
+          />
+        }
+        header={
+          <MainHeader
+            onToggleMobileNav={toggleMobileNav}
+            mobileNavOpen={mobileNavOpen}
+            sidebarCollapsed={sidebarCollapsed}
+            ready={ready}
+            token={token}
+            user={user}
+            ledgerToggle={<LedgerToggle />}
+            quickActionsDropdown={
+              ready && token ? (
+                <QuickActionsDropdown
+                  manufacturingLocked={lockedManufacturing}
+                  canPostAccounting={canPostAccounting}
+                />
+              ) : null
+            }
+            notificationsBell={
+              ready && token ? (
+                // Finance-specific notification adapter (era-data-hub / in-app feed).
+                <InAppNotificationBell />
+              ) : undefined
+            }
+            onLogout={() => void logout()}
+            riskIndicator={<ComplianceRiskIndicator />}
+          />
+        }
       >
-        <MainHeader
-          onToggleMobileNav={toggleMobileNav}
-          mobileNavOpen={mobileNavOpen}
-          sidebarCollapsed={sidebarCollapsed}
-          ready={ready}
-          token={token}
-          user={user}
-          ledgerToggle={<LedgerToggle />}
-          quickActionsDropdown={
-            ready && token ? (
-              <QuickActionsDropdown
-                manufacturingLocked={lockedManufacturing}
-                canPostAccounting={canPostAccounting}
-              />
-            ) : null
-          }
-          notificationsBell={
-            ready && token ? (
-              // Finance-specific notification adapter (era-data-hub / in-app feed).
-              <InAppNotificationBell />
-            ) : undefined
-          }
-          onLogout={() => void logout()}
-          riskIndicator={<ComplianceRiskIndicator />}
-        />
-
-        <main className={APP_MAIN_CONTENT_CLASS}>
+        <main className={`${APP_MAIN_CONTENT_CLASS} flex min-h-0 min-w-0 flex-1 flex-col overflow-auto`}>
           {ready && token ? <TrialBanner /> : null}
           {ready && token ? <ExternalAuditEngagementBanner /> : null}
           {ready && token && billingBanner ? (
@@ -661,7 +652,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ) : null}
           {children}
         </main>
-      </div>
+      </EraAppShellLayout>
 
       <CompanySelectBlockingModal open={mustBlockCompanySelect} />
 
@@ -671,7 +662,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           canPostAccounting={canPostAccounting}
         />
       ) : null}
-    </div>
     </AuditEngagementSessionProvider>
   );
 }

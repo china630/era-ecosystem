@@ -10,6 +10,7 @@ import { EraOpsSidebarSections } from "./era-ops-sidebar-sections";
 import { EraOpsSidebarNav } from "./era-ops-sidebar";
 import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
 import { SatelliteBillingBanner } from "./satellite-billing-banner";
+import { readSidebarCollapsed, writeSidebarCollapsed } from "./sidebar-collapsed";
 
 export type EraAppRouteShellProps = {
   children: ReactNode;
@@ -64,15 +65,17 @@ export function EraAppRouteShell({
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarReady, setSidebarReady] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("era.sidebar.collapsed");
-    if (stored === "1") setSidebarCollapsed(true);
+    setSidebarCollapsed(readSidebarCollapsed());
+    setSidebarReady(true);
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("era.sidebar.collapsed", sidebarCollapsed ? "1" : "0");
-  }, [sidebarCollapsed]);
+    if (!sidebarReady) return;
+    writeSidebarCollapsed(sidebarCollapsed);
+  }, [sidebarCollapsed, sidebarReady]);
 
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
 

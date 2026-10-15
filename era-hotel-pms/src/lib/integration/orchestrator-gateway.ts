@@ -29,7 +29,6 @@ export function envelopeToReservationCompletedEvent(
     guestVoen: string | null;
     amountNet: number;
     currency: "AZN";
-    paymentMethod: string;
     breakdown: Array<{
       sku: string;
       qty: number;
@@ -47,7 +46,6 @@ export function envelopeToReservationCompletedEvent(
       amountNet: payload.amountNet,
       guestVoen: payload.guestVoen,
       currency: payload.currency,
-      paymentMethod: payload.paymentMethod,
       items: payload.breakdown.map((line) => ({
         sku: line.sku,
         qty: line.qty,

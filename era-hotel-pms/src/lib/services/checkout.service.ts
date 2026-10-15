@@ -1,10 +1,10 @@
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { hotelDateKey, stayCheckOut } from '@/lib/hotel-calendar';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { prisma } from '@/lib/prisma';
 import { dispatchReservationCompleted } from '@/lib/integration/event-dispatcher';
 import type { DispatchResult } from '@/lib/integration/event-types';
-import { getOutboundSettings } from '@/lib/integration/integration-settings';
 import {
   assertGuestFoliosZeroBalance,
   assertZeroBalance,
@@ -21,12 +21,47 @@ export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
   dispatch: DispatchResult;
   cityLedgerTransferred: string[];
-  depositRemainder: {
-    appliedCount: number;
-    refundedHeld: number;
-    heldAmount: number;
-    heldIds: string[];
-  };
+  depositRemainder: Awaited<
+    ReturnType<typeof import('@/lib/services/folio-deposit.service').refundRemainingDeposits>
+  >;
+}
+
+type FolioWithLines = {
+  id?: string;
+  type: string;
+  charges: Parameters<typeof folioBalance>[0];
+  payments: Parameters<typeof folioBalance>[1];
+};
+
+/** Open agency/company folios that still owe money. */
+function payerDebtFolios<T extends FolioWithLines>(folios: T[]): T[] {
+  return folios.filter(
+    (f) => (f.type === 'COMPANY' || f.type === 'AGENCY') && folioBalance(f.charges, f.payments) > 0.01,
+  );
+}
+
+/**
+ * Payer debt never moves to City Ledger by default. The desk pays it or picks City Ledger explicitly.
+ * `pendingReversal` is lodging that early checkout voids later in the same check-out.
+ */
+export function assertPayerDebtResolved(
+  folios: FolioWithLines[],
+  transferToCityLedger: boolean | undefined,
+  pendingReversal: Record<string, number> = {},
+) {
+  if (transferToCityLedger === true) return;
+  const owed = folios
+    .filter((f) => f.type === 'COMPANY' || f.type === 'AGENCY')
+    .map((f) => folioBalance(f.charges, f.payments) - (f.id ? (pendingReversal[f.id] ?? 0) : 0))
+    .filter((bal) => bal > 0.01)
+    .reduce((s, bal) => s + bal, 0);
+  if (owed <= 0.01) return;
+  throw Object.assign(
+    new Error(
+      `Agency or company folio still owes ${owed.toFixed(2)} AZN. Take payment on that folio or transfer it to City Ledger.`,
+    ),
+    { status: 409, code: 'PAYER_DEBT_UNRESOLVED' },
+  );
 }
 
 export async function checkoutReservation(
@@ -51,16 +86,28 @@ export async function checkoutReservation(
   const { assertNoOpenLaundry } = await import('@/lib/services/hk-nafta.service');
   await assertNoOpenLaundry(id);
 
+  const { applyEarlyCheckoutUnusedNights, previewEarlyCheckoutUnusedNights } = await import(
+    '@/lib/services/early-checkout-unused-nights.service'
+  );
+  const earlyPreview = await previewEarlyCheckoutUnusedNights(id).catch(() => null);
+
+  assertPayerDebtResolved(
+    await prisma.folio.findMany({
+      where: { reservationId: id, status: 'OPEN', type: { in: ['AGENCY', 'COMPANY'] } },
+      include: { charges: true, payments: true },
+    }),
+    opts?.transferToCityLedger,
+    earlyPreview?.applicable ? earlyReversalByFolio(earlyPreview.chargePlans) : {},
+  );
+
   const { postLateCheckOutFee } = await import('@/lib/services/early-late-fees.service');
   await postLateCheckOutFee(id).catch((e) => console.error('Late check-out fee failed', e));
 
-  const { applyEarlyCheckoutUnusedNights } = await import(
-    '@/lib/services/early-checkout-unused-nights.service'
-  );
   await applyEarlyCheckoutUnusedNights(id, {
     refundMethod: opts?.unusedNightsRefundMethod ?? 'CASH',
     bankTerminalId: opts?.unusedNightsBankTerminalId,
     reason: opts?.unusedNightsReason,
+    preview: earlyPreview ?? undefined,
   }).catch((e) => console.error('Early checkout unused-nights failed', e));
 
   const todayKey = todayBakuYmd();
@@ -101,11 +148,14 @@ export async function checkoutReservation(
   const { refundRemainingDeposits } = await import('@/lib/services/folio-deposit.service');
   const depositRemainder = await refundRemainingDeposits(id);
 
-  const settings = await getOutboundSettings();
   const openFolios = await prisma.folio.findMany({
     where: { reservationId: id, status: 'OPEN' },
     include: { charges: true, payments: true },
   });
+
+  const arCandidates = payerDebtFolios(openFolios);
+  assertPayerDebtResolved(openFolios, opts?.transferToCityLedger);
+  const wantCl = opts?.transferToCityLedger === true && arCandidates.length > 0;
 
   if (opts?.transferToGuestDebt) {
     const note = opts.guestDebtNote?.trim() ?? '';
@@ -146,20 +196,11 @@ export async function checkoutReservation(
     });
   }
 
-  const arCandidates = openFolios.filter((f) => {
-    if (f.type !== 'COMPANY' && f.type !== 'AGENCY') return false;
-    return folioBalance(f.charges, f.payments) > 0.01;
-  });
-
-  const wantCl = opts?.transferToCityLedger !== false && arCandidates.length > 0;
-
   if (wantCl) {
-    if (settings.requireZeroBalanceOnCheckout === false || wantCl) {
-      await assertGuestFoliosZeroBalance(id);
-      for (const f of arCandidates) {
-        const bal = folioBalance(f.charges, f.payments);
-        await assertCanTransferToCityLedger(id, f.id, bal);
-      }
+    await assertGuestFoliosZeroBalance(id);
+    for (const f of arCandidates) {
+      const bal = folioBalance(f.charges, f.payments);
+      await assertCanTransferToCityLedger(id, f.id, bal);
     }
   } else {
     await assertZeroBalance(id);

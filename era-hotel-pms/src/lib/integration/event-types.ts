@@ -8,7 +8,6 @@ export interface SatelliteHotelPayload {
   guestVoen: string | null;
   amountNet: number;
   currency: 'AZN';
-  paymentMethod: SatellitePaymentMethod;
   breakdown: Array<{
     itemType: BreakdownItemType;
     sku: string;
