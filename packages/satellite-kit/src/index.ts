@@ -313,10 +313,28 @@ export {
   type FinanceCatalogItem,
 } from "./integration/finance-catalog";
 export {
+  HotelRevenueCatalogError,
   listHotelRevenueCodes,
   resolveHotelRevenueKey,
   type HotelRevenueCodeRow,
 } from "./integration/hotel-revenue-codes";
+export {
+  HOTEL_REVENUE_CODES_PATH,
+  HOTEL_REVENUE_CODES_PERMISSION,
+  resolveHotelRevenueCode,
+  sharedApiPermission,
+} from "./integration/hotel-revenue-route";
+export {
+  clinicProcedureTicketRef,
+  fnbTicketLineRef,
+  parseFolioChargeRef,
+  retailPendingLineRef,
+  retailPrescriptionRef,
+  retailReceiptLineRef,
+  retailReturnLineRef,
+  retailRoomReturnRef,
+  type FolioChargeSource,
+} from "./integration/folio-charge-ref";
 export {
   fiscalizeForSatellite,
   saleForSatelliteRouted,
