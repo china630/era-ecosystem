@@ -192,7 +192,7 @@ export default function RetailCatalogPage() {
         <h2 className="text-base font-semibold">{t("categoryTitle")}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t("code")} preset="code" value={categoryCode} onChange={(e) => setCategoryCode(e.target.value)} />
-          <Field label={t("name")} value={categoryName} onChange={(e) => setCategoryName(e.target.value)} />
+          <Field label={t("name")} preset="shortText" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} />
         </div>
         <CatalogField
           kind="SEARCHABLE"
