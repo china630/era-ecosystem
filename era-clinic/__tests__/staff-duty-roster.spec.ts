@@ -4,6 +4,7 @@ import {
   planRosterStaffReassignment,
   previousYearMonth,
   resolveDutyCandidates,
+  staffWhenUnposted,
   yearMonthOfYmd,
 } from "@/domain/staff/staff-kind";
 
@@ -14,6 +15,21 @@ describe("staff kind + monthly duty roster", () => {
     expect(inferStaffKind({ specialty: "Senior nurse", code: "NR-01" })).toBe("NURSE");
     expect(inferStaffKind({ specialty: "LAB", code: "LAB-01" })).toBe("LAB");
     expect(inferStaffKind({ specialty: "Therapist", code: "DR-01" })).toBe("DOCTOR");
+  });
+
+  it("keeps skilled staff when an approved bath line has nobody posted", () => {
+    const skilled = [{ id: "bath", fullName: "Attendant", code: "B1" }];
+    expect(
+      staffWhenUnposted({ dutyFiltered: [], postedCount: 0, skilled }),
+    ).toEqual(skilled);
+    expect(
+      staffWhenUnposted({
+        dutyFiltered: [{ id: "posted", fullName: "Posted", code: "P1" }],
+        postedCount: 1,
+        skilled,
+      }).map((row) => row.id),
+    ).toEqual(["posted"]);
+    expect(staffWhenUnposted({ dutyFiltered: [], postedCount: 1, skilled })).toEqual([]);
   });
 
   it("computes previous year-month across year boundary", () => {

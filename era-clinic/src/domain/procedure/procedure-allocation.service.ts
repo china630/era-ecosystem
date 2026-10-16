@@ -4,6 +4,7 @@ import {
   applyDutyFilter,
   resolvePostedStaffForSlot,
 } from "@/domain/staff/staff-duty-roster.service";
+import { staffWhenUnposted } from "@/domain/staff/staff-kind";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 
 export { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
@@ -99,6 +100,8 @@ export async function findSkilledFreePractitioner(input: {
   preferPractitionerId?: string | null;
   excludeOrderId?: string;
   staffMode?: ProcedureStaffMode;
+  /** Approved line with no person keeps the skilled pool. Does not invent staff without a skill. */
+  skillWhenUnposted?: boolean;
 }): Promise<{ id: string; fullName: string; code: string } | null> {
   const duty = await resolvePostedStaffForSlot({
     procedureTypeId: input.procedureTypeId,
@@ -114,8 +117,9 @@ export async function findSkilledFreePractitioner(input: {
     },
     include: { practitioner: true },
   });
-  let pool = skills.map((s) => s.practitioner);
-  if (pool.length === 0) {
+  const skilled = skills.map((s) => s.practitioner);
+  let pool = skilled;
+  if (pool.length === 0 && !input.skillWhenUnposted) {
     const nurses = await prisma.practitioner.findMany({
       where: { active: true, staffKind: { in: ["DOCTOR", "NURSE", "BATH", "MASSAGE"] } },
       orderBy: { code: "asc" },
@@ -123,10 +127,15 @@ export async function findSkilledFreePractitioner(input: {
     });
     pool = nurses;
   }
-  const candidates = preferFirst(
-    applyDutyFilter(pool, duty),
-    input.preferPractitionerId,
-  );
+  const dutyFiltered = applyDutyFilter(pool, duty);
+  const chosen = input.skillWhenUnposted
+    ? staffWhenUnposted({
+        dutyFiltered,
+        postedCount: duty.postedList.length,
+        skilled,
+      })
+    : dutyFiltered;
+  const candidates = preferFirst(chosen, input.preferPractitionerId);
   if (input.staffMode === "SOFT") {
     return pickSoftStaff(candidates, input);
   }

@@ -1,4 +1,4 @@
-import { planBathSeries, type StayDay } from "@/domain/planning/bath-calendar";
+import { planBathSeries, strayBathOrderIds, type StayDay } from "@/domain/planning/bath-calendar";
 
 function week(): StayDay[] {
   return [
@@ -158,5 +158,37 @@ describe("planBathSeries", () => {
       kept: [],
     });
     expect(cells.map((cell) => cell.fill)).toEqual(["OTURAQ", "TAM"]);
+  });
+});
+
+describe("strayBathOrderIds", () => {
+  it("drops the day that was saved beside the package, and keeps a checked-in one", () => {
+    const ids = strayBathOrderIds([
+      {
+        id: "pkg",
+        procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+        packageQuotaCode: "NAFTALAN_BATH",
+        status: "SCHEDULED",
+      },
+      {
+        id: "extra",
+        procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+        packageQuotaCode: "SVC-NAFTALAN-VANNASI-KISI",
+        status: "SCHEDULED",
+      },
+      {
+        id: "blank",
+        procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+        packageQuotaCode: null,
+        status: "SCHEDULED",
+      },
+      {
+        id: "done",
+        procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+        packageQuotaCode: "SVC-NAFTALAN-VANNASI-KISI",
+        status: "CHECKED_IN",
+      },
+    ]);
+    expect(ids).toEqual(["extra"]);
   });
 });

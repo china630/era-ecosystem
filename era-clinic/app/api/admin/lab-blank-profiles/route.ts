@@ -19,25 +19,30 @@ export async function GET(req: Request) {
     const guard = await assertClinicAdminRoute(req);
     if (guard.error) return guard.error;
     await ensureUrineBlankProfile();
-    const [profiles, analytes] = await Promise.all([
+    const [profiles, services] = await Promise.all([
       prisma.labBlankProfile.findMany({
-        where: { active: true },
         include: { rows: { orderBy: { sortOrder: "asc" } } },
         orderBy: { name: "asc" },
       }),
-      prisma.diagnosticAnalyte.findMany({
-        select: { code: true, labelAz: true, labelEn: true, labelRu: true },
-        orderBy: { code: "asc" },
+      prisma.diagnosticService.findMany({
+        where: { active: true, analytes: { some: {} } },
+        select: {
+          id: true,
+          code: true,
+          serviceCode: true,
+          category: true,
+          titleAz: true,
+          titleRu: true,
+          titleEn: true,
+          analytes: {
+            orderBy: { sortOrder: "asc" },
+            select: { code: true, labelAz: true, labelEn: true, labelRu: true },
+          },
+        },
+        orderBy: [{ category: "asc" }, { titleAz: "asc" }],
       }),
     ]);
-    const seen = new Set<string>();
-    const analyteOptions = analytes.flatMap((row) => {
-      if (seen.has(row.code)) return [];
-      seen.add(row.code);
-      const label = row.labelAz || row.labelEn || row.code;
-      return [{ value: row.code, label: `${label} (${row.code})` }];
-    });
-    return jsonOk({ profiles, analyteOptions });
+    return jsonOk({ profiles, panels: services });
   } catch (err) {
     return handleRouteError(err);
   }

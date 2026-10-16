@@ -645,6 +645,9 @@ export async function getPackageAssignSnapshot(
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
   const softWarnDay1 = careDenied ?? anamnesisDenied;
 
+  const { foldBathQuotaCards } = await import("@/domain/planning/bath-calendar.service");
+  await foldBathQuotaCards(episodeId);
+
   const orders = await prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: episodeId,

@@ -33,7 +33,14 @@ export async function previewBlankForOrder(input: {
   if (!order || !profile) return [];
   const allowed = new Set<string>();
   for (const item of order.items) {
-    if (profile.serviceCode && item.serviceCode !== profile.serviceCode) continue;
+    const panelCode = profile.serviceCode;
+    const service = item.diagnosticService;
+    const samePanel =
+      !panelCode ||
+      item.serviceCode === panelCode ||
+      service?.code === panelCode ||
+      service?.serviceCode === panelCode;
+    if (!samePanel) continue;
     for (const analyte of item.diagnosticService?.analytes ?? []) {
       allowed.add(analyte.code);
       if (analyte.cardId) {
@@ -92,10 +99,22 @@ export async function previewWordForOrder(input: {
     };
   }
   const codes = order.items.map((item) => item.serviceCode).filter(Boolean);
+  const services = codes.length
+    ? await prisma.diagnosticService.findMany({
+        where: { OR: [{ code: { in: codes } }, { serviceCode: { in: codes } }] },
+        select: { code: true, serviceCode: true },
+      })
+    : [];
+  const keys = [
+    ...new Set([
+      ...codes,
+      ...services.flatMap((row) => [row.code, row.serviceCode].filter(Boolean)),
+    ]),
+  ];
   const profile = input.profileId
     ? await prisma.labBlankProfile.findUnique({ where: { id: input.profileId } })
     : await prisma.labBlankProfile.findFirst({
-        where: { active: true, serviceCode: serviceCode ? serviceCode : { in: codes } },
+        where: { active: true, serviceCode: { in: keys.length ? keys : ["__none__"] } },
         orderBy: { name: "asc" },
       });
   if (!profile) return { mode: "missing" };
@@ -130,7 +149,9 @@ export async function saveBlankProfile(input: {
   const rows = blankRows(input.rows);
   const existing = input.id
     ? await prisma.labBlankProfile.findUnique({ where: { id: input.id } })
-    : await prisma.labBlankProfile.findFirst({ where: { name } });
+    : input.serviceCode
+      ? await prisma.labBlankProfile.findFirst({ where: { serviceCode: input.serviceCode } })
+      : await prisma.labBlankProfile.findFirst({ where: { name } });
   const profile = existing
     ? await prisma.labBlankProfile.update({
         where: { id: existing.id },

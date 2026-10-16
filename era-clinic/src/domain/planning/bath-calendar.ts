@@ -167,3 +167,37 @@ export function planBathSeries(input: {
   }
   return orderedCells;
 }
+
+/**
+ * A bath saved from the calendar used to be stamped with the procedure code,
+ * while the package line uses the package quota. Those are the extra cards.
+ * A session already checked in stays.
+ */
+export function strayBathOrderIds(
+  orders: Array<{
+    id: string;
+    procedureCode: string;
+    packageQuotaCode: string | null;
+    status: string;
+  }>,
+): string[] {
+  const byCode = new Map<string, typeof orders>();
+  for (const order of orders) {
+    const list = byCode.get(order.procedureCode) ?? [];
+    list.push(order);
+    byCode.set(order.procedureCode, list);
+  }
+  const ids: string[] = [];
+  for (const [procedureCode, group] of byCode) {
+    const packageQuota = group
+      .map((row) => row.packageQuotaCode?.trim() || "")
+      .find((code) => code && code !== procedureCode);
+    if (!packageQuota) continue;
+    for (const row of group) {
+      if (row.status !== "SCHEDULED" && row.status !== "PROPOSED") continue;
+      const quota = row.packageQuotaCode?.trim() || "";
+      if (quota === procedureCode) ids.push(row.id);
+    }
+  }
+  return ids;
+}

@@ -541,13 +541,13 @@ export async function placeConfirmedProcedures(
   }
 
   const prescribedByPractitionerId = opts?.confirmedByUserId
-    ? (
-        await prisma.practitioner.findFirst({
-          where: { userId: opts.confirmedByUserId },
-          select: { id: true },
-        })
-      )?.id ?? null
-    : null;
+      ? (
+          await prisma.practitioner.findFirst({
+            where: { userId: opts.confirmedByUserId },
+            select: { id: true },
+          })
+        )?.id ?? null
+      : null;
   const orderById = new Map(orders.map((order) => [order.id, order]));
   for (const row of scanned.planned) {
     const order = orderById.get(row.orderId);
@@ -587,25 +587,25 @@ export async function placeConfirmedProcedures(
 
 const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-function randomAccessCode(): string {
-  let out = "";
-  for (let i = 0; i < 5; i++) {
+  function randomAccessCode(): string {
+    let out = "";
+    for (let i = 0; i < 5; i++) {
     out += ACCESS_CODE_ALPHABET[Math.floor(Math.random() * ACCESS_CODE_ALPHABET.length)]!;
+    }
+    return out;
   }
-  return out;
-}
 
-async function generateUniqueAccessCode(organizationId: string): Promise<string> {
-  for (let attempt = 0; attempt < 50; attempt++) {
-    const code = randomAccessCode();
-    const exists = await prisma.procedureOrder.findFirst({
-      where: { organizationId, accessCode: code },
-      select: { id: true },
-    });
-    if (!exists) return code;
+  async function generateUniqueAccessCode(organizationId: string): Promise<string> {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const code = randomAccessCode();
+      const exists = await prisma.procedureOrder.findFirst({
+        where: { organizationId, accessCode: code },
+        select: { id: true },
+      });
+      if (!exists) return code;
+    }
+    throw new Error("Unable to generate unique procedure access code");
   }
-  throw new Error("Unable to generate unique procedure access code");
-}
 
 async function loadClosedYmds(fromYmd: string, horizonEndYmd: string): Promise<Set<string>> {
   const closed = new Set<string>();
