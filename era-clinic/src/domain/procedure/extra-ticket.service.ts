@@ -17,6 +17,7 @@ import {
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
 import { enterRequestTenant } from "@/lib/request-organization";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 
 export async function listExtrasAwaitingTicket(organizationId?: string | null) {
   const orgId = resolveClinicCutoverOrgId(organizationId);
@@ -45,6 +46,7 @@ export async function issueExtraTickets(
   orderIds: string[],
   actorUserId: string,
   organizationId?: string | null,
+  locale?: string | null,
 ) {
   if (!orderIds.length) {
     throw new ProcedureAttendanceError("No procedures selected", "INVALID_TRANSITION");
@@ -53,7 +55,7 @@ export async function issueExtraTickets(
   enterSatelliteTenant({ organizationId: orgId });
   const selected = await prisma.procedureOrder.findMany({
     where: { id: { in: orderIds } },
-    select: { patientRefId: true },
+    select: { patientRefId: true, procedureCode: true },
   });
   const patientIds = new Set(selected.map((order) => order.patientRefId));
   if (patientIds.size > 1) {
@@ -70,6 +72,10 @@ export async function issueExtraTickets(
     );
   }
   const issued = [];
+  const catalogNames = await loadCatalogDisplayNameMap(
+    selected.map((row) => row.procedureCode),
+    locale || "az",
+  );
 
   for (const orderId of orderIds) {
     const order = await prisma.procedureOrder.findUnique({
@@ -95,9 +101,10 @@ export async function issueExtraTickets(
     }
 
     const ticketId = extraTicketIdForOrder(order.id);
+    const procedureLabel = catalogNames.get(order.procedureCode) || order.procedureName;
     const description = charge.overQuota
-      ? `Over-quota ${order.procedureName}`
-      : order.procedureName;
+      ? `Over-quota ${procedureLabel}`
+      : procedureLabel;
 
     if (order.patientOrigin === "IN_HOUSE" && !order.reservationId) {
       throw new ProcedureAttendanceError(
@@ -148,12 +155,26 @@ export async function issueExtraTickets(
   };
 }
 
+const printInclude = {
+  patientRef: true,
+  clinicalEpisode: { select: { roomNumber: true } },
+} as const;
+
 export async function loadExtraTicketPrint(ticketId: string, organizationId: string) {
   const orgId = organizationId.trim();
   if (!orgId) return [];
   enterRequestTenant(orgId);
-  return prisma.procedureOrder.findMany({
+  const seed = await prisma.procedureOrder.findMany({
     where: { extraTicketId: ticketId },
-    include: { patientRef: true },
+    include: printInclude,
+    orderBy: { createdAt: "asc" },
+  });
+  const receipt = seed.find((row) => row.paymentReceiptRef?.trim())?.paymentReceiptRef?.trim();
+  const patientRefId = seed[0]?.patientRefId;
+  if (!receipt || !patientRefId) return seed;
+  return prisma.procedureOrder.findMany({
+    where: { paymentReceiptRef: receipt, patientRefId },
+    include: printInclude,
+    orderBy: { createdAt: "asc" },
   });
 }

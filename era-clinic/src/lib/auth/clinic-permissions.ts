@@ -616,6 +616,11 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
     prefix: "/api/admin/procedure-substitution-rules",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   },
+  {
+    prefix: "/api/admin/procedure-day-series",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
+  },
+  { prefix: "/api/admin/lab-blank-profiles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES },
   { prefix: "/api/admin/lis-profiles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES },
   { prefix: "/api/admin/practitioners", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
   { prefix: "/api/admin/rooms", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },

@@ -29,6 +29,7 @@ import {
   resolveClinicCutoverOrgId,
 } from "@/domain/physio/clinic-cutover.service";
 import { enterSatelliteTenant } from "@era/satellite-kit";
+import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 
 export type ExtraPrescribeLine = {
   procedureCode: string;
@@ -239,7 +240,7 @@ export async function payAndScheduleExtras(
   orderIds: string[],
   actorUserId: string,
   organizationId?: string | null,
-  opts?: { paymentReceiptRef?: string | null },
+  opts?: { paymentReceiptRef?: string | null; locale?: string | null },
 ): Promise<{
   printPaths: string[];
   placed: number;
@@ -266,13 +267,19 @@ export async function payAndScheduleExtras(
   const chargedMeta: Array<{ orderId: string; amount: number; ticketId: string }> = [];
 
   const hotelOrganizationId = await getClinicHotelOrganizationId(orgId);
+  const catalogNames = await loadCatalogDisplayNameMap(
+    requested.map((row) => row.procedureCode),
+    opts?.locale || "az",
+  );
+  const displayName = (order: { procedureCode: string; procedureName: string }) =>
+    catalogNames.get(order.procedureCode) || order.procedureName;
 
   for (const id of orderIds) {
     const order = byId.get(id);
     if (!order || order.status !== "PENDING_PAY") {
       rejected.push({
         id,
-        name: order?.procedureName ?? id,
+        name: order ? displayName(order) : id,
         reason: "status is not PENDING_PAY",
       });
       continue;
@@ -281,16 +288,16 @@ export async function payAndScheduleExtras(
       const charge = await resolveProcedureCharge(order, { burnQuota: false });
       const amount = charge.amountNet > 0 ? charge.amountNet : Number(order.amountNet);
       if (!(amount > 0)) {
-        rejected.push({ id: order.id, name: order.procedureName, reason: "amount is 0" });
+        rejected.push({ id: order.id, name: displayName(order), reason: "amount is 0" });
         continue;
       }
       const ticketId = extraTicketIdForOrder(order.id);
-      const description = `${order.procedureName} · çek ${receipt}`;
+      const description = `${displayName(order)} · çek ${receipt}`;
       if (order.patientOrigin === "IN_HOUSE") {
         if (!order.reservationId) {
           rejected.push({
             id: order.id,
-            name: order.procedureName,
+            name: displayName(order),
             reason: "no hotel reservation",
           });
           continue;
@@ -305,13 +312,13 @@ export async function payAndScheduleExtras(
           qty: order.quantity,
         });
         chargedMeta.push({ orderId: order.id, amount, ticketId });
-        accepted.push({ id: order.id, name: order.procedureName });
+        accepted.push({ id: order.id, name: displayName(order) });
         continue;
       }
       const { postHotelSettlementPending } = await import("@/lib/settlement-hub-client");
       const sku = await tryResolveSellableSku(order.procedureCode);
       if (!sku) {
-        rejected.push({ id: order.id, name: order.procedureName, reason: "no SKU" });
+        rejected.push({ id: order.id, name: displayName(order), reason: "no SKU" });
         continue;
       }
       await postHotelSettlementPending({
@@ -325,13 +332,13 @@ export async function payAndScheduleExtras(
       });
       rejected.push({
         id: order.id,
-        name: order.procedureName,
+        name: displayName(order),
         reason: "waiting for hotel payment",
       });
     } catch (err) {
       rejected.push({
         id: order.id,
-        name: order.procedureName,
+        name: displayName(order),
         reason: err instanceof Error ? err.message : "hotel rejected the line",
       });
     }
@@ -378,7 +385,6 @@ export async function payAndScheduleExtras(
     }
   }
 
-  const printPaths: string[] = [];
   const issuedOrders = [];
   for (const c of chargedMeta) {
     const updated = await prisma.procedureOrder.update({
@@ -390,8 +396,11 @@ export async function payAndScheduleExtras(
       include: { patientRef: true },
     });
     issuedOrders.push(updated);
-    printPaths.push(extraTicketPrintPath(c.ticketId, orgId));
   }
+  // One paper cheque lists every line on this receipt. Folio keys stay per order.
+  const printPaths = chargedMeta.length
+    ? [extraTicketPrintPath(chargedMeta[0]!.ticketId, orgId)]
+    : [];
 
   await recordClinicAudit(
     { userId: actorUserId },

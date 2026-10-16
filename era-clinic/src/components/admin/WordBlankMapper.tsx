@@ -28,12 +28,15 @@ export function WordBlankMapper() {
   useEffect(() => {
     void (async () => {
       const res = await fetch("/api/admin/lab-blank-profiles");
-      if (!res.ok) return;
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(json, tc("loadingFailed"));
+        return;
+      }
       const list = (json.data?.analyteOptions ?? json.analyteOptions ?? []) as Array<{ value: string; label: string }>;
       setOptions(list);
     })();
-  }, []);
+  }, [tc]);
 
   async function readFile(file: File) {
     setBusy(true);

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, ChevronDown, ChevronRight } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
   DATA_TABLE_CLASS,
@@ -50,6 +50,7 @@ type PatientGroup = {
 export default function ExtraTicketsPage() {
   const t = useTranslations("extraTickets");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [dualRun, setDualRun] = useState(false);
   const [rows, setRows] = useState<ExtraRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -61,17 +62,17 @@ export default function ExtraTicketsPage() {
   const [origin, setOrigin] = useState("");
   const qDebounced = useDebouncedValue(q, 300);
 
-  async function load() {
-    const res = await fetch("/api/procedures/issue-ticket");
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/procedures/issue-ticket?locale=${encodeURIComponent(locale)}`);
     const d = await res.json();
     const payload = d.data ?? d;
     setDualRun(!!payload.dualRun);
     setRows((payload.orders ?? []) as ExtraRow[]);
-  }
+  }, [locale]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const originOptions = useMemo(
     () => [
@@ -190,6 +191,7 @@ export default function ExtraTicketsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderIds,
+          locale,
         }),
       });
       const d = await res.json();
@@ -205,10 +207,20 @@ export default function ExtraTicketsPage() {
       const payload = d.data ?? d;
       const printPaths = (payload.printPaths as string[] | undefined) ?? [];
       const printPath = (payload.printPath as string | undefined) ?? printPaths[0];
+      const seen = new Set<string>();
       for (const path of printPaths.length ? printPaths : printPath ? [printPath] : []) {
-        const base = path.includes("?") ? `${path}&sheets=1` : `${path}?sheets=1`;
+        if (seen.has(path)) continue;
+        seen.add(path);
+        const withLang = path.includes("lang=")
+          ? path
+          : `${path}${path.includes("?") ? "&" : "?"}lang=${encodeURIComponent(locale)}`;
+        const base = withLang.includes("sheets=") ? withLang : `${withLang}&sheets=1`;
+        const ticket = decodeURIComponent(base.split("/print/extra-ticket/")[1]?.split("?")[0] ?? "ticket").replace(
+          /[^a-zA-Z0-9_-]/g,
+          "_",
+        );
         for (let i = 0; i < 3; i++) {
-          window.open(`${base}&copy=${i + 1}`, `_blank_ticket_${Date.now()}_${i}`);
+          window.open(`${base}&copy=${i + 1}`, `extra_ticket_${ticket}_copy_${i + 1}`);
         }
       }
       setSelected(new Set());

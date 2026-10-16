@@ -151,6 +151,12 @@ describe("clinic default permissions", () => {
     expect(adminApiRoutePermission("/api/admin/roles/CLINIC_ADMIN/permissions")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
     );
+    expect(adminApiRoutePermission("/api/admin/procedure-day-series")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
+    );
+    expect(adminApiRoutePermission("/api/admin/lab-blank-profiles")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
+    );
   });
 
   it("CLINIC_ADMIN role alone does not bypass sessionHasClinicPermission", () => {

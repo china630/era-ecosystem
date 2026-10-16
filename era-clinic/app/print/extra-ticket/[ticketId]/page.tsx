@@ -7,6 +7,10 @@ import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { normalizePrintLang } from "@/domain/print/print-types";
 import { todayBakuYmd } from "@/lib/baku-day";
+import {
+  loadCatalogDisplayNameMap,
+  resolveOrderDisplayName,
+} from "@/domain/catalog/catalog-display-name.service";
 
 type Props = {
   params: Promise<{ ticketId: string }>;
@@ -41,6 +45,12 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
   );
   const copies: Array<(typeof COPIES)[number]> =
     sheetCount === 1 ? [COPIES[copyIdx]!] : [...COPIES];
+  const catalogNames = await loadCatalogDisplayNameMap(
+    orders.map((row) => row.procedureCode),
+    lang,
+  );
+  const roomNumber =
+    orders.map((row) => row.clinicalEpisode?.roomNumber?.trim()).find(Boolean) ?? null;
   const patient = {
     fullName: first.patientRef.fullName,
     sex: first.patientRef.sex,
@@ -49,7 +59,7 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
       : null,
     phone: first.patientRef.phone,
     nationality: first.patientRef.nationality,
-    roomNumber: null,
+    roomNumber,
     doctorName: null,
     date: todayBakuYmd(),
   };
@@ -83,7 +93,7 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
               {orders.map((row, i) => (
                 <tr key={row.id} className="border-b border-black/30">
                   <td className="p-1">{i + 1}</td>
-                  <td className="p-1">{row.procedureName}</td>
+                  <td className="p-1">{resolveOrderDisplayName(row, catalogNames)}</td>
                   <td className="p-1">{Number(row.amountNet).toFixed(2)} AZN</td>
                 </tr>
               ))}

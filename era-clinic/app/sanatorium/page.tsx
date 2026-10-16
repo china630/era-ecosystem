@@ -64,16 +64,20 @@ import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { IcdPicker } from "@/components/IcdPicker";
 import { EpisodeAssignBlocks } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
+import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
+
+type CourseMark = "ready" | "attention" | "blocked";
 
 type EpisodeListFilters = {
   q: string;
   origin: string;
   room: string;
   program: string;
+  course: string;
   sort: string;
   sortDir: "" | "asc" | "desc";
 };
@@ -117,6 +121,7 @@ type Episode = {
   hasCareTeam?: boolean;
   /** W2 — package entitlement signal for list badge. */
   packageSignal?: "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED";
+  courseMark?: CourseMark;
   patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { id: string; text: string; recordedAt: string }[];
   diagnoses: {
@@ -210,14 +215,18 @@ function daysRemaining(endsOn: string): number {
   return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86_400_000));
 }
 
-function AssignmentDot({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
+function courseDotClass(mark: CourseMark): string {
+  if (mark === "ready") return "bg-[#27AE60]";
+  if (mark === "attention") return "bg-[#F1C40F]";
+  return "bg-[#E74C3C]";
+}
+
+function CourseDot({ mark, label }: { mark: CourseMark; label: string }) {
   return (
     <span
-      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
-        ok ? "bg-[#27AE60]" : "bg-[#E74C3C]"
-      }`}
-      title={ok ? yes : no}
-      aria-label={ok ? yes : no}
+      className={`inline-block h-3 w-3 shrink-0 rounded-full ${courseDotClass(mark)}`}
+      title={label}
+      aria-label={label}
     />
   );
 }
@@ -264,6 +273,7 @@ export default function SanatoriumPage() {
   const [filterOrigin, setFilterOrigin] = useState("");
   const [filterRoom, setFilterRoom] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
+  const [filterCourse, setFilterCourse] = useState("");
   const [hotelRooms, setHotelRooms] = useState<string[]>([]);
   const [programCodes, setProgramCodes] = useState<string[]>([]);
   const [proposedOrders, setProposedOrders] = useState<
@@ -295,10 +305,11 @@ export default function SanatoriumPage() {
       origin: filterOrigin,
       room: filterRoom,
       program: filterProgram,
+      course: filterCourse,
       sort: listSort?.key ?? "",
       sortDir: listSort?.dir ?? "",
     }),
-    [q, filterOrigin, filterRoom, filterProgram, listSort],
+    [q, filterOrigin, filterRoom, filterProgram, filterCourse, listSort],
   );
 
   const listFetcher = useCallback(
@@ -321,6 +332,7 @@ export default function SanatoriumPage() {
       if (f.origin) params.set("origin", f.origin);
       if (f.room.trim()) params.set("roomNumber", f.room.trim());
       if (f.program.trim()) params.set("programCode", f.program.trim());
+      if (f.course) params.set("course", f.course);
       if (f.sort && f.sortDir) {
         params.set("sort", f.sort);
         params.set("sortDir", f.sortDir);
@@ -863,19 +875,30 @@ export default function SanatoriumPage() {
     }
   }
 
+  function markFor(e: Episode): CourseMark {
+    const override = careTeamOn[e.id];
+    const team = override ?? e.hasCareTeam === true;
+    if (override === undefined && e.courseMark) return e.courseMark;
+    if (!team) return "blocked";
+    return e.packageSignal === "OK" ? "ready" : "attention";
+  }
+
+  function courseLabel(mark: CourseMark): string {
+    if (mark === "ready") return t("courseReady");
+    if (mark === "attention") return t("courseAttention");
+    return t("courseBlocked");
+  }
+
   const columns = useMemo<EraDataGridColumn<Episode & Record<string, unknown>>[]>(
     () => [
       {
         key: "assignment",
         header: t("colAssignment"),
         className: "w-10",
-        render: (e) => (
-          <AssignmentDot
-            ok={careTeamOn[e.id] ?? e.hasCareTeam === true}
-            yes={t("assignmentYes")}
-            no={t("assignmentNo")}
-          />
-        ),
+        render: (e) => {
+          const mark = markFor(e);
+          return <CourseDot mark={mark} label={courseLabel(mark)} />;
+        },
       },
       {
         key: "patient",
@@ -937,7 +960,20 @@ export default function SanatoriumPage() {
           return prog ? String(daysRemaining(prog.endsOn)) : "—";
         },
       },
-      { key: "status", header: t("colStatus"), sortable: true, render: (e) => e.status },
+      {
+        key: "status",
+        header: t("colStatus"),
+        render: (e) => {
+          const mark = markFor(e);
+          const label = courseLabel(mark);
+          return (
+            <span className="inline-flex items-center gap-2">
+              <CourseDot mark={mark} label={label} />
+              <span>{label}</span>
+            </span>
+          );
+        },
+      },
       {
         key: "actions",
         header: tc("actions"),
@@ -1084,6 +1120,7 @@ export default function SanatoriumPage() {
               setFilterOrigin("");
               setFilterRoom("");
               setFilterProgram("");
+              setFilterCourse("");
             }}
           >
             <Field
@@ -1101,6 +1138,17 @@ export default function SanatoriumPage() {
               <option value="">{tc("all")}</option>
               <option value="IN_HOUSE">{t("originInHouse")}</option>
               <option value="WALK_IN">{t("originWalkIn")}</option>
+            </FieldSelect>
+            <FieldSelect
+              label={t("filterCourse")}
+              preset="select"
+              value={filterCourse}
+              onChange={(e) => setFilterCourse(e.target.value)}
+            >
+              <option value="">{tc("all")}</option>
+              <option value="ready">{t("courseReady")}</option>
+              <option value="attention">{t("courseAttention")}</option>
+              <option value="blocked">{t("courseBlocked")}</option>
             </FieldSelect>
             <CatalogField
               kind="SEARCHABLE"
@@ -1168,7 +1216,7 @@ export default function SanatoriumPage() {
         title={t("treatmentChart")}
         subtitle={selected?.patientRef?.fullName}
         onClose={() => setChartModalOpen(false)}
-        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
+        maxWidthClass={EPISODE_MODAL_CLASS}
       >
         {selected ? (
           <div className="space-y-4 text-[13px]">

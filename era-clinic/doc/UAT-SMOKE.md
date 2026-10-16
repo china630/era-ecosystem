@@ -215,7 +215,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 Prerequisite (ops): clinic cutover policy `elektrawebDualRun` + Sync; hotel org `writeEnabled` + Sync; pool kill switch; extension on **sanatorium** desk with Write ON and SPA open.
 
 1. Doctor assigns a paid extra (`PENDING_PAY` on Müalicə kartı / extras modal — price shown).
-2. **`/reception/extra-tickets`** — filter by patient/procedure/origin; row **Banknote** or select rows → **Pay** (receipt/cheque required). ERA posts hotel folio (or walk-in cashier/EW channel), places onto schedule, then opens 3-copy print (`/print/extra-ticket/…`).
+2. **`/reception/extra-tickets`** — filter by patient/procedure/origin; row **Banknote** or select rows → **Pay**. ERA posts each line to the hotel folio, places them on the schedule, then opens one cheque that lists every paid line (room number + catalog name in the print language) in 3 copy windows (`/print/extra-ticket/…`).
 3. Confirm hotel health `writeEnabled` and outbox not stuck `FAILED`. Unknown SPA product must fail enqueue (do not guess).
 4. **`/nurse`** — extra without ticket → check-in blocked (`TICKET_REQUIRED`).
 5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio / hotel cashier path, not clinic cashier (field).
@@ -233,15 +233,16 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 1. **In-house** Müalicə kartı: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. Placement: **today ≤ N distinct in-package codes** (`/admin/settings` daily cap, default 3) + any **paid extras**; rest from next work day. Day-1 auto ≤ N distinct codes. Card **Cədvəl** = today (Baku) only; **Tam plan** + print in the plan modal (cards, same width as the patient card). Language picker must sit **above** the plan/card modal. Print **Doctor** = episode care team (not cabin/roster nurse).
 2. **Walk-in:** package block hidden; **Additional procedures** only; reception Pay requires payment receipt/cheque ref.
 3. Extras modal shows unit price + muted total; Save → `PENDING_PAY` on card (not nurse list until ticket).
-4. `/reception/extra-tickets` → filters + row money icon or select all → Pay with receipt → folio/cashier → schedule → print ×3 per procedure.
+4. `/reception/extra-tickets` → filters + row money icon or select all → Pay → folio/cashier → schedule → one cheque with every paid line, 3 copy windows.
 5. Nurse `/nurse?mine=1`: unpaid extras absent; paid without ticket → check-in `TICKET_REQUIRED`.
 6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
-7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
+7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** for the batch (reception / nurse / guest), and each window lists every procedure on that receipt.
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
 9. **Package left menu** shows **named treatment SKUs only** (e.g. Naftalan). Pool buckets (Fizioprosedurlar* / Parafin* / `PHYSIO_POOL`) are **hidden** — not assignable as a catch-all from this modal.
 10. Opening package assign on an OPEN episode **without** `ProgramInstance` returns **200** + `blockReason` (`NO_PROGRAM_CODE` / `NO_PROGRAM`) — modal shows how to set/open the package (not a generic load failure). Mutations still 409 `NO_PROGRAM`.
 11. **Naftalan vannası** overlay: title + **Miqdar** top-right (no duplicate Prosedur field); fill Tam / Oturaq (above navel) / Qurşaq (waist); no zone chips / Tətbiq; **Vanna ardıcıllığı** only if qty > 1. Overlay top aligns with **Paket qalığı** list.
 12. Assigned card copy: `Name ×qty (draft)` then one param per line (`naftalanFill`, `dayBlock`, `bathSequence`). Same SKU must not split into multiple cards.
+13. Müalicə kartı, prosedur planı, and the assign modal share one fixed frame (episode card size). Assigned bath cards show the day-series calendar. Sanatorium list: green / yellow / red course mark and a status filter. Day series and Word blank upload use the procedure-rules and LIS screen permissions.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=cli57-package-assign

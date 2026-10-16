@@ -571,6 +571,7 @@ export async function listOpenEpisodes(input?: {
   origin?: string;
   roomNumber?: string;
   programCode?: string;
+  course?: "ready" | "attention" | "blocked";
   includeHotelRooms?: boolean;
   includeProgramCodes?: boolean;
   sort?: "patient" | "room" | "origin" | "program" | "status";
@@ -633,6 +634,20 @@ export async function listOpenEpisodes(input?: {
           },
         },
       ],
+    });
+  }
+  if (input?.course === "blocked") {
+    and.push({ careDoctors: { none: {} } });
+  } else if (input?.course === "ready") {
+    and.push({
+      careDoctors: { some: {} },
+      programInstance: { isNot: null },
+      noPackageConfirmedAt: null,
+    });
+  } else if (input?.course === "attention") {
+    and.push({
+      careDoctors: { some: {} },
+      OR: [{ programInstance: { is: null } }, { noPackageConfirmedAt: { not: null } }],
     });
   }
   if (scopeFilter) and.push(scopeFilter);
@@ -726,6 +741,15 @@ export async function listOpenEpisodes(input?: {
   }
 
   /** Ops package signal for list badges / filters. */
+  function courseMark(
+    hasCareTeam: boolean,
+    signal: "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED",
+  ): "ready" | "attention" | "blocked" {
+    if (!hasCareTeam) return "blocked";
+    if (signal === "OK") return "ready";
+    return "attention";
+  }
+
   function packageSignal(e: {
     programCode: string | null;
     noPackageConfirmedAt?: Date | null;
@@ -762,6 +786,7 @@ export async function listOpenEpisodes(input?: {
       ...flagged,
       programInstance,
       packageSignal: packageSignal(e),
+      courseMark: courseMark(flagged.hasCareTeam, packageSignal(e)),
     };
   }
 
