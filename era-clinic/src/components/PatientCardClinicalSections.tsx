@@ -686,13 +686,17 @@ export function PatientCardClinicalSections({
                         const d = await res.json();
                         const misses = Array.isArray(d.misses) ? d.misses : [];
                         const missText = misses
-                          .map((miss: { ymd?: string; reason?: string }) => {
+                          .map((miss: { ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }) => {
                             const reason =
                               miss.reason === "no_staff"
                                 ? t("packageAssignMissNoStaff")
                                 : miss.reason === "no_cabin"
                                   ? t("packageAssignMissNoCabin")
-                                  : t("packageAssignMissNoDay");
+                                  : miss.reason === "no_slot"
+                                    ? t("packageAssignMissNoSlot")
+                                    : t("packageAssignMissNoDay");
+                            const who = miss.procedureName || miss.procedureCode;
+                            if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
                             return t("packageAssignMiss", { date: miss.ymd || "—", reason });
                           })
                           .join("; ");

@@ -23,17 +23,23 @@ function hoursBetween(a: Date, b: Date): number {
   return Math.abs(a.getTime() - b.getTime()) / 3_600_000;
 }
 
+type CompatibilityRuleRow = {
+  procedureCodeA: string;
+  procedureCodeB: string;
+  ruleType: ProcedureCompatibilityRuleType;
+  minHours: number | null;
+};
+
 /** Check a candidate slot against existing scheduled procedures. */
-export async function validateProcedureCompatibility(input: {
+export function validateProcedureCompatibilityRules(input: {
   candidateCode: string;
   startAt: Date;
   endAt: Date;
   existing: ScheduledProcedure[];
   excludeCodes?: string[];
-}): Promise<CompatibilityViolation[]> {
-  const rules = await prisma.procedureCompatibilityRule.findMany({
-    where: { active: true },
-  });
+  rules: CompatibilityRuleRow[];
+}): CompatibilityViolation[] {
+  const rules = input.rules;
 
   const violations: CompatibilityViolation[] = [];
   const existing = input.existing.filter(
@@ -98,6 +104,22 @@ export async function validateProcedureCompatibility(input: {
   }
 
   return violations;
+}
+
+export async function validateProcedureCompatibility(input: {
+  candidateCode: string;
+  startAt: Date;
+  endAt: Date;
+  existing: ScheduledProcedure[];
+  excludeCodes?: string[];
+  rules?: CompatibilityRuleRow[];
+}): Promise<CompatibilityViolation[]> {
+  const rules =
+    input.rules ??
+    (await prisma.procedureCompatibilityRule.findMany({
+      where: { active: true },
+    }));
+  return validateProcedureCompatibilityRules({ ...input, rules });
 }
 
 export async function listCompatibilityRules() {
