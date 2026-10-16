@@ -283,6 +283,7 @@ export async function patchReservationFull(
     dailyRates,
     shareEligible,
     moveReasonCode,
+    audit,
     ...data
   } = input;
 
@@ -889,7 +890,7 @@ export async function patchReservationFull(
   }
 
   const after = await loadReservationAuditSnapshot(id);
-  await recordReservationDiff(id, 'UPDATE', before, after, input.audit);
+  await recordReservationDiff(id, 'UPDATE', before, after, audit);
   return getReservationFull(id);
 }
 
