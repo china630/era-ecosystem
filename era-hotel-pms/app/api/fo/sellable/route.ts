@@ -3,6 +3,7 @@ import { serialize } from '@/lib/serialize';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { parseHotelNoon } from '@/lib/hotel-calendar';
 import { getSellablePreview } from '@/lib/services/room-type-availability.service';
 
 export async function GET(request: Request) {
@@ -16,8 +17,8 @@ export async function GET(request: Request) {
     if (!roomTypeId || !fromStr || !toStr) {
       throw new Error('roomTypeId, from, and to query params required');
     }
-    const from = new Date(fromStr);
-    const to = new Date(toStr);
+    const from = parseHotelNoon(fromStr);
+    const to = parseHotelNoon(toStr);
     if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
       throw new Error('Invalid from/to date');
     }

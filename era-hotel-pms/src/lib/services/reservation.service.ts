@@ -81,9 +81,11 @@ export async function getAvailability(roomTypeId: string, from: Date, to: Date, 
   const roomType = await prisma.roomType.findUnique({ where: { id: roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
 
-  const booked = await countDoorsUsedForRoomType(roomTypeId, from, to, excludeReservationId);
+  const fromNight = parseHotelNoon(from);
+  const toNight = parseHotelNoon(to);
+  const booked = await countDoorsUsedForRoomType(roomTypeId, fromNight, toNight, excludeReservationId);
 
-  const stopSell = await hasStopSellInRange(roomTypeId, from, to);
+  const stopSell = await hasStopSellInRange(roomTypeId, fromNight, toNight);
   const effectiveQuota = stopSell ? 0 : roomType.baseQuota;
 
   return {

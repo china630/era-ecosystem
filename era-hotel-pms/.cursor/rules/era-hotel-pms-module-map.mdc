@@ -35,7 +35,7 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | Route | API | Role |
 |-------|-----|------|
 | Staff `/login` | `POST /api/auth/login`; `getSatelliteSession` reads the cookie | Middleware stamps `x-user-id`, `x-user-role`, `x-era-organization-id` from the token |
-| /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview |
+| /fo/availability | GET /api/fo/room-type-availability, GET /api/fo/sellable | Sellable Avl/Occ; create preview; hotel-noon night (same as channel/IBE/contract) |
 | /fo/reservations | reservations grid | Stay list — `GET /api/reports/reservations-grid` paged `{ items, total, page, pageSize }`; chip `queue` (bookings = open arrivals from today, Baku day; `overdue=1` for the night-audit tail; `realizedArrivals` after In-house = IN_HOUSE with `Stay.actualCheckIn` today, date pickers hidden); default sort is room number; leading № is display-only (continues across pages, not a sort key — API ignores `sort=rowNo`); source column shows agency, walk-in, OTA, company, or website; guest names joined with ` / `; `EraListWorkspace`; notes column penultimate; `q` + `noteQ` + `hasNotes` |
 | /reports/payment-voids | `GET /api/reports/payment-voids` | Deleted folio payments (reason required). Same rows as the folio Deleted chip |
 | /fo/room-plan | room-plan API | Timeline bars; share twin N lanes without overlay; bed = per-night free; EW day-state + occupancy-frame strokes; OOO/OOS hidden |

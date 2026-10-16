@@ -1,3 +1,4 @@
+import { hotelNightBounds } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import {
   computeBarPoolAfterContractHold,
@@ -79,16 +80,16 @@ export async function deleteContractAllotment(id: string) {
   return prisma.contractAllotment.delete({ where: { id } });
 }
 
-/** Count contract-tagged reservations overlapping a night for a room type. */
+/** Count contract-tagged reservations overlapping a hotel night for a room type. */
 async function countContractBookings(roomTypeId: string, night: Date, salesContractId?: string) {
-  const nextDay = new Date(night.getTime() + 86400000);
+  const { start, end } = hotelNightBounds(night);
   return prisma.reservation.count({
     where: {
       roomTypeId,
       ...(salesContractId ? { salesContractId } : { salesContractId: { not: null } }),
       status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
-      checkInDate: { lt: nextDay },
-      checkOutDate: { gt: night },
+      checkInDate: { lt: end },
+      checkOutDate: { gt: start },
     },
   });
 }
@@ -124,9 +125,9 @@ export async function getAvailabilityWithContractAllotment(
   const dayResults = [];
 
   for (const night of nights) {
-    const nightEnd = new Date(night.getTime() + 86400000);
-    const slices = await loadShareSlicesForType(roomTypeId, night, nightEnd);
-    const overlapping = countDoorsUsedOnNight(slices, night, roomType.adultCapacity ?? 2);
+    const { start, end } = hotelNightBounds(night);
+    const slices = await loadShareSlicesForType(roomTypeId, start, end);
+    const overlapping = countDoorsUsedOnNight(slices, start, roomType.adultCapacity ?? 2);
 
     let available = Math.max(0, roomType.baseQuota - overlapping);
 

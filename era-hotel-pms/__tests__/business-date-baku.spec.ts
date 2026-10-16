@@ -6,7 +6,7 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { hotelDateKey, hotelNightBounds, stayOccupiesHotelNight } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import {
   getBusinessDateStatus,
@@ -43,5 +43,27 @@ describe('hotel business date (Asia/Baku)', () => {
     const status = await getBusinessDateStatus();
     expect(status.wallClockDate).toBe('2026-09-22');
     expect(status.currentBusinessDate).toBe('2026-09-22');
+  });
+});
+
+describe('hotel night bounds (door occupancy)', () => {
+  it('is [12:00 Baku, next 12:00) so 12:00 checkout is turnover', () => {
+    const { start, end } = hotelNightBounds('2026-10-16');
+    expect(start.toISOString()).toBe('2026-10-16T08:00:00.000Z');
+    expect(end.toISOString()).toBe('2026-10-17T08:00:00.000Z');
+    expect(
+      stayOccupiesHotelNight(
+        new Date('2026-10-06T10:00:00.000Z'),
+        new Date('2026-10-16T08:00:00.000Z'),
+        '2026-10-16',
+      ),
+    ).toBe(false);
+    expect(
+      stayOccupiesHotelNight(
+        new Date('2026-10-06T10:00:00.000Z'),
+        new Date('2026-10-16T08:00:00.000Z'),
+        '2026-10-15',
+      ),
+    ).toBe(true);
   });
 });

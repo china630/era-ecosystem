@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { stayOccupiesHotelNight } from '@/lib/hotel-calendar';
 import { safePct, safeDiv } from '@/lib/reports/ratio';
 import {
   countDoorsUsedOnNight,
@@ -94,7 +95,9 @@ function indexOcc(reservations: OccReservation[]): OccIndex {
 }
 
 function nightSlice(reservations: OccReservation[], night: Date, roomTypeId?: string): OccReservation[] {
-  const day = indexOcc(reservations).byNight.get(toIso(night)) ?? [];
+  const day = (indexOcc(reservations).byNight.get(toIso(night)) ?? []).filter((r) =>
+    stayOccupiesHotelNight(r.checkInDate, r.checkOutDate, night),
+  );
   return roomTypeId ? day.filter((r) => r.roomTypeId === roomTypeId) : day;
 }
 

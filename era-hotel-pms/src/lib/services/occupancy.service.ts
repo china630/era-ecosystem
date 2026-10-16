@@ -1,6 +1,5 @@
-import { bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
-import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, parseHotelNoon, stayOccupiesHotelNight } from '@/lib/hotel-calendar';
 
 const ACTIVE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
@@ -26,29 +25,20 @@ export interface OccupancyGrid {
   rows: OccupancyRow[];
 }
 
-function reservationOccupiesNight(
-  checkIn: Date,
-  checkOut: Date,
-  nightStart: Date,
-  nightEnd: Date,
-): boolean {
-  return checkIn < nightEnd && checkOut > nightStart;
-}
-
 export async function getOccupancyGrid(input?: {
   from?: Date;
   days?: number;
 }): Promise<OccupancyGrid> {
   const days = input?.days ?? 30;
   const fromKey = hotelDateKey(input?.from ?? new Date());
-  const { start: from } = bakuDayBounds(fromKey);
+  const from = parseHotelNoon(fromKey);
 
   const dates: string[] = [];
   for (let i = 0; i < days; i++) {
     dates.push(addHotelDays(fromKey, i));
   }
 
-  const windowEnd = bakuDayBounds(addHotelDays(fromKey, days)).start;
+  const windowEnd = parseHotelNoon(addHotelDays(fromKey, days));
 
   const roomTypes = await prisma.roomType.findMany({ orderBy: { code: 'asc' } });
   const reservations = await prisma.reservation.findMany({
@@ -65,10 +55,8 @@ export async function getOccupancyGrid(input?: {
     let totalSoldNights = 0;
 
     const cells: OccupancyCell[] = dates.map((nightKey) => {
-      const { start: nightStart, end: nightEnd } = bakuDayBounds(nightKey);
-
       const sold = typeReservations.filter((r) =>
-        reservationOccupiesNight(r.checkInDate, r.checkOutDate, nightStart, nightEnd),
+        stayOccupiesHotelNight(r.checkInDate, r.checkOutDate, nightKey),
       ).length;
 
       totalSoldNights += sold;
