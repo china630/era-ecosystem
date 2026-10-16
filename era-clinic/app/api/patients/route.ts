@@ -122,6 +122,7 @@ export async function GET(req: Request) {
       hasMdm: parseHasMdm(params.get("hasMdm")),
       ageMin: ageMinRaw ? Number(ageMinRaw) : undefined,
       ageMax: ageMaxRaw ? Number(ageMaxRaw) : undefined,
+      nationality: params.get("nationality")?.trim().toUpperCase() || undefined,
       roomNumber: params.get("roomNumber")?.trim() || undefined,
       includeHotelRooms: params.get("includeHotelRooms") === "1",
       programCode: params.get("programCode")?.trim() || undefined,

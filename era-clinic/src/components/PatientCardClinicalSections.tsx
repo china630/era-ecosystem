@@ -698,9 +698,11 @@ export function PatientCardClinicalSections({
                                       ? t("packageAssignMissDayFull")
                                       : miss.reason === "rule"
                                         ? t("packageAssignMissRule")
-                                        : miss.reason === "no_slot"
-                                          ? t("packageAssignMissNoSlot")
-                                          : t("packageAssignMissNoDay");
+                                : miss.reason === "no_slot"
+                                  ? t("packageAssignMissNoSlot")
+                                  : miss.reason === "no_mode"
+                                    ? t("packageAssignMissNoBathMode")
+                                    : t("packageAssignMissNoDay");
                             const who = miss.procedureName || miss.procedureCode;
                             if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
                             return t("packageAssignMiss", { date: miss.ymd || "—", reason });

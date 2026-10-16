@@ -7,6 +7,7 @@ import {
 } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { getCapacitySummary } from "@/lib/capacity.service";
+import { executiveDayBlocks } from "@/domain/ops/executive-day.service";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 function resolveDayBounds(dateParam?: string) {
@@ -34,32 +35,23 @@ export async function GET(req: Request) {
       ...(practitionerId ? { practitionerId } : {}),
     };
 
-    const [visitsToday, labCompletedToday, openLabOrders] = await Promise.all([
+    const [visitsToday, openLabOrders, blocks, capacity] = await Promise.all([
       prisma.visit.count({ where: visitWhere }),
-      prisma.labOrder.findMany({
-        where: {
-          status: "COMPLETED",
-          completedAt: { gte: today, lt: tomorrow },
-        },
-        select: { amountNet: true },
-      }),
       prisma.labOrder.count({
         where: { status: { not: "COMPLETED" } },
       }),
+      executiveDayBlocks({
+        from: today,
+        to: tomorrow,
+      }),
+      getCapacitySummary(today),
     ]);
-
-    const labRevenueToday = labCompletedToday.reduce(
-      (sum, o) => sum + Number(o.amountNet),
-      0,
-    );
-
-    const capacity = await getCapacitySummary(today);
 
     return jsonOk({
       date: ymd,
       practitionerId: practitionerId ?? null,
       visitsToday,
-      labRevenueToday,
+      blocks,
       openLabOrders,
       currency: "AZN",
       capacity,

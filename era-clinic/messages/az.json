@@ -814,6 +814,12 @@
     "openLabOrders": "Açıq lab sifarişləri",
     "filterDate": "Tarix",
     "filterPractitioner": "Həkim",
+    "blockProcedures": "Prosedurlar",
+    "blockDiagnostics": "Diaqnostika",
+    "blockLabs": "Analizlər",
+    "countFree": "Paketdə",
+    "countPaid": "Ödənişli",
+    "countTotal": "Cəmi",
     "capacityTitle": "Sanatoriya yüklənməsi (həftə)"
   },
   "sanatorium": {
@@ -1636,6 +1642,7 @@
     "sexOther": "Digər",
     "sexUnknown": "Göstərilməyib",
     "birthDate": "Doğum tarixi",
+    "colAge": "Yaş",
     "ageYears": "{age} yaş",
     "ageUnknown": "Yaş bilinmir",
     "bloodGroup": "Qan qrupu",
@@ -1863,6 +1870,7 @@
     "packageAssignMissNoCabin": "həmin gün boş kabinə yoxdur",
     "packageAssignMissNoDay": "qalma günlərində yer qalmayıb",
     "packageAssignMissNoSlot": "qalma günlərində boş vaxt qalmayıb",
+    "packageAssignMissNoBathMode": "vanna üçün gün blokunu seçin",
     "packageAssignMissStaffBusy": "boş vaxtlarda personal məşğuldur",
     "packageAssignMissDayFull": "həmin gün üçün prosedur limiti dolub",
     "packageAssignMissRule": "boş vaxtı plan qaydası bağlayır",

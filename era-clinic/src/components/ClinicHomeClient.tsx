@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   PageHeader,
   SECONDARY_BUTTON_CLASS,
@@ -21,11 +22,27 @@ function todayBaku(): string {
   }).format(new Date());
 }
 
+type Practitioner = { id: string; fullName: string };
+
 export function ClinicHomeClient({ showExecutive }: { showExecutive: boolean }) {
   const t = useTranslations("home");
+  const te = useTranslations("executive");
   const tc = useTranslations("common");
   const [date, setDate] = useState(todayBaku);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [practitionerId, setPractitionerId] = useState("");
+  const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
+
+  useEffect(() => {
+    if (!showExecutive) return;
+    void fetch("/api/admin/practitioners")
+      .then((res) => res.json())
+      .then((data) => {
+        const rows = (data.data ?? data) as Practitioner[];
+        if (Array.isArray(rows)) setPractitioners(rows);
+      })
+      .catch(() => undefined);
+  }, [showExecutive]);
 
   return (
     <div className="space-y-6">
@@ -34,13 +51,30 @@ export function ClinicHomeClient({ showExecutive }: { showExecutive: boolean }) 
         <div
           className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end justify-between gap-3 px-4 py-3`}
         >
-          <DatePicker
-            label={t("filterDate")}
-            value={date}
-            onChange={setDate}
-            placeholder={tc("datePlaceholder")}
-            openCalendarLabel={tc("openCalendar")}
-          />
+          <div className="flex flex-wrap items-end gap-3">
+            <DatePicker
+              label={t("filterDate")}
+              value={date}
+              onChange={setDate}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+            {showExecutive ? (
+              <div className="w-56">
+                <CatalogField
+                  kind="SEARCHABLE"
+                  label={te("filterPractitioner")}
+                  value={practitionerId}
+                  onChange={(value) => setPractitionerId(String(value ?? ""))}
+                  options={[
+                    { value: "", label: tc("all") },
+                    ...practitioners.map((row) => ({ value: row.id, label: row.fullName })),
+                  ]}
+                  emptyLabel={tc("all")}
+                />
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             className={`${SECONDARY_BUTTON_CLASS} inline-flex items-center gap-1.5`}
@@ -53,7 +87,11 @@ export function ClinicHomeClient({ showExecutive }: { showExecutive: boolean }) 
 
         {showExecutive ? (
           <div className={`${CARD_CONTAINER_CLASS} p-6`}>
-            <ExecutiveDashboard date={date} refreshKey={refreshKey} />
+            <ExecutiveDashboard
+              date={date}
+              refreshKey={refreshKey}
+              practitionerId={practitionerId}
+            />
           </div>
         ) : null}
 

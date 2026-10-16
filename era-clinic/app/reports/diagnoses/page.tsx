@@ -132,7 +132,7 @@ export default function DiagnosisReportPage() {
             </FieldSelect>
             <FieldSelect
               label={t("chapter")}
-              preset="selectWide"
+              preset="select"
               value={chapter}
               onChange={(e) => setChapter(e.target.value)}
             >

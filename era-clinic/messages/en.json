@@ -839,6 +839,12 @@
     "openLabOrders": "Open lab orders",
     "filterDate": "Date",
     "filterPractitioner": "Practitioner",
+    "blockProcedures": "Procedures",
+    "blockDiagnostics": "Diagnostics",
+    "blockLabs": "Lab tests",
+    "countFree": "In package",
+    "countPaid": "Paid",
+    "countTotal": "Total",
     "capacityTitle": "Sanatorium load (week)"
   },
   "sanatorium": {
@@ -1648,6 +1654,7 @@
     "sexOther": "Other",
     "sexUnknown": "Not specified",
     "birthDate": "Date of birth",
+    "colAge": "Age",
     "ageYears": "{age} y",
     "ageUnknown": "Age unknown",
     "bloodGroup": "Blood group",
@@ -1875,6 +1882,7 @@
     "packageAssignMissNoCabin": "no free cabin that day",
     "packageAssignMissNoDay": "no stay day left for this session",
     "packageAssignMissNoSlot": "no open time left in the stay",
+    "packageAssignMissNoBathMode": "Choose the bath day pattern",
     "packageAssignMissStaffBusy": "staff are busy at the open times",
     "packageAssignMissDayFull": "that day already has the maximum procedures",
     "packageAssignMissRule": "a scheduling rule blocks the open times",

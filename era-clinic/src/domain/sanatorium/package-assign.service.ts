@@ -651,7 +651,7 @@ export async function getPackageAssignSnapshot(
   const orders = await prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: episodeId,
-      status: { in: [...IN_CIRCULATION, ...CONSUMED] },
+      status: { in: ["PROPOSED", ...IN_CIRCULATION, ...CONSUMED] },
       inPackage: true,
     },
     select: {
@@ -678,7 +678,7 @@ export async function getPackageAssignSnapshot(
   for (const o of orders) {
     const q = quotaCodeOf(o);
     const row = counts.get(q) ?? { circ: 0, consumed: 0 };
-    if ((IN_CIRCULATION as readonly string[]).includes(o.status)) row.circ += 1;
+    if (o.status === "PROPOSED" || (IN_CIRCULATION as readonly string[]).includes(o.status)) row.circ += 1;
     else row.consumed += 1;
     counts.set(q, row);
   }
@@ -864,17 +864,10 @@ export type AssignLineInput = {
 /** Drop a failed save: none of the new sessions stay on the schedule. */
 async function abandonCreatedPackageOrders(ids: string[]) {
   if (ids.length === 0) return;
+  await prisma.procedureOrderSite.deleteMany({ where: { procedureOrderId: { in: ids } } });
   await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
   await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
-  await prisma.procedureOrder.updateMany({
-    where: { id: { in: ids } },
-    data: {
-      status: "CANCELLED",
-      cancelledAt: new Date(),
-      cancelReason: "place_failed",
-      resourceId: null,
-    },
-  });
+  await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
 }
 
 /**
@@ -1105,7 +1098,8 @@ export async function assignPackageProcedures(
       reason: row.reason,
     })),
   ];
-  if (misses.length > 0) {
+  const placed = placement.placed + bathSeat.placedIds.length;
+  if (misses.length > 0 || placed !== createdIds.length) {
     await abandonCreatedPackageOrders(createdIds);
     const onlyMissingCabin =
       bathSeat.missed.length === 0 &&
@@ -1121,8 +1115,6 @@ export async function assignPackageProcedures(
       misses,
     );
   }
-  const placed = placement.placed + bathSeat.placedIds.length;
-
   const codes = [...new Set(resolved.map((l) => l.quotaCode))];
   for (const code of codes) {
     await syncQuotaUsed(instance.id, episodeId, code);

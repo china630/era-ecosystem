@@ -207,19 +207,20 @@ export function BathCalendarPanel({
   if (!snap || snap.series.length === 0 || snap.days.length === 0) return null;
 
   function cellMark(ymd: string): string {
-    if (manualRests.includes(ymd)) return "·";
-    if (manualBaths.includes(ymd)) return "•";
     const planned = preview.get(ymd);
-    if (layout === "fresh" && planned) return planned;
     const order = snap?.orders.find((row) => row.ymd === ymd && codes.has(row.procedureCode));
-    if (order) {
+    let base = "";
+    if (layout === "fresh" && planned) base = planned;
+    else if (order) {
       const mark = markByCode.get(order.procedureCode) ?? "";
       const fill = order.physioFields?.naftalanFill;
-      if (fill === "OTURAQ") return `${mark} от`;
-      if (fill === "TAM") return `${mark} т`;
-      return mark;
-    }
-    return planned ?? "";
+      if (fill === "OTURAQ") base = `${mark} от`;
+      else if (fill === "TAM") base = `${mark} т`;
+      else base = mark;
+    } else base = planned ?? markByCode.get(members[0]?.procedureCode ?? "") ?? "";
+    if (manualRests.includes(ymd)) return "İst";
+    if (manualBaths.includes(ymd)) return base ? `${base}+` : "+";
+    return base;
   }
 
   function toggle(cell: WeekCell) {
