@@ -22,4 +22,16 @@ describe('handleRouteError share / room conflicts', () => {
     const res = handleRouteError(new Error('OTA reservations cannot use shared twin assignment'));
     expect(res.status).toBe(400);
   });
+
+  it('does not return a Prisma Request dump to the desk', async () => {
+    const dump = new Error(
+      'Invalid `prisma.reservation.update()` invocation:\n{ data: { audit: { request: { headers: { append: [object Function] } } } } }',
+    );
+    dump.name = 'PrismaClientValidationError';
+    const res = handleRouteError(dump);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe('Could not save this stay');
+    expect(String(body.error)).not.toMatch(/append/);
+  });
 });

@@ -95,6 +95,13 @@ export function handleRouteError(err: unknown) {
     ) {
       return jsonError(err.message, 409);
     }
+    if (
+      err.name === 'PrismaClientValidationError' ||
+      /invalid\s+`prisma\./i.test(err.message)
+    ) {
+      console.error(err);
+      return jsonError('Could not save this stay', 400);
+    }
     const known = ['not found', 'invalid', 'cannot', 'only', 'must'];
     if (known.some((k) => lower.includes(k))) {
       return jsonError(err.message, 400);
