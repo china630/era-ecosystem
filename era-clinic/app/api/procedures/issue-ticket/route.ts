@@ -19,8 +19,12 @@ import {
 import { payAndScheduleExtras } from "@/domain/sanatorium/extras-assign.service";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
 import { prisma } from "@/lib/prisma";
+import {
+  loadCatalogDisplayNameMap,
+  resolveOrderDisplayName,
+} from "@/domain/catalog/catalog-display-name.service";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getSatelliteSession();
     const denied = await requireClinicPermission(
@@ -31,13 +35,18 @@ export async function GET() {
     const { dualRun, orders } = await listExtrasAwaitingTicket(
       session?.organizationId,
     );
+    const locale = new URL(request.url).searchParams.get("locale") || "az";
+    const catalogNames = await loadCatalogDisplayNameMap(
+      orders.map((order) => order.procedureCode),
+      locale,
+    );
     return jsonOk({
       dualRun,
       count: orders.length,
       orders: orders.map((o) => ({
         id: o.id,
         procedureCode: o.procedureCode,
-        procedureName: o.procedureName,
+        procedureName: resolveOrderDisplayName(o, catalogNames),
         amountNet: Number(o.amountNet),
         patientOrigin: o.patientOrigin,
         status: o.status,
@@ -60,6 +69,7 @@ const schema = z.object({
   pay: z.boolean().optional(),
   /** Guest payment receipt / cheque reference (required for Pay). */
   paymentReceiptRef: z.string().min(1).max(200).optional(),
+  locale: z.string().min(2).max(8).optional(),
 });
 
 export async function POST(request: Request) {
@@ -82,7 +92,7 @@ export async function POST(request: Request) {
         body.orderIds,
         session!.sub,
         session?.organizationId,
-        { paymentReceiptRef: body.paymentReceiptRef },
+        { paymentReceiptRef: body.paymentReceiptRef, locale: body.locale },
       );
       return jsonOk({
         paid: result.accepted.length > 0,
@@ -100,6 +110,7 @@ export async function POST(request: Request) {
       body.orderIds,
       session!.sub,
       session?.organizationId,
+      body.locale,
     );
     return jsonOk({
       dualRun: result.dualRun,

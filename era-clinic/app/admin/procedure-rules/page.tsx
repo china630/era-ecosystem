@@ -311,10 +311,12 @@ export default function ProcedureRulesPage() {
         title={t('title')}
         subtitle={t('subtitle')}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-            <Plus className="h-4 w-4" aria-hidden />
-            {tc('add')}
-          </button>
+          tab === 'daySeries' ? undefined : (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+              <Plus className="h-4 w-4" aria-hidden />
+              {tc('add')}
+            </button>
+          )
         }
       />
       <div className={TAB_STRIP_CLASS}>

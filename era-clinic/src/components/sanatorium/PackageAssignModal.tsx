@@ -27,6 +27,7 @@ import { BathCalendarPanel } from "@/components/sanatorium/BathCalendarPanel";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
+import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
 
 export type PackageBalanceRow = {
   procedureCode: string;
@@ -1201,7 +1202,7 @@ export function PackageAssignModal({
       onClose={() => {
         if (!busy) onClose();
       }}
-      maxWidthClass="max-w-4xl w-full max-h-[90vh]"
+      maxWidthClass={EPISODE_MODAL_CLASS}
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
@@ -1583,6 +1584,11 @@ export function PackageAssignModal({
                         <p className={`pt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
                           {tPhysio("paidLine")}: {lane.paidQty}
                         </p>
+                      ) : null}
+                      {/NAFTALAN|VANN|BATH/i.test(lane.code) ? (
+                        <div className="mt-2">
+                          <BathCalendarPanel episodeId={episodeId} procedureCode={lane.code} />
+                        </div>
                       ) : null}
                     </li>
                   );

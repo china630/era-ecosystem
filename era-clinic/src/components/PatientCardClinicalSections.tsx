@@ -30,6 +30,7 @@ import {
   EpisodeScheduleCards,
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
+import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 type TimelineEvent = {
   id: string;
@@ -865,7 +866,7 @@ export function PatientCardClinicalSections({
           onPlanClose?.();
         }}
         closeLabel={tc("close")}
-        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
+        maxWidthClass={EPISODE_MODAL_CLASS}
         headerActions={
           <button
             type="button"

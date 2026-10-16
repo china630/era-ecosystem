@@ -28,20 +28,28 @@ export function DaySeriesPanel({ procedureOptions }: { procedureOptions: Array<{
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/procedure-day-series");
-    if (!res.ok) return;
-    const json = await res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showApiError(json, tc("loadingFailed"));
+      return;
+    }
     setRows((json.data ?? json) as Series[]);
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   async function save() {
+    const pending =
+      procedureCode && shortMark.trim()
+        ? [...members, { procedureCode, shortMark: shortMark.trim() }]
+        : members;
+    if (!pending.length) return;
     const res = await fetch("/api/admin/procedure-day-series", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, name, fillsRestDays, members }),
+      body: JSON.stringify({ code, name, fillsRestDays, members: pending }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -51,6 +59,8 @@ export function DaySeriesPanel({ procedureOptions }: { procedureOptions: Array<{
     showSuccess(tc("saved"));
     setCode("");
     setName("");
+    setProcedureCode("");
+    setShortMark("");
     setMembers([]);
     await load();
   }
@@ -101,7 +111,12 @@ export function DaySeriesPanel({ procedureOptions }: { procedureOptions: Array<{
         >
           {tc("add")}
         </button>
-        <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={!code || !name} onClick={() => void save()}>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={!code.trim() || !name.trim() || (members.length === 0 && !(procedureCode && shortMark.trim()))}
+          onClick={() => void save()}
+        >
           {tc("save")}
         </button>
       </div>
