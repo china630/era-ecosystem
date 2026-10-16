@@ -12,6 +12,9 @@ jest.mock("@/lib/prisma", () => ({
     resourceBooking: {
       deleteMany: jest.fn(),
     },
+    procedureAllocation: {
+      deleteMany: jest.fn(),
+    },
     visit: {
       updateMany: jest.fn(),
     },
@@ -44,6 +47,9 @@ const mockedOrders = prisma.procedureOrder as unknown as {
 const mockedBookings = prisma.resourceBooking as unknown as {
   deleteMany: jest.Mock;
 };
+const mockedAllocations = prisma.procedureAllocation as unknown as {
+  deleteMany: jest.Mock;
+};
 const mockedVisits = prisma.visit as unknown as {
   updateMany: jest.Mock;
 };
@@ -60,6 +66,7 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
     mockedOrders.updateMany.mockResolvedValue({ count: 1 });
     mockedOrders.deleteMany.mockResolvedValue({ count: 0 });
     mockedBookings.deleteMany.mockResolvedValue({ count: 1 });
+    mockedAllocations.deleteMany.mockResolvedValue({ count: 1 });
 
     await handleGuestDeparted({
       type: SATELLITE_HOTEL_GUEST_DEPARTED,
@@ -87,6 +94,12 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
         data: expect.objectContaining({ status: "CLOSED" }),
       }),
     );
+    expect(mockedAllocations.deleteMany).toHaveBeenCalledWith({
+      where: { procedureOrderId: { in: ["ord-1"] } },
+    });
+    expect(mockedBookings.deleteMany).toHaveBeenCalledWith({
+      where: { procedureOrderId: { in: ["ord-1"] } },
+    });
     expect(mockedOrders.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ cancelReason: "hotel_guest_departed" }),
