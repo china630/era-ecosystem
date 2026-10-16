@@ -1,41 +1,85 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Ban, Check, Pencil, Upload } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
+  CARD_CONTAINER_CLASS,
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   Field,
-  MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  ListPaginationFooter,
+  ModalFooter,
+  ModalShell,
   TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
-import { URINE_BLANK_ROWS } from "@/domain/lab/urine-blank-rows";
 
-type Row = { label: string; value: string; norm: string; analyteCode: string };
-type BlankProfile = {
+type Analyte = { code: string; labelAz: string; labelEn: string; labelRu: string };
+type Panel = {
+  id: string;
+  code: string;
+  serviceCode: string;
+  category: string;
+  titleAz: string;
+  titleRu: string;
+  titleEn: string;
+  analytes: Analyte[];
+};
+type Profile = {
   id: string;
   name: string;
-  kind: "TABLE" | "NARRATIVE";
   serviceCode: string | null;
+  active: boolean;
   rows: Array<{ sourceLabel: string; analyteCode: string }>;
 };
+type WordRow = { label: string; value: string; norm: string };
+
+function panelTitle(panel: Panel, locale: string): string {
+  if (locale.startsWith("ru")) return panel.titleRu || panel.titleAz || panel.titleEn;
+  if (locale.startsWith("en")) return panel.titleEn || panel.titleAz || panel.titleRu;
+  return panel.titleAz || panel.titleEn || panel.titleRu;
+}
+
+function analyteTitle(row: Analyte, locale: string): string {
+  if (locale.startsWith("ru")) return row.labelRu || row.labelAz || row.labelEn || row.code;
+  if (locale.startsWith("en")) return row.labelEn || row.labelAz || row.labelRu || row.code;
+  return row.labelAz || row.labelEn || row.labelRu || row.code;
+}
+
+function profileFor(panel: Panel, profiles: Profile[]): Profile | undefined {
+  return (
+    profiles.find((row) => row.serviceCode === panel.code) ??
+    profiles.find((row) => Boolean(panel.serviceCode) && row.serviceCode === panel.serviceCode)
+  );
+}
 
 export function WordBlankMapper() {
-  const t = useTranslations("labOrdersDetail");
+  const t = useTranslations("lisProfiles");
   const tc = useTranslations("common");
-  const [profiles, setProfiles] = useState<BlankProfile[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [kind, setKind] = useState("TABLE");
-  const [serviceCode, setServiceCode] = useState<string | null>(null);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [options, setOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const locale = useLocale();
+  const [panels, setPanels] = useState<Panel[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [busy, setBusy] = useState(false);
+  const [openPanel, setOpenPanel] = useState<Panel | null>(null);
+  const [wordRows, setWordRows] = useState<WordRow[]>([]);
+  const [mapping, setMapping] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
+  const pendingPanel = useRef<Panel | null>(null);
+  const debouncedQuery = useDebouncedValue(query, 300);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/lab-blank-profiles");
@@ -44,42 +88,57 @@ export function WordBlankMapper() {
       showApiError(json, tc("loadingFailed"));
       return;
     }
-    const body = (json.data ?? json) as {
-      profiles?: BlankProfile[];
-      analyteOptions?: Array<{ value: string; label: string }>;
-    };
+    const body = (json.data ?? json) as { profiles?: Profile[]; panels?: Panel[] };
     setProfiles(Array.isArray(body.profiles) ? body.profiles : []);
-    setOptions(Array.isArray(body.analyteOptions) ? body.analyteOptions : []);
+    setPanels(Array.isArray(body.panels) ? body.panels : []);
   }, [tc]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  function openProfile(profile: BlankProfile) {
-    setEditingId(profile.id);
-    setName(profile.name);
-    setKind(profile.kind);
-    setServiceCode(profile.serviceCode);
-    setRows(
-      profile.rows.map((row) => ({
-        label: row.sourceLabel,
-        value: "",
-        norm: "",
-        analyteCode: row.analyteCode,
-      })),
+  const filtered = useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
+    return panels.filter((panel) => {
+      const profile = profileFor(panel, profiles);
+      const mapped = Boolean(profile && profile.rows.length > 0 && profile.active);
+      const off = Boolean(profile && !profile.active);
+      if (status === "mapped" && !mapped) return false;
+      if (status === "unmapped" && (mapped || off || profile)) return false;
+      if (status === "off" && !off) return false;
+      if (!q) return true;
+      const title = panelTitle(panel, locale).toLowerCase();
+      return (
+        title.includes(q) ||
+        panel.code.toLowerCase().includes(q) ||
+        panel.category.toLowerCase().includes(q)
+      );
+    });
+  }, [panels, profiles, debouncedQuery, status, locale]);
+
+  const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  function openMapper(panel: Panel, rows: WordRow[], profile: Profile | undefined) {
+    const next: Record<string, string> = {};
+    const byLabel = new Map(
+      (profile?.rows ?? []).map((row) => [row.analyteCode, row.sourceLabel]),
     );
+    const wordLabels = new Set(rows.map((row) => row.label));
+    for (const analyte of panel.analytes) {
+      const saved = byLabel.get(analyte.code) ?? "";
+      if (saved && (wordLabels.size === 0 || wordLabels.has(saved))) next[analyte.code] = saved;
+      else {
+        const title = analyteTitle(analyte, locale).trim().toLowerCase();
+        const hit = rows.find((row) => row.label.trim().toLowerCase() === title);
+        next[analyte.code] = hit?.label ?? "";
+      }
+    }
+    setMapping(next);
+    setWordRows(rows);
+    setOpenPanel(panel);
   }
 
-  function startNew() {
-    setEditingId(null);
-    setName("");
-    setKind("TABLE");
-    setServiceCode(null);
-    setRows([]);
-  }
-
-  async function readFile(file: File) {
+  async function readWord(panel: Panel, file: File) {
     setBusy(true);
     try {
       const body = new FormData();
@@ -87,37 +146,44 @@ export function WordBlankMapper() {
       const res = await fetch("/api/admin/lab-blank-profiles", { method: "PUT", body });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, t("loadWord"));
+        showApiError(json, t("uploadWord"));
         return;
       }
-      const parsed = (json.data?.rows ?? json.rows ?? []) as Array<{ label: string; value: string; norm: string }>;
-      const known = new Map(rows.map((row) => [row.label.trim().toLowerCase(), row.analyteCode]));
-      for (const row of URINE_BLANK_ROWS) known.set(row.label.toLowerCase(), known.get(row.label.toLowerCase()) || row.code);
-      setRows(
-        parsed.map((row) => ({
-          ...row,
-          analyteCode: known.get(row.label.trim().toLowerCase()) ?? "",
-        })),
-      );
+      const rows = (json.data?.rows ?? json.rows ?? []) as WordRow[];
+      if (rows.length === 0) {
+        showApiError({ error: t("wordEmpty") });
+        return;
+      }
+      openMapper(panel, rows, profileFor(panel, profiles));
     } finally {
       setBusy(false);
     }
   }
 
   async function save() {
+    if (!openPanel) return;
+    const rows = openPanel.analytes
+      .map((analyte) => ({
+        sourceLabel: (mapping[analyte.code] ?? "").trim(),
+        analyteCode: analyte.code,
+      }))
+      .filter((row) => row.sourceLabel);
+    if (rows.length === 0) {
+      showApiError({ error: t("mapRequired") });
+      return;
+    }
     setBusy(true);
     try {
+      const profile = profileFor(openPanel, profiles);
       const res = await fetch("/api/admin/lab-blank-profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: editingId ?? undefined,
-          name,
-          kind,
-          serviceCode,
-          rows: rows
-            .filter((row) => row.analyteCode.trim())
-            .map((row) => ({ sourceLabel: row.label, analyteCode: row.analyteCode.trim() })),
+          id: profile?.id,
+          name: panelTitle(openPanel, locale),
+          kind: "TABLE",
+          serviceCode: openPanel.code,
+          rows,
         }),
       });
       const json = await res.json();
@@ -125,113 +191,228 @@ export function WordBlankMapper() {
         showApiError(json, tc("saveFailed"));
         return;
       }
-      const saved = (json.data ?? json) as BlankProfile;
-      if (saved?.id) openProfile(saved);
-      showSuccess(tc("saved"));
+      showSuccess(t("blankSaved"));
+      setOpenPanel(null);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  async function remove(id: string) {
-    if (!window.confirm(t("confirmDeleteBlank"))) return;
-    const res = await fetch(`/api/admin/lab-blank-profiles?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      showApiError(json, tc("failed"));
-      return;
+  async function toggleActive(profile: Profile) {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/lab-blank-profiles/${profile.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !profile.active }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc("failed"));
+        return;
+      }
+      showSuccess(profile.active ? t("blankDeactivated") : t("blankActivated"));
+      await load();
+    } finally {
+      setBusy(false);
     }
-    if (editingId === id) startNew();
-    showSuccess(t("blankDeleted"));
-    await load();
   }
 
+  const wordOptions = wordRows.map((row) => ({
+    value: row.label,
+    label: row.value ? `${row.label} · ${row.value}` : row.label,
+  }));
+
   return (
-    <section className="mt-4 space-y-3 rounded-lg border border-[#D5DADF] bg-white p-4">
-      <h2 className="text-sm font-medium">{t("savedBlanks")}</h2>
-      {profiles.length === 0 ? <p className="text-sm text-[#7F8C8D]">{t("blankEmpty")}</p> : null}
-      <ul className="space-y-2">
-        {profiles.map((profile) => (
-          <li key={profile.id} className="flex items-center justify-between gap-2 text-sm">
-            <span className="font-medium">{profile.name}</span>
-            <span className="flex gap-1">
-              <button
-                type="button"
-                className={TABLE_ROW_ICON_BTN_CLASS}
-                aria-label={tc("edit")}
-                onClick={() => openProfile(profile)}
-              >
-                <Pencil className="h-3.5 w-3.5" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className={TABLE_ROW_ICON_BTN_CLASS}
-                aria-label={tc("delete")}
-                onClick={() => void remove(profile.id)}
-              >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden />
-              </button>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <div className="flex flex-wrap items-end gap-2">
-        <Field preset="shortText" label={tc("name")} value={name} onChange={(e) => setName(e.target.value)} />
+    <div className="space-y-3">
+      <EraListFilterBar
+        resetLabel={tc("filterReset")}
+        onReset={() => {
+          setQuery("");
+          setStatus("all");
+          setPage(1);
+        }}
+      >
+        <Field
+          preset="shortText"
+          label={t("panelSearch")}
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setPage(1);
+          }}
+        />
         <CatalogField
           kind="CLOSED_SMALL"
-          label={t("loadWord")}
-          value={kind}
-          onChange={(value) => setKind(String(value ?? "TABLE"))}
+          label={t("panelStatus")}
+          value={status}
+          onChange={(value) => {
+            setStatus(String(value ?? "all"));
+            setPage(1);
+          }}
           options={[
-            { value: "TABLE", label: "TABLE" },
-            { value: "NARRATIVE", label: "NARRATIVE" },
+            { value: "all", label: t("statusAll") },
+            { value: "mapped", label: t("statusMapped") },
+            { value: "unmapped", label: t("statusUnmapped") },
+            { value: "off", label: t("statusOff") },
           ]}
         />
-        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={() => fileRef.current?.click()}>
-          {t("loadWord")}
-        </button>
-        {editingId ? (
-          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={startNew}>
-            {tc("add")}
-          </button>
-        ) : null}
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".docx"
-          className={`hidden ${MODAL_INPUT_CLASS}`}
-          aria-label={t("loadWord")}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            if (file) void readFile(file);
+      </EraListFilterBar>
+      <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("panelName")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("panelCode")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("blankStatus")}</th>
+                <th className={`${DATA_TABLE_TH_LEFT_CLASS} text-right`}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageRows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td colSpan={4} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                    {t("noPanels")}
+                  </td>
+                </tr>
+              ) : (
+                pageRows.map((panel) => {
+                  const profile = profileFor(panel, profiles);
+                  const statusLabel = !profile
+                    ? t("unmapped")
+                    : profile.active
+                      ? t("mapped")
+                      : t("inactive");
+                  return (
+                    <tr key={panel.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>
+                        {panelTitle(panel, locale)}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{panel.code}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{statusLabel}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="flex justify-end gap-1">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("uploadWord")}
+                            disabled={busy}
+                            onClick={() => {
+                              pendingPanel.current = panel;
+                              fileRef.current?.click();
+                            }}
+                          >
+                            <Upload className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("editMap")}
+                            disabled={busy || !profile}
+                            onClick={() =>
+                              openMapper(
+                                panel,
+                                (profile?.rows ?? []).map((row) => ({
+                                  label: row.sourceLabel,
+                                  value: "",
+                                  norm: "",
+                                })),
+                                profile,
+                              )
+                            }
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={profile?.active ? t("deactivate") : t("activate")}
+                            disabled={busy || !profile}
+                            onClick={() => profile && void toggleActive(profile)}
+                          >
+                            {profile && !profile.active ? (
+                              <Check className="h-3.5 w-3.5" aria-hidden />
+                            ) : (
+                              <Ban className="h-3.5 w-3.5" aria-hidden />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tc("rowsPerPage"),
+            pageOf: tc("pageOf"),
+            prev: tc("prev"),
+            next: tc("next"),
           }}
         />
       </div>
-      <ul className="space-y-1">
-        {rows.map((row, index) => (
-          <li key={`${row.label}-${index}`} className="grid grid-cols-[1fr_16rem] items-center gap-2 text-sm">
-            <span>{row.label}</span>
-            <CatalogField
-              kind="SEARCHABLE"
-              label={row.label}
-              value={row.analyteCode}
-              onChange={(value) =>
-                setRows((current) =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index ? { ...item, analyteCode: String(value ?? "") } : item,
-                  ),
-                )
-              }
-              options={options}
-            />
-          </li>
-        ))}
-      </ul>
-      <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy || !name || rows.length === 0} onClick={() => void save()}>
-        {tc("save")}
-      </button>
-    </section>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="hidden"
+        aria-label={t("uploadWord")}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          const panel = pendingPanel.current;
+          if (file && panel) void readWord(panel, file);
+        }}
+      />
+      <ModalShell
+        open={openPanel != null}
+        title={openPanel ? panelTitle(openPanel, locale) : ""}
+        onClose={() => setOpenPanel(null)}
+        closeLabel={tc("close")}
+        maxWidthClass="max-w-3xl w-full"
+        footer={
+          <ModalFooter
+            onCancel={() => setOpenPanel(null)}
+            onSubmit={() => void save()}
+            busy={busy}
+            submitLabel={tc("save")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <ul className="space-y-2">
+          {(openPanel?.analytes ?? []).map((analyte) => (
+            <li key={analyte.code} className="grid grid-cols-[1fr_16rem] items-center gap-2 text-sm">
+              <span>
+                {analyteTitle(analyte, locale)}
+                <span className={`ml-1 ${TEXT_MUTED_CLASS}`}>({analyte.code})</span>
+              </span>
+              <CatalogField
+                kind="SEARCHABLE"
+                label={analyte.code}
+                value={mapping[analyte.code] ?? ""}
+                onChange={(value) =>
+                  setMapping((current) => ({ ...current, [analyte.code]: String(value ?? "") }))
+                }
+                options={[{ value: "", label: "—" }, ...wordOptions]}
+              />
+            </li>
+          ))}
+        </ul>
+      </ModalShell>
+    </div>
   );
 }

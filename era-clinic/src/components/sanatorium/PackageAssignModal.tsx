@@ -259,6 +259,24 @@ export function PackageAssignModal({
   const [formBurnPool, setFormBurnPool] = useState<string | null>(null);
   const [formQty, setFormQty] = useState(1);
   const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
+  const [naftaDayBlock, setNaftaDayBlock] = useState("");
+  const setDayBlock = useCallback((mode: string) => {
+    const block =
+      mode === "2" || mode === "3" || mode === "5" || mode === "ALTERNATING" ? mode : null;
+    setNaftaDayBlock(block ?? "");
+    setFormPhysio((prev) => ({
+      ...prev,
+      physioFields: { ...prev.physioFields, dayBlock: block },
+    }));
+    const paint = <T extends { procedureCode: string; physioFields?: Record<string, unknown> | null }>(
+      row: T,
+    ): T =>
+      /NAFTALAN|VANN|BATH/i.test(row.procedureCode)
+        ? { ...row, physioFields: { ...(row.physioFields ?? {}), dayBlock: block } }
+        : row;
+    setDraft((prev) => prev.map(paint));
+    setExtraDraft((prev) => prev.map(paint));
+  }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [softWarn, setSoftWarn] = useState<string | null>(null);
@@ -1199,6 +1217,8 @@ export function PackageAssignModal({
     pushPaid(code, name, 1, { paramsLabel });
   }
 
+  let naftaSeat: Array<{ procedureCode: string; qty: number }> = [];
+
   return (
     <ModalShell
       open={open}
@@ -1465,6 +1485,13 @@ export function PackageAssignModal({
               if (lanes.some((lane) => lane.code === row.procedureCode)) continue;
               pushLane(row.procedureCode, row.procedureName, "", [], undefined, undefined, 0, false);
             }
+            naftaSeat = lanes
+              .filter((lane) => /NAFTALAN|VANN|BATH/i.test(lane.code))
+              .map((lane) => ({
+                procedureCode: lane.code,
+                qty: lane.pkgQty + lane.extraQty + lane.paidQty,
+              }))
+              .filter((row) => row.qty > 0);
             if (lanes.length === 0) {
               return <p className={TEXT_MUTED_CLASS}>{labels.emptyRight}</p>;
             }
@@ -1497,6 +1524,7 @@ export function PackageAssignModal({
               </div>
             );
             return (
+              <>
               <ul className="space-y-2">
                 {lanes.map((lane) => {
                   const quota = lane.assigned
@@ -1589,15 +1617,19 @@ export function PackageAssignModal({
                           {tPhysio("paidLine")}: {lane.paidQty}
                         </p>
                       ) : null}
-                      {/NAFTALAN|VANN|BATH/i.test(lane.code) ? (
-                        <div className="mt-2">
-                          <BathCalendarPanel episodeId={episodeId} procedureCode={lane.code} />
-                        </div>
-                      ) : null}
                     </li>
                   );
                 })}
               </ul>
+              {naftaSeat.length > 0 ? (
+                <BathCalendarPanel
+                  episodeId={episodeId}
+                  members={naftaSeat}
+                  dayBlock={naftaDayBlock}
+                  onDayBlockChange={setDayBlock}
+                />
+              ) : null}
+              </>
             );
           })()}
           </div>
@@ -1686,10 +1718,27 @@ export function PackageAssignModal({
                       onFieldsChange={(physioFields) =>
                         setFormPhysio((prev) => ({ ...prev, physioFields }))
                       }
+                      hideFields={
+                        formCode && /NAFTALAN|VANN|BATH/i.test(formCode) ? ["DAY_BLOCK"] : []
+                      }
                     />
                   </div>
                   {/NAFTALAN|VANN|BATH/i.test(formCode) ? (
-                    <BathCalendarPanel episodeId={episodeId} procedureCode={formCode} />
+                    <BathCalendarPanel
+                      previewOnly
+                      episodeId={episodeId}
+                      members={
+                        naftaSeat.some((row) => row.procedureCode === formCode)
+                          ? naftaSeat.map((row) =>
+                              row.procedureCode === formCode
+                                ? { ...row, qty: Math.max(row.qty, formQty) }
+                                : row,
+                            )
+                          : [...naftaSeat, { procedureCode: formCode, qty: formQty }]
+                      }
+                      dayBlock={naftaDayBlock}
+                      onDayBlockChange={setDayBlock}
+                    />
                   ) : null}
                 </>
               ) : (

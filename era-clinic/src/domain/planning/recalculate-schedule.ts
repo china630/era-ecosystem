@@ -13,10 +13,10 @@ export type ScheduleMove = {
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
 
-function asMode(value: unknown): BathMode {
+function asMode(value: unknown): BathMode | null {
   const text = String(value ?? "");
-  if (text === "3" || text === "5" || text === "ALTERNATING") return text;
-  return "2";
+  if (text === "2" || text === "3" || text === "5" || text === "ALTERNATING") return text;
+  return null;
 }
 
 /**
@@ -133,6 +133,8 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
         }
         if (manual && day?.working) kept.push({ ymd, procedureCode, locked: true });
       }
+      const mode = asMode(fields.dayBlock);
+      if (!mode) continue;
       const planned = planBathSeries({
         days: days.filter((day) => day.ymd > today),
         series: [
@@ -140,7 +142,7 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
             seriesCode: info.series.code,
             procedureCode,
             mark: info.member.shortMark,
-            mode: asMode(fields.dayBlock),
+            mode,
             qty: rows.filter((row) => !LOCKED.has(row.status) && bakuDateKey(row.scheduledAt) > today).length,
             fillsRestDays: info.series.fillsRestDays,
           },

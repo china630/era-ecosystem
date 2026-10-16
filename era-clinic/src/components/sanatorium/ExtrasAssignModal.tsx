@@ -382,6 +382,7 @@ export function ExtrasAssignModal({
             </p>
             <PhysioSiteChips
               value={formPhysio}
+              hideFields={code && /NAFTALAN|VANN|BATH/i.test(code) ? ["DAY_BLOCK"] : []}
               catalog={catalog}
               programs={programs}
               substances={substances}

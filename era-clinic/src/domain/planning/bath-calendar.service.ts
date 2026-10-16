@@ -9,8 +9,10 @@ import {
   findSkilledFreePractitioner,
   listPhysicalRequirementResources,
   replaceProcedureAllocations,
+  resolveStaffModeForProcedureType,
 } from "@/domain/procedure/procedure-allocation.service";
-import { planBathSeries, type BathMode, type KeptCell, type PlannedBath } from "@/domain/planning/bath-calendar";
+import { planBathSeries, strayBathOrderIds, type BathMode, type KeptCell } from "@/domain/planning/bath-calendar";
+import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
 
@@ -143,13 +145,7 @@ async function writeSeatedOrder(input: {
   slot: CabinSlot;
   note: string | null;
   fields: { dayBlock: BathMode; bathSequence: "SITZ_THEN_FULL" | null; naftalanFill: "OTURAQ" | "TAM" | null };
-  cell: PlannedBath;
-  orgId: string;
-  episode: { patientRefId: string | null; patientOrigin: string; reservationId: string | null };
-  procedureType: { id: string; name: string; bodyPart: string | null };
-  episodeId: string;
-  procedureCode: string;
-}): Promise<string> {
+}): Promise<string | null> {
   const data = {
     scheduledAt: input.slot.start,
     endsAt: input.slot.end,
@@ -158,29 +154,59 @@ async function writeSeatedOrder(input: {
     note: input.note,
     physioFields: input.fields,
   };
-  if (input.existingId) {
-    await prisma.procedureOrder.update({ where: { id: input.existingId }, data });
-    return input.existingId;
-  }
-  if (!input.episode.patientRefId) throw new Error("Episode not found");
-  const created = await prisma.procedureOrder.create({
+  if (!input.existingId) return null;
+  await prisma.procedureOrder.update({ where: { id: input.existingId }, data });
+  return input.existingId;
+}
+
+/**
+ * Drop bath days the calendar invented beside the package line.
+ * The package day stays. The extra card disappears. The package remainder is unchanged.
+ */
+export async function foldBathQuotaCards(episodeId: string): Promise<void> {
+  const [episode, orders] = await Promise.all([
+    prisma.clinicalEpisode.findUnique({
+      where: { id: episodeId },
+      select: { programInstance: { select: { id: true } } },
+    }),
+    prisma.procedureOrder.findMany({
+      where: {
+        clinicalEpisodeId: episodeId,
+        inPackage: true,
+        status: { in: ["SCHEDULED", "PROPOSED", "CHECKED_IN", "COMPLETED"] },
+      },
+      select: { id: true, procedureCode: true, packageQuotaCode: true, status: true },
+    }),
+  ]);
+  const strayIds = strayBathOrderIds(orders);
+  if (strayIds.length === 0) return;
+  await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: strayIds } } });
+  await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: strayIds } } });
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: strayIds } },
     data: {
-      ...data,
-      organizationId: input.orgId,
-      patientRefId: input.episode.patientRefId,
-      clinicalEpisodeId: input.episodeId,
-      procedureTypeId: input.procedureType.id,
-      procedureCode: input.procedureCode,
-      procedureName: input.procedureType.name,
-      bodyPart: input.procedureType.bodyPart,
-      inPackage: true,
-      packageQuotaCode: input.procedureCode,
-      patientOrigin: input.episode.patientOrigin,
-      reservationId: input.episode.reservationId,
-      amountNet: 0,
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelReason: "bath_not_in_package",
+      resourceId: null,
     },
   });
-  return created.id;
+  const instanceId = episode?.programInstance?.id;
+  if (!instanceId) return;
+  const quotas = new Set<string>();
+  for (const order of orders) {
+    if (!strayIds.includes(order.id)) continue;
+    const sibling = orders.find(
+      (row) =>
+        row.procedureCode === order.procedureCode &&
+        row.packageQuotaCode &&
+        row.packageQuotaCode !== order.procedureCode,
+    );
+    if (sibling?.packageQuotaCode) quotas.add(sibling.packageQuotaCode);
+  }
+  for (const quotaCode of quotas) {
+    await syncEntitlementUsage({ instanceId, episodeId, quotaCode });
+  }
 }
 
 function storedMode(fields: unknown): string | null {
@@ -198,6 +224,7 @@ export async function saveBathCalendar(input: {
   manualBathYmds: string[];
   bathSequence?: "SITZ_THEN_FULL" | null;
 }) {
+  await foldBathQuotaCards(input.episodeId);
   const snapshot = await getBathCalendar(input.episodeId);
   const series = snapshot.series.find((row) =>
     row.members.some((member) => member.procedureCode === input.procedureCode),
@@ -269,7 +296,7 @@ export async function saveBathCalendar(input: {
         procedureCode: input.procedureCode,
         mark: member.shortMark,
         mode: input.mode,
-        qty: input.qty,
+        qty: Math.min(input.qty, own.length),
         fillsRestDays: series.fillsRestDays,
         sitzThenFull: input.bathSequence === "SITZ_THEN_FULL",
       },
@@ -280,6 +307,7 @@ export async function saveBathCalendar(input: {
 
   const movable = own.filter((order) => !LOCKED.has(order.status));
   const orgId = requestOrganizationId();
+  const staffMode = await resolveStaffModeForProcedureType(procedureType.id);
   const used = new Set<string>();
   let unplaced = 0;
   const unplacedDays: string[] = [];
@@ -311,7 +339,8 @@ export async function saveBathCalendar(input: {
       procedureTypeId: procedureType.id,
       startsAt: slot.start,
       endsAt: slot.end,
-      staffMode: "HARD",
+      staffMode,
+      skillWhenUnposted: true,
     });
     if (!staff) {
       unplaced += 1;
@@ -330,13 +359,12 @@ export async function saveBathCalendar(input: {
       slot,
       note,
       fields,
-      cell,
-      orgId,
-      episode,
-      procedureType,
-      episodeId: input.episodeId,
-      procedureCode: input.procedureCode,
     });
+    if (!orderId) {
+      unplaced += 1;
+      unplacedDays.push(cell.ymd);
+      continue;
+    }
     if (existing) used.add(existing.id);
     await replaceProcedureAllocations(orderId, [
       { role: slot.role, resourceId: slot.resourceId, startsAt: slot.start, endsAt: slot.end },
@@ -370,6 +398,16 @@ export async function saveBathCalendar(input: {
   for (const ymd of restYmds) {
     if (bathYmds.has(ymd) || markedRests.has(ymd)) continue;
     const when = dayStartInstant(ymd, 9);
+    const sibling = await prisma.procedureOrder.findFirst({
+      where: {
+        clinicalEpisodeId: input.episodeId,
+        procedureCode: input.procedureCode,
+        inPackage: true,
+        status: { notIn: ["CANCELLED", "NO_SHOW"] },
+        NOT: { packageQuotaCode: input.procedureCode },
+      },
+      select: { packageQuotaCode: true },
+    });
     await prisma.procedureOrder.create({
       data: {
         organizationId: orgId,
@@ -385,7 +423,7 @@ export async function saveBathCalendar(input: {
         cancelReason: "bath_rest",
         bodyPart: procedureType.bodyPart,
         inPackage: true,
-        packageQuotaCode: input.procedureCode,
+        packageQuotaCode: sibling?.packageQuotaCode || input.procedureCode,
         patientOrigin: episode.patientOrigin,
         reservationId: episode.reservationId,
         amountNet: 0,
@@ -407,11 +445,11 @@ export type BathSeatMiss = {
   reason: "no_cabin" | "no_staff" | "no_day";
 };
 
-function bathModeOf(fields: unknown): BathMode {
+function bathModeOf(fields: unknown): BathMode | null {
   const block =
     fields && typeof fields === "object" ? (fields as { dayBlock?: unknown }).dayBlock : null;
   if (block === "2" || block === "3" || block === "5" || block === "ALTERNATING") return block;
-  return "2";
+  return null;
 }
 
 /**
@@ -460,6 +498,8 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
 
   for (const [procedureCode, group] of byCode) {
     const meta = memberByCode.get(procedureCode)!;
+    const mode = bathModeOf(group[0]?.physioFields);
+    if (!mode) continue;
     const already = snapshot.orders.filter((order) => order.procedureCode === procedureCode);
     const kept: KeptCell[] = already.map((order) => ({
       ymd: order.ymd,
@@ -478,7 +518,7 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
                 seriesCode: meta.seriesCode,
                 procedureCode,
                 mark: meta.mark,
-                mode: bathModeOf(group[0]?.physioFields),
+                mode,
                 qty: already.length + group.length,
                 fillsRestDays: meta.fillsRestDays,
               },
@@ -506,11 +546,13 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
         missed.push({ ymd: cell.ymd, procedureCode, reason: "no_cabin" });
         continue;
       }
+      const staffMode = await resolveStaffModeForProcedureType(order.procedureTypeId);
       const staff = await findSkilledFreePractitioner({
         procedureTypeId: order.procedureTypeId,
         startsAt: slot.start,
         endsAt: slot.end,
-        staffMode: "HARD",
+        staffMode,
+        skillWhenUnposted: true,
       });
       if (!staff) {
         missed.push({ ymd: cell.ymd, procedureCode, reason: "no_staff" });

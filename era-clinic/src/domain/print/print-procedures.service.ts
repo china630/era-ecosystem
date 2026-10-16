@@ -9,6 +9,18 @@ import {
 import { listEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { todayBakuYmd } from "@/lib/baku-day";
 
+/**
+ * Guest sheet is the placed course only.
+ * PENDING_PAY extras still have a placeholder clock (now + 1 min each) and are not on the folio.
+ * PROPOSED rows are not seated yet.
+ */
+export const PRINT_PROCEDURE_STATUSES = [
+  "SCHEDULED",
+  "CHECKED_IN",
+  "COMPLETED",
+  "NO_SHOW",
+] as const;
+
 /** Print Doctor column = episode care team, never cabin/roster STAFF. */
 export function episodeCareTeamPrintName(names: string[]): string {
   const cleaned = names.map((n) => n.trim()).filter(Boolean);
@@ -67,7 +79,7 @@ export async function buildProceduresPrint(
   const orders = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: patientId,
-      status: { notIn: ["CANCELLED"] },
+      status: { in: [...PRINT_PROCEDURE_STATUSES] },
       ...(episode ? { clinicalEpisodeId: episode.id } : {}),
     },
     include: {

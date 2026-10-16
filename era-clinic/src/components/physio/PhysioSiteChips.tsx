@@ -154,6 +154,7 @@ export function PhysioSiteChips({
   onFieldsChange,
   compact = false,
   sessionQty = 1,
+  hideFields = [],
 }: {
   value: PhysioChipsValue;
   catalog: PhysioCatalogSite[];
@@ -171,6 +172,8 @@ export function PhysioSiteChips({
   compact?: boolean;
   /** Bath sequence (sit→full over days) only when qty > 1. */
   sessionQty?: number;
+  /** Fields owned by another control on the same form (naftalan day block lives on the calendar). */
+  hideFields?: PhysioOrderFieldCode[];
 }) {
   const [note, setNote] = useState(value.note ?? "");
   useEffect(() => {
@@ -454,7 +457,7 @@ export function PhysioSiteChips({
           disabled={!editable}
         />
       ) : null}
-      {hasField(allowed, "DAY_BLOCK") ? (
+      {hasField(allowed, "DAY_BLOCK") && !hideFields.includes("DAY_BLOCK") ? (
         <CatalogField
           kind="CLOSED_SMALL"
           label={labels.dayBlock}

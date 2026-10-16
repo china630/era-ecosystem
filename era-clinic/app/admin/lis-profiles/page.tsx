@@ -5,6 +5,9 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CHIP_ACTIVE_CLASS,
+  CHIP_CLASS,
+  CHIP_GROUP_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -72,6 +75,7 @@ export default function LisProfilesAdminPage() {
   const [importBusy, setImportBusy] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [tab, setTab] = useState<"files" | "import" | "panels">("files");
 
   const pagedProfiles = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -178,14 +182,35 @@ export default function LisProfilesAdminPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
+          tab === "files" ? (
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             <Plus className="h-4 w-4" aria-hidden />
             {t("addProfile")}
           </button>
+          ) : null
         }
       />
+      <div className={CHIP_GROUP_CLASS}>
+        {(
+          [
+            ["files", t("tabFiles")],
+            ["import", t("tabImport")],
+            ["panels", t("tabPanels")],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={tab === id ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      <div className={`${CARD_CONTAINER_CLASS} mb-6 space-y-3 p-4`}>
+      {tab === "files" ? (
+      <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
           <thead>
@@ -252,7 +277,9 @@ export default function LisProfilesAdminPage() {
           }}
         />
       </div>
+      ) : null}
 
+      {tab === "import" ? (
       <div className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-3 text-sm font-semibold">{t("importTitle")}</h2>
         <p className={`mb-4 text-[13px] ${TEXT_MUTED_CLASS}`}>{t("importHint")}</p>
@@ -300,8 +327,9 @@ export default function LisProfilesAdminPage() {
           </button>
         </form>
       </div>
+      ) : null}
 
-      <WordBlankMapper />
+      {tab === "panels" ? <WordBlankMapper /> : null}
       <ModalShell
         open={modalOpen}
         title={editingId ? t("editProfile") : t("addProfile")}
