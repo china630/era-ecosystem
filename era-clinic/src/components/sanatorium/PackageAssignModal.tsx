@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
@@ -818,6 +819,21 @@ export function PackageAssignModal({
     });
   }
 
+  function bathFields(
+    code: string,
+    fields: Record<string, unknown> | null | undefined,
+  ): Record<string, unknown> | null {
+    const block =
+      naftaDayBlock === "2" ||
+      naftaDayBlock === "3" ||
+      naftaDayBlock === "5" ||
+      naftaDayBlock === "ALTERNATING"
+        ? naftaDayBlock
+        : null;
+    if (!block || !/NAFTALAN|VANN|BATH/i.test(code)) return fields ?? null;
+    return { ...(fields ?? {}), dayBlock: block };
+  }
+
   function missReasonText(reason: string | undefined): string {
     if (reason === "no_staff") return tPhysio("packageAssignMissNoStaff");
     if (reason === "staff_busy") return tPhysio("packageAssignMissStaffBusy");
@@ -825,6 +841,7 @@ export function PackageAssignModal({
     if (reason === "day_full") return tPhysio("packageAssignMissDayFull");
     if (reason === "rule") return tPhysio("packageAssignMissRule");
     if (reason === "no_slot") return tPhysio("packageAssignMissNoSlot");
+    if (reason === "no_mode") return tPhysio("packageAssignMissNoBathMode");
     return tPhysio("packageAssignMissNoDay");
   }
 
@@ -926,7 +943,7 @@ export function PackageAssignModal({
       onClose();
       return;
     }
-    if (lines.length > 0 && !blockReason && !start) {
+    if (lines.length > 0 && !blockReason && !start && assigned.length === 0) {
       const point = defaultStartPoint();
       setStartDate(point.date);
       setStartHour(point.hour);
@@ -971,7 +988,7 @@ export function PackageAssignModal({
               procedureCode: d.procedureCode,
               qty: d.qty,
               note: d.note || null,
-              physioFields: d.physioFields ?? null,
+              physioFields: bathFields(d.procedureCode, d.physioFields),
               siteIds: d.siteIds ?? [],
               siteApplyMode: d.siteApplyMode ?? null,
               siteLaterality: d.siteLaterality ?? {},
@@ -1248,7 +1265,7 @@ export function PackageAssignModal({
 
   let naftaSeat: Array<{ procedureCode: string; qty: number }> = [];
 
-  return (
+  const shell = (
     <ModalShell
       open={open}
       title={labels.title}
@@ -1681,18 +1698,20 @@ export function PackageAssignModal({
                   );
                 })}
               </ul>
-              {naftaSeat.length > 0 ? (
-                <BathCalendarPanel
-                  episodeId={episodeId}
-                  members={naftaSeat}
-                  dayBlock={naftaDayBlock}
-                  onDayBlockChange={setDayBlock}
-                />
-              ) : null}
               </>
             );
           })()}
           </div>
+          {naftaSeat.length > 0 ? (
+            <div className="mt-2 max-h-[46%] shrink-0 overflow-y-auto">
+              <BathCalendarPanel
+                episodeId={episodeId}
+                members={naftaSeat}
+                dayBlock={naftaDayBlock}
+                onDayBlockChange={setDayBlock}
+              />
+            </div>
+          ) : null}
           <p className="shrink-0 border-t border-slate-200 pt-3 text-right text-lg font-semibold">
             {tPhysio("amountDue")}: {(extraDraftTotal + extraPendingTotal).toFixed(2)} AZN
           </p>
@@ -1886,4 +1905,6 @@ export function PackageAssignModal({
       </div>
     </ModalShell>
   );
+  if (typeof document === "undefined") return shell;
+  return createPortal(shell, document.body);
 }

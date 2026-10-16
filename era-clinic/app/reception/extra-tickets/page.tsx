@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, ChevronDown, ChevronRight } from "lucide-react";
+import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
@@ -87,7 +88,7 @@ export default function ExtraTicketsPage() {
     const roomNeedle = room.trim().toLowerCase();
     return rows.filter((r) => {
       if (origin && r.patientOrigin !== origin) return false;
-      if (roomNeedle && !(r.roomNumber ?? "").toLowerCase().includes(roomNeedle)) return false;
+      if (roomNeedle && (r.roomNumber ?? "").trim().toLowerCase() !== roomNeedle) return false;
       if (!needle) return true;
       const hay = `${r.patientName} ${r.refCode} ${r.procedureName}`.toLowerCase();
       return hay.includes(needle);
@@ -285,11 +286,11 @@ export default function ExtraTicketsPage() {
                 </div>
             }
           >
-            <Field
+            <OccupiedRoomFilter
               label={t("filterRoom")}
-              preset="shortText"
               value={room}
-              onChange={(e) => setRoom(e.target.value)}
+              onChange={setRoom}
+              allLabel={tc("all")}
             />
             <Field
               label={t("filterSearch")}

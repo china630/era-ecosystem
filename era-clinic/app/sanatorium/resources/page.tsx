@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Maximize2, Minimize2, X } from "lucide-react";
+import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
 import {
   APP_SHELL_CLASS,
   CARD_CONTAINER_CLASS,
@@ -247,6 +248,12 @@ export default function SanatoriumResourcesPage() {
         </div>
       }
     >
+      <OccupiedRoomFilter
+        label={t("filterRoom")}
+        value={roomFilter}
+        onChange={setRoomFilter}
+        allLabel={tc("all")}
+      />
       <DatePicker
         label={t("date")}
         value={date}
@@ -259,12 +266,6 @@ export default function SanatoriumResourcesPage() {
         preset="shortText"
         value={resourceFilter}
         onChange={(e) => setResourceFilter(e.target.value)}
-      />
-      <Field
-        label={t("filterRoom")}
-        preset="shortText"
-        value={roomFilter}
-        onChange={(e) => setRoomFilter(e.target.value)}
       />
       <Field
         label={t("filterPatient")}

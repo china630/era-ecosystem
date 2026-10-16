@@ -144,7 +144,7 @@ function patientMatches(slot: MatrixSlot, query: string): boolean {
 function roomMatches(slot: MatrixSlot, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return (slot.roomNumber ?? "").toLowerCase().includes(q);
+  return (slot.roomNumber ?? "").trim().toLowerCase() === q;
 }
 
 function rowHasPatient(row: MatrixResourceRow, patientQuery: string, roomQuery: string): boolean {

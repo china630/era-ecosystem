@@ -16,6 +16,7 @@ import {
   ListPaginationFooter,
   ModalFooter,
   ModalShell,
+  countryLabel,
   countryOptions,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -48,6 +49,7 @@ type Patient = {
   lastName?: string;
   fullName: string;
   phone?: string | null;
+  nationality?: string | null;
   sex?: PatientSex;
   ageYears?: number | null;
   bloodGroup?: PatientBloodGroup;
@@ -62,6 +64,7 @@ type ListFilters = {
   hasMdm: "" | "0" | "1";
   ageMin: string;
   ageMax: string;
+  nationality: string;
   sort: string;
   sortDir: "" | "asc" | "desc";
 };
@@ -89,6 +92,7 @@ const emptyListFilters = (): ListFilters => ({
   hasMdm: "",
   ageMin: "",
   ageMax: "",
+  nationality: "",
   sort: "",
   sortDir: "",
 });
@@ -127,6 +131,7 @@ export default function PatientsPage() {
       if (isSuperAdmin && f.hasMdm) params.set("hasMdm", f.hasMdm);
       if (f.ageMin.trim()) params.set("ageMin", f.ageMin.trim());
       if (f.ageMax.trim()) params.set("ageMax", f.ageMax.trim());
+      if (f.nationality.trim()) params.set("nationality", f.nationality.trim());
       if (f.sort && f.sortDir) {
         params.set("sort", f.sort);
         params.set("sortDir", f.sortDir);
@@ -166,9 +171,14 @@ export default function PatientsPage() {
       },
       {
         key: "ageYears",
-        header: t("birthDate"),
+        header: t("colAge"),
         sortable: true,
         render: (p) => (p.ageYears != null ? t("ageYears", { age: p.ageYears }) : "—"),
+      },
+      {
+        key: "nationality",
+        header: t("nationality"),
+        render: (p) => (p.nationality ? countryLabel(p.nationality, locale) : "—"),
       },
       { key: "phone", header: t("phone"), render: (p) => p.phone ?? "—" },
       {
@@ -214,7 +224,7 @@ export default function PatientsPage() {
         ),
       },
     ],
-    [t, tc, isSuperAdmin],
+    [t, tc, isSuperAdmin, locale],
   );
 
   async function save() {
@@ -307,6 +317,16 @@ export default function PatientsPage() {
               <option value="O_NEG">O-</option>
               <option value="UNKNOWN">{t("sexUnknown")}</option>
             </FieldSelect>
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("nationality")}
+              value={filterState.nationality}
+              onChange={(v) =>
+                setFilterState({ ...filterState, nationality: String(v ?? "").toUpperCase() })
+              }
+              options={countryOptions(locale)}
+              emptyLabel={tc("all")}
+            />
             {isSuperAdmin ? (
               <FieldSelect
                 label={t("filterMdm")}

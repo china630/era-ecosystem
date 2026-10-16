@@ -2,18 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  CARD_CONTAINER_CLASS,
-  FieldSelect,
-  TEXT_MUTED_CLASS,
-  showApiError,
-} from "@era/satellite-kit/ui";
+import { TEXT_MUTED_CLASS, showApiError } from "@era/satellite-kit/ui";
+
+type BlockStat = {
+  free: number;
+  paid: number;
+  total: number;
+  amount: number;
+};
 
 type Summary = {
   date: string;
   visitsToday: number;
-  labRevenueToday: number;
   openLabOrders: number;
+  blocks: {
+    procedures: BlockStat;
+    diagnostics: BlockStat;
+    labs: BlockStat;
+  };
   capacity: {
     guestEquivalent: number;
     scheduledSlots: number;
@@ -21,27 +27,19 @@ type Summary = {
   };
 };
 
-type Practitioner = { id: string; code: string; fullName: string };
-
 export function ExecutiveDashboard({
   date,
   refreshKey = 0,
+  practitionerId = "",
 }: {
   date: string;
   refreshKey?: number;
+  practitionerId?: string;
 }) {
   const t = useTranslations("executive");
   const tc = useTranslations("common");
-  const [practitionerId, setPractitionerId] = useState("");
-  const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    void fetch("/api/admin/practitioners")
-      .then((r) => r.json())
-      .then((d) => setPractitioners((d.data ?? d) as Practitioner[]));
-  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,47 +66,63 @@ export function ExecutiveDashboard({
 
   if (!summary) return null;
 
+  const cards: Array<{ key: keyof Summary["blocks"]; title: string }> = [
+    { key: "procedures", title: t("blockProcedures") },
+    { key: "diagnostics", title: t("blockDiagnostics") },
+    { key: "labs", title: t("blockLabs") },
+  ];
+
   return (
     <div className="space-y-4">
-      <FieldSelect
-        label={t("filterPractitioner")}
-        preset="selectWide"
-        value={practitionerId}
-        onChange={(e) => setPractitionerId(e.target.value)}
-      >
-        <option value="">{tc("all")}</option>
-        {practitioners.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.fullName}
-          </option>
-        ))}
-      </FieldSelect>
-      <dl className={`${CARD_CONTAINER_CLASS} grid gap-4 p-4 text-[13px] sm:grid-cols-2 lg:grid-cols-4`}>
-        <div className="rounded border p-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        {cards.map((card) => {
+          const block = summary.blocks[card.key];
+          return (
+            <section key={card.key} className="rounded-lg border border-[#D5DADF] p-4">
+              <h3 className={`m-0 text-[13px] font-medium ${TEXT_MUTED_CLASS}`}>{card.title}</h3>
+              <p className="mb-3 mt-1 text-2xl font-semibold tabular-nums">
+                {block.amount.toFixed(2)} AZN
+              </p>
+              <dl className="space-y-1 text-[13px]">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className={TEXT_MUTED_CLASS}>{t("countFree")}</dt>
+                  <dd className="m-0 tabular-nums">{block.free}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className={TEXT_MUTED_CLASS}>{t("countPaid")}</dt>
+                  <dd className="m-0 tabular-nums">{block.paid}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t border-[#D5DADF] pt-1 font-semibold">
+                  <dt>{t("countTotal")}</dt>
+                  <dd className="m-0 tabular-nums">{block.total}</dd>
+                </div>
+              </dl>
+            </section>
+          );
+        })}
+      </div>
+      <dl className="grid gap-3 text-[13px] sm:grid-cols-3">
+        <div className="rounded-lg border border-[#D5DADF] p-3">
           <dt className={TEXT_MUTED_CLASS}>{t("visitsToday")}</dt>
-          <dd className="text-2xl font-semibold">{summary.visitsToday}</dd>
+          <dd className="text-xl font-semibold">{summary.visitsToday}</dd>
         </div>
-        <div className="rounded border p-4">
-          <dt className={TEXT_MUTED_CLASS}>{t("labRevenueToday")}</dt>
-          <dd className="text-2xl font-semibold">{summary.labRevenueToday.toFixed(2)} AZN</dd>
-        </div>
-        <div className="rounded border p-4">
+        <div className="rounded-lg border border-[#D5DADF] p-3">
           <dt className={TEXT_MUTED_CLASS}>{t("openLabOrders")}</dt>
-          <dd className="text-2xl font-semibold">{summary.openLabOrders}</dd>
+          <dd className="text-xl font-semibold">{summary.openLabOrders}</dd>
         </div>
         <div
-          className={`rounded border p-4 ${
+          className={`rounded-lg border p-3 ${
             summary.capacity.riskLevel === "critical"
               ? "border-red-400 bg-red-50"
               : summary.capacity.riskLevel === "warning"
                 ? "border-amber-400 bg-amber-50"
-                : ""
+                : "border-[#D5DADF]"
           }`}
         >
           <dt className={TEXT_MUTED_CLASS}>{t("capacityTitle")}</dt>
-          <dd className="text-2xl font-semibold">~{summary.capacity.guestEquivalent} guests</dd>
+          <dd className="text-xl font-semibold">~{summary.capacity.guestEquivalent}</dd>
           <dd className={`text-xs ${TEXT_MUTED_CLASS}`}>
-            {summary.capacity.scheduledSlots} slots · risk {summary.capacity.riskLevel}
+            {summary.capacity.scheduledSlots} · {summary.capacity.riskLevel}
           </dd>
         </div>
       </dl>

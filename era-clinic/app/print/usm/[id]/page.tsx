@@ -28,7 +28,28 @@ export default async function PrintUsmPage({ params, searchParams }: Props) {
       signatureLabel={printLabel(lang, "radiologist")}
       signatureName={doc.signatureDoctor}
     >
-      <div className="whitespace-pre-wrap text-[12px] leading-relaxed">{doc.narrative}</div>
+      {doc.rows.length === 0 ? (
+        <p className="text-[12px]">—</p>
+      ) : (
+        <table className="w-full border-collapse text-[11px]">
+          <thead>
+            <tr className="border-b border-black">
+              <th className="py-1 pr-2 text-left">{printLabel(lang, "parameter")}</th>
+              <th className="py-1 pr-2 text-left">{printLabel(lang, "result")}</th>
+              <th className="py-1 text-left">{printLabel(lang, "flag")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {doc.rows.map((row, index) => (
+              <tr key={`${row.label}-${index}`} className="border-b border-neutral-300 align-top">
+                <td className="py-1 pr-2">{row.label}</td>
+                <td className="py-1 pr-2 whitespace-pre-wrap">{row.value}</td>
+                <td className="py-1">{row.flag}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </PrintShell>
   );
 }

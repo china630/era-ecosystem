@@ -30,6 +30,7 @@ import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
 import { labStatusTone } from "@/components/lab-status-tone";
 import { bakuDateDisplay } from "@/lib/baku-day";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
+import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
 import type {
   DiagnosticCatalogGroup,
   DiagnosticCatalogItem,
@@ -538,11 +539,11 @@ export default function LabOrdersPage() {
               </label>
             }
           >
-            <Field
+            <OccupiedRoomFilter
               label={t("roomFilter")}
-              preset="shortText"
               value={filters.room}
-              onChange={(e) => patchFilters({ room: e.target.value })}
+              onChange={(room) => patchFilters({ room })}
+              allLabel={tc("all")}
             />
             <Field
               label={t("patientFilter")}

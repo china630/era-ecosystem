@@ -814,6 +814,12 @@
     "openLabOrders": "Открытые лаб. заказы",
     "filterDate": "Дата",
     "filterPractitioner": "Врач",
+    "blockProcedures": "Процедуры",
+    "blockDiagnostics": "Диагностика",
+    "blockLabs": "Анализы",
+    "countFree": "В пакете",
+    "countPaid": "Платные",
+    "countTotal": "Всего",
     "capacityTitle": "Загрузка санатория (неделя)"
   },
   "sanatorium": {
@@ -1636,6 +1642,7 @@
     "sexOther": "Другой",
     "sexUnknown": "Не указан",
     "birthDate": "Дата рождения",
+    "colAge": "Возраст",
     "ageYears": "{age} лет",
     "ageUnknown": "Возраст не указан",
     "bloodGroup": "Группа крови",
@@ -1863,6 +1870,7 @@
     "packageAssignMissNoCabin": "в этот день нет свободной кабины",
     "packageAssignMissNoDay": "в днях проживания не осталось места",
     "packageAssignMissNoSlot": "в днях проживания не осталось свободного времени",
+    "packageAssignMissNoBathMode": "выберите режим ванн",
     "packageAssignMissStaffBusy": "в свободное время персонал занят",
     "packageAssignMissDayFull": "на этот день уже набран предел процедур",
     "packageAssignMissRule": "свободное время закрывает правило расписания",

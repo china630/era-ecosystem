@@ -47,6 +47,7 @@ import {
   ModalShell,
   MODAL_CHECKBOX_CLASS,
   countryOptions,
+  countryLabel,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   PageHeader,
@@ -60,6 +61,7 @@ import {
   usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
+import { ageYearsFromBirthDate } from "@/domain/patient/patient-demographics";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { IcdPicker } from "@/components/IcdPicker";
 import { EpisodeAssignBlocks } from "@/components/sanatorium/EpisodeAssignChrome";
@@ -122,7 +124,14 @@ type Episode = {
   /** W2 — package entitlement signal for list badge. */
   packageSignal?: "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED";
   courseMark?: CourseMark;
-  patientRef: { id: string; fullName: string; refCode: string } | null;
+  patientRef: {
+    id: string;
+    fullName: string;
+    refCode: string;
+    sex?: "MALE" | "FEMALE" | "UNKNOWN" | null;
+    birthDate?: string | null;
+    nationality?: string | null;
+  } | null;
   complaints: { id: string; text: string; recordedAt: string }[];
   diagnoses: {
     id: string;
@@ -914,6 +923,30 @@ export default function SanatoriumPage() {
         render: (e) => e.patientRef?.refCode ?? "—",
       },
       {
+        key: "sex",
+        header: tp("sex"),
+        render: (e) =>
+          e.patientRef?.sex === "MALE"
+            ? tp("sexShortMale")
+            : e.patientRef?.sex === "FEMALE"
+              ? tp("sexShortFemale")
+              : "—",
+      },
+      {
+        key: "age",
+        header: tp("colAge"),
+        render: (e) => {
+          const age = ageYearsFromBirthDate(e.patientRef?.birthDate);
+          return age != null ? tp("ageYears", { age }) : "—";
+        },
+      },
+      {
+        key: "nationality",
+        header: tp("nationality"),
+        render: (e) =>
+          e.patientRef?.nationality ? countryLabel(e.patientRef.nationality, locale) : "—",
+      },
+      {
         key: "room",
         header: t("colRoom"),
         sortable: true,
@@ -930,9 +963,10 @@ export default function SanatoriumPage() {
         header: t("colProgram"),
         sortable: true,
         render: (e) => {
+          if (e.patientOrigin === "WALK_IN") return "—";
           const code = e.programInstance?.programCode ?? e.programCode ?? "—";
           const signal = e.packageSignal ?? "OK";
-          const showBadge = signal !== "OK";
+          const showBadge = signal !== "OK" && signal !== "NO_PROGRAM";
           return (
             <div className="flex flex-wrap items-center gap-1">
               <span>{code}</span>
@@ -958,20 +992,6 @@ export default function SanatoriumPage() {
         render: (e) => {
           const prog = e.programInstance;
           return prog ? String(daysRemaining(prog.endsOn)) : "—";
-        },
-      },
-      {
-        key: "status",
-        header: t("colStatus"),
-        render: (e) => {
-          const mark = markFor(e);
-          const label = courseLabel(mark);
-          return (
-            <span className="inline-flex items-center gap-2">
-              <CourseDot mark={mark} label={label} />
-              <span>{label}</span>
-            </span>
-          );
         },
       },
       {
@@ -1035,7 +1055,7 @@ export default function SanatoriumPage() {
         ),
       },
     ],
-    [t, tc, busy, careTeamOn],
+    [t, tp, tc, busy, careTeamOn, locale],
   );
 
   const program = selected?.programInstance;
@@ -1123,6 +1143,17 @@ export default function SanatoriumPage() {
               setFilterCourse("");
             }}
           >
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("filterHotelRoom")}
+              value={filterRoom}
+              onChange={(v) => setFilterRoom(String(v ?? ""))}
+              options={[
+                { value: "", label: t("filterHotelRoomAll") },
+                ...hotelRooms.map((room) => ({ value: room, label: room })),
+              ]}
+              emptyLabel={t("filterHotelRoomAll")}
+            />
             <Field
               label={tc("search")}
               preset="shortText"
@@ -1150,17 +1181,6 @@ export default function SanatoriumPage() {
               <option value="attention">{t("courseAttention")}</option>
               <option value="blocked">{t("courseBlocked")}</option>
             </FieldSelect>
-            <CatalogField
-              kind="SEARCHABLE"
-              label={t("filterHotelRoom")}
-              value={filterRoom}
-              onChange={(v) => setFilterRoom(String(v ?? ""))}
-              options={[
-                { value: "", label: t("filterHotelRoomAll") },
-                ...hotelRooms.map((room) => ({ value: room, label: room })),
-              ]}
-              emptyLabel={t("filterHotelRoomAll")}
-            />
             <CatalogField
               kind={inferCatalogFieldKind({
                 optionCount: programCodes.length + 1,

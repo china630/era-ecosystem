@@ -442,7 +442,7 @@ export async function saveBathCalendar(input: {
 export type BathSeatMiss = {
   ymd: string;
   procedureCode: string;
-  reason: "no_cabin" | "no_staff" | "no_day";
+  reason: "no_cabin" | "no_staff" | "no_day" | "no_mode";
 };
 
 function bathModeOf(fields: unknown): BathMode | null {
@@ -499,7 +499,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
   for (const [procedureCode, group] of byCode) {
     const meta = memberByCode.get(procedureCode)!;
     const mode = bathModeOf(group[0]?.physioFields);
-    if (!mode) continue;
+    if (!mode) {
+      for (const order of group) {
+        missed.push({ ymd: "", procedureCode: order.procedureCode, reason: "no_mode" });
+      }
+      continue;
+    }
     const already = snapshot.orders.filter((order) => order.procedureCode === procedureCode);
     const kept: KeptCell[] = already.map((order) => ({
       ymd: order.ymd,

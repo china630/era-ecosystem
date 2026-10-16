@@ -67,8 +67,8 @@ export function CountryStayReport({
     copy.sort((a, b) => {
       const dir = sortDir === "asc" ? 1 : -1;
       if (sortKey === "country") {
-        const an = a.code ? countryLabel(locale, a.code) : "";
-        const bn = b.code ? countryLabel(locale, b.code) : "";
+        const an = a.code ? countryLabel(a.code, locale) : "";
+        const bn = b.code ? countryLabel(b.code, locale) : "";
         return an.localeCompare(bn) * dir;
       }
       return (a[sortKey] - b[sortKey]) * dir;
@@ -125,7 +125,11 @@ export function CountryStayReport({
               onChange={(v) => setMonth(String(v ?? month))}
               options={Array.from({ length: 12 }, (_, i) => {
                 const value = String(i + 1).padStart(2, "0");
-                return { value, label: value };
+                const label = new Intl.DateTimeFormat(locale, {
+                  month: "long",
+                  timeZone: "UTC",
+                }).format(new Date(Date.UTC(2026, i, 1)));
+                return { value, label };
               })}
               emptyLabel={null}
             />
@@ -174,7 +178,7 @@ export function CountryStayReport({
                 sorted.map((row) => (
                   <tr key={row.code || "unknown"} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {row.code ? countryLabel(locale, row.code) : "—"}
+                      {row.code ? countryLabel(row.code, locale) : "—"}
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-right`}>{row.guests}</td>
                     {showNights ? (

@@ -154,8 +154,8 @@ export async function GET(req: Request) {
       const room = query.room.trim();
       conditions.push({
         OR: [
-          { episode: { roomNumber: { contains: room, mode: "insensitive" } } },
-          { visit: { roomNumber: { contains: room, mode: "insensitive" } } },
+          { episode: { roomNumber: { equals: room, mode: "insensitive" } } },
+          { visit: { roomNumber: { equals: room, mode: "insensitive" } } },
         ],
       });
     }
