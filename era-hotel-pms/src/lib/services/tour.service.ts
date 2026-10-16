@@ -309,6 +309,7 @@ export async function payFolioCharge(
   paymentMethod: PaymentMethod,
   bankTerminalId?: string,
   createdByUserId?: string,
+  auditRequest?: Request,
 ) {
   const charge = await prisma.folioCharge.findUnique({
     where: { id: chargeId },
@@ -326,6 +327,7 @@ export async function payFolioCharge(
     bankTerminalId:
       paymentMethod === 'CARD' || paymentMethod.startsWith('CARD_') ? bankTerminalId : undefined,
     createdByUserId,
+    auditRequest,
   });
   await prisma.folioPaymentAllocation.create({
     data: { paymentId: payment.id, chargeId: charge.id, amount: toDecimal(amount) },
@@ -340,26 +342,28 @@ export async function payFolioCharge(
       data: { status: 'PAID', folioPaymentId: payment.id },
     });
   }
-  const { recordHotelAudit } = await import('@/lib/satellite-audit');
-  await recordHotelAudit({ userId: createdByUserId }, 'Reservation', charge.folio.reservationId, 'PAYMENT', {
-    reservationId: charge.folio.reservationId,
-    paymentId: payment.id,
-    amount,
-    paymentMethod,
-    bankTerminalId: bankTerminalId ?? null,
-    chargeId: charge.id,
-  });
   return payment;
 }
 
-export async function payTourBooking(id: string, paymentMethod: PaymentMethod) {
+export async function payTourBooking(
+  id: string,
+  paymentMethod: PaymentMethod,
+  createdByUserId?: string,
+  auditRequest?: Request,
+) {
   const booking = await prisma.tourBooking.findUnique({ where: { id } });
   if (!booking) throw new Error('Tour booking not found');
   if (booking.status === 'PAID') throw new Error('Tour booking already paid');
   if (booking.status !== 'CHARGED' || !booking.folioChargeId) {
     throw new Error('Tour booking is not awaiting payment');
   }
-  return payFolioCharge(booking.folioChargeId, paymentMethod);
+  return payFolioCharge(
+    booking.folioChargeId,
+    paymentMethod,
+    undefined,
+    createdByUserId,
+    auditRequest,
+  );
 }
 
 export async function syncTourBookingsAfterFolioSettle(folioId: string, usedGuestTender: boolean) {

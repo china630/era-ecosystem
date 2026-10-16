@@ -34,6 +34,7 @@ export async function POST(
     const result = await checkoutReservation(id, {
       ...(parsed ?? {}),
       createdByUserId: session?.sub,
+      auditRequest: request,
     });
     return jsonOk(serialize(result));
   } catch (err) {

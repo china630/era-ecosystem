@@ -26,6 +26,7 @@ export async function POST(
         effectiveDate: body.effectiveDate,
         roomTypeId: body.roomTypeId,
         ratePlanId: body.ratePlanId,
+        audit: { userId: session?.sub, request },
       }),
     );
   } catch (err) {

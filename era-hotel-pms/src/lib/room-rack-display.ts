@@ -127,18 +127,87 @@ export function reservationsTouchingDate<T extends RackStaySlice>(
   );
 }
 
-/** Stay shown on the door tile for the filter interval. */
+function rangeKeys(fromKey: string, toKey: string): { lo: string; hi: string } {
+  return fromKey <= toKey
+    ? { lo: fromKey, hi: toKey }
+    : { lo: toKey, hi: fromKey };
+}
+
+/** In-house on the door, or a pre-arrival stay whose check-in falls in the rack interval. */
+export function isRackLiveStay(
+  stay: RackStaySlice,
+  fromKey: string,
+  toKey: string = fromKey,
+): boolean {
+  if (!stay.checkInDate || !stay.checkOutDate) return false;
+  if (!stayTouchesHotelDateRange(stay.checkInDate, stay.checkOutDate, fromKey, toKey)) {
+    return false;
+  }
+  if (stay.status === 'IN_HOUSE') return true;
+  if (stay.status !== 'CONFIRMED' && stay.status !== 'OPTION') return false;
+  const { lo, hi } = rangeKeys(fromKey, toKey);
+  const ci = hotelDateKey(stay.checkInDate);
+  return ci >= lo && ci <= hi;
+}
+
+export function rackLiveStaysForDate<T extends RackStaySlice>(
+  reservations: T[],
+  fromKey: string,
+  toKey: string = fromKey,
+): T[] {
+  return reservationsTouchingDate(reservations, fromKey, toKey).filter((stay) =>
+    isRackLiveStay(stay, fromKey, toKey),
+  );
+}
+
+/** Assigned stay overlapping the interval — blocks quick-book even when the guest is not on the tile. */
+export function rackHasAssignedStay(
+  reservations: RackStaySlice[],
+  fromKey: string,
+  toKey: string = fromKey,
+): boolean {
+  return Boolean(pickRackAssignedStayForDate(reservations, fromKey, toKey));
+}
+
+/** Occupant, today's arrival, or assigned-not-received stay overlapping the interval. */
+export function pickRackAssignedStayForDate<T extends RackStaySlice>(
+  reservations: T[],
+  fromKey: string,
+  toKey: string = fromKey,
+): T | undefined {
+  const live = pickRackStayForDate(reservations, fromKey, toKey);
+  if (live) return live;
+  return reservationsTouchingDate(reservations, fromKey, toKey).find(
+    (stay) =>
+      stay.status === 'IN_HOUSE' || stay.status === 'CONFIRMED' || stay.status === 'OPTION',
+  );
+}
+
+/** Stay shown on the door tile: in-house first, then today's (interval) arrival. */
 export function pickRackStayForDate<T extends RackStaySlice>(
   reservations: T[],
   fromKey: string,
   toKey: string = fromKey,
 ): T | undefined {
-  const touching = reservationsTouchingDate(reservations, fromKey, toKey);
+  const live = rackLiveStaysForDate(reservations, fromKey, toKey);
   return (
-    touching.find((r) => r.status === 'IN_HOUSE') ??
-    touching.find((r) => r.status === 'CONFIRMED') ??
-    touching[0]
+    live.find((r) => r.status === 'IN_HOUSE') ??
+    live.find((r) => r.status === 'CONFIRMED') ??
+    live.find((r) => r.status === 'OPTION')
   );
+}
+
+export type RackDoorUse = 'live' | 'held' | 'vacant';
+
+/** Live occupant/arrival, assigned-not-received, or free for the interval. */
+export function rackDoorUse(
+  reservations: RackStaySlice[],
+  fromKey: string,
+  toKey: string = fromKey,
+): RackDoorUse {
+  if (pickRackStayForDate(reservations, fromKey, toKey)) return 'live';
+  if (rackHasAssignedStay(reservations, fromKey, toKey)) return 'held';
+  return 'vacant';
 }
 
 export function deriveSharePoolForDate(
@@ -150,7 +219,7 @@ export function deriveSharePoolForDate(
   fromKey: string,
   toKey: string = fromKey,
 ): { gender: string; occupied: number; capacity: number } | null {
-  const touching = reservationsTouchingDate(room.reservations, fromKey, toKey);
+  const touching = rackLiveStaysForDate(room.reservations, fromKey, toKey);
   const shareStays = touching.filter(
     (r) =>
       r.shareEligible &&
@@ -209,11 +278,15 @@ export function computeRackDisplayState(
   if (active?.checkInDate && active?.checkOutDate) {
     const ci = hotelDateKey(active.checkInDate);
     const co = hotelDateKey(active.checkOutDate);
-    if (active.status === 'CONFIRMED' && ci >= lo && ci <= hi) return 'arrival';
-    if (active.status === 'IN_HOUSE' && co >= lo && co <= hi) return 'departure';
-    if (active.status === 'IN_HOUSE' || active.status === 'CONFIRMED' || active.status === 'OPTION') {
-      return 'occupied';
+    if (
+      (active.status === 'CONFIRMED' || active.status === 'OPTION') &&
+      ci >= lo &&
+      ci <= hi
+    ) {
+      return 'arrival';
     }
+    if (active.status === 'IN_HOUSE' && co >= lo && co <= hi) return 'departure';
+    if (active.status === 'IN_HOUSE') return 'occupied';
   }
 
   if (room.status === 'OCCUPIED') return 'occupied';

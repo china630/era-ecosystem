@@ -19,6 +19,7 @@ export async function POST(
     }
     const result = await swapReservationRooms(id, body.otherReservationId, {
       actorUserId: session?.sub,
+      request,
     });
     return jsonOk(serialize(result));
   } catch (err) {

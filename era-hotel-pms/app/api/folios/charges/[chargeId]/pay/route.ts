@@ -32,12 +32,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ chargeId: stri
       const applied = await applyHeldDepositsToFolio(
         charge.folioId,
         decimalToNumber(charge.amount) * charge.qty,
+        { userId: session?.sub, request: req },
       );
       if (applied.amount <= 0.01) return jsonError('No held deposit to apply', 400);
       return jsonOk(serialize(applied));
     }
     return jsonOk(
-      serialize(await payFolioCharge(chargeId, body.paymentMethod, body.bankTerminalId, session.sub)),
+      serialize(
+        await payFolioCharge(chargeId, body.paymentMethod, body.bankTerminalId, session.sub, req),
+      ),
     );
   } catch (e) {
     return handleRouteError(e);

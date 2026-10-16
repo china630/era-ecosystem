@@ -6,8 +6,6 @@ import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { prisma } from '@/lib/prisma';
-import { recordHotelAudit } from '@/lib/satellite-audit';
 
 export async function GET(request: Request) {
   try {
@@ -44,31 +42,24 @@ export async function POST(request: Request) {
     if (body.folioId) {
       assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
       const data = paymentSchema.parse(body);
-      const payment = await postPayment({ ...data, createdByUserId: session?.sub });
-      const folio = await prisma.folio.findUnique({
-        where: { id: data.folioId },
-        select: { reservationId: true },
+      const payment = await postPayment({
+        ...data,
+        createdByUserId: session?.sub,
+        auditRequest: request,
       });
-      if (folio) {
-        await recordHotelAudit(
-          { userId: session?.sub, request },
-          'Reservation',
-          folio.reservationId,
-          'PAYMENT',
-          {
-            paymentId: payment.id,
-            amount: data.amount,
-            paymentMethod: data.paymentMethod,
-            bankTerminalId: data.bankTerminalId ?? null,
-            reservationId: folio.reservationId,
-          },
-        );
-      }
       return jsonOk(serialize(payment), 201);
     }
     assertPermission(session, PERMISSIONS.FOLIO_CHARGE);
     const data = chargeSchema.parse(body);
-    return jsonOk(serialize(await postCharge(data)), 201);
+    return jsonOk(
+      serialize(
+        await postCharge({
+          ...data,
+          audit: { userId: session?.sub, request },
+        }),
+      ),
+      201,
+    );
   } catch (err) {
     return handleRouteError(err);
   }

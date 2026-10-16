@@ -4,6 +4,7 @@ import { physicalTypeAllowedForDoor } from '@/lib/services/door-type.policy';
 import { dispatchRoomChanged } from '@/lib/integration/guest-lifecycle-events';
 import { REISSUE_KEY_TASK_TITLE } from '@/lib/services/depart-guest.service';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
+import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
 
 const RELOCATABLE = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
@@ -14,7 +15,7 @@ const RELOCATABLE = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 export async function swapReservationRooms(
   reservationIdA: string,
   reservationIdB: string,
-  opts?: { actorUserId?: string },
+  opts?: { actorUserId?: string; request?: Request },
 ) {
   if (reservationIdA === reservationIdB) throw new Error('Cannot swap a stay with itself');
 
@@ -144,13 +145,13 @@ export async function swapReservationRooms(
     reservationId: a.id,
     previousRoomNumber: roomA.roomNumber,
     newRoomNumber: roomB.roomNumber,
-    programCode: a.ratePlan?.medicalFlag ? a.ratePlan.code : undefined,
+    programCode: clinicProgramCodeFromTariff(a.ratePlan),
   }).catch(() => undefined);
   void dispatchRoomChanged({
     reservationId: b.id,
     previousRoomNumber: roomB.roomNumber,
     newRoomNumber: roomA.roomNumber,
-    programCode: b.ratePlan?.medicalFlag ? b.ratePlan.code : undefined,
+    programCode: clinicProgramCodeFromTariff(b.ratePlan),
   }).catch(() => undefined);
 
   await Promise.all([
@@ -158,6 +159,23 @@ export async function swapReservationRooms(
     addReservationTask(b.id, { title: REISSUE_KEY_TASK_TITLE }).catch(() => undefined),
   ]);
 
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(a.id, 'SWAP_ROOM', {
+    userId: opts?.actorUserId,
+    request: opts?.request,
+  }, {
+    section: 'card',
+    source: 'user',
+    fields: [{ key: 'roomNumber', from: roomA.roomNumber, to: roomB.roomNumber }],
+  });
+  await recordReservationAudit(b.id, 'SWAP_ROOM', {
+    userId: opts?.actorUserId,
+    request: opts?.request,
+  }, {
+    section: 'card',
+    source: 'user',
+    fields: [{ key: 'roomNumber', from: roomB.roomNumber, to: roomA.roomNumber }],
+  });
   return {
     a: { id: a.id, roomId: fromB, roomNumber: roomB.roomNumber },
     b: { id: b.id, roomId: fromA, roomNumber: roomA.roomNumber },

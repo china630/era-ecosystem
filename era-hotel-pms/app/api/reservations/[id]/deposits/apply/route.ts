@@ -16,7 +16,10 @@ export async function POST(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const body = bodySchema.parse(await request.json());
-    const result = await applyHeldDepositsToFolio(body.folioId, body.amount);
+    const result = await applyHeldDepositsToFolio(body.folioId, body.amount, {
+      userId: session?.sub,
+      request,
+    });
     if (result.amount <= 0.01) {
       return jsonError('No held deposit to apply', 400);
     }

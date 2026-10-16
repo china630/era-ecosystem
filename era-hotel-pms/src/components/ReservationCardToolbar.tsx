@@ -160,8 +160,8 @@ export function ReservationCardActions({
         <button
           type="button"
           className={ICON_BTN}
-          title={!onHistory ? t('availableAfterSave') : t('history')}
-          aria-label={t('history')}
+          title={!onHistory ? t('availableAfterSave') : t('stayJournal')}
+          aria-label={t('stayJournal')}
           disabled={busy || !onHistory}
           onClick={onHistory}
         >

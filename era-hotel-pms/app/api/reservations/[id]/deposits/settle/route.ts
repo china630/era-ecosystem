@@ -24,15 +24,21 @@ export async function POST(
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const body = bodySchema.parse(await request.json());
+    const audit = { userId: session?.sub, request };
     if (body.action === 'carry') {
-      return jsonOk(serialize(await carryDepositRemainder(body.depositId)));
+      return jsonOk(serialize(await carryDepositRemainder(body.depositId, audit)));
     }
     if (!body.paymentMethod) {
       throw new Error('Payout needs cash or card');
     }
     return jsonOk(
       serialize(
-        await payoutDepositRemainder(body.depositId, body.paymentMethod, body.bankTerminalId),
+        await payoutDepositRemainder(
+          body.depositId,
+          body.paymentMethod,
+          body.bankTerminalId,
+          audit,
+        ),
       ),
     );
   } catch (err) {

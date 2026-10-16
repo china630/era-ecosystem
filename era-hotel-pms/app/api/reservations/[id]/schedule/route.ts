@@ -21,7 +21,16 @@ export async function PATCH(
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = schema.parse(await request.json());
+    const { loadReservationAuditSnapshot, recordReservationDiff } = await import(
+      '@/lib/reservation-audit'
+    );
+    const before = await loadReservationAuditSnapshot(id);
     const reservation = await updateReservationSchedule(id, body);
+    const after = await loadReservationAuditSnapshot(id);
+    await recordReservationDiff(id, 'UPDATE', before, after, {
+      userId: session?.sub,
+      request,
+    });
     return jsonOk(serialize(reservation));
   } catch (err) {
     return handleRouteError(err);

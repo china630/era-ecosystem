@@ -24,7 +24,11 @@ export async function POST(request: Request, ctx: Ctx) {
     await requireHotelModule('hotel_distribution', session.organizationId);
     const { id } = await ctx.params;
     const body = schema.parse(await request.json());
-    const result = await pickupAllotmentBlock({ allotmentBlockId: id, ...body });
+    const result = await pickupAllotmentBlock({
+      allotmentBlockId: id,
+      ...body,
+      audit: { userId: session?.sub, request },
+    });
     return jsonOk(serialize(result), 201);
   } catch (err) {
     return handleRouteError(err);

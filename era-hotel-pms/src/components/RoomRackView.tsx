@@ -19,7 +19,8 @@ import {
   formatSharePoolBadge,
   canQuickBookRoom,
   pickRackStayForDate,
-  reservationsTouchingDate,
+  rackDoorUse,
+  rackLiveStaysForDate,
   deriveSharePoolForDate,
   type RackDisplayState,
 } from '@/lib/room-rack-display';
@@ -243,9 +244,9 @@ export default function RoomRackView({
       if (inspectedOnly && room.status !== 'INSPECTED') return false;
       if (oooOnly && room.status !== 'OOO') return false;
       const active = pickRackStayForDate(room.reservations, rangeLo, rangeHi);
-      const isOccupied = Boolean(active);
-      if (occupiedOnly && !isOccupied) return false;
-      if (vacantOnly && isOccupied) return false;
+      const doorUse = rackDoorUse(room.reservations, rangeLo, rangeHi);
+      if (occupiedOnly && doorUse !== 'live') return false;
+      if (vacantOnly && doorUse !== 'vacant') return false;
 
       if (agencyFilter !== 'all') {
         if (!active) return false;
@@ -267,7 +268,14 @@ export default function RoomRackView({
         }
         const ci = hotelDateKey(active.checkInDate);
         const co = hotelDateKey(active.checkOutDate);
-        if (resFilter === 'arrival' && !(active.status === 'CONFIRMED' && ci >= rangeLo && ci <= rangeHi)) {
+        if (
+          resFilter === 'arrival' &&
+          !(
+            (active.status === 'CONFIRMED' || active.status === 'OPTION') &&
+            ci >= rangeLo &&
+            ci <= rangeHi
+          )
+        ) {
           return false;
         }
         if (resFilter === 'departure' && !(active.status === 'IN_HOUSE' && co >= rangeLo && co <= rangeHi)) {
@@ -296,10 +304,13 @@ export default function RoomRackView({
     payFilter,
   ]);
 
-  const occupiedCount = rooms.filter((r) =>
-    Boolean(pickRackStayForDate(r.reservations, rangeLo, rangeHi)),
+  const occupiedCount = rooms.filter(
+    (r) => rackDoorUse(r.reservations, rangeLo, rangeHi) === 'live',
   ).length;
-  const vacantCount = rooms.length - occupiedCount;
+  const heldCount = rooms.filter(
+    (r) => rackDoorUse(r.reservations, rangeLo, rangeHi) === 'held',
+  ).length;
+  const vacantCount = rooms.length - occupiedCount - heldCount;
 
   function toggleType(code: string) {
     setTypeFilters((prev) => {
@@ -372,6 +383,7 @@ export default function RoomRackView({
         </div>
         <div className="flex gap-3 text-[12px] text-[#7F8C8D]">
           <span>{t('occupied')}: {occupiedCount}</span>
+          <span>{t('held')}: {heldCount}</span>
           <span>{t('vacant')}: {vacantCount}</span>
         </div>
         <div>
@@ -514,8 +526,9 @@ export default function RoomRackView({
         <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {filtered.map((room) => {
-            const touching = reservationsTouchingDate(room.reservations, rangeLo, rangeHi);
+            const touching = rackLiveStaysForDate(room.reservations, rangeLo, rangeHi);
             const active = pickRackStayForDate(room.reservations, rangeLo, rangeHi);
+            const held = rackDoorUse(room.reservations, rangeLo, rangeHi) === 'held';
             const sharePool = deriveSharePoolForDate(room, rangeLo, rangeHi);
             const guestGender = active
               ? (normalizeShareGender(active.shareGender) ??
@@ -523,10 +536,12 @@ export default function RoomRackView({
               : null;
             const top = rackBorder(room);
             const textCls = rackText(room);
-            const showQuick = onQuickBook && canQuickBookRoom(room);
+            const showQuick = onQuickBook && canQuickBookRoom(room) && !held;
             const isDropTarget =
               dropTargetId === room.id &&
               Boolean(dragResId) &&
+              !held &&
+              !active &&
               ['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status);
             return (
               <div
@@ -534,6 +549,8 @@ export default function RoomRackView({
                 className={`relative rounded-2xl border border-[#D5DADF] bg-white p-3 shadow-sm transition ${top} ${selectedId === room.id ? 'ring-2 ring-[#2980B9]' : ''} ${isDropTarget ? 'ring-2 ring-emerald-500' : ''}`}
                 onDragOver={(e) => {
                   if (!dragResId || !onRelocate) return;
+                  if (held || active) return;
+                  if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return;
                   e.preventDefault();
                   setDropTargetId(room.id);
                 }}
@@ -544,6 +561,8 @@ export default function RoomRackView({
                   setDropTargetId(null);
                   setDragResId(null);
                   if (!resId || !onRelocate) return;
+                  if (held || active) return;
+                  if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return;
                   if (room.reservations.some((stay) => stay.id === resId)) return;
                   setPendingMove({ reservationId: resId, toRoomId: room.id });
                 }}
@@ -660,7 +679,9 @@ export default function RoomRackView({
                       </div>
                     </div>
                   ) : (
-                    <div className="mt-2 text-[12px] text-[#7F8C8D]">{t('vacant')}</div>
+                    <div className="mt-2 text-[12px] text-[#7F8C8D]">
+                      {held ? t('held') : t('vacant')}
+                    </div>
                   )}
                 </button>
                 {showQuick ? (

@@ -4,6 +4,8 @@ import {
   deriveSharePoolForDate,
   formatSharePoolBadge,
   pickRackStayForDate,
+  rackDoorUse,
+  rackHasAssignedStay,
 } from '@/lib/room-rack-display';
 import { normalizeShareGender } from '@/lib/share-gender';
 
@@ -49,6 +51,38 @@ describe('rack stay vs filter date', () => {
   it('date range 8–11 Sep keeps Sep stay and drops June', () => {
     expect(pickRackStayForDate([sep], '2026-09-08', '2026-09-11')?.status).toBe('IN_HOUSE');
     expect(pickRackStayForDate([june], '2026-09-08', '2026-09-11')).toBeUndefined();
+  });
+
+  const olga = {
+    status: 'CONFIRMED' as const,
+    checkInDate: '2026-10-03T10:00:00.000Z',
+    checkOutDate: '2026-10-17T08:00:00.000Z',
+  };
+
+  it('does not paint a mid-stay CONFIRMED guest who has not checked in', () => {
+    expect(pickRackStayForDate([olga], '2026-10-16')).toBeUndefined();
+    expect(
+      computeRackDisplayState({ status: 'CLEAN', reservations: [olga] }, '2026-10-16'),
+    ).toBe('vacant');
+    expect(rackHasAssignedStay([olga], '2026-10-16')).toBe(true);
+    expect(rackDoorUse([olga], '2026-10-16')).toBe('held');
+    expect(rackDoorUse([], '2026-10-16')).toBe('vacant');
+  });
+
+  it('paints CONFIRMED as arrival only on the check-in date', () => {
+    expect(pickRackStayForDate([olga], '2026-10-03')?.status).toBe('CONFIRMED');
+    expect(
+      computeRackDisplayState({ status: 'CLEAN', reservations: [olga] }, '2026-10-03'),
+    ).toBe('arrival');
+    expect(rackDoorUse([olga], '2026-10-03')).toBe('live');
+  });
+
+  it('paints OPTION as arrival on the check-in date and hides it afterwards', () => {
+    const option = { ...olga, status: 'OPTION' as const };
+    expect(
+      computeRackDisplayState({ status: 'CLEAN', reservations: [option] }, '2026-10-03'),
+    ).toBe('arrival');
+    expect(pickRackStayForDate([option], '2026-10-16')).toBeUndefined();
   });
 });
 

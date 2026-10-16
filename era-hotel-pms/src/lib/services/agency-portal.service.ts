@@ -86,6 +86,7 @@ export async function createAgencyPortalReservation(input: {
   bookerEmail?: string;
   externalRef?: string;
   paymentMethod?: 'COMPANY_ACCOUNT' | 'CASH' | 'CARD';
+  audit?: { userId?: string | null; request?: Request };
 }) {
   const contract = await prisma.salesContract.findFirst({
     where: {

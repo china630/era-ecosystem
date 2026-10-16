@@ -4,6 +4,7 @@ import {
   overlayFoPackageCodes,
   programCodeForLifecycle,
   resolveMedicalSku,
+  stayProductFamily,
   summarizeMedicalSku,
   type MedicalPackageCode,
 } from "@/lib/services/medical-package-resolve.service";
@@ -16,7 +17,7 @@ type TxLike = Pick<
 /**
  * Load notes + agency + pax, resolve SKUs, stamp ReservationGuest + Reservation.
  * An explicit guest-column code wins for that pax. An empty column inherits the
- * stay SKU (ERA-PKG, agency, PKG-* rate plan).
+ * stay SKU (ERA-PKG, agency, medical PKG-* rate plan). Infotur stays are not stamped.
  */
 export async function stampMedicalPackagesForReservation(
   tx: TxLike,
@@ -51,6 +52,30 @@ export async function stampMedicalPackagesForReservation(
       unanimousCode: null,
       unresolved: true,
       perGuestCodes: [],
+      stayKind: "unresolved",
+    };
+  }
+
+  if (stayProductFamily(reservation.ratePlan) === "infotur") {
+    await tx.reservation.update({
+      where: { id: reservationId },
+      data: { medicalPackageCode: null, medicalPackageUnresolved: true },
+    });
+    if (reservation.paxGuests.length > 0) {
+      await Promise.all(
+        reservation.paxGuests.map((g) =>
+          tx.reservationGuest.update({
+            where: { id: g.id },
+            data: { medicalPackageCode: null },
+          }),
+        ),
+      );
+    }
+    return {
+      unanimousCode: null,
+      unresolved: true,
+      programCode: undefined,
+      perGuestCodes: reservation.paxGuests.map(() => null),
       stayKind: "unresolved",
     };
   }

@@ -1,9 +1,14 @@
 import {
+  clinicProgramCodeFromTariff,
+  medicalPackageChoices,
   normalizeMedicalPackageCode,
   overlayFoPackageCodes,
   programCodeForLifecycle,
+  ratePlanRequiresGuestPackage,
   resolveAgencyPackageCode,
   resolveMedicalSku,
+  stayProductFamily,
+  usesMedicalPackageCompose,
 } from "@/lib/services/medical-package-resolve.service";
 
 describe("medical-package-resolve", () => {
@@ -175,6 +180,14 @@ describe("medical-package-resolve", () => {
     });
     expect(medicalTariff.stayKind).toBe("medical");
     expect(medicalTariff.unanimousCode).toBe("PKG-STANDART");
+    const infotur = resolveMedicalSku({
+      notes: [],
+      agencyName: "Walkin leisure",
+      guests: [{ fullName: "Guest" }],
+      ratePlanCode: "PKG-INFOTUR",
+      applyLeisureAgencyRule: true,
+    });
+    expect(infotur.stayKind).toBe("leisure");
   });
 
   it("front office does not copy the tariff into an empty guest package", () => {
@@ -187,6 +200,38 @@ describe("medical-package-resolve", () => {
     expect(r.perGuestCodes).toEqual([null]);
     expect(r.unanimousCode).toBeNull();
     expect(r.stayKind).toBe("unresolved");
+  });
+
+  it("stay product family splits Infotur from Medical Rates", () => {
+    expect(stayProductFamily({ code: "PKG-INFOTUR" })).toBe("infotur");
+    expect(stayProductFamily({ code: "MEDICAL RATES (MEDIKAL +10)" })).toBe(
+      "medical",
+    );
+    expect(stayProductFamily({ code: "PKG-STANDART" })).toBe("medical");
+    expect(stayProductFamily({ code: "BAR-FB" })).toBe("bar");
+    expect(ratePlanRequiresGuestPackage({ code: "PKG-INFOTUR", medicalFlag: true })).toBe(
+      false,
+    );
+    expect(
+      ratePlanRequiresGuestPackage({ code: "MEDICAL RATES", medicalFlag: false }),
+    ).toBe(true);
+    expect(usesMedicalPackageCompose({ code: "PKG-INFOTUR" })).toBe(false);
+    expect(usesMedicalPackageCompose({ code: "PKG-PREMIUM" })).toBe(true);
+    expect(normalizeMedicalPackageCode("PKG-INFOTUR")).toBeNull();
+    expect(clinicProgramCodeFromTariff({ code: "PKG-INFOTUR" })).toBeUndefined();
+    expect(clinicProgramCodeFromTariff({ code: "PKG-STANDART" })).toBe(
+      "PKG-STANDART",
+    );
+    expect(
+      clinicProgramCodeFromTariff({ code: "MEDICAL RATES (MEDIKAL +10)" }),
+    ).toBeUndefined();
+    expect(
+      medicalPackageChoices([
+        { code: "PKG-INFOTUR", label: "PKG-INFOTUR — Infotur" },
+        { code: "PKG-STANDART", label: "PKG-STANDART — Standart" },
+        { code: "PKG-PREMIUM", label: "PKG-PREMIUM" },
+      ]).map((row) => row.value),
+    ).toEqual(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMA", "PKG-DETOKS"]);
   });
 
   it("isLeisureAgency helper", async () => {

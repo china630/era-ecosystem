@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       adults: input.adults,
       bookerEmail: session.email,
       externalRef: input.externalRef,
+      audit: { userId: session.sub, request },
     });
     return jsonOk(serialize(reservation), 201);
   } catch (err) {

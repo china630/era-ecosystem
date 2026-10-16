@@ -43,7 +43,7 @@ Clinic receives a guest at check-in when that guest has an explicit medical pack
 
 A past arrival date moves to the business day on check-in. Nights before that day are dropped and not charged. The confirmation text names the new date only in that case.
 
-The Walk-in Leisure agency name does not mute clinic. The Elektra bridge still treats that label as non-medical when the imported tariff is not a `PKG-*` code.
+The Walk-in Leisure agency name does not mute clinic. The Elektra bridge still treats that label as non-medical when the imported tariff is not a medical `PKG-*` SKU (Infotur does not count).
 
 ## Coverage
 

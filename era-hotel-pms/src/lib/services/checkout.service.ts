@@ -14,8 +14,11 @@ import {
 import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.service';
 import { createFiscalDocumentsOnCheckout, issueFolioInvoice } from '@/lib/services/fiscal-document.service';
 import { getReservation } from '@/lib/services/reservation.service';
+import {
+  clinicProgramCodeFromTariff,
+  usesMedicalPackageCompose,
+} from '@/lib/services/medical-package-resolve.service';
 import { releaseDoorAfterShareDeparture } from '@/lib/services/share-assignment.service';
-import { recordHotelAudit } from '@/lib/satellite-audit';
 
 export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
@@ -78,10 +81,11 @@ export async function checkoutReservation(
     unusedNightsReason?: string;
     procedureCreditRefundMethod?: 'CASH' | 'CARD';
     procedureCreditBankTerminalId?: string;
+    auditRequest?: Request;
   },
 ): Promise<CheckoutResult> {
   const existing = await getReservation(id);
-  if (existing.ratePlan.medicalFlag) {
+  if (usesMedicalPackageCompose(existing.ratePlan)) {
     const { assertClinicCheckoutClear } = await import('@/lib/integration/clinic-checkout-gate');
     await assertClinicCheckoutClear(id);
   }
@@ -145,11 +149,15 @@ export async function checkoutReservation(
       reservationId: id,
       amount: opts.discountAmount,
       description: opts.discountDescription ?? 'Checkout discount',
+      audit: { userId: opts.createdByUserId, request: opts.auditRequest },
     });
   }
 
   const { applyHeldDepositsToReservation } = await import('@/lib/services/folio-deposit.service');
-  await applyHeldDepositsToReservation(id);
+  await applyHeldDepositsToReservation(id, {
+    userId: opts?.createdByUserId,
+    request: opts?.auditRequest,
+  });
 
   const { refundRemainingDeposits } = await import('@/lib/services/folio-deposit.service');
   const depositRemainder = await refundRemainingDeposits(id);
@@ -196,9 +204,17 @@ export async function checkoutReservation(
       });
       posted.push({ folioId: folio.id, amount });
     }
-    await recordHotelAudit({ userId: opts.createdByUserId }, 'Reservation', id, 'GUEST_DEBT', {
-      note,
-      lines: posted,
+    const { recordReservationAudit } = await import('@/lib/reservation-audit');
+    await recordReservationAudit(id, 'GUEST_DEBT', {
+      userId: opts.createdByUserId,
+      request: opts.auditRequest,
+    }, {
+      section: 'folio',
+      source: 'user',
+      fields: [
+        { key: 'amount', from: null, to: String(posted.reduce((sum, row) => sum + row.amount, 0)) },
+        { key: 'reason', from: null, to: note },
+      ],
     });
   }
 
@@ -289,7 +305,7 @@ export async function checkoutReservation(
   void dispatchGuestCheckedOut({
     reservationId: id,
     roomNumber: completed.room?.roomNumber ?? undefined,
-    programCode: completed.ratePlan.medicalFlag ? completed.ratePlan.code : undefined,
+    programCode: clinicProgramCodeFromTariff(completed.ratePlan),
   }).catch((e) => console.error('Guest lifecycle check-out failed', e));
   const { notifyFbPosReservationLifecycle } = await import('@/lib/integration/fnb-pos-webhook');
   void notifyFbPosReservationLifecycle({
@@ -302,6 +318,19 @@ export async function checkoutReservation(
   const { submitTourismCheckOut } = await import('@/lib/services/tourism.service');
   void submitTourismCheckOut(id).catch((e) => console.error('Tourism check-out failed', e));
   const reservation = await getReservation(id);
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(id, 'CHECK_OUT', {
+    userId: opts?.createdByUserId,
+    request: opts?.auditRequest,
+  }, {
+    section: 'status',
+    source: 'user',
+    fields: [
+      { key: 'status', from: 'IN_HOUSE', to: 'CHECKED_OUT' },
+      ...(opts?.transferToGuestDebt ? [{ key: 'guestDebt', from: null, to: opts.guestDebtNote ?? 'yes' }] : []),
+      ...(opts?.transferToCityLedger ? [{ key: 'cityLedger', from: null, to: 'true' }] : []),
+    ],
+  });
 
   return { reservation, dispatch, cityLedgerTransferred, depositRemainder };
 }

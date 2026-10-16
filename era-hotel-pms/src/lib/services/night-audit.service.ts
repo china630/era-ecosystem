@@ -438,6 +438,7 @@ async function executeLockedNightAudit() {
           qty: 1,
           description: roomChargeNote('night-audit', hotelDateKey(date)),
           businessDate: date,
+          audit: { source: 'night_audit' },
         });
         steps.push(`Step 3: Room charge posted (${amount} AZN) — reservation ${res.id}`);
       }

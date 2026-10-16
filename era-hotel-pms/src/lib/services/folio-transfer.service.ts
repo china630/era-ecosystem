@@ -1,6 +1,5 @@
 import { decimalToNumber } from '@/lib/decimal';
 import { prisma } from '@/lib/prisma';
-import { recordHotelAudit } from '@/lib/satellite-audit';
 import { ensureOpenFolio } from '@/lib/services/booking-folio.service';
 import type { FolioType } from '@prisma/client';
 
@@ -33,6 +32,7 @@ export async function transferFolioCharge(input: {
   targetReservationId?: string;
   targetReservationGuestId?: string | null;
   actorUserId?: string;
+  request?: Request;
 }) {
   const note = input.note.trim();
   if (!note) throw new Error('TRANSFER_NOTE_REQUIRED');
@@ -80,21 +80,26 @@ export async function transferFolioCharge(input: {
     toFolioType: targetType,
     revenueCode: charge.revenueCode.code,
   };
-  await recordHotelAudit(
-    { userId: input.actorUserId },
-    'Reservation',
-    charge.folio.reservationId,
-    'TRANSFER',
-    payload,
-  );
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  const fields = [
+    { key: 'amount', from: String(payload.amount), to: null },
+    { key: 'revenueCode', from: payload.revenueCode, to: payload.revenueCode },
+    { key: 'folioType', from: payload.fromFolioType, to: payload.toFolioType },
+  ];
+  const actor = { userId: input.actorUserId, request: input.request };
+  await recordReservationAudit(charge.folio.reservationId, 'TRANSFER', actor, {
+    section: 'folio',
+    source: 'user',
+    fields,
+    refs: { chargeId: charge.id, toReservationId: targetReservationId },
+  });
   if (targetReservationId !== charge.folio.reservationId) {
-    await recordHotelAudit(
-      { userId: input.actorUserId },
-      'Reservation',
-      targetReservationId,
-      'TRANSFER',
-      payload,
-    );
+    await recordReservationAudit(targetReservationId, 'TRANSFER', actor, {
+      section: 'folio',
+      source: 'user',
+      fields: fields.map((row) => ({ ...row, from: null, to: row.to })),
+      refs: { chargeId: charge.id, fromReservationId: charge.folio.reservationId },
+    });
   }
   return { folioId: target.id, reservationId: targetReservationId };
 }
