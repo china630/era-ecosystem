@@ -44,6 +44,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 1. Open /availability — confirm Avl/Occ grid for date range.
 2. Pick a type/date with Avl > 0 → **+ Reservation**.
 3. On create card, Product shows sellable count; try dates with Avl = 0 → save blocked / message links to RTA.
+4. Same stay dates: card «Kvota / satılan» must match the **worst** matrix cell for that type over `[check-in, check-out)` (not a civil-midnight extra checkout). A 12:00 Baku departure does not occupy the arrival night; a free door (e.g. 805 CLEAN) can still be unsellable if type Occ = quota.
 
 ## 2. Booking (PMS-01)
 

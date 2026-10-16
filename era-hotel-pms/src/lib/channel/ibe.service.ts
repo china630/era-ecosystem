@@ -1,3 +1,4 @@
+import { addHotelDays, parseHotelNoon } from '@/lib/hotel-calendar';
 import { getChannelAvailability } from '@/lib/services/channel.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { prisma } from '@/lib/prisma';
@@ -88,9 +89,8 @@ export async function searchIbeAvailability(
   },
   db: Db = prisma,
 ) {
-  const checkIn = new Date(input.from);
-  const checkOut = new Date(checkIn);
-  checkOut.setUTCDate(checkOut.getUTCDate() + Math.max(1, input.nights));
+  const checkIn = parseHotelNoon(input.from);
+  const checkOut = parseHotelNoon(addHotelDays(input.from, Math.max(1, input.nights)));
   const guests = (input.adults ?? 1) + (input.children ?? 0);
   const orgId = requestOrganizationId();
 

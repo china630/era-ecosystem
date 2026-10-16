@@ -41,6 +41,31 @@ export function addHotelDays(isoOrKey: string | Date, days: number): string {
   return hotelDateKey(noon);
 }
 
+/**
+ * Occupied hotel night D: [12:00 Baku D, 12:00 Baku D+1).
+ * Checkout at 12:00 does not occupy D (same-day turnover).
+ * Civil `bakuDayBounds` is the wrong window — it still holds the departure morning.
+ */
+export function hotelNightBounds(isoOrKey: string | Date): { start: Date; end: Date } {
+  const key = hotelDateKey(isoOrKey);
+  return {
+    start: parseHotelNoon(key),
+    end: parseHotelNoon(addHotelDays(key, 1)),
+  };
+}
+
+/** True when a stay consumes a door on hotel night D (FO Avl/Occ / sellable / create). */
+export function stayOccupiesHotelNight(
+  checkIn: Date | string,
+  checkOut: Date | string,
+  night: string | Date,
+): boolean {
+  const cin = checkIn instanceof Date ? checkIn : new Date(checkIn);
+  const cout = checkOut instanceof Date ? checkOut : new Date(checkOut);
+  const { start, end } = hotelNightBounds(night);
+  return cin < end && cout > start;
+}
+
 /** True stay overlap (double booking), not adjacent checkout/check-in turnover. */
 export function staysOverlap(
   aIn: Date,

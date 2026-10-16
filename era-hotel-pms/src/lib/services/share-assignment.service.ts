@@ -1,4 +1,3 @@
-import { bakuCivilUtcDate, bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { isOtaAgency } from '@/lib/booking-source-kind';
 import {
@@ -6,6 +5,7 @@ import {
   hotelDateKey,
   parseHotelNoon,
   reservationStayOverlaps,
+  stayOccupiesHotelNight,
 } from '@/lib/hotel-calendar';
 import { canAssignDoor, canBookDoor, resolveAxes, roomWriteFromAxes } from '@/lib/room-state';
 import type { ReservationStatus } from '@prisma/client';
@@ -72,7 +72,7 @@ function eachNight(from: Date, to: Date): Date[] {
   let cur = hotelDateKey(from);
   const end = hotelDateKey(to);
   while (cur < end) {
-    nights.push(bakuCivilUtcDate(cur));
+    nights.push(parseHotelNoon(cur));
     cur = addHotelDays(cur, 1);
   }
   return nights;
@@ -488,8 +488,7 @@ export async function resolveDoorAssignment(input: {
 }
 
 function overlapsNight(r: ShareReservationSlice, night: Date): boolean {
-  const { start, end } = bakuDayBounds(hotelDateKey(night));
-  return r.checkInDate < end && r.checkOutDate > start;
+  return stayOccupiesHotelNight(r.checkInDate, r.checkOutDate, night);
 }
 
 /** Count physical doors consumed on one hotel night. */

@@ -1,3 +1,5 @@
+import { stayOccupiesHotelNight } from '@/lib/hotel-calendar';
+
 export class IbeAuthError extends Error {
   status = 401;
   constructor(message: string) {
@@ -39,8 +41,7 @@ export function holdCoversNight(
   hold: { checkInDate: Date; checkOutDate: Date },
   nightIso: string,
 ): boolean {
-  const night = new Date(`${nightIso}T00:00:00.000Z`);
-  return hold.checkInDate <= night && hold.checkOutDate > night;
+  return stayOccupiesHotelNight(hold.checkInDate, hold.checkOutDate, nightIso);
 }
 
 export function deductHoldsFromAvailable(physical: number, holdCount: number): number {
