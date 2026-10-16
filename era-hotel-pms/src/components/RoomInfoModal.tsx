@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { pickRackAssignedStayForDate } from '@/lib/room-rack-display';
 import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -36,6 +37,7 @@ type Reservation = {
   guest: Guest;
   totalAmount: number;
   checkInDate?: string;
+  checkOutDate?: string;
 };
 
 type Room = {
@@ -61,6 +63,8 @@ export type RoomInfoModalProps = {
   onAddCharge: (reservationId: string, revenueCodeId: string) => void;
   onSetStatus: (status: RoomStatus) => void;
   onOpenReservation?: (reservationId: string) => void;
+  filterDateFrom?: string;
+  filterDateTo?: string;
 };
 
 export default function RoomInfoModal({
@@ -78,6 +82,8 @@ export default function RoomInfoModal({
   onAddCharge,
   onSetStatus,
   onOpenReservation,
+  filterDateFrom,
+  filterDateTo,
 }: RoomInfoModalProps) {
   const t = useTranslations('chessboard');
   const tRoom = useTranslations('roomStatus');
@@ -85,7 +91,11 @@ export default function RoomInfoModal({
 
   if (!room) return null;
 
-  const activeReservation = room.reservations?.[0];
+  const fromKey = filterDateFrom ?? todayBakuYmd();
+  const toKey = filterDateTo ?? fromKey;
+  const activeReservation =
+    pickRackAssignedStayForDate(room.reservations ?? [], fromKey, toKey) ??
+    (filterDateFrom ? undefined : room.reservations?.[0]);
   const arrivalKey = activeReservation?.checkInDate
     ? hotelDateKey(activeReservation.checkInDate)
     : '';
@@ -126,7 +136,9 @@ export default function RoomInfoModal({
             )}
           </div>
           <div className="flex flex-wrap gap-2 pt-2">
-            {activeReservation.status === 'CONFIRMED' && canCheckIn && (
+            {(activeReservation.status === 'CONFIRMED' ||
+              activeReservation.status === 'OPTION') &&
+              canCheckIn && (
               <button
                 type="button"
                 disabled={busy || !arrivalReached}

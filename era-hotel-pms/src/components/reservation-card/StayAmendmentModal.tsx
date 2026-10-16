@@ -12,6 +12,10 @@ import {
 } from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
 import type { RatePlanOption, SelectOption } from './types';
+import {
+  stayProductFamilyRank,
+  stayProductFamilySuffixKey,
+} from '@/lib/services/medical-package-resolve.service';
 
 export function StayAmendmentModal({
   open,
@@ -50,13 +54,20 @@ export function StayAmendmentModal({
     [roomTypes],
   );
   const ratePlanOptions = useMemo(() => {
-    const medical = ratePlans.filter((p) => p.medicalFlag);
-    const rest = ratePlans.filter((p) => !p.medicalFlag);
-    return [...medical, ...rest].map((p) => ({
-      value: p.id,
-      label: p.medicalFlag ? `${p.label} (pkg)` : p.label,
-    }));
-  }, [ratePlans]);
+    return [...ratePlans]
+      .sort((a, b) => {
+        const rank = stayProductFamilyRank(a) - stayProductFamilyRank(b);
+        if (rank !== 0) return rank;
+        return (a.label || '').localeCompare(b.label || '');
+      })
+      .map((p) => {
+        const suffix = stayProductFamilySuffixKey(p);
+        return {
+          value: p.id,
+          label: suffix ? `${p.label}${tc(suffix)}` : p.label,
+        };
+      });
+  }, [ratePlans, tc]);
 
   if (!open || !reservationId) return null;
 

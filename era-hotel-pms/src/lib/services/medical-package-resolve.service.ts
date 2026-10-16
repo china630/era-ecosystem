@@ -72,18 +72,73 @@ export type AgencySkuRuleInput = {
   packageCode: MedicalPackageCode;
 };
 
-/**
- * True when agency is explicit non-medical Walkin leisure (hotel skips clinic lifecycle).
- */
-/** Medical stay tariff: guest row must name a PKG-* package. Daily rates do not. */
+export type StayProductFamily = "medical" | "infotur" | "bar";
+
+const INFOTUR_RE = /INFOTUR/i;
+const MEDICAL_PARENT_RE = /^MEDICAL\b/i;
+
+/** Desk product family from the stay tariff code. Infotur is not a medical SKU. */
+export function stayProductFamily(plan: {
+  code?: string | null;
+}): StayProductFamily {
+  const code = (plan.code ?? "").trim().toUpperCase();
+  if (!code) return "bar";
+  if (INFOTUR_RE.test(code)) return "infotur";
+  if (CODE_SET.has(code) || MEDICAL_PARENT_RE.test(code)) return "medical";
+  return "bar";
+}
+
+export function stayProductFamilyRank(plan: { code?: string | null }): number {
+  const family = stayProductFamily(plan);
+  if (family === "medical") return 0;
+  if (family === "infotur") return 1;
+  return 2;
+}
+
+export function stayProductFamilySuffixKey(
+  plan: { code?: string | null },
+): "medicalSuffix" | "infoturSuffix" | null {
+  const family = stayProductFamily(plan);
+  if (family === "medical") return "medicalSuffix";
+  if (family === "infotur") return "infoturSuffix";
+  return null;
+}
+
+/** Medical Rates (and the four PKG SKUs): each named guest must pick a medical package. Infotur does not. */
 export function ratePlanRequiresGuestPackage(plan: {
   code?: string | null;
   medicalFlag?: boolean | null;
 }): boolean {
-  if (plan.medicalFlag) return true;
-  return /^MEDICAL\b/i.test((plan.code ?? "").trim());
+  return stayProductFamily(plan) === "medical";
 }
 
+/** Mixed-package nightly compose (Standart/Premium/Derma/Detoks). Not Infotur. */
+export function usesMedicalPackageCompose(plan: {
+  code?: string | null;
+}): boolean {
+  return stayProductFamily(plan) === "medical";
+}
+
+/** Guest-column options: the four medical SKUs only. Never Infotur. */
+export function medicalPackageChoices(
+  plans: Array<{ code?: string | null; label?: string | null }>,
+): Array<{ value: string; label: string }> {
+  const labels = new Map<string, string>();
+  for (const plan of plans) {
+    const code = normalizeMedicalPackageCode(plan.code);
+    if (!code) continue;
+    const label = (plan.label ?? "").trim();
+    if (label && !labels.has(code)) labels.set(code, label);
+  }
+  return MEDICAL_PACKAGE_CODES.map((code) => ({
+    value: code,
+    label: labels.get(code) ?? code,
+  }));
+}
+
+/**
+ * True when agency is explicit non-medical Walkin leisure (hotel skips clinic lifecycle).
+ */
 export function isLeisureAgency(agencyName: string | null | undefined): boolean {
   if (!agencyName?.trim()) return false;
   const raw = agencyName.trim();
@@ -103,6 +158,13 @@ export function normalizeMedicalPackageCode(
   if (ALIASES[withoutPkg]) return ALIASES[withoutPkg];
   if (CODE_SET.has(compact)) return compact as MedicalPackageCode;
   return null;
+}
+
+/** Clinic programCode from the stay tariff. Infotur and MEDICAL RATES parent are not templates. */
+export function clinicProgramCodeFromTariff(
+  plan: { code?: string | null } | null | undefined,
+): string | undefined {
+  return normalizeMedicalPackageCode(plan?.code) ?? undefined;
 }
 
 function guestDisplayName(g: ResolveGuestInput): string {
@@ -456,7 +518,7 @@ export function summarizeMedicalSku(
 
 /**
  * Guest column wins when set. An empty column ("stay package") keeps the
- * resolved stay SKU (ERA-PKG, agency, or PKG-* rate plan).
+ * resolved stay SKU (ERA-PKG, agency, or a medical PKG-* rate plan — not Infotur).
  */
 export function overlayFoPackageCodes(
   resolved: ResolveMedicalSkuResult,

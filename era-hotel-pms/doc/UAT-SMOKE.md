@@ -52,7 +52,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 3. Guest card Details tab shows **masked** FIN/passport from MDM ops-profile; parent names (`parentFatherName` / `parentMotherName`) separate from patronymic; edit uses transient lookup only.
 4. Re-save guest with empty middle name — MDM **does not** clear existing patronymic (fill-not-clear).
 5. Create 3-night booking (room type + rate + dates).
-6. Confirm reservation on chessboard.
+6. Confirm reservation. Arrival day on the rack: guest name as arrival. Other days: rack tile is Reserved without the name; the room-plan bar still shows the stay.
 
 ## 3. Check-in & folio (PMS-03, FIN-01)
 
@@ -253,12 +253,12 @@ Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d
 5. Reports section: **Actual check-in/out times** → `/fo/reservation-times` (guest + agency filters; only actual CI/CO; newest actual CI first).
 
 ### Room rack & plan
-6. Rack tile for the **filter date range** (From–To): guest + stay dates only if the stay overlaps that interval. Gender chip uses `normalizeShareGender` (EW `0` = male). Filter column and room grid scroll independently. Unassigned arrivals: compact room search + Assign (same type, assignable doors only).
-7. Drag in-house/confirmed reservation to another room → confirm → room updates (HK-03 enforced).
+6. Rack tile for the **filter date range** (From–To): guest + stay dates only for in-house or an arrival whose check-in falls in that interval (not a mid-stay CONFIRMED without check-in). Gender chip uses `normalizeShareGender` (EW `0` = male). Filter column and room grid scroll independently. Unassigned arrivals: compact room search + Assign (same type, assignable doors only).
+7. Drag in-house / today's-arrival reservation to another **vacant** room → confirm → room updates (HK-03 enforced). A Reserved (assigned, not received) tile is not a drop target.
 8. `/room-plan`: **Grouping** and **Period** dropdowns (14/21/30); drag bar to another room row.
 
 ### Lists & cards
-9. `/fo/reservations`: notes column is **penultimate** (before Res. ID); notes search field + **With notes** filter; `/fo/reservations/notes` → `?hasNotes=1`.
+9. `/fo/reservations`: leading **№** is display-only (continues across pages; header is not sortable); notes column is **penultimate** (before Res. ID); notes search field + **With notes** filter; `/fo/reservations/notes` → `?hasNotes=1`.
 9a. `/fo/reservations` → chip **Realized arrivals** sits right after In-house. Check a guest in today → the stay appears there; a guest checked in yesterday does not. The date pickers are hidden on this chip.
 10. **+** on vacant rack tile opens reservation create with `roomId`; create/edit share toolbar + bottom bar chrome.
 11. Guest card: stats bar, CRM + Reservation Details button grids (not three links only).
@@ -601,11 +601,11 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 1. Import Notes dump or FO-with-Notes: Extra Req `ERA-PKG STANDART` (one line, no guest names) → every pax `medicalPackageCode` stamped. Named Extra lines only when packages differ.
 1b. Live dual-run: EW **Reservation Notes** (`/app/grid/allresnotes`) Extra Request `ERA-PKG DERMO` → ERA Extra Req + `PKG-DERMA` (bridge v0.3.10 + hotel ingest). FOCP list does not carry Extra Req.
-2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`. Elektra import of `Walkin leisure` with a non-PKG tariff stays leisure and does not emit a sanatorium lifecycle. A `PKG-*` tariff on that import still resolves the package. Front office does not use the agency name to skip clinic: check-in emits one event per guest who has an explicit package.
+2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`. Elektra import of `Walkin leisure` with a non-medical tariff stays leisure and does not emit a sanatorium lifecycle. A medical `PKG-*` SKU (Standart / Premium / Derma / Detoks) on that import still resolves the package; Infotur (`PKG-INFOTUR`) does not. Front office does not use the agency name to skip clinic: check-in emits one event per guest who has an explicit package.
 3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
-4. Front-office check-in sends `programCode` only for a guest who has an explicit package. An Elektra `PKG-*` tariff can still fill the package on import. A non-PKG Elektra rate code does not.
+4. Front-office check-in sends `programCode` only for a guest who has an explicit package. An Elektra medical `PKG-*` SKU can still fill the package on import. Infotur and a non-PKG Elektra rate code do not.
 5. Travel agency form: medical package CatalogField. Stored `Agency.medicalPackageCode` wins; empty means the name tokens (`Premium` / `Dermo` / `Detoks` / Həmkarlar / standart).
-6. FO Guests tab: a medical rate plan shows a package Select per guest. `WALKIN` and other non-medical plans hide that column. Save on a medical plan with an empty package is refused. A filled package refreshes `dailyRates` / folio `packageCompose`.
+6. FO Guests tab: **Medical Rates** / `PKG-STANDART|PREMIUM|DERMA|DETOKS` shows a package Select per guest (those four SKUs only). **Infotur** (`PKG-INFOTUR`) and BAR hide that column — Infotur is the stay tariff, not mixed with medical SKUs. Save on a medical plan with an empty package is refused. A filled package refreshes `dailyRates` / folio `packageCompose`.
 7. FO cheat-sheet: [`nafta/ERA-PKG-FO-CHEATSHEET.md`](./nafta/ERA-PKG-FO-CHEATSHEET.md).
 
 ## 39. Stay date amend → clinic quota nights (CLI-51 / Wave B)

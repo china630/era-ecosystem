@@ -20,6 +20,7 @@ export async function POST(
     const result = await departGuestFromStay(id, paxId, {
       departedAt: body.departedAt ? new Date(body.departedAt) : undefined,
       folioMode: body.folioMode,
+      audit: { userId: session?.sub, request },
     });
     return jsonOk(serialize(result));
   } catch (err) {

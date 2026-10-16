@@ -95,6 +95,62 @@ describe('listReservationsForGrid pagination', () => {
     expect((prisma.reservation.findMany as jest.Mock).mock.calls[0][0].take).not.toBe(500);
   });
 
+  it('sort=rowNo is ignored and ranks like the default room sort', async () => {
+    const { prisma } = await import('@/lib/prisma');
+    const future = new Date('2099-01-01T00:00:00.000Z');
+    const ranked = [
+      {
+        id: 'aaa',
+        checkInDate: future,
+        room: { roomNumber: '202', status: 'CLEAN' },
+        roomType: { code: 'SGL' },
+        guest: { fullName: 'Zed' },
+        agency: null,
+        company: null,
+        source: null,
+        notes: [],
+        adults: 1,
+        status: 'CONFIRMED',
+      },
+      {
+        id: 'zzz',
+        checkInDate: future,
+        room: { roomNumber: '101', status: 'CLEAN' },
+        roomType: { code: 'SGL' },
+        guest: { fullName: 'Ann' },
+        agency: null,
+        company: null,
+        source: null,
+        notes: [],
+        adults: 1,
+        status: 'CONFIRMED',
+      },
+    ];
+    (prisma.reservation.findMany as jest.Mock).mockImplementation(
+      (args: { select?: unknown; where?: { id?: { in?: string[] } } }) => {
+        if (args.select) return Promise.resolve(ranked);
+        const ids = args.where?.id?.in ?? [];
+        return Promise.resolve(
+          ranked
+            .filter((row) => ids.includes(row.id))
+            .map((row) => ({ ...row, paxGuests: [], notes: [] })),
+        );
+      },
+    );
+
+    const { listReservationsForGrid } = await import(
+      '@/lib/services/reservation-full.service'
+    );
+    const result = await listReservationsForGrid({
+      page: 1,
+      pageSize: 25,
+      sort: 'rowNo',
+      dir: 'asc',
+    });
+
+    expect(result.items.map((row) => row.id)).toEqual(['zzz', 'aaa']);
+  });
+
   it('hasNotes with no note rows returns empty page', async () => {
     const { prisma } = await import('@/lib/prisma');
     (prisma.reservationNote.findMany as jest.Mock).mockResolvedValue([]);

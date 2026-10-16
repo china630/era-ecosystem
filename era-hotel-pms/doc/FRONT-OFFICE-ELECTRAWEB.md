@@ -12,7 +12,7 @@ Operational priority (Electra-aligned) — see [ADR hotel-fo-screen-chain](../..
 
 1. **Room type availability** `/fo/availability` — sellable Avl/Occ (unassigned stays occupy inventory).
 2. **Reservation list** `/fo/reservations` — stays queue; assign / check-in.
-3. **Room rack** `/fo/rack` — door tiles for the shift (HK + in-house).
+3. **Room rack** `/fo/rack` — door tiles for the shift (HK + in-house + today's arrival). A confirmed stay that has not been received does not put the guest name on the tile.
 4. **Room plan** `/fo/room-plan` — timeline bars after roomId.
 5. Groups / allotment blocks — booking envelopes and corporate holds.
 
@@ -47,7 +47,7 @@ Empty rack/plan cells = free **doors**, not sellable type inventory. Create form
 | Spec item | Implementation | Wave |
 |-----------|----------------|------|
 | Əsas KPI dashboard | `ExecutiveDashboard`, 7 KPIs | C |
-| Rack tile: status, guest, dates, pay, procedures | `RoomRackView` + `listRoomsForRack` — tile stay must overlap **From–To**; filter pane and grid scroll separately; gender via `normalizeShareGender` | C |
+| Rack tile: status, guest, dates, pay, procedures | `RoomRackView` + `listRoomsForRack` — tile guest is in-house or arrival in **From–To** (not a mid-stay CONFIRMED without check-in); filter pane and grid scroll separately; gender via `normalizeShareGender` | C |
 | Rack DnD relocate | `POST /api/reservations/:id/relocate` | C |
 | Room plan grouping/period dropdowns | `FilterMenuButton` | C |
 | Room plan layout | Fixed **room column** + scrollable timeline; full page width | C+ |

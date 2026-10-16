@@ -30,6 +30,8 @@ Clinic already has domain-specific `VisitDiscountAudit`; hotel/FB had no unified
 
 PII keys (`password`, `passport`, `fin`, `phone`, `email`) are redacted in `changesJson`.
 
+Hotel reservation stay journal reuses this table (`entityType=Reservation`, `entityId=reservationId`). Writers go through `recordReservationAudit` / `recordReservationDiff` (`era-hotel-pms/src/lib/reservation-audit.ts`). The card UI is a viewer; do not add a second stay-log table.
+
 ## Consequences
 
 - Satellites remain autonomous; audit is local DB, not orchestrator-centralized (export to SIEM later if needed).

@@ -8,7 +8,6 @@ import {
   revenueRoleIn,
   STAY_NIGHT_ROLES,
 } from '@/lib/revenue-code-token';
-import { recordHotelAudit } from '@/lib/satellite-audit';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
@@ -83,12 +82,8 @@ export async function postMissedRoomNights(reservationId: string, actorUserId?: 
       qty: 1,
       description: roomChargeNote('manual-room', night.date),
       businessDate: openDate,
+      audit: { userId: actorUserId, source: 'night_audit' },
     });
   }
-  await recordHotelAudit({ userId: actorUserId }, 'Reservation', reservationId, 'MISSED_NIGHTS', {
-    nights: preview.nights,
-    total: preview.total,
-    businessDate: hotelDateKey(openDate),
-  });
   return preview;
 }

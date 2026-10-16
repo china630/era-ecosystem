@@ -18,7 +18,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await requireHotelModule('hotel_transfers', session.organizationId);
     const { id } = await ctx.params;
     const body = bodySchema.parse(await req.json());
-    return jsonOk(serialize(await payTourBooking(id, body.paymentMethod)));
+    return jsonOk(serialize(await payTourBooking(id, body.paymentMethod, session.sub, req)));
   } catch (e) {
     return handleRouteError(e);
   }

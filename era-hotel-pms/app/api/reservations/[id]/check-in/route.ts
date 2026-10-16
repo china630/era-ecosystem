@@ -23,9 +23,16 @@ export async function POST(
     const reservation = await checkInReservation(id, {
       early: body?.early === true,
       checkInTime: body?.checkInTime,
+      audit: { userId: session?.sub, request },
     });
     let guestQrToken: string | null = null;
-    if (reservation.ratePlan?.medicalFlag && reservation.guest?.globalPersonId) {
+    const { usesMedicalPackageCompose } = await import(
+      '@/lib/services/medical-package-resolve.service'
+    );
+    if (
+      usesMedicalPackageCompose(reservation.ratePlan) &&
+      reservation.guest?.globalPersonId
+    ) {
       try {
         const { issueGuestQrToken } = await import('@era/satellite-kit');
         const qr = await issueGuestQrToken(reservation.guest.globalPersonId);

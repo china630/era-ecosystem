@@ -48,7 +48,10 @@ export async function POST(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const body = settleSchema.parse(await request.json());
-    return jsonOk(serialize(await settleFolio({ ...body, createdByUserId: session?.sub })), 201);
+    return jsonOk(
+      serialize(await settleFolio({ ...body, createdByUserId: session?.sub, auditRequest: request })),
+      201,
+    );
   } catch (err) {
     return handleRouteError(err);
   }

@@ -4,6 +4,7 @@ import { closeFolio } from '@/lib/services/folio.service';
 import { recalcReservationDailyRates } from '@/lib/services/reservation-pricing.service';
 import { dispatchGuestDeparted } from '@/lib/integration/guest-lifecycle-events';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
+import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
 import {
   countLivePax,
   previewOccupancyAfterDepart,
@@ -32,6 +33,7 @@ export async function departGuestFromStay(
   opts?: {
     departedAt?: Date;
     folioMode?: DepartFolioMode;
+    audit?: { userId?: string | null; request?: Request };
   },
 ) {
   const departedAt = opts?.departedAt ?? new Date();
@@ -184,7 +186,7 @@ export async function departGuestFromStay(
     reservationId,
     paxKey: paxId,
     roomNumber: reservation.room?.roomNumber,
-    programCode: reservation.ratePlan?.medicalFlag ? reservation.ratePlan.code : undefined,
+    programCode: clinicProgramCodeFromTariff(reservation.ratePlan),
     globalPersonId: paxGlobalPersonId,
     guestName: guestName || undefined,
     checkOutDate: departedAt.toISOString(),
@@ -201,6 +203,16 @@ export async function departGuestFromStay(
       guest: true,
       room: true,
     },
+  });
+
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(reservationId, 'DEPART_GUEST', opts?.audit, {
+    section: 'guests',
+    source: 'user',
+    fields: [
+      { key: `guest.${paxId}.name`, from: guestName || paxId, to: null },
+      { key: `guest.${paxId}.departed`, from: null, to: departedAt.toISOString() },
+    ],
   });
 
   return {

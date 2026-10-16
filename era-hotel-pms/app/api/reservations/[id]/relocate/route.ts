@@ -29,6 +29,7 @@ export async function POST(
       compUpgrade: body.compUpgrade,
       givenRoomTypeId: body.givenRoomTypeId,
       actorUserId: session?.sub,
+      request,
     });
     return jsonOk(serialize(reservation));
   } catch (err) {

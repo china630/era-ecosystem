@@ -31,6 +31,10 @@ import {
 } from '@/lib/booking-source-kind';
 import { guestListItems } from '@/lib/guest-list-identity';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import {
+  stayProductFamilyRank,
+  stayProductFamilySuffixKey,
+} from '@/lib/services/medical-package-resolve.service';
 
 function catalogValue(v: string | string[]): string {
   return Array.isArray(v) ? (v[0] ?? '') : v;
@@ -269,11 +273,17 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               medicalFlag: !!x.medicalFlag,
               mealPlanId: x.mealPlanId ?? null,
               roomTypeId: x.roomTypeId ?? null,
-              label: `${x.name ? `${x.code} — ${x.name}` : x.code}${x.medicalFlag ? tc('medicalSuffix') : ''}`,
+              label: `${x.name ? `${x.code} — ${x.name}` : x.code}${
+                (() => {
+                  const suffix = stayProductFamilySuffixKey({ code: x.code });
+                  return suffix ? tc(suffix) : '';
+                })()
+              }`,
             }),
           );
         mapped.sort((a, b) => {
-          if (!!a.medicalFlag !== !!b.medicalFlag) return a.medicalFlag ? -1 : 1;
+          const rank = stayProductFamilyRank(a) - stayProductFamilyRank(b);
+          if (rank !== 0) return rank;
           return (a.code ?? a.label).localeCompare(b.code ?? b.label);
         });
         setRatePlans(mapped);

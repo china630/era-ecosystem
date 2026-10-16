@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/depart-guest.service';
 import { dispatchGuestMoved } from '@/lib/integration/guest-lifecycle-events';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
+import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
 
 function bumpOccupancy(current: OccupancyCounts, bucket: keyof OccupancyCounts): OccupancyCounts {
   return { ...current, [bucket]: current[bucket] + 1 };
@@ -176,7 +177,7 @@ export async function moveGuestBetweenStays(
     paxKey: paxId,
     previousRoomNumber: from.room?.roomNumber,
     newRoomNumber: to.room?.roomNumber ?? toReservationId,
-    programCode: to.ratePlan?.medicalFlag ? to.ratePlan.code : undefined,
+    programCode: clinicProgramCodeFromTariff(to.ratePlan),
     globalPersonId: paxGlobalPersonId,
     guestName: guestName || undefined,
   }).catch((e) => console.error('Move guest lifecycle failed', e));

@@ -19,6 +19,10 @@ jest.mock('@era/satellite-kit', () => ({
   publishToOrchestratorGateway: jest.fn(),
 }));
 
+jest.mock('@/lib/satellite-audit', () => ({
+  recordHotelAudit: jest.fn(),
+}));
+
 jest.mock('@/lib/integration/guest-lifecycle-events', () => ({
   dispatchGuestCheckedIn: jest.fn(),
   dispatchGuestCheckedOut: jest.fn(),

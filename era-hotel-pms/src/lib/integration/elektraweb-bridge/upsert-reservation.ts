@@ -108,6 +108,10 @@ export async function upsertReservationFromElektrawebRow(
     where: { externalRef },
     include: { room: true, guest: true, ratePlan: true },
   });
+  const { loadReservationAuditSnapshot, recordReservationDiff } = await import(
+    '@/lib/reservation-audit'
+  );
+  const before = existing ? await loadReservationAuditSnapshot(existing.id) : null;
 
   const agencyId = resolvedAgencyId ?? existing?.agencyId ?? undefined;
   // EW has no sell-path column; fill only an empty source so FO edits survive re-sync.
@@ -331,6 +335,15 @@ export async function upsertReservationFromElektrawebRow(
     });
     events.push('ROOM_CHANGED');
   }
+
+  const after = await loadReservationAuditSnapshot(reservation.id);
+  await recordReservationDiff(
+    reservation.id,
+    existing ? 'UPDATE' : 'CREATE',
+    before,
+    after,
+    { source: 'elektraweb' },
+  );
 
   return {
     action: existing ? 'updated' : 'created',

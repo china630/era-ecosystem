@@ -29,7 +29,7 @@ Related: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md) · [HotelOps
 | Room type availability | `/fo/availability` | Sellable Avl/Occ; entry to create when Avl > 0 |
 | Reservation list | `/fo/reservations` | Stay queue: filters, notes, assign / check-in |
 | Room plan | `/fo/room-plan` | Timeline by room; relocate / extend |
-| Room rack | `/fo/rack` | Shift doors: HK status, in-house, quick actions |
+| Room rack | `/fo/rack` | Shift doors: HK status, in-house, today's arrival, quick actions |
 | Group reservations | `/fo/groups` | Groups / booking envelope |
 | In-house | `/fo/in-house` | In-house guests; jump to card / folio |
 | Room changes | `/fo/room-changes` | Journal of moves; change door on plan / card Assignment |

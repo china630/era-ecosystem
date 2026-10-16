@@ -20,7 +20,10 @@ export async function POST(
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = schema.parse(await request.json().catch(() => ({})));
-    const reservation = await restoreReservation(id, body);
+    const reservation = await restoreReservation(id, {
+      ...body,
+      audit: { userId: session?.sub, request },
+    });
     return jsonOk(serialize(reservation));
   } catch (err) {
     return handleRouteError(err);

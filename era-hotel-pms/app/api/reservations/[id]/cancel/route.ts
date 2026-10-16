@@ -20,7 +20,10 @@ export async function PATCH(
     assertPermission(session, PERMISSIONS.RESERVATIONS_CANCEL);
     const { id } = await params;
     const body = schema.parse(await request.json().catch(() => ({})));
-    const reservation = await cancelReservation(id, body.noShow, body.reason);
+    const reservation = await cancelReservation(id, body.noShow, body.reason, {
+      userId: session?.sub,
+      request,
+    });
     return jsonOk(serialize(reservation));
   } catch (err) {
     return handleRouteError(err);

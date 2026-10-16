@@ -14,7 +14,7 @@ import {
   showSuccess,
   showWarning,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay, bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
+import { bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
 import { guestListItems } from '@/lib/guest-list-identity';
 import {
   isPreArrivalStatus,
@@ -41,7 +41,13 @@ import { DepartGuestModal } from '@/components/reservation-card/DepartGuestModal
 import { MoveGuestModal } from '@/components/reservation-card/MoveGuestModal';
 import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
-import { ratePlanRequiresGuestPackage } from '@/lib/services/medical-package-resolve.service';
+import {
+  medicalPackageChoices,
+  ratePlanRequiresGuestPackage,
+  stayProductFamily,
+  stayProductFamilyRank,
+  stayProductFamilySuffixKey,
+} from '@/lib/services/medical-package-resolve.service';
 import { ReservationCardPricingTab } from '@/components/reservation-card/ReservationCardPricingTab';
 import { StayAmendmentModal } from '@/components/reservation-card/StayAmendmentModal';
 import {
@@ -55,6 +61,8 @@ import {
   type BookingStaySummary,
 } from '@/components/reservation-card/ReservationCardStaysBar';
 import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
+import { StayJournal } from '@/components/reservation-card/StayJournal';
+import type { StayJournalEntry } from '@/lib/reservation-audit';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -199,24 +207,6 @@ export type ReservationCardEditorProps = {
   onReservationCreated?: (id: string) => void;
 };
 
-const MEDICAL_PACKAGE_FALLBACK = ['PKG-STANDART', 'PKG-PREMIUM', 'PKG-DERMA', 'PKG-DETOKS'] as const;
-
-function medicalPackageChoices(plans: RatePlanOption[]): Array<{ value: string; label: string }> {
-  const seen = new Set<string>();
-  const options: Array<{ value: string; label: string }> = [];
-  for (const plan of plans) {
-    const code = (plan.code ?? '').trim().toUpperCase();
-    if (!code.startsWith('PKG-') || seen.has(code)) continue;
-    seen.add(code);
-    options.push({ value: code, label: plan.label });
-  }
-  for (const code of MEDICAL_PACKAGE_FALLBACK) {
-    if (seen.has(code)) continue;
-    options.push({ value: code, label: code });
-  }
-  return options;
-}
-
 function nightlyForChargedType(
   plans: RatePlanOption[],
   ratePlanId: string,
@@ -241,126 +231,6 @@ function nightlyForChargedType(
   if (matches.length === 0) return null;
   const peer = matches.find((r) => Boolean(r.medicalFlag) === Boolean(current?.medicalFlag));
   return (peer ?? matches[0]).pricePerNight ?? null;
-}
-
-function auditDetail(changes: unknown): string {
-  if (!changes || typeof changes !== 'object') return '';
-  const row = changes as Record<string, unknown>;
-  const bits: string[] = [];
-  if (row.amount != null) bits.push(String(row.amount));
-  if (typeof row.note === 'string' && row.note.trim()) bits.push(row.note.trim());
-  if (typeof row.reason === 'string' && row.reason.trim()) bits.push(row.reason.trim());
-  if (typeof row.paymentMethod === 'string') bits.push(row.paymentMethod);
-  if (row.fields && typeof row.fields === 'object') {
-    bits.push(
-      Object.entries(row.fields as Record<string, { from?: unknown; to?: unknown }>)
-        .map(([key, value]) => `${key}: ${String(value?.from ?? '—')} → ${String(value?.to ?? '—')}`)
-        .join('; '),
-    );
-  }
-  return bits.length ? ` — ${bits.join(' · ')}` : '';
-}
-
-function stayMoveReason(
-  code: string | null | undefined,
-  note: string | null | undefined,
-  t: (key: string) => string,
-): string {
-  const raw = (code ?? '').trim();
-  const text = (note ?? '').trim();
-  if (raw === 'CARD_ASSIGN' || text === 'CARD_ASSIGN') return t('roomMoveReasonCard');
-  if (raw === 'SWAP') return t('roomMoveReasonSwap');
-  if (raw === 'RELOCATE' || raw === 'RACK_DND') return t('roomMoveReasonRelocate');
-  if (raw === 'GUEST_REFUSED') return t('moveReason.GUEST_REFUSED');
-  if (raw === 'DID_NOT_OCCUPY') return t('moveReason.DID_NOT_OCCUPY');
-  if (raw === 'HOTEL') return t('moveReason.HOTEL');
-  if (text) return text;
-  return t('roomMoveReasonOther');
-}
-
-function StayJournal({
-  notes,
-  changes,
-  tariffChanges,
-  createdAt,
-  audit,
-}: {
-  notes: Record<string, string>;
-  createdAt?: string | null;
-  audit: Array<{ id: string; action: string; createdAt: string; actor: string | null; changes: unknown }>;
-  changes: Array<{
-    id: string;
-    effectiveAt: string;
-    fromRoom?: { roomNumber: string } | null;
-    toRoom?: { roomNumber: string } | null;
-    reasonCode?: string | null;
-    notes?: string | null;
-  }>;
-  tariffChanges: Array<{
-    id: string;
-    effectiveAt: string;
-    fromCode?: string | null;
-    toCode?: string | null;
-  }>;
-}) {
-  const t = useTranslations('reservationCard');
-  const moves = [...changes].sort((a, b) => String(b.effectiveAt).localeCompare(String(a.effectiveAt)));
-  const tariffs = [...tariffChanges].sort((a, b) =>
-    String(b.effectiveAt).localeCompare(String(a.effectiveAt)),
-  );
-  const noteLines = Object.entries(notes).filter(([, value]) => value.trim());
-  const createdLine =
-    createdAt && !audit.some((row) => row.action === 'CREATE')
-      ? t('stayCreated', { at: bakuDateTimeDisplay(createdAt) })
-      : null;
-  if (moves.length === 0 && tariffs.length === 0 && noteLines.length === 0 && audit.length === 0 && !createdLine) {
-    return <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalEmpty')}</p>;
-  }
-  return (
-    <div className="space-y-3 text-[13px] text-[#34495E]">
-      {createdLine ? <p className="m-0">{createdLine}</p> : null}
-      {audit.length > 0 ? (
-        <ul className="m-0 list-none space-y-1 p-0">
-          {audit.map((row) => (
-            <li key={row.id}>
-              {bakuDateTimeDisplay(row.createdAt)} — {row.actor ?? '—'} — {row.action}
-              {auditDetail(row.changes)}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {moves.length > 0 ? (
-        <ul className="m-0 list-none space-y-1 p-0">
-          {moves.map((c) => (
-            <li key={c.id}>
-              {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
-              {bakuDateTimeDisplay(c.effectiveAt)}, {stayMoveReason(c.reasonCode, c.notes, t)}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {tariffs.length > 0 ? (
-        <ul className="m-0 list-none space-y-1 p-0">
-          {tariffs.map((row) => (
-            <li key={row.id}>
-              {t('tariffChangeLine', {
-                from: row.fromCode || '—',
-                to: row.toCode || '—',
-                at: bakuDateTimeDisplay(row.effectiveAt),
-              })}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {noteLines.map(([key, value]) => (
-        <p key={key} className="m-0 whitespace-pre-wrap">
-          <span className="font-semibold">{key}</span>
-          {': '}
-          {value}
-        </p>
-      ))}
-    </div>
-  );
 }
 
 export function ReservationCardEditor({
@@ -452,9 +322,10 @@ export function ReservationCardEditor({
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [stayAudit, setStayAudit] = useState<
-    Array<{ id: string; action: string; createdAt: string; actor: string | null; changes: unknown }>
-  >([]);
+  const [stayAudit, setStayAudit] = useState<StayJournalEntry[]>([]);
+  const [stayAuditStatus, setStayAuditStatus] = useState<'idle' | 'loading' | 'error' | 'ready'>(
+    'idle',
+  );
   const [scanPaxIndex, setScanPaxIndex] = useState<number | null>(null);
   const [allergenCount, setAllergenCount] = useState(0);
   const staysBarRef = useRef<HTMLDivElement | null>(null);
@@ -615,6 +486,7 @@ export function ReservationCardEditor({
     setRoomStatus(rm?.status ?? '');
     setRoomHkCondition(rm?.hkCondition ?? '');
     setMealPlanId(String(json.mealPlanId ?? ''));
+    setRatePlanId(String(json.ratePlanId ?? ''));
     setChildren11_6(String(json.children11_6 ?? 0));
     setChildren5_2(String(json.children5_2 ?? 0));
     setChildren1_0(String(json.children1_0 ?? 0));
@@ -863,13 +735,24 @@ export function ReservationCardEditor({
 
   useEffect(() => {
     if (!historyOpen || !reservationId) return;
+    let cancelled = false;
+    setStayAuditStatus('loading');
     void fetch(`/api/reservations/${reservationId}/journal`)
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('journal'))))
       .then((body) => {
+        if (cancelled) return;
         const payload = body?.data ?? body;
         setStayAudit(Array.isArray(payload?.entries) ? payload.entries : []);
+        setStayAuditStatus('ready');
       })
-      .catch(() => setStayAudit([]));
+      .catch(() => {
+        if (cancelled) return;
+        setStayAudit([]);
+        setStayAuditStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [historyOpen, reservationId]);
 
   const loadSeq = useRef(0);
@@ -1119,7 +1002,7 @@ export function ReservationCardEditor({
         );
       }
       if (Array.isArray(rp)) {
-        // Nafta: medical packages (PKG-*) first, then BAR walk-in rates
+        // Nafta: Medical Rates, then Infotur, then BAR walk-in rates
         const mapped: RatePlanOption[] = rp
           .filter((x: { active?: boolean }) => x.active !== false)
           .map(
@@ -1160,12 +1043,16 @@ export function ReservationCardEditor({
                   effectiveTo: v.effectiveTo ? String(v.effectiveTo) : null,
                 })),
               label: `${x.name ? `${x.code} — ${catalogLabel(x, locale)}` : x.code}${
-                x.medicalFlag ? tc('medicalSuffix') : ''
+                (() => {
+                  const suffix = stayProductFamilySuffixKey({ code: x.code });
+                  return suffix ? tc(suffix) : '';
+                })()
               }`,
             }),
           );
         mapped.sort((a, b) => {
-          if (!!a.medicalFlag !== !!b.medicalFlag) return a.medicalFlag ? -1 : 1;
+          const rank = stayProductFamilyRank(a) - stayProductFamilyRank(b);
+          if (rank !== 0) return rank;
           return (a.code ?? a.label).localeCompare(b.code ?? b.label);
         });
         setRatePlans(mapped);
@@ -1802,7 +1689,7 @@ export function ReservationCardEditor({
           const linkedRp = ratePlans.find((r) => r.id === contract.ratePlanId);
           if (linkedRp?.mealPlanId) setMealPlanId(linkedRp.mealPlanId);
           if (linkedRp?.roomTypeId) setRoomTypeId(linkedRp.roomTypeId);
-          if (linkedRp?.medicalFlag) setSegment('Medical');
+          if (stayProductFamily(linkedRp ?? {}) === 'medical') setSegment('Medical');
           if (
             !ratePlanRequiresGuestPackage({
               code: linkedRp?.code,
@@ -1826,7 +1713,7 @@ export function ReservationCardEditor({
       if (rp?.mealPlanId) setMealPlanId(rp.mealPlanId);
       else if (!patch.ratePlanId) setMealPlanId('');
       if (rp?.roomTypeId) setRoomTypeId(rp.roomTypeId);
-      if (rp?.medicalFlag) setSegment('Medical');
+      if (stayProductFamily(rp ?? {}) === 'medical') setSegment('Medical');
     }
     if (patch.roomTypeId !== undefined) {
       const nextType = patch.roomTypeId;
@@ -3119,34 +3006,12 @@ export function ReservationCardEditor({
         open={historyOpen}
         title={t('stayJournal')}
         onClose={() => setHistoryOpen(false)}
-        maxWidthClass="max-w-lg"
+        maxWidthClass="max-w-4xl"
       >
         <StayJournal
-          notes={notes}
-          createdAt={typeof data?.createdAt === 'string' ? data.createdAt : null}
-          audit={stayAudit}
-          changes={
-            Array.isArray(data?.roomChanges)
-              ? (data.roomChanges as Array<{
-                  id: string;
-                  effectiveAt: string;
-                  fromRoom?: { roomNumber: string } | null;
-                  toRoom?: { roomNumber: string } | null;
-                  reasonCode?: string | null;
-                  notes?: string | null;
-                }>)
-              : []
-          }
-          tariffChanges={
-            Array.isArray(data?.tariffChanges)
-              ? (data.tariffChanges as Array<{
-                  id: string;
-                  effectiveAt: string;
-                  fromCode?: string | null;
-                  toCode?: string | null;
-                }>)
-              : []
-          }
+          entries={stayAudit}
+          loading={stayAuditStatus === 'loading'}
+          error={stayAuditStatus === 'error'}
         />
       </EraModal>
       <EraModal

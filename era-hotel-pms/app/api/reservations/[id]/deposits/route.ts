@@ -36,7 +36,16 @@ export async function POST(
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const { id } = await params;
     const body = createSchema.parse(await request.json());
-    return jsonOk(serialize(await recordDeposit({ reservationId: id, ...body })), 201);
+    return jsonOk(
+      serialize(
+        await recordDeposit({
+          reservationId: id,
+          ...body,
+          audit: { userId: session?.sub, request },
+        }),
+      ),
+      201,
+    );
   } catch (err) {
     return handleRouteError(err);
   }

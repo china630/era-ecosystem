@@ -31,6 +31,7 @@ export async function POST(
           targetReservationId: body.targetReservationId,
           targetReservationGuestId: body.targetReservationGuestId,
           actorUserId: session?.sub,
+          request,
         }),
       ),
     );

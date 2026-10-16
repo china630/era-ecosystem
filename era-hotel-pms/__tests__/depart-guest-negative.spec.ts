@@ -45,6 +45,10 @@ jest.mock('@/lib/integration/guest-lifecycle-events', () => ({
   dispatchGuestMoved: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('@/lib/satellite-audit', () => ({
+  recordHotelAudit: jest.fn(),
+}));
+
 jest.mock('@/lib/services/reservation-submodals.service', () => ({
   addReservationTask: jest.fn().mockResolvedValue({ id: 'task-1' }),
 }));

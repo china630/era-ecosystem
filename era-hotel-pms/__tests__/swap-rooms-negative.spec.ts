@@ -29,6 +29,10 @@ jest.mock('@/lib/services/reservation-submodals.service', () => ({
   addReservationTask: jest.fn().mockResolvedValue({ id: 'task-1' }),
 }));
 
+jest.mock('@/lib/satellite-audit', () => ({
+  recordHotelAudit: jest.fn(),
+}));
+
 const { prisma } = jest.requireMock('@/lib/prisma') as {
   prisma: {
     reservation: { findUnique: jest.Mock; update: jest.Mock };

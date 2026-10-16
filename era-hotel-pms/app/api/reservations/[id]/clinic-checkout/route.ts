@@ -15,7 +15,10 @@ export async function GET(
     assertPermission(session, PERMISSIONS.RESERVATIONS_CHECKOUT);
     const { id } = await params;
     const reservation = await getReservation(id);
-    if (!reservation.ratePlan.medicalFlag) return jsonOk({ medical: false });
+    const { usesMedicalPackageCompose } = await import(
+      '@/lib/services/medical-package-resolve.service'
+    );
+    if (!usesMedicalPackageCompose(reservation.ratePlan)) return jsonOk({ medical: false });
 
     const base = (
       process.env.CLINIC_URL ??
