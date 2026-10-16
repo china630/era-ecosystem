@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
+import { getCalendarDaysRange } from "@era/satellite-kit";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
 import {
   addBakuDays,
@@ -9,11 +9,7 @@ import {
   bakuHourMinute,
   parseBakuDateTime,
 } from "@/lib/baku-day";
-import {
-  clampDailyPackageProcedureCap,
-  inPackageCodesOnBakuDay,
-  packageDayIsFullForNewCode,
-} from "@/domain/sanatorium/daily-package-cap";
+import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import {
   DEFAULT_WORK_HOURS,
   alignDurationToSlotMinutes,
@@ -22,17 +18,16 @@ import {
   resolveEffectiveDayEndHour,
   type TenantWorkHours,
 } from "@/domain/settings/scheduling-settings";
+import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind";
+import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
 import {
-  countResourceAllocations,
-  findSkilledFreePractitioner,
-  listPhysicalRequirementResources,
-  replaceProcedureAllocations,
-  resolvePhysicalResource,
-} from "@/domain/procedure/procedure-allocation.service";
-import {
-  evaluateRotation,
-  type RotationContextSlot,
-} from "@/lib/procedure-rotation.service";
+  scanProcedureSlots,
+  type PlacementFailure,
+  type ScanAllocation,
+  type ScanOrder,
+  type ScanStaff,
+} from "@/lib/procedure-slot-scan";
 import { resolveProcedureSubstitution } from "@/lib/procedure-substitution.service";
 import { sortLinesExamPrefixFirst } from "@/lib/sanatorium-day1";
 
@@ -54,18 +49,10 @@ type PlannedSlot = {
   dayEndHour?: number | null;
 };
 
-function addMinutes(d: Date, mins: number): Date {
-  return new Date(d.getTime() + mins * 60_000);
-}
-
 function bakuWallTime(ref: Date, hour: number, minute = 0): Date {
   const hh = String(hour).padStart(2, "0");
   const mm = String(minute).padStart(2, "0");
   return parseBakuDateTime(bakuDateKey(ref), `${hh}:${mm}`);
-}
-
-function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
-  return aStart < bEnd && bStart < aEnd;
 }
 
 import { effectivePatientRestMinutes } from "@/domain/procedure/resource-occupancy";
@@ -205,16 +192,6 @@ export async function nextWorkSlot(
     return bakuWallTime(next, hours.dayStartHour);
   }
   return d;
-}
-
-async function jumpNextWorkMorning(
-  from: Date,
-  hours: TenantWorkHours,
-  dayEndHour?: number,
-): Promise<Date> {
-  const nextYmd = addBakuDays(bakuDateKey(from), 1);
-  const d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
-  return nextWorkSlot(d, hours, dayEndHour);
 }
 
 async function expandProposedSlots(instanceId: string): Promise<{
@@ -358,13 +335,14 @@ export type PlaceConfirmedResult = {
   placed: number;
   /** Procedure names whose type has no resolvable LOCATION/EQUIPMENT resource. */
   missingCabinNames: string[];
+  failures: PlacementFailure[];
 };
 
 export async function placeConfirmedProcedures(
   orderIds: string[],
-  opts?: { confirmedByUserId?: string },
+  opts?: { confirmedByUserId?: string; atomic?: boolean; scheduleBefore?: Date | null },
 ): Promise<PlaceConfirmedResult> {
-  if (orderIds.length === 0) return { placed: 0, missingCabinNames: [] };
+  if (orderIds.length === 0) return { placed: 0, missingCabinNames: [], failures: [] };
 
   const settings = await getSchedulingSettings();
   const { schedulingSlotMinutes: slotMinutes } = settings;
@@ -376,7 +354,7 @@ export async function placeConfirmedProcedures(
     include: { procedureType: { include: { requirements: true } } },
     orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
   });
-  if (orders.length === 0) return { placed: 0, missingCabinNames: [] };
+  if (orders.length === 0) return { placed: 0, missingCabinNames: [], failures: [] };
 
   const patientRefId = orders[0].patientRefId;
   const episodeId = orders[0].clinicalEpisodeId;
@@ -404,9 +382,10 @@ export async function placeConfirmedProcedures(
   const existing = await prisma.procedureOrder.findMany({
     where: {
       patientRefId,
-      status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
+      status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY"] },
     },
     select: {
+      status: true,
       procedureCode: true,
       bodyPart: true,
       scheduledAt: true,
@@ -417,72 +396,54 @@ export async function placeConfirmedProcedures(
     orderBy: { scheduledAt: "asc" },
   });
 
-  const scheduledPatient: {
-    code: string;
-    bodyPart?: string | null;
-    start: Date;
-    end: Date;
-    patientRestMinutes: number;
-    inPackage: boolean;
-  }[] = existing.map((e) => ({
-    code: e.procedureCode,
-    bodyPart: e.bodyPart,
-    start: e.scheduledAt,
-    end: e.endsAt ?? e.scheduledAt,
-    patientRestMinutes: e.procedureType?.patientRestMinutes ?? 15,
-    inPackage: e.inPackage === true,
+  const patientSlots = existing.map((row) => ({
+    code: row.procedureCode,
+    bodyPart: row.bodyPart,
+    start: row.scheduledAt,
+    end: row.endsAt ?? row.scheduledAt,
+    patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
+    inPackage: row.inPackage === true,
+    countsForRest: row.status !== "NO_SHOW",
   }));
+  const rotationContext: RotationContextSlot[] = existing
+    .filter((row) => row.status !== "NO_SHOW")
+    .map((row) => ({
+      procedureCode: row.procedureCode,
+      bodyPart: row.bodyPart,
+      startAt: row.scheduledAt,
+      endAt: row.endsAt ?? row.scheduledAt,
+    }));
 
-  const rotationContext: RotationContextSlot[] = scheduledPatient.map((s) => ({
-    procedureCode: s.code,
-    bodyPart: s.bodyPart,
-    startAt: s.start,
-    endAt: s.end,
-  }));
-
-  let placed = 0;
-  const missingCabinNames: string[] = [];
   const now = new Date();
-
-  const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
-  const prescribedByPractitionerId =
-    opts?.confirmedByUserId
-      ? (
-          await prisma.practitioner.findFirst({
-            where: { userId: opts.confirmedByUserId },
-            select: { id: true },
-          })
-        )?.id ?? null
-      : null;
-
-  function randomAccessCode(): string {
-    let out = "";
-    for (let i = 0; i < 5; i++) {
-      const idx = Math.floor(Math.random() * ACCESS_CODE_ALPHABET.length);
-      out += ACCESS_CODE_ALPHABET[idx]!;
-    }
-    return out;
+  const today = bakuDateKey(now);
+  let horizonEndYmd = addBakuDays(today, 21);
+  if (opts?.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())) {
+    horizonEndYmd = bakuDateKey(opts.scheduleBefore);
   }
 
-  async function generateUniqueAccessCode(organizationId: string): Promise<string> {
-    for (let attempt = 0; attempt < 50; attempt++) {
-      const code = randomAccessCode();
-      const exists = await prisma.procedureOrder.findFirst({
-        where: { organizationId, accessCode: code },
-        select: { id: true },
-      });
-      if (!exists) return code;
-    }
-    throw new Error("Unable to generate unique procedure access code");
-  }
+  const [rotationRules, compatibilityRules] = await Promise.all([
+    prisma.procedureRotationRule.findMany({ where: { active: true } }),
+    prisma.procedureCompatibilityRule.findMany({ where: { active: true } }),
+  ]);
 
+  const untyped: PlacementFailure[] = [];
+  const scanOrders: Array<
+    ScanOrder & { resourceCodeList: string[]; extendedEndHour: number | null }
+  > = [];
+  const resourceCodes = new Set<string>();
   for (const order of orders) {
     const pt = order.procedureType ?? typeByCode.get(order.procedureCode);
-    if (!pt) continue;
-
+    if (!pt) {
+      untyped.push({
+        orderId: order.id,
+        procedureCode: order.procedureCode,
+        procedureName: order.procedureName?.trim() || order.procedureCode,
+        reason: "no_slot",
+      });
+      continue;
+    }
     const physicalReq = pt.requirements?.find(
-      (r) => r.role === "LOCATION" || r.role === "EQUIPMENT",
+      (req) => req.role === "LOCATION" || req.role === "EQUIPMENT",
     );
     const physicalRole: "LOCATION" | "EQUIPMENT" =
       physicalReq?.role === "LOCATION"
@@ -492,220 +453,352 @@ export async function placeConfirmedProcedures(
           : pt.resourceKind === "ROOM"
             ? "LOCATION"
             : "EQUIPMENT";
-
-    const physicalResources = await listPhysicalRequirementResources(pt);
-    if (physicalResources.length === 0) {
-      const label = order.procedureName?.trim() || order.procedureCode;
-      if (!missingCabinNames.includes(label)) missingCabinNames.push(label);
-      continue;
+    const codes = new Set<string>();
+    for (const req of pt.requirements ?? []) {
+      if (req.role !== "LOCATION" && req.role !== "EQUIPMENT") continue;
+      const code = req.resourceCode?.trim();
+      if (code) codes.add(code);
     }
-
-    const duration = alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes);
+    if (codes.size === 0 && pt.resourceCode?.trim()) codes.add(pt.resourceCode.trim());
+    for (const code of codes) resourceCodes.add(code);
+    const staffReq = pt.requirements?.find((req) => req.role === "STAFF");
     const typeHours = {
       ...workHours,
       dayStartHour: pt.dayStartHour ?? workHours.dayStartHour,
       dayEndHour: pt.dayEndHour ?? workHours.dayEndHour,
     };
-    const dayEnd = resolveEffectiveDayEndHour(typeHours, {
-      procedureExtendedEndHour: pt.extendedEndHour,
-      resourceExtendedEndHour: physicalResources[0]?.extendedEndHour,
+    scanOrders.push({
+      id: order.id,
+      organizationId: order.organizationId,
+      procedureCode: order.procedureCode,
+      procedureName: order.procedureName?.trim() || order.procedureCode,
+      bodyPart: order.bodyPart ?? pt.bodyPart ?? null,
+      inPackage: order.inPackage === true,
+      durationMin: alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes),
+      dayEndHour: 0,
+      patientRestMinutes: pt.patientRestMinutes ?? 15,
+      resourceGapMinutes: pt.resourceGapMinutes ?? 5,
+      afterLunchAllowed: pt.afterLunchAllowed ?? true,
+      beforeLunchAllowed: pt.beforeLunchAllowed ?? true,
+      typeHours,
+      physicalRole,
+      resources: [],
+      staffMode: staffReq?.staffMode === "SOFT" ? "SOFT" : "HARD",
+      procedureTypeId: pt.id,
+      resourceCodeList: [...codes].sort(),
+      extendedEndHour: pt.extendedEndHour,
     });
-
-    let slotStart = await nextWorkSlot(now, typeHours, dayEnd);
-    if (!pt.afterLunchAllowed && bakuHourMinute(slotStart).hour >= typeHours.lunchEndHour) {
-      const nextYmd = addBakuDays(bakuDateKey(slotStart), 1);
-      slotStart = bakuWallTime(bakuDayBounds(nextYmd).start, typeHours.dayStartHour);
-    }
-    if (!pt.beforeLunchAllowed && bakuHourMinute(slotStart).hour < typeHours.lunchEndHour) {
-      slotStart = bakuWallTime(slotStart, typeHours.lunchEndHour);
-    }
-
-    let orderPlaced = false;
-    for (let attempt = 0; attempt < 240 && !orderPlaced; attempt++) {
-      slotStart = avoidLunchOverlap(slotStart, duration, typeHours);
-      if (!pt.afterLunchAllowed && bakuHourMinute(slotStart).hour >= typeHours.lunchEndHour) {
-        const nextYmd = addBakuDays(bakuDateKey(slotStart), 1);
-        slotStart = bakuWallTime(bakuDayBounds(nextYmd).start, typeHours.dayStartHour);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-      if (!pt.beforeLunchAllowed && bakuHourMinute(slotStart).hour < typeHours.lunchEndHour) {
-        slotStart = bakuWallTime(slotStart, typeHours.lunchEndHour);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      const slotEnd = addMinutes(slotStart, duration);
-      const slotEndHm = bakuHourMinute(slotEnd);
-      if (slotEndHm.hour > dayEnd || (slotEndHm.hour === dayEnd && slotEndHm.minute > 0)) {
-        slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      if (order.inPackage === true) {
-        const codesOnDay = inPackageCodesOnBakuDay(
-          scheduledPatient.map((s) => ({
-            code: s.code,
-            start: s.start,
-            inPackage: s.inPackage,
-          })),
-          slotStart,
-        );
-        if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, packageCap)) {
-          slotStart = await jumpNextWorkMorning(slotStart, typeHours, dayEnd);
-          continue;
-        }
-      }
-
-      if (await hasProcedureSameDay(patientRefId, order.procedureCode, slotStart, order.id)) {
-        slotStart = await jumpNextWorkMorning(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      const rotation = await evaluateRotation({
-        candidateCode: order.procedureCode,
-        bodyPart: order.bodyPart ?? pt.bodyPart,
-        day: slotStart,
-        context: rotationContext,
-      });
-      if (!rotation.ok) {
-        const nextYmd = addBakuDays(bakuDateKey(slotStart), 1);
-        slotStart = bakuWallTime(bakuDayBounds(nextYmd).start, typeHours.dayStartHour);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      const staffMode =
-        pt.requirements?.find((r) => r.role === "STAFF")?.staffMode ?? "HARD";
-      const staff = await findSkilledFreePractitioner({
-        procedureTypeId: pt.id,
-        startsAt: slotStart,
-        endsAt: slotEnd,
-        staffMode,
-      });
-      if (!staff) {
-        slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      const ruleOk = rules.every((rule) => {
-        if (rule.kind === "MUTUAL_EXCLUSION") {
-          const hasBefore = scheduledPatient.some(
-            (s) =>
-              s.code === rule.beforeCode &&
-              overlaps(s.start, s.end, slotStart, slotEnd),
-          );
-          const hasAfter = scheduledPatient.some(
-            (s) =>
-              s.code === rule.afterCode &&
-              overlaps(s.start, s.end, slotStart, slotEnd),
-          );
-          if (hasBefore && hasAfter) return false;
-        }
-        if (rule.kind === "SEQUENCE_GAP" && rule.afterCode === order.procedureCode) {
-          const prev = scheduledPatient.find((s) => s.code === rule.beforeCode);
-          if (prev) {
-            const gapMs = slotStart.getTime() - prev.end.getTime();
-            if (gapMs < (rule.minGapMinutes ?? 0) * 60_000) return false;
-          }
-        }
-        return true;
-      });
-
-      const compatViolations = await validateProcedureCompatibility({
-        candidateCode: order.procedureCode,
-        startAt: slotStart,
-        endAt: slotEnd,
-        existing: scheduledPatient.map((s) => ({
-          procedureCode: s.code,
-          startAt: s.start,
-          endAt: s.end,
-        })),
-      });
-      const compatOk = compatViolations.length === 0;
-
-      const patientRest = pt.patientRestMinutes ?? 15;
-      const gapErr = await validatePatientConsecutiveGap({
-        patientRefId,
-        startAt: slotStart,
-        endAt: slotEnd,
-        excludeOrderId: order.id,
-        candidatePatientRestMinutes: patientRest,
-      });
-
-      if (!ruleOk || !compatOk || gapErr) {
-        slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      let pickedResource: (typeof physicalResources)[number] | null = null;
-      for (const resource of physicalResources) {
-        const used = await countResourceAllocations(resource.id, slotStart, slotEnd);
-        if (used < resource.capacity) {
-          pickedResource = resource;
-          break;
-        }
-      }
-      if (!pickedResource) {
-        slotStart = addMinutes(slotStart, slotMinutes);
-        slotStart = await nextWorkSlot(slotStart, typeHours, dayEnd);
-        continue;
-      }
-
-      const accessCode =
-        order.accessCode?.trim() ||
-        (await generateUniqueAccessCode(order.organizationId));
-      await prisma.procedureOrder.update({
-        where: { id: order.id },
-        data: {
-          status: "SCHEDULED",
-          scheduledAt: slotStart,
-          endsAt: slotEnd,
-          resourceId: pickedResource.id,
-          confirmedAt: now,
-          confirmedByUserId: opts?.confirmedByUserId,
-          prescribedByPractitionerId,
-          accessCode,
-          bodyPart: order.bodyPart ?? pt.bodyPart ?? undefined,
-        },
-      });
-      await replaceProcedureAllocations(order.id, [
-        {
-          role: physicalRole,
-          resourceId: pickedResource.id,
-          startsAt: slotStart,
-          endsAt: slotEnd,
-        },
-        {
-          role: "STAFF",
-          practitionerId: staff.id,
-          startsAt: slotStart,
-          endsAt: slotEnd,
-        },
-      ]);
-
-      const placedSlot = {
-        code: order.procedureCode,
-        bodyPart: order.bodyPart ?? pt.bodyPart,
-        start: slotStart,
-        end: slotEnd,
-        patientRestMinutes: patientRest,
-        inPackage: order.inPackage === true,
-      };
-      scheduledPatient.push(placedSlot);
-      rotationContext.push({
-        procedureCode: placedSlot.code,
-        bodyPart: placedSlot.bodyPart,
-        startAt: placedSlot.start,
-        endAt: placedSlot.end,
-      });
-      placed++;
-      orderPlaced = true;
-    }
   }
 
-  return { placed, missingCabinNames };
+  const resourceRows = resourceCodes.size
+    ? await prisma.resource.findMany({ where: { code: { in: [...resourceCodes] } } })
+    : [];
+  const resourceByCode = new Map(resourceRows.map((row) => [row.code, row]));
+  for (const order of scanOrders) {
+    order.resources = order.resourceCodeList
+      .map((code) => resourceByCode.get(code))
+      .filter((row): row is NonNullable<typeof row> => Boolean(row))
+      .map((row) => ({
+        id: row.id,
+        capacity: row.capacity,
+        role: order.physicalRole,
+      }));
+    order.dayEndHour = resolveEffectiveDayEndHour(order.typeHours, {
+      procedureExtendedEndHour: order.extendedEndHour,
+      resourceExtendedEndHour: resourceByCode.get(order.resourceCodeList[0] ?? "")?.extendedEndHour,
+    });
+  }
+
+  const typeIds = [...new Set(scanOrders.map((order) => order.procedureTypeId))];
+  const staffByTypeAndYmd = await loadStaffByDay(typeIds, today, horizonEndYmd);
+  const staffIds = [...new Set([...staffByTypeAndYmd.values()].flat().map((person) => person.id))];
+  const resourceIds = [...new Set(scanOrders.flatMap((order) => order.resources.map((row) => row.id)))];
+  const allocations = await loadOccupancy(resourceIds, staffIds, today, horizonEndYmd);
+
+  const closedYmds = await loadClosedYmds(today, horizonEndYmd);
+  const scanned = scanProcedureSlots({
+    orders: scanOrders,
+    now,
+    slotMinutes,
+    packageCap,
+    horizonEndYmd,
+    closedYmds,
+    staffByTypeAndYmd,
+    rules,
+    rotationRules,
+    compatibilityRules,
+    patientSlots,
+    rotationContext,
+    allocations,
+  });
+
+  const failures = [...untyped, ...scanned.failures];
+  const missingCabinNames = [
+    ...new Set(failures.filter((row) => row.reason === "no_cabin").map((row) => row.procedureName)),
+  ];
+  if (opts?.atomic && failures.length > 0) {
+    return { placed: 0, missingCabinNames, failures };
+  }
+
+  const prescribedByPractitionerId = opts?.confirmedByUserId
+    ? (
+        await prisma.practitioner.findFirst({
+          where: { userId: opts.confirmedByUserId },
+          select: { id: true },
+        })
+      )?.id ?? null
+    : null;
+  const orderById = new Map(orders.map((order) => [order.id, order]));
+  for (const row of scanned.planned) {
+    const order = orderById.get(row.orderId);
+    const accessCode = order?.accessCode?.trim() || (await generateUniqueAccessCode(row.organizationId));
+    await prisma.procedureOrder.update({
+      where: { id: row.orderId },
+      data: {
+        status: "SCHEDULED",
+        scheduledAt: row.slotStart,
+        endsAt: row.slotEnd,
+        resourceId: row.resourceId,
+        confirmedAt: now,
+        confirmedByUserId: opts?.confirmedByUserId,
+        prescribedByPractitionerId,
+        accessCode,
+        bodyPart: row.bodyPart ?? undefined,
+      },
+    });
+    await replaceProcedureAllocations(row.orderId, [
+      {
+        role: row.physicalRole,
+        resourceId: row.resourceId,
+        startsAt: row.slotStart,
+        endsAt: row.slotEnd,
+      },
+      {
+        role: "STAFF",
+        practitionerId: row.staffId,
+        startsAt: row.slotStart,
+        endsAt: row.slotEnd,
+      },
+    ]);
+  }
+
+  return { placed: scanned.planned.length, missingCabinNames, failures };
+}
+
+const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+function randomAccessCode(): string {
+  let out = "";
+  for (let i = 0; i < 5; i++) {
+    out += ACCESS_CODE_ALPHABET[Math.floor(Math.random() * ACCESS_CODE_ALPHABET.length)]!;
+  }
+  return out;
+}
+
+async function generateUniqueAccessCode(organizationId: string): Promise<string> {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const code = randomAccessCode();
+    const exists = await prisma.procedureOrder.findFirst({
+      where: { organizationId, accessCode: code },
+      select: { id: true },
+    });
+    if (!exists) return code;
+  }
+  throw new Error("Unable to generate unique procedure access code");
+}
+
+async function loadClosedYmds(fromYmd: string, horizonEndYmd: string): Promise<Set<string>> {
+  const closed = new Set<string>();
+  if (fromYmd >= horizonEndYmd) return closed;
+  try {
+    const days = await getCalendarDaysRange(fromYmd, horizonEndYmd);
+    for (const day of days) {
+      if (day.dayType === "mourning" || day.isWorking === false) closed.add(day.date);
+    }
+  } catch {
+    /* no calendar — treat the stay as open, same as a missing day */
+  }
+  return closed;
+}
+
+async function loadOccupancy(
+  resourceIds: string[],
+  staffIds: string[],
+  fromYmd: string,
+  horizonEndYmd: string,
+): Promise<ScanAllocation[]> {
+  if (resourceIds.length === 0 && staffIds.length === 0) return [];
+  const from = bakuDayBounds(fromYmd).start;
+  const to = bakuDayBounds(horizonEndYmd).start;
+  const lookback = new Date(from.getTime() - 240 * 60_000);
+  const rows = await prisma.procedureAllocation.findMany({
+    where: {
+      startsAt: { lt: to },
+      endsAt: { gt: lookback },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+      OR: [
+        ...(resourceIds.length
+          ? [{ role: { in: ["LOCATION" as const, "EQUIPMENT" as const] }, resourceId: { in: resourceIds } }]
+          : []),
+        ...(staffIds.length ? [{ role: "STAFF" as const, practitionerId: { in: staffIds } }] : []),
+      ],
+    },
+    select: {
+      role: true,
+      resourceId: true,
+      practitionerId: true,
+      startsAt: true,
+      endsAt: true,
+      procedureOrderId: true,
+      procedureOrder: { select: { procedureType: { select: { resourceGapMinutes: true } } } },
+    },
+  });
+  return rows.map((row) => ({
+    role: row.role,
+    resourceId: row.resourceId,
+    practitionerId: row.practitionerId,
+    startsAt: row.startsAt,
+    endsAt: row.endsAt,
+    procedureOrderId: row.procedureOrderId,
+    resourceGapMinutes: row.procedureOrder.procedureType?.resourceGapMinutes ?? 5,
+  }));
+}
+
+async function loadStaffByDay(
+  typeIds: string[],
+  fromYmd: string,
+  horizonEndYmd: string,
+): Promise<Map<string, ScanStaff[]>> {
+  const out = new Map<string, ScanStaff[]>();
+  if (typeIds.length === 0 || fromYmd >= horizonEndYmd) return out;
+
+  const skills = await prisma.practitionerSkill.findMany({
+    where: {
+      procedureTypeId: { in: typeIds },
+      active: true,
+      practitioner: { active: true, staffKind: { in: ["DOCTOR", "NURSE", "BATH", "MASSAGE"] } },
+    },
+    include: { practitioner: { select: { id: true, fullName: true, code: true } } },
+  });
+  const skilledByType = new Map<string, ScanStaff[]>();
+  for (const typeId of typeIds) skilledByType.set(typeId, []);
+  for (const skill of skills) {
+    const list = skilledByType.get(skill.procedureTypeId) ?? [];
+    list.push(skill.practitioner);
+    skilledByType.set(skill.procedureTypeId, list);
+  }
+  const needsFallback = typeIds.some((typeId) => (skilledByType.get(typeId) ?? []).length === 0);
+  const fallback = needsFallback
+    ? await prisma.practitioner.findMany({
+        where: { active: true, staffKind: { in: ["DOCTOR", "NURSE", "BATH", "MASSAGE"] } },
+        orderBy: { code: "asc" },
+        take: 20,
+        select: { id: true, fullName: true, code: true },
+      })
+    : [];
+  for (const typeId of typeIds) {
+    if ((skilledByType.get(typeId) ?? []).length === 0) skilledByType.set(typeId, fallback);
+  }
+
+  const months = new Set<string>();
+  let cursor = fromYmd;
+  while (cursor < horizonEndYmd) {
+    months.add(cursor.slice(0, 7));
+    cursor = addBakuDays(cursor, 1);
+  }
+  const rosters = await prisma.staffDutyRoster.findMany({
+    where: {
+      organizationId: requestOrganizationId(),
+      staffKind: "NURSE",
+      yearMonth: { in: [...months] },
+    },
+    include: {
+      lines: {
+        include: { practitioner: { select: { id: true, code: true, fullName: true, active: true } } },
+      },
+      dayOverrides: {
+        include: { practitioner: { select: { id: true, code: true, fullName: true, active: true } } },
+      },
+    },
+  });
+  const personIds = new Set<string>(fallback.map((person) => person.id));
+  for (const roster of rosters) {
+    for (const line of roster.lines) {
+      if (line.practitioner?.active) personIds.add(line.practitioner.id);
+    }
+    for (const ov of roster.dayOverrides) {
+      if (ov.practitioner?.active) personIds.add(ov.practitioner.id);
+    }
+  }
+  const from = bakuDayBounds(fromYmd).start;
+  const to = bakuDayBounds(horizonEndYmd).start;
+  const [absences, dayOffs] = await Promise.all([
+    personIds.size
+      ? prisma.staffAbsence.findMany({
+          where: { practitionerId: { in: [...personIds] }, startsOn: { lte: to }, endsOn: { gte: from } },
+          select: { practitionerId: true, startsOn: true, endsOn: true },
+        })
+      : [],
+    personIds.size
+      ? prisma.practitionerScheduleException.findMany({
+          where: {
+            practitionerId: { in: [...personIds] },
+            kind: "DAY_OFF",
+            date: { gte: from, lt: to },
+          },
+          select: { practitionerId: true, date: true },
+        })
+      : [],
+  ]);
+  const absenceByPerson = new Map<string, Array<{ startsOn: Date; endsOn: Date }>>();
+  for (const row of absences) {
+    const list = absenceByPerson.get(row.practitionerId) ?? [];
+    list.push(row);
+    absenceByPerson.set(row.practitionerId, list);
+  }
+  const dayOffKey = new Set(dayOffs.map((row) => `${row.practitionerId}|${bakuDateKey(row.date)}`));
+
+  const ymds: string[] = [];
+  cursor = fromYmd;
+  while (cursor < horizonEndYmd) {
+    ymds.push(cursor);
+    cursor = addBakuDays(cursor, 1);
+  }
+  for (const typeId of typeIds) {
+    const skilled = skilledByType.get(typeId) ?? [];
+    for (const ymd of ymds) {
+      const yearMonth = ymd.slice(0, 7);
+      const roster = rosters.find((row) => row.yearMonth === yearMonth) ?? null;
+      const postedList = (roster?.lines ?? [])
+        .filter((line) => line.procedureTypeId === typeId && line.practitioner?.active)
+        .map((line) => line.practitioner!)
+        .map((person) => ({ id: person.id, code: person.code, fullName: person.fullName }));
+      const absentIds = postedList
+        .filter(
+          (person) =>
+            dayOffKey.has(`${person.id}|${ymd}`) ||
+            isAbsentOnYmd(absenceByPerson.get(person.id) ?? [], ymd),
+        )
+        .map((person) => person.id);
+      const ov = roster?.dayOverrides.find(
+        (row) => row.procedureTypeId === typeId && bakuDateKey(row.dutyDate) === ymd && row.practitioner?.active,
+      );
+      const dayOverride = ov?.practitioner
+        ? { id: ov.practitioner.id, code: ov.practitioner.code, fullName: ov.practitioner.fullName }
+        : null;
+      const people = resolveDutyCandidates({
+        rosterStatus: roster?.status ?? null,
+        postedPractitionerId: postedList[0]?.id ?? null,
+        posted: postedList[0] ?? null,
+        postedStaff: postedList,
+        absentIds,
+        postedAbsent: postedList.length > 0 && absentIds.length === postedList.length,
+        skilled,
+        dayOverridePractitionerId: dayOverride?.id ?? null,
+        dayOverride,
+      });
+      out.set(`${typeId}|${ymd}`, people);
+    }
+  }
+  return out;
 }

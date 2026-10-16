@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
-import { saveBlankProfile } from "@/domain/lab/blank-apply";
+import { deleteBlankProfile, saveBlankProfile } from "@/domain/lab/blank-apply";
 import { extractBlankTable } from "@/domain/lab/blank-docx";
 import { ensureUrineBlankProfile } from "@/domain/lab/urine-blank";
 
 const saveSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1),
   kind: z.enum(["TABLE", "NARRATIVE"]).default("TABLE"),
   serviceCode: z.string().nullable().optional(),
@@ -63,6 +64,19 @@ export async function PUT(req: Request) {
     if (!(file instanceof File)) return jsonOk({ rows: [] });
     const rows = extractBlankTable(Buffer.from(await file.arrayBuffer()));
     return jsonOk({ rows });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const guard = await assertClinicAdminRoute(req);
+    if (guard.error) return guard.error;
+    const id = new URL(req.url).searchParams.get("id")?.trim() ?? "";
+    if (!id) return jsonError("id required", 400);
+    await deleteBlankProfile(id);
+    return jsonOk({ deleted: true });
   } catch (err) {
     return handleRouteError(err);
   }

@@ -33,7 +33,12 @@ export class PackageAssignError extends Error {
     message: string,
     public code: string,
     public status = 409,
-    public misses: Array<{ ymd: string; procedureCode: string; reason: string }> = [],
+    public misses: Array<{
+      ymd: string;
+      procedureCode: string;
+      reason: string;
+      procedureName?: string;
+    }> = [],
   ) {
     super(message);
     this.name = "PackageAssignError";
@@ -853,6 +858,22 @@ export type AssignLineInput = {
   burnPoolCode?: string | null;
 };
 
+/** Drop a failed save: none of the new sessions stay on the schedule. */
+async function abandonCreatedPackageOrders(ids: string[]) {
+  if (ids.length === 0) return;
+  await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
+  await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: ids } },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelReason: "place_failed",
+      resourceId: null,
+    },
+  });
+}
+
 /**
  * Create PROPOSED orders for delta qty, place onto resources, burn quotaUsed to match circulation.
  */
@@ -1002,6 +1023,7 @@ export async function assignPackageProcedures(
   const workStart = parseBakuDateTime(todayBakuYmd(), "08:00");
 
   const createdIds: string[] = [];
+  const nameByCode = new Map<string, string>();
   let seq = 0;
 
   for (const line of resolved) {
@@ -1013,6 +1035,7 @@ export async function assignPackageProcedures(
         400,
       );
     }
+    nameByCode.set(line.procedureCode, pt.name);
     const batchId = newBatchId();
     const duration = pt.durationMin ?? 30;
     for (let i = 0; i < line.qty; i++) {
@@ -1061,60 +1084,40 @@ export async function assignPackageProcedures(
   const genericIds = createdIds.filter((id) => !bathSeat.handledIds.includes(id));
   const placement = await placeConfirmedProcedures(genericIds, {
     confirmedByUserId: opts?.confirmedByUserId,
+    atomic: true,
+    scheduleBefore: instance.endsOn,
   });
-  const placed = placement.placed + bathSeat.placedIds.length;
-
-  const stillProposed = await prisma.procedureOrder.findMany({
-    where: { id: { in: createdIds }, status: "PROPOSED" },
-    select: { id: true, procedureCode: true, procedureName: true },
-  });
-  const genericStill = stillProposed.filter((row) => !bathSeat.handledIds.includes(row.id));
-  const bathStill = stillProposed.filter((row) => bathSeat.handledIds.includes(row.id));
-  if (bathStill.length > 0) {
-    await prisma.procedureOrder.updateMany({
-      where: { id: { in: bathStill.map((row) => row.id) } },
-      data: {
-        status: "CANCELLED",
-        cancelledAt: new Date(),
-        cancelReason: "place_failed_bath_day",
-      },
-    });
-  }
-  if (genericStill.length > 0) {
-    const codes = [...new Set(genericStill.map((o) => o.procedureCode))].join(", ");
-    await prisma.procedureOrder.updateMany({
-      where: { id: { in: genericStill.map((o) => o.id) } },
-      data: {
-        status: "CANCELLED",
-        cancelledAt: new Date(),
-        cancelReason:
-          placement.missingCabinNames.length > 0
-            ? "place_failed_no_cabinet"
-            : "place_failed_no_slot_or_resource",
-      },
-    });
-    if (placement.missingCabinNames.length > 0) {
+  const misses = [
+    ...bathSeat.missed.map((miss) => ({
+      ymd: miss.ymd,
+      procedureCode: miss.procedureCode,
+      procedureName: nameByCode.get(miss.procedureCode) || miss.procedureCode,
+      reason: miss.reason,
+    })),
+    ...placement.failures.map((row) => ({
+      ymd: "",
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      reason: row.reason,
+    })),
+  ];
+  if (misses.length > 0) {
+    await abandonCreatedPackageOrders(createdIds);
+    const onlyMissingCabin =
+      bathSeat.missed.length === 0 &&
+      placement.failures.length > 0 &&
+      placement.failures.every((row) => row.reason === "no_cabin");
+    if (onlyMissingCabin) {
       throw new PackageAssignError(placement.missingCabinNames.join(", "), "NO_CABIN", 409);
     }
     throw new PackageAssignError(
-      `Could not place ${genericStill.length} of ${createdIds.length} session(s) (${codes}). Check procedure resources, staff skills, and schedule capacity.`,
+      misses.map((miss) => miss.procedureName || miss.procedureCode).join(", "),
       "PLACE_FAILED",
       409,
+      misses,
     );
   }
-  if (bathSeat.missed.length > 0 && bathSeat.placedIds.length === 0 && genericIds.length === 0) {
-    throw new PackageAssignError(
-      bathSeat.missed.map((miss) => `${miss.ymd || "—"} ${miss.procedureCode} ${miss.reason}`).join("; "),
-      "PLACE_FAILED",
-      409,
-      bathSeat.missed,
-    );
-  }
-  if (bathSeat.missed.length > 0) {
-    softWarn = [softWarn, bathSeat.missed.map((miss) => miss.ymd || miss.reason).join(", ")]
-      .filter(Boolean)
-      .join(" · ");
-  }
+  const placed = placement.placed + bathSeat.placedIds.length;
 
   const codes = [...new Set(resolved.map((l) => l.quotaCode))];
   for (const code of codes) {

@@ -107,23 +107,52 @@ export async function previewWordForOrder(input: {
   return { mode: "rows", rows };
 }
 
+function blankRows(input: Array<{ sourceLabel: string; analyteCode: string }>) {
+  const byLabel = new Map<string, { sourceLabel: string; analyteCode: string }>();
+  for (const row of input) {
+    const sourceLabel = row.sourceLabel.trim();
+    const analyteCode = row.analyteCode.trim();
+    if (!sourceLabel || !analyteCode) continue;
+    byLabel.set(sourceLabel, { sourceLabel, analyteCode });
+  }
+  return [...byLabel.values()];
+}
+
+/** Create a Word blank, or replace the one with this id or the same name. */
 export async function saveBlankProfile(input: {
+  id?: string;
   name: string;
   kind: "TABLE" | "NARRATIVE";
   serviceCode?: string | null;
   rows: Array<{ sourceLabel: string; analyteCode: string }>;
 }) {
-  const profile = await prisma.labBlankProfile.create({
-    data: {
-      name: input.name,
-      kind: input.kind,
-      serviceCode: input.serviceCode || null,
-      active: true,
-    },
-  });
-  if (input.rows.length > 0) {
+  const name = input.name.trim();
+  const rows = blankRows(input.rows);
+  const existing = input.id
+    ? await prisma.labBlankProfile.findUnique({ where: { id: input.id } })
+    : await prisma.labBlankProfile.findFirst({ where: { name } });
+  const profile = existing
+    ? await prisma.labBlankProfile.update({
+        where: { id: existing.id },
+        data: {
+          name,
+          kind: input.kind,
+          serviceCode: input.serviceCode?.trim() || existing.serviceCode,
+          active: true,
+        },
+      })
+    : await prisma.labBlankProfile.create({
+        data: {
+          name,
+          kind: input.kind,
+          serviceCode: input.serviceCode || null,
+          active: true,
+        },
+      });
+  await prisma.labBlankRow.deleteMany({ where: { profileId: profile.id } });
+  if (rows.length > 0) {
     await prisma.labBlankRow.createMany({
-      data: input.rows.map((row, index) => ({
+      data: rows.map((row, index) => ({
         organizationId: profile.organizationId,
         profileId: profile.id,
         sourceLabel: row.sourceLabel,
@@ -136,4 +165,8 @@ export async function saveBlankProfile(input: {
     where: { id: profile.id },
     include: { rows: { orderBy: { sortOrder: "asc" } } },
   });
+}
+
+export async function deleteBlankProfile(id: string) {
+  await prisma.labBlankProfile.delete({ where: { id } });
 }

@@ -797,7 +797,7 @@ export function PackageAssignModal({
   }
 
   function placeMissText(
-    misses: Array<{ ymd?: string; reason?: string }> | undefined,
+    misses: Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }> | undefined,
   ): string {
     if (!misses?.length) return "";
     return misses
@@ -807,7 +807,11 @@ export function PackageAssignModal({
             ? tPhysio("packageAssignMissNoStaff")
             : miss.reason === "no_cabin"
               ? tPhysio("packageAssignMissNoCabin")
-              : tPhysio("packageAssignMissNoDay");
+              : miss.reason === "no_slot"
+                ? tPhysio("packageAssignMissNoSlot")
+                : tPhysio("packageAssignMissNoDay");
+        const who = miss.procedureName || miss.procedureCode;
+        if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
         return tPhysio("packageAssignMiss", { date: miss.ymd || "—", reason });
       })
       .join("; ");

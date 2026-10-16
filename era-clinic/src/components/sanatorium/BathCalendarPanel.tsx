@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CatalogField, Field, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { addBakuDays } from "@era/satellite-kit/time";
 
 type Day = { ymd: string; working: boolean; endHour: number };
 type Member = { procedureCode: string; shortMark: string };
@@ -17,6 +18,36 @@ type Order = {
 };
 
 type Snapshot = { days: Day[]; series: Series[]; orders: Order[] };
+type WeekCell = { ymd: string; working: boolean; inStay: boolean };
+
+/** Monday = 0 … Sunday = 6 in Asia/Baku. */
+function mondayIndex(ymd: string): number {
+  const [year, month, day] = ymd.split("-").map(Number);
+  const noon = new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1, 12));
+  const short = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Baku", weekday: "short" }).format(noon);
+  const index: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+  return index[short] ?? 0;
+}
+
+/** Stay days padded to whole Monday–Sunday weeks. Days outside the stay are only there to keep the week. */
+function stayWeeks(days: Day[]): WeekCell[][] {
+  if (days.length === 0) return [];
+  const sorted = [...days].sort((a, b) => a.ymd.localeCompare(b.ymd));
+  const byYmd = new Map(sorted.map((day) => [day.ymd, day]));
+  const first = sorted[0]!.ymd;
+  const last = sorted[sorted.length - 1]!.ymd;
+  let cursor = addBakuDays(first, -mondayIndex(first));
+  const end = addBakuDays(last, 6 - mondayIndex(last));
+  const cells: WeekCell[] = [];
+  while (cursor <= end) {
+    const day = byYmd.get(cursor);
+    cells.push(day ? { ymd: cursor, working: day.working, inStay: true } : { ymd: cursor, working: false, inStay: false });
+    cursor = addBakuDays(cursor, 1);
+  }
+  const weeks: WeekCell[][] = [];
+  for (let index = 0; index < cells.length; index += 7) weeks.push(cells.slice(index, index + 7));
+  return weeks;
+}
 
 export function BathCalendarPanel({
   episodeId,
@@ -66,6 +97,9 @@ export function BathCalendarPanel({
       ),
     [snap],
   );
+
+  const weeks = useMemo(() => stayWeeks(snap?.days ?? []), [snap]);
+  const weekdayLabels = t("bathCalendarWeekdays").split(",");
 
   const markByCode = useMemo(() => {
     const map = new Map<string, string>();
@@ -117,9 +151,9 @@ export function BathCalendarPanel({
     return mark;
   }
 
-  function toggle(day: Day) {
-    if (!day.working) return;
-    const ymd = day.ymd;
+  function toggle(cell: WeekCell) {
+    if (!cell.inStay || !cell.working) return;
+    const ymd = cell.ymd;
     if (manualRests.includes(ymd)) {
       setManualRests((rests) => rests.filter((row) => row !== ymd));
       return;
@@ -212,25 +246,39 @@ export function BathCalendarPanel({
           onChange={(event) => setQty(Number(event.target.value) || 0)}
         />
       </div>
-      <div className="flex flex-wrap gap-1">
-        {snap.days.map((day) => {
-          const mark = cellMark(day.ymd);
-          const green = day.working;
-          return (
-            <button
-              key={day.ymd}
-              type="button"
-              title={day.ymd}
-              onClick={() => toggle(day)}
-              className={`h-8 min-w-8 rounded px-1 text-[11px] ${
-                green ? "bg-[#E8F6EF] text-[#1E8449]" : "bg-[#F4F6F7] text-[#95A5A6]"
-              }`}
-            >
-              {day.ymd.slice(8)}
-              {mark ? ` ${mark}` : ""}
-            </button>
-          );
-        })}
+      <div className="space-y-1">
+        <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-[#7F8C8D]">
+          {weekdayLabels.map((label, index) => (
+            <span key={index} className="min-w-0 truncate">
+              {label}
+            </span>
+          ))}
+        </div>
+        {weeks.map((week) => (
+          <div key={week[0]?.ymd} className="grid grid-cols-7 gap-1">
+            {week.map((cell) => {
+              const mark = cell.inStay ? cellMark(cell.ymd) : "";
+              const open = cell.inStay && cell.working;
+              const tone = !cell.inStay
+                ? "bg-[#F3E6D8] text-[#8B5E3C]"
+                : cell.working
+                  ? "bg-[#E8F6EF] text-[#1E8449]"
+                  : "bg-[#F4F6F7] text-[#95A5A6]";
+              return (
+                <button
+                  key={cell.ymd}
+                  type="button"
+                  title={cell.ymd}
+                  onClick={() => toggle(cell)}
+                  className={`min-h-8 min-w-0 w-full overflow-hidden rounded px-0.5 text-[11px] leading-tight ${tone} ${open ? "" : "pointer-events-none"}`}
+                >
+                  {cell.ymd.slice(8)}
+                  {mark ? ` ${mark}` : ""}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
       <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy || !procedureCode} onClick={() => void save()}>
         {t("bathCalendarSave")}

@@ -4,8 +4,8 @@ import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { bakuDateKey, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays, stayYmd } from "@/domain/planning/clinic-day";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 import {
-  countResourceAllocations,
   findSkilledFreePractitioner,
   listPhysicalRequirementResources,
   replaceProcedureAllocations,
@@ -96,7 +96,26 @@ async function findCabinSlotOnDay(input: {
   )?.role;
   const role: "LOCATION" | "EQUIPMENT" =
     physicalRole === "LOCATION" || procedureType.resourceKind === "ROOM" ? "LOCATION" : "EQUIPMENT";
-  let cursor = dayStartInstant(input.ymd, settings.dayStartHour);
+  const dayStart = dayStartInstant(input.ymd, settings.dayStartHour);
+  const dayEnd = dayStartInstant(input.ymd, input.endHour);
+  const lookback = new Date(dayStart.getTime() - 240 * 60_000);
+  const occupied = await prisma.procedureAllocation.findMany({
+    where: {
+      role: { in: ["LOCATION", "EQUIPMENT"] },
+      resourceId: { in: resources.map((row) => row.id) },
+      startsAt: { lt: dayEnd },
+      endsAt: { gt: lookback },
+      ...(input.excludeOrderId ? { procedureOrderId: { not: input.excludeOrderId } } : {}),
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+    },
+    select: {
+      resourceId: true,
+      startsAt: true,
+      endsAt: true,
+      procedureOrder: { select: { procedureType: { select: { resourceGapMinutes: true } } } },
+    },
+  });
+  let cursor = dayStart;
   for (let attempt = 0; attempt < 240; attempt++) {
     const end = new Date(cursor.getTime() + durationMin * 60_000);
     const endHm = bakuHourMinute(end);
@@ -104,7 +123,12 @@ async function findCabinSlotOnDay(input: {
     const startHm = bakuHourMinute(cursor);
     if (startHm.hour > input.endHour || (startHm.hour === input.endHour && startHm.minute > 0)) break;
     for (const resource of resources) {
-      const used = await countResourceAllocations(resource.id, cursor, end, input.excludeOrderId);
+      let used = 0;
+      for (const row of occupied) {
+        if (row.resourceId !== resource.id) continue;
+        const gap = row.procedureOrder.procedureType?.resourceGapMinutes ?? 5;
+        if (allocationOccupiesCandidate(row.startsAt, row.endsAt, gap, cursor, end)) used++;
+      }
       if (used < resource.capacity) {
         return { start: cursor, end, resourceId: resource.id, role };
       }

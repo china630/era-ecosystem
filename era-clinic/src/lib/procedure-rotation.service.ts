@@ -44,16 +44,15 @@ function matchesMember(
  * BODY_PART: same code + same body part may not run on consecutive days (maxConsecutiveDays=1).
  * GROUP: member codes share a streak; after max days, restProcedureCode is preferred.
  */
-export async function evaluateRotation(input: {
+export function evaluateRotationRules(input: {
   candidateCode: string;
   bodyPart?: string | null;
   day: Date;
   context: RotationContextSlot[];
-}): Promise<RotationEvaluation> {
-  const rules = await prisma.procedureRotationRule.findMany({
-    where: { active: true },
-  });
+  rules: ProcedureRotationRule[];
+}): RotationEvaluation {
   const candidateDay = dayKey(input.day);
+  const rules = input.rules;
 
   for (const rule of rules) {
     if (!rule.memberCodes.includes(input.candidateCode)) continue;
@@ -90,6 +89,21 @@ export async function evaluateRotation(input: {
   }
 
   return { ok: true, mustShift: false };
+}
+
+export async function evaluateRotation(input: {
+  candidateCode: string;
+  bodyPart?: string | null;
+  day: Date;
+  context: RotationContextSlot[];
+  rules?: ProcedureRotationRule[];
+}): Promise<RotationEvaluation> {
+  const rules =
+    input.rules ??
+    (await prisma.procedureRotationRule.findMany({
+      where: { active: true },
+    }));
+  return evaluateRotationRules({ ...input, rules });
 }
 
 export async function listRotationRules() {
