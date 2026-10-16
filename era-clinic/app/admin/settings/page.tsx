@@ -101,6 +101,7 @@ const WORK_DEFAULTS: WorkHours = {
   bathDayModes: [
     { code: "2", baths: 2, rest: 1 },
     { code: "3", baths: 3, rest: 1 },
+    { code: "4", baths: 4, rest: 1 },
     { code: "5", baths: 5, rest: 1 },
     { code: "ALTERNATING", baths: 1, rest: 1 },
   ],

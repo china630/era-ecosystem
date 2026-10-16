@@ -510,16 +510,25 @@ export async function placeConfirmedProcedures(
     ? await prisma.resource.findMany({ where: { code: { in: [...resourceCodes] } } })
     : [];
   const resourceByCode = new Map(resourceRows.map((row) => [row.code, row]));
+  const sexFailures: PlacementFailure[] = [];
   for (const order of scanOrders) {
-    order.resources = order.resourceCodeList
+    const listed = order.resourceCodeList
       .map((code) => resourceByCode.get(code))
-      .filter((row): row is NonNullable<typeof row> => Boolean(row))
-      .filter((row) => cabinMatchesGuest(row.sexAudience, guestSex))
-      .map((row) => ({
-        id: row.id,
-        capacity: row.capacity,
-        role: order.physicalRole,
-      }));
+      .filter((row): row is NonNullable<typeof row> => Boolean(row));
+    const matching = listed.filter((row) => cabinMatchesGuest(row.sexAudience, guestSex));
+    if (listed.length > 0 && matching.length === 0) {
+      sexFailures.push({
+        orderId: order.id,
+        procedureCode: order.procedureCode,
+        procedureName: order.procedureName,
+        reason: "cabin_sex",
+      });
+    }
+    order.resources = matching.map((row) => ({
+      id: row.id,
+      capacity: row.capacity,
+      role: order.physicalRole,
+    }));
     order.dayEndHour = resolveEffectiveDayEndHour(order.typeHours, {
       procedureExtendedEndHour: order.extendedEndHour,
       resourceExtendedEndHour: resourceByCode.get(order.resourceCodeList[0] ?? "")?.extendedEndHour,
@@ -534,7 +543,7 @@ export async function placeConfirmedProcedures(
 
   const closedYmds = await loadClosedYmds(today, horizonEndYmd);
   const scanned = scanProcedureSlots({
-    orders: scanOrders,
+    orders: scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
     now,
     slotMinutes,
     packageCap,
@@ -549,7 +558,7 @@ export async function placeConfirmedProcedures(
     allocations,
   });
 
-  const failures = [...untyped, ...scanned.failures];
+  const failures = [...untyped, ...sexFailures, ...scanned.failures];
   const missingCabinNames = [
     ...new Set(failures.filter((row) => row.reason === "no_cabin").map((row) => row.procedureName)),
   ];

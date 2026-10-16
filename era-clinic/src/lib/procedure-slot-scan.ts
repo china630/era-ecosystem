@@ -19,6 +19,7 @@ import {
 
 export type PlacementFailureReason =
   | "no_cabin"
+  | "cabin_sex"
   | "no_staff"
   | "staff_busy"
   | "cabin_busy"

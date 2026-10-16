@@ -173,6 +173,8 @@ export default function SanatoriumResourcesPage() {
       showApiError(
         typeof data?.error === "string" && data.error.includes("Cabin sex")
           ? { ...data, error: t("cabinSexMismatch") }
+          : typeof data?.error === "string" && data.error.includes("past")
+            ? { ...data, error: t("reschedulePast") }
           : data,
         t("moveFailed"),
       );
@@ -204,6 +206,8 @@ export default function SanatoriumResourcesPage() {
       showApiError(
         typeof data?.error === "string" && data.error.includes("Cabin sex")
           ? { ...data, error: t("cabinSexMismatch") }
+          : typeof data?.error === "string" && data.error.includes("past")
+            ? { ...data, error: t("reschedulePast") }
           : data,
         t("moveFailed"),
       );

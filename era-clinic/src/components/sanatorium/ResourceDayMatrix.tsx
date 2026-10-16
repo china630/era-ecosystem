@@ -37,10 +37,7 @@ export type MatrixResourceRow = {
 };
 
 export function cabinLabel(name: string | undefined, code: string | undefined): string {
-  const title = name?.trim() ?? "";
-  const id = code?.trim() ?? "";
-  if (title && id && title !== id) return `${title} (${id})`;
-  return title || id || "—";
+  return name?.trim() || code?.trim() || "—";
 }
 export type Slot = MatrixSlot;
 export type ResourceRow = MatrixResourceRow;

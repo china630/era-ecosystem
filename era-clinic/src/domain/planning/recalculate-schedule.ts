@@ -153,6 +153,7 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
         ],
         kept,
         modes: bathModes,
+        notBeforeYmd: today,
       });
       const plannedDays = new Set(planned.filter((cell) => !cell.locked).map((cell) => cell.ymd));
       const automatic = rows.filter((row) => {

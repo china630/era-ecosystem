@@ -286,7 +286,7 @@ export function PatientCardClinicalSections({
       const data = await res.json();
       const row = data.data ?? data;
       const days = (row.days ?? []) as TimelineDay[];
-      setPlanDays((prev) => (reset ? days : mergeDays(prev, days)));
+      setPlanDays((prev) => (reset ? days : mergeDays(prev, days, "asc")));
       setPlanOffset(row.nextOffset ?? offset);
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
@@ -375,9 +375,14 @@ export function PatientCardClinicalSections({
   async function submitPlanReschedule() {
     if (!rescheduleId) return;
     const day = rescheduleDate;
+    const scheduledAtDate = parseBakuDateTime(day, `${rescheduleTime}:00`);
+    if (scheduledAtDate.getTime() < Date.now()) {
+      showApiError({ error: ts("reschedulePast") }, tc("failed"));
+      return;
+    }
     setPlanBusy(true);
     try {
-      const scheduledAt = parseBakuDateTime(day, `${rescheduleTime}:00`).toISOString();
+      const scheduledAt = scheduledAtDate.toISOString();
       const res = await fetch(`/api/procedures/${rescheduleId}/reschedule`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -388,6 +393,8 @@ export function PatientCardClinicalSections({
         showApiError(
           typeof data?.error === "string" && data.error.includes("Cabin sex")
             ? { ...data, error: ts("cabinSexMismatch") }
+            : typeof data?.error === "string" && data.error.includes("past")
+              ? { ...data, error: ts("reschedulePast") }
             : data,
           tc("failed"),
         );
@@ -647,6 +654,8 @@ export function PatientCardClinicalSections({
                                 ? t("packageAssignMissNoStaff")
                                 : miss.reason === "staff_busy"
                                   ? t("packageAssignMissStaffBusy")
+                                  : miss.reason === "cabin_sex"
+                                    ? t("packageAssignMissCabinSex")
                                   : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
                                     ? t("packageAssignMissNoCabin")
                                     : miss.reason === "day_full"
@@ -670,7 +679,9 @@ export function PatientCardClinicalSections({
                             {
                               error:
                                 missText ||
-                                (d.code === "NO_CABIN"
+                                (d.code === "CABIN_SEX"
+                                  ? t("packageAssignMissCabinSex")
+                                  : d.code === "NO_CABIN"
                                   ? t("packageAssignNoCabin", { names })
                                   : (packageAssignBlockText(t, d.code) ?? names) || tc("failed")),
                             },
@@ -962,26 +973,28 @@ export function PatientCardClinicalSections({
           />
         }
       >
-        <DatePicker
-          label={tc("date")}
-          value={rescheduleDate}
-          onChange={(value) => setRescheduleDate(value)}
-          placeholder="dd.mm.yyyy"
-        />
-        <CatalogField
-          kind="SEARCHABLE"
-          label={ts("procedureTime")}
-          value={rescheduleTime}
-          emptyLabel={null}
-          options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
-            const total = 8 * 60 + index * 5;
-            const hh = String(Math.floor(total / 60)).padStart(2, "0");
-            const mm = String(total % 60).padStart(2, "0");
-            const label = `${hh}:${mm}`;
-            return { value: label, label };
-          })}
-          onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
-        />
+        <div className="grid grid-cols-2 items-end gap-2">
+          <DatePicker
+            label={tc("date")}
+            value={rescheduleDate}
+            onChange={(value) => setRescheduleDate(value)}
+            placeholder="dd.mm.yyyy"
+          />
+          <CatalogField
+            kind="SEARCHABLE"
+            label={ts("procedureTime")}
+            value={rescheduleTime}
+            emptyLabel={null}
+            options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
+              const total = 8 * 60 + index * 5;
+              const hh = String(Math.floor(total / 60)).padStart(2, "0");
+              const mm = String(total % 60).padStart(2, "0");
+              const label = `${hh}:${mm}`;
+              return { value: label, label };
+            })}
+            onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
+          />
+        </div>
       </ModalShell>
       <ModalShell
         open={Boolean(cancelAskId)}
@@ -1063,7 +1076,11 @@ export function PatientCardClinicalSections({
   );
 }
 
-function mergeDays(prev: TimelineDay[], next: TimelineDay[]): TimelineDay[] {
+function mergeDays(
+  prev: TimelineDay[],
+  next: TimelineDay[],
+  dateOrder: "asc" | "desc" = "desc",
+): TimelineDay[] {
   const map = new Map<string, TimelineDay>();
   for (const d of prev) map.set(d.date, { ...d, events: [...d.events] });
   for (const d of next) {
@@ -1077,7 +1094,15 @@ function mergeDays(prev: TimelineDay[], next: TimelineDay[]): TimelineDay[] {
       if (!ids.has(ev.id)) existing.events.push(ev);
     }
   }
-  return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
+  const days = [...map.values()].map((day) => ({
+    ...day,
+    events: [...day.events].sort(
+      (a, b) => new Date(a.at ?? 0).getTime() - new Date(b.at ?? 0).getTime(),
+    ),
+  }));
+  return days.sort((a, b) =>
+    dateOrder === "asc" ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date),
+  );
 }
 
 function HistoryCards({

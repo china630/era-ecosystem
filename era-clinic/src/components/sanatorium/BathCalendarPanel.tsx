@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CatalogField, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
-import { addBakuDays } from "@era/satellite-kit/time";
+import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
 import { planBathSeries, type BathModeDef } from "@/domain/planning/bath-calendar";
 
 type Day = { ymd: string; working: boolean; endHour: number };
@@ -25,6 +25,7 @@ type SeatMember = { procedureCode: string; qty: number };
 const FALLBACK_MODES: BathModeDef[] = [
   { code: "2", baths: 2, rest: 1 },
   { code: "3", baths: 3, rest: 1 },
+  { code: "4", baths: 4, rest: 1 },
   { code: "5", baths: 5, rest: 1 },
   { code: "ALTERNATING", baths: 1, rest: 1 },
 ];
@@ -76,7 +77,7 @@ export function BathCalendarPanel({
   members,
   dayBlock,
   onDayBlockChange,
-  previewOnly = false,
+  onNeedsWriteChange,
 }: {
   episodeId: string;
   /** Assigned package + extra sessions for each procedure in the naftalan group. */
@@ -84,13 +85,12 @@ export function BathCalendarPanel({
   /** Shared day block. Empty until the guest's course or the user sets it. */
   dayBlock: string;
   onDayBlockChange: (mode: string) => void;
-  /** Form overlay: show the rhythm, do not write sessions that are not saved yet. */
-  previewOnly?: boolean;
+  /** True when Saxla must wait for Plana yaz. */
+  onNeedsWriteChange?: (needsWrite: boolean) => void;
 }) {
   const t = useTranslations("patientRegistry");
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [bathSequence, setBathSequence] = useState("");
   const [manualBaths, setManualBaths] = useState<string[]>([]);
   const [manualRests, setManualRests] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -145,15 +145,21 @@ export function BathCalendarPanel({
   const mode = isMode(dayBlock, modes) ? dayBlock : "";
   const stored = snap ? storedBlock(snap.orders, codes, modes) : "";
   const layout = !stored || stored !== mode ? "fresh" : "continue";
+  const memberQty = members.reduce((sum, row) => sum + Math.max(0, row.qty), 0);
+  const seatedQty = members
+    .filter((row) => row.qty > 0 && seriesByCode.has(row.procedureCode))
+    .reduce((sum, row) => sum + row.qty, 0);
 
   const preview = useMemo(() => {
     const map = new Map<string, string>();
     if (!snap || !mode) return map;
     const seated = members.filter((row) => row.qty > 0 && seriesByCode.has(row.procedureCode));
     if (seated.length === 0) return map;
+    const today = todayBakuYmd();
     const kept = snap.orders
       .filter((order) => {
         if (!codes.has(order.procedureCode)) return true;
+        if (order.ymd < today) return true;
         if (layout === "continue") return true;
         return order.status === "CHECKED_IN" || order.status === "COMPLETED";
       })
@@ -179,12 +185,38 @@ export function BathCalendarPanel({
       kept,
       layout,
       modes,
+      notBeforeYmd: today,
     });
     for (const cell of planned) {
       if (!map.has(cell.ymd)) map.set(cell.ymd, cell.mark);
     }
     return map;
   }, [snap, mode, members, seriesByCode, markByCode, codes, layout, modes]);
+
+  const savedCount = snap
+    ? snap.orders.filter((order) => codes.has(order.procedureCode)).length
+    : 0;
+
+  useEffect(() => {
+    if (!onNeedsWriteChange) return;
+    if (memberQty < 1) {
+      onNeedsWriteChange(false);
+      return;
+    }
+    if (loadFailed) {
+      onNeedsWriteChange(false);
+      return;
+    }
+    if (!snap) {
+      onNeedsWriteChange(true);
+      return;
+    }
+    if (seatedQty < 1) {
+      onNeedsWriteChange(false);
+      return;
+    }
+    onNeedsWriteChange(!mode || layout === "fresh" || savedCount < seatedQty);
+  }, [onNeedsWriteChange, memberQty, seatedQty, mode, layout, savedCount, loadFailed, snap]);
 
   if (members.length === 0) return null;
 
@@ -218,21 +250,27 @@ export function BathCalendarPanel({
     const planned = preview.get(ymd);
     const order = snap?.orders.find((row) => row.ymd === ymd && codes.has(row.procedureCode));
     let base = "";
-    if (layout === "fresh" && planned) base = planned;
+    if (order && ymd < todayBakuYmd()) {
+      const mark = markByCode.get(order.procedureCode) ?? "";
+      const fill = order.physioFields?.naftalanFill;
+      if (fill === "OTURAQ") base = `${mark} от`;
+      else if (fill === "TAM") base = `${mark} т`;
+      else base = mark;
+    } else if (layout === "fresh") base = planned ?? "";
     else if (order) {
       const mark = markByCode.get(order.procedureCode) ?? "";
       const fill = order.physioFields?.naftalanFill;
       if (fill === "OTURAQ") base = `${mark} от`;
       else if (fill === "TAM") base = `${mark} т`;
       else base = mark;
-    } else base = planned ?? markByCode.get(members[0]?.procedureCode ?? "") ?? "";
-    if (manualRests.includes(ymd)) return "İst";
-    if (manualBaths.includes(ymd)) return base ? `${base}+` : "+";
+    } else base = planned ?? "";
+    if (ymd >= todayBakuYmd() && manualRests.includes(ymd)) return "İst";
+    if (ymd >= todayBakuYmd() && manualBaths.includes(ymd)) return base ? `${base}+` : "+";
     return base;
   }
 
   function toggle(cell: WeekCell) {
-    if (!cell.inStay || !cell.working) return;
+    if (!cell.inStay || !cell.working || cell.ymd < todayBakuYmd()) return;
     const ymd = cell.ymd;
     if (manualRests.includes(ymd)) {
       setManualRests((rests) => rests.filter((row) => row !== ymd));
@@ -247,7 +285,7 @@ export function BathCalendarPanel({
   }
 
   async function save() {
-    if (!mode || previewOnly) return;
+    if (!mode) return;
     const seated = members.filter((row) => row.qty >= 1 && seriesByCode.has(row.procedureCode));
     if (seated.length === 0) return;
     setBusy(true);
@@ -265,9 +303,9 @@ export function BathCalendarPanel({
             procedureCode: member.procedureCode,
             mode,
             qty: member.qty,
-            manualRestYmds: sendManual ? manualRests : [],
-            manualBathYmds: sendManual ? manualBaths : [],
-            bathSequence: bathSequence === "SITZ_THEN_FULL" ? "SITZ_THEN_FULL" : null,
+            manualRestYmds: sendManual ? manualRests.filter((ymd) => ymd >= todayBakuYmd()) : [],
+            manualBathYmds: sendManual ? manualBaths.filter((ymd) => ymd >= todayBakuYmd()) : [],
+            bathSequence: null,
           }),
         });
         const data = await res.json();
@@ -299,27 +337,10 @@ export function BathCalendarPanel({
 
   return (
     <section className="mb-3 space-y-2 rounded-lg border border-[#D5DADF] p-3">
-      <h4 className="text-sm font-medium">{t("bathCalendarTitle")}</h4>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("bathCalendarMode")}
-          value={dayBlock}
-          onChange={(value) => onDayBlockChange(String(value ?? ""))}
-          options={modes.map((row) => ({
-            value: row.code,
-            label: row.code === "ALTERNATING" ? t("bathCalendarAlternating") : row.code,
-          }))}
-        />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("bathCalendarSitz")}
-          value={bathSequence}
-          onChange={(value) => setBathSequence(String(value ?? ""))}
-          options={[{ value: "SITZ_THEN_FULL", label: t("bathCalendarSitz") }]}
-        />
-        <p className="self-end text-[12px] text-[#7F8C8D]">
-          {t("bathCalendarQty")}: {total}
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="text-sm font-medium">{t("bathCalendarTitle")}</h4>
+        <p className="text-[13px] font-semibold">
+          {t("bathCalendarTotal")}: {total}
         </p>
       </div>
       <div className="space-y-1">
@@ -334,9 +355,12 @@ export function BathCalendarPanel({
           <div key={week[0]?.ymd} className="grid grid-cols-7 gap-1">
             {week.map((cell) => {
               const mark = cell.inStay ? cellMark(cell.ymd) : "";
-              const open = cell.inStay && cell.working;
+              const past = cell.inStay && cell.ymd < todayBakuYmd();
+              const open = cell.inStay && cell.working && !past;
               const tone = !cell.inStay
                 ? "bg-[#F3E6D8] text-[#8B5E3C]"
+                : past
+                  ? "bg-[#F8E4E6] text-[#A56B73]"
                 : cell.working
                   ? "bg-[#E8F6EF] text-[#1E8449]"
                   : "bg-[#F4F6F7] text-[#95A5A6]";
@@ -344,10 +368,9 @@ export function BathCalendarPanel({
                 <button
                   key={cell.ymd}
                   type="button"
-                  title={cell.ymd}
-                  onClick={() => {
-                    if (!previewOnly) toggle(cell);
-                  }}
+                  title={past ? t("bathCalendarPastDay") : cell.ymd}
+                  disabled={!open}
+                  onClick={() => toggle(cell)}
                   className={`min-h-8 min-w-0 w-full overflow-hidden rounded px-0.5 text-[11px] leading-tight ${tone} ${open ? "" : "pointer-events-none"}`}
                 >
                   {cell.ymd.slice(8)}
@@ -358,7 +381,23 @@ export function BathCalendarPanel({
           </div>
         ))}
       </div>
-      {previewOnly ? null : (
+      <div className="flex items-end justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-[12px]">{t("bathCalendarMode")}</span>
+          <div className="w-[11rem]">
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label=""
+              value={dayBlock}
+              emptyLabel="—"
+              onChange={(value) => onDayBlockChange(String(value ?? ""))}
+              options={modes.map((row) => ({
+                value: row.code,
+                label: row.code === "ALTERNATING" ? t("bathCalendarAlternating") : row.code,
+              }))}
+            />
+          </div>
+        </div>
         <button
           type="button"
           className={SECONDARY_BUTTON_CLASS}
@@ -367,7 +406,7 @@ export function BathCalendarPanel({
         >
           {t("bathCalendarSave")}
         </button>
-      )}
+      </div>
     </section>
   );
 }

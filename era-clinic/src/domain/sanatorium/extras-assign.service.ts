@@ -31,6 +31,7 @@ import {
 } from "@/domain/physio/clinic-cutover.service";
 import { enterSatelliteTenant } from "@era/satellite-kit";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
+import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 
 export type ExtraPrescribeLine = {
   procedureCode: string;
@@ -137,6 +138,13 @@ export async function prescribeExtras(
         `Unknown procedure type ${line.procedureCode}`,
         "UNKNOWN_TYPE",
         400,
+      );
+    }
+    if (!(await procedureFitsGuestSex(line.procedureCode, episode.patientRef?.sex))) {
+      throw new PackageAssignError(
+        "Cabin sex does not match the guest",
+        "CABIN_SEX",
+        409,
       );
     }
     const unitPrice = await listPriceForCode(line.procedureCode);

@@ -563,7 +563,9 @@ export default function SanatoriumPage() {
     setBusy(false);
     if (!res.ok) {
       const failed = (await res.json().catch(() => ({}))) as { code?: string; error?: string };
-      if (failed.code === "NO_CABIN") {
+      if (failed.code === "CABIN_SEX") {
+        showApiError({ error: tCard("packageAssignMissCabinSex") }, t("failed"));
+      } else if (failed.code === "NO_CABIN") {
         showApiError(
           { error: tCard("packageAssignNoCabin", { names: failed.error ?? "" }) },
           t("failed"),
@@ -731,8 +733,13 @@ export default function SanatoriumPage() {
 
   async function rescheduleProcedure() {
     if (!rescheduleOrderId) return;
+    const scheduledAtDate = parseBakuDateTime(rescheduleDate, `${rescheduleTime}:00`);
+    if (scheduledAtDate.getTime() < Date.now()) {
+      showApiError({ error: t("reschedulePast") }, t("failed"));
+      return;
+    }
     setBusy(true);
-    const scheduledAt = parseBakuDateTime(rescheduleDate, `${rescheduleTime}:00`).toISOString();
+    const scheduledAt = scheduledAtDate.toISOString();
     const res = await fetch(`/api/procedures/${rescheduleOrderId}/reschedule`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -745,6 +752,8 @@ export default function SanatoriumPage() {
       showApiError(
         typeof data?.error === "string" && data.error.includes("Cabin sex")
           ? { ...data, error: t("cabinSexMismatch") }
+          : typeof data?.error === "string" && data.error.includes("past")
+            ? { ...data, error: t("reschedulePast") }
           : data,
         t("failed"),
       );
@@ -1784,24 +1793,26 @@ export default function SanatoriumPage() {
           />
         }
       >
-        <DatePicker
-          label={t("date", { defaultValue: "Date" })}
-          value={rescheduleDate}
-          onChange={setRescheduleDate}
-          placeholder="dd.mm.yyyy"
-        />
-        <CatalogField
-          kind="SEARCHABLE"
-          label={t("procedureTime")}
-          value={rescheduleTime}
-          emptyLabel={null}
-          options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
-            const total = 8 * 60 + index * 5;
-            const label = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-            return { value: label, label };
-          })}
-          onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
-        />
+        <div className="grid grid-cols-2 items-end gap-2">
+          <DatePicker
+            label={t("date", { defaultValue: "Date" })}
+            value={rescheduleDate}
+            onChange={setRescheduleDate}
+            placeholder="dd.mm.yyyy"
+          />
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t("procedureTime")}
+            value={rescheduleTime}
+            emptyLabel={null}
+            options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
+              const total = 8 * 60 + index * 5;
+              const label = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+              return { value: label, label };
+            })}
+            onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
+          />
+        </div>
       </ModalShell>
 
       <ModalShell

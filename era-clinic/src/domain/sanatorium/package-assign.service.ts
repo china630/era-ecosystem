@@ -24,6 +24,10 @@ import {
 } from "@/lib/import/seed-catalog-match";
 import { parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import {
+  blockedProcedureCodesForGuest,
+  procedureFitsGuestSex,
+} from "@/domain/procedure/procedure-sex-gate";
+import {
   formatLateralityLabel,
   formatPhysioFieldsPrint,
   type PhysioOrderFields,
@@ -517,7 +521,7 @@ async function loadEpisodeForAssign(
       programInstance: {
         include: {
           procedureLines: true,
-          template: { include: { procedures: true } },
+          template: { include: { procedures: { orderBy: [{ sortOrder: "asc" }, { procedureCode: "asc" }] } } },
         },
       },
       patientRef: true,
@@ -569,6 +573,8 @@ export async function getPackageAssignSnapshot(
   packageCode: string | null;
   packageVersion: number | null;
   templateId: string | null;
+  /** SKUs whose cabins are all the other sex. */
+  sexBlockedCodes: string[];
 }> {
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
@@ -587,6 +593,7 @@ export async function getPackageAssignSnapshot(
         packageCode: null,
         packageVersion: null,
         templateId: null,
+        sexBlockedCodes: [],
       };
     }
     const { tryOpenProgramAfterTherapistStage } = await import(
@@ -618,6 +625,7 @@ export async function getPackageAssignSnapshot(
         packageCode: episode.programCode?.trim() || null,
         packageVersion: null,
         templateId: null,
+        sexBlockedCodes: [],
       };
     }
   }
@@ -832,6 +840,16 @@ export async function getPackageAssignSnapshot(
     }
   }
 
+  const templateOrder = new Map(
+    (instance.template?.procedures ?? []).map((row, index) => [row.procedureCode, index]),
+  );
+  balances.sort(
+    (a, b) =>
+      (templateOrder.get(a.procedureCode) ?? 10_000) -
+      (templateOrder.get(b.procedureCode) ?? 10_000),
+  );
+  const sexBlocked = await blockedProcedureCodesForGuest(episode.patientRef?.sex);
+
   return {
     balances,
     assigned: [...batchMap.values()],
@@ -844,6 +862,7 @@ export async function getPackageAssignSnapshot(
       (instance.template as { version?: number } | null | undefined)?.version ??
       null,
     templateId: instance.templateId,
+    sexBlockedCodes: [...sexBlocked],
   };
 }
 
@@ -1004,6 +1023,13 @@ export async function assignPackageProcedures(
       ...bal,
       remaining: bal.remaining - line.qty,
     });
+    if (!(await procedureFitsGuestSex(skuCode, episode.patientRef?.sex))) {
+      throw new PackageAssignError(
+        "Cabin sex does not match the guest",
+        "CABIN_SEX",
+        409,
+      );
+    }
     resolved.push({ ...line, procedureCode: skuCode, quotaCode });
   }
 
@@ -1108,6 +1134,14 @@ export async function assignPackageProcedures(
       placement.failures.every((row) => row.reason === "no_cabin");
     if (onlyMissingCabin) {
       throw new PackageAssignError(placement.missingCabinNames.join(", "), "NO_CABIN", 409);
+    }
+    if (misses.length > 0 && misses.every((row) => row.reason === "cabin_sex")) {
+      throw new PackageAssignError(
+        misses.map((miss) => miss.procedureName || miss.procedureCode).join(", "),
+        "CABIN_SEX",
+        409,
+        misses,
+      );
     }
     throw new PackageAssignError(
       misses.map((miss) => miss.procedureName || miss.procedureCode).join(", "),

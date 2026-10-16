@@ -262,9 +262,10 @@ export function PackageAssignModal({
   const [formQty, setFormQty] = useState(1);
   const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
   const [naftaDayBlock, setNaftaDayBlock] = useState("");
+  const [bathNeedsWrite, setBathNeedsWrite] = useState(false);
+  const [sexBlockedCodes, setSexBlockedCodes] = useState<Set<string>>(new Set());
   const setDayBlock = useCallback((mode: string) => {
-    const block =
-      mode === "2" || mode === "3" || mode === "5" || mode === "ALTERNATING" ? mode : null;
+    const block = /^[0-9A-Z_]{1,16}$/.test(mode) ? mode : null;
     setNaftaDayBlock(block ?? "");
     setFormPhysio((prev) => ({
       ...prev,
@@ -338,6 +339,13 @@ export function PackageAssignModal({
     setBalances(payload.balances ?? []);
     setAssigned(payload.assigned ?? []);
     setPoolEligible(payload.poolEligible ?? {});
+    setSexBlockedCodes(
+      new Set(
+        Array.isArray(payload.sexBlockedCodes)
+          ? payload.sexBlockedCodes.filter((row: unknown): row is string => typeof row === "string")
+          : [],
+      ),
+    );
     const code = typeof payload.packageCode === "string" ? payload.packageCode : null;
     const ver =
       typeof payload.packageVersion === "number" ? payload.packageVersion : null;
@@ -577,6 +585,7 @@ export function PackageAssignModal({
   }, [allCodes, locale, tPhysio]);
 
   function openForm(code: string, fillAllQty = false) {
+    if (refuseWrongSex(code)) return;
     setFormLane("package");
     const bal = balances.find((b) => b.procedureCode === code);
     const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
@@ -748,7 +757,14 @@ export function PackageAssignModal({
     });
   }
 
+  function refuseWrongSex(code: string): boolean {
+    if (!sexBlockedCodes.has(code)) return false;
+    setError(tPhysio("packageAssignMissCabinSex"));
+    return true;
+  }
+
   function openCatalogLine(code: string, name: string) {
+    if (refuseWrongSex(code)) return;
     setFormLane("package");
     setFormBurnPool(null);
     setFormCode(code);
@@ -757,6 +773,7 @@ export function PackageAssignModal({
   }
 
   function addDraft() {
+    if (formCode && refuseWrongSex(formCode)) return;
     if (formLane === "extra") {
       addExtraFromForm();
       return;
@@ -774,6 +791,7 @@ export function PackageAssignModal({
   }
 
   function fillAll(code: string) {
+    if (refuseWrongSex(code)) return;
     const bal = balances.find((b) => b.procedureCode === code);
     if (needsPicker(bal)) {
       openForm(code, true);
@@ -789,6 +807,7 @@ export function PackageAssignModal({
         openForm(code, true);
         return;
       }
+      if (refuseWrongSex(sku.code)) return;
       const physio = gateToPhysio(sku.code, sku.name);
       pushDraft({
         procedureCode: sku.code,
@@ -823,13 +842,7 @@ export function PackageAssignModal({
     code: string,
     fields: Record<string, unknown> | null | undefined,
   ): Record<string, unknown> | null {
-    const block =
-      naftaDayBlock === "2" ||
-      naftaDayBlock === "3" ||
-      naftaDayBlock === "5" ||
-      naftaDayBlock === "ALTERNATING"
-        ? naftaDayBlock
-        : null;
+    const block = /^[0-9A-Z_]{1,16}$/.test(naftaDayBlock) ? naftaDayBlock : null;
     if (!block || !/NAFTALAN|VANN|BATH/i.test(code)) return fields ?? null;
     return { ...(fields ?? {}), dayBlock: block };
   }
@@ -837,6 +850,7 @@ export function PackageAssignModal({
   function missReasonText(reason: string | undefined): string {
     if (reason === "no_staff") return tPhysio("packageAssignMissNoStaff");
     if (reason === "staff_busy") return tPhysio("packageAssignMissStaffBusy");
+    if (reason === "cabin_sex") return tPhysio("packageAssignMissCabinSex");
     if (reason === "no_cabin" || reason === "cabin_busy") return tPhysio("packageAssignMissNoCabin");
     if (reason === "day_full") return tPhysio("packageAssignMissDayFull");
     if (reason === "rule") return tPhysio("packageAssignMissRule");
@@ -881,6 +895,7 @@ export function PackageAssignModal({
     const serverError = typeof payload.error === "string" ? payload.error.trim() : "";
     const misses = placeMissText(payload.misses);
     if (misses) return misses;
+    if (code === "CABIN_SEX") return tPhysio("packageAssignMissCabinSex");
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
     if (code === "PLACE_FAILED") return tPhysio("packageAssignPlaceFailed");
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
@@ -890,6 +905,10 @@ export function PackageAssignModal({
   }
 
   async function save(start?: { date: string; hour: string }) {
+    if (bathNeedsWrite) {
+      setError(tPhysio("packageAssignNeedBathPlan"));
+      return;
+    }
     let extras = extraDraft;
     let lines = draft;
     if (formLane === "extra" && formCode) {
@@ -1034,6 +1053,8 @@ export function PackageAssignModal({
               error:
                 code === "QUOTA_REMAINING"
                   ? tPhysio("packageAssignQuotaRemaining")
+                  : code === "CABIN_SEX"
+                    ? tPhysio("packageAssignMissCabinSex")
                   : typeof extraBody?.error === "string"
                     ? extraBody.error
                     : tc("saveFailed"),
@@ -1251,6 +1272,7 @@ export function PackageAssignModal({
   }
 
   function extraPlus(code: string, name: string, paramsLabel: string) {
+    if (refuseWrongSex(code)) return;
     const hit = extraDraft.find(
       (row) => row.procedureCode === code && row.paramsLabel === paramsLabel,
     );
@@ -1690,7 +1712,7 @@ export function PackageAssignModal({
                         </div>
                       </div>
                       {lane.paidQty > 0 ? (
-                        <p className={`pt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        <p className="pt-1 text-[13px] font-semibold text-[#1F4E79]">
                           {tPhysio("paidLine")}: {lane.paidQty}
                         </p>
                       ) : null}
@@ -1709,6 +1731,7 @@ export function PackageAssignModal({
                 members={naftaSeat}
                 dayBlock={naftaDayBlock}
                 onDayBlockChange={setDayBlock}
+                onNeedsWriteChange={setBathNeedsWrite}
               />
             </div>
           ) : null}
@@ -1798,27 +1821,12 @@ export function PackageAssignModal({
                         setFormPhysio((prev) => ({ ...prev, physioFields }))
                       }
                       hideFields={
-                        formCode && /NAFTALAN|VANN|BATH/i.test(formCode) ? ["DAY_BLOCK"] : []
+                        formCode && /NAFTALAN|VANN|BATH/i.test(formCode)
+                          ? ["DAY_BLOCK", "BATH_SEQUENCE"]
+                          : []
                       }
                     />
                   </div>
-                  {/NAFTALAN|VANN|BATH/i.test(formCode) ? (
-                    <BathCalendarPanel
-                      previewOnly
-                      episodeId={episodeId}
-                      members={
-                        naftaSeat.some((row) => row.procedureCode === formCode)
-                          ? naftaSeat.map((row) =>
-                              row.procedureCode === formCode
-                                ? { ...row, qty: Math.max(row.qty, formQty) }
-                                : row,
-                            )
-                          : [...naftaSeat, { procedureCode: formCode, qty: formQty }]
-                      }
-                      dayBlock={naftaDayBlock}
-                      onDayBlockChange={setDayBlock}
-                    />
-                  ) : null}
                 </>
               ) : (
                 <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>

@@ -97,6 +97,16 @@ export async function POST(req: Request) {
     const placement = await placeConfirmedProcedures(body.orderIds, {
       confirmedByUserId: session.sub,
     });
+    if (placement.failures.some((row) => row.reason === "cabin_sex")) {
+      const names = [
+        ...new Set(
+          placement.failures
+            .filter((row) => row.reason === "cabin_sex")
+            .map((row) => row.procedureName),
+        ),
+      ];
+      return jsonError(names.join(", "), 409, { code: "CABIN_SEX" });
+    }
     if (placement.missingCabinNames.length > 0) {
       return jsonError(placement.missingCabinNames.join(", "), 409, { code: "NO_CABIN" });
     }
