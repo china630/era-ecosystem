@@ -27,7 +27,7 @@ export function ClinicDayPanel() {
       const res = await fetch("/api/admin/clinic-days", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dayYmd, closed, endHour: closed ? null : 17 }),
+        body: JSON.stringify({ dayYmd, closed, endHour: null }),
       });
       const data = await res.json();
       if (!res.ok) {

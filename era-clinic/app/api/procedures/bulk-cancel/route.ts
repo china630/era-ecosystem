@@ -10,6 +10,7 @@ import {
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { cancelProcedureOrder } from "@/domain/procedure/procedure-attendance.service";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
             cancelReason: body.reason,
           },
         });
+        await releaseProcedureOccupancy([t.id]);
         cancelled++;
       } else {
         await cancelProcedureOrder(

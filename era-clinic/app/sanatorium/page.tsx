@@ -275,6 +275,7 @@ export default function SanatoriumPage() {
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [rescheduleOrderId, setRescheduleOrderId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState(todayBakuYmd());
   const [rescheduleTime, setRescheduleTime] = useState("09:00");
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
@@ -731,7 +732,7 @@ export default function SanatoriumPage() {
   async function rescheduleProcedure() {
     if (!rescheduleOrderId) return;
     setBusy(true);
-    const scheduledAt = parseBakuDateTime(chartDate, `${rescheduleTime}:00`).toISOString();
+    const scheduledAt = parseBakuDateTime(rescheduleDate, `${rescheduleTime}:00`).toISOString();
     const res = await fetch(`/api/procedures/${rescheduleOrderId}/reschedule`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -740,7 +741,14 @@ export default function SanatoriumPage() {
     const data = await res.json();
     setBusy(false);
     if (res.ok) showSuccess(t("rescheduled"));
-    else showApiError(data, t("failed"));
+    else {
+      showApiError(
+        typeof data?.error === "string" && data.error.includes("Cabin sex")
+          ? { ...data, error: t("cabinSexMismatch") }
+          : data,
+        t("failed"),
+      );
+    }
     setRescheduleOrderId(null);
     if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
   }
@@ -1776,12 +1784,23 @@ export default function SanatoriumPage() {
           />
         }
       >
-        <Field
+        <DatePicker
+          label={t("date", { defaultValue: "Date" })}
+          value={rescheduleDate}
+          onChange={setRescheduleDate}
+          placeholder="dd.mm.yyyy"
+        />
+        <CatalogField
+          kind="SEARCHABLE"
           label={t("procedureTime")}
-          preset="time"
-          type="time"
           value={rescheduleTime}
-          onChange={(e) => setRescheduleTime(e.target.value)}
+          emptyLabel={null}
+          options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
+            const total = 8 * 60 + index * 5;
+            const label = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+            return { value: label, label };
+          })}
+          onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
         />
       </ModalShell>
 

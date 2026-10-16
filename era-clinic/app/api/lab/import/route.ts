@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError, getSatelliteSession, requireClinicPermission } from "@/lib/api-utils";
 import { assertOpsApiPermission } from "@/lib/auth/clinic-ops-guard";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { createImportedLabOrder } from "@/domain/lab/lab-order-write.service";
 
 const MAX_EXTERNAL_AGE_DAYS = 90;
@@ -21,11 +22,14 @@ const bodySchema = z.object({
   resultDate: z.string().min(1),
 });
 
-/** Legacy alias of /api/lab-orders/import — gated by api:lab_orders. */
+/** Legacy alias of /api/lab-orders/import — create/results need api:lab_orders.write. */
 export async function POST(req: Request) {
   try {
     const gate = await assertOpsApiPermission(req);
     if (gate.error) return gate.error;
+    const session = await getSatelliteSession();
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
+    if (denied) return denied;
 
     const body = bodySchema.parse(await req.json());
     const resultDate = new Date(body.resultDate);

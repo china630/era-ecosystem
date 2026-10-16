@@ -44,12 +44,17 @@ type CardLimits = {
   patientCardPlanPageSize: number;
 };
 
+type BathModeRow = { code: string; baths: number; rest: number };
+
 type WorkHours = {
   dayStartHour: number;
   dayEndHour: number;
   lunchStartHour: number;
   lunchEndHour: number;
   closedWeekdays: number[];
+  saturdayEndHour: number;
+  shortenedDayEndHour: number;
+  bathDayModes: BathModeRow[];
 };
 
 type SchedulingDefaults = {
@@ -74,12 +79,31 @@ const CARD_DEFAULTS: CardLimits = {
   patientCardPlanPageSize: 25,
 };
 
+function modesFrom(raw: unknown): BathModeRow[] {
+  if (!Array.isArray(raw) || raw.length === 0) return WORK_DEFAULTS.bathDayModes;
+  return raw
+    .map((row) => ({
+      code: String((row as BathModeRow).code ?? "").toUpperCase(),
+      baths: Number((row as BathModeRow).baths) || 1,
+      rest: Number((row as BathModeRow).rest) || 0,
+    }))
+    .filter((row) => row.code);
+}
+
 const WORK_DEFAULTS: WorkHours = {
   dayStartHour: 9,
   dayEndHour: 18,
   lunchStartHour: 13,
   lunchEndHour: 14,
   closedWeekdays: [0],
+  saturdayEndHour: 13,
+  shortenedDayEndHour: 13,
+  bathDayModes: [
+    { code: "2", baths: 2, rest: 1 },
+    { code: "3", baths: 3, rest: 1 },
+    { code: "5", baths: 5, rest: 1 },
+    { code: "ALTERNATING", baths: 1, rest: 1 },
+  ],
 };
 
 const SCHED_DEFAULTS: SchedulingDefaults = {
@@ -150,6 +174,9 @@ export default function ClinicAdminSettingsPage() {
           lunchStartHour: row.lunchStartHour ?? WORK_DEFAULTS.lunchStartHour,
           lunchEndHour: row.lunchEndHour ?? WORK_DEFAULTS.lunchEndHour,
           closedWeekdays: row.closedWeekdays ?? WORK_DEFAULTS.closedWeekdays,
+          saturdayEndHour: row.saturdayEndHour ?? WORK_DEFAULTS.saturdayEndHour,
+          shortenedDayEndHour: row.shortenedDayEndHour ?? WORK_DEFAULTS.shortenedDayEndHour,
+          bathDayModes: modesFrom(row.bathDayModes),
         };
         setWorkHours(hours);
         setDraftWork(hours);
@@ -238,6 +265,9 @@ export default function ClinicAdminSettingsPage() {
         lunchStartHour: row.lunchStartHour ?? draftWork.lunchStartHour,
         lunchEndHour: row.lunchEndHour ?? draftWork.lunchEndHour,
         closedWeekdays: row.closedWeekdays ?? draftWork.closedWeekdays,
+        saturdayEndHour: row.saturdayEndHour ?? draftWork.saturdayEndHour,
+        shortenedDayEndHour: row.shortenedDayEndHour ?? draftWork.shortenedDayEndHour,
+        bathDayModes: modesFrom(row.bathDayModes),
       });
       setSchedDefaults({
         schedulingSlotMinutes:
@@ -339,6 +369,22 @@ export default function ClinicAdminSettingsPage() {
             </td>
           </tr>
           <tr className="border-b">
+            <td className="p-3 font-medium">{t("saturdayEndHour")}</td>
+            <td className="p-3">{workHours.saturdayEndHour}:00</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("shortenedDayEndHour")}</td>
+            <td className="p-3">{workHours.shortenedDayEndHour}:00</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("bathModesTitle")}</td>
+            <td className="p-3">
+              {workHours.bathDayModes
+                .map((row) => `${row.code}: ${row.baths}+${row.rest}`)
+                .join(", ")}
+            </td>
+          </tr>
+          <tr className="border-b">
             <td className="p-3 font-medium">{t("closedWeekdays")}</td>
             <td className="p-3">{closedLabel || "—"}</td>
           </tr>
@@ -434,6 +480,8 @@ export default function ClinicAdminSettingsPage() {
               [
                 ["dayStartHour", "dayStartHour"],
                 ["dayEndHour", "dayEndHour"],
+                ["saturdayEndHour", "saturdayEndHour"],
+                ["shortenedDayEndHour", "shortenedDayEndHour"],
                 ["lunchStartHour", "lunchStartHour"],
                 ["lunchEndHour", "lunchEndHour"],
               ] as const
@@ -469,6 +517,82 @@ export default function ClinicAdminSettingsPage() {
                   </label>
                 ))}
               </div>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <p className={MODAL_FIELD_LABEL_CLASS}>{t("bathModesTitle")}</p>
+              {draftWork.bathDayModes.map((row, index) => (
+                <div key={`${row.code}-${index}`} className="grid grid-cols-4 items-end gap-2">
+                  <Field
+                    label={t("bathModeCode")}
+                    preset="shortText"
+                    value={row.code}
+                    onChange={(e) =>
+                      setDraftWork((prev) => ({
+                        ...prev,
+                        bathDayModes: prev.bathDayModes.map((item, i) =>
+                          i === index ? { ...item, code: e.target.value.toUpperCase() } : item,
+                        ),
+                      }))
+                    }
+                  />
+                  <Field
+                    label={t("bathModeBaths")}
+                    preset="count"
+                    type="number"
+                    min={1}
+                    max={14}
+                    value={row.baths}
+                    onChange={(e) =>
+                      setDraftWork((prev) => ({
+                        ...prev,
+                        bathDayModes: prev.bathDayModes.map((item, i) =>
+                          i === index ? { ...item, baths: Number(e.target.value) || 1 } : item,
+                        ),
+                      }))
+                    }
+                  />
+                  <Field
+                    label={t("bathModeRest")}
+                    preset="count"
+                    type="number"
+                    min={0}
+                    max={7}
+                    value={row.rest}
+                    onChange={(e) =>
+                      setDraftWork((prev) => ({
+                        ...prev,
+                        bathDayModes: prev.bathDayModes.map((item, i) =>
+                          i === index ? { ...item, rest: Number(e.target.value) || 0 } : item,
+                        ),
+                      }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() =>
+                      setDraftWork((prev) => ({
+                        ...prev,
+                        bathDayModes: prev.bathDayModes.filter((_, i) => i !== index),
+                      }))
+                    }
+                  >
+                    {tc("delete")}
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() =>
+                  setDraftWork((prev) => ({
+                    ...prev,
+                    bathDayModes: [...prev.bathDayModes, { code: "", baths: 1, rest: 1 }],
+                  }))
+                }
+              >
+                {t("addBathMode")}
+              </button>
             </div>
           </fieldset>
           {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}

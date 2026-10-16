@@ -88,7 +88,7 @@ export type PhysioOrderFields = {
   extraOil?: boolean | null;
   holdOrStop?: boolean | null;
   spineLevel?: (typeof SPINE_LEVEL_CODES)[number] | null;
-  dayBlock?: (typeof DAY_BLOCK_CODES)[number] | null;
+  dayBlock?: string | null;
   bathSequence?: (typeof BATH_SEQUENCE_CODES)[number] | null;
   naftalanFill?: (typeof NAFTALAN_FILL_CODES)[number] | null;
   intensity?: (typeof INTENSITY_CODES)[number] | null;
@@ -164,8 +164,10 @@ function parseIncomingValue(key: string, raw: unknown): unknown {
       return s ? inSet(SPINE_LEVEL_CODES, s) : null;
     }
     case "dayBlock": {
-      const s = asOptionalString(raw);
-      return s ? inSet(DAY_BLOCK_CODES, s) : null;
+      const s = asOptionalString(raw)?.trim().toUpperCase() ?? "";
+      if (!s) return null;
+      if (inSet(DAY_BLOCK_CODES, s)) return s;
+      return /^[0-9A-Z_]{1,16}$/.test(s) ? s : null;
     }
     case "bathSequence": {
       const s = asOptionalString(raw);

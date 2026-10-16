@@ -36,7 +36,7 @@ describe("planBathSeries", () => {
     ]);
   });
 
-  it("treats a closed day inside a streak as the rest", () => {
+  it("resets a streak on a closed day and does not spend the owed rest", () => {
     const days = week().map((day) =>
       day.ymd === "2026-10-07" ? { ...day, working: false } : day,
     );
@@ -59,6 +59,34 @@ describe("planBathSeries", () => {
       "2026-10-06",
       "2026-10-08",
       "2026-10-09",
+    ]);
+  });
+
+  it("keeps the owed rest until the next working day", () => {
+    const cells = planBathSeries({
+      days: [
+        { ymd: "2026-10-09", working: true },
+        { ymd: "2026-10-10", working: true },
+        { ymd: "2026-10-11", working: false },
+        { ymd: "2026-10-12", working: true },
+        { ymd: "2026-10-13", working: true },
+      ],
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "2",
+          qty: 3,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual([
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-13",
     ]);
   });
 

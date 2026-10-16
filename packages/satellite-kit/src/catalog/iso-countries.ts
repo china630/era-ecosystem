@@ -37,6 +37,13 @@ const CODE_SET = new Set<string>(ISO_ALPHA2);
 
 function displayLocale(locale: string): string {
   const base = locale.toLowerCase().split("-")[0];
+  if (base === "az") return "az-Latn";
+  if (base === "ru" || base === "en") return base;
+  return "en";
+}
+
+function sortLocale(locale: string): string {
+  const base = locale.toLowerCase().split("-")[0];
   if (base === "az" || base === "ru" || base === "en") return base;
   return "en";
 }
@@ -68,7 +75,7 @@ export function countryOptions(
   const options = ISO_ALPHA2.map((code) => ({
     value: code,
     label: countryLabel(code, locale),
-  })).sort((a, b) => a.label.localeCompare(b.label, displayLocale(locale)));
+  })).sort((a, b) => a.label.localeCompare(b.label, sortLocale(locale)));
   const extra = current?.trim().toUpperCase();
   if (extra && !CODE_SET.has(extra)) {
     return [{ value: extra, label: extra }, ...options];

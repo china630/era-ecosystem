@@ -15,6 +15,7 @@ import {
   resolveHotelStayId,
 } from "@/lib/services/sanatorium.service";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 import { prisma } from "@/lib/prisma";
 import { enterRequestTenant } from "@/lib/request-organization";
 
@@ -120,7 +121,7 @@ export async function closeOpenEpisodesForReservation(reservationId: string) {
   });
   const orderIds = live.map((row) => row.id);
   if (orderIds.length > 0) {
-    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: orderIds } } });
+    await releaseProcedureOccupancy(orderIds);
     await prisma.procedureOrder.updateMany({
       where: { id: { in: orderIds } },
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
@@ -184,7 +185,7 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
   });
   const departedIds = departed.map((row) => row.id);
   if (departedIds.length > 0) {
-    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: departedIds } } });
+    await releaseProcedureOccupancy(departedIds);
     await prisma.procedureOrder.updateMany({
       where: { id: { in: departedIds } },
       data: {

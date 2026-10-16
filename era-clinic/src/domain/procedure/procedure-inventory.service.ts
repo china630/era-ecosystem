@@ -9,6 +9,7 @@ import {
 } from "@/lib/treatment-planner.service";
 import { getResourceCalendar } from "@/lib/procedure-scheduling.service";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { bakuDateKey, bakuDayBounds, bakuHourMinute } from "@/lib/baku-day";
 
 function addMinutes(d: Date, mins: number): Date {
@@ -36,9 +37,21 @@ export async function listAvailableResourceSlots(input: {
   const calendar = await getResourceCalendar(dayStart, {
     procedureCode: input.procedureCode,
   });
-  const resources = input.resourceId
+  let resources = input.resourceId
     ? calendar.filter((r) => r.resourceId === input.resourceId)
     : calendar;
+  if (input.patientRefId && resources.length > 0) {
+    const patient = await prisma.patientRef.findUnique({
+      where: { id: input.patientRefId },
+      select: { sex: true },
+    });
+    const rows = await prisma.resource.findMany({
+      where: { id: { in: resources.map((row) => row.resourceId) } },
+      select: { id: true, sexAudience: true },
+    });
+    const audience = new Map(rows.map((row) => [row.id, row.sexAudience]));
+    resources = resources.filter((row) => cabinMatchesGuest(audience.get(row.resourceId), patient?.sex));
+  }
 
   const procedureType = input.procedureCode
     ? await prisma.procedureType.findFirst({ where: { code: input.procedureCode } })

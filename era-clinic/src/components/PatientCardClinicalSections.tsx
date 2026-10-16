@@ -213,12 +213,7 @@ export function PatientCardClinicalSections({
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState(todayBakuYmd());
   const [rescheduleTime, setRescheduleTime] = useState("10:00");
-  const [paidOpen, setPaidOpen] = useState(false);
-  const [paidCode, setPaidCode] = useState("");
-  const [paidTime, setPaidTime] = useState("10:00");
-  const [paidConfirm, setPaidConfirm] = useState(false);
-  const [paidWarn, setPaidWarn] = useState<string | null>(null);
-  const [procedureOptions, setProcedureOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [cancelAskId, setCancelAskId] = useState<string | null>(null);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
   const [day1Busy, setDay1Busy] = useState(false);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
@@ -334,6 +329,7 @@ export function PatientCardClinicalSections({
   }
 
   async function cancelPlanOrder(orderId: string) {
+    setCancelAskId(null);
     setPlanBusy(true);
     try {
       const res = await fetch(`/api/procedures/${orderId}/cancel`, {
@@ -389,56 +385,15 @@ export function PatientCardClinicalSections({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showApiError(data, tc("failed"));
+        showApiError(
+          typeof data?.error === "string" && data.error.includes("Cabin sex")
+            ? { ...data, error: ts("cabinSexMismatch") }
+            : data,
+          tc("failed"),
+        );
         return;
       }
       setRescheduleId(null);
-      await loadPlan(true);
-    } finally {
-      setPlanBusy(false);
-    }
-  }
-
-  async function submitPlanPaid(confirmPaid: boolean) {
-    if (!episodeId || !paidCode) return;
-    const name = procedureOptions.find((row) => row.value === paidCode)?.label ?? paidCode;
-    const day = planDate === "all" ? todayBakuYmd() : planDate;
-    setPlanBusy(true);
-    setPaidWarn(null);
-    try {
-      const epRes = await fetch(`/api/sanatorium/episodes/${episodeId}`);
-      const epJson = await epRes.json().catch(() => ({}));
-      const episode = (epJson.data ?? epJson) as {
-        patientOrigin?: string;
-        reservationId?: string | null;
-      };
-      const scheduledAt = parseBakuDateTime(day, `${paidTime}:00`).toISOString();
-      const res = await fetch("/api/procedures", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patientRefId,
-          procedureCode: paidCode,
-          procedureName: name,
-          scheduledAt,
-          patientOrigin: episode.patientOrigin,
-          reservationId: episode.reservationId ?? null,
-          confirmPaidSameDay: confirmPaid,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 409 && data.code === "SAME_DAY_FOURTH_PAID") {
-        setPaidConfirm(true);
-        setPaidWarn(typeof data.error === "string" ? data.error : ts("sameDayFourthWarn"));
-        return;
-      }
-      if (!res.ok) {
-        showApiError(data, tc("failed"));
-        return;
-      }
-      setPaidOpen(false);
-      setPaidConfirm(false);
-      setPaidCode("");
       await loadPlan(true);
     } finally {
       setPlanBusy(false);
@@ -923,27 +878,6 @@ export function PatientCardClinicalSections({
               {t("openDayPlan")}
             </button>
           ) : null}
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={!episodeId}
-            onClick={() => {
-              setPaidConfirm(false);
-              setPaidWarn(null);
-              setPaidOpen(true);
-              if (procedureOptions.length === 0) {
-                void fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`)
-                  .then((r) => r.json())
-                  .then((d) => {
-                    const rows = (d.data ?? d.items ?? d) as Array<{ code: string; name: string }>;
-                    if (!Array.isArray(rows)) return;
-                    setProcedureOptions(rows.map((row) => ({ value: row.code, label: row.name })));
-                  });
-              }
-            }}
-          >
-            {ts("addPaidSameDay")}
-          </button>
         </div>
         {planVisible.length === 0 ? (
           <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
@@ -993,7 +927,7 @@ export function PatientCardClinicalSections({
                         className={TABLE_ROW_ICON_BTN_CLASS}
                         aria-label={ts("cancelProcedure")}
                         disabled={planBusy}
-                        onClick={() => void cancelPlanOrder(orderId)}
+                        onClick={() => setCancelAskId(orderId)}
                       >
                         <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                       </button>
@@ -1028,42 +962,43 @@ export function PatientCardClinicalSections({
           />
         }
       >
-        <Field
+        <DatePicker
+          label={tc("date")}
+          value={rescheduleDate}
+          onChange={(value) => setRescheduleDate(value)}
+          placeholder="dd.mm.yyyy"
+        />
+        <CatalogField
+          kind="SEARCHABLE"
           label={ts("procedureTime")}
-          preset="shortText"
           value={rescheduleTime}
-          onChange={(e) => setRescheduleTime(e.target.value)}
+          emptyLabel={null}
+          options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
+            const total = 8 * 60 + index * 5;
+            const hh = String(Math.floor(total / 60)).padStart(2, "0");
+            const mm = String(total % 60).padStart(2, "0");
+            const label = `${hh}:${mm}`;
+            return { value: label, label };
+          })}
+          onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
         />
       </ModalShell>
       <ModalShell
-        open={paidOpen}
-        title={ts("addPaidSameDay")}
-        onClose={() => setPaidOpen(false)}
+        open={Boolean(cancelAskId)}
+        title={ts("confirmCancelProcedure")}
+        onClose={() => setCancelAskId(null)}
         footer={
           <ModalFooter
-            onCancel={() => setPaidOpen(false)}
-            onSubmit={() => void submitPlanPaid(paidConfirm)}
+            onCancel={() => setCancelAskId(null)}
+            onSubmit={() => {
+              if (cancelAskId) void cancelPlanOrder(cancelAskId);
+            }}
             busy={planBusy}
-            submitLabel={paidConfirm ? ts("confirmPaidFolio") : tc("save")}
+            submitLabel={ts("cancelProcedure")}
           />
         }
       >
-        <div className="space-y-3">
-          {paidWarn ? <p className="text-sm text-amber-800">{paidWarn}</p> : null}
-          <CatalogField
-            kind="SEARCHABLE"
-            label={ts("pickProcedure")}
-            value={paidCode}
-            onChange={(v) => setPaidCode(String(v ?? ""))}
-            options={procedureOptions}
-          />
-          <Field
-            label={ts("procedureTime")}
-            preset="shortText"
-            value={paidTime}
-            onChange={(e) => setPaidTime(e.target.value)}
-          />
-        </div>
+        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{ts("confirmCancelProcedure")}</p>
       </ModalShell>
       <ModalShell
         open={Boolean(visitSlot)}

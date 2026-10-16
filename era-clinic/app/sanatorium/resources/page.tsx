@@ -170,7 +170,12 @@ export default function SanatoriumResourcesPage() {
     const data = await res.json();
     setDragOrderId(null);
     if (!res.ok) {
-      showApiError(data, t("moveFailed"));
+      showApiError(
+        typeof data?.error === "string" && data.error.includes("Cabin sex")
+          ? { ...data, error: t("cabinSexMismatch") }
+          : data,
+        t("moveFailed"),
+      );
       return;
     }
     showSuccess(t("moved"));
@@ -196,7 +201,12 @@ export default function SanatoriumResourcesPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      showApiError(data, t("moveFailed"));
+      showApiError(
+        typeof data?.error === "string" && data.error.includes("Cabin sex")
+          ? { ...data, error: t("cabinSexMismatch") }
+          : data,
+        t("moveFailed"),
+      );
       return;
     }
     setPlacing(null);

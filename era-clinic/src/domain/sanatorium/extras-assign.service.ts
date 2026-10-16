@@ -13,6 +13,7 @@ import {
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 import { allocateClinicReceiptNo } from "@/domain/cashier/receipt-seq.service";
 import {
   postProcedureFolioCharge,
@@ -480,6 +481,7 @@ export async function cancelPaidExtraWithFolioReverse(
       cancelReason: "clinic_extra_reverse",
     },
   });
+  await releaseProcedureOccupancy([orderId]);
   await recordClinicAudit(
     { userId: actorUserId },
     "ProcedureOrder",
@@ -513,7 +515,7 @@ export async function applyHotelVoidToExtra(input: {
     if (settings.noShowKeepsCharge) return { cancelled: false, reason: "received" };
   }
   if (order.status === "SCHEDULED" || order.status === "PROPOSED") {
-    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: order.id } });
+    await releaseProcedureOccupancy([order.id]);
   }
   await prisma.procedureOrder.update({
     where: { id: order.id },

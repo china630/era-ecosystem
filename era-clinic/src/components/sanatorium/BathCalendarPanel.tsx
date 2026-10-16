@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CatalogField, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { addBakuDays } from "@era/satellite-kit/time";
-import { planBathSeries, type BathMode } from "@/domain/planning/bath-calendar";
+import { planBathSeries, type BathModeDef } from "@/domain/planning/bath-calendar";
 
 type Day = { ymd: string; working: boolean; endHour: number };
 type Member = { procedureCode: string; shortMark: string };
@@ -18,14 +18,19 @@ type Order = {
   physioFields?: { naftalanFill?: string | null; dayBlock?: string | null } | null;
 };
 
-type Snapshot = { days: Day[]; series: Series[]; orders: Order[] };
+type Snapshot = { days: Day[]; series: Series[]; orders: Order[]; modes?: BathModeDef[] };
 type WeekCell = { ymd: string; working: boolean; inStay: boolean };
 type SeatMember = { procedureCode: string; qty: number };
 
-const MODES = ["2", "3", "5", "ALTERNATING"] as const;
+const FALLBACK_MODES: BathModeDef[] = [
+  { code: "2", baths: 2, rest: 1 },
+  { code: "3", baths: 3, rest: 1 },
+  { code: "5", baths: 5, rest: 1 },
+  { code: "ALTERNATING", baths: 1, rest: 1 },
+];
 
-function isMode(value: string): value is BathMode {
-  return (MODES as readonly string[]).includes(value);
+function isMode(value: string, modes: BathModeDef[]): boolean {
+  return modes.some((row) => row.code === value);
 }
 
 /** Monday = 0 … Sunday = 6 in Asia/Baku. */
@@ -57,11 +62,11 @@ function stayWeeks(days: Day[]): WeekCell[][] {
   return weeks;
 }
 
-function storedBlock(orders: Order[], codes: Set<string>): string {
+function storedBlock(orders: Order[], codes: Set<string>, modes: BathModeDef[]): string {
   for (const order of orders) {
     if (!codes.has(order.procedureCode)) continue;
     const block = order.physioFields?.dayBlock;
-    if (block && isMode(String(block))) return String(block);
+    if (block && isMode(String(block), modes)) return String(block);
   }
   return "";
 }
@@ -111,7 +116,8 @@ export function BathCalendarPanel({
 
   useEffect(() => {
     if (!snap || hydrated || dayBlock) return;
-    const stored = storedBlock(snap.orders, codes);
+    const modes = snap.modes?.length ? snap.modes : FALLBACK_MODES;
+    const stored = storedBlock(snap.orders, codes, modes);
     if (stored) onDayBlockChange(stored);
     setHydrated(true);
   }, [snap, hydrated, dayBlock, codes, onDayBlockChange]);
@@ -135,8 +141,9 @@ export function BathCalendarPanel({
     return map;
   }, [snap]);
 
-  const mode = isMode(dayBlock) ? dayBlock : "";
-  const stored = snap ? storedBlock(snap.orders, codes) : "";
+  const modes = snap?.modes?.length ? snap.modes : FALLBACK_MODES;
+  const mode = isMode(dayBlock, modes) ? dayBlock : "";
+  const stored = snap ? storedBlock(snap.orders, codes, modes) : "";
   const layout = !stored || stored !== mode ? "fresh" : "continue";
 
   const preview = useMemo(() => {
@@ -171,12 +178,13 @@ export function BathCalendarPanel({
       }),
       kept,
       layout,
+      modes,
     });
     for (const cell of planned) {
       if (!map.has(cell.ymd)) map.set(cell.ymd, cell.mark);
     }
     return map;
-  }, [snap, mode, members, seriesByCode, markByCode, codes, layout]);
+  }, [snap, mode, members, seriesByCode, markByCode, codes, layout, modes]);
 
   if (members.length === 0) return null;
 
@@ -298,23 +306,17 @@ export function BathCalendarPanel({
           label={t("bathCalendarMode")}
           value={dayBlock}
           onChange={(value) => onDayBlockChange(String(value ?? ""))}
-          options={[
-            { value: "", label: "—" },
-            { value: "2", label: "2" },
-            { value: "3", label: "3" },
-            { value: "5", label: "5" },
-            { value: "ALTERNATING", label: t("bathCalendarAlternating") },
-          ]}
+          options={modes.map((row) => ({
+            value: row.code,
+            label: row.code === "ALTERNATING" ? t("bathCalendarAlternating") : row.code,
+          }))}
         />
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("bathCalendarSitz")}
           value={bathSequence}
           onChange={(value) => setBathSequence(String(value ?? ""))}
-          options={[
-            { value: "", label: "—" },
-            { value: "SITZ_THEN_FULL", label: t("bathCalendarSitz") },
-          ]}
+          options={[{ value: "SITZ_THEN_FULL", label: t("bathCalendarSitz") }]}
         />
         <p className="self-end text-[12px] text-[#7F8C8D]">
           {t("bathCalendarQty")}: {total}

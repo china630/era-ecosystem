@@ -7,7 +7,9 @@ import {
   skipLunch,
   validatePatientConsecutiveGap,
 } from "@/lib/treatment-planner.service";
+import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 import { bakuDateKey, bakuDayBounds, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 
 const LUNCH_END_HOUR = 14;
@@ -23,7 +25,11 @@ export async function rescheduleProcedureOrder(
 ): Promise<{ id: string; scheduledAt: Date; endsAt: Date | null; resourceId: string | null }> {
   const order = await prisma.procedureOrder.findUnique({
     where: { id: orderId },
-    include: { resourceBooking: true, procedureType: true },
+    include: {
+      resourceBooking: true,
+      procedureType: true,
+      patientRef: { select: { sex: true } },
+    },
   });
   if (!order) throw new Error("Procedure not found");
   if (order.status !== "SCHEDULED") {
@@ -72,6 +78,9 @@ export async function rescheduleProcedureOrder(
     const resource = await prisma.resource.findUnique({
       where: { id: targetResourceId },
     });
+    if (resource && !cabinMatchesGuest(resource.sexAudience, order.patientRef.sex)) {
+      throw new Error("Cabin sex does not match the guest");
+    }
     if (resource && used >= resource.capacity) {
       throw new Error("Resource conflict at selected time");
     }
@@ -143,7 +152,8 @@ export async function rescheduleProcedureOrder(
 }
 
 export async function getResourceCalendar(date: Date, opts?: { procedureCode?: string }) {
-  const { schedulingSlotMinutes } = await getSchedulingSettings();
+  const settings = await getSchedulingSettings();
+  const schedulingSlotMinutes = settings.schedulingSlotMinutes;
   const dayYmd = bakuDateKey(date);
   const { start: dayStart, end: dayEnd } = bakuDayBounds(dayYmd);
 
@@ -177,15 +187,30 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
   }
 
   const allResources = await prisma.resource.findMany({ orderBy: { code: "asc" } });
-  const bookings = await prisma.resourceBooking.findMany({
-    where: {
-      startsAt: { lt: dayEnd },
-      endsAt: { gt: dayStart },
-    },
-    include: {
-      procedureOrder: { include: { patientRef: true } },
-    },
-  });
+  const [bookings, allocations] = await Promise.all([
+    prisma.resourceBooking.findMany({
+      where: {
+        startsAt: { lt: dayEnd },
+        endsAt: { gt: dayStart },
+      },
+      include: {
+        procedureOrder: { include: { patientRef: true, procedureType: { select: { resourceGapMinutes: true } } } },
+      },
+    }),
+    prisma.procedureAllocation.findMany({
+      where: {
+        role: { in: ["LOCATION", "EQUIPMENT"] },
+        startsAt: { lt: dayEnd },
+        endsAt: { gt: new Date(dayStart.getTime() - 240 * 60_000) },
+        procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+      },
+      include: {
+        procedureOrder: {
+          include: { patientRef: true, procedureType: { select: { resourceGapMinutes: true } } },
+        },
+      },
+    }),
+  ]);
 
   const bookingResourceIds = new Set(bookings.map((b) => b.resourceId));
   const resources = allResources.filter((resource) => {
@@ -197,30 +222,47 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
 
   return resources.map((resource) => {
     const resourceBookings = bookings.filter((b) => b.resourceId === resource.id);
+    const resourceAllocations = allocations.filter((row) => row.resourceId === resource.id);
     const slots: Array<{
       time: string;
       occupied: boolean;
       procedureOrderId?: string;
       patientName?: string;
       procedureName?: string;
+      lunch?: boolean;
     }> = [];
-    for (let h = 9; h < 17; h++) {
+    const startHour = settings.dayStartHour;
+    const endHour = settings.dayEndHour;
+    for (let h = startHour; h < endHour; h++) {
       for (let m = 0; m < 60; m += schedulingSlotMinutes) {
-        if (h === 13 && m < 60) continue;
+        const inLunch = h >= settings.lunchStartHour && h < settings.lunchEndHour;
         const slotStart = parseBakuDateTime(
           dayYmd,
           `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
         );
         const slotEnd = addMinutes(slotStart, schedulingSlotMinutes);
-        const hit = resourceBookings.find(
-          (b) => b.startsAt < slotEnd && b.endsAt > slotStart,
+        const proof = resourceBookings.find((b) => {
+          const status = b.procedureOrder?.status;
+          const keep = status === "NO_SHOW" || !b.procedureOrderId;
+          return keep && b.startsAt < slotEnd && b.endsAt > slotStart;
+        });
+        const held = resourceAllocations.find((row) =>
+          allocationOccupiesCandidate(
+            row.startsAt,
+            row.endsAt,
+            row.procedureOrder.procedureType?.resourceGapMinutes ?? 5,
+            slotStart,
+            slotEnd,
+          ),
         );
+        const order = held?.procedureOrder ?? proof?.procedureOrder;
         slots.push({
           time: slotStart.toISOString(),
-          occupied: Boolean(hit),
-          procedureOrderId: hit?.procedureOrderId ?? undefined,
-          patientName: hit?.procedureOrder?.patientRef.fullName,
-          procedureName: hit?.procedureOrder?.procedureName,
+          occupied: Boolean(held || proof),
+          lunch: !held && !proof && inLunch,
+          procedureOrderId: order?.id ?? proof?.procedureOrderId ?? undefined,
+          patientName: order?.patientRef.fullName,
+          procedureName: order?.procedureName,
         });
       }
     }
