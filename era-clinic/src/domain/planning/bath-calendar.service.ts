@@ -5,13 +5,15 @@ import { bakuDateKey, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays, stayYmd } from "@/domain/planning/clinic-day";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
+import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import {
   findSkilledFreePractitioner,
   listPhysicalRequirementResources,
+  releaseProcedureOccupancy,
   replaceProcedureAllocations,
   resolveStaffModeForProcedureType,
 } from "@/domain/procedure/procedure-allocation.service";
-import { planBathSeries, strayBathOrderIds, type BathMode, type KeptCell } from "@/domain/planning/bath-calendar";
+import { planBathSeries, parseBathDayModes, strayBathOrderIds, type KeptCell } from "@/domain/planning/bath-calendar";
 import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
@@ -31,7 +33,7 @@ export async function getBathCalendar(episodeId: string) {
     }
   }
   if (!episode || !stayFrom || !stayTo || Number.isNaN(stayFrom.getTime()) || Number.isNaN(stayTo.getTime())) {
-    return { days: [], series: [], orders: [] };
+    return { days: [], series: [], modes: [], orders: [] };
   }
   const { fromYmd, toYmd } = stayYmd(stayFrom, stayTo);
   const days = await listClinicDays(fromYmd, toYmd);
@@ -59,9 +61,11 @@ export async function getBathCalendar(episodeId: string) {
         orderBy: { scheduledAt: "asc" },
       })
     : [];
+  const settings = await getSchedulingSettings();
   return {
     days,
     series,
+    modes: parseBathDayModes(settings.bathDayModesJson),
     orders: orders.map((order) => ({
       ...order,
       ymd: bakuDateKey(order.scheduledAt),
@@ -82,13 +86,16 @@ async function findCabinSlotOnDay(input: {
   endHour: number;
   procedureTypeId: string;
   excludeOrderId?: string;
+  guestSex?: string | null;
 }): Promise<CabinSlot | null> {
   const procedureType = await prisma.procedureType.findFirst({
     where: { id: input.procedureTypeId },
     include: { requirements: true },
   });
   if (!procedureType) return null;
-  const resources = await listPhysicalRequirementResources(procedureType);
+  const resources = (await listPhysicalRequirementResources(procedureType)).filter((row) =>
+    cabinMatchesGuest(row.sexAudience, input.guestSex),
+  );
   if (resources.length === 0) return null;
   const settings = await getSchedulingSettings();
   const durationMin = procedureType.durationMin ?? settings.schedulingSlotMinutes;
@@ -144,7 +151,7 @@ async function writeSeatedOrder(input: {
   existingId?: string;
   slot: CabinSlot;
   note: string | null;
-  fields: { dayBlock: BathMode; bathSequence: "SITZ_THEN_FULL" | null; naftalanFill: "OTURAQ" | "TAM" | null };
+  fields: { dayBlock: string; bathSequence: "SITZ_THEN_FULL" | null; naftalanFill: "OTURAQ" | "TAM" | null };
 }): Promise<string | null> {
   const data = {
     scheduledAt: input.slot.start,
@@ -218,7 +225,7 @@ function storedMode(fields: unknown): string | null {
 export async function saveBathCalendar(input: {
   episodeId: string;
   procedureCode: string;
-  mode: BathMode;
+  mode: string;
   qty: number;
   manualRestYmds: string[];
   manualBathYmds: string[];
@@ -238,6 +245,11 @@ export async function saveBathCalendar(input: {
     select: { patientRefId: true, patientOrigin: true, reservationId: true },
   });
   if (!episode?.patientRefId) throw new Error("Episode not found");
+  const patient = await prisma.patientRef.findUnique({
+    where: { id: episode.patientRefId },
+    select: { sex: true },
+  });
+  const guestSex = patient?.sex ?? null;
   const procedureType = await prisma.procedureType.findFirst({
     where: { code: input.procedureCode },
     select: { id: true, name: true, durationMin: true, bodyPart: true },
@@ -303,6 +315,7 @@ export async function saveBathCalendar(input: {
     ],
     kept,
     layout,
+    modes: snapshot.modes,
   }).filter((cell) => cell.procedureCode === input.procedureCode);
 
   const movable = own.filter((order) => !LOCKED.has(order.status));
@@ -325,6 +338,7 @@ export async function saveBathCalendar(input: {
       endHour: day?.endHour ?? 17,
       procedureTypeId: procedureType.id,
       excludeOrderId: existing?.id,
+      guestSex,
     });
     if (!slot) {
       if (existing && existing.ymd === cell.ymd) {
@@ -379,12 +393,14 @@ export async function saveBathCalendar(input: {
       where: { id: { in: restDrop.map((order) => order.id) } },
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "bath_rest" },
     });
+    await releaseProcedureOccupancy(restDrop.map((order) => order.id));
   }
   if (otherDrop.length > 0) {
     await prisma.procedureOrder.updateMany({
       where: { id: { in: otherDrop.map((order) => order.id) } },
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "bath_calendar" },
     });
+    await releaseProcedureOccupancy(otherDrop.map((order) => order.id));
   }
   const bathYmds = new Set(planned.map((cell) => cell.ymd));
   const staleRests = restOrders.filter((order) => bathYmds.has(bakuDateKey(order.scheduledAt)));
@@ -445,11 +461,12 @@ export type BathSeatMiss = {
   reason: "no_cabin" | "no_staff" | "no_day" | "no_mode";
 };
 
-function bathModeOf(fields: unknown): BathMode | null {
+function bathModeOf(fields: unknown): string | null {
   const block =
     fields && typeof fields === "object" ? (fields as { dayBlock?: unknown }).dayBlock : null;
-  if (block === "2" || block === "3" || block === "5" || block === "ALTERNATING") return block;
-  return null;
+  const code = typeof block === "string" ? block.trim().toUpperCase() : "";
+  if (!/^[0-9A-Z_]{1,16}$/.test(code)) return null;
+  return code;
 }
 
 /**
@@ -489,6 +506,11 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
   const snapshot = await getBathCalendar(handled[0]!.clinicalEpisodeId!);
   const placedIds: string[] = [];
   const missed: BathSeatMiss[] = [];
+  const guest = await prisma.patientRef.findUnique({
+    where: { id: handled[0]!.patientRefId },
+    select: { sex: true },
+  });
+  const guestSex = guest?.sex ?? null;
   const byCode = new Map<string, typeof handled>();
   for (const order of handled) {
     const list = byCode.get(order.procedureCode) ?? [];
@@ -530,6 +552,7 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
             ],
             kept,
             layout: "continue",
+            modes: snapshot.modes,
           }).filter(
             (cell) =>
               cell.procedureCode === procedureCode &&
@@ -546,6 +569,7 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
         endHour: day?.endHour ?? 17,
         procedureTypeId: order.procedureTypeId,
         excludeOrderId: order.id,
+        guestSex,
       });
       if (!slot) {
         missed.push({ ymd: cell.ymd, procedureCode, reason: "no_cabin" });

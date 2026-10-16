@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
@@ -1296,6 +1297,7 @@ export async function replacePackageProcedures(
       cancelReason: "package_replace",
     },
   });
+  await releaseProcedureOccupancy(active.map((o) => o.id));
   for (const code of fromQuotaCodes) {
     await syncQuotaUsed(instance.id, episodeId, code);
   }
@@ -1420,6 +1422,7 @@ export async function adjustPackageAssign(
       cancelReason: "package_assign_adjust",
     },
   });
+  await releaseProcedureOccupancy(cancellable.map((o) => o.id));
 
   const syncCodes = [...new Set(cancellable.map((o) => quotaCodeOf(o)))];
   for (const code of syncCodes) {
@@ -1467,6 +1470,7 @@ export async function cancelExcessPlannedSessions(instanceId: string): Promise<n
         cancelReason: "package_quota_shrunk",
       },
     });
+    await releaseProcedureOccupancy(drop.map((row) => row.id));
     cancelled += drop.length;
   }
   return cancelled;
@@ -1485,18 +1489,24 @@ export async function cancelFutureScheduledPastEnd(
   });
   if (!instance) return 0;
 
-  const result = await prisma.procedureOrder.updateMany({
+  const doomed = await prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: instance.episodeId,
       status: "SCHEDULED",
       scheduledAt: { gte: endsOn },
     },
+    select: { id: true },
+  });
+  if (doomed.length === 0) return 0;
+  const result = await prisma.procedureOrder.updateMany({
+    where: { id: { in: doomed.map((row) => row.id) } },
     data: {
       status: "CANCELLED",
       cancelledAt: new Date(),
       cancelReason: "stay_shortened",
     },
   });
+  await releaseProcedureOccupancy(doomed.map((row) => row.id));
 
   for (const line of instance.procedureLines) {
     await syncQuotaUsed(instanceId, instance.episodeId, line.procedureCode);

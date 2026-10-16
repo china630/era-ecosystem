@@ -6,6 +6,7 @@ import {
   findCurrentProgramTemplate,
   programTemplateInclude,
 } from "@/domain/sanatorium/program-template-admin";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 
 export async function instantiateProgramFromTemplate(input: {
   episodeId: string;
@@ -227,18 +228,26 @@ export async function recalcProgramQuotas(
         data: { quotaTotal: Math.max(line.quotaUsed, 0) },
       });
       if (opts.reservationId ?? instance.reservationId) {
-        await prisma.procedureOrder.updateMany({
+        const reservationId = opts.reservationId ?? instance.reservationId!;
+        const dropped = await prisma.procedureOrder.findMany({
           where: {
-            reservationId: opts.reservationId ?? instance.reservationId!,
+            reservationId,
             procedureCode: line.procedureCode,
             status: "PROPOSED",
           },
-          data: {
-            status: "CANCELLED",
-            cancelledAt: new Date(),
-            cancelReason: "package_code_dropped",
-          },
+          select: { id: true },
         });
+        if (dropped.length > 0) {
+          await prisma.procedureOrder.updateMany({
+            where: { id: { in: dropped.map((row) => row.id) } },
+            data: {
+              status: "CANCELLED",
+              cancelledAt: new Date(),
+              cancelReason: "package_code_dropped",
+            },
+          });
+          await releaseProcedureOccupancy(dropped.map((row) => row.id));
+        }
       }
     }
   }

@@ -112,6 +112,8 @@ export default function ProceduresReportPage() {
   } | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sortKey, setSortKey] = useState<"procedure" | "paid" | "origin" | "qty" | "amount">("procedure");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const tableItems = useMemo(() => {
     if (view !== "doctor-lines") return items;
@@ -136,8 +138,32 @@ export default function ProceduresReportPage() {
       prev.totalAmount = Math.round((prev.totalAmount + row.totalAmount) * 100) / 100;
       if (row.origin && !prev.origins.includes(row.origin)) prev.origins.push(row.origin);
     }
-    return [...grouped.values()];
-  }, [items, view]);
+    return [...grouped.values()].sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const left =
+        sortKey === "procedure"
+          ? a.procedure.name
+          : sortKey === "paid"
+            ? a.paid
+            : sortKey === "origin"
+              ? a.origins.join(",")
+              : sortKey === "qty"
+                ? a.quantity
+                : a.totalAmount;
+      const right =
+        sortKey === "procedure"
+          ? b.procedure.name
+          : sortKey === "paid"
+            ? b.paid
+            : sortKey === "origin"
+              ? b.origins.join(",")
+              : sortKey === "qty"
+                ? b.quantity
+                : b.totalAmount;
+      if (typeof left === "number" && typeof right === "number") return (left - right) * dir;
+      return String(left).localeCompare(String(right), locale) * dir;
+    });
+  }, [items, view, sortKey, sortDir, locale]);
 
   const pagedItems = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -414,11 +440,33 @@ export default function ProceduresReportPage() {
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 {view === "doctor-lines" ? (
                   <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPaid")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colOrigin")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colQty")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colAmount")}</th>
+                    {(
+                      [
+                        ["procedure", "colProcedure"],
+                        ["paid", "colPaid"],
+                        ["origin", "colOrigin"],
+                        ["qty", "colQty"],
+                        ["amount", "colAmount"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <th key={key} className={DATA_TABLE_TH_LEFT_CLASS}>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1"
+                          onClick={() => {
+                            setPage(1);
+                            if (sortKey === key) setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
+                            else {
+                              setSortKey(key);
+                              setSortDir("asc");
+                            }
+                          }}
+                        >
+                          {tr(label)}
+                          {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
+                        </button>
+                      </th>
+                    ))}
                   </>
                 ) : view === "doctor-bonus" ? (
                   <>

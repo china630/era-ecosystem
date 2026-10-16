@@ -18,6 +18,7 @@ import {
   resolveEffectiveDayEndHour,
   type TenantWorkHours,
 } from "@/domain/settings/scheduling-settings";
+import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
 import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
@@ -362,6 +363,12 @@ export async function placeConfirmedProcedures(
   });
   if (orders.length === 0) return { placed: 0, missingCabinNames: [], failures: [] };
 
+  const patient = await prisma.patientRef.findUnique({
+    where: { id: orders[0].patientRefId },
+    select: { sex: true },
+  });
+  const guestSex = patient?.sex ?? null;
+
   const patientRefId = orders[0].patientRefId;
   const episodeId = orders[0].clinicalEpisodeId;
   if (episodeId) {
@@ -507,6 +514,7 @@ export async function placeConfirmedProcedures(
     order.resources = order.resourceCodeList
       .map((code) => resourceByCode.get(code))
       .filter((row): row is NonNullable<typeof row> => Boolean(row))
+      .filter((row) => cabinMatchesGuest(row.sexAudience, guestSex))
       .map((row) => ({
         id: row.id,
         capacity: row.capacity,

@@ -14,6 +14,7 @@ const createSchema = z.object({
   capacity: z.number().int().positive().optional(),
   roomId: z.string().nullable().optional(),
   extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
+  sexAudience: z.enum(["MALE", "FEMALE", "ANY"]).optional(),
 });
 
 export async function GET(req: Request) {

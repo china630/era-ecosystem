@@ -159,6 +159,7 @@ export async function createResource(data: {
   capacity?: number;
   roomId?: string | null;
   extendedEndHour?: number | null;
+  sexAudience?: "MALE" | "FEMALE" | "ANY";
 }) {
   return prisma.resource.create({ data });
 }
@@ -171,6 +172,7 @@ export async function updateResource(
     capacity?: number;
     roomId?: string | null;
     extendedEndHour?: number | null;
+    sexAudience?: "MALE" | "FEMALE" | "ANY";
   },
 ) {
   return prisma.resource.update({ where: { id }, data });

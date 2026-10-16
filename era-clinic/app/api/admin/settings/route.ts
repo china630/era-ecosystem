@@ -30,6 +30,17 @@ const patchSchema = z.object({
   lunchStartHour: z.number().int().min(0).max(23).optional(),
   lunchEndHour: z.number().int().min(1).max(24).optional(),
   closedWeekdays: z.array(z.number().int().min(0).max(6)).optional(),
+  saturdayEndHour: z.number().int().min(1).max(24).optional(),
+  shortenedDayEndHour: z.number().int().min(1).max(24).optional(),
+  bathDayModes: z
+    .array(
+      z.object({
+        code: z.string().min(1).max(16),
+        baths: z.number().int().min(1).max(14),
+        rest: z.number().int().min(0).max(7),
+      }),
+    )
+    .optional(),
   defaultProcedureGapMinutes: z.number().int().min(0).max(240).optional(),
   peakModeEnabled: z.boolean().optional(),
   peakDayEndHour: z.number().int().min(1).max(24).optional(),

@@ -80,6 +80,19 @@ async function upsertSystemRole(
         CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
       ]);
     }
+  } else {
+    const template = parseRolePermissions(templateJson);
+    const current = parseRolePermissions(existing.permissionsJson);
+    if (
+      template.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE) &&
+      current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
+      !current.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE)
+    ) {
+      patch.permissionsJson = serializeRolePermissions([
+        ...current,
+        CLINIC_PERMISSION.API_LAB_ORDERS_WRITE,
+      ]);
+    }
   }
   // Keep display name if already set; only fill blank.
   if (!existing.name?.trim()) {

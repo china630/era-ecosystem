@@ -16,10 +16,13 @@ export type SchedulingSettings = {
   lunchStartHour: number;
   lunchEndHour: number;
   closedWeekdays: number[];
+  saturdayEndHour: number;
+  shortenedDayEndHour: number;
   defaultProcedureGapMinutes: number;
   peakModeEnabled: boolean;
   peakDayEndHour: number;
   dailyPackageProcedureCap: number;
+  bathDayModesJson: string | null;
 };
 
 export type TenantWorkHours = Pick<
@@ -29,6 +32,8 @@ export type TenantWorkHours = Pick<
   | "lunchStartHour"
   | "lunchEndHour"
   | "closedWeekdays"
+  | "saturdayEndHour"
+  | "shortenedDayEndHour"
   | "peakModeEnabled"
   | "peakDayEndHour"
 >;
@@ -43,10 +48,13 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   lunchStartHour: 13,
   lunchEndHour: 14,
   closedWeekdays: [0],
+  saturdayEndHour: 13,
+  shortenedDayEndHour: 13,
   defaultProcedureGapMinutes: 5,
   peakModeEnabled: false,
   peakDayEndHour: 22,
   dailyPackageProcedureCap: DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP,
+  bathDayModesJson: null,
 };
 
 export const DEFAULT_WORK_HOURS: TenantWorkHours = {
@@ -55,6 +63,8 @@ export const DEFAULT_WORK_HOURS: TenantWorkHours = {
   lunchStartHour: 13,
   lunchEndHour: 14,
   closedWeekdays: [0],
+  saturdayEndHour: 13,
+  shortenedDayEndHour: 13,
   peakModeEnabled: false,
   peakDayEndHour: 22,
 };
@@ -66,6 +76,8 @@ function workHoursFromTenant(tenant: Awaited<ReturnType<typeof getDefaultTenant>
     lunchStartHour: tenant.lunchStartHour,
     lunchEndHour: tenant.lunchEndHour,
     closedWeekdays: tenant.closedWeekdays ?? [0],
+    saturdayEndHour: tenant.saturdayEndHour ?? 13,
+    shortenedDayEndHour: tenant.shortenedDayEndHour ?? 13,
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
   };
@@ -80,6 +92,7 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
     procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     dailyPackageProcedureCap: clampDailyPackageProcedureCap(tenant.dailyPackageProcedureCap),
+    bathDayModesJson: tenant.bathDayModesJson ?? null,
     ...workHoursFromTenant(tenant),
   };
 }

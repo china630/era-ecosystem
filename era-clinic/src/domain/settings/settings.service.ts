@@ -6,6 +6,7 @@ import {
   type ClinicPresetCode,
 } from "@/domain/presets/clinic-presets";
 import { SANATORIUM_DEFAULT_SETTINGS } from "@/domain/settings/scheduling-settings";
+import { parseBathDayModes, type BathModeDef } from "@/domain/planning/bath-calendar";
 import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import type {
   ProcedureOverQuotaPolicy,
@@ -66,6 +67,9 @@ export async function getClinicSettings() {
     lunchStartHour: tenant.lunchStartHour,
     lunchEndHour: tenant.lunchEndHour,
     closedWeekdays: tenant.closedWeekdays ?? [0],
+    saturdayEndHour: tenant.saturdayEndHour ?? 13,
+    shortenedDayEndHour: tenant.shortenedDayEndHour ?? 13,
+    bathDayModes: parseBathDayModes(tenant.bathDayModesJson),
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
@@ -129,6 +133,9 @@ export async function updateClinicSettings(input: {
   lunchStartHour?: number;
   lunchEndHour?: number;
   closedWeekdays?: number[];
+  saturdayEndHour?: number;
+  shortenedDayEndHour?: number;
+  bathDayModes?: BathModeDef[];
   defaultProcedureGapMinutes?: number;
   peakModeEnabled?: boolean;
   peakDayEndHour?: number;
@@ -189,6 +196,10 @@ export async function updateClinicSettings(input: {
   const lunchStartHour = clampHour(input.lunchStartHour, 13);
   const lunchEndHour = clampHour(input.lunchEndHour, 14);
   const closedWeekdays = clampWeekdays(input.closedWeekdays);
+  const saturdayEndHour = clampHour(input.saturdayEndHour, 13);
+  const shortenedDayEndHour = clampHour(input.shortenedDayEndHour, 13);
+  const bathDayModesJson =
+    input.bathDayModes != null ? JSON.stringify(parseBathDayModes(input.bathDayModes)) : undefined;
   const defaultProcedureGapMinutes =
     input.defaultProcedureGapMinutes != null
       ? Math.min(240, Math.max(0, Math.floor(input.defaultProcedureGapMinutes)))
@@ -209,6 +220,9 @@ export async function updateClinicSettings(input: {
       lunchStartHour: lunchStartHour ?? 13,
       lunchEndHour: lunchEndHour ?? 14,
       closedWeekdays: closedWeekdays ?? [0],
+      saturdayEndHour: saturdayEndHour ?? 13,
+      shortenedDayEndHour: shortenedDayEndHour ?? 13,
+      ...(bathDayModesJson != null ? { bathDayModesJson } : {}),
       defaultProcedureGapMinutes: defaultProcedureGapMinutes ?? 5,
       ...(resultsPreview != null ? { patientCardResultsPreview: resultsPreview } : {}),
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
@@ -242,6 +256,9 @@ export async function updateClinicSettings(input: {
       ...(lunchStartHour != null ? { lunchStartHour } : {}),
       ...(lunchEndHour != null ? { lunchEndHour } : {}),
       ...(closedWeekdays != null ? { closedWeekdays } : {}),
+      ...(saturdayEndHour != null ? { saturdayEndHour } : {}),
+      ...(shortenedDayEndHour != null ? { shortenedDayEndHour } : {}),
+      ...(bathDayModesJson != null ? { bathDayModesJson } : {}),
       ...(defaultProcedureGapMinutes != null ? { defaultProcedureGapMinutes } : {}),
       ...(input.peakModeEnabled != null ? { peakModeEnabled: input.peakModeEnabled } : {}),
       ...(input.peakDayEndHour != null

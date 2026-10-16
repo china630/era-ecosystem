@@ -85,6 +85,7 @@ type Resource = {
   roomId?: string | null;
   room?: { code: string; name?: string } | null;
   extendedEndHour?: number | null;
+  sexAudience?: "MALE" | "FEMALE" | "ANY";
 };
 
 type ProcedureType = {
@@ -605,6 +606,7 @@ export default function MasterDataPage() {
       capacity: String(row.capacity),
       roomId: row.roomId ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
+      sexAudience: row.sexAudience ?? "ANY",
     });
     resetModalExtras();
     setModalOpen(true);
@@ -725,6 +727,8 @@ export default function MasterDataPage() {
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
+          sexAudience:
+            form.sexAudience === "MALE" || form.sexAudience === "FEMALE" ? form.sexAudience : "ANY",
         };
       } else {
         payload = {
@@ -765,6 +769,8 @@ export default function MasterDataPage() {
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
           : null,
+        sexAudience:
+          form.sexAudience === "MALE" || form.sexAudience === "FEMALE" ? form.sexAudience : "ANY",
       };
     } else {
       payload = {
@@ -1418,6 +1424,18 @@ export default function MasterDataPage() {
                 <option value="EQUIPMENT">EQUIPMENT</option>
                 <option value="ROOM">ROOM</option>
               </FieldSelect>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("sexAudience")}
+                value={form.sexAudience ?? "ANY"}
+                emptyLabel={null}
+                options={[
+                  { value: "ANY", label: t("sexAny") },
+                  { value: "MALE", label: t("sexMale") },
+                  { value: "FEMALE", label: t("sexFemale") },
+                ]}
+                onChange={(next) => setForm({ ...form, sexAudience: String(next ?? "ANY") })}
+              />
               <Field
                 label={t("capacity")}
                 preset="count"

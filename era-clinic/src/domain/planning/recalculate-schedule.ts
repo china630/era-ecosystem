@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { bakuDateKey } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays } from "@/domain/planning/clinic-day";
-import { planBathSeries, type BathMode, type KeptCell } from "@/domain/planning/bath-calendar";
+import { parseBathDayModes, planBathSeries, type KeptCell } from "@/domain/planning/bath-calendar";
+import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 
 export type ScheduleMove = {
   orderId: string;
@@ -13,10 +15,10 @@ export type ScheduleMove = {
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
 
-function asMode(value: unknown): BathMode | null {
-  const text = String(value ?? "");
-  if (text === "2" || text === "3" || text === "5" || text === "ALTERNATING") return text;
-  return null;
+function asMode(value: unknown): string | null {
+  const text = String(value ?? "").trim().toUpperCase();
+  if (!/^[0-9A-Z_]{1,16}$/.test(text)) return null;
+  return text;
 }
 
 /**
@@ -27,6 +29,8 @@ function asMode(value: unknown): BathMode | null {
  */
 export async function previewScheduleRecalc(episodeId?: string): Promise<ScheduleMove[]> {
   const today = bakuDateKey(new Date());
+  const settings = await getSchedulingSettings();
+  const bathModes = parseBathDayModes(settings.bathDayModesJson);
   const episodes = await prisma.clinicalEpisode.findMany({
     where: {
       status: "OPEN",
@@ -148,6 +152,7 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
           },
         ],
         kept,
+        modes: bathModes,
       });
       const plannedDays = new Set(planned.filter((cell) => !cell.locked).map((cell) => cell.ymd));
       const automatic = rows.filter((row) => {
@@ -240,6 +245,7 @@ export async function applyScheduleRecalc(episodeId?: string): Promise<ScheduleM
   const moves = await previewScheduleRecalc(episodeId);
   for (const move of moves) {
     if (!move.toYmd) {
+      await releaseProcedureOccupancy([move.orderId]);
       await prisma.procedureOrder.update({
         where: { id: move.orderId },
         data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: move.reason },

@@ -16,6 +16,7 @@ export type PhysicalResource = {
   kind: "ROOM" | "EQUIPMENT";
   capacity: number;
   extendedEndHour?: number | null;
+  sexAudience?: "MALE" | "FEMALE" | "ANY" | null;
 };
 
 /** Count HARD STAFF allocations overlapping [start, end). */
@@ -234,6 +235,14 @@ export async function listPhysicalRequirementResources(
     if (row) out.push(row);
   }
   return out;
+}
+
+/** Drop cabin booking and allocation. NO_SHOW keeps the matrix bar on purpose. */
+export async function releaseProcedureOccupancy(orderIds: string[]): Promise<void> {
+  const ids = [...new Set(orderIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) return;
+  await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
+  await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
 }
 
 export type AllocationWrite = {

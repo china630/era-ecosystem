@@ -499,6 +499,7 @@ export async function cancelProcedureOrder(
     if (order.resourceBooking) {
       await tx.resourceBooking.delete({ where: { id: order.resourceBooking.id } });
     }
+    await tx.procedureAllocation.deleteMany({ where: { procedureOrderId: orderId } });
     return tx.procedureOrder.update({
       where: { id: orderId },
       data: {
