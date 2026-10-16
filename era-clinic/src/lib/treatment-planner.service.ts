@@ -22,6 +22,7 @@ import { replaceProcedureAllocations } from "@/domain/procedure/procedure-alloca
 import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
 import {
+  nextSearchStart,
   scanProcedureSlots,
   type PlacementFailure,
   type ScanAllocation,
@@ -340,7 +341,12 @@ export type PlaceConfirmedResult = {
 
 export async function placeConfirmedProcedures(
   orderIds: string[],
-  opts?: { confirmedByUserId?: string; atomic?: boolean; scheduleBefore?: Date | null },
+  opts?: {
+    confirmedByUserId?: string;
+    atomic?: boolean;
+    scheduleBefore?: Date | null;
+    startAt?: Date | null;
+  },
 ): Promise<PlaceConfirmedResult> {
   if (orderIds.length === 0) return { placed: 0, missingCabinNames: [], failures: [] };
 
@@ -414,7 +420,10 @@ export async function placeConfirmedProcedures(
       endAt: row.endsAt ?? row.scheduledAt,
     }));
 
-  const now = new Date();
+  const now =
+    opts?.startAt && !Number.isNaN(opts.startAt.getTime())
+      ? opts.startAt
+      : nextSearchStart(new Date(), workHours.dayStartHour, workHours.dayEndHour);
   const today = bakuDateKey(now);
   let horizonEndYmd = addBakuDays(today, 21);
   if (opts?.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())) {

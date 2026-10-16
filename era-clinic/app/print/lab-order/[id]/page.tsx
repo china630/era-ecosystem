@@ -41,21 +41,20 @@ export default async function PrintLabOrderPage({ params, searchParams }: Props)
                 <th className="p-1 text-left">{printLabel(lang, "no")}</th>
                 <th className="p-1 text-left">{printLabel(lang, "parameter")}</th>
                 <th className="p-1 text-left">{printLabel(lang, "result")}</th>
+                <th className="p-1 text-left">{printLabel(lang, "unit")}</th>
                 <th className="p-1 text-left">{printLabel(lang, "norm")}</th>
+                <th className="p-1 text-left">{printLabel(lang, "flag")}</th>
               </tr>
             </thead>
             <tbody>
               {sec.rows.map((r) => (
                 <tr key={`${r.no}-${r.code}`} className="border-b border-neutral-300">
                   <td className="p-1 align-top">{r.no}</td>
-                  <td className="p-1 align-top">
-                    {r.label}
-                    {r.flag !== "NORMAL" ? (
-                      <span className="ml-1 font-bold">({r.flag})</span>
-                    ) : null}
-                  </td>
+                  <td className="p-1 align-top">{r.label}</td>
                   <td className="p-1 align-top font-medium">{r.value}</td>
+                  <td className="p-1 align-top">{r.unit || "—"}</td>
                   <td className="p-1 align-top">{r.norm}</td>
+                  <td className="p-1 align-top">{r.flag}</td>
                 </tr>
               ))}
             </tbody>

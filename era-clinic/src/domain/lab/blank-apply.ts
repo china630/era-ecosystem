@@ -89,14 +89,17 @@ export async function previewWordForOrder(input: {
   const serviceCode = order.items[0]?.serviceCode ?? "";
   const kind = usmBlankKind(serviceCode);
   if (kind) {
-    return {
-      mode: "fields",
-      fields: parseUsmSections(extractDocxParagraphs(input.docx), {
-        kind,
-        sex: order.patientRef.sex,
-      }),
-      omit: usmFieldsOmitted(order.patientRef.sex),
-    };
+    const narrative = parseUsmSections(extractDocxParagraphs(input.docx), {
+      kind,
+      sex: order.patientRef.sex,
+    });
+    if (Object.keys(narrative).length > 0) {
+      return {
+        mode: "fields",
+        fields: narrative,
+        omit: usmFieldsOmitted(order.patientRef.sex),
+      };
+    }
   }
   const codes = order.items.map((item) => item.serviceCode).filter(Boolean);
   const services = codes.length
@@ -112,9 +115,13 @@ export async function previewWordForOrder(input: {
     ]),
   ];
   const profile = input.profileId
-    ? await prisma.labBlankProfile.findUnique({ where: { id: input.profileId } })
+    ? await prisma.labBlankProfile.findUnique({
+        where: { id: input.profileId },
+        include: { rows: true },
+      })
     : await prisma.labBlankProfile.findFirst({
         where: { active: true, serviceCode: { in: keys.length ? keys : ["__none__"] } },
+        include: { rows: true },
         orderBy: { name: "asc" },
       });
   if (!profile) return { mode: "missing" };
@@ -123,7 +130,52 @@ export async function previewWordForOrder(input: {
     profileId: profile.id,
     docx: input.docx,
   });
+  if (rows.some((row) => row.applied)) return { mode: "rows", rows };
+  const withFields = keys.length
+    ? await prisma.diagnosticService.findMany({
+        where: { OR: [{ code: { in: keys } }, { serviceCode: { in: keys } }] },
+        select: { fieldsJson: true },
+      })
+    : [];
+  const fieldKeys = new Set(withFields.flatMap((row) => fieldKeysOf(row.fieldsJson)));
+  const fields = fieldsFromBlank(input.docx, profile.rows, fieldKeys);
+  if (Object.keys(fields).length > 0) return { mode: "fields", fields, omit: [] };
   return { mode: "rows", rows };
+}
+
+function fieldKeysOf(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((row) => {
+        if (!row || typeof row !== "object") return "";
+        const rec = row as { key?: unknown; code?: unknown };
+        return String(rec.key ?? rec.code ?? "").trim();
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function fieldsFromBlank(
+  docx: Buffer,
+  rows: Array<{ sourceLabel: string; analyteCode: string }>,
+  fieldKeys: Set<string>,
+): Record<string, string> {
+  if (fieldKeys.size === 0) return {};
+  const byLabel = new Map(
+    rows.map((row) => [row.sourceLabel.trim().toLowerCase(), row.analyteCode]),
+  );
+  const fields: Record<string, string> = {};
+  for (const row of extractBlankTable(docx)) {
+    const key = byLabel.get(row.label.trim().toLowerCase());
+    if (!key || !fieldKeys.has(key) || !isFilledBlankValue(row.value)) continue;
+    fields[key] = row.value;
+  }
+  return fields;
 }
 
 function blankRows(input: Array<{ sourceLabel: string; analyteCode: string }>) {
