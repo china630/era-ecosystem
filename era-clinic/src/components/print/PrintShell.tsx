@@ -15,6 +15,8 @@ type Props = {
   children: React.ReactNode;
   signatureLabel?: string;
   signatureName?: string | null;
+  /** Override the room line key (receipt uses hotel room, not ward). */
+  roomLabelKey?: string;
 };
 
 function sexLabel(lang: PrintLang, sex: string | null | undefined): string {
@@ -34,6 +36,7 @@ export function PrintShell({
   children,
   signatureLabel,
   signatureName,
+  roomLabelKey = "roomNo",
 }: Props) {
   useEffect(() => {
     if (!autoPrint) return;
@@ -114,7 +117,7 @@ export function PrintShell({
             <strong>{printLabel(lang, "phone")}:</strong> {patient.phone ?? "—"}
           </div>
           <div>
-            <strong>{printLabel(lang, "roomNo")}:</strong> {patient.roomNumber ?? "—"}
+            <strong>{printLabel(lang, roomLabelKey)}:</strong> {patient.roomNumber ?? "—"}
           </div>
           {patient.doctorName ? (
             <div>

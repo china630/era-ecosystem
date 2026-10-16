@@ -40,7 +40,7 @@ export const DEVICE_PARAM_CODES = [
 ] as const;
 export const APPLICATION_SURFACE_CODES = ["FRONT_BACK", "UPPER", "LOWER"] as const;
 /** FO closed list: günaşırı / 2 / 3 / 5 (naftalan family only). */
-export const DAY_BLOCK_CODES = ["2", "3", "5", "ALTERNATING"] as const;
+export const DAY_BLOCK_CODES = ["2", "3", "4", "5", "ALTERNATING"] as const;
 export const BATH_SEQUENCE_CODES = ["SITZ_THEN_FULL"] as const;
 export const NAFTALAN_FILL_CODES = ["TAM", "OTURAQ", "QURSAQ"] as const;
 export const INTENSITY_CODES = ["LIGHT", "WEAK", "NOT_HOT", "MEDIUM", "MORE"] as const;

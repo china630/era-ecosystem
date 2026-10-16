@@ -35,6 +35,9 @@ export async function rescheduleProcedureOrder(
   if (order.status !== "SCHEDULED") {
     throw new Error("Only SCHEDULED procedures can be rescheduled");
   }
+  if (scheduledAt.getTime() < Date.now()) {
+    throw new Error("Cannot reschedule into the past");
+  }
 
   const targetResourceId = opts?.resourceId ?? order.resourceId;
 

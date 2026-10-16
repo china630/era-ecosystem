@@ -6,6 +6,7 @@ import { dayStartInstant, listClinicDays, stayYmd } from "@/domain/planning/clin
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
+import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 import {
   findSkilledFreePractitioner,
   listPhysicalRequirementResources,
@@ -266,10 +267,13 @@ export async function saveBathCalendar(input: {
     },
     select: { id: true, scheduledAt: true },
   });
-  const requestBaths = new Set(input.manualBathYmds);
-  const requestRests = new Set(input.manualRestYmds);
+  const today = todayBakuYmd();
+  const requestBaths = new Set(input.manualBathYmds.filter((ymd) => ymd >= today));
+  const requestRests = new Set(input.manualRestYmds.filter((ymd) => ymd >= today));
   const pinYmds = new Set(
-    own.filter((order) => order.note === "bath_manual" && !LOCKED.has(order.status)).map((order) => order.ymd),
+    own
+      .filter((order) => order.note === "bath_manual" && !LOCKED.has(order.status) && order.ymd >= today)
+      .map((order) => order.ymd),
   );
   for (const ymd of requestBaths) pinYmds.add(ymd);
   for (const ymd of requestRests) pinYmds.delete(ymd);
@@ -284,7 +288,7 @@ export async function saveBathCalendar(input: {
     kept.push({ ymd: order.ymd, procedureCode: order.procedureCode, locked: true });
   }
   for (const order of own) {
-    if (LOCKED.has(order.status)) {
+    if (LOCKED.has(order.status) || order.ymd < today) {
       kept.push({ ymd: order.ymd, procedureCode: input.procedureCode, locked: true });
     }
   }
@@ -316,16 +320,20 @@ export async function saveBathCalendar(input: {
     kept,
     layout,
     modes: snapshot.modes,
+    notBeforeYmd: today,
   }).filter((cell) => cell.procedureCode === input.procedureCode);
 
-  const movable = own.filter((order) => !LOCKED.has(order.status));
+  const movable = own.filter((order) => !LOCKED.has(order.status) && order.ymd >= today);
   const orgId = requestOrganizationId();
   const staffMode = await resolveStaffModeForProcedureType(procedureType.id);
   const used = new Set<string>();
   let unplaced = 0;
   const unplacedDays: string[] = [];
   for (const cell of planned) {
-    const lockedOrder = own.find((order) => LOCKED.has(order.status) && order.ymd === cell.ymd);
+    const lockedOrder = own.find(
+      (order) =>
+        order.ymd === cell.ymd && (LOCKED.has(order.status) || order.ymd < today),
+    );
     if (lockedOrder) {
       used.add(lockedOrder.id);
       continue;
@@ -403,7 +411,10 @@ export async function saveBathCalendar(input: {
     await releaseProcedureOccupancy(otherDrop.map((order) => order.id));
   }
   const bathYmds = new Set(planned.map((cell) => cell.ymd));
-  const staleRests = restOrders.filter((order) => bathYmds.has(bakuDateKey(order.scheduledAt)));
+  const staleRests = restOrders.filter((order) => {
+    const ymd = bakuDateKey(order.scheduledAt);
+    return ymd >= today && bathYmds.has(ymd);
+  });
   if (staleRests.length > 0) {
     await prisma.procedureOrder.deleteMany({ where: { id: { in: staleRests.map((order) => order.id) } } });
   }
@@ -412,7 +423,7 @@ export async function saveBathCalendar(input: {
     ...restDrop.map((order) => order.ymd),
   ]);
   for (const ymd of restYmds) {
-    if (bathYmds.has(ymd) || markedRests.has(ymd)) continue;
+    if (ymd < today || bathYmds.has(ymd) || markedRests.has(ymd)) continue;
     const when = dayStartInstant(ymd, 9);
     const sibling = await prisma.procedureOrder.findFirst({
       where: {
@@ -458,7 +469,7 @@ export async function saveBathCalendar(input: {
 export type BathSeatMiss = {
   ymd: string;
   procedureCode: string;
-  reason: "no_cabin" | "no_staff" | "no_day" | "no_mode";
+  reason: "no_cabin" | "cabin_sex" | "no_staff" | "no_day" | "no_mode";
 };
 
 function bathModeOf(fields: unknown): string | null {
@@ -553,6 +564,7 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
             kept,
             layout: "continue",
             modes: snapshot.modes,
+            notBeforeYmd: today,
           }).filter(
             (cell) =>
               cell.procedureCode === procedureCode &&
@@ -564,6 +576,10 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
       const order = queue[0];
       if (!order?.procedureTypeId) break;
       const day = snapshot.days.find((row) => row.ymd === cell.ymd);
+      if (!(await procedureFitsGuestSex(procedureCode, guestSex))) {
+        missed.push({ ymd: cell.ymd, procedureCode, reason: "cabin_sex" });
+        continue;
+      }
       const slot = await findCabinSlotOnDay({
         ymd: cell.ymd,
         endHour: day?.endHour ?? 17,

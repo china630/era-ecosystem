@@ -10,7 +10,7 @@
 
 **Entitlement blocks (CLI-51 amend):** each package line is a **block** (`ProgramTemplateProcedure` code = balance key). Optional `ProgramTemplateBlockMember` lists SKUs that may burn that block (`ProcedureType` for treatment families; diagnostic catalog for LAB/EXAM). A LAB block lists catalog kinds `lab_panel`, `imaging`, and `functional` (blood panels, ultrasound, ECG) and still fulfills as `LAB_ORDER`. EXAM lists `visit` only. Knot matrix stores **qty per block** at PDF night columns only (interpolate for other stays). Admin edit modal is wide with physio / bath / paraffin / lab / exam blocks. **`fulfillment` is derived from block kind** (İcra is not a separate admin control). Membership picker is cascaded by kind — not the full treatment catalog on a lab block.
 
-The bath calendar passes the chosen days. The planner picks a free cabin of the guest's sex, or a shared cabin, and an hour inside that day. It stops at the day's end hour from clinic settings (Saturday default 13:00). A day with no free slot stays in the quota. A mode change redraws automatic cells around manual baths and already checked-in or completed sessions. Sitz-then-full marks the first session sitting (`OTURAQ`) and the rest full (`TAM`).
+The bath calendar passes the chosen days. The planner picks a free cabin of the guest's sex, or a shared cabin, and an hour inside that day. It stops at the day's end hour from clinic settings (Saturday default 13:00). A day with no free slot stays in the quota. A mode change redraws automatic cells from today (Asia/Baku) forward. Days before today stay put, even when still SCHEDULED, and the calendar paints them pale pink. Manual baths and already checked-in or completed sessions stay pinned. Sitz-then-full marks the first session sitting (`OTURAQ`) and the rest full (`TAM`).
 
 Stay check-in, check-out, and nights come from `ProgramInstance.startsOn` / `endsOn`. If the hotel lifecycle event never wrote a package and the course still has a `reservationId`, opening the patient card or the sanatorium chart reads the hotel stay once (`/api/internal/v1/stays/by-external-ref`) and shows those dates. A failed hotel call leaves the dates empty.
 
@@ -49,9 +49,9 @@ Access matrix (`/admin/access`): labels for both keys; legacy templates key remo
 
 Giriş, Çıxış and Gecə on the course card, the treatment card, the bath calendar and package recalculation use the hotel stay when the episode has a reservation. The program window is the fallback. Opening a package from the clinic, including the checkup form, passes those hotel dates into the program instance. When the hotel stay is known, that form does not ask for a start date.
 
-A bath whose procedure code is in an active day series is seated one session per planned stay day (from today forward), into a free cabin of the guest's sex or a shared cabin, and a free attendant. Unknown guest sex only fits a shared cabin. A day that cannot take the session stays on the toast with the date and the reason. Sessions that already seated are not cancelled. Procedures outside a day series still use the minute-grid placer, with the same cabin sex rule.
+A bath whose procedure code is in an active day series is seated one session per planned stay day (from today forward), into a free cabin of the guest's sex or a shared cabin, and a free attendant. Unknown guest sex only fits a shared cabin. A SKU whose cabins are all the other sex is refused when the line is added, not after seating. A day that cannot take the session stays on the toast with the date and the reason. Sessions that already seated are not cancelled. Procedures outside a day series still use the minute-grid placer, with the same cabin sex rule. The bath calendar paints a mark only on planned bath days.
 
-Bath day modes live in clinic settings (`code`, baths, rest days). Defaults are 2, 3, 5, and alternating. A closed day resets a streak and does not spend the owed rest. Week hours also live in settings: weekday end, Saturday end (default 13:00), shortened-day end (default 13:00), and closed weekdays (default Sunday). A closed weekday stays empty unless the country calendar opens it.
+Bath day modes live in clinic settings (`code`, baths, rest days). Defaults are 2, 3, 4, 5, and alternating. A closed day resets a streak and does not spend the owed rest. Week hours also live in settings: weekday end, Saturday end (default 13:00), shortened-day end (default 13:00), and closed weekdays (default Sunday). A closed weekday stays empty unless the country calendar opens it.
 
 ## Future debt (not in this wave)
 
@@ -59,6 +59,7 @@ Bath day modes live in clinic settings (`code`, baths, rest days). Defaults are 
 |------|--------|
 | **Whole-visit print** | One sheet with all `CpoeEntry` rows for a visit (+ optional combined layout). Separate route e.g. `/print/visit/[visitId]`. |
 | **FHIR export** | Production HL7/FHIR is Phase K4+ / OUT of current edition. Optional later: download stub `QuestionnaireResponse` / `Composition` from `payloadJson` (file only, not partner integration). |
+| **Day sequence for non-bath SKUs** | Two massage types on the same stay should not land on the same day. Not in this wave. |
 
 ---
 

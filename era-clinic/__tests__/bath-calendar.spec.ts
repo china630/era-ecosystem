@@ -187,6 +187,67 @@ describe("planBathSeries", () => {
     });
     expect(cells.map((cell) => cell.fill)).toEqual(["OTURAQ", "TAM"]);
   });
+
+  it("does not place a new automatic bath before notBeforeYmd", () => {
+    const cells = planBathSeries({
+      days: week(),
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "2",
+          qty: 3,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [
+        {
+          ymd: "2026-10-05",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          locked: true,
+        },
+      ],
+      layout: "fresh",
+      notBeforeYmd: "2026-10-08",
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual([
+      "2026-10-05",
+      "2026-10-08",
+      "2026-10-09",
+    ]);
+  });
+
+  it("keeps every past pin even when qty is already spent", () => {
+    const cells = planBathSeries({
+      days: week(),
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "2",
+          qty: 1,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [
+        {
+          ymd: "2026-10-05",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          locked: true,
+        },
+        {
+          ymd: "2026-10-06",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          locked: true,
+        },
+      ],
+      layout: "fresh",
+      notBeforeYmd: "2026-10-08",
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual(["2026-10-05", "2026-10-06"]);
+  });
 });
 
 describe("strayBathOrderIds", () => {

@@ -465,21 +465,12 @@ export function PhysioSiteChips({
           onChange={(next) => patchFields({ dayBlock: pickOpt(DAY_BLOCK_CODES, next) })}
           options={DAY_BLOCK_CODES.map((v) => ({
             value: v,
-            label:
-              v === "ALTERNATING"
-                ? labels.dayBlockAlt
-                : v === "2"
-                  ? "2"
-                  : v === "3"
-                    ? "3"
-                    : v === "5"
-                      ? "5"
-                      : v,
+            label: v === "ALTERNATING" ? labels.dayBlockAlt : v,
           }))}
           disabled={!editable}
         />
       ) : null}
-      {hasField(allowed, "BATH_SEQUENCE") && sessionQty > 1 ? (
+      {hasField(allowed, "BATH_SEQUENCE") && sessionQty > 1 && !hideFields.includes("BATH_SEQUENCE") ? (
         <CatalogField
           kind="CLOSED_SMALL"
           label={labels.bathSequence}

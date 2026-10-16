@@ -6,7 +6,7 @@
  * Locked and manual cells stay. Extra quantity continues after the last kept cell.
  */
 
-export type BathMode = "2" | "3" | "5" | "ALTERNATING";
+export type BathMode = "2" | "3" | "4" | "5" | "ALTERNATING";
 
 export type BathModeDef = {
   code: string;
@@ -17,6 +17,7 @@ export type BathModeDef = {
 export const DEFAULT_BATH_MODES: BathModeDef[] = [
   { code: "2", baths: 2, rest: 1 },
   { code: "3", baths: 3, rest: 1 },
+  { code: "4", baths: 4, rest: 1 },
   { code: "5", baths: 5, rest: 1 },
   { code: "ALTERNATING", baths: 1, rest: 1 },
 ];
@@ -44,7 +45,22 @@ export function parseBathDayModes(raw: unknown): BathModeDef[] {
     if (!Number.isFinite(rest) || rest < 0 || rest > 7) continue;
     out.push({ code, baths: Math.floor(baths), rest: Math.floor(rest) });
   }
-  return out.length > 0 ? out : DEFAULT_BATH_MODES;
+  const list = out.length > 0 ? out : [...DEFAULT_BATH_MODES];
+  const have = new Set(list.map((row) => row.code));
+  for (const builtin of DEFAULT_BATH_MODES) {
+    if (have.has(builtin.code)) continue;
+    const builtinIndex = DEFAULT_BATH_MODES.findIndex((row) => row.code === builtin.code);
+    let insertAt = list.length;
+    for (let i = builtinIndex - 1; i >= 0; i--) {
+      const pos = list.findIndex((row) => row.code === DEFAULT_BATH_MODES[i]!.code);
+      if (pos >= 0) {
+        insertAt = pos + 1;
+        break;
+      }
+    }
+    list.splice(insertAt, 0, builtin);
+  }
+  return list;
 }
 
 export function resolveBathBlock(
@@ -107,6 +123,8 @@ export function planBathSeries(input: {
   /** continue = add quantity after the last saved bath. fresh = redraw automatic days around pins. */
   layout?: BathLayout;
   modes?: BathModeDef[];
+  /** Civil days strictly before this YMD are never given a new automatic bath. */
+  notBeforeYmd?: string;
 }): PlannedBath[] {
   const placed: PlannedBath[] = [];
   const bathDays = new Set<string>();
@@ -157,7 +175,8 @@ export function planBathSeries(input: {
       if (fresh) {
         const pin = keptByDay.get(day.ymd);
         if (pin) {
-          if (!bathDays.has(day.ymd) && used < series.qty) {
+          const pastPin = Boolean(input.notBeforeYmd && day.ymd < input.notBeforeYmd);
+          if (!bathDays.has(day.ymd) && (pastPin || used < series.qty)) {
             placed.push({
               ymd: day.ymd,
               seriesCode: series.seriesCode,
@@ -167,12 +186,17 @@ export function planBathSeries(input: {
               locked: true,
             });
             bathDays.add(day.ymd);
-            used += 1;
-            finishBlock();
+            if (!pastPin) {
+              used += 1;
+              finishBlock();
+            } else if (used < series.qty) {
+              used += 1;
+            }
           }
           continue;
         }
       }
+      if (input.notBeforeYmd && day.ymd < input.notBeforeYmd) continue;
       if (lastKept && day.ymd <= lastKept) continue;
       if (used >= series.qty) break;
       if (!day.working) {
