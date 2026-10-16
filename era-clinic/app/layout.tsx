@@ -21,7 +21,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={APP_SHELL_CLASS}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SatelliteAppProviders>
-            <SatelliteRootChrome>
+            <SatelliteRootChrome barePublicPrefixes={["/print"]}>
               <ClinicOpsShell>{children}</ClinicOpsShell>
             </SatelliteRootChrome>
           </SatelliteAppProviders>

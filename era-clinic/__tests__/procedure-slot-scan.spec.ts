@@ -98,4 +98,25 @@ describe("scanProcedureSlots", () => {
     });
     expect(result.failures[0]?.reason).toBe("no_slot");
   });
+
+  it("starts on the next 5-minute mark, not the raw minute", () => {
+    const result = scanProcedureSlots({
+      orders: [order()],
+      now: parseBakuDateTime("2026-10-16", "09:36"),
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.planned[0]?.slotStart.getTime()).toBe(
+      parseBakuDateTime("2026-10-16", "09:40").getTime(),
+    );
+  });
 });

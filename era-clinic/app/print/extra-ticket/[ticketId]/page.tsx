@@ -71,6 +71,7 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
       patient={patient}
       title={printLabel(lang, "extraTicket")}
       autoPrint={sp.autoprint === "1"}
+      paper="receipt"
     >
       {copies.map((copyKey, idx) => (
         <Fragment key={copyKey}>

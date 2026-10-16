@@ -6,6 +6,38 @@ import { deleteBlankProfile, saveBlankProfile } from "@/domain/lab/blank-apply";
 import { extractBlankTable } from "@/domain/lab/blank-docx";
 import { ensureUrineBlankProfile } from "@/domain/lab/urine-blank";
 
+function panelFields(raw: string | null): Array<{
+  code: string;
+  labelAz: string;
+  labelEn: string;
+  labelRu: string;
+}> {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((row) => {
+      if (!row || typeof row !== "object") return [];
+      const rec = row as {
+        key?: unknown;
+        code?: unknown;
+        label?: { az?: unknown; en?: unknown; ru?: unknown };
+        labelAz?: unknown;
+        labelEn?: unknown;
+        labelRu?: unknown;
+      };
+      const code = String(rec.key ?? rec.code ?? "").trim();
+      if (!code) return [];
+      const labelAz = String(rec.label?.az ?? rec.labelAz ?? code);
+      const labelEn = String(rec.label?.en ?? rec.labelEn ?? labelAz);
+      const labelRu = String(rec.label?.ru ?? rec.labelRu ?? labelAz);
+      return [{ code, labelAz, labelEn, labelRu }];
+    });
+  } catch {
+    return [];
+  }
+}
+
 const saveSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1),
@@ -25,7 +57,10 @@ export async function GET(req: Request) {
         orderBy: { name: "asc" },
       }),
       prisma.diagnosticService.findMany({
-        where: { active: true, analytes: { some: {} } },
+        where: {
+          active: true,
+          OR: [{ analytes: { some: {} } }, { fieldsJson: { not: null } }],
+        },
         select: {
           id: true,
           code: true,
@@ -34,6 +69,8 @@ export async function GET(req: Request) {
           titleAz: true,
           titleRu: true,
           titleEn: true,
+          fieldsJson: true,
+          modality: { select: { code: true, kind: true } },
           analytes: {
             orderBy: { sortOrder: "asc" },
             select: { code: true, labelAz: true, labelEn: true, labelRu: true },
@@ -42,7 +79,28 @@ export async function GET(req: Request) {
         orderBy: [{ category: "asc" }, { titleAz: "asc" }],
       }),
     ]);
-    return jsonOk({ profiles, panels: services });
+    const panels = services
+      .map((service) => {
+        const fields = panelFields(service.fieldsJson);
+        const imaging =
+          service.modality.kind === "imaging" || service.modality.code.toUpperCase() === "USG";
+        const kind = imaging ? "usm" : service.analytes.length > 0 ? "lab" : "other";
+        if (service.analytes.length === 0 && fields.length === 0) return null;
+        return {
+          id: service.id,
+          code: service.code,
+          serviceCode: service.serviceCode,
+          category: service.category,
+          titleAz: service.titleAz,
+          titleRu: service.titleRu,
+          titleEn: service.titleEn,
+          kind,
+          analytes: service.analytes,
+          fields,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row != null);
+    return jsonOk({ profiles, panels });
   } catch (err) {
     return handleRouteError(err);
   }

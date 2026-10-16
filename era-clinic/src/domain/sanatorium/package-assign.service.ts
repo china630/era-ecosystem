@@ -883,7 +883,7 @@ async function abandonCreatedPackageOrders(ids: string[]) {
 export async function assignPackageProcedures(
   episodeId: string,
   lines: AssignLineInput[],
-  opts?: { confirmedByUserId?: string; softWarnOnly?: boolean },
+  opts?: { confirmedByUserId?: string; softWarnOnly?: boolean; startAt?: Date | null },
 ): Promise<{
   placed: number;
   softWarn: string | null;
@@ -1089,6 +1089,7 @@ export async function assignPackageProcedures(
     confirmedByUserId: opts?.confirmedByUserId,
     atomic: true,
     scheduleBefore: instance.endsOn,
+    startAt: opts?.startAt,
   });
   const misses = [
     ...bathSeat.missed.map((miss) => ({

@@ -33,7 +33,9 @@ type Panel = {
   titleAz: string;
   titleRu: string;
   titleEn: string;
+  kind?: "lab" | "usm" | "other";
   analytes: Analyte[];
+  fields?: Analyte[];
 };
 type Profile = {
   id: string;
@@ -56,6 +58,12 @@ function analyteTitle(row: Analyte, locale: string): string {
   return row.labelAz || row.labelEn || row.labelRu || row.code;
 }
 
+function panelTargets(panel: Panel | null): Analyte[] {
+  if (!panel) return [];
+  if (panel.analytes.length > 0) return panel.analytes;
+  return panel.fields ?? [];
+}
+
 function profileFor(panel: Panel, profiles: Profile[]): Profile | undefined {
   return (
     profiles.find((row) => row.serviceCode === panel.code) ??
@@ -71,6 +79,7 @@ export function WordBlankMapper() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [kind, setKind] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [busy, setBusy] = useState(false);
@@ -106,6 +115,7 @@ export function WordBlankMapper() {
       if (status === "mapped" && !mapped) return false;
       if (status === "unmapped" && (mapped || off || profile)) return false;
       if (status === "off" && !off) return false;
+      if (kind !== "all" && (panel.kind ?? "lab") !== kind) return false;
       if (!q) return true;
       const title = panelTitle(panel, locale).toLowerCase();
       return (
@@ -114,7 +124,7 @@ export function WordBlankMapper() {
         panel.category.toLowerCase().includes(q)
       );
     });
-  }, [panels, profiles, debouncedQuery, status, locale]);
+  }, [panels, profiles, debouncedQuery, status, kind, locale]);
 
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -124,7 +134,7 @@ export function WordBlankMapper() {
       (profile?.rows ?? []).map((row) => [row.analyteCode, row.sourceLabel]),
     );
     const wordLabels = new Set(rows.map((row) => row.label));
-    for (const analyte of panel.analytes) {
+    for (const analyte of panelTargets(panel)) {
       const saved = byLabel.get(analyte.code) ?? "";
       if (saved && (wordLabels.size === 0 || wordLabels.has(saved))) next[analyte.code] = saved;
       else {
@@ -162,7 +172,7 @@ export function WordBlankMapper() {
 
   async function save() {
     if (!openPanel) return;
-    const rows = openPanel.analytes
+    const rows = panelTargets(openPanel)
       .map((analyte) => ({
         sourceLabel: (mapping[analyte.code] ?? "").trim(),
         analyteCode: analyte.code,
@@ -231,6 +241,7 @@ export function WordBlankMapper() {
         onReset={() => {
           setQuery("");
           setStatus("all");
+          setKind("all");
           setPage(1);
         }}
       >
@@ -256,6 +267,21 @@ export function WordBlankMapper() {
             { value: "mapped", label: t("statusMapped") },
             { value: "unmapped", label: t("statusUnmapped") },
             { value: "off", label: t("statusOff") },
+          ]}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("panelKind")}
+          value={kind}
+          onChange={(value) => {
+            setKind(String(value ?? "all"));
+            setPage(1);
+          }}
+          options={[
+            { value: "all", label: t("kindAll") },
+            { value: "lab", label: t("kindLab") },
+            { value: "usm", label: t("kindUsm") },
+            { value: "other", label: t("kindOther") },
           ]}
         />
       </EraListFilterBar>
@@ -394,7 +420,7 @@ export function WordBlankMapper() {
         }
       >
         <ul className="space-y-2">
-          {(openPanel?.analytes ?? []).map((analyte) => (
+          {panelTargets(openPanel).map((analyte) => (
             <li key={analyte.code} className="grid grid-cols-[1fr_16rem] items-center gap-2 text-sm">
               <span>
                 {analyteTitle(analyte, locale)}

@@ -27,6 +27,9 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
       title={printLabel(lang, "procedures")}
       autoPrint={sp.autoprint === "1"}
     >
+      <style>{`
+        .print-date-row td { background: #E5E7EB; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      `}</style>
       <table className="w-full border-collapse text-[10px]">
         <thead>
           <tr className="border-b border-black">
@@ -43,7 +46,7 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
         <tbody>
           {doc.rowsByDate.map((group) => (
             <Fragment key={group.date}>
-              <tr className="bg-neutral-100">
+              <tr className="print-date-row">
                 <td colSpan={8} className="p-1 font-semibold">
                   {group.date}
                 </td>
@@ -53,16 +56,15 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
                   <td className="p-1">{r.no}</td>
                   <td className="p-1">
                     <div>{r.name}</div>
-                    {r.note ? (
-                      <div className="mt-0.5 text-[9px] text-neutral-600">{r.note}</div>
-                    ) : null}
+                    {r.zones ? <div className="mt-0.5 text-[9px]">{r.zones}</div> : null}
+                    {r.settings ? <div className="mt-0.5 text-[9px]">{r.settings}</div> : null}
                   </td>
                   <td className="p-1">{r.quantity}</td>
                   <td className="p-1">{r.time}</td>
                   <td className="p-1">{r.room}</td>
                   <td className="p-1">{r.doctor}</td>
                   <td className="p-1">{r.price}</td>
-                  <td className="p-1">{r.note ? "—" : ""}</td>
+                  <td className="p-1">{r.note}</td>
                 </tr>
               ))}
             </Fragment>

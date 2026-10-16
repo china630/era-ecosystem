@@ -11,6 +11,7 @@ type Props = {
   patient?: PrintPatientStrip | null;
   title: string;
   autoPrint?: boolean;
+  paper?: "a4" | "receipt";
   children: React.ReactNode;
   signatureLabel?: string;
   signatureName?: string | null;
@@ -29,6 +30,7 @@ export function PrintShell({
   patient,
   title,
   autoPrint,
+  paper = "a4",
   children,
   signatureLabel,
   signatureName,
@@ -40,13 +42,19 @@ export function PrintShell({
   }, [autoPrint]);
 
   return (
-    <div className="print-root mx-auto max-w-[210mm] bg-white p-6 text-[12px] text-black">
+    <div
+      className={
+        paper === "receipt"
+          ? "print-root mx-auto w-[58mm] max-w-[58mm] bg-white p-2 text-[10px] text-black"
+          : "print-root mx-auto max-w-[210mm] bg-white p-6 text-[12px] text-black"
+      }
+    >
       <style>{`
-        @page { size: A4; margin: 12mm; }
+        @page { size: ${paper === "receipt" ? "58mm auto" : "A4"}; margin: ${paper === "receipt" ? "2mm" : "12mm"}; }
         @media print {
           .no-print { display: none !important; }
-          body { background: white; }
-          .print-root { padding: 0; max-width: none; }
+          html, body { background: white; overflow: visible !important; height: auto !important; }
+          .print-root { padding: 0; max-width: none; overflow: visible !important; height: auto !important; }
         }
       `}</style>
       <div className="no-print mb-4 flex justify-end gap-2">
@@ -82,7 +90,13 @@ export function PrintShell({
       <h2 className="mb-3 text-center text-[16px] font-bold uppercase">{title}</h2>
 
       {patient ? (
-        <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-1 border border-black p-2 text-[11px]">
+        <div
+          className={
+            paper === "receipt"
+              ? "mb-2 grid grid-cols-1 gap-y-0.5 border border-black p-1 text-[9px]"
+              : "mb-4 grid grid-cols-2 gap-x-6 gap-y-1 border border-black p-2 text-[11px]"
+          }
+        >
           <div>
             <strong>{printLabel(lang, "patient")}:</strong> {patient.fullName}
           </div>

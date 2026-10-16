@@ -690,15 +690,22 @@ export function PatientCardClinicalSections({
                             const reason =
                               miss.reason === "no_staff"
                                 ? t("packageAssignMissNoStaff")
-                                : miss.reason === "no_cabin"
-                                  ? t("packageAssignMissNoCabin")
-                                  : miss.reason === "no_slot"
-                                    ? t("packageAssignMissNoSlot")
-                                    : t("packageAssignMissNoDay");
+                                : miss.reason === "staff_busy"
+                                  ? t("packageAssignMissStaffBusy")
+                                  : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
+                                    ? t("packageAssignMissNoCabin")
+                                    : miss.reason === "day_full"
+                                      ? t("packageAssignMissDayFull")
+                                      : miss.reason === "rule"
+                                        ? t("packageAssignMissRule")
+                                        : miss.reason === "no_slot"
+                                          ? t("packageAssignMissNoSlot")
+                                          : t("packageAssignMissNoDay");
                             const who = miss.procedureName || miss.procedureCode;
                             if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
                             return t("packageAssignMiss", { date: miss.ymd || "—", reason });
                           })
+                          .filter((line: string, index: number, all: string[]) => all.indexOf(line) === index)
                           .join("; ");
                         if (!res.ok) {
                           const names = typeof d.error === "string" ? d.error : "";
@@ -885,8 +892,9 @@ export function PatientCardClinicalSections({
             <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
         }
+        bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2">
           <button
             type="button"
             className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
@@ -940,7 +948,7 @@ export function PatientCardClinicalSections({
             {planLoading ? tc("loading") : t("planEmpty")}
           </p>
         ) : (
-          <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
+          <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
             {planVisible.map((ev) => {
               const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
               const actionable = ev.type === "procedure" && ev.status === "SCHEDULED" && orderId;
@@ -997,7 +1005,7 @@ export function PatientCardClinicalSections({
         {planHasMore ? (
           <button
             type="button"
-            className={`${PRIMARY_BUTTON_CLASS} mt-3`}
+            className={`${PRIMARY_BUTTON_CLASS} mt-3 shrink-0`}
             disabled={planLoading}
             onClick={() => void loadPlan(false)}
           >

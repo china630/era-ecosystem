@@ -14,6 +14,7 @@ import {
   getPackageAssignSnapshot,
 } from "@/domain/sanatorium/package-assign.service";
 import { readUiLocale } from "@/lib/request-locale";
+import { parseBakuDateTime } from "@/lib/baku-day";
 
 const lineSchema = z.object({
   procedureCode: z.string().min(1),
@@ -32,6 +33,8 @@ const lineSchema = z.object({
 
 const assignSchema = z.object({
   lines: z.array(lineSchema).min(1),
+  startOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startHour: z.number().int().min(0).max(23).optional(),
 });
 
 function mapAssignError(err: unknown) {
@@ -82,8 +85,13 @@ export async function POST(
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
     const body = assignSchema.parse(await req.json());
+    const startAt =
+      body.startOn && body.startHour != null
+        ? parseBakuDateTime(body.startOn, `${String(body.startHour).padStart(2, "0")}:00`)
+        : null;
     const result = await assignPackageProcedures(id, body.lines, {
       confirmedByUserId: session.sub,
+      startAt,
     });
     return jsonOk(result);
   } catch (err) {

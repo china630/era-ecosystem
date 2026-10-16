@@ -28,6 +28,7 @@ import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
+import { addBakuDays, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
 export type PackageBalanceRow = {
   procedureCode: string;
@@ -279,6 +280,9 @@ export function PackageAssignModal({
   }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [startOpen, setStartOpen] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [startHour, setStartHour] = useState("9");
   const [softWarn, setSoftWarn] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState<PackageBlockReason | null>(null);
   const [formLane, setFormLane] = useState<"package" | "extra" | null>(null);
@@ -814,24 +818,40 @@ export function PackageAssignModal({
     });
   }
 
+  function missReasonText(reason: string | undefined): string {
+    if (reason === "no_staff") return tPhysio("packageAssignMissNoStaff");
+    if (reason === "staff_busy") return tPhysio("packageAssignMissStaffBusy");
+    if (reason === "no_cabin" || reason === "cabin_busy") return tPhysio("packageAssignMissNoCabin");
+    if (reason === "day_full") return tPhysio("packageAssignMissDayFull");
+    if (reason === "rule") return tPhysio("packageAssignMissRule");
+    if (reason === "no_slot") return tPhysio("packageAssignMissNoSlot");
+    return tPhysio("packageAssignMissNoDay");
+  }
+
+  function defaultStartPoint(): { date: string; hour: string } {
+    const { hour } = bakuHourMinute(new Date());
+    let next = hour + 1;
+    let date = todayBakuYmd();
+    if (next >= 17) {
+      next = 9;
+      date = addBakuDays(date, 1);
+    }
+    if (next < 9) next = 9;
+    return { date, hour: String(next) };
+  }
+
   function placeMissText(
     misses: Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }> | undefined,
   ): string {
     if (!misses?.length) return "";
     return misses
       .map((miss) => {
-        const reason =
-          miss.reason === "no_staff"
-            ? tPhysio("packageAssignMissNoStaff")
-            : miss.reason === "no_cabin"
-              ? tPhysio("packageAssignMissNoCabin")
-              : miss.reason === "no_slot"
-                ? tPhysio("packageAssignMissNoSlot")
-                : tPhysio("packageAssignMissNoDay");
+        const reason = missReasonText(miss.reason);
         const who = miss.procedureName || miss.procedureCode;
         if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
         return tPhysio("packageAssignMiss", { date: miss.ymd || "—", reason });
       })
+      .filter((line, index, all) => all.indexOf(line) === index)
       .join("; ");
   }
 
@@ -852,7 +872,7 @@ export function PackageAssignModal({
     return tc("saveFailed");
   }
 
-  async function save() {
+  async function save(start?: { date: string; hour: string }) {
     let extras = extraDraft;
     let lines = draft;
     if (formLane === "extra" && formCode) {
@@ -906,6 +926,13 @@ export function PackageAssignModal({
       onClose();
       return;
     }
+    if (lines.length > 0 && !blockReason && !start) {
+      const point = defaultStartPoint();
+      setStartDate(point.date);
+      setStartHour(point.hour);
+      setStartOpen(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -950,6 +977,7 @@ export function PackageAssignModal({
               siteLaterality: d.siteLaterality ?? {},
               burnPoolCode: d.burnPoolCode ?? null,
             })),
+            ...(start ? { startOn: start.date, startHour: Number(start.hour) } : {}),
           }),
         });
         const d = await res.json();
@@ -997,6 +1025,7 @@ export function PackageAssignModal({
           return;
         }
       }
+      setStartOpen(false);
       setDraft([]);
       setExtraDraft([]);
       setPendingCancel(new Set());
@@ -1242,7 +1271,9 @@ export function PackageAssignModal({
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             disabled={!canSave}
-            onClick={() => void save()}
+            onClick={() =>
+              void save(startOpen ? { date: startDate, hour: startHour } : undefined)
+            }
           >
             {labels.save}
           </button>
@@ -1260,7 +1291,36 @@ export function PackageAssignModal({
           {labels.softWarnPrefix}: {softWarn}
         </p>
       ) : null}
-      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      {startOpen ? (
+        <div className="mb-3 shrink-0 rounded-lg border border-[#D5DADF] bg-[#F4F5F7] p-3">
+          <p className="mb-2 text-[13px] font-medium">{tPhysio("packageAssignStartTitle")}</p>
+          <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignStartHint")}</p>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[12px]">
+              <span className="mb-1 block">{tPhysio("packageAssignStartDate")}</span>
+              <input
+                type="date"
+                className={MODAL_INPUT_CLASS}
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+              />
+            </label>
+            <div className="w-28">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={tPhysio("packageAssignStartHour")}
+                value={startHour}
+                onChange={(value) => setStartHour(String(value ?? "9"))}
+                options={Array.from({ length: 8 }, (_, index) => {
+                  const hour = String(9 + index);
+                  return { value: hour, label: `${hour.padStart(2, "0")}:00` };
+                })}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <div className="grid h-full min-h-0 flex-1 grid-rows-1 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
           <h4 className="text-sm font-medium">{tPhysio("packageBalanceTitle")}</h4>
           {balances.filter((b) => b.assignable !== false).length === 0 ? (
@@ -1362,7 +1422,7 @@ export function PackageAssignModal({
           </div>
         </div>
 
-        <div className="relative flex min-h-0 flex-col">
+        <div className="relative flex h-full min-h-0 flex-col">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h4 className="text-sm font-medium">{tPhysio("assignedReceiptTitle")}</h4>
           </div>
@@ -1633,7 +1693,7 @@ export function PackageAssignModal({
             );
           })()}
           </div>
-          <p className="mb-6 border-t border-slate-200 pt-3 text-right text-lg font-semibold">
+          <p className="shrink-0 border-t border-slate-200 pt-3 text-right text-lg font-semibold">
             {tPhysio("amountDue")}: {(extraDraftTotal + extraPendingTotal).toFixed(2)} AZN
           </p>
           {formBurnPool || formCode ? (
