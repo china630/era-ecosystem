@@ -585,7 +585,7 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
   for (const cell of planned) {
     const queue = queues.get(cell.procedureCode);
     const order = queue?.[0];
-    if (!order?.procedureTypeId) continue;
+    if (!queue || !order?.procedureTypeId) continue;
     const day = snapshot.days.find((row) => row.ymd === cell.ymd);
     if (!(await procedureFitsGuestSex(cell.procedureCode, guestSex))) {
       missed.push({
