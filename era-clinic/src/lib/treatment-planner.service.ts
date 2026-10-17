@@ -348,6 +348,7 @@ export async function placeConfirmedProcedures(
     atomic?: boolean;
     scheduleBefore?: Date | null;
     startAt?: Date | null;
+    pinYmdByOrderId?: Record<string, string>;
   },
 ): Promise<PlaceConfirmedResult> {
   if (orderIds.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
@@ -437,6 +438,9 @@ export async function placeConfirmedProcedures(
   if (opts?.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())) {
     horizonEndYmd = bakuDateKey(opts.scheduleBefore);
   }
+  for (const pin of Object.values(opts?.pinYmdByOrderId ?? {})) {
+    if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
+  }
 
   const [rotationRules, compatibilityRules] = await Promise.all([
     prisma.procedureRotationRule.findMany({ where: { active: true } }),
@@ -507,6 +511,7 @@ export async function placeConfirmedProcedures(
       procedureTypeId: pt.id,
       resourceCodeList: [...codes].sort(),
       extendedEndHour: pt.extendedEndHour,
+      pinYmd: opts?.pinYmdByOrderId?.[order.id],
     });
   }
 
@@ -590,7 +595,7 @@ export async function placeConfirmedProcedures(
         scheduledAt: row.slotStart,
         endsAt: row.slotEnd,
         resourceId: row.resourceId,
-        confirmedAt: now,
+        confirmedAt: new Date(),
         confirmedByUserId: opts?.confirmedByUserId,
         prescribedByPractitionerId,
         accessCode,

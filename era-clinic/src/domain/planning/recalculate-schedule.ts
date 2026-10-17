@@ -263,6 +263,12 @@ function shiftForward(
 
 export async function applyScheduleRecalc(episodeId?: string): Promise<ScheduleMove[]> {
   const moves = await previewScheduleRecalc(episodeId);
+  const series = await prisma.procedureDaySeries.findMany({
+    where: { active: true },
+    include: { members: true },
+  });
+  const bathCodes = new Set(series.flatMap((row) => row.members.map((member) => member.procedureCode)));
+  const toPlace: Array<{ orderId: string; ymd: string; bath: boolean }> = [];
   for (const move of moves) {
     if (!move.toYmd) {
       await releaseProcedureOccupancy([move.orderId]);
@@ -272,13 +278,37 @@ export async function applyScheduleRecalc(episodeId?: string): Promise<ScheduleM
       });
       continue;
     }
+    await releaseProcedureOccupancy([move.orderId]);
     await prisma.procedureOrder.update({
       where: { id: move.orderId },
       data: {
+        status: "PROPOSED",
         scheduledAt: dayStartInstant(move.toYmd, 9),
         ...(move.reason === "manual_bath_moved" ? { note: "bath_manual" } : {}),
       },
     });
+    toPlace.push({
+      orderId: move.orderId,
+      ymd: move.toYmd,
+      bath: bathCodes.has(move.procedureCode),
+    });
+  }
+  const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+  const pinOf = (rows: typeof toPlace) =>
+    Object.fromEntries(rows.map((row) => [row.orderId, row.ymd]));
+  const baths = toPlace.filter((row) => row.bath);
+  const others = toPlace.filter((row) => !row.bath);
+  if (baths.length > 0) {
+    await placeConfirmedProcedures(
+      baths.map((row) => row.orderId),
+      { pinYmdByOrderId: pinOf(baths) },
+    );
+  }
+  if (others.length > 0) {
+    await placeConfirmedProcedures(
+      others.map((row) => row.orderId),
+      { pinYmdByOrderId: pinOf(others) },
+    );
   }
   return moves;
 }

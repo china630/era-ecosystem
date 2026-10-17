@@ -119,4 +119,74 @@ describe("scanProcedureSlots", () => {
       parseBakuDateTime("2026-10-16", "09:40").getTime(),
     );
   });
+
+  it("refuses a same-minute start even when rest after is zero", () => {
+    const second = { ...order(), id: "order-2", procedureCode: "SVC-BATH", procedureName: "Naftalan" };
+    const result = scanProcedureSlots({
+      orders: [second],
+      now,
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [
+        {
+          code: "SVC-PARA",
+          start: parseBakuDateTime("2026-10-16", "09:00"),
+          end: parseBakuDateTime("2026-10-16", "09:20"),
+          patientRestMinutes: 0,
+          inPackage: true,
+          countsForRest: true,
+        },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.planned[0]?.slotStart.getTime()).toBe(
+      parseBakuDateTime("2026-10-16", "09:20").getTime(),
+    );
+  });
+
+  it("keeps a pinned order on that day behind an existing guest slot", () => {
+    const bath = {
+      ...order(),
+      id: "bath-1",
+      procedureCode: "SVC-NAFTALAN",
+      procedureName: "Naftalan",
+      pinYmd: "2026-10-16",
+      patientRestMinutes: 40,
+    };
+    const result = scanProcedureSlots({
+      orders: [bath],
+      now,
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [
+        {
+          code: "SVC-PARA",
+          start: parseBakuDateTime("2026-10-16", "09:00"),
+          end: parseBakuDateTime("2026-10-16", "09:20"),
+          patientRestMinutes: 15,
+          inPackage: true,
+          countsForRest: true,
+        },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.failures).toEqual([]);
+    expect(result.planned[0]?.slotStart.getTime()).toBe(
+      parseBakuDateTime("2026-10-16", "09:35").getTime(),
+    );
+  });
 });

@@ -18,6 +18,7 @@ export function ClinicDayPanel() {
   const { auth } = useClinicAuth();
   const [dayYmd, setDayYmd] = useState("");
   const [closed, setClosed] = useState(true);
+  const [episodeId, setEpisodeId] = useState("");
   const [busy, setBusy] = useState(false);
   if (!auth?.isPlatformSuperAdmin) return null;
 
@@ -54,8 +55,30 @@ export function ClinicDayPanel() {
         return;
       }
       const count = (data.data?.moves ?? data.moves ?? []).length;
-      if (apply) showSuccess(t("recalcScheduleDone", { count }));
-      else showSuccess(t("recalcScheduleDone", { count }));
+      showSuccess(t("recalcScheduleDone", { count }));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reseat(apply: boolean) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/schedule-reseat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apply, episodeId: episodeId.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, t("reseatApply"));
+        return;
+      }
+      const payload = data.data ?? data;
+      const placed = (payload.placedIds ?? []).length;
+      const preview = (payload.preview ?? []).length;
+      const misses = (payload.misses ?? []).length;
+      showSuccess(t("reseatDone", { preview, placed, misses }));
     } finally {
       setBusy(false);
     }
@@ -84,6 +107,31 @@ export function ClinicDayPanel() {
         </button>
         <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void recalc(true)}>
           {t("recalcSchedule")}
+        </button>
+      </div>
+      <div className="flex flex-wrap items-end gap-2 pt-2">
+        <CatalogField
+          kind="FREE_TEXT"
+          label={t("reseatEpisodeId")}
+          value={episodeId}
+          onChange={(value) => setEpisodeId(typeof value === "string" ? value : "")}
+          options={[]}
+        />
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy || !episodeId.trim()}
+          onClick={() => void reseat(false)}
+        >
+          {t("reseatPreview")}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={busy || !episodeId.trim()}
+          onClick={() => void reseat(true)}
+        >
+          {t("reseatApply")}
         </button>
       </div>
     </section>
