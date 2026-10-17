@@ -1,6 +1,7 @@
 import {
   applyPhysicalResourcePool,
   displayPhysicalResourceCodes,
+  normalizeProcedureRequirements,
   physicalResourceCodesFromRequirements,
 } from "@/domain/procedure/procedure-physical-pool";
 
@@ -38,5 +39,32 @@ describe("procedure physical resource pool", () => {
       "CAB-KABINA-PARAFIN-2",
     ]);
     expect(next.filter((r) => r.role === "STAFF")).toHaveLength(1);
+  });
+
+  it("keeps one SOFT STAFF and drops empty EQUIPMENT", () => {
+    const next = normalizeProcedureRequirements([
+      { role: "LOCATION", resourceCode: "WO-ROOM-29" },
+      { role: "EQUIPMENT", resourceCode: "" },
+      { role: "STAFF", staffMode: "HARD" },
+      { role: "STAFF", staffMode: "SOFT" },
+    ]);
+    expect(next.filter((r) => r.role === "EQUIPMENT")).toHaveLength(0);
+    expect(next.filter((r) => r.role === "STAFF")).toEqual([
+      { role: "STAFF", staffMode: "SOFT" },
+    ]);
+  });
+
+  it("does not invent an empty EQUIPMENT row when the pool is empty", () => {
+    const next = applyPhysicalResourcePool(
+      [
+        { role: "STAFF", staffMode: "SOFT" },
+        { role: "STAFF", staffMode: "HARD" },
+      ],
+      ["  ", ""],
+      () => "EQUIPMENT",
+    );
+    expect(next.filter((r) => r.role === "LOCATION" || r.role === "EQUIPMENT")).toEqual([]);
+    expect(next.filter((r) => r.role === "STAFF")).toHaveLength(1);
+    expect(next[0]?.staffMode).toBe("SOFT");
   });
 });

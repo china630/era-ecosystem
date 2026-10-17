@@ -469,6 +469,7 @@ export async function saveBathCalendar(input: {
 export type BathSeatMiss = {
   ymd: string;
   procedureCode: string;
+  procedureName?: string;
   reason: "no_cabin" | "cabin_sex" | "no_staff" | "no_day" | "no_mode";
 };
 
@@ -534,7 +535,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
     const mode = bathModeOf(group[0]?.physioFields);
     if (!mode) {
       for (const order of group) {
-        missed.push({ ymd: "", procedureCode: order.procedureCode, reason: "no_mode" });
+        missed.push({
+          ymd: bakuDateKey(order.scheduledAt),
+          procedureCode: order.procedureCode,
+          procedureName: order.procedureName,
+          reason: "no_mode",
+        });
       }
       continue;
     }
@@ -577,7 +583,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
       if (!order?.procedureTypeId) break;
       const day = snapshot.days.find((row) => row.ymd === cell.ymd);
       if (!(await procedureFitsGuestSex(procedureCode, guestSex))) {
-        missed.push({ ymd: cell.ymd, procedureCode, reason: "cabin_sex" });
+        missed.push({
+          ymd: cell.ymd,
+          procedureCode,
+          procedureName: order.procedureName,
+          reason: "cabin_sex",
+        });
         continue;
       }
       const slot = await findCabinSlotOnDay({
@@ -588,7 +599,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
         guestSex,
       });
       if (!slot) {
-        missed.push({ ymd: cell.ymd, procedureCode, reason: "no_cabin" });
+        missed.push({
+          ymd: cell.ymd,
+          procedureCode,
+          procedureName: order.procedureName,
+          reason: "no_cabin",
+        });
         continue;
       }
       const staffMode = await resolveStaffModeForProcedureType(order.procedureTypeId);
@@ -600,7 +616,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
         skillWhenUnposted: true,
       });
       if (!staff) {
-        missed.push({ ymd: cell.ymd, procedureCode, reason: "no_staff" });
+        missed.push({
+          ymd: cell.ymd,
+          procedureCode,
+          procedureName: order.procedureName,
+          reason: "no_staff",
+        });
         continue;
       }
       queue.shift();
@@ -621,7 +642,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
       placedIds.push(order.id);
     }
     for (const order of queue) {
-      missed.push({ ymd: "", procedureCode: order.procedureCode, reason: "no_day" });
+      missed.push({
+        ymd: bakuDateKey(order.scheduledAt),
+        procedureCode: order.procedureCode,
+        procedureName: order.procedureName,
+        reason: "no_day",
+      });
     }
   }
 

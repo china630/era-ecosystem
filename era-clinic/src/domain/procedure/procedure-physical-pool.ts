@@ -30,46 +30,43 @@ export function displayPhysicalResourceCodes(rows: PhysicalRequirementLike[]): s
   return codes.length > 0 ? codes.join(", ") : "—";
 }
 
+/** One STAFF row (SOFT if any), drop LOCATION/EQUIPMENT without a resource code. */
+export function normalizeProcedureRequirements<T extends PhysicalRequirementLike>(rows: T[]): T[] {
+  const physical = rows.filter(
+    (row) =>
+      (row.role === "LOCATION" || row.role === "EQUIPMENT") && Boolean(row.resourceCode?.trim()),
+  );
+  const staffRows = rows.filter((row) => row.role === "STAFF");
+  const preferred = staffRows.find((row) => row.staffMode === "SOFT") ?? staffRows[0];
+  const staff = preferred
+    ? [preferred]
+    : ([
+        {
+          role: "STAFF",
+          staffMode: "SOFT",
+          quantity: 1,
+          required: true,
+        } as T,
+      ]);
+  return [...physical, ...staff];
+}
+
 export function applyPhysicalResourcePool<T extends PhysicalRequirementLike>(
   rows: T[],
   codes: string[],
   kindOf: (code: string) => "ROOM" | "EQUIPMENT" | undefined,
 ): T[] {
-  const staff = rows.filter((r) => r.role === "STAFF");
   const unique = [...new Set(codes.map((c) => c.trim()).filter(Boolean))];
-  const physical: T[] = [];
-  if (unique.length === 0) {
-    physical.push({
-      role: "EQUIPMENT",
-      resourceKind: "EQUIPMENT",
-      resourceCode: null,
+  const physical: T[] = unique.map((code) => {
+    const kind = kindOf(code) ?? "ROOM";
+    return {
+      role: kind === "ROOM" ? "LOCATION" : "EQUIPMENT",
+      resourceKind: kind,
+      resourceCode: code,
       quantity: 1,
       staffMode: "HARD",
       required: true,
-    } as T);
-  } else {
-    for (const code of unique) {
-      const kind = kindOf(code) ?? "ROOM";
-      physical.push({
-        role: kind === "ROOM" ? "LOCATION" : "EQUIPMENT",
-        resourceKind: kind,
-        resourceCode: code,
-        quantity: 1,
-        staffMode: "HARD",
-        required: true,
-      } as T);
-    }
-  }
-  const staffOut =
-    staff.length > 0
-      ? staff
-      : ([
-          {
-            role: "STAFF",
-            staffMode: "SOFT",
-            quantity: 1,
-            required: true,
-          },
-        ] as T[]);
-  return [...physical, ...staffOut];
+    } as T;
+  });
+  return normalizeProcedureRequirements([...physical, ...rows.filter((row) => row.role === "STAFF")]);
 }
