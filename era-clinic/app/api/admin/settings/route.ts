@@ -41,6 +41,10 @@ const patchSchema = z.object({
       }),
     )
     .optional(),
+  defaultBathMode: z.string().min(1).max(16).optional(),
+  closedDaySpendsOwedRest: z.boolean().optional(),
+  closedDayResetsOpenStreak: z.boolean().optional(),
+  weeklyNaftalanCap: z.number().int().min(0).max(14).optional(),
   defaultProcedureGapMinutes: z.number().int().min(0).max(240).optional(),
   peakModeEnabled: z.boolean().optional(),
   peakDayEndHour: z.number().int().min(1).max(24).optional(),

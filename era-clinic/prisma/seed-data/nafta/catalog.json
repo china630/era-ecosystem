@@ -656,14 +656,6 @@
     "nameEn": "Ultraphonophoresis"
   },
   {
-    "code": "SVC-SOLYUKS",
-    "nameAz": "Solyuks",
-    "nameRu": "Солюкс",
-    "price": null,
-    "sheet": "Пакет услуг",
-    "nameEn": "Sollux lamp therapy"
-  },
-  {
     "code": "SVC-AMPLIPULS",
     "nameAz": "Amplipuls",
     "nameRu": "Амплипульс",

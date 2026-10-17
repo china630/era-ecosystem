@@ -1,0 +1,23 @@
+# ADR: clinic bath week rhythm
+
+## Status
+
+Accepted (2026-10-17).
+
+## Context
+
+Nafta wants five naftalan sessions in a Monday–Saturday week, rest no later than after three working baths, and iodine-bromine / hydromassage only on a day without naftalan. The package modal mini-calendar required a manual mode and blocked Saxla.
+
+## Decision
+
+- Naftalan bath, application, and 4-chamber stay one day-series family.
+- Iodine and hydromassage stay in the same package block (`SVC-VANNA`) and use `fillsRestDays`.
+- Saxla plans all series together. Missing `dayBlock` uses tenant `defaultBathMode` (default `3`).
+- A closed clinic day (`working: false`, including Sunday or a swapped weekend) spends an owed rest when `closedDaySpendsOwedRest` is on, otherwise resets an unfinished streak when `closedDayResetsOpenStreak` is on.
+- `weeklyNaftalanCap` (default 5) limits the naftalan family per Baku Monday–Sunday week. 0 turns the cap off.
+- The package-assign mini calendar is removed. Point edits stay on the course schedule.
+
+## Consequences
+
+- New Saxla runs use the new rest rule. Already seated courses are not rewritten until recalc.
+- Contraindication naftalan → other physio is still out of scope.

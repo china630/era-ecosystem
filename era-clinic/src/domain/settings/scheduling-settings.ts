@@ -4,6 +4,12 @@ import type {
 } from "@prisma/client";
 import { DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP, clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import { getDefaultTenant } from "@/domain/settings/settings.service";
+import {
+  parseBathDayModes,
+  resolveBathPlanPolicy,
+  resolveDefaultBathMode,
+  type BathPlanPolicy,
+} from "@/domain/planning/bath-calendar";
 
 export type SchedulingSettings = {
   programSchedulingMode: ProgramSchedulingMode;
@@ -23,6 +29,10 @@ export type SchedulingSettings = {
   peakDayEndHour: number;
   dailyPackageProcedureCap: number;
   bathDayModesJson: string | null;
+  defaultBathMode: string;
+  closedDaySpendsOwedRest: boolean;
+  closedDayResetsOpenStreak: boolean;
+  weeklyNaftalanCap: number;
 };
 
 export type TenantWorkHours = Pick<
@@ -55,6 +65,10 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   peakDayEndHour: 22,
   dailyPackageProcedureCap: DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP,
   bathDayModesJson: null,
+  defaultBathMode: "3",
+  closedDaySpendsOwedRest: true,
+  closedDayResetsOpenStreak: true,
+  weeklyNaftalanCap: 5,
 };
 
 export const DEFAULT_WORK_HOURS: TenantWorkHours = {
@@ -93,6 +107,11 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     dailyPackageProcedureCap: clampDailyPackageProcedureCap(tenant.dailyPackageProcedureCap),
     bathDayModesJson: tenant.bathDayModesJson ?? null,
+    defaultBathMode: tenant.defaultBathMode?.trim() || "3",
+    closedDaySpendsOwedRest: tenant.closedDaySpendsOwedRest !== false,
+    closedDayResetsOpenStreak: tenant.closedDayResetsOpenStreak !== false,
+    weeklyNaftalanCap:
+      tenant.weeklyNaftalanCap == null ? 5 : Math.min(14, Math.max(0, tenant.weeklyNaftalanCap)),
     ...workHoursFromTenant(tenant),
   };
 }
@@ -113,6 +132,18 @@ export function resolveEffectiveDayEndHour(
   ].filter((v): v is number => typeof v === "number" && v > 0);
   if (overrides.length === 0) return hours.dayEndHour;
   return Math.max(hours.dayEndHour, ...overrides);
+}
+
+export function bathPolicyFromSettings(settings: SchedulingSettings): BathPlanPolicy {
+  return resolveBathPlanPolicy({
+    closedDaySpendsOwedRest: settings.closedDaySpendsOwedRest,
+    closedDayResetsOpenStreak: settings.closedDayResetsOpenStreak,
+    weeklyNaftalanCap: settings.weeklyNaftalanCap,
+  });
+}
+
+export function defaultBathModeFromSettings(settings: SchedulingSettings): string {
+  return resolveDefaultBathMode(settings.defaultBathMode, parseBathDayModes(settings.bathDayModesJson));
 }
 
 export async function getTenantWorkHours(): Promise<TenantWorkHours> {

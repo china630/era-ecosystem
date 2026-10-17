@@ -552,6 +552,40 @@ export default function SanatoriumPage() {
     return origin;
   }
 
+  function confirmMissText(
+    misses:
+      | Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }>
+      | undefined,
+  ): string {
+    if (!misses?.length) return "";
+    return misses
+      .map((miss) => {
+        const reason =
+          miss.reason === "no_staff"
+            ? tCard("packageAssignMissNoStaff")
+            : miss.reason === "staff_busy"
+              ? tCard("packageAssignMissStaffBusy")
+              : miss.reason === "cabin_sex"
+                ? tCard("packageAssignMissCabinSex")
+                : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
+                  ? tCard("packageAssignMissNoCabin")
+                  : miss.reason === "day_full"
+                    ? tCard("packageAssignMissDayFull")
+                    : miss.reason === "rule"
+                      ? tCard("packageAssignMissRule")
+                      : miss.reason === "no_slot"
+                        ? tCard("packageAssignMissNoSlot")
+                        : miss.reason === "no_mode"
+                          ? tCard("packageAssignMissNoBathMode")
+                          : tCard("packageAssignMissNoDay");
+        const who = miss.procedureName || miss.procedureCode;
+        if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
+        return tCard("packageAssignMiss", { date: miss.ymd || "—", reason });
+      })
+      .filter((line, index, all) => all.indexOf(line) === index)
+      .join("; ");
+  }
+
   async function confirmProposed(orderIds: string[]) {
     if (orderIds.length === 0) return;
     setBusy(true);
@@ -561,31 +595,39 @@ export default function SanatoriumPage() {
       body: JSON.stringify({ orderIds }),
     });
     setBusy(false);
+    const payload = (await res.json().catch(() => ({}))) as {
+      code?: string;
+      error?: string;
+      softWarn?: string;
+      misses?: Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }>;
+    };
+    const missText = confirmMissText(payload.misses);
     if (!res.ok) {
-      const failed = (await res.json().catch(() => ({}))) as { code?: string; error?: string };
-      if (failed.code === "CABIN_SEX") {
+      if (missText) {
+        showApiError({ error: missText }, t("failed"));
+      } else if (payload.code === "CABIN_SEX") {
         showApiError({ error: tCard("packageAssignMissCabinSex") }, t("failed"));
-      } else if (failed.code === "NO_CABIN") {
+      } else if (payload.code === "NO_CABIN") {
         showApiError(
-          { error: tCard("packageAssignNoCabin", { names: failed.error ?? "" }) },
+          { error: tCard("packageAssignNoCabin", { names: payload.error ?? "" }) },
           t("failed"),
         );
       } else {
-        showApiError(failed, t("failed"));
+        showApiError(payload, t("failed"));
       }
       return;
     }
-    const data = (await res.json().catch(() => ({}))) as {
-      softWarn?: string;
-    };
-    showSuccess(
-      data.softWarn
-        ? t("day1SoftWarn", {
-            defaultValue:
-              "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
-          })
-        : t("planConfirmed", { defaultValue: "Plan confirmed" }),
-    );
+    if (missText) showApiError({ error: missText });
+    else {
+      showSuccess(
+        payload.softWarn
+          ? t("day1SoftWarn", {
+              defaultValue:
+                "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
+            })
+          : t("planConfirmed", { defaultValue: "Plan confirmed" }),
+      );
+    }
     setSelectedProposed(new Set());
     const patientRefId = selected?.patientRef?.id;
     if (patientRefId) await loadProposed(patientRefId);

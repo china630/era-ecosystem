@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { bakuDateKey } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays } from "@/domain/planning/clinic-day";
 import { parseBathDayModes, planBathSeries, type KeptCell } from "@/domain/planning/bath-calendar";
-import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import {
+  bathPolicyFromSettings,
+  defaultBathModeFromSettings,
+  getSchedulingSettings,
+} from "@/domain/settings/scheduling-settings";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 
 export type ScheduleMove = {
@@ -99,12 +103,22 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
       list.push(order);
       byProcedure.set(order.procedureCode, list);
     }
+    const kept: KeptCell[] = [];
+    const seriesInputs: Array<{
+      seriesCode: string;
+      procedureCode: string;
+      mark: string;
+      mode: string;
+      qty: number;
+      fillsRestDays: boolean;
+    }> = [];
+    const automaticByCode = new Map<string, typeof bathOrders>();
     for (const [procedureCode, rows] of byProcedure) {
       const info = memberOf.get(procedureCode);
       if (!info) continue;
       const sample = rows.find((row) => row.physioFields && typeof row.physioFields === "object");
       const fields = (sample?.physioFields ?? {}) as Record<string, unknown>;
-      const kept: KeptCell[] = [];
+      const automatic: typeof bathOrders = [];
       for (const row of rows) {
         const ymd = bakuDateKey(row.scheduledAt);
         const day = days.find((item) => item.ymd === ymd);
@@ -135,43 +149,48 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
           }
           continue;
         }
-        if (manual && day?.working) kept.push({ ymd, procedureCode, locked: true });
+        if (manual && day?.working) {
+          kept.push({ ymd, procedureCode, locked: true });
+          continue;
+        }
+        automatic.push(row);
       }
-      const mode = asMode(fields.dayBlock);
-      if (!mode) continue;
+      automaticByCode.set(procedureCode, automatic);
+      seriesInputs.push({
+        seriesCode: info.series.code,
+        procedureCode,
+        mark: info.member.shortMark,
+        mode: asMode(fields.dayBlock) ?? defaultBathModeFromSettings(settings),
+        qty: kept.filter((cell) => cell.procedureCode === procedureCode).length + automatic.length,
+        fillsRestDays: info.series.fillsRestDays,
+      });
+    }
+    if (seriesInputs.length > 0) {
       const planned = planBathSeries({
         days: days.filter((day) => day.ymd > today),
-        series: [
-          {
-            seriesCode: info.series.code,
-            procedureCode,
-            mark: info.member.shortMark,
-            mode,
-            qty: rows.filter((row) => !LOCKED.has(row.status) && bakuDateKey(row.scheduledAt) > today).length,
-            fillsRestDays: info.series.fillsRestDays,
-          },
-        ],
+        series: seriesInputs,
         kept,
         modes: bathModes,
         notBeforeYmd: today,
+        policy: bathPolicyFromSettings(settings),
       });
-      const plannedDays = new Set(planned.filter((cell) => !cell.locked).map((cell) => cell.ymd));
-      const automatic = rows.filter((row) => {
-        const ymd = bakuDateKey(row.scheduledAt);
-        return ymd > today && !LOCKED.has(row.status) && row.note !== "bath_manual";
-      });
-      automatic.forEach((row, index) => {
-        const target = [...plannedDays][index] ?? null;
-        const fromYmd = bakuDateKey(row.scheduledAt);
-        if (target === fromYmd) return;
-        moves.push({
-          orderId: row.id,
-          procedureCode,
-          fromYmd,
-          toYmd: target,
-          reason: target ? "bath_relaid" : "bath_quota",
+      for (const [procedureCode, automatic] of automaticByCode) {
+        const plannedDays = planned
+          .filter((cell) => cell.procedureCode === procedureCode && !cell.locked)
+          .map((cell) => cell.ymd);
+        automatic.forEach((row, index) => {
+          const target = plannedDays[index] ?? null;
+          const fromYmd = bakuDateKey(row.scheduledAt);
+          if (target === fromYmd) return;
+          moves.push({
+            orderId: row.id,
+            procedureCode,
+            fromYmd,
+            toYmd: target,
+            reason: target ? "bath_relaid" : "bath_quota",
+          });
         });
-      });
+      }
     }
   }
   return moves;
