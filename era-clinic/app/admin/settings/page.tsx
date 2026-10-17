@@ -55,6 +55,10 @@ type WorkHours = {
   saturdayEndHour: number;
   shortenedDayEndHour: number;
   bathDayModes: BathModeRow[];
+  defaultBathMode: string;
+  closedDaySpendsOwedRest: boolean;
+  closedDayResetsOpenStreak: boolean;
+  weeklyNaftalanCap: number;
 };
 
 type SchedulingDefaults = {
@@ -105,6 +109,10 @@ const WORK_DEFAULTS: WorkHours = {
     { code: "5", baths: 5, rest: 1 },
     { code: "ALTERNATING", baths: 1, rest: 1 },
   ],
+  defaultBathMode: "3",
+  closedDaySpendsOwedRest: true,
+  closedDayResetsOpenStreak: true,
+  weeklyNaftalanCap: 5,
 };
 
 const SCHED_DEFAULTS: SchedulingDefaults = {
@@ -178,6 +186,11 @@ export default function ClinicAdminSettingsPage() {
           saturdayEndHour: row.saturdayEndHour ?? WORK_DEFAULTS.saturdayEndHour,
           shortenedDayEndHour: row.shortenedDayEndHour ?? WORK_DEFAULTS.shortenedDayEndHour,
           bathDayModes: modesFrom(row.bathDayModes),
+          defaultBathMode: String(row.defaultBathMode ?? WORK_DEFAULTS.defaultBathMode).toUpperCase(),
+          closedDaySpendsOwedRest: row.closedDaySpendsOwedRest !== false,
+          closedDayResetsOpenStreak: row.closedDayResetsOpenStreak !== false,
+          weeklyNaftalanCap:
+            typeof row.weeklyNaftalanCap === "number" ? row.weeklyNaftalanCap : WORK_DEFAULTS.weeklyNaftalanCap,
         };
         setWorkHours(hours);
         setDraftWork(hours);
@@ -269,6 +282,11 @@ export default function ClinicAdminSettingsPage() {
         saturdayEndHour: row.saturdayEndHour ?? draftWork.saturdayEndHour,
         shortenedDayEndHour: row.shortenedDayEndHour ?? draftWork.shortenedDayEndHour,
         bathDayModes: modesFrom(row.bathDayModes),
+        defaultBathMode: String(row.defaultBathMode ?? draftWork.defaultBathMode).toUpperCase(),
+        closedDaySpendsOwedRest: row.closedDaySpendsOwedRest !== false,
+        closedDayResetsOpenStreak: row.closedDayResetsOpenStreak !== false,
+        weeklyNaftalanCap:
+          typeof row.weeklyNaftalanCap === "number" ? row.weeklyNaftalanCap : draftWork.weeklyNaftalanCap,
       });
       setSchedDefaults({
         schedulingSlotMinutes:
@@ -331,7 +349,7 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("clinicName")}</td>
             <td className="p-3">{clinicName}</td>
-            <td className="p-3 text-right" rowSpan={13}>
+            <td className="p-3 text-right" rowSpan={17}>
               <button
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
@@ -384,6 +402,22 @@ export default function ClinicAdminSettingsPage() {
                 .map((row) => `${row.code}: ${row.baths}+${row.rest}`)
                 .join(", ")}
             </td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("defaultBathMode")}</td>
+            <td className="p-3">{workHours.defaultBathMode}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("closedDaySpendsOwedRest")}</td>
+            <td className="p-3">{workHours.closedDaySpendsOwedRest ? t("bathFlagOn") : t("bathFlagOff")}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("closedDayResetsOpenStreak")}</td>
+            <td className="p-3">{workHours.closedDayResetsOpenStreak ? t("bathFlagOn") : t("bathFlagOff")}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("weeklyNaftalanCap")}</td>
+            <td className="p-3">{workHours.weeklyNaftalanCap}</td>
           </tr>
           <tr className="border-b">
             <td className="p-3 font-medium">{t("closedWeekdays")}</td>
@@ -594,6 +628,63 @@ export default function ClinicAdminSettingsPage() {
               >
                 {t("addBathMode")}
               </button>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("defaultBathMode")}
+                value={draftWork.defaultBathMode}
+                onChange={(next) =>
+                  setDraftWork((prev) => ({
+                    ...prev,
+                    defaultBathMode: String(Array.isArray(next) ? next[0] ?? "" : next).toUpperCase(),
+                  }))
+                }
+                options={draftWork.bathDayModes.map((row) => ({
+                  value: row.code,
+                  label: `${row.code} (${row.baths}+${row.rest})`,
+                }))}
+              />
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={draftWork.closedDaySpendsOwedRest}
+                  onChange={(e) =>
+                    setDraftWork((prev) => ({
+                      ...prev,
+                      closedDaySpendsOwedRest: e.target.checked,
+                    }))
+                  }
+                />
+                {t("closedDaySpendsOwedRest")}
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={draftWork.closedDayResetsOpenStreak}
+                  onChange={(e) =>
+                    setDraftWork((prev) => ({
+                      ...prev,
+                      closedDayResetsOpenStreak: e.target.checked,
+                    }))
+                  }
+                />
+                {t("closedDayResetsOpenStreak")}
+              </label>
+              <Field
+                label={t("weeklyNaftalanCap")}
+                preset="count"
+                type="number"
+                min={0}
+                max={14}
+                value={draftWork.weeklyNaftalanCap}
+                onChange={(e) =>
+                  setDraftWork((prev) => ({
+                    ...prev,
+                    weeklyNaftalanCap: Number(e.target.value) || 0,
+                  }))
+                }
+              />
             </div>
           </fieldset>
           {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}

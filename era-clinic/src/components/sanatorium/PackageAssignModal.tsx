@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -24,7 +24,6 @@ import {
 import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
-import { BathCalendarPanel } from "@/components/sanatorium/BathCalendarPanel";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
@@ -261,26 +260,7 @@ export function PackageAssignModal({
   const [formBurnPool, setFormBurnPool] = useState<string | null>(null);
   const [formQty, setFormQty] = useState(1);
   const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
-  const [naftaDayBlock, setNaftaDayBlock] = useState("");
-  const [bathNeedsWrite, setBathNeedsWrite] = useState(false);
-  const bathNeedsWriteRef = useRef(false);
   const [sexBlockedCodes, setSexBlockedCodes] = useState<Set<string>>(new Set());
-  const setDayBlock = useCallback((mode: string) => {
-    const block = /^[0-9A-Z_]{1,16}$/.test(mode) ? mode : null;
-    setNaftaDayBlock(block ?? "");
-    setFormPhysio((prev) => ({
-      ...prev,
-      physioFields: { ...prev.physioFields, dayBlock: block },
-    }));
-    const paint = <T extends { procedureCode: string; physioFields?: Record<string, unknown> | null }>(
-      row: T,
-    ): T =>
-      /NAFTALAN|VANN|BATH/i.test(row.procedureCode)
-        ? { ...row, physioFields: { ...(row.physioFields ?? {}), dayBlock: block } }
-        : row;
-    setDraft((prev) => prev.map(paint));
-    setExtraDraft((prev) => prev.map(paint));
-  }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startOpen, setStartOpen] = useState(false);
@@ -375,11 +355,6 @@ export function PackageAssignModal({
     }
     else if (payload.softWarnDay1) setSoftWarn(String(payload.softWarnDay1));
   }, [episodeId, locale, tPhysio]);
-
-  useEffect(() => {
-    if (bathNeedsWriteRef.current && !bathNeedsWrite) setError(null);
-    bathNeedsWriteRef.current = bathNeedsWrite;
-  }, [bathNeedsWrite]);
 
   useEffect(() => {
     if (!open) return;
@@ -850,12 +825,10 @@ export function PackageAssignModal({
   }
 
   function bathFields(
-    code: string,
+    _code: string,
     fields: Record<string, unknown> | null | undefined,
   ): Record<string, unknown> | null {
-    const block = /^[0-9A-Z_]{1,16}$/.test(naftaDayBlock) ? naftaDayBlock : null;
-    if (!block || !/NAFTALAN|VANN|BATH/i.test(code)) return fields ?? null;
-    return { ...(fields ?? {}), dayBlock: block };
+    return fields ?? null;
   }
 
   function missReasonText(reason: string | undefined): string {
@@ -916,14 +889,6 @@ export function PackageAssignModal({
   }
 
   async function save(start?: { date: string; hour: string }) {
-    if (bathNeedsWrite) {
-      showApiError({
-        error: /^[0-9A-Z_]{1,16}$/.test(naftaDayBlock)
-          ? tPhysio("packageAssignNeedBathPlan")
-          : tPhysio("packageAssignMissNoBathMode"),
-      });
-      return;
-    }
     let extras = extraDraft;
     let lines = draft;
     if (formLane === "extra" && formCode) {
@@ -1300,8 +1265,6 @@ export function PackageAssignModal({
     pushPaid(code, name, 1, { paramsLabel });
   }
 
-  let naftaSeat: Array<{ procedureCode: string; qty: number }> = [];
-
   const shell = (
     <ModalShell
       open={open}
@@ -1599,13 +1562,6 @@ export function PackageAssignModal({
               if (lanes.some((lane) => lane.code === row.procedureCode)) continue;
               pushLane(row.procedureCode, row.procedureName, "", [], undefined, undefined, 0, false);
             }
-            naftaSeat = lanes
-              .filter((lane) => /NAFTALAN|VANN|BATH/i.test(lane.code))
-              .map((lane) => ({
-                procedureCode: lane.code,
-                qty: lane.pkgQty + lane.extraQty + lane.paidQty,
-              }))
-              .filter((row) => row.qty > 0);
             if (lanes.length === 0) {
               return <p className={TEXT_MUTED_CLASS}>{labels.emptyRight}</p>;
             }
@@ -1739,17 +1695,6 @@ export function PackageAssignModal({
             );
           })()}
           </div>
-          {naftaSeat.length > 0 ? (
-            <div className="mt-2 max-h-[46%] shrink-0 overflow-y-auto">
-              <BathCalendarPanel
-                episodeId={episodeId}
-                members={naftaSeat}
-                dayBlock={naftaDayBlock}
-                onDayBlockChange={setDayBlock}
-                onNeedsWriteChange={setBathNeedsWrite}
-              />
-            </div>
-          ) : null}
           <p className="shrink-0 border-t border-slate-200 pt-3 text-right text-lg font-semibold">
             {tPhysio("amountDue")}: {(extraDraftTotal + extraPendingTotal).toFixed(2)} AZN
           </p>

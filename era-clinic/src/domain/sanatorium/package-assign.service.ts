@@ -13,7 +13,10 @@ import {
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
-import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import {
+  defaultBathModeFromSettings,
+  getSchedulingSettings,
+} from "@/domain/settings/scheduling-settings";
 import {
   resolveMembersByBlock,
   parseEntitlementSnapshot,
@@ -881,7 +884,7 @@ export type AssignLineInput = {
   burnPoolCode?: string | null;
 };
 
-/** Drop a failed save: none of the new sessions stay on the schedule. */
+/** Drop new rows that did not seat. Already seated siblings in this save stay. */
 async function abandonCreatedPackageOrders(ids: string[]) {
   if (ids.length === 0) return;
   await prisma.procedureOrderSite.deleteMany({ where: { procedureOrderId: { in: ids } } });
@@ -1033,9 +1036,9 @@ export async function assignPackageProcedures(
     resolved.push({ ...line, procedureCode: skuCode, quotaCode });
   }
 
-  const packageCap = clampDailyPackageProcedureCap(
-    (await getSchedulingSettings()).dailyPackageProcedureCap,
-  );
+  const settings = await getSchedulingSettings();
+  const defaultBathMode = defaultBathModeFromSettings(settings);
+  const packageCap = clampDailyPackageProcedureCap(settings.dailyPackageProcedureCap);
   const distinctCodes = new Set(resolved.map((l) => l.procedureCode)).size;
   let softWarn =
     distinctCodes > packageCap
@@ -1077,7 +1080,13 @@ export async function assignPackageProcedures(
           bodyPart: line.bodyPart ?? pt.bodyPart ?? undefined,
           status: "PROPOSED",
           note: line.note ?? undefined,
-          physioFields: line.physioFields ?? undefined,
+          physioFields: {
+            ...(line.physioFields ?? {}),
+            dayBlock:
+              typeof line.physioFields?.dayBlock === "string" && line.physioFields.dayBlock.trim()
+                ? String(line.physioFields.dayBlock).trim().toUpperCase()
+                : defaultBathMode,
+          },
           assignBatchId: batchId,
           inPackage: true,
           packageQuotaCode: line.quotaCode,
@@ -1107,7 +1116,6 @@ export async function assignPackageProcedures(
   const genericIds = createdIds.filter((id) => !bathSeat.handledIds.includes(id));
   const placement = await placeConfirmedProcedures(genericIds, {
     confirmedByUserId: opts?.confirmedByUserId,
-    atomic: true,
     scheduleBefore: instance.endsOn,
     startAt: opts?.startAt,
   });
@@ -1115,19 +1123,21 @@ export async function assignPackageProcedures(
     ...bathSeat.missed.map((miss) => ({
       ymd: miss.ymd,
       procedureCode: miss.procedureCode,
-      procedureName: nameByCode.get(miss.procedureCode) || miss.procedureCode,
+      procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
       reason: miss.reason,
     })),
     ...placement.failures.map((row) => ({
-      ymd: "",
+      ymd: row.ymd ?? "",
       procedureCode: row.procedureCode,
       procedureName: row.procedureName,
       reason: row.reason,
     })),
   ];
-  const placed = placement.placed + bathSeat.placedIds.length;
-  if (misses.length > 0 || placed !== createdIds.length) {
-    await abandonCreatedPackageOrders(createdIds);
+  const kept = new Set([...bathSeat.placedIds, ...placement.placedIds]);
+  const leftover = createdIds.filter((id) => !kept.has(id));
+  if (leftover.length > 0) await abandonCreatedPackageOrders(leftover);
+  const placed = kept.size;
+  if (placed < 1 && (misses.length > 0 || leftover.length > 0)) {
     const onlyMissingCabin =
       bathSeat.missed.length === 0 &&
       placement.failures.length > 0 &&
@@ -1158,8 +1168,8 @@ export async function assignPackageProcedures(
   return {
     placed,
     softWarn,
-    orderIds: createdIds,
-    ...(bathSeat.missed.length > 0 ? { misses: bathSeat.missed } : {}),
+    orderIds: createdIds.filter((id) => kept.has(id)),
+    ...(misses.length > 0 ? { misses } : {}),
   };
 }
 
@@ -1375,7 +1385,12 @@ export async function replacePackageProcedures(
 export async function day1AutoAssign(
   episodeId: string,
   opts?: { confirmedByUserId?: string },
-): Promise<{ placed: number; softWarn: string | null; orderIds: string[] }> {
+): Promise<{
+  placed: number;
+  softWarn: string | null;
+  orderIds: string[];
+  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+}> {
   const packageCap = clampDailyPackageProcedureCap(
     (await getSchedulingSettings()).dailyPackageProcedureCap,
   );

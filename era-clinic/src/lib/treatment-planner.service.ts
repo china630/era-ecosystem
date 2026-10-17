@@ -335,6 +335,7 @@ export async function planProgramFifo(
  */
 export type PlaceConfirmedResult = {
   placed: number;
+  placedIds: string[];
   /** Procedure names whose type has no resolvable LOCATION/EQUIPMENT resource. */
   missingCabinNames: string[];
   failures: PlacementFailure[];
@@ -349,7 +350,7 @@ export async function placeConfirmedProcedures(
     startAt?: Date | null;
   },
 ): Promise<PlaceConfirmedResult> {
-  if (orderIds.length === 0) return { placed: 0, missingCabinNames: [], failures: [] };
+  if (orderIds.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
 
   const settings = await getSchedulingSettings();
   const { schedulingSlotMinutes: slotMinutes } = settings;
@@ -361,7 +362,7 @@ export async function placeConfirmedProcedures(
     include: { procedureType: { include: { requirements: true } } },
     orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
   });
-  if (orders.length === 0) return { placed: 0, missingCabinNames: [], failures: [] };
+  if (orders.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
 
   const patient = await prisma.patientRef.findUnique({
     where: { id: orders[0].patientRefId },
@@ -567,7 +568,7 @@ export async function placeConfirmedProcedures(
     ...new Set(failures.filter((row) => row.reason === "no_cabin").map((row) => row.procedureName)),
   ];
   if (opts?.atomic && failures.length > 0) {
-    return { placed: 0, missingCabinNames, failures };
+    return { placed: 0, placedIds: [], missingCabinNames, failures };
   }
 
   const prescribedByPractitionerId = opts?.confirmedByUserId
@@ -612,7 +613,12 @@ export async function placeConfirmedProcedures(
     ]);
   }
 
-  return { placed: scanned.planned.length, missingCabinNames, failures };
+  return {
+    placed: scanned.planned.length,
+    placedIds: scanned.planned.map((row) => row.orderId),
+    missingCabinNames,
+    failures,
+  };
 }
 
 const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";

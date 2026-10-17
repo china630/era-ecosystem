@@ -3,7 +3,11 @@ import { requestOrganizationId } from "@/lib/request-organization";
 import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { bakuDateKey, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays, stayYmd } from "@/domain/planning/clinic-day";
-import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import {
+  bathPolicyFromSettings,
+  defaultBathModeFromSettings,
+  getSchedulingSettings,
+} from "@/domain/settings/scheduling-settings";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
@@ -304,6 +308,7 @@ export async function saveBathCalendar(input: {
   for (const ymd of restYmds) {
     kept.push({ ymd, procedureCode: input.procedureCode, locked: false, manualRest: true });
   }
+  const settings = await getSchedulingSettings();
   const planned = planBathSeries({
     days: snapshot.days,
     series: [
@@ -321,6 +326,7 @@ export async function saveBathCalendar(input: {
     layout,
     modes: snapshot.modes,
     notBeforeYmd: today,
+    policy: bathPolicyFromSettings(settings),
   }).filter((cell) => cell.procedureCode === input.procedureCode);
 
   const movable = own.filter((order) => !LOCKED.has(order.status) && order.ymd >= today);
@@ -516,6 +522,9 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
   if (handled.length === 0) return { handledIds: [], placedIds: [], missed: [] };
 
   const snapshot = await getBathCalendar(handled[0]!.clinicalEpisodeId!);
+  const settings = await getSchedulingSettings();
+  const defaultMode = defaultBathModeFromSettings(settings);
+  const policy = bathPolicyFromSettings(settings);
   const placedIds: string[] = [];
   const missed: BathSeatMiss[] = [];
   const guest = await prisma.patientRef.findUnique({
@@ -530,118 +539,124 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
     byCode.set(order.procedureCode, list);
   }
 
-  for (const [procedureCode, group] of byCode) {
-    const meta = memberByCode.get(procedureCode)!;
-    const mode = bathModeOf(group[0]?.physioFields);
-    if (!mode) {
-      for (const order of group) {
-        missed.push({
-          ymd: bakuDateKey(order.scheduledAt),
-          procedureCode: order.procedureCode,
-          procedureName: order.procedureName,
-          reason: "no_mode",
-        });
-      }
-      continue;
-    }
-    const already = snapshot.orders.filter((order) => order.procedureCode === procedureCode);
-    const kept: KeptCell[] = already.map((order) => ({
+  const today = todayBakuYmd();
+  const upcoming = snapshot.days.filter((day) => day.ymd >= today);
+  const kept: KeptCell[] = snapshot.orders
+    .filter((order) => memberByCode.has(order.procedureCode))
+    .map((order) => ({
       ymd: order.ymd,
-      procedureCode,
+      procedureCode: order.procedureCode,
       locked: true,
     }));
-    const today = todayBakuYmd();
-    const upcoming = snapshot.days.filter((day) => day.ymd >= today);
-    const planned =
-      upcoming.length === 0
-        ? []
-        : planBathSeries({
-            days: upcoming,
-            series: [
-              {
-                seriesCode: meta.seriesCode,
-                procedureCode,
-                mark: meta.mark,
-                mode,
-                qty: already.length + group.length,
-                fillsRestDays: meta.fillsRestDays,
-              },
-            ],
-            kept,
-            layout: "continue",
-            modes: snapshot.modes,
-            notBeforeYmd: today,
-          }).filter(
-            (cell) =>
-              cell.procedureCode === procedureCode &&
-              cell.ymd >= today &&
-              !already.some((order) => order.ymd === cell.ymd),
-          );
-    const queue = [...group];
-    for (const cell of planned) {
-      const order = queue[0];
-      if (!order?.procedureTypeId) break;
-      const day = snapshot.days.find((row) => row.ymd === cell.ymd);
-      if (!(await procedureFitsGuestSex(procedureCode, guestSex))) {
-        missed.push({
-          ymd: cell.ymd,
-          procedureCode,
-          procedureName: order.procedureName,
-          reason: "cabin_sex",
-        });
-        continue;
-      }
-      const slot = await findCabinSlotOnDay({
+  const seriesInputs = [...byCode.entries()].map(([procedureCode, group]) => {
+    const meta = memberByCode.get(procedureCode)!;
+    const already = snapshot.orders.filter((order) => order.procedureCode === procedureCode);
+    return {
+      seriesCode: meta.seriesCode,
+      procedureCode,
+      mark: meta.mark,
+      mode: bathModeOf(group[0]?.physioFields) ?? defaultMode,
+      qty: already.length + group.length,
+      fillsRestDays: meta.fillsRestDays,
+    };
+  });
+  const planned =
+    upcoming.length === 0
+      ? []
+      : planBathSeries({
+          days: upcoming,
+          series: seriesInputs,
+          kept,
+          layout: "continue",
+          modes: snapshot.modes,
+          notBeforeYmd: today,
+          policy,
+        }).filter(
+          (cell) =>
+            cell.ymd >= today &&
+            !snapshot.orders.some(
+              (order) => order.procedureCode === cell.procedureCode && order.ymd === cell.ymd,
+            ),
+        );
+  const queues = new Map<string, typeof handled>();
+  for (const [procedureCode, group] of byCode) {
+    queues.set(procedureCode, [...group]);
+  }
+  for (const cell of planned) {
+    const queue = queues.get(cell.procedureCode);
+    const order = queue?.[0];
+    if (!order?.procedureTypeId) continue;
+    const day = snapshot.days.find((row) => row.ymd === cell.ymd);
+    if (!(await procedureFitsGuestSex(cell.procedureCode, guestSex))) {
+      missed.push({
         ymd: cell.ymd,
-        endHour: day?.endHour ?? 17,
-        procedureTypeId: order.procedureTypeId,
-        excludeOrderId: order.id,
-        guestSex,
+        procedureCode: cell.procedureCode,
+        procedureName: order.procedureName,
+        reason: "cabin_sex",
       });
-      if (!slot) {
-        missed.push({
-          ymd: cell.ymd,
-          procedureCode,
-          procedureName: order.procedureName,
-          reason: "no_cabin",
-        });
-        continue;
-      }
-      const staffMode = await resolveStaffModeForProcedureType(order.procedureTypeId);
-      const staff = await findSkilledFreePractitioner({
-        procedureTypeId: order.procedureTypeId,
-        startsAt: slot.start,
-        endsAt: slot.end,
-        staffMode,
-        skillWhenUnposted: true,
-      });
-      if (!staff) {
-        missed.push({
-          ymd: cell.ymd,
-          procedureCode,
-          procedureName: order.procedureName,
-          reason: "no_staff",
-        });
-        continue;
-      }
-      queue.shift();
-      await prisma.procedureOrder.update({
-        where: { id: order.id },
-        data: {
-          status: "SCHEDULED",
-          scheduledAt: slot.start,
-          endsAt: slot.end,
-          resourceId: slot.resourceId,
-          confirmedAt: new Date(),
-        },
-      });
-      await replaceProcedureAllocations(order.id, [
-        { role: slot.role, resourceId: slot.resourceId, startsAt: slot.start, endsAt: slot.end },
-        { role: "STAFF", practitionerId: staff.id, startsAt: slot.start, endsAt: slot.end },
-      ]);
-      placedIds.push(order.id);
+      continue;
     }
-    for (const order of queue) {
+    const slot = await findCabinSlotOnDay({
+      ymd: cell.ymd,
+      endHour: day?.endHour ?? 17,
+      procedureTypeId: order.procedureTypeId,
+      excludeOrderId: order.id,
+      guestSex,
+    });
+    if (!slot) {
+      missed.push({
+        ymd: cell.ymd,
+        procedureCode: cell.procedureCode,
+        procedureName: order.procedureName,
+        reason: "no_cabin",
+      });
+      continue;
+    }
+    const staffMode = await resolveStaffModeForProcedureType(order.procedureTypeId);
+    const staff = await findSkilledFreePractitioner({
+      procedureTypeId: order.procedureTypeId,
+      startsAt: slot.start,
+      endsAt: slot.end,
+      staffMode,
+      skillWhenUnposted: true,
+    });
+    if (!staff) {
+      missed.push({
+        ymd: cell.ymd,
+        procedureCode: cell.procedureCode,
+        procedureName: order.procedureName,
+        reason: "no_staff",
+      });
+      continue;
+    }
+    queue.shift();
+    const prevFields =
+      order.physioFields && typeof order.physioFields === "object" && !Array.isArray(order.physioFields)
+        ? (order.physioFields as Record<string, unknown>)
+        : {};
+    await prisma.procedureOrder.update({
+      where: { id: order.id },
+      data: {
+        status: "SCHEDULED",
+        scheduledAt: slot.start,
+        endsAt: slot.end,
+        resourceId: slot.resourceId,
+        confirmedAt: new Date(),
+        physioFields: {
+          ...prevFields,
+          dayBlock:
+            seriesInputs.find((row) => row.procedureCode === cell.procedureCode)?.mode ?? defaultMode,
+        },
+      },
+    });
+    await replaceProcedureAllocations(order.id, [
+      { role: slot.role, resourceId: slot.resourceId, startsAt: slot.start, endsAt: slot.end },
+      { role: "STAFF", practitionerId: staff.id, startsAt: slot.start, endsAt: slot.end },
+    ]);
+    placedIds.push(order.id);
+  }
+  for (const group of queues.values()) {
+    for (const order of group) {
       missed.push({
         ymd: bakuDateKey(order.scheduledAt),
         procedureCode: order.procedureCode,

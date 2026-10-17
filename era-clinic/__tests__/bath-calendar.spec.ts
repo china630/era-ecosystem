@@ -62,7 +62,36 @@ describe("planBathSeries", () => {
     ]);
   });
 
-  it("keeps the owed rest until the next working day", () => {
+  it("spends owed rest on a closed day so Monday can take a bath", () => {
+    const cells = planBathSeries({
+      days: [
+        { ymd: "2026-10-08", working: true },
+        { ymd: "2026-10-09", working: true },
+        { ymd: "2026-10-10", working: true },
+        { ymd: "2026-10-11", working: false },
+        { ymd: "2026-10-12", working: true },
+      ],
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "3",
+          qty: 4,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual([
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-12",
+    ]);
+  });
+
+  it("can keep the old rule: closed day does not spend owed rest", () => {
     const cells = planBathSeries({
       days: [
         { ymd: "2026-10-09", working: true },
@@ -82,12 +111,135 @@ describe("planBathSeries", () => {
         },
       ],
       kept: [],
+      policy: { closedDaySpendsOwedRest: false, closedDayResetsOpenStreak: true },
     });
     expect(cells.map((cell) => cell.ymd)).toEqual([
       "2026-10-09",
       "2026-10-10",
       "2026-10-13",
     ]);
+  });
+
+  it("lays Monday start as five naftalan and iodine on Thursday", () => {
+    const cells = planBathSeries({
+      days: week(),
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "3",
+          qty: 5,
+          fillsRestDays: false,
+        },
+        {
+          seriesCode: "IODINE",
+          procedureCode: "SVC-YOD-BROM-VANNASI",
+          mark: "Й",
+          mode: "3",
+          qty: 1,
+          fillsRestDays: true,
+        },
+      ],
+      kept: [],
+    });
+    expect(
+      cells.filter((cell) => cell.seriesCode === "NAFTALAN").map((cell) => cell.ymd),
+    ).toEqual(["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-09", "2026-10-10"]);
+    expect(cells.find((cell) => cell.procedureCode === "SVC-YOD-BROM-VANNASI")?.ymd).toBe(
+      "2026-10-08",
+    );
+  });
+
+  it("lays a Tuesday start as four naftalan and rest on Friday", () => {
+    const cells = planBathSeries({
+      days: week().slice(1),
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "3",
+          qty: 5,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual([
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-10",
+    ]);
+  });
+
+  it("resets a Friday–Saturday streak on Sunday so Monday starts a new three", () => {
+    const cells = planBathSeries({
+      days: [
+        { ymd: "2026-10-09", working: true },
+        { ymd: "2026-10-10", working: true },
+        { ymd: "2026-10-11", working: false },
+        { ymd: "2026-10-12", working: true },
+        { ymd: "2026-10-13", working: true },
+        { ymd: "2026-10-14", working: true },
+      ],
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "3",
+          qty: 5,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual([
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-14",
+    ]);
+  });
+
+  it("caps naftalan at five in a seven-day working week", () => {
+    const days: StayDay[] = [
+      { ymd: "2026-10-05", working: true },
+      { ymd: "2026-10-06", working: true },
+      { ymd: "2026-10-07", working: true },
+      { ymd: "2026-10-08", working: true },
+      { ymd: "2026-10-09", working: true },
+      { ymd: "2026-10-10", working: true },
+      { ymd: "2026-10-11", working: true },
+    ];
+    const cells = planBathSeries({
+      days,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-KISI",
+          mark: "Нм",
+          mode: "3",
+          qty: 7,
+          fillsRestDays: false,
+        },
+        {
+          seriesCode: "IODINE",
+          procedureCode: "SVC-YOD-BROM-VANNASI",
+          mark: "Й",
+          mode: "3",
+          qty: 2,
+          fillsRestDays: true,
+        },
+      ],
+      kept: [],
+      policy: { weeklyNaftalanCap: 5 },
+    });
+    expect(cells.filter((cell) => cell.seriesCode === "NAFTALAN")).toHaveLength(5);
+    expect(cells.some((cell) => cell.procedureCode === "SVC-YOD-BROM-VANNASI")).toBe(true);
   });
 
   it("keeps a manual rest and continues the next block on the next working day", () => {
