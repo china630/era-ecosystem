@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -263,6 +263,7 @@ export function PackageAssignModal({
   const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
   const [naftaDayBlock, setNaftaDayBlock] = useState("");
   const [bathNeedsWrite, setBathNeedsWrite] = useState(false);
+  const bathNeedsWriteRef = useRef(false);
   const [sexBlockedCodes, setSexBlockedCodes] = useState<Set<string>>(new Set());
   const setDayBlock = useCallback((mode: string) => {
     const block = /^[0-9A-Z_]{1,16}$/.test(mode) ? mode : null;
@@ -332,7 +333,9 @@ export function PackageAssignModal({
       setBlockReason(
         code === "NO_PROGRAM" || code === "NO_PROGRAM_CODE" ? code : null,
       );
-      setError(code && !msg.includes(code) ? `${msg} (${code})` : msg);
+      const text = code && !msg.includes(code) ? `${msg} (${code})` : msg;
+      setError(text);
+      showApiError({ error: text });
       return;
     }
     const payload = d.data ?? d;
@@ -366,9 +369,17 @@ export function PackageAssignModal({
       block,
       typeof payload.packageCode === "string" ? payload.packageCode : "",
     );
-    if (blockText) setError(blockText);
+    if (blockText) {
+      setError(blockText);
+      showApiError({ error: blockText });
+    }
     else if (payload.softWarnDay1) setSoftWarn(String(payload.softWarnDay1));
   }, [episodeId, locale, tPhysio]);
+
+  useEffect(() => {
+    if (bathNeedsWriteRef.current && !bathNeedsWrite) setError(null);
+    bathNeedsWriteRef.current = bathNeedsWrite;
+  }, [bathNeedsWrite]);
 
   useEffect(() => {
     if (!open) return;
@@ -759,7 +770,7 @@ export function PackageAssignModal({
 
   function refuseWrongSex(code: string): boolean {
     if (!sexBlockedCodes.has(code)) return false;
-    setError(tPhysio("packageAssignMissCabinSex"));
+    showApiError({ error: tPhysio("packageAssignMissCabinSex") });
     return true;
   }
 
@@ -906,7 +917,11 @@ export function PackageAssignModal({
 
   async function save(start?: { date: string; hour: string }) {
     if (bathNeedsWrite) {
-      setError(tPhysio("packageAssignNeedBathPlan"));
+      showApiError({
+        error: /^[0-9A-Z_]{1,16}$/.test(naftaDayBlock)
+          ? tPhysio("packageAssignNeedBathPlan")
+          : tPhysio("packageAssignMissNoBathMode"),
+      });
       return;
     }
     let extras = extraDraft;

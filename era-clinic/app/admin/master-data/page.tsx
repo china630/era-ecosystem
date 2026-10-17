@@ -175,14 +175,6 @@ function displayProcedureResourceNames(
 function defaultProcedureRequirements(): RequirementRow[] {
   return [
     {
-      role: "EQUIPMENT",
-      resourceKind: "EQUIPMENT",
-      resourceCode: null,
-      quantity: 1,
-      staffMode: "HARD",
-      required: true,
-    },
-    {
       role: "STAFF",
       staffMode: "SOFT",
       quantity: 1,

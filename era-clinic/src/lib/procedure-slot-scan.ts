@@ -120,6 +120,7 @@ export type PlacementFailure = {
   procedureCode: string;
   procedureName: string;
   reason: PlacementFailureReason;
+  ymd?: string;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -392,6 +393,7 @@ export function scanProcedureSlots(input: {
 
     let placed: PlannedPlacement | null = null;
     let sawStaffPool = false;
+    let lastYmd = "";
     const blocks = { day_full: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
     const opened = slotStart != null;
     for (let attempt = 0; attempt < 4000 && slotStart && !placed; attempt++) {
@@ -461,6 +463,7 @@ export function scanProcedureSlots(input: {
       }
 
       const ymd = bakuDateKey(slotStart);
+      lastYmd = ymd;
       const pool = input.staffByTypeAndYmd.get(`${order.procedureTypeId}|${ymd}`) ?? [];
       if (pool.length === 0) {
         slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
@@ -606,6 +609,7 @@ export function scanProcedureSlots(input: {
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
         reason: placementBlockReason(opened, sawStaffPool, blocks),
+        ymd: lastYmd || undefined,
       });
     }
   }

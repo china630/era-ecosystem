@@ -455,6 +455,7 @@ export async function placeConfirmedProcedures(
         procedureCode: order.procedureCode,
         procedureName: order.procedureName?.trim() || order.procedureCode,
         reason: "no_slot",
+        ymd: order.scheduledAt ? bakuDateKey(order.scheduledAt) : undefined,
       });
       continue;
     }
@@ -477,7 +478,9 @@ export async function placeConfirmedProcedures(
     }
     if (codes.size === 0 && pt.resourceCode?.trim()) codes.add(pt.resourceCode.trim());
     for (const code of codes) resourceCodes.add(code);
-    const staffReq = pt.requirements?.find((req) => req.role === "STAFF");
+    const staffReq =
+      pt.requirements?.find((req) => req.role === "STAFF" && req.staffMode === "SOFT") ??
+      pt.requirements?.find((req) => req.role === "STAFF");
     const typeHours = {
       ...workHours,
       dayStartHour: pt.dayStartHour ?? workHours.dayStartHour,
@@ -522,6 +525,7 @@ export async function placeConfirmedProcedures(
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
         reason: "cabin_sex",
+        ymd: today,
       });
     }
     order.resources = matching.map((row) => ({

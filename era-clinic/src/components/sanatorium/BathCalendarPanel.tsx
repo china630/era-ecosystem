@@ -85,7 +85,7 @@ export function BathCalendarPanel({
   /** Shared day block. Empty until the guest's course or the user sets it. */
   dayBlock: string;
   onDayBlockChange: (mode: string) => void;
-  /** True when Saxla must wait for Plana yaz. */
+  /** True when package Saxla must wait for a day block or for calendar Plana yaz. */
   onNeedsWriteChange?: (needsWrite: boolean) => void;
 }) {
   const t = useTranslations("patientRegistry");
@@ -215,8 +215,22 @@ export function BathCalendarPanel({
       onNeedsWriteChange(false);
       return;
     }
-    onNeedsWriteChange(!mode || layout === "fresh" || savedCount < seatedQty);
-  }, [onNeedsWriteChange, memberQty, seatedQty, mode, layout, savedCount, loadFailed, snap]);
+    const manuals = manualBaths.length > 0 || manualRests.length > 0;
+    const dirtySaved =
+      savedCount > 0 && (layout === "fresh" || manuals || savedCount < seatedQty);
+    onNeedsWriteChange(!mode || dirtySaved);
+  }, [
+    onNeedsWriteChange,
+    memberQty,
+    seatedQty,
+    mode,
+    layout,
+    savedCount,
+    loadFailed,
+    snap,
+    manualBaths,
+    manualRests,
+  ]);
 
   if (members.length === 0) return null;
 
@@ -292,6 +306,8 @@ export function BathCalendarPanel({
     try {
       const unplacedDays: string[] = [];
       let unplaced = 0;
+      let seated = 0;
+      let planned = 0;
       let manualLeft = true;
       for (const member of seated) {
         const sendManual = manualLeft;
@@ -313,12 +329,23 @@ export function BathCalendarPanel({
           showApiError(data, t("bathCalendarFailed"));
           return;
         }
-        const saved = (data.data ?? data) as { unplaced?: number; unplacedDays?: string[] };
+        const saved = (data.data ?? data) as {
+          seated?: number;
+          planned?: number;
+          unplaced?: number;
+          unplacedDays?: string[];
+        };
+        seated += saved.seated ?? 0;
+        planned += saved.planned ?? 0;
         unplaced += saved.unplaced ?? 0;
         unplacedDays.push(...(saved.unplacedDays ?? []));
       }
       const dates = unplacedDays.join(", ");
       const skipped = members.some((row) => row.qty >= 1 && !seriesByCode.has(row.procedureCode));
+      if (seated < 1 && planned < 1) {
+        showApiError({ error: t("bathCalendarNothingToSeat") });
+        return;
+      }
       showSuccess(
         unplaced
           ? t("bathCalendarUnplaced", { count: unplaced, dates: dates || "—" })
