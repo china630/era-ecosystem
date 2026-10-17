@@ -1,6 +1,16 @@
 import { nextWorkSlot, skipLunch } from "@/lib/treatment-planner.service";
 import { bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 
+jest.mock("@/domain/planning/clinic-day", () => {
+  const actual = jest.requireActual("@/domain/planning/clinic-day") as typeof import("@/domain/planning/clinic-day");
+  return {
+    ...actual,
+    listClinicDays: jest.fn(async (fromYmd: string) => [
+      { ymd: fromYmd, working: true, endHour: 17 },
+    ]),
+  };
+});
+
 describe("treatment planner work windows", () => {
   it("skips lunch block to 14:00 Baku", () => {
     const slot = parseBakuDateTime("2026-06-04", "13:30");

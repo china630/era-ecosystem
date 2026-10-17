@@ -61,13 +61,19 @@ export function ClinicDayPanel() {
     }
   }
 
-  async function reseat(apply: boolean) {
+  async function reseat(apply: boolean, mode: "episode" | "overlaps" | "closed" = "episode") {
     setBusy(true);
     try {
       const res = await fetch("/api/admin/schedule-reseat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apply, episodeId: episodeId.trim() }),
+        body: JSON.stringify(
+          mode === "overlaps"
+            ? { apply, allOpenOverlaps: true }
+            : mode === "closed"
+              ? { apply, allOpenClosedDays: true }
+              : { apply, episodeId: episodeId.trim() },
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -132,6 +138,38 @@ export function ClinicDayPanel() {
           onClick={() => void reseat(true)}
         >
           {t("reseatApply")}
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy}
+          onClick={() => void reseat(false, "overlaps")}
+        >
+          {t("reseatPreviewAll")}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={busy}
+          onClick={() => void reseat(true, "overlaps")}
+        >
+          {t("reseatApplyAll")}
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy}
+          onClick={() => void reseat(false, "closed")}
+        >
+          {t("reseatClosedPreview")}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={busy}
+          onClick={() => void reseat(true, "closed")}
+        >
+          {t("reseatClosedApply")}
         </button>
       </div>
     </section>
