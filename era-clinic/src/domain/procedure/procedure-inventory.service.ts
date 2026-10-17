@@ -3,20 +3,17 @@ import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import {
   hasProcedureSameDay,
-  nextWorkSlot,
-  skipLunch,
   validatePatientConsecutiveGap,
 } from "@/lib/treatment-planner.service";
 import { getResourceCalendar } from "@/lib/procedure-scheduling.service";
+import { clinicDayIsClosed } from "@/domain/planning/slot-decision";
 import { countResourceAllocations } from "@/domain/procedure/procedure-allocation.service";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
-import { bakuDateKey, bakuDayBounds, bakuHourMinute } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
 
 function addMinutes(d: Date, mins: number): Date {
   return new Date(d.getTime() + mins * 60_000);
 }
-
-const LUNCH_END_HOUR = 14;
 
 /**
  * Free slots for a resource (hotel inventory style).
@@ -32,6 +29,7 @@ export async function listAvailableResourceSlots(input: {
 }) {
   const { schedulingSlotMinutes } = await getSchedulingSettings();
   const dayYmd = bakuDateKey(input.date);
+  if (await clinicDayIsClosed(dayYmd)) return [];
   const { start: dayStart } = bakuDayBounds(dayYmd);
 
   const calendar = await getResourceCalendar(dayStart, {
@@ -56,6 +54,11 @@ export async function listAvailableResourceSlots(input: {
   const procedureType = input.procedureCode
     ? await prisma.procedureType.findFirst({ where: { code: input.procedureCode } })
     : null;
+  if (procedureType) {
+    const { loadStaffByDayForScan } = await import("@/lib/treatment-planner.service");
+    const staff = await loadStaffByDayForScan([procedureType.id], dayYmd, addBakuDays(dayYmd, 1));
+    if ((staff.get(`${procedureType.id}|${dayYmd}`) ?? []).length === 0) return [];
+  }
   const duration = input.durationMin ?? procedureType?.durationMin ?? schedulingSlotMinutes;
 
   const out: Array<{
@@ -71,12 +74,10 @@ export async function listAvailableResourceSlots(input: {
       (await prisma.resource.findUnique({ where: { id: row.resourceId } }))?.capacity ?? 1;
 
     for (const slot of row.slots) {
-      if (slot.occupied) continue;
-      const slotStart = await nextWorkSlot(new Date(slot.time));
-      if (procedureType && !procedureType.afterLunchAllowed && bakuHourMinute(slotStart).hour >= LUNCH_END_HOUR) {
-        continue;
-      }
-      const adjusted = skipLunch(slotStart);
+      if (slot.occupied || slot.lunch) continue;
+      const slotStart = new Date(slot.time);
+      if (bakuDateKey(slotStart) !== dayYmd) continue;
+      const adjusted = slotStart;
       const slotEnd = addMinutes(adjusted, duration);
 
       const overlapping = await countResourceAllocations(
@@ -143,6 +144,11 @@ export async function listAvailableResourceSlots(input: {
 }
 
 export async function getResourceDayMatrix(date: Date) {
+  const dayYmd = bakuDateKey(date);
+  const closed = await clinicDayIsClosed(dayYmd);
+  if (closed) {
+    return { date: dayYmd, closed: true, resources: [] as Awaited<ReturnType<typeof getResourceCalendar>> };
+  }
   const calendar = await getResourceCalendar(date);
   const orderIds = calendar
     .flatMap((r) => r.slots.map((s) => s.procedureOrderId))
@@ -165,6 +171,7 @@ export async function getResourceDayMatrix(date: Date) {
 
   return {
     date: bakuDateKey(date),
+    closed: false,
     resources: calendar.map((r) => ({
       ...r,
       slots: r.slots.map((s) => {

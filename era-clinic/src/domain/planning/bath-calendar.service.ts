@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { requestOrganizationId } from "@/lib/request-organization";
 import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { addBakuDays, bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays, stayYmd } from "@/domain/planning/clinic-day";
@@ -30,7 +29,7 @@ export async function getBathCalendar(episodeId: string) {
     }
   }
   if (!episode || !stayFrom || !stayTo || Number.isNaN(stayFrom.getTime()) || Number.isNaN(stayTo.getTime())) {
-    return { days: [], series: [], modes: [], orders: [] };
+    return { days: [], series: [], modes: [], orders: [], restByCode: {} };
   }
   const { fromYmd, toYmd } = stayYmd(stayFrom, stayTo);
   const days = await listClinicDays(fromYmd, toYmd);
@@ -59,6 +58,29 @@ export async function getBathCalendar(episodeId: string) {
       })
     : [];
   const settings = await getSchedulingSettings();
+  const stubRests = codes.length
+    ? await prisma.procedureOrder.findMany({
+        where: {
+          clinicalEpisodeId: episodeId,
+          procedureCode: { in: codes },
+          status: "CANCELLED",
+          cancelReason: "bath_rest",
+        },
+        select: { procedureCode: true, scheduledAt: true },
+      })
+    : [];
+  const restByCode: Record<string, string[]> = {};
+  for (const code of codes) {
+    const ymds = new Set<string>();
+    for (const order of orders) {
+      if (order.procedureCode !== code) continue;
+      for (const ymd of restYmdsFromFields(order.physioFields)) ymds.add(ymd);
+    }
+    for (const stub of stubRests) {
+      if (stub.procedureCode === code) ymds.add(bakuDateKey(stub.scheduledAt));
+    }
+    restByCode[code] = [...ymds].sort();
+  }
   return {
     days,
     series,
@@ -67,6 +89,7 @@ export async function getBathCalendar(episodeId: string) {
       ...order,
       ymd: bakuDateKey(order.scheduledAt),
     })),
+    restByCode,
   };
 }
 
@@ -150,6 +173,13 @@ function storedMode(fields: unknown): string | null {
   return block == null ? null : String(block);
 }
 
+function restYmdsFromFields(fields: unknown): string[] {
+  if (!fields || typeof fields !== "object") return [];
+  const raw = (fields as { restYmds?: unknown }).restYmds;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((row): row is string => typeof row === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row));
+}
+
 export async function saveBathCalendar(input: {
   episodeId: string;
   procedureCode: string;
@@ -200,6 +230,7 @@ export async function saveBathCalendar(input: {
   for (const ymd of requestBaths) pinYmds.add(ymd);
   for (const ymd of requestRests) pinYmds.delete(ymd);
   const restYmds = new Set(restOrders.map((order) => bakuDateKey(order.scheduledAt)));
+  for (const ymd of own.flatMap((order) => restYmdsFromFields(order.physioFields))) restYmds.add(ymd);
   for (const ymd of requestRests) restYmds.add(ymd);
   for (const ymd of requestBaths) restYmds.delete(ymd);
   const previousMode = own.map((order) => storedMode(order.physioFields)).find((mode) => mode);
@@ -248,7 +279,6 @@ export async function saveBathCalendar(input: {
   }).filter((cell) => cell.procedureCode === input.procedureCode);
 
   const movable = own.filter((order) => !LOCKED.has(order.status) && order.ymd >= today);
-  const orgId = requestOrganizationId();
   const used = new Set<string>();
   const pins: Record<string, string> = {};
   let unplaced = 0;
@@ -281,6 +311,7 @@ export async function saveBathCalendar(input: {
           dayBlock: input.mode,
           bathSequence: input.bathSequence ?? null,
           naftalanFill: cell.fill ?? null,
+          restYmds: [...restYmds].sort(),
         },
       },
     });
@@ -298,7 +329,7 @@ export async function saveBathCalendar(input: {
   if (restDrop.length > 0) {
     await prisma.procedureOrder.updateMany({
       where: { id: { in: restDrop.map((order) => order.id) } },
-      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "bath_rest" },
+      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "bath_calendar" },
     });
     await releaseProcedureOccupancy(restDrop.map((order) => order.id));
   }
@@ -309,50 +340,27 @@ export async function saveBathCalendar(input: {
     });
     await releaseProcedureOccupancy(otherDrop.map((order) => order.id));
   }
-  const bathYmds = new Set(planned.map((cell) => cell.ymd));
-  const staleRests = restOrders.filter((order) => {
-    const ymd = bakuDateKey(order.scheduledAt);
-    return ymd >= today && bathYmds.has(ymd);
-  });
-  if (staleRests.length > 0) {
-    await prisma.procedureOrder.deleteMany({ where: { id: { in: staleRests.map((order) => order.id) } } });
+  const leftoverRestIds = restOrders.map((order) => order.id);
+  if (leftoverRestIds.length > 0) {
+    await prisma.procedureOrder.deleteMany({ where: { id: { in: leftoverRestIds } } });
   }
-  const markedRests = new Set([
-    ...restOrders.map((order) => bakuDateKey(order.scheduledAt)),
-    ...restDrop.map((order) => order.ymd),
-  ]);
-  for (const ymd of restYmds) {
-    if (ymd < today || bathYmds.has(ymd) || markedRests.has(ymd)) continue;
-    const when = dayStartInstant(ymd, 9);
-    const sibling = await prisma.procedureOrder.findFirst({
-      where: {
-        clinicalEpisodeId: input.episodeId,
-        procedureCode: input.procedureCode,
-        inPackage: true,
-        status: { notIn: ["CANCELLED", "NO_SHOW"] },
-        NOT: { packageQuotaCode: input.procedureCode },
-      },
-      select: { packageQuotaCode: true },
-    });
-    await prisma.procedureOrder.create({
+  const liveAfter = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: input.episodeId,
+      procedureCode: input.procedureCode,
+      status: { in: ["SCHEDULED", "PROPOSED", "CHECKED_IN", "COMPLETED"] },
+    },
+    select: { id: true, physioFields: true },
+  });
+  for (const row of liveAfter) {
+    const prev = row.physioFields && typeof row.physioFields === "object" ? row.physioFields : {};
+    await prisma.procedureOrder.update({
+      where: { id: row.id },
       data: {
-        organizationId: orgId,
-        patientRefId: episode.patientRefId,
-        clinicalEpisodeId: input.episodeId,
-        procedureTypeId: procedureType.id,
-        procedureCode: input.procedureCode,
-        procedureName: procedureType.name,
-        scheduledAt: when,
-        endsAt: when,
-        status: "CANCELLED",
-        cancelledAt: new Date(),
-        cancelReason: "bath_rest",
-        bodyPart: procedureType.bodyPart,
-        inPackage: true,
-        packageQuotaCode: sibling?.packageQuotaCode || input.procedureCode,
-        patientOrigin: episode.patientOrigin,
-        reservationId: episode.reservationId,
-        amountNet: 0,
+        physioFields: {
+          ...(prev as Record<string, unknown>),
+          restYmds: [...restYmds].sort(),
+        },
       },
     });
   }

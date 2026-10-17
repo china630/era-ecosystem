@@ -516,6 +516,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-17 | CLI-58: one slot-rule kernel (`evaluateCandidateSlot`). Auto search still hunts; manual PATCH / matrix / card accept that minute or 409 (no day snap). Closed calendar days return an empty matrix. Paid same-day POST pins the day. Bath rest is `physioFields.restYmds`, not `CANCELLED` stubs. Not SHIPPED. |
 | 2026-10-17 | CLI-58: closed clinic days (`listClinicDays` week template) are the SoR for the minute grid and resource matrix writes; reseat can move leftover Sunday `SCHEDULED` to the next working day. Not SHIPPED. |
 | 2026-10-17 | CLI-58: guest slot is one door (bath + physio `scanSlot`); overlap refused even when rest is 0; super-admin `schedule-reseat` retimes future `SCHEDULED`. Not SHIPPED. |
 | 2026-10-17 | CLI-58: Saxla seats baths with settings (`defaultBathMode`, closed-day rest, weekly cap); package modal mini calendar removed. API `bath-calendar` kept for recalc. Not SHIPPED. |

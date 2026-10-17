@@ -24,6 +24,10 @@ export type PlacementFailureReason =
   | "staff_busy"
   | "cabin_busy"
   | "day_full"
+  | "same_day"
+  | "closed"
+  | "lunch"
+  | "cross_day"
   | "rule"
   | "no_slot";
 
@@ -318,6 +322,156 @@ function restGap(
   return false;
 }
 
+export type CandidateSlotInput = {
+  order: ScanOrder;
+  slotStart: Date;
+  slotEnd: Date;
+  packageCap: number;
+  closedYmds: Set<string>;
+  staffByTypeAndYmd: Map<string, ScanStaff[]>;
+  rules: ScanRule[];
+  rotationRules: ScanRotationRule[];
+  compatibilityRules: ScanCompatRule[];
+  patientSlots: ScanPatientSlot[];
+  rotationContext: RotationContextSlot[];
+  allocations: ScanAllocation[];
+  /** Manual move: this cabin only. Auto search leaves it unset. */
+  requiredResourceId?: string | null;
+};
+
+export type CandidateSlotOk = {
+  ok: true;
+  resource: ScanResource;
+  staff: ScanStaff;
+};
+
+export type CandidateSlotFail = {
+  ok: false;
+  reason: PlacementFailureReason;
+  sawStaffPool: boolean;
+};
+
+/**
+ * One legality check for a concrete minute + cabin.
+ * Auto search advances after a miss. Manual PATCH must refuse — never snap.
+ */
+export function evaluateCandidateSlot(
+  input: CandidateSlotInput,
+): CandidateSlotOk | CandidateSlotFail {
+  const { order, slotStart, slotEnd } = input;
+  const ymd = bakuDateKey(slotStart);
+  const fail = (reason: PlacementFailureReason, sawStaffPool = false): CandidateSlotFail => ({
+    ok: false,
+    reason,
+    sawStaffPool,
+  });
+
+  if (input.closedYmds.has(ymd)) return fail("closed");
+  if (order.pinYmd && ymd !== order.pinYmd) return fail("no_slot");
+
+  const startHm = bakuHourMinute(slotStart);
+  const endHm = bakuHourMinute(slotEnd);
+  if (startHm.hour < order.typeHours.dayStartHour) return fail("no_slot");
+  if (endHm.hour > order.dayEndHour || (endHm.hour === order.dayEndHour && endHm.minute > 0)) {
+    return fail("no_slot");
+  }
+  if (startHm.hour >= order.typeHours.lunchStartHour && startHm.hour < order.typeHours.lunchEndHour) {
+    return fail("lunch");
+  }
+  const lunchStart = bakuWallTime(slotStart, order.typeHours.lunchStartHour);
+  const lunchEnd = bakuWallTime(slotStart, order.typeHours.lunchEndHour);
+  if (slotStart.getTime() < lunchEnd.getTime() && slotEnd.getTime() > lunchStart.getTime()) {
+    return fail("lunch");
+  }
+  if (!order.afterLunchAllowed && startHm.hour >= order.typeHours.lunchEndHour) return fail("lunch");
+  if (!order.beforeLunchAllowed && startHm.hour < order.typeHours.lunchEndHour) return fail("lunch");
+
+  if (order.inPackage) {
+    const codesOnDay = inPackageCodesOnBakuDay(
+      input.patientSlots.map((slot) => ({
+        code: slot.code,
+        start: slot.start,
+        inPackage: slot.inPackage,
+      })),
+      slotStart,
+    );
+    if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
+      return fail("day_full");
+    }
+  }
+
+  if (sameProcedureThatDay(input.patientSlots, order.procedureCode, slotStart)) {
+    return fail("same_day");
+  }
+
+  const rotation = evaluateRotationRules({
+    candidateCode: order.procedureCode,
+    bodyPart: order.bodyPart,
+    day: slotStart,
+    context: input.rotationContext,
+    rules: input.rotationRules,
+  });
+  if (!rotation.ok) return fail("rule");
+
+  const pool = input.staffByTypeAndYmd.get(`${order.procedureTypeId}|${ymd}`) ?? [];
+  if (pool.length === 0) return fail("no_staff");
+  const staff = pickStaff(
+    pool,
+    input.allocations,
+    slotStart,
+    slotEnd,
+    order.id,
+    order.staffMode,
+  );
+  if (!staff) return fail("staff_busy", true);
+
+  const ruleOk = input.rules.every((rule) => {
+    if (rule.kind === "MUTUAL_EXCLUSION") {
+      const hasBefore = input.patientSlots.some(
+        (slot) => slot.code === rule.beforeCode && overlaps(slot.start, slot.end, slotStart, slotEnd),
+      );
+      const hasAfter = input.patientSlots.some(
+        (slot) => slot.code === rule.afterCode && overlaps(slot.start, slot.end, slotStart, slotEnd),
+      );
+      if (hasBefore && hasAfter) return false;
+    }
+    if (rule.kind === "SEQUENCE_GAP" && rule.afterCode === order.procedureCode) {
+      const prev = input.patientSlots.find((slot) => slot.code === rule.beforeCode);
+      if (prev) {
+        const gapMs = slotStart.getTime() - prev.end.getTime();
+        if (gapMs < (rule.minGapMinutes ?? 0) * 60_000) return false;
+      }
+    }
+    return true;
+  });
+  const compat = validateProcedureCompatibilityRules({
+    candidateCode: order.procedureCode,
+    startAt: slotStart,
+    endAt: slotEnd,
+    existing: input.patientSlots.map((slot) => ({
+      procedureCode: slot.code,
+      startAt: slot.start,
+      endAt: slot.end,
+    })),
+    rules: input.compatibilityRules,
+  });
+  if (!ruleOk || compat.length > 0 || restGap(input.patientSlots, slotStart, slotEnd, order.patientRestMinutes)) {
+    return fail("rule", true);
+  }
+
+  const candidates = input.requiredResourceId
+    ? order.resources.filter((row) => row.id === input.requiredResourceId)
+    : order.resources;
+  if (order.resources.length === 0) return fail("no_cabin", true);
+  if (input.requiredResourceId && candidates.length === 0) return fail("no_cabin", true);
+  const resource = candidates.find(
+    (row) => resourceUsed(input.allocations, row.id, slotStart, slotEnd, order.id) < row.capacity,
+  );
+  if (!resource) return fail("cabin_busy", true);
+
+  return { ok: true, resource, staff };
+}
+
 function placementBlockReason(
   opened: boolean,
   sawStaffPool: boolean,
@@ -430,140 +584,45 @@ export function scanProcedureSlots(input: {
       }
 
       const slotEnd = addMinutes(slotStart, order.durationMin);
-      const slotEndHm = bakuHourMinute(slotEnd);
-      if (slotEndHm.hour > order.dayEndHour || (slotEndHm.hour === order.dayEndHour && slotEndHm.minute > 0)) {
-        slotStart = nextOpenSlot(
-          addMinutes(slotStart, input.slotMinutes),
-          order.typeHours,
-          order.dayEndHour,
-          input.closedYmds,
-          input.horizonEndYmd,
-      input.slotMinutes,
-        );
-        continue;
-      }
-
-      if (order.inPackage) {
-        const codesOnDay = inPackageCodesOnBakuDay(
-          input.patientSlots.map((slot) => ({
-            code: slot.code,
-            start: slot.start,
-            inPackage: slot.inPackage,
-          })),
-          slotStart,
-        );
-        if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
-          blocks.day_full += 1;
-          slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
-          continue;
-        }
-      }
-
-      if (sameProcedureThatDay(input.patientSlots, order.procedureCode, slotStart)) {
-        slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
-        continue;
-      }
-
-      const rotation = evaluateRotationRules({
-        candidateCode: order.procedureCode,
-        bodyPart: order.bodyPart,
-        day: slotStart,
-        context: input.rotationContext,
-        rules: input.rotationRules,
+      lastYmd = bakuDateKey(slotStart);
+      const verdict = evaluateCandidateSlot({
+        order,
+        slotStart,
+        slotEnd,
+        packageCap: input.packageCap,
+        closedYmds: input.closedYmds,
+        staffByTypeAndYmd: input.staffByTypeAndYmd,
+        rules: input.rules,
+        rotationRules: input.rotationRules,
+        compatibilityRules: input.compatibilityRules,
+        patientSlots: input.patientSlots,
+        rotationContext: input.rotationContext,
+        allocations: input.allocations,
       });
-      if (!rotation.ok) {
-        blocks.rule += 1;
-        slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
-        continue;
-      }
-
-      const ymd = bakuDateKey(slotStart);
-      lastYmd = ymd;
-      const pool = input.staffByTypeAndYmd.get(`${order.procedureTypeId}|${ymd}`) ?? [];
-      if (pool.length === 0) {
-        slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
+      if (!verdict.ok) {
+        if (verdict.sawStaffPool) sawStaffPool = true;
+        if (verdict.reason === "day_full") blocks.day_full += 1;
+        if (verdict.reason === "staff_busy") blocks.staff_busy += 1;
+        if (verdict.reason === "cabin_busy") blocks.cabin_busy += 1;
+        if (verdict.reason === "rule" || verdict.reason === "lunch") blocks.rule += 1;
+        const jumpMorning =
+          verdict.reason === "day_full" ||
+          verdict.reason === "same_day" ||
+          verdict.reason === "no_staff" ||
+          verdict.reason === "closed";
+        slotStart = jumpMorning
+          ? nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes)
+          : nextOpenSlot(
+              addMinutes(slotStart, input.slotMinutes),
+              order.typeHours,
+              order.dayEndHour,
+              input.closedYmds,
+              input.horizonEndYmd,
+              input.slotMinutes,
+            );
         continue;
       }
       sawStaffPool = true;
-      const staff = pickStaff(
-        pool,
-        input.allocations,
-        slotStart,
-        slotEnd,
-        order.id,
-        order.staffMode,
-      );
-      if (!staff) {
-        blocks.staff_busy += 1;
-        slotStart = nextOpenSlot(
-          addMinutes(slotStart, input.slotMinutes),
-          order.typeHours,
-          order.dayEndHour,
-          input.closedYmds,
-          input.horizonEndYmd,
-      input.slotMinutes,
-        );
-        continue;
-      }
-
-      const ruleOk = input.rules.every((rule) => {
-        if (rule.kind === "MUTUAL_EXCLUSION") {
-          const hasBefore = input.patientSlots.some(
-            (slot) => slot.code === rule.beforeCode && overlaps(slot.start, slot.end, slotStart!, slotEnd),
-          );
-          const hasAfter = input.patientSlots.some(
-            (slot) => slot.code === rule.afterCode && overlaps(slot.start, slot.end, slotStart!, slotEnd),
-          );
-          if (hasBefore && hasAfter) return false;
-        }
-        if (rule.kind === "SEQUENCE_GAP" && rule.afterCode === order.procedureCode) {
-          const prev = input.patientSlots.find((slot) => slot.code === rule.beforeCode);
-          if (prev) {
-            const gapMs = slotStart!.getTime() - prev.end.getTime();
-            if (gapMs < (rule.minGapMinutes ?? 0) * 60_000) return false;
-          }
-        }
-        return true;
-      });
-      const compat = validateProcedureCompatibilityRules({
-        candidateCode: order.procedureCode,
-        startAt: slotStart,
-        endAt: slotEnd,
-        existing: input.patientSlots.map((slot) => ({
-          procedureCode: slot.code,
-          startAt: slot.start,
-          endAt: slot.end,
-        })),
-        rules: input.compatibilityRules,
-      });
-      if (!ruleOk || compat.length > 0 || restGap(input.patientSlots, slotStart, slotEnd, order.patientRestMinutes)) {
-        blocks.rule += 1;
-        slotStart = nextOpenSlot(
-          addMinutes(slotStart, input.slotMinutes),
-          order.typeHours,
-          order.dayEndHour,
-          input.closedYmds,
-          input.horizonEndYmd,
-      input.slotMinutes,
-        );
-        continue;
-      }
-
-      const resource = order.resources.find(
-        (row) => resourceUsed(input.allocations, row.id, slotStart!, slotEnd, order.id) < row.capacity,
-      );
-      if (!resource) {
-        blocks.cabin_busy += 1;
-        slotStart = nextOpenSlot(
-          addMinutes(slotStart, input.slotMinutes),
-          order.typeHours,
-          order.dayEndHour,
-          input.closedYmds,
-          input.horizonEndYmd,
-      input.slotMinutes,
-        );
-        continue;
-      }
 
       placed = {
         orderId: order.id,
@@ -573,9 +632,9 @@ export function scanProcedureSlots(input: {
         bodyPart: order.bodyPart,
         slotStart,
         slotEnd,
-        resourceId: resource.id,
+        resourceId: verdict.resource.id,
         physicalRole: order.physicalRole,
-        staffId: staff.id,
+        staffId: verdict.staff.id,
         patientRestMinutes: order.patientRestMinutes,
         inPackage: order.inPackage,
         resourceGapMinutes: order.resourceGapMinutes,
@@ -598,7 +657,7 @@ export function scanProcedureSlots(input: {
       input.allocations.push(
         {
           role: order.physicalRole,
-          resourceId: resource.id,
+          resourceId: verdict.resource.id,
           practitionerId: null,
           startsAt: slotStart,
           endsAt: slotEnd,
@@ -608,7 +667,7 @@ export function scanProcedureSlots(input: {
         {
           role: "STAFF",
           resourceId: null,
-          practitionerId: staff.id,
+          practitionerId: verdict.staff.id,
           startsAt: slotStart,
           endsAt: slotEnd,
           procedureOrderId: order.id,
