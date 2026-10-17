@@ -97,6 +97,8 @@ export type ScanOrder = {
   resources: ScanResource[];
   staffMode: "HARD" | "SOFT";
   procedureTypeId: string;
+  /** When set, only this Baku day is legal. Leaving the day is a miss. */
+  pinYmd?: string;
 };
 
 export type PlannedPlacement = {
@@ -309,6 +311,7 @@ function restGap(
   for (let i = 1; i < timeline.length; i++) {
     const prev = timeline[i - 1]!;
     const curr = timeline[i]!;
+    if (curr.start.getTime() < prev.end.getTime()) return true;
     const need = Math.max(0, prev.restAfter);
     if (need > 0 && curr.start.getTime() - prev.end.getTime() < need * 60_000) return true;
   }
@@ -362,8 +365,16 @@ export function scanProcedureSlots(input: {
       continue;
     }
 
+    const pinStart = order.pinYmd
+      ? bakuWallTime(bakuDayBounds(order.pinYmd).start, order.typeHours.dayStartHour)
+      : null;
+    const searchFrom =
+      pinStart &&
+      (bakuDateKey(input.now) !== order.pinYmd || input.now.getTime() <= pinStart.getTime())
+        ? pinStart
+        : input.now;
     let slotStart = nextOpenSlot(
-      input.now,
+      searchFrom,
       order.typeHours,
       order.dayEndHour,
       input.closedYmds,
@@ -397,6 +408,10 @@ export function scanProcedureSlots(input: {
     const blocks = { day_full: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
     const opened = slotStart != null;
     for (let attempt = 0; attempt < 4000 && slotStart && !placed; attempt++) {
+      if (order.pinYmd && bakuDateKey(slotStart) !== order.pinYmd) {
+        slotStart = null;
+        break;
+      }
       slotStart = avoidLunchOverlap(slotStart, order.durationMin, order.typeHours);
       if (!order.afterLunchAllowed && bakuHourMinute(slotStart).hour >= order.typeHours.lunchEndHour) {
         slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
