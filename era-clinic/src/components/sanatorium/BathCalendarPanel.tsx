@@ -300,16 +300,16 @@ export function BathCalendarPanel({
 
   async function save() {
     if (!mode) return;
-    const seated = members.filter((row) => row.qty >= 1 && seriesByCode.has(row.procedureCode));
-    if (seated.length === 0) return;
+    const toSeat = members.filter((row) => row.qty >= 1 && seriesByCode.has(row.procedureCode));
+    if (toSeat.length === 0) return;
     setBusy(true);
     try {
       const unplacedDays: string[] = [];
       let unplaced = 0;
-      let seated = 0;
+      let seatedCount = 0;
       let planned = 0;
       let manualLeft = true;
-      for (const member of seated) {
+      for (const member of toSeat) {
         const sendManual = manualLeft;
         manualLeft = false;
         const res = await fetch(`/api/sanatorium/episodes/${episodeId}/bath-calendar`, {
@@ -335,14 +335,14 @@ export function BathCalendarPanel({
           unplaced?: number;
           unplacedDays?: string[];
         };
-        seated += saved.seated ?? 0;
+        seatedCount += saved.seated ?? 0;
         planned += saved.planned ?? 0;
         unplaced += saved.unplaced ?? 0;
         unplacedDays.push(...(saved.unplacedDays ?? []));
       }
       const dates = unplacedDays.join(", ");
       const skipped = members.some((row) => row.qty >= 1 && !seriesByCode.has(row.procedureCode));
-      if (seated < 1 && planned < 1) {
+      if (seatedCount < 1 && planned < 1) {
         showApiError({ error: t("bathCalendarNothingToSeat") });
         return;
       }
