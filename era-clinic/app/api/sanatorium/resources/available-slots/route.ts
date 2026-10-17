@@ -16,6 +16,10 @@ export async function GET(request: Request) {
     const patientRefId = url.searchParams.get("patientRefId") ?? undefined;
     const excludeOrderId = url.searchParams.get("excludeOrderId") ?? undefined;
 
+    const { clinicDayIsClosed } = await import("@/domain/planning/slot-decision");
+    if (await clinicDayIsClosed(dateParam)) {
+      return jsonOk({ date: dateParam, closed: true, slots: [] });
+    }
     const slots = await listAvailableResourceSlots({
       date: bakuDayBounds(dateParam).start,
       resourceId,
@@ -23,7 +27,7 @@ export async function GET(request: Request) {
       patientRefId,
       excludeOrderId,
     });
-    return jsonOk({ date: dateParam, slots });
+    return jsonOk({ date: dateParam, closed: false, slots });
   } catch (err) {
     return handleRouteError(err);
   }

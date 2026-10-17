@@ -23,6 +23,7 @@ import {
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { bakuDateKey, bakuDateTimeLabel, addBakuDays, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { localizeSlotDecision } from "@/lib/slot-decision-ui";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import type { PhysioChipsValue } from "@/components/physio/PhysioSiteChips";
 import {
@@ -390,14 +391,7 @@ export function PatientCardClinicalSections({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showApiError(
-          typeof data?.error === "string" && data.error.includes("Cabin sex")
-            ? { ...data, error: ts("cabinSexMismatch") }
-            : typeof data?.error === "string" && data.error.includes("past")
-              ? { ...data, error: ts("reschedulePast") }
-            : data,
-          tc("failed"),
-        );
+        showApiError(localizeSlotDecision(data, ts), tc("failed"));
         return;
       }
       setRescheduleId(null);
@@ -973,13 +967,8 @@ export function PatientCardClinicalSections({
           />
         }
       >
-        <div className="grid grid-cols-2 items-end gap-2">
-          <DatePicker
-            label={tc("date")}
-            value={rescheduleDate}
-            onChange={(value) => setRescheduleDate(value)}
-            placeholder="dd.mm.yyyy"
-          />
+        <div className="grid grid-cols-1 items-end gap-2">
+          <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{ts("rescheduleSameDayHint")}</p>
           <CatalogField
             kind="SEARCHABLE"
             label={ts("procedureTime")}

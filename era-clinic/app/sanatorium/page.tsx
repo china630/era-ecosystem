@@ -16,6 +16,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuCivilUtcDate, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { localizeSlotDecision } from "@/lib/slot-decision-ui";
 import {
   CHIP_GROUP_CLASS,
   CatalogField,
@@ -791,14 +792,7 @@ export default function SanatoriumPage() {
     setBusy(false);
     if (res.ok) showSuccess(t("rescheduled"));
     else {
-      showApiError(
-        typeof data?.error === "string" && data.error.includes("Cabin sex")
-          ? { ...data, error: t("cabinSexMismatch") }
-          : typeof data?.error === "string" && data.error.includes("past")
-            ? { ...data, error: t("reschedulePast") }
-          : data,
-        t("failed"),
-      );
+      showApiError(localizeSlotDecision(data, t), t("failed"));
     }
     setRescheduleOrderId(null);
     if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
@@ -852,7 +846,7 @@ export default function SanatoriumPage() {
         return;
       }
       if (!res.ok) {
-        showApiError(data, t("failed"));
+        showApiError(localizeSlotDecision(data, t), t("failed"));
         return;
       }
       setPaidSameDayOpen(false);
@@ -1835,13 +1829,8 @@ export default function SanatoriumPage() {
           />
         }
       >
-        <div className="grid grid-cols-2 items-end gap-2">
-          <DatePicker
-            label={t("date", { defaultValue: "Date" })}
-            value={rescheduleDate}
-            onChange={setRescheduleDate}
-            placeholder="dd.mm.yyyy"
-          />
+        <div className="grid grid-cols-1 items-end gap-2">
+          <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{t("rescheduleSameDayHint")}</p>
           <CatalogField
             kind="SEARCHABLE"
             label={t("procedureTime")}

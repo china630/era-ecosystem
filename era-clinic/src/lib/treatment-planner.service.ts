@@ -348,6 +348,8 @@ export async function placeConfirmedProcedures(
     scheduleBefore?: Date | null;
     startAt?: Date | null;
     pinYmdByOrderId?: Record<string, string>;
+    /** When true, a pin on a closed day is a miss — do not remap to the next working day. */
+    pinStrict?: boolean;
   },
 ): Promise<PlaceConfirmedResult> {
   if (orderIds.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
@@ -443,10 +445,12 @@ export async function placeConfirmedProcedures(
   }
   const clinicDays = await listClinicDays(today, addBakuDays(horizonEndYmd, 7));
   const closedYmds = new Set(clinicDays.filter((day) => !day.working).map((day) => day.ymd));
-  for (const [orderId, pin] of Object.entries(pinYmdByOrderId)) {
-    if (!pin || !closedYmds.has(pin)) continue;
-    const next = nextWorkingYmd(clinicDays, pin);
-    if (next) pinYmdByOrderId[orderId] = next;
+  if (!opts?.pinStrict) {
+    for (const [orderId, pin] of Object.entries(pinYmdByOrderId)) {
+      if (!pin || !closedYmds.has(pin)) continue;
+      const next = nextWorkingYmd(clinicDays, pin);
+      if (next) pinYmdByOrderId[orderId] = next;
+    }
   }
   for (const pin of Object.values(pinYmdByOrderId)) {
     if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
@@ -556,10 +560,10 @@ export async function placeConfirmedProcedures(
   }
 
   const typeIds = [...new Set(scanOrders.map((order) => order.procedureTypeId))];
-  const staffByTypeAndYmd = await loadStaffByDay(typeIds, today, horizonEndYmd);
+  const staffByTypeAndYmd = await loadStaffByDayForScan(typeIds, today, horizonEndYmd);
   const staffIds = [...new Set([...staffByTypeAndYmd.values()].flat().map((person) => person.id))];
   const resourceIds = [...new Set(scanOrders.flatMap((order) => order.resources.map((row) => row.id)))];
-  const allocations = await loadOccupancy(resourceIds, staffIds, today, horizonEndYmd);
+  const allocations = await loadOccupancyForScan(resourceIds, staffIds, today, horizonEndYmd);
 
   const scanned = scanProcedureSlots({
     orders: scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
@@ -657,7 +661,7 @@ const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     throw new Error("Unable to generate unique procedure access code");
   }
 
-async function loadOccupancy(
+export async function loadOccupancyForScan(
   resourceIds: string[],
   staffIds: string[],
   fromYmd: string,
@@ -700,7 +704,7 @@ async function loadOccupancy(
   }));
 }
 
-async function loadStaffByDay(
+export async function loadStaffByDayForScan(
   typeIds: string[],
   fromYmd: string,
   horizonEndYmd: string,

@@ -1,5 +1,5 @@
 import { parseBakuDateTime } from "@/lib/baku-day";
-import { scanProcedureSlots, type ScanOrder } from "@/lib/procedure-slot-scan";
+import { evaluateCandidateSlot, scanProcedureSlots, type ScanOrder } from "@/lib/procedure-slot-scan";
 import type { TenantWorkHours } from "@/domain/settings/scheduling-settings";
 
 const hours: TenantWorkHours = {
@@ -213,5 +213,75 @@ describe("scanProcedureSlots", () => {
     expect(result.planned[0]?.slotStart.getTime()).toBe(
       parseBakuDateTime("2026-10-19", "08:00").getTime(),
     );
+  });
+});
+
+describe("evaluateCandidateSlot", () => {
+  const slot = {
+    order: order(),
+    slotStart: parseBakuDateTime("2026-10-16", "10:00"),
+    slotEnd: parseBakuDateTime("2026-10-16", "10:30"),
+    packageCap: 3,
+    closedYmds: new Set<string>(),
+    staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+    rules: [],
+    rotationRules: [],
+    compatibilityRules: [],
+    patientSlots: [],
+    rotationContext: [],
+    allocations: [],
+  };
+
+  it("accepts a free open-day minute", () => {
+    const verdict = evaluateCandidateSlot(slot);
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) expect(verdict.staff.id).toBe("nurse-1");
+  });
+
+  it("refuses a closed day without snapping", () => {
+    const verdict = evaluateCandidateSlot({
+      ...slot,
+      slotStart: parseBakuDateTime("2026-10-18", "10:00"),
+      slotEnd: parseBakuDateTime("2026-10-18", "10:30"),
+      closedYmds: new Set(["2026-10-18"]),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-18", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+    });
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.reason).toBe("closed");
+  });
+
+  it("refuses a fourth distinct package SKU", () => {
+    const verdict = evaluateCandidateSlot({
+      ...slot,
+      patientSlots: [
+        { code: "A", start: slot.slotStart, end: slot.slotEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+        { code: "B", start: slot.slotStart, end: slot.slotEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+        { code: "C", start: slot.slotStart, end: slot.slotEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+      ],
+    });
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.reason).toBe("day_full");
+  });
+
+  it("does not apply the package cap to a paid extra", () => {
+    const verdict = evaluateCandidateSlot({
+      ...slot,
+      order: { ...order(), inPackage: false },
+      patientSlots: [
+        { code: "A", start: slot.slotStart, end: slot.slotEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+        { code: "B", start: slot.slotStart, end: slot.slotEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+        { code: "C", start: slot.slotStart, end: slot.slotEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+      ],
+    });
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("reports no staff when the duty line is empty", () => {
+    const verdict = evaluateCandidateSlot({
+      ...slot,
+      staffByTypeAndYmd: new Map(),
+    });
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.reason).toBe("no_staff");
   });
 });
