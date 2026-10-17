@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { getCalendarDaysRange } from "@era/satellite-kit";
-import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
+import { listClinicDays, nextWorkingYmd } from "@/domain/planning/clinic-day";
 import {
   addBakuDays,
   bakuDateKey,
@@ -183,15 +182,15 @@ export async function nextWorkSlot(
   if (bakuHourMinute(d).hour >= endHour) {
     const nextYmd = addBakuDays(bakuDateKey(d), 1);
     d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
-    d = await nextSchedulingDay(d);
-    d = bakuWallTime(d, hours.dayStartHour);
   }
   if (bakuHourMinute(d).hour < hours.dayStartHour) {
     d = bakuWallTime(d, hours.dayStartHour);
   }
-  if (!(await isElectiveSchedulingAllowed(d))) {
-    const next = await nextSchedulingDay(d);
-    return bakuWallTime(next, hours.dayStartHour);
+  const ymd = bakuDateKey(d);
+  const days = await listClinicDays(ymd, addBakuDays(ymd, 21));
+  const work = nextWorkingYmd(days, ymd);
+  if (work && work !== ymd) {
+    return bakuWallTime(bakuDayBounds(work).start, hours.dayStartHour);
   }
   return d;
 }
@@ -438,7 +437,18 @@ export async function placeConfirmedProcedures(
   if (opts?.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())) {
     horizonEndYmd = bakuDateKey(opts.scheduleBefore);
   }
-  for (const pin of Object.values(opts?.pinYmdByOrderId ?? {})) {
+  const pinYmdByOrderId = { ...(opts?.pinYmdByOrderId ?? {}) };
+  for (const pin of Object.values(pinYmdByOrderId)) {
+    if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
+  }
+  const clinicDays = await listClinicDays(today, addBakuDays(horizonEndYmd, 7));
+  const closedYmds = new Set(clinicDays.filter((day) => !day.working).map((day) => day.ymd));
+  for (const [orderId, pin] of Object.entries(pinYmdByOrderId)) {
+    if (!pin || !closedYmds.has(pin)) continue;
+    const next = nextWorkingYmd(clinicDays, pin);
+    if (next) pinYmdByOrderId[orderId] = next;
+  }
+  for (const pin of Object.values(pinYmdByOrderId)) {
     if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
   }
 
@@ -511,7 +521,7 @@ export async function placeConfirmedProcedures(
       procedureTypeId: pt.id,
       resourceCodeList: [...codes].sort(),
       extendedEndHour: pt.extendedEndHour,
-      pinYmd: opts?.pinYmdByOrderId?.[order.id],
+      pinYmd: pinYmdByOrderId[order.id],
     });
   }
 
@@ -551,7 +561,6 @@ export async function placeConfirmedProcedures(
   const resourceIds = [...new Set(scanOrders.flatMap((order) => order.resources.map((row) => row.id)))];
   const allocations = await loadOccupancy(resourceIds, staffIds, today, horizonEndYmd);
 
-  const closedYmds = await loadClosedYmds(today, horizonEndYmd);
   const scanned = scanProcedureSlots({
     orders: scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
     now,
@@ -647,20 +656,6 @@ const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     }
     throw new Error("Unable to generate unique procedure access code");
   }
-
-async function loadClosedYmds(fromYmd: string, horizonEndYmd: string): Promise<Set<string>> {
-  const closed = new Set<string>();
-  if (fromYmd >= horizonEndYmd) return closed;
-  try {
-    const days = await getCalendarDaysRange(fromYmd, horizonEndYmd);
-    for (const day of days) {
-      if (day.dayType === "mourning" || day.isWorking === false) closed.add(day.date);
-    }
-  } catch {
-    /* no calendar — treat the stay as open, same as a missing day */
-  }
-  return closed;
-}
 
 async function loadOccupancy(
   resourceIds: string[],

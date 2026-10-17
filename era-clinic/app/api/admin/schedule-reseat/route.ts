@@ -7,6 +7,9 @@ const bodySchema = z.object({
   apply: z.boolean().default(false),
   episodeId: z.string().min(1).optional(),
   orderIds: z.array(z.string().min(1)).optional(),
+  allOpenOverlaps: z.boolean().optional(),
+  allOpenClosedDays: z.boolean().optional(),
+  closedDaysOnly: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -17,8 +20,14 @@ export async function POST(req: Request) {
       return jsonError("Forbidden", 403);
     }
     const body = bodySchema.parse(await req.json());
-    if (!body.episodeId && !(body.orderIds ?? []).length) {
-      return jsonError("episodeId or orderIds required", 400);
+    if (
+      !body.allOpenOverlaps &&
+      !body.allOpenClosedDays &&
+      !body.closedDaysOnly &&
+      !body.episodeId &&
+      !(body.orderIds ?? []).length
+    ) {
+      return jsonError("episodeId, orderIds, allOpenOverlaps, or allOpenClosedDays required", 400);
     }
     const result = body.apply ? await applyReseatFuturePlan(body) : await previewReseatFuturePlan(body);
     return jsonOk(result);

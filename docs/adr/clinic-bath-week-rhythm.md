@@ -17,6 +17,7 @@ Nafta wants five naftalan sessions in a Monday–Saturday week, rest no later th
 - `weeklyNaftalanCap` (default 5) limits the naftalan family per Baku Monday–Sunday week. 0 turns the cap off.
 - The package-assign mini calendar is removed. Point edits stay on the course schedule.
 - Cabin search must not pick a time without the guest's other orders. Bath days stay a policy; the slot is the same door as other procedures.
+- Closed weekdays and clinic-day overrides come from `listClinicDays`. Physio and baths both refuse a `working: false` day. The resource matrix does not invent its own week.
 
 ## Consequences
 

@@ -42,9 +42,10 @@ function eachYmd(fromYmd: string, toYmd: string): string[] {
 
 /**
  * Stay days from check-in inclusive through the day before checkout.
- * Layer, highest wins: manual override, production-calendar exception, week template.
+ * Layer, highest wins: manual clinic-day override, then the week template
+ * (`closedWeekdays`). The country calendar may close an otherwise open day
+ * (holiday / mourning / isWorking false) but must not open a closed weekday.
  * Weekday end, Saturday end, and shortened-day end come from clinic settings.
- * A weekday in closedWeekdays stays off unless the country calendar opens it.
  */
 export async function listClinicDays(fromYmd: string, toYmd: string): Promise<ClinicDay[]> {
   const ymds = eachYmd(fromYmd, toYmd);
@@ -71,9 +72,13 @@ export async function listClinicDays(fromYmd: string, toYmd: string): Promise<Cl
       });
       continue;
     }
+    if (closed.has(weekday)) {
+      days.push({ ymd, working: false, endHour: 0 });
+      continue;
+    }
     const country = await getCalendarDay(ymd);
     const countryHoliday = country?.dayType === "holiday" || country?.dayType === "mourning";
-    const saturdayStaysOpen = weekday === 6 && !closed.has(6);
+    const saturdayStaysOpen = weekday === 6;
     const countryClosed = country?.isWorking === false && !saturdayStaysOpen;
     if (countryHoliday || countryClosed) {
       days.push({ ymd, working: false, endHour: 0 });
@@ -81,12 +86,6 @@ export async function listClinicDays(fromYmd: string, toYmd: string): Promise<Cl
     }
     if (country?.dayType === "shortened") {
       days.push({ ymd, working: true, endHour: shortEnd });
-      continue;
-    }
-    if (closed.has(weekday)) {
-      const opened = country?.isWorking === true;
-      const end = weekday === 6 ? saturdayEnd : weekdayEnd;
-      days.push({ ymd, working: opened, endHour: opened ? end : 0 });
       continue;
     }
     if (weekday === 6) {
@@ -105,4 +104,12 @@ export function stayYmd(startsOn: Date, endsOn: Date): { fromYmd: string; toYmd:
 export function dayStartInstant(ymd: string, hour: number): Date {
   const { start } = bakuDayBounds(ymd);
   return new Date(start.getTime() + hour * 3_600_000);
+}
+
+/** First working clinic day on or after fromYmd. */
+export function nextWorkingYmd(days: ClinicDay[], fromYmd: string): string | null {
+  for (const day of days) {
+    if (day.ymd >= fromYmd && day.working) return day.ymd;
+  }
+  return null;
 }

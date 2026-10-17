@@ -459,6 +459,7 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 2. `/sanatorium` → patient card → package modal → **Saxla** seats naftalan and paraffin on the same day at **different** minutes (guest overlap is refused). No mini calendar.
 3. `/admin/settings` → **Clinic days** → close one civil day → schedule recalc preview lists moved sessions → Apply (super-admin only). Recalc does not stack two sessions at 09:00 for one guest.
 4. Super-admin: paste episode id → **Preview reseat** / **Reseat future plan**. Future `SCHEDULED` retimes; `CHECKED_IN` / `COMPLETED` stay. Do not delete orders.
+4a. Default week template keeps Sunday closed. Saxla / matrix has no Sunday slots unless `/admin/settings` opens that civil day. Super-admin **Preview closed days** / **Move off closed days** shifts leftover Sunday `SCHEDULED` to the next working day (not a full stay recalc).
 5. `/admin/lis-profiles` → **Word blank** mapper → upload a `.docx`, map analytes to cells → Save.
 6. Open lab order → results step → pick the blank profile → upload a filled `.docx` from the lab → mapped analyte values appear in the result lines → Save.
 7. Apply any package → the course has `LAB-CBC` and `LAB-URINE`; urine reference shows U-SG 1010–1030 and U-PH 6.0–7.4.

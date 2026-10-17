@@ -189,4 +189,29 @@ describe("scanProcedureSlots", () => {
       parseBakuDateTime("2026-10-16", "09:35").getTime(),
     );
   });
+
+  it("skips a closed Sunday and seats the next open day", () => {
+    const result = scanProcedureSlots({
+      orders: [order()],
+      now: parseBakuDateTime("2026-10-18", "09:00"),
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-21",
+      closedYmds: new Set(["2026-10-18"]),
+      staffByTypeAndYmd: new Map([
+        ["type-1|2026-10-18", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+        ["type-1|2026-10-19", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+      ]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.failures).toEqual([]);
+    expect(result.planned[0]?.slotStart.getTime()).toBe(
+      parseBakuDateTime("2026-10-19", "08:00").getTime(),
+    );
+  });
 });
