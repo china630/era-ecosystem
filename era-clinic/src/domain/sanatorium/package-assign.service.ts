@@ -904,7 +904,7 @@ export async function assignPackageProcedures(
   placed: number;
   softWarn: string | null;
   orderIds: string[];
-  misses?: Array<{ ymd: string; procedureCode: string; reason: string }>;
+  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
 }> {
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
