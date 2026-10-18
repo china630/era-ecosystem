@@ -223,6 +223,8 @@ export const APP_SIDEBAR_OFFSET_CLASS = "lg:pl-[17.5rem]";
 export const APP_SIDEBAR_COLLAPSED_OFFSET_CLASS = "lg:pl-[4.5rem]";
 export const APP_SIDEBAR_LEFT_CLASS = "lg:left-[17.5rem]";
 export const APP_SIDEBAR_COLLAPSED_LEFT_CLASS = "lg:left-[4.5rem]";
+/** Fixed header box — must stay in lockstep with `APP_HEADER_OFFSET_CLASS`. */
+export const APP_HEADER_HEIGHT_CLASS = "h-16";
 export const APP_HEADER_OFFSET_CLASS = "pt-16";
 
 /**
