@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import type { HousekeepingTaskStatus, RoomHkCondition } from '@prisma/client';
 import { roomWriteFromAxes } from '@/lib/room-state';
-import { OccupiedHkLockedError, roomHasInHouseStay } from '@/lib/occupied-hk-lock';
+import { OccupiedHkLockedError } from '@/lib/occupied-hk-lock';
+import { roomHasInHouseStay } from '@/lib/occupied-hk-guard';
 
 export async function listTasks(status?: HousekeepingTaskStatus) {
   return prisma.housekeepingTask.findMany({

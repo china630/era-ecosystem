@@ -1,5 +1,3 @@
-import { prisma } from '@/lib/prisma';
-
 /** FO rack / RoomInfo / PATCH rooms status cannot flip cleanliness on a live stay. */
 export class OccupiedHkLockedError extends Error {
   status = 409;
@@ -7,20 +5,6 @@ export class OccupiedHkLockedError extends Error {
   constructor() {
     super('Cannot change housekeeping condition while the room is in-house');
     this.name = 'OccupiedHkLockedError';
-  }
-}
-
-export async function roomHasInHouseStay(roomId: string): Promise<boolean> {
-  const stay = await prisma.reservation.findFirst({
-    where: { roomId, status: 'IN_HOUSE' },
-    select: { id: true },
-  });
-  return Boolean(stay);
-}
-
-export async function assertRoomHkEditable(roomId: string): Promise<void> {
-  if (await roomHasInHouseStay(roomId)) {
-    throw new OccupiedHkLockedError();
   }
 }
 
