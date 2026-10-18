@@ -36,6 +36,22 @@ import {
   formatPhysioFieldsPrint,
   type PhysioOrderFields,
 } from "@/domain/physio/physio-order-fields";
+import {
+  BATH_TRANSFER_PREFIX,
+  bathTransferQuotaCode,
+  bathTransferSku,
+  foldHay,
+  isBathQuotaLine,
+  isBathTransferQuota,
+} from "@/domain/sanatorium/package-assign-quota";
+
+export {
+  BATH_TRANSFER_PREFIX,
+  bathTransferQuotaCode,
+  bathTransferSku,
+  isBathQuotaLine,
+  isBathTransferQuota,
+} from "@/domain/sanatorium/package-assign-quota";
 
 export class PackageAssignError extends Error {
   constructor(
@@ -66,18 +82,6 @@ export function isPackagePoolCode(code: string): boolean {
 }
 
 export type PoolEligibleSku = { code: string; name: string };
-
-function foldHay(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/ə/g, "e")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ç/g, "c")
-    .replace(/ğ/g, "g");
-}
 
 /**
  * Program-template quota codes that are not ProcedureType rows.
@@ -211,27 +215,6 @@ export function resolvePackageQuotaSku(
  * Intake labs / doctor exams stay on ProgramProcedureBalance for quota truth but are out of scope
  * for this modal (ADR clinic-episode-procedure-assign-modal — intake on separate card blocks).
  */
-export const BATH_TRANSFER_PREFIX = "XFER-";
-
-export function isBathTransferQuota(code: string): boolean {
-  return code.trim().toUpperCase().startsWith(BATH_TRANSFER_PREFIX);
-}
-
-export function bathTransferSku(code: string): string {
-  return isBathTransferQuota(code) ? code.trim().slice(BATH_TRANSFER_PREFIX.length) : code;
-}
-
-export function bathTransferQuotaCode(sku: string): string {
-  return `${BATH_TRANSFER_PREFIX}${sku.trim()}`;
-}
-
-/** Unused bath / naftalan / application quota that can move to another package SKU. */
-export function isBathQuotaLine(code: string, name?: string | null): boolean {
-  if (isBathTransferQuota(code)) return false;
-  const hay = foldHay(`${code} ${name ?? ""}`);
-  return /vann|bath|naftalan|aplikasiya|iod|yod.?brom|4.?kam|four.?chamber/.test(hay);
-}
-
 export function isPackageAssignTreatmentLine(code: string, name?: string | null): boolean {
   const c = code.trim().toUpperCase();
   if (!c) return false;

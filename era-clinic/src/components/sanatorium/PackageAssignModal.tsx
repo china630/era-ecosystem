@@ -31,7 +31,7 @@ import {
   isBathTransferQuota,
   bathTransferSku,
   bathTransferQuotaCode,
-} from "@/domain/sanatorium/package-assign.service";
+} from "@/domain/sanatorium/package-assign-quota";
 import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
 import { addBakuDays, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
@@ -1964,6 +1964,7 @@ export function PackageAssignModal({
                   label={tPhysio("replaceBathsReason")}
                   value={replaceReason}
                   onChange={(v) => setReplaceReason(String(v ?? ""))}
+                  options={[]}
                 />
               </div>
               <div className="flex justify-end gap-2">
