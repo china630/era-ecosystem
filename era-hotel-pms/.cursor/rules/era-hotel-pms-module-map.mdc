@@ -234,7 +234,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 
 | Route | API | Notes |
 |-------|-----|-------|
-| `/settings/master-data` | `/api/master/{room-types,lookups,rate-plans,revenue-codes,room-views,bed-types}` (+ `[id]`) | Tabs: room types → dictionaries → rooms → rate plans → revenue → lookups. Optional `nameAz/nameRu/nameEn` on all six catalogs; UI labels via `catalogLabel(row, locale)` (`src/lib/catalog-label.ts`) |
+| `/settings/master-data` | `/api/master/{room-types,lookups,rate-plans,revenue-codes,room-views,bed-types}` (+ `[id]`) | Tabs: room types → dictionaries → rooms → rate plans → revenue → lookups. Optional `nameAz/nameRu/nameEn` on all six catalogs; UI labels via `catalogLabel(row, locale)` (`src/lib/catalog-label.ts`). NATIONALITY seed names come from `@era/satellite-kit/catalog/iso-countries` |
 | `/concierge` | `GET /api/concierge`, `POST` `action: createProduct` | Product catalog + orders; category = `CONCIERGE_CATEGORY` lookup (`CatalogField`); write needs `RESERVATIONS_WRITE` |
 | Elektraweb revenue / sell path | `src/lib/integration/elektraweb-revenue.ts`, `elektraweb-sell-path.ts` | One adapter each for Excel import + live bridge; channel rate codes → BAR + OTA source + channel agency. Reclass: `scripts/ops/reclass-elektra-rate-channels.ts` |
 
