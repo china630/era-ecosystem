@@ -28,6 +28,7 @@ import { hotelDateKey } from '@/lib/hotel-calendar';
 import { normalizeShareGender } from '@/lib/share-gender';
 import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
+import { stayListHasInHouse } from '@/lib/occupied-hk-lock';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -153,7 +154,7 @@ export type RoomRackViewProps = {
   selectedId: string | null;
   onSelect: (room: RoomRackRoom) => void;
   onQuickBook?: (room: RoomRackRoom) => void;
-  onRelocate?: (reservationId: string, toRoomId: string, reasonCode: RoomMoveReason) => Promise<void>;
+  onRelocate?: (reservationId: string, toRoomId: string, reasonCode?: RoomMoveReason) => Promise<void>;
   onHkStatus?: (roomId: string, hk: 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED') => void;
   loading?: boolean;
   filterDateFrom: string;
@@ -564,10 +565,34 @@ export default function RoomRackView({
                   if (held || active) return;
                   if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return;
                   if (room.reservations.some((stay) => stay.id === resId)) return;
-                  setPendingMove({ reservationId: resId, toRoomId: room.id });
+                  const dragged = rooms
+                    .flatMap((row) => row.reservations ?? [])
+                    .find((stay) => stay.id === resId);
+                  if (dragged?.status === 'IN_HOUSE') {
+                    setPendingMove({ reservationId: resId, toRoomId: room.id });
+                    return;
+                  }
+                  void onRelocate(resId, room.id);
                 }}
               >
                 {onHkStatus && room.inventoryStatus !== 'OOO' && room.inventoryStatus !== 'OOS' ? (
+                  stayListHasInHouse(room.reservations) ? (
+                    <div
+                      className="mx-auto mb-1 text-center text-[10px] font-semibold uppercase text-[#7F8C8D]"
+                      title={t('occupiedHkLocked')}
+                    >
+                      {t(
+                        `hkOpt.${
+                          room.hkCondition === 'DIRTY' ||
+                          room.hkCondition === 'PICKUP' ||
+                          room.hkCondition === 'CLEAN' ||
+                          room.hkCondition === 'INSPECTED'
+                            ? room.hkCondition
+                            : 'CLEAN'
+                        }`,
+                      )}
+                    </div>
+                  ) : (
                   <select
                     className={`${FORM_INPUT_CLASS} mx-auto mb-1 block h-7 min-h-0 max-w-full px-1 py-0.5 text-center text-[10px] font-semibold uppercase`}
                     aria-label={t('hkStatus')}
@@ -593,6 +618,7 @@ export default function RoomRackView({
                       </option>
                     ))}
                   </select>
+                  )
                 ) : (
                   <div className={`text-center text-[11px] font-semibold uppercase ${textCls}`}>
                     {tRoom(room.status)}

@@ -114,8 +114,8 @@ export async function postCharge(input: {
     include: { folios: true, guest: true },
   });
   if (!reservation) throw new Error('Reservation not found');
-  if (!['CONFIRMED', 'IN_HOUSE'].includes(reservation.status)) {
-    throw new Error('Charges can only be posted to CONFIRMED or IN_HOUSE reservations');
+  if (!['OPTION', 'CONFIRMED', 'IN_HOUSE'].includes(reservation.status)) {
+    throw new Error('Charges can only be posted to OPTION, CONFIRMED or IN_HOUSE reservations');
   }
 
   const revenueCode = await prisma.revenueCode.findUnique({ where: { id: input.revenueCodeId } });
@@ -222,6 +222,41 @@ export async function postCharge(input: {
   return charge;
 }
 
+async function allocatePaymentToCharges(
+  folioId: string,
+  paymentId: string,
+  amount: number,
+  revenueCodeId?: string,
+) {
+  const charges = await prisma.folioCharge.findMany({
+    where: { folioId },
+    orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
+    include: { paymentAllocations: true },
+  });
+  const preferred = revenueCodeId
+    ? charges.filter((charge) => charge.revenueCodeId === revenueCodeId)
+    : [];
+  const rest = revenueCodeId ? charges.filter((charge) => charge.revenueCodeId !== revenueCodeId) : charges;
+  let left = amount;
+  for (const charge of [...preferred, ...rest]) {
+    if (left <= 0.009) break;
+    const gross = decimalToNumber(charge.amount) * charge.qty;
+    if (gross <= 0.009) continue;
+    const already = charge.paymentAllocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+    const open = gross - already;
+    if (open <= 0.009) continue;
+    const take = Math.min(open, left);
+    await prisma.folioPaymentAllocation.create({
+      data: {
+        paymentId,
+        chargeId: charge.id,
+        amount: toDecimal(Math.round(take * 100) / 100),
+      },
+    });
+    left -= take;
+  }
+}
+
 export async function postPayment(input: {
   folioId: string;
   amount: number;
@@ -233,6 +268,7 @@ export async function postPayment(input: {
   kind?: 'PAYMENT' | 'REFUND';
   refundOfPaymentId?: string;
   refundReason?: string;
+  revenueCodeId?: string;
   auditRequest?: Request;
 }) {
   const folio = await prisma.folio.findUnique({
@@ -366,6 +402,10 @@ export async function postPayment(input: {
       amount: input.amount,
       businessDate: payment.businessDate,
     });
+  }
+
+  if (kind === 'PAYMENT') {
+    await allocatePaymentToCharges(input.folioId, payment.id, input.amount, input.revenueCodeId);
   }
 
   await recalcReservationTotal(folio.reservationId);

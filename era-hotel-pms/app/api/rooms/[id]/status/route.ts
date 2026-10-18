@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
+import { prisma } from '@/lib/prisma';
 import { updateRoomAxes, updateRoomStatus } from '@/lib/services/room.service';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import type { RoomStatus } from '@prisma/client';
+import type { RoomHkCondition, RoomStatus } from '@prisma/client';
 
 const schema = z.object({
   status: z
@@ -35,7 +36,19 @@ export async function PATCH(
     const { id } = await params;
     const body = schema.parse(await request.json());
     if (body.hkCondition || body.inventoryStatus) {
-      const hk = body.hkCondition ?? (body.status === 'INSPECTED' ? 'INSPECTED' : body.status === 'DIRTY' ? 'DIRTY' : body.status === 'PICKUP' ? 'PICKUP' : 'CLEAN');
+      const fromStatus =
+        body.status === 'INSPECTED' ||
+        body.status === 'DIRTY' ||
+        body.status === 'PICKUP' ||
+        body.status === 'CLEAN'
+          ? (body.status as RoomHkCondition)
+          : null;
+      const current = await prisma.room.findUnique({
+        where: { id },
+        select: { hkCondition: true },
+      });
+      if (!current) throw new Error('Room not found');
+      const hk = (body.hkCondition ?? fromStatus ?? current.hkCondition) as RoomHkCondition;
       const inv =
         body.inventoryStatus ??
         (body.status === 'OOO' ? 'OOO' : body.status === 'OOS' || body.status === 'MAINTENANCE' ? 'OOS' : 'IN_SERVICE');

@@ -10,6 +10,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
+import { stayListHasInHouse } from '@/lib/occupied-hk-lock';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -100,6 +101,8 @@ export default function RoomInfoModal({
     ? hotelDateKey(activeReservation.checkInDate)
     : '';
   const arrivalReached = !arrivalKey || arrivalKey <= todayBakuYmd();
+  const occupied = stayListHasInHouse(room.reservations);
+  const hkLockedStatus = new Set(['CLEAN', 'INSPECTED', 'DIRTY', 'AVAILABLE']);
 
   return (
     <EraModal
@@ -181,12 +184,16 @@ export default function RoomInfoModal({
 
       <div className="mt-6 border-t border-[#D5DADF] pt-4">
         <p className="mb-2 text-xs font-semibold uppercase text-[#7F8C8D]">{t('housekeeping')}</p>
+        {occupied ? (
+          <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('occupiedHkLocked')}</p>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {(['CLEAN', 'INSPECTED', 'DIRTY', 'AVAILABLE', 'OOO'] as RoomStatus[]).map((s) => (
             <button
               key={s}
               type="button"
-              disabled={busy}
+              disabled={busy || (occupied && hkLockedStatus.has(s))}
+              title={occupied && hkLockedStatus.has(s) ? t('occupiedHkLocked') : undefined}
               onClick={() => onSetStatus(s)}
               className={SECONDARY_BUTTON_CLASS}
             >

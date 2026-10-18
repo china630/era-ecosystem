@@ -220,8 +220,10 @@ export async function recalcProgramQuotas(
     }
   }
 
-  // Codes only in old package: remaining 0 (keep used for history)
+  // Codes only in old package: remaining 0 (keep used for history).
+  // Bath-transfer buckets (XFER-*) are not template lines — do not wipe them.
   for (const line of instance.procedureLines) {
+    if (line.procedureCode.toUpperCase().startsWith("XFER-")) continue;
     if (!newCodes.has(line.procedureCode)) {
       await prisma.programProcedureBalance.update({
         where: { id: line.id },

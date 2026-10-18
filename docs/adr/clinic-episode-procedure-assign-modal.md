@@ -276,7 +276,7 @@ Exact enum names are implementation choice; semantics required:
 | `inPackage` | Explicit boolean on `ProcedureOrder` (not `amountNet <= 0`) for package vs paid |
 | Pay | All-or-nothing selected extras; one system receipt `yyyymmdd-xxx` per Pay click (not typed) |
 | Walk-in | Hide package assign block; extras only |
-| Replace | Autocomplete from/to; out-of-package → `PENDING_PAY`; FO manager (`api:procedures.fo_manager`) |
+| Replace | Bath leftover → in-package `XFER-*` + contraindication (`/transfer`). Seated in-package swap still `/replace`. Out-of-package seated swap → `PENDING_PAY` (FO manager) |
 | Physio | Form overlay (package **and** extras) with sites/fields/**laterality**; params under names in modal + print |
 | Qty | Right column `+1` (draft) and `−1` / delete → `adjust` `targetActiveQty` / `cancelAllActive` |
 | CHECKED_IN | Locked in snapshot + API (`CHECKED_IN_LOCKED`); grey like COMPLETED for modal delete/qty↓ |
@@ -296,5 +296,16 @@ Exact enum names are implementation choice; semantics required:
 | Errors | `POOL_NOT_ASSIGNABLE`, `POOL_SKU_NOT_ELIGIBLE` |
 | Day-1 | Skips `isPool` balance rows |
 | Assign menu filter | Pools + labs / doctor exams excluded via `isPackageAssignTreatmentLine` |
+
+## Amendment 2026-10-18 — bath quota transfer (SCREEN)
+
+Unused **bath / naftalan / application** remaining (`quotaTotal − consumed − CHECKED_IN`) may move to another treatment SKU as **in-package** remaining (`ProgramProcedureBalance` `XFER-{sku}`).
+
+- Does **not** auto-seat. Staff add from left block **Əvəz edilmiş prosedurlar** and Save as usual.
+- COMPLETED / CHECKED_IN / IN_PROGRESS baths cannot be written off; only leftover + SCHEDULED/PROPOSED (cancelled when needed).
+- Mandatory contraindication: `PatientContraindication` `FULL_BODY` + reason note + `createdAt`. Chief-doctor consent stays paper-only.
+- Not a folio extra and not admin naftalan→iod-brom substitution.
+- Route: `POST /api/sanatorium/episodes/[id]/package-assign/transfer`.
+- Night package recalc must not shrink `XFER-*` lines. Paid extras refuse while `XFER-{sku}` remaining exists (`QUOTA_REMAINING`).
 
 Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).

@@ -39,7 +39,7 @@ Do **not** add Pickup, SO, or DND as extra `RoomStatus` values.
 |------|--------|----------------|
 | Inventory | In service / **OOS** / **OOO** | HK + engineering; date range (`RoomClosure`) |
 | FO occupancy | Vacant / Occupied | Reservation `IN_HOUSE` (prefer derived) |
-| HK condition | Dirty / **Pickup** / Clean / Inspected | Maid / supervisor |
+| HK condition | Dirty / **Pickup** / Clean / Inspected | Maid / supervisor / system checkout-move. FO rack, chessboard, and RoomInfo cannot change it while `IN_HOUSE`. |
 
 `MAINTENANCE` collapses to OOS or OOO plus a reason from a managed list.
 
@@ -335,7 +335,7 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/hk/forecast` | 7–14 day load |
 | `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY` |
 | `/fo/laundry` | Same tickets; fallback Delivered only (no invent) |
-| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS and can close a door. |
+| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS, can close a door, and return it to service. |
 
 `/hk/maids` links a control-plane workforce employment (`globalPersonId`). The hotel keeps department and ƏG. It is not the roster.
 

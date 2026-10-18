@@ -43,7 +43,7 @@
 | Child matrix | `/admin/child-matrix` | CRUD API |
 | Channel availability | `/channel` | Matrix + `GET /api/channel/availability` |
 | Channel mapping MVP | `/channel` | `GET/POST /api/channel/mappings` |
-| HK closed OOO | `/housekeeping/closed-rooms` | `GET /api/housekeeping/closed-rooms` |
+| HK closed OOO | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms`, `POST …/return` |
 | HK maids | `/housekeeping/maids` | Housekeeper + assign |
 | HK minibar | `/housekeeping/minibar` | Items + post to folio |
 | HK lost & found | `/housekeeping/lost-and-found` | CRUD |

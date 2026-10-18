@@ -192,7 +192,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door+overlap auto-pair (assign/import); N lanes without overlay; per-night `nextFreeShareBedIndex`; seed room 105 / backfill 307; UAT-SMOKE §30 not signed — not SHIPPED |
 | HOT-FO-04 | Stay amendment + Manual Price / stay % | Y ADR | Y relocate/amendments/pricing/spread | API | UI on card (stay billing, tariff journal, late arrival); UAT-SMOKE §35 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
-| HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | UAT-SMOKE §34 open — not SHIPPED |
+| HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | FO cannot change `hkCondition` on IN_HOUSE (`OCCUPIED_HK_LOCKED`). Visit outcomes still can. UAT-SMOKE §34 open — not SHIPPED |
 | HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |
 | HOT-HK-03 | Floor sheet + visit outcomes + laundry folio | Y | Y `/hk` `/hk/laundry` `/hk/mobile` | API | SCREEN; millət + duty + needed-by; UAT §34 |
 | HOT-HK-04 | Skip/Sleep discrepancy + HK forecast | Y | Y `/hk/discrepancy` `/hk/forecast` | API | SCREEN; Sleep ≠ SO; heads/linen/deep counts |
@@ -207,7 +207,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status | Blocker / gap |
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------------|
 | HOT-CASH-01 | Folio settle multi-method (CASH/CARD/COMPANY/LOYALTY/DEPOSIT/BANK_TRANSFER) | KKM policy | Y settle | Y `/folio/[id]` | — | — | — | SHIPPED | UAT-SMOKE §3/§27; BANK_TRANSFER ops tender + bankReference; match in Finance. Card now requires an explicit BANK_POS pick |
-| HOT-FOLIO-DESK | Guest personal debt, missed nights, folio transfer, stay journal, persisted bank terminals | ADR hotel-folio-desk | Y | Y folio card | — | — | hub devices | API | UI is on the folio card. One check-out dialog for folio tab, rack, and card (UAT-SMOKE §27 step 1a). Stay journal on the reservation card now shows feed + field diffs from `SatelliteAuditLog`. Missed nights, transfer, and journal still have no UAT step — not SHIPPED |
+| HOT-FOLIO-DESK | Guest personal debt, missed nights, folio transfer, stay journal, persisted bank terminals | ADR hotel-folio-desk | Y | Y folio card | — | — | hub devices | API | UI is on the folio card. Accept payment always (article required). Check-out is guest charges vs money in, then pay or refund; no per-article cashier match. One dialog for folio tab, rack, and card (UAT-SMOKE §27 step 1a). Stay journal is an event list + labeled expand from `SatelliteAuditLog` (no raw-key sausage). Missed nights, transfer, and journal still have no UAT step — not SHIPPED |
 | HOT-CASH-02 | Unified front-cash pending hub (F&B/clinic walk-in) | ADR settlement hub | Y | Y `/front-cash/pending` | — | — | — | SHIPPED | UAT-SMOKE §6b; not clinic cashier |
 | HOT-CASH-06 | Front cash journal + shift Z packet + close shift | MENU-IA | Y `/api/front-cash/transactions` | Y `/front-cash/transactions` | — | — | — | SHIPPED | UAT-SMOKE §28; ops Z print (not fiscal KKM Z) |
 | HOT-CASH-03 | Folio deposit hold / apply / refund HELD | H-BL-10/41 | Y deposits | Y folio settle DEPOSIT | — | — | — | SHIPPED | UAT-SMOKE §27; apply@check-in + settle/CO |
@@ -516,6 +516,8 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-19 | Hotel: FO cannot change room cleanliness on IN_HOUSE (`OCCUPIED_HK_LOCKED`); stay journal is event list + labeled expand + filters. HOT-HK-01 / HOT-FOLIO-DESK stay API (UAT unsigned). |
+| 2026-10-18 | Hotel FO/folio desk: room-move reason only IN_HOUSE; door picker shows OOS/OOO/type block; `/hk/closed-rooms` return-to-service; reservations default 100 rows; transfers booker OPTION+CONFIRMED+IN_HOUSE; charges/pay on OPTION/CONFIRMED; Accept payment + article; pink/blue ledger + article filter; checkout two totals. HOT-FOLIO-DESK stays API (UAT §27 unsigned). Hotel-noon occupancy still local-only (not on droplet). |
 | 2026-10-17 | CLI-58: one slot-rule kernel (`evaluateCandidateSlot`). Auto search still hunts; manual PATCH / matrix / card accept that minute or 409 (no day snap). Closed calendar days return an empty matrix. Paid same-day POST pins the day. Bath rest is `physioFields.restYmds`, not `CANCELLED` stubs. Not SHIPPED. |
 | 2026-10-17 | CLI-58: closed clinic days (`listClinicDays` week template) are the SoR for the minute grid and resource matrix writes; reseat can move leftover Sunday `SCHEDULED` to the next working day. Not SHIPPED. |
 | 2026-10-17 | CLI-58: guest slot is one door (bath + physio `scanSlot`); overlap refused even when rest is 0; super-admin `schedule-reseat` retimes future `SCHEDULED`. Not SHIPPED. |

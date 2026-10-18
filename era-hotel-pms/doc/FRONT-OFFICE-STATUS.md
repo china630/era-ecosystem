@@ -123,7 +123,7 @@
 - Rate plans can be deleted when no reservation, contract, or stay slice references them.
 - Policies save creates a hotel profile when the row is missing.
 - Reservations grid: full note of the selected row, birthday icon inside the stay window, server sort. Apply migration `20261008230000_walkin_profile_stay_slice_room`.
-- Reservation-card stay journal is `SatelliteAuditLog` for that stay: feed of actions and a field-diff grid (create/save, check-in/out, room, folio, night audit, Elektraweb). Not a second table.
+- Reservation-card stay journal is `SatelliteAuditLog` for that stay: event list + labeled expand (create/save, check-in/out, room, folio, night audit, Elektraweb). Not a second table.
 - Kit column sort on the FO and front-cash lists (groups, laundry, room changes, reservation times, agency inbox, folio journal, agency and company ledgers). In-house and folio balances open sorted by room number. Groups, room changes, agency inbox, in-house, the folio journal, and both city ledgers also filter by the columns that were previously only searchable as one box.
 - Reservation card footer shows CANCEL and NO SHOW to the left of check-in. Credit card, packages, tasks, and folio routing stay inactive until the stay is saved. Notes render as bold title plus text, and only when a note exists. The room-change form opens from a checkbox. A new stay starts at 0 adults.
 - Reservations list keeps the selected stay's notes in a fixed band between the filters and the grid.

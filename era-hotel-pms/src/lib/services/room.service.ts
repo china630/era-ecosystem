@@ -7,6 +7,8 @@ import {
   type RoomHkCondition,
   type RoomInventoryStatus,
 } from '@/lib/room-state';
+import { OccupiedHkLockedError } from '@/lib/occupied-hk-lock';
+import { roomHasInHouseStay } from '@/lib/occupied-hk-guard';
 
 
 
@@ -186,9 +188,16 @@ export async function updateRoomStatus(id: string, status: RoomStatus) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');
   const axes = axesFromLegacyStatus(status);
+  const occupied = await roomHasInHouseStay(id);
+  let hk = axes.hkCondition;
+  if (occupied && hk !== room.hkCondition) {
+    const inventoryOnly = axes.inventoryStatus === 'OOO' || axes.inventoryStatus === 'OOS';
+    if (!inventoryOnly) throw new OccupiedHkLockedError();
+    hk = room.hkCondition as RoomHkCondition;
+  }
   return prisma.room.update({
     where: { id },
-    data: roomWriteFromAxes(axes.hkCondition, axes.inventoryStatus, axes.inventoryReason),
+    data: roomWriteFromAxes(hk, axes.inventoryStatus, axes.inventoryReason),
     include: { roomType: true },
   });
 }
@@ -201,6 +210,9 @@ export async function updateRoomAxes(
 ) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');
+  if (hk !== room.hkCondition && (await roomHasInHouseStay(id))) {
+    throw new OccupiedHkLockedError();
+  }
   return prisma.room.update({
     where: { id },
     data: roomWriteFromAxes(hk, inventory, reason),
@@ -208,12 +220,34 @@ export async function updateRoomAxes(
   });
 }
 
+/** Take an OOS/OOO door back to sellable inventory. HK condition stays DIRTY. */
+export async function returnRoomToService(id: string) {
+  const room = await prisma.room.findUnique({ where: { id } });
+  if (!room) throw new Error('Room not found');
+  const { todayBakuYmd } = await import('@era/satellite-kit/time');
+  const end = new Date(`${todayBakuYmd()}T00:00:00.000Z`);
+  const updated = await prisma.room.update({
+    where: { id },
+    data: roomWriteFromAxes('DIRTY', 'IN_SERVICE', null),
+    include: { roomType: true },
+  });
+  await prisma.roomClosure.updateMany({
+    where: { roomId: id, OR: [{ endDate: null }, { endDate: { gt: end } }] },
+    data: { endDate: end },
+  });
+  return updated;
+}
+
 
 
 export async function setRoomOOO(id: string, days: number, notes?: string) {
+  const existing = await prisma.room.findUnique({ where: { id } });
+  if (!existing) throw new Error('Room not found');
+  const occupied = await roomHasInHouseStay(id);
+  const hk = occupied ? (existing.hkCondition as RoomHkCondition) : 'DIRTY';
   const room = await prisma.room.update({
     where: { id },
-    data: roomWriteFromAxes('DIRTY', 'OOO'),
+    data: roomWriteFromAxes(hk, 'OOO'),
   });
   await prisma.housekeepingTask.create({
     data: {
@@ -227,9 +261,13 @@ export async function setRoomOOO(id: string, days: number, notes?: string) {
 }
 
 export async function setRoomOOS(id: string, days: number, notes?: string) {
+  const existing = await prisma.room.findUnique({ where: { id } });
+  if (!existing) throw new Error('Room not found');
+  const occupied = await roomHasInHouseStay(id);
+  const hk = occupied ? (existing.hkCondition as RoomHkCondition) : 'DIRTY';
   const room = await prisma.room.update({
     where: { id },
-    data: roomWriteFromAxes('DIRTY', 'OOS'),
+    data: roomWriteFromAxes(hk, 'OOS'),
   });
   await prisma.housekeepingTask.create({
     data: {

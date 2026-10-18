@@ -15,6 +15,7 @@ import { bakuTimeLabel } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { stayListHasInHouse } from '@/lib/occupied-hk-lock';
 
 interface Task {
   id: string;
@@ -29,6 +30,7 @@ interface Room {
   floor?: number;
   status: string;
   roomType: { code: string };
+  reservations?: Array<{ status?: string }>;
 }
 
 type HkFilter = 'all' | 'pending' | 'dirty' | 'clean';
@@ -87,7 +89,13 @@ export default function HousekeepingPage() {
       body: JSON.stringify({ status: 'INSPECTED' }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('roomInspected', { room: data.roomNumber }) : data.error);
+    setMsg(
+      res.ok
+        ? t('roomInspected', { room: data.roomNumber })
+        : data?.code === 'OCCUPIED_HK_LOCKED'
+          ? t('occupiedHkLocked')
+          : data.error,
+    );
     await load();
   }
 
@@ -100,7 +108,9 @@ export default function HousekeepingPage() {
   }, [rooms]);
 
   const dirtyRooms = rooms.filter((r) => r.status === 'DIRTY');
-  const cleanRooms = rooms.filter((r) => r.status === 'CLEAN');
+  const cleanRooms = rooms.filter(
+    (r) => r.status === 'CLEAN' && !stayListHasInHouse(r.reservations),
+  );
   const pendingTasks = useMemo(
     () => tasks.filter((task) => task.status !== 'DONE'),
     [tasks],

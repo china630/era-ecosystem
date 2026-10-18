@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CatalogField, Field, PageHeader, PRIMARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  Field,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -27,6 +35,7 @@ export default function ClosedRoomsPage() {
   const [kind, setKind] = useState('OOO');
   const [days, setDays] = useState('3');
   const [busy, setBusy] = useState(false);
+  const [returnId, setReturnId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [res, roomRes] = await Promise.all([fetch('/api/housekeeping/closed-rooms'), fetch('/api/rooms')]);
@@ -70,6 +79,18 @@ export default function ClosedRoomsPage() {
     }
   }
 
+  async function returnToService(id: string) {
+    setReturnId(id);
+    const res = await fetch(`/api/housekeeping/closed-rooms/${id}/return`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    setReturnId(null);
+    if (!res.ok) showApiError(data, tc('failed'));
+    else {
+      showSuccess(tc('saved'));
+      await load();
+    }
+  }
+
   function ymd(value: string | null | undefined) {
     return value ? String(value).slice(0, 10) : '—';
   }
@@ -97,6 +118,7 @@ export default function ClosedRoomsPage() {
                 <th className="px-3 py-2">{t('closedFrom')}</th>
                 <th className="px-3 py-2">{t('closedTo')}</th>
                 <th className="px-3 py-2">{t('closedReason')}</th>
+                {canClose ? <th className="px-3 py-2" /> : null}
               </tr>
             </thead>
             <tbody>
@@ -109,6 +131,18 @@ export default function ClosedRoomsPage() {
                     <td className="px-3 py-2">{ymd(c?.startDate)}</td>
                     <td className="px-3 py-2">{ymd(c?.endDate)}</td>
                     <td className="px-3 py-2">{r.inventoryReason ?? c?.reason ?? '—'}</td>
+                    {canClose ? (
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={returnId === r.id}
+                          onClick={() => void returnToService(r.id)}
+                        >
+                          {t('returnToService')}
+                        </button>
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })}

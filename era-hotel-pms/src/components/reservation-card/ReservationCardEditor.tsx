@@ -62,7 +62,7 @@ import {
 } from '@/components/reservation-card/ReservationCardStaysBar';
 import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
 import { StayJournal } from '@/components/reservation-card/StayJournal';
-import type { StayJournalEntry } from '@/lib/reservation-audit';
+import type { StayJournalEntry } from '@/lib/reservation-journal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
@@ -89,8 +89,8 @@ import {
   stayActionForPlane,
   type StayActionKind,
 } from '@/lib/stay-window-plane';
-import { canAssignDoor, canBookDoor } from '@/lib/room-state';
 import { canJoinOccupiedDoor } from '@/lib/share-door-join';
+import { doorAssignBlock, type DoorBlock } from '@/lib/door-assign-reason';
 import type {
   AgencyOption,
   AttachmentRow,
@@ -356,7 +356,7 @@ export function ReservationCardEditor({
       hkCondition?: string;
       inventoryStatus?: string;
       maxBed?: number | null;
-      roomType?: { adultCapacity?: number };
+      roomType?: { adultCapacity?: number; code?: string };
       reservations?: Array<{
         id: string;
         checkInDate: string;
@@ -1100,7 +1100,7 @@ export function ReservationCardEditor({
                 guest?: { sex?: string | null };
               }>;
               maxBed?: number | null;
-              roomType?: { adultCapacity?: number };
+              roomType?: { adultCapacity?: number; code?: string };
             }) => ({
               id: x.id,
               roomNumber: x.roomNumber,
@@ -1865,7 +1865,7 @@ export function ReservationCardEditor({
   async function save(moveReasonCode?: RoomMoveReason) {
     const doorChanged =
       !isCreate && Boolean(roomId) && Boolean(pendingRoomId) && pendingRoomId !== roomId;
-    if (doorChanged && !moveReasonCode) {
+    if (doorChanged && status === 'IN_HOUSE' && !moveReasonCode) {
       setMovePromptOpen(true);
       return;
     }
@@ -2196,73 +2196,82 @@ export function ReservationCardEditor({
       status === 'IN_HOUSE' ||
       status === 'CHECKED_OUT');
 
+  function doorBlockLabel(block: DoorBlock): string {
+    if (block.code === 'OOS') return t('doorBlockedOos');
+    if (block.code === 'OOO') return t('doorBlockedOoo');
+    if (block.code === 'OCCUPIED') return t('doorBlockedOccupied');
+    if (block.code === 'DIRTY') return t('doorBlockedDirty');
+    return t('doorBlockedWrongType', { door: block.doorType ?? '—', need: block.needType ?? '—' });
+  }
+
   const assignableRooms = useMemo(() => {
-    /** Opera: door list follows physical category (Given), else Room type (charge). */
     const typeId = physicalRoomTypeId;
-    if (!typeId) return [];
+    const needCode =
+      rooms.find((r) => r.roomTypeId === typeId)?.roomType?.code ??
+      roomTypes.find((rt) => rt.id === typeId)?.label?.split('—')[0]?.trim();
     const ci = checkIn;
     const co = checkOut;
-    const currentAssigned = roomId;
-    const list = rooms.filter((r) => {
-      if (r.roomTypeId && r.roomTypeId !== typeId) return false;
-      const doorGate = status === 'IN_HOUSE' ? canAssignDoor : canBookDoor;
-      if (
-        r.status &&
-        !doorGate(
-          {
-            status: r.status as 'AVAILABLE' | 'CLEAN' | 'INSPECTED' | 'DIRTY' | 'OCCUPIED' | 'OOO' | 'OOS' | 'MAINTENANCE',
-            hkCondition: r.hkCondition as 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED' | undefined,
-            inventoryStatus: r.inventoryStatus as 'IN_SERVICE' | 'OOS' | 'OOO' | undefined,
-          },
-          false,
-        )
-      ) {
-        if (r.id !== currentAssigned) return false;
-      }
-      if (!ci || !co) return true;
+    return rooms.map((r) => {
       const overlapping = (r.reservations ?? []).filter((res) => {
         if (reservationId && res.id === reservationId) return false;
         if (!['CONFIRMED', 'IN_HOUSE', 'OPTION'].includes(res.status)) return false;
+        if (!ci || !co) return false;
         const a = res.checkInDate.slice(0, 10);
         const b = res.checkOutDate.slice(0, 10);
         return a < co && b > ci;
       });
-      if (overlapping.length === 0) return true;
-      const maxBed = r.maxBed ?? r.roomType?.adultCapacity ?? 2;
-      return canJoinOccupiedDoor({
-        candidate: {
-          shareEligible,
-          adults: Math.max(0, Number(adults) || 0),
-          gender: guestGender || null,
+      const canShare =
+        overlapping.length === 0 ||
+        canJoinOccupiedDoor({
+          candidate: {
+            shareEligible,
+            adults: Math.max(0, Number(adults) || 0),
+            gender: guestGender || null,
+          },
+          overlapping: overlapping.map((res) => ({
+            shareEligible: res.shareEligible,
+            shareGender: res.shareGender ?? res.guest?.sex ?? null,
+            adults: res.adults,
+          })),
+          maxBed: r.maxBed ?? r.roomType?.adultCapacity ?? 2,
+        });
+      const block = doorAssignBlock(
+        {
+          id: r.id,
+          roomNumber: r.roomNumber,
+          roomTypeId: r.roomTypeId,
+          roomTypeCode: r.roomType?.code,
+          status: r.status,
+          hkCondition: r.hkCondition,
+          inventoryStatus: r.inventoryStatus,
         },
-        overlapping: overlapping.map((res) => ({
-          shareEligible: res.shareEligible,
-          shareGender: res.shareGender ?? res.guest?.sex ?? null,
-          adults: res.adults,
-        })),
-        maxBed,
-      });
+        {
+          needTypeId: typeId,
+          needTypeCode: needCode,
+          inHouse: status === 'IN_HOUSE',
+          occupied: overlapping.length > 0 && !canShare,
+          currentAssignedId: roomId,
+        },
+      );
+      return {
+        ...r,
+        disabled: Boolean(block),
+        roomNumber: block ? `${r.roomNumber} · ${doorBlockLabel(block)}` : r.roomNumber,
+      };
     });
-    const selectedId = pendingRoomId || roomId;
-    if (selectedId && !list.some((r) => r.id === selectedId)) {
-      const selected = rooms.find((r) => r.id === selectedId);
-      if (selected && (!selected.roomTypeId || selected.roomTypeId === typeId)) {
-        return [selected, ...list];
-      }
-    }
-    return list;
   }, [
     rooms,
     physicalRoomTypeId,
+    roomTypes,
     checkIn,
     checkOut,
     reservationId,
-    pendingRoomId,
     roomId,
     shareEligible,
     adults,
     guestGender,
     status,
+    t,
   ]);
 
   /** Drop pending door when physical category no longer matches. */
@@ -2770,7 +2779,7 @@ export function ReservationCardEditor({
                       .filter(Boolean),
                   )}
                   onPostNight={
-                    status === 'CONFIRMED' || status === 'IN_HOUSE'
+                    status === 'OPTION' || status === 'CONFIRMED' || status === 'IN_HOUSE'
                       ? (ymd) => void postOneNight(ymd)
                       : undefined
                   }
@@ -2789,7 +2798,7 @@ export function ReservationCardEditor({
                     accounts={folios}
                     pax={pax}
                     displayCurrency={pricingDisplayCurrency}
-                    canPostCharges={status === 'IN_HOUSE'}
+                    canPostCharges={status === 'OPTION' || status === 'CONFIRMED' || status === 'IN_HOUSE'}
                     canCheckOut={status === 'IN_HOUSE'}
                     fiscalDocuments={
                       (data?.fiscalDocuments as Array<{
@@ -3069,32 +3078,40 @@ export function ReservationCardEditor({
             label={t('roomNo')}
             value={restoreRoomId}
             onChange={(v) => setRestoreRoomId(String(v ?? ''))}
-            options={rooms
-              .filter((r) => {
-                if (restoreTypeId && r.roomTypeId && r.roomTypeId !== restoreTypeId) return false;
-                if (
-                  r.status &&
-                  !canBookDoor(
-                    {
-                      status: r.status as 'AVAILABLE' | 'CLEAN' | 'INSPECTED' | 'DIRTY' | 'OCCUPIED' | 'OOO' | 'OOS' | 'MAINTENANCE',
-                      hkCondition: r.hkCondition as 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED' | undefined,
-                      inventoryStatus: r.inventoryStatus as 'IN_SERVICE' | 'OOS' | 'OOO' | undefined,
-                    },
-                    false,
-                  )
-                ) {
-                  return false;
-                }
-                const taken = (r.reservations ?? []).some((res) => {
-                  if (reservationId && res.id === reservationId) return false;
-                  if (!['CONFIRMED', 'IN_HOUSE', 'OPTION'].includes(res.status)) return false;
-                  const a = res.checkInDate.slice(0, 10);
-                  const b = res.checkOutDate.slice(0, 10);
-                  return Boolean(checkIn && checkOut && a < checkOut && b > checkIn);
-                });
-                return !taken;
-              })
-              .map((r) => ({ value: r.id, label: r.roomNumber }))}
+            options={rooms.map((r) => {
+              const taken = (r.reservations ?? []).some((res) => {
+                if (reservationId && res.id === reservationId) return false;
+                if (!['CONFIRMED', 'IN_HOUSE', 'OPTION'].includes(res.status)) return false;
+                const a = res.checkInDate.slice(0, 10);
+                const b = res.checkOutDate.slice(0, 10);
+                return Boolean(checkIn && checkOut && a < checkOut && b > checkIn);
+              });
+              const needCode =
+                rooms.find((row) => row.roomTypeId === restoreTypeId)?.roomType?.code ??
+                roomTypes.find((rt) => rt.id === restoreTypeId)?.label?.split('—')[0]?.trim();
+              const block = doorAssignBlock(
+                {
+                  id: r.id,
+                  roomNumber: r.roomNumber,
+                  roomTypeId: r.roomTypeId,
+                  roomTypeCode: r.roomType?.code,
+                  status: r.status,
+                  hkCondition: r.hkCondition,
+                  inventoryStatus: r.inventoryStatus,
+                },
+                {
+                  needTypeId: restoreTypeId,
+                  needTypeCode: needCode,
+                  inHouse: false,
+                  occupied: taken,
+                },
+              );
+              return {
+                value: r.id,
+                label: block ? `${r.roomNumber} · ${doorBlockLabel(block)}` : r.roomNumber,
+                disabled: Boolean(block),
+              };
+            })}
             emptyLabel="—"
           />
         </div>

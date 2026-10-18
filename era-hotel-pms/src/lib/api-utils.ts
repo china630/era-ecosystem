@@ -7,6 +7,7 @@ import {
   GuestIdentityRequiredError,
   StayCheckInBlockedError,
 } from '@/lib/guest-stay-requirements';
+import { OccupiedHkLockedError } from '@/lib/occupied-hk-lock';
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 import { TourConflictError } from '@/lib/services/tour.service';
 import { BusinessDateLagError } from '@/lib/business-date-lag';
@@ -55,6 +56,9 @@ export function handleRouteError(err: unknown) {
       { error: err.message, code: err.code, tickets: err.tickets },
       { status: 409 },
     );
+  }
+  if (err instanceof OccupiedHkLockedError) {
+    return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
   }
   if (err instanceof BusinessDateLagError) {
     return NextResponse.json(
