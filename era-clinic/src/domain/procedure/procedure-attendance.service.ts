@@ -487,7 +487,7 @@ export async function cancelProcedureOrder(
     include: { resourceBooking: true },
   });
   if (!order) throw new ProcedureAttendanceError("Procedure not found", "NOT_FOUND");
-  if (!["SCHEDULED", "CHECKED_IN"].includes(order.status)) {
+  if (!["PROPOSED", "SCHEDULED", "CHECKED_IN"].includes(order.status)) {
     throw new ProcedureAttendanceError(
       `Cannot cancel from status ${order.status}`,
       "INVALID_TRANSITION",
@@ -499,6 +499,7 @@ export async function cancelProcedureOrder(
     if (order.resourceBooking) {
       await tx.resourceBooking.delete({ where: { id: order.resourceBooking.id } });
     }
+    await tx.procedureAllocation.deleteMany({ where: { procedureOrderId: orderId } });
     return tx.procedureOrder.update({
       where: { id: orderId },
       data: {

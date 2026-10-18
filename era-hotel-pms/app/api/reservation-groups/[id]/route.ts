@@ -71,6 +71,7 @@ export async function POST(request: Request, ctx: Ctx) {
       groupId: id,
       ...body,
       paymentMethod: body.paymentMethod ?? null,
+      audit: { userId: session?.sub, request },
     });
     return jsonOk(serialize(stay), 201);
   } catch (err) {

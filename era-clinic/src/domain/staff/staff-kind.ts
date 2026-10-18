@@ -149,6 +149,20 @@ export function resolveDutyCandidates(input: {
   return postedStaff.filter((person) => !absent.has(person.id));
 }
 
+/**
+ * Bath seating: an approved roster line with nobody on it does not discard people
+ * who have the skill. A posted person still wins. Absent posted people stay empty.
+ */
+export function staffWhenUnposted(input: {
+  dutyFiltered: DutyCandidate[];
+  postedCount: number;
+  skilled: DutyCandidate[];
+}): DutyCandidate[] {
+  if (input.dutyFiltered.length > 0) return input.dutyFiltered;
+  if (input.postedCount === 0) return input.skilled;
+  return [];
+}
+
 export type RosterReassignSlot = {
   allocationId: string;
   procedureTypeId: string;

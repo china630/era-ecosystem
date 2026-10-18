@@ -5,6 +5,7 @@ import {
   paramsLinesFromOrder,
   mergeParamLines,
   assignedAggGroupKey,
+  pickAdjustCancellations,
   isPackagePoolCode,
   isEntitlementBucket,
   eligibleSkusForPool,
@@ -209,6 +210,28 @@ describe("CLI-57 package assign helpers", () => {
       "dayBlock: 2",
       "bathSequence: SITZ_THEN_FULL",
     ]);
+  });
+
+  it("pickAdjustCancellations drops PROPOSED before SCHEDULED", () => {
+    const proposed = {
+      id: "p1",
+      status: "PROPOSED",
+      scheduledAt: new Date("2026-10-19T05:30:00.000Z"),
+    };
+    const scheduled = {
+      id: "s1",
+      status: "SCHEDULED",
+      scheduledAt: new Date("2026-10-19T05:00:00.000Z"),
+    };
+    expect(
+      pickAdjustCancellations([scheduled, proposed], { targetActiveQty: 1 }).map((o) => o.id),
+    ).toEqual(["p1"]);
+    expect(
+      pickAdjustCancellations([scheduled, proposed], { targetActiveQty: 2 }),
+    ).toEqual([]);
+    expect(
+      pickAdjustCancellations([scheduled, proposed], { cancelAllActive: true }).map((o) => o.id),
+    ).toEqual(["p1", "s1"]);
   });
 
   it("extraNeedsPaperTicket prefers inPackage over amountNet", () => {

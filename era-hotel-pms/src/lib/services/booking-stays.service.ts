@@ -1,6 +1,7 @@
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { createReservation } from '@/lib/services/reservation.service';
+import type { ReservationAuditActor } from '@/lib/reservation-audit';
 import type { BookingFolioMode, PaymentMethod } from '@prisma/client';
 
 export async function listBookingStays(groupId: string) {
@@ -66,6 +67,7 @@ export async function addStayToBooking(input: {
   salesContractId?: string;
   sourceId?: string;
   adults?: number;
+  audit?: ReservationAuditActor;
 }) {
   const group = await prisma.reservationGroup.findUnique({ where: { id: input.groupId } });
   if (!group) throw new Error('Booking (group) not found');
@@ -85,6 +87,7 @@ export async function addStayToBooking(input: {
     paymentMethod: input.paymentMethod,
     adults: input.adults,
     copyGuestNameToPax: false,
+    audit: input.audit,
   });
 }
 
@@ -122,6 +125,7 @@ export async function createGroupBookingWithStays(input: {
   paidBy?: string;
   contractRef?: string;
   lines: GroupBookingStayLine[];
+  audit?: ReservationAuditActor;
 }) {
   if (!input.lines.length) throw new Error('At least one room stay line is required');
   if (!input.name?.trim()) throw new Error('Booking name is required');
@@ -173,6 +177,7 @@ export async function createGroupBookingWithStays(input: {
         contractRef: input.contractRef,
         /** Booker is a hold on each room until FO fills real party names. */
         copyGuestNameToPax: false,
+        audit: input.audit,
       });
       stays.push(stay);
     }
@@ -211,7 +216,10 @@ export async function ensureBookingGroupForReservation(reservationId: string): P
  * Add another room (RoomStay) cloning product fields from the source stay.
  * Creates a Booking group first when the source stay is still standalone.
  */
-export async function addRoomStayFromReservation(reservationId: string) {
+export async function addRoomStayFromReservation(
+  reservationId: string,
+  audit?: ReservationAuditActor,
+) {
   const src = await prisma.reservation.findUnique({ where: { id: reservationId } });
   if (!src) throw new Error('Reservation not found');
   const groupId = await ensureBookingGroupForReservation(reservationId);
@@ -229,5 +237,6 @@ export async function addRoomStayFromReservation(reservationId: string) {
     salesContractId: src.salesContractId ?? undefined,
     sourceId: src.sourceId ?? undefined,
     adults: src.adults,
+    audit,
   });
 }

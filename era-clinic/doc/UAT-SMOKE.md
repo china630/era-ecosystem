@@ -105,7 +105,7 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 1. **`/sanatorium`** — open courses table with **ListPaginationFooter** (server page/pageSize; **no** page echo from API; footer stays visible while loading) + search + origin + **hotel room** + **program/package** filters; episode visible; **no** procedures until checkup (complaint + ICD). Search ICD in **one** searchable field (`I10` / гипертенз) → add diagnosis → then schedule program. Treatment chart: delete complaint/diagnosis rows; delete lab only if ORDERED; adding a duplicate COMPLETED lab shows Yes/No repeat confirm. Quota bars show **Name (CODE)** not raw `WO-TR-*`. **Register walk-in**: Ad / Soyad / Ata adı; nationality SEARCHABLE empty (not AZ); FIN or passport required; allocates `P-######`.
 2. **Complete checkup & schedule program** → FIFO chart with 5-min slots; same procedure not twice same day. Slots require free **cabin/equipment** AND **skilled HARD staff** (Pattern A allocations).
 3. **`/nurse`** — day board: agenda (previous slot → EOD) + day progress; kanban Missed / Upcoming / In progress / Completed. Slot times via `bakuTimeLabel` (browser TZ ignored). **Check-in** only while unified window open (`endsAt`, +gap if next slot free) → `CHECKED_IN`. No nurse No-show button. Missed rows stay `SCHEDULED` until EOD sweep. Late guests: reception reschedules. Staff filter (`GET /api/procedures/desk-staff`) is nurses, bath attendants, massage therapists, and doctors who perform a non-`VISIT-` procedure; lab techs and visit-only doctors stay out. A desk login opens **mine**.
-4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks (**UI labels** via `bakuTimeLabel` / `bakuDateTimeDisplay` — browser TZ ignored); lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); per-type `resourceGapMinutes` / `patientRestMinutes` on procedure types (tenant default = create default only); DEMO-WEEK from Randevular (~840 orders). Same-day drag stays. **Move** keeps the order selected and shows today/tomorrow/stay-day chips above the same matrix; click a free cell (or drop) to reschedule. Square click opens the order card (patient, room, code, status, interval, cabin, staff, package vs paid, quota).
+4. **`/sanatorium/resources`** — reception **Location day board**: Asia/Baku clocks (**UI labels** via `bakuTimeLabel` / `bakuDateTimeDisplay` — browser TZ ignored); lunch 13–14 shown as muted (not bookable); date + resource/patient filters + horizon (+1h/+3h); per-type `resourceGapMinutes` / `patientRestMinutes` on procedure types (tenant default = create default only); DEMO-WEEK from Randevular (~840 orders). Drag and Köçür stay on **this calendar day only** (no day chips). A closed clinic day returns `closed: true` and an empty grid. Square click opens the order card (patient, room, code, status, interval, cabin, staff, package vs paid, quota). A fourth distinct package SKU or a day without a posted duty line is 409, not a silent move.
 5. **`/sanatorium` care-team dot** — assigning the first care doctor turns the episode dot green without reloading the list. The last care doctor cannot be removed (`LAST_CARE_DOCTOR`).
 6. **`/lab-orders`** — first-column dot and status text follow pipeline status (ORDERED red, collected/in progress/result ready yellow, published/completed green, cancelled grey) and update that row after collect/publish without a full reload.
 7. **Hotel folio revenue code** — `/admin/settings` field (default `23` AMBULATOR). Empty setting refuses the folio post with a clear message. Caller `RETAIL` still wins. Pending settlement-hub lines stay on the hub enum.
@@ -115,10 +115,12 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 11. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
 12. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).
 13. Hotel stay product change from date (`SATELLITE_HOTEL_STAY_PRODUCT_CHANGED`) → remaining **PROPOSED** and **SCHEDULED** orders from the effective date are cancelled; completed/checked-in stay. Clinic rebuilds a new **PROPOSED** plan for the new program when a matching template exists. The same event fills an empty patient nationality.
-14. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default).
+14. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default) and drops an empty EQUIPMENT row plus a second STAFF row.
 15. **`/admin/catalog`** — Import Nafta prices; filter package vs paid; department column.
 16. **SOFT staff** — with STAFF=SOFT, planner/available-slots/reschedule do **not** require exclusive nurse time; multi-capacity resources (e.g. ozone capacity=3) can fill while nurses are shared.
 17. **`/sanatorium/nurse-roster`** (DOCTOR / SatAdmin) — pick month; toggle **Procedures | Nurses**; assign one or more people to a procedure (doctors, nurses, bath attendants, massage therapists) or assign procedures to a person; mark stable; add vacation overlapping the month → warning on the row; **Approve**. Approve moves not-yet-started `SCHEDULED` staff in that month onto a free posted person for that procedure (time and cabin stay; a day substitute replaces the list that day; a HARD clash tries the next posted person and leaves the slot empty only when nobody is free; past and checked-in stay; the lab roster does not move these rows). Day substitute is the arrow icon on the chip. Master-data practitioners show Doctor / Nurse / Bath attendant / Massage therapist / Lab. Tables have pagination footers. ADR `clinic-staff-duty-roster.md`.
+18. **Sollyuks one code** — master-data and the nurse roster show `SVC-SOLLYUKS` only. Package Saxla for Solyuks uses that type (same row as Esmira). `SVC-SOLYUKS` is gone. A miss toast names the procedure and the day; seated siblings in the same save stay. Doctor confirm on `/sanatorium` is the same: seated rows stay, unplaced stay Proposed, toast names the miss and the day.
+19. **Bath Saxla without calendar** — package modal has no mini bath grid. Saxla from Monday seats five naftalan and iodine/hydro on Thursday. Start Tuesday → four naftalan, rest Friday. Start Thursday–Saturday → Sunday is the rest. `/admin/settings` shows default mode `3`, closed-day rest flags, and weekly naftalan cap 5.
 
 ### ICD-10 catalog (CLI-39…42)
 
@@ -195,7 +197,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 13. **FO manager permission (no role-name bypass):** Uncheck `api:procedures.fo_manager` on **CLINIC_ADMIN**, Save + refresh. Package assign modal must **not** show out-of-package Replace solely because role is CLINIC_ADMIN. Re-check permission → Replace returns.
 14. **Ops:** after image/DB upgrade run clinic Prisma migrate so `Role.is_system` / `staff_kind` / `clone_from_code` exist; first login or `/admin/access` runs `ensureSystemClinicRoles`.
 15. **Empty matrix (Wave 3 hole-close):** Uncheck **all** grants on **CLINIC_ADMIN**, Save + refresh. Admin screens and APIs **403** — access must **not** fall back to the full role template. If pre-upgrade the UI showed an empty matrix but access still worked, use **Reset to defaults** after this wave. JWT without `permissions[]` (legacy session) → re-login (fail-closed pages).
-16. **Print gates:** role without `screen:reception.extra_tickets` → `/print/extra-ticket/…` forbidden. Without `screen:lab_orders` → `/print/lab-order/…` forbidden. NURSE with `screen:reports.procedures` (no `screen:doctor`) may open `/print/procedures/…`; with `screen:lab_orders` may open `/print/usm/…`. Visit-exam print still any-of `api:visits` \| `api:patients`.
+16. **Print gates:** role without `screen:reception.extra_tickets` → `/print/extra-ticket/…` forbidden. Without `screen:lab_orders` → `/print/lab-order/…` forbidden. NURSE with `screen:reports.procedures` (no `screen:doctor`) may open `/print/procedures/…`; with `screen:lab_orders` may open `/print/usm/…`. Course summary `/print/episode/…` any-of `screen:doctor` \| `screen:sanatorium` \| `screen:patients` (reception via sanatorium). Visit-exam print still any-of `api:visits` \| `api:patients`.
 
 
 
@@ -203,7 +205,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 
 1. Admin -> Settings -> Print branding: set AZ clinic name + phone; save.
 2. Lab order workflow -> Print -> choose language -> form opens and print dialog appears.
-3. Patient card -> Results **per-row** print (lab/USM) and Plan **Print schedule** → language dialog → print page. Check-up form remains at `/print/checkup/...` (no header button on Results/intake).
+3. Patient card stay strip **printer** → language dialog → `/print/episode/…?episode=` (stay, anamnesis, complaints, ICD, labs, exam notes, seated procedures). OPEN course still prints (interim note). Results **per-row** print (lab/USM) and Plan **Print schedule** stay separate. Check-up form remains at `/print/checkup/...` (no header button on Results/intake).
 4. Qualitative analyte (if configured): enter via select; reprint in another language shows translated label.
 
 ## Extra tickets (Nafta dual-run, HOT-06)
@@ -215,7 +217,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 Prerequisite (ops): clinic cutover policy `elektrawebDualRun` + Sync; hotel org `writeEnabled` + Sync; pool kill switch; extension on **sanatorium** desk with Write ON and SPA open.
 
 1. Doctor assigns a paid extra (`PENDING_PAY` on Müalicə kartı / extras modal — price shown).
-2. **`/reception/extra-tickets`** — filter by patient/procedure/origin; row **Banknote** or select rows → **Pay** (receipt/cheque required). ERA posts hotel folio (or walk-in cashier/EW channel), places onto schedule, then opens 3-copy print (`/print/extra-ticket/…`).
+2. **`/reception/extra-tickets`** — filter by patient/procedure/origin; row **Banknote** or select rows → **Pay**. ERA posts each line to the hotel folio, places them on the schedule, then opens one cheque that lists every paid line (room number + catalog name in the print language) in 3 copy windows (`/print/extra-ticket/…`).
 3. Confirm hotel health `writeEnabled` and outbox not stuck `FAILED`. Unknown SPA product must fail enqueue (do not guess).
 4. **`/nurse`** — extra without ticket → check-in blocked (`TICKET_REQUIRED`).
 5. Walk-in extra lands on Elektraweb **Tibbi Ambulator** house folio / hotel cashier path, not clinic cashier (field).
@@ -230,18 +232,19 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 
 **Status:** SCREEN — not SHIPPED / not Pilot. ADR `docs/adr/clinic-episode-procedure-assign-modal.md`.
 
-1. **In-house** Müalicə kartı: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. Placement: **today ≤ N distinct in-package codes** (`/admin/settings` daily cap, default 3) + any **paid extras**; rest from next work day. Day-1 auto ≤ N distinct codes. Card **Cədvəl** = today (Baku) only; **Tam plan** + print in the plan modal (cards, same width as the patient card). Language picker must sit **above** the plan/card modal. Print **Doctor** = episode care team (not cabin/roster nurse).
+1. **In-house** patient card **Package** tab: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. Placement: **today ≤ N distinct in-package codes** (`/admin/settings` daily cap, default 3) + any **paid extras**; rest from next work day. Day-1 auto ≤ N distinct codes. **Plan** tab = schedule chips + print (same card frame). Language picker must sit **above** the card. Print **Doctor** = episode care team (not cabin/roster nurse).
 2. **Walk-in:** package block hidden; **Additional procedures** only; reception Pay requires payment receipt/cheque ref.
 3. Extras modal shows unit price + muted total; Save → `PENDING_PAY` on card (not nurse list until ticket).
-4. `/reception/extra-tickets` → filters + row money icon or select all → Pay with receipt → folio/cashier → schedule → print ×3 per procedure.
+4. `/reception/extra-tickets` → filters + row money icon or select all → Pay → folio/cashier → schedule → one cheque with every paid line, 3 copy windows.
 5. Nurse `/nurse?mine=1`: unpaid extras absent; paid without ticket → check-in `TICKET_REQUIRED`.
 6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
-7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** per procedure (reception / nurse / guest).
+7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** for the batch (reception / nurse / guest), and each window lists every procedure on that receipt.
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
 9. **Package left menu** shows **named treatment SKUs only** (e.g. Naftalan). Pool buckets (Fizioprosedurlar* / Parafin* / `PHYSIO_POOL`) are **hidden** — not assignable as a catch-all from this modal.
 10. Opening package assign on an OPEN episode **without** `ProgramInstance` returns **200** + `blockReason` (`NO_PROGRAM_CODE` / `NO_PROGRAM`) — modal shows how to set/open the package (not a generic load failure). Mutations still 409 `NO_PROGRAM`.
 11. **Naftalan vannası** overlay: title + **Miqdar** top-right (no duplicate Prosedur field); fill Tam / Oturaq (above navel) / Qurşaq (waist); no zone chips / Tətbiq; **Vanna ardıcıllığı** only if qty > 1. Overlay top aligns with **Paket qalığı** list.
 12. Assigned card copy: `Name ×qty (draft)` then one param per line (`naftalanFill`, `dayBlock`, `bathSequence`). Same SKU must not split into multiple cards.
+13. Guest / Doctor / Diagnostics / Plan / Package share one patient-card frame; assign is a modal inside that card. Assigned bath cards show the day-series calendar. Sanatorium list: green / yellow / red course mark and a status filter. Day series and Word blank upload use the procedure-rules and LIS screen permissions.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=cli57-package-assign
@@ -353,7 +356,7 @@ Doctor card (no curl):
 1. Hotel check-in without resolved `programCode` → `/sanatorium` shows OPEN episode (patient not dropped).
 2. **Complete checkup** → Select one of `PKG-STANDART` / `PKG-PREMIUM` / `PKG-DERMA` / `PKG-DETOKS` (empty allowed until submit; ICD/complaint still required).
 3. Walk-in registration uses the same four-code Select.
-4. Open `/sanatorium?episode=<id>` → treatment chart modal opens (not only PatientCard).
+4. Open `/sanatorium?episode=<id>` → patient card opens on the Package tab.
 5. Patient card «Gün planını aç» href lands on that deep link.
 
 ## Visit CPOE / diagnostic SoT (CLI-10)
@@ -453,9 +456,12 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 **Status:** SCREEN. Not SHIPPED until these steps pass on a pilot org. Migration `20261015120000_day_series_calendar_blanks` must be applied first.
 
 1. `/admin/procedure-rules` → **Day series** tab lists NAFTALAN / HYDRO / IODINE (created by the planning import only when missing) → edit members → Save.
-2. `/sanatorium` → patient card → package modal → **Bath calendar** shows the series grid for the stay → change one cell → Save → reopen: the cell is kept.
-3. `/admin/settings` → **Clinic days** → close one civil day → schedule recalc preview lists moved sessions → Apply (super-admin only).
-4. `/admin/lis-profiles` → **Word blank** mapper → upload a `.docx`, map analytes to cells → Save.
-5. Open lab order → results step → pick the blank profile → upload a filled `.docx` from the lab → mapped analyte values appear in the result lines → Save.
-6. Apply any package → the course has `LAB-CBC` and `LAB-URINE`; urine reference shows U-SG 1010–1030 and U-PH 6.0–7.4.
+2. `/sanatorium` → patient card → package modal → **Saxla** seats naftalan and paraffin on the same day at **different** minutes (guest overlap is refused). No mini calendar.
+3. `/admin/settings` → **Clinic days** → close one civil day → schedule recalc preview lists moved sessions → Apply (super-admin only). Recalc does not stack two sessions at 09:00 for one guest.
+4. Super-admin: paste episode id → **Preview reseat** / **Reseat future plan**. Future `SCHEDULED` retimes; `CHECKED_IN` / `COMPLETED` stay. Do not delete orders.
+4a. Default week template keeps Sunday closed. Saxla / matrix has no Sunday slots unless `/admin/settings` opens that civil day. Super-admin **Preview closed days** / **Move off closed days** shifts leftover Sunday `SCHEDULED` to the next working day (not a full stay recalc).
+4b. Patient-card / course reschedule edits **time only**. Changing the day returns 409 `CROSS_DAY`. Paid same-day `POST /api/procedures` seats through the same pin-day grid; a closed day is 409 `CLOSED`.
+5. `/admin/lis-profiles` → **Word blank** mapper → upload a `.docx`, map analytes to cells → Save.
+6. Open lab order → results step → pick the blank profile → upload a filled `.docx` from the lab → mapped analyte values appear in the result lines → Save.
+7. Apply any package → the course has `LAB-CBC` and `LAB-URINE`; urine reference shows U-SG 1010–1030 and U-PH 6.0–7.4.
 

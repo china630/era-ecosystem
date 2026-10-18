@@ -2,7 +2,11 @@ import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { MEDICAL_PACKAGE_CODES } from '@/lib/services/medical-package-resolve.service';
+import {
+  MEDICAL_PACKAGE_CODES,
+  stayProductFamily,
+  usesMedicalPackageCompose,
+} from '@/lib/services/medical-package-resolve.service';
 import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
 import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
@@ -232,7 +236,7 @@ export async function recalcReservationDailyRates(
   }
 
   const packageCodes = stayPackageCodes(res);
-  if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
+  if (usesMedicalPackageCompose(res.ratePlan)) {
     if (packageCodes.length === 0) {
       throw new NightlyPriceMissingError(res.id, res.ratePlan.code, {
         roomTypeCode: res.roomType?.code ?? null,
@@ -290,7 +294,7 @@ export async function recalcReservationDailyRates(
       ? res.ratePlan
       : await prisma.ratePlan.findUnique({ where: { id: planId } });
   if (!plan) throw new Error('Rate plan not found');
-  if (!plan.medicalFlag && res.mealPlanId && roomTypeId) {
+  if (stayProductFamily(plan) !== 'medical' && res.mealPlanId && roomTypeId) {
     const { ratePlanGridNightlySell } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
     );

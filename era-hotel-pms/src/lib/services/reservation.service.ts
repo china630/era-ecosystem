@@ -81,9 +81,11 @@ export async function getAvailability(roomTypeId: string, from: Date, to: Date, 
   const roomType = await prisma.roomType.findUnique({ where: { id: roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
 
-  const booked = await countDoorsUsedForRoomType(roomTypeId, from, to, excludeReservationId);
+  const fromNight = parseHotelNoon(from);
+  const toNight = parseHotelNoon(to);
+  const booked = await countDoorsUsedForRoomType(roomTypeId, fromNight, toNight, excludeReservationId);
 
-  const stopSell = await hasStopSellInRange(roomTypeId, from, to);
+  const stopSell = await hasStopSellInRange(roomTypeId, fromNight, toNight);
   const effectiveQuota = stopSell ? 0 : roomType.baseQuota;
 
   return {
@@ -184,6 +186,7 @@ export async function createReservation(input: {
     ownsFolio?: boolean;
     medicalPackageCode?: string | null;
   }>;
+  audit?: { userId?: string | null; request?: Request };
 }) {
   let ratePlanId = input.ratePlanId;
   let agencyId = input.agencyId;
@@ -397,41 +400,64 @@ export async function createReservation(input: {
   );
   if (manualNightly != null) {
     totalAmount = toDecimal(manualNightly * manualNights.length);
-  } else if (ratePlan.medicalFlag) {
-    const { ownerPackageNightlySell } = await import(
-      '@/lib/services/nafta-package-compose-apply.service'
-    );
-    const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
-    const { MEDICAL_PACKAGE_CODES } = await import(
+  } else {
+    const { usesMedicalPackageCompose, stayProductFamily, MEDICAL_PACKAGE_CODES } = await import(
       '@/lib/services/medical-package-resolve.service'
     );
-    const named =
-      input.paxGuests?.filter(
-        (p) => p.guestId || p.firstName?.trim() || p.lastName?.trim() || p.medicalPackageCode?.trim(),
-      ) ?? [];
-    const raw =
-      named.length > 0
-        ? paxCodesForCompose(named, ratePlan.code)
-        : [ratePlan.code];
-    const codes = raw
-      .map((c) => (c ?? '').trim().toUpperCase())
-      .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
-    let sum = 0;
     const stayNights = Array.from(
       { length: countNights(input.checkInDate, input.checkOutDate) },
       (_, i) => parseHotelNoon(addHotelDays(input.checkInDate, i)),
     );
-    for (const stayDate of stayNights) {
-      const amount = await ownerPackageNightlySell(stayDate, codes, {
-        roomTypeId: input.roomTypeId,
-        mealPlanId: input.mealPlanId ?? ratePlan.mealPlanId,
-      });
-      if (amount == null) {
-        throw new Error('Package sell price is not set for this stay date');
+    if (usesMedicalPackageCompose(ratePlan)) {
+      const { ownerPackageNightlySell } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
+      const named =
+        input.paxGuests?.filter(
+          (p) => p.guestId || p.firstName?.trim() || p.lastName?.trim() || p.medicalPackageCode?.trim(),
+        ) ?? [];
+      const raw =
+        named.length > 0
+          ? paxCodesForCompose(named, ratePlan.code)
+          : [ratePlan.code];
+      const codes = raw
+        .map((c) => (c ?? '').trim().toUpperCase())
+        .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+      let sum = 0;
+      for (const stayDate of stayNights) {
+        const amount = await ownerPackageNightlySell(stayDate, codes, {
+          roomTypeId: input.roomTypeId,
+          mealPlanId: input.mealPlanId ?? ratePlan.mealPlanId,
+        });
+        if (amount == null) {
+          throw new Error('Package sell price is not set for this stay date');
+        }
+        sum += amount;
       }
-      sum += amount;
+      totalAmount = toDecimal(sum);
+    } else if (stayProductFamily(ratePlan) === 'infotur') {
+      const { ratePlanGridNightlySell } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const mealPlanId = input.mealPlanId ?? ratePlan.mealPlanId;
+      let sum = 0;
+      for (const stayDate of stayNights) {
+        const amount = mealPlanId
+          ? await ratePlanGridNightlySell(stayDate, {
+              ratePlanId,
+              roomTypeId: input.roomTypeId,
+              mealPlanId,
+              occupancy: Math.max(1, input.adults ?? 1),
+            })
+          : null;
+        if (amount == null) {
+          throw new Error('Package sell price is not set for this stay date');
+        }
+        sum += amount;
+      }
+      totalAmount = toDecimal(sum);
     }
-    totalAmount = toDecimal(sum);
   }
 
   const contractRef =
@@ -597,12 +623,15 @@ export async function createReservation(input: {
         inheritRatePlanPackage: false,
       },
     );
+    const { usesMedicalPackageCompose } = await import(
+      '@/lib/services/medical-package-resolve.service'
+    );
     if (isFreeStayBilling(input.billingMode)) {
       const { recalcReservationDailyRates } = await import(
         '@/lib/services/reservation-pricing.service'
       );
       await recalcReservationDailyRates(reservation.id);
-    } else if (manualNightly == null && ratePlan.medicalFlag) {
+    } else if (manualNightly == null && usesMedicalPackageCompose(ratePlan)) {
       const { syncComposedDailyRates } = await import(
         '@/lib/services/nafta-package-compose-apply.service'
       );
@@ -610,7 +639,7 @@ export async function createReservation(input: {
       if (composed.missing || !composed.applied) {
         throw new Error('Package sell price is not set for this stay date');
       }
-    } else if (manualNightly == null && !ratePlan.medicalFlag && input.mealPlanId) {
+    } else if (manualNightly == null && !usesMedicalPackageCompose(ratePlan) && input.mealPlanId) {
       const { ratePlanGridNightlySell } = await import(
         '@/lib/services/nafta-package-compose-apply.service'
       );
@@ -654,10 +683,19 @@ export async function createReservation(input: {
     }
   }
 
+  const { loadReservationAuditSnapshot, recordReservationDiff } = await import(
+    '@/lib/reservation-audit'
+  );
+  const afterCreate = await loadReservationAuditSnapshot(reservation.id);
+  await recordReservationDiff(reservation.id, 'CREATE', null, afterCreate, input.audit);
   return reservation;
 }
 
-export async function assignRoom(reservationId: string, roomId: string) {
+export async function assignRoom(
+  reservationId: string,
+  roomId: string,
+  audit?: { userId?: string | null; request?: Request },
+) {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
     include: {
@@ -749,6 +787,21 @@ export async function assignRoom(reservationId: string, roomId: string) {
       });
     }
   }
+  const fromRoom = fromRoomId
+    ? await prisma.room.findUnique({ where: { id: fromRoomId }, select: { roomNumber: true } })
+    : null;
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(reservationId, 'ASSIGN_ROOM', audit, {
+    section: 'card',
+    source: 'user',
+    fields: [
+      {
+        key: 'roomNumber',
+        from: fromRoom?.roomNumber ?? null,
+        to: updated.room?.roomNumber ?? room.roomNumber,
+      },
+    ],
+  });
   return updated;
 }
 
@@ -772,7 +825,11 @@ export async function listArrivals(from: Date | string, to: Date | string = from
 
 export async function checkInReservation(
   id: string,
-  opts?: { early?: boolean; checkInTime?: string },
+  opts?: {
+    early?: boolean;
+    checkInTime?: string;
+    audit?: { userId?: string | null; request?: Request };
+  },
 ) {
   const { assertBusinessDayOpenForPosting, getCurrentBusinessDate } = await import(
     '@/lib/services/business-date.service'
@@ -860,7 +917,12 @@ export async function checkInReservation(
     !reservation.useManualRate &&
     !isFreeStayBilling(reservation.billingMode)
   ) {
-    const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode, MEDICAL_PACKAGE_CODES } =
+    const {
+      ratePlanRequiresGuestPackage,
+      normalizeMedicalPackageCode,
+      MEDICAL_PACKAGE_CODES,
+      usesMedicalPackageCompose,
+    } =
       await import('@/lib/services/medical-package-resolve.service');
     const party = await prisma.reservationGuest.findMany({
       where: { reservationId: id },
@@ -884,7 +946,7 @@ export async function checkInReservation(
         throw new Error('Select a medical package for each guest');
       }
     }
-    if (reservation.ratePlan.medicalFlag) {
+    if (usesMedicalPackageCompose(reservation.ratePlan)) {
       const { ownerPackageNightlySell } = await import(
         '@/lib/services/nafta-package-compose-apply.service'
       );
@@ -939,12 +1001,22 @@ export async function checkInReservation(
       where: { id },
       data: { checkInDate: stayCheckIn(bizKey) },
     });
-    const { syncComposedDailyRates } = await import(
-      '@/lib/services/nafta-package-compose-apply.service'
+    const { usesMedicalPackageCompose } = await import(
+      '@/lib/services/medical-package-resolve.service'
     );
-    const composed = await syncComposedDailyRates(id);
-    if (composed.missing) {
-      throw new Error('Package sell price is not set for this stay date');
+    if (usesMedicalPackageCompose(reservation.ratePlan)) {
+      const { syncComposedDailyRates } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const composed = await syncComposedDailyRates(id);
+      if (composed.missing) {
+        throw new Error('Package sell price is not set for this stay date');
+      }
+    } else {
+      const { recalcReservationDailyRates } = await import(
+        '@/lib/services/reservation-pricing.service'
+      );
+      await recalcReservationDailyRates(id);
     }
     reservation = await getReservation(id);
     arrivalKey = hotelDateKey(reservation.checkInDate);
@@ -965,7 +1037,7 @@ export async function checkInReservation(
     return updated;
   }).then(async (updated) => {
     const { applyHeldDepositsOnCheckIn } = await import('@/lib/services/folio-deposit.service');
-    await applyHeldDepositsOnCheckIn(id);
+    await applyHeldDepositsOnCheckIn(id, opts?.audit);
 
     const { postEarlyCheckInFee } = await import('@/lib/services/early-late-fees.service');
     if (opts?.checkInTime && opts.checkInTime < '14:00') {
@@ -1055,10 +1127,20 @@ export async function checkInReservation(
         }).catch((e) => console.error('Guest lifecycle check-in failed', e));
       }
       if (full) {
-        const { syncComposedDailyRates } = await import(
-          '@/lib/services/nafta-package-compose-apply.service'
+        const { usesMedicalPackageCompose } = await import(
+          '@/lib/services/medical-package-resolve.service'
         );
-        await syncComposedDailyRates(id);
+        if (usesMedicalPackageCompose(full.ratePlan)) {
+          const { syncComposedDailyRates } = await import(
+            '@/lib/services/nafta-package-compose-apply.service'
+          );
+          await syncComposedDailyRates(id);
+        } else {
+          const { recalcReservationDailyRates } = await import(
+            '@/lib/services/reservation-pricing.service'
+          );
+          await recalcReservationDailyRates(id);
+        }
       }
     }
     if (
@@ -1075,11 +1157,22 @@ export async function checkInReservation(
         })
         .catch((e) => console.error('Door lock unlock on check-in failed', e));
     }
+    const { recordReservationAudit } = await import('@/lib/reservation-audit');
+    await recordReservationAudit(id, opts?.early ? 'CHECK_IN_EARLY' : 'CHECK_IN', opts?.audit, {
+      section: 'status',
+      source: 'user',
+      fields: [{ key: 'status', from: reservation.status, to: 'IN_HOUSE' }],
+    });
     return result;
   });
 }
 
-export async function cancelReservation(id: string, noShow = false, reason?: string) {
+export async function cancelReservation(
+  id: string,
+  noShow = false,
+  reason?: string,
+  audit?: { userId?: string | null; request?: Request },
+) {
   const reservation = await getReservation(id);
   if (['CHECKED_OUT', 'CANCELLED'].includes(reservation.status)) {
     throw new Error('Reservation already closed');
@@ -1087,7 +1180,7 @@ export async function cancelReservation(id: string, noShow = false, reason?: str
   const cancelReason = reason?.trim() ?? '';
   if (!noShow && !cancelReason) throw new Error('CANCEL_REASON_REQUIRED');
 
-  return prisma.$transaction(async (tx) => {
+  const cancelled = await prisma.$transaction(async (tx) => {
     const updated = await tx.reservation.update({
       where: { id },
       data: {
@@ -1121,12 +1214,22 @@ export async function cancelReservation(id: string, noShow = false, reason?: str
     }
     return updated;
   });
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(id, noShow ? 'NO_SHOW' : 'CANCEL', audit, {
+    section: 'status',
+    source: 'user',
+    fields: [
+      { key: 'status', from: reservation.status, to: noShow ? 'NO_SHOW' : 'CANCELLED' },
+      ...(reason?.trim() ? [{ key: 'reason', from: null, to: reason.trim() }] : []),
+    ],
+  });
+  return cancelled;
 }
 
 /** Put a cancelled stay back on the books. The door and type must still be free, or the desk picks another. */
 export async function restoreReservation(
   id: string,
-  input: { roomId?: string | null; roomTypeId?: string },
+  input: { roomId?: string | null; roomTypeId?: string; audit?: { userId?: string | null; request?: Request } },
 ) {
   const reservation = await getReservation(id);
   if (reservation.status !== 'CANCELLED') {
@@ -1190,6 +1293,12 @@ export async function restoreReservation(
       checkIn: reservation.checkInDate,
     });
   }
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(id, 'RESTORE', input.audit, {
+    section: 'status',
+    source: 'user',
+    fields: [{ key: 'status', from: 'CANCELLED', to: 'CONFIRMED' }],
+  });
   return updated;
 }
 
@@ -1461,12 +1570,19 @@ export async function updateReservationSchedule(
 
 export async function addQuickCharge(
   reservationId: string,
-  input: { revenueCodeId: string; amount: number; qty?: number; description: string },
+  input: {
+    revenueCodeId: string;
+    amount: number;
+    qty?: number;
+    description: string;
+    audit?: { userId?: string | null; request?: Request };
+  },
 ) {
   const reservation = await getReservation(reservationId);
   if (reservation.status !== 'IN_HOUSE') {
     throw new Error('Quick charges only for IN_HOUSE reservations');
   }
-  return postCharge({ reservationId, ...input });
+  const { audit, ...charge } = input;
+  return postCharge({ reservationId, ...charge, audit });
 }
 

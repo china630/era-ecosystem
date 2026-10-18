@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { createReservation } from '@/lib/services/reservation.service';
 import { getAllotmentBlockPickup } from '@/lib/services/allotment-block.service';
+import type { ReservationAuditActor } from '@/lib/reservation-audit';
 import type { BookingFolioMode, PaymentMethod } from '@prisma/client';
 
 /**
@@ -16,6 +17,7 @@ export async function pickupAllotmentBlock(input: {
   paymentMethod?: PaymentMethod;
   /** Cap how many rooms to pick per line (default = remaining). */
   quantities?: Record<string, number>;
+  audit?: ReservationAuditActor;
 }) {
   const block = await prisma.allotmentBlock.findUnique({
     where: { id: input.allotmentBlockId },
@@ -86,6 +88,7 @@ export async function pickupAllotmentBlock(input: {
         checkOutDate: block.validTo,
         paymentMethod,
         adults: 1,
+        audit: input.audit,
       });
       stays.push(stay);
     }

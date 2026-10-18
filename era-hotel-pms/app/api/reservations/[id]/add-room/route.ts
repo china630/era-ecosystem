@@ -9,13 +9,16 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 type Ctx = { params: Promise<{ id: string }> };
 
 /** POST — ensure Booking group, then clone a sibling RoomStay. */
-export async function POST(_request: Request, context: Ctx) {
+export async function POST(request: Request, context: Ctx) {
   try {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await context.params;
     z.string().uuid().parse(id);
-    const stay = await addRoomStayFromReservation(id);
+    const stay = await addRoomStayFromReservation(id, {
+      userId: session?.sub,
+      request,
+    });
     return jsonOk(serialize(stay), 201);
   } catch (err) {
     return handleRouteError(err);

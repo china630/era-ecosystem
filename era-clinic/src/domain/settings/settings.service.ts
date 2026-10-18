@@ -6,6 +6,7 @@ import {
   type ClinicPresetCode,
 } from "@/domain/presets/clinic-presets";
 import { SANATORIUM_DEFAULT_SETTINGS } from "@/domain/settings/scheduling-settings";
+import { parseBathDayModes, type BathModeDef } from "@/domain/planning/bath-calendar";
 import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import type {
   ProcedureOverQuotaPolicy,
@@ -42,6 +43,10 @@ export async function getDefaultTenant() {
         defaultAppointmentSlotMinutes:
           SANATORIUM_DEFAULT_SETTINGS.defaultAppointmentSlotMinutes,
         procedureOverQuotaPolicy: SANATORIUM_DEFAULT_SETTINGS.procedureOverQuotaPolicy,
+        defaultBathMode: SANATORIUM_DEFAULT_SETTINGS.defaultBathMode,
+        closedDaySpendsOwedRest: SANATORIUM_DEFAULT_SETTINGS.closedDaySpendsOwedRest,
+        closedDayResetsOpenStreak: SANATORIUM_DEFAULT_SETTINGS.closedDayResetsOpenStreak,
+        weeklyNaftalanCap: SANATORIUM_DEFAULT_SETTINGS.weeklyNaftalanCap,
       },
     });
   }
@@ -66,6 +71,14 @@ export async function getClinicSettings() {
     lunchStartHour: tenant.lunchStartHour,
     lunchEndHour: tenant.lunchEndHour,
     closedWeekdays: tenant.closedWeekdays ?? [0],
+    saturdayEndHour: tenant.saturdayEndHour ?? 13,
+    shortenedDayEndHour: tenant.shortenedDayEndHour ?? 13,
+    bathDayModes: parseBathDayModes(tenant.bathDayModesJson),
+    defaultBathMode: tenant.defaultBathMode?.trim() || "3",
+    closedDaySpendsOwedRest: tenant.closedDaySpendsOwedRest !== false,
+    closedDayResetsOpenStreak: tenant.closedDayResetsOpenStreak !== false,
+    weeklyNaftalanCap:
+      tenant.weeklyNaftalanCap == null ? 5 : Math.min(14, Math.max(0, tenant.weeklyNaftalanCap)),
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
@@ -129,6 +142,13 @@ export async function updateClinicSettings(input: {
   lunchStartHour?: number;
   lunchEndHour?: number;
   closedWeekdays?: number[];
+  saturdayEndHour?: number;
+  shortenedDayEndHour?: number;
+  bathDayModes?: BathModeDef[];
+  defaultBathMode?: string;
+  closedDaySpendsOwedRest?: boolean;
+  closedDayResetsOpenStreak?: boolean;
+  weeklyNaftalanCap?: number;
   defaultProcedureGapMinutes?: number;
   peakModeEnabled?: boolean;
   peakDayEndHour?: number;
@@ -189,6 +209,18 @@ export async function updateClinicSettings(input: {
   const lunchStartHour = clampHour(input.lunchStartHour, 13);
   const lunchEndHour = clampHour(input.lunchEndHour, 14);
   const closedWeekdays = clampWeekdays(input.closedWeekdays);
+  const saturdayEndHour = clampHour(input.saturdayEndHour, 13);
+  const shortenedDayEndHour = clampHour(input.shortenedDayEndHour, 13);
+  const bathDayModesJson =
+    input.bathDayModes != null ? JSON.stringify(parseBathDayModes(input.bathDayModes)) : undefined;
+  const defaultBathMode =
+    input.defaultBathMode != null
+      ? String(input.defaultBathMode).trim().toUpperCase().slice(0, 16) || "3"
+      : undefined;
+  const weeklyNaftalanCap =
+    input.weeklyNaftalanCap != null
+      ? Math.min(14, Math.max(0, Math.floor(input.weeklyNaftalanCap)))
+      : undefined;
   const defaultProcedureGapMinutes =
     input.defaultProcedureGapMinutes != null
       ? Math.min(240, Math.max(0, Math.floor(input.defaultProcedureGapMinutes)))
@@ -209,6 +241,17 @@ export async function updateClinicSettings(input: {
       lunchStartHour: lunchStartHour ?? 13,
       lunchEndHour: lunchEndHour ?? 14,
       closedWeekdays: closedWeekdays ?? [0],
+      saturdayEndHour: saturdayEndHour ?? 13,
+      shortenedDayEndHour: shortenedDayEndHour ?? 13,
+      ...(bathDayModesJson != null ? { bathDayModesJson } : {}),
+      ...(defaultBathMode != null ? { defaultBathMode } : {}),
+      ...(input.closedDaySpendsOwedRest != null
+        ? { closedDaySpendsOwedRest: input.closedDaySpendsOwedRest }
+        : {}),
+      ...(input.closedDayResetsOpenStreak != null
+        ? { closedDayResetsOpenStreak: input.closedDayResetsOpenStreak }
+        : {}),
+      ...(weeklyNaftalanCap != null ? { weeklyNaftalanCap } : {}),
       defaultProcedureGapMinutes: defaultProcedureGapMinutes ?? 5,
       ...(resultsPreview != null ? { patientCardResultsPreview: resultsPreview } : {}),
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
@@ -242,6 +285,17 @@ export async function updateClinicSettings(input: {
       ...(lunchStartHour != null ? { lunchStartHour } : {}),
       ...(lunchEndHour != null ? { lunchEndHour } : {}),
       ...(closedWeekdays != null ? { closedWeekdays } : {}),
+      ...(saturdayEndHour != null ? { saturdayEndHour } : {}),
+      ...(shortenedDayEndHour != null ? { shortenedDayEndHour } : {}),
+      ...(bathDayModesJson != null ? { bathDayModesJson } : {}),
+      ...(defaultBathMode != null ? { defaultBathMode } : {}),
+      ...(input.closedDaySpendsOwedRest != null
+        ? { closedDaySpendsOwedRest: input.closedDaySpendsOwedRest }
+        : {}),
+      ...(input.closedDayResetsOpenStreak != null
+        ? { closedDayResetsOpenStreak: input.closedDayResetsOpenStreak }
+        : {}),
+      ...(weeklyNaftalanCap != null ? { weeklyNaftalanCap } : {}),
       ...(defaultProcedureGapMinutes != null ? { defaultProcedureGapMinutes } : {}),
       ...(input.peakModeEnabled != null ? { peakModeEnabled: input.peakModeEnabled } : {}),
       ...(input.peakDayEndHour != null

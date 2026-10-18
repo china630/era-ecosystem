@@ -11,9 +11,12 @@ type Props = {
   patient?: PrintPatientStrip | null;
   title: string;
   autoPrint?: boolean;
+  paper?: "a4" | "receipt";
   children: React.ReactNode;
   signatureLabel?: string;
   signatureName?: string | null;
+  /** Override the room line key (receipt uses hotel room, not ward). */
+  roomLabelKey?: string;
 };
 
 function sexLabel(lang: PrintLang, sex: string | null | undefined): string {
@@ -29,9 +32,11 @@ export function PrintShell({
   patient,
   title,
   autoPrint,
+  paper = "a4",
   children,
   signatureLabel,
   signatureName,
+  roomLabelKey = "roomNo",
 }: Props) {
   useEffect(() => {
     if (!autoPrint) return;
@@ -40,13 +45,19 @@ export function PrintShell({
   }, [autoPrint]);
 
   return (
-    <div className="print-root mx-auto max-w-[210mm] bg-white p-6 text-[12px] text-black">
+    <div
+      className={
+        paper === "receipt"
+          ? "print-root mx-auto w-[58mm] max-w-[58mm] bg-white p-2 text-[10px] text-black"
+          : "print-root mx-auto max-w-[210mm] bg-white p-6 text-[12px] text-black"
+      }
+    >
       <style>{`
-        @page { size: A4; margin: 12mm; }
+        @page { size: ${paper === "receipt" ? "58mm auto" : "A4"}; margin: ${paper === "receipt" ? "2mm" : "12mm"}; }
         @media print {
           .no-print { display: none !important; }
-          body { background: white; }
-          .print-root { padding: 0; max-width: none; }
+          html, body { background: white; overflow: visible !important; height: auto !important; }
+          .print-root { padding: 0; max-width: none; overflow: visible !important; height: auto !important; }
         }
       `}</style>
       <div className="no-print mb-4 flex justify-end gap-2">
@@ -73,41 +84,71 @@ export function PrintShell({
             </p>
           </div>
         </div>
-        <div className="text-right text-[11px]">
-          <p className="m-0 font-semibold">{printLabel(lang, "date")}</p>
-          <p className="m-0">{patient?.date ?? ""}</p>
-        </div>
+        {patient?.date ? (
+          <p className="m-0 shrink-0 whitespace-nowrap text-right text-[11px]">
+            <span className="font-semibold">{printLabel(lang, "date")}</span> {patient.date}
+          </p>
+        ) : null}
       </header>
 
       <h2 className="mb-3 text-center text-[16px] font-bold uppercase">{title}</h2>
 
       {patient ? (
-        <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-1 border border-black p-2 text-[11px]">
-          <div>
-            <strong>{printLabel(lang, "patient")}:</strong> {patient.fullName}
-          </div>
-          <div>
-            <strong>{printLabel(lang, "country")}:</strong>{" "}
-            {patient.nationality ? countryLabel(patient.nationality, lang) : "—"}
-          </div>
-          <div>
-            <strong>{printLabel(lang, "sex")}:</strong> {sexLabel(lang, patient.sex)}
-          </div>
-          <div>
-            <strong>{printLabel(lang, "birthDate")}:</strong> {patient.birthDate ?? "—"}
-          </div>
-          <div>
-            <strong>{printLabel(lang, "phone")}:</strong> {patient.phone ?? "—"}
-          </div>
-          <div>
-            <strong>{printLabel(lang, "roomNo")}:</strong> {patient.roomNumber ?? "—"}
-          </div>
-          {patient.doctorName ? (
+        paper === "receipt" ? (
+          <div className="mb-2 grid grid-cols-1 gap-y-0.5 border border-black p-1 text-[9px]">
             <div>
-              <strong>{printLabel(lang, "doctor")}:</strong> {patient.doctorName}
+              <strong>{printLabel(lang, "patient")}:</strong> {patient.fullName}
             </div>
-          ) : null}
-        </div>
+            <div>
+              <strong>{printLabel(lang, "sex")}:</strong> {sexLabel(lang, patient.sex)}
+            </div>
+            <div>
+              <strong>{printLabel(lang, "phone")}:</strong> {patient.phone ?? "—"}
+            </div>
+            <div>
+              <strong>{printLabel(lang, roomLabelKey)}:</strong> {patient.roomNumber ?? "—"}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4 grid grid-cols-2 gap-x-8 gap-y-1 border border-black p-2 text-[11px]">
+            <div className="space-y-0.5">
+              <div>
+                <strong>{printLabel(lang, "patient")}:</strong> {patient.fullName}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "sex")}:</strong> {sexLabel(lang, patient.sex)}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "birthDate")}:</strong> {patient.birthDate ?? "—"}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "country")}:</strong>{" "}
+                {patient.nationality ? countryLabel(patient.nationality, lang) : "—"}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "phone")}:</strong> {patient.phone ?? "—"}
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <div>
+                <strong>{printLabel(lang, "doctor")}:</strong> {patient.doctorName ?? "—"}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "arrival")}:</strong> {patient.arrival ?? "—"}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "departure")}:</strong> {patient.departure ?? "—"}
+              </div>
+              <div>
+                <strong>{printLabel(lang, "stayDays")}:</strong>{" "}
+                {patient.stayDays != null ? patient.stayDays : "—"}
+              </div>
+              <div>
+                <strong>{printLabel(lang, roomLabelKey)}:</strong> {patient.roomNumber ?? "—"}
+              </div>
+            </div>
+          </div>
+        )
       ) : null}
 
       {children}

@@ -75,6 +75,7 @@ export async function settleFolio(input: {
   discountDescription?: string;
   applyDeposits?: boolean;
   createdByUserId?: string;
+  auditRequest?: Request;
 }) {
   const folio = await prisma.folio.findUnique({
     where: { id: input.folioId },
@@ -89,6 +90,7 @@ export async function settleFolio(input: {
       reservationId: folio.reservationId,
       amount: input.discountAmount,
       description: input.discountDescription ?? 'Settlement discount',
+      audit: { userId: input.createdByUserId, request: input.auditRequest },
     });
   }
 
@@ -110,6 +112,7 @@ export async function settleFolio(input: {
       await applyHeldDepositsToFolio(
         input.folioId,
         depositSum > 0 ? depositSum : undefined,
+        { userId: input.createdByUserId, request: input.auditRequest },
       );
     }
   }
@@ -160,6 +163,7 @@ export async function settleFolio(input: {
         bankReference: line.bankReference,
         bankTerminalId: line.bankTerminalId,
         createdByUserId: input.createdByUserId,
+        auditRequest: input.auditRequest,
       });
       await allocatePaymentFifo(refreshed.id, payment.id, line.amount);
 
@@ -173,16 +177,6 @@ export async function settleFolio(input: {
       where: { id: settlement.id },
       data: { status: 'COMPLETED', completedAt: new Date() },
     });
-  });
-
-  const { recordHotelAudit } = await import('@/lib/satellite-audit');
-  await recordHotelAudit({ userId: input.createdByUserId }, 'Reservation', refreshed.reservationId, 'PAYMENT', {
-    reservationId: refreshed.reservationId,
-    lines: cashLines.map((line) => ({
-      method: line.method,
-      amount: line.amount,
-      bankTerminalId: line.bankTerminalId ?? null,
-    })),
   });
 
   const { syncTourBookingsAfterFolioSettle, usedGuestTender } = await import(

@@ -4,6 +4,7 @@ import {
   applyDutyFilter,
   resolvePostedStaffForSlot,
 } from "@/domain/staff/staff-duty-roster.service";
+import { staffWhenUnposted } from "@/domain/staff/staff-kind";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
 
 export { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
@@ -15,6 +16,7 @@ export type PhysicalResource = {
   kind: "ROOM" | "EQUIPMENT";
   capacity: number;
   extendedEndHour?: number | null;
+  sexAudience?: "MALE" | "FEMALE" | "ANY" | null;
 };
 
 /** Count HARD STAFF allocations overlapping [start, end). */
@@ -99,6 +101,8 @@ export async function findSkilledFreePractitioner(input: {
   preferPractitionerId?: string | null;
   excludeOrderId?: string;
   staffMode?: ProcedureStaffMode;
+  /** Approved line with no person keeps the skilled pool. Does not invent staff without a skill. */
+  skillWhenUnposted?: boolean;
 }): Promise<{ id: string; fullName: string; code: string } | null> {
   const duty = await resolvePostedStaffForSlot({
     procedureTypeId: input.procedureTypeId,
@@ -114,8 +118,9 @@ export async function findSkilledFreePractitioner(input: {
     },
     include: { practitioner: true },
   });
-  let pool = skills.map((s) => s.practitioner);
-  if (pool.length === 0) {
+  const skilled = skills.map((s) => s.practitioner);
+  let pool = skilled;
+  if (pool.length === 0 && !input.skillWhenUnposted) {
     const nurses = await prisma.practitioner.findMany({
       where: { active: true, staffKind: { in: ["DOCTOR", "NURSE", "BATH", "MASSAGE"] } },
       orderBy: { code: "asc" },
@@ -123,10 +128,15 @@ export async function findSkilledFreePractitioner(input: {
     });
     pool = nurses;
   }
-  const candidates = preferFirst(
-    applyDutyFilter(pool, duty),
-    input.preferPractitionerId,
-  );
+  const dutyFiltered = applyDutyFilter(pool, duty);
+  const chosen = input.skillWhenUnposted
+    ? staffWhenUnposted({
+        dutyFiltered,
+        postedCount: duty.postedList.length,
+        skilled,
+      })
+    : dutyFiltered;
+  const candidates = preferFirst(chosen, input.preferPractitionerId);
   if (input.staffMode === "SOFT") {
     return pickSoftStaff(candidates, input);
   }
@@ -227,6 +237,14 @@ export async function listPhysicalRequirementResources(
   return out;
 }
 
+/** Drop cabin booking and allocation. NO_SHOW keeps the matrix bar on purpose. */
+export async function releaseProcedureOccupancy(orderIds: string[]): Promise<void> {
+  const ids = [...new Set(orderIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) return;
+  await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
+  await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
+}
+
 export type AllocationWrite = {
   role: ProcedureRequirementRole;
   resourceId?: string | null;
@@ -297,11 +315,12 @@ export async function getStaffAllocationForOrder(procedureOrderId: string) {
 export async function resolveStaffModeForProcedureType(
   procedureTypeId: string,
 ): Promise<ProcedureStaffMode> {
-  const staffReq = await prisma.procedureTypeRequirement.findFirst({
+  const staffReq = await prisma.procedureTypeRequirement.findMany({
     where: { procedureTypeId, role: "STAFF" },
     select: { staffMode: true },
   });
-  return staffReq?.staffMode ?? "HARD";
+  if (staffReq.some((row) => row.staffMode === "SOFT")) return "SOFT";
+  return staffReq[0]?.staffMode ?? "HARD";
 }
 
 /**
@@ -314,17 +333,33 @@ export async function ensureDefaultRequirements(procedureTypeId: string) {
   const existing = await prisma.procedureTypeRequirement.findMany({
     where: { procedureTypeId },
   });
-  const hasPhysical = existing.some(
-    (r) => r.role === "LOCATION" || r.role === "EQUIPMENT",
+  const emptyPhysicalIds = existing
+    .filter(
+      (r) =>
+        (r.role === "LOCATION" || r.role === "EQUIPMENT") && !r.resourceCode?.trim(),
+    )
+    .map((r) => r.id);
+  const staff = existing.filter((r) => r.role === "STAFF");
+  const keepStaff = staff.find((r) => r.staffMode === "SOFT") ?? staff[0];
+  const extraStaffIds = staff.filter((r) => r.id !== keepStaff?.id).map((r) => r.id);
+  const dropIds = [...emptyPhysicalIds, ...extraStaffIds];
+  if (dropIds.length > 0) {
+    await prisma.procedureTypeRequirement.deleteMany({ where: { id: { in: dropIds } } });
+  }
+  const leftover = existing.filter((r) => !dropIds.includes(r.id));
+  const hasPhysical = leftover.some(
+    (r) =>
+      (r.role === "LOCATION" || r.role === "EQUIPMENT") && Boolean(r.resourceCode?.trim()),
   );
-  const hasStaff = existing.some((r) => r.role === "STAFF");
-  if (!hasPhysical) {
+  const hasStaff = leftover.some((r) => r.role === "STAFF");
+  const code = pt.resourceCode?.trim();
+  if (!hasPhysical && code) {
     await prisma.procedureTypeRequirement.create({
       data: {
         procedureTypeId,
         role: pt.resourceKind === "ROOM" ? "LOCATION" : "EQUIPMENT",
         resourceKind: pt.resourceKind,
-        resourceCode: pt.resourceCode,
+        resourceCode: code,
         staffMode: "HARD",
         required: true,
       },

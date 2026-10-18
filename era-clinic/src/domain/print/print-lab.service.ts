@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
 
@@ -48,7 +49,10 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
             include: {
               analytes: {
                 orderBy: { sortOrder: "asc" },
-                include: { valueOptions: { orderBy: { sortOrder: "asc" } } },
+                include: {
+                  valueOptions: { orderBy: { sortOrder: "asc" } },
+                  card: { select: { code: true } },
+                },
               },
             },
           },
@@ -59,23 +63,20 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
   if (!order) return null;
 
   const branding = await getPrintBranding(lang);
-  const episode = await prisma.clinicalEpisode.findFirst({
-    where: { patientRefId: order.patientRefId },
-    orderBy: { openedAt: "desc" },
+  const stay = await loadPrintEpisodeStay({
+    episodeId: order.clinicalEpisodeId,
+    patientRefId: order.patientRefId,
   });
 
-  const patient: PrintPatientStrip = {
+  const patient: PrintPatientStrip = composePrintPatientStrip({
     fullName: order.patientRef?.fullName ?? "—",
-    sex: order.patientRef?.sex ?? null,
-    birthDate: order.patientRef?.birthDate
-      ? order.patientRef.birthDate.toISOString().slice(0, 10)
-      : null,
-    phone: order.patientRef?.phone ?? null,
-    nationality: order.patientRef?.nationality ?? null,
-    roomNumber: episode?.roomNumber ?? null,
-    doctorName: null,
-    date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.createdAt),
-  };
+    sex: order.patientRef?.sex,
+    birthDate: order.patientRef?.birthDate,
+    phone: order.patientRef?.phone,
+    nationality: order.patientRef?.nationality,
+    date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
+    stay,
+  });
 
   const titleParts: string[] = [];
   const sectionMap = new Map<string, PrintLabRow[]>();
@@ -90,24 +91,32 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
       titleParts.push(item.serviceCode);
     }
     const analytes = svc?.analytes ?? [];
-    const byCode = new Map(analytes.map((a: { code: string }) => [a.code, a]));
-    for (const r of item.results) {
-      const analyte = byCode.get(r.code) as {
-        section?: string | null;
-        valueType?: string;
-        valueOptions?: Array<{ code: string; labelEn: string; labelRu: string; labelAz: string | null }>;
-        labelEn?: string;
-        labelRu?: string;
-        labelAz?: string | null;
-        unit?: string | null;
-        refMin?: string | null;
-        refMax?: string | null;
-      } | undefined;
+    const savedFor = (analyte: { code: string; card?: { code: string } | null }) =>
+      item.results.find(
+        (row) => row.code === analyte.code || (analyte.card?.code && row.code === analyte.card.code),
+      );
+    const used = new Set(
+      analytes.flatMap((analyte) => {
+        const saved = savedFor(analyte);
+        return saved ? [saved.code] : [];
+      }),
+    );
+    const resultRows = [
+      ...analytes.map((analyte) => ({ saved: savedFor(analyte), analyte })),
+      ...item.results
+        .filter((row) => !used.has(row.code))
+        .map((saved) => ({ saved, analyte: undefined })),
+    ];
+    const seen = new Set<string>();
+    for (const { saved, analyte } of resultRows) {
+      const code = analyte?.code ?? saved?.code ?? "";
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
       const section = analyte?.section ?? null;
       const sectionKey = section ?? "_default";
-      let value = r.value;
-      if (analyte?.valueType === "QUALITATIVE" && analyte.valueOptions?.length) {
-        const opt = analyte.valueOptions.find((o: { code: string }) => o.code === r.value);
+      let value = saved?.value ?? "";
+      if (analyte?.valueType === "QUALITATIVE" && analyte.valueOptions?.length && value) {
+        const opt = analyte.valueOptions.find((o: { code: string }) => o.code === value);
         if (opt) {
           value = pickL10n(
             { en: opt.labelEn, ru: opt.labelRu, az: opt.labelAz ?? opt.labelEn },
@@ -115,25 +124,26 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
           );
         }
       }
-      if (!String(value ?? "").trim() || value === "-" || value === "—" || value === "1") continue;
-      const label = analyte
+      const shown = String(value ?? "").trim();
+      const catalogLabel = analyte
         ? pickL10n(
             {
-              en: analyte.labelEn ?? r.code,
-              ru: analyte.labelRu ?? analyte.labelEn ?? r.code,
-              az: analyte.labelAz ?? analyte.labelEn ?? r.code,
+              en: analyte.labelEn ?? code,
+              ru: analyte.labelRu ?? analyte.labelEn ?? code,
+              az: analyte.labelAz ?? analyte.labelEn ?? code,
             },
             lang,
           )
-        : r.label || r.code;
+        : code;
+      const label = saved?.label?.trim() || catalogLabel;
       const row: PrintLabRow = {
         no: no++,
-        code: r.code,
+        code,
         label,
-        value,
-        unit: r.unit ?? analyte?.unit ?? "",
-        norm: formatNorm(r.refMin ?? analyte?.refMin, r.refMax ?? analyte?.refMax, r.unit ?? analyte?.unit),
-        flag: r.flag,
+        value: shown || "—",
+        unit: saved?.unit ?? analyte?.unit ?? "",
+        norm: formatNorm(saved?.refMin ?? analyte?.refMin, saved?.refMax ?? analyte?.refMax) || "—",
+        flag: saved?.flag || "—",
         section,
       };
       const list = sectionMap.get(sectionKey) ?? [];

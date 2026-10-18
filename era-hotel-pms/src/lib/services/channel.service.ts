@@ -1,5 +1,5 @@
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
-import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, hotelNightBounds } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
@@ -108,17 +108,17 @@ export async function getChannelAvailability(from: Date, to: Date) {
     const rows = [];
     for (const night of nights) {
       const stopSell = await isStopSellForDate(night, rt.id);
-      const nightEnd = new Date(night.getTime() + 86400000);
-      const slices = await loadShareSlicesForType(rt.id, night, nightEnd);
-      const overlapping = countDoorsUsedOnNight(slices, night, rt.adultCapacity ?? 2);
+      const { start, end } = hotelNightBounds(night);
+      const slices = await loadShareSlicesForType(rt.id, start, end);
+      const overlapping = countDoorsUsedOnNight(slices, start, rt.adultCapacity ?? 2);
       const contractQuota = await getContractAllotmentQuota(rt.id, night);
       const contractBooked = await prisma.reservation.count({
         where: {
           roomTypeId: rt.id,
           salesContractId: { not: null },
           status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
-          checkInDate: { lt: new Date(night.getTime() + 86400000) },
-          checkOutDate: { gt: night },
+          checkInDate: { lt: end },
+          checkOutDate: { gt: start },
         },
       });
       const contractHeld = Math.max(contractQuota - contractBooked, 0);

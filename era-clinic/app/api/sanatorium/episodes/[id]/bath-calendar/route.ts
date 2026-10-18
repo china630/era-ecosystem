@@ -12,7 +12,7 @@ import { getBathCalendar, saveBathCalendar } from "@/domain/planning/bath-calend
 
 const bodySchema = z.object({
   procedureCode: z.string().min(1),
-  mode: z.enum(["2", "3", "5", "ALTERNATING"]),
+  mode: z.string().regex(/^[0-9A-Z_]{1,16}$/),
   qty: z.number().int().min(0).max(60),
   manualRestYmds: z.array(z.string()).default([]),
   manualBathYmds: z.array(z.string()).default([]),

@@ -151,6 +151,12 @@ describe("clinic default permissions", () => {
     expect(adminApiRoutePermission("/api/admin/roles/CLINIC_ADMIN/permissions")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
     );
+    expect(adminApiRoutePermission("/api/admin/procedure-day-series")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
+    );
+    expect(adminApiRoutePermission("/api/admin/lab-blank-profiles")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
+    );
   });
 
   it("CLINIC_ADMIN role alone does not bypass sessionHasClinicPermission", () => {
@@ -239,6 +245,29 @@ describe("clinic default permissions", () => {
     ).toBe(true);
     expect(
       sessionHasClinicPermission(nurse, CLINIC_PERMISSION.SCREEN_DOCTOR),
+    ).toBe(false);
+    expect(
+      sessionHasAnyClinicPermission(
+        nurse,
+        routePermissions("/print/episode/x")!,
+      ),
+    ).toBe(true);
+  });
+
+  it("print episode any-of allows reception without screen:doctor", () => {
+    const reception = {
+      role: CLINIC_ROLE.RECEPTION,
+      login: "front",
+      permissions: DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.RECEPTION],
+    };
+    expect(
+      sessionHasAnyClinicPermission(
+        reception,
+        routePermissions("/print/episode/x")!,
+      ),
+    ).toBe(true);
+    expect(
+      sessionHasClinicPermission(reception, CLINIC_PERMISSION.SCREEN_DOCTOR),
     ).toBe(false);
   });
 

@@ -166,7 +166,9 @@ export async function getNightlyRoomChargeForDate(
     '@/lib/services/nafta-package-compose-apply.service'
   );
   const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
-  const { MEDICAL_PACKAGE_CODES } = await import('@/lib/services/medical-package-resolve.service');
+  const { MEDICAL_PACKAGE_CODES, usesMedicalPackageCompose, stayProductFamily } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
   const packageCodes = (
     res.paxGuests.length > 0
       ? paxCodesForCompose(res.paxGuests, res.ratePlan.code ?? res.medicalPackageCode)
@@ -174,7 +176,7 @@ export async function getNightlyRoomChargeForDate(
   )
     .map((c) => (c ?? '').trim().toUpperCase())
     .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
-  if (packageCodes.length > 0 || res.ratePlan.medicalFlag) {
+  if (usesMedicalPackageCompose(res.ratePlan)) {
     const roomTypeId = slice?.roomTypeId ?? res.roomTypeId;
     const nightly = roomTypeId
       ? await ownerPackageNightlySell(businessDate, packageCodes, {
@@ -193,7 +195,7 @@ export async function getNightlyRoomChargeForDate(
   }
 
   const gridRoomTypeId = slice?.roomTypeId ?? res.roomTypeId;
-  if (!res.ratePlan.medicalFlag && gridRoomTypeId && res.mealPlanId) {
+  if (stayProductFamily(res.ratePlan) !== 'medical' && gridRoomTypeId && res.mealPlanId) {
     const { ratePlanGridNightlySell } = await import(
       "@/lib/services/nafta-package-compose-apply.service"
     );

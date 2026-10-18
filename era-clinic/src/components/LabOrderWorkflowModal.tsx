@@ -691,9 +691,14 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                     value: string;
                     applied: boolean;
                   }>;
+                  const applied = rows.filter((row) => row.applied && row.analyteCode);
+                  if (applied.length === 0) {
+                    showApiError({ error: t("loadWordNoValues") }, t("loadWord"));
+                    return;
+                  }
                   setResultLines((lines) =>
                     lines.map((line) => {
-                      const hit = rows.find((row) => row.applied && row.analyteCode === line.code);
+                      const hit = applied.find((row) => row.analyteCode === line.code);
                       return hit ? { ...line, value: hit.value } : line;
                     }),
                   );

@@ -55,6 +55,7 @@ async function occupiedDoorsOnNight(roomTypeId: string, nightKey: string): Promi
 /**
  * FO Room Type Availability matrix (Electra-style Avl / Occ).
  * Occ includes unassigned stays. Avl may be negative (overbook signal).
+ * Per-night window is hotel noon — same `stayOccupiesHotelNight` as sellable/create.
  */
 export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   const fromKey = hotelDateKey(from);
@@ -112,8 +113,8 @@ export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   return { from: fromKey, to: toKey, nights, rows, totals };
 }
 
-/** Min sellable nights across stay — same gate as createReservation. */
+/** Min sellable nights across stay — same hotel-noon Occ as the availability matrix. */
 export async function getSellablePreview(roomTypeId: string, checkIn: Date, checkOut: Date) {
   const { getAvailability } = await import('@/lib/services/reservation.service');
-  return getAvailability(roomTypeId, checkIn, checkOut);
+  return getAvailability(roomTypeId, parseHotelNoon(checkIn), parseHotelNoon(checkOut));
 }

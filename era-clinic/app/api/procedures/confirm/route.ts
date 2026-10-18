@@ -97,12 +97,43 @@ export async function POST(req: Request) {
     const placement = await placeConfirmedProcedures(body.orderIds, {
       confirmedByUserId: session.sub,
     });
-    if (placement.missingCabinNames.length > 0) {
-      return jsonError(placement.missingCabinNames.join(", "), 409, { code: "NO_CABIN" });
+    const misses = placement.failures.map((row) => ({
+      ymd: row.ymd ?? "",
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      reason: row.reason,
+    }));
+    if (placement.placed < 1) {
+      const onlyCabinSex =
+        misses.length > 0 && misses.every((row) => row.reason === "cabin_sex");
+      const onlyMissingCabin =
+        placement.missingCabinNames.length > 0 &&
+        (misses.length === 0 || misses.every((row) => row.reason === "no_cabin"));
+      if (onlyCabinSex) {
+        return jsonError(
+          [...new Set(misses.map((row) => row.procedureName))].join(", "),
+          409,
+          { code: "CABIN_SEX", misses },
+        );
+      }
+      if (onlyMissingCabin) {
+        return jsonError(placement.missingCabinNames.join(", "), 409, {
+          code: "NO_CABIN",
+          misses,
+        });
+      }
+      return jsonError(
+        misses.map((row) => row.procedureName || row.procedureCode).join(", ") ||
+          placement.missingCabinNames.join(", ") ||
+          "Could not place sessions",
+        409,
+        { code: "PLACE_FAILED", misses },
+      );
     }
     return jsonOk({
       placed: placement.placed,
-      orderIds: body.orderIds,
+      orderIds: placement.placedIds,
+      ...(misses.length > 0 ? { misses } : {}),
       ...(softWarn ? { softWarn } : {}),
     });
   } catch (err) {

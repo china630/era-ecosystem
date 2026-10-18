@@ -28,12 +28,6 @@ export default async function PrintCheckupPage({ params, searchParams }: Props) 
     >
       <div className="mb-3 grid grid-cols-2 gap-2 text-[11px]">
         <div>
-          <strong>{printLabel(lang, "arrival")}:</strong> {doc.arrival ?? "—"}
-        </div>
-        <div>
-          <strong>{printLabel(lang, "departure")}:</strong> {doc.departure ?? "—"}
-        </div>
-        <div>
           <strong>{printLabel(lang, "height")}:</strong> __________
         </div>
         <div>

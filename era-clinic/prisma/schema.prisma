@@ -49,6 +49,20 @@ model Tenant {
   lunchEndHour                   Int                      @default(14) @map("lunch_end_hour")
   /// JS getUTCDay-style weekday numbers closed (0=Sunday). Default Sunday only.
   closedWeekdays                 Int[]                    @default([0]) @map("closed_weekdays")
+  /// Saturday end hour (Asia/Baku), exclusive. Saturday stays a short working day unless it is closed.
+  saturdayEndHour                Int                      @default(13) @map("saturday_end_hour")
+  /// Country shortened / mourning-eve end hour (Asia/Baku), exclusive.
+  shortenedDayEndHour            Int                      @default(13) @map("shortened_day_end_hour")
+  /// Bath day modes JSON: [{ code, baths, rest }]. Null uses 2, 3, 5, and alternating.
+  bathDayModesJson               String?                  @map("bath_day_modes_json") @db.Text
+  /// Mode code Saxla uses when the order has no dayBlock (Nafta default 3).
+  defaultBathMode                String                   @default("3") @map("default_bath_mode")
+  /// A closed day spends an owed rest (Thu–Sat baths → Sunday is the rest).
+  closedDaySpendsOwedRest        Boolean                  @default(true) @map("closed_day_spends_owed_rest")
+  /// A closed day with no owed rest clears a 1–2 day streak (Fri–Sat → Mon starts a new 3).
+  closedDayResetsOpenStreak      Boolean                  @default(true) @map("closed_day_resets_open_streak")
+  /// Max naftalan-family sessions per Monday–Sunday week. 0 = off.
+  weeklyNaftalanCap              Int                      @default(5) @map("weekly_naftalan_cap")
   /// Default resourceGapMinutes copied onto new ProcedureType rows (cabin idle after occupancy)
   defaultProcedureGapMinutes     Int                      @default(5) @map("default_procedure_gap_minutes")
   /// When true, procedures/resources with extendedEndHour may run past dayEndHour
@@ -240,6 +254,13 @@ enum PatientSex {
   MALE
   FEMALE
   UNKNOWN
+}
+
+/// Who may be seated in this cabin. ANY is a shared room.
+enum ResourceSexAudience {
+  MALE
+  FEMALE
+  ANY
 }
 
 enum PatientBloodGroup {
@@ -473,6 +494,8 @@ model Resource {
   name                 String
   kind                 ResourceKind          @default(EQUIPMENT)
   capacity             Int                   @default(1)
+  /// MALE / FEMALE cabins refuse the other sex. ANY is shared.
+  sexAudience          ResourceSexAudience   @default(ANY) @map("sex_audience")
   /// When peak mode is on, this resource may run until this hour (exclusive)
   extendedEndHour      Int?                  @map("extended_end_hour")
   roomId               String?

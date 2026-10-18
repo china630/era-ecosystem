@@ -172,6 +172,7 @@ export async function applyStayAmendment(input: {
   effectiveDate: Date;
   roomTypeId: string;
   ratePlanId: string;
+  audit?: { userId?: string | null; request?: Request };
 }) {
   const preview = await previewStayAmendment(input);
   const res = await prisma.reservation.findUnique({
@@ -221,6 +222,17 @@ export async function applyStayAmendment(input: {
     });
   }
 
+  if (!guestPackageOnStay) {
+    await prisma.reservationGuest.updateMany({
+      where: { reservationId: input.reservationId, medicalPackageCode: { not: null } },
+      data: { medicalPackageCode: null },
+    });
+    await prisma.reservation.update({
+      where: { id: input.reservationId },
+      data: { medicalPackageCode: null },
+    });
+  }
+
   if (!res.useManualRate) {
     await recalcReservationDailyRates(input.reservationId, { remainingFrom: effective });
   }
@@ -238,6 +250,7 @@ export async function applyStayAmendment(input: {
         description: `RATE_ADJ ${isoDate(biz)}`,
         businessDate: dateOnlyUtc(biz),
         externalRef,
+        audit: input.audit,
       });
     }
   }
@@ -253,17 +266,6 @@ export async function applyStayAmendment(input: {
         fromCode: res.ratePlan.code,
         toCode: newPlan?.code ?? null,
       },
-    });
-  }
-
-  if (!guestPackageOnStay) {
-    await prisma.reservationGuest.updateMany({
-      where: { reservationId: input.reservationId, medicalPackageCode: { not: null } },
-      data: { medicalPackageCode: null },
-    });
-    await prisma.reservation.update({
-      where: { id: input.reservationId },
-      data: { medicalPackageCode: null },
     });
   }
 
@@ -292,5 +294,15 @@ export async function applyStayAmendment(input: {
     }
   }
 
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(input.reservationId, 'AMEND', input.audit, {
+    section: 'nights',
+    source: 'user',
+    fields: [
+      { key: 'ratePlan', from: res.ratePlan.code, to: newPlan?.code ?? input.ratePlanId },
+      { key: 'roomType', from: res.roomTypeId, to: input.roomTypeId },
+      { key: 'effectiveDate', from: null, to: hotelDateKey(input.effectiveDate) },
+    ],
+  });
   return { ok: true, preview };
 }

@@ -94,6 +94,18 @@ export function handleRouteError(err: unknown) {
       "LAB_ALREADY_COMPLETED",
       "LAB_OVER_QUOTA_BLOCKED",
       "IN_USE",
+      "CLOSED",
+      "CROSS_DAY",
+      "DAY_FULL",
+      "NO_STAFF",
+      "STAFF_BUSY",
+      "CABIN_BUSY",
+      "CABIN_SEX",
+      "NO_CABIN",
+      "SAME_DAY",
+      "LUNCH",
+      "RULE",
+      "NO_SLOT",
     ]);
     if (conflictCodes.has(code)) {
       const testCode =

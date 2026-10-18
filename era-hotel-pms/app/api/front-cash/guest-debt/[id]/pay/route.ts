@@ -29,6 +29,7 @@ export async function POST(
           paymentMethod: body.paymentMethod,
           bankTerminalId: body.bankTerminalId,
           createdByUserId: session?.sub,
+          auditRequest: request,
         }),
       ),
     );

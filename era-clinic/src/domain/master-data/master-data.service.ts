@@ -21,6 +21,7 @@ import {
   catalogKindIsNonCabinProcedure,
   inferServiceCatalogKind,
 } from "@/domain/catalog/service-catalog-kind";
+import { normalizeProcedureRequirements } from "@/domain/procedure/procedure-physical-pool";
 
 function rethrowIfInUse(err: unknown): never {
   if (
@@ -159,6 +160,7 @@ export async function createResource(data: {
   capacity?: number;
   roomId?: string | null;
   extendedEndHour?: number | null;
+  sexAudience?: "MALE" | "FEMALE" | "ANY";
 }) {
   return prisma.resource.create({ data });
 }
@@ -171,6 +173,7 @@ export async function updateResource(
     capacity?: number;
     roomId?: string | null;
     extendedEndHour?: number | null;
+    sexAudience?: "MALE" | "FEMALE" | "ANY";
   },
 ) {
   return prisma.resource.update({ where: { id }, data });
@@ -206,6 +209,7 @@ export async function listProcedureTypes(locale = "en") {
       : row.name;
     return {
       ...row,
+      requirements: normalizeProcedureRequirements(row.requirements),
       name: displayName,
       catalog: cat
         ? {
@@ -287,7 +291,7 @@ export async function createProcedureType(data: {
     },
   });
   await ensureDefaultRequirements(row.id);
-  return prisma.procedureType.findUniqueOrThrow({
+  const created = await prisma.procedureType.findUniqueOrThrow({
     where: { id: row.id },
     include: {
       requirements: true,
@@ -295,6 +299,10 @@ export async function createProcedureType(data: {
       _count: { select: { skills: true } },
     },
   });
+  return {
+    ...created,
+    requirements: normalizeProcedureRequirements(created.requirements),
+  };
 }
 
 export async function updateProcedureType(
@@ -368,7 +376,9 @@ export async function updateProcedureType(
     const physical = existing.find(
       (r) => r.role === "LOCATION" || r.role === "EQUIPMENT",
     );
-    if (physical) {
+    if (physical && !updated.resourceCode?.trim()) {
+      await prisma.procedureTypeRequirement.delete({ where: { id: physical.id } });
+    } else if (physical) {
       await prisma.procedureTypeRequirement.update({
         where: { id: physical.id },
         data: {
@@ -418,10 +428,11 @@ export async function purgeNonCabinProcedureTypes(): Promise<
 }
 
 export async function listProcedureTypeRequirements(procedureTypeId: string) {
-  return prisma.procedureTypeRequirement.findMany({
+  const rows = await prisma.procedureTypeRequirement.findMany({
     where: { procedureTypeId },
     orderBy: { createdAt: "asc" },
   });
+  return normalizeProcedureRequirements(rows);
 }
 
 export type ProcedureTypeRequirementInput = {
@@ -438,11 +449,12 @@ export async function replaceProcedureTypeRequirements(
   procedureTypeId: string,
   requirements: ProcedureTypeRequirementInput[],
 ) {
+  const cleaned = normalizeProcedureRequirements(requirements);
   await prisma.$transaction(async (tx) => {
     await tx.procedureTypeRequirement.deleteMany({ where: { procedureTypeId } });
-    if (requirements.length > 0) {
+    if (cleaned.length > 0) {
       await tx.procedureTypeRequirement.createMany({
-        data: requirements.map((r) => ({
+        data: cleaned.map((r) => ({
           procedureTypeId,
           role: r.role,
           resourceKind: r.resourceKind ?? null,

@@ -24,7 +24,7 @@ function parseCsvLine(line: string, delimiter: string): string[] {
 export async function POST(req: Request) {
   try {
     const session = await getSatelliteSession();
-    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
     if (denied) return denied;
 
     const body = bodySchema.parse(await req.json());

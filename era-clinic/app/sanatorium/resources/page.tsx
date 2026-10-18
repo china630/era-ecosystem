@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Maximize2, Minimize2, X } from "lucide-react";
+import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
 import {
   APP_SHELL_CLASS,
   CARD_CONTAINER_CLASS,
@@ -29,7 +30,8 @@ import {
   type ResourceRow,
   type TimeHorizon,
 } from "@/components/sanatorium/ResourceDayMatrix";
-import { bakuDateTimeDisplay, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateTimeDisplay, bakuTimeLabel } from "@/lib/baku-day";
+import { localizeSlotDecision } from "@/lib/slot-decision-ui";
 import Link from "next/link";
 
 function bakuYmd(d = new Date()) {
@@ -62,21 +64,11 @@ type OrderCard = {
   quotaTotal: number | null;
 };
 
-function addCivilDays(ymd: string, days: number): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  const dt = new Date(Date.UTC(y!, (m ?? 1) - 1, (d ?? 1) + days));
-  const yy = dt.getUTCFullYear();
-  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getUTCDate()).padStart(2, "0");
-  return `${yy}-${mm}-${dd}`;
-}
-
-function chipLabel(ymd: string, today: string): string {
-  const [y, m, d] = ymd.split("-");
-  const short = `${d}.${m}`;
-  if (ymd === today) return short;
-  if (ymd === addCivilDays(today, 1)) return short;
-  return `${short}.${y}`;
+function slotMoveError(
+  data: { error?: string; code?: string },
+  t: (key: string) => string,
+) {
+  return localizeSlotDecision(data, t);
 }
 
 export default function SanatoriumResourcesPage() {
@@ -101,6 +93,7 @@ export default function SanatoriumResourcesPage() {
   const [detailSlot, setDetailSlot] = useState<Slot | null>(null);
   const [orderCard, setOrderCard] = useState<OrderCard | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [dayClosed, setDayClosed] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(
@@ -108,6 +101,7 @@ export default function SanatoriumResourcesPage() {
     );
     const data = await res.json();
     const payload = data.data ?? data;
+    setDayClosed(payload.closed === true);
     setResources(payload.resources ?? []);
   }, [date, locale]);
 
@@ -169,7 +163,7 @@ export default function SanatoriumResourcesPage() {
     const data = await res.json();
     setDragOrderId(null);
     if (!res.ok) {
-      showApiError(data, t("moveFailed"));
+      showApiError(slotMoveError(data, t), t("moveFailed"));
       return;
     }
     showSuccess(t("moved"));
@@ -195,7 +189,7 @@ export default function SanatoriumResourcesPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      showApiError(data, t("moveFailed"));
+      showApiError(slotMoveError(data, t), t("moveFailed"));
       return;
     }
     setPlacing(null);
@@ -247,6 +241,12 @@ export default function SanatoriumResourcesPage() {
         </div>
       }
     >
+      <OccupiedRoomFilter
+        label={t("filterRoom")}
+        value={roomFilter}
+        onChange={setRoomFilter}
+        allLabel={tc("all")}
+      />
       <DatePicker
         label={t("date")}
         value={date}
@@ -259,12 +259,6 @@ export default function SanatoriumResourcesPage() {
         preset="shortText"
         value={resourceFilter}
         onChange={(e) => setResourceFilter(e.target.value)}
-      />
-      <Field
-        label={t("filterRoom")}
-        preset="shortText"
-        value={roomFilter}
-        onChange={(e) => setRoomFilter(e.target.value)}
       />
       <Field
         label={t("filterPatient")}
@@ -333,11 +327,9 @@ export default function SanatoriumResourcesPage() {
     />
   );
 
-  const today = todayBakuYmd();
-  const placeDays = Array.from({ length: 7 }, (_, i) => addCivilDays(today, i));
   const placingBar = placing ? (
     <div className="mb-3 rounded-xl border border-sky-200 bg-sky-50 p-3">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="m-0 text-[13px] font-medium">
           {t("placingHint", {
             patient: placing.patientName ?? "—",
@@ -348,29 +340,12 @@ export default function SanatoriumResourcesPage() {
           {t("placingCancel")}
         </button>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {placeDays.map((ymd) => (
-          <button
-            key={ymd}
-            type="button"
-            className={ymd === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-            onClick={() => setDate(ymd)}
-          >
-            {ymd === today
-              ? t("chipToday")
-              : ymd === addCivilDays(today, 1)
-                ? t("chipTomorrow")
-                : chipLabel(ymd, today)}
-          </button>
-        ))}
-      </div>
     </div>
   ) : null;
 
-  const closedHint =
-    resources.length > 0 && resources.every((r) => (r.slots?.length ?? 0) === 0) ? (
-      <p className={`mb-3 text-sm ${SUBSECTION_SURFACE_CLASS}`}>{t("closedDayHint")}</p>
-    ) : null;
+  const closedHint = dayClosed ? (
+    <p className={`mb-3 text-sm ${SUBSECTION_SURFACE_CLASS}`}>{t("closedDayHint")}</p>
+  ) : null;
 
   return (
     <>

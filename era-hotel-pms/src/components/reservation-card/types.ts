@@ -73,7 +73,7 @@ export type AgencyOption = SelectOption & {
 
 export type PartyBillingMode = 'PRIMARY' | 'EQUAL';
 
-/** FO product dropdown — Nafta packages are medicalFlag rate plans; BAR is BASE. */
+/** FO product dropdown — Medical Rates / Infotur packages vs BAR (`type=BASE`). */
 export type RatePlanOption = SelectOption & {
   code?: string;
   /** BASE = BAR (all room types via RoomTypeRate); DERIVED = package / channel. */

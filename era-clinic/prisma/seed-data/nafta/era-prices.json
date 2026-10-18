@@ -1540,16 +1540,6 @@
     "department": "Физиотерапия"
   },
   {
-    "code": "SVC-SOLYUKS",
-    "descriptionAz": "Solyuks",
-    "descriptionRu": "Солюкс",
-    "description": "Солюкс",
-    "amount": 0,
-    "packageIncluded": true,
-    "department": "Пакет услуг",
-    "descriptionEn": "Sollux lamp therapy"
-  },
-  {
     "code": "SVC-SPELEOTERAPIYA",
     "descriptionAz": "Speleoterapiya (duz otağı)",
     "descriptionRu": "Спелеотерапия (соляная комната)",

@@ -58,6 +58,8 @@ export const CLINIC_PERMISSION = {
   API_APPOINTMENTS_READ: "api:appointments.read",
   API_LAB_ORDERS_FILE: "api:lab_orders.file",
   API_LAB_ORDERS: "api:lab_orders",
+  /** Create, cancel, and write lab results. Read stays on API_LAB_ORDERS. */
+  API_LAB_ORDERS_WRITE: "api:lab_orders.write",
   API_REPORTS_PROCEDURES: "api:reports.procedures",
   API_REPORTS_DIAGNOSES: "api:reports.diagnoses",
   API_NURSE_QR_SCAN: "api:nurse.qr_scan",
@@ -226,6 +228,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_READ,
       CLINIC_PERMISSION.API_LAB_ORDERS_FILE,
       CLINIC_PERMISSION.API_LAB_ORDERS,
+      CLINIC_PERMISSION.API_LAB_ORDERS_WRITE,
       CLINIC_PERMISSION.API_REPORTS_PROCEDURES,
       CLINIC_PERMISSION.API_NURSE_QR_SCAN,
       CLINIC_PERMISSION.API_NURSE_OVERDUE,
@@ -252,6 +255,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       ...LAB_TECH_SCREENS,
       CLINIC_PERMISSION.API_LAB_ORDERS_FILE,
       CLINIC_PERMISSION.API_LAB_ORDERS,
+      CLINIC_PERMISSION.API_LAB_ORDERS_WRITE,
       CLINIC_PERMISSION.API_PATIENTS,
       CLINIC_PERMISSION.API_CATALOG_READ,
       CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
@@ -504,6 +508,14 @@ const ROUTE_ANY_OF_PREFIXES: Array<{
       CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
     ],
   },
+  {
+    prefix: "/print/episode",
+    permissions: [
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+      CLINIC_PERMISSION.SCREEN_SANATORIUM,
+      CLINIC_PERMISSION.SCREEN_PATIENTS,
+    ],
+  },
 ];
 
 /** Auth-only staff pages: logged-in required, no screen permission. */
@@ -616,6 +628,11 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
     prefix: "/api/admin/procedure-substitution-rules",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   },
+  {
+    prefix: "/api/admin/procedure-day-series",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
+  },
+  { prefix: "/api/admin/lab-blank-profiles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES },
   { prefix: "/api/admin/lis-profiles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES },
   { prefix: "/api/admin/practitioners", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
   { prefix: "/api/admin/rooms", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },

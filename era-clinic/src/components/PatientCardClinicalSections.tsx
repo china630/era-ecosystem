@@ -23,11 +23,11 @@ import {
 import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { bakuDateKey, bakuDateTimeLabel, addBakuDays, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { localizeSlotDecision } from "@/lib/slot-decision-ui";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import type { PhysioChipsValue } from "@/components/physio/PhysioSiteChips";
 import {
   EpisodeAssignBlocks,
-  EpisodeScheduleCards,
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
@@ -166,10 +166,8 @@ type Props = {
   readOnly?: boolean;
   /** Bump to reload card-summary (intake checklist after anamnesis/complaint). */
   refreshKey?: number;
-  /** When set, opens the sanatorium treatment chart instead of navigating to the same URL. */
-  onOpenDayPlan?: (episodeId: string) => void;
-  /** Plan opened without the patient card. Closing the plan closes the host. */
-  onPlanClose?: () => void;
+  /** Card tab: only that slice. Omit for the legacy stacked card. */
+  section?: "diagnostics" | "plan" | "package";
 };
 
 export function PatientCardClinicalSections({
@@ -181,7 +179,7 @@ export function PatientCardClinicalSections({
   studiesUnlocked = false,
   readOnly = false,
   refreshKey = 0,
-  onPlanClose,
+  section,
 }: Props) {
   const t = useTranslations("patientCard");
   const ts = useTranslations("sanatorium");
@@ -192,7 +190,6 @@ export function PatientCardClinicalSections({
   const [summary, setSummary] = useState<CardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(panel === "history");
-  const [planOpen, setPlanOpen] = useState(panel === "plan");
   const [printHref, setPrintHref] = useState<string | null>(null);
   const [printOpen, setPrintOpen] = useState(false);
 
@@ -212,13 +209,21 @@ export function PatientCardClinicalSections({
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState(todayBakuYmd());
   const [rescheduleTime, setRescheduleTime] = useState("10:00");
-  const [paidOpen, setPaidOpen] = useState(false);
-  const [paidCode, setPaidCode] = useState("");
-  const [paidTime, setPaidTime] = useState("10:00");
-  const [paidConfirm, setPaidConfirm] = useState(false);
-  const [paidWarn, setPaidWarn] = useState<string | null>(null);
-  const [procedureOptions, setProcedureOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [cancelAskId, setCancelAskId] = useState<string | null>(null);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
+  const [quotaRows, setQuotaRows] = useState<
+    Array<{
+      procedureCode: string;
+      procedureName: string;
+      quotaTotal: number;
+      quotaUsed: number;
+      consumed: number;
+      assignable: boolean;
+    }>
+  >([]);
+  const [packageBlock, setPackageBlock] = useState<string | null>(null);
+  const [packageCode, setPackageCode] = useState<string | null>(null);
+  const [quotaTick, setQuotaTick] = useState(0);
   const [day1Busy, setDay1Busy] = useState(false);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
   const [visitDate, setVisitDate] = useState("");
@@ -244,8 +249,46 @@ export function PatientCardClinicalSections({
 
   useEffect(() => {
     if (panel === "history") setHistoryOpen(true);
-    if (panel === "plan") setPlanOpen(true);
   }, [panel]);
+
+  useEffect(() => {
+    if (section !== "package" || !episodeId) {
+      setQuotaRows([]);
+      setPackageBlock(null);
+      setPackageCode(null);
+      return;
+    }
+    void fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`)
+      .then((res) => res.json())
+      .then((payload) => {
+        const snap = payload.data ?? payload;
+        const rows = Array.isArray(snap.balances) ? snap.balances : [];
+        setQuotaRows(
+          rows.map((row: {
+            procedureCode: string;
+            procedureName: string;
+            quotaTotal: number;
+            quotaUsed: number;
+            consumed: number;
+            assignable: boolean;
+          }) => ({
+            procedureCode: row.procedureCode,
+            procedureName: row.procedureName,
+            quotaTotal: row.quotaTotal,
+            quotaUsed: row.quotaUsed,
+            consumed: row.consumed,
+            assignable: row.assignable !== false,
+          })),
+        );
+        setPackageBlock(typeof snap.blockReason === "string" ? snap.blockReason : null);
+        setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
+      })
+      .catch(() => {
+        setQuotaRows([]);
+        setPackageBlock(null);
+        setPackageCode(null);
+      });
+  }, [section, episodeId, refreshKey, packageModalOpen, quotaTick]);
 
   const fromIso = useMemo(() => {
     if (period === "all") return undefined;
@@ -290,7 +333,7 @@ export function PatientCardClinicalSections({
       const data = await res.json();
       const row = data.data ?? data;
       const days = (row.days ?? []) as TimelineDay[];
-      setPlanDays((prev) => (reset ? days : mergeDays(prev, days)));
+      setPlanDays((prev) => (reset ? days : mergeDays(prev, days, "asc")));
       setPlanOffset(row.nextOffset ?? offset);
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
@@ -304,9 +347,9 @@ export function PatientCardClinicalSections({
   }, [historyOpen, histTypes, period, episodeId]);
 
   useEffect(() => {
-    if (planOpen) void loadPlan(true);
+    if (section === "plan") void loadPlan(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planOpen, episodeId]);
+  }, [section, episodeId]);
 
   const planChipDates = useMemo(() => {
     const dates = new Set(planDays.map((day) => day.date));
@@ -323,7 +366,6 @@ export function PatientCardClinicalSections({
   );
 
   if (loading || !summary) {
-    if (onPlanClose) return null;
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
   }
 
@@ -333,6 +375,7 @@ export function PatientCardClinicalSections({
   }
 
   async function cancelPlanOrder(orderId: string) {
+    setCancelAskId(null);
     setPlanBusy(true);
     try {
       const res = await fetch(`/api/procedures/${orderId}/cancel`, {
@@ -378,9 +421,14 @@ export function PatientCardClinicalSections({
   async function submitPlanReschedule() {
     if (!rescheduleId) return;
     const day = rescheduleDate;
+    const scheduledAtDate = parseBakuDateTime(day, `${rescheduleTime}:00`);
+    if (scheduledAtDate.getTime() < Date.now()) {
+      showApiError({ error: ts("reschedulePast") }, tc("failed"));
+      return;
+    }
     setPlanBusy(true);
     try {
-      const scheduledAt = parseBakuDateTime(day, `${rescheduleTime}:00`).toISOString();
+      const scheduledAt = scheduledAtDate.toISOString();
       const res = await fetch(`/api/procedures/${rescheduleId}/reschedule`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -388,56 +436,10 @@ export function PatientCardClinicalSections({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showApiError(data, tc("failed"));
+        showApiError(localizeSlotDecision(data, ts), tc("failed"));
         return;
       }
       setRescheduleId(null);
-      await loadPlan(true);
-    } finally {
-      setPlanBusy(false);
-    }
-  }
-
-  async function submitPlanPaid(confirmPaid: boolean) {
-    if (!episodeId || !paidCode) return;
-    const name = procedureOptions.find((row) => row.value === paidCode)?.label ?? paidCode;
-    const day = planDate === "all" ? todayBakuYmd() : planDate;
-    setPlanBusy(true);
-    setPaidWarn(null);
-    try {
-      const epRes = await fetch(`/api/sanatorium/episodes/${episodeId}`);
-      const epJson = await epRes.json().catch(() => ({}));
-      const episode = (epJson.data ?? epJson) as {
-        patientOrigin?: string;
-        reservationId?: string | null;
-      };
-      const scheduledAt = parseBakuDateTime(day, `${paidTime}:00`).toISOString();
-      const res = await fetch("/api/procedures", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patientRefId,
-          procedureCode: paidCode,
-          procedureName: name,
-          scheduledAt,
-          patientOrigin: episode.patientOrigin,
-          reservationId: episode.reservationId ?? null,
-          confirmPaidSameDay: confirmPaid,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 409 && data.code === "SAME_DAY_FOURTH_PAID") {
-        setPaidConfirm(true);
-        setPaidWarn(typeof data.error === "string" ? data.error : ts("sameDayFourthWarn"));
-        return;
-      }
-      if (!res.ok) {
-        showApiError(data, tc("failed"));
-        return;
-      }
-      setPaidOpen(false);
-      setPaidConfirm(false);
-      setPaidCode("");
       await loadPlan(true);
     } finally {
       setPlanBusy(false);
@@ -453,15 +455,17 @@ export function PatientCardClinicalSections({
     return `/print/lab-order/${id}`;
   }
 
-  const { resultsPreview, planPreview } = summary;
+  const { resultsPreview } = summary;
   const pendingExtras = summary.pendingExtras ?? [];
   const intakeChecklist = summary.intakeChecklist;
 
+  const showDiagnostics = !section || section === "diagnostics";
+  const showPackage = !section || section === "package";
+  const showInlinePlan = section === "plan";
+
   return (
     <div className="space-y-6">
-      {!planOpen ? (
-      <>
-      {resultsPreview.length > 0 ? (
+      {showDiagnostics && resultsPreview.length > 0 ? (
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -530,7 +534,7 @@ export function PatientCardClinicalSections({
       </section>
       ) : null}
 
-      {(summary?.examNotesPreview?.length ?? 0) > 0 ? (
+      {showDiagnostics && (summary?.examNotesPreview?.length ?? 0) > 0 ? (
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -573,7 +577,13 @@ export function PatientCardClinicalSections({
       </section>
       ) : null}
 
-      {intakeChecklist?.items?.length ? (
+      {showDiagnostics && !intakeChecklist?.items?.length && resultsPreview.length === 0 ? (
+        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+          {t("intakeChecklistEmpty", { defaultValue: "No intake diagnostics on this course." })}
+        </p>
+      ) : null}
+
+      {showDiagnostics && intakeChecklist?.items?.length ? (
         <section className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -651,7 +661,7 @@ export function PatientCardClinicalSections({
         </section>
       ) : null}
 
-      {studiesUnlocked ? (
+      {showPackage && studiesUnlocked ? (
       <section className="space-y-2">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
           {t("assignSectionTitle", { defaultValue: "Procedure assign" })}
@@ -685,15 +695,30 @@ export function PatientCardClinicalSections({
                         const d = await res.json();
                         const misses = Array.isArray(d.misses) ? d.misses : [];
                         const missText = misses
-                          .map((miss: { ymd?: string; reason?: string }) => {
+                          .map((miss: { ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }) => {
                             const reason =
                               miss.reason === "no_staff"
                                 ? t("packageAssignMissNoStaff")
-                                : miss.reason === "no_cabin"
-                                  ? t("packageAssignMissNoCabin")
-                                  : t("packageAssignMissNoDay");
+                                : miss.reason === "staff_busy"
+                                  ? t("packageAssignMissStaffBusy")
+                                  : miss.reason === "cabin_sex"
+                                    ? t("packageAssignMissCabinSex")
+                                  : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
+                                    ? t("packageAssignMissNoCabin")
+                                    : miss.reason === "day_full"
+                                      ? t("packageAssignMissDayFull")
+                                      : miss.reason === "rule"
+                                        ? t("packageAssignMissRule")
+                                : miss.reason === "no_slot"
+                                  ? t("packageAssignMissNoSlot")
+                                  : miss.reason === "no_mode"
+                                    ? t("packageAssignMissNoBathMode")
+                                    : t("packageAssignMissNoDay");
+                            const who = miss.procedureName || miss.procedureCode;
+                            if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
                             return t("packageAssignMiss", { date: miss.ymd || "—", reason });
                           })
+                          .filter((line: string, index: number, all: string[]) => all.indexOf(line) === index)
                           .join("; ");
                         if (!res.ok) {
                           const names = typeof d.error === "string" ? d.error : "";
@@ -701,7 +726,9 @@ export function PatientCardClinicalSections({
                             {
                               error:
                                 missText ||
-                                (d.code === "NO_CABIN"
+                                (d.code === "CABIN_SEX"
+                                  ? t("packageAssignMissCabinSex")
+                                  : d.code === "NO_CABIN"
                                   ? t("packageAssignNoCabin", { names })
                                   : (packageAssignBlockText(t, d.code) ?? names) || tc("failed")),
                             },
@@ -733,25 +760,208 @@ export function PatientCardClinicalSections({
       </section>
       ) : null}
 
-      {studiesUnlocked ? (
-      <section className="space-y-2">
-        <EpisodeScheduleCards
-          title={t("scheduleCardsTitle", { defaultValue: "Schedule" })}
-          emptyLabel={t("scheduleCardsEmpty", { defaultValue: "No scheduled procedures yet." })}
-          actions={
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPlanOpen(true)}>
-              {t("openPlan")}
+      {showPackage && packageBlock ? (
+        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+          {packageAssignBlockText(t, packageBlock) ?? packageBlock}
+        </p>
+      ) : null}
+
+      {showPackage && (packageBlock === "NO_PROGRAM" || packageBlock === "NO_PROGRAM_CODE") && episodeId ? (
+        <div className="flex flex-wrap gap-2">
+          {packageCode ? (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => {
+                void fetch(`/api/sanatorium/episodes/${episodeId}?action=complete-checkup`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ programCode: packageCode }),
+                }).then(async (res) => {
+                  if (!res.ok) {
+                    showApiError(await res.json().catch(() => ({})), tc("failed"));
+                    return;
+                  }
+                  setQuotaTick((n) => n + 1);
+                  void loadSummary();
+                });
+              }}
+            >
+              {ts("completeCheckupSchedule")}
             </button>
-          }
-          items={planPreview.map((ev) => ({
-            id: ev.id,
-            title: eventTitle(ev, locale),
-            subtitle: ev.subtitle,
-            status: ev.status,
-            atLabel: ev.at ? bakuDateTimeLabel(ev.at) : undefined,
-          }))}
-        />
-      </section>
+          ) : null}
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => {
+              void fetch(`/api/sanatorium/episodes/${episodeId}/confirm-no-package`, {
+                method: "POST",
+              }).then(async (res) => {
+                if (!res.ok) {
+                  showApiError(await res.json().catch(() => ({})), tc("failed"));
+                  return;
+                }
+                setQuotaTick((n) => n + 1);
+                void loadSummary();
+              });
+            }}
+          >
+            {ts("confirmNoPackage")}
+          </button>
+        </div>
+      ) : null}
+
+      {showPackage && quotaRows.length > 0 ? (
+        <section className="space-y-2">
+          <ul className="space-y-3">
+            {quotaRows.map((line) => {
+              const assignedPct =
+                line.quotaTotal > 0
+                  ? Math.min(100, (line.quotaUsed / line.quotaTotal) * 100)
+                  : 0;
+              const donePct =
+                line.quotaUsed > 0
+                  ? Math.min(100, (line.consumed / line.quotaUsed) * 100)
+                  : 0;
+              return (
+                <li key={line.procedureCode} className={`${CARD_CONTAINER_CLASS} p-3 text-[13px]`}>
+                  <div className="mb-1 font-medium">{line.procedureName || line.procedureCode}</div>
+                  <div className="mb-0.5 flex justify-between text-[12px]">
+                    <span>{ts("quotaAssigned")}</span>
+                    <span>
+                      {ts("quotaUsed", { used: line.quotaUsed, total: line.quotaTotal })}
+                    </span>
+                  </div>
+                  <div className="mb-1 h-2 overflow-hidden rounded-lg bg-slate-100">
+                    <div className="h-full bg-[#2980B9]" style={{ width: `${assignedPct}%` }} />
+                  </div>
+                  <div className="mb-0.5 flex justify-between text-[12px]">
+                    <span>{ts("quotaCompleted")}</span>
+                    <span>
+                      {ts("quotaUsed", { used: line.consumed, total: line.quotaUsed })}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-lg bg-slate-100">
+                    <div className="h-full bg-emerald-600" style={{ width: `${donePct}%` }} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      {showInlinePlan ? (
+        <section className="flex min-h-0 flex-1 flex-col space-y-3">
+          {studiesUnlocked && episodeId ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
+                onClick={() =>
+                  openPrint(
+                    `/print/procedures/${patientRefId}?episode=${encodeURIComponent(episodeId)}`,
+                  )
+                }
+              >
+                <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={readOnly || !anamnesisOk}
+                onClick={() => setPackageModalOpen(true)}
+              >
+                +
+              </button>
+            </div>
+          ) : null}
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+              onClick={() => setPlanDate("all")}
+            >
+              {t("planAll")}
+            </button>
+            {planChipDates.map((date) => (
+              <button
+                key={date}
+                type="button"
+                className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                onClick={() => setPlanDate(date)}
+              >
+                {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
+              </button>
+            ))}
+          </div>
+          {planVisible.length === 0 ? (
+            <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+              {planLoading ? tc("loading") : t("planEmpty")}
+            </p>
+          ) : (
+            <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+              {planVisible.map((ev) => {
+                const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
+                const scheduled = ev.type === "procedure" && ev.status === "SCHEDULED" && orderId;
+                const proposed = ev.type === "procedure" && ev.status === "PROPOSED" && orderId;
+                const actionable = scheduled || proposed;
+                return (
+                  <li
+                    key={ev.id}
+                    className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
+                  >
+                    <div className="min-w-0">
+                      <div className="font-medium">{eventTitle(ev, locale)}</div>
+                      <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        {ev.at ? bakuDateTimeLabel(ev.at) : ""}
+                        {ev.status ? ` · ${planStatusLabel(ev.status)}` : ""}
+                      </p>
+                    </div>
+                    {actionable ? (
+                      <div className="flex shrink-0 gap-1">
+                        {scheduled ? (
+                          <>
+                            <button
+                              type="button"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={ts("reschedule")}
+                              disabled={planBusy}
+                              onClick={() => {
+                                setRescheduleId(orderId);
+                                setRescheduleDate(ev.at ? bakuDateKey(ev.at) : todayBakuYmd());
+                                setRescheduleTime(ev.at ? bakuTimeLabel(ev.at) : "10:00");
+                              }}
+                            >
+                              <CalendarClock className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
+                            </button>
+                            <Link
+                              href={`/sanatorium/resources?date=${encodeURIComponent(ev.at ? bakuDateKey(ev.at) : todayBakuYmd())}&highlight=${encodeURIComponent(orderId)}`}
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={ts("openMatrix")}
+                            >
+                              <LayoutGrid className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                            </Link>
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={ts("cancelProcedure")}
+                          disabled={planBusy}
+                          onClick={() => setCancelAskId(orderId)}
+                        >
+                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       ) : null}
 
       {studiesUnlocked && episodeId ? (
@@ -797,8 +1007,6 @@ export function PatientCardClinicalSections({
             }}
           />
         </>
-      ) : null}
-      </>
       ) : null}
 
       <ModalShell
@@ -858,149 +1066,6 @@ export function PatientCardClinicalSections({
       </ModalShell>
 
       <ModalShell
-        open={planOpen}
-        title={t("planModalTitle")}
-        onClose={() => {
-          setPlanOpen(false);
-          onPlanClose?.();
-        }}
-        closeLabel={tc("close")}
-        maxWidthClass="max-w-4xl w-full max-h-[90vh]"
-        headerActions={
-          <button
-            type="button"
-            className={TABLE_ROW_ICON_BTN_CLASS}
-            aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
-            onClick={() =>
-              openPrint(
-                `/print/procedures/${patientRefId}${episodeId ? `?episode=${encodeURIComponent(episodeId)}` : ""}`,
-              )
-            }
-          >
-            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
-          </button>
-        }
-      >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-            onClick={() => setPlanDate("all")}
-          >
-            {t("planAll")}
-          </button>
-          {planChipDates.map((date) => (
-            <button
-              key={date}
-              type="button"
-              className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-              onClick={() => setPlanDate(date)}
-            >
-              {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
-            </button>
-          ))}
-          {episodeId ? (
-            <button
-              type="button"
-              className={LINK_ACCENT_CLASS}
-              onClick={() => setPlanDate(todayBakuYmd())}
-            >
-              {t("openDayPlan")}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={!episodeId}
-            onClick={() => {
-              setPaidConfirm(false);
-              setPaidWarn(null);
-              setPaidOpen(true);
-              if (procedureOptions.length === 0) {
-                void fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`)
-                  .then((r) => r.json())
-                  .then((d) => {
-                    const rows = (d.data ?? d.items ?? d) as Array<{ code: string; name: string }>;
-                    if (!Array.isArray(rows)) return;
-                    setProcedureOptions(rows.map((row) => ({ value: row.code, label: row.name })));
-                  });
-              }
-            }}
-          >
-            {ts("addPaidSameDay")}
-          </button>
-        </div>
-        {planVisible.length === 0 ? (
-          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-            {planLoading ? tc("loading") : t("planEmpty")}
-          </p>
-        ) : (
-          <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
-            {planVisible.map((ev) => {
-              const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
-              const actionable = ev.type === "procedure" && ev.status === "SCHEDULED" && orderId;
-              return (
-                <li
-                  key={ev.id}
-                  className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium">{eventTitle(ev, locale)}</div>
-                    <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                      {ev.at ? bakuDateTimeLabel(ev.at) : ""}
-                      {ev.status ? ` · ${planStatusLabel(ev.status)}` : ""}
-                    </p>
-                  </div>
-                  {actionable ? (
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={ts("reschedule")}
-                        disabled={planBusy}
-                        onClick={() => {
-                          setRescheduleId(orderId);
-                          setRescheduleDate(ev.at ? bakuDateKey(ev.at) : todayBakuYmd());
-                          setRescheduleTime(ev.at ? bakuTimeLabel(ev.at) : "10:00");
-                        }}
-                      >
-                        <CalendarClock className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
-                      </button>
-                      <Link
-                        href={`/sanatorium/resources?date=${encodeURIComponent(ev.at ? bakuDateKey(ev.at) : todayBakuYmd())}&highlight=${encodeURIComponent(orderId)}`}
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={ts("openMatrix")}
-                      >
-                        <LayoutGrid className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                      </Link>
-                      <button
-                        type="button"
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        aria-label={ts("cancelProcedure")}
-                        disabled={planBusy}
-                        onClick={() => void cancelPlanOrder(orderId)}
-                      >
-                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                      </button>
-                    </div>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {planHasMore ? (
-          <button
-            type="button"
-            className={`${PRIMARY_BUTTON_CLASS} mt-3`}
-            disabled={planLoading}
-            onClick={() => void loadPlan(false)}
-          >
-            {t("loadMore")}
-          </button>
-        ) : null}
-      </ModalShell>
-      <ModalShell
         open={Boolean(rescheduleId)}
         title={ts("reschedule")}
         onClose={() => setRescheduleId(null)}
@@ -1013,42 +1078,40 @@ export function PatientCardClinicalSections({
           />
         }
       >
-        <Field
-          label={ts("procedureTime")}
-          preset="shortText"
-          value={rescheduleTime}
-          onChange={(e) => setRescheduleTime(e.target.value)}
-        />
+        <div className="grid grid-cols-1 items-end gap-2">
+          <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{ts("rescheduleSameDayHint")}</p>
+          <CatalogField
+            kind="SEARCHABLE"
+            label={ts("procedureTime")}
+            value={rescheduleTime}
+            emptyLabel={null}
+            options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
+              const total = 8 * 60 + index * 5;
+              const hh = String(Math.floor(total / 60)).padStart(2, "0");
+              const mm = String(total % 60).padStart(2, "0");
+              const label = `${hh}:${mm}`;
+              return { value: label, label };
+            })}
+            onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
+          />
+        </div>
       </ModalShell>
       <ModalShell
-        open={paidOpen}
-        title={ts("addPaidSameDay")}
-        onClose={() => setPaidOpen(false)}
+        open={Boolean(cancelAskId)}
+        title={ts("confirmCancelProcedure")}
+        onClose={() => setCancelAskId(null)}
         footer={
           <ModalFooter
-            onCancel={() => setPaidOpen(false)}
-            onSubmit={() => void submitPlanPaid(paidConfirm)}
+            onCancel={() => setCancelAskId(null)}
+            onSubmit={() => {
+              if (cancelAskId) void cancelPlanOrder(cancelAskId);
+            }}
             busy={planBusy}
-            submitLabel={paidConfirm ? ts("confirmPaidFolio") : tc("save")}
+            submitLabel={ts("cancelProcedure")}
           />
         }
       >
-        <div className="space-y-3">
-          {paidWarn ? <p className="text-sm text-amber-800">{paidWarn}</p> : null}
-          <CatalogField
-            kind="SEARCHABLE"
-            label={ts("pickProcedure")}
-            value={paidCode}
-            onChange={(v) => setPaidCode(String(v ?? ""))}
-            options={procedureOptions}
-          />
-          <Field
-            label={ts("procedureTime")}
-            preset="shortText"
-            value={paidTime}
-            onChange={(e) => setPaidTime(e.target.value)}
-          />
-        </div>
+        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{ts("confirmCancelProcedure")}</p>
       </ModalShell>
       <ModalShell
         open={Boolean(visitSlot)}
@@ -1113,7 +1176,11 @@ export function PatientCardClinicalSections({
   );
 }
 
-function mergeDays(prev: TimelineDay[], next: TimelineDay[]): TimelineDay[] {
+function mergeDays(
+  prev: TimelineDay[],
+  next: TimelineDay[],
+  dateOrder: "asc" | "desc" = "desc",
+): TimelineDay[] {
   const map = new Map<string, TimelineDay>();
   for (const d of prev) map.set(d.date, { ...d, events: [...d.events] });
   for (const d of next) {
@@ -1127,7 +1194,15 @@ function mergeDays(prev: TimelineDay[], next: TimelineDay[]): TimelineDay[] {
       if (!ids.has(ev.id)) existing.events.push(ev);
     }
   }
-  return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
+  const days = [...map.values()].map((day) => ({
+    ...day,
+    events: [...day.events].sort(
+      (a, b) => new Date(a.at ?? 0).getTime() - new Date(b.at ?? 0).getTime(),
+    ),
+  }));
+  return days.sort((a, b) =>
+    dateOrder === "asc" ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date),
+  );
 }
 
 function HistoryCards({

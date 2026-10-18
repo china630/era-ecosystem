@@ -51,6 +51,7 @@ export type ListPatientsQuery = {
   hasMdm?: 0 | 1;
   ageMin?: number;
   ageMax?: number;
+  nationality?: string;
   /** Hotel room on a matching sanatorium episode (Nafta / hotel appliance). */
   roomNumber?: string;
   includeHotelRooms?: boolean;
@@ -201,6 +202,9 @@ export async function listPatientsPaged(input: ListPatientsQuery = {}) {
   }
   if (input.sex) where.sex = input.sex;
   if (input.bloodGroup) where.bloodGroup = input.bloodGroup;
+  if (input.nationality?.trim()) {
+    where.nationality = { equals: input.nationality.trim().toUpperCase(), mode: "insensitive" };
+  }
   if (input.hasMdm === 1) where.globalPersonId = { not: null };
   if (input.hasMdm === 0) where.globalPersonId = null;
 

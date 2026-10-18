@@ -100,10 +100,9 @@ export async function POST(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = createSchema.parse(await request.json());
-    const reservation = await createReservation(body);
-    const { recordHotelAudit } = await import('@/lib/satellite-audit');
-    await recordHotelAudit({ userId: session?.sub, request }, 'Reservation', reservation.id, 'CREATE', {
-      reservationId: reservation.id,
+    const reservation = await createReservation({
+      ...body,
+      audit: { userId: session?.sub, request },
     });
     const operationalGaps = await collectStayOperationalGaps(reservation.id);
     return jsonOk(serialize({ ...reservation, operationalGaps }), 201);

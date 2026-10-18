@@ -2,27 +2,45 @@ import { prisma } from "@/lib/prisma";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import {
+  composePrintPatientStrip,
+  loadPrintEpisodeStay,
+} from "@/domain/print/print-patient-strip";
+import {
   formatLateralityLabel,
   formatPhysioFieldsPrint,
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
-import { listEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { todayBakuYmd } from "@/lib/baku-day";
+import {
+  loadCatalogDisplayNameMap,
+  resolveOrderDisplayName,
+} from "@/domain/catalog/catalog-display-name.service";
 
-/** Print Doctor column = episode care team, never cabin/roster STAFF. */
-export function episodeCareTeamPrintName(names: string[]): string {
-  const cleaned = names.map((n) => n.trim()).filter(Boolean);
-  return cleaned.length ? cleaned.join(", ") : "—";
-}
+export { episodeCareTeamPrintName } from "@/domain/print/print-patient-strip";
+
+/**
+ * Guest sheet is the placed course only.
+ * PENDING_PAY extras still have a placeholder clock (now + 1 min each) and are not on the folio.
+ * PROPOSED rows are not seated yet.
+ */
+export const PRINT_PROCEDURE_STATUSES = [
+  "SCHEDULED",
+  "CHECKED_IN",
+  "COMPLETED",
+  "NO_SHOW",
+] as const;
 
 export type PrintProcedureRow = {
   no: number;
   date: string;
   name: string;
+  /** Body sites in the print language, with the Latin name. */
+  zones: string;
+  /** Device program, mode, and intensity. Not the body sites. */
+  settings: string;
   quantity: number;
   time: string;
   room: string;
-  doctor: string;
   price: string;
   note: string;
 };
@@ -67,7 +85,7 @@ export async function buildProceduresPrint(
   const orders = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: patientId,
-      status: { notIn: ["CANCELLED"] },
+      status: { in: [...PRINT_PROCEDURE_STATUSES] },
       ...(episode ? { clinicalEpisodeId: episode.id } : {}),
     },
     include: {
@@ -85,17 +103,19 @@ export async function buildProceduresPrint(
       }),
     ),
   ];
+  const catalogNames = await loadCatalogDisplayNameMap(
+    orders.map((row) => row.procedureCode),
+    lang,
+  );
   const listItems = listIds.length
     ? await prisma.physioListItem.findMany({ where: { id: { in: listIds } } })
     : [];
   const listById = new Map(listItems.map((r) => [r.id, r]));
   const printLang = lang === "ru" || lang === "az" ? lang : "en";
-  const careTeam = episode
-    ? await listEpisodeCareDoctors(episode.id)
-    : [];
-  const doctor = episodeCareTeamPrintName(
-    careTeam.map((r) => r.practitioner.fullName),
-  );
+  const stay = await loadPrintEpisodeStay({
+    episodeId: episode?.id,
+    patientRefId: patientId,
+  });
 
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
@@ -108,17 +128,27 @@ export async function buildProceduresPrint(
       "—";
     const ends = o.endsAt ? `-${bakuTime(o.endsAt)}` : "";
     const siteBits = o.sites.map((row) => {
-      const title =
-        lang === "ru"
-          ? `${row.site.titleRu} / ${row.site.titleLa}`
-          : lang === "az"
-            ? `${row.site.titleAz} / ${row.site.titleLa}`
-            : `${row.site.titleEn} / ${row.site.titleLa}`;
+      const local =
+        lang === "ru" ? row.site.titleRu : lang === "az" ? row.site.titleAz : row.site.titleEn;
+      const latin = row.site.titleLa?.trim() ?? "";
+      const title = [local?.trim(), latin].filter(Boolean).join(" / ");
       const lat = formatLateralityLabel(printLang, row.laterality);
       return lat ? `${title} (${lat})` : title;
     });
     const mode =
-      o.siteApplyMode === "TURN" ? (lang === "ru" ? "по очереди" : lang === "az" ? "növbəli" : "in turn") : "";
+      o.siteApplyMode === "TURN"
+        ? lang === "ru"
+          ? "по очереди"
+          : lang === "az"
+            ? "növbəli"
+            : "in turn"
+        : o.siteApplyMode === "TOGETHER"
+          ? lang === "ru"
+            ? "вместе"
+            : lang === "az"
+              ? "birlikdə"
+              : "together"
+          : "";
     const fields = readPhysioFields(o.physioFields);
     const program = fields.deviceProgramId ? listById.get(fields.deviceProgramId) : null;
     const substance = fields.substanceId ? listById.get(fields.substanceId) : null;
@@ -138,17 +168,19 @@ export async function buildProceduresPrint(
             : substance.titleEn
         : null,
     });
-    const noteParts = [...siteBits, mode, ...fieldBits, o.note ?? ""].filter(Boolean);
+    const zones = siteBits.join(", ");
+    const settings = [mode, ...fieldBits].filter(Boolean).join(" · ");
     const row: PrintProcedureRow = {
       no: no++,
       date,
-      name: o.procedureName,
+      name: resolveOrderDisplayName(o, catalogNames),
+      zones,
+      settings,
       quantity: o.quantity ?? 1,
       time: `${bakuTime(o.scheduledAt)}${ends}`,
-      room,
-      doctor,
-      price: `${Number(o.amountNet).toFixed(2)} AZN`,
-      note: noteParts.join(" · "),
+        room,
+        price: `${Number(o.amountNet).toFixed(2)} AZN`,
+        note: (o.note ?? "").trim(),
     };
     const list = map.get(date) ?? [];
     list.push(row);
@@ -157,16 +189,15 @@ export async function buildProceduresPrint(
 
   return {
     branding,
-    patient: {
+    patient: composePrintPatientStrip({
       fullName: patient.fullName,
       sex: patient.sex,
-      birthDate: patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : null,
+      birthDate: patient.birthDate,
       phone: patient.phone,
       nationality: patient.nationality,
-      roomNumber: episode?.roomNumber ?? null,
-      doctorName: null,
       date: todayBakuYmd(),
-    },
+      stay,
+    }),
     rowsByDate: [...map.entries()].map(([date, rows]) => ({ date, rows })),
   };
 }

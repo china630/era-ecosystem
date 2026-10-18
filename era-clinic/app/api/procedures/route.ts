@@ -296,6 +296,13 @@ export async function POST(req: Request) {
         return jsonError(deniedAn, 409, { code: ANAMNESIS_REQUIRED });
       }
     }
+    const { clinicDayIsClosed, SlotDecisionError, SLOT_REASON_MESSAGE } = await import(
+      "@/domain/planning/slot-decision"
+    );
+    if (await clinicDayIsClosed(ymd)) {
+      throw new SlotDecisionError("closed");
+    }
+
     const order = await prisma.procedureOrder.create({
       data: {
         organizationId: requestOrganizationId(),
@@ -310,9 +317,22 @@ export async function POST(req: Request) {
         inPackage: false,
         bonusEligible: forcePaidExtra || (amountNet ?? 0) > 0,
         manuallyAdjusted: true,
+        status: "PROPOSED",
       },
       include: { patientRef: true },
     });
+
+    const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+    const seated = await placeConfirmedProcedures([order.id], {
+      confirmedByUserId: session!.sub,
+      pinYmdByOrderId: { [order.id]: ymd },
+      pinStrict: true,
+    });
+    if (seated.placed === 0) {
+      await prisma.procedureOrder.delete({ where: { id: order.id } });
+      const reason = seated.failures[0]?.reason ?? "no_slot";
+      throw new SlotDecisionError(reason, SLOT_REASON_MESSAGE[reason]);
+    }
 
     // Post folio for confirmed 4th same-day paid
     if (forcePaidExtra && order.reservationId && (amountNet ?? 0) > 0) {
@@ -338,7 +358,11 @@ export async function POST(req: Request) {
       }
     }
 
-    return jsonOk(order, 201);
+    const seatedOrder = await prisma.procedureOrder.findUnique({
+      where: { id: order.id },
+      include: { patientRef: true },
+    });
+    return jsonOk(seatedOrder ?? order, 201);
   } catch (err) {
     return handleRouteError(err);
   }

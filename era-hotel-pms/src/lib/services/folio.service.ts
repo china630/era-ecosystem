@@ -104,6 +104,7 @@ export async function postCharge(input: {
   departmentId?: string;
   externalRef?: string;
   invoiceRef?: string;
+  audit?: { userId?: string | null; request?: Request; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' };
 }) {
   const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
   await assertBusinessDayOpenForPosting();
@@ -207,6 +208,17 @@ export async function postCharge(input: {
     fireAndForgetDispatch(dispatchFolioChargePosted(offset.id));
   }
   fireAndForgetDispatch(dispatchFolioChargePosted(charge.id));
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(chargeReservationId, 'CHARGE', input.audit, {
+    section: 'folio',
+    source: input.audit?.source ?? 'user',
+    fields: [
+      { key: 'amount', from: null, to: String(input.amount) },
+      { key: 'revenueCode', from: null, to: revenueCode.code },
+      { key: 'description', from: null, to: description },
+    ],
+    refs: { chargeId: charge.id, folioId: folio.id },
+  });
   return charge;
 }
 
@@ -221,6 +233,7 @@ export async function postPayment(input: {
   kind?: 'PAYMENT' | 'REFUND';
   refundOfPaymentId?: string;
   refundReason?: string;
+  auditRequest?: Request;
 }) {
   const folio = await prisma.folio.findUnique({
     where: { id: input.folioId },
@@ -386,6 +399,23 @@ export async function postPayment(input: {
     }).catch((e) => console.error('Platform hooks on folio payment failed', e));
   }
 
+  if (input.paymentMethod !== 'GUEST_DEBT') {
+    const { recordReservationAudit } = await import('@/lib/reservation-audit');
+    await recordReservationAudit(folio.reservationId, kind === 'REFUND' ? 'REFUND' : 'PAYMENT', {
+      userId: input.createdByUserId,
+      request: input.auditRequest,
+    }, {
+      section: 'folio',
+      source: 'user',
+      fields: [
+        { key: 'amount', from: null, to: String(input.amount) },
+        { key: 'paymentMethod', from: null, to: input.paymentMethod },
+        ...(input.bankTerminalId ? [{ key: 'bankTerminalId', from: null, to: input.bankTerminalId }] : []),
+        ...(input.refundReason ? [{ key: 'reason', from: null, to: input.refundReason }] : []),
+      ],
+      refs: { paymentId: payment.id, folioId: input.folioId },
+    });
+  }
   return payment;
 }
 
@@ -441,7 +471,11 @@ async function mirrorCityLedgerCharge(input: {
 }
 
 /** Take a posted payment off the live folio. The row stays for the Deleted tab and the voids report. */
-export async function voidFolioPayment(input: { paymentId: string; reason: string }) {
+export async function voidFolioPayment(input: {
+  paymentId: string;
+  reason: string;
+  audit?: { userId?: string | null; request?: Request };
+}) {
   const reason = input.reason.trim();
   if (!reason) throw new Error('A reason is required');
   const payment = await prisma.folioPayment.findUnique({
@@ -460,6 +494,16 @@ export async function voidFolioPayment(input: { paymentId: string; reason: strin
   });
   await prisma.folioPaymentAllocation.deleteMany({ where: { paymentId: payment.id } });
   await recalcReservationTotal(payment.folio.reservationId);
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(payment.folio.reservationId, 'PAYMENT_VOID', input.audit, {
+    section: 'folio',
+    source: 'user',
+    fields: [
+      { key: 'amount', from: String(payment.amount), to: null },
+      { key: 'reason', from: null, to: reason },
+    ],
+    refs: { paymentId: payment.id, folioId: payment.folioId },
+  });
   return updated;
 }
 
@@ -543,6 +587,7 @@ export async function payGuestDebt(input: {
   paymentMethod: PaymentMethod;
   bankTerminalId?: string | null;
   createdByUserId?: string | null;
+  auditRequest?: Request;
 }) {
   if (!GUEST_DEBT_PAY_METHODS.has(input.paymentMethod)) {
     throw new Error('Payment method is not accepted for a guest debt');
@@ -583,20 +628,20 @@ export async function payGuestDebt(input: {
       remaining: round2(remaining - amount),
     };
   }, { isolationLevel: 'Serializable' });
-  const { recordHotelAudit } = await import('@/lib/satellite-audit');
-  await recordHotelAudit(
-    { userId: input.createdByUserId },
-    'Reservation',
-    paid.reservationId,
-    'GUEST_DEBT_PAY',
-    {
-      entryId: input.entryId,
-      paymentId: paid.id,
-      amount,
-      paymentMethod: input.paymentMethod,
-      bankTerminalId: paid.bankTerminalId,
-    },
-  );
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(paid.reservationId, 'GUEST_DEBT_PAY', {
+    userId: input.createdByUserId,
+    request: input.auditRequest,
+  }, {
+    section: 'folio',
+    source: 'user',
+    fields: [
+      { key: 'amount', from: null, to: String(amount) },
+      { key: 'paymentMethod', from: null, to: input.paymentMethod },
+      { key: 'remaining', from: null, to: String(paid.remaining) },
+    ],
+    refs: { entryId: input.entryId, paymentId: paid.id },
+  });
   return { id: paid.id, remaining: paid.remaining };
 }
 
@@ -678,6 +723,7 @@ export async function postDiscount(input: {
   amount: number;
   description: string;
   folioId?: string;
+  audit?: { userId?: string | null; request?: Request; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' };
 }) {
   if (input.amount <= 0) throw new Error('Discount amount must be positive');
   const code = await requireRevenueCodeByRole('DISCOUNT');
@@ -687,10 +733,15 @@ export async function postDiscount(input: {
     amount: -Math.abs(input.amount),
     qty: 1,
     description: input.description || 'Discount',
+    audit: input.audit,
   });
 }
 
-export async function voidCharge(chargeId: string, reason?: string) {
+export async function voidCharge(
+  chargeId: string,
+  reason?: string,
+  audit?: { userId?: string | null; request?: Request },
+) {
   const voidReason = reason?.trim() ?? '';
   if (!voidReason) throw new Error('VOID_REASON_REQUIRED');
   const charge = await prisma.folioCharge.findUnique({
@@ -781,6 +832,17 @@ export async function voidCharge(chargeId: string, reason?: string) {
       });
     }
     await recalcReservationTotal(charge.folio.reservationId);
+    const { recordReservationAudit } = await import('@/lib/reservation-audit');
+    await recordReservationAudit(charge.folio.reservationId, 'VOID', audit, {
+      section: 'folio',
+      source: 'user',
+      fields: [
+        { key: 'amount', from: String(charge.amount), to: null },
+        { key: 'revenueCode', from: charge.revenueCode.code, to: null },
+        { key: 'reason', from: null, to: voidReason },
+      ],
+      refs: { chargeId: charge.id, folioId: charge.folioId },
+    });
     return { reservationId: charge.folio.reservationId };
   }
 
@@ -815,6 +877,17 @@ export async function voidCharge(chargeId: string, reason?: string) {
   await voidLaundryForCharge(chargeId);
   await recalcReservationTotal(charge.folio.reservationId);
   fireAndForgetDispatch(dispatchFolioChargeVoided(voidPayload));
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(charge.folio.reservationId, 'VOID', audit, {
+    section: 'folio',
+    source: 'user',
+    fields: [
+      { key: 'amount', from: String(charge.amount), to: null },
+      { key: 'revenueCode', from: charge.revenueCode.code, to: null },
+      { key: 'reason', from: null, to: voidReason },
+    ],
+    refs: { chargeId: charge.id, folioId: charge.folioId },
+  });
   return { reservationId: charge.folio.reservationId };
 }
 

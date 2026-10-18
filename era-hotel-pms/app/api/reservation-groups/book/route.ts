@@ -51,7 +51,10 @@ export async function POST(request: Request) {
     if (body.checkOutDate <= body.checkInDate) {
       throw new Error('Check-out must be after check-in');
     }
-    const result = await createGroupBookingWithStays(body);
+    const result = await createGroupBookingWithStays({
+      ...body,
+      audit: { userId: session?.sub, request },
+    });
     const firstStayId = result.stays[0]?.id;
     const operationalGaps = firstStayId ? await collectStayOperationalGaps(firstStayId) : [];
     return jsonOk(serialize({ ...result, operationalGaps }), 201);

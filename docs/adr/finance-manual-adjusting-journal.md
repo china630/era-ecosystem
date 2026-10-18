@@ -43,6 +43,7 @@ Client PDF credit note; e-qaimé; edit SENT journal; mutate `Invoice.totalAmount
 ## Consequences
 
 - Accountants get a first-class GL voucher with audit (`AuditMutationInterceptor` → `JournalEntry`).
+- Under [finance-tax-scheme.md](./finance-tax-scheme.md) this voucher stays an **optional** escape for `OWNER` / `ADMIN` / `ACCOUNTANT`. The daily path is a classified fact. A missing fact blocks period close; it is not cleared by a free-form journal.
 - Invoice aging / remaining stay consistent via `InvoicePayment` rows tied to credit-adjustment journals.
 - Netting / bank / surplus remain for their domains; catch-all vouchers keep mandatory narrative.
 - Scaffold proof: `fin-gl-negative.spec.ts`, `fin-arap-negative.spec.ts` (credit-adjustment), `fin-fa-negative.spec.ts` (DONATION note).

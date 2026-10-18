@@ -16,7 +16,7 @@ Nafta sanatorium day operations mixed two concerns:
 1. **Who orchestrates the day schedule** (move/cancel/fill liberated slots, walk-in).
 2. **Who proves the guest attended** a procedure so disputes are not paper-only.
 
-The 2026-07-18 amendment treated short cabin procedures as “check-in = complete”. That was wrong for longer sessions (40 min): marking `COMPLETED` at start lied about delivery time and confused nurse UX. Occupancy is already held by allocation intervals (`CANCELLED`/`NO_SHOW` only free the slot), so early complete did not free capacity — it only corrupted semantics.
+The 2026-07-18 amendment treated short cabin procedures as “check-in = complete”. That was wrong for longer sessions (40 min): marking `COMPLETED` at start lied about delivery time and confused nurse UX. Occupancy is held by allocation intervals. `CANCELLED` frees the slot on every cancel path: the order status changes and both `ResourceBooking` and `ProcedureAllocation` are removed. `NO_SHOW` frees availability but keeps the matrix bar as proof. The matrix does not paint a `CANCELLED` booking.
 
 ## Decision
 

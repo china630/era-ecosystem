@@ -37,10 +37,7 @@ export type MatrixResourceRow = {
 };
 
 export function cabinLabel(name: string | undefined, code: string | undefined): string {
-  const title = name?.trim() ?? "";
-  const id = code?.trim() ?? "";
-  if (title && id && title !== id) return `${title} (${id})`;
-  return title || id || "—";
+  return name?.trim() || code?.trim() || "—";
 }
 export type Slot = MatrixSlot;
 export type ResourceRow = MatrixResourceRow;
@@ -144,7 +141,7 @@ function patientMatches(slot: MatrixSlot, query: string): boolean {
 function roomMatches(slot: MatrixSlot, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return (slot.roomNumber ?? "").toLowerCase().includes(q);
+  return (slot.roomNumber ?? "").trim().toLowerCase() === q;
 }
 
 function rowHasPatient(row: MatrixResourceRow, patientQuery: string, roomQuery: string): boolean {

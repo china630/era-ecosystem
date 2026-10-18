@@ -269,7 +269,11 @@ export function ExtrasAssignModal({
       );
       const d = await res.json();
       if (!res.ok) {
-        showApiError(d, tc("saveFailed"));
+        const code = typeof d?.code === "string" ? d.code : null;
+        showApiError(
+          code === "CABIN_SEX" ? { ...d, error: tPhysio("packageAssignMissCabinSex") } : d,
+          tc("saveFailed"),
+        );
         return;
       }
       setDraft([]);
@@ -382,6 +386,9 @@ export function ExtrasAssignModal({
             </p>
             <PhysioSiteChips
               value={formPhysio}
+              hideFields={
+                code && /NAFTALAN|VANN|BATH/i.test(code) ? ["DAY_BLOCK", "BATH_SEQUENCE"] : []
+              }
               catalog={catalog}
               programs={programs}
               substances={substances}

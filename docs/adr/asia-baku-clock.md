@@ -67,7 +67,7 @@ Operational “today” and day windows no longer use UTC `toISOString().slice(0
 
 | Product | Pattern |
 |---------|---------|
-| Hotel | `hotelDateKey()` / `todayBakuYmd` for FO/cash/HK/NA defaults; `bakuDayBounds` for night-audit arrival windows; business-date fallback `bakuCivilUtcDate(todayBakuYmd())`; card times via `bakuTimeLabel` |
+| Hotel | `hotelDateKey()` / `todayBakuYmd` for FO/cash/HK/NA defaults; `bakuDayBounds` for night-audit arrival windows; **door Avl/Occ** via `hotelNightBounds` / `stayOccupiesHotelNight` (12:00–12:00 Baku, not civil midnight); business-date fallback `bakuCivilUtcDate(todayBakuYmd())`; card times via `bakuTimeLabel` |
 | Clinic | Calendar/queue/executive/slots use `todayBakuYmd` + `bakuDayBounds`; EOD/slots via `parseBakuDateTime` |
 | F&B | `DailyMenuEntry.boardDate` = `bakuCivilUtcDate(todayBakuYmd())`; reservations filter via `bakuDayBounds` |
 
@@ -77,7 +77,7 @@ Evidence: `era-hotel-pms/__tests__/business-date-baku.spec.ts`, `era-clinic/__te
 
 Follow-up cleaned leftovers that used the same antipatterns outside the original file list:
 
-- Hotel: NA side screens, transfers/channel/group/BAR/L&F/report defaults; `setHours(0)` night walks; report period presets (`period.ts`) + HK roster week; contract `eachNight`; share `overlapsNight`; channel auto-push horizon.
+- Hotel: NA side screens, transfers/channel/group/BAR/L&F/report defaults; `setHours(0)` night walks; report period presets (`period.ts`) + HK roster week; contract `eachNight`; share `overlapsNight` (door nights = hotel noon, not `bakuDayBounds`); channel auto-push horizon.
 - Clinic: scheduling `getHours()` → `bakuHourMinute`; cashier/cron UTC-midnight filters → `bakuDayBounds`; sanatorium + appointment create wall times via `parseBakuDateTime` / `bakuTimeLabel`; diagnosis report + history lookback via `addBakuDays`.
 - Kit: `bakuHourMinute`, `addBakuDays`.
 

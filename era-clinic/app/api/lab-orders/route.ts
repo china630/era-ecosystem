@@ -154,8 +154,8 @@ export async function GET(req: Request) {
       const room = query.room.trim();
       conditions.push({
         OR: [
-          { episode: { roomNumber: { contains: room, mode: "insensitive" } } },
-          { visit: { roomNumber: { contains: room, mode: "insensitive" } } },
+          { episode: { roomNumber: { equals: room, mode: "insensitive" } } },
+          { visit: { roomNumber: { equals: room, mode: "insensitive" } } },
         ],
       });
     }
@@ -218,7 +218,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSatelliteSession();
-    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
     if (denied) return denied;
 
     const body = createSchema.parse(await req.json());

@@ -16,15 +16,19 @@ export async function saveDaySeries(input: {
   members: Array<{ procedureCode: string; shortMark: string }>;
 }) {
   const organizationId = requestOrganizationId();
-  const series = input.id
+  const code = input.code.trim();
+  const existing = input.id
+    ? await prisma.procedureDaySeries.findUnique({ where: { id: input.id } })
+    : await prisma.procedureDaySeries.findFirst({ where: { code } });
+  const series = existing
     ? await prisma.procedureDaySeries.update({
-        where: { id: input.id },
-        data: { code: input.code, name: input.name, fillsRestDays: input.fillsRestDays, active: true },
+        where: { id: existing.id },
+        data: { code, name: input.name, fillsRestDays: input.fillsRestDays, active: true },
       })
     : await prisma.procedureDaySeries.create({
         data: {
           organizationId,
-          code: input.code,
+          code,
           name: input.name,
           fillsRestDays: input.fillsRestDays,
           active: true,

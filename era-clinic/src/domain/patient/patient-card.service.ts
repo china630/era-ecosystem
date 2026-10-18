@@ -147,7 +147,10 @@ function mapProcedureEvent(p: {
   };
 }
 
-function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
+function groupDays(
+  events: PatientTimelineEvent[],
+  order: "history" | "plan" = "history",
+): PatientTimelineDay[] {
   const dayMap = new Map<string, PatientTimelineEvent[]>();
   for (const ev of events) {
     const key = bakuDateKey(ev.at);
@@ -157,9 +160,14 @@ function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
   }
   const todayKey = bakuDateKey(new Date());
   const keys = [...dayMap.keys()];
-  const upcoming = keys.filter((d) => d >= todayKey).sort((a, b) => a.localeCompare(b));
-  const archive = keys.filter((d) => d < todayKey).sort((a, b) => b.localeCompare(a));
-  return [...upcoming, ...archive].map((date) => ({
+  const sortedKeys =
+    order === "plan"
+      ? keys.sort((a, b) => a.localeCompare(b))
+      : [
+          ...keys.filter((d) => d >= todayKey).sort((a, b) => a.localeCompare(b)),
+          ...keys.filter((d) => d < todayKey).sort((a, b) => b.localeCompare(a)),
+        ];
+  return sortedKeys.map((date) => ({
     date,
     labelHint: date === todayKey ? "today" : date > todayKey ? "upcoming" : "past",
     events: (dayMap.get(date) ?? []).sort(
@@ -578,7 +586,7 @@ export async function getPatientPlanPage(
   return {
     patientRefId,
     events: events.map(withTimeSubtitle),
-    days: groupDays(events),
+    days: groupDays(events, "plan"),
     offset,
     limit,
     hasMore,

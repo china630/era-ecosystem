@@ -19,7 +19,7 @@ import {
   TEXT_MUTED_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
-import { addBakuDays, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, todayBakuYmd } from "@/lib/baku-day";
 
 type DoctorLinesItem = {
   procedure: { code: string; name: string };
@@ -112,11 +112,63 @@ export default function ProceduresReportPage() {
   } | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sortKey, setSortKey] = useState<"procedure" | "paid" | "origin" | "qty" | "amount">("procedure");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const tableItems = useMemo(() => {
+    if (view !== "doctor-lines") return items;
+    const grouped = new Map<
+      string,
+      DoctorLinesItem & { origins: string[] }
+    >();
+    for (const raw of items) {
+      const row = raw as DoctorLinesItem;
+      const key = `${row.procedure.code}\0${row.paid}`;
+      const prev = grouped.get(key);
+      if (!prev) {
+        grouped.set(key, {
+          ...row,
+          origins: row.origin ? [row.origin] : [],
+          quantity: row.quantity,
+          totalAmount: row.totalAmount,
+        });
+        continue;
+      }
+      prev.quantity += row.quantity;
+      prev.totalAmount = Math.round((prev.totalAmount + row.totalAmount) * 100) / 100;
+      if (row.origin && !prev.origins.includes(row.origin)) prev.origins.push(row.origin);
+    }
+    return [...grouped.values()].sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const left =
+        sortKey === "procedure"
+          ? a.procedure.name
+          : sortKey === "paid"
+            ? a.paid
+            : sortKey === "origin"
+              ? a.origins.join(",")
+              : sortKey === "qty"
+                ? a.quantity
+                : a.totalAmount;
+      const right =
+        sortKey === "procedure"
+          ? b.procedure.name
+          : sortKey === "paid"
+            ? b.paid
+            : sortKey === "origin"
+              ? b.origins.join(",")
+              : sortKey === "qty"
+                ? b.quantity
+                : b.totalAmount;
+      if (typeof left === "number" && typeof right === "number") return (left - right) * dir;
+      return String(left).localeCompare(String(right), locale) * dir;
+    });
+  }, [items, view, sortKey, sortDir, locale]);
 
   const pagedItems = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [items, page, pageSize]);
+    return tableItems.slice(start, start + pageSize);
+  }, [tableItems, page, pageSize]);
 
   useEffect(() => {
     setPage(1);
@@ -248,14 +300,6 @@ export default function ProceduresReportPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
-
-  function lineStatus(status: string) {
-    if (status === "COMPLETED") return tr("status_COMPLETED");
-    if (status === "CANCELLED") return tr("status_CANCELLED");
-    if (status === "NO_SHOW") return tr("status_NO_SHOW");
-    if (status === "PENDING") return tr("status_PENDING");
-    return status;
-  }
 
   function paidLabel(value: string) {
     if (value === "paid") return tr("paidYes");
@@ -396,16 +440,33 @@ export default function ProceduresReportPage() {
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 {view === "doctor-lines" ? (
                   <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
-                    {canPickDoctor ? (
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colDoctor")}</th>
-                    ) : null}
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colDate")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colStatus")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPaid")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colOrigin")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colQty")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colAmount")}</th>
+                    {(
+                      [
+                        ["procedure", "colProcedure"],
+                        ["paid", "colPaid"],
+                        ["origin", "colOrigin"],
+                        ["qty", "colQty"],
+                        ["amount", "colAmount"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <th key={key} className={DATA_TABLE_TH_LEFT_CLASS}>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1"
+                          onClick={() => {
+                            setPage(1);
+                            if (sortKey === key) setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
+                            else {
+                              setSortKey(key);
+                              setSortDir("asc");
+                            }
+                          }}
+                        >
+                          {tr(label)}
+                          {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
+                        </button>
+                      </th>
+                    ))}
                   </>
                 ) : view === "doctor-bonus" ? (
                   <>
@@ -430,28 +491,26 @@ export default function ProceduresReportPage() {
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 ? (
+              {tableItems.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={7}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={view === "doctor-lines" ? 5 : 7}>
                     {tr("empty")}
                   </td>
                 </tr>
               ) : (
                 pagedItems.map((it: any, idx: number) => {
                   if (view === "doctor-lines") {
-                    const row = it as DoctorLinesItem;
+                    const row = it as DoctorLinesItem & { origins?: string[] };
+                    const origins = row.origins?.length ? row.origins : row.origin ? [row.origin] : [];
                     return (
-                      <tr key={idx} className={DATA_TABLE_TR_CLASS}>
+                      <tr key={`${row.procedure.code}-${row.paid}`} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>
                           {row.procedure.code} — {row.procedure.name}
                         </td>
-                        {canPickDoctor ? (
-                          <td className={DATA_TABLE_TD_CLASS}>{row.doctorName || "—"}</td>
-                        ) : null}
-                        <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.procedureDate)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{lineStatus(row.status)}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{paidLabel(row.paid)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{originLabel(row.origin)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {origins.length ? origins.map((value) => originLabel(value)).join(", ") : "—"}
+                        </td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.quantity}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.totalAmount}</td>
                       </tr>
@@ -499,7 +558,7 @@ export default function ProceduresReportPage() {
           <ListPaginationFooter
             page={page}
             pageSize={pageSize}
-            total={items.length}
+            total={tableItems.length}
             loading={busy}
             onPageChange={setPage}
             onPageSizeChange={(n) => {

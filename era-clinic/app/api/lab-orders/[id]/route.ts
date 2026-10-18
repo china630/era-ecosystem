@@ -58,7 +58,7 @@ export async function DELETE(
   try {
     const session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
+    const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
     if (denied) return denied;
 
     const { id } = await params;

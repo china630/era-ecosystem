@@ -55,7 +55,7 @@ export async function POST(
     return jsonOk(result);
   } catch (err) {
     if (err instanceof PackageAssignError) {
-      return jsonError(err.message, err.status, { code: err.code });
+      return jsonError(err.message, err.status, { code: err.code, misses: err.misses });
     }
     return handleRouteError(err);
   }

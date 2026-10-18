@@ -138,6 +138,15 @@ describe('IBE hold inventory + CORS negatives', () => {
     expect(holdCoversNight(hold, '2026-09-23')).toBe(false);
   });
 
+  it('12:00 Baku checkout does not cover the departure night', () => {
+    const hold = {
+      checkInDate: new Date('2026-10-15T10:00:00.000Z'),
+      checkOutDate: new Date('2026-10-16T08:00:00.000Z'),
+    };
+    expect(holdCoversNight(hold, '2026-10-15')).toBe(true);
+    expect(holdCoversNight(hold, '2026-10-16')).toBe(false);
+  });
+
   it('never emits wildcard CORS', () => {
     const headers = ibeCorsHeaders([], 'https://evil.example') as Record<string, string>;
     expect(headers['Access-Control-Allow-Origin']).toBeUndefined();

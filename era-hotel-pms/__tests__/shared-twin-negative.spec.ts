@@ -382,6 +382,32 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
       expect(max).toBe(2);
     });
   });
+
+  describe('hotel-noon occupancy (FO Avl = sellable)', () => {
+    const departingNoon = slice({
+      id: 'out-noon',
+      shareEligible: false,
+      checkInDate: new Date('2026-10-06T10:00:00.000Z'),
+      checkOutDate: new Date('2026-10-16T08:00:00.000Z'),
+    });
+    const staying = slice({
+      id: 'stay',
+      shareEligible: false,
+      checkInDate: new Date('2026-10-10T10:00:00.000Z'),
+      checkOutDate: new Date('2026-10-20T08:00:00.000Z'),
+    });
+
+    it('12:00 Baku checkout occupies the last night, not the departure morning', () => {
+      expect(countDoorsUsedOnNight([departingNoon], parseHotelNoon('2026-10-15'), 3)).toBe(1);
+      expect(countDoorsUsedOnNight([departingNoon], parseHotelNoon('2026-10-16'), 3)).toBe(0);
+    });
+
+    it('date-only sellable window does not let same-day checkouts zero Avl', () => {
+      const from = new Date('2026-10-16');
+      const to = new Date('2026-10-26');
+      expect(maxDoorsUsedInRange([staying, departingNoon], from, to, 3)).toBe(1);
+    });
+  });
 });
 
 describe('share-assignment pure math', () => {

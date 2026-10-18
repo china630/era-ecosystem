@@ -22,7 +22,10 @@ export async function POST(
     assertPermission(session, PERMISSIONS.FOLIO_CHARGE);
     const { id } = await params;
     const body = schema.parse(await request.json());
-    const charge = await addQuickCharge(id, body);
+    const charge = await addQuickCharge(id, {
+      ...body,
+      audit: { userId: session?.sub, request },
+    });
     const reservation = await getReservation(id);
     return jsonOk(serialize({ charge, reservation }));
   } catch (err) {

@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { bakuDateKey } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays } from "@/domain/planning/clinic-day";
-import { planBathSeries, type BathMode, type KeptCell } from "@/domain/planning/bath-calendar";
+import { parseBathDayModes, planBathSeries, type KeptCell } from "@/domain/planning/bath-calendar";
+import {
+  bathPolicyFromSettings,
+  defaultBathModeFromSettings,
+  getSchedulingSettings,
+} from "@/domain/settings/scheduling-settings";
+import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 
 export type ScheduleMove = {
   orderId: string;
@@ -13,10 +19,10 @@ export type ScheduleMove = {
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
 
-function asMode(value: unknown): BathMode {
-  const text = String(value ?? "");
-  if (text === "3" || text === "5" || text === "ALTERNATING") return text;
-  return "2";
+function asMode(value: unknown): string | null {
+  const text = String(value ?? "").trim().toUpperCase();
+  if (!/^[0-9A-Z_]{1,16}$/.test(text)) return null;
+  return text;
 }
 
 /**
@@ -27,6 +33,8 @@ function asMode(value: unknown): BathMode {
  */
 export async function previewScheduleRecalc(episodeId?: string): Promise<ScheduleMove[]> {
   const today = bakuDateKey(new Date());
+  const settings = await getSchedulingSettings();
+  const bathModes = parseBathDayModes(settings.bathDayModesJson);
   const episodes = await prisma.clinicalEpisode.findMany({
     where: {
       status: "OPEN",
@@ -95,12 +103,22 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
       list.push(order);
       byProcedure.set(order.procedureCode, list);
     }
+    const kept: KeptCell[] = [];
+    const seriesInputs: Array<{
+      seriesCode: string;
+      procedureCode: string;
+      mark: string;
+      mode: string;
+      qty: number;
+      fillsRestDays: boolean;
+    }> = [];
+    const automaticByCode = new Map<string, typeof bathOrders>();
     for (const [procedureCode, rows] of byProcedure) {
       const info = memberOf.get(procedureCode);
       if (!info) continue;
       const sample = rows.find((row) => row.physioFields && typeof row.physioFields === "object");
       const fields = (sample?.physioFields ?? {}) as Record<string, unknown>;
-      const kept: KeptCell[] = [];
+      const automatic: typeof bathOrders = [];
       for (const row of rows) {
         const ymd = bakuDateKey(row.scheduledAt);
         const day = days.find((item) => item.ymd === ymd);
@@ -131,39 +149,48 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
           }
           continue;
         }
-        if (manual && day?.working) kept.push({ ymd, procedureCode, locked: true });
+        if (manual && day?.working) {
+          kept.push({ ymd, procedureCode, locked: true });
+          continue;
+        }
+        automatic.push(row);
       }
+      automaticByCode.set(procedureCode, automatic);
+      seriesInputs.push({
+        seriesCode: info.series.code,
+        procedureCode,
+        mark: info.member.shortMark,
+        mode: asMode(fields.dayBlock) ?? defaultBathModeFromSettings(settings),
+        qty: kept.filter((cell) => cell.procedureCode === procedureCode).length + automatic.length,
+        fillsRestDays: info.series.fillsRestDays,
+      });
+    }
+    if (seriesInputs.length > 0) {
       const planned = planBathSeries({
         days: days.filter((day) => day.ymd > today),
-        series: [
-          {
-            seriesCode: info.series.code,
-            procedureCode,
-            mark: info.member.shortMark,
-            mode: asMode(fields.dayBlock),
-            qty: rows.filter((row) => !LOCKED.has(row.status) && bakuDateKey(row.scheduledAt) > today).length,
-            fillsRestDays: info.series.fillsRestDays,
-          },
-        ],
+        series: seriesInputs,
         kept,
+        modes: bathModes,
+        notBeforeYmd: today,
+        policy: bathPolicyFromSettings(settings),
       });
-      const plannedDays = new Set(planned.filter((cell) => !cell.locked).map((cell) => cell.ymd));
-      const automatic = rows.filter((row) => {
-        const ymd = bakuDateKey(row.scheduledAt);
-        return ymd > today && !LOCKED.has(row.status) && row.note !== "bath_manual";
-      });
-      automatic.forEach((row, index) => {
-        const target = [...plannedDays][index] ?? null;
-        const fromYmd = bakuDateKey(row.scheduledAt);
-        if (target === fromYmd) return;
-        moves.push({
-          orderId: row.id,
-          procedureCode,
-          fromYmd,
-          toYmd: target,
-          reason: target ? "bath_relaid" : "bath_quota",
+      for (const [procedureCode, automatic] of automaticByCode) {
+        const plannedDays = planned
+          .filter((cell) => cell.procedureCode === procedureCode && !cell.locked)
+          .map((cell) => cell.ymd);
+        automatic.forEach((row, index) => {
+          const target = plannedDays[index] ?? null;
+          const fromYmd = bakuDateKey(row.scheduledAt);
+          if (target === fromYmd) return;
+          moves.push({
+            orderId: row.id,
+            procedureCode,
+            fromYmd,
+            toYmd: target,
+            reason: target ? "bath_relaid" : "bath_quota",
+          });
         });
-      });
+      }
     }
   }
   return moves;
@@ -236,21 +263,52 @@ function shiftForward(
 
 export async function applyScheduleRecalc(episodeId?: string): Promise<ScheduleMove[]> {
   const moves = await previewScheduleRecalc(episodeId);
+  const series = await prisma.procedureDaySeries.findMany({
+    where: { active: true },
+    include: { members: true },
+  });
+  const bathCodes = new Set(series.flatMap((row) => row.members.map((member) => member.procedureCode)));
+  const toPlace: Array<{ orderId: string; ymd: string; bath: boolean }> = [];
   for (const move of moves) {
     if (!move.toYmd) {
+      await releaseProcedureOccupancy([move.orderId]);
       await prisma.procedureOrder.update({
         where: { id: move.orderId },
         data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: move.reason },
       });
       continue;
     }
+    await releaseProcedureOccupancy([move.orderId]);
     await prisma.procedureOrder.update({
       where: { id: move.orderId },
       data: {
+        status: "PROPOSED",
         scheduledAt: dayStartInstant(move.toYmd, 9),
         ...(move.reason === "manual_bath_moved" ? { note: "bath_manual" } : {}),
       },
     });
+    toPlace.push({
+      orderId: move.orderId,
+      ymd: move.toYmd,
+      bath: bathCodes.has(move.procedureCode),
+    });
+  }
+  const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+  const pinOf = (rows: typeof toPlace) =>
+    Object.fromEntries(rows.map((row) => [row.orderId, row.ymd]));
+  const baths = toPlace.filter((row) => row.bath);
+  const others = toPlace.filter((row) => !row.bath);
+  if (baths.length > 0) {
+    await placeConfirmedProcedures(
+      baths.map((row) => row.orderId),
+      { pinYmdByOrderId: pinOf(baths) },
+    );
+  }
+  if (others.length > 0) {
+    await placeConfirmedProcedures(
+      others.map((row) => row.orderId),
+      { pinYmdByOrderId: pinOf(others) },
+    );
   }
   return moves;
 }

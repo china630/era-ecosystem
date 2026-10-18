@@ -60,6 +60,8 @@ type Row = {
   notes?: Array<{ noteType: string; text: string }>;
 };
 
+type NumberedRow = Row & { rowNo: number };
+
 const ROW_BG: Record<string, string> = {
   IN_HOUSE: 'bg-amber-50',
   CONFIRMED: 'bg-white',
@@ -210,6 +212,15 @@ export default function ReservationsListPage() {
     reload,
   } = usePaginatedList<Row, ListFilters>({ fetcher, filters });
 
+  const numberedRows = useMemo(
+    () =>
+      rows.map((row, index) => ({
+        ...row,
+        rowNo: (page - 1) * pageSize + index + 1,
+      })),
+    [rows, page, pageSize],
+  );
+
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
@@ -308,7 +319,7 @@ export default function ReservationsListPage() {
           </EraListFilterBar>
         }
         toolbar={(() => {
-          const selected = rows.find((row) => row.id === selectedId);
+          const selected = numberedRows.find((row) => row.id === selectedId);
           const selectedNotes = (selected?.notes ?? []).filter((note) => (note.text ?? '').trim());
           return (
             <div className="mb-1 h-8 shrink-0 overflow-hidden">
@@ -325,8 +336,15 @@ export default function ReservationsListPage() {
         })()}
         table={
           <div className="flex min-h-0 flex-1 flex-col">
-          <HotelDataGrid<Row & Record<string, unknown>>
+          <HotelDataGrid<NumberedRow & Record<string, unknown>>
             columns={[
+              {
+                key: 'rowNo',
+                header: t('rowNo'),
+                sortable: false,
+                className: 'w-12 whitespace-nowrap tabular-nums text-[#7F8C8D]',
+                render: (r) => String(r.rowNo),
+              },
               {
                 key: 'room',
                 header: t('room'),
@@ -428,10 +446,11 @@ export default function ReservationsListPage() {
                 ),
               },
             ]}
-            rows={rows as (Row & Record<string, unknown>)[]}
+            rows={numberedRows as (NumberedRow & Record<string, unknown>)[]}
             rowKey={(r) => r.id}
             sort={sortKey && sortDir ? { key: sortKey, dir: sortDir } : null}
             onSortChange={(next) => {
+              if (next.key === 'rowNo') return;
               setSortKey(next.key);
               setSortDir(next.dir);
               setPage(1);

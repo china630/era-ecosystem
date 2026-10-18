@@ -2,6 +2,7 @@ import { updateReservationSchedule } from '@/lib/services/reservation.service';
 import { recordRoomMove } from '@/lib/services/room-occupancy-log.service';
 import { physicalTypeAllowedForDoor } from '@/lib/services/door-type.policy';
 import { prisma } from '@/lib/prisma';
+import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
 
 const RELOCATABLE = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
@@ -14,6 +15,7 @@ export async function relocateReservationRoom(
     compUpgrade?: boolean;
     givenRoomTypeId?: string | null;
     actorUserId?: string;
+    request?: Request;
   },
 ) {
   const reservation = await prisma.reservation.findUnique({
@@ -76,9 +78,21 @@ export async function relocateReservationRoom(
       reservationId,
       previousRoomNumber: fromRoom?.roomNumber ?? undefined,
       newRoomNumber: dest?.roomNumber ?? toRoomId,
-      programCode: reservation.ratePlan?.medicalFlag ? reservation.ratePlan.code : undefined,
+      programCode: clinicProgramCodeFromTariff(reservation.ratePlan),
     }).catch((e) => console.error('Guest lifecycle room change failed', e));
   }
 
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(reservationId, 'RELOCATE', {
+    userId: opts?.actorUserId,
+    request: opts?.request,
+  }, {
+    section: 'card',
+    source: 'user',
+    fields: [
+      { key: 'roomNumber', from: reservation.room?.roomNumber ?? null, to: toRoom.roomNumber },
+      ...(opts?.reason ? [{ key: 'reason', from: null, to: opts.reason }] : []),
+    ],
+  });
   return updated;
 }

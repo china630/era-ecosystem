@@ -14,7 +14,7 @@ Operators confused Room plan empty cells (free doors) with sellable inventory. E
 |---|--------|-------|----------|
 | 1 | Room type availability | `/availability` | How many of each type can still be sold on these dates? (Occ includes unassigned stays) |
 | 2 | Reservation list | `/reports/reservations` | Which stays exist (arrivals / future), assign, check-in |
-| 3 | Room rack | `/` | Door status now (Clean/Dirty, in-house) |
+| 3 | Room rack | `/` | Door status now (Clean/Dirty, in-house, today's arrival). Assigned stay without check-in is not an occupant. |
 | 4 | Room plan | `/room-plan` | Who occupies which door across dates (bars) |
 | 5 | Group / allotment | `/reports/group-reservations`, `/admin/allotment-blocks` | Booking envelopes and corporate blocks |
 
@@ -26,6 +26,7 @@ Operators confused Room plan empty cells (free doors) with sellable inventory. E
 | RoomStay | Prisma Reservation (one sold room intent, roomCount=1) |
 | Assignment | roomId (+ share pool + shareBedIndex 1..maxBed at assign; Stay at check-in) |
 | Sellable (Avl) | quota minus **door** consumption (exclusive = 1 door; share packs beds by gender) — [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
+| Hotel night D | Occupied iff `checkIn < noon(D+1)` and `checkOut > noon(D)` (12:00 Baku). Same-day 12:00 checkout is turnover, not Occ on D. Matrix cells, `GET /api/fo/sellable`, and create all use this window — card `available` = min matrix Avl over `[check-in, check-out)`. Civil `bakuDayBounds` is not a door-night. |
 | Free door | Physical room without overlapping assigned stay (share pool may be n/maxBed occupied) |
 | Share door | Up to maxBed independent RoomStays on one door, same gender (M or F only); checkbox on card, not guest count |
 
@@ -59,7 +60,7 @@ On create, Product panel shows live sellable preview via GET /api/fo/sellable (s
 | Field | Meaning at Nafta |
 |-------|------------------|
 | Room type | Sellable category (STD-TWN, DLX, …) — not the physical door |
-| Package / rate | Commercial product: `PKG-STANDART` / `PREMIUM` / `DERMO` / `DETOKS` (`medicalFlag`, often room-type scoped) **or** BAR (`type=BASE`, prices in `RoomTypeRate`) |
+| Package / rate | Stay product families: **Medical** (`MEDICAL RATES` + `PKG-STANDART` / `PREMIUM` / `DERMA` / `DETOKS`) with a per-guest SKU column; **Infotur** (`PKG-INFOTUR`) as the stay tariff only — no guest mix with medical SKUs; **BAR** (`type=BASE`, prices in `RoomTypeRate`). `medicalFlag` still scopes the sell grid; it does not mean “show every PKG-* on the guest”. |
 | Meal plan | Packages lock **FB** from `RatePlan.mealPlanId`; BAR-BB / BAR-FB set meal from the plan; FO may override only for non-package BAR |
 
 **Product linkage:** choosing a type-scoped package sets room type; choosing room type filters out incompatible packages; BAR remains available for all types.

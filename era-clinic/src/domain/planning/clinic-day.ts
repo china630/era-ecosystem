@@ -1,6 +1,7 @@
 import { getCalendarDay } from "@era/satellite-kit";
 import { addBakuDays, bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
 import { prisma } from "@/lib/prisma";
+import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 
 export type ClinicDay = {
   ymd: string;
@@ -41,48 +42,57 @@ function eachYmd(fromYmd: string, toYmd: string): string[] {
 
 /**
  * Stay days from check-in inclusive through the day before checkout.
- * Layer, highest wins: manual override, production-calendar exception, week template.
- * Ordinary Saturday stays a short working day. Sunday is off unless the country or the clinic opens it.
+ * Layer, highest wins: manual clinic-day override, then the week template
+ * (`closedWeekdays`). The country calendar may close an otherwise open day
+ * (holiday / mourning / isWorking false) but must not open a closed weekday.
+ * Weekday end, Saturday end, and shortened-day end come from clinic settings.
  */
 export async function listClinicDays(fromYmd: string, toYmd: string): Promise<ClinicDay[]> {
   const ymds = eachYmd(fromYmd, toYmd);
-  const overrides = await prisma.clinicDayOverride.findMany({
-    where: { dayYmd: { in: ymds } },
-  });
+  const [overrides, settings] = await Promise.all([
+    prisma.clinicDayOverride.findMany({
+      where: { dayYmd: { in: ymds } },
+    }),
+    getSchedulingSettings(),
+  ]);
   const byDay = new Map(overrides.map((row) => [row.dayYmd, row]));
+  const closed = new Set(settings.closedWeekdays);
+  const weekdayEnd = settings.dayEndHour;
+  const saturdayEnd = settings.saturdayEndHour;
+  const shortEnd = settings.shortenedDayEndHour;
   const days: ClinicDay[] = [];
   for (const ymd of ymds) {
+    const weekday = bakuWeekday(ymd);
     const override = byDay.get(ymd);
     if (override) {
       days.push({
         ymd,
         working: !override.closed,
-        endHour: override.endHour ?? (override.closed ? 0 : 17),
+        endHour: override.endHour ?? (override.closed ? 0 : weekday === 6 ? saturdayEnd : weekdayEnd),
       });
       continue;
     }
+    if (closed.has(weekday)) {
+      days.push({ ymd, working: false, endHour: 0 });
+      continue;
+    }
     const country = await getCalendarDay(ymd);
-    const weekday = bakuWeekday(ymd);
     const countryHoliday = country?.dayType === "holiday" || country?.dayType === "mourning";
-    const countryClosed = country?.isWorking === false && weekday !== 6;
+    const saturdayStaysOpen = weekday === 6;
+    const countryClosed = country?.isWorking === false && !saturdayStaysOpen;
     if (countryHoliday || countryClosed) {
       days.push({ ymd, working: false, endHour: 0 });
       continue;
     }
     if (country?.dayType === "shortened") {
-      days.push({ ymd, working: true, endHour: 13 });
-      continue;
-    }
-    if (weekday === 0) {
-      const workingSunday = country?.isWorking === true;
-      days.push({ ymd, working: workingSunday, endHour: workingSunday ? 17 : 0 });
+      days.push({ ymd, working: true, endHour: shortEnd });
       continue;
     }
     if (weekday === 6) {
-      days.push({ ymd, working: true, endHour: 13 });
+      days.push({ ymd, working: true, endHour: saturdayEnd });
       continue;
     }
-    days.push({ ymd, working: true, endHour: 17 });
+    days.push({ ymd, working: true, endHour: weekdayEnd });
   }
   return days;
 }
@@ -94,4 +104,12 @@ export function stayYmd(startsOn: Date, endsOn: Date): { fromYmd: string; toYmd:
 export function dayStartInstant(ymd: string, hour: number): Date {
   const { start } = bakuDayBounds(ymd);
   return new Date(start.getTime() + hour * 3_600_000);
+}
+
+/** First working clinic day on or after fromYmd. */
+export function nextWorkingYmd(days: ClinicDay[], fromYmd: string): string | null {
+  for (const day of days) {
+    if (day.ymd >= fromYmd && day.working) return day.ymd;
+  }
+  return null;
 }

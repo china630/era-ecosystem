@@ -155,10 +155,17 @@ export async function getReservationFull(id: string) {
   };
 
   try {
-    const { previewComposedPackageSell } = await import(
-      '@/lib/services/nafta-package-compose-apply.service'
+    const { usesMedicalPackageCompose } = await import(
+      '@/lib/services/medical-package-resolve.service'
     );
-    result.packageCompose = await previewComposedPackageSell(reservation.id);
+    if (usesMedicalPackageCompose(reservation.ratePlan)) {
+      const { previewComposedPackageSell } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      result.packageCompose = await previewComposedPackageSell(reservation.id);
+    } else {
+      result.packageCompose = null;
+    }
   } catch {
     result.packageCompose = null;
   }
@@ -255,8 +262,13 @@ export async function patchReservationFull(
       fixPrice?: boolean;
       discountPct?: number | null;
     }>;
+    audit?: { userId?: string | null; request?: Request };
   },
 ) {
+  const { loadReservationAuditSnapshot, recordReservationDiff } = await import(
+    '@/lib/reservation-audit'
+  );
+  const before = await loadReservationAuditSnapshot(id);
   const existing = await prisma.reservation.findUnique({
     where: { id },
     include: { guest: true, paxGuests: { orderBy: { sortOrder: 'asc' } } },
@@ -271,6 +283,7 @@ export async function patchReservationFull(
     dailyRates,
     shareEligible,
     moveReasonCode,
+    audit,
     ...data
   } = input;
 
@@ -806,11 +819,21 @@ export async function patchReservationFull(
   // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
   // only when the stay window did not change.
   if (datesChanged || !clientDailyRates?.length) {
-    const { syncComposedDailyRates } = await import(
-      '@/lib/services/nafta-package-compose-apply.service'
+    const { usesMedicalPackageCompose } = await import(
+      '@/lib/services/medical-package-resolve.service'
     );
-    const composed = await syncComposedDailyRates(id);
-    if (!composed.applied) {
+    if (stayPlan && usesMedicalPackageCompose(stayPlan)) {
+      const { syncComposedDailyRates } = await import(
+        '@/lib/services/nafta-package-compose-apply.service'
+      );
+      const composed = await syncComposedDailyRates(id);
+      if (!composed.applied) {
+        const { recalcReservationDailyRates } = await import(
+          '@/lib/services/reservation-pricing.service'
+        );
+        await recalcReservationDailyRates(id);
+      }
+    } else {
       const { recalcReservationDailyRates } = await import(
         '@/lib/services/reservation-pricing.service'
       );
@@ -866,6 +889,8 @@ export async function patchReservationFull(
     }
   }
 
+  const after = await loadReservationAuditSnapshot(id);
+  await recordReservationDiff(id, 'UPDATE', before, after, audit);
   return getReservationFull(id);
 }
 
@@ -1003,7 +1028,9 @@ export async function listReservationsForGrid(
       notes: { select: { text: true } },
     },
   });
-  const sortKey = opts.sort?.trim() ?? '';
+  const requestedSort = opts.sort?.trim() ?? '';
+  // Painted in the list after fetch; never a rank key.
+  const sortKey = requestedSort === 'rowNo' ? '' : requestedSort;
   const sortDir = opts.dir === 'desc' ? -1 : 1;
   const textOf = (row: (typeof ranked)[number]) => {
     switch (sortKey) {

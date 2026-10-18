@@ -330,6 +330,8 @@ export default function Chessboard() {
       <RoomInfoModal
         room={selected}
         open={Boolean(selected)}
+        filterDateFrom={filterDateFrom}
+        filterDateTo={filterDateTo}
         onClose={() => setSelected(null)}
         busy={busy}
         canFolioRead={can(PERMISSIONS.FOLIO_READ)}
