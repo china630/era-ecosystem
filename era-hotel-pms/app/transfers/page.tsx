@@ -90,7 +90,7 @@ export default function TransfersPage() {
       fetch(
         guestIdFilter
           ? `/api/reservations?guestId=${encodeURIComponent(guestIdFilter)}`
-          : '/api/reservations?status=IN_HOUSE',
+          : '/api/reservations?status=CONFIRMED,OPTION,IN_HOUSE',
       ),
     ]);
     const transferData = await transferRes.json();

@@ -85,10 +85,20 @@ export async function GET(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
     const url = new URL(request.url);
-    const status = url.searchParams.get('status') as ReservationStatus | null;
+    const statusRaw = url.searchParams.get('status');
+    const statuses = (statusRaw ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value): value is ReservationStatus =>
+        ['OPTION', 'CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT', 'CANCELLED', 'NO_SHOW'].includes(value),
+      );
     const guestId = url.searchParams.get('guestId') ?? undefined;
     const includeParty = url.searchParams.get('includeParty') === '1';
-    const reservations = await listReservations(status ?? undefined, guestId, includeParty);
+    const reservations = await listReservations(
+      statuses.length === 0 ? undefined : statuses.length === 1 ? statuses[0] : statuses,
+      guestId,
+      includeParty,
+    );
     return jsonOk(serialize(reservations));
   } catch (err) {
     return handleRouteError(err);

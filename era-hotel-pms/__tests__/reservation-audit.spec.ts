@@ -1,5 +1,7 @@
 import {
   diffReservationSnapshots,
+  journalActionGroup,
+  parseAuditFieldKey,
   parseReservationAuditChanges,
   sectionForField,
   snapshotReservation,
@@ -53,8 +55,23 @@ describe("reservation-audit", () => {
     const summary = summarizeReservationAudit("UPDATE", [
       { key: "roomNumber", from: "101", to: "202" },
     ]);
-    expect(summary).toContain("roomNumber");
+    expect(summary).toContain("room:");
     expect(summary).toContain("101");
+    expect(summarizeReservationAudit("CREATE", [
+      { key: "guestCount", from: null, to: "2" },
+    ])).toBe("CREATE");
+    expect(parseAuditFieldKey("guest.abc.name")).toEqual({
+      kind: "guest",
+      guestId: "abc",
+      attr: "name",
+    });
+    expect(parseAuditFieldKey("night.2026-10-18.amount")).toEqual({
+      kind: "night",
+      ymd: "2026-10-18",
+      attr: "amount",
+    });
+    expect(journalActionGroup("RELOCATE")).toBe("room");
+    expect(journalActionGroup("PAYMENT")).toBe("money");
   });
 
   it("parses new payloads and legacy scalar diffs", () => {

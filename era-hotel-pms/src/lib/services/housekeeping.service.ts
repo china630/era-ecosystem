@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import type { HousekeepingTaskStatus, RoomHkCondition } from '@prisma/client';
 import { roomWriteFromAxes } from '@/lib/room-state';
+import { OccupiedHkLockedError } from '@/lib/occupied-hk-lock';
+import { roomHasInHouseStay } from '@/lib/occupied-hk-guard';
 
 export async function listTasks(status?: HousekeepingTaskStatus) {
   return prisma.housekeepingTask.findMany({
@@ -62,6 +64,9 @@ export async function completeTask(taskId: string, roomStatus: RoomHkCondition |
 export async function markInspected(roomId: string) {
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) throw new Error('Room not found');
+  if (room.hkCondition !== 'INSPECTED' && (await roomHasInHouseStay(roomId))) {
+    throw new OccupiedHkLockedError();
+  }
   const inventory =
     room.inventoryStatus === 'OOO' || room.inventoryStatus === 'OOS'
       ? room.inventoryStatus

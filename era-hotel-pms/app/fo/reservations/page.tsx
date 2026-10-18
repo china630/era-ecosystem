@@ -210,7 +210,7 @@ export default function ReservationsListPage() {
     setPageSize,
     loading,
     reload,
-  } = usePaginatedList<Row, ListFilters>({ fetcher, filters });
+  } = usePaginatedList<Row, ListFilters>({ fetcher, filters, defaultPageSize: 100 });
 
   const numberedRows = useMemo(
     () =>

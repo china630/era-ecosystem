@@ -102,11 +102,13 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
         room: {
           findUnique: jest.fn().mockResolvedValue({
             id: 'room1',
+            hkCondition: 'CLEAN',
             inventoryStatus: 'IN_SERVICE',
             inventoryReason: null,
           }),
           update: jest.fn().mockResolvedValue({ id: 'room1', status: 'INSPECTED' }),
         },
+        reservation: { findFirst: jest.fn().mockResolvedValue(null) },
       },
     }));
     const hk = await import('@/lib/services/housekeeping.service');

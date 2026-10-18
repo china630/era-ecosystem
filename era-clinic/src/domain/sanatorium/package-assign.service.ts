@@ -36,6 +36,22 @@ import {
   formatPhysioFieldsPrint,
   type PhysioOrderFields,
 } from "@/domain/physio/physio-order-fields";
+import {
+  BATH_TRANSFER_PREFIX,
+  bathTransferQuotaCode,
+  bathTransferSku,
+  foldHay,
+  isBathQuotaLine,
+  isBathTransferQuota,
+} from "@/domain/sanatorium/package-assign-quota";
+
+export {
+  BATH_TRANSFER_PREFIX,
+  bathTransferQuotaCode,
+  bathTransferSku,
+  isBathQuotaLine,
+  isBathTransferQuota,
+} from "@/domain/sanatorium/package-assign-quota";
 
 export class PackageAssignError extends Error {
   constructor(
@@ -66,18 +82,6 @@ export function isPackagePoolCode(code: string): boolean {
 }
 
 export type PoolEligibleSku = { code: string; name: string };
-
-function foldHay(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/ə/g, "e")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ç/g, "c")
-    .replace(/ğ/g, "g");
-}
 
 /**
  * Program-template quota codes that are not ProcedureType rows.
@@ -214,6 +218,9 @@ export function resolvePackageQuotaSku(
 export function isPackageAssignTreatmentLine(code: string, name?: string | null): boolean {
   const c = code.trim().toUpperCase();
   if (!c) return false;
+  if (isBathTransferQuota(c)) {
+    return isPackageAssignTreatmentLine(bathTransferSku(c), name);
+  }
   // Pool buckets stay visible — modal opens a SKU picker (eligibleSkusForPool).
   if (isPackagePoolCode(c)) return true;
   if (c.startsWith("WO-TR-") || c.startsWith("SVC-")) return true;
@@ -484,6 +491,8 @@ export type PackageBalanceRow = {
    * Modal shows them read-only; only assignable rows open the picker.
    */
   assignable: boolean;
+  /** Quota moved from unused baths — not auto-seated. */
+  isTransfer?: boolean;
 };
 
 export type PackageAssignedAgg = {
@@ -721,10 +730,15 @@ export async function getPackageAssignSnapshot(
     const configured = membersByBlock.get(line.procedureCode) ?? [];
     const isPool = isEntitlementBucket(line.procedureCode, configured);
     const isQuotaAlias = isPackageQuotaAlias(line.procedureCode);
-    const assignable = isPackageAssignTreatmentLine(
-      line.procedureCode,
-      nameByCode.get(line.procedureCode) ?? line.procedureCode,
-    );
+    const displayCode = isBathTransferQuota(line.procedureCode)
+      ? bathTransferSku(line.procedureCode)
+      : line.procedureCode;
+    const displayName =
+      nameByCode.get(displayCode) ??
+      catalogNames.get(displayCode) ??
+      nameByCode.get(line.procedureCode) ??
+      line.procedureCode;
+    const assignable = isPackageAssignTreatmentLine(line.procedureCode, displayName);
     let needsSkuPicker = false;
     if (assignable) {
       if (configured.length > 1) {
@@ -745,7 +759,7 @@ export async function getPackageAssignSnapshot(
     }
     return {
       procedureCode: line.procedureCode,
-      procedureName: nameByCode.get(line.procedureCode) ?? line.procedureCode,
+      procedureName: displayName,
       quotaTotal: line.quotaTotal,
       quotaUsed: line.quotaUsed,
       remaining: Math.max(0, line.quotaTotal - used),
@@ -755,6 +769,7 @@ export async function getPackageAssignSnapshot(
       isQuotaAlias,
       needsSkuPicker,
       assignable,
+      isTransfer: isBathTransferQuota(line.procedureCode),
     };
   });
 
@@ -957,6 +972,16 @@ export async function assignPackageProcedures(
         );
       }
       skuCode = resolvedSku;
+    } else if (burnQuota && isBathTransferQuota(burnQuota)) {
+      if (bathTransferSku(burnQuota) !== line.procedureCode) {
+        throw new PackageAssignError(
+          `SKU ${line.procedureCode} is not the transfer target for ${burnQuota}`,
+          "TRANSFER_SKU_MISMATCH",
+          400,
+        );
+      }
+      quotaCode = burnQuota;
+      skuCode = line.procedureCode;
     } else if (burnQuota && isPackageQuotaAlias(burnQuota) && !(membersByBlock.get(burnQuota)?.length)) {
       quotaCode = burnQuota;
       const eligible = eligibleSkusForQuotaAlias(
@@ -1380,6 +1405,144 @@ export async function replacePackageProcedures(
 }
 
 /**
+ * Move unused bath quota onto another treatment SKU as in-package remaining.
+ * Does not seat the new SKU. COMPLETED / CHECKED_IN baths stay.
+ */
+export async function transferBathQuota(
+  episodeId: string,
+  input: {
+    fromCode: string;
+    toCode: string;
+    qty: number;
+    reason: string;
+  },
+): Promise<{ transferred: number; quotaCode: string; contraindicationId: string }> {
+  const qty = input.qty;
+  const reason = input.reason.trim();
+  if (qty < 1) {
+    throw new PackageAssignError("qty must be >= 1", "INVALID", 400);
+  }
+  if (reason.length < 2) {
+    throw new PackageAssignError("Contraindication reason is required", "REASON_REQUIRED", 400);
+  }
+  if (isPackagePoolCode(input.toCode) || isBathTransferQuota(input.toCode)) {
+    throw new PackageAssignError(
+      `Pool code ${input.toCode} is not a replacement SKU`,
+      "POOL_NOT_ASSIGNABLE",
+      400,
+    );
+  }
+
+  const episode = await loadEpisodeForAssign(episodeId);
+  const instance = episode.programInstance!;
+  const fromLine = instance.procedureLines.find((l) => l.procedureCode === input.fromCode);
+  if (!fromLine) {
+    throw new PackageAssignError(`No package line ${input.fromCode}`, "NOT_IN_PACKAGE", 400);
+  }
+  const { loadCatalogDisplayNameMap } = await import(
+    "@/domain/catalog/catalog-display-name.service"
+  );
+  const names = await loadCatalogDisplayNameMap([input.fromCode, input.toCode], "az");
+  const fromName = names.get(input.fromCode) ?? input.fromCode;
+  const toName = names.get(input.toCode) ?? input.toCode;
+  if (!isBathQuotaLine(input.fromCode, fromName)) {
+    throw new PackageAssignError("Only unused bath quota can be transferred", "NOT_BATH", 400);
+  }
+  if (isBathQuotaLine(input.toCode, toName)) {
+    throw new PackageAssignError("Replacement must not be another bath", "TARGET_IS_BATH", 400);
+  }
+
+  const live = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: true,
+      OR: [
+        { procedureCode: input.fromCode },
+        { packageQuotaCode: input.fromCode },
+      ],
+      status: { in: ["PROPOSED", "SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] },
+    },
+    orderBy: { scheduledAt: "desc" },
+    select: { id: true, status: true, scheduledAt: true, procedureCode: true, packageQuotaCode: true },
+  });
+  const consumed = live.filter((o) => o.status === "COMPLETED" || o.status === "NO_SHOW").length;
+  const checkedIn = live.filter((o) => o.status === "CHECKED_IN").length;
+  const transferable = fromLine.quotaTotal - consumed - checkedIn;
+  if (qty > transferable) {
+    throw new PackageAssignError(
+      `Only ${Math.max(0, transferable)} unused bath sessions can be transferred`,
+      "INSUFFICIENT_UNUSED",
+      400,
+    );
+  }
+
+  const remaining = Math.max(0, fromLine.quotaTotal - live.length);
+  const cancelNeed = Math.max(0, qty - remaining);
+  const drop = live
+    .filter((o) => o.status === "PROPOSED" || o.status === "SCHEDULED")
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === "PROPOSED" ? -1 : 1;
+      return b.scheduledAt.getTime() - a.scheduledAt.getTime();
+    });
+  const cancel = drop.slice(0, cancelNeed);
+  const quotaCode = bathTransferQuotaCode(input.toCode);
+
+  const contra = await prisma.$transaction(async (tx) => {
+    if (cancel.length > 0) {
+      await tx.procedureOrder.updateMany({
+        where: { id: { in: cancel.map((o) => o.id) } },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+          cancelReason: "bath_quota_transfer",
+        },
+      });
+    }
+    await tx.programProcedureBalance.update({
+      where: { id: fromLine.id },
+      data: { quotaTotal: fromLine.quotaTotal - qty },
+    });
+    const existing = await tx.programProcedureBalance.findUnique({
+      where: {
+        instanceId_procedureCode: { instanceId: instance.id, procedureCode: quotaCode },
+      },
+    });
+    if (existing) {
+      await tx.programProcedureBalance.update({
+        where: { id: existing.id },
+        data: { quotaTotal: existing.quotaTotal + qty },
+      });
+    } else {
+      await tx.programProcedureBalance.create({
+        data: {
+          instanceId: instance.id,
+          procedureCode: quotaCode,
+          quotaTotal: qty,
+          quotaUsed: 0,
+          organizationId: instance.organizationId,
+        },
+      });
+    }
+    return tx.patientContraindication.create({
+      data: {
+        patientRefId: episode.patientRefId,
+        episodeId,
+        bodyPart: "FULL_BODY",
+        note: reason,
+        organizationId: episode.organizationId,
+      },
+    });
+  });
+
+  if (cancel.length > 0) {
+    await releaseProcedureOccupancy(cancel.map((o) => o.id));
+  }
+  await syncQuotaUsed(instance.id, episodeId, input.fromCode);
+  await syncQuotaUsed(instance.id, episodeId, quotaCode);
+  return { transferred: qty, quotaCode, contraindicationId: contra.id };
+}
+
+/**
  * Day-1 auto: up to N distinct non-pool package codes with remaining > 0, qty 1 each.
  * N = Tenant.dailyPackageProcedureCap (default 3).
  */
@@ -1400,7 +1563,15 @@ export async function day1AutoAssign(
     throw new PackageAssignError(snap.blockReason, snap.blockReason, 409);
   }
   const picks = snap.balances
-    .filter((b) => !b.isPool && !b.isQuotaAlias && !b.needsSkuPicker && b.remaining > 0)
+    .filter(
+      (b) =>
+        !b.isPool &&
+        !b.isQuotaAlias &&
+        !b.needsSkuPicker &&
+        !b.isTransfer &&
+        !isBathTransferQuota(b.procedureCode) &&
+        b.remaining > 0,
+    )
     .slice(0, packageCap);
   if (picks.length === 0) {
     throw new PackageAssignError("No remaining package quota", "EMPTY_REMAINING", 400);

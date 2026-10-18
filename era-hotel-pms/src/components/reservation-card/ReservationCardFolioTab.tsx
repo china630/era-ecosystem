@@ -4,12 +4,14 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  CatalogField,
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
   CHIP_GROUP_CLASS,
   DANGER_BUTTON_CLASS,
   FxEquivalentBadge,
   GHOST_BUTTON_CLASS,
+  MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
@@ -183,6 +185,8 @@ export function ReservationCardFolioTab({
   const [transferId, setTransferId] = useState<string | null>(null);
   const [missedOpen, setMissedOpen] = useState(false);
   const [folioFocus, setFolioFocus] = useState<string>('all');
+  const [articleFilter, setArticleFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const namedPax = useMemo(
     () =>
@@ -300,6 +304,26 @@ export function ReservationCardFolioTab({
     return ledger;
   }, [accounts, deletedRows, focusGuestId, folioFocus, ledger]);
 
+  const articleOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const row of visibleRows) {
+      if (row.code && row.code !== '—') seen.set(row.code, row.code);
+    }
+    return Array.from(seen.entries()).map(([value, label]) => ({ value, label }));
+  }, [visibleRows]);
+
+  const filteredRows = useMemo(() => {
+    if (articleFilter === 'all') return visibleRows;
+    return visibleRows.filter((row) => row.code === articleFilter);
+  }, [articleFilter, visibleRows]);
+
+  const allFilteredSelected =
+    filteredRows.length > 0 && filteredRows.every((row) => selectedIds.includes(row.id));
+
+  function toggleRow(id: string, on: boolean) {
+    setSelectedIds((prev) => (on ? Array.from(new Set([...prev, id])) : prev.filter((row) => row !== id)));
+  }
+
   const closable = accounts.filter((f) => {
     if (f.status !== 'OPEN') return false;
     if (Math.abs(accountBalance(f)) >= 0.01) return false;
@@ -333,6 +357,37 @@ export function ReservationCardFolioTab({
 
   const columns: EraDataGridColumn<LedgerRow>[] = useMemo(() => {
     const cols: EraDataGridColumn<LedgerRow>[] = [
+      {
+        key: 'pick',
+        header: (
+          <input
+            type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
+            checked={allFilteredSelected}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setSelectedIds((prev) => {
+                const ids = new Set(prev);
+                for (const row of filteredRows) {
+                  if (on) ids.add(row.id);
+                  else ids.delete(row.id);
+                }
+                return Array.from(ids);
+              });
+            }}
+            aria-label={t('folioSelectAll')}
+          />
+        ) as unknown as string,
+        render: (row) => (
+          <input
+            type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
+            checked={selectedIds.includes(row.id)}
+            onChange={(e) => toggleRow(row.id, e.target.checked)}
+            aria-label={row.description}
+          />
+        ),
+      },
       { key: 'folioType', header: t('folioType'), render: (row) => row.folioType },
       { key: 'code', header: t('department'), render: (row) => row.code },
       { key: 'description', header: t('folioDesc'), render: (row) => row.description },
@@ -340,7 +395,11 @@ export function ReservationCardFolioTab({
         key: 'amount',
         header: t('amount'),
         className: 'text-right font-mono',
-        render: (row) => `${row.amount.toFixed(2)} ${displayCurrency}`,
+        render: (row) => (
+          <span className={row.kind === 'charge' ? 'text-rose-700' : 'text-sky-700'}>
+            {row.amount.toFixed(2)} {displayCurrency}
+          </span>
+        ),
       },
       {
         key: 'actions',
@@ -394,7 +453,7 @@ export function ReservationCardFolioTab({
       });
     }
     return cols;
-  }, [can, displayCurrency, t, tf]);
+  }, [allFilteredSelected, can, displayCurrency, filteredRows, selectedIds, t, tf]);
 
   const cashBar = (
     <div className="flex flex-wrap gap-2">
@@ -409,7 +468,7 @@ export function ReservationCardFolioTab({
       )}
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <button type="button" className={DANGER_BUTTON_CLASS} onClick={() => setPayOpen(true)}>
-          {t('getPayment')}
+          {tf('acceptPayment')}
         </button>
       ) : null}
       {can(PERMISSIONS.NIGHT_AUDIT_RUN) ? (
@@ -445,6 +504,7 @@ export function ReservationCardFolioTab({
         page={1}
         pageSize={Math.max(rows.length, 1)}
         total={rows.length}
+        rowClassName={(row) => (row.kind === 'charge' ? 'bg-rose-50' : 'bg-sky-50')}
       />
     );
   }
@@ -595,7 +655,17 @@ export function ReservationCardFolioTab({
         </div>
       ) : (
         <>
-          {renderGrid(visibleRows)}
+          {articleOptions.length > 0 ? (
+            <CatalogField
+              kind="CLOSED_MEDIUM"
+              label={t('folioFilterArticle')}
+              value={articleFilter}
+              onChange={(v) => setArticleFilter(String(v ?? 'all'))}
+              options={[{ value: 'all', label: t('folioTab.all') }, ...articleOptions]}
+              emptyLabel={null}
+            />
+          ) : null}
+          {renderGrid(filteredRows)}
           {cashBar}
         </>
       )}

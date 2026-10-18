@@ -1,6 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { addHotelDays, stayCheckIn } from '@/lib/hotel-calendar';
-import { todayBakuYmd } from '@era/satellite-kit/time';
 
 export type CashierPayTarget = {
   reservationId: string;
@@ -13,19 +11,13 @@ function personName(parts: Array<string | null | undefined>): string {
   return parts.filter((p) => p && p.trim()).join(' ').trim();
 }
 
-/** In-house stays and today's arrivals, for the header payment modal. */
+/** Live stays the desk can take money on before or after check-in. */
 export async function listCashierPayTargets(q: string): Promise<CashierPayTarget[]> {
-  const today = todayBakuYmd();
-  const from = stayCheckIn(today);
-  const to = stayCheckIn(addHotelDays(today, 1));
   const query = q.trim();
 
   const stays = await prisma.reservation.findMany({
     where: {
-      OR: [
-        { status: 'IN_HOUSE' },
-        { status: 'CONFIRMED', checkInDate: { gte: from, lt: to } },
-      ],
+      status: { in: ['OPTION', 'CONFIRMED', 'IN_HOUSE'] },
       ...(query
         ? {
             AND: [

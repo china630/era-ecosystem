@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Menu } from "lucide-react";
 import {
+  APP_HEADER_HEIGHT_CLASS,
   APP_SIDEBAR_COLLAPSED_LEFT_CLASS,
   APP_SIDEBAR_LEFT_CLASS,
 } from "./design-system";
@@ -44,12 +45,13 @@ export function EraAppHeader({
   return (
     <header
       className={[
-        "fixed top-0 left-0 right-0 z-[60] border-b border-[#2980B9]/15 bg-white/90 backdrop-blur-md transition-[left] duration-200",
+        "fixed top-0 left-0 right-0 z-[60] box-border border-b border-[#2980B9]/15 bg-white/90 backdrop-blur-md transition-[left] duration-200",
+        APP_HEADER_HEIGHT_CLASS,
         sidebarLeft,
         className,
       ].join(" ")}
     >
-      <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-6 sm:py-3">
+      <div className="flex h-full flex-nowrap items-center justify-between gap-3 overflow-hidden px-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           {onToggleMobileNav ? (
             <button
@@ -66,7 +68,7 @@ export function EraAppHeader({
           {left}
         </div>
 
-        <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 shrink-0 flex-nowrap items-center gap-2 sm:gap-3">
           {tierBar}
           {locale}
           {notifications}

@@ -11,6 +11,9 @@ import {
   eligibleSkusForPool,
   eligibleSkusForQuotaAlias,
   isPackageAssignTreatmentLine,
+  isBathQuotaLine,
+  isBathTransferQuota,
+  bathTransferQuotaCode,
   resolvePackageQuotaSku,
 } from "@/domain/sanatorium/package-assign.service";
 import { applyQuotaRecalc } from "@/lib/program-quota";
@@ -43,6 +46,7 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
     expect(isPackageAssignTreatmentLine("SVC-OZONE", "Ozone")).toBe(true);
     expect(isPackageAssignTreatmentLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);
+    expect(isPackageAssignTreatmentLine("XFER-SVC-MASSAGE", "Massage")).toBe(true);
 
     expect(isPackageAssignTreatmentLine("ALT", "ALAT")).toBe(false);
     expect(isPackageAssignTreatmentLine("AST", "ASAT")).toBe(false);
@@ -53,6 +57,15 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackageAssignTreatmentLine("LAB-CBC", "Qan umumi analiz")).toBe(false);
     expect(isPackageAssignTreatmentLine("LAB-URINE", "Sidik")).toBe(false);
     expect(isPackageAssignTreatmentLine("THERAPIST", "Hekim muayinesi")).toBe(false);
+  });
+
+  it("isBathQuotaLine and XFER codes", () => {
+    expect(isBathQuotaLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);
+    expect(isBathQuotaLine("SVC-OZONE", "Ozone")).toBe(false);
+    expect(isBathTransferQuota("XFER-SVC-MASSAGE")).toBe(true);
+    expect(bathTransferQuotaCode("SVC-MASSAGE")).toBe("XFER-SVC-MASSAGE");
+    expect(isBathQuotaLine("XFER-SVC-MASSAGE", "Massage")).toBe(false);
+    expect(isBathQuotaLine("SVC-APP-01", "Naftalan aplikasiyası")).toBe(true);
   });
 
   it("resolvePackageQuotaSku maps NAFTALAN_BATH by sex and WO-TR fallbacks", () => {

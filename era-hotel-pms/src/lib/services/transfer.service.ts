@@ -61,8 +61,8 @@ export async function createTransferOrder(input: {
   const reservation = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
   });
-  if (!reservation || !['CONFIRMED', 'IN_HOUSE'].includes(reservation.status)) {
-    throw new Error('Reservation must be CONFIRMED or IN_HOUSE');
+  if (!reservation || !['OPTION', 'CONFIRMED', 'IN_HOUSE'].includes(reservation.status)) {
+    throw new Error('Reservation must be OPTION, CONFIRMED or IN_HOUSE');
   }
 
   if (input.vehicleId) {

@@ -27,23 +27,39 @@ const chargeSchema = z.object({
 });
 
 const paymentSchema = z.object({
-  folioId: z.string().uuid(),
+  folioId: z.string().uuid().optional(),
+  reservationId: z.string().uuid().optional(),
+  revenueCodeId: z.string().uuid().optional(),
   amount: z.number().positive(),
   paymentMethod: z.enum(DESK_PAYMENT_METHODS),
   registerRef: z.string().optional(),
   bankReference: z.string().max(120).optional(),
   bankTerminalId: z.string().min(1).max(64).optional(),
+}).refine((row) => Boolean(row.folioId || row.reservationId), {
+  message: 'folioId or reservationId is required',
 });
 
 export async function POST(request: Request) {
   try {
     const session = await getSatelliteSession();
     const body = await request.json();
-    if (body.folioId) {
+    if (body.folioId || (body.reservationId && body.paymentMethod)) {
       assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
       const data = paymentSchema.parse(body);
+      let folioId = data.folioId;
+      if (!folioId && data.reservationId) {
+        const { ensureOpenFolio } = await import('@/lib/services/booking-folio.service');
+        const folio = await ensureOpenFolio(data.reservationId, 'GUEST');
+        folioId = folio.id;
+      }
       const payment = await postPayment({
-        ...data,
+        folioId: folioId!,
+        amount: data.amount,
+        paymentMethod: data.paymentMethod,
+        registerRef: data.registerRef,
+        bankReference: data.bankReference,
+        bankTerminalId: data.bankTerminalId,
+        revenueCodeId: data.revenueCodeId,
         createdByUserId: session?.sub,
         auditRequest: request,
       });

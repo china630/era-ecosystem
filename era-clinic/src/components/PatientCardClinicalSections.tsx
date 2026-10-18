@@ -17,6 +17,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   showApiError,
+  showSuccess,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
@@ -31,6 +32,7 @@ import {
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
+import { toastPackageAssignOutcome } from "@/lib/package-assign-toasts";
 type TimelineEvent = {
   id: string;
   type: string;
@@ -735,7 +737,14 @@ export function PatientCardClinicalSections({
                           );
                           return;
                         }
-                        if (missText) showApiError({ error: missText });
+                        toastPackageAssignOutcome(
+                          [],
+                          misses,
+                          (key, values) => t(key, values),
+                        );
+                        if (typeof d.placed === "number" && d.placed > 0) {
+                          showSuccess(t("day1ProgramOpened"));
+                        }
                         const q = `?${new URLSearchParams({
                           ...(episodeId ? { episode: episodeId } : {}),
                           locale,
@@ -745,6 +754,8 @@ export function PatientCardClinicalSections({
                           const d = await r.json();
                           setSummary(d.data ?? d);
                         }
+                        await loadPlan(true);
+                        setQuotaTick((n) => n + 1);
                       })
                       .finally(() => setDay1Busy(false));
                   }
@@ -980,6 +991,8 @@ export function PatientCardClinicalSections({
                 const d = await r.json();
                 setSummary(d.data ?? d);
               }
+              await loadPlan(true);
+              setQuotaTick((n) => n + 1);
             }}
             labels={{
               title: t("assignPackageTitle", { defaultValue: "Procedures in package" }),

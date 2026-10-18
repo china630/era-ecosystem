@@ -1,25 +1,29 @@
 import { prisma } from '@/lib/prisma';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { recordHotelAudit } from '@/lib/satellite-audit';
+import {
+  RESERVATION_AUDIT_SECTIONS,
+  type ReservationAuditField,
+  type ReservationAuditSection,
+  type ReservationAuditSource,
+  type StayJournalEntry,
+} from '@/lib/reservation-journal';
 
-export const RESERVATION_AUDIT_SECTIONS = [
-  'card',
-  'guests',
-  'nights',
-  'notes',
-  'status',
-  'folio',
-] as const;
-
-export type ReservationAuditSection = (typeof RESERVATION_AUDIT_SECTIONS)[number];
-
-export type ReservationAuditSource = 'user' | 'elektraweb' | 'night_audit' | 'system';
-
-export type ReservationAuditField = {
-  key: string;
-  from: string | null;
-  to: string | null;
-};
+export {
+  JOURNAL_ACTION_GROUPS,
+  RESERVATION_AUDIT_SECTIONS,
+  guestNameHint,
+  journalActionGroup,
+  parseAuditFieldKey,
+} from '@/lib/reservation-journal';
+export type {
+  JournalActionGroup,
+  ParsedAuditFieldKey,
+  ReservationAuditField,
+  ReservationAuditSection,
+  ReservationAuditSource,
+  StayJournalEntry,
+} from '@/lib/reservation-journal';
 
 export type ReservationAuditPayload = {
   section: ReservationAuditSection;
@@ -33,18 +37,6 @@ export type ReservationAuditActor = {
   userId?: string | null;
   request?: Request;
   source?: ReservationAuditSource;
-};
-
-export type StayJournalEntry = {
-  id: string;
-  action: string;
-  createdAt: string;
-  actor: string | null;
-  section: ReservationAuditSection;
-  source: ReservationAuditSource;
-  summary: string;
-  fields: ReservationAuditField[];
-  ipAddress?: string | null;
 };
 
 type SnapshotField = { key: string; section: ReservationAuditSection; value: string | null };
@@ -237,10 +229,28 @@ export function summarizeReservationAudit(
   action: string,
   fields: ReservationAuditField[],
 ): string {
+  if (action === 'CREATE') return action;
   if (fields.length === 0) return action;
-  const labels = fields.slice(0, 4).map((item) => `${item.key}: ${item.from ?? '—'} → ${item.to ?? '—'}`);
-  const extra = fields.length > 4 ? ` (+${fields.length - 4})` : '';
-  return `${action} · ${labels.join('; ')}${extra}`;
+  const guestCount = fields.find((item) => item.key === 'guestCount');
+  const room = fields.find((item) => item.key === 'roomNumber');
+  const status = fields.find((item) => item.key === 'status');
+  const nights = fields.filter((item) => /^night\.\d{4}-\d{2}-\d{2}\.amount$/.test(item.key));
+  const amount = fields.find((item) => item.key === 'amount');
+  const parts: string[] = [];
+  if (status) parts.push(`status: ${status.from ?? '—'} → ${status.to ?? '—'}`);
+  if (guestCount) parts.push(`guests: ${guestCount.from ?? '—'} → ${guestCount.to ?? '—'}`);
+  if (room) parts.push(`room: ${room.from ?? '—'} → ${room.to ?? '—'}`);
+  if (nights.length === 1) {
+    parts.push(`night: ${nights[0]!.from ?? '—'} → ${nights[0]!.to ?? '—'}`);
+  } else if (nights.length > 1) {
+    parts.push(`nights: ${nights.length}`);
+  }
+  if (amount) parts.push(`amount: ${amount.to ?? amount.from ?? '—'}`);
+  if (parts.length === 0) {
+    const first = fields[0]!;
+    parts.push(`${first.key}: ${first.from ?? '—'} → ${first.to ?? '—'}`);
+  }
+  return `${action} · ${parts.slice(0, 3).join('; ')}`;
 }
 
 export function parseReservationAuditChanges(raw: unknown): {

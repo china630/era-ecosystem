@@ -237,7 +237,8 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 3. Extras modal shows unit price + muted total; Save → `PENDING_PAY` on card (not nurse list until ticket).
 4. `/reception/extra-tickets` → filters + row money icon or select all → Pay → folio/cashier → schedule → one cheque with every paid line, 3 copy windows.
 5. Nurse `/nurse?mine=1`: unpaid extras absent; paid without ticket → check-in `TICKET_REQUIRED`.
-6. Replace (manager): out-of-package target → `PENDING_PAY` (never free). Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
+6. **Bath replace:** Package modal **Əvəz et** — unused bath leftover (not completed/checked-in) → another SKU as **free package** quota (`XFER-*`). Reason required (contraindication + date). New SKU appears under **Əvəz edilmiş prosedurlar**; **not** auto-seated. Folio/`PENDING_PAY` must not apply. Reception **Procedures → Add paid (same-day)** → confirm `SAME_DAY_FOURTH_PAID` → folio (`inPackage: false`).
+6b. After **Saxla**: one green toast per seated SKU (`qty × name`) and one red toast per missed SKU; Plan tab reloads. Care team trash asks confirm. `/lab-orders` create: guest picker + catalog chips; no Visit ID / create-modality.
 7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** for the batch (reception / nurse / guest), and each window lists every procedure on that receipt.
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
 9. **Package left menu** shows **named treatment SKUs only** (e.g. Naftalan). Pool buckets (Fizioprosedurlar* / Parafin* / `PHYSIO_POOL`) are **hidden** — not assignable as a catch-all from this modal.

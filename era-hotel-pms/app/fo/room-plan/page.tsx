@@ -188,7 +188,7 @@ export default function RoomPlanPage() {
   async function moveReservation(
     reservationId: string,
     toRoomId: string,
-    reasonCode: RoomMoveReason,
+    reasonCode?: RoomMoveReason,
   ) {
     if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
     setBusy(true);
@@ -196,7 +196,11 @@ export default function RoomPlanPage() {
       const res = await fetch(`/api/reservations/${reservationId}/relocate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode }),
+        body: JSON.stringify({
+          roomId: toRoomId,
+          compUpgrade: true,
+          ...(reasonCode ? { reasonCode } : {}),
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -316,7 +320,14 @@ export default function RoomPlanPage() {
       }}
       onMoveReservation={
         can(PERMISSIONS.RESERVATIONS_WRITE)
-          ? (reservationId, toRoomId) => setPendingMove({ reservationId, toRoomId })
+          ? (reservationId, toRoomId) => {
+              const stay = data?.reservations.find((row) => row.id === reservationId);
+              if (stay?.status === 'IN_HOUSE') {
+                setPendingMove({ reservationId, toRoomId });
+                return;
+              }
+              void moveReservation(reservationId, toRoomId);
+            }
           : undefined
       }
       onResizeEnd={

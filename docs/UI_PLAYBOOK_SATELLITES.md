@@ -12,7 +12,7 @@ Authenticated routes use the **Finance-aligned shell** from `@era/satellite-kit/
 |-------|-----------|--------|
 | Root body | `APP_SHELL_CLASS` | Full viewport, `#EBEDF0` background |
 | Route wrapper | **`EraAppRouteShell`** | Mobile drawer, sidebar collapse, bare public paths. Finance and orchestrator use the same `EraAppShellLayout` + `EraAppSidebar`; collapse is remembered in `era.sidebar.collapsed` (legacy `erafinance_sidebar_collapsed` is read once). |
-| Header | **`EraAppHeader`** | Fixed top bar; slots for left cluster + right profile cluster |
+| Header | **`EraAppHeader`** | Fixed top bar **`h-16`** (`APP_HEADER_HEIGHT_CLASS`); main offset **`pt-16`** (`APP_HEADER_OFFSET_CLASS`) — keep these paired so the title band does not slide under the bar |
 | Sidebar | **`EraAppSidebar`** | **`17.5rem`** expanded; **`overflow-x-hidden`**; collapsible sections via `EraOpsSidebarSections` |
 | Main | `EraOpsContent` inside shell | Padding = **`APP_MAIN_CONTENT_PADDED_CLASS`** (same as orch/finance `APP_MAIN_CONTENT_CLASS`); no `max-w-*` on ops screens |
 | Platform links | `PlatformSessionBarServer` | Finance / Billing deep links only — **not** org name (org is in header) |
