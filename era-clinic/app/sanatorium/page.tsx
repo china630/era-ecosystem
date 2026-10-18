@@ -35,6 +35,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   PageHeader,
   TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
   type EraDataGridColumn,
