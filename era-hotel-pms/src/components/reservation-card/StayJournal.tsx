@@ -3,14 +3,20 @@
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
-import { TAB_ITEM_ACTIVE_CLASS, TAB_ITEM_CLASS, TAB_STRIP_CLASS } from '@era/satellite-kit/ui';
+import { CatalogField } from '@era/satellite-kit/ui';
 import type {
   ReservationAuditField,
+  ReservationAuditSection,
   ReservationAuditSource,
   StayJournalEntry,
 } from '@/lib/reservation-audit';
-
-type TabId = 'feed' | 'fields';
+import {
+  JOURNAL_ACTION_GROUPS,
+  guestNameHint,
+  journalActionGroup,
+  parseAuditFieldKey,
+  type JournalActionGroup,
+} from '@/lib/reservation-audit';
 
 const ACTION_KEYS = [
   'CREATE',
@@ -43,6 +49,49 @@ const ACTION_KEYS = [
   'MISSED_NIGHTS',
 ] as const;
 
+const PLAIN_FIELD_KEYS = [
+  'status',
+  'checkInDate',
+  'checkOutDate',
+  'roomType',
+  'givenRoomType',
+  'roomNumber',
+  'ratePlan',
+  'mealPlan',
+  'paymentMethod',
+  'billingMode',
+  'source',
+  'agency',
+  'company',
+  'contract',
+  'walkInProfile',
+  'adults',
+  'children11_6',
+  'children5_2',
+  'children1_0',
+  'voucherNo',
+  'resNo',
+  'market',
+  'segment',
+  'vipType',
+  'tripReason',
+  'creditLimitAzn',
+  'useManualRate',
+  'manualDailyRate',
+  'discountPercent',
+  'isLocked',
+  'guestCount',
+  'amount',
+  'revenueCode',
+  'folioType',
+  'reason',
+] as const;
+
+const SECTIONS: ReservationAuditSection[] = ['card', 'guests', 'nights', 'notes', 'status', 'folio'];
+const SOURCES: ReservationAuditSource[] = ['user', 'elektraweb', 'night_audit', 'system'];
+const ACTION_GROUPS = Object.keys(JOURNAL_ACTION_GROUPS) as JournalActionGroup[];
+const MONEY_KEYS = new Set(['amount', 'creditLimitAzn', 'manualDailyRate', 'discountPercent']);
+
 function dash(value: string | null | undefined): string {
   return value && value.trim() ? value : '—';
 }
@@ -51,6 +100,111 @@ function actionLabel(t: (key: string) => string, action: string): string {
   return (ACTION_KEYS as readonly string[]).includes(action)
     ? t(`stayJournalAction.${action}`)
     : action;
+}
+
+function ymdDisplay(ymd: string): string {
+  const [year, month, day] = ymd.split('-');
+  if (!year || !month || !day) return ymd;
+  return `${day}.${month}.${year}`;
+}
+
+function formatFieldValue(
+  t: (key: string) => string,
+  tRes: (key: string) => string,
+  key: string,
+  value: string | null | undefined,
+): string {
+  if (!value || !value.trim()) return '—';
+  if (value === 'true') return t('stayJournalYes');
+  if (value === 'false') return t('stayJournalNo');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return ymdDisplay(value);
+  if (key === 'status') {
+    try {
+      return tRes(value);
+    } catch {
+      return value;
+    }
+  }
+  const parsed = parseAuditFieldKey(key);
+  const money =
+    MONEY_KEYS.has(key) || (parsed.kind === 'night' && parsed.attr === 'amount');
+  if (money && /^-?\d+(\.\d+)?$/.test(value)) return `${value} AZN`;
+  return value;
+}
+
+function fieldLabel(
+  t: (key: string) => string,
+  key: string,
+  fields: ReservationAuditField[],
+): string {
+  const parsed = parseAuditFieldKey(key);
+  if (parsed.kind === 'guest') {
+    const attr = t(`stayJournalFieldKey.guest.${parsed.attr}`);
+    const name = guestNameHint(fields, parsed.guestId);
+    return name ? `${attr} · ${name}` : attr;
+  }
+  if (parsed.kind === 'night') {
+    const [, month, day] = parsed.ymd.split('-');
+    return t(`stayJournalFieldKey.night.${parsed.attr}`, {
+      date: day && month ? `${day}.${month}` : parsed.ymd,
+    });
+  }
+  if (parsed.kind === 'note') {
+    return t('stayJournalFieldKey.note', { type: parsed.noteType });
+  }
+  if ((PLAIN_FIELD_KEYS as readonly string[]).includes(parsed.key)) {
+    return t(`stayJournalFieldKey.${parsed.key}`);
+  }
+  return parsed.key;
+}
+
+function entrySummary(
+  t: (key: string) => string,
+  tRes: (key: string) => string,
+  entry: StayJournalEntry,
+): string {
+  if (entry.action === 'CREATE') return t('stayJournalCreatedShort');
+  const fields = entry.fields;
+  if (fields.length === 0) return actionLabel(t, entry.action);
+  const guestCount = fields.find((item) => item.key === 'guestCount');
+  if (guestCount) {
+    return t('stayJournalSummaryGuests', {
+      from: dash(guestCount.from),
+      to: dash(guestCount.to),
+    });
+  }
+  const room = fields.find((item) => item.key === 'roomNumber');
+  if (room) {
+    return t('stayJournalSummaryRoom', { from: dash(room.from), to: dash(room.to) });
+  }
+  const status = fields.find((item) => item.key === 'status');
+  if (status) {
+    return t('stayJournalSummaryStatus', {
+      from: formatFieldValue(t, tRes, 'status', status.from),
+      to: formatFieldValue(t, tRes, 'status', status.to),
+    });
+  }
+  const nights = fields.filter((item) => /^night\.\d{4}-\d{2}-\d{2}\.amount$/.test(item.key));
+  if (nights.length > 1) {
+    return t('stayJournalSummaryNights', { count: nights.length });
+  }
+  if (nights.length === 1) {
+    const parsed = parseAuditFieldKey(nights[0]!.key);
+    const date = parsed.kind === 'night' ? ymdDisplay(parsed.ymd) : nights[0]!.key;
+    return t('stayJournalSummaryNight', {
+      date,
+      from: formatFieldValue(t, tRes, nights[0]!.key, nights[0]!.from),
+      to: formatFieldValue(t, tRes, nights[0]!.key, nights[0]!.to),
+    });
+  }
+  const amount = fields.find((item) => item.key === 'amount');
+  if (amount) {
+    return t('stayJournalSummaryAmount', {
+      amount: formatFieldValue(t, tRes, 'amount', amount.to ?? amount.from),
+    });
+  }
+  const first = fields[0]!;
+  return `${fieldLabel(t, first.key, fields)}: ${formatFieldValue(t, tRes, first.key, first.from)} → ${formatFieldValue(t, tRes, first.key, first.to)}`;
 }
 
 export function StayJournal({
@@ -63,149 +217,166 @@ export function StayJournal({
   error?: boolean;
 }) {
   const t = useTranslations('reservationCard');
-  const [tab, setTab] = useState<TabId>('feed');
-  const fieldRows = useMemo(() => {
-    const rows: Array<{
-      id: string;
-      createdAt: string;
-      action: string;
-      actor: string | null;
-      source: ReservationAuditSource;
-      field: ReservationAuditField;
-    }> = [];
-    for (const entry of entries) {
-      for (const field of entry.fields) {
-        rows.push({
-          id: `${entry.id}:${field.key}`,
-          createdAt: entry.createdAt,
-          action: entry.action,
-          actor: entry.actor,
-          source: entry.source,
-          field,
-        });
-      }
+  const tRes = useTranslations('reservationStatus');
+  const [actionGroup, setActionGroup] = useState('');
+  const [section, setSection] = useState('');
+  const [actor, setActor] = useState('');
+  const [source, setSource] = useState('');
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const actors = useMemo(() => {
+    const names = new Set<string>();
+    for (const row of entries) {
+      if (row.actor) names.add(row.actor);
     }
-    return rows;
+    return [...names].sort((a, b) => a.localeCompare(b));
   }, [entries]);
+
+  const visible = useMemo(() => {
+    return entries.filter((row) => {
+      if (actionGroup) {
+        const group = journalActionGroup(row.action);
+        if (group !== actionGroup) return false;
+      }
+      if (section && row.section !== section) return false;
+      if (source && row.source !== source) return false;
+      if (actor === '__system__') {
+        if (row.actor) return false;
+      } else if (actor && row.actor !== actor) {
+        return false;
+      }
+      return true;
+    });
+  }, [entries, actionGroup, section, actor, source]);
+
+  function catalogValue(next: string | string[]): string {
+    return Array.isArray(next) ? (next[0] ?? '') : next;
+  }
 
   return (
     <div className="space-y-3">
-      <div className={TAB_STRIP_CLASS} role="tablist">
-        {(['feed', 'fields'] as TabId[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            className={tab === id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
-            onClick={() => setTab(id)}
-          >
-            {id === 'feed' ? t('stayJournalFeed') : t('stayJournalFields')}
-          </button>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('stayJournalAction')}
+          value={actionGroup}
+          onChange={(next) => setActionGroup(catalogValue(next))}
+          options={ACTION_GROUPS.map((id) => ({
+            value: id,
+            label: t(`stayJournalActionGroup.${id}`),
+          }))}
+          emptyLabel={t('stayJournalFilterAll')}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('stayJournalSectionLabel')}
+          value={section}
+          onChange={(next) => setSection(catalogValue(next))}
+          options={SECTIONS.map((id) => ({
+            value: id,
+            label: t(`stayJournalSection.${id}`),
+          }))}
+          emptyLabel={t('stayJournalFilterAll')}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('stayJournalActor')}
+          value={actor}
+          onChange={(next) => setActor(catalogValue(next))}
+          options={[
+            { value: '__system__', label: t('stayJournalActorSystem') },
+            ...actors.map((name) => ({ value: name, label: name })),
+          ]}
+          emptyLabel={t('stayJournalFilterAll')}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('stayJournalSourceLabel')}
+          value={source}
+          onChange={(next) => setSource(catalogValue(next))}
+          options={SOURCES.map((id) => ({
+            value: id,
+            label: t(`stayJournalSource.${id}`),
+          }))}
+          emptyLabel={t('stayJournalFilterAll')}
+        />
       </div>
       {loading ? (
         <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalLoading')}</p>
       ) : error ? (
         <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalLoadError')}</p>
-      ) : tab === 'feed' ? (
-        <Feed entries={entries} />
+      ) : visible.length === 0 ? (
+        <p className="m-0 text-[13px] text-[#7F8C8D]">
+          {entries.length === 0 ? t('stayJournalEmpty') : t('stayJournalNoMatch')}
+        </p>
       ) : (
-        <Fields rows={fieldRows} />
+        <ul className="m-0 list-none divide-y divide-[#E8EEF2] p-0">
+          {visible.map((row) => {
+            const open = openId === row.id;
+            return (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
+                  aria-expanded={open}
+                  onClick={() => setOpenId(open ? null : row.id)}
+                >
+                  <span className="min-w-0">
+                    <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+                      {actionLabel(t, row.action)}
+                      {' · '}
+                      {t(`stayJournalSection.${row.section}` as 'stayJournalSection.card')}
+                    </span>
+                    <span className="block text-[13px] font-medium text-[#34495E]">
+                      {entrySummary(t, tRes, row)}
+                    </span>
+                    <span className="mt-0.5 block text-[12px] text-[#7F8C8D]">
+                      {row.actor ?? t('stayJournalActorSystem')}
+                      {' · '}
+                      {t(`stayJournalSource.${row.source}` as 'stayJournalSource.user')}
+                      {row.ipAddress ? ` · ${row.ipAddress}` : ''}
+                    </span>
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap text-[12px] text-[#7F8C8D]">
+                    {bakuDateTimeDisplay(row.createdAt)}
+                  </span>
+                </button>
+                {open && row.fields.length > 0 ? (
+                  <div className="overflow-x-auto pb-3">
+                    <table className="w-full border-collapse text-left text-[12px] text-[#34495E]">
+                      <thead>
+                        <tr className="border-b border-[#E8EEF2] text-[#7F8C8D]">
+                          <th className="py-1 pr-3 font-medium">{t('stayJournalField')}</th>
+                          <th className="py-1 pr-3 font-medium">{t('stayJournalFrom')}</th>
+                          <th className="py-1 font-medium">{t('stayJournalTo')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {row.fields.map((field) => (
+                          <tr key={`${row.id}:${field.key}`} className="border-b border-[#F0F4F6]">
+                            <td className="py-1 pr-3 font-medium">
+                              {fieldLabel(t, field.key, row.fields)}
+                            </td>
+                            <td className="py-1 pr-3">
+                              {formatFieldValue(t, tRes, field.key, field.from)}
+                            </td>
+                            <td className="py-1">
+                              {formatFieldValue(t, tRes, field.key, field.to)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+                {open && row.fields.length === 0 ? (
+                  <p className="m-0 pb-3 text-[12px] text-[#7F8C8D]">{t('stayJournalNoFieldDiff')}</p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       )}
-    </div>
-  );
-}
-
-function Feed({ entries }: { entries: StayJournalEntry[] }) {
-  const t = useTranslations('reservationCard');
-  if (entries.length === 0) {
-    return <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalEmpty')}</p>;
-  }
-  return (
-    <ul className="m-0 list-none space-y-3 p-0">
-      {entries.map((row) => (
-        <li key={row.id} className="border-b border-[#E8EEF2] pb-3 last:border-b-0 last:pb-0">
-          <div className="flex flex-wrap items-baseline justify-between gap-2 text-[13px] text-[#34495E]">
-            <strong className="font-semibold">{actionLabel(t, row.action)}</strong>
-            <span className="text-[#7F8C8D]">{bakuDateTimeDisplay(row.createdAt)}</span>
-          </div>
-          <p className="m-0 mt-1 text-[12px] text-[#7F8C8D]">
-            {t(`stayJournalSection.${row.section}` as 'stayJournalSection.card')}
-            {' · '}
-            {t(`stayJournalSource.${row.source}` as 'stayJournalSource.user')}
-            {' · '}
-            {row.actor ?? t('stayJournalActorSystem')}
-            {row.ipAddress ? ` · ${row.ipAddress}` : ''}
-          </p>
-          <p className="m-0 mt-1 text-[13px] text-[#34495E]">
-            {row.action === 'CREATE' && row.fields.length === 0
-              ? t('stayCreated', { at: bakuDateTimeDisplay(row.createdAt) })
-              : row.summary}
-          </p>
-          {row.fields.length > 0 ? (
-            <ul className="m-0 mt-2 list-none space-y-0.5 p-0 text-[12px] text-[#34495E]">
-              {row.fields.map((field) => (
-                <li key={`${row.id}:${field.key}`}>
-                  <span className="font-medium">{field.key}</span>
-                  {': '}
-                  {dash(field.from)} → {dash(field.to)}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Fields({
-  rows,
-}: {
-  rows: Array<{
-    id: string;
-    createdAt: string;
-    action: string;
-    actor: string | null;
-    source: ReservationAuditSource;
-    field: ReservationAuditField;
-  }>;
-}) {
-  const t = useTranslations('reservationCard');
-  if (rows.length === 0) {
-    return <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalEmpty')}</p>;
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-[12px] text-[#34495E]">
-        <thead>
-          <tr className="border-b border-[#E8EEF2] text-[#7F8C8D]">
-            <th className="py-1 pr-3 font-medium">{t('stayJournalTime')}</th>
-            <th className="py-1 pr-3 font-medium">{t('stayJournalField')}</th>
-            <th className="py-1 pr-3 font-medium">{t('stayJournalFrom')}</th>
-            <th className="py-1 pr-3 font-medium">{t('stayJournalTo')}</th>
-            <th className="py-1 pr-3 font-medium">{t('stayJournalAction')}</th>
-            <th className="py-1 pr-3 font-medium">{t('stayJournalActor')}</th>
-            <th className="py-1 font-medium">{t('stayJournalSourceLabel')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id} className="border-b border-[#F0F4F6] align-top">
-              <td className="py-1 pr-3 whitespace-nowrap">{bakuDateTimeDisplay(row.createdAt)}</td>
-              <td className="py-1 pr-3 font-medium">{row.field.key}</td>
-              <td className="py-1 pr-3">{dash(row.field.from)}</td>
-              <td className="py-1 pr-3">{dash(row.field.to)}</td>
-              <td className="py-1 pr-3">{actionLabel(t, row.action)}</td>
-              <td className="py-1 pr-3">{row.actor ?? t('stayJournalActorSystem')}</td>
-              <td className="py-1">
-                {t(`stayJournalSource.${row.source}` as 'stayJournalSource.user')}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

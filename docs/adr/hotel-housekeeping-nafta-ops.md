@@ -24,7 +24,7 @@ Opera Cloud practices (credits, turndown, rush-push) do not match this labour mo
 1. **Three room axes** (do not add Pickup / SO as extra `RoomStatus` values):
    - Inventory: in service / **OOS** / **OOO** (date-bounded; `MAINTENANCE` collapses to OOS/OOO + reason).
    - FO occupancy: vacant / occupied — derived from `IN_HOUSE`, not the sole stored truth.
-   - HK condition: Dirty / Pickup / Clean / Inspected.
+   - HK condition: Dirty / Pickup / Clean / Inspected. Front office (rack, chessboard, RoomInfo, `PATCH /api/rooms/:id/status`) cannot change cleanliness while the door has an `IN_HOUSE` stay. HK visit outcomes and system checkout/move writers still can. Night audit does not reset occupied rooms to Dirty.
 2. **OOO vs OOS in statistics:** OOO leaves inventory (excluded from occupancy / RevPAR denominator). OOS stays in inventory and only blocks sell. Today both are subtracted the same way — that is wrong after this wave.
 3. **Three HK departments** are first-class (rooms / public area / laundry), not filters on one maid list. Shift templates **E 08:00–16:00**, **L 16:00–00:00**, **N 00:00–08:00**, plus per-cell time override. Night public-area role may be **pinned**.
 4. **Roster is a draft the manager owns.** Auto-propose week (6/1 OFF; Mərtəbə: exactly one OFF per calendar day when headcount is 7). Any cell is editable. Drag-and-drop: reorder rows, swap floor pairs, move person between departments. Shift codes use `CatalogField` / closed list — not free text.

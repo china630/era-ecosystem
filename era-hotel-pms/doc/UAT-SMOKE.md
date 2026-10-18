@@ -239,7 +239,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260601120000_wave_b_full`
 5. `/reports/inhouse-daily` — pick date, in-house + departures grids.
 6. `/reports/end-of-day-logs` — after `/operations` night audit, runs listed.
 7. `/channel` — availability matrix for date range.
-8. `/housekeeping/closed-rooms` — OOO/OOS rooms (not parity stub).
+8. `/hk/closed-rooms` — OOO/OOS rooms (not parity stub). Return to service is on the row.
 9. `/guests` → open **Guest card** → Identity tab → add document.
 
 ## 13. Wave C — Front Office product (2026-06-01)
@@ -256,6 +256,7 @@ Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d
 ### Room rack & plan
 6. Rack tile for the **filter date range** (From–To): guest + stay dates only for in-house or an arrival whose check-in falls in that interval (not a mid-stay CONFIRMED without check-in). Gender chip uses `normalizeShareGender` (EW `0` = male). Filter column and room grid scroll independently. Unassigned arrivals: compact room search + Assign (same type, assignable doors only).
 7. Drag in-house / today's-arrival reservation to another **vacant** room → confirm → room updates (HK-03 enforced). A Reserved (assigned, not received) tile is not a drop target.
+7a. In-house tile: HK cleanliness select is off (label only). RoomInfo cleanliness buttons are disabled. `PATCH /api/rooms/:id/status` with a new `hkCondition` returns 409 `OCCUPIED_HK_LOCKED`. HK visit V/VC/OK on `/hk/mobile` can still set CLEAN.
 8. `/room-plan`: **Grouping** and **Period** dropdowns (14/21/30); drag bar to another room row.
 
 ### Lists & cards
@@ -426,7 +427,7 @@ Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-cor
 UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR`; guest folio still requires zero balance.
-1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. Stay with no debt → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists. Guest with a HELD deposit and "Apply deposits" on → the prefilled amount is the debt less the deposit; an amount above that is refused in the dialog. User without folio payment right (Night auditor) → "Pay now" is not offered, a hint explains why.
+1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. The top of the dialog shows charges, money in, and net (pay or refund). Stay with no net → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists. Held cash is already in "money in"; the pay amount is the net. User without folio payment right (Night auditor) → "Pay now" is not offered, a hint explains why.
 2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error.
 3. **Deposit on settle:** HELD deposit → `/folio/[id]` settle wizard → Apply deposits / method DEPOSIT → balance reduces; deposit APPLIED.
 4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
@@ -507,7 +508,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
 4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` **grid** (empty headers + guest/room/status/date filters) + fallback Delivered on the **same** ticket only.
 5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
-6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates.
+6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates. Return to service puts the door back to IN_SERVICE (DIRTY).
 7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
 8. `/hk/forecast` — 7 and 14 day load by floor.
 9. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
@@ -525,7 +526,7 @@ ADR: [hotel-stay-amendment-and-pricing.md](../../docs/adr/hotel-stay-amendment-a
 4. Wizard: effective date = today or later; preview nights; apply. Past posted nights unchanged. If tonight already posted, folio shows one `RATE_ADJ` line.
 5. Medical package stay: night audit package lines sum to that night’s sell. Clinic remaining `PROPOSED`/`SCHEDULED` from effective date cancelled; completed procedures remain.
 6. Rate & source → Stay billing. Compliment → save → room nights are 0; an extra on the folio stays charged. House use → the extra is posted and a matching negative line `(house use)` leaves the guest balance at 0. Meal plan stays BB/FB. Apply migration `20261013010000_stay_billing_and_tariff_log` before this step.
-7. Change the rate plan on the card and save, or apply the product wizard → the stay journal shows from-code → to-code. Posted nights stay as they were.
+7. Change the rate plan on the card and save, or apply the product wizard → the stay journal shows a human line (not raw keys) and expand shows rate plan from-code → to-code. Posted nights stay as they were. Filters (action / section / user / source) hide other events.
 8. A medical rate plan keeps the Guests package column. Save or check-in with an empty package is refused, and the tariff code is not written into that column. `WALKIN` hides the column, prices from `/settings/daily-prices`, and check-in sends no clinic event.
 9. Check-in when arrival is before the open business date: the confirmation names that business date, the stored arrival moves to it, and nights before it are not charged. Same-day check-in does not say the date changes. If night audit is behind and the arrival is still ahead of the business date, check-in names both dates and does not move the arrival.
 

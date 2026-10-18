@@ -34,13 +34,14 @@ import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-na
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
 export async function listReservations(
-  status?: ReservationStatus,
+  status?: ReservationStatus | ReservationStatus[],
   guestId?: string,
   includeParty = false,
 ) {
+  const statuses = Array.isArray(status) ? status : status ? [status] : [];
   return prisma.reservation.findMany({
     where: {
-      ...(status ? { status } : {}),
+      ...(statuses.length === 1 ? { status: statuses[0] } : statuses.length > 1 ? { status: { in: statuses } } : {}),
       ...(guestId
         ? includeParty
           ? { OR: [{ guestId }, { paxGuests: { some: { guestId } } }] }

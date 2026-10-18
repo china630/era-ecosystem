@@ -62,6 +62,8 @@ export function FolioPaymentModal({
   const [bankReference, setBankReference] = useState('');
   const [bankTerminalId, setBankTerminalId] = useState('');
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
+  const [codes, setCodes] = useState<Array<{ id: string; code: string; name?: string | null }>>([]);
+  const [revenueCodeId, setRevenueCodeId] = useState('');
   const [busy, setBusy] = useState(false);
 
   const knownStay = Boolean(reservationId);
@@ -87,7 +89,21 @@ export function FolioPaymentModal({
     setGuestId('');
     setStayId(reservationId ?? '');
     setFolios([]);
+    setRevenueCodeId('');
   }, [open, reservationId]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch('/api/master/revenue-codes')
+      .then((r) => r.json())
+      .then((data) => {
+        const rows = (data.data ?? data) as Array<{ id: string; code: string; name?: string | null; active?: boolean }>;
+        const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
+        setCodes(list);
+        setRevenueCodeId((prev) => prev || list[0]?.id || '');
+      })
+      .catch(() => setCodes([]));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -130,16 +146,7 @@ export function FolioPaymentModal({
 
   const folio = pickTargetFolio(folios, party, selectedGuest);
   const balance = folio ? accountBalance(folio) : 0;
-  const asDeposit =
-    party === 'guest' &&
-    balance <= 0.01 &&
-    method !== 'DEPOSIT' &&
-    method !== 'CL_AGENCY' &&
-    method !== 'CL_COMPANY';
-  const methods = METHODS;
-  useEffect(() => {
-    if (asDeposit && (method === 'LOYALTY_POINTS' || method === 'DEPOSIT')) setMethod('CASH');
-  }, [asDeposit, method]);
+  const methods = METHODS.filter((m) => m !== 'DEPOSIT');
   const needsGuest = party === 'guest' && payer.kind === 'pick' && !selectedGuest;
   const needsStay = !knownStay && !activeStayId;
   const amountN = Number(amount);
@@ -147,50 +154,32 @@ export function FolioPaymentModal({
     !needsStay &&
     !needsGuest &&
     amountN > 0 &&
-    (asDeposit || Boolean(folio)) &&
+    Boolean(revenueCodeId) &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
-    (method !== 'CARD' || (bankTerminals.length > 0 && bankTerminalId.trim().length > 0)) &&
-    (method !== 'DEPOSIT' || balance > 0.01);
+    (method !== 'CARD' || (bankTerminals.length > 0 && bankTerminalId.trim().length > 0));
   async function submit() {
     if (!canSubmit || !activeStayId) return;
     setBusy(true);
     try {
-      const res =
-        method === 'DEPOSIT'
-          ? await fetch(`/api/reservations/${activeStayId}/deposits/apply`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ folioId: folio!.id, amount: amountN }),
-            })
-          : asDeposit
-        ? await fetch(`/api/reservations/${activeStayId}/deposits`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: amountN,
-              paymentMethod: method,
-              registerRef: method === 'BANK_TRANSFER' ? bankReference.trim() : undefined,
-            }),
-          })
-        : await fetch('/api/folios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              folioId: folio!.id,
-              amount: amountN,
-              paymentMethod: method,
-              bankReference: method === 'BANK_TRANSFER' ? bankReference.trim() : undefined,
-              bankTerminalId: method === 'CARD' ? bankTerminalId.trim() || undefined : undefined,
-            }),
-          });
+      const res = await fetch('/api/folios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          folioId: folio?.id,
+          reservationId: folio ? undefined : activeStayId,
+          revenueCodeId,
+          amount: amountN,
+          paymentMethod: method,
+          bankReference: method === 'BANK_TRANSFER' ? bankReference.trim() : undefined,
+          bankTerminalId: method === 'CARD' ? bankTerminalId.trim() || undefined : undefined,
+        }),
+      });
       const data = await res.json();
       if (!res.ok) {
         showApiError(data, tc('error'));
         return;
       }
-      showSuccess(
-        method === 'DEPOSIT' ? t('depositApplied') : asDeposit ? t('depositRecordedShort') : t('paymentRecorded'),
-      );
+      showSuccess(t('paymentRecorded'));
       onDone?.();
       onClose();
     } finally {
@@ -212,7 +201,7 @@ export function FolioPaymentModal({
           onSubmit={() => void submit()}
           busy={busy}
           submitDisabled={!canSubmit}
-          submitLabel={asDeposit ? t('acceptDeposit') : t('acceptPayment')}
+          submitLabel={t('acceptPayment')}
         />
       }
     >
@@ -251,12 +240,17 @@ export function FolioPaymentModal({
             {folio ? ` — ${balance.toFixed(2)} AZN` : ''}
           </p>
         ) : null}
-        {asDeposit && activeStayId && !needsGuest ? (
-          <p className="m-0 text-[12px] text-[#7F8C8D]">{t('depositBecauseZero')}</p>
-        ) : null}
-        {!asDeposit && activeStayId && !needsGuest && !folio ? (
-          <p className="m-0 text-[12px] text-amber-800">{t('noOpenFolio')}</p>
-        ) : null}
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t('paymentFor')}
+          value={revenueCodeId}
+          onChange={(v) => setRevenueCodeId(String(v ?? ''))}
+          options={codes.map((c) => ({
+            value: c.id,
+            label: c.name ? `${c.code} — ${c.name}` : c.code,
+          }))}
+          emptyLabel={null}
+        />
         <Field
           label={tc('amount')}
           preset="amount"

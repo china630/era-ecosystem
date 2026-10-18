@@ -191,7 +191,7 @@ export default function Chessboard() {
   async function relocateToRoom(
     reservationId: string,
     toRoomId: string,
-    reasonCode: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL',
+    reasonCode?: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL',
   ) {
     if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
     setBusy(true);
@@ -199,7 +199,11 @@ export default function Chessboard() {
       const res = await fetch(`/api/reservations/${reservationId}/relocate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: toRoomId, compUpgrade: true, reasonCode }),
+        body: JSON.stringify({
+          roomId: toRoomId,
+          compUpgrade: true,
+          ...(reasonCode ? { reasonCode } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -226,7 +230,10 @@ export default function Chessboard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showApiError(data, tCommon('updateFailed'));
+        showApiError(
+          data?.code === 'OCCUPIED_HK_LOCKED' ? { error: t('occupiedHkLocked') } : data,
+          tCommon('updateFailed'),
+        );
         return;
       }
       showSuccess(
@@ -311,7 +318,12 @@ export default function Chessboard() {
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                      showApiError(data, tCommon('updateFailed'));
+                      showApiError(
+                        data?.code === 'OCCUPIED_HK_LOCKED'
+                          ? { error: t('occupiedHkLocked') }
+                          : data,
+                        tCommon('updateFailed'),
+                      );
                       return;
                     }
                     await load();

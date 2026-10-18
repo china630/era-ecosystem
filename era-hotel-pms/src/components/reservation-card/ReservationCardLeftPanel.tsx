@@ -383,7 +383,7 @@ export type ReservationCardLeftPanelProps = {
   roomTypes: SelectOption[];
   mealPlans: SelectOption[];
   ratePlans: RatePlanOption[];
-  rooms: Array<{ id: string; roomNumber: string }>;
+  rooms: Array<{ id: string; roomNumber: string; disabled?: boolean }>;
   onChange: (patch: Partial<Record<string, string>>) => void;
   onAssignRoom?: () => void;
   assignBusy?: boolean;
@@ -694,7 +694,11 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                   id="res-card-room-select"
                   value={props.roomId}
                   onChange={setCatalog('roomId')}
-                  options={rooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
+                  options={rooms.map((r) => ({
+                    value: r.id,
+                    label: r.roomNumber,
+                    disabled: r.disabled,
+                  }))}
                   emptyLabel="—"
                   hint={t('roomNoPhysicalHint')}
                   disabled={disabled}

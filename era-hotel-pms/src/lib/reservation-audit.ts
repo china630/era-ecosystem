@@ -233,14 +233,88 @@ export function sectionForField(key: string): ReservationAuditSection {
   return 'card';
 }
 
+export type ParsedAuditFieldKey =
+  | { kind: 'guest'; guestId: string; attr: string }
+  | { kind: 'night'; ymd: string; attr: string }
+  | { kind: 'note'; noteType: string }
+  | { kind: 'plain'; key: string };
+
+export const JOURNAL_ACTION_GROUPS = {
+  create: ['CREATE'],
+  update: ['UPDATE', 'AMEND', 'TARIFF_CHANGE'],
+  checkin: ['CHECK_IN', 'CHECK_IN_EARLY'],
+  checkout: ['CHECK_OUT', 'DEPART_GUEST'],
+  room: ['ASSIGN_ROOM', 'RELOCATE', 'SWAP_ROOM', 'ROOM_MOVE'],
+  money: [
+    'CHARGE',
+    'PAYMENT',
+    'REFUND',
+    'PAYMENT_VOID',
+    'VOID',
+    'DEPOSIT',
+    'DEPOSIT_PAYOUT',
+    'DEPOSIT_CARRY',
+    'TRANSFER',
+    'SETTLE',
+    'GUEST_DEBT',
+    'GUEST_DEBT_PAY',
+    'MISSED_NIGHTS',
+  ],
+  cancel: ['CANCEL', 'NO_SHOW', 'RESTORE'],
+} as const;
+
+export type JournalActionGroup = keyof typeof JOURNAL_ACTION_GROUPS;
+
+export function parseAuditFieldKey(key: string): ParsedAuditFieldKey {
+  const guest = key.match(/^guest\.(.+)\.(name|primary|ownsFolio|package|birthDate)$/);
+  if (guest) return { kind: 'guest', guestId: guest[1], attr: guest[2] };
+  const night = key.match(/^night\.(\d{4}-\d{2}-\d{2})\.(amount|manual)$/);
+  if (night) return { kind: 'night', ymd: night[1], attr: night[2] };
+  if (key.startsWith('note.')) return { kind: 'note', noteType: key.slice(5) };
+  return { kind: 'plain', key };
+}
+
+export function guestNameHint(fields: ReservationAuditField[], guestId: string): string | null {
+  const row = fields.find((item) => item.key === `guest.${guestId}.name`);
+  const text = row?.to || row?.from;
+  return text && text.trim() ? text : null;
+}
+
+export function journalActionGroup(action: string): JournalActionGroup | null {
+  for (const [group, codes] of Object.entries(JOURNAL_ACTION_GROUPS) as Array<
+    [JournalActionGroup, readonly string[]]
+  >) {
+    if (codes.includes(action)) return group;
+  }
+  return null;
+}
+
 export function summarizeReservationAudit(
   action: string,
   fields: ReservationAuditField[],
 ): string {
+  if (action === 'CREATE') return action;
   if (fields.length === 0) return action;
-  const labels = fields.slice(0, 4).map((item) => `${item.key}: ${item.from ?? '—'} → ${item.to ?? '—'}`);
-  const extra = fields.length > 4 ? ` (+${fields.length - 4})` : '';
-  return `${action} · ${labels.join('; ')}${extra}`;
+  const guestCount = fields.find((item) => item.key === 'guestCount');
+  const room = fields.find((item) => item.key === 'roomNumber');
+  const status = fields.find((item) => item.key === 'status');
+  const nights = fields.filter((item) => /^night\.\d{4}-\d{2}-\d{2}\.amount$/.test(item.key));
+  const amount = fields.find((item) => item.key === 'amount');
+  const parts: string[] = [];
+  if (status) parts.push(`status: ${status.from ?? '—'} → ${status.to ?? '—'}`);
+  if (guestCount) parts.push(`guests: ${guestCount.from ?? '—'} → ${guestCount.to ?? '—'}`);
+  if (room) parts.push(`room: ${room.from ?? '—'} → ${room.to ?? '—'}`);
+  if (nights.length === 1) {
+    parts.push(`night: ${nights[0]!.from ?? '—'} → ${nights[0]!.to ?? '—'}`);
+  } else if (nights.length > 1) {
+    parts.push(`nights: ${nights.length}`);
+  }
+  if (amount) parts.push(`amount: ${amount.to ?? amount.from ?? '—'}`);
+  if (parts.length === 0) {
+    const first = fields[0]!;
+    parts.push(`${first.key}: ${first.from ?? '—'} → ${first.to ?? '—'}`);
+  }
+  return `${action} · ${parts.slice(0, 3).join('; ')}`;
 }
 
 export function parseReservationAuditChanges(raw: unknown): {

@@ -1,19 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import {
   CatalogField,
   DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   Field,
   FieldSection,
   FieldTextarea,
-  MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
@@ -22,7 +18,6 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { folioArticleSummary } from '@/lib/folio-article-summary';
 import { accountBalance } from '@/lib/folio-payer';
 import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { useAuth } from '@/hooks/useAuth';
@@ -142,7 +137,6 @@ export function FolioCheckoutModal({
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
   const tHk = useTranslations('housekeeping');
-  const locale = useLocale();
   const { can } = useAuth();
   const canPay = can(PERMISSIONS.FOLIO_PAYMENT);
   const [folios, setFolios] = useState<FolioRow[]>([]);
@@ -246,6 +240,31 @@ export function FolioCheckoutModal({
 
   const stayGuest = folios[0]?.reservation?.guest?.fullName?.trim() ?? '';
   const stayRoom = folios[0]?.reservation?.room?.roomNumber?.trim() ?? '';
+
+  const guestTotals = useMemo(() => {
+    const guestFolios = folios.filter((folio) => folio.type === 'GUEST' && folio.status === 'OPEN');
+    const charged = guestFolios.reduce(
+      (sum, folio) =>
+        sum +
+        folio.charges.reduce((inner, charge) => inner + Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)), 0),
+      0,
+    );
+    const received = guestFolios.reduce((sum, folio) => {
+      const paid = (folio.payments ?? []).reduce((inner, payment) => {
+        if (payment.voidedAt) return inner;
+        const n = Number(payment.amount);
+        return inner + (payment.kind === 'REFUND' ? -n : n);
+      }, 0);
+      return sum + paid;
+    }, 0);
+    const moneyIn = Math.round((received + heldDeposits) * 100) / 100;
+    const net = Math.round((charged - moneyIn) * 100) / 100;
+    return {
+      charged: Math.round(charged * 100) / 100,
+      received: moneyIn,
+      net,
+    };
+  }, [folios, heldDeposits]);
 
   const blocks = useMemo<DebtBlock[]>(() => {
     const out: DebtBlock[] = [];
@@ -441,47 +460,6 @@ export function FolioCheckoutModal({
     await loadFolios();
   }
 
-  function renderSummary(folio: FolioRow) {
-    const allocatedByChargeId: Record<string, number> = {};
-    for (const charge of folio.charges) {
-      if (!charge.id) continue;
-      allocatedByChargeId[charge.id] = (charge.paymentAllocations ?? []).reduce(
-        (sum, row) => sum + Number(row.amount),
-        0,
-      );
-    }
-    const summary = folioArticleSummary({
-      charges: folio.charges.map((charge) => ({ ...charge, id: charge.id ?? '' })),
-      payments: folio.payments ?? [],
-      locale,
-      allocatedByChargeId,
-    });
-    const rows = summary.rows.filter((row) => Math.abs(row.debt) > 0.01);
-    if (rows.length === 0) return null;
-    return (
-      <table className={DATA_TABLE_CLASS}>
-        <thead>
-          <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-            <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('summaryArticle')}</th>
-            <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('summaryCharged')}</th>
-            <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('summaryPaid')}</th>
-            <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('summaryDebt')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key} className={DATA_TABLE_TR_CLASS}>
-              <td className={DATA_TABLE_TD_CLASS}>{row.label}</td>
-              <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{money(row.charged)}</td>
-              <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{money(row.paid)}</td>
-              <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{money(row.debt)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }
-
   function renderTender(block: DebtBlock) {
     const isGuest = block.party === 'GUEST';
     const isFirstGuest = block.folio.id === firstGuestBlockId;
@@ -553,15 +531,9 @@ export function FolioCheckoutModal({
               onChange={(e) => setDiscountAmount(e.target.value)}
             />
             {heldDeposits > 0.01 ? (
-              <label className="inline-flex items-center gap-1.5 pb-2 text-[12px]">
-                <input
-                  type="checkbox"
-                  className={MODAL_CHECKBOX_CLASS}
-                  checked={applyDeposits}
-                  onChange={(e) => setApplyDeposits(e.target.checked)}
-                />
-                {t('applyHeldDeposits')} ({money(heldDeposits)} AZN)
-              </label>
+              <p className={`m-0 pb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {t('checkoutHeldIn', { amount: money(heldDeposits) })}
+              </p>
             ) : null}
           </div>
         ) : null}
@@ -657,11 +629,33 @@ export function FolioCheckoutModal({
           {procedureCredit > 0.01 ? (
             <p className="m-0">{t('procedureCreditHint', { amount: money(procedureCredit) })}</p>
           ) : null}
+          <FieldSection title={t('checkoutTotals')}>
+            <div className="grid grid-cols-3 gap-2 font-mono text-[13px]">
+              <div>
+                <div className={TEXT_MUTED_CLASS}>{t('checkoutCharges')}</div>
+                <div>{money(guestTotals.charged)}</div>
+              </div>
+              <div>
+                <div className={TEXT_MUTED_CLASS}>{t('checkoutReceived')}</div>
+                <div>{money(guestTotals.received)}</div>
+              </div>
+              <div>
+                <div className={TEXT_MUTED_CLASS}>{t('checkoutNet')}</div>
+                <div className={guestTotals.net > 0.01 ? TEXT_DANGER_CLASS : guestTotals.net < -0.01 ? 'text-sky-700' : ''}>
+                  {money(guestTotals.net)}
+                </div>
+              </div>
+            </div>
+            <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
+              {guestTotals.net > 0.01
+                ? t('checkoutNetPayHint')
+                : guestTotals.net < -0.01
+                  ? t('checkoutNetRefundHint')
+                  : t('checkoutNoDebt')}
+            </p>
+          </FieldSection>
           {loading ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{tc('loading')}</p> : null}
           {loadFailed ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{tc('loadError')}</p> : null}
-          {!loading && !loadFailed && blocks.length === 0 ? (
-            <p className="m-0">{t('checkoutNoDebt')}</p>
-          ) : null}
           {blocks.map((block) => {
             const choice = choices[block.folio.id] ?? '';
             const isGuest = block.party === 'GUEST';
@@ -673,7 +667,6 @@ export function FolioCheckoutModal({
                 badge={`${money(block.debt)} AZN`}
               >
                 <div className="space-y-3">
-                  {renderSummary(block.folio)}
                   <CatalogField
                     kind="OPS_HOT"
                     label={t('checkoutChoice')}
