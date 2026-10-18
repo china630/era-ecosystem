@@ -1471,6 +1471,7 @@ export async function adjustPackageAssign(
 
   const cancellable = pickAdjustCancellations(active, input);
   const checkedInCount = active.filter((o) => o.status === "CHECKED_IN").length;
+  const scheduled = active.filter((o) => o.status === "SCHEDULED");
 
   if (cancellable.length === 0) {
     if (checkedInCount > 0 && scheduled.length === 0) {
