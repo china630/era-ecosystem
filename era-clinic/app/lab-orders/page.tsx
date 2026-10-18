@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Eye, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  CatalogField,
   DatePicker,
   EraDataGrid,
   EraListFilterBar,
@@ -26,7 +27,7 @@ import {
   type EraDataGridColumn,
   usePaginatedList,
 } from "@era/satellite-kit/ui";
-import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
+import { CatalogMultiAdder } from "@/components/catalog-multi-adder";
 import { labStatusTone } from "@/components/lab-status-tone";
 import { bakuDateDisplay } from "@/lib/baku-day";
 import { LabOrderWorkflowModal } from "@/components/LabOrderWorkflowModal";
@@ -185,14 +186,16 @@ export default function LabOrdersPage() {
   const [filters, setFilters] = useState<ListFilters>(emptyFilters);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ patientRefCode: "", patientFullName: "", visitId: "" });
+  const [form, setForm] = useState({ patientRefCode: "", patientFullName: "" });
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [catalogItems, setCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
   const [catalogGroups, setCatalogGroups] = useState<DiagnosticCatalogGroup[]>([]);
   const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
   const [favoritesMode, setFavoritesMode] = useState<"first" | "only">("first");
-  const [search, setSearch] = useState("");
   const [modalityFilter, setModalityFilter] = useState("");
+  const [guestOptions, setGuestOptions] = useState<
+    Array<{ value: string; label: string; fullName: string }>
+  >([]);
   const [externalResult, setExternalResult] = useState(false);
   const [resultDate, setResultDate] = useState("");
   const [externalResultsText, setExternalResultsText] = useState("");
@@ -264,6 +267,62 @@ export default function LabOrdersPage() {
   }
 
   useEffect(() => {
+    void (async () => {
+      const fromEpisodes = await fetch("/api/sanatorium/episodes?pageSize=200")
+        .then(async (res) => {
+          if (!res.ok) return [];
+          const d = await res.json();
+          const row = d.data ?? d;
+          const items = (Array.isArray(row)
+            ? row
+            : (row.data ?? row.items ?? [])) as Array<{
+            roomNumber?: string | null;
+            patientOrigin?: string;
+            patientRef?: { refCode?: string; fullName?: string };
+          }>;
+          return items
+            .map((ep) => {
+              const code = ep.patientRef?.refCode?.trim() ?? "";
+              const name = ep.patientRef?.fullName?.trim() ?? code;
+              if (!code) return null;
+              const room = ep.roomNumber?.trim();
+              const origin = ep.patientOrigin === "WALK_IN" ? "walk-in" : room || "";
+              return {
+                value: code,
+                fullName: name,
+                label: origin ? `${name} · ${code} · ${origin}` : `${name} · ${code}`,
+              };
+            })
+            .filter((row): row is { value: string; label: string; fullName: string } => Boolean(row));
+        })
+        .catch(() => []);
+      if (fromEpisodes.length > 0) {
+        setGuestOptions(fromEpisodes);
+        return;
+      }
+      const fromPatients = await fetch("/api/patients?pageSize=100&episodeStatus=OPEN")
+        .then(async (res) => {
+          if (!res.ok) return [];
+          const d = await res.json();
+          const items = (d.items ?? d.data?.items ?? []) as Array<{
+            refCode?: string;
+            fullName?: string;
+          }>;
+          return items
+            .map((p) => {
+              const code = p.refCode?.trim() ?? "";
+              const name = p.fullName?.trim() ?? code;
+              if (!code) return null;
+              return { value: code, fullName: name, label: `${name} · ${code}` };
+            })
+            .filter((row): row is { value: string; label: string; fullName: string } => Boolean(row));
+        })
+        .catch(() => []);
+      setGuestOptions(fromPatients);
+    })();
+  }, []);
+
+  useEffect(() => {
     void fetch("/api/diagnostic-catalog?kinds=lab_panel,imaging,functional,endoscopy,package&applyFavorites=false")
       .then((r) => r.json())
       .then((d) => {
@@ -285,13 +344,15 @@ export default function LabOrdersPage() {
     return [...map.entries()].map(([code, title]) => ({ code, title }));
   }, [catalogGroups]);
 
-  const pickerItems = useMemo(
+  const catalogOptions = useMemo(
     () =>
       filterAndSortCatalogItems(catalogItems, favoriteKeys, favoritesMode, {
-        search,
-        modality: modalityFilter || undefined,
-      }),
-    [catalogItems, favoriteKeys, favoritesMode, search, modalityFilter],
+        search: "",
+      }).map((item) => ({
+        value: item.code,
+        label: formatNameAndCode(pickL10n(item.title, locale), item.code),
+      })),
+    [catalogItems, favoriteKeys, favoritesMode, locale],
   );
 
   function patchFilters(patch: Partial<ListFilters>) {
@@ -315,14 +376,18 @@ export default function LabOrdersPage() {
 
   async function createOrder(confirmRepeat = false) {
     if (!form.patientRefCode.trim() || selectedCodes.length === 0) return;
+    const guest = guestOptions.find((row) => row.value === form.patientRefCode.trim());
+    if (!guest) {
+      showApiError({ error: t("selectPatient") });
+      return;
+    }
     const expanded = expandPackageCodes(selectedCodes, catalogItems);
     const payload: Record<string, unknown> = pendingCreatePayload && confirmRepeat
       ? { ...pendingCreatePayload, confirmRepeat: true }
       : {
-          patientRefCode: form.patientRefCode.trim(),
-          patientFullName: form.patientFullName.trim() || form.patientRefCode.trim(),
+          patientRefCode: guest.value,
+          patientFullName: guest.fullName,
           testCodes: expanded,
-          visitId: form.visitId.trim() || undefined,
         };
     if (!confirmRepeat || !pendingCreatePayload) {
       if (externalResult) {
@@ -372,7 +437,7 @@ export default function LabOrdersPage() {
     setLabRepeatOpen(false);
     setPendingCreatePayload(null);
     setPendingRepeatCode("");
-    setForm({ patientRefCode: "", patientFullName: "", visitId: "" });
+    setForm({ patientRefCode: "", patientFullName: "" });
     setSelectedCodes([]);
     setExternalResult(false);
     setResultDate("");
@@ -639,18 +704,20 @@ export default function LabOrdersPage() {
         }}
       >
         <div className="space-y-3">
-          <Field
-            label={t("patientRefCode")}
-            preset="shortText"
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t("guest")}
             value={form.patientRefCode}
-            onChange={(e) => setForm({ ...form, patientRefCode: e.target.value })}
-            placeholder="P-000001"
-          />
-          <Field
-            label={t("patientFullName")}
-            preset="shortText"
-            value={form.patientFullName}
-            onChange={(e) => setForm({ ...form, patientFullName: e.target.value })}
+            onChange={(value) => {
+              const code = String(value ?? "");
+              const hit = guestOptions.find((row) => row.value === code);
+              setForm({
+                patientRefCode: code,
+                patientFullName: hit?.fullName ?? "",
+              });
+            }}
+            options={guestOptions}
+            emptyLabel={t("selectPatient")}
           />
           <label className={`flex items-center gap-2 text-[13px] ${MODAL_FIELD_LABEL_CLASS}`}>
             <input
@@ -679,36 +746,13 @@ export default function LabOrdersPage() {
               />
             </>
           ) : null}
-          <DiagnosticCatalogPicker
-            items={pickerItems}
-            selected={selectedCodes}
+          <CatalogMultiAdder
+            label={t("tests")}
+            options={catalogOptions}
+            value={selectedCodes}
             onChange={setSelectedCodes}
-            favoriteKeys={favoriteKeys}
-            favoritesMode={favoritesMode}
-            search={search}
-            onSearchChange={setSearch}
-            modalityFilter={modalityFilter}
-            onModalityFilterChange={setModalityFilter}
-            modalities={modalities}
-            labels={{
-              search: t("searchCatalog"),
-              allModalities: t("allModalities"),
-              favoriteBadge: t("favoriteBadge"),
-              empty: t("catalogEmpty"),
-              favoritesOnlyHint: t("favoritesOnlyHint"),
-            }}
-          />
-          {selectedCodes.length > 0 && (
-            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-              {t("selectedCount", { count: selectedCodes.length })}
-            </p>
-          )}
-          <Field
-            label={t("visitIdOptional")}
-            preset="shortText"
-            placeholder={t("visitIdOptional")}
-            value={form.visitId}
-            onChange={(e) => setForm({ ...form, visitId: e.target.value })}
+            emptyLabel={t("searchCatalog")}
+            removeLabel={t("removeChip")}
           />
         </div>
         <ModalFooter

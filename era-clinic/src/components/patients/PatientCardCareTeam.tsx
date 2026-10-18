@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  ModalFooter,
+  ModalShell,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
@@ -53,6 +55,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [pickId, setPickId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [removeId, setRemoveId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/care-team`);
@@ -152,7 +155,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
                     className={TABLE_ROW_ICON_BTN_CLASS}
                     aria-label={t("careTeamRemove")}
                     disabled={busy}
-                    onClick={() => void removeDoctor(row.practitionerId)}
+                    onClick={() => setRemoveId(row.practitionerId)}
                   >
                     <Trash2 className="h-4 w-4 text-[#C0392B]" aria-hidden />
                   </button>
@@ -192,6 +195,25 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
           <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
         ) : null}
       </div>
+      <ModalShell
+        open={Boolean(removeId)}
+        title={t("careTeamRemoveConfirm")}
+        onClose={() => {
+          if (!busy) setRemoveId(null);
+        }}
+      >
+        <ModalFooter
+          onCancel={() => setRemoveId(null)}
+          onSubmit={() => {
+            if (!removeId) return;
+            const id = removeId;
+            setRemoveId(null);
+            void removeDoctor(id);
+          }}
+          submitLabel={t("careTeamRemove")}
+          cancelLabel={tc("cancel")}
+        />
+      </ModalShell>
     </section>
   );
 }

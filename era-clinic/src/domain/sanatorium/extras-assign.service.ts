@@ -99,7 +99,11 @@ export async function remainingPackageQuotaCode(
     where: { templateId: instance.templateId, procedureCode },
     select: { blockCode: true },
   });
-  const quotaCodes = [procedureCode, ...memberOf.map((m) => m.blockCode)];
+  const quotaCodes = [
+    procedureCode,
+    `XFER-${procedureCode}`,
+    ...memberOf.map((m) => m.blockCode),
+  ];
   for (const code of quotaCodes) {
     const line = instance.procedureLines.find((l) => l.procedureCode === code);
     if (!line || line.quotaTotal <= 0) continue;
@@ -131,6 +135,14 @@ export async function prescribeExtras(
 
   for (const line of lines) {
     if (line.qty < 1) continue;
+    const openQuota = await remainingPackageQuotaCode(episodeId, line.procedureCode);
+    if (openQuota?.toUpperCase().startsWith("XFER-")) {
+      throw new PackageAssignError(
+        "Use transferred package remaining before a paid extra",
+        "QUOTA_REMAINING",
+        409,
+      );
+    }
     // Overflow past package quota is a paid extra. Quota no longer blocks the write.
     const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
