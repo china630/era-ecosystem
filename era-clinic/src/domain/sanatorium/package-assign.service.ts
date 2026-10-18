@@ -2,6 +2,7 @@
  * CLI-57 — package lazy-assign from ProgramProcedureBalance (ADR clinic-episode-procedure-assign-modal).
  */
 import { randomBytes } from "crypto";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
@@ -1455,7 +1456,7 @@ export async function adjustPackageAssign(
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
 
-  const where = {
+  const where: Prisma.ProcedureOrderWhereInput = {
     clinicalEpisodeId: episodeId,
     procedureCode: input.procedureCode,
     status: { in: ["PROPOSED", ...IN_CIRCULATION] },
