@@ -38,33 +38,31 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
             <th className="p-1 text-left">{printLabel(lang, "quantity")}</th>
             <th className="p-1 text-left">{printLabel(lang, "time")}</th>
             <th className="p-1 text-left">{printLabel(lang, "room")}</th>
-            <th className="p-1 text-left">{printLabel(lang, "doctor")}</th>
             <th className="p-1 text-left">{printLabel(lang, "price")}</th>
-            <th className="p-1 text-left">{printLabel(lang, "note")}</th>
+            <th className="p-1 w-[28%] text-left">{printLabel(lang, "note")}</th>
           </tr>
         </thead>
         <tbody>
           {doc.rowsByDate.map((group) => (
             <Fragment key={group.date}>
               <tr className="print-date-row">
-                <td colSpan={8} className="p-1 font-semibold">
+                <td colSpan={7} className="p-1 font-semibold">
                   {group.date}
                 </td>
               </tr>
               {group.rows.map((r) => (
                 <tr key={r.no} className="border-b border-neutral-300 align-top">
                   <td className="p-1">{r.no}</td>
-                  <td className="p-1">
-                    <div>{r.name}</div>
-                    {r.zones ? <div className="mt-0.5 text-[9px]">{r.zones}</div> : null}
-                    {r.settings ? <div className="mt-0.5 text-[9px]">{r.settings}</div> : null}
-                  </td>
+                  <td className="p-1">{r.name}</td>
                   <td className="p-1">{r.quantity}</td>
                   <td className="p-1">{r.time}</td>
                   <td className="p-1">{r.room}</td>
-                  <td className="p-1">{r.doctor}</td>
                   <td className="p-1">{r.price}</td>
-                  <td className="p-1">{r.note}</td>
+                  <td className="p-1">
+                    {r.zones ? <div>{r.zones}</div> : null}
+                    {r.settings ? <div className="mt-0.5">{r.settings}</div> : null}
+                    {r.note ? <div className="mt-0.5">{r.note}</div> : null}
+                  </td>
                 </tr>
               ))}
             </Fragment>

@@ -70,6 +70,11 @@ describe("clinic page route inventory (Wave 3 fail-closed)", () => {
       CLINIC_PERMISSION.SCREEN_DOCTOR,
       CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
     ]);
+    expect(routePermissions("/print/episode/x")).toEqual([
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+      CLINIC_PERMISSION.SCREEN_SANATORIUM,
+      CLINIC_PERMISSION.SCREEN_PATIENTS,
+    ]);
   });
 
   it("account/password is auth-only (null permission, allowlisted)", () => {

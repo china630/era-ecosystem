@@ -4,49 +4,31 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  CalendarClock,
   ClipboardList,
   DoorClosed,
   Eye,
-  LayoutGrid,
   ListChecks,
   Plus,
-  Trash2,
+  TestTube2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
-import { bakuCivilUtcDate, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
-import { localizeSlotDecision } from "@/lib/slot-decision-ui";
+import { bakuCivilUtcDate, todayBakuYmd } from "@/lib/baku-day";
 import {
-  CHIP_GROUP_CLASS,
   CatalogField,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_HEAD_ROW_CLASS,
-  DATA_TABLE_SCROLL_CLASS,
-  DATA_TABLE_SHELL_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TH_LEFT_CLASS,
-  DATA_TABLE_TH_RIGHT_CLASS,
-  DATA_TABLE_TR_CLASS,
   DatePicker,
   EraDataGrid,
   EraListFilterBar,
   EraListWorkspace,
-  FIELD_SECTION_BODY_CLASS,
-  FIELD_SECTION_CLASS,
   Field,
   FieldRow,
   FieldSelect,
-  FieldTextarea,
   FORM_STACK_CLASS,
   inferCatalogFieldKind,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
-  LINK_ACCENT_CLASS,
-  LOCALE_TOGGLE_ACTIVE_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_CHECKBOX_CLASS,
   countryOptions,
   countryLabel,
   PRIMARY_BUTTON_CLASS,
@@ -55,23 +37,12 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   showApiError,
   showSuccess,
-  TEXT_DANGER_CLASS,
-  TEXT_MUTED_CLASS,
-  TEXT_SUCCESS_CLASS,
   type EraDataGridColumn,
   usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { ageYearsFromBirthDate } from "@/domain/patient/patient-demographics";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
-import { IcdPicker } from "@/components/IcdPicker";
-import { EpisodeAssignBlocks } from "@/components/sanatorium/EpisodeAssignChrome";
-import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
-import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
-import { packageAssignBlockText } from "@/lib/package-assign-block";
-import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
-import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
-import { formatNameAndCode } from "@/lib/display-code";
 
 type CourseMark = "ready" | "attention" | "blocked";
 
@@ -97,14 +68,6 @@ type ProgramInstance = {
   startsOn: string;
   endsOn: string;
   procedureLines: ProcedureLine[];
-};
-
-type ProcedureOrder = {
-  id: string;
-  procedureName: string;
-  procedureCode: string;
-  scheduledAt: string;
-  status: string;
 };
 
 type Episode = {
@@ -163,13 +126,6 @@ type Episode = {
   hotelStay?: { startsOn: string; endsOn: string } | null;
 };
 
-type ProgramTemplate = {
-  id: string;
-  code: string;
-  name: string;
-  durationDays: number;
-};
-
 type WalkInForm = {
   firstName: string;
   middleName: string;
@@ -202,21 +158,6 @@ function civilYmd(value: string): string | null {
   return m?.[1] ?? null;
 }
 
-function formatStayDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
-}
-
-function stayNights(program: { startsOn: string; endsOn: string }): number {
-  const a = new Date(program.startsOn);
-  const b = new Date(program.endsOn);
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
-  const start = Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate());
-  const end = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate());
-  return Math.max(0, Math.round((end - start) / 86_400_000));
-}
-
 function daysRemaining(endsOn: string): number {
   const ymd = civilYmd(endsOn);
   if (!ymd) return 0;
@@ -243,41 +184,18 @@ function CourseDot({ mark, label }: { mark: CourseMark; label: string }) {
 
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
-  const tCard = useTranslations("patientCard");
   const tc = useTranslations("common");
   const tp = useTranslations("patientRegistry");
   const locale = useLocale();
   const { auth } = useClinicAuth();
   const isSuperAdmin = Boolean(auth?.isPlatformSuperAdmin);
-  const [procedureTypeNames, setProcedureTypeNames] = useState<Map<string, string>>(new Map());
-  const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
-  const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [patientCardId, setPatientCardId] = useState<string | null>(null);
   const [cardPanel, setCardPanel] = useState<string | null>(null);
   const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
-  const [cardPlanOnly, setCardPlanOnly] = useState(false);
-  const [chartDate, setChartDate] = useState(todayBakuYmd());
-  const [complaint, setComplaint] = useState("");
-  const [icdCodeId, setIcdCodeId] = useState("");
-  const [diagnosisNote, setDiagnosisNote] = useState("");
-  const [icdChapter, setIcdChapter] = useState("");
-  const [testCode, setTestCode] = useState("");
-  const [labCatalogItems, setLabCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
-  const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
-  const [programCode, setProgramCode] = useState("");
-  const [programStartsOn, setProgramStartsOn] = useState(todayBakuYmd());
   const searchParams = useSearchParams();
   const deepLinkHandled = useRef(false);
-  const [complaintModalOpen, setComplaintModalOpen] = useState(false);
-  const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
-  const [labModalOpen, setLabModalOpen] = useState(false);
-  const [programModalOpen, setProgramModalOpen] = useState(false);
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
-  const [chartModalOpen, setChartModalOpen] = useState(false);
-  const [rescheduleOrderId, setRescheduleOrderId] = useState<string | null>(null);
-  const [rescheduleDate, setRescheduleDate] = useState(todayBakuYmd());
-  const [rescheduleTime, setRescheduleTime] = useState("09:00");
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
@@ -287,26 +205,6 @@ export default function SanatoriumPage() {
   const [filterCourse, setFilterCourse] = useState("");
   const [hotelRooms, setHotelRooms] = useState<string[]>([]);
   const [programCodes, setProgramCodes] = useState<string[]>([]);
-  const [proposedOrders, setProposedOrders] = useState<
-    Array<{ id: string; procedureName: string; procedureCode: string; status: string; scheduledAt: string }>
-  >([]);
-  const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
-  const [packageModalOpen, setPackageModalOpen] = useState(false);
-  const [pendingExtras, setPendingExtras] = useState<
-    Array<{ id: string; procedureName: string; amountNet: number }>
-  >([]);
-  const [day1Busy, setDay1Busy] = useState(false);
-  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
-  const [bulkCancelReason, setBulkCancelReason] = useState("");
-  const [bulkCancelReplace, setBulkCancelReplace] = useState("");
-  const [labRepeatOpen, setLabRepeatOpen] = useState(false);
-  const [pendingLabCode, setPendingLabCode] = useState("");
-  const [paidSameDayOpen, setPaidSameDayOpen] = useState(false);
-  const [paidSameDayCode, setPaidSameDayCode] = useState("");
-  const [paidSameDayTime, setPaidSameDayTime] = useState("10:00");
-  const [paidSameDayConfirm, setPaidSameDayConfirm] = useState(false);
-  const [paidSameDayWarn, setPaidSameDayWarn] = useState<string | null>(null);
-
   const [listSort, setListSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
   const [careTeamOn, setCareTeamOn] = useState<Record<string, boolean>>({});
 
@@ -385,167 +283,27 @@ export default function SanatoriumPage() {
 
   const loadDetail = useCallback(async (episodeId: string) => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`);
-    if (!res.ok) {
-      setEpisodeDetail(null);
-      return;
-    }
+    if (!res.ok) return null;
     const data = await res.json();
-    setEpisodeDetail(data?.data ?? data);
+    return (data?.data ?? data) as Episode;
   }, []);
 
-  const loadSchedule = useCallback(async (episodeId: string, date: string) => {
-    const { start, end } = bakuDayBounds(date);
-    const qs = new URLSearchParams({
-      from: start.toISOString(),
-      to: end.toISOString(),
-      locale,
-    });
-    const res = await fetch(`/api/sanatorium/episodes/${episodeId}/schedule?${qs}`);
-    if (!res.ok) {
-      setScheduleOrders([]);
-      return;
-    }
-    const data = await res.json();
-    const payload = data?.data ?? data;
-    setScheduleOrders(Array.isArray(payload) ? payload : []);
-  }, [locale]);
-
-  const loadProposed = useCallback(async (patientRefId: string) => {
-    const res = await fetch(`/api/patients/${patientRefId}/card-feed?section=plan&offset=0`);
-    if (!res.ok) {
-      setProposedOrders([]);
-      return;
-    }
-    const data = await res.json();
-    const row = data.data ?? data;
-    const events = (row.events ?? []) as Array<{
-      id: string;
-      title: string;
-      status: string;
-      at: string;
-      atLabel?: string;
-      subtitle?: string;
-      codes?: string[];
-    }>;
-    const proposed = events
-      .filter((ev) => ev.status === "PROPOSED")
-      .map((ev) => ({
-        id: ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : ev.id,
-        procedureName: ev.title.replace(/^Procedure · /, ""),
-        procedureCode: ev.codes?.[0] ?? "",
-        status: ev.status,
-        scheduledAt: ev.at,
-      }));
-    setProposedOrders(proposed);
-    setSelectedProposed(new Set(proposed.slice(0, 3).map((o) => o.id)));
-  }, []);
-
-  const loadPendingExtras = useCallback(async (episodeId: string) => {
-    const res = await fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`);
-    if (!res.ok) {
-      setPendingExtras([]);
-      return;
-    }
-    const d = await res.json();
-    const payload = d.data ?? d;
-    setPendingExtras(
-      ((payload.items ?? []) as Array<{ id: string; procedureName: string; amountNet: number }>).map(
-        (r) => ({
-          id: r.id,
-          procedureName: r.procedureName,
-          amountNet: r.amountNet,
-        }),
-      ),
-    );
-  }, []);
-
-  useEffect(() => {
-    void fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const rows = (d.data ?? d.items ?? d) as Array<{ code: string; name: string }>;
-        if (!Array.isArray(rows)) return;
-        setProcedureTypeNames(new Map(rows.map((r) => [r.code, r.name])));
-      })
-      .catch(() => null);
-  }, [locale]);
-
-  useEffect(() => {
-    void fetch("/api/diagnostic-catalog?kinds=lab_panel&applyFavorites=false")
-      .then((r) => r.json())
-      .then((d) => {
-        const row = d.data ?? d;
-        const items = (row.items ?? []) as DiagnosticCatalogItem[];
-        setLabCatalogItems(items.filter((item) => item.kind === "lab_panel"));
-      });
-  }, []);
-
-  useEffect(() => {
-    void fetch("/api/sanatorium/program-templates")
-      .then((r) => r.json())
-      .then((d) => {
-        const rows = (d.data ?? d) as ProgramTemplate[];
-        setProgramTemplates(Array.isArray(rows) ? rows : []);
-      });
-  }, []);
-
-  /** Deep link /sanatorium?episode=… opens treatment chart (not only PatientCard). */
+  /** Deep link /sanatorium?episode=… opens the patient card on the Package tab. */
   useEffect(() => {
     const ep = searchParams.get("episode");
     if (!ep || deepLinkHandled.current) return;
     deepLinkHandled.current = true;
     void (async () => {
       setSelectedId(ep);
-      setChartModalOpen(true);
-      await loadDetail(ep);
+      const row = await loadDetail(ep);
+      const patientId = row?.patientRef?.id;
+      if (patientId) {
+        setCardEpisodeId(ep);
+        setCardPanel("package");
+        setPatientCardId(patientId);
+      }
     })();
   }, [searchParams, loadDetail]);
-
-  const naftaPackageTemplates = useMemo(() => {
-    const codes = new Set(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMA", "PKG-DETOKS"]);
-    const filtered = programTemplates.filter((p) => codes.has(p.code));
-    return filtered.length > 0 ? filtered : programTemplates;
-  }, [programTemplates]);
-
-  useEffect(() => {
-    if (!selectedId) return;
-    void loadDetail(selectedId);
-    void loadSchedule(selectedId, chartDate);
-  }, [selectedId, chartDate, loadDetail, loadSchedule]);
-
-  useEffect(() => {
-    const patientRefId = episodeDetail?.patientRef?.id;
-    if (chartModalOpen && patientRefId && episodeDetail?.programInstance) {
-      void loadProposed(patientRefId);
-    }
-    if (chartModalOpen && selectedId) {
-      void loadPendingExtras(selectedId);
-    }
-  }, [chartModalOpen, episodeDetail, loadProposed, loadPendingExtras, selectedId]);
-
-  const selected = episodeDetail?.id === selectedId
-    ? episodeDetail
-    : episodes.find((e) => e.id === selectedId) ?? null;
-
-  function statusLabel(status: string): string {
-    switch (status) {
-      case "SCHEDULED":
-        return t("statusScheduled");
-      case "CHECKED_IN":
-      case "IN_PROGRESS":
-        return t("statusCheckedIn");
-      case "NO_SHOW":
-        return t("statusNoShow");
-      case "COMPLETED":
-        return t("statusCompleted");
-      case "CANCELLED":
-        return t("statusCancelled");
-      case "PROPOSED":
-        return t("statusProposed", { defaultValue: "Proposed" });
-      default:
-        return status;
-    }
-  }
 
   function originLabel(origin: string): string {
     if (origin === "WALK_IN") return t("originWalkIn");
@@ -553,177 +311,18 @@ export default function SanatoriumPage() {
     return origin;
   }
 
-  function confirmMissText(
-    misses:
-      | Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }>
-      | undefined,
-  ): string {
-    if (!misses?.length) return "";
-    return misses
-      .map((miss) => {
-        const reason =
-          miss.reason === "no_staff"
-            ? tCard("packageAssignMissNoStaff")
-            : miss.reason === "staff_busy"
-              ? tCard("packageAssignMissStaffBusy")
-              : miss.reason === "cabin_sex"
-                ? tCard("packageAssignMissCabinSex")
-                : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
-                  ? tCard("packageAssignMissNoCabin")
-                  : miss.reason === "day_full"
-                    ? tCard("packageAssignMissDayFull")
-                    : miss.reason === "rule"
-                      ? tCard("packageAssignMissRule")
-                      : miss.reason === "no_slot"
-                        ? tCard("packageAssignMissNoSlot")
-                        : miss.reason === "no_mode"
-                          ? tCard("packageAssignMissNoBathMode")
-                          : tCard("packageAssignMissNoDay");
-        const who = miss.procedureName || miss.procedureCode;
-        if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
-        return tCard("packageAssignMiss", { date: miss.ymd || "—", reason });
-      })
-      .filter((line, index, all) => all.indexOf(line) === index)
-      .join("; ");
-  }
-
-  async function confirmProposed(orderIds: string[]) {
-    if (orderIds.length === 0) return;
-    setBusy(true);
-    const res = await fetch("/api/procedures/confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderIds }),
-    });
-    setBusy(false);
-    const payload = (await res.json().catch(() => ({}))) as {
-      code?: string;
-      error?: string;
-      softWarn?: string;
-      misses?: Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }>;
-    };
-    const missText = confirmMissText(payload.misses);
-    if (!res.ok) {
-      if (missText) {
-        showApiError({ error: missText }, t("failed"));
-      } else if (payload.code === "CABIN_SEX") {
-        showApiError({ error: tCard("packageAssignMissCabinSex") }, t("failed"));
-      } else if (payload.code === "NO_CABIN") {
-        showApiError(
-          { error: tCard("packageAssignNoCabin", { names: payload.error ?? "" }) },
-          t("failed"),
-        );
-      } else {
-        showApiError(payload, t("failed"));
-      }
-      return;
-    }
-    if (missText) showApiError({ error: missText });
-    else {
-      showSuccess(
-        payload.softWarn
-          ? t("day1SoftWarn", {
-              defaultValue:
-                "Plan confirmed (soft warn: Nafta day-1 default is 2–3 procedures).",
-            })
-          : t("planConfirmed", { defaultValue: "Plan confirmed" }),
-      );
-    }
-    setSelectedProposed(new Set());
-    const patientRefId = selected?.patientRef?.id;
-    if (patientRefId) await loadProposed(patientRefId);
-    if (selectedId) await loadSchedule(selectedId, chartDate);
-  }
-
-  async function submitBulkCancel() {
-    if (!selectedId || !bulkCancelReason.trim()) return;
-    setBusy(true);
-    const res = await fetch("/api/procedures/bulk-cancel", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        episodeId: selectedId,
-        reason: bulkCancelReason.trim(),
-        replaceWithCode: bulkCancelReplace.trim() || undefined,
-      }),
-    });
-    setBusy(false);
-    setBulkCancelOpen(false);
-    setBulkCancelReason("");
-    setBulkCancelReplace("");
-    if (res.ok) showSuccess(t("bulkCancelled", { defaultValue: "Procedures cancelled" }));
-    else showApiError(await res.json().catch(() => ({})), t("failed"));
-    if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
-  }
-
-  async function reloadEpisode() {
-    await loadList();
-    if (selectedId) {
-      await loadDetail(selectedId);
-      await loadSchedule(selectedId, chartDate);
-    }
+  function openPatientCard(patientId: string, episodeId: string, panel: string) {
+    setSelectedId(episodeId);
+    setCardEpisodeId(episodeId);
+    setCardPanel(panel);
+    setPatientCardId(patientId);
   }
 
   async function openChart(episodeId: string) {
-    setSelectedId(episodeId);
-    setChartModalOpen(true);
-    await loadDetail(episodeId);
-  }
-
-  async function postAction(action: string, body: unknown) {
-    if (!selectedId) return;
-    setBusy(true);
-    const res = await fetch(`/api/sanatorium/episodes/${selectedId}?action=${action}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (res.status === 409 && data.code === "ANAMNESIS_REQUIRED") {
-      showApiError(data, t("anamnesisRequiredForProgram"));
-      return;
-    }
-    if (action === "instantiate-program" && res.status === 409) {
-      showApiError({ error: t("alreadyHasProgram") });
-      return;
-    }
-    if (action === "lab" && res.status === 409 && data.code === "LAB_ALREADY_COMPLETED") {
-      const code = (body as { testCode?: string }).testCode ?? testCode;
-      setPendingLabCode(code);
-      setLabRepeatOpen(true);
-      return;
-    }
-    if (action === "lab" && res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
-      showApiError(data, t("labAlreadyOpen"));
-      return;
-    }
-    if (res.ok) {
-      showSuccess(
-        action === "instantiate-program" || action === "complete-checkup"
-          ? t("programStarted")
-          : t("saved"),
-      );
-    } else {
-      showApiError(data, t("failed"));
-    }
-    if (res.ok) {
-      if (action === "complaint") {
-        setComplaint("");
-        setComplaintModalOpen(false);
-      }
-      if (action === "diagnosis") {
-        setIcdCodeId("");
-        setDiagnosisNote("");
-        setIcdChapter("");
-        setDiagnosisModalOpen(false);
-      }
-      if (action === "lab") setLabModalOpen(false);
-      if (action === "instantiate-program" || action === "complete-checkup") {
-        setProgramModalOpen(false);
-      }
-      await reloadEpisode();
-    }
+    const row = await loadDetail(episodeId);
+    const patientId = row?.patientRef?.id;
+    if (patientId) openPatientCard(patientId, episodeId, "package");
+    else setSelectedId(episodeId);
   }
 
   function validateWalkIn(): string | null {
@@ -774,148 +373,6 @@ export default function SanatoriumPage() {
     if (ep?.id) setSelectedId(ep.id);
   }
 
-  async function rescheduleProcedure() {
-    if (!rescheduleOrderId) return;
-    const scheduledAtDate = parseBakuDateTime(rescheduleDate, `${rescheduleTime}:00`);
-    if (scheduledAtDate.getTime() < Date.now()) {
-      showApiError({ error: t("reschedulePast") }, t("failed"));
-      return;
-    }
-    setBusy(true);
-    const scheduledAt = scheduledAtDate.toISOString();
-    const res = await fetch(`/api/procedures/${rescheduleOrderId}/reschedule`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scheduledAt }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (res.ok) showSuccess(t("rescheduled"));
-    else {
-      showApiError(localizeSlotDecision(data, t), t("failed"));
-    }
-    setRescheduleOrderId(null);
-    if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
-  }
-
-  async function cancelProcedure(orderId: string) {
-    setBusy(true);
-    const res = await fetch(`/api/procedures/${orderId}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason: "reception_episode_chart" }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (res.ok) showSuccess(t("procedureCancelled"));
-    else showApiError(data, t("failed"));
-    await reloadEpisode();
-  }
-
-  async function submitPaidSameDay(confirmPaidSameDay = false) {
-    if (!selected?.patientRef?.id || !paidSameDayCode) return;
-    const name =
-      procedureTypeNames.get(paidSameDayCode) ?? paidSameDayCode;
-    setBusy(true);
-    setPaidSameDayWarn(null);
-    try {
-      const scheduledAt = parseBakuDateTime(chartDate, `${paidSameDayTime}:00`).toISOString();
-      const res = await fetch("/api/procedures", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patientRefId: selected.patientRef.id,
-          procedureCode: paidSameDayCode,
-          procedureName: name,
-          scheduledAt,
-          patientOrigin: selected.patientOrigin,
-          reservationId: selected.reservationId,
-          confirmPaidSameDay,
-        }),
-      });
-      const data = await res.json();
-      if (res.status === 409 && data.code === "SAME_DAY_FOURTH_PAID") {
-        setPaidSameDayConfirm(true);
-        setPaidSameDayWarn(
-          data.error ??
-            t("sameDayFourthWarn", {
-              defaultValue:
-                "Already 3 package procedures today. Confirm to post as paid folio (not package quota).",
-            }),
-        );
-        return;
-      }
-      if (!res.ok) {
-        showApiError(localizeSlotDecision(data, t), t("failed"));
-        return;
-      }
-      setPaidSameDayOpen(false);
-      setPaidSameDayConfirm(false);
-      setPaidSameDayCode("");
-      showSuccess(t("paidSameDayAdded", { defaultValue: "Paid same-day procedure added" }));
-      if (selectedId) await loadSchedule(selectedId, chartDate);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function deleteComplaintRow(complaintId: string) {
-    const patientRefId = selected?.patientRef?.id;
-    if (!patientRefId) return;
-    setBusy(true);
-    const res = await fetch(
-      `/api/patients/${patientRefId}/complaints?id=${encodeURIComponent(complaintId)}`,
-      { method: "DELETE" },
-    );
-    setBusy(false);
-    if (res.ok) showSuccess(t("saved"));
-    else showApiError(await res.json().catch(() => ({})), t("failed"));
-    if (res.ok) await reloadEpisode();
-  }
-
-  async function deleteDiagnosisRow(diagnosisId: string) {
-    const patientRefId = selected?.patientRef?.id;
-    if (!patientRefId) return;
-    setBusy(true);
-    const res = await fetch(
-      `/api/patients/${patientRefId}/diagnoses?id=${encodeURIComponent(diagnosisId)}`,
-      { method: "DELETE" },
-    );
-    setBusy(false);
-    if (res.ok) showSuccess(t("saved"));
-    else showApiError(await res.json().catch(() => ({})), t("failed"));
-    if (res.ok) await reloadEpisode();
-  }
-
-  async function cancelLabRow(orderId: string) {
-    if (!window.confirm(t("labCancelConfirm"))) return;
-    setBusy(true);
-    const res = await fetch(`/api/lab-orders/${orderId}`, { method: "DELETE" });
-    setBusy(false);
-    if (res.ok) showSuccess(t("labCancelled"));
-    else showApiError(await res.json().catch(() => ({})), t("failed"));
-    if (res.ok) await reloadEpisode();
-  }
-
-  function labOrderLabel(order: Episode["labOrders"][number]): string {
-    const item = order.items?.[0];
-    if (item) {
-      const svc = item.diagnosticService;
-      const name = svc
-        ? pickL10n(
-            {
-              en: svc.titleEn ?? svc.code,
-              ru: svc.titleRu ?? svc.titleEn ?? svc.code,
-              az: svc.titleAz ?? svc.titleEn ?? svc.code,
-            },
-            locale,
-          )
-        : "";
-      return formatNameAndCode(name, item.serviceCode);
-    }
-    return formatNameAndCode("", order.testCode);
-  }
-
   async function closeWalkIn(episodeId: string) {
     if (!window.confirm(t("closeWalkInConfirm"))) return;
     setBusy(true);
@@ -931,7 +388,6 @@ export default function SanatoriumPage() {
     if (res.ok) {
       if (selectedId === episodeId) {
         setSelectedId("");
-        setChartModalOpen(false);
       }
       await loadList();
     }
@@ -1067,25 +523,27 @@ export default function SanatoriumPage() {
               disabled={!e.patientRef?.id}
               onClick={() => {
                 if (!e.patientRef?.id) return;
-                setCardEpisodeId(e.id);
-                setCardPanel("plan");
-                setCardPlanOnly(true);
-                setPatientCardId(e.patientRef.id);
+                openPatientCard(e.patientRef.id, e.id, "plan");
               }}
             >
               <ListChecks className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
+            {e.programInstance && e.patientRef?.id ? (
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={t("diagnosticsBtn")}
+                onClick={() => openPatientCard(e.patientRef!.id, e.id, "diagnostics")}
+              >
+                <TestTube2 className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            ) : null}
             {e.patientRef?.id ? (
               <button
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
                 aria-label={t("patientCard")}
-                onClick={() => {
-                  setCardPlanOnly(false);
-                  setCardPanel(null);
-                  setCardEpisodeId(e.id);
-                  setPatientCardId(e.patientRef!.id);
-                }}
+                onClick={() => openPatientCard(e.patientRef!.id, e.id, "guest")}
               >
                 <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
               </button>
@@ -1110,20 +568,6 @@ export default function SanatoriumPage() {
     ],
     [t, tp, tc, busy, careTeamOn, locale],
   );
-
-  const program = selected?.programInstance;
-  const stayWindow =
-    selected?.hotelStay ??
-    (program ? { startsOn: program.startsOn, endsOn: program.endsOn } : null);
-  const proceduresUnlocked =
-    Boolean(selected?.anamnesisText?.trim()) &&
-    (selected?.complaints.length ?? 0) > 0 &&
-    (selected?.diagnoses.length ?? 0) > 0;
-  const canCompleteCheckup =
-    Boolean(selected) &&
-    !program &&
-    Boolean(selected?.anamnesisText?.trim()) &&
-    selected!.complaints.length > 0;
 
   async function applyOpenPackages() {
     setBusy(true);
@@ -1285,440 +729,6 @@ export default function SanatoriumPage() {
       />
 
       <ModalShell
-        open={chartModalOpen && Boolean(selected)}
-        title={t("treatmentChart")}
-        subtitle={selected?.patientRef?.fullName}
-        onClose={() => setChartModalOpen(false)}
-        maxWidthClass={EPISODE_MODAL_CLASS}
-      >
-        {selected ? (
-          <div className="space-y-4 text-[13px]">
-
-            {program || stayWindow ? (
-              <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
-                <div className="flex flex-wrap gap-4">
-                  {program ? (
-                    <span>
-                      <strong>{t("programSummary")}:</strong> {program.programCode}
-                    </span>
-                  ) : null}
-                  {stayWindow ? (
-                    <span>
-                      {tp("stayCheckIn")}: {formatStayDate(stayWindow.startsOn)} · {tp("stayCheckOut")}:{" "}
-                      {formatStayDate(stayWindow.endsOn)} · {tp("stayNights")}: {stayNights(stayWindow)}
-                      {` · ${t("daysRemaining")}: ${daysRemaining(stayWindow.endsOn)}`}
-                    </span>
-                  ) : null}
-                </div>
-                {program ? <div>
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <h3 className="font-semibold">{t("programQuota")}</h3>
-                    {proceduresUnlocked ? (
-                      <button
-                        type="button"
-                        className={PRIMARY_BUTTON_CLASS}
-                        onClick={() => setPackageModalOpen(true)}
-                      >
-                        <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                        {t("assignSectionTitle", { defaultValue: "Procedures" })}
-                      </button>
-                    ) : null}
-                  </div>
-                  <ul className="space-y-3">
-                    {program.procedureLines.map((line) => {
-                      const assignedPct =
-                        line.quotaTotal > 0
-                          ? Math.min(100, (line.quotaUsed / line.quotaTotal) * 100)
-                          : 0;
-                      const done = line.quotaCompleted ?? 0;
-                      const donePct =
-                        line.quotaUsed > 0 ? Math.min(100, (done / line.quotaUsed) * 100) : 0;
-                      return (
-                        <li key={line.procedureCode}>
-                          <div className="mb-1 font-medium">
-                            {formatNameAndCode(
-                              procedureTypeNames.get(line.procedureCode) ?? "",
-                              line.procedureCode,
-                            )}
-                          </div>
-                          <div className="mb-0.5 flex justify-between text-[12px]">
-                            <span>{t("quotaAssigned")}</span>
-                            <span>{t("quotaUsed", { used: line.quotaUsed, total: line.quotaTotal })}</span>
-                          </div>
-                          <div className={`mb-1 h-2 overflow-hidden rounded-lg ${CHIP_GROUP_CLASS} !p-0`}>
-                            <div
-                              className={`h-full ${LOCALE_TOGGLE_ACTIVE_CLASS}`}
-                              style={{ width: `${assignedPct}%` }}
-                            />
-                          </div>
-                          <div className="mb-0.5 flex justify-between text-[12px]">
-                            <span>{t("quotaCompleted")}</span>
-                            <span>{t("quotaUsed", { used: done, total: line.quotaUsed })}</span>
-                          </div>
-                          <div className={`h-2 overflow-hidden rounded-lg ${CHIP_GROUP_CLASS} !p-0`}>
-                            <div
-                              className="h-full bg-emerald-600"
-                              style={{ width: `${donePct}%` }}
-                            />
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {pendingExtras.length > 0 ? (
-                    <p className={`mt-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                      {t("extrasAwaiting", {
-                        defaultValue: "Additional procedures (awaiting payment)",
-                      })}
-                      : {pendingExtras.length}
-                    </p>
-                  ) : null}
-                </div> : null}
-              </div>
-            ) : selected.patientOrigin === "WALK_IN" ? (
-              proceduresUnlocked ? (
-              <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
-                <EpisodeAssignBlocks
-                  packageTitle={t("assignPackageTitle", {
-                    defaultValue: "Procedures in package",
-                  })}
-                  extrasTitle={t("extrasAwaiting", {
-                    defaultValue: "Additional procedures (awaiting payment)",
-                  })}
-                  day1Label={t("day1AutoAssign", {
-                    defaultValue: "Day-1 auto (≤3)",
-                  })}
-                  readOnly={busy}
-                  hidePackage
-                  onPackagePlus={() => setPackageModalOpen(true)}
-                  onExtrasPlus={() => setPackageModalOpen(true)}
-                  extrasPending={pendingExtras.map((p) => ({
-                    id: p.id,
-                    title: p.procedureName,
-                    amountNet: p.amountNet,
-                    status: "PENDING_PAY",
-                  }))}
-                  pendingPayLabel={t("pendingPay")}
-                />
-              </div>
-              ) : null
-            ) : (
-              <div className={`border-dashed ${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-2`}>
-                {!selected.checkupCompletedAt && (
-                  <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("checkupPendingHint")}</p>
-                )}
-                {selected.packageSignal && selected.packageSignal !== "OK" ? (
-                  <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                    {t(`packageSignal_${selected.packageSignal}`)}
-                  </p>
-                ) : null}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={!canCompleteCheckup}
-                    onClick={() => setProgramModalOpen(true)}
-                  >
-                    {t("completeCheckupSchedule")}
-                  </button>
-                  {selected.packageSignal === "NO_PROGRAM_CODE" ||
-                  selected.packageSignal === "NO_PROGRAM" ? (
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      disabled={busy}
-                      onClick={() => {
-                        if (!selectedId) return;
-                        setBusy(true);
-                        void fetch(
-                          `/api/sanatorium/episodes/${selectedId}/confirm-no-package`,
-                          { method: "POST" },
-                        )
-                          .then(async (res) => {
-                            if (!res.ok) {
-                              const d = await res.json().catch(() => ({}));
-                              showApiError(d, t("failed"));
-                              return;
-                            }
-                            await loadList();
-                            await loadDetail(selectedId);
-                          })
-                          .finally(() => setBusy(false));
-                      }}
-                    >
-                      {t("confirmNoPackage")}
-                    </button>
-                  ) : null}
-                  {selected.packageSignal === "NO_PACKAGE_CONFIRMED" ? (
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      disabled={busy}
-                      onClick={() => {
-                        if (!selectedId) return;
-                        setBusy(true);
-                        void fetch(
-                          `/api/sanatorium/episodes/${selectedId}/confirm-no-package`,
-                          { method: "DELETE" },
-                        )
-                          .then(async (res) => {
-                            if (!res.ok) {
-                              const d = await res.json().catch(() => ({}));
-                              showApiError(d, t("failed"));
-                              return;
-                            }
-                            await loadList();
-                            await loadDetail(selectedId);
-                          })
-                          .finally(() => setBusy(false));
-                      }}
-                    >
-                      {t("undoNoPackage")}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : null}
-      </ModalShell>
-
-      <ModalShell
-        open={paidSameDayOpen}
-        title={t("addPaidSameDay", { defaultValue: "Add paid (same-day)" })}
-        onClose={() => {
-          setPaidSameDayOpen(false);
-          setPaidSameDayConfirm(false);
-        }}
-        footer={
-          <ModalFooter
-            onCancel={() => {
-              setPaidSameDayOpen(false);
-              setPaidSameDayConfirm(false);
-            }}
-            onSubmit={() => void submitPaidSameDay(paidSameDayConfirm)}
-            busy={busy}
-            submitLabel={
-              paidSameDayConfirm
-                ? t("confirmPaidFolio", { defaultValue: "Confirm paid folio" })
-                : tc("save")
-            }
-          />
-        }
-      >
-        <div className={FORM_STACK_CLASS}>
-          {paidSameDayWarn ? (
-            <p className="text-sm text-amber-800">{paidSameDayWarn}</p>
-          ) : (
-            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-              {t("addPaidSameDayHint", {
-                defaultValue:
-                  "Reception manual slot. If the guest already has 3 package procedures today, confirm to charge folio (does not burn package quota).",
-              })}
-            </p>
-          )}
-          <CatalogField
-            kind="SEARCHABLE"
-            label={t("pickProcedure", { defaultValue: "Procedure" })}
-            value={paidSameDayCode}
-            onChange={(v) => setPaidSameDayCode(String(v ?? ""))}
-            options={[...procedureTypeNames.entries()].map(([code, name]) => ({
-              value: code,
-              label: `${name} (${code})`,
-            }))}
-          />
-          <Field
-            label={t("procedureTime")}
-            preset="shortText"
-            value={paidSameDayTime}
-            onChange={(e) => setPaidSameDayTime(e.target.value)}
-          />
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={bulkCancelOpen}
-        title={t("bulkCancel", { defaultValue: "Bulk cancel" })}
-        onClose={() => setBulkCancelOpen(false)}
-        footer={
-          <ModalFooter
-            onCancel={() => setBulkCancelOpen(false)}
-            onSubmit={() => void submitBulkCancel()}
-            busy={busy}
-            submitLabel={t("cancelProcedure")}
-          />
-        }
-      >
-        <div className={FORM_STACK_CLASS}>
-          <Field
-            label={t("bulkCancelReason", { defaultValue: "Reason" })}
-            preset="shortText"
-            value={bulkCancelReason}
-            onChange={(e) => setBulkCancelReason(e.target.value)}
-            required
-          />
-          <Field
-            label={t("replaceWithCode", { defaultValue: "Replace with code (optional)" })}
-            preset="code"
-            value={bulkCancelReplace}
-            onChange={(e) => setBulkCancelReplace(e.target.value)}
-          />
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={complaintModalOpen}
-        title={t("newComplaint")}
-        onClose={() => setComplaintModalOpen(false)}
-        footer={
-          <ModalFooter
-            onCancel={() => setComplaintModalOpen(false)}
-            onSubmit={() => void postAction("complaint", { text: complaint })}
-            busy={busy}
-            submitLabel={t("add")}
-          />
-        }
-      >
-        <div className={FORM_STACK_CLASS}>
-          <Field
-            label={t("newComplaint")}
-            preset="shortText"
-            value={complaint}
-            onChange={(e) => setComplaint(e.target.value)}
-            required
-          />
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={diagnosisModalOpen}
-        title={t("addDiagnosis")}
-        onClose={() => setDiagnosisModalOpen(false)}
-        footer={
-          <ModalFooter
-            onCancel={() => setDiagnosisModalOpen(false)}
-            onSubmit={() =>
-              void postAction("diagnosis", {
-                icdCodeId,
-                note: diagnosisNote || null,
-              })
-            }
-            busy={busy}
-            submitLabel={t("addDiagnosis")}
-          />
-        }
-      >
-        <div className={`${FORM_STACK_CLASS} grid grid-cols-1 gap-3`}>
-          <IcdPicker
-            label={t("icdCode")}
-            valueId={icdCodeId}
-            required
-            showChapterFilter
-            chapter={icdChapter}
-            onChapterChange={setIcdChapter}
-            onChange={(id) => setIcdCodeId(id)}
-          />
-          <FieldTextarea
-            label={t("diagnosisNote")}
-            rows={3}
-            value={diagnosisNote}
-            onChange={(e) => setDiagnosisNote(e.target.value)}
-          />
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={labModalOpen}
-        title={t("orderLab")}
-        onClose={() => setLabModalOpen(false)}
-        footer={
-          <ModalFooter
-            onCancel={() => setLabModalOpen(false)}
-            onSubmit={() => {
-              if (!testCode) {
-                showApiError({ error: t("failed") });
-                return;
-              }
-              void postAction("lab", { testCode });
-            }}
-            busy={busy}
-            submitDisabled={!testCode}
-            submitLabel={t("orderLab")}
-          />
-        }
-      >
-        <div className={FORM_STACK_CLASS}>
-          <FieldSelect
-            label={t("orderLab")}
-            preset="select"
-            value={testCode}
-            onChange={(e) => setTestCode(e.target.value)}
-            required
-          >
-            <option value="">—</option>
-            {labCatalogItems.map((item) => (
-              <option key={item.code} value={item.code}>
-                {item.code} — {pickL10n(item.title, locale)}
-              </option>
-            ))}
-          </FieldSelect>
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={programModalOpen}
-        title={t("completeCheckupSchedule")}
-        onClose={() => setProgramModalOpen(false)}
-        footer={
-          <ModalFooter
-            onCancel={() => setProgramModalOpen(false)}
-            onSubmit={() =>
-              void postAction("complete-checkup", {
-                programCode: programCode || selected?.programCode || undefined,
-                ...(selected?.hotelStay
-                  ? {}
-                  : { startsOn: parseBakuDateTime(programStartsOn, "09:00:00").toISOString() }),
-              })
-            }
-            busy={busy}
-            submitDisabled={!canCompleteCheckup || !(programCode || selected?.programCode)}
-            submitLabel={t("completeCheckupSchedule")}
-          />
-        }
-      >
-        <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
-          <FieldSelect
-            label={t("programSelect")}
-            preset="select"
-            value={programCode || selected?.programCode || ""}
-            onChange={(e) => setProgramCode(e.target.value)}
-            required
-          >
-            <option value="">—</option>
-            {naftaPackageTemplates.map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.code} — {p.name}
-              </option>
-            ))}
-          </FieldSelect>
-          {selected?.hotelStay ? (
-            <p className="text-[13px] self-end">
-              {tp("stayCheckIn")}: {formatStayDate(selected.hotelStay.startsOn)} · {tp("stayCheckOut")}:{" "}
-              {formatStayDate(selected.hotelStay.endsOn)}
-            </p>
-          ) : (
-            <DatePicker
-              label={t("startsOn")}
-              value={programStartsOn}
-              onChange={setProgramStartsOn}
-              placeholder={tc("datePlaceholder")}
-              openCalendarLabel={tc("openCalendar")}
-            />
-          )}
-        </div>
-      </ModalShell>
-
-      <ModalShell
         open={walkInModalOpen}
         title={t("registerWalkIn")}
         onClose={() => setWalkInModalOpen(false)}
@@ -1816,120 +826,20 @@ export default function SanatoriumPage() {
         </div>
       </ModalShell>
 
-      <ModalShell
-        open={Boolean(rescheduleOrderId)}
-        title={t("reschedule")}
-        onClose={() => setRescheduleOrderId(null)}
-        footer={
-          <ModalFooter
-            onCancel={() => setRescheduleOrderId(null)}
-            onSubmit={() => void rescheduleProcedure()}
-            busy={busy}
-            submitLabel={t("reschedule")}
-          />
-        }
-      >
-        <div className="grid grid-cols-1 items-end gap-2">
-          <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{t("rescheduleSameDayHint")}</p>
-          <CatalogField
-            kind="SEARCHABLE"
-            label={t("procedureTime")}
-            value={rescheduleTime}
-            emptyLabel={null}
-            options={Array.from({ length: ((21 - 8) * 60) / 5 }, (_, index) => {
-              const total = 8 * 60 + index * 5;
-              const label = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-              return { value: label, label };
-            })}
-            onChange={(value) => setRescheduleTime(String(value ?? "09:00"))}
-          />
-        </div>
-      </ModalShell>
-
-      <ModalShell
-        open={labRepeatOpen}
-        title={t("labRepeatTitle")}
-        onClose={() => setLabRepeatOpen(false)}
-        footer={
-          <ModalFooter
-            onCancel={() => setLabRepeatOpen(false)}
-            onSubmit={() => {
-              setLabRepeatOpen(false);
-              void postAction("lab", { testCode: pendingLabCode, confirmRepeat: true });
-            }}
-            busy={busy}
-            submitLabel={tc("yes")}
-            cancelLabel={tc("no")}
-          />
-        }
-      >
-        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-          {t("labRepeatBody", { code: pendingLabCode })}
-        </p>
-      </ModalShell>
-
       <PatientCardModal
         patientId={patientCardId}
         open={Boolean(patientCardId)}
         panel={cardPanel}
         initialEpisodeId={cardEpisodeId}
-        planOnly={cardPlanOnly}
         onClose={() => {
           setPatientCardId(null);
           setCardPanel(null);
           setCardEpisodeId(null);
-          setCardPlanOnly(false);
         }}
         onCareTeamSize={(episodeId, count) => {
           setCareTeamOn((prev) => ({ ...prev, [episodeId]: count > 0 }));
         }}
-        onOpenDayPlan={(episodeId) => {
-          setPatientCardId(null);
-          setSelectedId(episodeId);
-          setChartModalOpen(true);
-          void loadDetail(episodeId);
-        }}
       />
-
-      {selectedId ? (
-        <>
-          <PackageAssignModal
-            open={packageModalOpen}
-            episodeId={selectedId}
-            onClose={() => setPackageModalOpen(false)}
-            onSaved={() => {
-              void loadPendingExtras(selectedId);
-              const patientRefId = episodeDetail?.patientRef?.id;
-              if (patientRefId) void loadProposed(patientRefId);
-              void loadDetail(selectedId);
-            }}
-            labels={{
-              title: t("packageAssignModalTitle", { defaultValue: "Procedures in package" }),
-              save: tc("save"),
-              cancel: tc("cancel"),
-              leftMenu: t("packageMenuLeft", { defaultValue: "Package remaining" }),
-              rightAssigned: t("packageMenuRight", { defaultValue: "Assigned" }),
-              remaining: t("remaining", { defaultValue: "Remaining" }),
-              qty: t("qty", { defaultValue: "Quantity" }),
-              note: t("note", { defaultValue: "Note" }),
-              addToDraft: t("addToDraft", { defaultValue: "Add" }),
-              all: t("assignAll", { defaultValue: "All" }),
-              delete: tc("delete"),
-              consumedLocked: t("consumedLocked", { defaultValue: "Completed" }),
-              emptyLeft: t("packageEmptyLeft", { defaultValue: "No package lines." }),
-              emptyRight: t("packageEmptyRight", { defaultValue: "Nothing assigned yet." }),
-              softWarnPrefix: t("softWarn", { defaultValue: "Note" }),
-              replace: t("replaceProcedure", { defaultValue: "Replace" }),
-              replaceFrom: t("replaceFrom", { defaultValue: "From" }),
-              replaceTo: t("replaceTo", { defaultValue: "To" }),
-              replaceSubmit: t("replaceSubmit", { defaultValue: "Replace" }),
-              qtyDown: t("qtyDown", { defaultValue: "−1" }),
-              checkedInLocked: t("checkedInLocked", { defaultValue: "Checked in" }),
-              pickPoolSku: t("pickProcedure", { defaultValue: "Procedure" }),
-            }}
-          />
-        </>
-      ) : null}
     </div>
   );
 }

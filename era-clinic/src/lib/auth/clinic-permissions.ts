@@ -508,6 +508,14 @@ const ROUTE_ANY_OF_PREFIXES: Array<{
       CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
     ],
   },
+  {
+    prefix: "/print/episode",
+    permissions: [
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+      CLINIC_PERMISSION.SCREEN_SANATORIUM,
+      CLINIC_PERMISSION.SCREEN_PATIENTS,
+    ],
+  },
 ];
 
 /** Auth-only staff pages: logged-in required, no screen permission. */

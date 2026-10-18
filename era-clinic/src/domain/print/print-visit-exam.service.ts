@@ -15,6 +15,7 @@ import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { formatIcdLabel, normalizeIcdLocale } from "@/domain/icd/icd-catalog";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { bakuDateKey } from "@/lib/baku-day";
 
 export type VisitExamPrintRow = {
@@ -195,6 +196,10 @@ export async function buildVisitExamPrint(
 
   const branding = await getPrintBranding(lang);
   const doctorName = entry.visit.practitioner?.fullName ?? null;
+  const stay = await loadPrintEpisodeStay({
+    episodeId: entry.visit.clinicalEpisodeId,
+    patientRefId: entry.visit.patientRefId,
+  });
   const titleFallback =
     service != null
       ? pickL10n(
@@ -215,18 +220,17 @@ export async function buildVisitExamPrint(
 
   return {
     branding,
-    patient: {
+    patient: composePrintPatientStrip({
       fullName: entry.visit.patientRef?.fullName ?? "—",
-      sex: entry.visit.patientRef?.sex ?? null,
-      birthDate: entry.visit.patientRef?.birthDate
-        ? bakuDateKey(entry.visit.patientRef.birthDate)
-        : null,
-      phone: entry.visit.patientRef?.phone ?? null,
-      nationality: entry.visit.patientRef?.nationality ?? null,
-      roomNumber: entry.visit.roomNumber ?? null,
-      doctorName,
+      sex: entry.visit.patientRef?.sex,
+      birthDate: entry.visit.patientRef?.birthDate,
+      phone: entry.visit.patientRef?.phone,
+      nationality: entry.visit.patientRef?.nationality,
       date: bakuDateKey(entry.createdAt),
-    },
+      stay,
+      doctorName,
+      roomNumber: entry.visit.roomNumber ?? stay.roomNumber,
+    }),
     title: pickPayloadTitle(payload, lang, titleFallback),
     diagnoses,
     rows,

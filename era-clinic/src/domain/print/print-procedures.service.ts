@@ -2,16 +2,21 @@ import { prisma } from "@/lib/prisma";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import {
+  composePrintPatientStrip,
+  loadPrintEpisodeStay,
+} from "@/domain/print/print-patient-strip";
+import {
   formatLateralityLabel,
   formatPhysioFieldsPrint,
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
-import { listEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { todayBakuYmd } from "@/lib/baku-day";
 import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
 } from "@/domain/catalog/catalog-display-name.service";
+
+export { episodeCareTeamPrintName } from "@/domain/print/print-patient-strip";
 
 /**
  * Guest sheet is the placed course only.
@@ -25,12 +30,6 @@ export const PRINT_PROCEDURE_STATUSES = [
   "NO_SHOW",
 ] as const;
 
-/** Print Doctor column = episode care team, never cabin/roster STAFF. */
-export function episodeCareTeamPrintName(names: string[]): string {
-  const cleaned = names.map((n) => n.trim()).filter(Boolean);
-  return cleaned.length ? cleaned.join(", ") : "—";
-}
-
 export type PrintProcedureRow = {
   no: number;
   date: string;
@@ -42,7 +41,6 @@ export type PrintProcedureRow = {
   quantity: number;
   time: string;
   room: string;
-  doctor: string;
   price: string;
   note: string;
 };
@@ -114,12 +112,10 @@ export async function buildProceduresPrint(
     : [];
   const listById = new Map(listItems.map((r) => [r.id, r]));
   const printLang = lang === "ru" || lang === "az" ? lang : "en";
-  const careTeam = episode
-    ? await listEpisodeCareDoctors(episode.id)
-    : [];
-  const doctor = episodeCareTeamPrintName(
-    careTeam.map((r) => r.practitioner.fullName),
-  );
+  const stay = await loadPrintEpisodeStay({
+    episodeId: episode?.id,
+    patientRefId: patientId,
+  });
 
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
@@ -182,10 +178,9 @@ export async function buildProceduresPrint(
       settings,
       quantity: o.quantity ?? 1,
       time: `${bakuTime(o.scheduledAt)}${ends}`,
-      room,
-      doctor,
-      price: `${Number(o.amountNet).toFixed(2)} AZN`,
-      note: (o.note ?? "").trim(),
+        room,
+        price: `${Number(o.amountNet).toFixed(2)} AZN`,
+        note: (o.note ?? "").trim(),
     };
     const list = map.get(date) ?? [];
     list.push(row);
@@ -194,16 +189,15 @@ export async function buildProceduresPrint(
 
   return {
     branding,
-    patient: {
+    patient: composePrintPatientStrip({
       fullName: patient.fullName,
       sex: patient.sex,
-      birthDate: patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : null,
+      birthDate: patient.birthDate,
       phone: patient.phone,
       nationality: patient.nationality,
-      roomNumber: episode?.roomNumber ?? null,
-      doctorName: null,
       date: todayBakuYmd(),
-    },
+      stay,
+    }),
     rowsByDate: [...map.entries()].map(([date, rows]) => ({ date, rows })),
   };
 }

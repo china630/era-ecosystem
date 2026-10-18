@@ -891,6 +891,7 @@
     "orderLab": "Lab",
     "treatmentChart": "Treatment chart",
     "proceduresBtn": "Procedures",
+    "diagnosticsBtn": "Diagnostics",
     "patientCard": "Patient card",
     "chartDate": "Date",
     "procedureTime": "Time",
@@ -1729,6 +1730,7 @@
     "anamnesisMissing": "Anamnesis not recorded for this course",
     "episodeSelect": "Care course",
     "episodeClosedReadOnly": "This course is closed (read-only)",
+    "printEpisodeSummary": "Course summary",
     "anamnesisSave": "Save anamnesis",
     "anamnesisCourseMissing": "No care course yet — register walk-in or await hotel check-in",
     "noEpisodes": "No care courses",
@@ -1773,7 +1775,12 @@
     "packageOrigin": "Origin",
     "stayCheckIn": "Check-in",
     "stayCheckOut": "Check-out",
-    "stayNights": "Nights"
+    "stayNights": "Nights",
+    "cardTabGuest": "Guest",
+    "cardTabDoctor": "Doctor",
+    "cardTabDiagnostics": "Diagnostics",
+    "cardTabPlan": "Plan",
+    "cardTabPackage": "Package"
   },
   "patientTimeline": {
     "title": "Clinical timeline",
@@ -1900,6 +1907,7 @@
     "statusProposed": "PROPOSED",
     "printCheckup": "Print check-up",
     "intakeChecklistTitle": "Initial diagnostic procedures",
+    "intakeChecklistEmpty": "No intake diagnostics on this course.",
     "intakeStatusDone": "Passed",
     "intakeStatusOrdered": "Ordered",
     "intakeStatusMissing": "Missing",

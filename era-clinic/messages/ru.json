@@ -866,6 +866,7 @@
     "orderLab": "Лаб.",
     "treatmentChart": "Курортная карта",
     "proceduresBtn": "Процедуры",
+    "diagnosticsBtn": "Диагностика",
     "patientCard": "Карта пациента",
     "chartDate": "Дата",
     "procedureTime": "Время",
@@ -1717,6 +1718,7 @@
     "anamnesisMissing": "Анамнез этого курса не заполнен",
     "episodeSelect": "Курс лечения",
     "episodeClosedReadOnly": "Курс закрыт (только просмотр)",
+    "printEpisodeSummary": "Итог курса",
     "anamnesisSave": "Сохранить анамнез",
     "anamnesisCourseMissing": "Нет курса — зарегистрируйте walk-in или дождитесь check-in",
     "noEpisodes": "Нет курсов",
@@ -1761,7 +1763,12 @@
     "packageOrigin": "Источник",
     "stayCheckIn": "Заезд",
     "stayCheckOut": "Выезд",
-    "stayNights": "Ночей"
+    "stayNights": "Ночей",
+    "cardTabGuest": "Гость",
+    "cardTabDoctor": "Врач",
+    "cardTabDiagnostics": "Диагностика",
+    "cardTabPlan": "План",
+    "cardTabPackage": "Пакет"
   },
   "patientTimeline": {
     "title": "Клинический таймлайн",
@@ -1888,6 +1895,7 @@
     "statusProposed": "ПРЕДЛОЖЕНО",
     "printCheckup": "Печать чек-апа",
     "intakeChecklistTitle": "Первичные диагностические процедуры",
+    "intakeChecklistEmpty": "На этом курсе нет первичной диагностики.",
     "intakeStatusDone": "Пройден",
     "intakeStatusOrdered": "Назначено",
     "intakeStatusMissing": "Нет",

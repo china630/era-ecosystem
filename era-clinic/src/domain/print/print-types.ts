@@ -27,7 +27,12 @@ export type PrintPatientStrip = {
   nationality: string | null;
   roomNumber: string | null;
   doctorName: string | null;
+  /** Header clock: print day (procedures) or result-ready day (lab/USM). */
   date: string;
+  arrival: string | null;
+  departure: string | null;
+  /** Package / stay nights (`nightsBetween`). */
+  stayDays: number | null;
 };
 
 export type CheckupSectionConfig = {

@@ -3,13 +3,14 @@ import { getCheckupSectionsConfig, getPrintBranding } from "@/domain/print/print
 import { printLabel } from "@/domain/print/print-labels";
 import { formatIcdLabel, normalizeIcdLocale } from "@/domain/icd/icd-catalog";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
 import {
   NAFTA_INTAKE_SLOT_CODES,
   printSpecialtyForIntakeSlot,
   type NaftaIntakeSlotCode,
 } from "@/lib/import/nafta-intake-map";
-import { bakuDateKey, todayBakuYmd } from "@/lib/baku-day";
+import { todayBakuYmd } from "@/lib/baku-day";
 
 export type PrintCheckupSection = {
   specialty: string;
@@ -123,20 +124,24 @@ export async function buildCheckupPrint(
     return d.note ? `${base} (${d.note})` : base;
   });
 
+  const stay = await loadPrintEpisodeStay({
+    episodeId: episode?.id,
+    patientRefId: patientId,
+  });
+
   return {
     branding,
-    patient: {
+    patient: composePrintPatientStrip({
       fullName: patient.fullName,
       sex: patient.sex,
-      birthDate: patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : null,
+      birthDate: patient.birthDate,
       phone: patient.phone,
       nationality: patient.nationality,
-      roomNumber: episode?.roomNumber ?? null,
-      doctorName: null,
       date: todayBakuYmd(),
-    },
-    arrival: episode?.openedAt ? bakuDateKey(episode.openedAt) : null,
-    departure: episode?.closedAt ? bakuDateKey(episode.closedAt) : null,
+      stay,
+    }),
+    arrival: stay.arrival,
+    departure: stay.departure,
     diagnoses,
     sections,
   };

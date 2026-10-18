@@ -1411,6 +1411,33 @@ export async function day1AutoAssign(
   );
 }
 
+const ADJUSTABLE = ["PROPOSED", "SCHEDULED"] as const;
+
+/**
+ * Modal qty includes PROPOSED + SCHEDULED + CHECKED_IN.
+ * Shrink cancels PROPOSED first (unseated leftovers), then SCHEDULED. CHECKED_IN stays.
+ */
+export function pickAdjustCancellations<
+  T extends { id: string; status: string; scheduledAt: Date },
+>(
+  active: T[],
+  input: { targetActiveQty?: number; cancelAllActive?: boolean },
+): T[] {
+  const checkedInCount = active.filter((o) => o.status === "CHECKED_IN").length;
+  const drop = active
+    .filter((o) => (ADJUSTABLE as readonly string[]).includes(o.status))
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === "PROPOSED" ? -1 : 1;
+      return b.scheduledAt.getTime() - a.scheduledAt.getTime();
+    });
+  if (input.cancelAllActive) return drop;
+  if (input.targetActiveQty == null) return [];
+  const keepTotal = Math.max(0, input.targetActiveQty);
+  const keepAdjustable = Math.max(0, keepTotal - checkedInCount);
+  if (drop.length <= keepAdjustable) return [];
+  return drop.slice(0, drop.length - keepAdjustable);
+}
+
 /**
  * Cancel non-consumed package sessions for a code/batch; return quota. COMPLETED stays.
  */
@@ -1419,9 +1446,9 @@ export async function adjustPackageAssign(
   input: {
     procedureCode: string;
     assignBatchId?: string | null;
-    /** Target active (non-completed) qty; excess SCHEDULED cancelled. */
+    /** Target active (non-completed) qty; excess PROPOSED then SCHEDULED cancelled. */
     targetActiveQty?: number;
-    /** If true, cancel all active for code/batch. */
+    /** If true, cancel all PROPOSED/SCHEDULED for code/batch. */
     cancelAllActive?: boolean;
   },
 ): Promise<{ cancelled: number }> {
@@ -1431,7 +1458,7 @@ export async function adjustPackageAssign(
   const where = {
     clinicalEpisodeId: episodeId,
     procedureCode: input.procedureCode,
-    status: { in: [...IN_CIRCULATION] },
+    status: { in: ["PROPOSED", ...IN_CIRCULATION] },
     inPackage: true,
     ...(input.assignBatchId ? { assignBatchId: input.assignBatchId } : {}),
   };
@@ -1441,17 +1468,8 @@ export async function adjustPackageAssign(
     orderBy: { scheduledAt: "desc" },
   });
 
-  // CHECKED_IN never cancelled from modal; only SCHEDULED may shrink.
-  const scheduled = active.filter((o) => o.status === "SCHEDULED");
-  const checkedInCount = active.length - scheduled.length;
-
-  let cancellable = scheduled;
-  if (!input.cancelAllActive && input.targetActiveQty != null) {
-    const keepTotal = Math.max(0, input.targetActiveQty);
-    const keepScheduled = Math.max(0, keepTotal - checkedInCount);
-    if (scheduled.length <= keepScheduled) return { cancelled: 0 };
-    cancellable = scheduled.slice(0, scheduled.length - keepScheduled);
-  }
+  const cancellable = pickAdjustCancellations(active, input);
+  const checkedInCount = active.filter((o) => o.status === "CHECKED_IN").length;
 
   if (cancellable.length === 0) {
     if (checkedInCount > 0 && scheduled.length === 0) {
