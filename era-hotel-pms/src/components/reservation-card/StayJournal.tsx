@@ -4,19 +4,19 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { CatalogField } from '@era/satellite-kit/ui';
-import type {
-  ReservationAuditField,
-  ReservationAuditSection,
-  ReservationAuditSource,
-  StayJournalEntry,
-} from '@/lib/reservation-audit';
 import {
   JOURNAL_ACTION_GROUPS,
   guestNameHint,
   journalActionGroup,
   parseAuditFieldKey,
   type JournalActionGroup,
-} from '@/lib/reservation-audit';
+  type ReservationAuditField,
+  type ReservationAuditSection,
+  type ReservationAuditSource,
+  type StayJournalEntry,
+} from '@/lib/reservation-journal';
+
+type JournalT = (key: string, values?: Record<string, string | number>) => string;
 
 const ACTION_KEYS = [
   'CREATE',
@@ -96,7 +96,7 @@ function dash(value: string | null | undefined): string {
   return value && value.trim() ? value : '—';
 }
 
-function actionLabel(t: (key: string) => string, action: string): string {
+function actionLabel(t: JournalT, action: string): string {
   return (ACTION_KEYS as readonly string[]).includes(action)
     ? t(`stayJournalAction.${action}`)
     : action;
@@ -109,7 +109,7 @@ function ymdDisplay(ymd: string): string {
 }
 
 function formatFieldValue(
-  t: (key: string) => string,
+  t: JournalT,
   tRes: (key: string) => string,
   key: string,
   value: string | null | undefined,
@@ -133,7 +133,7 @@ function formatFieldValue(
 }
 
 function fieldLabel(
-  t: (key: string) => string,
+  t: JournalT,
   key: string,
   fields: ReservationAuditField[],
 ): string {
@@ -159,7 +159,7 @@ function fieldLabel(
 }
 
 function entrySummary(
-  t: (key: string) => string,
+  t: JournalT,
   tRes: (key: string) => string,
   entry: StayJournalEntry,
 ): string {

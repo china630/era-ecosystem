@@ -62,7 +62,7 @@ import {
 } from '@/components/reservation-card/ReservationCardStaysBar';
 import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
 import { StayJournal } from '@/components/reservation-card/StayJournal';
-import type { StayJournalEntry } from '@/lib/reservation-audit';
+import type { StayJournalEntry } from '@/lib/reservation-journal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
