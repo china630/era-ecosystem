@@ -7,6 +7,7 @@ import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { normalizePrintLang } from "@/domain/print/print-types";
 import { bakuDateTimeDisplay } from "@/lib/baku-day";
+import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
@@ -52,18 +53,20 @@ export default async function PrintExtraTicketPage({ params, searchParams }: Pro
     orders.map((row) => row.clinicalEpisode?.roomNumber?.trim()).find(Boolean) ?? null;
   const issuedAt = first.extraTicketIssuedAt ?? first.createdAt ?? first.scheduledAt;
   const total = orders.reduce((sum, row) => sum + Number(row.amountNet), 0);
-  const patient = {
+  const stay = await loadPrintEpisodeStay({
+    episodeId: first.clinicalEpisodeId,
+    patientRefId: first.patientRefId,
+  });
+  const patient = composePrintPatientStrip({
     fullName: first.patientRef.fullName,
     sex: first.patientRef.sex,
-    birthDate: first.patientRef.birthDate
-      ? first.patientRef.birthDate.toISOString().slice(0, 10)
-      : null,
+    birthDate: first.patientRef.birthDate,
     phone: first.patientRef.phone,
     nationality: first.patientRef.nationality,
-    roomNumber,
-    doctorName: null,
     date: bakuDateTimeDisplay(issuedAt),
-  };
+    stay,
+    roomNumber: roomNumber ?? stay.roomNumber,
+  });
 
   return (
     <PrintShell

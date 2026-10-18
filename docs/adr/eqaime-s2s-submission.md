@@ -61,11 +61,13 @@ Org ASAN ID: `Organization.settings.tax.asanUserId`.
 
 ## Consequences
 
+- `ERA_EQAIME_S2S_ENABLED` is a **deployment channel** switch only. Whether a fact must carry an e-qaimə before the day closes is an organization/scheme rule, set in UI, specified in [finance-tax-scheme.md](./finance-tax-scheme.md). The env flag must not remain the only policy.
 - Without partner URL + flag, production behaviour is **RPA prefill only** — honest **STUB/API** in COVERAGE_MATRIX.
 - Live DVX response parsing and idempotent retries are follow-ups when pilot credentials arrive.
 - Hotel and other satellites remain read-only for e-Qaimé issuance per [hotel-eqaime-readonly-boundary.md](./hotel-eqaime-readonly-boundary.md).
 
 ## Related
 
+- [finance-tax-scheme.md](./finance-tax-scheme.md) — close rule vs channel flag
 - [etaxes-hsm-asan-submission.md](./etaxes-hsm-asan-submission.md)
 - [asan-sima-gov-signature.md](./asan-sima-gov-signature.md)

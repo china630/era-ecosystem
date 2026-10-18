@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
+import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
 
@@ -36,9 +37,9 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
   if (!order) return null;
 
   const branding = await getPrintBranding(lang);
-  const episode = await prisma.clinicalEpisode.findFirst({
-    where: { patientRefId: order.patientRefId },
-    orderBy: { openedAt: "desc" },
+  const stay = await loadPrintEpisodeStay({
+    episodeId: order.clinicalEpisodeId,
+    patientRefId: order.patientRefId,
   });
 
   const phrases = await prisma.imagingPhrase.findMany({ where: { active: true } });
@@ -150,18 +151,15 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
 
   return {
     branding,
-    patient: {
+    patient: composePrintPatientStrip({
       fullName: order.patientRef?.fullName ?? "—",
-      sex: order.patientRef?.sex ?? null,
-      birthDate: order.patientRef?.birthDate
-        ? order.patientRef.birthDate.toISOString().slice(0, 10)
-        : null,
-      phone: order.patientRef?.phone ?? null,
-      nationality: order.patientRef?.nationality ?? null,
-      roomNumber: episode?.roomNumber ?? null,
-      doctorName: branding.signatureDoctor,
-      date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.createdAt),
-    },
+      sex: order.patientRef?.sex,
+      birthDate: order.patientRef?.birthDate,
+      phone: order.patientRef?.phone,
+      nationality: order.patientRef?.nationality,
+      date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
+      stay,
+    }),
     title,
     rows,
     signatureDoctor: branding.signatureDoctor,

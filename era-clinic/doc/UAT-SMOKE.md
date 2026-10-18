@@ -197,7 +197,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 13. **FO manager permission (no role-name bypass):** Uncheck `api:procedures.fo_manager` on **CLINIC_ADMIN**, Save + refresh. Package assign modal must **not** show out-of-package Replace solely because role is CLINIC_ADMIN. Re-check permission → Replace returns.
 14. **Ops:** after image/DB upgrade run clinic Prisma migrate so `Role.is_system` / `staff_kind` / `clone_from_code` exist; first login or `/admin/access` runs `ensureSystemClinicRoles`.
 15. **Empty matrix (Wave 3 hole-close):** Uncheck **all** grants on **CLINIC_ADMIN**, Save + refresh. Admin screens and APIs **403** — access must **not** fall back to the full role template. If pre-upgrade the UI showed an empty matrix but access still worked, use **Reset to defaults** after this wave. JWT without `permissions[]` (legacy session) → re-login (fail-closed pages).
-16. **Print gates:** role without `screen:reception.extra_tickets` → `/print/extra-ticket/…` forbidden. Without `screen:lab_orders` → `/print/lab-order/…` forbidden. NURSE with `screen:reports.procedures` (no `screen:doctor`) may open `/print/procedures/…`; with `screen:lab_orders` may open `/print/usm/…`. Visit-exam print still any-of `api:visits` \| `api:patients`.
+16. **Print gates:** role without `screen:reception.extra_tickets` → `/print/extra-ticket/…` forbidden. Without `screen:lab_orders` → `/print/lab-order/…` forbidden. NURSE with `screen:reports.procedures` (no `screen:doctor`) may open `/print/procedures/…`; with `screen:lab_orders` may open `/print/usm/…`. Course summary `/print/episode/…` any-of `screen:doctor` \| `screen:sanatorium` \| `screen:patients` (reception via sanatorium). Visit-exam print still any-of `api:visits` \| `api:patients`.
 
 
 
@@ -205,7 +205,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 
 1. Admin -> Settings -> Print branding: set AZ clinic name + phone; save.
 2. Lab order workflow -> Print -> choose language -> form opens and print dialog appears.
-3. Patient card -> Results **per-row** print (lab/USM) and Plan **Print schedule** → language dialog → print page. Check-up form remains at `/print/checkup/...` (no header button on Results/intake).
+3. Patient card stay strip **printer** → language dialog → `/print/episode/…?episode=` (stay, anamnesis, complaints, ICD, labs, exam notes, seated procedures). OPEN course still prints (interim note). Results **per-row** print (lab/USM) and Plan **Print schedule** stay separate. Check-up form remains at `/print/checkup/...` (no header button on Results/intake).
 4. Qualitative analyte (if configured): enter via select; reprint in another language shows translated label.
 
 ## Extra tickets (Nafta dual-run, HOT-06)
@@ -232,7 +232,7 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 
 **Status:** SCREEN — not SHIPPED / not Pilot. ADR `docs/adr/clinic-episode-procedure-assign-modal.md`.
 
-1. **In-house** Müalicə kartı: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. Placement: **today ≤ N distinct in-package codes** (`/admin/settings` daily cap, default 3) + any **paid extras**; rest from next work day. Day-1 auto ≤ N distinct codes. Card **Cədvəl** = today (Baku) only; **Tam plan** + print in the plan modal (cards, same width as the patient card). Language picker must sit **above** the plan/card modal. Print **Doctor** = episode care team (not cabin/roster nurse).
+1. **In-house** patient card **Package** tab: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. Placement: **today ≤ N distinct in-package codes** (`/admin/settings` daily cap, default 3) + any **paid extras**; rest from next work day. Day-1 auto ≤ N distinct codes. **Plan** tab = schedule chips + print (same card frame). Language picker must sit **above** the card. Print **Doctor** = episode care team (not cabin/roster nurse).
 2. **Walk-in:** package block hidden; **Additional procedures** only; reception Pay requires payment receipt/cheque ref.
 3. Extras modal shows unit price + muted total; Save → `PENDING_PAY` on card (not nurse list until ticket).
 4. `/reception/extra-tickets` → filters + row money icon or select all → Pay → folio/cashier → schedule → one cheque with every paid line, 3 copy windows.
@@ -244,7 +244,7 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 10. Opening package assign on an OPEN episode **without** `ProgramInstance` returns **200** + `blockReason` (`NO_PROGRAM_CODE` / `NO_PROGRAM`) — modal shows how to set/open the package (not a generic load failure). Mutations still 409 `NO_PROGRAM`.
 11. **Naftalan vannası** overlay: title + **Miqdar** top-right (no duplicate Prosedur field); fill Tam / Oturaq (above navel) / Qurşaq (waist); no zone chips / Tətbiq; **Vanna ardıcıllığı** only if qty > 1. Overlay top aligns with **Paket qalığı** list.
 12. Assigned card copy: `Name ×qty (draft)` then one param per line (`naftalanFill`, `dayBlock`, `bathSequence`). Same SKU must not split into multiple cards.
-13. Müalicə kartı, prosedur planı, and the assign modal share one fixed frame (episode card size). Assigned bath cards show the day-series calendar. Sanatorium list: green / yellow / red course mark and a status filter. Day series and Word blank upload use the procedure-rules and LIS screen permissions.
+13. Guest / Doctor / Diagnostics / Plan / Package share one patient-card frame; assign is a modal inside that card. Assigned bath cards show the day-series calendar. Sanatorium list: green / yellow / red course mark and a status filter. Day series and Word blank upload use the procedure-rules and LIS screen permissions.
 
 ```bash
 cd era-clinic && npm test -- --testPathPattern=cli57-package-assign
@@ -356,7 +356,7 @@ Doctor card (no curl):
 1. Hotel check-in without resolved `programCode` → `/sanatorium` shows OPEN episode (patient not dropped).
 2. **Complete checkup** → Select one of `PKG-STANDART` / `PKG-PREMIUM` / `PKG-DERMA` / `PKG-DETOKS` (empty allowed until submit; ICD/complaint still required).
 3. Walk-in registration uses the same four-code Select.
-4. Open `/sanatorium?episode=<id>` → treatment chart modal opens (not only PatientCard).
+4. Open `/sanatorium?episode=<id>` → patient card opens on the Package tab.
 5. Patient card «Gün planını aç» href lands on that deep link.
 
 ## Visit CPOE / diagnostic SoT (CLI-10)
