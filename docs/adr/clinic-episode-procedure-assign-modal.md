@@ -72,7 +72,7 @@ Single modal; **no nested second modal**.
 - Quantity **≠** one schedule card: `qty = N` means **N sessions**, planner spreads them (see D5).
 - Right column shows **aggregates** (`Ozone ×7`); schedule zone on the card shows **per-slot cards**.
 - Qty edits (+/−) and leftover drafts merge onto the same SKU card. Distinct physio params still appear as stacked lines on that card rather than splitting cards.
-- Placement times are **automatic** (FIFO / incremental engine). No slot picker in the doctor form in this slice.
+- Placement times are **automatic** (FIFO / incremental engine). Saxla seats **new** modal lines in add order (first row first); already `SCHEDULED` rows stay. A fourth distinct in-package code on one civil day is `day_full`, not `no_staff`. Paid extras skip that cap. No slot picker in the doctor form in this slice.
 
 ### D4 — Lazy assign replaces package pre-expand (amends CLI-31 UX)
 

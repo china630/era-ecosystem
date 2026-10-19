@@ -373,11 +373,20 @@ export async function saveBathCalendar(input: {
   };
 }
 
+/** Active day-series member codes (naftalan / vanna). Saxla seats these per modal line. */
+export async function bathSeriesProcedureCodes(): Promise<Set<string>> {
+  const series = await prisma.procedureDaySeries.findMany({
+    where: { active: true },
+    select: { members: { select: { procedureCode: true } } },
+  });
+  return new Set(series.flatMap((row) => row.members.map((member) => member.procedureCode)));
+}
+
 export type BathSeatMiss = {
   ymd: string;
   procedureCode: string;
   procedureName?: string;
-  reason: "no_cabin" | "cabin_sex" | "no_staff" | "no_day" | "no_mode";
+  reason: "no_cabin" | "cabin_sex" | "no_staff" | "no_day" | "no_mode" | "day_full";
 };
 
 function bathModeOf(fields: unknown): string | null {
@@ -519,7 +528,10 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
   placedIds.push(...seated.placedIds);
   for (const fail of seated.failures) {
     const mapped =
-      fail.reason === "cabin_sex" || fail.reason === "no_staff" || fail.reason === "no_cabin"
+      fail.reason === "cabin_sex" ||
+      fail.reason === "no_staff" ||
+      fail.reason === "no_cabin" ||
+      fail.reason === "day_full"
         ? fail.reason
         : "no_cabin";
     missed.push({

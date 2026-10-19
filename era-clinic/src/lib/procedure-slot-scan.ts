@@ -472,12 +472,14 @@ export function evaluateCandidateSlot(
   return { ok: true, resource, staff };
 }
 
-function placementBlockReason(
+/** Day-full is decided before the staff pool is read — do not report that as no_staff. */
+export function placementBlockReason(
   opened: boolean,
   sawStaffPool: boolean,
   blocks: { day_full: number; staff_busy: number; cabin_busy: number; rule: number },
 ): PlacementFailureReason {
   if (!opened) return "no_slot";
+  if (blocks.day_full > 0) return "day_full";
   if (!sawStaffPool) return "no_staff";
   const ranked = (Object.entries(blocks) as Array<[PlacementFailureReason, number]>)
     .filter(([, count]) => count > 0)

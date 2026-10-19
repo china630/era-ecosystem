@@ -32,7 +32,10 @@ import {
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
-import { toastPackageAssignOutcome } from "@/lib/package-assign-toasts";
+import {
+  formatPackageAssignMissLines,
+  toastPackageAssignOutcome,
+} from "@/lib/package-assign-toasts";
 type TimelineEvent = {
   id: string;
   type: string;
@@ -696,32 +699,7 @@ export function PatientCardClinicalSections({
                       .then(async (res) => {
                         const d = await res.json();
                         const misses = Array.isArray(d.misses) ? d.misses : [];
-                        const missText = misses
-                          .map((miss: { ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }) => {
-                            const reason =
-                              miss.reason === "no_staff"
-                                ? t("packageAssignMissNoStaff")
-                                : miss.reason === "staff_busy"
-                                  ? t("packageAssignMissStaffBusy")
-                                  : miss.reason === "cabin_sex"
-                                    ? t("packageAssignMissCabinSex")
-                                  : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
-                                    ? t("packageAssignMissNoCabin")
-                                    : miss.reason === "day_full"
-                                      ? t("packageAssignMissDayFull")
-                                      : miss.reason === "rule"
-                                        ? t("packageAssignMissRule")
-                                : miss.reason === "no_slot"
-                                  ? t("packageAssignMissNoSlot")
-                                  : miss.reason === "no_mode"
-                                    ? t("packageAssignMissNoBathMode")
-                                    : t("packageAssignMissNoDay");
-                            const who = miss.procedureName || miss.procedureCode;
-                            if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
-                            return t("packageAssignMiss", { date: miss.ymd || "—", reason });
-                          })
-                          .filter((line: string, index: number, all: string[]) => all.indexOf(line) === index)
-                          .join("; ");
+                        const missText = formatPackageAssignMissLines(misses, t);
                         if (!res.ok) {
                           const names = typeof d.error === "string" ? d.error : "";
                           showApiError(

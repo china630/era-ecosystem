@@ -25,7 +25,10 @@ import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels"
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
-import { toastPackageAssignOutcome } from "@/lib/package-assign-toasts";
+import {
+  formatPackageAssignMissLines,
+  toastPackageAssignOutcome,
+} from "@/lib/package-assign-toasts";
 import {
   isBathQuotaLine,
   isBathTransferQuota,
@@ -872,18 +875,6 @@ export function PackageAssignModal({
     return fields ?? null;
   }
 
-  function missReasonText(reason: string | undefined): string {
-    if (reason === "no_staff") return tPhysio("packageAssignMissNoStaff");
-    if (reason === "staff_busy") return tPhysio("packageAssignMissStaffBusy");
-    if (reason === "cabin_sex") return tPhysio("packageAssignMissCabinSex");
-    if (reason === "no_cabin" || reason === "cabin_busy") return tPhysio("packageAssignMissNoCabin");
-    if (reason === "day_full") return tPhysio("packageAssignMissDayFull");
-    if (reason === "rule") return tPhysio("packageAssignMissRule");
-    if (reason === "no_slot") return tPhysio("packageAssignMissNoSlot");
-    if (reason === "no_mode") return tPhysio("packageAssignMissNoBathMode");
-    return tPhysio("packageAssignMissNoDay");
-  }
-
   function defaultStartPoint(): { date: string; hour: string } {
     const { hour } = bakuHourMinute(new Date());
     let next = hour + 1;
@@ -899,16 +890,7 @@ export function PackageAssignModal({
   function placeMissText(
     misses: Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }> | undefined,
   ): string {
-    if (!misses?.length) return "";
-    return misses
-      .map((miss) => {
-        const reason = missReasonText(miss.reason);
-        const who = miss.procedureName || miss.procedureCode;
-        if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
-        return tPhysio("packageAssignMiss", { date: miss.ymd || "—", reason });
-      })
-      .filter((line, index, all) => all.indexOf(line) === index)
-      .join("; ");
+    return formatPackageAssignMissLines(misses, tPhysio);
   }
 
   function assignSaveMessage(payload: {
