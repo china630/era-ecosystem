@@ -516,7 +516,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
-| 2026-10-19 | Clinic baths: tenant 09–17 (no seed women-AM / men-PM); Saxla `startOn`/`startHour` is the same door as physio for day-series seating. CLI-57/58 stay SCREEN. |
+| 2026-10-19 | Clinic baths: tenant 09–17; Saxla first bath = start day+hour, later days clinic open, mode rest from that start (not continue / not PROPOSED self-occupy). CLI-57/58 stay SCREEN. |
 | 2026-10-19 | Hotel: FO cannot change room cleanliness on IN_HOUSE (`OCCUPIED_HK_LOCKED`); stay journal is event list + labeled expand + filters. HOT-HK-01 / HOT-FOLIO-DESK stay API (UAT unsigned). |
 | 2026-10-18 | Hotel FO/folio desk: room-move reason only IN_HOUSE; door picker shows OOS/OOO/type block; `/hk/closed-rooms` return-to-service; reservations default 100 rows; transfers booker OPTION+CONFIRMED+IN_HOUSE; charges/pay on OPTION/CONFIRMED; Accept payment + article; pink/blue ledger + article filter; checkout two totals. HOT-FOLIO-DESK stays API (UAT §27 unsigned). Hotel-noon occupancy still local-only (not on droplet). |
 | 2026-10-17 | CLI-58: one slot-rule kernel (`evaluateCandidateSlot`). Auto search still hunts; manual PATCH / matrix / card accept that minute or 409 (no day snap). Closed calendar days return an empty matrix. Paid same-day POST pins the day. Bath rest is `physioFields.restYmds`, not `CANCELLED` stubs. Not SHIPPED. |

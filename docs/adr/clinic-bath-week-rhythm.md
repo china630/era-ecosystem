@@ -24,5 +24,6 @@ Nafta wants five naftalan sessions in a Monday–Saturday week, rest no later th
 ## Consequences
 
 - New Saxla runs use the new rest rule. Already seated courses are not rewritten until recalc.
+- A new Saxla batch starts on `startOn` at `startHour` (first working day). The PROPOSED rows created in that save do not occupy days or continue lastKept. Later days open at the clinic/type hour.
 - Contraindication naftalan → other physio is still out of scope.
 - Reception drag / card time edit share the same refuse reasons as Saxla (cap, staff, closed day, guest gap).

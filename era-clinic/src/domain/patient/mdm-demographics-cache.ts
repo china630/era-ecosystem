@@ -128,34 +128,37 @@ export async function fetchOpsProfileForPatientFill(
   return profile;
 }
 
-/** Single-person fill from hotel check-in payload (fill-not-clear). */
+/** Hotel stay payload overwrites sex, birth date, and citizenship when it sends them. */
 export async function applyStayDemographicsCache(
   patientId: string,
   stay: { sex?: string | null; birthDate?: string | Date | null; nationality?: string | null },
 ): Promise<void> {
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return;
+  const data: {
+    nationality?: string;
+    sex?: "MALE" | "FEMALE";
+    birthDate?: Date;
+  } = {};
   const nationality = normalizeNationalityIso(stay.nationality);
-  if (nationality && !patient.nationality?.trim()) {
-    await prisma.patientRef.update({
-      where: { id: patientId },
-      data: { nationality },
-    });
-    patient.nationality = nationality;
+  if (nationality && nationality !== (patient.nationality ?? "").trim().toUpperCase()) {
+    data.nationality = nationality;
   }
-  const patch = buildPatientDemographicsFillPatch(patient, {
-    sex: normalizePersonSex(stay.sex) ?? null,
-    birthDate:
-      stay.birthDate instanceof Date
-        ? stay.birthDate.toISOString().slice(0, 10)
-        : stay.birthDate ?? null,
-    firstName: null,
-    middleName: null,
-    lastName: null,
-    accessDenied: false,
-  });
-  if (!patch) return;
-  await persistFill(patientId, patch);
+  const sex = normalizePersonSex(stay.sex);
+  if ((sex === "MALE" || sex === "FEMALE") && sex !== patient.sex) {
+    data.sex = sex;
+  }
+  const birthRaw =
+    stay.birthDate instanceof Date
+      ? stay.birthDate.toISOString().slice(0, 10)
+      : stay.birthDate ?? null;
+  const birthDate = parsePersonBirthDate(birthRaw);
+  if (birthDate) {
+    const prev = patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : "";
+    if (prev !== birthDate.toISOString().slice(0, 10)) data.birthDate = birthDate;
+  }
+  if (Object.keys(data).length === 0) return;
+  await prisma.patientRef.update({ where: { id: patientId }, data });
 }
 
 /** Single-person fill (check-in / episode open). */
