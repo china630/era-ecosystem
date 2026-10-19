@@ -1,5 +1,10 @@
-import { nextWorkingYmd, notBeforeYmdFromStart, type ClinicDay } from "@/domain/planning/clinic-day";
-import { parseBakuDateTime } from "@/lib/baku-day";
+import {
+  nextWorkingYmd,
+  notBeforeYmdFromStart,
+  saxlaFirstClock,
+  type ClinicDay,
+} from "@/domain/planning/clinic-day";
+import { bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 
 function day(ymd: string, working: boolean): ClinicDay {
   return { ymd, working, endHour: working ? 17 : 0 };
@@ -43,5 +48,18 @@ describe("notBeforeYmdFromStart", () => {
     expect(notBeforeYmdFromStart(parseBakuDateTime("2026-10-18", "10:00"), "2026-10-19")).toBe(
       "2026-10-19",
     );
+  });
+});
+
+describe("saxlaFirstClock", () => {
+  it("keeps the Saxla instant when the first pin is that day", () => {
+    const start = parseBakuDateTime("2026-10-19", "11:00");
+    expect(saxlaFirstClock(start, "2026-10-19", 9).getTime()).toBe(start.getTime());
+  });
+
+  it("moves the Saxla hour onto the first working pin day", () => {
+    const clock = saxlaFirstClock(parseBakuDateTime("2026-10-18", "11:00"), "2026-10-19", 9);
+    expect(bakuDateKey(clock)).toBe("2026-10-19");
+    expect(bakuHourMinute(clock).hour).toBe(11);
   });
 });

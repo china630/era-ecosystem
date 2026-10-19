@@ -31,6 +31,16 @@ export type PlacementFailureReason =
   | "rule"
   | "no_slot";
 
+/** First pin day uses Saxla `now`; later pin days open at the type/clinic hour. */
+export function pinSearchFrom(now: Date, pinYmd: string | undefined, typeDayStartHour: number): Date {
+  if (!pinYmd) return now;
+  const pinStart = bakuWallTime(bakuDayBounds(pinYmd).start, typeDayStartHour);
+  if (bakuDateKey(now) === pinYmd) {
+    return now.getTime() > pinStart.getTime() ? now : pinStart;
+  }
+  return pinStart;
+}
+
 /** Next working-hour start. 14:36 with a 17:00 close becomes 15:00. After the close, next morning. */
 export function nextSearchStart(now: Date, dayStartHour: number, dayEndHour: number): Date {
   const { hour } = bakuHourMinute(now);
@@ -521,14 +531,7 @@ export function scanProcedureSlots(input: {
       continue;
     }
 
-    const pinStart = order.pinYmd
-      ? bakuWallTime(bakuDayBounds(order.pinYmd).start, order.typeHours.dayStartHour)
-      : null;
-    const searchFrom =
-      pinStart &&
-      (bakuDateKey(input.now) !== order.pinYmd || input.now.getTime() <= pinStart.getTime())
-        ? pinStart
-        : input.now;
+    const searchFrom = pinSearchFrom(input.now, order.pinYmd, order.typeHours.dayStartHour);
     let slotStart = nextOpenSlot(
       searchFrom,
       order.typeHours,

@@ -1,5 +1,5 @@
 import { getCalendarDay } from "@era/satellite-kit";
-import { addBakuDays, bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDayBounds, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 import { prisma } from "@/lib/prisma";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 
@@ -111,6 +111,21 @@ export function notBeforeYmdFromStart(startAt: Date | null | undefined, todayYmd
   if (!startAt || Number.isNaN(startAt.getTime())) return todayYmd;
   const ymd = bakuDateKey(startAt);
   return ymd < todayYmd ? todayYmd : ymd;
+}
+
+/** First series day keeps the Saxla hour when the start day is closed or shifted. */
+export function saxlaFirstClock(
+  startAt: Date | null | undefined,
+  firstYmd: string,
+  fallbackHour: number,
+): Date {
+  const hour =
+    startAt && !Number.isNaN(startAt.getTime()) ? bakuHourMinute(startAt).hour : fallbackHour;
+  const hh = `${String(hour).padStart(2, "0")}:00`;
+  if (startAt && !Number.isNaN(startAt.getTime()) && bakuDateKey(startAt) === firstYmd) {
+    return startAt;
+  }
+  return parseBakuDateTime(firstYmd, hh);
 }
 
 /** First working clinic day on or after fromYmd. */

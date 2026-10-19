@@ -1,6 +1,7 @@
-import { parseBakuDateTime } from "@/lib/baku-day";
+import { bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 import {
   evaluateCandidateSlot,
+  pinSearchFrom,
   placementBlockReason,
   scanProcedureSlots,
   type ScanOrder,
@@ -38,6 +39,20 @@ function order(): ScanOrder {
     procedureTypeId: "type-1",
   };
 }
+
+describe("pinSearchFrom", () => {
+  it("uses the Saxla clock on the start pin day", () => {
+    const now = parseBakuDateTime("2026-10-19", "11:00");
+    const from = pinSearchFrom(now, "2026-10-19", 9);
+    expect(from.getTime()).toBe(now.getTime());
+  });
+
+  it("opens later pin days at the type hour", () => {
+    const from = pinSearchFrom(parseBakuDateTime("2026-10-19", "11:00"), "2026-10-20", 9);
+    expect(bakuDateKey(from)).toBe("2026-10-20");
+    expect(bakuHourMinute(from).hour).toBe(9);
+  });
+});
 
 describe("scanProcedureSlots", () => {
   const now = parseBakuDateTime("2026-10-16", "09:00");

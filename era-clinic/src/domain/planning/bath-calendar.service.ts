@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { addBakuDays, bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
-import { dayStartInstant, listClinicDays, notBeforeYmdFromStart, stayYmd } from "@/domain/planning/clinic-day";
+import {
+  dayStartInstant,
+  listClinicDays,
+  nextWorkingYmd,
+  notBeforeYmdFromStart,
+  saxlaFirstClock,
+  stayYmd,
+} from "@/domain/planning/clinic-day";
 import {
   bathPolicyFromSettings,
   defaultBathModeFromSettings,
@@ -9,7 +16,15 @@ import {
 } from "@/domain/settings/scheduling-settings";
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
-import { planBathSeries, parseBathDayModes, strayBathOrderIds, type KeptCell } from "@/domain/planning/bath-calendar";
+import {
+  planBathSeries,
+  parseBathDayModes,
+  saxlaBlockedDays,
+  saxlaDayTaken,
+  saxlaSeatKept,
+  strayBathOrderIds,
+  type KeptCell,
+} from "@/domain/planning/bath-calendar";
 import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
@@ -112,13 +127,12 @@ async function seatPinnedOrders(
   const ymds = Object.values(pins).sort();
   const first = ymds[0]!;
   const last = ymds[ymds.length - 1]!;
-  const clock =
-    startAt && !Number.isNaN(startAt.getTime())
-      ? startAt
-      : dayStartInstant(first, (await getSchedulingSettings()).dayStartHour);
+  const dayHour = (await getSchedulingSettings()).dayStartHour;
+  const clock = saxlaFirstClock(startAt, first, dayHour);
   const result = await placeConfirmedProcedures(ids, {
     pinYmdByOrderId: pins,
     startAt: clock,
+    pinStrict: true,
     scheduleBefore: bakuDayBounds(addBakuDays(last, 1)).start,
   });
   return { placedIds: result.placedIds, failures: result.failures };
@@ -405,9 +419,9 @@ function bathModeOf(fields: unknown): string | null {
 }
 
 /**
- * Seat package bath orders on stay days from the day series.
- * Days start from Saxla `startAt` (same door as physio). The week rhythm
- * still lays baths then rest. Minutes use the shared placer.
+ * Seat new package bath orders from Saxla start: first day = start clock,
+ * later days = clinic open, then baths/rest. The PROPOSED rows just created
+ * do not occupy days or continue the streak.
  */
 export async function seatBathSeriesOrders(
   orderIds: string[],
@@ -460,24 +474,21 @@ export async function seatBathSeriesOrders(
   }
 
   const today = todayBakuYmd();
-  const notBeforeYmd = notBeforeYmdFromStart(opts?.startAt, today);
+  const startFloor = notBeforeYmdFromStart(opts?.startAt, today);
+  const notBeforeYmd = nextWorkingYmd(snapshot.days, startFloor) ?? startFloor;
   const upcoming = snapshot.days.filter((day) => day.ymd >= notBeforeYmd);
-  const kept: KeptCell[] = snapshot.orders
-    .filter((order) => memberByCode.has(order.procedureCode))
-    .map((order) => ({
-      ymd: order.ymd,
-      procedureCode: order.procedureCode,
-      locked: true,
-    }));
+  const seatingIds = new Set(handled.map((order) => order.id));
+  const seatingCodes = new Set(byCode.keys());
+  const kept: KeptCell[] = saxlaSeatKept(snapshot.orders, seatingIds, seatingCodes);
+  const blockedDays = saxlaBlockedDays(snapshot.orders, seatingIds, seatingCodes);
   const seriesInputs = [...byCode.entries()].map(([procedureCode, group]) => {
     const meta = memberByCode.get(procedureCode)!;
-    const already = snapshot.orders.filter((order) => order.procedureCode === procedureCode);
     return {
       seriesCode: meta.seriesCode,
       procedureCode,
       mark: meta.mark,
+      qty: group.length,
       mode: bathModeOf(group[0]?.physioFields) ?? defaultMode,
-      qty: already.length + group.length,
       fillsRestDays: meta.fillsRestDays,
     };
   });
@@ -488,22 +499,22 @@ export async function seatBathSeriesOrders(
           days: upcoming,
           series: seriesInputs,
           kept,
-          layout: "continue",
+          layout: "fresh",
           modes: snapshot.modes,
           notBeforeYmd,
+          blockedDays,
           policy,
         }).filter(
           (cell) =>
             cell.ymd >= notBeforeYmd &&
-            !snapshot.orders.some(
-              (order) => order.procedureCode === cell.procedureCode && order.ymd === cell.ymd,
-            ),
+            !saxlaDayTaken(snapshot.orders, seatingIds, cell.procedureCode, cell.ymd),
         );
   const queues = new Map<string, typeof handled>();
   for (const [procedureCode, group] of byCode) {
     queues.set(procedureCode, [...group]);
   }
   const pins: Record<string, string> = {};
+  let firstNew = true;
   for (const cell of planned) {
     const queue = queues.get(cell.procedureCode);
     const order = queue?.[0];
@@ -525,7 +536,9 @@ export async function seatBathSeriesOrders(
     await prisma.procedureOrder.update({
       where: { id: order.id },
       data: {
-        scheduledAt: dayStartInstant(cell.ymd, settings.dayStartHour),
+        scheduledAt: firstNew
+          ? saxlaFirstClock(opts?.startAt, cell.ymd, settings.dayStartHour)
+          : dayStartInstant(cell.ymd, settings.dayStartHour),
         physioFields: {
           ...prevFields,
           dayBlock:
@@ -534,6 +547,7 @@ export async function seatBathSeriesOrders(
       },
     });
     pins[order.id] = cell.ymd;
+    firstNew = false;
   }
   const seated = await seatPinnedOrders(pins, opts?.startAt);
   placedIds.push(...seated.placedIds);
@@ -552,8 +566,10 @@ export async function seatBathSeriesOrders(
       reason: mapped,
     });
   }
-  const leftoverYmd =
-    upcoming.filter((day) => day.working).at(-1)?.ymd ?? notBeforeYmd;
+  const lastCellYmd = planned.map((cell) => cell.ymd).sort().at(-1);
+  const leftoverYmd = lastCellYmd
+    ? nextWorkingYmd(snapshot.days, addBakuDays(lastCellYmd, 1)) ?? lastCellYmd
+    : notBeforeYmd;
   for (const group of queues.values()) {
     for (const order of group) {
       missed.push({

@@ -299,40 +299,34 @@ export async function handleStayProductChanged(
       : {}),
   };
 
-  if (p.guestName?.trim()) {
-    const nameTargets = new Set<string>();
-    const linked = await prisma.clinicalEpisode.findMany({
-      where: episodeWhere,
-      select: { patientRefId: true },
+  const patientIds = new Set<string>();
+  const linked = await prisma.clinicalEpisode.findMany({
+    where: episodeWhere,
+    select: { patientRefId: true },
+  });
+  for (const row of linked) {
+    if (row.patientRefId) patientIds.add(row.patientRefId);
+  }
+  if (gpid) {
+    const people = await prisma.patientRef.findMany({
+      where: { organizationId: event.organizationId, globalPersonId: gpid },
+      select: { id: true },
     });
-    for (const row of linked) {
-      if (row.patientRefId) nameTargets.add(row.patientRefId);
-    }
-    if (gpid) {
-      const people = await prisma.patientRef.findMany({
-        where: { organizationId: event.organizationId, globalPersonId: gpid },
-        select: { id: true },
-      });
-      for (const row of people) nameTargets.add(row.id);
-    }
-    for (const patientId of nameTargets) {
+    for (const row of people) patientIds.add(row.id);
+  }
+
+  if (p.guestName?.trim()) {
+    for (const patientId of patientIds) {
       await renamePatientFromGuestName(patientId, p.guestName);
     }
   }
 
   if (p.nationality || p.sex || p.birthDate) {
-    const people = await prisma.clinicalEpisode.findMany({
-      where: episodeWhere,
-      select: { patientRefId: true },
-    });
-    const seen = new Set<string>();
-    for (const row of people) {
-      if (!row.patientRefId || seen.has(row.patientRefId)) continue;
-      seen.add(row.patientRefId);
-      const { applyStayDemographicsCache } = await import(
-        "@/domain/patient/mdm-demographics-cache"
-      );
-      await applyStayDemographicsCache(row.patientRefId, {
+    const { applyStayDemographicsCache } = await import(
+      "@/domain/patient/mdm-demographics-cache"
+    );
+    for (const patientId of patientIds) {
+      await applyStayDemographicsCache(patientId, {
         nationality: p.nationality,
         sex: p.sex,
         birthDate: p.birthDate,
