@@ -106,6 +106,13 @@ export function dayStartInstant(ymd: string, hour: number): Date {
   return new Date(start.getTime() + hour * 3_600_000);
 }
 
+/** Saxla start date, not earlier than today. Same door for baths and physio. */
+export function notBeforeYmdFromStart(startAt: Date | null | undefined, todayYmd: string): string {
+  if (!startAt || Number.isNaN(startAt.getTime())) return todayYmd;
+  const ymd = bakuDateKey(startAt);
+  return ymd < todayYmd ? todayYmd : ymd;
+}
+
 /** First working clinic day on or after fromYmd. */
 export function nextWorkingYmd(days: ClinicDay[], fromYmd: string): string | null {
   for (const day of days) {
