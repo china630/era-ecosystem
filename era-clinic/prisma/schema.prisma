@@ -28,8 +28,6 @@ model Tenant {
   patientCardPlanPreview         Int                      @default(15) @map("patient_card_plan_preview")
   patientCardHistoryPageSize     Int                      @default(25) @map("patient_card_history_page_size")
   patientCardPlanPageSize        Int                      @default(25) @map("patient_card_plan_page_size")
-  /// Max distinct in-package procedure codes per guest per Asia/Baku day (paid extras excluded).
-  dailyPackageProcedureCap       Int                      @default(3) @map("daily_package_procedure_cap")
   /// Check-in allowed from scheduledAt − N minutes
   procedureCheckInGraceBeforeMin Int                      @default(5) @map("procedure_check_in_grace_before_min")
   /// Check-in allowed until scheduledAt + N minutes
@@ -1819,6 +1817,8 @@ model ProgramTemplateProcedure {
    */
   quotaBasis     String          @default("PER_NIGHTS") @map("quota_basis")
   requiresDoctor Boolean         @default(false) @map("requires_doctor")
+  /** Distinct in-package SKUs per Asia/Baku day for this block. Null = family default. */
+  dailyDistinctCap Int?          @map("daily_distinct_cap")
   template       ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([templateId])
@@ -1851,6 +1851,7 @@ model ProgramInstance {
   template            ProgramTemplate           @relation(fields: [templateId], references: [id])
   episode             ClinicalEpisode           @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   procedureLines      ProgramProcedureBalance[]
+  quotaTransfers      ProgramQuotaTransfer[]
 
   @@unique([organizationId, episodeId])
   @@index([reservationId])
@@ -1868,6 +1869,24 @@ model ProgramProcedureBalance {
 
   @@unique([instanceId, procedureCode])
   @@index([organizationId])
+}
+
+model ProgramQuotaTransfer {
+  id             String          @id @default(cuid())
+  organizationId String
+  instanceId     String
+  episodeId      String
+  fromCode       String          @map("from_code")
+  toQuotaCode    String          @map("to_quota_code")
+  qty            Int
+  reason         String
+  createdAt      DateTime        @default(now()) @map("created_at")
+  instance       ProgramInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
+  @@index([episodeId])
+  @@index([organizationId])
+  @@map("program_quota_transfer")
 }
 
 model ProcedureOrder {

@@ -12,7 +12,9 @@ Amended 2026-08-30 (Wave C / Nafta): first-day confirm is a **FIFO prefix of 2�
 
 Amended 2026-08-31 — [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md): empty OPEN-episode anamnesis blocks `buildProposedPlan`, manual `POST /api/procedures`, `placeConfirmedProcedures`, and bulk-cancel **replace** (**SCREEN** / CLI-55). Contraindication substitution uses the **episode** set.
 
-Amended 2026-09-04 — [clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md) (**CLI-57 PLANNED**): package doctor happy path becomes **lazy assign from balance** (modal Save → place) plus optional **day-1 auto ≤3 distinct codes**; full `buildProposedPlan` pre-expand is no longer the primary Müalicə kartı UX. Paid extras: prescribe → `PENDING_PAY` → Pay/folio|cashier → schedule → ticket ×3 (amends Issue-ticket-first order). Placement engine / FIFO gates / rotation remain.
+Amended 2026-10-19 — daily free cap is per package block (physio 3, bath 1, paraffin 1). Day-1 auto and `Tenant.dailyPackageProcedureCap` are removed. A replacement spends the predecessor block.
+
+Amended 2026-09-04 — [clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md) (**CLI-57 PLANNED**): package doctor happy path becomes **lazy assign from balance** (modal Save → place); full `buildProposedPlan` pre-expand is no longer the primary Müalicə kartı UX. Paid extras: prescribe → `PENDING_PAY` → Pay/folio|cashier → schedule → ticket ×3 (amends Issue-ticket-first order). Placement engine / FIFO gates / rotation remain.
 
 ## Context
 

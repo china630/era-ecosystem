@@ -27,6 +27,7 @@ import {
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import { pickL10n, type DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
+import { resolveDailyDistinctCap } from "@/domain/sanatorium/daily-package-cap";
 import {
   CUSTOM_QUERY_MIN,
   filterCustomSkus,
@@ -53,6 +54,7 @@ type ProgramBlock = {
   fulfillment: ProgramBlockFulfillment | "";
   quotaBasis: QuotaBasis | "";
   requiresDoctor: boolean | null;
+  dailyDistinctCap: number | null;
 };
 
 type ProgramKnot = { nights: number; procedureCode: string; qty: number };
@@ -139,6 +141,7 @@ function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
     fulfillment: "",
     quotaBasis: "",
     requiresDoctor: null,
+    dailyDistinctCap: null,
   };
 }
 
@@ -481,6 +484,7 @@ export default function ProgramTemplatesAdminPage() {
           fulfillment: fulfillmentFromKind(kind),
           quotaBasis: (p.quotaBasis as QuotaBasis) || "PER_NIGHTS",
           requiresDoctor: Boolean(p.requiresDoctor),
+          dailyDistinctCap: p.dailyDistinctCap ?? null,
         };
       }),
     );
@@ -823,6 +827,10 @@ ${head}
           fulfillment: fulfillmentFromKind(b.kind),
           quotaBasis: b.quotaBasis || "PER_NIGHTS",
           requiresDoctor: Boolean(b.requiresDoctor),
+          dailyDistinctCap:
+            b.kind === "PHYSIO" || b.kind === "BATH" || b.kind === "PARAFFIN"
+              ? b.dailyDistinctCap
+              : null,
         };
       });
       const payload = editingId
@@ -1204,6 +1212,7 @@ ${head}
                   <tbody>
                     {matrixBlocks.map((b) => {
                       const kind = inferBlockKind(b.procedureCode, b.kind);
+                      const dailyCap = resolveDailyDistinctCap(kind, b.dailyDistinctCap);
                       const chips = displayMemberCodes(b);
                       const chipPreview = chips.slice(0, 3);
                       const chipMore = chips.length - chipPreview.length;
@@ -1231,6 +1240,7 @@ ${head}
                               {defaultBlockName(kind, t)}
                               {" · "}
                               {t(`fulfillment_${fulfillmentFromKind(kind)}`)}
+                              {dailyCap != null ? ` · ${dailyCap}` : ""}
                             </p>
                             {chips.length === 0 ? (
                               <p className={`mb-0 mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>
@@ -1353,6 +1363,27 @@ ${head}
               }}
               options={kindOptions}
             />
+            {blockDraft.kind === "PHYSIO" ||
+            blockDraft.kind === "BATH" ||
+            blockDraft.kind === "PARAFFIN" ? (
+              <Field
+                label={t("dailyDistinctCap")}
+                hint={t("dailyDistinctCapHint")}
+                preset="count"
+                type="number"
+                min={1}
+                max={12}
+                value={blockDraft.dailyDistinctCap ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  setBlockDraft((prev) =>
+                    prev
+                      ? { ...prev, dailyDistinctCap: raw ? Number(raw) : null }
+                      : prev,
+                  );
+                }}
+              />
+            ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field
                 label={t("blockCode")}

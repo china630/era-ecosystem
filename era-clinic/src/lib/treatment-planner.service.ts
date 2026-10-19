@@ -8,7 +8,7 @@ import {
   bakuHourMinute,
   parseBakuDateTime,
 } from "@/lib/baku-day";
-import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
+import { dailyCapForQuota, loadEpisodeDailyCaps } from "@/domain/sanatorium/block-daily-cap";
 import {
   DEFAULT_WORK_HOURS,
   alignDurationToSlotMinutes,
@@ -356,7 +356,6 @@ export async function placeConfirmedProcedures(
 
   const settings = await getSchedulingSettings();
   const { schedulingSlotMinutes: slotMinutes } = settings;
-  const packageCap = clampDailyPackageProcedureCap(settings.dailyPackageProcedureCap);
   const workHours = await getTenantWorkHours();
 
   const orders = await prisma.procedureOrder.findMany({
@@ -374,6 +373,7 @@ export async function placeConfirmedProcedures(
 
   const patientRefId = orders[0].patientRefId;
   const episodeId = orders[0].clinicalEpisodeId;
+  const dailyCaps = episodeId ? await loadEpisodeDailyCaps(episodeId) : null;
   if (episodeId) {
     const episode = await prisma.clinicalEpisode.findUnique({
       where: { id: episodeId },
@@ -407,6 +407,7 @@ export async function placeConfirmedProcedures(
       scheduledAt: true,
       endsAt: true,
       inPackage: true,
+      packageQuotaCode: true,
       procedureType: { select: { patientRestMinutes: true } },
     },
     orderBy: { scheduledAt: "asc" },
@@ -419,6 +420,9 @@ export async function placeConfirmedProcedures(
     end: row.endsAt ?? row.scheduledAt,
     patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
     inPackage: row.inPackage === true,
+    quotaKey: dailyCaps
+      ? dailyCapForQuota(dailyCaps, row.packageQuotaCode, row.procedureCode).quotaKey
+      : row.procedureCode,
     countsForRest: row.status !== "NO_SHOW",
   }));
   const rotationContext: RotationContextSlot[] = existing
@@ -512,6 +516,9 @@ export async function placeConfirmedProcedures(
       procedureName: order.procedureName?.trim() || order.procedureCode,
       bodyPart: order.bodyPart ?? pt.bodyPart ?? null,
       inPackage: order.inPackage === true,
+      ...(order.inPackage && dailyCaps
+        ? dailyCapForQuota(dailyCaps, order.packageQuotaCode, order.procedureCode)
+        : { quotaKey: order.procedureCode, dailyCap: null }),
       durationMin: alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes),
       dayEndHour: 0,
       patientRestMinutes: pt.patientRestMinutes ?? 15,
@@ -569,7 +576,7 @@ export async function placeConfirmedProcedures(
     orders: scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
     now,
     slotMinutes,
-    packageCap,
+    packageCap: 12,
     horizonEndYmd,
     closedYmds,
     staffByTypeAndYmd,

@@ -2,7 +2,6 @@ import type {
   ProcedureOverQuotaPolicy,
   ProgramSchedulingMode,
 } from "@prisma/client";
-import { DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP, clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import { getDefaultTenant } from "@/domain/settings/settings.service";
 import {
   parseBathDayModes,
@@ -27,7 +26,6 @@ export type SchedulingSettings = {
   defaultProcedureGapMinutes: number;
   peakModeEnabled: boolean;
   peakDayEndHour: number;
-  dailyPackageProcedureCap: number;
   bathDayModesJson: string | null;
   defaultBathMode: string;
   closedDaySpendsOwedRest: boolean;
@@ -63,7 +61,6 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   defaultProcedureGapMinutes: 5,
   peakModeEnabled: false,
   peakDayEndHour: 22,
-  dailyPackageProcedureCap: DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP,
   bathDayModesJson: null,
   defaultBathMode: "3",
   closedDaySpendsOwedRest: true,
@@ -105,7 +102,6 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
     defaultAppointmentSlotMinutes: tenant.defaultAppointmentSlotMinutes ?? 30,
     procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
     defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
-    dailyPackageProcedureCap: clampDailyPackageProcedureCap(tenant.dailyPackageProcedureCap),
     bathDayModesJson: tenant.bathDayModesJson ?? null,
     defaultBathMode: tenant.defaultBathMode?.trim() || "3",
     closedDaySpendsOwedRest: tenant.closedDaySpendsOwedRest !== false,

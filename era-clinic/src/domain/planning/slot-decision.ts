@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { listClinicDays } from "@/domain/planning/clinic-day";
 import { addBakuDays, bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
-import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
+import { dailyCapForQuota, loadEpisodeDailyCaps } from "@/domain/sanatorium/block-daily-cap";
 import {
   alignDurationToSlotMinutes,
   getSchedulingSettings,
@@ -38,7 +38,7 @@ export const SLOT_REASON_MESSAGE: Record<PlacementFailureReason, string> = {
   no_staff: "No staff posted for this procedure on that day",
   staff_busy: "Staff is busy at the selected time",
   cabin_busy: "Resource conflict at selected time",
-  day_full: "the daily limit of 3 free (in-package) procedures is used up",
+  day_full: "the daily limit for this package block is used up",
   same_day: "Same procedure already scheduled for this day",
   closed: "Clinic is closed on that day",
   lunch: "Procedure cannot be scheduled in the lunch break",
@@ -88,7 +88,13 @@ export async function placeManualProcedureSlot(input: {
   const settings = await getSchedulingSettings();
   const workHours = await getTenantWorkHours();
   const slotMinutes = settings.schedulingSlotMinutes;
-  const packageCap = clampDailyPackageProcedureCap(settings.dailyPackageProcedureCap);
+  const dailyCaps = order.clinicalEpisodeId
+    ? await loadEpisodeDailyCaps(order.clinicalEpisodeId)
+    : null;
+  const capFields =
+    order.inPackage && dailyCaps
+      ? dailyCapForQuota(dailyCaps, order.packageQuotaCode, order.procedureCode)
+      : { quotaKey: order.procedureCode, dailyCap: null as number | null };
   const pt = order.procedureType ?? (await prisma.procedureType.findFirst({
     where: { code: order.procedureCode },
     include: { requirements: true },
@@ -147,6 +153,7 @@ export async function placeManualProcedureSlot(input: {
     procedureName: order.procedureName?.trim() || order.procedureCode,
     bodyPart: order.bodyPart ?? pt.bodyPart ?? null,
     inPackage: order.inPackage === true,
+    ...capFields,
     durationMin: duration,
     dayEndHour: resolveEffectiveDayEndHour(typeHours, {
       procedureExtendedEndHour: pt.extendedEndHour,
@@ -181,6 +188,7 @@ export async function placeManualProcedureSlot(input: {
       scheduledAt: true,
       endsAt: true,
       inPackage: true,
+      packageQuotaCode: true,
       procedureType: { select: { patientRestMinutes: true } },
     },
   });
@@ -191,6 +199,9 @@ export async function placeManualProcedureSlot(input: {
     end: row.endsAt ?? row.scheduledAt,
     patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
     inPackage: row.inPackage === true,
+    quotaKey: dailyCaps
+      ? dailyCapForQuota(dailyCaps, row.packageQuotaCode, row.procedureCode).quotaKey
+      : row.procedureCode,
     countsForRest: row.status !== "NO_SHOW",
   }));
   const rotationContext: RotationContextSlot[] = existing
@@ -226,7 +237,7 @@ export async function placeManualProcedureSlot(input: {
     order: scanOrder,
     slotStart,
     slotEnd,
-    packageCap,
+    packageCap: 12,
     closedYmds: new Set(clinicDays.filter((day) => !day.working).map((day) => day.ymd)),
     staffByTypeAndYmd,
     rules,

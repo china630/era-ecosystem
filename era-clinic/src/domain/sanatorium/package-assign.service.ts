@@ -13,7 +13,6 @@ import {
   episodeCareTeamDenied,
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
-import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import {
   defaultBathModeFromSettings,
   getSchedulingSettings,
@@ -43,6 +42,8 @@ import {
   foldHay,
   isBathQuotaLine,
   isBathTransferQuota,
+  isReplaceableQuotaLine,
+  transferQuotaCode,
 } from "@/domain/sanatorium/package-assign-quota";
 
 export {
@@ -491,8 +492,9 @@ export type PackageBalanceRow = {
    * Modal shows them read-only; only assignable rows open the picker.
    */
   assignable: boolean;
-  /** Quota moved from unused baths — not auto-seated. */
+  /** Quota moved from unused baths or paraffin — not auto-seated. */
   isTransfer?: boolean;
+  transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
 };
 
 export type PackageAssignedAgg = {
@@ -534,6 +536,7 @@ async function loadEpisodeForAssign(
       programInstance: {
         include: {
           procedureLines: true,
+          quotaTransfers: { orderBy: { createdAt: "asc" } },
           template: { include: { procedures: { orderBy: [{ sortOrder: "asc" }, { procedureCode: "asc" }] } } },
         },
       },
@@ -770,6 +773,14 @@ export async function getPackageAssignSnapshot(
       needsSkuPicker,
       assignable,
       isTransfer: isBathTransferQuota(line.procedureCode),
+      transfers: (instance.quotaTransfers ?? [])
+        .filter((row) => row.toQuotaCode === line.procedureCode)
+        .map((row) => ({
+          createdAt: row.createdAt.toISOString(),
+          qty: row.qty,
+          reason: row.reason,
+          fromCode: row.fromCode,
+        })),
     };
   });
 
@@ -1079,12 +1090,7 @@ export async function assignPackageProcedures(
 
   const settings = await getSchedulingSettings();
   const defaultBathMode = defaultBathModeFromSettings(settings);
-  const packageCap = clampDailyPackageProcedureCap(settings.dailyPackageProcedureCap);
-  const distinctCodes = new Set(resolved.map((l) => l.procedureCode)).size;
-  let softWarn =
-    distinctCodes > packageCap
-      ? `Daily in-package cap is ${packageCap} distinct codes; batch has ${distinctCodes} (remainder places from next work day)`
-      : null;
+  const softWarn: string | null = null;
 
   const orgId = requestOrganizationId();
   const workStart =
@@ -1486,11 +1492,19 @@ export async function transferBathQuota(
   const names = await loadCatalogDisplayNameMap([input.fromCode, input.toCode], "az");
   const fromName = names.get(input.fromCode) ?? input.fromCode;
   const toName = names.get(input.toCode) ?? input.toCode;
-  if (!isBathQuotaLine(input.fromCode, fromName)) {
-    throw new PackageAssignError("Only unused bath quota can be transferred", "NOT_BATH", 400);
+  if (!isReplaceableQuotaLine(input.fromCode, fromName)) {
+    throw new PackageAssignError(
+      "Only unused bath or paraffin quota can be transferred",
+      "NOT_REPLACEABLE",
+      400,
+    );
   }
-  if (isBathQuotaLine(input.toCode, toName)) {
-    throw new PackageAssignError("Replacement must not be another bath", "TARGET_IS_BATH", 400);
+  if (isReplaceableQuotaLine(input.toCode, toName)) {
+    throw new PackageAssignError(
+      "Replacement must be a physio procedure",
+      "TARGET_NOT_PHYSIO",
+      400,
+    );
   }
 
   const live = await prisma.procedureOrder.findMany({
@@ -1526,7 +1540,7 @@ export async function transferBathQuota(
       return b.scheduledAt.getTime() - a.scheduledAt.getTime();
     });
   const cancel = drop.slice(0, cancelNeed);
-  const quotaCode = bathTransferQuotaCode(input.toCode);
+  const quotaCode = transferQuotaCode(input.fromCode, input.toCode);
 
   const contra = await prisma.$transaction(async (tx) => {
     if (cancel.length > 0) {
@@ -1564,6 +1578,17 @@ export async function transferBathQuota(
         },
       });
     }
+    await tx.programQuotaTransfer.create({
+      data: {
+        organizationId: instance.organizationId,
+        instanceId: instance.id,
+        episodeId,
+        fromCode: input.fromCode,
+        toQuotaCode: quotaCode,
+        qty,
+        reason,
+      },
+    });
     return tx.patientContraindication.create({
       data: {
         patientRefId: episode.patientRefId,
@@ -1581,47 +1606,6 @@ export async function transferBathQuota(
   await syncQuotaUsed(instance.id, episodeId, input.fromCode);
   await syncQuotaUsed(instance.id, episodeId, quotaCode);
   return { transferred: qty, quotaCode, contraindicationId: contra.id };
-}
-
-/**
- * Day-1 auto: up to N distinct non-pool package codes with remaining > 0, qty 1 each.
- * N = Tenant.dailyPackageProcedureCap (default 3).
- */
-export async function day1AutoAssign(
-  episodeId: string,
-  opts?: { confirmedByUserId?: string },
-): Promise<{
-  placed: number;
-  softWarn: string | null;
-  orderIds: string[];
-  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
-}> {
-  const packageCap = clampDailyPackageProcedureCap(
-    (await getSchedulingSettings()).dailyPackageProcedureCap,
-  );
-  const snap = await getPackageAssignSnapshot(episodeId);
-  if (snap.blockReason) {
-    throw new PackageAssignError(snap.blockReason, snap.blockReason, 409);
-  }
-  const picks = snap.balances
-    .filter(
-      (b) =>
-        !b.isPool &&
-        !b.isQuotaAlias &&
-        !b.needsSkuPicker &&
-        !b.isTransfer &&
-        !isBathTransferQuota(b.procedureCode) &&
-        b.remaining > 0,
-    )
-    .slice(0, packageCap);
-  if (picks.length === 0) {
-    throw new PackageAssignError("No remaining package quota", "EMPTY_REMAINING", 400);
-  }
-  return assignPackageProcedures(
-    episodeId,
-    picks.map((p) => ({ procedureCode: p.procedureCode, qty: 1 })),
-    opts,
-  );
 }
 
 const ADJUSTABLE = ["PROPOSED", "SCHEDULED"] as const;

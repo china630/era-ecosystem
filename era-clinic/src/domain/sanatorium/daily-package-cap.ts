@@ -42,3 +42,80 @@ export function packageDayIsFullForNewCode(
   if (codesOnDay.has(candidateCode)) return false;
   return codesOnDay.size >= limit;
 }
+
+/** Empty stored cap: physio 3, bath 1, paraffin 1. Other blocks are uncapped. */
+export function defaultDailyDistinctCap(kind: string | null | undefined): number | null {
+  if (kind === "PHYSIO") return 3;
+  if (kind === "BATH") return 1;
+  if (kind === "PARAFFIN") return 1;
+  return null;
+}
+
+export function resolveDailyDistinctCap(
+  kind: string | null | undefined,
+  stored: number | null | undefined,
+): number | null {
+  if (stored == null || !Number.isFinite(Number(stored))) return defaultDailyDistinctCap(kind);
+  const n = Math.floor(Number(stored));
+  if (n < 1) return defaultDailyDistinctCap(kind);
+  return Math.min(12, n);
+}
+
+export type BlockCapSource = {
+  procedureCode: string;
+  kind?: string | null;
+  dailyDistinctCap?: number | null;
+};
+
+/** Stored kind wins. Known pool codes still get a family when the row never saved one. */
+export function kindForDailyCap(
+  code: string,
+  kind: string | null | undefined,
+): string | null | undefined {
+  if (kind) return kind;
+  const c = code.trim().toUpperCase();
+  if (c === "PHYSIO_POOL" || c.startsWith("PHYSIO_POOL_")) return "PHYSIO";
+  if (
+    c === "PARAFFIN_POOL" ||
+    c.startsWith("PARAFFIN_POOL_") ||
+    c.includes("PARAFFIN") ||
+    c.includes("PARAFIN")
+  ) {
+    return "PARAFFIN";
+  }
+  if (c === "NAFTALAN" || c === "NAFTALAN_BATH" || c.includes("NAFTALAN")) return "BATH";
+  return kind;
+}
+
+export function capsByBlock(rows: BlockCapSource[]): Map<string, number | null> {
+  const map = new Map<string, number | null>();
+  for (const row of rows) {
+    map.set(
+      row.procedureCode,
+      resolveDailyDistinctCap(kindForDailyCap(row.procedureCode, row.kind), row.dailyDistinctCap),
+    );
+  }
+  return map;
+}
+
+export type BlockCapSlot = PackageCapSlot & { quotaKey: string };
+
+/** Distinct in-package SKUs of one package block on this Asia/Baku day. */
+export function packageBlockIsFull(input: {
+  slots: BlockCapSlot[];
+  day: Date;
+  candidateCode: string;
+  quotaKey: string;
+  cap: number | null;
+}): boolean {
+  if (input.cap == null) return false;
+  const key = bakuDateKey(input.day);
+  const codes = new Set<string>();
+  for (const slot of input.slots) {
+    if (!slot.inPackage || slot.quotaKey !== input.quotaKey) continue;
+    if (bakuDateKey(slot.start) !== key) continue;
+    codes.add(slot.code);
+  }
+  if (codes.has(input.candidateCode)) return false;
+  return codes.size >= input.cap;
+}

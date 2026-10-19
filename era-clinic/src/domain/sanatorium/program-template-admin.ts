@@ -21,6 +21,7 @@ const procedureSchema = z.object({
     .enum(["PHYSIO", "BATH", "PARAFFIN", "LAB", "EXAM", "CUSTOM"])
     .nullable()
     .optional(),
+  dailyDistinctCap: z.number().int().min(1).max(12).nullable().optional(),
   sortOrder: z.number().int().nonnegative().optional(),
   memberCodes: z.array(z.string().min(1)).optional(),
   assignMode: assignModeSchema.optional(),
@@ -88,6 +89,7 @@ export type EntitlementSnapshot = {
     quotaTotal: number;
     kind?: string | null;
     sortOrder?: number;
+    dailyDistinctCap?: number | null;
   } & EntitlementBlockAxes>;
   knots: Array<{ nights: number; procedureCode: string; qty: number }>;
   members: Array<{ blockCode: string; procedureCode: string }>;
@@ -242,6 +244,7 @@ export function buildEntitlementSnapshot(input: {
     quotaTotal: number;
     kind?: string | null;
     sortOrder?: number;
+    dailyDistinctCap?: number | null;
     assignMode?: string | null;
     fulfillment?: string | null;
     quotaBasis?: string | null;
@@ -260,6 +263,7 @@ export function buildEntitlementSnapshot(input: {
       quotaTotal: p.quotaTotal,
       kind: p.kind ?? null,
       sortOrder: p.sortOrder ?? 0,
+      dailyDistinctCap: p.dailyDistinctCap ?? null,
       ...normalizeBlockAxes(p),
     })),
     knots: input.knots.map((k) => ({
@@ -335,6 +339,7 @@ export async function replaceTemplateProceduresAndKnots(
           fulfillment: axes.fulfillment,
           quotaBasis: axes.quotaBasis,
           requiresDoctor: axes.requiresDoctor,
+          dailyDistinctCap: p.dailyDistinctCap ?? null,
         };
       }),
     });
@@ -486,6 +491,7 @@ function proceduresFromExisting(existing: {
     fulfillment?: string | null;
     quotaBasis?: string | null;
     requiresDoctor?: boolean | null;
+    dailyDistinctCap?: number | null;
   }>;
   blockMembers: Array<{ blockCode: string; procedureCode: string }>;
 }): ProgramProcedureInput[] {
@@ -505,6 +511,7 @@ function proceduresFromExisting(existing: {
       kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
       sortOrder: p.sortOrder,
       memberCodes: membersByBlock.get(p.procedureCode) ?? [],
+      dailyDistinctCap: p.dailyDistinctCap ?? null,
       ...axes,
     };
   });
