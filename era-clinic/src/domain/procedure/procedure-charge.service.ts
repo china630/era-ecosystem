@@ -15,7 +15,6 @@ import {
   resolveSellableSku,
   revenueCodeForServiceLine,
 } from "@/lib/billing-router";
-import { isSameDayFourthOrLater } from "@/lib/sanatorium-day1";
 
 export type ProcedureChargeContext = {
   overQuota: boolean;
@@ -135,46 +134,6 @@ export async function resolveProcedureCharge(
   // Prefer existing positive amount when entitlement says paid but order already priced.
   if (amountNet <= 0 && !priceMissing && Number(order.amountNet) > 0 && charge.reason !== "in_quota") {
     amountNet = Number(order.amountNet);
-  }
-
-  // Wave C: PDF >3 same calendar day → 4th+ paid; strip package stamp (do not decrement quotaUsed).
-  if (charge.reason === "in_quota" && amountNet === 0 && order.patientOrigin === "IN_HOUSE") {
-    const { bakuDayBounds, todayBakuYmd } = await import("@/domain/ops/day-summary.service");
-    const { start, end } = bakuDayBounds(todayBakuYmd());
-    const sameDayCount = await prisma.procedureOrder.count({
-      where: {
-        patientRefId: orderFull?.patientRefId,
-        status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
-        scheduledAt: { gte: start, lt: end },
-        id: { not: order.id },
-      },
-    });
-    if (isSameDayFourthOrLater(sameDayCount)) {
-      const dayCharge = applyPriceMissingFallback(
-        await resolveEntitlementCharge({
-          episodeId,
-          patientOrigin: "WALK_IN",
-          serviceCode: order.procedureCode,
-          inPackage: false,
-        }),
-        { serviceCode: order.procedureCode, where: "procedure-4th-same-day" },
-      );
-      amountNet = dayCharge.amountNet;
-      priceMissing = dayCharge.priceMissing;
-      if (burnQuota) {
-        await prisma.procedureOrder.update({
-          where: { id: order.id },
-          data: { inPackage: false, packageQuotaCode: null },
-        });
-        if (program && episodeId) {
-          await syncEntitlementUsage({
-            instanceId: program.id,
-            episodeId,
-            quotaCode,
-          });
-        }
-      }
-    }
   }
 
   const settings = await getSchedulingSettings();

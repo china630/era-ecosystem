@@ -14,7 +14,7 @@ import {
   CatalogField,
   showApiError,
 } from "@era/satellite-kit/ui";
-import { ArrowLeftRight, ChevronDown, Minus, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
 import {
   PhysioSiteChips,
   type PhysioCatalogListItem,
@@ -32,11 +32,12 @@ import {
 import {
   isBathQuotaLine,
   isBathTransferQuota,
+  isReplaceableQuotaLine,
   bathTransferSku,
-  bathTransferQuotaCode,
+  parseTransferQuota,
 } from "@/domain/sanatorium/package-assign-quota";
 import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
-import { addBakuDays, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
 export type PackageBalanceRow = {
   procedureCode: string;
@@ -54,6 +55,7 @@ export type PackageBalanceRow = {
   /** False for intake labs/exams — read-only in W2; hidden from assign menu in W1. */
   assignable?: boolean;
   isTransfer?: boolean;
+  transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
 };
 
 export type PackageAssignedAgg = {
@@ -292,6 +294,7 @@ export function PackageAssignModal({
   >([]);
 
   const [replaceOpen, setReplaceOpen] = useState(false);
+  const [transferInfoCode, setTransferInfoCode] = useState<string | null>(null);
   const [replaceFrom, setReplaceFrom] = useState("");
   const [replaceTo, setReplaceTo] = useState("");
   const [replaceQty, setReplaceQty] = useState(1);
@@ -558,7 +561,7 @@ export function PackageAssignModal({
   );
 
   const replaceToOptions = useMemo(() => {
-    return allCodes.filter((row) => !isBathQuotaLine(row.value, row.label));
+    return allCodes.filter((row) => !isReplaceableQuotaLine(row.value, row.label));
   }, [allCodes]);
 
   const poolSkuOptions = useMemo(() => {
@@ -652,10 +655,18 @@ export function PackageAssignModal({
     setDraft((prev) => mergeDraft(prev, line));
   }
 
+  function openTransferForSku(code: string): string | null {
+    const hit = balances.find((row) => {
+      const parsed = parseTransferQuota(row.procedureCode);
+      return parsed?.sku === code && (draftRemaining.get(row.procedureCode) ?? row.remaining) > 0;
+    });
+    return hit?.procedureCode ?? null;
+  }
+
   function quotaForCode(code: string): { rem: number; burnPool: string | null } {
-    const xfer = bathTransferQuotaCode(code);
-    const xferRem = draftRemaining.get(xfer) ?? 0;
-    if (xferRem > 0) {
+    const xfer = openTransferForSku(code);
+    const xferRem = xfer ? (draftRemaining.get(xfer) ?? 0) : 0;
+    if (xfer && xferRem > 0) {
       return { rem: xferRem, burnPool: xfer };
     }
     if (balances.some((b) => b.procedureCode === code && !b.isPool && !b.isQuotaAlias)) {
@@ -790,8 +801,8 @@ export function PackageAssignModal({
 
   function openCatalogLine(code: string, name: string) {
     if (refuseWrongSex(code)) return;
-    const xfer = bathTransferQuotaCode(code);
-    if ((draftRemaining.get(xfer) ?? 0) > 0) {
+    const xfer = openTransferForSku(code);
+    if (xfer && (draftRemaining.get(xfer) ?? 0) > 0) {
       openForm(xfer);
       return;
     }
@@ -1199,14 +1210,11 @@ export function PackageAssignModal({
     setDraft((prev) => prev.filter((d) => !draftMatchesAssigned(d, row)));
   }
 
-  function openReplace(row?: PackageAssignedAgg) {
+  function openReplace(fromCode?: string) {
     const from =
-      row?.packageQuotaCode &&
-      isBathQuotaLine(row.packageQuotaCode, row.procedureName)
-        ? row.packageQuotaCode
-        : row?.procedureCode && isBathQuotaLine(row.procedureCode, row.procedureName)
-          ? row.procedureCode
-          : bathFromOptions[0]?.value ?? "";
+      fromCode && isReplaceableQuotaLine(fromCode)
+        ? fromCode
+        : bathFromOptions[0]?.value ?? "";
     setReplaceFrom(from);
     setReplaceBatchId(null);
     setReplaceQty(1);
@@ -1284,8 +1292,8 @@ export function PackageAssignModal({
 
   function extraPlus(code: string, name: string, paramsLabel: string) {
     if (refuseWrongSex(code)) return;
-    const xfer = bathTransferQuotaCode(code);
-    if ((draftRemaining.get(xfer) ?? 0) > 0) {
+    const xfer = openTransferForSku(code);
+    if (xfer && (draftRemaining.get(xfer) ?? 0) > 0) {
       openForm(xfer);
       return;
     }
@@ -1376,16 +1384,6 @@ export function PackageAssignModal({
       <div className="grid h-full min-h-0 flex-1 grid-rows-1 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
           <h4 className="text-sm font-medium">{tPhysio("packageBalanceTitle")}</h4>
-          {bathFromOptions.length > 0 ? (
-            <button
-              type="button"
-              className={`${SECONDARY_BUTTON_CLASS} mb-2 text-[12px]`}
-              disabled={busy}
-              onClick={() => openReplace()}
-            >
-              {tPhysio("replaceBaths")}
-            </button>
-          ) : null}
           {transferBalances.filter((b) => b.assignable !== false).length > 0 ? (
             <div className="mb-3">
               <h4 className="text-sm font-medium">{tPhysio("replacedProceduresTitle")}</h4>
@@ -1404,8 +1402,31 @@ export function PackageAssignModal({
                           <p className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}>
                             {labels.remaining}: {rem} / {b.quotaTotal}
                           </p>
+                          {(b.transfers?.length ?? 0) > 0 && transferInfoCode === b.procedureCode ? (
+                            <ul className={`mt-1 space-y-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
+                              {b.transfers!.map((row, index) => (
+                                <li key={`${row.createdAt}-${index}`}>
+                                  {bakuDateKey(new Date(row.createdAt))} · {row.qty} · {row.reason}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
                         </div>
                         <div className="flex shrink-0 gap-1">
+                          {(b.transfers?.length ?? 0) > 0 ? (
+                            <button
+                              type="button"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={tPhysio("replaceInfo")}
+                              onClick={() =>
+                                setTransferInfoCode((cur) =>
+                                  cur === b.procedureCode ? null : b.procedureCode,
+                                )
+                              }
+                            >
+                              <Info className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
@@ -1454,6 +1475,16 @@ export function PackageAssignModal({
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
+                      {isReplaceableQuotaLine(b.procedureCode, b.procedureName) ? (
+                        <button
+                          type="button"
+                          className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
+                          disabled={busy || rem < 1}
+                          onClick={() => openReplace(b.procedureCode)}
+                        >
+                          {tPhysio("replaceBaths")}
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
@@ -1707,20 +1738,6 @@ export function PackageAssignModal({
                         </div>
                         {lane.assigned && !lane.pkgLocked ? (
                           <div className="flex shrink-0 gap-1">
-                            {isBathQuotaLine(
-                              lane.assigned.packageQuotaCode || lane.assigned.procedureCode,
-                              lane.assigned.procedureName,
-                            ) ? (
-                            <button
-                              type="button"
-                              className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                              disabled={busy}
-                              onClick={() => openReplace(lane.assigned!)}
-                              aria-label={tPhysio("replaceBaths")}
-                            >
-                              <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden />
-                            </button>
-                            ) : null}
                             <button
                               type="button"
                               className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}

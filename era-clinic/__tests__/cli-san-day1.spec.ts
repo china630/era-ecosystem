@@ -1,9 +1,4 @@
-import {
-  day1ConfirmSoftWarn,
-  isExamPrefixCode,
-  isSameDayFourthOrLater,
-  sortLinesExamPrefixFirst,
-} from "@/lib/sanatorium-day1";
+import { isExamPrefixCode, sortLinesExamPrefixFirst } from "@/lib/sanatorium-day1";
 import {
   fifoConfirmBlockedReason,
   procedureConfirmHttpStatus,
@@ -28,18 +23,6 @@ describe("Wave C day-1 helpers (CLI-52)", () => {
     ]);
     expect(isExamPrefixCode("ECG")).toBe(true);
     expect(isExamPrefixCode("NAFTALAN_BATH")).toBe(false);
-  });
-
-  it("soft-warns when confirm batch >3; does not warn at 3", () => {
-    expect(day1ConfirmSoftWarn(3)).toBeNull();
-    expect(day1ConfirmSoftWarn(4)).toMatch(/soft cap/i);
-  });
-
-  it("marks 4th same-day as paid extra; 3rd is still in daily free band", () => {
-    // 2 other same-day → this is 3rd → not fourth+
-    expect(isSameDayFourthOrLater(2)).toBe(false);
-    // 3 other same-day → this is 4th → paid extra
-    expect(isSameDayFourthOrLater(3)).toBe(true);
   });
 
   it("allows FIFO confirm of first 3 by sequenceIndex; skip-first still 409", () => {

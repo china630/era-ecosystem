@@ -1,5 +1,6 @@
 import {
   inPackageCodesOnBakuDay,
+  packageBlockIsFull,
   packageDayIsFullForNewCode,
 } from "@/domain/sanatorium/daily-package-cap";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
@@ -79,6 +80,8 @@ export type ScanPatientSlot = {
   end: Date;
   patientRestMinutes: number;
   inPackage: boolean;
+  /** Package block whose daily cap this session spends. */
+  quotaKey?: string;
   /** NO_SHOW blocks a second session the same day and does not create a rest gap. */
   countsForRest: boolean;
 };
@@ -113,6 +116,10 @@ export type ScanOrder = {
   procedureTypeId: string;
   /** When set, only this Baku day is legal. Leaving the day is a miss. */
   pinYmd?: string;
+  /** Package block for the daily distinct-SKU cap. */
+  quotaKey?: string;
+  /** Null = this block has no daily cap. Unset = caller still uses packageCap. */
+  dailyCap?: number | null;
 };
 
 export type PlannedPlacement = {
@@ -396,17 +403,36 @@ export function evaluateCandidateSlot(
   if (!order.afterLunchAllowed && startHm.hour >= order.typeHours.lunchEndHour) return fail("lunch");
   if (!order.beforeLunchAllowed && startHm.hour < order.typeHours.lunchEndHour) return fail("lunch");
 
-  if (order.inPackage) {
-    const codesOnDay = inPackageCodesOnBakuDay(
-      input.patientSlots.map((slot) => ({
-        code: slot.code,
-        start: slot.start,
-        inPackage: slot.inPackage,
-      })),
-      slotStart,
-    );
-    if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
-      return fail("day_full");
+  if (order.inPackage && order.dailyCap !== null) {
+    if (order.quotaKey && order.dailyCap != null) {
+      if (
+        packageBlockIsFull({
+          slots: input.patientSlots.map((slot) => ({
+            code: slot.code,
+            start: slot.start,
+            inPackage: slot.inPackage,
+            quotaKey: slot.quotaKey || slot.code,
+          })),
+          day: slotStart,
+          candidateCode: order.procedureCode,
+          quotaKey: order.quotaKey,
+          cap: order.dailyCap,
+        })
+      ) {
+        return fail("day_full");
+      }
+    } else if (order.dailyCap === undefined) {
+      const codesOnDay = inPackageCodesOnBakuDay(
+        input.patientSlots.map((slot) => ({
+          code: slot.code,
+          start: slot.start,
+          inPackage: slot.inPackage,
+        })),
+        slotStart,
+      );
+      if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
+        return fail("day_full");
+      }
     }
   }
 
@@ -651,6 +677,7 @@ export function scanProcedureSlots(input: {
         end: slotEnd,
         patientRestMinutes: order.patientRestMinutes,
         inPackage: order.inPackage,
+        quotaKey: order.quotaKey,
         countsForRest: true,
       });
       input.rotationContext.push({
