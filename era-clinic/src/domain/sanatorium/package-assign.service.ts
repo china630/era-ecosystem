@@ -1087,7 +1087,10 @@ export async function assignPackageProcedures(
       : null;
 
   const orgId = requestOrganizationId();
-  const workStart = parseBakuDateTime(todayBakuYmd(), "08:00");
+  const workStart =
+    opts?.startAt && !Number.isNaN(opts.startAt.getTime())
+      ? opts.startAt
+      : parseBakuDateTime(todayBakuYmd(), `${String(settings.dayStartHour).padStart(2, "0")}:00`);
 
   const createdIds: string[] = [];
   const nameByCode = new Map<string, string>();
@@ -1169,7 +1172,7 @@ export async function assignPackageProcedures(
   for (const chunk of chunkCreatedIdsByLine(createdIds, resolved)) {
     if (chunk.ids.length === 0) continue;
     if (bathCodes.has(chunk.procedureCode)) {
-      const bathSeat = await seatBathSeriesOrders(chunk.ids);
+      const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt: opts?.startAt });
       genericCabinOnly = false;
       misses.push(
         ...bathSeat.missed.map((miss) => ({

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
 import { addBakuDays, bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
-import { dayStartInstant, listClinicDays, stayYmd } from "@/domain/planning/clinic-day";
+import { dayStartInstant, listClinicDays, notBeforeYmdFromStart, stayYmd } from "@/domain/planning/clinic-day";
 import {
   bathPolicyFromSettings,
   defaultBathModeFromSettings,
@@ -93,7 +93,10 @@ export async function getBathCalendar(episodeId: string) {
   };
 }
 
-async function seatPinnedOrders(pins: Record<string, string>): Promise<{
+async function seatPinnedOrders(
+  pins: Record<string, string>,
+  startAt?: Date | null,
+): Promise<{
   placedIds: string[];
   failures: Array<{
     orderId: string;
@@ -109,9 +112,13 @@ async function seatPinnedOrders(pins: Record<string, string>): Promise<{
   const ymds = Object.values(pins).sort();
   const first = ymds[0]!;
   const last = ymds[ymds.length - 1]!;
+  const clock =
+    startAt && !Number.isNaN(startAt.getTime())
+      ? startAt
+      : dayStartInstant(first, (await getSchedulingSettings()).dayStartHour);
   const result = await placeConfirmedProcedures(ids, {
     pinYmdByOrderId: pins,
-    startAt: dayStartInstant(first, (await getSchedulingSettings()).dayStartHour),
+    startAt: clock,
     scheduleBefore: bakuDayBounds(addBakuDays(last, 1)).start,
   });
   return { placedIds: result.placedIds, failures: result.failures };
@@ -399,10 +406,13 @@ function bathModeOf(fields: unknown): string | null {
 
 /**
  * Seat package bath orders on stay days from the day series.
- * The day is the week rhythm. The clock uses the shared minute grid.
- * A day that cannot take the session is reported. Already seated orders stay.
+ * Days start from Saxla `startAt` (same door as physio). The week rhythm
+ * still lays baths then rest. Minutes use the shared placer.
  */
-export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
+export async function seatBathSeriesOrders(
+  orderIds: string[],
+  opts?: { startAt?: Date | null },
+): Promise<{
   handledIds: string[];
   placedIds: string[];
   missed: BathSeatMiss[];
@@ -450,7 +460,8 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
   }
 
   const today = todayBakuYmd();
-  const upcoming = snapshot.days.filter((day) => day.ymd >= today);
+  const notBeforeYmd = notBeforeYmdFromStart(opts?.startAt, today);
+  const upcoming = snapshot.days.filter((day) => day.ymd >= notBeforeYmd);
   const kept: KeptCell[] = snapshot.orders
     .filter((order) => memberByCode.has(order.procedureCode))
     .map((order) => ({
@@ -479,11 +490,11 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
           kept,
           layout: "continue",
           modes: snapshot.modes,
-          notBeforeYmd: today,
+          notBeforeYmd,
           policy,
         }).filter(
           (cell) =>
-            cell.ymd >= today &&
+            cell.ymd >= notBeforeYmd &&
             !snapshot.orders.some(
               (order) => order.procedureCode === cell.procedureCode && order.ymd === cell.ymd,
             ),
@@ -524,7 +535,7 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
     });
     pins[order.id] = cell.ymd;
   }
-  const seated = await seatPinnedOrders(pins);
+  const seated = await seatPinnedOrders(pins, opts?.startAt);
   placedIds.push(...seated.placedIds);
   for (const fail of seated.failures) {
     const mapped =
@@ -541,10 +552,12 @@ export async function seatBathSeriesOrders(orderIds: string[]): Promise<{
       reason: mapped,
     });
   }
+  const leftoverYmd =
+    upcoming.filter((day) => day.working).at(-1)?.ymd ?? notBeforeYmd;
   for (const group of queues.values()) {
     for (const order of group) {
       missed.push({
-        ymd: bakuDateKey(order.scheduledAt),
+        ymd: leftoverYmd,
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
         reason: "no_day",
