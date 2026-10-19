@@ -86,6 +86,8 @@ export function toastPackageAssignOutcome(
     });
   }
 
-  const detail = formatPackageAssignMissLines(misses, t);
+  const detail = formatPackageAssignMissLines(misses, (key, values) =>
+    values ? t(key, { count: 0, name: "", date: values.date, reason: values.reason }) : t(key),
+  );
   if (detail) showApiError({ error: detail });
 }
