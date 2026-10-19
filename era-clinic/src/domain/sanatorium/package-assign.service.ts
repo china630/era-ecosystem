@@ -909,6 +909,21 @@ async function abandonCreatedPackageOrders(ids: string[]) {
   await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
 }
 
+/** One modal line → the order ids created for it, in add order. */
+export function chunkCreatedIdsByLine(
+  createdIds: string[],
+  lines: Array<{ qty: number; procedureCode: string }>,
+): Array<{ procedureCode: string; ids: string[] }> {
+  const out: Array<{ procedureCode: string; ids: string[] }> = [];
+  let offset = 0;
+  for (const line of lines) {
+    const qty = Math.max(0, Math.floor(Number(line.qty) || 0));
+    out.push({ procedureCode: line.procedureCode, ids: createdIds.slice(offset, offset + qty) });
+    offset += qty;
+  }
+  return out;
+}
+
 /**
  * Create PROPOSED orders for delta qty, place onto resources, burn quotaUsed to match circulation.
  */
@@ -1137,39 +1152,62 @@ export async function assignPackageProcedures(
     }
   }
 
-  const { seatBathSeriesOrders } = await import("@/domain/planning/bath-calendar.service");
-  const bathSeat = await seatBathSeriesOrders(createdIds);
-  const genericIds = createdIds.filter((id) => !bathSeat.handledIds.includes(id));
-  const placement = await placeConfirmedProcedures(genericIds, {
-    confirmedByUserId: opts?.confirmedByUserId,
-    scheduleBefore: instance.endsOn,
-    startAt: opts?.startAt,
-  });
-  const misses = [
-    ...bathSeat.missed.map((miss) => ({
-      ymd: miss.ymd,
-      procedureCode: miss.procedureCode,
-      procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
-      reason: miss.reason,
-    })),
-    ...placement.failures.map((row) => ({
-      ymd: row.ymd ?? "",
-      procedureCode: row.procedureCode,
-      procedureName: row.procedureName,
-      reason: row.reason,
-    })),
-  ];
-  const kept = new Set([...bathSeat.placedIds, ...placement.placedIds]);
+  const { seatBathSeriesOrders, bathSeriesProcedureCodes } = await import(
+    "@/domain/planning/bath-calendar.service"
+  );
+  const bathCodes = await bathSeriesProcedureCodes();
+  const misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+  }> = [];
+  const placedIds: string[] = [];
+  const missingCabinNames: string[] = [];
+  let genericCabinOnly = true;
+  let genericTried = false;
+  for (const chunk of chunkCreatedIdsByLine(createdIds, resolved)) {
+    if (chunk.ids.length === 0) continue;
+    if (bathCodes.has(chunk.procedureCode)) {
+      const bathSeat = await seatBathSeriesOrders(chunk.ids);
+      genericCabinOnly = false;
+      misses.push(
+        ...bathSeat.missed.map((miss) => ({
+          ymd: miss.ymd,
+          procedureCode: miss.procedureCode,
+          procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
+          reason: miss.reason,
+        })),
+      );
+      placedIds.push(...bathSeat.placedIds);
+      continue;
+    }
+    genericTried = true;
+    const placement = await placeConfirmedProcedures(chunk.ids, {
+      confirmedByUserId: opts?.confirmedByUserId,
+      scheduleBefore: instance.endsOn,
+      startAt: opts?.startAt,
+    });
+    missingCabinNames.push(...placement.missingCabinNames);
+    if (placement.failures.some((row) => row.reason !== "no_cabin")) genericCabinOnly = false;
+    misses.push(
+      ...placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+    placedIds.push(...placement.placedIds);
+  }
+  const kept = new Set(placedIds);
   const leftover = createdIds.filter((id) => !kept.has(id));
   if (leftover.length > 0) await abandonCreatedPackageOrders(leftover);
   const placed = kept.size;
   if (placed < 1 && (misses.length > 0 || leftover.length > 0)) {
-    const onlyMissingCabin =
-      bathSeat.missed.length === 0 &&
-      placement.failures.length > 0 &&
-      placement.failures.every((row) => row.reason === "no_cabin");
+    const onlyMissingCabin = genericTried && genericCabinOnly && misses.every((row) => row.reason === "no_cabin");
     if (onlyMissingCabin) {
-      throw new PackageAssignError(placement.missingCabinNames.join(", "), "NO_CABIN", 409);
+      throw new PackageAssignError([...new Set(missingCabinNames)].join(", "), "NO_CABIN", 409);
     }
     if (misses.length > 0 && misses.every((row) => row.reason === "cabin_sex")) {
       throw new PackageAssignError(

@@ -38,7 +38,7 @@ export const SLOT_REASON_MESSAGE: Record<PlacementFailureReason, string> = {
   no_staff: "No staff posted for this procedure on that day",
   staff_busy: "Staff is busy at the selected time",
   cabin_busy: "Resource conflict at selected time",
-  day_full: "Daily package procedure cap reached",
+  day_full: "the daily limit of 3 free (in-package) procedures is used up",
   same_day: "Same procedure already scheduled for this day",
   closed: "Clinic is closed on that day",
   lunch: "Procedure cannot be scheduled in the lunch break",
