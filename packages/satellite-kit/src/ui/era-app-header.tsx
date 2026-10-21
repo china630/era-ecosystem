@@ -45,13 +45,13 @@ export function EraAppHeader({
   return (
     <header
       className={[
-        "fixed top-0 left-0 right-0 z-[60] box-border border-b border-[#2980B9]/15 bg-white/90 backdrop-blur-md transition-[left] duration-200",
+        "fixed top-0 left-0 right-0 z-[80] box-border border-b border-[#2980B9]/15 bg-white transition-[left] duration-200",
         APP_HEADER_HEIGHT_CLASS,
         sidebarLeft,
         className,
       ].join(" ")}
     >
-      <div className="flex h-full flex-nowrap items-center justify-between gap-3 overflow-hidden px-3 sm:px-6">
+      <div className="flex h-full flex-nowrap items-center justify-between gap-3 px-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           {onToggleMobileNav ? (
             <button

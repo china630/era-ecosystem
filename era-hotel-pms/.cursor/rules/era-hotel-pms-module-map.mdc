@@ -64,6 +64,9 @@ Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md).
 | Stay billing + tariff journal | `billingMode` on `POST /api/reservations` and `PATCH …/full` | `NORMAL` / `COMP` / `HOUSE`. Tariff change appends `StayTariffChange`. Medical plans require a guest package; `WALKIN` does not |
 | Stay split | `POST /api/reservations/:id/stay-split` | Second room segment from a date inside the stay; door or type quota |
 | Cancel / no-show | `PATCH /api/reservations/:id/cancel` `{ noShow? }` | CONFIRMED/OPTION only; yellow cancel before arrival, red no-show from arrival |
+| Undo checkout | `POST /api/reservations/:id/undo-checkout` `{ reason }` | Before NA → IN_HOUSE (no HK rewrite); after NA → CONFIRMED |
+| Delete empty stay | `DELETE /api/reservations/:id` `{ reason }` | OPTION/CONFIRMED + empty folio; `RESERVATIONS_CANCEL` |
+| Guest overlap warn | `GET /api/reservations/:id/guest-overlaps` · `GET /api/reservations/guest-overlaps?guestId&checkIn&checkOut` | Same guest on two stays is allowed; warning only |
 | Desk quick profile | `POST /api/fo/quick-profile` | Incomplete agency (name+phone) or company (name+VÖEN) from the reservation card. No commission, settlement, or contract |
 | `/admin/contract-pricing` | 410 redirect | Legacy — use `/admin/contracts` |
 | `/reports/agency-ledger`, `/reports/agency-profitability` | Finance city ledger reports | Agency AR boundary |

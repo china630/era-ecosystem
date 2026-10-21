@@ -502,9 +502,8 @@ export class MdmService {
       );
     }
 
-    const nationalityIso =
-      normalizeNationalityIso(input.nationality) ?? "AZ";
-    const segment = inferPersonSegment(nationalityIso, identifiers);
+    const nationalityIso = normalizeNationalityIso(input.nationality);
+    const segment = inferPersonSegment(nationalityIso ?? undefined, identifiers);
     const finBlindIndex = finIdent ? blindIndexFin(finIdent.value) : null;
 
     const demo = personCoreDemographicsWrite({

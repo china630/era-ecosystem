@@ -108,7 +108,7 @@ export function EraAppShellLayout({
       */}
       <div
         className={[
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-[padding] duration-200 ease-out",
+          "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-[padding] duration-200 ease-out",
           APP_HEADER_OFFSET_CLASS,
           mainOffset,
         ].join(" ")}

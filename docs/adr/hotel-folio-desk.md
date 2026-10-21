@@ -19,6 +19,34 @@ Bank POS devices are stored on the orchestrator. A sync that only saved the orga
 - Void, delete payment, refund, and both transfers require a note. The stay journal is the same `SatelliteAuditLog` (entity `Reservation`). Create/save, check-in/out, room moves, folio money, night audit, and Elektraweb write a labeled field diff (`section`, `source`, `fields`). The card journal is an event list (when / who / action / human summary) with expand to Field | Was | Now. Filters are action / section / actor / source. Raw Prisma keys and the flat Fields tab are not shown. `/settings/audit` stays the hotel-wide filter. IP is shown on the stay journal only for settings-capable users. The cash journal shows who took the payment and which terminal.
 - The folio tab does not show the local fiscal strip or the card-authorization panel.
 
+### Folio card wave (2026-10-22)
+
+Law (do not reinvent):
+
+- **Pocket** = who pays (named guest / agency / company).
+- **Article** (`xərc maddəsi`) = what the money is for. One pocket is split by articles, not by a second “room vs bar” guest chip.
+- **Pricing** edits the night grid. **Folio** shows debt after a night or extra posts. Folio never posts room nights.
+
+Desk UI:
+
+- Pocket chips on ribbon 1 (`Hamısı` only when two or more pockets). Deleted chip only when voids exist. Printer icon on that ribbon prints the **current filter** plus stay header and the words guest owes / overpaid / settled.
+- Ribbon 2: `CatalogField` article + line kind (`Hamısı`, not “Bütün”) + search. Not three `Hamısı` chips.
+- Cash bar: Extra charge / Extra payment only (payment is the red button). Titles match buttons. Invoice, folio checkout, missed nights, folio print, and close-folio are not on this bar. Empty pockets are hidden. Check-out stays the card footer. Agency/company invoices live on city ledger. Guest fiscal receipt is at payment time.
+- Checkboxes stay. **Transfer** is enabled when at least one charge is selected. Row kebab: adjust / void / transfer / refund — not pay-one-night.
+- Charge modal: pocket + article + amount. Payment modal: pocket + article + amount + tender (+ terminal). Keep the article on payment.
+
+Allocation (implementation bug, not the law):
+
+- Persist `revenueCodeId` on `FolioPayment`.
+- Allocate only onto charges of that article. Leftover stays credit for that article.
+- A later ROOM night consumes ROOM credit. Bar does not.
+
+Signs: charges and payments show unsigned amounts plus kind. Header and footer use guest owes / overpaid / settled. Stay total is not replaced by folio net. HELD deposit stays its own chip.
+
+Missed nights: pricing grid only (`postNight` per row; batch top-right when more than one yellow night). Lightning does not “charge all”. Today’s house nights are night audit.
+
+Menus: kit `EraMenu` (outside click, Escape, item click closes) on lightning, card kebab, row kebab. Card kebab holds registration / proforma / confirmation prints.
+
 ## Consequences
 
-Apply `20261014233000_folio_desk_journal` on the hotel database before the new screens are used. This ADR does not mark the flow SHIPPED: the UI is present and a UAT step is still missing (`HOT-FOLIO-DESK`).
+Apply `20261014233000_folio_desk_journal` and `20261022010000_folio_payment_article` on the hotel database before the new screens are used. This ADR does not mark the flow SHIPPED: the UI is present and a UAT step is still missing (`HOT-FOLIO-DESK`).

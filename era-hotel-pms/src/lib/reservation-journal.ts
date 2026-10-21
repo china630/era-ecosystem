@@ -56,7 +56,7 @@ export const JOURNAL_ACTION_GROUPS = {
     'GUEST_DEBT_PAY',
     'MISSED_NIGHTS',
   ],
-  cancel: ['CANCEL', 'NO_SHOW', 'RESTORE'],
+  cancel: ['CANCEL', 'NO_SHOW', 'RESTORE', 'DELETE'],
 } as const;
 
 export type JournalActionGroup = keyof typeof JOURNAL_ACTION_GROUPS;

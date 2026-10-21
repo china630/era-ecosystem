@@ -405,6 +405,10 @@ export function ReservationCardEditor({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [restoreOpen, setRestoreOpen] = useState(false);
+  const [undoCheckoutOpen, setUndoCheckoutOpen] = useState(false);
+  const [undoReason, setUndoReason] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
   const [restoreTypeId, setRestoreTypeId] = useState('');
   const [restoreRoomId, setRestoreRoomId] = useState('');
   const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(initialStayAction);
@@ -1305,17 +1309,17 @@ export function ReservationCardEditor({
     }
   }
 
-  async function chargeAll() {
+  async function postMissedNights() {
     if (!reservationId) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/reservations/${reservationId}/pricing/charge-all`, { method: 'POST' });
+      const res = await fetch(`/api/reservations/${reservationId}/missed-nights`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) {
         showApiError(json, tc('failed'));
         return;
       }
-      showSuccess(t('chargeAllDone', { count: json.posted?.length ?? 0 }));
+      showSuccess(t('missedNightsPosted', { count: json.nights?.length ?? 0 }));
       await load();
     } finally {
       setBusy(false);
@@ -1469,6 +1473,83 @@ export function ReservationCardEditor({
     }
   }
 
+  async function undoCheckoutStay() {
+    if (!reservationId || !undoReason.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/undo-checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: undoReason.trim() }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      setUndoCheckoutOpen(false);
+      setUndoReason('');
+      showSuccess(t('restoreDone'));
+      applyJson((json as { reservation?: Record<string, unknown> }).reservation ?? json);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteStay() {
+    if (!reservationId || !deleteReason.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: deleteReason.trim() }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      setDeleteOpen(false);
+      showSuccess(t('deleteStayDone'));
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function printStayForm(kind: 'registration' | 'proforma' | 'confirmation') {
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    if (!popup) return;
+    const title =
+      kind === 'registration' ? t('printRegistration') : kind === 'proforma' ? t('printProforma') : t('printConfirmation');
+    const guestName = (data?.guest as { fullName?: string } | undefined)?.fullName ?? '';
+    popup.document.write(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:sans-serif;padding:24px"><h1>${title}</h1><p>${guestName}</p><p>${checkIn} → ${checkOut}</p><p>${roomId ? rooms.find((r) => r.id === roomId)?.roomNumber ?? '' : ''}</p></body></html>`,
+    );
+    popup.document.close();
+    popup.print();
+  }
+
+  async function warnGuestOverlaps(): Promise<boolean> {
+    const url = reservationId
+      ? `/api/reservations/${reservationId}/guest-overlaps`
+      : guestId && checkIn && checkOut
+        ? `/api/reservations/guest-overlaps?guestId=${encodeURIComponent(guestId)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`
+        : null;
+    if (!url) return true;
+    const res = await fetch(url);
+    if (!res.ok) return true;
+    const body = (await res.json()) as
+      | Array<{ roomNumber: string; checkIn: string; checkOut: string }>
+      | { data?: Array<{ roomNumber: string; checkIn: string; checkOut: string }> };
+    const list = Array.isArray(body) ? body : body.data ?? [];
+    if (list.length === 0) return true;
+    const first = list[0]!;
+    return window.confirm(t('guestOverlapWarn', { room: first.roomNumber, from: first.checkIn, to: first.checkOut }));
+  }
+
   async function splitStay(
     input: { fromDate: string; roomTypeId: string; roomId: string | null },
     confirmed?: { reasonCode?: RoomMoveReason; settlement?: ClassSettlement },
@@ -1521,6 +1602,7 @@ export function ReservationCardEditor({
       showWarning(t('checkInNeedList', { details: lines.join('; ') }));
       return;
     }
+    if (!(await warnGuestOverlaps())) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/check-in`, {
@@ -1911,6 +1993,7 @@ export function ReservationCardEditor({
       setCardMoveAsk({ askReason, askSettlement });
       return;
     }
+    if (!(await warnGuestOverlaps())) return;
     setBusy(true);
     try {
       const sourceKind = bookingSourceKind(sources.find((s) => s.id === sourceId)?.code);
@@ -2443,8 +2526,15 @@ export function ReservationCardEditor({
     attachOpen,
     onAttachToggle: reservationId ? () => setAttachOpen((o) => !o) : undefined,
     onRecalc: isCreate ? undefined : () => void recalcPricing(),
-    onChargeAll: isCreate ? undefined : () => void chargeAll(),
     onAmendProduct: isCreate ? undefined : () => setAmendOpen(true),
+    onPrintForm: isCreate ? undefined : printStayForm,
+    onUndoCheckout: status === 'CHECKED_OUT' ? () => setUndoCheckoutOpen(true) : undefined,
+    onDeleteStay:
+      !isCreate &&
+      (status === 'OPTION' || status === 'CONFIRMED') &&
+      can(PERMISSIONS.RESERVATIONS_CANCEL)
+        ? () => setDeleteOpen(true)
+        : undefined,
   };
 
   const body = (
@@ -2831,6 +2921,11 @@ export function ReservationCardEditor({
                       ? (ymd) => void postOneNight(ymd)
                       : undefined
                   }
+                  onPostMissed={
+                    status === 'OPTION' || status === 'CONFIRMED' || status === 'IN_HOUSE'
+                      ? () => void postMissedNights()
+                      : undefined
+                  }
                   onDailyRates={setDailyRates}
                   onManualRate={setManualDailyRate}
                   onDiscountPercent={setDiscountPercent}
@@ -2847,7 +2942,8 @@ export function ReservationCardEditor({
                     pax={pax}
                     displayCurrency={pricingDisplayCurrency}
                     canPostCharges={status === 'OPTION' || status === 'CONFIRMED' || status === 'IN_HOUSE'}
-                    canCheckOut={status === 'IN_HOUSE'}
+                    hasAgency={Boolean(agencyId)}
+                    hasCompany={Boolean(companyId)}
                     fiscalDocuments={
                       (data?.fiscalDocuments as Array<{
                         id: string;
@@ -3117,6 +3213,50 @@ export function ReservationCardEditor({
           label={t('cancelReason')}
           value={cancelReason}
           onChange={(e) => setCancelReason(e.target.value)}
+          rows={3}
+        />
+      </EraModal>
+      <EraModal
+        open={undoCheckoutOpen}
+        title={t('restoreStay')}
+        onClose={() => setUndoCheckoutOpen(false)}
+        maxWidthClass="max-w-md"
+        footer={
+          <EraModalFooter
+            onCancel={() => setUndoCheckoutOpen(false)}
+            busy={busy}
+            submitDisabled={!undoReason.trim()}
+            submitLabel={t('restoreStay')}
+            onSubmit={() => void undoCheckoutStay()}
+          />
+        }
+      >
+        <FieldTextarea
+          label={t('restoreReason')}
+          value={undoReason}
+          onChange={(e) => setUndoReason(e.target.value)}
+          rows={3}
+        />
+      </EraModal>
+      <EraModal
+        open={deleteOpen}
+        title={t('deleteStay')}
+        onClose={() => setDeleteOpen(false)}
+        maxWidthClass="max-w-md"
+        footer={
+          <EraModalFooter
+            onCancel={() => setDeleteOpen(false)}
+            busy={busy}
+            submitDisabled={!deleteReason.trim()}
+            submitLabel={t('deleteStay')}
+            onSubmit={() => void deleteStay()}
+          />
+        }
+      >
+        <FieldTextarea
+          label={t('deleteReason')}
+          value={deleteReason}
+          onChange={(e) => setDeleteReason(e.target.value)}
           rows={3}
         />
       </EraModal>

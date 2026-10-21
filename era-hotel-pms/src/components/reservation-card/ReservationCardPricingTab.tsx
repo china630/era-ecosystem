@@ -57,6 +57,7 @@ export function ReservationCardPricingTab({
   businessDate,
   postedDates,
   onPostNight,
+  onPostMissed,
   onDailyRates,
   onManualRate,
   onDiscountPercent,
@@ -74,6 +75,7 @@ export function ReservationCardPricingTab({
   businessDate: string | null;
   postedDates: string[];
   onPostNight?: (ymd: string) => void;
+  onPostMissed?: () => void;
   onDailyRates: (rows: DailyRateRow[]) => void;
   onManualRate: (value: string) => void;
   onDiscountPercent: (value: string) => void;
@@ -300,6 +302,18 @@ export function ReservationCardPricingTab({
 
       {dailyRates.length > 0 ? (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-[#D5DADF]">
+          {onPostMissed && dailyRates.filter((row) => kindOf(row.stayDate) === 'past').length > 1 ? (
+            <div className="flex justify-end border-b border-[#D5DADF] px-2 py-1">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={busy || isLocked}
+                onClick={onPostMissed}
+              >
+                {t('missedNights')}
+              </button>
+            </div>
+          ) : null}
           <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full table-fixed font-mono text-[12px]" data-testid="rate-grid-table">
             <colgroup>

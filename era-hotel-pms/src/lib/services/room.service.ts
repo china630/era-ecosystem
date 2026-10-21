@@ -271,6 +271,35 @@ export async function updateRoomAxes(
   return updated;
 }
 
+/**
+ * Check-in and an in-house move write cleanliness directly.
+ * The rack lock stays in place for a staff click on an occupied door.
+ */
+type DoorHkDb = {
+  room: {
+    findUnique: (args: { where: { id: string } }) => Promise<{
+      deleted: boolean;
+      inventoryStatus: string;
+      inventoryReason: string | null;
+    } | null>;
+    update: (args: { where: { id: string }; data: ReturnType<typeof roomWriteFromAxes> }) => Promise<unknown>;
+  };
+};
+
+export async function writeInServiceDoorHk(
+  roomId: string,
+  hk: RoomHkCondition,
+  db: DoorHkDb | object = prisma,
+) {
+  const client = db as DoorHkDb;
+  const room = await client.room.findUnique({ where: { id: roomId } });
+  if (!room || room.deleted || room.inventoryStatus !== 'IN_SERVICE') return;
+  await client.room.update({
+    where: { id: roomId },
+    data: roomWriteFromAxes(hk, 'IN_SERVICE', room.inventoryReason),
+  });
+}
+
 /** Take an OOS/OOO door back to sellable inventory. HK condition stays DIRTY. */
 export async function returnRoomToService(id: string, audit?: RoomAuditCtx) {
   const room = await prisma.room.findUnique({ where: { id } });

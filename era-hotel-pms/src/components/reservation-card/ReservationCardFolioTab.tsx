@@ -4,8 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { Printer } from 'lucide-react';
 import {
+  CatalogField,
   DANGER_BUTTON_CLASS,
+  EraMenu,
+  EraMenuItem,
   Field,
   FilterChips,
   FxEquivalentBadge,
@@ -19,17 +23,13 @@ import {
   showSuccess,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
+import { formatFolioBalanceWords } from '@/components/reservation-card/folio-balance';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { FolioChargeModal } from '@/components/folio/FolioChargeModal';
-import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
-import { FolioInvoiceModal } from '@/components/folio/FolioInvoiceModal';
 import {
-  FolioCloseModal,
   FolioDeletePaymentModal,
-  FolioMissedNightsModal,
-  FolioPayLineModal,
   FolioRefundModal,
   FolioTransferModal,
   FolioVoidModal,
@@ -78,6 +78,7 @@ export type FolioAccount = {
     voidReason?: string | null;
     refundReason?: string | null;
     refundOfPaymentId?: string | null;
+    revenueCode?: { code: string; name?: string | null } | null;
   }>;
 };
 
@@ -116,31 +117,21 @@ function FolioRowMenu({
   label: string;
   items: Array<{ id: string; label: string; run: () => void }>;
 }) {
-  const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
   return (
-    <span className="relative inline-block">
-      <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setOpen((value) => !value)}>
-        {label}
-      </button>
-      {open ? (
-        <span className="absolute right-0 z-20 mt-1 flex min-w-[180px] flex-col rounded border border-[#D5DADF] bg-white p-1 shadow">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="px-2 py-1 text-left text-[12px] hover:bg-[#F4F6F7]"
-              onClick={() => {
-                setOpen(false);
-                item.run();
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </span>
-      ) : null}
-    </span>
+    <EraMenu
+      trigger={
+        <button type="button" className={GHOST_BUTTON_CLASS}>
+          {label}
+        </button>
+      }
+    >
+      {items.map((item) => (
+        <EraMenuItem key={item.id} onSelect={item.run}>
+          {item.label}
+        </EraMenuItem>
+      ))}
+    </EraMenu>
   );
 }
 
@@ -150,7 +141,7 @@ function partyOf(tab: FolioSubTab): FolioParty {
   return 'guest';
 }
 
-/** On-card folio: the ledger, plus payment / charge / invoice / checkout modals. */
+/** On-card folio: the ledger, plus extra charge / extra payment / transfer. */
 export function ReservationCardFolioTab({
   reservationId,
   folioTab,
@@ -158,7 +149,8 @@ export function ReservationCardFolioTab({
   pax = [],
   displayCurrency = 'AZN',
   canPostCharges = false,
-  canCheckOut = false,
+  hasAgency = false,
+  hasCompany = false,
   fiscalDocuments: _fiscalDocuments = [],
   onFolioTab,
   onChanged,
@@ -169,7 +161,8 @@ export function ReservationCardFolioTab({
   pax?: PaxRow[];
   displayCurrency?: string;
   canPostCharges?: boolean;
-  canCheckOut?: boolean;
+  hasAgency?: boolean;
+  hasCompany?: boolean;
   fiscalDocuments?: Array<{
     id: string;
     invoiceNumber?: string | null;
@@ -187,15 +180,10 @@ export function ReservationCardFolioTab({
   const { can } = useAuth();
   const [payOpen, setPayOpen] = useState(false);
   const [chargeOpen, setChargeOpen] = useState(false);
-  const [invoiceOpen, setInvoiceOpen] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [voidId, setVoidId] = useState<string | null>(null);
-  const [payLineId, setPayLineId] = useState<string | null>(null);
   const [refund, setRefund] = useState<{ id: string; max: number; folioStatus: string } | null>(null);
-  const [closeId, setCloseId] = useState<string | null>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
-  const [transferId, setTransferId] = useState<string | null>(null);
-  const [missedOpen, setMissedOpen] = useState(false);
+  const [transferIds, setTransferIds] = useState<string[]>([]);
   const [folioFocus, setFolioFocus] = useState<string>('all');
   const [articleFilter, setArticleFilter] = useState('all');
   const [lineKind, setLineKind] = useState<'all' | 'charge' | 'payment'>('all');
@@ -278,8 +266,10 @@ export function ReservationCardFolioTab({
           folioStatus: folio.status,
           kind: 'payment',
           description: payment.kind === 'REFUND' ? tf('refund') : tf('ledgerPayment'),
-          code: tPay(payment.paymentMethod as 'CASH'),
-          amount: payment.kind === 'REFUND' ? Number(payment.amount) : -Number(payment.amount),
+          code: payment.revenueCode
+            ? revenueLabel(payment.revenueCode, locale)
+            : tPay(payment.paymentMethod as 'CASH'),
+          amount: Number(payment.amount),
           when: payment.createdAt
             ? bakuDateTimeDisplay(payment.createdAt)
             : payment.businessDate
@@ -308,7 +298,7 @@ export function ReservationCardFolioTab({
           kind: 'payment',
           description: payment.voidReason?.trim() || tf('deletePayment'),
           code: payment.paymentMethod,
-          amount: -Number(payment.amount),
+          amount: Number(payment.amount),
           when: payment.createdAt ? bakuDateTimeDisplay(payment.createdAt) : '—',
           paymentId: payment.id,
           paymentKind: payment.kind,
@@ -339,7 +329,6 @@ export function ReservationCardFolioTab({
   const articleOptions = useMemo(() => {
     const seen = new Map<string, string>();
     for (const row of visibleRows) {
-      if (row.kind !== 'charge') continue;
       if (row.code && row.code !== '—') seen.set(row.code, row.code);
     }
     return Array.from(seen.entries()).map(([value, label]) => ({ value, label }));
@@ -348,7 +337,7 @@ export function ReservationCardFolioTab({
   const filteredRows = useMemo(() => {
     const needle = folioQuery.trim().toLowerCase();
     return visibleRows.filter((row) => {
-      if (articleFilter !== 'all' && row.kind === 'charge' && row.code !== articleFilter) return false;
+      if (articleFilter !== 'all' && row.code !== articleFilter) return false;
       if (lineKind !== 'all' && row.kind !== lineKind) return false;
       if (!needle) return true;
       return `${row.description} ${row.code}`.toLowerCase().includes(needle);
@@ -467,6 +456,7 @@ export function ReservationCardFolioTab({
         className: 'text-right font-mono',
         render: (row) => (
           <span className={row.kind === 'charge' ? 'text-rose-700' : 'text-sky-700'}>
+            {row.kind === 'payment' ? t('folioLinesPayments') : t('folioLinesCharges')}{' '}
             {row.amount.toFixed(2)} {displayCurrency}
           </span>
         ),
@@ -497,14 +487,8 @@ export function ReservationCardFolioTab({
               ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_VOID)
                 ? [{ id: 'void', label: tf('void'), run: () => setVoidId(row.chargeId ?? null) }]
                 : []),
-              ...(row.kind === 'charge' &&
-              can(PERMISSIONS.FOLIO_PAYMENT) &&
-              row.folioType === 'GUEST' &&
-              row.folioStatus === 'OPEN'
-                ? [{ id: 'pay', label: tf('pay'), run: () => setPayLineId(row.chargeId ?? null) }]
-                : []),
               ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_CHARGE) && row.folioStatus === 'OPEN'
-                ? [{ id: 'transfer', label: tf('transfer'), run: () => setTransferId(row.chargeId ?? null) }]
+                ? [{ id: 'transfer', label: tf('transfer'), run: () => setTransferIds(row.chargeId ? [row.chargeId] : []) }]
                 : []),
               ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_VOID) && row.paymentKind !== 'REFUND' && row.paymentId
                 ? [{ id: 'delete', label: tf('deletePayment'), run: () => setDeletePaymentId(row.paymentId ?? null) }]
@@ -541,33 +525,33 @@ export function ReservationCardFolioTab({
     return cols;
   }, [allFilteredSelected, can, displayCurrency, filteredRows, selectedIds, t, tf]);
 
+  const selectedCharges = filteredRows.filter(
+    (row) => row.kind === 'charge' && selectedIds.includes(row.id) && row.chargeId,
+  );
   const cashBar = (
     <div className="flex flex-wrap gap-2">
       {canPostCharges && can(PERMISSIONS.FOLIO_CHARGE) ? (
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setChargeOpen(true)}>
-          {t('posting')}
+          {t('extraCharge')}
         </button>
       ) : (
         <button type="button" className={PRIMARY_BUTTON_CLASS} disabled title={t('postingAfterCheckIn')}>
-          {t('posting')}
+          {t('extraCharge')}
         </button>
       )}
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <button type="button" className={DANGER_BUTTON_CLASS} onClick={() => setPayOpen(true)}>
-          {tf('acceptPayment')}
+          {t('extraPayment')}
         </button>
       ) : null}
-      {can(PERMISSIONS.NIGHT_AUDIT_RUN) ? (
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setMissedOpen(true)}>
-          {tf('missedNights')}
-        </button>
-      ) : null}
-      <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setInvoiceOpen(true)}>
-        {t('invoice')}
-      </button>
-      {canCheckOut && can(PERMISSIONS.RESERVATIONS_CHECKOUT) ? (
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutOpen(true)}>
-          {tf('checkOut')}
+      {can(PERMISSIONS.FOLIO_CHARGE) ? (
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={selectedCharges.length === 0}
+          onClick={() => setTransferIds(selectedCharges.map((row) => row.chargeId!).filter(Boolean))}
+        >
+          {t('transferSelected')}
         </button>
       ) : null}
     </div>
@@ -612,26 +596,17 @@ export function ReservationCardFolioTab({
         onClose={() => setChargeOpen(false)}
         onDone={onChanged}
         reservationId={reservationId}
-      />
-      <FolioInvoiceModal
-        open={invoiceOpen}
-        onClose={() => setInvoiceOpen(false)}
-        onDone={onChanged}
-        folios={accounts}
-      />
-      <FolioCheckoutModal
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
-        onDone={onChanged}
-        reservationId={reservationId}
+        pocketOptions={[
+          { value: 'GUEST' as const, label: t('folioTab.guest') },
+          ...(hasAgency || agencyLines > 0 || accounts.some((f) => f.type === 'AGENCY')
+            ? [{ value: 'AGENCY' as const, label: t('folioTab.agency') }]
+            : []),
+          ...(hasCompany || companyLines > 0 || accounts.some((f) => f.type === 'COMPANY')
+            ? [{ value: 'COMPANY' as const, label: t('folioTab.company') }]
+            : []),
+        ]}
       />
       <FolioVoidModal open={Boolean(voidId)} chargeId={voidId} onClose={() => setVoidId(null)} onDone={onChanged} />
-      <FolioPayLineModal
-        open={Boolean(payLineId)}
-        chargeId={payLineId}
-        onClose={() => setPayLineId(null)}
-        onDone={onChanged}
-      />
       <FolioRefundModal open={Boolean(refund)} payment={refund} onClose={() => setRefund(null)} onDone={onChanged} />
       <FolioDeletePaymentModal
         open={Boolean(deletePaymentId)}
@@ -640,18 +615,12 @@ export function ReservationCardFolioTab({
         onDone={onChanged}
       />
       <FolioTransferModal
-        open={Boolean(transferId)}
-        chargeId={transferId}
-        onClose={() => setTransferId(null)}
+        open={transferIds.length > 0}
+        chargeId={transferIds[0] ?? null}
+        chargeIds={transferIds}
+        onClose={() => setTransferIds([])}
         onDone={onChanged}
       />
-      <FolioMissedNightsModal
-        open={missedOpen}
-        reservationId={reservationId}
-        onClose={() => setMissedOpen(false)}
-        onDone={onChanged}
-      />
-      <FolioCloseModal open={Boolean(closeId)} folioId={closeId} onClose={() => setCloseId(null)} onDone={onChanged} />
     </>
   );
 
@@ -671,8 +640,14 @@ export function ReservationCardFolioTab({
           `<tr><td>${index + 1}</td><td>${escapeHtml(row.when)}</td><td>${escapeHtml(row.code)}</td><td>${escapeHtml(row.description)}</td><td style="text-align:right">${row.amount.toFixed(2)}</td></tr>`,
       )
       .join('');
+    const netWords = formatFolioBalanceWords(chargeTotal - paymentTotal, {
+      guestOwes: t('guestOwes'),
+      overpaid: t('overpaid'),
+      settled: t('settled'),
+    });
+    const guest = namedPax[0]?.label ?? '';
     popup.document.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(t('folioPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapeHtml(t('folioPrint'))}</h1><table style="width:100%;border-collapse:collapse"><thead><tr><th>#</th><th>${escapeHtml(t('folioWhen'))}</th><th>${escapeHtml(t('department'))}</th><th>${escapeHtml(t('folioDesc'))}</th><th>${escapeHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapeHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapeHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapeHtml(t('folioTotalNet'))}: ${(chargeTotal + paymentTotal).toFixed(2)} ${displayCurrency}</strong></p></body></html>`,
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(t('folioPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapeHtml(guest)} · ${escapeHtml(t('folioPrint'))}</h1><p>${escapeHtml(t('xercMaddesi'))}: ${escapeHtml(articleFilter)} · ${escapeHtml(lineKind)}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th>#</th><th>${escapeHtml(t('folioWhen'))}</th><th>${escapeHtml(t('department'))}</th><th>${escapeHtml(t('folioDesc'))}</th><th>${escapeHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapeHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapeHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapeHtml(netWords.text)}</strong></p></body></html>`,
     );
     popup.document.close();
     popup.focus();
@@ -705,50 +680,73 @@ export function ReservationCardFolioTab({
     }
   }
 
+  const pocketItems = [
+    { id: 'all', label: t('folioTab.all'), hidden: false },
+    ...namedPax.map((guest) => {
+      const id = guest.row.id ?? '';
+      return {
+        id: `guest:${id}`,
+        label: guest.label,
+        hidden: !id || guestLineCount(id) === 0,
+      };
+    }),
+    { id: 'agency', label: t('folioTab.agency'), hidden: agencyLines === 0 },
+    { id: 'company', label: t('folioTab.company'), hidden: companyLines === 0 },
+    { id: 'deleted', label: t('folioTab.deleted'), hidden: deletedRows.length === 0 },
+  ];
+  const livePockets = pocketItems.filter((item) => item.id !== 'all' && item.id !== 'deleted' && !item.hidden);
+  const hideAllChip = livePockets.length < 2;
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-2" data-testid="reservation-folio-tab">
-      <FilterChips
-        ariaLabel={t('folioTab.all')}
-        value={folioFocus}
-        alwaysVisibleIds={['all']}
-        onChange={(id) => {
-          setFolioFocus(id);
-          if (id === 'agency') onFolioTab('agency');
-          else if (id === 'company') onFolioTab('company');
-          else if (id.startsWith('guest:')) onFolioTab('guest');
-          else onFolioTab('all');
-        }}
-        items={[
-          { id: 'all', label: t('folioTab.all') },
-          ...namedPax.map((guest) => {
-            const id = guest.row.id ?? '';
-            return {
-              id: `guest:${id}`,
-              label: guest.label,
-              hidden: !id || guestLineCount(id) === 0,
-            };
-          }),
-          { id: 'agency', label: t('folioTab.agency'), hidden: agencyLines === 0 },
-          { id: 'company', label: t('folioTab.company'), hidden: companyLines === 0 },
-          { id: 'deleted', label: t('folioTab.deleted'), hidden: deletedRows.length === 0 },
-        ]}
-      />
-      <div className="flex shrink-0 flex-wrap items-end gap-2">
+      <div className="flex items-start justify-between gap-2">
         <FilterChips
-          value={articleFilter}
-          alwaysVisibleIds={['all']}
-          onChange={setArticleFilter}
-          items={[{ id: 'all', label: t('folioTab.all') }, ...articleOptions.map((option) => ({ id: option.value, label: option.label }))]}
+          ariaLabel={t('folioTab.all')}
+          value={folioFocus}
+          alwaysVisibleIds={hideAllChip ? [] : ['all']}
+          onChange={(id) => {
+            setFolioFocus(id);
+            if (id === 'agency') onFolioTab('agency');
+            else if (id === 'company') onFolioTab('company');
+            else if (id.startsWith('guest:')) onFolioTab('guest');
+            else onFolioTab('all');
+          }}
+          items={pocketItems.map((item) =>
+            item.id === 'all' ? { ...item, hidden: hideAllChip } : item,
+          )}
         />
-        <FilterChips
-          value={lineKind}
-          alwaysVisibleIds={['all', 'charge', 'payment']}
-          onChange={(id) => setLineKind(id as 'all' | 'charge' | 'payment')}
-          items={[
-            { id: 'all', label: t('folioLinesAll') },
-            { id: 'charge', label: t('folioLinesCharges') },
-            { id: 'payment', label: t('folioLinesPayments') },
+        <button
+          type="button"
+          className={`${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`}
+          aria-label={t('folioPrint')}
+          onClick={printRows}
+        >
+          <Printer className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="flex shrink-0 flex-wrap items-end gap-2">
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('xercMaddesi')}
+          value={articleFilter}
+          onChange={(v) => setArticleFilter(String(v ?? 'all'))}
+          options={[
+            { value: 'all', label: t('folioTab.all') },
+            ...articleOptions.map((option) => ({ value: option.value, label: option.label })),
           ]}
+          emptyLabel={null}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('lineKind')}
+          value={lineKind}
+          onChange={(v) => setLineKind((String(v ?? 'all') as 'all' | 'charge' | 'payment'))}
+          options={[
+            { value: 'all', label: t('folioTab.all') },
+            { value: 'charge', label: t('folioLinesCharges') },
+            { value: 'payment', label: t('folioLinesPayments') },
+          ]}
+          emptyLabel={null}
         />
         <input
           type="search"
@@ -789,23 +787,19 @@ export function ReservationCardFolioTab({
                 {t('folioTotalPayments')}: {paymentTotal.toFixed(2)} {displayCurrency}
               </td>
               <td className="whitespace-nowrap px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]">
-                {t('folioTotalNet')}: {(chargeTotal + paymentTotal).toFixed(2)} {displayCurrency}
+                {
+                  formatFolioBalanceWords(chargeTotal - paymentTotal, {
+                    guestOwes: t('guestOwes'),
+                    overpaid: t('overpaid'),
+                    settled: t('settled'),
+                  }).text
+                }
               </td>
             </tr>
           </tbody>
         </table>
         <div className="flex flex-wrap items-center gap-2">
           {folioFocus === 'deleted' ? null : cashBar}
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={printRows}>
-            {t('folioPrint')}
-          </button>
-          {closable.length > 0 && can(PERMISSIONS.FOLIO_PAYMENT)
-            ? closable.map((f) => (
-                <button key={f.id} type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCloseId(f.id)}>
-                  {tf('closeFolio')} · {personalSections.find((section) => section.folio.id === f.id)?.label ?? f.type}
-                </button>
-              ))
-            : null}
         </div>
       </div>
       <FinanceBoundaryBanner target="salesInvoices" />

@@ -132,6 +132,7 @@
 - Night audit asks F&B `GET /api/internal/v1/shifts/open` with the hotel's organization (`x-era-organization-id`) and the bridge secret. F&B lists open shifts for that organization only. There is no fallback to the container's organization. An empty answer closes that organization's hotel copies whose shift id is missing from the list. Another cafe's copy does not block this hotel. A shift ping from F&B must send the cafe's organization; the hotel stores the copy under that id and rejects a ping without it.
 - A clinic episode opens on check-in. Saving a reservation that has not checked in does not publish a clinic booking. Package changes after check-in update the open course.
 - Check-in while the business date is behind the arrival date (and the arrival date is already today on the wall calendar) tells the cashier which business date night audit is still on. Early check-in stays for an arrival that is still in the future.
+- Check-in marks the occupied in-service door Dirty. A room move with a reception reason on the arrival day, before any folio charge, puts the vacated door back to Clean. A later move leaves that door Dirty and opens a housekeeping task. The door the guest walks into is Dirty.
 
 ## 11. 2026-10-13 stay billing and packages (not a sell claim)
 
