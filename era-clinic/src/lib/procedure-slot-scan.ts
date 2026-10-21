@@ -29,6 +29,10 @@ export type PlacementFailureReason =
   | "closed"
   | "lunch"
   | "cross_day"
+  | "bath_rest"
+  | "week_full"
+  | "past_checkout"
+  | "checkout_noon"
   | "rule"
   | "no_slot";
 

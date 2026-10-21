@@ -1,4 +1,6 @@
 import {
+  bathSeriesRestYmds,
+  naftalanWeekIsFull,
   planBathSeries,
   saxlaBlockedDays,
   saxlaDayTaken,
@@ -528,5 +530,35 @@ describe("strayBathOrderIds", () => {
       },
     ]);
     expect(ids).toEqual(["extra"]);
+  });
+});
+
+describe("bath series rest for a manual move", () => {
+  const days: StayDay[] = [
+    { ymd: "2026-10-19", working: true },
+    { ymd: "2026-10-20", working: true },
+    { ymd: "2026-10-21", working: true },
+    { ymd: "2026-10-22", working: true },
+    { ymd: "2026-10-23", working: true },
+    { ymd: "2026-10-24", working: true },
+    { ymd: "2026-10-25", working: false },
+  ];
+
+  it("marks the fourth working day as rest in mode 3", () => {
+    expect(bathSeriesRestYmds({ days, anchorYmd: "2026-10-19", mode: "3" })).toEqual([
+      "2026-10-22",
+    ]);
+  });
+
+  it("does not treat the anchor day as rest", () => {
+    expect(bathSeriesRestYmds({ days, anchorYmd: "2026-10-20", mode: "3" })).not.toContain(
+      "2026-10-20",
+    );
+  });
+
+  it("fills the naftalan week at five other baths", () => {
+    const others = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"];
+    expect(naftalanWeekIsFull("2026-10-24", others, 5)).toBe(true);
+    expect(naftalanWeekIsFull("2026-10-24", others.slice(0, 4), 5)).toBe(false);
   });
 });

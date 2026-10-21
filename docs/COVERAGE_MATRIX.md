@@ -516,6 +516,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-21 | Clinic plan card shows the whole open course. Reschedule from the plan card can change the day (matrix stays same-day) through the slot door: block cap, bath rest, weekly naftalan, checkout day only until 12:00. Procedure print always includes the checkout day and a 12:00 check-out line. CLI-57/58 stay SCREEN. |
 | 2026-10-19 | Clinic package daily cap is per block (physio 3, bath 1, paraffin 1 on the template; empty uses that default). Tenant `dailyPackageProcedureCap` and the day-1 auto button are gone. Bath/paraffin Əvəz et spends the predecessor block. CLI-57 stays SCREEN. |
 | 2026-10-19 | Clinic baths: tenant 09–17; Saxla first bath = start day+hour, later days clinic open, mode rest from that start (not continue / not PROPOSED self-occupy). CLI-57/58 stay SCREEN. |
 | 2026-10-19 | Hotel: FO cannot change room cleanliness on IN_HOUSE (`OCCUPIED_HK_LOCKED`); stay journal is event list + labeled expand + filters. HOT-HK-01 / HOT-FOLIO-DESK stay API (UAT unsigned). |

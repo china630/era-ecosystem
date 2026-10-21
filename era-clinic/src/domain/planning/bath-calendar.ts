@@ -125,6 +125,65 @@ export function bakuMondayYmd(ymd: string): string {
   return addBakuDays(ymd, -back);
 }
 
+/**
+ * Rest days of one bath series, counted from its first remaining bath.
+ * The anchor day is a bath. Later working days follow the mode. Closed days
+ * use the same clinic policy as `planBathSeries`.
+ */
+export function bathSeriesRestYmds(input: {
+  days: StayDay[];
+  anchorYmd: string;
+  mode: string;
+  modes?: BathModeDef[];
+  policy?: Partial<BathPlanPolicy>;
+}): string[] {
+  const policy = resolveBathPlanPolicy(input.policy);
+  const block = resolveBathBlock(input.mode, input.modes);
+  const rest: string[] = [];
+  let streak = 0;
+  let restLeft = 0;
+  let started = false;
+  const finishBlock = () => {
+    streak += 1;
+    if (streak >= block.baths) {
+      streak = 0;
+      restLeft = block.rest;
+    }
+  };
+  for (const day of input.days) {
+    if (day.ymd < input.anchorYmd) continue;
+    if (!started) {
+      started = true;
+      if (day.working) finishBlock();
+      continue;
+    }
+    if (!day.working) {
+      if (restLeft > 0 && policy.closedDaySpendsOwedRest) {
+        restLeft -= 1;
+        streak = 0;
+      } else if (restLeft === 0 && streak > 0 && policy.closedDayResetsOpenStreak) {
+        streak = 0;
+      }
+      continue;
+    }
+    if (restLeft > 0) {
+      rest.push(day.ymd);
+      restLeft -= 1;
+      streak = 0;
+      continue;
+    }
+    finishBlock();
+  }
+  return rest;
+}
+
+/** Other naftalan baths already sitting in the target Baku week. Cap 0 disables the limit. */
+export function naftalanWeekIsFull(targetYmd: string, otherYmds: string[], cap: number): boolean {
+  if (cap <= 0) return false;
+  const week = bakuMondayYmd(targetYmd);
+  return otherYmds.filter((ymd) => bakuMondayYmd(ymd) === week).length >= cap;
+}
+
 export function resolveBathBlock(
   mode: string,
   modes: BathModeDef[] = DEFAULT_BATH_MODES,

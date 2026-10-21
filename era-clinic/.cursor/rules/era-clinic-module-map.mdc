@@ -115,7 +115,7 @@ Removed screens: `/executive` (merged into Home for owners), `/admin/catalog-fav
 | `/api/procedures/bulk-cancel` | session **RECEPTION** (+ admin) — bulk cancel + optional replace code |
 | `GET /api/procedures/[id]` | session `API_PROCEDURES_READ` — matrix order card (patient, room, staff, package vs paid, quota index) |
 | `PATCH /api/procedures/[id]` | session **DOCTOR** / **RECEPTION** (+ admin) — PROPOSED/SCHEDULED: `siteIds[]`, `siteApplyMode` (TURN/TOGETHER), `note`, legacy `bodyPart` (derived from sites when `siteIds` sent) |
-| `/api/procedures/[id]/reschedule` | session **RECEPTION** (+ admin) — same-day minute/cabin only (`evaluateCandidateSlot`); 409 `CROSS_DAY` / `CLOSED` / `DAY_FULL` / `NO_STAFF` / …; no `nextWorkSlot` snap |
+| `/api/procedures/[id]/reschedule` | session **RECEPTION** (+ admin) — that minute or 409 (`evaluateCandidateSlot`, no `nextWorkSlot` snap). Plan card sends `allowOtherDay` (block cap, bath rest, weekly naftalan, checkout day until 12:00; 409 `PAST_CHECKOUT` / `CHECKOUT_NOON` / `BATH_REST` / `WEEK_FULL` / `DAY_FULL` / `CLOSED`). Resource matrix omits the flag, so another day is 409 `CROSS_DAY` |
 | `POST /api/procedures` | session **RECEPTION** — paid same-day extra: `PROPOSED` + `placeConfirmed` with `pinStrict`; closed day 409 `CLOSED` |
 | `/api/procedures/[id]/cancel` | session **RECEPTION** |
 | `/api/procedures/[id]/check-in` | session NURSE — QR / MANUAL (`checkInRequiresQr=false`) / override; channel-aware window; **atomic → `CHECKED_IN`** (no auto-complete) |

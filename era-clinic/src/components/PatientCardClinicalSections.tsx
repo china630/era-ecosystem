@@ -425,6 +425,10 @@ export function PatientCardClinicalSections({
   async function submitPlanReschedule() {
     if (!rescheduleId) return;
     const day = rescheduleDate;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}$/.test(rescheduleTime)) {
+      showApiError({ error: tc("failed") }, tc("failed"));
+      return;
+    }
     const scheduledAtDate = parseBakuDateTime(day, `${rescheduleTime}:00`);
     if (scheduledAtDate.getTime() < Date.now()) {
       showApiError({ error: ts("reschedulePast") }, tc("failed"));
@@ -436,7 +440,7 @@ export function PatientCardClinicalSections({
       const res = await fetch(`/api/procedures/${rescheduleId}/reschedule`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt }),
+        body: JSON.stringify({ scheduledAt, allowOtherDay: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1018,6 +1022,12 @@ export function PatientCardClinicalSections({
       >
         <div className="grid grid-cols-1 items-end gap-2">
           <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{ts("rescheduleSameDayHint")}</p>
+          <DatePicker
+            label={tc("date")}
+            value={rescheduleDate}
+            onChange={setRescheduleDate}
+            placeholder="dd.mm.yyyy"
+          />
           <CatalogField
             kind="SEARCHABLE"
             label={ts("procedureTime")}
