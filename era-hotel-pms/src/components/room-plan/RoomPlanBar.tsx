@@ -112,20 +112,18 @@ export function RoomPlanBar({
   bar,
   shape,
   selected,
-  draggable,
   roomBars,
   onSelect,
-  onDragStart,
-  onDragEnd,
+  onOpen,
+  onPointerDown,
 }: {
   bar: RoomPlanReservationBar;
   shape: BarShapeFlags;
   selected: boolean;
-  draggable: boolean;
   roomBars: RoomPlanReservationBar[];
   onSelect: () => void;
-  onDragStart: (e: React.DragEvent<HTMLButtonElement>) => void;
-  onDragEnd: (e: React.DragEvent<HTMLButtonElement>) => void;
+  onOpen: () => void;
+  onPointerDown: (event: React.PointerEvent<HTMLButtonElement>, mode: 'move' | 'start' | 'end') => void;
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const [widthPx, setWidthPx] = useState(80);
@@ -194,25 +192,49 @@ export function RoomPlanBar({
   const caption = `${names} ${pax}${meal}`;
   const debt = formatPlanDebtBadge(bar.guestBalance);
 
+  const [hoverEl, setHoverEl] = useState<HTMLButtonElement | null>(null);
   const showTooltip = useCallback((el: HTMLButtonElement | null) => {
-    if (el) setHoverRect(el.getBoundingClientRect());
-    else setHoverRect(null);
+    setHoverEl(el);
   }, []);
+  useEffect(() => {
+    if (!hoverEl) {
+      setHoverRect(null);
+      return;
+    }
+    const timer = window.setTimeout(() => setHoverRect(hoverEl.getBoundingClientRect()), 400);
+    return () => window.clearTimeout(timer);
+  }, [hoverEl]);
 
   return (
     <>
       <button
         ref={btnRef}
         type="button"
-        draggable={draggable}
         onClick={onSelect}
+        onDoubleClick={(event) => {
+          event.preventDefault();
+          onOpen();
+        }}
         onMouseEnter={(e) => showTooltip(e.currentTarget)}
         onMouseLeave={() => showTooltip(null)}
         onFocus={(e) => showTooltip(e.currentTarget)}
         onBlur={() => showTooltip(null)}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        className={`relative block h-[26px] w-full overflow-visible p-0 ${
+        onPointerDown={(event) => {
+          if (event.button !== 0) return;
+          showTooltip(null);
+          const rect = event.currentTarget.getBoundingClientRect();
+          const local = event.clientX - rect.left;
+          const mode = local < 16 ? 'start' : rect.width - local < 20 ? 'end' : 'move';
+          event.currentTarget.style.cursor = mode === 'move' ? 'grabbing' : 'ew-resize';
+          onPointerDown(event, mode);
+        }}
+        onPointerMove={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const local = event.clientX - rect.left;
+          event.currentTarget.style.cursor =
+            local < 16 || rect.width - local < 20 ? 'ew-resize' : 'grab';
+        }}
+        className={`relative block h-[26px] w-full cursor-grab overflow-visible p-0 ${
           selected ? 'ring-2 ring-[#2980B9] ring-offset-1' : ''
         }`}
         aria-label={caption}

@@ -24,20 +24,41 @@ export interface FolioTransactionsResult {
   rows: FolioTransactionRow[];
   totalCharges: number;
   totalPayments: number;
+  /** Running balance starts at zero inside the selected dates. */
+  balanceScope: 'period';
 }
 
 const FOLIO_SELECT = {
   select: {
     id: true,
+    type: true,
     reservationId: true,
+    reservationGuest: { select: { guest: { select: { fullName: true } } } },
     reservation: {
       select: {
         guest: { select: { fullName: true } },
         room: { select: { roomNumber: true } },
+        agency: { select: { name: true } },
+        company: { select: { name: true } },
       },
     },
   },
 } as const;
+
+function partyName(folio: {
+  type: string;
+  reservationGuest: { guest: { fullName: string } | null } | null;
+  reservation: {
+    guest: { fullName: string };
+    agency: { name: string } | null;
+    company: { name: string } | null;
+  } | null;
+}) {
+  if (!folio.reservation) return null;
+  if (folio.type === 'AGENCY') return folio.reservation.agency?.name ?? folio.reservation.guest.fullName;
+  if (folio.type === 'COMPANY') return folio.reservation.company?.name ?? folio.reservation.guest.fullName;
+  return folio.reservationGuest?.guest?.fullName ?? folio.reservation.guest.fullName;
+}
 
 export async function queryFolioTransactions(
   fromParam: string | Date,
@@ -47,6 +68,10 @@ export async function queryFolioTransactions(
   const to = ymdParam(toParam) < from ? from : ymdParam(toParam);
   const window = civilWindow(from, to);
 
+  const hotelDrawer = await prisma.department.findFirst({
+    where: { cashPoint: 'HOTEL' },
+    select: { name: true },
+  });
   const [charges, payments] = await Promise.all([
     prisma.folioCharge.findMany({
       where: { businessDate: { gte: window.gte, lt: window.lt } },
@@ -64,12 +89,13 @@ export async function queryFolioTransactions(
       take: 5000,
     }),
     prisma.folioPayment.findMany({
-      where: { createdAt: { gte: window.gte, lt: window.lt } },
+      where: { businessDate: { gte: window.gte, lt: window.lt }, voidedAt: null },
       select: {
         id: true,
         amount: true,
         kind: true,
         paymentMethod: true,
+        businessDate: true,
         createdAt: true,
         folio: FOLIO_SELECT,
       },
@@ -85,7 +111,7 @@ export async function queryFolioTransactions(
       businessDate: civilDay(c.businessDate),
       folioId: c.folio.id,
       reservationId: c.folio.reservationId,
-      guestName: c.folio.reservation?.guest.fullName ?? null,
+      guestName: partyName(c.folio),
       roomNumber: c.folio.reservation?.room?.roomNumber ?? null,
       department: c.department?.name ?? c.revenueCode.department?.name ?? null,
       revenueCode: c.revenueCode.code,
@@ -96,13 +122,13 @@ export async function queryFolioTransactions(
     })),
     ...payments.map((p) => ({
       id: p.id,
-      time: p.createdAt.toISOString(),
-      businessDate: civilDay(p.createdAt),
       folioId: p.folio.id,
       reservationId: p.folio.reservationId,
-      guestName: p.folio.reservation?.guest.fullName ?? null,
+      time: p.createdAt.toISOString(),
+      businessDate: civilDay(p.businessDate),
+      guestName: partyName(p.folio),
       roomNumber: p.folio.reservation?.room?.roomNumber ?? null,
-      department: null,
+      department: hotelDrawer?.name ?? null,
       revenueCode: null,
       charge: 0,
       payment: round2(p.kind === 'REFUND' ? -Number(p.amount) : Number(p.amount)),
@@ -129,6 +155,7 @@ export async function queryFolioTransactions(
     from,
     to,
     rows,
+    balanceScope: 'period' as const,
     totalCharges: round2(rows.reduce((s, r) => s + r.charge, 0)),
     totalPayments: round2(rows.reduce((s, r) => s + r.payment, 0)),
   };

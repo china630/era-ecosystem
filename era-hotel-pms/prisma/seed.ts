@@ -168,8 +168,11 @@ async function main() {
     data: { code: 'ACC', name: 'Accommodation' },
   });
   const deptRest = await prisma.department.create({
-    data: { code: 'REST', name: 'Restaurant' },
+    data: { code: 'REST', name: 'Restaurant', cashPoint: 'FNB_POS' },
   });
+  await prisma.department.create({ data: { code: 'HOTEL', name: 'Hotel', cashPoint: 'HOTEL' } });
+  await prisma.department.create({ data: { code: 'CLINIC', name: 'Clinic', cashPoint: 'CLINIC' } });
+  await prisma.department.create({ data: { code: 'RETAIL', name: 'Retail', cashPoint: 'RETAIL' } });
   const deptMed = await prisma.department.create({
     data: { code: 'MED', name: 'Medical' },
   });

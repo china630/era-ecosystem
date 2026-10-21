@@ -30,6 +30,7 @@ type PendingRow = {
   qty: number;
   description: string;
   payerLabel: string | null;
+  revenueCode?: string | null;
   createdAt: string;
   businessDate: string;
 };
@@ -152,26 +153,14 @@ export default function FrontCashPendingPage() {
             header: t('colAmount'),
             render: (r) => `${Number(r.amount).toFixed(2)} ${r.currency}`,
           },
-          {
-            key: 'open',
-            header: t('colActions'),
-            render: (r) => (
-              <button
-                type="button"
-                className="text-[#2980B9] hover:underline"
-                onClick={() => {
-                  setReceipt(r);
-                  setVoidOpen(false);
-                  setVoidReason('');
-                }}
-              >
-                {t('openReceipt')}
-              </button>
-            ),
-          },
         ]}
         rows={visibleRows as (PendingRow & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
+        onRowDoubleClick={(r) => {
+          setReceipt(r);
+          setVoidOpen(false);
+          setVoidReason('');
+        }}
         emptyMessage={loading ? tc('loading') : t('empty')}
       />
 
@@ -219,7 +208,12 @@ export default function FrontCashPendingPage() {
         {receipt ? (
           <div className="space-y-3 text-sm">
             <p className="text-xs text-[#7F8C8D]">
-              {receipt.sourceSystem} · {receipt.payerLabel ?? '—'}
+              {receipt.sourceSystem} · {receipt.sourceRef} · {receipt.payerLabel ?? '—'}
+            </p>
+            <p className="text-xs text-[#7F8C8D]">
+              {receipt.businessDate?.slice?.(0, 10) ?? receipt.businessDate} · {receipt.sku ?? '—'} ·{' '}
+              {t('lineQty')} {receipt.qty ?? 1}
+              {receipt.revenueCode ? ` · ${receipt.revenueCode}` : ''}
             </p>
             <table className="w-full text-sm">
               <thead>

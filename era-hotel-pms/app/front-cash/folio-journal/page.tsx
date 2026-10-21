@@ -12,7 +12,6 @@ import {
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
-import { hotelDateKey } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,16 +31,12 @@ type Row = {
   description: string;
 };
 
-function todayIso() {
-  return hotelDateKey();
-}
-
 export default function FolioJournalPage() {
   const { can } = useAuth();
   const t = useTranslations('folioJournal');
   const tc = useTranslations('common');
-  const [from, setFrom] = useState(todayIso);
-  const [to, setTo] = useState(todayIso);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [rows, setRows] = useState<Row[]>([]);
   const [folioReservationId, setFolioReservationId] = useState<string | null>(null);
   const [q, setQ] = useState('');
@@ -51,11 +46,16 @@ export default function FolioJournalPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/front-cash/folio-journal?from=${from}&to=${to}`);
+      const query = from && to ? `?from=${from}&to=${to}` : '';
+      const res = await fetch(`/api/front-cash/folio-journal${query}`);
       const data = await res.json();
       if (!res.ok) {
         showApiError(data, tc('loadError'));
         return;
+      }
+      if (!from && typeof data.from === 'string') {
+        setFrom(data.from);
+        setTo(typeof data.to === 'string' ? data.to : data.from);
       }
       setRows(Array.isArray(data.rows) ? data.rows : []);
     } catch (e) {
@@ -104,9 +104,8 @@ export default function FolioJournalPage() {
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {
-          const d = todayIso();
-          setFrom(d);
-          setTo(d);
+          setFrom('');
+          setTo('');
           setQ('');
           setDepartment('');
           setEntry('');
@@ -162,26 +161,13 @@ export default function FolioJournalPage() {
           { key: 'description', header: t('colDesc'), sortable: true },
           { key: 'charge', header: t('colCharge'), sortable: true, sortValue: (r) => r.charge, render: (r) => r.charge.toFixed(2) },
           { key: 'payment', header: t('colPayment'), sortable: true, sortValue: (r) => r.payment, render: (r) => r.payment.toFixed(2) },
-          { key: 'balance', header: t('colBalance'), sortable: true, sortValue: (r) => r.balance, render: (r) => r.balance.toFixed(2) },
-          {
-            key: 'open',
-            header: tc('actions'),
-            render: (r) =>
-              r.reservationId ? (
-                <button
-                  type="button"
-                  className="text-[#2980B9] hover:underline"
-                  onClick={() => setFolioReservationId(r.reservationId)}
-                >
-                  {t('openFolio')}
-                </button>
-              ) : (
-                '—'
-              ),
-          },
+          { key: 'balance', header: t('colPeriodBalance'), sortable: true, sortValue: (r) => r.balance, render: (r) => r.balance.toFixed(2) },
         ]}
         rows={visible as (Row & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
+        onRowDoubleClick={(r) => {
+          if (r.reservationId) setFolioReservationId(r.reservationId);
+        }}
         emptyMessage={t('empty')}
       />
       <ReservationCardModal

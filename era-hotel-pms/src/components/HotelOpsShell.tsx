@@ -312,18 +312,18 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: Banknote,
           items: sectionItems([
             {
-              id: 'fc-desk',
-              href: '/front-cash/desk',
-              labelKey: 'frontCashDesk',
-              icon: Banknote,
-              permission: PERMISSIONS.SCREEN_FRONT_CASH,
-            },
-            {
               id: 'fc-pending',
               href: '/front-cash/pending',
               labelKey: 'pendingSettlement',
               icon: Banknote,
               anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.FOLIO_VOID],
+            },
+            {
+              id: 'fc-desk',
+              href: '/front-cash/desk',
+              labelKey: 'frontCashDesk',
+              icon: Banknote,
+              permission: PERMISSIONS.SCREEN_FRONT_CASH,
             },
             {
               id: 'fc-balances',
@@ -345,13 +345,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'debts',
               icon: ClipboardList,
               anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_FOLIO, PERMISSIONS.SCREEN_REPORTS],
-            },
-            {
-              id: 'fc-tx',
-              href: '/front-cash/transactions',
-              labelKey: 'cashTransactions',
-              icon: Banknote,
-              anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.SCREEN_FOLIO],
             },
           ]),
         },
@@ -835,6 +828,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               id: 'set-master',
               href: '/settings/master-data',
               labelKey: 'masterData',
+              icon: Building2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
+              id: 'set-departments',
+              href: '/settings/departments',
+              labelKey: 'departments',
               icon: Building2,
               permission: PERMISSIONS.SCREEN_SETTINGS,
             },

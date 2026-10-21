@@ -4,10 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
-  CHIP_GROUP_CLASS,
   DatePicker,
+  FilterChips,
   EraListFilterBar,
   EraListWorkspace,
   Field,
@@ -231,22 +229,18 @@ export default function ReservationsListPage() {
           }
         />
       </div>
-      <div className={`${CHIP_GROUP_CLASS} mb-3 shrink-0`} role="tablist">
-        {RESERVATION_QUEUE_CODES.map((code) => (
-          <button
-            key={code}
-            type="button"
-            role="tab"
-            aria-selected={queue === code}
-            className={`${queue === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS} inline-flex items-center justify-center whitespace-nowrap px-2.5 text-center`}
-            onClick={() => {
-              setQueue(code);
-              setOverdue(false);
-            }}
-          >
-            {t(`queue.${code}`)}
-          </button>
-        ))}
+      <div className="mb-3 shrink-0">
+        <FilterChips
+          value={queue}
+          onChange={(code) => {
+            setQueue(code as typeof queue);
+            setOverdue(false);
+          }}
+          items={RESERVATION_QUEUE_CODES.map((code) => ({
+            id: code,
+            label: t(`queue.${code}`),
+          }))}
+        />
       </div>
       <EraListWorkspace
         filter={

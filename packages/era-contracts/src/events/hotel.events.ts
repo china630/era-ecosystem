@@ -211,8 +211,11 @@ export interface SatelliteHotelCityLedgerSnapshotEvent {
   correlationId: string;
   occurredAt: string;
   payload: {
-    agencyId: string;
-    agencyCode: string;
+    agencyId?: string;
+    agencyCode?: string;
+    companyId?: string;
+    companyCode?: string;
+    financeCounterpartyId?: string;
     asOfDate: string;
     balance: number;
     periodCharges: number;
@@ -226,15 +229,22 @@ export const satelliteHotelCityLedgerSnapshotSchema = z.object({
   organizationId: z.string().min(1),
   correlationId: z.string().min(1),
   occurredAt: z.string().min(1),
-  payload: z.object({
-    agencyId: z.string().min(1),
-    agencyCode: z.string().min(1),
-    asOfDate: z.string().min(1),
-    balance: z.number(),
-    periodCharges: z.number(),
-    periodPayments: z.number(),
-    currency: z.literal("AZN"),
-  }),
+  payload: z
+    .object({
+      agencyId: z.string().min(1).optional(),
+      agencyCode: z.string().min(1).optional(),
+      companyId: z.string().min(1).optional(),
+      companyCode: z.string().min(1).optional(),
+      financeCounterpartyId: z.string().min(1).optional(),
+      asOfDate: z.string().min(1),
+      balance: z.number(),
+      periodCharges: z.number(),
+      periodPayments: z.number(),
+      currency: z.literal("AZN"),
+    })
+    .refine((row) => Boolean(row.agencyId || row.companyId), {
+      message: "City ledger snapshot needs an agency or a company",
+    }),
 });
 
 export function isSatelliteHotelCityLedgerSnapshot(

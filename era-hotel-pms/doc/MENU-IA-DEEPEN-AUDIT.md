@@ -10,17 +10,17 @@ Coverage: `docs/COVERAGE_MATRIX.md`. UAT: [`UAT-SMOKE.md`](./UAT-SMOKE.md) §28.
 | HOT-CASH-06 | Cash journal deepen | **SHIPPED** | Yes | Not a full cash-shift Z / register close report |
 | HOT-NA-03 | EOD hub + P1 grids | **SHIPPED** | Yes | Four real grids + hub; **not** Elektraweb Management PDF catalog (HOT-RPT spec) |
 | HOT-NA-04 | Reservation updates | **SHIPPED** | Yes | Action kinds are heuristics on audit/status/notes |
-| HOT-NA-05 | Year-end | **STUB** | Preview only | ADR `hotel-year-end-calendar`; POST always `YEAR_END_NOT_ENABLED` |
+| HOT-NA-05 | Year-end | **API** | On 31 Dec / 1 Jan | Hotel calendar seal. Finance GL year close stays in finance |
 | HOT-NA-01/02 | Core EOD + polish | **SHIPPED** | Yes | Path `/night-audit` (unchanged product depth) |
 
 **Overall:** MENU-IA Cash/NA stubs from cutover are now **ops-usable** for day-close packet navigation and P1 control lists. Do **not** claim full Elektraweb Night Audit / year-end / full EOD catalog parity. Pilot FO/NA daily close remains on HOT-NA-01 + folio/cash SHIPPED rows — this wave improves the **packet around** EOD, not the EOD engine itself.
 
 ## What deepen delivered
 
-1. **Cash journal** — `listFrontCashJournal`: FolioPayment + FolioDeposit (HELD window / still HELD) + pending summary/items + open `CashShift` + totals by method. UI sections + links to pending / NA shift.
+1. **Cash journal** — `listCashJournal` for one business date. The page has no shift tabs, deposits totals, or Z.
 2. **EOD P1 grids** — `GET /api/night-audit/eod-reports?type=&date=` + `/night-audit/reports/{cancelled,created,folio-transactions,room-price-control}`. Hub regrouped P1 / ops / FO.
 3. **Reservation updates** — `action=CANCEL|EXTEND|NOTE|OTHER` + `format=csv` download.
-4. **Year-end** — ADR written; posting remains disabled by design.
+4. **Year-end** — hotel calendar seal on a closed 31 December and open on 1 January. Finance GL year close stays in finance.
 5. **UAT-SMOKE §28** — UI steps for the three SHIPPED rows + STUB check for year-end.
 6. **`/night-audit/logs`** — page restored (was missing after MENU-IA move; legacy path redirected into a 404).
 

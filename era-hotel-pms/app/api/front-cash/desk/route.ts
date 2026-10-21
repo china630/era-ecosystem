@@ -5,13 +5,15 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { closeCashDeskRow, listCashDesk } from '@/lib/services/cash-desk.service';
 
 export async function GET(request: Request) {
   try {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
-    const date = new URL(request.url).searchParams.get('date') || hotelDateKey();
+    const date =
+      new URL(request.url).searchParams.get('date') || hotelDateKey(await getCurrentBusinessDate());
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return jsonOk({ error: 'Invalid date' }, 400);
     }

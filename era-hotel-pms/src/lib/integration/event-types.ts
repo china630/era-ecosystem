@@ -96,8 +96,11 @@ export interface InvoiceIssuedPayload {
 }
 
 export interface CityLedgerSnapshotPayload {
-  agencyId: string;
-  agencyCode: string;
+  agencyId?: string;
+  agencyCode?: string;
+  companyId?: string;
+  companyCode?: string;
+  financeCounterpartyId?: string;
   asOfDate: string;
   balance: number;
   periodCharges: number;

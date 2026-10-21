@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -20,7 +20,12 @@ import ReservationCardModal from '@/components/ReservationCardModal';
 import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
 import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
-import RoomPlanGrid, { type RoomPlanGroup, type RoomPlanRoom } from '@/components/RoomPlanGrid';
+import RoomPlanGrid, {
+  type RoomPlanGridHandle,
+  type RoomPlanGroup,
+  type RoomPlanRoom,
+  type PlanGestureResult,
+} from '@/components/RoomPlanGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { matchesCodeNameQuery } from '@/lib/list-filter';
@@ -100,6 +105,8 @@ export default function RoomPlanPage() {
   const [data, setData] = useState<RoomPlanData | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cardReservationId, setCardReservationId] = useState<string | null>(null);
+  const [cardStayAction, setCardStayAction] = useState<'earlyCheckOut' | null>(null);
+  const gridRef = useRef<RoomPlanGridHandle>(null);
   const [busy, setBusy] = useState(false);
   const [pendingMove, setPendingMove] = useState<{
     reservationId: string;
@@ -223,6 +230,62 @@ export default function RoomPlanPage() {
     }
   }
 
+  async function applyPlanDrop(result: PlanGestureResult) {
+    if (result.kind === 'noop') return;
+    if (result.kind === 'early-checkout') {
+      setCardStayAction('earlyCheckOut');
+      setCardReservationId(result.reservationId);
+      return;
+    }
+    if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
+    setBusy(true);
+    try {
+      if (result.checkIn || result.checkOut) {
+        const res = await fetch(`/api/reservations/${result.reservationId}/schedule`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...(result.checkIn ? { checkInDate: result.checkIn } : {}),
+            ...(result.checkOut ? { checkOutDate: result.checkOut } : {}),
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          showApiError(json, tc('updateFailed'));
+          return;
+        }
+      }
+      if (result.toRoomId) {
+        const stay = data?.reservations.find((row) => row.id === result.reservationId);
+        const door = data?.rooms.find((row) => row.id === result.toRoomId);
+        const askReason = stay?.status === 'IN_HOUSE';
+        const askSettlement = doorTypeNeedsSettlement(
+          stay?.roomTypeId,
+          stay?.givenRoomTypeId,
+          door?.roomTypeId,
+        );
+        if (askReason || askSettlement) {
+          await load();
+          setPendingMove({
+            reservationId: result.reservationId,
+            toRoomId: result.toRoomId,
+            askReason,
+            askSettlement,
+          });
+          return;
+        }
+        await moveReservation(result.reservationId, result.toRoomId);
+        return;
+      }
+      showSuccess(t('datesShifted'));
+      await load();
+    } catch (error) {
+      showApiError({ error: error instanceof Error ? error.message : tc('updateError') });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionRoomPlan')}</p>;
   }
@@ -320,51 +383,16 @@ export default function RoomPlanPage() {
       groups={groups}
       selectedId={selectedId}
       fillViewport={fullscreen}
-      onSelect={(id) => {
-        setSelectedId(id);
-        if (id) setCardReservationId(id);
+      ref={gridRef}
+      onSelect={(id) => setSelectedId(id)}
+      onOpenReservation={(id) => {
+        setCardStayAction(null);
+        setCardReservationId(id);
       }}
-      onMoveReservation={
+      onPlanDrop={
         can(PERMISSIONS.RESERVATIONS_WRITE)
-          ? (reservationId, toRoomId) => {
-              const stay = data?.reservations.find((row) => row.id === reservationId);
-              const door = data?.rooms.find((row) => row.id === toRoomId);
-              const askReason = stay?.status === 'IN_HOUSE';
-              const askSettlement = doorTypeNeedsSettlement(
-                stay?.roomTypeId,
-                stay?.givenRoomTypeId,
-                door?.roomTypeId,
-              );
-              if (askReason || askSettlement) {
-                setPendingMove({ reservationId, toRoomId, askReason, askSettlement });
-                return;
-              }
-              void moveReservation(reservationId, toRoomId);
-            }
-          : undefined
-      }
-      onResizeEnd={
-        can(PERMISSIONS.RESERVATIONS_WRITE)
-          ? async (reservationId, newCheckOutIso) => {
-              setBusy(true);
-              try {
-                const res = await fetch(`/api/reservations/${reservationId}/schedule`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ checkOutDate: newCheckOutIso }),
-                });
-                const json = await res.json();
-                if (!res.ok) {
-                  showApiError(json, tc('updateFailed'));
-                  return;
-                }
-                showSuccess(t('extendTo', { date: newCheckOutIso.slice(0, 10) }));
-                await load();
-              } catch (e) {
-                showApiError({ error: e instanceof Error ? e.message : tc('updateError') });
-              } finally {
-                setBusy(false);
-              }
+          ? (result) => {
+              void applyPlanDrop(result);
             }
           : undefined
       }
@@ -379,9 +407,14 @@ export default function RoomPlanPage() {
           <button
             key={u.chipKey ?? u.id}
             type="button"
-            onClick={() => {
-              setSelectedId(u.id);
+            onClick={() => setSelectedId(u.id)}
+            onDoubleClick={() => {
+              setCardStayAction(null);
               setCardReservationId(u.id);
+            }}
+            onPointerDown={(event) => {
+              if (event.button !== 0 || !can(PERMISSIONS.RESERVATIONS_WRITE)) return;
+              gridRef.current?.beginAssign(u, event);
             }}
             className={`rounded-lg border px-2 py-0.5 ${
               selectedId === u.id
@@ -401,8 +434,10 @@ export default function RoomPlanPage() {
       <ReservationCardModal
         open={Boolean(cardReservationId)}
         reservationId={cardReservationId}
+        initialStayAction={cardStayAction}
         onClose={() => {
           setCardReservationId(null);
+          setCardStayAction(null);
           void load();
         }}
       />

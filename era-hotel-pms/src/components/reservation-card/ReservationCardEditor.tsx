@@ -206,6 +206,7 @@ export type ReservationCardEditorProps = {
   reservationId: string | null;
   /** Right-hand tab shown when the card opens. Create still starts on guests. */
   initialTab?: TabId;
+  initialStayAction?: StayActionKind | null;
   onReservationCreated?: (id: string) => void;
 };
 
@@ -241,6 +242,7 @@ export function ReservationCardEditor({
   onClose,
   reservationId,
   initialTab = 'guests',
+  initialStayAction = null,
   onReservationCreated,
 }: ReservationCardEditorProps) {
   const isCreate = !reservationId;
@@ -405,7 +407,7 @@ export function ReservationCardEditor({
   const [restoreOpen, setRestoreOpen] = useState(false);
   const [restoreTypeId, setRestoreTypeId] = useState('');
   const [restoreRoomId, setRestoreRoomId] = useState('');
-  const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(null);
+  const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(initialStayAction);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [earlyCheckoutPreview, setEarlyCheckoutPreview] = useState<{
     applicable?: boolean;
@@ -2474,9 +2476,37 @@ export function ReservationCardEditor({
         </div>
       ) : null}
 
-      {pendingStayAction ? (
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
-          <span>
+      <EraModal
+        open={Boolean(pendingStayAction)}
+        title={
+          pendingStayAction === 'earlyCheckIn'
+            ? t('earlyCheckIn')
+            : pendingStayAction === 'checkIn'
+              ? t('confirmCheckIn')
+              : pendingStayAction === 'earlyCheckOut'
+                ? t('earlyCheckOut')
+                : t('confirmCheckOut')
+        }
+        onClose={() => setPendingStayAction(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setPendingStayAction(null)}
+            onSubmit={() => {
+              const kind = pendingStayAction;
+              if (kind === 'earlyCheckIn') void confirmCheckIn(true);
+              else if (kind === 'checkIn') void confirmCheckIn(false);
+              else {
+                setPendingStayAction(null);
+                setCheckoutModalOpen(true);
+              }
+            }}
+            busy={busy}
+            submitLabel={stayActionLabel}
+          />
+        }
+      >
+        <div className="space-y-2 text-[13px] text-[#34495E]">
+          <p className="m-0">
             {pendingStayAction === 'earlyCheckIn'
               ? t('stayActionEarlyIn', {
                   days: String(hotelStayDayGap(checkIn, todayBakuYmd())),
@@ -2488,48 +2518,21 @@ export function ReservationCardEditor({
                 : pendingStayAction === 'checkOut'
                   ? t('stayActionCheckOut')
                   : pendingStayAction === 'checkIn' &&
-                    checkIn < (pricingBusinessDate ?? todayBakuYmd())
-                  ? t('stayActionLateIn', { date: pricingBusinessDate ?? todayBakuYmd() })
+                      checkIn < (pricingBusinessDate ?? todayBakuYmd())
+                    ? t('stayActionLateIn', { date: pricingBusinessDate ?? todayBakuYmd() })
                     : checkInTime < '14:00'
                       ? t('stayActionEarlyHour')
                       : t('stayActionCheckIn')}
-          </span>
-          <span className="flex gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setPendingStayAction(null)}
-            >
-              {tc('cancel')}
-            </button>
-            <button
-              type="button"
-              className={DANGER_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => {
-                const kind = pendingStayAction;
-                if (kind === 'earlyCheckIn') void confirmCheckIn(true);
-                else if (kind === 'checkIn') void confirmCheckIn(false);
-                else {
-                  setPendingStayAction(null);
-                  setCheckoutModalOpen(true);
-                }
-              }}
-            >
-              {stayActionLabel}
-            </button>
-          </span>
+          </p>
           {earlyCheckoutPreview?.unusedNights ? (
-            <span className="basis-full">
-              {t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}
-            </span>
+            <p className="m-0">{t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}</p>
           ) : null}
           {guestFolioBalance > 0.01 &&
           (pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') ? (
-            <span className={`basis-full ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</span>
+            <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</p>
           ) : null}
         </div>
-      ) : null}
+      </EraModal>
 
       {namesIncomplete ? (
         <div className="mb-3 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
@@ -2732,7 +2735,7 @@ export function ReservationCardEditor({
 
             <div
               className={
-                tab === 'pricing'
+                tab === 'pricing' || tab === 'folio'
                   ? 'flex min-h-0 flex-1 flex-col overflow-hidden pb-2'
                   : 'min-h-0 flex-1 overflow-y-auto pb-2'
               }

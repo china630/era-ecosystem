@@ -1,4 +1,6 @@
-import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { getSatelliteSession } from '@/lib/auth/session';
@@ -15,7 +17,7 @@ export async function GET(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_READ);
     const url = new URL(request.url);
-    const today = todayBakuYmd();
+    const today = hotelDateKey(await getCurrentBusinessDate());
     const from = dayStart(url.searchParams.get('from') ?? today);
     const to = dayStart(url.searchParams.get('to') ?? today);
     const cashShiftId = url.searchParams.get('cashShiftId') ?? undefined;

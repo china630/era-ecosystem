@@ -1,6 +1,6 @@
 # ADR: Hotel year-end close / open (calendar gate)
 
-**Status:** Accepted (staged — posting not enabled)  
+**Status:** Accepted (hotel boundary live; finance GL year close stays in finance)  
 **Date:** 2026-08-07  
 **Scope:** `era-hotel-pms` Night Audit year-end (`/night-audit/year-end`); Finance calendar sign-off
 
@@ -15,25 +15,21 @@ Hotel already owns **business date** roll (`HotelProfile.currentBusinessDate`, `
 | Layer | Owner | Behavior now |
 |-------|-------|--------------|
 | Menu + preview UI | Hotel | `/night-audit/year-end` shows business date, wall clock, last/first-day flags |
-| API | Hotel | `GET/POST /api/night-audit/year-end` — POST returns `YEAR_END_NOT_ENABLED` |
-| Live year close/open | Blocked | Requires Finance calendar sign-off + feature flag |
-| Daily Night Audit EOD | Hotel | Unchanged (`HOT-NA-01`) — rolls business day only |
+| API | Hotel | `GET/POST /api/night-audit/year-end` seals 31 Dec and opens 1 Jan on the business date |
+| Live year close/open | Hotel calendar | Does not call finance `closeFiscalYear`. Buttons are live only on that business date |
+| Daily Night Audit EOD | Hotel | Rolls the business date except on 31 December, when the date stays until Last Day of the Year |
 
-### Enablement checklist (all required)
+Last Day of the Year writes `HotelYearBoundary` kind `CLOSED` and then advances the business date to 1 January. It is pressable only when the business date is 31 December, that business day is already `CLOSED`, the year is not sealed, and the blocks are empty: unclosed cash, an open POS shift, deferred checks when settlement policy is `BLOCK`, a checked-out folio with a balance, an open city ledger when `yearEndBlockIfOpenCityLedger` is on, and any earlier `OPEN` business day in that calendar year. Guests who stay through New Year do not block.
 
-1. Finance ADR / calendar policy for satellite year boundary (AZN fiscal year = calendar year unless org override).
-2. Explicit org flag (env or `HotelProfile`) `yearEndPostingEnabled=true` after Finance sign-off.
-3. Preconditions: no open cash shift blocking policy decided; pending settlement policy decided; no OPEN `BusinessDay` gaps for the year.
-4. Audit trail for LAST_DAY / FIRST_DAY with actor + before/after business date.
-5. UAT-SMOKE UI path on a non-prod calendar window.
+First Day of the Year writes kind `OPENED`. It is pressable only on 1 January, and only when the previous year is sealed or that year had no business days. Until `OPENED` exists, a charge or payment with business date 1 January is refused (`YEAR_NOT_OPEN`). Posting into a sealed year is refused (`YEAR_CLOSED`). A second press does not seal or open again.
 
-Until then: keep `enabled: false` and `code: YEAR_END_NOT_ENABLED`. Coverage **HOT-NA-05 = STUB**.
+Finance `closeFiscalYear` is not called from these buttons. Coverage **HOT-NA-05 = API** until a UAT-SMOKE path exists. This is not a sell or pilot claim.
 
 ## Consequences
 
-- Ops can rehearse navigation and read preview without risk of false “year closed”.
-- Deepen wave must not silently flip posting on.
-- Clone-spec A.7 year-end remains out of phase-1 product claims.
+- The hotel operational year has an explicit seal and open, stored with the actor and the business date.
+- General-ledger year close stays a finance action.
+- Night audit on 31 December closes the day and leaves the business date in place.
 
 ## Related
 

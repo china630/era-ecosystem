@@ -9,11 +9,13 @@ export default function ReservationCardModal({
   onClose,
   reservationId: reservationIdProp,
   initialTab = 'guests',
+  initialStayAction = null,
 }: {
   open: boolean;
   onClose: () => void;
   reservationId?: string | null;
   initialTab?: TabId;
+  initialStayAction?: 'earlyCheckIn' | 'checkIn' | 'earlyCheckOut' | 'checkOut' | null;
 }) {
   const propId = reservationIdProp ?? null;
   const [editId, setEditId] = useState<string | null>(propId);
@@ -36,6 +38,7 @@ export default function ReservationCardModal({
       onClose={onClose}
       reservationId={editId}
       initialTab={initialTab}
+      initialStayAction={initialStayAction}
       onReservationCreated={(id) => setEditId(id)}
     />
   );

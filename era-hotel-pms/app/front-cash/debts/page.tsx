@@ -1,12 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Banknote } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -16,8 +15,8 @@ import {
   DatePicker,
   EraListFilterBar,
   Field,
+  FilterChips,
   PageHeader,
-  SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
   useDebouncedValue,
@@ -66,19 +65,14 @@ export default function DebtsPage() {
   }
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-3">
       <PageHeader title={t('debtsTitle')} subtitle={t('debtsHint')} />
-      <div className="flex flex-wrap gap-2">
-        {KINDS.map((code) => (
-          <button
-            key={code}
-            type="button"
-            className={kind === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-            onClick={() => selectKind(code)}
-          >
-            {t(`debtsChip.${code}`)}
-          </button>
-        ))}
+      <div className="mb-3 shrink-0">
+        <FilterChips
+          value={kind}
+          onChange={(id) => selectKind(id as Kind)}
+          items={KINDS.map((code) => ({ id: code, label: t(`debtsChip.${code}`) }))}
+        />
       </div>
       {kind === 'guest' ? <GuestDebtPanel /> : null}
       {kind === 'agency' ? <AgencyLedgerPage /> : null}
@@ -200,8 +194,14 @@ function GuestDebtPanel() {
                 <td className={DATA_TABLE_TD_CLASS}>{row.actor ?? '—'}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
                   {row.remaining > 0.009 && can(PERMISSIONS.FOLIO_PAYMENT) ? (
-                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPaying(row)}>
-                      {t('debtPay')}
+                    <button
+                      type="button"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded text-[#2980B9] hover:bg-[#EBF5FB]"
+                      aria-label={t('debtPay')}
+                      title={t('debtPay')}
+                      onClick={() => setPaying(row)}
+                    >
+                      <Banknote className="h-4 w-4" aria-hidden />
                     </button>
                   ) : null}
                 </td>

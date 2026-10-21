@@ -159,6 +159,7 @@ export {
   type UsePaginatedListOptions,
   type UsePaginatedListResult,
 } from "./use-paginated-list";
+export { FilterChips, type FilterChipItem } from "./filter-chips";
 export { VoenLookupField, type VoenLookupResult } from "./voen-lookup-field";
 export { buildVoenLookupLabels, type VoenLookupFieldLabels } from "./voen-lookup-labels";
 export { FxEquivalentBadge, type FxEquivalentPreview } from "./fx-equivalent-badge";

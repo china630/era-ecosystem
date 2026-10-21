@@ -21,6 +21,21 @@ interface Reservation {
   room: { roomNumber: string } | null;
 }
 
+const NIGHT_STEP_LABEL = {
+  cash: 'naCash',
+  pos: 'naPos',
+  pending: 'naPending',
+  arrivals: 'naArrivals',
+  due: 'naDue',
+  price: 'naPrice',
+  folios: 'naFolios',
+  moves: 'naMoves',
+  night: 'naNight',
+  finance: 'naFinance',
+  pack: 'naPack',
+  roll: 'naRoll',
+} as const;
+
 interface CashShift {
   id: string;
   cashier: string;
@@ -87,6 +102,8 @@ export default function OperationsPage() {
   const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [previewSteps, setPreviewSteps] = useState<{ id: string; state: string; detail: string }[] | null>(null);
+  const [canClose, setCanClose] = useState(false);
   const runGuard = useRef(false);
   const [tourismFailed, setTourismFailed] = useState<
     { id: string; eventKind: string; errorMessage: string | null; reservation: { guest: { fullName: string } } }[]
@@ -113,6 +130,14 @@ export default function OperationsPage() {
     loadTourism();
   }, [loadStatus, loadRuns, loadTourism]);
 
+  useEffect(() => {
+    if (!busy) return;
+    const timer = window.setInterval(() => {
+      void loadStatus();
+    }, 1500);
+    return () => window.clearInterval(timer);
+  }, [busy, loadStatus]);
+
   async function retryTourism(id: string) {
     const res = await fetch(`/api/tourism/${id}/retry`, { method: 'POST' });
     setMsg(res.ok ? t('tourismRetrySent') : t('retryFailed'));
@@ -128,6 +153,17 @@ export default function OperationsPage() {
   const dueOutCount = status?.deskHold?.dueCount ?? 0;
   const deskBlocked = missedCount > 0 || dueOutCount > 0;
   const naBlocked = cashBlocked || pendingBlocksNa || deskBlocked;
+
+  async function checkDay() {
+    const res = await fetch('/api/night-audit/preview');
+    const data = await res.json();
+    if (!res.ok) {
+      setMsg(data.error ?? tc('failed'));
+      return;
+    }
+    setPreviewSteps(Array.isArray(data.steps) ? data.steps : []);
+    setCanClose(Boolean(data.canClose));
+  }
 
   async function runNightAudit() {
     if (runGuard.current) return;
@@ -300,9 +336,12 @@ export default function OperationsPage() {
           <p className="mb-3 text-[13px] text-rose-600">{t('pendingSettlementBlock')}</p>
         )}
         <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => void checkDay()} className={SECONDARY_BUTTON_CLASS} disabled={busy}>
+            {t('checkDay')}
+          </button>
           <button
             type="button"
-            disabled={busy || naBlocked || !status?.businessDate?.currentBusinessDate}
+            disabled={busy || !canClose || !status?.businessDate?.currentBusinessDate}
             onClick={runNightAudit}
             className={PRIMARY_BUTTON_CLASS}
           >
@@ -312,6 +351,17 @@ export default function OperationsPage() {
             {t('processRetry')}
           </button>
         </div>
+        {previewSteps && previewSteps.length > 0 ? (
+          <ul className="mt-4 space-y-1 text-[13px] text-[#34495E]">
+            {previewSteps.map((step) => (
+              <li key={step.id}>
+                {step.state === 'stop' ? '●' : step.state === 'done' ? '○' : '·'}{' '}
+                {t(NIGHT_STEP_LABEL[step.id as keyof typeof NIGHT_STEP_LABEL] ?? 'naCash')}
+                {step.detail ? ` — ${step.detail}` : ''}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {lastSteps.length > 0 && (
           <ol className="mt-4 list-decimal space-y-1 pl-5 text-[13px] text-[#34495E]">
             {lastSteps.map((s, i) => (

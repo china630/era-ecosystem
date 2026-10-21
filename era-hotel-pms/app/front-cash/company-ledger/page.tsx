@@ -9,8 +9,10 @@ import {
   CatalogField,
   Field,
   PageHeader,
+  PRIMARY_BUTTON_CLASS,
   useDebouncedValue,
   showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import {
@@ -145,6 +147,25 @@ export default function CompanyLedgerPage() {
     })();
   }, [companyId, from, to, tc]);
 
+  async function pushSnapshotNow() {
+    if (!companyId) return;
+    try {
+      const res = await fetch(`/api/companies/${companyId}/city-ledger-snapshot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asOfDate: to }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, tc('error'));
+        return;
+      }
+      showSuccess(t('snapshotPushed'));
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('error') });
+    }
+  }
+
   const visibleSummary = useMemo(() => {
     const needle = debouncedQ.trim().toLowerCase();
     return summary.filter((row) => {
@@ -265,7 +286,16 @@ export default function CompanyLedgerPage() {
 
       {ledger && companyId ? (
         <>
-          <PageHeader title={t('companyDetail')} />
+          <PageHeader
+            title={t('companyDetail')}
+            actions={
+              can(PERMISSIONS.FOLIO_PAYMENT) ? (
+                <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void pushSnapshotNow()}>
+                  {t('pushSnapshot')}
+                </button>
+              ) : null
+            }
+          />
           <HotelDataGrid<Record<string, unknown>>
             columns={[
               { key: 'label', header: t('metric'), sortable: true },

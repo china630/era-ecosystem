@@ -21,10 +21,17 @@ type PricingPolicy = {
   loadBasedPricingEnabled: boolean;
   childAbsolutePricingEnabled: boolean;
   agencyPortalAutoConfirm: boolean;
+  stopIfZeroNightPrice: boolean;
+  autoNoShow: boolean;
+  stopIfGuestFolioBalance: boolean;
+  autoExtendUndeparted: boolean;
+  checkCheckedOutFolios: boolean;
+  cancelRoomChangePlans: boolean;
 };
 
 export default function PoliciesPage() {
   const t = useTranslations('policies');
+  const tn = useTranslations('operations');
   const th = useTranslations('housekeeping');
   const tp = useTranslations('pricingPolicy');
   const tr = useTranslations();
@@ -59,6 +66,12 @@ export default function PoliciesPage() {
           loadBasedPricingEnabled: Boolean(data.loadBasedPricingEnabled),
           childAbsolutePricingEnabled: Boolean(data.childAbsolutePricingEnabled),
           agencyPortalAutoConfirm: Boolean(data.agencyPortalAutoConfirm),
+          stopIfZeroNightPrice: data.stopIfZeroNightPrice !== false,
+          autoNoShow: Boolean(data.autoNoShow),
+          stopIfGuestFolioBalance: data.stopIfGuestFolioBalance !== false,
+          autoExtendUndeparted: data.autoExtendUndeparted !== false,
+          checkCheckedOutFolios: data.checkCheckedOutFolios !== false,
+          cancelRoomChangePlans: data.cancelRoomChangePlans !== false,
         });
       }
     }
@@ -109,6 +122,12 @@ export default function PoliciesPage() {
         loadBasedPricingEnabled: Boolean(data.loadBasedPricingEnabled),
         childAbsolutePricingEnabled: Boolean(data.childAbsolutePricingEnabled),
         agencyPortalAutoConfirm: Boolean(data.agencyPortalAutoConfirm),
+        stopIfZeroNightPrice: data.stopIfZeroNightPrice !== false,
+        autoNoShow: Boolean(data.autoNoShow),
+        stopIfGuestFolioBalance: data.stopIfGuestFolioBalance !== false,
+        autoExtendUndeparted: data.autoExtendUndeparted !== false,
+        checkCheckedOutFolios: data.checkCheckedOutFolios !== false,
+        cancelRoomChangePlans: data.cancelRoomChangePlans !== false,
       });
       showSuccess(tp('saved'));
     } finally {
@@ -226,6 +245,35 @@ export default function PoliciesPage() {
         ) : null}
 
         {canPrice ? <LetterheadSection /> : null}
+
+        {canPrice && policy ? (
+        <section id="night-audit" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{tn('nightAudit')}</h2>
+          {(
+            [
+              ['stopIfZeroNightPrice', 'naStopZeroPrice'],
+              ['autoNoShow', 'naAutoNoShow'],
+              ['stopIfGuestFolioBalance', 'naStopGuestFolio'],
+              ['autoExtendUndeparted', 'naAutoExtend'],
+              ['checkCheckedOutFolios', 'naCheckCheckedOut'],
+              ['cancelRoomChangePlans', 'naCancelRoomMoves'],
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key} className="flex items-start gap-3 text-[13px] text-[#34495E]">
+              <input
+                type="checkbox"
+                className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+                checked={Boolean(policy[key])}
+                onChange={() => setPolicy({ ...policy, [key]: !policy[key] })}
+              />
+              <span>{tn(label)}</span>
+            </label>
+          ))}
+          <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy === 'price'} onClick={() => void savePrice()}>
+            {tc('save')}
+          </button>
+        </section>
+        ) : null}
 
         {canPack ? (
         <section id="reports" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
