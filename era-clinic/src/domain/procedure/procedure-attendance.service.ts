@@ -528,7 +528,7 @@ export async function receptionRescheduleProcedure(
   orderId: string,
   scheduledAt: Date,
   actor: AttendanceActor,
-  opts?: { resourceId?: string },
+  opts?: { resourceId?: string; allowOtherDay?: boolean },
 ) {
   const updated = await rescheduleProcedureOrder(orderId, scheduledAt, opts);
   await prisma.procedureOrder.update({

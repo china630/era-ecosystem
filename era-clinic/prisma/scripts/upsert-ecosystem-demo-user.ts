@@ -6,9 +6,9 @@
  * Run from satellite root: npx tsx prisma/scripts/upsert-ecosystem-demo-user.ts
  */
 import { createRequire } from "node:module";
-import path from "node:path";
 
-const require = createRequire(path.join(process.cwd(), "package.json"));
+// Resolve relative to this file (not package.json) so ../../src/... stays under the satellite.
+const require = createRequire(import.meta.url);
 const { Prisma, PrismaClient } = require("@prisma/client") as typeof import("@prisma/client");
 const {
   hashPassword,

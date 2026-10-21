@@ -1,9 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import {
+  bathSeriesRestYmds,
+  naftalanWeekIsFull,
+  parseBathDayModes,
+  bakuMondayYmd,
+} from "@/domain/planning/bath-calendar";
 import { listClinicDays } from "@/domain/planning/clinic-day";
-import { addBakuDays, bakuDateKey, bakuDayBounds } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDayBounds, parseBakuDateTime } from "@/lib/baku-day";
 import { dailyCapForQuota, loadEpisodeDailyCaps } from "@/domain/sanatorium/block-daily-cap";
 import {
   alignDurationToSlotMinutes,
+  bathPolicyFromSettings,
+  defaultBathModeFromSettings,
   getSchedulingSettings,
   getTenantWorkHours,
   resolveEffectiveDayEndHour,
@@ -43,6 +51,10 @@ export const SLOT_REASON_MESSAGE: Record<PlacementFailureReason, string> = {
   closed: "Clinic is closed on that day",
   lunch: "Procedure cannot be scheduled in the lunch break",
   cross_day: "Manual move must stay on the same day",
+  bath_rest: "This day is a rest day for this bath",
+  week_full: "The weekly naftalan limit is used up",
+  past_checkout: "That day is after checkout",
+  checkout_noon: "On checkout day the procedure must finish by 12:00",
   rule: "Procedure rule or rest gap conflict",
   no_slot: "Selected time is outside working hours",
 };
@@ -54,10 +66,25 @@ function addMinutes(d: Date, mins: number): Date {
 /**
  * Accept this minute or refuse. Does not hunt the next free slot.
  */
+function storedRestYmds(fields: unknown): string[] {
+  if (!fields || typeof fields !== "object") return [];
+  const raw = (fields as { restYmds?: unknown }).restYmds;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((row): row is string => typeof row === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row));
+}
+
+function storedBathMode(fields: unknown): string | null {
+  if (!fields || typeof fields !== "object") return null;
+  const block = (fields as { dayBlock?: unknown }).dayBlock;
+  return block == null ? null : String(block);
+}
+
 export async function placeManualProcedureSlot(input: {
   orderId: string;
   scheduledAt: Date;
   resourceId?: string | null;
+  /** Plan card may pick another day. The resource matrix does not send this. */
+  allowOtherDay?: boolean;
 }): Promise<{ id: string; scheduledAt: Date; endsAt: Date | null; resourceId: string | null }> {
   const order = await prisma.procedureOrder.findUnique({
     where: { id: input.orderId },
@@ -76,8 +103,21 @@ export async function placeManualProcedureSlot(input: {
 
   const originYmd = bakuDateKey(order.scheduledAt);
   const targetYmd = bakuDateKey(input.scheduledAt);
-  if (targetYmd !== originYmd) {
+  if (targetYmd !== originYmd && !input.allowOtherDay) {
     throw new SlotDecisionError("cross_day");
+  }
+
+  const stay = order.clinicalEpisodeId
+    ? await prisma.clinicalEpisode.findUnique({
+        where: { id: order.clinicalEpisodeId },
+        select: { programInstance: { select: { endsOn: true } } },
+      })
+    : null;
+  const checkoutYmd = stay?.programInstance?.endsOn
+    ? bakuDateKey(stay.programInstance.endsOn)
+    : null;
+  if (checkoutYmd && targetYmd > checkoutYmd) {
+    throw new SlotDecisionError("past_checkout");
   }
 
   const clinicDays = await listClinicDays(targetYmd, addBakuDays(targetYmd, 1));
@@ -110,6 +150,12 @@ export async function placeManualProcedureSlot(input: {
       : alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes);
   const slotStart = input.scheduledAt;
   const slotEnd = addMinutes(slotStart, duration);
+  if (checkoutYmd && targetYmd === checkoutYmd) {
+    const noon = parseBakuDateTime(checkoutYmd, "12:00");
+    if (slotEnd.getTime() > noon.getTime()) {
+      throw new SlotDecisionError("checkout_noon");
+    }
+  }
 
   const physicalReq = pt.requirements?.find(
     (req) => req.role === "LOCATION" || req.role === "EQUIPMENT",
@@ -189,8 +235,25 @@ export async function placeManualProcedureSlot(input: {
       endsAt: true,
       inPackage: true,
       packageQuotaCode: true,
+      clinicalEpisodeId: true,
+      physioFields: true,
       procedureType: { select: { patientRestMinutes: true } },
     },
+  });
+  await assertBathSeriesMove({
+    procedureCode: order.procedureCode,
+    originYmd,
+    targetYmd,
+    ownFields: order.physioFields,
+    settings,
+    others: existing
+      .filter((row) => !order.clinicalEpisodeId || row.clinicalEpisodeId === order.clinicalEpisodeId)
+      .filter((row) => row.status !== "NO_SHOW")
+      .map((row) => ({
+        procedureCode: row.procedureCode,
+        ymd: bakuDateKey(row.scheduledAt),
+        physioFields: row.physioFields,
+      })),
   });
   const patientSlots: ScanPatientSlot[] = existing.map((row) => ({
     code: row.procedureCode,
@@ -275,6 +338,59 @@ export async function placeManualProcedureSlot(input: {
     },
   ]);
   return updated;
+}
+
+async function assertBathSeriesMove(input: {
+  procedureCode: string;
+  originYmd: string;
+  targetYmd: string;
+  ownFields: unknown;
+  settings: Awaited<ReturnType<typeof getSchedulingSettings>>;
+  others: Array<{ procedureCode: string; ymd: string; physioFields: unknown }>;
+}): Promise<void> {
+  const member = await prisma.procedureDaySeriesMember.findFirst({
+    where: { procedureCode: input.procedureCode, series: { active: true } },
+    select: { series: { select: { fillsRestDays: true } } },
+  });
+  if (!member) return;
+
+  const sameSku = input.others.filter((row) => row.procedureCode === input.procedureCode);
+  const stored = new Set<string>([
+    ...storedRestYmds(input.ownFields),
+    ...sameSku.flatMap((row) => storedRestYmds(row.physioFields)),
+  ]);
+  if (stored.has(input.targetYmd)) throw new SlotDecisionError("bath_rest");
+
+  const anchorRow = [...sameSku].sort((a, b) => a.ymd.localeCompare(b.ymd))[0];
+  if (anchorRow && input.targetYmd >= anchorRow.ymd) {
+    const end = input.targetYmd > anchorRow.ymd ? input.targetYmd : anchorRow.ymd;
+    const days = await listClinicDays(anchorRow.ymd, addBakuDays(end, 1));
+    const rest = bathSeriesRestYmds({
+      days,
+      anchorYmd: anchorRow.ymd,
+      mode:
+        storedBathMode(input.ownFields) ??
+        storedBathMode(anchorRow.physioFields) ??
+        defaultBathModeFromSettings(input.settings),
+      modes: parseBathDayModes(input.settings.bathDayModesJson),
+      policy: bathPolicyFromSettings(input.settings),
+    });
+    if (rest.includes(input.targetYmd)) throw new SlotDecisionError("bath_rest");
+  }
+
+  if (member.series.fillsRestDays) return;
+  if (bakuMondayYmd(input.originYmd) === bakuMondayYmd(input.targetYmd)) return;
+  const naftalan = await prisma.procedureDaySeriesMember.findMany({
+    where: { series: { active: true, fillsRestDays: false } },
+    select: { procedureCode: true },
+  });
+  const codes = new Set(naftalan.map((row) => row.procedureCode));
+  const weekYmds = input.others
+    .filter((row) => codes.has(row.procedureCode))
+    .map((row) => row.ymd);
+  if (naftalanWeekIsFull(input.targetYmd, weekYmds, input.settings.weeklyNaftalanCap)) {
+    throw new SlotDecisionError("week_full");
+  }
 }
 
 export async function clinicDayIsClosed(ymd: string): Promise<boolean> {

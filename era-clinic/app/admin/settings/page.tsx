@@ -467,13 +467,9 @@ export default function ClinicAdminSettingsPage() {
             <td className="p-3 font-medium">{t("cardPlanPreview")}</td>
             <td className="p-3">{cardLimits.patientCardPlanPreview}</td>
           </tr>
-          <tr className="border-b">
+          <tr>
             <td className="p-3 font-medium">{t("cardHistoryPageSize")}</td>
             <td className="p-3">{cardLimits.patientCardHistoryPageSize}</td>
-          </tr>
-          <tr>
-            <td className="p-3 font-medium">{t("cardPlanPageSize")}</td>
-            <td className="p-3">{cardLimits.patientCardPlanPageSize}</td>
           </tr>
         </tbody>
       </table>
@@ -849,7 +845,6 @@ export default function ClinicAdminSettingsPage() {
                 ["patientCardResultsPreview", "cardResultsPreview"],
                 ["patientCardPlanPreview", "cardPlanPreview"],
                 ["patientCardHistoryPageSize", "cardHistoryPageSize"],
-                ["patientCardPlanPageSize", "cardPlanPageSize"],
               ] as const
             ).map(([key, labelKey]) => (
               <Field

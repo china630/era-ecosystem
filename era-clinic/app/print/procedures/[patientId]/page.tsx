@@ -52,9 +52,9 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
               </tr>
               {group.rows.map((r) => (
                 <tr key={r.no} className="border-b border-neutral-300 align-top">
-                  <td className="p-1">{r.no}</td>
+                  <td className="p-1">{r.checkout ? "" : r.no}</td>
                   <td className="p-1">{r.name}</td>
-                  <td className="p-1">{r.quantity}</td>
+                  <td className="p-1">{r.checkout ? "" : r.quantity}</td>
                   <td className="p-1">{r.time}</td>
                   <td className="p-1">{r.room}</td>
                   <td className="p-1">{r.price}</td>
