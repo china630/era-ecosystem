@@ -10,7 +10,6 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
-import { stayListHasInHouse } from '@/lib/occupied-hk-lock';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -101,7 +100,7 @@ export default function RoomInfoModal({
     ? hotelDateKey(activeReservation.checkInDate)
     : '';
   const arrivalReached = !arrivalKey || arrivalKey <= todayBakuYmd();
-  const occupied = stayListHasInHouse(room.reservations);
+  const occupied = activeReservation?.status === 'IN_HOUSE';
   const hkLockedStatus = new Set(['CLEAN', 'INSPECTED', 'DIRTY', 'AVAILABLE']);
 
   return (

@@ -71,6 +71,7 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
         housekeepingTask: {
           findUnique: jest.fn().mockResolvedValue({ id: 't1', roomId: 'room1' }),
         },
+        room: { findUnique: jest.fn().mockResolvedValue(null) },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
           const tx = {
             housekeepingTask: {
@@ -109,6 +110,7 @@ describe('HK status / assignable proof (AC-HOT-HK)', () => {
           update: jest.fn().mockResolvedValue({ id: 'room1', status: 'INSPECTED' }),
         },
         reservation: { findFirst: jest.fn().mockResolvedValue(null) },
+        roomChangePlan: { findMany: jest.fn().mockResolvedValue([]) },
       },
     }));
     const hk = await import('@/lib/services/housekeeping.service');

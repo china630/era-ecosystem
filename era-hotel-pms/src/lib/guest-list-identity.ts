@@ -54,7 +54,7 @@ export function mapGuestToListItem(guest: {
   lastName: string | null;
   title: string | null;
   sex: string | null;
-  nationality: string;
+  nationality: string | null;
   birthDate: Date | null;
   birthPlace: string | null;
   phone: string | null;
@@ -74,7 +74,7 @@ export function mapGuestToListItem(guest: {
     lastName: guest.lastName,
     title: guest.title,
     sex: guest.sex,
-    nationality: guest.nationality,
+    nationality: guest.nationality ?? '',
     birthDate: guest.birthDate ? guest.birthDate.toISOString().slice(0, 10) : null,
     birthPlace: guest.birthPlace,
     phone: guest.phone,

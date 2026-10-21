@@ -22,13 +22,14 @@ import {
   rackDoorUse,
   rackLiveStaysForDate,
   deriveSharePoolForDate,
+  reservationsTouchingDate,
   type RackDisplayState,
 } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { normalizeShareGender } from '@/lib/share-gender';
-import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
-import { stayListHasInHouse } from '@/lib/occupied-hk-lock';
+import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -58,6 +59,7 @@ export type RoomRackRoom = {
   inventoryStatus?: 'IN_SERVICE' | 'OOS' | 'OOO';
   floor: number;
   roomType: { code: string; name: string; adultCapacity?: number };
+  roomTypeId?: string;
   reservations: Array<{
     id: string;
     status: ReservationStatus;
@@ -75,6 +77,8 @@ export type RoomRackRoom = {
     shareEligible?: boolean;
     shareGender?: string | null;
     adults?: number;
+    roomTypeId?: string;
+    givenRoomTypeId?: string | null;
   }>;
   rackDisplayState?: RackDisplayState;
   sharePool?: { gender: string; occupied: number; capacity: number } | null;
@@ -154,7 +158,11 @@ export type RoomRackViewProps = {
   selectedId: string | null;
   onSelect: (room: RoomRackRoom) => void;
   onQuickBook?: (room: RoomRackRoom) => void;
-  onRelocate?: (reservationId: string, toRoomId: string, reasonCode?: RoomMoveReason) => Promise<void>;
+  onRelocate?: (
+    reservationId: string,
+    toRoomId: string,
+    opts?: { reasonCode?: RoomMoveReason; settlement?: ClassSettlement },
+  ) => Promise<void>;
   onHkStatus?: (roomId: string, hk: 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED') => void;
   loading?: boolean;
   filterDateFrom: string;
@@ -184,9 +192,13 @@ export default function RoomRackView({
   const tPay = useTranslations('rackPayStatus');
   const [dragResId, setDragResId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
-  const [pendingMove, setPendingMove] = useState<{ reservationId: string; toRoomId: string } | null>(
-    null,
-  );
+  const [dragFromRoomId, setDragFromRoomId] = useState<string | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    reservationId: string;
+    toRoomId: string;
+    askReason: boolean;
+    askSettlement: boolean;
+  } | null>(null);
 
   const [search, setSearch] = useState('');
   const [floorFilter, setFloorFilter] = useState<string>('all');
@@ -538,20 +550,16 @@ export default function RoomRackView({
             const top = rackBorder(room);
             const textCls = rackText(room);
             const showQuick = onQuickBook && canQuickBookRoom(room) && !held;
-            const isDropTarget =
-              dropTargetId === room.id &&
-              Boolean(dragResId) &&
-              !held &&
-              !active &&
-              ['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status);
+            const isDropTarget = dropTargetId === room.id && Boolean(dragResId) && dragFromRoomId !== room.id;
+            const occupiedOnDates = reservationsTouchingDate(room.reservations, rangeLo, rangeHi).some(
+              (stay) => stay.status === 'IN_HOUSE',
+            );
             return (
               <div
                 key={room.id}
                 className={`relative rounded-2xl border border-[#D5DADF] bg-white p-3 shadow-sm transition ${top} ${selectedId === room.id ? 'ring-2 ring-[#2980B9]' : ''} ${isDropTarget ? 'ring-2 ring-emerald-500' : ''}`}
                 onDragOver={(e) => {
-                  if (!dragResId || !onRelocate) return;
-                  if (held || active) return;
-                  if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return;
+                  if (!dragResId || !onRelocate || dragFromRoomId === room.id) return;
                   e.preventDefault();
                   setDropTargetId(room.id);
                 }}
@@ -559,24 +567,29 @@ export default function RoomRackView({
                 onDrop={(e) => {
                   e.preventDefault();
                   const resId = e.dataTransfer.getData('reservationId') || dragResId;
+                  const fromRoom = e.dataTransfer.getData('fromRoomId') || dragFromRoomId;
                   setDropTargetId(null);
                   setDragResId(null);
-                  if (!resId || !onRelocate) return;
-                  if (held || active) return;
-                  if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) return;
-                  if (room.reservations.some((stay) => stay.id === resId)) return;
+                  setDragFromRoomId(null);
+                  if (!resId || !onRelocate || fromRoom === room.id) return;
                   const dragged = rooms
                     .flatMap((row) => row.reservations ?? [])
                     .find((stay) => stay.id === resId);
-                  if (dragged?.status === 'IN_HOUSE') {
-                    setPendingMove({ reservationId: resId, toRoomId: room.id });
+                  const askReason = dragged?.status === 'IN_HOUSE';
+                  const askSettlement = doorTypeNeedsSettlement(
+                    dragged?.roomTypeId,
+                    dragged?.givenRoomTypeId,
+                    room.roomTypeId,
+                  );
+                  if (askReason || askSettlement) {
+                    setPendingMove({ reservationId: resId, toRoomId: room.id, askReason, askSettlement });
                     return;
                   }
                   void onRelocate(resId, room.id);
                 }}
               >
                 {onHkStatus && room.inventoryStatus !== 'OOO' && room.inventoryStatus !== 'OOS' ? (
-                  stayListHasInHouse(room.reservations) ? (
+                  occupiedOnDates ? (
                     <div
                       className="mx-auto mb-1 text-center text-[10px] font-semibold uppercase text-[#7F8C8D]"
                       title={t('occupiedHkLocked')}
@@ -661,10 +674,13 @@ export default function RoomRackView({
                         onDragStart={(e) => {
                           e.stopPropagation();
                           setDragResId(active.id);
+                          setDragFromRoomId(room.id);
                           e.dataTransfer.setData('reservationId', active.id);
+                          e.dataTransfer.setData('fromRoomId', room.id);
                         }}
                         onDragEnd={() => {
                           setDragResId(null);
+                          setDragFromRoomId(null);
                           setDropTargetId(null);
                         }}
                         title={onRelocate ? t('dragHint') : undefined}
@@ -729,13 +745,20 @@ export default function RoomRackView({
         </div>
         </div>
       </div>
-      <RoomMoveReasonModal
+      <RoomMoveConfirmModal
         open={Boolean(pendingMove)}
+        askReason={Boolean(pendingMove?.askReason)}
+        askSettlement={Boolean(pendingMove?.askSettlement)}
         onClose={() => setPendingMove(null)}
-        onConfirm={(reason) => {
+        onConfirm={(choice) => {
           const move = pendingMove;
           setPendingMove(null);
-          if (move && onRelocate) void onRelocate(move.reservationId, move.toRoomId, reason);
+          if (move && onRelocate) {
+            void onRelocate(move.reservationId, move.toRoomId, {
+              reasonCode: choice.reason,
+              settlement: choice.settlement,
+            });
+          }
         }}
       />
     </div>

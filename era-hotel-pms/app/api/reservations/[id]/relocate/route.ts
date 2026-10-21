@@ -1,10 +1,9 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
-import { serialize } from '@/lib/serialize';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { relocateReservationRoom } from '@/lib/services/reservation-relocate.service';
+import { isClassSettlement, requestRoomMove } from '@/lib/services/room-move-request.service';
 
 const schema = z.object({
   roomId: z.string().uuid(),
@@ -12,6 +11,8 @@ const schema = z.object({
   reasonCode: z.string().optional(),
   compUpgrade: z.boolean().optional(),
   givenRoomTypeId: z.string().uuid().nullable().optional(),
+  settlement: z.enum(['HOTEL', 'GUEST_PAY', 'HOTEL_REFUND', 'GUEST_CHEAPER']).optional(),
+  effectiveDate: z.string().optional(),
 });
 
 export async function POST(
@@ -23,15 +24,15 @@ export async function POST(
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const { id } = await params;
     const body = schema.parse(await request.json());
-    const reservation = await relocateReservationRoom(id, body.roomId, {
-      reason: body.reason,
-      reasonCode: body.reasonCode,
-      compUpgrade: body.compUpgrade,
-      givenRoomTypeId: body.givenRoomTypeId,
+    const settlement = body.settlement ?? (body.compUpgrade ? 'HOTEL' : undefined);
+    const result = await requestRoomMove(id, body.roomId, {
+      effectiveDate: body.effectiveDate,
+      reasonCode: body.reasonCode ?? body.reason,
+      settlement: isClassSettlement(settlement) ? settlement : null,
       actorUserId: session?.sub,
       request,
     });
-    return jsonOk(serialize(reservation));
+    return jsonOk(result);
   } catch (err) {
     return handleRouteError(err);
   }

@@ -52,14 +52,14 @@ export async function PATCH(
       const inv =
         body.inventoryStatus ??
         (body.status === 'OOO' ? 'OOO' : body.status === 'OOS' || body.status === 'MAINTENANCE' ? 'OOS' : 'IN_SERVICE');
-      const room = await updateRoomAxes(id, hk, inv);
+      const room = await updateRoomAxes(id, hk, inv, null, { userId: session?.sub, request });
       return jsonOk(serialize(room));
     }
     if (!body.status || body.status === 'PICKUP') {
-      const room = await updateRoomAxes(id, 'PICKUP', 'IN_SERVICE');
+      const room = await updateRoomAxes(id, 'PICKUP', 'IN_SERVICE', null, { userId: session?.sub, request });
       return jsonOk(serialize(room));
     }
-    const room = await updateRoomStatus(id, body.status as RoomStatus);
+    const room = await updateRoomStatus(id, body.status as RoomStatus, { userId: session?.sub, request });
     return jsonOk(serialize(room));
   } catch (err) {
     return handleRouteError(err);

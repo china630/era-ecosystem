@@ -62,9 +62,10 @@ export function isValidAzFin(value: string): boolean {
   return FIN_RE.test(value.trim());
 }
 
-export function mapNationalityToIso(raw: string | null | undefined): string {
+/** Known label or ISO alpha-2. Empty and unknown stay empty — never invent AZ. */
+export function mapNationalityToIso(raw: string | null | undefined): string | null {
   const s = (raw ?? "").trim();
-  if (!s) return "AZ";
+  if (!s) return null;
   const folded = s
     .toUpperCase()
     .replace(/İ/g, "I")
@@ -74,9 +75,10 @@ export function mapNationalityToIso(raw: string | null | undefined): string {
     .replace(/Ş/g, "S")
     .replace(/Ç/g, "C")
     .replace(/[^A-Z]/g, "");
+  if (!folded) return null;
   if (NATIONALITY_TO_ISO[folded]) return NATIONALITY_TO_ISO[folded];
   if (/^[A-Z]{2}$/.test(folded)) return folded;
-  return "AZ";
+  return null;
 }
 
 /**

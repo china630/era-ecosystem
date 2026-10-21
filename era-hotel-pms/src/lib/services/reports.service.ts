@@ -132,14 +132,22 @@ export async function createRoomChangePlan(input: {
   toRoomId?: string;
   effectiveAt: Date;
   notes?: string;
+  createdByUserId?: string | null;
 }) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: input.reservationId },
+    select: { organizationId: true },
+  });
+  if (!stay) throw new Error('Reservation not found');
   return prisma.roomChangePlan.create({
     data: {
+      organizationId: stay.organizationId,
       reservationId: input.reservationId,
       fromRoomId: input.fromRoomId,
       toRoomId: input.toRoomId,
       effectiveAt: input.effectiveAt,
       notes: input.notes,
+      createdByUserId: input.createdByUserId ?? undefined,
       status: 'PENDING',
       kind: 'SCHEDULED',
     },

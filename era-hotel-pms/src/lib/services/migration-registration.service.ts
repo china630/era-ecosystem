@@ -25,7 +25,7 @@ export async function buildMigrationPayload(
   guest: {
     globalPersonId: string | null;
     fullName: string;
-    nationality: string;
+    nationality: string | null;
     birthDate: Date | null;
     visaType: string | null;
     visaNumber: string | null;

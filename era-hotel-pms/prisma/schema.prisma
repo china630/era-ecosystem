@@ -1005,7 +1005,7 @@ model Guest {
   title              String?
   /** M/F ops cache — physical column `gender`. */
   sex                String?        @map("gender")
-  nationality        String         @default("AZ")
+  nationality        String?
   voen               String?
   phone              String?
   email              String?

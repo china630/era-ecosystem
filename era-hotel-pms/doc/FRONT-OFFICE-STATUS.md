@@ -118,7 +118,8 @@
 ## 10. 2026-10-08 FO ops (not a sell claim)
 
 - Reservation card: CANCELLED before arrival, NO_SHOW from the arrival date, while status is CONFIRMED or OPTION. Night audit is unchanged.
-- One stay can hold two room segments (`ReservationStaySlice.roomId`). `POST /api/reservations/:id/stay-split` pins a door or a type quota and writes a PENDING room-change plan. Room plan and rack follow the slice dates.
+- A door move is one command (`requestRoomMove`): the reservation card Save, drag-and-drop, the reservation card date form, and `POST /api/reservations/:id/relocate`. A free clean door moves immediately. A future date, or a door that is still occupied or not Clean/Inspected, stays a PENDING plan with the user who asked. The guest and the night charge stay on the current door until that target door is marked Clean or Inspected, including from a housekeeping task or visit outcome. A class change asks who pays before the move; the choice is stored on the plan. `POST /api/reservations/:id/stay-split` without a room still pins a type quota.
+- Room status changes (out of order, return to service, housekeeping condition) are written to the satellite audit log with the user.
 - Walk-in profile is lookup kind `WALKIN_PROFILE` on `Reservation.walkInProfileCode`. Saving WALKIN clears `agencyId`.
 - Rate plans can be deleted when no reservation, contract, or stay slice references them.
 - Policies save creates a hotel profile when the row is missing.

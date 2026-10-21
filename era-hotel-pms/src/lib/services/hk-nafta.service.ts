@@ -537,7 +537,12 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
   return done;
 }
 
-export async function applySheetOutcome(roomId: string, workDateIso: string, outcome: HkVisitOutcome) {
+export async function applySheetOutcome(
+  roomId: string,
+  workDateIso: string,
+  outcome: HkVisitOutcome,
+  audit?: { userId?: string | null; request?: Request },
+) {
   const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
   let task = await prisma.housekeepingTask.findFirst({
     where: { roomId, businessDate: workDate, status: { not: 'DONE' } },
@@ -549,10 +554,14 @@ export async function applySheetOutcome(roomId: string, workDateIso: string, out
     });
   }
   if (!task) throw new Error('Task missing');
-  return applyVisitOutcome(task.id, outcome);
+  return applyVisitOutcome(task.id, outcome, audit);
 }
 
-export async function applyVisitOutcome(taskId: string, outcome: HkVisitOutcome) {
+export async function applyVisitOutcome(
+  taskId: string,
+  outcome: HkVisitOutcome,
+  audit?: { userId?: string | null; request?: Request },
+) {
   const task = await prisma.housekeepingTask.findUnique({ where: { id: taskId } });
   if (!task) throw new Error('Task not found');
   const room = await prisma.room.findUnique({ where: { id: task.roomId } });
@@ -596,10 +605,14 @@ export async function applyVisitOutcome(taskId: string, outcome: HkVisitOutcome)
     }
   }
   if (done) {
-    await prisma.room.update({
+    const written = await prisma.room.update({
       where: { id: room.id },
       data: roomWriteFromAxes(hk, inv, room.inventoryReason),
     });
+    const { finishRoomStatusChange } = await import('@/lib/services/room.service');
+    await finishRoomStatusChange(room, written, audit).catch((error) =>
+      console.error('room status follow-up', error),
+    );
   }
   return { outcome, done };
 }

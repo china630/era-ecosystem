@@ -7,6 +7,12 @@ jest.mock('@/lib/prisma', () => ({
     reservationNote: {
       findMany: jest.fn(),
     },
+    hotelProfile: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    businessDay: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
   },
 }));
 

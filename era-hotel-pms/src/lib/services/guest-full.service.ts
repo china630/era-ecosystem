@@ -201,6 +201,15 @@ export async function patchGuestFull(
         (nextMiddle ?? '') !== (existing.middleName ?? '') ||
         (nextLast ?? '') !== (existing.lastName ?? '')),
   );
+  const nextBirth =
+    birthDate !== undefined ? birthDate ?? '' : toYmd(existing?.birthDate);
+  const demoChanged = Boolean(
+    existing &&
+      ((nationality !== undefined &&
+        (nationality ?? '') !== (existing.nationality ?? '')) ||
+        (sex !== undefined && (sex ?? '') !== (existing.sex ?? '')) ||
+        (birthDate !== undefined && nextBirth !== toYmd(existing.birthDate))),
+  );
 
   await prisma.guest.update({
     where: { id },
@@ -230,9 +239,9 @@ export async function patchGuestFull(
             : toDecimal(bonusPercent),
     },
   });
-  if (nameChanged) {
+  if (nameChanged || demoChanged) {
     const { syncGuestNameToOpenStays } = await import('@/lib/services/guest-name-sync.service');
-    await syncGuestNameToOpenStays(id).catch((error) =>
+    await syncGuestNameToOpenStays(id, { pushDemographics: true }).catch((error) =>
       console.error('Open-stay name sync failed', error),
     );
   }

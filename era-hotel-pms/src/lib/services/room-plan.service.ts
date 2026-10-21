@@ -146,6 +146,8 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
         .map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim())
         .filter(Boolean),
       roomType: r.roomType,
+      roomTypeId: r.roomTypeId,
+      givenRoomTypeId: r.givenRoomTypeId,
       room: r.room,
       agency: r.agency,
       source: r.source,

@@ -21,10 +21,10 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
     if (body.roomId) {
       const date = body.date ?? todayBakuYmd();
-      return jsonOk(serialize(await applySheetOutcome(body.roomId, date, body.outcome)));
+      return jsonOk(serialize(await applySheetOutcome(body.roomId, date, body.outcome, { userId: session?.sub, request })));
     }
     if (!body.taskId) throw new Error('taskId or roomId required');
-    return jsonOk(serialize(await applyVisitOutcome(body.taskId, body.outcome)));
+    return jsonOk(serialize(await applyVisitOutcome(body.taskId, body.outcome, { userId: session?.sub, request })));
   } catch (err) {
     return handleRouteError(err);
   }
