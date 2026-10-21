@@ -1,7 +1,5 @@
-import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { roomWriteFromAxes } from '@/lib/room-state';
 import { countRemainingInHouseOnDoor } from '@/lib/services/share-assignment.service';
 
 /** Reasons the move confirmation offers. Free text is not a reason. */
@@ -13,8 +11,8 @@ export function isRoomMoveReason(value: string | null | undefined): value is Roo
 }
 
 /**
- * "Did not occupy" keeps the vacated door clean only when the guest has not
- * stayed a hotel night and the folio has no charges. Any other case is Dirty.
+ * Hotel business day of arrival, check-in not on an earlier day, folio still empty.
+ * That is the same moment as check-in: a reasoned move puts the old door back to Clean.
  */
 export async function didNotOccupyKeepsClean(reservationId: string): Promise<boolean> {
   const row = await prisma.reservation.findUnique({
@@ -25,7 +23,8 @@ export async function didNotOccupyKeepsClean(reservationId: string): Promise<boo
     },
   });
   if (!row) return false;
-  const today = todayBakuYmd();
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const today = hotelDateKey(await getCurrentBusinessDate());
   if (hotelDateKey(row.checkInDate) < today) return false;
   if (row.stay?.actualCheckIn && hotelDateKey(row.stay.actualCheckIn) < today) return false;
   const charges = await prisma.folioCharge.count({
@@ -35,9 +34,11 @@ export async function didNotOccupyKeepsClean(reservationId: string): Promise<boo
 }
 
 /**
- * After an in-house guest leaves a door for another one, the old door becomes
- * Dirty with a housekeeping task. Share roommates still in house keep the door.
- * DID_NOT_OCCUPY skips that only when `didNotOccupyKeepsClean` is true.
+ * After an in-house guest leaves a door, the door they walk into is Dirty.
+ * Share roommates still in the old door keep it.
+ * A move with a reception reason on the arrival day, before any folio charge,
+ * puts the vacated door back to Clean: check-in has just marked it Dirty and
+ * the guest did not stay. Any later move leaves that door Dirty and opens a task.
  */
 export async function settleVacatedDoorAfterMove(input: {
   reservationId: string;
@@ -50,20 +51,20 @@ export async function settleVacatedDoorAfterMove(input: {
   if (!fromRoomId || fromRoomId === input.toRoomId) return;
   if (input.status !== 'IN_HOUSE') return;
 
+  const { writeInServiceDoorHk } = await import('@/lib/services/room.service');
+  await writeInServiceDoorHk(input.toRoomId, 'DIRTY');
+
   const others = await countRemainingInHouseOnDoor(fromRoomId, input.reservationId);
   if (others > 0) return;
 
-  if (
-    input.reasonCode === 'DID_NOT_OCCUPY' &&
-    (await didNotOccupyKeepsClean(input.reservationId))
-  ) {
+  const sameMoment =
+    isRoomMoveReason(input.reasonCode) && (await didNotOccupyKeepsClean(input.reservationId));
+  if (sameMoment) {
+    await writeInServiceDoorHk(fromRoomId, 'CLEAN');
     return;
   }
 
-  await prisma.room.update({
-    where: { id: fromRoomId },
-    data: roomWriteFromAxes('DIRTY', 'IN_SERVICE'),
-  });
+  await writeInServiceDoorHk(fromRoomId, 'DIRTY');
   await prisma.housekeepingTask.create({
     data: {
       roomId: fromRoomId,

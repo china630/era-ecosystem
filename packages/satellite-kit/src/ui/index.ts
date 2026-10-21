@@ -84,6 +84,7 @@ export {
 export { EraOpsSidebarSections } from "./era-ops-sidebar-sections";
 export { ColorLegend, type ColorLegendItem, type ColorLegendProps } from "./color-legend";
 export { FilterMenuButton, type FilterMenuOption, type FilterMenuButtonProps } from "./filter-menu-button";
+export { EraMenu, EraMenuItem, type EraMenuProps } from "./era-menu";
 export {
   EraListFilterBar,
   type EraListFilterBarProps,

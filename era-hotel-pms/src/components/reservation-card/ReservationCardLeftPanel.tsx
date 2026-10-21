@@ -22,6 +22,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal } from '@/components/EraModal';
+import { formatFolioBalanceWords } from '@/components/reservation-card/folio-balance';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
@@ -1104,7 +1105,15 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               <div className={SUBSECTION_SURFACE_CLASS}>
                 <div className="flex justify-between">
                   <span className={TEXT_MUTED_CLASS}>{t('folioBalance')}</span>
-                  <span className="font-mono">{props.folioBalance.toFixed(2)} AZN</span>
+                  <span className="font-mono">
+                    {
+                      formatFolioBalanceWords(props.folioBalance, {
+                        guestOwes: t('guestOwes'),
+                        overpaid: t('overpaid'),
+                        settled: t('settled'),
+                      }).text
+                    }
+                  </span>
                 </div>
                 {props.creditLimitAzn !== '' && !Number.isNaN(Number(props.creditLimitAzn)) ? (
                   <div className="mt-1 flex justify-between">

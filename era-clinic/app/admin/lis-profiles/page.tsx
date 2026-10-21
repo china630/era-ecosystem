@@ -5,9 +5,6 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
-  CHIP_GROUP_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -16,6 +13,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   Field,
   FieldSelect,
+  FilterChips,
   FORM_STACK_CLASS,
   ListPaginationFooter,
   ModalFooter,
@@ -190,24 +188,15 @@ export default function LisProfilesAdminPage() {
           ) : null
         }
       />
-      <div className={CHIP_GROUP_CLASS}>
-        {(
-          [
-            ["files", t("tabFiles")],
-            ["import", t("tabImport")],
-            ["panels", t("tabPanels")],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={tab === id ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-            onClick={() => setTab(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <FilterChips
+        value={tab}
+        onChange={(id) => setTab(id as "files" | "import" | "panels")}
+        items={[
+          { id: "files", label: t("tabFiles") },
+          { id: "import", label: t("tabImport") },
+          { id: "panels", label: t("tabPanels") },
+        ]}
+      />
 
       {tab === "files" ? (
       <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

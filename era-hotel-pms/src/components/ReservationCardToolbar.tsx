@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CreditCard,
@@ -13,9 +13,9 @@ import {
   Zap,
 } from 'lucide-react';
 import {
-  DROPDOWN_ITEM_CLASS,
-  DROPDOWN_PANEL_CLASS,
   CHIP_CLASS,
+  EraMenu,
+  EraMenuItem,
   GHOST_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -37,10 +37,12 @@ export type ReservationCardToolbarProps = {
   onClose?: () => void;
   onToggleLock?: () => void;
   onPrint?: () => void;
+  onPrintForm?: (kind: 'registration' | 'proforma' | 'confirmation') => void;
+  onDeleteStay?: () => void;
+  onUndoCheckout?: () => void;
   onConfirmCheckIn?: () => void;
   onHistory?: () => void;
   onRecalc?: () => void;
-  onChargeAll?: () => void;
   onAmendProduct?: () => void;
   attachOpen?: boolean;
   onAttachToggle?: () => void;
@@ -64,8 +66,10 @@ export function ReservationCardActions({
   onConfirmCheckIn,
   onHistory,
   onRecalc,
-  onChargeAll,
   onAmendProduct,
+  onPrintForm,
+  onDeleteStay,
+  onUndoCheckout,
   attachOpen,
   onAttachToggle,
   canCheckIn,
@@ -81,8 +85,6 @@ export function ReservationCardActions({
 }: ReservationCardToolbarProps & { mode?: ActionMode }) {
   const t = useTranslations('reservationCard');
   const tc = useTranslations('common');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [lightningOpen, setLightningOpen] = useState(false);
 
   const showHeader = mode === 'header' || mode === 'all';
   const showFooter = mode === 'footer' || mode === 'all';
@@ -102,59 +104,26 @@ export function ReservationCardActions({
         </button>
       ) : null}
       {showHeader ? (
-        <div className="relative">
-          <button
-            type="button"
-            className={ICON_BTN}
-            aria-label={t('lightning')}
-            disabled={busy || (!onRecalc && !onChargeAll && !onAmendProduct && !canCheckIn)}
-            title={
-              !onRecalc && !onChargeAll && !onAmendProduct && !canCheckIn
-                ? t('availableAfterSave')
-                : t('lightning')
-            }
-            onClick={() => setLightningOpen((o) => !o)}
-          >
-            <Zap className="h-4 w-4" />
-          </button>
-          {lightningOpen ? (
-            <div className={DROPDOWN_PANEL_CLASS}>
-              <button
-                type="button"
-                className={DROPDOWN_ITEM_CLASS}
-                disabled={!onRecalc}
-                onClick={() => {
-                  setLightningOpen(false);
-                  onRecalc?.();
-                }}
-              >
-                {t('calcDaily')}
-              </button>
-              <button
-                type="button"
-                className={DROPDOWN_ITEM_CLASS}
-                disabled={!onChargeAll}
-                onClick={() => {
-                  setLightningOpen(false);
-                  onChargeAll?.();
-                }}
-              >
-                {t('chargeAll')}
-              </button>
-              <button
-                type="button"
-                className={DROPDOWN_ITEM_CLASS}
-                disabled={!onAmendProduct}
-                onClick={() => {
-                  setLightningOpen(false);
-                  onAmendProduct?.();
-                }}
-              >
-                {t('amendProduct')}
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <EraMenu
+          trigger={
+            <button
+              type="button"
+              className={ICON_BTN}
+              aria-label={t('lightning')}
+              disabled={busy || (!onRecalc && !onAmendProduct && !canCheckIn)}
+              title={!onRecalc && !onAmendProduct && !canCheckIn ? t('availableAfterSave') : t('lightning')}
+            >
+              <Zap className="h-4 w-4" />
+            </button>
+          }
+        >
+          <EraMenuItem disabled={!onRecalc} onSelect={() => onRecalc?.()}>
+            {t('calcDaily')}
+          </EraMenuItem>
+          <EraMenuItem disabled={!onAmendProduct} onSelect={() => onAmendProduct?.()}>
+            {t('amendProduct')}
+          </EraMenuItem>
+        </EraMenu>
       ) : null}
       {showHeader ? (
         <button
@@ -169,54 +138,51 @@ export function ReservationCardActions({
         </button>
       ) : null}
       {showHeader ? (
-        <div className="relative">
-          <button
-            type="button"
-            className={ICON_BTN}
-            aria-label={t('menu')}
-            title={t('menu')}
-            disabled={busy}
-            onClick={() => setMenuOpen((o) => !o)}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-          {menuOpen ? (
-            <div className={DROPDOWN_PANEL_CLASS}>
-              <button
-                type="button"
-                className={DROPDOWN_ITEM_CLASS}
-                onClick={() => {
-                  setMenuOpen(false);
-                  (onPrint ?? (() => window.print()))();
-                }}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Printer className="h-3.5 w-3.5" />
-                  {t('print')}
-                </span>
-              </button>
-              {showLock ? (
-                <button
-                  type="button"
-                  className={DROPDOWN_ITEM_CLASS}
-                  disabled={!onToggleLock}
-                  title={!onToggleLock ? t('availableAfterSave') : undefined}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onToggleLock?.();
-                  }}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    {isLocked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
-                    {isLocked ? t('unlock') : t('lock')}
-                  </span>
-                </button>
-              ) : null}
-            </div>
+        <EraMenu
+          trigger={
+            <button type="button" className={ICON_BTN} aria-label={t('menu')} title={t('menu')} disabled={busy}>
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          }
+        >
+          <EraMenuItem onSelect={() => onPrintForm?.('registration') ?? onPrint?.() ?? window.print()}>
+            <span className="inline-flex items-center gap-2">
+              <Printer className="h-3.5 w-3.5" />
+              {t('printRegistration')}
+            </span>
+          </EraMenuItem>
+          <EraMenuItem onSelect={() => onPrintForm?.('proforma')}>
+            {t('printProforma')}
+          </EraMenuItem>
+          <EraMenuItem onSelect={() => onPrintForm?.('confirmation')}>
+            {t('printConfirmation')}
+          </EraMenuItem>
+          {showLock ? (
+            <EraMenuItem disabled={!onToggleLock} onSelect={() => onToggleLock?.()}>
+              <span className="inline-flex items-center gap-2">
+                {isLocked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                {isLocked ? t('unlock') : t('lock')}
+              </span>
+            </EraMenuItem>
           ) : null}
-        </div>
+          {onDeleteStay ? (
+            <EraMenuItem onSelect={onDeleteStay} className="text-[#C0392B]">
+              {t('deleteStay')}
+            </EraMenuItem>
+          ) : null}
+        </EraMenu>
       ) : null}
 
+      {showFooter && onUndoCheckout ? (
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy || loading || isLocked}
+          onClick={onUndoCheckout}
+        >
+          {t('restoreStay')}
+        </button>
+      ) : null}
       {showFooter && onRestore ? (
         <button
           type="button"

@@ -1032,6 +1032,10 @@ export async function checkInReservation(
     await tx.stay.create({
       data: { reservationId: id, actualCheckIn: new Date() },
     });
+    if (updated.roomId) {
+      const { writeInServiceDoorHk } = await import('@/lib/services/room.service');
+      await writeInServiceDoorHk(updated.roomId, 'DIRTY', tx);
+    }
 
     await openFoliosForReservation(id, updated.guest.voen);
 
@@ -1333,11 +1337,19 @@ export function namedGuestIdsOnStay(input: {
   return [...ids];
 }
 
+export type NamedGuestOverlap = {
+  guestId: string;
+  reservationId: string;
+  roomNumber: string;
+  checkIn: string;
+  checkOut: string;
+};
+
 /**
- * Block the same named guest on overlapping stays (any booking / room).
+ * Same named guest on overlapping stays is allowed. Returns warnings only.
  * TBA booker holds (incomplete names) do not claim the person.
  */
-export async function assertNamedGuestsFreeOnStay(reservationId: string) {
+export async function listNamedGuestOverlaps(reservationId: string): Promise<NamedGuestOverlap[]> {
   const stay = await prisma.reservation.findUnique({
     where: { id: reservationId },
     include: { guest: true, paxGuests: true, room: true },
@@ -1350,8 +1362,9 @@ export async function assertNamedGuestsFreeOnStay(reservationId: string) {
     adults: stay.adults,
     pax: stay.paxGuests,
   });
-  if (claimed.length === 0) return;
+  if (claimed.length === 0) return [];
 
+  const warnings: NamedGuestOverlap[] = [];
   for (const guestId of claimed) {
     const conflict = await prisma.reservation.findFirst({
       where: {
@@ -1377,11 +1390,65 @@ export async function assertNamedGuestsFreeOnStay(reservationId: string) {
     });
     if (!otherClaimed.includes(guestId)) continue;
 
-    const door = conflict.room?.roomNumber ?? 'TBA';
-    throw new Error(
-      `Guest already named on overlapping stay (room ${door}, ${conflict.checkInDate.toISOString().slice(0, 10)} – ${conflict.checkOutDate.toISOString().slice(0, 10)})`,
-    );
+    warnings.push({
+      guestId,
+      reservationId: conflict.id,
+      roomNumber: conflict.room?.roomNumber ?? 'TBA',
+      checkIn: conflict.checkInDate.toISOString().slice(0, 10),
+      checkOut: conflict.checkOutDate.toISOString().slice(0, 10),
+    });
   }
+  return warnings;
+}
+
+/** Create-path warning: named guest already on another overlapping stay. */
+export async function listDraftGuestOverlaps(
+  guestIds: string[],
+  checkIn: Date,
+  checkOut: Date,
+): Promise<NamedGuestOverlap[]> {
+  const claimed = [...new Set(guestIds.filter(Boolean))];
+  if (claimed.length === 0) return [];
+
+  const warnings: NamedGuestOverlap[] = [];
+  for (const guestId of claimed) {
+    const conflict = await prisma.reservation.findFirst({
+      where: {
+        status: { in: [...SCHEDULABLE_STATUSES] },
+        checkInDate: { lt: checkOut },
+        checkOutDate: { gt: checkIn },
+        OR: [{ guestId }, { paxGuests: { some: { guestId } } }],
+      },
+      include: {
+        guest: true,
+        room: true,
+        paxGuests: true,
+      },
+    });
+    if (!conflict) continue;
+
+    const otherClaimed = namedGuestIdsOnStay({
+      guestId: conflict.guestId,
+      guestFullName: conflict.guest.fullName,
+      adults: conflict.adults,
+      pax: conflict.paxGuests,
+    });
+    if (!otherClaimed.includes(guestId)) continue;
+
+    warnings.push({
+      guestId,
+      reservationId: conflict.id,
+      roomNumber: conflict.room?.roomNumber ?? 'TBA',
+      checkIn: conflict.checkInDate.toISOString().slice(0, 10),
+      checkOut: conflict.checkOutDate.toISOString().slice(0, 10),
+    });
+  }
+  return warnings;
+}
+
+/** @deprecated Overlap is a warning, not a block. Kept so callers compile. */
+export async function assertNamedGuestsFreeOnStay(reservationId: string) {
+  await listNamedGuestOverlaps(reservationId);
 }
 
 export async function assertRoomFree(

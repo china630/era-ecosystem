@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { TEXT_DANGER_CLASS } from '@era/satellite-kit/ui';
+import { formatFolioBalanceWords } from '@/components/reservation-card/folio-balance';
 
 export type OccupancyWorld = 'exclusive' | 'share' | 'booking';
 
@@ -52,8 +53,20 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
     {
       key: 'balance',
       label: t('folioBalance'),
-      value: props.isCreate ? '—' : `${props.folioBalance.toFixed(2)} AZN`,
-      danger: !props.isCreate && props.folioBalance > 0.01,
+      value: props.isCreate
+        ? '—'
+        : formatFolioBalanceWords(props.folioBalance, {
+            guestOwes: t('guestOwes'),
+            overpaid: t('overpaid'),
+            settled: t('settled'),
+          }).text,
+      danger:
+        !props.isCreate &&
+        formatFolioBalanceWords(props.folioBalance, {
+          guestOwes: t('guestOwes'),
+          overpaid: t('overpaid'),
+          settled: t('settled'),
+        }).danger,
       clickable: false,
     },
   ];

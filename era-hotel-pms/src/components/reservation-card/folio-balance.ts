@@ -1,3 +1,12 @@
+export function formatFolioBalanceWords(
+  net: number,
+  labels: { guestOwes: string; overpaid: string; settled: string },
+): { text: string; danger: boolean } {
+  if (net > 0.01) return { text: `${labels.guestOwes} ${net.toFixed(2)} AZN`, danger: true };
+  if (net < -0.01) return { text: `${labels.overpaid} ${Math.abs(net).toFixed(2)} AZN`, danger: false };
+  return { text: labels.settled, danger: false };
+}
+
 export function computeGuestFolioBalance(
   folios: Array<{
     type: string;

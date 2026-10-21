@@ -787,6 +787,7 @@ model RevenueCode {
   departmentId String?
   department   Department?        @relation(fields: [departmentId], references: [id])
   charges      FolioCharge[]
+  payments     FolioPayment[]
   routingRule  FolioRoutingRule?
   routingOverrides ReservationFolioRoutingOverride[]
   packageLines RatePlanPackageLine[]
@@ -2380,12 +2381,16 @@ model FolioPayment {
   businessDate    DateTime         @db.Date
   fiscalReceiptId String?
   fiscalQrPayload String?
+  /** Article this payment is for. Leftover credit stays on this article. */
+  revenueCodeId   String?
+  revenueCode     RevenueCode?     @relation(fields: [revenueCodeId], references: [id], onDelete: SetNull)
   createdAt       DateTime         @default(now())
   allocations     FolioPaymentAllocation[]
 
   @@index([settlementId])
   @@index([refundOfPaymentId])
   @@index([organizationId])
+  @@index([revenueCodeId])
 }
 
 /// Personal debt left by a guest at check-out. Not the agency city ledger.

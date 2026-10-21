@@ -375,11 +375,13 @@ export function FolioTransferModal({
   onClose,
   onDone,
   chargeId,
+  chargeIds,
 }: {
   open: boolean;
   onClose: () => void;
   onDone?: () => void;
   chargeId: string | null;
+  chargeIds?: string[];
 }) {
   const t = useTranslations('folio');
   const tf = useTranslations('foStatus');
@@ -406,7 +408,7 @@ export function FolioTransferModal({
     setQuery('');
     setTargets([]);
     setTargetError('');
-  }, [open, chargeId]);
+  }, [open, chargeId, chargeIds?.join('|')]);
 
   useEffect(() => {
     if (!open || scope !== 'OTHER') return;
@@ -443,27 +445,30 @@ export function FolioTransferModal({
   }, [open, scope, query, tc]);
 
   async function submit() {
-    if (!chargeId || !note.trim()) return;
+    const ids = (chargeIds && chargeIds.length > 0 ? chargeIds : chargeId ? [chargeId] : []).filter(Boolean);
+    if (ids.length === 0 || !note.trim()) return;
     if (scope === 'OTHER' && !targetReservationId) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/folios/charges/${chargeId}/transfer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          note: note.trim(),
-          targetFolioType,
-          targetReservationId: scope === 'OTHER' ? targetReservationId : undefined,
-          targetReservationGuestId:
-            scope === 'OTHER' && targetFolioType === 'GUEST' && targetGuestId
-              ? targetGuestId
-              : undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showApiError(data, tc('error'));
-        return;
+      for (const id of ids) {
+        const res = await fetch(`/api/folios/charges/${id}/transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            note: note.trim(),
+            targetFolioType,
+            targetReservationId: scope === 'OTHER' ? targetReservationId : undefined,
+            targetReservationGuestId:
+              scope === 'OTHER' && targetFolioType === 'GUEST' && targetGuestId
+                ? targetGuestId
+                : undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showApiError(data, tc('error'));
+          return;
+        }
       }
       showSuccess(t('transferDone'));
       onDone?.();

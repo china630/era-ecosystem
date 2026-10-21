@@ -102,6 +102,7 @@ export async function postCharge(input: {
   description: string;
   businessDate?: Date;
   departmentId?: string;
+  folioType?: 'GUEST' | 'AGENCY' | 'COMPANY';
   externalRef?: string;
   invoiceRef?: string;
   audit?: { userId?: string | null; request?: Request; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' };
@@ -131,14 +132,16 @@ export async function postCharge(input: {
   });
 
   let chargeReservationId = input.reservationId;
-  let targetType = await resolveTargetFolioType(
-    input.revenueCodeId,
-    reservation.guest.voen ? 'COMPANY' : 'GUEST',
-    input.reservationId,
-  );
+  let targetType =
+    input.folioType ??
+    (await resolveTargetFolioType(
+      input.revenueCodeId,
+      reservation.guest.voen ? 'COMPANY' : 'GUEST',
+      input.reservationId,
+    ));
   let folio = reservation.folios.find((f) => f.type === targetType && f.status === 'OPEN');
 
-  if (bookingTarget) {
+  if (!input.folioType && bookingTarget) {
     chargeReservationId = bookingTarget.reservationId;
     targetType = bookingTarget.folioType;
     if (chargeReservationId === input.reservationId) {
@@ -182,6 +185,7 @@ export async function postCharge(input: {
     },
     include: { revenueCode: true, folio: true },
   });
+  await allocateArticleCreditsToCharge(folio.id, charge.id, input.revenueCodeId);
 
   await recalcReservationTotal(chargeReservationId);
   if (chargeReservationId !== input.reservationId) {
@@ -231,16 +235,15 @@ async function allocatePaymentToCharges(
   revenueCodeId?: string,
 ) {
   const charges = await prisma.folioCharge.findMany({
-    where: { folioId },
+    where: {
+      folioId,
+      ...(revenueCodeId ? { revenueCodeId } : {}),
+    },
     orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
     include: { paymentAllocations: true },
   });
-  const preferred = revenueCodeId
-    ? charges.filter((charge) => charge.revenueCodeId === revenueCodeId)
-    : [];
-  const rest = revenueCodeId ? charges.filter((charge) => charge.revenueCodeId !== revenueCodeId) : charges;
   let left = amount;
-  for (const charge of [...preferred, ...rest]) {
+  for (const charge of charges) {
     if (left <= 0.009) break;
     const gross = decimalToNumber(charge.amount) * charge.qty;
     if (gross <= 0.009) continue;
@@ -256,6 +259,44 @@ async function allocatePaymentToCharges(
       },
     });
     left -= take;
+  }
+}
+
+async function allocateArticleCreditsToCharge(folioId: string, chargeId: string, revenueCodeId: string) {
+  const charge = await prisma.folioCharge.findUnique({
+    where: { id: chargeId },
+    include: { paymentAllocations: true },
+  });
+  if (!charge) return;
+  const gross = decimalToNumber(charge.amount) * charge.qty;
+  let open =
+    gross - charge.paymentAllocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+  if (open <= 0.009) return;
+
+  const payments = await prisma.folioPayment.findMany({
+    where: {
+      folioId,
+      kind: 'PAYMENT',
+      voidedAt: null,
+      revenueCodeId,
+    },
+    include: { allocations: true },
+    orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
+  });
+  for (const payment of payments) {
+    if (open <= 0.009) break;
+    const used = payment.allocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+    const leftover = decimalToNumber(payment.amount) - used;
+    if (leftover <= 0.009) continue;
+    const take = Math.min(open, leftover);
+    await prisma.folioPaymentAllocation.create({
+      data: {
+        paymentId: payment.id,
+        chargeId,
+        amount: toDecimal(Math.round(take * 100) / 100),
+      },
+    });
+    open -= take;
   }
 }
 
@@ -398,6 +439,7 @@ export async function postPayment(input: {
       businessDate,
       fiscalReceiptId,
       fiscalQrPayload,
+      revenueCodeId: input.revenueCodeId ?? null,
     },
   });
 
@@ -980,7 +1022,7 @@ export async function listFolios(reservationId?: string) {
     where: reservationId ? { reservationId } : undefined,
     include: {
       charges: { include: { revenueCode: true, department: true, paymentAllocations: true } },
-      payments: true,
+      payments: { include: { revenueCode: true } },
       fiscalDocuments: true,
       reservationGuest: { select: { firstName: true, lastName: true, guest: { select: { fullName: true } } } },
       reservation: {

@@ -5,8 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
+  FilterChips,
   LINK_ACCENT_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
@@ -118,18 +117,11 @@ export function PatientClinicalTimeline({ patientRefId }: { patientRefId: string
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
           {t("title")}
         </h2>
-        <div className="flex flex-wrap gap-1">
-          {FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className={`${filter === f ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !px-2 !py-1 text-[11px]`}
-              onClick={() => setFilter(f)}
-            >
-              {t(`filters.${f}`)}
-            </button>
-          ))}
-        </div>
+        <FilterChips
+          value={filter}
+          onChange={(id) => setFilter(id as (typeof FILTERS)[number])}
+          items={FILTERS.map((f) => ({ id: f, label: t(`filters.${f}`) }))}
+        />
       </div>
 
       <div className={`${CARD_CONTAINER_CLASS} p-4 sm:p-6`}>
