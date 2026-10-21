@@ -762,9 +762,13 @@ model Department {
   organizationId String
   code         String
   name         String
+  /// Cash drawer this department collects. Null = revenue only (laundry, minibar).
+  /// HOTEL | FNB_POS | CLINIC | RETAIL. At most one department per point in an org.
+  cashPoint    String?
   revenueCodes RevenueCode[]
   charges      FolioCharge[]
   @@unique([organizationId, code])
+  @@unique([organizationId, cashPoint])
   @@index([organizationId])
 }
 
@@ -783,6 +787,7 @@ model RevenueCode {
   departmentId String?
   department   Department?        @relation(fields: [departmentId], references: [id])
   charges      FolioCharge[]
+  payments     FolioPayment[]
   routingRule  FolioRoutingRule?
   routingOverrides ReservationFolioRoutingOverride[]
   packageLines RatePlanPackageLine[]
@@ -1005,7 +1010,7 @@ model Guest {
   title              String?
   /** M/F ops cache — physical column `gender`. */
   sex                String?        @map("gender")
-  nationality        String         @default("AZ")
+  nationality        String?
   voen               String?
   phone              String?
   email              String?
@@ -2335,12 +2340,16 @@ model FolioCharge {
   /// Set when the clinic checks the procedure in. Void is refused after this.
   serviceReceivedAt DateTime? @map("service_received_at")
   businessDate  DateTime
+  /// Counter-line posted against this charge. The original row stays.
+  adjustsChargeId   String?
+  adjustmentReason  String?
   paxNo         Int?
   invoiceRef    String?
   createdAt     DateTime    @default(now())
   paymentAllocations FolioPaymentAllocation[]
   tourBookings       TourBooking[]
   @@index([organizationId])
+  @@index([adjustsChargeId])
   @@unique([organizationId, externalRef])
 }
 
@@ -2372,12 +2381,16 @@ model FolioPayment {
   businessDate    DateTime         @db.Date
   fiscalReceiptId String?
   fiscalQrPayload String?
+  /** Article this payment is for. Leftover credit stays on this article. */
+  revenueCodeId   String?
+  revenueCode     RevenueCode?     @relation(fields: [revenueCodeId], references: [id], onDelete: SetNull)
   createdAt       DateTime         @default(now())
   allocations     FolioPaymentAllocation[]
 
   @@index([settlementId])
   @@index([refundOfPaymentId])
   @@index([organizationId])
+  @@index([revenueCodeId])
 }
 
 /// Personal debt left by a guest at check-out. Not the agency city ledger.
@@ -2405,10 +2418,12 @@ model GuestDebtPayment {
   paymentMethod   PaymentMethod
   bankTerminalId  String?
   createdByUserId String?         @map("created_by_user_id")
+  /** Hotel cashier business day. The cash desk reads this, not createdAt. */
+  businessDate    DateTime        @db.Date
   createdAt       DateTime        @default(now())
 
   @@index([organizationId, entryId])
-  @@index([createdAt])
+  @@index([organizationId, businessDate])
 }
 
 /// Mirror of orchestrator BANK_POS / KKM rows so every hotel process can list them.
@@ -2476,6 +2491,8 @@ model FolioDeposit {
   payoutBankTerminalId String?
   fiscalReceiptId String?
   heldAt        DateTime           @default(now())
+  /** Hotel cashier business day the deposit was taken. */
+  businessDate  DateTime           @db.Date
   appliedAt     DateTime?
   refundedAt    DateTime?
   createdAt     DateTime           @default(now())
@@ -2483,6 +2500,7 @@ model FolioDeposit {
   @@index([reservationId])
   @@index([status])
   @@index([organizationId])
+  @@index([organizationId, businessDate])
 }
 
 model CardAuthorization {
@@ -2568,6 +2586,21 @@ model SettlementPendingCharge {
   @@index([sourceSystem, sourceRef])
   @@index([organizationId])
   @@unique([organizationId, idempotencyKey])
+}
+
+/// Hotel operational year seal. Not the finance GL year close.
+model HotelYearBoundary {
+  id             String   @id @default(uuid())
+  organizationId String
+  year           Int
+  /// CLOSED on 31 Dec, OPENED on 1 Jan.
+  kind           String
+  businessDate   DateTime @db.Date
+  actorUserId    String?
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, year, kind])
+  @@index([organizationId])
 }
 
 model BusinessDay {

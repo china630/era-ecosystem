@@ -167,22 +167,10 @@ export default function FolioBalancesPage() {
             sortValue: (r) => r.secondGuestBalance,
             render: (r) => money(r.secondGuestBalance),
           },
-          {
-            key: 'open',
-            header: tc('actions'),
-            render: (r) => (
-              <button
-                type="button"
-                className="text-[#2980B9] hover:underline"
-                onClick={() => setFolioReservationId(r.id)}
-              >
-                {t('openFolio')}
-              </button>
-            ),
-          },
         ]}
         rows={rows as (Row & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
+        onRowDoubleClick={(r) => setFolioReservationId(r.id)}
         defaultSort={{ key: 'roomNumber', dir: 'asc' }}
         emptyMessage={t('empty')}
       />

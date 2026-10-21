@@ -90,7 +90,7 @@ export default function GuestCardModal({
   const [middleName, setMiddleName] = useState('');
   const [title, setTitle] = useState('');
   const [sex, setSex] = useState('');
-  const [nationality, setNationality] = useState('AZ');
+  const [nationality, setNationality] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [vipType, setVipType] = useState('');
@@ -202,7 +202,7 @@ export default function GuestCardModal({
       setMiddleName(middle);
       setTitle(String(g.title ?? ''));
       setSex(String(g.sex ?? ''));
-      setNationality(String(g.nationality ?? 'AZ'));
+      setNationality(String(g.nationality ?? ''));
       setPhone(String(g.phone ?? ''));
       setEmail(String(g.email ?? ''));
       setVipType(String(g.vipType ?? ''));
@@ -281,7 +281,7 @@ export default function GuestCardModal({
       setMiddleName('');
       setTitle('');
       setSex('');
-      setNationality('AZ');
+      setNationality('');
       setPhone('');
       setEmail('');
       setVipType('');

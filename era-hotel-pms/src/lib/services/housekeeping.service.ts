@@ -37,19 +37,31 @@ export async function createDirtyTasksForCheckout() {
   return created;
 }
 
-export async function completeTask(taskId: string, roomStatus: RoomHkCondition | 'CLEAN' | 'INSPECTED' = 'CLEAN') {
+export async function completeTask(
+  taskId: string,
+  roomStatus: RoomHkCondition | 'CLEAN' | 'INSPECTED' = 'CLEAN',
+  audit?: { userId?: string | null; request?: Request },
+) {
   const task = await prisma.housekeepingTask.findUnique({ where: { id: taskId } });
   if (!task) throw new Error('Task not found');
   const hk: RoomHkCondition =
     roomStatus === 'INSPECTED' ? 'INSPECTED' : roomStatus === 'PICKUP' ? 'PICKUP' : 'CLEAN';
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.housekeepingTask.update({
+  const captured: Array<{
+    id: string;
+    roomNumber: string;
+    status: string;
+    hkCondition: string;
+    inventoryStatus: string;
+  }> = [];
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.housekeepingTask.update({
       where: { id: taskId },
       data: { status: 'DONE' },
       include: { room: true },
     });
     const room = await tx.room.findUnique({ where: { id: task.roomId } });
+    if (room) captured.push(room);
     const inventory = room?.inventoryStatus === 'OOO' || room?.inventoryStatus === 'OOS'
       ? room.inventoryStatus
       : 'IN_SERVICE';
@@ -57,8 +69,22 @@ export async function completeTask(taskId: string, roomStatus: RoomHkCondition |
       where: { id: task.roomId },
       data: roomWriteFromAxes(hk, inventory, room?.inventoryReason),
     });
-    return updated;
+    return row;
   });
+  const prior = captured[0];
+  if (prior) {
+    const { finishRoomStatusChange } = await import('@/lib/services/room.service');
+    const inventory =
+      prior.inventoryStatus === 'OOO' || prior.inventoryStatus === 'OOS'
+        ? prior.inventoryStatus
+        : 'IN_SERVICE';
+    await finishRoomStatusChange(
+      prior,
+      { status: hk === 'INSPECTED' ? 'INSPECTED' : hk === 'PICKUP' ? 'PICKUP' : 'CLEAN', hkCondition: hk, inventoryStatus: inventory },
+      audit,
+    ).catch((error) => console.error('room status follow-up', error));
+  }
+  return updated;
 }
 
 export async function markInspected(roomId: string) {
@@ -74,5 +100,9 @@ export async function markInspected(roomId: string) {
   return prisma.room.update({
     where: { id: roomId },
     data: roomWriteFromAxes('INSPECTED', inventory, room.inventoryReason),
+  }).then(async (updated) => {
+    const { finishRoomStatusChange } = await import('@/lib/services/room.service');
+    await finishRoomStatusChange(room, updated).catch((error) => console.error('room status follow-up', error));
+    return updated;
   });
 }

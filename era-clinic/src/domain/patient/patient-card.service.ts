@@ -537,6 +537,7 @@ export async function getPatientPlanPage(
   },
 ) {
   const settings = await getClinicSettings();
+  const paged = opts.limit != null;
   const limit = opts.limit ?? settings.patientCardPlanPageSize;
   const offset = opts.offset ?? 0;
   const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
@@ -566,8 +567,7 @@ export async function getPatientPlanPage(
       where,
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
-      skip: offset,
-      take: limit,
+      ...(paged ? { skip: offset, take: limit } : {}),
     }),
   ]);
 
@@ -582,7 +582,7 @@ export async function getPatientPlanPage(
     }),
   );
 
-  const hasMore = offset + limit < total;
+  const hasMore = paged && offset + limit < total;
   return {
     patientRefId,
     events: events.map(withTimeSubtitle),

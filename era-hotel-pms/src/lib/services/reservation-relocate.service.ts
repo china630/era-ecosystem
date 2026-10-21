@@ -16,6 +16,8 @@ export async function relocateReservationRoom(
     givenRoomTypeId?: string | null;
     actorUserId?: string;
     request?: Request;
+    /** Existing PENDING plan to mark applied, instead of inserting a second row. */
+    plannedId?: string;
   },
 ) {
   const reservation = await prisma.reservation.findUnique({
@@ -50,17 +52,29 @@ export async function relocateReservationRoom(
   }
 
   if (fromRoomId && fromRoomId !== toRoomId) {
-    await recordRoomMove({
-      reservationId,
-      fromRoomId,
-      toRoomId,
-      effectiveAt: new Date(),
-      notes: opts?.reason ?? opts?.reasonCode ?? 'Quick move from room rack / plan',
-      reasonCode: opts?.reasonCode,
-      createdByUserId: opts?.actorUserId,
-      kind: 'OCCURRED',
-      status: 'APPLIED',
-    });
+    if (opts?.plannedId) {
+      await prisma.roomChangePlan.update({
+        where: { id: opts.plannedId },
+        data: {
+          status: 'APPLIED',
+          kind: 'OCCURRED',
+          effectiveAt: new Date(),
+          ...(opts.reasonCode ? { reasonCode: opts.reasonCode } : {}),
+        },
+      });
+    } else {
+      await recordRoomMove({
+        reservationId,
+        fromRoomId,
+        toRoomId,
+        effectiveAt: new Date(),
+        notes: opts?.reason ?? opts?.reasonCode ?? 'Quick move from room rack / plan',
+        reasonCode: opts?.reasonCode,
+        createdByUserId: opts?.actorUserId,
+        kind: 'OCCURRED',
+        status: 'APPLIED',
+      });
+    }
     const { settleVacatedDoorAfterMove } = await import('@/lib/services/room-move-door.service');
     await settleVacatedDoorAfterMove({
       reservationId,

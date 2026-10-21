@@ -1,4 +1,3 @@
-import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
@@ -186,6 +185,7 @@ export async function patchReservationFull(
     sourceId?: string | null;
     roomId?: string | null;
     moveReasonCode?: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL';
+    settlement?: 'HOTEL' | 'GUEST_PAY' | 'HOTEL_REFUND' | 'GUEST_CHEAPER';
     guestId?: string;
     checkInDate?: Date;
     checkOutDate?: Date;
@@ -283,6 +283,7 @@ export async function patchReservationFull(
     dailyRates,
     shareEligible,
     moveReasonCode,
+    settlement,
     audit,
     ...data
   } = input;
@@ -364,6 +365,12 @@ export async function patchReservationFull(
 
   let assignShareBedIndex: number | null | undefined;
   let doorShareResolved = false;
+  const requestedRoomId =
+    typeof data.roomId === 'string' && data.roomId !== existing.roomId ? data.roomId : null;
+  if (requestedRoomId) {
+    if (existing.roomId) data.roomId = existing.roomId;
+    else delete data.roomId;
+  }
   const effectiveRoomId =
     data.roomId !== undefined ? data.roomId : existing.roomId;
   /** Explicit FO clear must not re-enter join/autoShare via door assign. */
@@ -530,6 +537,7 @@ export async function patchReservationFull(
       toRoomId: data.roomId,
       notes: reasonCode,
       reasonCode,
+      createdByUserId: input.audit?.userId ?? undefined,
       kind: 'OCCURRED',
       status: 'APPLIED',
     });
@@ -891,7 +899,31 @@ export async function patchReservationFull(
 
   const after = await loadReservationAuditSnapshot(id);
   await recordReservationDiff(id, 'UPDATE', before, after, audit);
-  return getReservationFull(id);
+  let movePending = false;
+  if (requestedRoomId) {
+    const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
+    const paxForGate = paxGuests ?? existing.paxGuests;
+    if (
+      reservationNamesIncomplete({
+        guestFullName: existing.guest.fullName,
+        adults: data.adults ?? existing.adults,
+        pax: paxForGate,
+      })
+    ) {
+      throw new Error('Guest names incomplete — fill real names before assign');
+    }
+    const { requestRoomMove } = await import('@/lib/services/room-move-request.service');
+    const { isClassSettlement } = await import('@/lib/room-move-settlement');
+    const moved = await requestRoomMove(id, requestedRoomId, {
+      reasonCode: moveReasonCode,
+      settlement: isClassSettlement(settlement) ? settlement : null,
+      actorUserId: audit?.userId,
+      request: audit?.request,
+    });
+    movePending = moved.pending;
+  }
+  const full = await getReservationFull(id);
+  return movePending ? { ...full, movePending: true } : full;
 }
 
 export type ListReservationsForGridQuery = {
@@ -938,7 +970,7 @@ export async function listReservationsForGrid(
   if (queue) {
     const queued = reservationQueueWhere({
       queue,
-      today: todayBakuYmd(),
+      today: hotelDateKey(await getCurrentBusinessDate()),
       overdue: opts.overdue,
       dateFrom: opts.dateFrom,
       dateTo: opts.dateTo,
@@ -1010,7 +1042,7 @@ export async function listReservationsForGrid(
     ];
   }
 
-  const today = todayBakuYmd();
+  const today = hotelDateKey(await getCurrentBusinessDate());
   const ranked = await prisma.reservation.findMany({
     where,
     select: {

@@ -1,4 +1,13 @@
-import { planBathSeries, strayBathOrderIds, type StayDay } from "@/domain/planning/bath-calendar";
+import {
+  bathSeriesRestYmds,
+  naftalanWeekIsFull,
+  planBathSeries,
+  saxlaBlockedDays,
+  saxlaDayTaken,
+  saxlaSeatKept,
+  strayBathOrderIds,
+  type StayDay,
+} from "@/domain/planning/bath-calendar";
 
 function week(): StayDay[] {
   return [
@@ -400,6 +409,96 @@ describe("planBathSeries", () => {
     });
     expect(cells.map((cell) => cell.ymd)).toEqual(["2026-10-05", "2026-10-06"]);
   });
+
+  it("starts a fresh mode-3 block on Monday from Saxla, rest Thursday, fourth on Friday", () => {
+    const stay: StayDay[] = [
+      { ymd: "2026-10-19", working: true },
+      { ymd: "2026-10-20", working: true },
+      { ymd: "2026-10-21", working: true },
+      { ymd: "2026-10-22", working: true },
+      { ymd: "2026-10-23", working: true },
+      { ymd: "2026-10-24", working: true },
+      { ymd: "2026-10-25", working: false },
+    ];
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Нж",
+          mode: "3",
+          qty: 4,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+      layout: "fresh",
+      notBeforeYmd: "2026-10-19",
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual([
+      "2026-10-19",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-23",
+    ]);
+  });
+
+  it("skips an already seated same-SKU day without spending new qty", () => {
+    const stay: StayDay[] = [
+      { ymd: "2026-10-19", working: true },
+      { ymd: "2026-10-20", working: true },
+      { ymd: "2026-10-21", working: true },
+      { ymd: "2026-10-22", working: true },
+      { ymd: "2026-10-23", working: true },
+    ];
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Нж",
+          mode: "3",
+          qty: 3,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+      layout: "fresh",
+      notBeforeYmd: "2026-10-19",
+      blockedDays: [{ ymd: "2026-10-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" }],
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual(["2026-10-20", "2026-10-21", "2026-10-23"]);
+  });
+});
+
+describe("saxlaSeatKept", () => {
+  it("does not treat the PROPOSED rows this save just created as kept or taken", () => {
+    const orders = [
+      { id: "new-1", ymd: "2026-10-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+      { id: "new-2", ymd: "2026-10-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+      { id: "other", ymd: "2026-10-20", procedureCode: "SVC-YOD-BROM-VANNASI" },
+    ];
+    const seatingIds = new Set(["new-1", "new-2"]);
+    const seatingCodes = new Set(["SVC-NAFTALAN-VANNASI-QADIN"]);
+    expect(saxlaSeatKept(orders, seatingIds, seatingCodes)).toEqual([
+      { ymd: "2026-10-20", procedureCode: "SVC-YOD-BROM-VANNASI", locked: true },
+    ]);
+    expect(
+      saxlaDayTaken(orders, seatingIds, "SVC-NAFTALAN-VANNASI-QADIN", "2026-10-19"),
+    ).toBe(false);
+    expect(
+      saxlaBlockedDays(
+        [
+          ...orders,
+          { id: "old", ymd: "2026-10-21", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+        ],
+        seatingIds,
+        seatingCodes,
+      ),
+    ).toEqual([{ ymd: "2026-10-21", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" }]);
+  });
 });
 
 describe("strayBathOrderIds", () => {
@@ -431,5 +530,35 @@ describe("strayBathOrderIds", () => {
       },
     ]);
     expect(ids).toEqual(["extra"]);
+  });
+});
+
+describe("bath series rest for a manual move", () => {
+  const days: StayDay[] = [
+    { ymd: "2026-10-19", working: true },
+    { ymd: "2026-10-20", working: true },
+    { ymd: "2026-10-21", working: true },
+    { ymd: "2026-10-22", working: true },
+    { ymd: "2026-10-23", working: true },
+    { ymd: "2026-10-24", working: true },
+    { ymd: "2026-10-25", working: false },
+  ];
+
+  it("marks the fourth working day as rest in mode 3", () => {
+    expect(bathSeriesRestYmds({ days, anchorYmd: "2026-10-19", mode: "3" })).toEqual([
+      "2026-10-22",
+    ]);
+  });
+
+  it("does not treat the anchor day as rest", () => {
+    expect(bathSeriesRestYmds({ days, anchorYmd: "2026-10-20", mode: "3" })).not.toContain(
+      "2026-10-20",
+    );
+  });
+
+  it("fills the naftalan week at five other baths", () => {
+    const others = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"];
+    expect(naftalanWeekIsFull("2026-10-24", others, 5)).toBe(true);
+    expect(naftalanWeekIsFull("2026-10-24", others.slice(0, 4), 5)).toBe(false);
   });
 });

@@ -8,6 +8,7 @@ import {
   StayCheckInBlockedError,
 } from '@/lib/guest-stay-requirements';
 import { OccupiedHkLockedError } from '@/lib/occupied-hk-lock';
+import { RoomTypeSettlementRequiredError } from '@/lib/services/room-move-request.service';
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 import { TourConflictError } from '@/lib/services/tour.service';
 import { BusinessDateLagError } from '@/lib/business-date-lag';
@@ -58,6 +59,9 @@ export function handleRouteError(err: unknown) {
     );
   }
   if (err instanceof OccupiedHkLockedError) {
+    return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+  }
+  if (err instanceof RoomTypeSettlementRequiredError) {
     return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
   }
   if (err instanceof BusinessDateLagError) {

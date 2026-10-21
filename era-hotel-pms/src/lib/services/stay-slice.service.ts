@@ -82,9 +82,14 @@ export async function splitStayFromDate(input: {
   fromDate: Date;
   roomTypeId: string;
   roomId?: string | null;
+  actorUserId?: string | null;
 }) {
   const res = await prisma.reservation.findUnique({ where: { id: input.reservationId } });
   if (!res) throw new Error('Reservation not found');
+  if (input.roomId) {
+    const { assertNamedGuestsFreeOnStay } = await import('@/lib/services/reservation.service');
+    await assertNamedGuestsFreeOnStay(input.reservationId);
+  }
   if (res.status !== 'CONFIRMED' && res.status !== 'OPTION' && res.status !== 'IN_HOUSE') {
     throw new Error('Stay cannot be split');
   }
@@ -138,6 +143,7 @@ export async function splitStayFromDate(input: {
       effectiveAt: from,
       kind: 'SCHEDULED',
       status: 'PENDING',
+      createdByUserId: input.actorUserId ?? undefined,
     },
   });
 }

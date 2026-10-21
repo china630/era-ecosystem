@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 
@@ -73,12 +72,8 @@ export function EpisodeScheduleCards({ title, emptyLabel, items, actions }: Prop
 type AssignBlocksProps = {
   packageTitle: string;
   extrasTitle: string;
-  day1Label: string;
   onPackagePlus: () => void;
   onExtrasPlus: () => void;
-  onDay1?: () => void;
-  day1Busy?: boolean;
-  day1Disabled?: boolean;
   readOnly?: boolean;
   /** CLI-57 walk-in: hide package block (extras only). */
   hidePackage?: boolean;
@@ -95,12 +90,8 @@ type AssignBlocksProps = {
 export function EpisodeAssignBlocks({
   packageTitle,
   extrasTitle,
-  day1Label,
   onPackagePlus,
   onExtrasPlus: _onExtrasPlus,
-  onDay1,
-  day1Busy,
-  day1Disabled,
   readOnly,
   hidePackage,
   extrasPending = [],
@@ -112,16 +103,6 @@ export function EpisodeAssignBlocks({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-semibold">{packageTitle}</h3>
           <div className="flex flex-wrap gap-2">
-            {onDay1 ? (
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={readOnly || day1Busy || day1Disabled}
-                onClick={onDay1}
-              >
-                {day1Label}
-              </button>
-            ) : null}
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}

@@ -456,7 +456,7 @@ export async function listReservationJournal(
     });
   }
 
-  const roomActions = new Set(['RELOCATE', 'ASSIGN_ROOM', 'SWAP_ROOM', 'ROOM_MOVE']);
+  const roomActions = new Set(['RELOCATE', 'ASSIGN_ROOM', 'SWAP_ROOM', 'ROOM_MOVE', 'ROOM_MOVE_PLANNED']);
   for (const move of reservation.roomChanges) {
     const from = move.fromRoom?.roomNumber ?? null;
     const to = move.toRoom?.roomNumber ?? null;

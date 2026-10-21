@@ -102,6 +102,7 @@ export async function postCharge(input: {
   description: string;
   businessDate?: Date;
   departmentId?: string;
+  folioType?: 'GUEST' | 'AGENCY' | 'COMPANY';
   externalRef?: string;
   invoiceRef?: string;
   audit?: { userId?: string | null; request?: Request; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' };
@@ -131,14 +132,16 @@ export async function postCharge(input: {
   });
 
   let chargeReservationId = input.reservationId;
-  let targetType = await resolveTargetFolioType(
-    input.revenueCodeId,
-    reservation.guest.voen ? 'COMPANY' : 'GUEST',
-    input.reservationId,
-  );
+  let targetType =
+    input.folioType ??
+    (await resolveTargetFolioType(
+      input.revenueCodeId,
+      reservation.guest.voen ? 'COMPANY' : 'GUEST',
+      input.reservationId,
+    ));
   let folio = reservation.folios.find((f) => f.type === targetType && f.status === 'OPEN');
 
-  if (bookingTarget) {
+  if (!input.folioType && bookingTarget) {
     chargeReservationId = bookingTarget.reservationId;
     targetType = bookingTarget.folioType;
     if (chargeReservationId === input.reservationId) {
@@ -162,7 +165,9 @@ export async function postCharge(input: {
 
   if (!folio) throw new Error('Open folio missing after ensure');
 
-  const businessDate = input.businessDate ?? new Date();
+  const businessDate = input.businessDate ?? (await getCurrentBusinessDate());
+  const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
+  await assertYearBoundaryAllows(businessDate);
   const description = chargeDescriptionForPost(revenueCode.systemRole, input.description, businessDate);
 
   const charge = await prisma.folioCharge.create({
@@ -180,6 +185,7 @@ export async function postCharge(input: {
     },
     include: { revenueCode: true, folio: true },
   });
+  await allocateArticleCreditsToCharge(folio.id, charge.id, input.revenueCodeId);
 
   await recalcReservationTotal(chargeReservationId);
   if (chargeReservationId !== input.reservationId) {
@@ -201,7 +207,7 @@ export async function postCharge(input: {
         qty: input.qty ?? 1,
         sku: input.sku?.trim() || null,
         description: `${description} (house use)`,
-        businessDate: input.businessDate ?? new Date(),
+        businessDate,
         externalRef: `house-use:${charge.id}`,
       },
     });
@@ -229,16 +235,15 @@ async function allocatePaymentToCharges(
   revenueCodeId?: string,
 ) {
   const charges = await prisma.folioCharge.findMany({
-    where: { folioId },
+    where: {
+      folioId,
+      ...(revenueCodeId ? { revenueCodeId } : {}),
+    },
     orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
     include: { paymentAllocations: true },
   });
-  const preferred = revenueCodeId
-    ? charges.filter((charge) => charge.revenueCodeId === revenueCodeId)
-    : [];
-  const rest = revenueCodeId ? charges.filter((charge) => charge.revenueCodeId !== revenueCodeId) : charges;
   let left = amount;
-  for (const charge of [...preferred, ...rest]) {
+  for (const charge of charges) {
     if (left <= 0.009) break;
     const gross = decimalToNumber(charge.amount) * charge.qty;
     if (gross <= 0.009) continue;
@@ -254,6 +259,44 @@ async function allocatePaymentToCharges(
       },
     });
     left -= take;
+  }
+}
+
+async function allocateArticleCreditsToCharge(folioId: string, chargeId: string, revenueCodeId: string) {
+  const charge = await prisma.folioCharge.findUnique({
+    where: { id: chargeId },
+    include: { paymentAllocations: true },
+  });
+  if (!charge) return;
+  const gross = decimalToNumber(charge.amount) * charge.qty;
+  let open =
+    gross - charge.paymentAllocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+  if (open <= 0.009) return;
+
+  const payments = await prisma.folioPayment.findMany({
+    where: {
+      folioId,
+      kind: 'PAYMENT',
+      voidedAt: null,
+      revenueCodeId,
+    },
+    include: { allocations: true },
+    orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
+  });
+  for (const payment of payments) {
+    if (open <= 0.009) break;
+    const used = payment.allocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+    const leftover = decimalToNumber(payment.amount) - used;
+    if (leftover <= 0.009) continue;
+    const take = Math.min(open, leftover);
+    await prisma.folioPaymentAllocation.create({
+      data: {
+        paymentId: payment.id,
+        chargeId,
+        amount: toDecimal(Math.round(take * 100) / 100),
+      },
+    });
+    open -= take;
   }
 }
 
@@ -278,7 +321,8 @@ export async function postPayment(input: {
   if (!folio) throw new Error('Folio not found');
   const kind = input.kind ?? 'PAYMENT';
   if (kind === 'PAYMENT' && (input.paymentMethod === 'CL_AGENCY' || input.paymentMethod === 'CL_COMPANY')) {
-    await assertCityLedgerCounterparty(folio.reservationId, input.paymentMethod);
+    const { assertCanPostCityLedgerTender } = await import('@/lib/services/city-ledger-gate.service');
+    await assertCanPostCityLedgerTender(folio.reservationId, input.paymentMethod, input.amount);
   }
   if (folio.status !== 'OPEN' && !(kind === 'REFUND' && ['CLOSED', 'PENDING_AR'].includes(folio.status))) {
     throw new Error('Folio is not open');
@@ -377,6 +421,9 @@ export async function postPayment(input: {
     await prisma.folio.update({ where: { id: folio.id }, data: { status: 'OPEN' } });
   }
 
+  const businessDate = await getCurrentBusinessDate();
+  const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
+  await assertYearBoundaryAllows(businessDate);
   const payment = await prisma.folioPayment.create({
     data: {
       folioId: input.folioId,
@@ -389,9 +436,10 @@ export async function postPayment(input: {
       bankReference: input.bankReference,
       bankTerminalId: input.bankTerminalId,
       createdByUserId: input.createdByUserId ?? null,
-      businessDate: await getCurrentBusinessDate(),
+      businessDate,
       fiscalReceiptId,
       fiscalQrPayload,
+      revenueCodeId: input.revenueCodeId ?? null,
     },
   });
 
@@ -457,22 +505,6 @@ export async function postPayment(input: {
     });
   }
   return payment;
-}
-
-async function assertCityLedgerCounterparty(
-  reservationId: string,
-  method: 'CL_AGENCY' | 'CL_COMPANY',
-) {
-  const reservation = await prisma.reservation.findUnique({
-    where: { id: reservationId },
-    select: { agencyId: true, companyId: true },
-  });
-  if (method === 'CL_AGENCY' && !reservation?.agencyId) {
-    throw new Error('Agency is not set on this stay');
-  }
-  if (method === 'CL_COMPANY' && !reservation?.companyId) {
-    throw new Error('Company is not set on this stay');
-  }
 }
 
 async function mirrorCityLedgerCharge(input: {
@@ -651,6 +683,9 @@ export async function payGuestDebt(input: {
     );
     const remaining = round2(decimalToNumber(entry.amount) - already);
     if (amount - remaining > 0.001) throw new Error('Amount is above the remaining debt');
+    const businessDate = await getCurrentBusinessDate();
+    const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
+    await assertYearBoundaryAllows(businessDate);
     const payment = await tx.guestDebtPayment.create({
       data: {
         organizationId: entry.organizationId,
@@ -659,6 +694,7 @@ export async function payGuestDebt(input: {
         paymentMethod: input.paymentMethod,
         bankTerminalId: input.paymentMethod === 'CARD' ? input.bankTerminalId ?? null : null,
         createdByUserId: input.createdByUserId ?? null,
+        businessDate,
       },
     });
     return {
@@ -775,6 +811,56 @@ export async function postDiscount(input: {
     description: input.description || 'Discount',
     audit: input.audit,
   });
+}
+
+/** Counter-line on the same folio. The source charge is left as posted. */
+export async function postFolioAdjustment(input: {
+  chargeId: string;
+  amount: number;
+  reason: string;
+  audit?: { userId?: string | null; request?: Request };
+}) {
+  const reason = input.reason.trim();
+  if (!reason) throw new Error('A reason is required');
+  const amount = Math.round(input.amount * 100) / 100;
+  if (!Number.isFinite(amount) || amount === 0) throw new Error('Amount must be non-zero');
+  const source = await prisma.folioCharge.findUnique({
+    where: { id: input.chargeId },
+    include: { folio: true },
+  });
+  if (!source) throw new Error('Charge not found');
+  if (source.folio.status !== 'OPEN') throw new Error('Folio is not open');
+  const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
+  await assertBusinessDayOpenForPosting();
+  const revenue = await requireRevenueCodeByRole('RATE_ADJ');
+  const businessDate = await getCurrentBusinessDate();
+  const charge = await prisma.folioCharge.create({
+    data: {
+      organizationId: source.organizationId,
+      folioId: source.folioId,
+      revenueCodeId: revenue.id,
+      amount: toDecimal(amount),
+      qty: 1,
+      description: reason,
+      businessDate,
+      adjustsChargeId: source.id,
+      adjustmentReason: reason,
+      externalRef: `folio-adj:${source.id}:${crypto.randomUUID()}`,
+    },
+  });
+  await recalcReservationTotal(source.folio.reservationId);
+  fireAndForgetDispatch(dispatchFolioChargePosted(charge.id));
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(source.folio.reservationId, 'CHARGE', input.audit, {
+    section: 'folio',
+    source: 'user',
+    fields: [
+      { key: 'amount', from: null, to: String(amount) },
+      { key: 'reason', from: null, to: reason },
+      { key: 'adjustsChargeId', from: null, to: source.id },
+    ],
+  });
+  return charge;
 }
 
 export async function voidCharge(
@@ -936,7 +1022,7 @@ export async function listFolios(reservationId?: string) {
     where: reservationId ? { reservationId } : undefined,
     include: {
       charges: { include: { revenueCode: true, department: true, paymentAllocations: true } },
-      payments: true,
+      payments: { include: { revenueCode: true } },
       fiscalDocuments: true,
       reservationGuest: { select: { firstName: true, lastName: true, guest: { select: { fullName: true } } } },
       reservation: {

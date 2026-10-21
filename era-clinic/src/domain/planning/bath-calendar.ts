@@ -125,6 +125,65 @@ export function bakuMondayYmd(ymd: string): string {
   return addBakuDays(ymd, -back);
 }
 
+/**
+ * Rest days of one bath series, counted from its first remaining bath.
+ * The anchor day is a bath. Later working days follow the mode. Closed days
+ * use the same clinic policy as `planBathSeries`.
+ */
+export function bathSeriesRestYmds(input: {
+  days: StayDay[];
+  anchorYmd: string;
+  mode: string;
+  modes?: BathModeDef[];
+  policy?: Partial<BathPlanPolicy>;
+}): string[] {
+  const policy = resolveBathPlanPolicy(input.policy);
+  const block = resolveBathBlock(input.mode, input.modes);
+  const rest: string[] = [];
+  let streak = 0;
+  let restLeft = 0;
+  let started = false;
+  const finishBlock = () => {
+    streak += 1;
+    if (streak >= block.baths) {
+      streak = 0;
+      restLeft = block.rest;
+    }
+  };
+  for (const day of input.days) {
+    if (day.ymd < input.anchorYmd) continue;
+    if (!started) {
+      started = true;
+      if (day.working) finishBlock();
+      continue;
+    }
+    if (!day.working) {
+      if (restLeft > 0 && policy.closedDaySpendsOwedRest) {
+        restLeft -= 1;
+        streak = 0;
+      } else if (restLeft === 0 && streak > 0 && policy.closedDayResetsOpenStreak) {
+        streak = 0;
+      }
+      continue;
+    }
+    if (restLeft > 0) {
+      rest.push(day.ymd);
+      restLeft -= 1;
+      streak = 0;
+      continue;
+    }
+    finishBlock();
+  }
+  return rest;
+}
+
+/** Other naftalan baths already sitting in the target Baku week. Cap 0 disables the limit. */
+export function naftalanWeekIsFull(targetYmd: string, otherYmds: string[], cap: number): boolean {
+  if (cap <= 0) return false;
+  const week = bakuMondayYmd(targetYmd);
+  return otherYmds.filter((ymd) => bakuMondayYmd(ymd) === week).length >= cap;
+}
+
 export function resolveBathBlock(
   mode: string,
   modes: BathModeDef[] = DEFAULT_BATH_MODES,
@@ -155,6 +214,44 @@ export type SeriesPlanInput = {
 };
 
 export type BathLayout = "continue" | "fresh";
+
+/** Other-series live days occupy a date. The PROPOSED rows this Saxla is seating do not. */
+export function saxlaSeatKept(
+  orders: Array<{ id: string; ymd: string; procedureCode: string }>,
+  seatingIds: ReadonlySet<string>,
+  seatingCodes: ReadonlySet<string>,
+): KeptCell[] {
+  return orders
+    .filter((order) => !seatingIds.has(order.id) && !seatingCodes.has(order.procedureCode))
+    .map((order) => ({
+      ymd: order.ymd,
+      procedureCode: order.procedureCode,
+      locked: true,
+    }));
+}
+
+export function saxlaDayTaken(
+  orders: Array<{ id: string; ymd: string; procedureCode: string }>,
+  seatingIds: ReadonlySet<string>,
+  procedureCode: string,
+  ymd: string,
+): boolean {
+  return orders.some(
+    (order) =>
+      !seatingIds.has(order.id) && order.procedureCode === procedureCode && order.ymd === ymd,
+  );
+}
+
+/** Live same-SKU days already on the stay. Occupy the date without spending new qty. */
+export function saxlaBlockedDays(
+  orders: Array<{ id: string; ymd: string; procedureCode: string }>,
+  seatingIds: ReadonlySet<string>,
+  seatingCodes: ReadonlySet<string>,
+): Array<{ ymd: string; procedureCode: string }> {
+  return orders
+    .filter((order) => !seatingIds.has(order.id) && seatingCodes.has(order.procedureCode))
+    .map((order) => ({ ymd: order.ymd, procedureCode: order.procedureCode }));
+}
 
 export type KeptCell = {
   ymd: string;
@@ -187,6 +284,8 @@ export function planBathSeries(input: {
   modes?: BathModeDef[];
   /** Civil days strictly before this YMD are never given a new automatic bath. */
   notBeforeYmd?: string;
+  /** Occupied dates (existing same SKU). Skip without counting toward new qty. */
+  blockedDays?: Array<{ ymd: string; procedureCode: string }>;
   policy?: Partial<BathPlanPolicy>;
 }): PlannedBath[] {
   const policy = resolveBathPlanPolicy(input.policy);
@@ -213,6 +312,10 @@ export function planBathSeries(input: {
       bathDays.add(cell.ymd);
     }
   }
+  for (const block of input.blockedDays ?? []) {
+    bathDays.add(block.ymd);
+    bumpNaftalanWeek(block.ymd, block.procedureCode);
+  }
 
   const ordered = [...input.series].sort((a, b) => Number(a.fillsRestDays) - Number(b.fillsRestDays));
   for (const series of ordered) {
@@ -220,6 +323,11 @@ export function planBathSeries(input: {
     const keptBaths = ownKept.filter((cell) => cell.locked && !cell.manualRest);
     const restDays = new Set(ownKept.filter((cell) => cell.manualRest).map((cell) => cell.ymd));
     const keptByDay = new Map(keptBaths.map((cell) => [cell.ymd, cell]));
+    const blockedOwn = new Set(
+      (input.blockedDays ?? [])
+        .filter((row) => row.procedureCode === series.procedureCode)
+        .map((row) => row.ymd),
+    );
     const fresh = input.layout === "fresh";
     let used = 0;
     if (!fresh) {
@@ -295,6 +403,10 @@ export function planBathSeries(input: {
       if (restLeft > 0) {
         restLeft -= 1;
         streak = 0;
+        continue;
+      }
+      if (blockedOwn.has(day.ymd)) {
+        finishBlock();
         continue;
       }
       if (bathDays.has(day.ymd)) continue;

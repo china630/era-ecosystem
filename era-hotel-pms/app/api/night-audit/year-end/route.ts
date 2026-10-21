@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     assertPermission(session, PERMISSIONS.NIGHT_AUDIT_RUN);
     const body = bodySchema.parse(await request.json());
     // Honest staged response (200): menu is live, posting not enabled yet.
-    return jsonOk(serialize(await runYearEndAction(body.action)));
+    return jsonOk(serialize(await runYearEndAction(body.action, session?.sub)));
   } catch (err) {
     return handleRouteError(err);
   }

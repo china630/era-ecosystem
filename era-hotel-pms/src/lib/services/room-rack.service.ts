@@ -23,6 +23,8 @@ export type RackReservationSummary = {
   shareEligible?: boolean;
   shareGender?: string | null;
   adults?: number;
+  roomTypeId?: string;
+  givenRoomTypeId?: string | null;
 };
 
 export type RackRoomDto = {
@@ -126,6 +128,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           shareEligible: r.shareEligible,
           shareGender: r.shareGender,
           adults: r.adults,
+          roomTypeId: r.roomTypeId,
+          givenRoomTypeId: r.givenRoomTypeId,
         };
         const slices = r.staySlices ?? [];
         if (slices.length === 0) return [summary];
@@ -163,6 +167,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           shareGender: true,
           agencyId: true,
           sourceId: true,
+          roomTypeId: true,
+          givenRoomTypeId: true,
           guest: { select: { fullName: true, sex: true } },
           agency: { select: { code: true } },
           source: { select: { code: true } },
@@ -198,6 +204,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       shareEligible: slice.reservation.shareEligible,
       shareGender: slice.reservation.shareGender,
       adults: slice.reservation.adults,
+      roomTypeId: slice.reservation.roomTypeId,
+      givenRoomTypeId: slice.reservation.givenRoomTypeId,
     });
   }
 
@@ -217,6 +225,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       shareGender: true,
       agencyId: true,
       sourceId: true,
+      roomTypeId: true,
+      givenRoomTypeId: true,
       guest: { select: { fullName: true, sex: true } },
       agency: { select: { code: true } },
       source: { select: { code: true } },
@@ -259,6 +269,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         shareEligible: stay.shareEligible,
         shareGender: stay.shareGender,
         adults: stay.adults,
+        roomTypeId: stay.roomTypeId,
+        givenRoomTypeId: stay.givenRoomTypeId,
       });
     }
   }

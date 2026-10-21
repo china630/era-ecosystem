@@ -316,7 +316,7 @@ export default function FoStatusPage() {
               <MatrixCard title={t('endOfDay')} matrix={data.endOfDay} />
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid items-start gap-3 lg:grid-cols-2">
               <section className="rounded-lg border border-slate-200 bg-white p-3">
                 <h2 className="mb-2 text-[14px] font-medium">{t('currentStatus')}</h2>
                 <table className="w-full text-[13px]">
@@ -340,13 +340,13 @@ export default function FoStatusPage() {
                   </tbody>
                 </table>
               </section>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3">
                 <PieChart title={t('cleanState')} parts={cleanParts} />
                 <PieChart title={t('occupancy')} parts={occParts} />
               </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid gap-3">
               <ColumnChart
                 title={t('availability')}
                 labels={data.forecast.map((point) => ddmm(point.day))}

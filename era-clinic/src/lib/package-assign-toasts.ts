@@ -9,12 +9,45 @@ export type AssignToastLine = {
 export type AssignToastMiss = {
   procedureCode?: string;
   procedureName?: string;
+  ymd?: string;
+  reason?: string;
 };
+
+export function packageAssignMissReasonText(
+  reason: string | undefined,
+  t: (key: string) => string,
+): string {
+  if (reason === "no_staff") return t("packageAssignMissNoStaff");
+  if (reason === "staff_busy") return t("packageAssignMissStaffBusy");
+  if (reason === "cabin_sex") return t("packageAssignMissCabinSex");
+  if (reason === "no_cabin" || reason === "cabin_busy") return t("packageAssignMissNoCabin");
+  if (reason === "day_full") return t("packageAssignMissDayFull");
+  if (reason === "rule") return t("packageAssignMissRule");
+  if (reason === "no_slot") return t("packageAssignMissNoSlot");
+  if (reason === "no_mode") return t("packageAssignMissNoBathMode");
+  return t("packageAssignMissNoDay");
+}
+
+export function formatPackageAssignMissLines(
+  misses: AssignToastMiss[] | undefined,
+  t: (key: string, values?: { date: string; reason: string }) => string,
+): string {
+  if (!misses?.length) return "";
+  return misses
+    .map((miss) => {
+      const reason = packageAssignMissReasonText(miss.reason, (key) => t(key));
+      const who = miss.procedureName || miss.procedureCode;
+      if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
+      return t("packageAssignMiss", { date: miss.ymd || "—", reason });
+    })
+    .filter((line, index, all) => all.indexOf(line) === index)
+    .join("; ");
+}
 
 export function toastPackageAssignOutcome(
   requested: AssignToastLine[],
   misses: AssignToastMiss[] | undefined,
-  t: (key: string, values: { count: number; name: string }) => string,
+  t: (key: string, values?: { count: number; name: string; date?: string; reason?: string }) => string,
 ): void {
   const missQty = new Map<string, { name: string; qty: number }>();
   for (const miss of misses ?? []) {
@@ -32,7 +65,7 @@ export function toastPackageAssignOutcome(
     seen.add(line.procedureCode);
     const asked = requested
       .filter((row) => row.procedureCode === line.procedureCode)
-      .reduce((sum, row) => sum + row.qty, 0);
+      .reduce((sum, row) => row.qty + sum, 0);
     const failed = missQty.get(line.procedureCode)?.qty ?? 0;
     const placed = Math.max(0, asked - failed);
     const name = line.procedureName || line.procedureCode;
@@ -52,4 +85,9 @@ export function toastPackageAssignOutcome(
       error: t("packageAssignNotPlaced", { count: row.qty, name: row.name }),
     });
   }
+
+  const detail = formatPackageAssignMissLines(misses, (key, values) =>
+    values ? t(key, { count: 0, name: "", date: values.date, reason: values.reason }) : t(key),
+  );
+  if (detail) showApiError({ error: detail });
 }

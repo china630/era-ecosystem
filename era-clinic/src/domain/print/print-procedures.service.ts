@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
+import { printLabel } from "@/domain/print/print-labels";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
 import {
   composePrintPatientStrip,
@@ -43,7 +44,49 @@ export type PrintProcedureRow = {
   room: string;
   price: string;
   note: string;
+  /** Closing marker for the checkout day. Not a procedure. */
+  checkout?: boolean;
 };
+
+export function printDateFromYmd(ymd: string): string {
+  const [year, month, day] = ymd.split("-");
+  if (!year || !month || !day) return ymd;
+  return `${day}/${month}/${year}`;
+}
+
+export function appendCheckoutMarker(
+  groups: { date: string; rows: PrintProcedureRow[] }[],
+  departureYmd: string | null | undefined,
+  label: string,
+): { date: string; rows: PrintProcedureRow[] }[] {
+  if (!departureYmd || !/^\d{4}-\d{2}-\d{2}$/.test(departureYmd)) return groups;
+  const date = printDateFromYmd(departureYmd);
+  const marker: PrintProcedureRow = {
+    no: 0,
+    date,
+    name: label,
+    zones: "",
+    settings: "",
+    quantity: 0,
+    time: "12:00",
+    room: "",
+    price: "",
+    note: "",
+    checkout: true,
+  };
+  const next = groups.map((group) => ({ ...group, rows: [...group.rows] }));
+  const found = next.find((group) => group.date === date);
+  if (found) found.rows.push(marker);
+  else next.push({ date, rows: [marker] });
+  next.sort((a, b) => {
+    const key = (value: string) => {
+      const [day, month, year] = value.split("/");
+      return `${year ?? ""}-${month ?? ""}-${day ?? ""}`;
+    };
+    return key(a.date).localeCompare(key(b.date));
+  });
+  return next;
+}
 
 export type PrintProceduresDocument = {
   branding: PrintBranding;
@@ -198,6 +241,10 @@ export async function buildProceduresPrint(
       date: todayBakuYmd(),
       stay,
     }),
-    rowsByDate: [...map.entries()].map(([date, rows]) => ({ date, rows })),
+    rowsByDate: appendCheckoutMarker(
+      [...map.entries()].map(([date, rows]) => ({ date, rows })),
+      stay.departure,
+      printLabel(lang, "checkout"),
+    ),
   };
 }

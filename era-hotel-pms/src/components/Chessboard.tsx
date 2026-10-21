@@ -191,7 +191,7 @@ export default function Chessboard() {
   async function relocateToRoom(
     reservationId: string,
     toRoomId: string,
-    reasonCode?: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL',
+    opts?: { reasonCode?: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL'; settlement?: 'HOTEL' | 'GUEST_PAY' | 'HOTEL_REFUND' | 'GUEST_CHEAPER' },
   ) {
     if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
     setBusy(true);
@@ -201,8 +201,8 @@ export default function Chessboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: toRoomId,
-          compUpgrade: true,
-          ...(reasonCode ? { reasonCode } : {}),
+          ...(opts?.reasonCode ? { reasonCode: opts.reasonCode } : {}),
+          ...(opts?.settlement ? { settlement: opts.settlement } : {}),
         }),
       });
       const data = await res.json();
@@ -210,7 +210,7 @@ export default function Chessboard() {
         showApiError(data, tCommon('actionFailed'));
         return;
       }
-      showSuccess(t('relocated'));
+      showSuccess(data?.pending ? t('movePlanned') : t('relocated'));
       await load();
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tCommon('actionError') });
@@ -301,8 +301,7 @@ export default function Chessboard() {
         }
         onRelocate={
           can(PERMISSIONS.RESERVATIONS_WRITE)
-            ? (reservationId, toRoomId, reasonCode) =>
-                relocateToRoom(reservationId, toRoomId, reasonCode)
+            ? (reservationId, toRoomId, opts) => relocateToRoom(reservationId, toRoomId, opts)
             : undefined
         }
         onHkStatus={

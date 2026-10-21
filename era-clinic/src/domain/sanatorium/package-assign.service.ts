@@ -13,7 +13,6 @@ import {
   episodeCareTeamDenied,
 } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
-import { clampDailyPackageProcedureCap } from "@/domain/sanatorium/daily-package-cap";
 import {
   defaultBathModeFromSettings,
   getSchedulingSettings,
@@ -43,6 +42,8 @@ import {
   foldHay,
   isBathQuotaLine,
   isBathTransferQuota,
+  isReplaceableQuotaLine,
+  transferQuotaCode,
 } from "@/domain/sanatorium/package-assign-quota";
 
 export {
@@ -491,8 +492,9 @@ export type PackageBalanceRow = {
    * Modal shows them read-only; only assignable rows open the picker.
    */
   assignable: boolean;
-  /** Quota moved from unused baths — not auto-seated. */
+  /** Quota moved from unused baths or paraffin — not auto-seated. */
   isTransfer?: boolean;
+  transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
 };
 
 export type PackageAssignedAgg = {
@@ -534,6 +536,7 @@ async function loadEpisodeForAssign(
       programInstance: {
         include: {
           procedureLines: true,
+          quotaTransfers: { orderBy: { createdAt: "asc" } },
           template: { include: { procedures: { orderBy: [{ sortOrder: "asc" }, { procedureCode: "asc" }] } } },
         },
       },
@@ -770,6 +773,14 @@ export async function getPackageAssignSnapshot(
       needsSkuPicker,
       assignable,
       isTransfer: isBathTransferQuota(line.procedureCode),
+      transfers: (instance.quotaTransfers ?? [])
+        .filter((row) => row.toQuotaCode === line.procedureCode)
+        .map((row) => ({
+          createdAt: row.createdAt.toISOString(),
+          qty: row.qty,
+          reason: row.reason,
+          fromCode: row.fromCode,
+        })),
     };
   });
 
@@ -907,6 +918,21 @@ async function abandonCreatedPackageOrders(ids: string[]) {
   await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
   await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
   await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
+}
+
+/** One modal line → the order ids created for it, in add order. */
+export function chunkCreatedIdsByLine(
+  createdIds: string[],
+  lines: Array<{ qty: number; procedureCode: string }>,
+): Array<{ procedureCode: string; ids: string[] }> {
+  const out: Array<{ procedureCode: string; ids: string[] }> = [];
+  let offset = 0;
+  for (const line of lines) {
+    const qty = Math.max(0, Math.floor(Number(line.qty) || 0));
+    out.push({ procedureCode: line.procedureCode, ids: createdIds.slice(offset, offset + qty) });
+    offset += qty;
+  }
+  return out;
 }
 
 /**
@@ -1064,15 +1090,13 @@ export async function assignPackageProcedures(
 
   const settings = await getSchedulingSettings();
   const defaultBathMode = defaultBathModeFromSettings(settings);
-  const packageCap = clampDailyPackageProcedureCap(settings.dailyPackageProcedureCap);
-  const distinctCodes = new Set(resolved.map((l) => l.procedureCode)).size;
-  let softWarn =
-    distinctCodes > packageCap
-      ? `Daily in-package cap is ${packageCap} distinct codes; batch has ${distinctCodes} (remainder places from next work day)`
-      : null;
+  const softWarn: string | null = null;
 
   const orgId = requestOrganizationId();
-  const workStart = parseBakuDateTime(todayBakuYmd(), "08:00");
+  const workStart =
+    opts?.startAt && !Number.isNaN(opts.startAt.getTime())
+      ? opts.startAt
+      : parseBakuDateTime(todayBakuYmd(), `${String(settings.dayStartHour).padStart(2, "0")}:00`);
 
   const createdIds: string[] = [];
   const nameByCode = new Map<string, string>();
@@ -1137,39 +1161,62 @@ export async function assignPackageProcedures(
     }
   }
 
-  const { seatBathSeriesOrders } = await import("@/domain/planning/bath-calendar.service");
-  const bathSeat = await seatBathSeriesOrders(createdIds);
-  const genericIds = createdIds.filter((id) => !bathSeat.handledIds.includes(id));
-  const placement = await placeConfirmedProcedures(genericIds, {
-    confirmedByUserId: opts?.confirmedByUserId,
-    scheduleBefore: instance.endsOn,
-    startAt: opts?.startAt,
-  });
-  const misses = [
-    ...bathSeat.missed.map((miss) => ({
-      ymd: miss.ymd,
-      procedureCode: miss.procedureCode,
-      procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
-      reason: miss.reason,
-    })),
-    ...placement.failures.map((row) => ({
-      ymd: row.ymd ?? "",
-      procedureCode: row.procedureCode,
-      procedureName: row.procedureName,
-      reason: row.reason,
-    })),
-  ];
-  const kept = new Set([...bathSeat.placedIds, ...placement.placedIds]);
+  const { seatBathSeriesOrders, bathSeriesProcedureCodes } = await import(
+    "@/domain/planning/bath-calendar.service"
+  );
+  const bathCodes = await bathSeriesProcedureCodes();
+  const misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+  }> = [];
+  const placedIds: string[] = [];
+  const missingCabinNames: string[] = [];
+  let genericCabinOnly = true;
+  let genericTried = false;
+  for (const chunk of chunkCreatedIdsByLine(createdIds, resolved)) {
+    if (chunk.ids.length === 0) continue;
+    if (bathCodes.has(chunk.procedureCode)) {
+      const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt: opts?.startAt });
+      genericCabinOnly = false;
+      misses.push(
+        ...bathSeat.missed.map((miss) => ({
+          ymd: miss.ymd,
+          procedureCode: miss.procedureCode,
+          procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
+          reason: miss.reason,
+        })),
+      );
+      placedIds.push(...bathSeat.placedIds);
+      continue;
+    }
+    genericTried = true;
+    const placement = await placeConfirmedProcedures(chunk.ids, {
+      confirmedByUserId: opts?.confirmedByUserId,
+      scheduleBefore: instance.endsOn,
+      startAt: opts?.startAt,
+    });
+    missingCabinNames.push(...placement.missingCabinNames);
+    if (placement.failures.some((row) => row.reason !== "no_cabin")) genericCabinOnly = false;
+    misses.push(
+      ...placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+    placedIds.push(...placement.placedIds);
+  }
+  const kept = new Set(placedIds);
   const leftover = createdIds.filter((id) => !kept.has(id));
   if (leftover.length > 0) await abandonCreatedPackageOrders(leftover);
   const placed = kept.size;
   if (placed < 1 && (misses.length > 0 || leftover.length > 0)) {
-    const onlyMissingCabin =
-      bathSeat.missed.length === 0 &&
-      placement.failures.length > 0 &&
-      placement.failures.every((row) => row.reason === "no_cabin");
+    const onlyMissingCabin = genericTried && genericCabinOnly && misses.every((row) => row.reason === "no_cabin");
     if (onlyMissingCabin) {
-      throw new PackageAssignError(placement.missingCabinNames.join(", "), "NO_CABIN", 409);
+      throw new PackageAssignError([...new Set(missingCabinNames)].join(", "), "NO_CABIN", 409);
     }
     if (misses.length > 0 && misses.every((row) => row.reason === "cabin_sex")) {
       throw new PackageAssignError(
@@ -1445,11 +1492,19 @@ export async function transferBathQuota(
   const names = await loadCatalogDisplayNameMap([input.fromCode, input.toCode], "az");
   const fromName = names.get(input.fromCode) ?? input.fromCode;
   const toName = names.get(input.toCode) ?? input.toCode;
-  if (!isBathQuotaLine(input.fromCode, fromName)) {
-    throw new PackageAssignError("Only unused bath quota can be transferred", "NOT_BATH", 400);
+  if (!isReplaceableQuotaLine(input.fromCode, fromName)) {
+    throw new PackageAssignError(
+      "Only unused bath or paraffin quota can be transferred",
+      "NOT_REPLACEABLE",
+      400,
+    );
   }
-  if (isBathQuotaLine(input.toCode, toName)) {
-    throw new PackageAssignError("Replacement must not be another bath", "TARGET_IS_BATH", 400);
+  if (isReplaceableQuotaLine(input.toCode, toName)) {
+    throw new PackageAssignError(
+      "Replacement must be a physio procedure",
+      "TARGET_NOT_PHYSIO",
+      400,
+    );
   }
 
   const live = await prisma.procedureOrder.findMany({
@@ -1485,7 +1540,7 @@ export async function transferBathQuota(
       return b.scheduledAt.getTime() - a.scheduledAt.getTime();
     });
   const cancel = drop.slice(0, cancelNeed);
-  const quotaCode = bathTransferQuotaCode(input.toCode);
+  const quotaCode = transferQuotaCode(input.fromCode, input.toCode);
 
   const contra = await prisma.$transaction(async (tx) => {
     if (cancel.length > 0) {
@@ -1523,6 +1578,17 @@ export async function transferBathQuota(
         },
       });
     }
+    await tx.programQuotaTransfer.create({
+      data: {
+        organizationId: instance.organizationId,
+        instanceId: instance.id,
+        episodeId,
+        fromCode: input.fromCode,
+        toQuotaCode: quotaCode,
+        qty,
+        reason,
+      },
+    });
     return tx.patientContraindication.create({
       data: {
         patientRefId: episode.patientRefId,
@@ -1540,47 +1606,6 @@ export async function transferBathQuota(
   await syncQuotaUsed(instance.id, episodeId, input.fromCode);
   await syncQuotaUsed(instance.id, episodeId, quotaCode);
   return { transferred: qty, quotaCode, contraindicationId: contra.id };
-}
-
-/**
- * Day-1 auto: up to N distinct non-pool package codes with remaining > 0, qty 1 each.
- * N = Tenant.dailyPackageProcedureCap (default 3).
- */
-export async function day1AutoAssign(
-  episodeId: string,
-  opts?: { confirmedByUserId?: string },
-): Promise<{
-  placed: number;
-  softWarn: string | null;
-  orderIds: string[];
-  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
-}> {
-  const packageCap = clampDailyPackageProcedureCap(
-    (await getSchedulingSettings()).dailyPackageProcedureCap,
-  );
-  const snap = await getPackageAssignSnapshot(episodeId);
-  if (snap.blockReason) {
-    throw new PackageAssignError(snap.blockReason, snap.blockReason, 409);
-  }
-  const picks = snap.balances
-    .filter(
-      (b) =>
-        !b.isPool &&
-        !b.isQuotaAlias &&
-        !b.needsSkuPicker &&
-        !b.isTransfer &&
-        !isBathTransferQuota(b.procedureCode) &&
-        b.remaining > 0,
-    )
-    .slice(0, packageCap);
-  if (picks.length === 0) {
-    throw new PackageAssignError("No remaining package quota", "EMPTY_REMAINING", 400);
-  }
-  return assignPackageProcedures(
-    episodeId,
-    picks.map((p) => ({ procedureCode: p.procedureCode, qty: 1 })),
-    opts,
-  );
 }
 
 const ADJUSTABLE = ["PROPOSED", "SCHEDULED"] as const;

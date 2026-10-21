@@ -5,9 +5,7 @@
   "price": 15,
   "durationMin": 20,
   "resourceGapMinutes": 5,
-  "patientRestMinutes": 15,
-  "dayStartHour": 8,
-  "dayEndHour": 18
+  "patientRestMinutes": 15
  },
  {
   "code": "SVC-4-KAMERALI-NAFTALAN-VANNASI",
@@ -15,9 +13,7 @@
   "price": 12,
   "durationMin": 20,
   "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 8,
-  "dayEndHour": 18
+  "patientRestMinutes": 40
  },
  {
   "code": "SVC-AMPLIPULS",
@@ -31,10 +27,7 @@
   "price": 24,
   "durationMin": 20,
   "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 14,
-  "dayEndHour": 18,
-  "beforeLunchAllowed": false
+  "patientRestMinutes": 40
  },
  {
   "code": "SVC-APLIKASIYA-NAFTALAN-QADIN",
@@ -42,10 +35,7 @@
   "price": 24,
   "durationMin": 20,
   "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 8,
-  "dayEndHour": 13,
-  "afterLunchAllowed": false
+  "patientRestMinutes": 40
  },
  {
   "code": "SVC-BUKME",
@@ -165,10 +155,7 @@
   "price": 14,
   "durationMin": 20,
   "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 14,
-  "dayEndHour": 18,
-  "beforeLunchAllowed": false
+  "patientRestMinutes": 40
  },
  {
   "code": "SVC-NAFTALAN-VANNASI-QADIN",
@@ -176,10 +163,7 @@
   "price": 14,
   "durationMin": 20,
   "resourceGapMinutes": 5,
-  "patientRestMinutes": 40,
-  "dayStartHour": 8,
-  "dayEndHour": 13,
-  "afterLunchAllowed": false
+  "patientRestMinutes": 40
  },
  {
   "code": "SVC-OSTEOPATIYA",

@@ -13,6 +13,7 @@ import {
   runWithSatelliteTenant,
 } from '@era/satellite-kit';
 import { fetchHotelPoolOrganizationIds } from '@/lib/cron-organization-ids';
+import { mapNationalityToIso } from '@/lib/person-documents';
 import { extractGuestIdentityDocs } from '@/lib/guest-list-identity';
 import { prisma } from '@/lib/prisma';
 
@@ -48,15 +49,16 @@ async function backfillOrg(organizationId: string) {
       continue;
     }
 
+    const nationality = mapNationalityToIso(guest.nationality) ?? undefined;
     const resolved = await resolvePersonIdentity({
       fin: nationalIdFin || undefined,
       passport: passportNumber || undefined,
-      issuingCountry: guest.nationality || 'AZ',
+      issuingCountry: nationality,
       firstName: guest.firstName ?? undefined,
       lastName: guest.lastName ?? undefined,
       fullName: guest.fullName,
       phone: guest.phone ?? undefined,
-      nationality: guest.nationality || 'AZ',
+      nationality,
       sex: guest.sex ?? undefined,
       birthDate: guest.birthDate?.toISOString().slice(0, 10),
     });

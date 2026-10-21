@@ -145,7 +145,7 @@ type StayGuestSlice = {
   firstName: string | null;
   lastName: string | null;
   sex?: string | null;
-  nationality: string;
+  nationality: string | null;
   birthDate: Date | null;
   phone: string | null;
   documents: Array<{ docType: string; docNumber: string }>;

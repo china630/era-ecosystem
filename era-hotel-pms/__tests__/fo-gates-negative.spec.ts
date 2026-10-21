@@ -258,7 +258,7 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
   });
 
   describe('assertNamedGuestsFreeOnStay', () => {
-    it('blocks same named guest on overlapping stay', async () => {
+    it('lists same named guest on overlapping stay as a warning', async () => {
       const { prisma } = jest.requireMock('@/lib/prisma');
       prisma.reservation.findUnique.mockResolvedValue({
         id: 'r-new',
@@ -281,11 +281,11 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         paxGuests: [{ guestId: 'g1', firstName: 'Ali', lastName: 'Mammadov' }],
       });
 
-      const { assertNamedGuestsFreeOnStay } = await import(
+      const { listNamedGuestOverlaps } = await import(
         '@/lib/services/reservation.service'
       );
-      await expect(assertNamedGuestsFreeOnStay('r-new')).rejects.toThrow(
-        /overlapping stay/,
+      await expect(listNamedGuestOverlaps('r-new')).resolves.toEqual(
+        expect.arrayContaining([expect.objectContaining({ reservationId: 'r-old' })]),
       );
     });
   });

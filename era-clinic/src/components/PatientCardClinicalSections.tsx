@@ -32,7 +32,10 @@ import {
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
-import { toastPackageAssignOutcome } from "@/lib/package-assign-toasts";
+import {
+  formatPackageAssignMissLines,
+  toastPackageAssignOutcome,
+} from "@/lib/package-assign-toasts";
 type TimelineEvent = {
   id: string;
   type: string;
@@ -226,7 +229,6 @@ export function PatientCardClinicalSections({
   const [packageBlock, setPackageBlock] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
   const [quotaTick, setQuotaTick] = useState(0);
-  const [day1Busy, setDay1Busy] = useState(false);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
   const [visitDate, setVisitDate] = useState("");
   const [visitTime, setVisitTime] = useState("09:00");
@@ -423,6 +425,10 @@ export function PatientCardClinicalSections({
   async function submitPlanReschedule() {
     if (!rescheduleId) return;
     const day = rescheduleDate;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}$/.test(rescheduleTime)) {
+      showApiError({ error: tc("failed") }, tc("failed"));
+      return;
+    }
     const scheduledAtDate = parseBakuDateTime(day, `${rescheduleTime}:00`);
     if (scheduledAtDate.getTime() < Date.now()) {
       showApiError({ error: ts("reschedulePast") }, tc("failed"));
@@ -434,7 +440,7 @@ export function PatientCardClinicalSections({
       const res = await fetch(`/api/procedures/${rescheduleId}/reschedule`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt }),
+        body: JSON.stringify({ scheduledAt, allowOtherDay: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -672,9 +678,7 @@ export function PatientCardClinicalSections({
           <EpisodeAssignBlocks
             packageTitle={t("assignPackageTitle", { defaultValue: "Procedures in package" })}
             extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
-            day1Label={t("day1AutoAssign", { defaultValue: "Day-1 auto (≤3)" })}
             readOnly={readOnly || !anamnesisOk}
-            day1Busy={day1Busy}
             hidePackage={patientOrigin === "WALK_IN"}
             extrasPending={pendingExtras.map((row) => ({
               id: row.id,
@@ -685,81 +689,6 @@ export function PatientCardClinicalSections({
             pendingPayLabel={t("pendingPay", { defaultValue: "Awaiting payment" })}
             onPackagePlus={() => setPackageModalOpen(true)}
             onExtrasPlus={() => setPackageModalOpen(true)}
-            onDay1={
-              patientOrigin === "WALK_IN"
-                ? undefined
-                : () => {
-                    setDay1Busy(true);
-                    void fetch(`/api/sanatorium/episodes/${episodeId}/package-assign/day1`, {
-                      method: "POST",
-                    })
-                      .then(async (res) => {
-                        const d = await res.json();
-                        const misses = Array.isArray(d.misses) ? d.misses : [];
-                        const missText = misses
-                          .map((miss: { ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }) => {
-                            const reason =
-                              miss.reason === "no_staff"
-                                ? t("packageAssignMissNoStaff")
-                                : miss.reason === "staff_busy"
-                                  ? t("packageAssignMissStaffBusy")
-                                  : miss.reason === "cabin_sex"
-                                    ? t("packageAssignMissCabinSex")
-                                  : miss.reason === "no_cabin" || miss.reason === "cabin_busy"
-                                    ? t("packageAssignMissNoCabin")
-                                    : miss.reason === "day_full"
-                                      ? t("packageAssignMissDayFull")
-                                      : miss.reason === "rule"
-                                        ? t("packageAssignMissRule")
-                                : miss.reason === "no_slot"
-                                  ? t("packageAssignMissNoSlot")
-                                  : miss.reason === "no_mode"
-                                    ? t("packageAssignMissNoBathMode")
-                                    : t("packageAssignMissNoDay");
-                            const who = miss.procedureName || miss.procedureCode;
-                            if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
-                            return t("packageAssignMiss", { date: miss.ymd || "—", reason });
-                          })
-                          .filter((line: string, index: number, all: string[]) => all.indexOf(line) === index)
-                          .join("; ");
-                        if (!res.ok) {
-                          const names = typeof d.error === "string" ? d.error : "";
-                          showApiError(
-                            {
-                              error:
-                                missText ||
-                                (d.code === "CABIN_SEX"
-                                  ? t("packageAssignMissCabinSex")
-                                  : d.code === "NO_CABIN"
-                                  ? t("packageAssignNoCabin", { names })
-                                  : (packageAssignBlockText(t, d.code) ?? names) || tc("failed")),
-                            },
-                          );
-                          return;
-                        }
-                        toastPackageAssignOutcome(
-                          [],
-                          misses,
-                          (key, values) => t(key, values),
-                        );
-                        if (typeof d.placed === "number" && d.placed > 0) {
-                          showSuccess(t("day1ProgramOpened"));
-                        }
-                        const q = `?${new URLSearchParams({
-                          ...(episodeId ? { episode: episodeId } : {}),
-                          locale,
-                        }).toString()}`;
-                        const r = await fetch(`/api/patients/${patientRefId}/card-summary${q}`);
-                        if (r.ok) {
-                          const d = await r.json();
-                          setSummary(d.data ?? d);
-                        }
-                        await loadPlan(true);
-                        setQuotaTick((n) => n + 1);
-                      })
-                      .finally(() => setDay1Busy(false));
-                  }
-            }
           />
         ) : (
           <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
@@ -1093,6 +1022,12 @@ export function PatientCardClinicalSections({
       >
         <div className="grid grid-cols-1 items-end gap-2">
           <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{ts("rescheduleSameDayHint")}</p>
+          <DatePicker
+            label={tc("date")}
+            value={rescheduleDate}
+            onChange={setRescheduleDate}
+            placeholder="dd.mm.yyyy"
+          />
           <CatalogField
             kind="SEARCHABLE"
             label={ts("procedureTime")}

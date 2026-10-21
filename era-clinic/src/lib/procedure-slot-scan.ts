@@ -1,5 +1,6 @@
 import {
   inPackageCodesOnBakuDay,
+  packageBlockIsFull,
   packageDayIsFullForNewCode,
 } from "@/domain/sanatorium/daily-package-cap";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
@@ -28,8 +29,22 @@ export type PlacementFailureReason =
   | "closed"
   | "lunch"
   | "cross_day"
+  | "bath_rest"
+  | "week_full"
+  | "past_checkout"
+  | "checkout_noon"
   | "rule"
   | "no_slot";
+
+/** First pin day uses Saxla `now`; later pin days open at the type/clinic hour. */
+export function pinSearchFrom(now: Date, pinYmd: string | undefined, typeDayStartHour: number): Date {
+  if (!pinYmd) return now;
+  const pinStart = bakuWallTime(bakuDayBounds(pinYmd).start, typeDayStartHour);
+  if (bakuDateKey(now) === pinYmd) {
+    return now.getTime() > pinStart.getTime() ? now : pinStart;
+  }
+  return pinStart;
+}
 
 /** Next working-hour start. 14:36 with a 17:00 close becomes 15:00. After the close, next morning. */
 export function nextSearchStart(now: Date, dayStartHour: number, dayEndHour: number): Date {
@@ -69,6 +84,8 @@ export type ScanPatientSlot = {
   end: Date;
   patientRestMinutes: number;
   inPackage: boolean;
+  /** Package block whose daily cap this session spends. */
+  quotaKey?: string;
   /** NO_SHOW blocks a second session the same day and does not create a rest gap. */
   countsForRest: boolean;
 };
@@ -103,6 +120,10 @@ export type ScanOrder = {
   procedureTypeId: string;
   /** When set, only this Baku day is legal. Leaving the day is a miss. */
   pinYmd?: string;
+  /** Package block for the daily distinct-SKU cap. */
+  quotaKey?: string;
+  /** Null = this block has no daily cap. Unset = caller still uses packageCap. */
+  dailyCap?: number | null;
 };
 
 export type PlannedPlacement = {
@@ -386,17 +407,36 @@ export function evaluateCandidateSlot(
   if (!order.afterLunchAllowed && startHm.hour >= order.typeHours.lunchEndHour) return fail("lunch");
   if (!order.beforeLunchAllowed && startHm.hour < order.typeHours.lunchEndHour) return fail("lunch");
 
-  if (order.inPackage) {
-    const codesOnDay = inPackageCodesOnBakuDay(
-      input.patientSlots.map((slot) => ({
-        code: slot.code,
-        start: slot.start,
-        inPackage: slot.inPackage,
-      })),
-      slotStart,
-    );
-    if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
-      return fail("day_full");
+  if (order.inPackage && order.dailyCap !== null) {
+    if (order.quotaKey && order.dailyCap != null) {
+      if (
+        packageBlockIsFull({
+          slots: input.patientSlots.map((slot) => ({
+            code: slot.code,
+            start: slot.start,
+            inPackage: slot.inPackage,
+            quotaKey: slot.quotaKey || slot.code,
+          })),
+          day: slotStart,
+          candidateCode: order.procedureCode,
+          quotaKey: order.quotaKey,
+          cap: order.dailyCap,
+        })
+      ) {
+        return fail("day_full");
+      }
+    } else if (order.dailyCap === undefined) {
+      const codesOnDay = inPackageCodesOnBakuDay(
+        input.patientSlots.map((slot) => ({
+          code: slot.code,
+          start: slot.start,
+          inPackage: slot.inPackage,
+        })),
+        slotStart,
+      );
+      if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
+        return fail("day_full");
+      }
     }
   }
 
@@ -472,12 +512,14 @@ export function evaluateCandidateSlot(
   return { ok: true, resource, staff };
 }
 
-function placementBlockReason(
+/** Day-full is decided before the staff pool is read — do not report that as no_staff. */
+export function placementBlockReason(
   opened: boolean,
   sawStaffPool: boolean,
   blocks: { day_full: number; staff_busy: number; cabin_busy: number; rule: number },
 ): PlacementFailureReason {
   if (!opened) return "no_slot";
+  if (blocks.day_full > 0) return "day_full";
   if (!sawStaffPool) return "no_staff";
   const ranked = (Object.entries(blocks) as Array<[PlacementFailureReason, number]>)
     .filter(([, count]) => count > 0)
@@ -519,14 +561,7 @@ export function scanProcedureSlots(input: {
       continue;
     }
 
-    const pinStart = order.pinYmd
-      ? bakuWallTime(bakuDayBounds(order.pinYmd).start, order.typeHours.dayStartHour)
-      : null;
-    const searchFrom =
-      pinStart &&
-      (bakuDateKey(input.now) !== order.pinYmd || input.now.getTime() <= pinStart.getTime())
-        ? pinStart
-        : input.now;
+    const searchFrom = pinSearchFrom(input.now, order.pinYmd, order.typeHours.dayStartHour);
     let slotStart = nextOpenSlot(
       searchFrom,
       order.typeHours,
@@ -646,6 +681,7 @@ export function scanProcedureSlots(input: {
         end: slotEnd,
         patientRestMinutes: order.patientRestMinutes,
         inPackage: order.inPackage,
+        quotaKey: order.quotaKey,
         countsForRest: true,
       });
       input.rotationContext.push({

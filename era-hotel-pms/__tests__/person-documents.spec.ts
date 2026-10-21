@@ -55,5 +55,7 @@ describe('mapNationalityToIso', () => {
     expect(mapNationalityToIso('Azerbaijan')).toBe('AZ');
     expect(mapNationalityToIso('Russia')).toBe('RU');
     expect(mapNationalityToIso('Kazakhstan')).toBe('KZ');
+    expect(mapNationalityToIso('')).toBeNull();
+    expect(mapNationalityToIso('Narnia')).toBeNull();
   });
 });

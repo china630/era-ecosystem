@@ -516,15 +516,20 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteHotelCityLedgerSnapshotSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    const partyId = event.payload.agencyId ?? event.payload.companyId;
+    const partyCode = event.payload.agencyCode ?? event.payload.companyCode;
+    if (!partyId || !partyCode) {
+      throw new Error("City ledger snapshot needs an agency or a company");
+    }
     const counterpartyId = await this.resolveCounterpartyId(
       organizationId,
-      event.payload.agencyId,
+      event.payload.financeCounterpartyId ?? event.payload.agencyId,
     );
     const snapshot = await this.prisma.agencyCityLedgerSnapshot.create({
       data: {
         organizationId,
-        hotelAgencyId: event.payload.agencyId,
-        agencyCode: event.payload.agencyCode,
+        hotelAgencyId: partyId,
+        agencyCode: partyCode,
         asOfDate: event.payload.asOfDate,
         balance: event.payload.balance,
         periodCharges: event.payload.periodCharges,
@@ -535,20 +540,23 @@ export class SatelliteEventDispatchService {
       },
     });
     this.logger.log(
-      `City ledger snapshot persisted id=${snapshot.id} agency=${event.payload.agencyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
+      `City ledger snapshot persisted id=${snapshot.id} party=${partyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
     );
+    const partyLabel = event.payload.companyId ? "company" : "agency";
     return {
       meta: {
         snapshotId: snapshot.id,
         agencyId: event.payload.agencyId,
         agencyCode: event.payload.agencyCode,
+        companyId: event.payload.companyId,
+        companyCode: event.payload.companyCode,
         asOfDate: event.payload.asOfDate,
         balance: event.payload.balance,
         periodCharges: event.payload.periodCharges,
         periodPayments: event.payload.periodPayments,
         counterpartyId,
         revenuePosted: false,
-        reconciliationNote: `Hotel agency ${event.payload.agencyCode} balance ${event.payload.balance} AZN on ${event.payload.asOfDate}`,
+        reconciliationNote: `Hotel ${partyLabel} ${partyCode} balance ${event.payload.balance} AZN on ${event.payload.asOfDate}`,
       },
     };
   }

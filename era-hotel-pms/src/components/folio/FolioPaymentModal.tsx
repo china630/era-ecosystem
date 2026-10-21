@@ -64,6 +64,7 @@ export function FolioPaymentModal({
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [codes, setCodes] = useState<Array<{ id: string; code: string; name?: string | null }>>([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
+  const [pocket, setPocket] = useState<FolioParty>(party);
   const [busy, setBusy] = useState(false);
 
   const knownStay = Boolean(reservationId);
@@ -72,7 +73,7 @@ export function FolioPaymentModal({
     if (knownStay) return guests ?? [];
     return stays.find((s) => s.reservationId === stayId)?.guests ?? [];
   }, [knownStay, guests, stays, stayId]);
-  const payer = party === 'guest' ? resolvePayer(partyGuests) : { kind: 'none' as const };
+  const payer = pocket === 'guest' ? resolvePayer(partyGuests) : { kind: 'none' as const };
   const selectedGuest =
     payer.kind === 'fixed'
       ? payer.guest
@@ -90,7 +91,8 @@ export function FolioPaymentModal({
     setStayId(reservationId ?? '');
     setFolios([]);
     setRevenueCodeId('');
-  }, [open, reservationId]);
+    setPocket(party);
+  }, [open, reservationId, party]);
 
   useEffect(() => {
     if (!open) return;
@@ -144,10 +146,10 @@ export function FolioPaymentModal({
       .catch(() => setFolios([]));
   }, [open, activeStayId]);
 
-  const folio = pickTargetFolio(folios, party, selectedGuest);
+  const folio = pickTargetFolio(folios, pocket, selectedGuest);
   const balance = folio ? accountBalance(folio) : 0;
   const methods = METHODS.filter((m) => m !== 'DEPOSIT');
-  const needsGuest = party === 'guest' && payer.kind === 'pick' && !selectedGuest;
+  const needsGuest = pocket === 'guest' && payer.kind === 'pick' && !selectedGuest;
   const needsStay = !knownStay && !activeStayId;
   const amountN = Number(amount);
   const canSubmit =
@@ -167,6 +169,7 @@ export function FolioPaymentModal({
         body: JSON.stringify({
           folioId: folio?.id,
           reservationId: folio ? undefined : activeStayId,
+          folioType: pocket === 'agency' ? 'AGENCY' : pocket === 'company' ? 'COMPANY' : 'GUEST',
           revenueCodeId,
           amount: amountN,
           paymentMethod: method,
@@ -188,12 +191,12 @@ export function FolioPaymentModal({
   }
 
   const payerLabel =
-    party === 'agency' ? t('partyAgency') : party === 'company' ? t('partyCompany') : selectedGuest?.name ?? '';
+    pocket === 'agency' ? t('partyAgency') : pocket === 'company' ? t('partyCompany') : selectedGuest?.name ?? '';
 
   return (
     <EraModal
       open={open}
-      title={t('acceptPaymentTitle')}
+      title={t('extraPayment')}
       onClose={onClose}
       footer={
         <EraModalFooter
@@ -201,7 +204,7 @@ export function FolioPaymentModal({
           onSubmit={() => void submit()}
           busy={busy}
           submitDisabled={!canSubmit}
-          submitLabel={t('acceptPayment')}
+          submitLabel={t('extraPayment')}
         />
       }
     >
@@ -224,7 +227,21 @@ export function FolioPaymentModal({
             emptyLabel={null}
           />
         ) : null}
-        {party === 'guest' && payer.kind === 'pick' ? (
+        {activeStayId ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('pocket')}
+            value={pocket}
+            onChange={(v) => setPocket((String(v ?? 'guest') as FolioParty))}
+            options={[
+              { value: 'guest', label: t('partyGuest') },
+              { value: 'agency', label: t('partyAgency') },
+              { value: 'company', label: t('partyCompany') },
+            ]}
+            emptyLabel={null}
+          />
+        ) : null}
+        {pocket === 'guest' && payer.kind === 'pick' ? (
           <CatalogField
             kind="CLOSED_SMALL"
             label={t('pickGuest')}
@@ -242,7 +259,7 @@ export function FolioPaymentModal({
         ) : null}
         <CatalogField
           kind="SEARCHABLE"
-          label={t('paymentFor')}
+          label={t('xercMaddesi')}
           value={revenueCodeId}
           onChange={(v) => setRevenueCodeId(String(v ?? ''))}
           options={codes.map((c) => ({

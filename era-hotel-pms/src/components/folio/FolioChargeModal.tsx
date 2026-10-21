@@ -12,16 +12,19 @@ export function FolioChargeModal({
   onClose,
   onDone,
   reservationId,
+  pocketOptions,
 }: {
   open: boolean;
   onClose: () => void;
   onDone?: () => void;
   reservationId: string;
+  pocketOptions?: Array<{ value: 'GUEST' | 'AGENCY' | 'COMPANY'; label: string }>;
 }) {
   const t = useTranslations('folio');
   const tc = useTranslations('common');
   const [codes, setCodes] = useState<RevenueCode[]>([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
+  const [folioType, setFolioType] = useState<'GUEST' | 'AGENCY' | 'COMPANY'>('GUEST');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,6 +33,7 @@ export function FolioChargeModal({
     if (!open) return;
     setAmount('');
     setDescription('');
+    setFolioType(pocketOptions?.[0]?.value ?? 'GUEST');
     void fetch('/api/master/revenue-codes')
       .then((r) => r.json())
       .then((data) => {
@@ -57,6 +61,7 @@ export function FolioChargeModal({
           amount: amountN,
           qty: 1,
           description: description.trim(),
+          folioType,
         }),
       });
       const data = await res.json();
@@ -75,7 +80,7 @@ export function FolioChargeModal({
   return (
     <EraModal
       open={open}
-      title={t('postCharge')}
+      title={t('extraCharge')}
       onClose={onClose}
       footer={
         <EraModalFooter
@@ -83,14 +88,24 @@ export function FolioChargeModal({
           onSubmit={() => void submit()}
           busy={busy}
           submitDisabled={!canSubmit}
-          submitLabel={t('postCharge')}
+          submitLabel={t('extraCharge')}
         />
       }
     >
       <div className="space-y-3">
+        {pocketOptions && pocketOptions.length > 0 ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('pocket')}
+            value={folioType}
+            onChange={(v) => setFolioType((String(v ?? 'GUEST') as 'GUEST' | 'AGENCY' | 'COMPANY'))}
+            options={pocketOptions}
+            emptyLabel={null}
+          />
+        ) : null}
         <CatalogField
           kind="SEARCHABLE"
-          label={t('revenueCode')}
+          label={t('xercMaddesi')}
           value={revenueCodeId}
           onChange={(v) => setRevenueCodeId(String(v ?? ''))}
           options={codes.map((c) => ({

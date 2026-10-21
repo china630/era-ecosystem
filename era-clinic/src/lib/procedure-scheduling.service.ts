@@ -11,12 +11,13 @@ function addMinutes(d: Date, mins: number): Date {
 export async function rescheduleProcedureOrder(
   orderId: string,
   scheduledAt: Date,
-  opts?: { resourceId?: string },
+  opts?: { resourceId?: string; allowOtherDay?: boolean },
 ): Promise<{ id: string; scheduledAt: Date; endsAt: Date | null; resourceId: string | null }> {
   return placeManualProcedureSlot({
     orderId,
     scheduledAt,
     resourceId: opts?.resourceId,
+    allowOtherDay: opts?.allowOtherDay,
   });
 }
 

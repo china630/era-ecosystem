@@ -104,7 +104,7 @@ model GlobalNaturalPerson {
   /// Contact email (not platform User.email). Cipher like phone.
   emailCipher       String?             @map("email_cipher")
   /// ISO 3166-1 alpha-2 citizenship (not ethnicity). Do not store OTHER.
-  nationality       String?             @default("AZ")
+  nationality       String?
   /// SoR for legal sex (not HR profile). Satellites cache; do not invent a second identity card.
   sex               PersonSex           @default(UNKNOWN)
   birthDate         DateTime?           @map("birth_date") @db.Date

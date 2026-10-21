@@ -312,18 +312,18 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: Banknote,
           items: sectionItems([
             {
-              id: 'fc-desk',
-              href: '/front-cash/desk',
-              labelKey: 'frontCashDesk',
-              icon: Banknote,
-              permission: PERMISSIONS.SCREEN_FRONT_CASH,
-            },
-            {
               id: 'fc-pending',
               href: '/front-cash/pending',
               labelKey: 'pendingSettlement',
               icon: Banknote,
               anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.FOLIO_VOID],
+            },
+            {
+              id: 'fc-desk',
+              href: '/front-cash/desk',
+              labelKey: 'frontCashDesk',
+              icon: Banknote,
+              permission: PERMISSIONS.SCREEN_FRONT_CASH,
             },
             {
               id: 'fc-balances',
@@ -345,13 +345,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'debts',
               icon: ClipboardList,
               anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_FOLIO, PERMISSIONS.SCREEN_REPORTS],
-            },
-            {
-              id: 'fc-tx',
-              href: '/front-cash/transactions',
-              labelKey: 'cashTransactions',
-              icon: Banknote,
-              anyPermission: [PERMISSIONS.FOLIO_PAYMENT, PERMISSIONS.SCREEN_FOLIO],
             },
           ]),
         },
@@ -839,6 +832,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
+              id: 'set-departments',
+              href: '/settings/departments',
+              labelKey: 'departments',
+              icon: Building2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
               id: 'set-policies',
               href: '/settings/policies',
               labelKey: 'policies',
@@ -934,14 +934,14 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
 
   const headerQuickLinkClass = (active: boolean) =>
     [
-      'hidden items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition sm:inline-flex',
+      'hidden h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition sm:inline-flex',
       active
         ? 'border-[#2980B9]/40 bg-[#EBF5FB] text-[#2980B9]'
         : 'border-[#D5DADF] bg-white text-[#34495E] hover:border-[#2980B9]/30 hover:bg-[#F8F9FA]',
     ].join(' ');
 
   const headerLeft = (
-    <div className="hidden min-w-0 items-center gap-2 lg:flex">
+    <div className="hidden h-8 min-w-0 items-center gap-2 lg:flex">
       {can(PERMISSIONS.RESERVATIONS_WRITE) ? (
         <>
           <button

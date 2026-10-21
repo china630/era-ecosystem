@@ -1,5 +1,11 @@
-import { parseBakuDateTime } from "@/lib/baku-day";
-import { evaluateCandidateSlot, scanProcedureSlots, type ScanOrder } from "@/lib/procedure-slot-scan";
+import { bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
+import {
+  evaluateCandidateSlot,
+  pinSearchFrom,
+  placementBlockReason,
+  scanProcedureSlots,
+  type ScanOrder,
+} from "@/lib/procedure-slot-scan";
 import type { TenantWorkHours } from "@/domain/settings/scheduling-settings";
 
 const hours: TenantWorkHours = {
@@ -33,6 +39,20 @@ function order(): ScanOrder {
     procedureTypeId: "type-1",
   };
 }
+
+describe("pinSearchFrom", () => {
+  it("uses the Saxla clock on the start pin day", () => {
+    const now = parseBakuDateTime("2026-10-19", "11:00");
+    const from = pinSearchFrom(now, "2026-10-19", 9);
+    expect(from.getTime()).toBe(now.getTime());
+  });
+
+  it("opens later pin days at the type hour", () => {
+    const from = pinSearchFrom(parseBakuDateTime("2026-10-19", "11:00"), "2026-10-20", 9);
+    expect(bakuDateKey(from)).toBe("2026-10-20");
+    expect(bakuHourMinute(from).hour).toBe(9);
+  });
+});
 
 describe("scanProcedureSlots", () => {
   const now = parseBakuDateTime("2026-10-16", "09:00");
@@ -276,6 +296,39 @@ describe("evaluateCandidateSlot", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it("reports day_full, not no_staff, when the package day is already full", () => {
+    const bath = {
+      ...order(),
+      id: "bath-cap",
+      procedureCode: "SVC-NAFTALAN",
+      procedureName: "Naftalan",
+      pinYmd: "2026-10-16",
+    };
+    const dayStart = parseBakuDateTime("2026-10-16", "09:00");
+    const dayEnd = parseBakuDateTime("2026-10-16", "09:20");
+    const result = scanProcedureSlots({
+      orders: [bath],
+      now: dayStart,
+      slotMinutes: 5,
+      packageCap: 3,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [
+        { code: "A", start: dayStart, end: dayEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+        { code: "B", start: dayStart, end: dayEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+        { code: "C", start: dayStart, end: dayEnd, patientRestMinutes: 0, inPackage: true, countsForRest: false },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.planned).toEqual([]);
+    expect(result.failures[0]?.reason).toBe("day_full");
+  });
+
   it("reports no staff when the duty line is empty", () => {
     const verdict = evaluateCandidateSlot({
       ...slot,
@@ -283,5 +336,17 @@ describe("evaluateCandidateSlot", () => {
     });
     expect(verdict.ok).toBe(false);
     if (!verdict.ok) expect(verdict.reason).toBe("no_staff");
+  });
+});
+
+describe("placementBlockReason", () => {
+  const empty = { day_full: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
+
+  it("prefers day_full when the package cap rejected every slot", () => {
+    expect(placementBlockReason(true, false, { ...empty, day_full: 12 })).toBe("day_full");
+  });
+
+  it("still reports no_staff when the duty pool was empty", () => {
+    expect(placementBlockReason(true, false, empty)).toBe("no_staff");
   });
 });

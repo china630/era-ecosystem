@@ -40,6 +40,8 @@ import { ReservationCardGuestsTab } from '@/components/reservation-card/Reservat
 import { DepartGuestModal } from '@/components/reservation-card/DepartGuestModal';
 import { MoveGuestModal } from '@/components/reservation-card/MoveGuestModal';
 import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
+import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import {
   medicalPackageChoices,
@@ -204,6 +206,7 @@ export type ReservationCardEditorProps = {
   reservationId: string | null;
   /** Right-hand tab shown when the card opens. Create still starts on guests. */
   initialTab?: TabId;
+  initialStayAction?: StayActionKind | null;
   onReservationCreated?: (id: string) => void;
 };
 
@@ -239,6 +242,7 @@ export function ReservationCardEditor({
   onClose,
   reservationId,
   initialTab = 'guests',
+  initialStayAction = null,
   onReservationCreated,
 }: ReservationCardEditorProps) {
   const isCreate = !reservationId;
@@ -321,6 +325,16 @@ export function ReservationCardEditor({
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
+  const [cardMoveAsk, setCardMoveAsk] = useState<{ askReason: boolean; askSettlement: boolean } | null>(
+    null,
+  );
+  const [splitMoveAsk, setSplitMoveAsk] = useState<{
+    fromDate: string;
+    roomTypeId: string;
+    roomId: string | null;
+    askReason: boolean;
+    askSettlement: boolean;
+  } | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [stayAudit, setStayAudit] = useState<StayJournalEntry[]>([]);
   const [stayAuditStatus, setStayAuditStatus] = useState<'idle' | 'loading' | 'error' | 'ready'>(
@@ -391,9 +405,13 @@ export function ReservationCardEditor({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [restoreOpen, setRestoreOpen] = useState(false);
+  const [undoCheckoutOpen, setUndoCheckoutOpen] = useState(false);
+  const [undoReason, setUndoReason] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
   const [restoreTypeId, setRestoreTypeId] = useState('');
   const [restoreRoomId, setRestoreRoomId] = useState('');
-  const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(null);
+  const [pendingStayAction, setPendingStayAction] = useState<StayActionKind | null>(initialStayAction);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [earlyCheckoutPreview, setEarlyCheckoutPreview] = useState<{
     applicable?: boolean;
@@ -1291,17 +1309,17 @@ export function ReservationCardEditor({
     }
   }
 
-  async function chargeAll() {
+  async function postMissedNights() {
     if (!reservationId) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/reservations/${reservationId}/pricing/charge-all`, { method: 'POST' });
+      const res = await fetch(`/api/reservations/${reservationId}/missed-nights`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) {
         showApiError(json, tc('failed'));
         return;
       }
-      showSuccess(t('chargeAllDone', { count: json.posted?.length ?? 0 }));
+      showSuccess(t('missedNightsPosted', { count: json.nights?.length ?? 0 }));
       await load();
     } finally {
       setBusy(false);
@@ -1455,21 +1473,122 @@ export function ReservationCardEditor({
     }
   }
 
-  async function splitStay(input: { fromDate: string; roomTypeId: string; roomId: string | null }) {
-    if (!reservationId) return;
+  async function undoCheckoutStay() {
+    if (!reservationId || !undoReason.trim()) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/reservations/${reservationId}/stay-split`, {
+      const res = await fetch(`/api/reservations/${reservationId}/undo-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ reason: undoReason.trim() }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         showApiError(json, tc('error'));
         return;
       }
-      showSuccess(t('splitStayDone'));
+      setUndoCheckoutOpen(false);
+      setUndoReason('');
+      showSuccess(t('restoreDone'));
+      applyJson((json as { reservation?: Record<string, unknown> }).reservation ?? json);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteStay() {
+    if (!reservationId || !deleteReason.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: deleteReason.trim() }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showApiError(json, tc('error'));
+        return;
+      }
+      setDeleteOpen(false);
+      showSuccess(t('deleteStayDone'));
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function printStayForm(kind: 'registration' | 'proforma' | 'confirmation') {
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    if (!popup) return;
+    const title =
+      kind === 'registration' ? t('printRegistration') : kind === 'proforma' ? t('printProforma') : t('printConfirmation');
+    const guestName = (data?.guest as { fullName?: string } | undefined)?.fullName ?? '';
+    popup.document.write(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:sans-serif;padding:24px"><h1>${title}</h1><p>${guestName}</p><p>${checkIn} → ${checkOut}</p><p>${roomId ? rooms.find((r) => r.id === roomId)?.roomNumber ?? '' : ''}</p></body></html>`,
+    );
+    popup.document.close();
+    popup.print();
+  }
+
+  async function warnGuestOverlaps(): Promise<boolean> {
+    const url = reservationId
+      ? `/api/reservations/${reservationId}/guest-overlaps`
+      : guestId && checkIn && checkOut
+        ? `/api/reservations/guest-overlaps?guestId=${encodeURIComponent(guestId)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`
+        : null;
+    if (!url) return true;
+    const res = await fetch(url);
+    if (!res.ok) return true;
+    const body = (await res.json()) as
+      | Array<{ roomNumber: string; checkIn: string; checkOut: string }>
+      | { data?: Array<{ roomNumber: string; checkIn: string; checkOut: string }> };
+    const list = Array.isArray(body) ? body : body.data ?? [];
+    if (list.length === 0) return true;
+    const first = list[0]!;
+    return window.confirm(t('guestOverlapWarn', { room: first.roomNumber, from: first.checkIn, to: first.checkOut }));
+  }
+
+  async function splitStay(
+    input: { fromDate: string; roomTypeId: string; roomId: string | null },
+    confirmed?: { reasonCode?: RoomMoveReason; settlement?: ClassSettlement },
+  ) {
+    if (!reservationId) return;
+    const door = input.roomId ? rooms.find((row) => row.id === input.roomId) : undefined;
+    const askSettlement = doorTypeNeedsSettlement(roomTypeId, givenRoomTypeId, door?.roomTypeId);
+    const askReason = data?.status === 'IN_HOUSE' && Boolean(input.roomId);
+    if ((askReason || askSettlement) && !confirmed) {
+      setSplitMoveAsk({ ...input, askReason, askSettlement });
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/stay-split`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...input,
+          ...(confirmed?.reasonCode ? { reasonCode: confirmed.reasonCode } : {}),
+          ...(confirmed?.settlement ? { settlement: confirmed.settlement } : {}),
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        const code = (json as { code?: string } | null)?.code;
+        if (code === 'ROOM_TYPE_SETTLEMENT_REQUIRED' && input.roomId) {
+          setSplitMoveAsk({
+            ...input,
+            askReason: data?.status === 'IN_HOUSE',
+            askSettlement: true,
+          });
+          return;
+        }
+        showApiError(json, tc('error'));
+        return;
+      }
+      const pending = Boolean((json as { movePending?: boolean } | null)?.movePending);
+      showSuccess(pending ? t('splitStayPlanned') : t('splitStayDone'));
       applyJson(json as Record<string, unknown>);
     } finally {
       setBusy(false);
@@ -1483,6 +1602,7 @@ export function ReservationCardEditor({
       showWarning(t('checkInNeedList', { details: lines.join('; ') }));
       return;
     }
+    if (!(await warnGuestOverlaps())) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/check-in`, {
@@ -1862,13 +1982,18 @@ export function ReservationCardEditor({
     setChildren1_0(String(counts.children1_0));
   }
 
-  async function save(moveReasonCode?: RoomMoveReason) {
+  async function save(choice?: { reason?: RoomMoveReason; settlement?: ClassSettlement }) {
+    const moveReasonCode = choice?.reason;
     const doorChanged =
       !isCreate && Boolean(roomId) && Boolean(pendingRoomId) && pendingRoomId !== roomId;
-    if (doorChanged && status === 'IN_HOUSE' && !moveReasonCode) {
-      setMovePromptOpen(true);
+    const targetDoor = pendingRoomId ? rooms.find((row) => row.id === pendingRoomId) : undefined;
+    const askSettlement = doorTypeNeedsSettlement(roomTypeId, givenRoomTypeId, targetDoor?.roomTypeId);
+    const askReason = data?.status === 'IN_HOUSE';
+    if (doorChanged && (askReason || askSettlement) && !choice) {
+      setCardMoveAsk({ askReason, askSettlement });
       return;
     }
+    if (!(await warnGuestOverlaps())) return;
     setBusy(true);
     try {
       const sourceKind = bookingSourceKind(sources.find((s) => s.id === sourceId)?.code);
@@ -2076,6 +2201,7 @@ export function ReservationCardEditor({
           roomTypeId: roomTypeId || undefined,
           ...(pendingRoomId === roomId ? {} : { roomId: pendingRoomId || null }),
           ...(doorChanged && moveReasonCode ? { moveReasonCode } : {}),
+          ...(doorChanged && choice?.settlement ? { settlement: choice.settlement } : {}),
           mealPlanId: mealPlanId || null,
           roomCount: Number(roomCount) || 1,
           rateType: rateType || null,
@@ -2150,10 +2276,14 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (json?.code === 'ROOM_TYPE_SETTLEMENT_REQUIRED') {
+          setCardMoveAsk({ askReason: data?.status === 'IN_HOUSE', askSettlement: true });
+          return;
+        }
         showApiError(json, tc('failed'));
         return;
       }
-      showSuccess(tc('success'));
+      showSuccess(json.movePending ? t('splitStayPlanned') : tc('success'));
       if (isPreArrivalStatus(String(json.status ?? ''))) {
         warnOperationalGaps(json.operationalGaps, t);
       }
@@ -2396,8 +2526,15 @@ export function ReservationCardEditor({
     attachOpen,
     onAttachToggle: reservationId ? () => setAttachOpen((o) => !o) : undefined,
     onRecalc: isCreate ? undefined : () => void recalcPricing(),
-    onChargeAll: isCreate ? undefined : () => void chargeAll(),
     onAmendProduct: isCreate ? undefined : () => setAmendOpen(true),
+    onPrintForm: isCreate ? undefined : printStayForm,
+    onUndoCheckout: status === 'CHECKED_OUT' ? () => setUndoCheckoutOpen(true) : undefined,
+    onDeleteStay:
+      !isCreate &&
+      (status === 'OPTION' || status === 'CONFIRMED') &&
+      can(PERMISSIONS.RESERVATIONS_CANCEL)
+        ? () => setDeleteOpen(true)
+        : undefined,
   };
 
   const body = (
@@ -2429,9 +2566,37 @@ export function ReservationCardEditor({
         </div>
       ) : null}
 
-      {pendingStayAction ? (
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
-          <span>
+      <EraModal
+        open={Boolean(pendingStayAction)}
+        title={
+          pendingStayAction === 'earlyCheckIn'
+            ? t('earlyCheckIn')
+            : pendingStayAction === 'checkIn'
+              ? t('confirmCheckIn')
+              : pendingStayAction === 'earlyCheckOut'
+                ? t('earlyCheckOut')
+                : t('confirmCheckOut')
+        }
+        onClose={() => setPendingStayAction(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setPendingStayAction(null)}
+            onSubmit={() => {
+              const kind = pendingStayAction;
+              if (kind === 'earlyCheckIn') void confirmCheckIn(true);
+              else if (kind === 'checkIn') void confirmCheckIn(false);
+              else {
+                setPendingStayAction(null);
+                setCheckoutModalOpen(true);
+              }
+            }}
+            busy={busy}
+            submitLabel={stayActionLabel}
+          />
+        }
+      >
+        <div className="space-y-2 text-[13px] text-[#34495E]">
+          <p className="m-0">
             {pendingStayAction === 'earlyCheckIn'
               ? t('stayActionEarlyIn', {
                   days: String(hotelStayDayGap(checkIn, todayBakuYmd())),
@@ -2443,48 +2608,21 @@ export function ReservationCardEditor({
                 : pendingStayAction === 'checkOut'
                   ? t('stayActionCheckOut')
                   : pendingStayAction === 'checkIn' &&
-                    checkIn < (pricingBusinessDate ?? todayBakuYmd())
-                  ? t('stayActionLateIn', { date: pricingBusinessDate ?? todayBakuYmd() })
+                      checkIn < (pricingBusinessDate ?? todayBakuYmd())
+                    ? t('stayActionLateIn', { date: pricingBusinessDate ?? todayBakuYmd() })
                     : checkInTime < '14:00'
                       ? t('stayActionEarlyHour')
                       : t('stayActionCheckIn')}
-          </span>
-          <span className="flex gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setPendingStayAction(null)}
-            >
-              {tc('cancel')}
-            </button>
-            <button
-              type="button"
-              className={DANGER_BUTTON_CLASS}
-              disabled={busy}
-              onClick={() => {
-                const kind = pendingStayAction;
-                if (kind === 'earlyCheckIn') void confirmCheckIn(true);
-                else if (kind === 'checkIn') void confirmCheckIn(false);
-                else {
-                  setPendingStayAction(null);
-                  setCheckoutModalOpen(true);
-                }
-              }}
-            >
-              {stayActionLabel}
-            </button>
-          </span>
+          </p>
           {earlyCheckoutPreview?.unusedNights ? (
-            <span className="basis-full">
-              {t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}
-            </span>
+            <p className="m-0">{t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}</p>
           ) : null}
           {guestFolioBalance > 0.01 &&
           (pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') ? (
-            <span className={`basis-full ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</span>
+            <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</p>
           ) : null}
         </div>
-      ) : null}
+      </EraModal>
 
       {namesIncomplete ? (
         <div className="mb-3 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
@@ -2687,7 +2825,7 @@ export function ReservationCardEditor({
 
             <div
               className={
-                tab === 'pricing'
+                tab === 'pricing' || tab === 'folio'
                   ? 'flex min-h-0 flex-1 flex-col overflow-hidden pb-2'
                   : 'min-h-0 flex-1 overflow-y-auto pb-2'
               }
@@ -2783,6 +2921,11 @@ export function ReservationCardEditor({
                       ? (ymd) => void postOneNight(ymd)
                       : undefined
                   }
+                  onPostMissed={
+                    status === 'OPTION' || status === 'CONFIRMED' || status === 'IN_HOUSE'
+                      ? () => void postMissedNights()
+                      : undefined
+                  }
                   onDailyRates={setDailyRates}
                   onManualRate={setManualDailyRate}
                   onDiscountPercent={setDiscountPercent}
@@ -2799,7 +2942,8 @@ export function ReservationCardEditor({
                     pax={pax}
                     displayCurrency={pricingDisplayCurrency}
                     canPostCharges={status === 'OPTION' || status === 'CONFIRMED' || status === 'IN_HOUSE'}
-                    canCheckOut={status === 'IN_HOUSE'}
+                    hasAgency={Boolean(agencyId)}
+                    hasCompany={Boolean(companyId)}
                     fiscalDocuments={
                       (data?.fiscalDocuments as Array<{
                         id: string;
@@ -2932,7 +3076,34 @@ export function ReservationCardEditor({
         onClose={() => setMovePromptOpen(false)}
         onConfirm={(reason) => {
           setMovePromptOpen(false);
-          void save(reason);
+          void save({ reason });
+        }}
+      />
+      <RoomMoveConfirmModal
+        open={Boolean(cardMoveAsk)}
+        busy={busy}
+        askReason={Boolean(cardMoveAsk?.askReason)}
+        askSettlement={Boolean(cardMoveAsk?.askSettlement)}
+        onClose={() => setCardMoveAsk(null)}
+        onConfirm={(choice) => {
+          setCardMoveAsk(null);
+          void save(choice);
+        }}
+      />
+      <RoomMoveConfirmModal
+        open={Boolean(splitMoveAsk)}
+        busy={busy}
+        askReason={Boolean(splitMoveAsk?.askReason)}
+        askSettlement={Boolean(splitMoveAsk?.askSettlement)}
+        onClose={() => setSplitMoveAsk(null)}
+        onConfirm={(choice) => {
+          const ask = splitMoveAsk;
+          setSplitMoveAsk(null);
+          if (!ask) return;
+          void splitStay(
+            { fromDate: ask.fromDate, roomTypeId: ask.roomTypeId, roomId: ask.roomId },
+            { reasonCode: choice.reason, settlement: choice.settlement },
+          );
         }}
       />
       <StayAmendmentModal
@@ -3042,6 +3213,50 @@ export function ReservationCardEditor({
           label={t('cancelReason')}
           value={cancelReason}
           onChange={(e) => setCancelReason(e.target.value)}
+          rows={3}
+        />
+      </EraModal>
+      <EraModal
+        open={undoCheckoutOpen}
+        title={t('restoreStay')}
+        onClose={() => setUndoCheckoutOpen(false)}
+        maxWidthClass="max-w-md"
+        footer={
+          <EraModalFooter
+            onCancel={() => setUndoCheckoutOpen(false)}
+            busy={busy}
+            submitDisabled={!undoReason.trim()}
+            submitLabel={t('restoreStay')}
+            onSubmit={() => void undoCheckoutStay()}
+          />
+        }
+      >
+        <FieldTextarea
+          label={t('restoreReason')}
+          value={undoReason}
+          onChange={(e) => setUndoReason(e.target.value)}
+          rows={3}
+        />
+      </EraModal>
+      <EraModal
+        open={deleteOpen}
+        title={t('deleteStay')}
+        onClose={() => setDeleteOpen(false)}
+        maxWidthClass="max-w-md"
+        footer={
+          <EraModalFooter
+            onCancel={() => setDeleteOpen(false)}
+            busy={busy}
+            submitDisabled={!deleteReason.trim()}
+            submitLabel={t('deleteStay')}
+            onSubmit={() => void deleteStay()}
+          />
+        }
+      >
+        <FieldTextarea
+          label={t('deleteReason')}
+          value={deleteReason}
+          onChange={(e) => setDeleteReason(e.target.value)}
           rows={3}
         />
       </EraModal>

@@ -181,9 +181,10 @@ export async function createRevenueCode(input: {
   code: string;
   name: string;
   taxTag?: string;
-  departmentId?: string;
+  departmentId: string;
   targetFolioType?: FolioType;
 } & LocalizedNames) {
+  if (!input.departmentId) throw new Error('DEPARTMENT_REQUIRED');
   const { targetFolioType, ...codeData } = input;
   return prisma.$transaction(async (tx) => {
     const code = await tx.revenueCode.create({ data: codeData });
@@ -211,6 +212,7 @@ export async function updateRevenueCode(
 ) {
   const { targetFolioType, ...codeData } = input;
   return prisma.$transaction(async (tx) => {
+    if (input.departmentId === null) throw new Error('DEPARTMENT_REQUIRED');
     if (input.active === false) {
       const existing = await tx.revenueCode.findUnique({ where: { id } });
       if (existing?.systemRole) {
@@ -242,6 +244,40 @@ export async function listMealPlans() {
 
 export async function listDepartments() {
   return prisma.department.findMany({ orderBy: { code: 'asc' } });
+}
+
+const CASH_POINTS = new Set(['HOTEL', 'FNB_POS', 'CLINIC', 'RETAIL']);
+
+async function claimCashPoint(cashPoint: string | null, exceptId?: string) {
+  if (!cashPoint) return;
+  if (!CASH_POINTS.has(cashPoint)) throw new Error('CASH_POINT_UNKNOWN');
+  await prisma.department.updateMany({
+    where: { cashPoint, ...(exceptId ? { id: { not: exceptId } } : {}) },
+    data: { cashPoint: null },
+  });
+}
+
+export async function createDepartment(input: { code: string; name: string; cashPoint?: string | null }) {
+  const cashPoint = input.cashPoint?.trim() || null;
+  await claimCashPoint(cashPoint);
+  return prisma.department.create({
+    data: { code: input.code.trim().toUpperCase(), name: input.name.trim(), cashPoint },
+  });
+}
+
+export async function updateDepartment(
+  id: string,
+  input: { name?: string; cashPoint?: string | null },
+) {
+  const cashPoint = input.cashPoint === undefined ? undefined : input.cashPoint?.trim() || null;
+  if (cashPoint) await claimCashPoint(cashPoint, id);
+  return prisma.department.update({
+    where: { id },
+    data: {
+      ...(input.name != null ? { name: input.name.trim() } : {}),
+      ...(cashPoint !== undefined ? { cashPoint } : {}),
+    },
+  });
 }
 
 export async function listBedTypes() {

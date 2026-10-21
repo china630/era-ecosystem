@@ -444,11 +444,11 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / HOT-NA-04:
 
-1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → **Payments** / **Deposits** tabs + pending **link** (not a second queue) / method totals; **Print Z** (modal). Day close is `/front-cash/desk`, not a shift button.
+1. **Cash journal (HOT-CASH-06):** night-audit report 05 opens `/front-cash/transactions` for that business day. The list is grouped by employee. Day close is `/front-cash/desk`.
 2. **EOD hub (HOT-NA-03):** `/night-audit/reports` — pick date → open **09 Cancelled**, **10 Created**, **11 Folio transactions**, **12 Room price control**, **13 No-shows**, **14 Room moves**, **15 VIP in-house** → each shows a grid; **Export CSV** on report pages.
 3. **Folio day ledger:** `/night-audit/reports/folio-transactions?date=…` — CHARGE and PAYMENT rows for the day; Folio link opens `/folio/[reservationId]`.
 4. **Reservation updates (HOT-NA-04):** `/night-audit/reservation-updates` — filter Action type Cancel/Extend/Note/Other → grid updates; **Export CSV** downloads file.
-5. **Year-end still staged (HOT-NA-05 STUB):** `/night-audit/year-end` → preview loads; Last/First day buttons return staged / `YEAR_END_NOT_ENABLED` (do **not** expect posting).
+5. **Year boundary (HOT-NA-05 API):** `/night-audit/year-end` loads the business date. Last day is enabled only on a closed 31 December with empty blocks. First day is enabled only on 1 January. These buttons do not close the finance ledger year.
 6. **EOD logs path:** `/night-audit/logs` lists NightAuditRun rows (legacy `/reports/end-of-day-logs` redirects here).
 
 ## 29. Thin MVP deepen — routing / bank / transfer / BEO / CL / OTA (2026-08-11)

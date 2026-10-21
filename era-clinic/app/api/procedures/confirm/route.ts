@@ -12,7 +12,6 @@ import {
   fifoConfirmBlockedReason,
   procedureConfirmHttpStatus,
 } from "@/lib/sanatorium-fifo-gates";
-import { day1ConfirmSoftWarn } from "@/lib/sanatorium-day1";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
 import {
   resolveClinicDataScope,
@@ -91,9 +90,6 @@ export async function POST(req: Request) {
       return jsonError(fifoBlock, procedureConfirmHttpStatus(fifoBlock));
     }
 
-    // Soft warn only — never 4xx for >3 (contra / doctor may need 4).
-    const softWarn = day1ConfirmSoftWarn(body.orderIds.length);
-
     const placement = await placeConfirmedProcedures(body.orderIds, {
       confirmedByUserId: session.sub,
     });
@@ -134,7 +130,6 @@ export async function POST(req: Request) {
       placed: placement.placed,
       orderIds: placement.placedIds,
       ...(misses.length > 0 ? { misses } : {}),
-      ...(softWarn ? { softWarn } : {}),
     });
   } catch (err) {
     return handleRouteError(err);

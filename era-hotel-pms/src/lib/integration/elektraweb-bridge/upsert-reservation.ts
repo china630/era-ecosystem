@@ -164,6 +164,11 @@ export async function upsertReservationFromElektrawebRow(
     include: { room: true, guest: true, ratePlan: true },
   });
 
+  if (status === 'IN_HOUSE' && existing?.status !== 'IN_HOUSE' && reservation.roomId) {
+    const { writeInServiceDoorHk } = await import('@/lib/services/room.service');
+    await writeInServiceDoorHk(reservation.roomId, 'DIRTY');
+  }
+
   const folios = await prisma.folio.findMany({ where: { reservationId: reservation.id } });
   if (folios.length === 0) {
     await prisma.folio.create({

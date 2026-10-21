@@ -14,7 +14,7 @@ Canon: [`MENU-IA-CANON.md`](./MENU-IA-CANON.md). Coverage IDs: `docs/COVERAGE_MA
 | `/night-audit` core EOD | Yes | SHIPPED HOT-NA-01/02 | Path moved from `/operations` |
 | `/night-audit/reports` | Yes (navigation hub) | **API** HOT-NA-03 | Dated links to 8 existing screens |
 | `/night-audit/reservation-updates` | Yes (read grid) | **API** HOT-NA-04 | `updatedAt` + audit actions |
-| `/night-audit/year-end` | Preview only | **STUB** HOT-NA-05 | POST always `YEAR_END_NOT_ENABLED` |
+| `/night-audit/year-end` | On that business date | **API** HOT-NA-05 | Last day seals a closed 31 Dec. First day opens 1 Jan. Not finance GL close |
 | Full Elektraweb EOD 01–22 | No | Gap | Replaced by HOT-RPT catalog spec — not implemented |
 
 **Do not claim SHIPPED / Pilot-ready** for HOT-CASH-06, HOT-NA-03/04/05 until UAT-SMOKE UI steps and deepen criteria below.
@@ -22,8 +22,8 @@ Canon: [`MENU-IA-CANON.md`](./MENU-IA-CANON.md). Coverage IDs: `docs/COVERAGE_MA
 ## What primary fill delivered
 
 ### Front cash transactions
-- **UI:** `/front-cash/transactions` — date range + table (time, guest, room, kind, method, amount) → folio link.
-- **API:** `GET /api/front-cash/transactions?from&to` → `listFrontCashTransactions`.
+- **UI:** `/front-cash/transactions` — one business day, grouped by employee. Report 05 opens it. Double-click opens the folio.
+- **API:** `GET /api/front-cash/journal?date=` → `listCashJournal`.
 - **Source of truth:** `FolioPayment` (PAYMENT / REFUND), joined guest/room via folio reservation.
 
 ### Night Audit reports hub
@@ -37,9 +37,9 @@ Canon: [`MENU-IA-CANON.md`](./MENU-IA-CANON.md). Coverage IDs: `docs/COVERAGE_MA
 - **Logic:** reservations with `updatedAt` in window; optional latest `SatelliteAuditLog` action for `entityType=Reservation`.
 
 ### Year end
-- **UI:** preview of business date / wall clock / last-or-first-day flags; buttons call staged API.
-- **API:** `GET` preview; `POST { action: LAST_DAY | FIRST_DAY }` → `ok: false`, `code: YEAR_END_NOT_ENABLED`.
-- **Honesty:** menu is intentional; posting waits Finance calendar sign-off.
+- **UI:** preview of business date, day status, and blocks. Last day and first day stay disabled until that business date.
+- **API:** `POST { action: LAST_DAY | FIRST_DAY }` writes `HotelYearBoundary` and, on last day, rolls the date to 1 January.
+- **Honesty:** this is the hotel calendar. Finance general-ledger year close is not called.
 
 ## Deepen wave (next, after this audit)
 

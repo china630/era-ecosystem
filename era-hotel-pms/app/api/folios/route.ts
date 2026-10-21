@@ -24,6 +24,7 @@ const chargeSchema = z.object({
   amount: z.number(), // allow negative for DISCOUNT posts via API if needed
   qty: z.number().int().positive().optional(),
   description: z.string().min(1),
+  folioType: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
 });
 
 const paymentSchema = z.object({
@@ -35,6 +36,7 @@ const paymentSchema = z.object({
   registerRef: z.string().optional(),
   bankReference: z.string().max(120).optional(),
   bankTerminalId: z.string().min(1).max(64).optional(),
+  folioType: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
 }).refine((row) => Boolean(row.folioId || row.reservationId), {
   message: 'folioId or reservationId is required',
 });
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
       let folioId = data.folioId;
       if (!folioId && data.reservationId) {
         const { ensureOpenFolio } = await import('@/lib/services/booking-folio.service');
-        const folio = await ensureOpenFolio(data.reservationId, 'GUEST');
+        const folio = await ensureOpenFolio(data.reservationId, data.folioType ?? 'GUEST');
         folioId = folio.id;
       }
       const payment = await postPayment({
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
       serialize(
         await postCharge({
           ...data,
+          folioType: data.folioType,
           audit: { userId: session?.sub, request },
         }),
       ),

@@ -194,8 +194,6 @@ const createSchema = z.object({
   patientOrigin: z.enum(["WALK_IN", "IN_HOUSE"]).default("WALK_IN"),
   reservationId: z.string().optional(),
   amountNet: z.number().nonnegative().optional(),
-  /** Reception confirms 4th same-day package slot as paid folio charge. */
-  confirmPaidSameDay: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -226,46 +224,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // CLI-57: 4th+ in-package same day via reception → paid folio, do not burn package quota.
     const day = new Date(body.scheduledAt);
-    const { bakuDayBounds } = await import("@/domain/ops/day-summary.service");
     const ymd = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Asia/Baku",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
     }).format(day);
-    const { start, end } = bakuDayBounds(ymd);
-    const sameDayPackageCount = await prisma.procedureOrder.count({
-      where: {
-        patientRefId: body.patientRefId,
-        scheduledAt: { gte: start, lt: end },
-        status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
-        inPackage: true,
-      },
-    });
-    let forcePaidExtra = false;
-    if (sameDayPackageCount >= 3) {
-      if (!body.confirmPaidSameDay) {
-        return jsonError(
-          "Patient already has 3 package procedures on this date. Adding another is paid only. Confirm to post folio.",
-          409,
-          { code: "SAME_DAY_FOURTH_PAID", sameDayPackageCount },
-        );
-      }
-      forcePaidExtra = true;
-    }
 
     let amountNet = body.amountNet;
     if (amountNet == null) {
       const resolved = await resolveProcedureAmount(body.procedureCode);
       amountNet = resolved.amountNet;
     }
-    if (forcePaidExtra && (!amountNet || amountNet <= 0)) {
-      const resolved = await resolveProcedureAmount(body.procedureCode);
-      amountNet = resolved.amountNet > 0 ? resolved.amountNet : 25;
-    }
-
     const clinicalEpisodeId = await stampEpisodeOnCreate({
       patientRefId: body.patientRefId,
       reservationId: body.reservationId,
@@ -315,7 +286,7 @@ export async function POST(req: Request) {
         reservationId: body.reservationId,
         amountNet: amountNet ?? 0,
         inPackage: false,
-        bonusEligible: forcePaidExtra || (amountNet ?? 0) > 0,
+        bonusEligible: (amountNet ?? 0) > 0,
         manuallyAdjusted: true,
         status: "PROPOSED",
       },
@@ -332,30 +303,6 @@ export async function POST(req: Request) {
       await prisma.procedureOrder.delete({ where: { id: order.id } });
       const reason = seated.failures[0]?.reason ?? "no_slot";
       throw new SlotDecisionError(reason, SLOT_REASON_MESSAGE[reason]);
-    }
-
-    // Post folio for confirmed 4th same-day paid
-    if (forcePaidExtra && order.reservationId && (amountNet ?? 0) > 0) {
-      try {
-        const { postProcedureFolioCharge } = await import(
-          "@/domain/procedure/procedure-charge.service"
-        );
-        await postProcedureFolioCharge({
-          reservationId: order.reservationId,
-          amount: amountNet!,
-          description: `Same-day 4th+ procedure ${order.procedureName}`,
-          externalTicketId: `same-day-4-${order.id}`,
-          procedureCode: order.procedureCode,
-          qty: order.quantity,
-        });
-      } catch (err) {
-        await prisma.procedureOrder.delete({ where: { id: order.id } });
-        return jsonError(
-          err instanceof Error ? err.message : "Folio charge failed",
-          502,
-          { code: "FOLIO_CHARGE_FAILED" },
-        );
-      }
     }
 
     const seatedOrder = await prisma.procedureOrder.findUnique({

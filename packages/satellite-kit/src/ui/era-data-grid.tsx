@@ -49,6 +49,7 @@ export function EraDataGrid<T extends Record<string, unknown>>({
   layout = "flow",
   embedded = false,
   rowClassName,
+  cellClassName,
   onRowClick,
   onRowDoubleClick,
   page: controlledPage,
@@ -166,7 +167,7 @@ export function EraDataGrid<T extends Record<string, unknown>>({
                 aria-sort={
                   active ? (activeSort?.dir === "asc" ? "ascending" : "descending") : undefined
                 }
-                className={`${DATA_TABLE_TH_LEFT_CLASS} ${col.className ?? ""}`}
+                className={`${DATA_TABLE_TH_LEFT_CLASS} ${cellClassName ?? ""} ${col.className ?? ""}`}
               >
                 {sorting ? (
                   <button
@@ -219,7 +220,7 @@ export function EraDataGrid<T extends Record<string, unknown>>({
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`${DATA_TABLE_TD_CLASS} ${col.className ?? ""}`}
+                    className={`${DATA_TABLE_TD_CLASS} ${cellClassName ?? ""} ${col.className ?? ""}`}
                   >
                     {col.render ? col.render(row) : String(row[col.key] ?? "")}
                   </td>

@@ -13,6 +13,7 @@ import { evaluateAndPublishCapacity } from "@/lib/capacity.service";
 const schema = z.object({
   scheduledAt: z.string().datetime(),
   resourceId: z.string().optional(),
+  allowOtherDay: z.boolean().optional(),
 });
 
 export async function PATCH(
@@ -30,7 +31,7 @@ export async function PATCH(
       id,
       new Date(body.scheduledAt),
       { userId: session!.sub, canOverrideCheckIn: false },
-      { resourceId: body.resourceId },
+      { resourceId: body.resourceId, allowOtherDay: body.allowOtherDay },
     );
     void evaluateAndPublishCapacity().catch(() => null);
     return jsonOk(updated);

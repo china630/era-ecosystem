@@ -13,7 +13,7 @@ npm run test:design-regression:update
 
 **CI:** GitHub Actions `Design regression` runs smoke specs only (login + modal structure). Pixel compare is local — Linux CI fonts/Chrome differ from Windows goldens.
 
-Hotel/clinic bootstrap in that job must use `ERA_HOTEL_ORGANIZATION_ID` / `ERA_CLINIC_ORGANIZATION_ID` (see `.env.ci.example`). Fail-closed Prisma refuses a hotel seed write of `nafta-sanatorium-org` when tenant context is `ERA_BANK_ORGANIZATION_ID`.
+Hotel/clinic bootstrap in that job must use `ERA_HOTEL_ORGANIZATION_ID` / `ERA_CLINIC_ORGANIZATION_ID` (see `.env.ci.example`). Fail-closed Prisma refuses a hotel seed write of `nafta-sanatorium-org` when tenant context is a bank org.
 
 Expected files:
 

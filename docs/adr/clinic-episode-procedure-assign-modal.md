@@ -72,7 +72,7 @@ Single modal; **no nested second modal**.
 - Quantity **≠** one schedule card: `qty = N` means **N sessions**, planner spreads them (see D5).
 - Right column shows **aggregates** (`Ozone ×7`); schedule zone on the card shows **per-slot cards**.
 - Qty edits (+/−) and leftover drafts merge onto the same SKU card. Distinct physio params still appear as stacked lines on that card rather than splitting cards.
-- Placement times are **automatic** (FIFO / incremental engine). No slot picker in the doctor form in this slice.
+- Placement times are **automatic** (FIFO / incremental engine). Saxla seats **new** modal lines in add order (first row first); already `SCHEDULED` rows stay. A new in-package SKU past **that block's** daily distinct cap is `day_full`, not `no_staff`. Paid extras skip that cap. No slot picker in the doctor form in this slice.
 
 ### D4 — Lazy assign replaces package pre-expand (amends CLI-31 UX)
 
@@ -85,18 +85,20 @@ For **in-package** treatment lines:
    `R = quotaTotal − consumed − in_circulation`  
    where **consumed** ≈ COMPLETED (and any status product treats as burned), **in_circulation** ≈ committed non-completed scheduled/checked-in (and draft reserved only inside an open modal session). Exact status→bucket mapping is an implementation detail; product rule is: left never double-sells the same unit.
 
-**Day-1 auto (replaces “confirm 2–3 from a long PROPOSED list” as the happy path):**
+**Day-1 auto is removed (2026-10-19).** The package opens after the therapist stage. There is no separate “fill today” button.
 
-- A dedicated control (button/trigger), not silent on every open: schedule up to **N distinct procedure codes** from the package in **standard** field defaults, then place. **N** = `Tenant.dailyPackageProcedureCap` (default 3; `/admin/settings`).
-- Soft-warn spirit of CLI-52 remains; do not hard-block larger manual batches without product revisit.
-- Exam/intake sorting rules stay relevant only where intake still produces proposed/scheduled clinical exams — not mixed into this package menu (out of scope).
+**Daily cap lives on the package block (2026-10-19), not on Tenant:**
+
+- `ProgramTemplateProcedure.dailyDistinctCap` (1–12). Empty uses the family default: physio **3**, bath **1**, paraffin **1**. Lab and exam are uncapped.
+- SatAdmin sets it on `/admin/program-templates`. The entitlement snapshot stores the same field for the open stay.
+- A bath or paraffin **Əvəz et** writes `XFER-{predecessor}--{sku}` and spends the **predecessor** block's daily cap.
 
 ### D5 — Stay ↔ burn sync (max one per category per day)
 
 Planner constraint for package (and default for extras unless overridden later):
 
 - **At most one session per procedure code (category) per calendar day** (Asia/Baku) for the episode.
-- **Daily in-package cap:** at most **N distinct in-package procedure codes** on a Baku day (`Tenant.dailyPackageProcedureCap`, default **3**, clinic `/admin/settings`, clamp 1–12). Paid extras (`inPackage: false`) do **not** count toward N and may still land today. Remainder of a large package Save starts on the **next work morning**, not from the last historical slot (avoids weekend “day after tomorrow” cursor). Same-code collision jumps the **whole next work day**, not +5 minutes.
+- **Daily in-package cap:** distinct in-package SKUs **of that block** on a Baku day (`dailyDistinctCap`; empty physio 3 / bath 1 / paraffin 1). Paid extras (`inPackage: false`) do **not** count and may still land today. Remainder of a large package Save starts on the **next work morning**, not from the last historical slot (avoids weekend “day after tomorrow” cursor). Same-code collision jumps the **whole next work day**, not +5 minutes.
 
 Consequences:
 
@@ -159,7 +161,7 @@ Walk-in (no room reservation)
 #### Same pipeline candidates
 
 - True **à la carte** extras (extras modal → `PENDING_PAY` → Pay).
-- **Over-quota / 4th same-day** (any package code count ≥3 that day): reception **Procedures → Add paid (same-day)** → `409 SAME_DAY_FOURTH_PAID` → confirm → folio post, `inPackage: false` (does **not** burn package quota). Do not treat as free in-quota.
+- **Paid extra** (no remaining package quota): reception or the extras modal posts `inPackage: false`. It does not use the block daily cap and does not burn package quota. Completing a seated in-package line does not flip it to paid because the day already holds other package SKUs.
 
 #### Nurse gate
 

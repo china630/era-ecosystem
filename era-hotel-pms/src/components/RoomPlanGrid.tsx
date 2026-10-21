@@ -1,6 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 import { ColorLegend } from '@era/satellite-kit/ui';
@@ -26,11 +35,38 @@ import {
   type PlanBarDayState,
   type PlanBarOccupancyKind,
 } from '@/components/room-plan/plan-bar-theme';
+import { commitPlanGesture, type PlanGestureResult } from '@/components/room-plan/plan-gesture';
 import type {
   RoomPlanGroup,
   RoomPlanReservationBar,
   RoomPlanRoom,
 } from '@/components/room-plan/types';
+
+export type { PlanGestureResult };
+
+type PlanDragSession = {
+  reservationId: string;
+  status: string;
+  mode: 'move' | 'start' | 'end' | 'assign';
+  fromRoomId: string | null;
+  checkIn: string;
+  checkOut: string;
+  /** Column under the pointer when the drag started. */
+  startCol: number;
+  /** Left column of the bar, independent of where the pointer grabbed it. */
+  barCol: number;
+  barSpan: number;
+  lastCol: number;
+  lastRoomId: string | null;
+  x: number;
+  y: number;
+};
+
+function columnAt(clientX: number, row: HTMLElement, dayCount: number): number {
+  const rect = row.getBoundingClientRect();
+  const width = rect.width / dayCount;
+  return Math.max(0, Math.min(dayCount - 1, Math.floor((clientX - rect.left) / Math.max(width, 1))));
+}
 
 export type {
   ReservationStatus,
@@ -186,8 +222,10 @@ function TimelineCells({
   todayIndex,
   onHover,
   onSelect,
-  onResizeEnd,
-  onMoveReservation,
+  onOpen,
+  beginDrag,
+  swallowClick,
+  preview,
 }: {
   from: Date;
   days: number;
@@ -198,8 +236,10 @@ function TimelineCells({
   todayIndex: number | null;
   onHover: (dayIndex: number | null, clientX: number, clientY: number) => void;
   onSelect: (id: string | null) => void;
-  onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
-  onMoveReservation?: (reservationId: string, toRoomId: string) => void;
+  onOpen: (id: string) => void;
+  beginDrag: (session: PlanDragSession) => void;
+  swallowClick: MutableRefObject<boolean>;
+  preview: { roomId: string; leftPct: number; widthPct: number } | null;
 }) {
   const placed = computePlacedBars(from, days, roomBars);
   const dayBg = 'bg-white';
@@ -225,17 +265,7 @@ function TimelineCells({
         onHover(idx, e.clientX, e.clientY);
       }}
       onMouseLeave={() => onHover(null, 0, 0)}
-      onDragOver={(e) => {
-        if (!onMoveReservation) return;
-        e.preventDefault();
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        const resId = e.dataTransfer.getData('reservationId');
-        if (!resId || !onMoveReservation) return;
-        if (roomBars.some((bar) => bar.id === resId)) return;
-        onMoveReservation(resId, room.id);
-      }}
+      data-plan-room={room.id}
     >
       <div
         className="grid h-full w-full"
@@ -286,35 +316,44 @@ function TimelineCells({
               bar={bar}
               shape={cell.shape}
               selected={selectedId === bar.id}
-              draggable={!bar.barKey && Boolean(onResizeEnd || onMoveReservation)}
               roomBars={roomBars}
-              onSelect={() => onSelect(bar.id)}
-              onDragStart={(e) => {
-                if (bar.barKey || (!onMoveReservation && !onResizeEnd)) return;
-                e.dataTransfer.setData('reservationId', bar.id);
-              }}
-              onDragEnd={(e) => {
-                if (bar.barKey || !onResizeEnd) return;
-                const row = e.currentTarget.parentElement?.parentElement;
-                if (!row) return;
-                const rect = row.getBoundingClientRect();
-                const relX = e.clientX - rect.left;
-                const dayWidth = rect.width / days;
-                const endCol = Math.min(
-                  days,
-                  Math.max(cell.colStart + 1, Math.round(relX / Math.max(dayWidth, 1))),
-                );
-                const extraNights = endCol - cell.colStart - cell.span;
-                if (extraNights > 0) {
-                  const co = parseCalendarDate(bar.checkOutDate);
-                  co.setDate(co.getDate() + extraNights);
-                  onResizeEnd(bar.id, co.toISOString());
+              onSelect={() => {
+                if (swallowClick.current) {
+                  swallowClick.current = false;
+                  return;
                 }
+                onSelect(bar.id);
+              }}
+              onOpen={() => onOpen(bar.id)}
+              onPointerDown={(event, mode) => {
+                const row = event.currentTarget.closest('[data-plan-room]') as HTMLElement | null;
+                const startCol = row ? columnAt(event.clientX, row, days) : cell.colStart;
+                beginDrag({
+                  reservationId: bar.id,
+                  status: bar.status,
+                  mode,
+                  fromRoomId: room.id,
+                  checkIn: bar.checkInDate,
+                  checkOut: bar.checkOutDate,
+                  startCol,
+                  barCol: cell.colStart,
+                  barSpan: cell.span,
+                  lastCol: startCol,
+                  lastRoomId: room.id,
+                  x: event.clientX,
+                  y: event.clientY,
+                });
               }}
             />
           </div>
         );
       })}
+      {preview && preview.roomId === room.id ? (
+        <div
+          className="pointer-events-none absolute z-[3] rounded-sm bg-[#2980B9]/30"
+          style={{ left: `${preview.leftPct}%`, width: `${preview.widthPct}%`, top: 4, height: 26 }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -330,8 +369,10 @@ function RoomRow({
   todayIndex,
   onHover,
   onSelect,
-  onResizeEnd,
-  onMoveReservation,
+  onOpen,
+  beginDrag,
+  swallowClick,
+  preview,
 }: {
   from: Date;
   days: number;
@@ -343,8 +384,10 @@ function RoomRow({
   todayIndex: number | null;
   onHover: (dayIndex: number | null, clientX: number, clientY: number) => void;
   onSelect: (id: string | null) => void;
-  onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
-  onMoveReservation?: (reservationId: string, toRoomId: string) => void;
+  onOpen: (id: string) => void;
+  beginDrag: (session: PlanDragSession) => void;
+  swallowClick: MutableRefObject<boolean>;
+  preview: { roomId: string; leftPct: number; widthPct: number } | null;
 }) {
   const roomBars = barsByRoom.get(room.id) ?? [];
   const rowHeight = rowHeightForRoom(room, roomBars);
@@ -365,43 +408,163 @@ function RoomRow({
         todayIndex={todayIndex}
         onHover={onHover}
         onSelect={onSelect}
-        onResizeEnd={onResizeEnd}
-        onMoveReservation={onMoveReservation}
+        onOpen={onOpen}
+        beginDrag={beginDrag}
+        swallowClick={swallowClick}
+        preview={preview}
       />
     </>
   );
 }
 
-export default function RoomPlanGrid({
-  fromIso,
-  days,
-  rooms,
-  reservations,
-  availabilityByDay,
-  groups,
-  selectedId,
-  onSelect,
-  onResizeEnd,
-  onMoveReservation,
-  fillViewport = false,
-}: {
-  fromIso: string;
-  days: number;
-  rooms: RoomPlanRoom[];
-  reservations: RoomPlanReservationBar[];
-  availabilityByDay?: Record<string, number>;
-  groups?: RoomPlanGroup[];
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
-  onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
-  onMoveReservation?: (reservationId: string, toRoomId: string) => void;
-  /** When true, grid fills parent height (fullscreen) instead of capping at ~70vh. */
-  fillViewport?: boolean;
-}) {
+export type RoomPlanGridHandle = {
+  beginAssign: (stay: {
+    id: string;
+    status: string;
+    checkInDate: string;
+    checkOutDate: string;
+  }, event: { clientX: number; clientY: number }) => void;
+};
+
+const RoomPlanGrid = forwardRef<
+  RoomPlanGridHandle,
+  {
+    fromIso: string;
+    days: number;
+    rooms: RoomPlanRoom[];
+    reservations: RoomPlanReservationBar[];
+    availabilityByDay?: Record<string, number>;
+    groups?: RoomPlanGroup[];
+    selectedId: string | null;
+    onSelect: (id: string | null) => void;
+    onOpenReservation?: (id: string) => void;
+    onPlanDrop?: (result: PlanGestureResult) => void;
+    fillViewport?: boolean;
+  }
+>(function RoomPlanGrid(
+  {
+    fromIso,
+    days,
+    rooms,
+    reservations,
+    availabilityByDay,
+    groups,
+    selectedId,
+    onSelect,
+    onOpenReservation,
+    onPlanDrop,
+    fillViewport = false,
+  },
+  ref,
+) {
   const t = useTranslations('roomPlan');
   const locale = useLocale();
   const from = useMemo(() => parseCalendarDate(fromIso), [fromIso]);
   const [hover, setHover] = useState<HoverCell | null>(null);
+  const dragRef = useRef<PlanDragSession | null>(null);
+  const movedRef = useRef(false);
+  const [preview, setPreview] = useState<{ roomId: string; leftPct: number; widthPct: number } | null>(null);
+
+  const beginDrag = useCallback((session: PlanDragSession) => {
+    dragRef.current = session;
+    movedRef.current = false;
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    beginAssign(stay, event) {
+      const nights = Math.max(
+        1,
+        Math.round(
+          (parseCalendarDate(stay.checkOutDate).getTime() - parseCalendarDate(stay.checkInDate).getTime()) /
+            86400000,
+        ),
+      );
+      beginDrag({
+        reservationId: stay.id,
+        status: stay.status,
+        mode: 'assign',
+        fromRoomId: null,
+        checkIn: stay.checkInDate,
+        checkOut: stay.checkOutDate,
+        startCol: 0,
+        barCol: 0,
+        barSpan: nights,
+        lastCol: 0,
+        lastRoomId: null,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+  }), [beginDrag]);
+
+  useEffect(() => {
+    function onMove(event: PointerEvent) {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (Math.abs(event.clientX - drag.x) + Math.abs(event.clientY - drag.y) < 6) return;
+      movedRef.current = true;
+      const row = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-plan-room]') as HTMLElement | null;
+      if (!row) {
+        setPreview(null);
+        return;
+      }
+      const roomId = row.getAttribute('data-plan-room') ?? '';
+      const col = columnAt(event.clientX, row, days);
+      drag.lastCol = col;
+      drag.lastRoomId = roomId;
+      const delta = drag.mode === 'assign' ? 0 : col - drag.startCol;
+      const inHouse = drag.status === 'IN_HOUSE';
+      const holdDates = inHouse && (drag.mode === 'move' || drag.mode === 'start');
+      let start = drag.barCol;
+      let span = drag.barSpan;
+      if (drag.mode === 'assign') {
+        start = col;
+        span = drag.barSpan;
+      } else if (!holdDates && drag.mode === 'end') {
+        span = Math.max(1, drag.barSpan + delta);
+      } else if (!holdDates && drag.mode === 'start') {
+        span = Math.max(1, drag.barSpan - delta);
+        start = drag.barCol + drag.barSpan - span;
+      } else if (!holdDates) {
+        start = drag.barCol + delta;
+      }
+      setPreview({
+        roomId,
+        leftPct: (Math.max(0, start) / days) * 100,
+        widthPct: (Math.max(1, span) / days) * 100,
+      });
+    }
+    function onUp(event: PointerEvent) {
+      const drag = dragRef.current;
+      dragRef.current = null;
+      setPreview(null);
+      if (!drag || !movedRef.current) return;
+      movedRef.current = true;
+      const row = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-plan-room]') as HTMLElement | null;
+      const roomId = row?.getAttribute('data-plan-room') ?? drag.lastRoomId;
+      const col = row ? columnAt(event.clientX, row, days) : drag.lastCol;
+      const gridFrom = parseCalendarDate(fromIso);
+      gridFrom.setUTCDate(gridFrom.getUTCDate() + col);
+      const result = commitPlanGesture({
+        reservationId: drag.reservationId,
+        status: drag.status,
+        mode: drag.mode,
+        deltaDays: col - drag.startCol,
+        fromRoomId: drag.fromRoomId,
+        toRoomId: roomId,
+        checkIn: drag.checkIn,
+        checkOut: drag.checkOut,
+        assignCheckIn: drag.mode === 'assign' ? gridFrom.toISOString() : null,
+      });
+      if (result.kind !== 'noop') onPlanDrop?.(result);
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, [days, fromIso, onPlanDrop]);
 
   const dateHeaders = useMemo(() => {
     const base = parseCalendarDate(fromIso);
@@ -503,8 +666,10 @@ export default function RoomPlanGrid({
             });
           }}
           onSelect={onSelect}
-          onResizeEnd={onResizeEnd}
-          onMoveReservation={onMoveReservation}
+          onOpen={(id) => onOpenReservation?.(id)}
+          beginDrag={beginDrag}
+          swallowClick={movedRef}
+          preview={preview}
         />
       </div>
     ));
@@ -623,4 +788,6 @@ export default function RoomPlanGrid({
         : null}
     </div>
   );
-}
+});
+
+export default RoomPlanGrid;
