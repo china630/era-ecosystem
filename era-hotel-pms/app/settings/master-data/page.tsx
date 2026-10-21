@@ -73,6 +73,7 @@ interface DictRow extends RetireRow {
   code: string;
   name: string;
   systemType?: string | null;
+  department?: { code: string } | null;
 }
 
 interface RatePlan extends RetireRow {
@@ -93,6 +94,8 @@ interface RevenueCode extends RetireRow {
   code: string;
   name: string;
   taxTag?: string | null;
+  departmentId?: string | null;
+  department?: { id: string; code: string; name: string } | null;
   routingRule?: { targetFolioType: string } | null;
 }
 
@@ -220,6 +223,8 @@ export default function MasterDataPage() {
   const [editRatePlan, setEditRatePlan] = useState<RatePlan | null>(null);
   const [ratePlanModalOpen, setRatePlanModalOpen] = useState(false);
   const [editRevenueCode, setEditRevenueCode] = useState<RevenueCode | null>(null);
+  const [departments, setDepartments] = useState<{ id: string; code: string; name: string }[]>([]);
+  const [revenueDepartmentId, setRevenueDepartmentId] = useState('');
   const [revenueCodeModalOpen, setRevenueCodeModalOpen] = useState(false);
   const [editBedType, setEditBedType] = useState<DictRow | null>(null);
   const [bedTypeModalOpen, setBedTypeModalOpen] = useState(false);
@@ -229,14 +234,16 @@ export default function MasterDataPage() {
   const [roomModalOpen, setRoomModalOpen] = useState(false);
 
   async function load() {
-    const [rt, rm, rp, rc, bt, rv] = await Promise.all([
+    const [rt, rm, rp, rc, bt, rv, deps] = await Promise.all([
       fetch('/api/master/room-types').then((r) => r.json()),
       fetch('/api/rooms?scope=master').then((r) => r.json()),
       fetch('/api/master/rate-plans').then((r) => r.json()),
       fetch('/api/master/revenue-codes').then((r) => r.json()),
       fetch('/api/master/bed-types').then((r) => r.json()),
       fetch('/api/master/room-views').then((r) => r.json()),
+      fetch('/api/master/departments').then((r) => r.json()),
     ]);
+    if (Array.isArray(deps)) setDepartments(deps);
     setRoomTypes(rt);
     setRooms(rm);
     setRatePlans(rp);
@@ -347,7 +354,9 @@ export default function MasterDataPage() {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
+                <td className={DATA_TABLE_TD_CLASS}>
+                  {row.department?.code ? `${row.department.code} · ${row.code}` : row.code}
+                </td>
                 <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(row, locale)}</td>
                 {extraCol && <td className={DATA_TABLE_TD_CLASS}>{extraCol(row) ?? '—'}</td>}
                 <td className={DATA_TABLE_TD_CLASS}>
@@ -415,6 +424,7 @@ export default function MasterDataPage() {
               className={PRIMARY_BUTTON_CLASS}
               onClick={() => {
                 setEditRevenueCode(null);
+                setRevenueDepartmentId('');
                 setRevenueCodeModalOpen(true);
               }}
             >
@@ -424,7 +434,9 @@ export default function MasterDataPage() {
           </div>
         </div>
         {dictTable(filteredRevenueCodes, (row) => {
-          setEditRevenueCode(row);
+          const code = row as RevenueCode;
+          setEditRevenueCode(code);
+          setRevenueDepartmentId(code.departmentId ?? code.department?.id ?? '');
           setRevenueCodeModalOpen(true);
         })}
       </section>
@@ -1098,12 +1110,18 @@ export default function MasterDataPage() {
             e.preventDefault();
             setBusy(true);
             const fd = new FormData(e.currentTarget);
+            if (!revenueDepartmentId) {
+              setBusy(false);
+              showApiError({ error: t('departmentRequired') }, tc('error'));
+              return;
+            }
             const folioType = (fd.get('folioType') as string) || null;
             const body = editRevenueCode
               ? {
                   name: fd.get('name'),
                   ...localizedNamesFromForm(fd),
                   taxTag: (fd.get('taxTag') as string) || null,
+                  departmentId: revenueDepartmentId,
                   targetFolioType: folioType,
                   active: fd.get('active') === 'on',
                 }
@@ -1112,6 +1130,7 @@ export default function MasterDataPage() {
                   name: fd.get('name'),
                   ...localizedNamesFromForm(fd),
                   taxTag: (fd.get('taxTag') as string) || undefined,
+                  departmentId: revenueDepartmentId,
                   targetFolioType: folioType || undefined,
                 };
             const res = await fetch(
@@ -1157,6 +1176,13 @@ export default function MasterDataPage() {
             required
           />
           <LocalizedNameFields idPrefix="rc" row={editRevenueCode} />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('department')}
+            value={revenueDepartmentId}
+            onChange={(value) => setRevenueDepartmentId(String(value ?? ''))}
+            options={departments.map((row) => ({ value: row.id, label: `${row.code} · ${row.name}` }))}
+          />
           <FieldRow cols={2}>
             <Field
               label={t('taxTag')}

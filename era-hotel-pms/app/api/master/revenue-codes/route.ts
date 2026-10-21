@@ -12,7 +12,7 @@ const schema = z.object({
   name: z.string().min(1),
   ...localizedNameFields,
   taxTag: z.string().optional(),
-  departmentId: z.string().uuid().optional(),
+  departmentId: z.string().uuid(),
   targetFolioType: z.enum(['GUEST', 'COMPANY', 'AGENCY']).optional(),
 });
 

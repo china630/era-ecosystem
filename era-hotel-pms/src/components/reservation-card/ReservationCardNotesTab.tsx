@@ -3,10 +3,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
-  CHIP_GROUP_CLASS,
   FieldTextarea,
+  FilterChips,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
@@ -95,21 +93,16 @@ export function ReservationCardNotesTab({
 
   return (
     <div className="space-y-3" data-testid="reservation-notes-tab">
-      <div className={CHIP_GROUP_CLASS} role="tablist" aria-label={t('notesFilter')}>
-        {(['all', 'fo', 'hk', 'billing'] as NoteDept[]).map((d) => (
-          <button
-            key={d}
-            type="button"
-            role="tab"
-            aria-selected={dept === d}
-            className={dept === d ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-            data-testid={`notes-dept-${d}`}
-            onClick={() => setDept(d)}
-          >
-            {t(`notesDept.${d}`)}
-          </button>
-        ))}
-      </div>
+      <FilterChips
+        ariaLabel={t('notesFilter')}
+        value={dept}
+        onChange={(id) => setDept(id as NoteDept)}
+        items={(['all', 'fo', 'hk', 'billing'] as NoteDept[]).map((d) => ({
+          id: d,
+          label: t(`notesDept.${d}`),
+          testId: `notes-dept-${d}`,
+        }))}
+      />
 
       <ul className="m-0 list-none space-y-2 p-0">
         {filled.map((row) => (

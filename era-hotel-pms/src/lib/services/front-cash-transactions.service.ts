@@ -18,7 +18,7 @@ export async function listFrontCashJournal(opts: {
     ? await prisma.cashShift.findUnique({ where: { id: opts.cashShiftId } })
     : null;
 
-  const paymentWhere =
+  const shiftWindow =
     selectedShift != null
       ? {
           createdAt: {
@@ -26,7 +26,12 @@ export async function listFrontCashJournal(opts: {
             ...(selectedShift.closedAt ? { lte: selectedShift.closedAt } : {}),
           },
         }
-      : { createdAt: { gte: from, lt: toExclusive } };
+      : null;
+  const paymentWhere = shiftWindow ?? {
+    businessDate: { gte: from, lt: toExclusive },
+    voidedAt: null,
+  };
+  const postedWhere = shiftWindow ?? { businessDate: { gte: from, lt: toExclusive } };
 
   const [payments, debtPayments, deposits, openShift, recentShifts, pendingSummary, pendingRows, paidRows, departments] =
     await Promise.all([
@@ -55,17 +60,14 @@ export async function listFrontCashJournal(opts: {
       take: 500,
     }),
     prisma.guestDebtPayment.findMany({
-      where: paymentWhere,
+      where: postedWhere,
       orderBy: { createdAt: 'desc' },
       take: 300,
       include: { entry: { select: { note: true, reservationId: true } } },
     }),
     prisma.folioDeposit.findMany({
       where: {
-        OR: [
-          { heldAt: { gte: from, lt: toExclusive } },
-          { status: 'HELD' },
-        ],
+        businessDate: { gte: from, lt: toExclusive },
       },
       include: {
         reservation: {
@@ -94,11 +96,11 @@ export async function listFrontCashJournal(opts: {
       take: 50,
     }),
     prisma.settlementPendingCharge.findMany({
-      where: { status: 'PAID', paidAt: { gte: from, lt: toExclusive } },
+      where: { status: 'PAID', businessDate: { gte: from, lt: toExclusive } },
       orderBy: { paidAt: 'desc' },
       take: 300,
     }),
-    prisma.department.findMany({ select: { code: true, name: true } }),
+    prisma.department.findMany({ select: { code: true, name: true, cashPoint: true } }),
   ]);
 
   const cashierIds = [
@@ -115,6 +117,8 @@ export async function listFrontCashJournal(opts: {
       })
     : [];
   const cashierNames = new Map(cashiers.map((user) => [user.id, user.fullName]));
+  const hotelDrawer = departments.find((row) => row.cashPoint === 'HOTEL');
+  const hotelCode = hotelDrawer?.code ?? 'HOTEL';
 
   const paymentRows: Array<{
     id: string;
@@ -160,7 +164,7 @@ export async function listFrontCashJournal(opts: {
     surname: p.folio.reservation?.guest.lastName ?? null,
     roomNumber: p.folio.reservation?.room?.roomNumber ?? null,
     agencyName: p.folio.reservation?.agency?.name ?? p.folio.reservation?.agency?.code ?? null,
-    departmentCode: 'RECEPTION',
+    departmentCode: hotelCode,
     currency: 'AZN',
     rate: 1,
     note: p.refundReason || p.bankReference || null,
@@ -202,7 +206,7 @@ export async function listFrontCashJournal(opts: {
       surname: stay?.guest.lastName ?? null,
       roomNumber: stay?.room?.roomNumber ?? null,
       agencyName: stay?.agency?.name ?? stay?.agency?.code ?? null,
-      departmentCode: 'RECEPTION',
+      departmentCode: hotelCode,
       currency: 'AZN',
       rate: 1,
       note: row.entry.note,
@@ -210,7 +214,7 @@ export async function listFrontCashJournal(opts: {
   }
 
   const departmentName = new Map(departments.map((row) => [row.code, row.name]));
-  if (!departmentName.has('RECEPTION')) departmentName.set('RECEPTION', 'RECEPTION');
+  if (!departmentName.has(hotelCode)) departmentName.set(hotelCode, hotelDrawer?.name ?? hotelCode);
   for (const row of paidRows) {
     paymentRows.push({
       id: row.id,

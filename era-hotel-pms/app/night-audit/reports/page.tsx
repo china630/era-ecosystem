@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { getReportBySlug, reportHref } from '@/lib/reports/catalog';
 
-function todayIso() {
+function wallClock() {
   return hotelDateKey();
 }
 
@@ -46,7 +46,24 @@ export default function NightAuditReportsHubPage() {
   const t = useTranslations('nightAudit');
   const locale = useLocale();
   const tc = useTranslations('common');
-  const [date, setDate] = useState(todayIso);
+  const [businessDate, setBusinessDate] = useState('');
+  const [date, setDate] = useState('');
+
+  useEffect(() => {
+    void fetch('/api/night-audit/status')
+      .then((res) => res.json())
+      .then((data) => {
+        const key = data?.businessDate?.currentBusinessDate;
+        const next = typeof key === 'string' && key ? key : wallClock();
+        setBusinessDate(next);
+        setDate(next);
+      })
+      .catch(() => {
+        const next = wallClock();
+        setBusinessDate(next);
+        setDate(next);
+      });
+  }, []);
 
   const reports: ReportDef[] = useMemo(
     () => [
@@ -166,7 +183,7 @@ export default function NightAuditReportsHubPage() {
           .map((r) => (
             <li key={r.code}>
               <Link
-                href={r.href(date)}
+                href={date ? r.href(date) : '#'}
                 className="text-[#2980B9] hover:underline"
               >
                 {r.code} — {t(r.labelKey)}
@@ -192,6 +209,7 @@ export default function NightAuditReportsHubPage() {
   return (
     <>
       <PageHeader title={t('reportsTitle')} subtitle={t('reportsSubtitle')} />
+      {!date ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{tc('loading')}</p> : null}
       <section className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
         <h2 className="mb-2 text-[13px] font-semibold text-[#2C3E50]">
           Report Pack (PDF)
@@ -205,7 +223,8 @@ export default function NightAuditReportsHubPage() {
             return (
             <Link
               key={p.slug}
-              href={href}
+              href={date ? href : '#'}
+              aria-disabled={!date}
               className="rounded bg-[#ECF0F1] px-2 py-1 text-[12px] text-[#2980B9] hover:bg-[#D5DBDB]"
             >
               {p.label}
@@ -213,7 +232,7 @@ export default function NightAuditReportsHubPage() {
             );
           })}
           <Link
-            href={`/api/reports/pack/download?businessDate=${date}&lang=${locale}`}
+            href={date ? `/api/reports/pack/download?businessDate=${date}&lang=${locale}` : '#'}
             className="rounded bg-[#2980B9] px-3 py-1 text-[12px] font-medium text-white hover:bg-[#2471A3]"
           >
             ⬇ Download ZIP
@@ -222,7 +241,7 @@ export default function NightAuditReportsHubPage() {
       </section>
       <EraListFilterBar
         resetLabel={tc('filterReset')}
-        onReset={() => setDate(todayIso())}
+        onReset={() => setDate(businessDate || wallClock())}
       >
         <DatePicker
           label={tc('date')}

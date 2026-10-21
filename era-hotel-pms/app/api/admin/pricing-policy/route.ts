@@ -22,6 +22,12 @@ const patchSchema = z.object({
     .enum(['BLOCK_CHECKOUT', 'DEFER_HANDOFF', 'AUTO_CREATE'])
     .optional(),
   yearEndBlockIfOpenCityLedger: z.boolean().optional(),
+  stopIfZeroNightPrice: z.boolean().optional(),
+  autoNoShow: z.boolean().optional(),
+  stopIfGuestFolioBalance: z.boolean().optional(),
+  autoExtendUndeparted: z.boolean().optional(),
+  checkCheckedOutFolios: z.boolean().optional(),
+  cancelRoomChangePlans: z.boolean().optional(),
   agencyPortalAutoConfirm: z.boolean().optional(),
   agencyPortalOptionHoldHours: z.number().int().min(1).max(720).optional(),
 });

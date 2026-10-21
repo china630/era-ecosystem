@@ -1,22 +1,25 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import {
-  CatalogField,
-  CHIP_ACTIVE_CLASS,
-  CHIP_CLASS,
-  CHIP_GROUP_CLASS,
   DANGER_BUTTON_CLASS,
+  Field,
+  FilterChips,
   FxEquivalentBadge,
   GHOST_BUTTON_CLASS,
   MODAL_CHECKBOX_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
+  showApiError,
+  showSuccess,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { FolioChargeModal } from '@/components/folio/FolioChargeModal';
@@ -50,6 +53,9 @@ export type FolioAccount = {
     qty?: number | null;
     description?: string;
     businessDate?: string;
+    createdAt?: string;
+    adjustsChargeId?: string | null;
+    adjustmentReason?: string | null;
     paxNo?: number | null;
     invoiceRef?: string | null;
     revenueCode?: {
@@ -66,6 +72,8 @@ export type FolioAccount = {
     amount: number | string;
     paymentMethod: string;
     kind?: string | null;
+    businessDate?: string;
+    createdAt?: string;
     voidedAt?: string | null;
     voidReason?: string | null;
     refundReason?: string | null;
@@ -82,6 +90,10 @@ type LedgerRow = Record<string, unknown> & {
   description: string;
   code: string;
   amount: number;
+  when: string;
+  rowNo?: number;
+  adjustsChargeId?: string | null;
+  adjustmentReason?: string | null;
   paxNo?: number | null;
   chargeId?: string;
   paymentId?: string;
@@ -186,6 +198,13 @@ export function ReservationCardFolioTab({
   const [missedOpen, setMissedOpen] = useState(false);
   const [folioFocus, setFolioFocus] = useState<string>('all');
   const [articleFilter, setArticleFilter] = useState('all');
+  const [lineKind, setLineKind] = useState<'all' | 'charge' | 'payment'>('all');
+  const [folioQuery, setFolioQuery] = useState('');
+  const [adjustCharge, setAdjustCharge] = useState<{ id: string; description: string } | null>(null);
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
+  const [adjustBusy, setAdjustBusy] = useState(false);
+  const [slip, setSlip] = useState<LedgerRow | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const namedPax = useMemo(
@@ -210,9 +229,6 @@ export function ReservationCardFolioTab({
   const ledger = useMemo(() => {
     const rows: LedgerRow[] = [];
     for (const folio of accounts) {
-      if (folioTab === 'guest' && folio.type !== 'GUEST') continue;
-      if (folioTab === 'agency' && folio.type !== 'AGENCY') continue;
-      if (folioTab === 'company' && folio.type !== 'COMPANY') continue;
       const refunded = new Map<string, number>();
       for (const payment of folio.payments ?? []) {
         if (payment.voidedAt || payment.kind !== 'REFUND' || !payment.refundOfPaymentId) continue;
@@ -226,17 +242,27 @@ export function ReservationCardFolioTab({
         const note = displayRoomChargeNote(raw, (kind, date) =>
           kind === 'night-audit' ? tf('nightAuditNote', { date }) : tf('manualRoomNote', { date }),
         );
+        const received = (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
+          ? ` · ${tf('serviceReceived')}`
+          : '';
+        const cityLine =
+          raw === 'City ledger agency'
+            ? tf('cityLedgerAgency')
+            : raw === 'City ledger company'
+              ? tf('cityLedgerCompany')
+              : note;
         rows.push({
           id: charge.id,
           folioId: folio.id,
           folioType: folio.type,
           folioStatus: folio.status,
           kind: 'charge',
-          description: (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
-            ? `${note} · received`
-            : note,
+          description: `${cityLine}${received}`,
           code: revenueLabel(charge.revenueCode, locale),
           amount: Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)),
+          when: charge.businessDate ? charge.businessDate.slice(0, 10) : '—',
+          adjustsChargeId: charge.adjustsChargeId,
+          adjustmentReason: charge.adjustmentReason,
           paxNo: charge.paxNo,
           chargeId: charge.id,
         });
@@ -254,6 +280,11 @@ export function ReservationCardFolioTab({
           description: payment.kind === 'REFUND' ? tf('refund') : tf('ledgerPayment'),
           code: tPay(payment.paymentMethod as 'CASH'),
           amount: payment.kind === 'REFUND' ? Number(payment.amount) : -Number(payment.amount),
+          when: payment.createdAt
+            ? bakuDateTimeDisplay(payment.createdAt)
+            : payment.businessDate
+              ? payment.businessDate.slice(0, 10)
+              : '—',
           paymentId: payment.id,
           paymentKind: payment.kind,
           refundable: payment.kind !== 'REFUND' && refundMax > 0.01,
@@ -262,7 +293,7 @@ export function ReservationCardFolioTab({
       }
     }
     return rows;
-  }, [accounts, folioTab, locale, tPay, tf]);
+  }, [accounts, locale, tPay, tf]);
 
   const deletedRows = useMemo(() => {
     const rows: LedgerRow[] = [];
@@ -278,6 +309,7 @@ export function ReservationCardFolioTab({
           description: payment.voidReason?.trim() || tf('deletePayment'),
           code: payment.paymentMethod,
           amount: -Number(payment.amount),
+          when: payment.createdAt ? bakuDateTimeDisplay(payment.createdAt) : '—',
           paymentId: payment.id,
           paymentKind: payment.kind,
           voidedAt: payment.voidedAt,
@@ -307,15 +339,46 @@ export function ReservationCardFolioTab({
   const articleOptions = useMemo(() => {
     const seen = new Map<string, string>();
     for (const row of visibleRows) {
+      if (row.kind !== 'charge') continue;
       if (row.code && row.code !== '—') seen.set(row.code, row.code);
     }
     return Array.from(seen.entries()).map(([value, label]) => ({ value, label }));
   }, [visibleRows]);
 
   const filteredRows = useMemo(() => {
-    if (articleFilter === 'all') return visibleRows;
-    return visibleRows.filter((row) => row.code === articleFilter);
-  }, [articleFilter, visibleRows]);
+    const needle = folioQuery.trim().toLowerCase();
+    return visibleRows.filter((row) => {
+      if (articleFilter !== 'all' && row.kind === 'charge' && row.code !== articleFilter) return false;
+      if (lineKind !== 'all' && row.kind !== lineKind) return false;
+      if (!needle) return true;
+      return `${row.description} ${row.code}`.toLowerCase().includes(needle);
+    });
+  }, [articleFilter, folioQuery, lineKind, visibleRows]);
+
+  const lineCount = (rows: LedgerRow[]) => rows.length;
+  const guestLineCount = (guestId: string) =>
+    lineCount(
+      ledger.filter((row) => {
+        const folio = accounts.find((item) => item.id === row.folioId);
+        return folio?.type === 'GUEST' && folio.reservationGuestId === guestId;
+      }),
+    );
+  const agencyLines = lineCount(ledger.filter((row) => row.folioType === 'AGENCY'));
+  const companyLines = lineCount(ledger.filter((row) => row.folioType === 'COMPANY'));
+
+  useEffect(() => {
+    if (folioFocus === 'all' || folioFocus === 'deleted') return;
+    if (folioFocus === 'agency' && agencyLines === 0) setFolioFocus('all');
+    if (folioFocus === 'company' && companyLines === 0) setFolioFocus('all');
+    if (folioFocus.startsWith('guest:') && guestLineCount(folioFocus.slice('guest:'.length)) === 0) {
+      setFolioFocus('all');
+    }
+  }, [agencyLines, companyLines, folioFocus, ledger, accounts]);
+
+  useEffect(() => {
+    if (articleFilter === 'all') return;
+    if (!articleOptions.some((option) => option.value === articleFilter)) setArticleFilter('all');
+  }, [articleFilter, articleOptions]);
 
   const allFilteredSelected =
     filteredRows.length > 0 && filteredRows.every((row) => selectedIds.includes(row.id));
@@ -358,6 +421,12 @@ export function ReservationCardFolioTab({
   const columns: EraDataGridColumn<LedgerRow>[] = useMemo(() => {
     const cols: EraDataGridColumn<LedgerRow>[] = [
       {
+        key: 'rowNo',
+        header: t('folioRowNo'),
+        className: 'w-10 text-right font-mono',
+        render: (row) => String(row.rowNo ?? ''),
+      },
+      {
         key: 'pick',
         header: (
           <input
@@ -391,6 +460,7 @@ export function ReservationCardFolioTab({
       { key: 'folioType', header: t('folioType'), render: (row) => row.folioType },
       { key: 'code', header: t('department'), render: (row) => row.code },
       { key: 'description', header: t('folioDesc'), render: (row) => row.description },
+      { key: 'when', header: t('folioWhen'), className: 'whitespace-nowrap font-mono', render: (row) => row.when },
       {
         key: 'amount',
         header: t('amount'),
@@ -408,6 +478,22 @@ export function ReservationCardFolioTab({
           <FolioRowMenu
             label={tf('rowMenu')}
             items={[
+              ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_CHARGE) && row.folioStatus === 'OPEN'
+                ? [
+                    {
+                      id: 'adjust',
+                      label: tf('adjust'),
+                      run: () => {
+                        setAdjustAmount('');
+                        setAdjustReason('');
+                        setAdjustCharge({ id: row.chargeId ?? '', description: row.description });
+                      },
+                    },
+                  ]
+                : []),
+              ...(row.kind === 'charge' && row.adjustsChargeId
+                ? [{ id: 'slip', label: tf('adjustPrint'), run: () => setSlip(row) }]
+                : []),
               ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_VOID)
                 ? [{ id: 'void', label: tf('void'), run: () => setVoidId(row.chargeId ?? null) }]
                 : []),
@@ -491,19 +577,21 @@ export function ReservationCardFolioTab({
     if (rows.length === 0) {
       return <p className={`m-0 py-2 text-center text-[12px] ${TEXT_MUTED_CLASS}`}>{tc('empty')}</p>;
     }
+    const numbered = rows.map((row, index) => ({ ...row, rowNo: index + 1 }));
     return (
       <HotelDataGrid<LedgerRow>
         columns={columns}
-        rows={rows}
+        rows={numbered}
         rowKey={(row) => row.id}
         emptyMessage={tc('empty')}
         defaultPageSize={25}
         embedded
+        cellClassName="!px-2 !py-1.5 !font-mono !text-[12px]"
         pagination={false}
         paginationMode="server"
         page={1}
-        pageSize={Math.max(rows.length, 1)}
-        total={rows.length}
+        pageSize={Math.max(numbered.length, 1)}
+        total={numbered.length}
         rowClassName={(row) => (row.kind === 'charge' ? 'bg-rose-50' : 'bg-sky-50')}
       />
     );
@@ -567,121 +655,232 @@ export function ReservationCardFolioTab({
     </>
   );
 
+  const chargeTotal = filteredRows
+    .filter((row) => row.kind === 'charge')
+    .reduce((sum, row) => sum + row.amount, 0);
+  const paymentTotal = filteredRows
+    .filter((row) => row.kind === 'payment')
+    .reduce((sum, row) => sum + row.amount, 0);
+
+  function printRows() {
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    if (!popup) return;
+    const body = filteredRows
+      .map(
+        (row, index) =>
+          `<tr><td>${index + 1}</td><td>${escapeHtml(row.when)}</td><td>${escapeHtml(row.code)}</td><td>${escapeHtml(row.description)}</td><td style="text-align:right">${row.amount.toFixed(2)}</td></tr>`,
+      )
+      .join('');
+    popup.document.write(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(t('folioPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapeHtml(t('folioPrint'))}</h1><table style="width:100%;border-collapse:collapse"><thead><tr><th>#</th><th>${escapeHtml(t('folioWhen'))}</th><th>${escapeHtml(t('department'))}</th><th>${escapeHtml(t('folioDesc'))}</th><th>${escapeHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapeHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapeHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapeHtml(t('folioTotalNet'))}: ${(chargeTotal + paymentTotal).toFixed(2)} ${displayCurrency}</strong></p></body></html>`,
+    );
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  }
+
+  async function submitAdjustment() {
+    if (!adjustCharge) return;
+    const amount = Number(adjustAmount);
+    if (!Number.isFinite(amount) || amount === 0 || !adjustReason.trim()) return;
+    setAdjustBusy(true);
+    try {
+      const res = await fetch(`/api/folios/charges/${adjustCharge.id}/adjust`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, reason: adjustReason.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('updateFailed'));
+        return;
+      }
+      showSuccess(tf('adjustSaved'));
+      setAdjustCharge(null);
+      onChanged?.();
+    } catch (error) {
+      showApiError({ error: error instanceof Error ? error.message : tc('updateError') });
+    } finally {
+      setAdjustBusy(false);
+    }
+  }
+
   return (
-    <div className="space-y-3" data-testid="reservation-folio-tab">
-      <div className={CHIP_GROUP_CLASS} role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={folioFocus === 'all'}
-          className={folioFocus === 'all' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-          onClick={() => {
-            setFolioFocus('all');
-            onFolioTab('all');
-          }}
-        >
-          {t('folioTab.all')}
-        </button>
-        {namedPax.map((guest) => {
-          const id = guest.row.id ?? `idx-${guest.idx}`;
-          const key = `guest:${id}`;
-          return (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={folioFocus === key}
-              className={folioFocus === key ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-              onClick={() => {
-                setFolioFocus(key);
-                onFolioTab('guest');
-              }}
-            >
-              {guest.label}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={folioFocus === 'agency'}
-          className={folioFocus === 'agency' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-          onClick={() => {
-            setFolioFocus('agency');
-            onFolioTab('agency');
-          }}
-        >
-          {t('folioTab.agency')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={folioFocus === 'company'}
-          className={folioFocus === 'company' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-          onClick={() => {
-            setFolioFocus('company');
-            onFolioTab('company');
-          }}
-        >
-          {t('folioTab.company')}
-        </button>
-        {deletedRows.length > 0 ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={folioFocus === 'deleted'}
-            className={folioFocus === 'deleted' ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-            onClick={() => setFolioFocus('deleted')}
-          >
-            {t('folioTab.deleted')}
-          </button>
-        ) : null}
+    <div className="flex h-full min-h-0 flex-col gap-2" data-testid="reservation-folio-tab">
+      <FilterChips
+        ariaLabel={t('folioTab.all')}
+        value={folioFocus}
+        alwaysVisibleIds={['all']}
+        onChange={(id) => {
+          setFolioFocus(id);
+          if (id === 'agency') onFolioTab('agency');
+          else if (id === 'company') onFolioTab('company');
+          else if (id.startsWith('guest:')) onFolioTab('guest');
+          else onFolioTab('all');
+        }}
+        items={[
+          { id: 'all', label: t('folioTab.all') },
+          ...namedPax.map((guest) => {
+            const id = guest.row.id ?? '';
+            return {
+              id: `guest:${id}`,
+              label: guest.label,
+              hidden: !id || guestLineCount(id) === 0,
+            };
+          }),
+          { id: 'agency', label: t('folioTab.agency'), hidden: agencyLines === 0 },
+          { id: 'company', label: t('folioTab.company'), hidden: companyLines === 0 },
+          { id: 'deleted', label: t('folioTab.deleted'), hidden: deletedRows.length === 0 },
+        ]}
+      />
+      <div className="flex shrink-0 flex-wrap items-end gap-2">
+        <FilterChips
+          value={articleFilter}
+          alwaysVisibleIds={['all']}
+          onChange={setArticleFilter}
+          items={[{ id: 'all', label: t('folioTab.all') }, ...articleOptions.map((option) => ({ id: option.value, label: option.label }))]}
+        />
+        <FilterChips
+          value={lineKind}
+          alwaysVisibleIds={['all', 'charge', 'payment']}
+          onChange={(id) => setLineKind(id as 'all' | 'charge' | 'payment')}
+          items={[
+            { id: 'all', label: t('folioLinesAll') },
+            { id: 'charge', label: t('folioLinesCharges') },
+            { id: 'payment', label: t('folioLinesPayments') },
+          ]}
+        />
+        <input
+          type="search"
+          value={folioQuery}
+          onChange={(event) => setFolioQuery(event.target.value)}
+          placeholder={t('folioSearch')}
+          aria-label={t('folioSearch')}
+          className={`${MODAL_INPUT_CLASS} w-44`}
+        />
       </div>
       {folioFocus === 'deleted' ? (
-        <p className="m-0 text-[12px]">
+        <p className="m-0 shrink-0 text-[12px]">
           <Link className="text-[#1F6FEB] underline" href="/reports/payment-voids">
             {t('folioTab.deleted')}
           </Link>
         </p>
       ) : null}
-
-      {visibleRows.length === 0 ? (
-        <div
-          className="rounded-md border border-dashed border-[#D5DADF] bg-[#F8FAFC] px-4 py-6 text-center"
-          data-testid="folio-empty-state"
-        >
-          <p className={`m-0 text-[13px] ${TEXT_MUTED_CLASS}`}>{t('folioEmptyHint')}</p>
-          <div className="mt-3 flex justify-center">{folioFocus === 'deleted' ? null : cashBar}</div>
+      <div className="min-h-0 flex-1 overflow-auto">
+        {filteredRows.length === 0 ? (
+          <div
+            className="rounded-md border border-dashed border-[#D5DADF] bg-[#F8FAFC] px-4 py-6 text-center"
+            data-testid="folio-empty-state"
+          >
+            <p className={`m-0 text-[13px] ${TEXT_MUTED_CLASS}`}>{t('folioEmptyHint')}</p>
+          </div>
+        ) : (
+          renderGrid(filteredRows)
+        )}
+      </div>
+      <div className="shrink-0 space-y-2 border-t border-[#D5DADF] pt-2">
+        <table className="w-full font-mono text-[12px]" data-testid="folio-filtered-total">
+          <tbody>
+            <tr>
+              <td className="px-2 py-1 text-right text-[14px] font-medium text-[#95A5A6]">
+                {t('folioTotalCharges')}: {chargeTotal.toFixed(2)} {displayCurrency}
+              </td>
+              <td className="px-2 py-1 text-right text-[14px] font-medium text-[#95A5A6]">
+                {t('folioTotalPayments')}: {paymentTotal.toFixed(2)} {displayCurrency}
+              </td>
+              <td className="whitespace-nowrap px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]">
+                {t('folioTotalNet')}: {(chargeTotal + paymentTotal).toFixed(2)} {displayCurrency}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="flex flex-wrap items-center gap-2">
+          {folioFocus === 'deleted' ? null : cashBar}
+          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={printRows}>
+            {t('folioPrint')}
+          </button>
+          {closable.length > 0 && can(PERMISSIONS.FOLIO_PAYMENT)
+            ? closable.map((f) => (
+                <button key={f.id} type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCloseId(f.id)}>
+                  {tf('closeFolio')} · {personalSections.find((section) => section.folio.id === f.id)?.label ?? f.type}
+                </button>
+              ))
+            : null}
         </div>
-      ) : (
-        <>
-          {articleOptions.length > 0 ? (
-            <CatalogField
-              kind="CLOSED_MEDIUM"
-              label={t('folioFilterArticle')}
-              value={articleFilter}
-              onChange={(v) => setArticleFilter(String(v ?? 'all'))}
-              options={[{ value: 'all', label: t('folioTab.all') }, ...articleOptions]}
-              emptyLabel={null}
-            />
-          ) : null}
-          {renderGrid(filteredRows)}
-          {cashBar}
-        </>
-      )}
-
-      {closable.length > 0 && can(PERMISSIONS.FOLIO_PAYMENT) ? (
-        <div className="flex flex-wrap gap-2">
-          {closable.map((f) => (
-            <button key={f.id} type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCloseId(f.id)}>
-              {tf('closeFolio')} · {personalSections.find((section) => section.folio.id === f.id)?.label ?? f.type}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
+      </div>
       <FinanceBoundaryBanner target="salesInvoices" />
       {modals}
+      <EraModal
+        open={Boolean(adjustCharge)}
+        title={tf('adjust')}
+        onClose={() => setAdjustCharge(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setAdjustCharge(null)}
+            onSubmit={() => void submitAdjustment()}
+            busy={adjustBusy}
+            submitDisabled={!adjustReason.trim() || !Number(adjustAmount)}
+            submitLabel={tf('adjust')}
+          />
+        }
+      >
+        <div className="space-y-3 text-[13px]">
+          <p className="m-0 text-[#34495E]">{adjustCharge?.description}</p>
+          <Field
+            label={t('amount')}
+            preset="amount"
+            type="number"
+            step="0.01"
+            value={adjustAmount}
+            onChange={(event) => setAdjustAmount(event.target.value)}
+          />
+          <Field
+            label={tf('adjustReason')}
+            preset="longText"
+            value={adjustReason}
+            onChange={(event) => setAdjustReason(event.target.value)}
+          />
+        </div>
+      </EraModal>
+      <EraModal
+        open={Boolean(slip)}
+        title={tf('adjustPrint')}
+        onClose={() => setSlip(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setSlip(null)}
+            onSubmit={() => {
+              if (!slip) return;
+              const popup = window.open('', '_blank', 'noopener,noreferrer');
+              if (!popup) return;
+              popup.document.write(
+                `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(tf('adjustPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapeHtml(tf('adjustSlip'))}</h1><p>${escapeHtml(slip.when)}</p><p>${escapeHtml(slip.description)}</p><p>${escapeHtml(slip.adjustmentReason ?? '')}</p><p><strong>${slip.amount.toFixed(2)} ${displayCurrency}</strong></p></body></html>`,
+              );
+              popup.document.close();
+              popup.focus();
+              popup.print();
+            }}
+            submitLabel={t('folioPrint')}
+          />
+        }
+      >
+        <div className="space-y-1 font-mono text-[12px] text-[#34495E]">
+          <p className="m-0">{slip?.when}</p>
+          <p className="m-0">{slip?.description}</p>
+          <p className="m-0">{slip?.adjustmentReason}</p>
+          <p className="m-0 text-[18px] font-semibold">
+            {slip ? `${slip.amount.toFixed(2)} ${displayCurrency}` : ''}
+          </p>
+        </div>
+      </EraModal>
     </div>
   );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

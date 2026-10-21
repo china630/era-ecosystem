@@ -21,6 +21,7 @@ import {
   TEXT_SUCCESS_CLASS,
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { EraModal } from '@/components/EraModal';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
@@ -169,36 +170,50 @@ function ClassSettlement({
   const t = useTranslations('reservationCard');
   const givenLower =
     chargedNightly != null && givenNightly != null && givenNightly < chargedNightly;
+  const [open, setOpen] = useState(!hotelCovers);
+  if (hotelCovers) return null;
+  const choose = (run: () => void) => {
+    setOpen(false);
+    run();
+  };
   return (
-    <div
-      className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-950"
-      data-testid="class-settlement"
-    >
-      <p className="m-0">
-        {t('classDiffers', { charge: chargeLabel, physical: givenLabel })}
-      </p>
-      {hotelCovers ? (
-        <p className="m-0 font-medium">{t('classHotelCovers')}</p>
-      ) : givenLower ? (
-        <div className="flex flex-wrap gap-1">
-          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onHotelRefund}>
-            {t('classHotelRefund')}
-          </button>
-          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onGuestCheaper}>
-            {t('classGuestCheaper')}
-          </button>
+    <>
+      <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={() => setOpen(true)}>
+        {t('classSettlementLabel')}
+      </button>
+      <EraModal
+        open={open}
+        title={t('classSettlementLabel')}
+        onClose={() => setOpen(false)}
+      >
+        <div className="space-y-3 text-[13px]" data-testid="class-settlement">
+          <p className="m-0 text-[#34495E]">
+            {t('classDiffers', { charge: chargeLabel, physical: givenLabel })}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {givenLower ? (
+              <>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={() => choose(onHotelRefund)}>
+                  {t('classHotelRefund')}
+                </button>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={() => choose(onGuestCheaper)}>
+                  {t('classGuestCheaper')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={() => choose(onHotel)}>
+                  {t('classHotelCovers')}
+                </button>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={() => choose(onGuestPays)}>
+                  {t('classGuestPays')}
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className="flex flex-wrap gap-1">
-          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onHotel}>
-            {t('classHotelCovers')}
-          </button>
-          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={disabled} onClick={onGuestPays}>
-            {t('classGuestPays')}
-          </button>
-        </div>
-      )}
-    </div>
+      </EraModal>
+    </>
   );
 }
 

@@ -13,6 +13,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
+type YearBlock = { code: string; detail: string };
+
 type Preview = {
   businessDate: string;
   wallClockDate: string;
@@ -20,8 +22,10 @@ type Preview = {
   year: number;
   isLastDayOfYear: boolean;
   isFirstDayOfYear: boolean;
+  yearClosed: boolean;
+  yearOpened: boolean;
   enabled: boolean;
-  note: string;
+  blocks: YearBlock[];
 };
 
 export default function NightAuditYearEndPage() {
@@ -63,17 +67,11 @@ export default function NightAuditYearEndPage() {
         return;
       }
       if (data.ok === false) {
-        const message =
-          data.code === 'YEAR_END_BLOCKED_OPEN_CITY_LEDGER'
-            ? t('yearEndBlockedLedger', {
-                count: data.preview?.openCityLedger?.count ?? 0,
-              })
-            : t('yearEndNotEnabled');
-        showApiError({ error: message }, tc('error'));
+        showApiError({ error: t('yearEndFailed', { code: data.code ?? 'YEAR_END_FAILED' }) }, tc('error'));
         if (data.preview) setPreview(data.preview);
         return;
       }
-      showSuccess(data.message ?? t('yearEndStaged'));
+      showSuccess(data.message ?? t('yearEndDone'));
       if (data.preview) setPreview(data.preview);
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('error') });
@@ -102,7 +100,15 @@ export default function NightAuditYearEndPage() {
             <li>
               {t('yearLabel')}: {preview.year}
             </li>
-            <li className="text-[#7F8C8D]">{t('yearEndNote')}</li>
+            {preview.blocks.length > 0 ? (
+              <li className="text-rose-700">
+                {preview.blocks
+                  .map((block) =>
+                    t(`yearBlock${block.code}` as 'yearBlockCASH_OPEN', { detail: block.detail }),
+                  )
+                  .join(' · ')}
+              </li>
+            ) : null}
           </ul>
         ) : (
           <p className="m-0 text-[13px] text-[#7F8C8D]">{tc('loading')}</p>
@@ -111,18 +117,22 @@ export default function NightAuditYearEndPage() {
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            disabled={busy || !preview}
-            onClick={() => void run('LAST_DAY')}
-            title={
-              preview?.isLastDayOfYear ? undefined : t('lastDayHint')
+            disabled={
+              busy ||
+              !preview?.isLastDayOfYear ||
+              preview.businessDayStatus !== 'CLOSED' ||
+              preview.yearClosed ||
+              preview.blocks.length > 0
             }
+            onClick={() => void run('LAST_DAY')}
+            title={preview?.isLastDayOfYear ? undefined : t('lastDayHint')}
           >
             {t('lastDayOfYear')}
           </button>
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            disabled={busy || !preview}
+            disabled={busy || !preview?.isFirstDayOfYear || preview.yearOpened}
             onClick={() => void run('FIRST_DAY')}
             title={
               preview?.isFirstDayOfYear ? undefined : t('firstDayHint')

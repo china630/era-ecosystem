@@ -682,6 +682,35 @@ export async function dispatchCityLedgerSnapshot(
   return publishEvent(envelope);
 }
 
+export async function dispatchCompanyCityLedgerSnapshot(
+  companyId: string,
+  asOfDate: string,
+): Promise<DispatchResult> {
+  const { getCompanyLedger } = await import('@/lib/services/agency-ledger.service');
+  const ledger = await getCompanyLedger(companyId, new Date(asOfDate), new Date(asOfDate));
+  const company = await prisma.company.findUniqueOrThrow({ where: { id: companyId } });
+  const hotelId = await getPropertyCode();
+  const envelope: IntegrationEnvelope = {
+    correlationId: randomUUID(),
+    hotelId,
+    eventType: 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT',
+    timestamp: new Date().toISOString(),
+    payload: {
+      companyId,
+      companyCode: company.code,
+      ...(company.financeCounterpartyId
+        ? { financeCounterpartyId: company.financeCounterpartyId }
+        : {}),
+      asOfDate,
+      balance: ledger.closing,
+      periodCharges: ledger.newCharges,
+      periodPayments: ledger.payments,
+      currency: 'AZN',
+    } as CityLedgerSnapshotPayload,
+  };
+  return publishEvent(envelope);
+}
+
 export async function dispatchMasterDataSync(): Promise<DispatchResult> {
   const [revenueCodes, departments] = await Promise.all([
     prisma.revenueCode.findMany({ orderBy: { code: 'asc' } }),

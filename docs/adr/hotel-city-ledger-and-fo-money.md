@@ -22,6 +22,7 @@ Architecture already splits planes ([HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITA
 | Folio types GUEST / COMPANY / AGENCY | SHIPPED | `FolioType`; EQUAL party personal GUEST folios |
 | Folio routing rules | SHIPPED | `FolioRoutingRule` by revenue code; MASTER/SPLIT booking |
 | Credit limit on stay | SHIPPED (gate) | `city-ledger-gate.service` + contract + Agency/stay limit + open AR exposure |
+| Company city ledger | SHIPPED (ops) | Same door as agency: checkout `transferToCityLedger` and tenders `CL_AGENCY` / `CL_COMPANY` both call the gate before any folio write. Company limit is stay, else `Company.creditLimitAzn`, else the hotel default. Open AR is COMPANY folios of that `companyId`. VÖEN and `Company.financeCounterpartyId` follow the agency BLOCK/DEFER/AUTO_CREATE policy. Snapshot event may carry `companyId` or `agencyId`, plus `financeCounterpartyId` when the company card already has one. Finance stores that row on the existing snapshot table (`hotelAgencyId` is the company id when there is no agency). |
 | Settle multi-method | SHIPPED | CASH/CARD/COMPANY/LOYALTY/**DEPOSIT**; hub `/front-cash/pending` |
 | Deposit lifecycle | SHIPPED | HELD→APPLIED@check-in/settle/checkout; REFUNDED leftover HELD |
 | Checkout folio close | SHIPPED | Guest zero; COMPANY/AGENCY → PENDING_AR→TRANSFERRED_AR; per-folio close |

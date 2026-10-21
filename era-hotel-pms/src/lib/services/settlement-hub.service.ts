@@ -188,6 +188,11 @@ export async function payPendingCharge(input: PayPendingInput) {
     throw new Error('Payment amount must match pending charge');
   }
 
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
+  const businessDate = await getCurrentBusinessDate();
+  await assertYearBoundaryAllows(businessDate);
+
   const shift = await requireOpenCashShift();
 
   let fiscalReceiptId: string | null = null;
@@ -238,6 +243,7 @@ export async function payPendingCharge(input: PayPendingInput) {
       fiscalReceiptId,
       fiscalQrPayload,
       paidAt: new Date(),
+      businessDate,
     },
   });
 

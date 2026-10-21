@@ -291,11 +291,18 @@ export async function checkoutReservation(
       cityLedgerTransferred.push(f.id);
       await issueFolioInvoice(f.id).catch((e) => console.error('CL invoice issue failed', e));
     }
-    if (completed.agencyId) {
-      const asOf = todayBakuYmd();
-      const { dispatchCityLedgerSnapshot } = await import('@/lib/integration/event-dispatcher');
+    const asOf = todayBakuYmd();
+    const { dispatchCityLedgerSnapshot, dispatchCompanyCityLedgerSnapshot } = await import(
+      '@/lib/integration/event-dispatcher'
+    );
+    if (completed.agencyId && pending.some((folio) => folio.type === 'AGENCY')) {
       await dispatchCityLedgerSnapshot(completed.agencyId, asOf).catch((e) =>
         console.error('CL snapshot failed', e),
+      );
+    }
+    if (completed.companyId && pending.some((folio) => folio.type === 'COMPANY')) {
+      await dispatchCompanyCityLedgerSnapshot(completed.companyId, asOf).catch((e) =>
+        console.error('Company CL snapshot failed', e),
       );
     }
   }

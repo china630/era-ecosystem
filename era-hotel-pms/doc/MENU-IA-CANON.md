@@ -56,7 +56,7 @@ Legacy cutover (temporary redirects OK): `/` → `/fo/rack`, `/availability` →
 | Folio journal | `/front-cash/folio-journal` | Day charges+payments (read-only); click → stay folio |
 | Agency city ledger | `/front-cash/agency-ledger` | Travel-agent CL; AGENCY folios; commission %; Finance snapshot |
 | Company city ledger | `/front-cash/company-ledger` | Corporate CL; COMPANY folios; prepaid/postpaid; no commission |
-| Shift journal | `/front-cash/transactions` | FO cash journal (payments \| deposits tabs) + Z in modal + close shift (ops, not fiscal KKM Z) |
+| Day journal | `/front-cash/transactions` | Night-audit report 05. One business day, all cash points. Not in the cash menu |
 | Folio (not a screen) | reservation card, Folio tab | Stay ledger. Payment, charge, invoice, checkout, void, and refund are modals on that tab. Header “Accept payment” opens the same payment modal. `/folio/[id]` redirects to the card. |
 
 Café/clinic tickets awaiting reception payment live on **`/front-cash/pending`** (not a separate sanatorium menu, not F&B floor).
@@ -75,7 +75,7 @@ Short sidebar (Elektraweb shape); EOD report pack is a **hub**, not 20 menu rows
 | EOD reports | `/night-audit/reports` | Closed-date hub: **nightly pack** members (deep links to `/reports/*`) + Download ZIP; NA-only ops grids stay here |
 | EOD logs | `/night-audit/logs` | NA run history (when / steps / errors). The run row does not store an operator. |
 | Reservation updates | `/night-audit/reservation-updates` | Not a night-audit menu row. Linked from the EOD pack. Reservation changes in the audit window |
-| End of year | `/night-audit/year-end` | Year close/open (Last/First day). **In menu now**; implement when asked at year-end |
+| End of year | `/night-audit/year-end` | Last day only on closed 31 Dec; first day only on 1 Jan. Hotel calendar, not finance GL |
 
 **Inside EOD reports hub (not sidebar):**  
 Management pack (hotel-configured, Nafta default = 9 PDFs, including the police list) — links to `/reports/*` + ZIP. A saved pack that is still the previous eight slugs is rewritten to include `police-list` on the next pack read. Spec: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md).  
@@ -306,10 +306,10 @@ SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pa
 
 | Screen | Status (2026-08-07 deepen) | Still later |
 |--------|----------------------------|-------------|
-| `/front-cash/transactions` | **SHIPPED** HOT-CASH-06 — shift filter + printable ops Z + close shift | Fiscal KKM Z (not claimed) |
+| `/front-cash/transactions` | **API** HOT-CASH-06 — day journal for report 05 | Shift Z and method totals are not on this page |
 | `/night-audit/reports` + P1 grids | **SHIPPED** HOT-NA-03 — P1 + no-shows / room-moves / VIP + CSV | EW Management PDF catalog + ZIP pack (HOT-RPT-01/02 spec) |
 | `/night-audit/reservation-updates` | **SHIPPED** HOT-NA-04 — action filter + CSV | Richer diff / typed events |
-| `/night-audit/year-end` | **STUB** HOT-NA-05 — ADR [`hotel-year-end-calendar`](../../docs/adr/hotel-year-end-calendar.md) | Live close/open after Finance sign-off |
+| `/night-audit/year-end` | **API** HOT-NA-05 — hotel calendar seal | Finance `closeFiscalYear` stays in finance |
 | URL migration FO/HK/Cash/NA/Distribution/Settings | Done (legacy redirects in `next.config`) | Remove redirects when bookmarks migrate |
 
 Readiness: [`MENU-IA-PRIMARY-FILL-AUDIT.md`](./MENU-IA-PRIMARY-FILL-AUDIT.md) · deepen [`MENU-IA-DEEPEN-AUDIT.md`](./MENU-IA-DEEPEN-AUDIT.md).

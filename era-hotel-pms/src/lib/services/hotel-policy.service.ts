@@ -53,11 +53,22 @@ export type CityLedgerPolicy = {
   yearEndBlockIfOpenCityLedger: boolean;
 };
 
+/** Night-audit automation. Defaults match the Nafta Elektra screen on 2026-10-21. */
+export type NightAuditPolicy = {
+  stopIfZeroNightPrice: boolean;
+  autoNoShow: boolean;
+  stopIfGuestFolioBalance: boolean;
+  autoExtendUndeparted: boolean;
+  checkCheckedOutFolios: boolean;
+  cancelRoomChangePlans: boolean;
+};
+
 export type HotelPolicy = EarlyLatePolicy &
   PricingFeaturePolicy &
   ChannelFeaturePolicy &
   AgencyPortalPolicy &
-  CityLedgerPolicy;
+  CityLedgerPolicy &
+  NightAuditPolicy;
 
 export const DEFAULT_HOTEL_POLICY: HotelPolicy = {
   standardCheckInTime: '14:00',
@@ -74,6 +85,12 @@ export const DEFAULT_HOTEL_POLICY: HotelPolicy = {
   agencyPortalOptionHoldHours: 48,
   cityLedgerMissingCounterparty: "BLOCK_CHECKOUT",
   yearEndBlockIfOpenCityLedger: true,
+  stopIfZeroNightPrice: true,
+  autoNoShow: false,
+  stopIfGuestFolioBalance: true,
+  autoExtendUndeparted: true,
+  checkCheckedOutFolios: true,
+  cancelRoomChangePlans: true,
 };
 
 function parsePolicy(raw: string | null | undefined): HotelPolicy {

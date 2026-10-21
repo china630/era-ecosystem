@@ -102,9 +102,12 @@ describe('P5 FO money negative paths (AC-HOT-CASH)', () => {
     prisma.reservation.findUnique.mockResolvedValue({
       id: 'r1',
       agencyId: 'a1',
+      companyId: null,
+      creditLimitAzn: 50,
       salesContractId: 'c1',
       checkInDate: new Date('2026-08-01'),
       agency: { creditLimitAzn: null, voen: '1234567890', financeCounterpartyId: 'cp-1' },
+      company: null,
       salesContract: { id: 'c1' },
     });
     prisma.folio.findUnique.mockResolvedValue({

@@ -48,8 +48,8 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 - [x] `/night-audit` UI + API (legacy `/operations` redirects)
 - [x] EOD reports hub + P1 grids (cancelled / created / folio tx / price control)
 - [x] Reservation updates filter + CSV
-- [x] Front cash journal (payments + HELD deposits + pending + method totals)
-- [s] Year-end close/open (preview only; `YEAR_END_NOT_ENABLED`)
+- [~] Front cash journal (business-date day list; report 05 opens `/front-cash/transactions`)
+- [~] Year-end close/open (hotel calendar seal on 31 Dec / open on 1 Jan; finance GL year close stays in finance)
 
 ## Stage 4b — Management Reports W1 (HOT-RPT-01/02)
 

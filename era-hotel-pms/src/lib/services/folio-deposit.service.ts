@@ -22,6 +22,10 @@ export async function recordDeposit(input: {
   if (input.paymentMethod === 'DEPOSIT') {
     throw new Error('Cannot record a deposit with method DEPOSIT');
   }
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
+  const businessDate = await getCurrentBusinessDate();
+  await assertYearBoundaryAllows(businessDate);
   const created = await prisma.folioDeposit.create({
     data: {
       reservationId: input.reservationId,
@@ -30,6 +34,7 @@ export async function recordDeposit(input: {
       registerRef: input.registerRef,
       externalRef: input.externalRef,
       status: 'HELD',
+      businessDate,
     },
   });
   const { recordReservationAudit } = await import('@/lib/reservation-audit');
@@ -101,6 +106,7 @@ export async function applyHeldDepositsToFolio(
           paymentMethod: dep.paymentMethod,
           registerRef: dep.registerRef,
           status: 'HELD',
+          businessDate: dep.businessDate,
         },
       });
     }

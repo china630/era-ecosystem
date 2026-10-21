@@ -119,6 +119,8 @@ export type EraDataGridProps<T extends Record<string, unknown>> = {
   embedded?: boolean;
   /** Extra class names on each data row (status tint, etc.). */
   rowClassName?: (row: T) => string | undefined;
+  /** Appended to every body and header cell. Does not change the shared table token. */
+  cellClassName?: string;
   /** Click on the row body. Buttons inside a cell should stopPropagation. */
   onRowClick?: (row: T) => void;
   /** Second click opens a detail surface; the first click stays on onRowClick. */
