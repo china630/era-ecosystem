@@ -5,6 +5,8 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { createRoomChangePlan, listRoomChangePlans } from '@/lib/services/reports.service';
+import { requestRoomMove } from '@/lib/services/room-move-request.service';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 
 const createSchema = z.object({
   reservationId: z.string().uuid(),
@@ -29,7 +31,18 @@ export async function POST(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
     const body = createSchema.parse(await request.json());
-    return jsonOk(serialize(await createRoomChangePlan(body)));
+    if (body.toRoomId) {
+      return jsonOk(
+        await requestRoomMove(body.reservationId, body.toRoomId, {
+          effectiveDate: hotelDateKey(body.effectiveAt),
+          actorUserId: session?.sub,
+          request,
+        }),
+      );
+    }
+    return jsonOk(
+      serialize(await createRoomChangePlan({ ...body, createdByUserId: session?.sub })),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

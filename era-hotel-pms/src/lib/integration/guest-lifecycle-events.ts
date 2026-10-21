@@ -50,7 +50,7 @@ export function lifecycleDemographicsFromPax(pax: {
   }
   const sex = rawSex?.trim() || undefined;
   const rawNat = (pax.nationality ?? pax.guest?.nationality ?? "").trim();
-  const nationality = rawNat ? mapNationalityToIso(rawNat) : undefined;
+  const nationality = rawNat ? (mapNationalityToIso(rawNat) ?? undefined) : undefined;
   const phone = pax.guest?.phone?.trim() || undefined;
   return {
     ...(sex ? { sex } : {}),

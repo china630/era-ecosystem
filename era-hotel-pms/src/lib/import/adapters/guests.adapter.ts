@@ -105,7 +105,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
 
     let globalPersonId: string | null = existing?.globalPersonId ?? null;
     if (!dryRun) {
-      const iso = row.nationality ?? 'AZ';
+      const iso = row.nationality ?? undefined;
       const resolved = await resolvePersonIdentity({
         fin: row.nationalIdFin?.trim() || undefined,
         passport: row.passportNumber?.trim() || undefined,
@@ -133,7 +133,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       title: row.title ?? undefined,
       sex: row.sex ?? undefined,
       birthDate: row.birthDate ?? undefined,
-      nationality: row.nationality ?? 'AZ',
+      nationality: row.nationality ?? undefined,
       phone: row.phone ?? undefined,
       email: row.email ?? undefined,
       vipType: row.vipType ?? undefined,

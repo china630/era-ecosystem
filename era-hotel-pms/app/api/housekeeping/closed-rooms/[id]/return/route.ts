@@ -10,7 +10,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const { id } = await params;
-    return jsonOk(serialize(await returnRoomToService(id)));
+    return jsonOk(serialize(await returnRoomToService(id, { userId: session?.sub, request: _request })));
   } catch (err) {
     return handleRouteError(err);
   }

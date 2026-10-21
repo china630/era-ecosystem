@@ -25,6 +25,7 @@ export interface RoomPlanRoom {
   /** Housekeeping condition when present (DIRTY/PICKUP/CLEAN/INSPECTED). */
   hkCondition?: string | null;
   roomType: { code: string };
+  roomTypeId?: string;
   sharePool?: {
     gender: string;
     occupied: number;
@@ -60,6 +61,8 @@ export interface RoomPlanReservationBar {
   guest: { fullName: string };
   partyNames?: string[];
   roomType: { code: string };
+  roomTypeId?: string;
+  givenRoomTypeId?: string | null;
   room?: { roomNumber: string } | null;
   agency?: { name: string } | null;
   source?: { name: string; code?: string } | null;

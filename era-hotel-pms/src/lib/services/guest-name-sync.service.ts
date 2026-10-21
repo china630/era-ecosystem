@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { guestComposedFullName } from '@/lib/guest-identity.shared';
 import { ymdParam } from '@/lib/reports/civil-days';
 import { dispatchStayProductChanged } from '@/lib/integration/guest-lifecycle-events';
+import { mapNationalityToIso } from '@/lib/person-documents';
 
 const OPEN_STAY = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
 
@@ -13,7 +14,10 @@ function sameText(a: string | null | undefined, b: string | null | undefined): b
  * Copy the guest card name onto open stays and tell clinic.
  * Checked-out stays keep the name they had.
  */
-export async function syncGuestNameToOpenStays(guestId: string): Promise<number> {
+export async function syncGuestNameToOpenStays(
+  guestId: string,
+  opts?: { pushDemographics?: boolean },
+): Promise<number> {
   const guest = await prisma.guest.findUnique({
     where: { id: guestId },
     select: {
@@ -72,10 +76,11 @@ export async function syncGuestNameToOpenStays(guestId: string): Promise<number>
   }
 
   const inHouse = rows.filter((row) => row.reservation.status === 'IN_HOUSE');
-  if (changed > 0 && inHouse.length > 0) {
+  if (inHouse.length > 0 && (changed > 0 || opts?.pushDemographics)) {
     const guestName =
       guestComposedFullName(guest) || guest.fullName.trim() || 'Guest';
     const birthDate = guest.birthDate ? ymdParam(guest.birthDate) : undefined;
+    const nationality = mapNationalityToIso(guest.nationality) ?? undefined;
     for (const row of inHouse) {
       void dispatchStayProductChanged({
         reservationId: row.reservationId,
@@ -86,7 +91,7 @@ export async function syncGuestNameToOpenStays(guestId: string): Promise<number>
         paxKey: row.id,
         sex: guest.sex ?? undefined,
         birthDate,
-        nationality: guest.nationality || undefined,
+        nationality,
       }).catch((error) => console.error('Guest name clinic sync failed', error));
     }
   }

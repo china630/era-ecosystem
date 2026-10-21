@@ -40,6 +40,8 @@ import { ReservationCardGuestsTab } from '@/components/reservation-card/Reservat
 import { DepartGuestModal } from '@/components/reservation-card/DepartGuestModal';
 import { MoveGuestModal } from '@/components/reservation-card/MoveGuestModal';
 import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
+import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import {
   medicalPackageChoices,
@@ -321,6 +323,16 @@ export function ReservationCardEditor({
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
+  const [cardMoveAsk, setCardMoveAsk] = useState<{ askReason: boolean; askSettlement: boolean } | null>(
+    null,
+  );
+  const [splitMoveAsk, setSplitMoveAsk] = useState<{
+    fromDate: string;
+    roomTypeId: string;
+    roomId: string | null;
+    askReason: boolean;
+    askSettlement: boolean;
+  } | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [stayAudit, setStayAudit] = useState<StayJournalEntry[]>([]);
   const [stayAuditStatus, setStayAuditStatus] = useState<'idle' | 'loading' | 'error' | 'ready'>(
@@ -1455,21 +1467,45 @@ export function ReservationCardEditor({
     }
   }
 
-  async function splitStay(input: { fromDate: string; roomTypeId: string; roomId: string | null }) {
+  async function splitStay(
+    input: { fromDate: string; roomTypeId: string; roomId: string | null },
+    confirmed?: { reasonCode?: RoomMoveReason; settlement?: ClassSettlement },
+  ) {
     if (!reservationId) return;
+    const door = input.roomId ? rooms.find((row) => row.id === input.roomId) : undefined;
+    const askSettlement = doorTypeNeedsSettlement(roomTypeId, givenRoomTypeId, door?.roomTypeId);
+    const askReason = data?.status === 'IN_HOUSE' && Boolean(input.roomId);
+    if ((askReason || askSettlement) && !confirmed) {
+      setSplitMoveAsk({ ...input, askReason, askSettlement });
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(`/api/reservations/${reservationId}/stay-split`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
+        body: JSON.stringify({
+          ...input,
+          ...(confirmed?.reasonCode ? { reasonCode: confirmed.reasonCode } : {}),
+          ...(confirmed?.settlement ? { settlement: confirmed.settlement } : {}),
+        }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
+        const code = (json as { code?: string } | null)?.code;
+        if (code === 'ROOM_TYPE_SETTLEMENT_REQUIRED' && input.roomId) {
+          setSplitMoveAsk({
+            ...input,
+            askReason: data?.status === 'IN_HOUSE',
+            askSettlement: true,
+          });
+          return;
+        }
         showApiError(json, tc('error'));
         return;
       }
-      showSuccess(t('splitStayDone'));
+      const pending = Boolean((json as { movePending?: boolean } | null)?.movePending);
+      showSuccess(pending ? t('splitStayPlanned') : t('splitStayDone'));
       applyJson(json as Record<string, unknown>);
     } finally {
       setBusy(false);
@@ -1862,11 +1898,15 @@ export function ReservationCardEditor({
     setChildren1_0(String(counts.children1_0));
   }
 
-  async function save(moveReasonCode?: RoomMoveReason) {
+  async function save(choice?: { reason?: RoomMoveReason; settlement?: ClassSettlement }) {
+    const moveReasonCode = choice?.reason;
     const doorChanged =
       !isCreate && Boolean(roomId) && Boolean(pendingRoomId) && pendingRoomId !== roomId;
-    if (doorChanged && status === 'IN_HOUSE' && !moveReasonCode) {
-      setMovePromptOpen(true);
+    const targetDoor = pendingRoomId ? rooms.find((row) => row.id === pendingRoomId) : undefined;
+    const askSettlement = doorTypeNeedsSettlement(roomTypeId, givenRoomTypeId, targetDoor?.roomTypeId);
+    const askReason = data?.status === 'IN_HOUSE';
+    if (doorChanged && (askReason || askSettlement) && !choice) {
+      setCardMoveAsk({ askReason, askSettlement });
       return;
     }
     setBusy(true);
@@ -2076,6 +2116,7 @@ export function ReservationCardEditor({
           roomTypeId: roomTypeId || undefined,
           ...(pendingRoomId === roomId ? {} : { roomId: pendingRoomId || null }),
           ...(doorChanged && moveReasonCode ? { moveReasonCode } : {}),
+          ...(doorChanged && choice?.settlement ? { settlement: choice.settlement } : {}),
           mealPlanId: mealPlanId || null,
           roomCount: Number(roomCount) || 1,
           rateType: rateType || null,
@@ -2150,10 +2191,14 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (json?.code === 'ROOM_TYPE_SETTLEMENT_REQUIRED') {
+          setCardMoveAsk({ askReason: data?.status === 'IN_HOUSE', askSettlement: true });
+          return;
+        }
         showApiError(json, tc('failed'));
         return;
       }
-      showSuccess(tc('success'));
+      showSuccess(json.movePending ? t('splitStayPlanned') : tc('success'));
       if (isPreArrivalStatus(String(json.status ?? ''))) {
         warnOperationalGaps(json.operationalGaps, t);
       }
@@ -2932,7 +2977,34 @@ export function ReservationCardEditor({
         onClose={() => setMovePromptOpen(false)}
         onConfirm={(reason) => {
           setMovePromptOpen(false);
-          void save(reason);
+          void save({ reason });
+        }}
+      />
+      <RoomMoveConfirmModal
+        open={Boolean(cardMoveAsk)}
+        busy={busy}
+        askReason={Boolean(cardMoveAsk?.askReason)}
+        askSettlement={Boolean(cardMoveAsk?.askSettlement)}
+        onClose={() => setCardMoveAsk(null)}
+        onConfirm={(choice) => {
+          setCardMoveAsk(null);
+          void save(choice);
+        }}
+      />
+      <RoomMoveConfirmModal
+        open={Boolean(splitMoveAsk)}
+        busy={busy}
+        askReason={Boolean(splitMoveAsk?.askReason)}
+        askSettlement={Boolean(splitMoveAsk?.askSettlement)}
+        onClose={() => setSplitMoveAsk(null)}
+        onConfirm={(choice) => {
+          const ask = splitMoveAsk;
+          setSplitMoveAsk(null);
+          if (!ask) return;
+          void splitStay(
+            { fromDate: ask.fromDate, roomTypeId: ask.roomTypeId, roomId: ask.roomId },
+            { reasonCode: choice.reason, settlement: choice.settlement },
+          );
         }}
       />
       <StayAmendmentModal

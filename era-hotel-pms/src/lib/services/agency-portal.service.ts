@@ -132,7 +132,7 @@ export async function createAgencyPortalReservation(input: {
       fullName: input.guest.fullName.trim(),
       phone: input.guest.phone?.trim() || null,
       email: input.guest.email?.trim() || null,
-      nationality: input.guest.nationality?.trim() || 'AZ',
+      nationality: input.guest.nationality?.trim() || null,
     },
   });
 

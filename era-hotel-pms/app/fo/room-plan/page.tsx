@@ -17,7 +17,8 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import ReservationCardModal from '@/components/ReservationCardModal';
-import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
+import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
+import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import RoomPlanGrid, { type RoomPlanGroup, type RoomPlanRoom } from '@/components/RoomPlanGrid';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,6 +33,8 @@ interface ReservationBar {
   status: string;
   guest: { fullName: string };
   roomType: { code: string };
+  roomTypeId?: string;
+  givenRoomTypeId?: string | null;
 }
 
 interface RoomPlanData {
@@ -98,9 +101,12 @@ export default function RoomPlanPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cardReservationId, setCardReservationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pendingMove, setPendingMove] = useState<{ reservationId: string; toRoomId: string } | null>(
-    null,
-  );
+  const [pendingMove, setPendingMove] = useState<{
+    reservationId: string;
+    toRoomId: string;
+    askReason: boolean;
+    askSettlement: boolean;
+  } | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
 
   const load = useCallback(async () => {
@@ -188,7 +194,7 @@ export default function RoomPlanPage() {
   async function moveReservation(
     reservationId: string,
     toRoomId: string,
-    reasonCode?: RoomMoveReason,
+    opts?: { reasonCode?: RoomMoveReason; settlement?: ClassSettlement },
   ) {
     if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
     setBusy(true);
@@ -198,8 +204,8 @@ export default function RoomPlanPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: toRoomId,
-          compUpgrade: true,
-          ...(reasonCode ? { reasonCode } : {}),
+          ...(opts?.reasonCode ? { reasonCode: opts.reasonCode } : {}),
+          ...(opts?.settlement ? { settlement: opts.settlement } : {}),
         }),
       });
       const json = await res.json();
@@ -207,7 +213,7 @@ export default function RoomPlanPage() {
         showApiError(json, tc('updateFailed'));
         return;
       }
-      showSuccess(t('moved'));
+      showSuccess(json?.pending ? t('movePlanned') : t('moved'));
       setSelectedId(null);
       await load();
     } catch (e) {
@@ -322,8 +328,15 @@ export default function RoomPlanPage() {
         can(PERMISSIONS.RESERVATIONS_WRITE)
           ? (reservationId, toRoomId) => {
               const stay = data?.reservations.find((row) => row.id === reservationId);
-              if (stay?.status === 'IN_HOUSE') {
-                setPendingMove({ reservationId, toRoomId });
+              const door = data?.rooms.find((row) => row.id === toRoomId);
+              const askReason = stay?.status === 'IN_HOUSE';
+              const askSettlement = doorTypeNeedsSettlement(
+                stay?.roomTypeId,
+                stay?.givenRoomTypeId,
+                door?.roomTypeId,
+              );
+              if (askReason || askSettlement) {
+                setPendingMove({ reservationId, toRoomId, askReason, askSettlement });
                 return;
               }
               void moveReservation(reservationId, toRoomId);
@@ -393,14 +406,21 @@ export default function RoomPlanPage() {
           void load();
         }}
       />
-      <RoomMoveReasonModal
+      <RoomMoveConfirmModal
         open={Boolean(pendingMove)}
         busy={busy}
+        askReason={Boolean(pendingMove?.askReason)}
+        askSettlement={Boolean(pendingMove?.askSettlement)}
         onClose={() => setPendingMove(null)}
-        onConfirm={(reason) => {
+        onConfirm={(choice) => {
           const move = pendingMove;
           setPendingMove(null);
-          if (move) void moveReservation(move.reservationId, move.toRoomId, reason);
+          if (move) {
+            void moveReservation(move.reservationId, move.toRoomId, {
+              reasonCode: choice.reason,
+              settlement: choice.settlement,
+            });
+          }
         }}
       />
     </>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import {
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
@@ -28,7 +28,6 @@ import { ReservationNoteLine } from '@/components/reservation-card/ReservationNo
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { useListPaginationLabels } from '@/hooks/useListPaginationLabels';
-import { catalogLabel } from '@/lib/catalog-label';
 import {
   bookingSourceKind,
   inferSourceKindFromAgency,
@@ -105,7 +104,6 @@ export default function ReservationsListPage() {
   const tCard = useTranslations('reservationCard');
   const tRes = useTranslations('reservationStatus');
   const tc = useTranslations('common');
-  const locale = useLocale();
   const paginationLabels = useListPaginationLabels();
   const searchParams = useSearchParams();
   const guestIdFilter = searchParams.get('guestId') ?? '';
@@ -122,7 +120,6 @@ export default function ReservationsListPage() {
     return searchParams.get('guestId') ? 'all' : 'bookings';
   });
   const [overdue, setOverdue] = useState(searchParams.get('overdue') === '1');
-  const [queueLabels, setQueueLabels] = useState<Record<string, string>>({});
   const [noteQ, setNoteQ] = useState(searchParams.get('noteQ') ?? '');
   const [notesOnly, setNotesOnly] = useState(searchParams.get('hasNotes') === '1');
   const [dateFrom, setDateFrom] = useState('');
@@ -131,18 +128,6 @@ export default function ReservationsListPage() {
   useEffect(() => {
     if (guestIdFilter) setQueue('all');
   }, [guestIdFilter]);
-
-  useEffect(() => {
-    void fetch('/api/master/lookups?kind=RESERVATION_QUEUE&activeOnly=1')
-      .then((res) => (res.ok ? res.json() : []))
-      .then((rows: Array<{ code: string; name?: string; nameAz?: string; nameRu?: string; nameEn?: string }>) => {
-        if (!Array.isArray(rows)) return;
-        const next: Record<string, string> = {};
-        for (const row of rows) next[row.code] = catalogLabel(row, locale);
-        setQueueLabels(next);
-      })
-      .catch(() => setQueueLabels({}));
-  }, [locale]);
 
   useEffect(() => {
     setNotesOnly(searchParams.get('hasNotes') === '1');
@@ -253,13 +238,13 @@ export default function ReservationsListPage() {
             type="button"
             role="tab"
             aria-selected={queue === code}
-            className={`${queue === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS} inline-flex w-[9.5rem] items-center justify-center text-center`}
+            className={`${queue === code ? CHIP_ACTIVE_CLASS : CHIP_CLASS} inline-flex items-center justify-center whitespace-nowrap px-2.5 text-center`}
             onClick={() => {
               setQueue(code);
               setOverdue(false);
             }}
           >
-            {queueLabels[code] || t(`queue.${code}`)}
+            {t(`queue.${code}`)}
           </button>
         ))}
       </div>

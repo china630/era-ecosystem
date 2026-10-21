@@ -28,12 +28,12 @@ export async function POST(request: Request) {
     if (body.roomId && body.days) {
       const data = oooSchema.parse(body);
       if (body.kind === 'OOS') {
-        return jsonOk(serialize(await setRoomOOS(data.roomId, data.days, data.notes)));
+        return jsonOk(serialize(await setRoomOOS(data.roomId, data.days, data.notes, { userId: session?.sub, request })));
       }
-      return jsonOk(serialize(await setRoomOOO(data.roomId, data.days, data.notes)));
+      return jsonOk(serialize(await setRoomOOO(data.roomId, data.days, data.notes, { userId: session?.sub, request })));
     }
     const data = completeSchema.parse(body);
-    return jsonOk(serialize(await completeTask(data.taskId)));
+    return jsonOk(serialize(await completeTask(data.taskId, 'CLEAN', { userId: session?.sub, request })));
   } catch (err) {
     return handleRouteError(err);
   }

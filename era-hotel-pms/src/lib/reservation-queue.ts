@@ -8,6 +8,7 @@ export const RESERVATION_QUEUE_CODES = [
   'realizedArrivals',
   'dueOut',
   'departed',
+  'realizedDepartures',
   'all',
   'noShow',
   'cancel',
@@ -23,7 +24,12 @@ export function isReservationQueue(value: string | null | undefined): value is R
 
 /** Queues whose window is already one civil day. The date pickers do not apply. */
 export function queueIgnoresDates(queue: ReservationQueue): boolean {
-  return queue === 'dueIn' || queue === 'dueOut' || queue === 'realizedArrivals';
+  return (
+    queue === 'dueIn' ||
+    queue === 'dueOut' ||
+    queue === 'realizedArrivals' ||
+    queue === 'realizedDepartures'
+  );
 }
 
 function dayStart(ymd: string): Date {
@@ -103,6 +109,13 @@ export function reservationQueueWhere(input: {
   if (queue === 'departed') {
     const range = arrivalRange(dateFrom, dateTo);
     return { status: 'CHECKED_OUT', ...(range ? { checkOutDate: range } : {}) };
+  }
+
+  if (queue === 'realizedDepartures') {
+    return {
+      status: 'CHECKED_OUT',
+      stay: { is: { actualCheckOut: { gte: dayStart(today), lte: dayEnd(today) } } },
+    };
   }
 
   if (queue === 'noShow') {

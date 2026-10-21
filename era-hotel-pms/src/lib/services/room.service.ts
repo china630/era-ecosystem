@@ -10,6 +10,50 @@ import {
 import { OccupiedHkLockedError } from '@/lib/occupied-hk-lock';
 import { roomHasInHouseStay } from '@/lib/occupied-hk-guard';
 
+type RoomAuditCtx = { userId?: string | null; request?: Request };
+
+async function auditRoomStatus(
+  audit: RoomAuditCtx | undefined,
+  before: { id: string; roomNumber: string; status: string; hkCondition: string; inventoryStatus: string },
+  after: { status: string; hkCondition: string; inventoryStatus: string },
+) {
+  if (!audit?.userId && !audit?.request) return;
+  if (
+    before.status === after.status &&
+    before.hkCondition === after.hkCondition &&
+    before.inventoryStatus === after.inventoryStatus
+  ) {
+    return;
+  }
+  const { recordHotelAudit } = await import('@/lib/satellite-audit');
+  await recordHotelAudit(audit, 'Room', before.id, 'STATUS', {
+    roomNumber: before.roomNumber,
+    from: { status: before.status, hk: before.hkCondition, inventory: before.inventoryStatus },
+    to: { status: after.status, hk: after.hkCondition, inventory: after.inventoryStatus },
+  });
+}
+
+async function releaseWaitingMoves(room: { id: string; hkCondition: string; inventoryStatus: string }) {
+  if (room.inventoryStatus !== 'IN_SERVICE') return;
+  if (room.hkCondition !== 'CLEAN' && room.hkCondition !== 'INSPECTED') return;
+  const { applyPendingMovesForDoor } = await import('@/lib/services/room-move-request.service');
+  await applyPendingMovesForDoor(room.id).catch((error) => console.error('pending room move', error));
+}
+
+/** Audit a cleanliness or inventory change and run a waiting move when the door is clean. */
+export async function finishRoomStatusChange(
+  before: { id: string; roomNumber: string; status: string; hkCondition: string; inventoryStatus: string },
+  after: { status: string; hkCondition: string; inventoryStatus: string },
+  audit?: RoomAuditCtx,
+) {
+  await auditRoomStatus(audit, before, after);
+  await releaseWaitingMoves({
+    id: before.id,
+    hkCondition: after.hkCondition,
+    inventoryStatus: after.inventoryStatus,
+  });
+}
+
 
 
 export async function listRoomsMaster() {
@@ -184,7 +228,7 @@ export async function assignRoomType(id: string, roomTypeId: string) {
 
 
 
-export async function updateRoomStatus(id: string, status: RoomStatus) {
+export async function updateRoomStatus(id: string, status: RoomStatus, audit?: RoomAuditCtx) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');
   const axes = axesFromLegacyStatus(status);
@@ -195,11 +239,14 @@ export async function updateRoomStatus(id: string, status: RoomStatus) {
     if (!inventoryOnly) throw new OccupiedHkLockedError();
     hk = room.hkCondition as RoomHkCondition;
   }
-  return prisma.room.update({
+  const updated = await prisma.room.update({
     where: { id },
     data: roomWriteFromAxes(hk, axes.inventoryStatus, axes.inventoryReason),
     include: { roomType: true },
   });
+  await auditRoomStatus(audit, room, updated);
+  await releaseWaitingMoves(updated);
+  return updated;
 }
 
 export async function updateRoomAxes(
@@ -207,21 +254,25 @@ export async function updateRoomAxes(
   hk: RoomHkCondition,
   inventory: RoomInventoryStatus,
   reason?: string | null,
+  audit?: RoomAuditCtx,
 ) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');
   if (hk !== room.hkCondition && (await roomHasInHouseStay(id))) {
     throw new OccupiedHkLockedError();
   }
-  return prisma.room.update({
+  const updated = await prisma.room.update({
     where: { id },
     data: roomWriteFromAxes(hk, inventory, reason),
     include: { roomType: true },
   });
+  await auditRoomStatus(audit, room, updated);
+  await releaseWaitingMoves(updated);
+  return updated;
 }
 
 /** Take an OOS/OOO door back to sellable inventory. HK condition stays DIRTY. */
-export async function returnRoomToService(id: string) {
+export async function returnRoomToService(id: string, audit?: RoomAuditCtx) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');
   const { todayBakuYmd } = await import('@era/satellite-kit/time');
@@ -235,12 +286,13 @@ export async function returnRoomToService(id: string) {
     where: { roomId: id, OR: [{ endDate: null }, { endDate: { gt: end } }] },
     data: { endDate: end },
   });
+  await auditRoomStatus(audit, room, updated);
   return updated;
 }
 
 
 
-export async function setRoomOOO(id: string, days: number, notes?: string) {
+export async function setRoomOOO(id: string, days: number, notes?: string, audit?: RoomAuditCtx) {
   const existing = await prisma.room.findUnique({ where: { id } });
   if (!existing) throw new Error('Room not found');
   const occupied = await roomHasInHouseStay(id);
@@ -257,10 +309,11 @@ export async function setRoomOOO(id: string, days: number, notes?: string) {
       jobType: 'OTHER',
     },
   });
+  await auditRoomStatus(audit, existing, { ...existing, ...room });
   return room;
 }
 
-export async function setRoomOOS(id: string, days: number, notes?: string) {
+export async function setRoomOOS(id: string, days: number, notes?: string, audit?: RoomAuditCtx) {
   const existing = await prisma.room.findUnique({ where: { id } });
   if (!existing) throw new Error('Room not found');
   const occupied = await roomHasInHouseStay(id);
@@ -277,6 +330,7 @@ export async function setRoomOOS(id: string, days: number, notes?: string) {
       jobType: 'OTHER',
     },
   });
+  await auditRoomStatus(audit, existing, { ...existing, ...room });
   return room;
 }
 

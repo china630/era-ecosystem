@@ -59,6 +59,33 @@ describe('reservationQueueWhere', () => {
     });
   });
 
+  it('realized departures are guests who checked out on the business day', () => {
+    const where = reservationQueueWhere({
+      queue: 'realizedDepartures',
+      today,
+      dateFrom: '2026-01-01',
+    });
+    expect(where.status).toBe('CHECKED_OUT');
+    expect(where.checkOutDate).toBeUndefined();
+    expect(where.stay).toEqual({
+      is: {
+        actualCheckOut: {
+          gte: new Date('2026-10-10T00:00:00.000+04:00'),
+          lte: new Date('2026-10-10T23:59:59.999+04:00'),
+        },
+      },
+    });
+  });
+
+  it('puts expected departure before departed and realized departures after', () => {
+    expect(RESERVATION_QUEUE_CODES.indexOf('dueOut')).toBeLessThan(
+      RESERVATION_QUEUE_CODES.indexOf('departed'),
+    );
+    expect(RESERVATION_QUEUE_CODES.indexOf('departed')).toBeLessThan(
+      RESERVATION_QUEUE_CODES.indexOf('realizedDepartures'),
+    );
+  });
+
   it('all sits before no-show and cancel and drops those statuses', () => {
     expect(RESERVATION_QUEUE_CODES.indexOf('all')).toBeLessThan(RESERVATION_QUEUE_CODES.indexOf('noShow'));
     expect(RESERVATION_QUEUE_CODES.indexOf('all')).toBeLessThan(RESERVATION_QUEUE_CODES.indexOf('cancel'));
