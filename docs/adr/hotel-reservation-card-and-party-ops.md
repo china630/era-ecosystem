@@ -190,6 +190,7 @@ A move is stored in `RoomChangePlan` only when the door actually changes. The ch
 - **After NA:** `CONFIRMED` on the reservation list, door not held. Reception checks in again. Folio history and posted nights stay.
 - If the door is taken, or city-ledger / fiscal checkout cannot be reopened by the same click, do not silently return `IN_HOUSE` — use the after-NA path and settle cash by hand.
 - **Delete stay** is a hard delete of a duplicate, not `CANCELLED`. Reason required. Allowed only on `OPTION` / `CONFIRMED` with an empty folio (no charges, payments, deposits, fiscal). Forbidden on `IN_HOUSE` / `CHECKED_OUT` / any money. Permission: `RESERVATIONS_CANCEL` (manager / admin / night auditor — not receptionist).
+- Card prints (registration, proforma, confirmation) and the folio print open a real window without `noopener` and fill the Elektra blanks from the stay. The stay journal uses the same full-card modal, one filter row, and a grid. Header balance is the amount only; the folio footer says the guest’s debt. Deposit amount is shown in the payment color. A zero night on `COMP` or `HOUSE` does not stop night audit.
 - The same named guest on two overlapping stays is **allowed**. `assertNamedGuestsFreeOnStay` is a warning list, not a hard block. Save, create, and check-in show the other stay (door, dates) and may continue (`GET /api/reservations/:id/guest-overlaps` and `GET /api/reservations/guest-overlaps` for the create path). Two exclusive claims on one door without share stay forbidden.
 
 ## Consequences
