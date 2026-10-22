@@ -249,6 +249,29 @@ export function ReservationCardEditor({
 }: ReservationCardEditorProps) {
   const isCreate = !reservationId;
   const t = useTranslations('reservationCard');
+  const reportApiError = (body: unknown, fallback?: string) => {
+    const code =
+      body && typeof body === 'object' && 'code' in body
+        ? String((body as { code?: unknown }).code ?? '')
+        : '';
+    if (code === 'STAY_RECORD_EXISTS') {
+      showApiError({ error: t('stayRecordExists') }, fallback);
+      return;
+    }
+    if (code === 'STAY_SAVE_FAILED') {
+      showApiError({ error: t('staySaveFailed') }, fallback);
+      return;
+    }
+    if (code === 'FOLIO_HAS_MONEY') {
+      showApiError({ error: t('folioHasMoney') }, fallback);
+      return;
+    }
+    if (code === 'CITY_LEDGER_CHECKIN') {
+      showApiError({ error: t('cityLedgerCheckIn') }, fallback);
+      return;
+    }
+    showApiError(body, fallback);
+  };
   const tb = useTranslations('booking');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -807,7 +830,7 @@ export function ReservationCardEditor({
       }
     } catch (e) {
       if (seq !== loadSeq.current) return;
-      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+      reportApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     } finally {
       if (seq === loadSeq.current) setLoading(false);
     }
@@ -878,7 +901,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       setBookingName((json.name as string | null | undefined) ?? (nextName || null));
@@ -1301,7 +1324,7 @@ export function ReservationCardEditor({
       const res = await fetch(`/api/reservations/${reservationId}/pricing/recalc`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(tc('success'));
@@ -1318,7 +1341,7 @@ export function ReservationCardEditor({
       const res = await fetch(`/api/reservations/${reservationId}/missed-nights`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(t('missedNightsPosted', { count: json.nights?.length ?? 0 }));
@@ -1339,7 +1362,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(t('postNightDone'));
@@ -1439,7 +1462,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setCancelOpen(false);
@@ -1464,7 +1487,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setRestoreOpen(false);
@@ -1486,7 +1509,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setUndoCheckoutOpen(false);
@@ -1510,7 +1533,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setDeleteOpen(false);
@@ -1637,7 +1660,7 @@ export function ReservationCardEditor({
         },
       }),
     );
-    if (!opened) showApiError({ error: t('printBlocked') }, t('printBlocked'));
+    if (!opened) reportApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 
   async function warnGuestOverlaps(): Promise<boolean> {
@@ -1692,7 +1715,7 @@ export function ReservationCardEditor({
           });
           return;
         }
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       const pending = Boolean((json as { movePending?: boolean } | null)?.movePending);
@@ -1724,7 +1747,7 @@ export function ReservationCardEditor({
       const json = await res.json();
       if (!res.ok) {
         if (json?.code === 'BUSINESS_DATE_LAG') {
-          showApiError(
+          reportApiError(
             {
               error: t('checkInBusinessDateLag', {
                 businessDate: String(json.businessDate ?? ''),
@@ -1733,14 +1756,15 @@ export function ReservationCardEditor({
             },
             tc('failed'),
           );
-          return;
+        } else {
+          reportApiError(
+            json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
+              ? { error: formatOperationalGaps(json.people, t) }
+              : json,
+            tc('failed'),
+          );
         }
-        showApiError(
-          json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
-            ? { error: formatOperationalGaps(json.people, t) }
-            : json,
-          tc('failed'),
-        );
+        await load();
         return;
       }
       showSuccess(early ? t('earlyCheckInDone') : t('checkInDone'));
@@ -1762,7 +1786,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(t('breakShareDone'));
@@ -2119,7 +2143,7 @@ export function ReservationCardEditor({
           pax,
         });
       if (namesBlocked && pendingRoomId && pendingRoomId !== roomId) {
-        showApiError({ error: tb('namesIncomplete') }, tc('failed'));
+        reportApiError({ error: tb('namesIncomplete') }, tc('failed'));
         return;
       }
       const selectedType = roomTypes.find((r) => r.id === roomTypeId);
@@ -2130,7 +2154,7 @@ export function ReservationCardEditor({
       const capacity = doorCap != null && doorCap > 0 ? Math.min(typeCap, doorCap) : typeCap;
       const adultCount = Math.max(0, Number(adults) || 0);
       if (roomTypeId && adultCount > capacity) {
-        showApiError(
+        reportApiError(
           {
             error: t('adultsExceedCapacity', {
               adults: adultCount,
@@ -2149,14 +2173,14 @@ export function ReservationCardEditor({
         if (!checkIn) missing.push(tb('checkIn'));
         if (!checkOut) missing.push(tb('checkOut'));
         if (missing.length > 0) {
-          showApiError(
+          reportApiError(
             { error: t('missingRequired', { fields: missing.join(', ') }) },
             tc('failed'),
           );
           return;
         }
         if (sellable && sellable.available < 1) {
-          showApiError({ error: t('noSellableInventory') }, tc('failed'));
+          reportApiError({ error: t('noSellableInventory') }, tc('failed'));
           return;
         }
         const res = await fetch('/api/reservations', {
@@ -2243,9 +2267,9 @@ export function ReservationCardEditor({
         if (!res.ok) {
           const err = String(json.error ?? '');
           if (/no availability/i.test(err)) {
-            showApiError({ error: t('noSellableInventory') }, tc('failed'));
+            reportApiError({ error: t('noSellableInventory') }, tc('failed'));
           } else {
-            showApiError(json, tc('failed'));
+            reportApiError(json, tc('failed'));
           }
           return;
         }
@@ -2259,12 +2283,12 @@ export function ReservationCardEditor({
       if (creditLimitAzn.trim() !== '') {
         const limit = Number(creditLimitAzn);
         if (Number.isNaN(limit) || limit < 0) {
-          showApiError({ error: t('creditLimitInvalid') }, tc('failed'));
+          reportApiError({ error: t('creditLimitInvalid') }, tc('failed'));
           return;
         }
       }
       if (shareEligible && !guestGender) {
-        showApiError({ error: t('shareGenderRequired') }, tc('failed'));
+        reportApiError({ error: t('shareGenderRequired') }, tc('failed'));
         return;
       }
       if (guestId && guestGender) {
@@ -2388,7 +2412,7 @@ export function ReservationCardEditor({
           setCardMoveAsk({ askReason: data?.status === 'IN_HOUSE', askSettlement: true });
           return;
         }
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(json.movePending ? t('splitStayPlanned') : tc('success'));
@@ -2564,7 +2588,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       await load();
@@ -2639,7 +2663,7 @@ export function ReservationCardEditor({
     onUndoCheckout: status === 'CHECKED_OUT' ? () => setUndoCheckoutOpen(true) : undefined,
     onDeleteStay:
       !isCreate &&
-      (status === 'OPTION' || status === 'CONFIRMED') &&
+      (status === 'OPTION' || status === 'CONFIRMED' || status === 'CHECKED_OUT') &&
       can(PERMISSIONS.RESERVATIONS_CANCEL)
         ? () => setDeleteOpen(true)
         : undefined,
@@ -3114,7 +3138,7 @@ export function ReservationCardEditor({
             .then(async (res) => {
               const json = await res.json();
               if (!res.ok) {
-                showApiError(json, tc('failed'));
+                reportApiError(json, tc('failed'));
                 return;
               }
               const payload = (json.data ?? json) as {
@@ -3163,7 +3187,7 @@ export function ReservationCardEditor({
             .then(async (res) => {
               const json = await res.json();
               if (!res.ok) {
-                showApiError(json, tc('failed'));
+                reportApiError(json, tc('failed'));
                 return;
               }
               showSuccess(t('moveGuestDone'));

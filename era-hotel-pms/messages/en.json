@@ -1403,6 +1403,10 @@
       "legalExpenses": "I am responsible for all expenses incurred during my stay.",
       "legalPenalty": "An 18% penalty may apply if checkout rules are broken. By signing I confirm I was informed."
     },
+    "stayRecordExists": "This stay already has a check-in record. Restore it instead of checking in again.",
+    "staySaveFailed": "The stay could not be saved. The detail is in the server log.",
+    "folioHasMoney": "This stay has folio money and cannot be deleted.",
+    "cityLedgerCheckIn": "This checkout was sent to the city ledger. Settle that account by hand.",
     "deleteStay": "Delete reservation",
     "deleteStayDone": "Reservation deleted",
     "deleteReason": "Delete reason",

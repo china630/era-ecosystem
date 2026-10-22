@@ -11,6 +11,7 @@ import {
   Lock,
   LockOpen,
   MoreVertical,
+  Trash2,
   Paperclip,
   Zap,
 } from 'lucide-react';
@@ -175,7 +176,10 @@ export function ReservationCardActions({
           ) : null}
           {onDeleteStay ? (
             <EraMenuItem onSelect={onDeleteStay} className="text-[#C0392B]">
-              {t('deleteStay')}
+              <span className="inline-flex items-center gap-2">
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('deleteStay')}
+              </span>
             </EraMenuItem>
           ) : null}
         </EraMenu>

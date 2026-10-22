@@ -82,6 +82,10 @@ export function handleRouteError(err: unknown) {
     const status = (err as Error & { status?: number }).status;
     const lower = err.message.toLowerCase();
     if (typeof status === 'number' && status >= 400 && status < 600) {
+      const appCode = (err as { code?: unknown }).code;
+      if (typeof appCode === 'string' && !appCode.startsWith('P')) {
+        return NextResponse.json({ error: err.message, code: appCode }, { status });
+      }
       return jsonError(err.message, status);
     }
     if (lower.includes('unauthorized')) {
@@ -103,12 +107,28 @@ export function handleRouteError(err: unknown) {
     ) {
       return jsonError(err.message, 409);
     }
-    if (
-      err.name === 'PrismaClientValidationError' ||
-      /invalid\s+`prisma\./i.test(err.message)
-    ) {
+    if (err.name === 'PrismaClientKnownRequestError') {
+      const code = (err as { code?: string }).code;
+      const target = (err as { meta?: { target?: string[] | string } }).meta?.target;
+      const fields = Array.isArray(target) ? target : target ? [target] : [];
       console.error(err);
-      return jsonError('Could not save this stay', 400);
+      if (code === 'P2002' && fields.includes('reservationId')) {
+        return NextResponse.json(
+          { error: 'This stay already has a check-in record', code: 'STAY_RECORD_EXISTS' },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
+        { status: 400 },
+      );
+    }
+    if (err.name === 'PrismaClientValidationError') {
+      console.error(err);
+      return NextResponse.json(
+        { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
+        { status: 400 },
+      );
     }
     const known = ['not found', 'invalid', 'cannot', 'only', 'must'];
     if (known.some((k) => lower.includes(k))) {
