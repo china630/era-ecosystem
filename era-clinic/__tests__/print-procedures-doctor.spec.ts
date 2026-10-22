@@ -1,3 +1,4 @@
+import { showsUnpaidExtraOnPlan } from "@/domain/sanatorium/extra-procedure-route";
 import {
   appendCheckoutMarker,
   episodeCareTeamPrintName,
@@ -69,12 +70,14 @@ describe("procedure print doctor column", () => {
     expect(last?.price).toBe("");
   });
 
-  it("prints only seated sessions, not unpaid extras or unplaced proposals", () => {
+  it("keeps unpaid extras out of the seated status list; the org route decides the guest sheet", () => {
     expect(PRINT_PROCEDURE_STATUSES).toEqual([
       "SCHEDULED",
       "CHECKED_IN",
       "COMPLETED",
       "NO_SHOW",
     ]);
+    expect(showsUnpaidExtraOnPlan("SHOW_ON_PLAN")).toBe(true);
+    expect(showsUnpaidExtraOnPlan("HOLD_UNTIL_PAY")).toBe(false);
   });
 });

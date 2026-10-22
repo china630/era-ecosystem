@@ -52,8 +52,10 @@ export type PackageBalanceRow = {
   isQuotaAlias?: boolean;
   /** Open SKU picker (pool or unresolved quota alias). */
   needsSkuPicker?: boolean;
-  /** False for intake labs/exams — read-only in W2; hidden from assign menu in W1. */
+  /** False when the block is hidden from the procedure menu. */
   assignable?: boolean;
+  fulfillment?: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
+  procedureOrder?: number;
   isTransfer?: boolean;
   transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
 };
@@ -478,6 +480,22 @@ export function PackageAssignModal({
       formCode
     );
   }, [formCode, formBurnPool, balances, poolEligible, allCodes]);
+
+  const formFulfillment = useMemo(() => {
+    const quota = formBurnPool || formCode;
+    if (!quota) return "PROCEDURE_ORDER" as const;
+    return (
+      balances.find((b) => b.procedureCode === quota)?.fulfillment ?? "PROCEDURE_ORDER"
+    );
+  }, [formBurnPool, formCode, balances]);
+  const formIsStudy = formFulfillment === "LAB_ORDER" || formFulfillment === "VISIT";
+
+  function lineIsStudy(line: DraftLine): boolean {
+    const quota = line.burnPoolCode || line.procedureCode;
+    const fulfillment =
+      balances.find((b) => b.procedureCode === quota)?.fulfillment ?? "PROCEDURE_ORDER";
+    return fulfillment === "LAB_ORDER" || fulfillment === "VISIT";
+  }
 
   const draftRemaining = useMemo(() => {
     const map = new Map(balances.map((b) => [b.procedureCode, b.remaining]));
@@ -916,6 +934,11 @@ export function PackageAssignModal({
     if (code === "CABIN_SEX") return tPhysio("packageAssignMissCabinSex");
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
     if (code === "PLACE_FAILED") return tPhysio("packageAssignPlaceFailed");
+    if (code === "NOT_IN_PROCEDURES") return tPhysio("packageAssignNotInProcedures");
+    if (code === "NO_SERVICE") return tPhysio("packageAssignNoService");
+    if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
+    if (code === "LAB_ALREADY_OPEN") return tPhysio("packageAssignLabOpen");
+    if (code === "LAB_ONE") return tPhysio("packageAssignLabOne");
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
       ? `${serverError} (${code})`
       : serverError;
@@ -976,7 +999,8 @@ export function PackageAssignModal({
       onClose();
       return;
     }
-    if (lines.length > 0 && !blockReason && !start && assigned.length === 0) {
+    const needsSlot = lines.some((line) => !lineIsStudy(line));
+    if (lines.length > 0 && needsSlot && !blockReason && !start && assigned.length === 0) {
       const point = defaultStartPoint();
       setStartDate(point.date);
       setStartHour(point.hour);
@@ -1485,6 +1509,7 @@ export function PackageAssignModal({
                           {tPhysio("replaceBaths")}
                         </button>
                       ) : null}
+                      {b.fulfillment === "LAB_ORDER" ? null : (
                       <button
                         type="button"
                         className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
@@ -1493,6 +1518,7 @@ export function PackageAssignModal({
                       >
                         {labels.all}
                       </button>
+                      )}
                       <button
                         type="button"
                         className={`${PRIMARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
@@ -1824,11 +1850,12 @@ export function PackageAssignModal({
                       className={`${MODAL_INPUT_CLASS} w-[5ch]`}
                       type="number"
                       min={1}
-                      max={40}
+                      max={formFulfillment === "LAB_ORDER" ? 1 : 40}
                       value={formQty}
                       onChange={(e) => {
                         const raw = Number(e.target.value) || 1;
-                        const n = Math.min(40, Math.max(1, raw));
+                        const cap = formFulfillment === "LAB_ORDER" ? 1 : 40;
+                        const n = Math.min(cap, Math.max(1, raw));
                         setFormQty(n);
                         if (n <= 1) {
                           setFormPhysio((prev) => ({
@@ -1861,7 +1888,7 @@ export function PackageAssignModal({
                   {(unitOf(formCode) * Math.max(1, formQty)).toFixed(2)} AZN
                 </p>
               ) : null}
-              {formCode ? (
+              {formCode && !formIsStudy ? (
                 <>
                   <div className="mb-3">
                     <PhysioSiteChips
@@ -1898,11 +1925,11 @@ export function PackageAssignModal({
                     />
                   </div>
                 </>
-              ) : (
+              ) : !formCode ? (
                 <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
                   {labels.pickPoolSku ?? tPhysio("packageAssignPoolHint")}
                 </p>
-              )}
+              ) : null}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"

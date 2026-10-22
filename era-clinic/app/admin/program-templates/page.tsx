@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Printer, Trash2, X } from "lucide-react";
+import { Minus, Pencil, Plus, Printer, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -55,6 +55,8 @@ type ProgramBlock = {
   quotaBasis: QuotaBasis | "";
   requiresDoctor: boolean | null;
   dailyDistinctCap: number | null;
+  showInProcedures: boolean;
+  procedureOrder: number;
 };
 
 type ProgramKnot = { nights: number; procedureCode: string; qty: number };
@@ -129,9 +131,19 @@ function defaultBlockName(kind: BlockKind, t: (k: string) => string): string {
   }
 }
 
+function newBlockCode(): string {
+  const id = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+  return `BLK-${id}`;
+}
+
+function nextProcedureOrder(existing: ProgramBlock[]): number {
+  const used = existing.filter((row) => row.showInProcedures).map((row) => row.procedureOrder);
+  return used.length > 0 ? Math.max(...used) + 1 : 1;
+}
+
 function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
   return {
-    procedureCode: "",
+    procedureCode: newBlockCode(),
     procedureName: "",
     quotaTotal: 1,
     kind: null,
@@ -142,6 +154,8 @@ function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
     quotaBasis: "",
     requiresDoctor: null,
     dailyDistinctCap: null,
+    showInProcedures: false,
+    procedureOrder: 0,
   };
 }
 
@@ -485,6 +499,8 @@ export default function ProgramTemplatesAdminPage() {
           quotaBasis: (p.quotaBasis as QuotaBasis) || "PER_NIGHTS",
           requiresDoctor: Boolean(p.requiresDoctor),
           dailyDistinctCap: p.dailyDistinctCap ?? null,
+          showInProcedures: p.showInProcedures === true,
+          procedureOrder: p.procedureOrder ?? p.sortOrder ?? i,
         };
       }),
     );
@@ -674,7 +690,7 @@ export default function ProgramTemplatesAdminPage() {
         const mode = block.assignMode ? t(`assignMode_${block.assignMode}`) : "—";
         const basis = block.quotaBasis ? t(`quotaBasis_${block.quotaBasis}`) : "—";
         return `<tr>
-          <td class="name"><strong>${htmlEscape(block.procedureName || block.procedureCode)}</strong><div class="code">${htmlEscape(block.procedureCode)}</div></td>
+          <td class="name"><strong>${htmlEscape(block.procedureName || block.procedureCode)}</strong></td>
           <td><ul>${items}</ul></td>
           <td>${htmlEscape(mode)}</td>
           <td>${htmlEscape(basis)}</td>
@@ -827,6 +843,8 @@ ${head}
           fulfillment: fulfillmentFromKind(b.kind),
           quotaBasis: b.quotaBasis || "PER_NIGHTS",
           requiresDoctor: Boolean(b.requiresDoctor),
+          showInProcedures: b.showInProcedures === true,
+          procedureOrder: b.showInProcedures ? Math.max(1, b.procedureOrder || 0) : 0,
           dailyDistinctCap:
             b.kind === "PHYSIO" || b.kind === "BATH" || b.kind === "PARAFFIN"
               ? b.dailyDistinctCap
@@ -1224,9 +1242,6 @@ ${head}
                           <td className="sticky left-0 z-[1] bg-white p-1.5">
                             <p className="m-0 text-[13px] font-semibold text-slate-800">
                               {b.procedureName || b.procedureCode}
-                              <span className={`ml-1 font-normal ${TEXT_MUTED_CLASS}`}>
-                                ({b.procedureCode})
-                              </span>
                               {isAuto ? (
                                 <span
                                   className="ml-1 inline-flex items-center rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900"
@@ -1278,7 +1293,7 @@ ${head}
                                 onChange={(e) =>
                                   setStayQty(b.procedureCode, Number(e.target.value) || 0)
                                 }
-                                aria-label={`${b.procedureCode} stay qty`}
+                                aria-label={`${b.procedureName || b.procedureCode} stay qty`}
                               />
                             ) : (
                               <span className={`text-[11px] ${TEXT_MUTED_CLASS}`}>—</span>
@@ -1299,7 +1314,7 @@ ${head}
                                   onChange={(e) =>
                                     setKnotQty(n, b.procedureCode, Number(e.target.value) || 0)
                                   }
-                                  aria-label={`${b.procedureCode} ${n}n`}
+                                  aria-label={`${b.procedureName || b.procedureCode} ${n}n`}
                                 />
                               )}
                             </td>
@@ -1353,6 +1368,74 @@ ${head}
       >
         {blockDraft ? (
           <div className={`${FORM_STACK_CLASS} max-h-[min(60vh,32rem)] overflow-y-auto pr-1`}>
+            <Field
+              label={t("blockName")}
+              preset="shortText"
+              value={blockDraft.procedureName}
+              onChange={(e) =>
+                setBlockDraft({ ...blockDraft, procedureName: e.target.value })
+              }
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex items-center gap-2 text-[13px] text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={blockDraft.showInProcedures}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setBlockDraft((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            showInProcedures: on,
+                            procedureOrder: on
+                              ? prev.procedureOrder > 0
+                                ? prev.procedureOrder
+                                : nextProcedureOrder(
+                                    blocks.filter((row) => row.procedureCode !== prev.procedureCode),
+                                  )
+                              : 0,
+                          }
+                        : prev,
+                    );
+                  }}
+                />
+                {t("showInProcedures")}
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={t("procedureOrderDown")}
+                  disabled={!blockDraft.showInProcedures || blockDraft.procedureOrder <= 1}
+                  onClick={() =>
+                    setBlockDraft((prev) =>
+                      prev
+                        ? { ...prev, procedureOrder: Math.max(1, prev.procedureOrder - 1) }
+                        : prev,
+                    )
+                  }
+                >
+                  <Minus className="h-3.5 w-3.5" aria-hidden />
+                </button>
+                <span className="w-6 text-center text-[13px] tabular-nums">
+                  {blockDraft.showInProcedures ? blockDraft.procedureOrder : "—"}
+                </span>
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={t("procedureOrderUp")}
+                  disabled={!blockDraft.showInProcedures}
+                  onClick={() =>
+                    setBlockDraft((prev) =>
+                      prev ? { ...prev, procedureOrder: prev.procedureOrder + 1 } : prev,
+                    )
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </div>
+            </div>
             <CatalogField
               kind="CLOSED_SMALL"
               label={t("blockKind")}
@@ -1384,24 +1467,6 @@ ${head}
                 }}
               />
             ) : null}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                label={t("blockCode")}
-                preset="code"
-                value={blockDraft.procedureCode}
-                onChange={(e) =>
-                  setBlockDraft({ ...blockDraft, procedureCode: e.target.value })
-                }
-              />
-              <Field
-                label={t("blockName")}
-                preset="shortText"
-                value={blockDraft.procedureName}
-                onChange={(e) =>
-                  setBlockDraft({ ...blockDraft, procedureName: e.target.value })
-                }
-              />
-            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <CatalogField
                 kind="CLOSED_SMALL"

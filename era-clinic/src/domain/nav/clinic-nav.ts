@@ -237,6 +237,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
+    href: "/sanatorium/walk-in-parties",
+    labelKey: "walkInParties",
+    icon: Users,
+    group: "mod:sanatorium",
+    permission: CLINIC_PERMISSION.SCREEN_SANATORIUM,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
     href: "/sanatorium/resources",
     labelKey: "resourceMatrix",
     icon: Grid3x3,

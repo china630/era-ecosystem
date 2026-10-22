@@ -741,6 +741,10 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
     permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
   },
   {
+    prefix: "/api/sanatorium/walk-in-parties",
+    permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
+  },
+  {
     prefix: "/api/sanatorium/episodes",
     permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
   },

@@ -11,6 +11,7 @@ export async function postHotelSettlementPending(input: {
   sku?: string;
   qty?: number;
   revenueCode?: string;
+  basketRef?: string;
 }) {
   const base = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
   const secret = process.env.POS_BRIDGE_SECRET ?? process.env.CLINIC_BRIDGE_SECRET;
@@ -42,6 +43,7 @@ export async function postHotelSettlementPending(input: {
       ...(input.sku?.trim() ? { sku: input.sku.trim() } : {}),
       ...(input.qty != null ? { qty: input.qty } : {}),
       ...(input.revenueCode ? { revenueCode: input.revenueCode } : {}),
+      ...(input.basketRef ? { basketRef: input.basketRef } : {}),
     }),
     signal: AbortSignal.timeout(15000),
   });

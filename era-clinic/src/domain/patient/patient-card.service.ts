@@ -4,6 +4,7 @@ import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { getClinicSettings } from "@/domain/settings/settings.service";
+import { showsUnpaidExtraOnPlan } from "@/domain/sanatorium/extra-procedure-route";
 import {
   bakuDateKey,
   mergeAppointmentVisitEvents,
@@ -103,6 +104,7 @@ function mapLabEvent(
 }
 
 function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
+  if (ev.status === "PENDING_PAY") return ev;
   return {
     ...ev,
     subtitle: ev.subtitle
@@ -135,7 +137,8 @@ function mapProcedureEvent(p: {
   return {
     id: `procedure:${p.id}`,
     type: "procedure",
-    at: p.scheduledAt.toISOString(),
+    at:
+      p.status === "PENDING_PAY" ? new Date().toISOString() : p.scheduledAt.toISOString(),
     title: `Procedure · ${p.procedureName}`,
     subtitle: [p.procedureCode ? `type ${p.procedureCode}` : null, siteCodes, p.bodyPart]
       .filter(Boolean)
@@ -542,6 +545,7 @@ export async function getPatientPlanPage(
   const offset = opts.offset ?? 0;
   const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
 
+  const showUnpaid = showsUnpaidExtraOnPlan(settings.extraProcedureRoute);
   const where = {
     patientRefId,
     ...episodeFilter,
@@ -558,6 +562,9 @@ export async function getPatientPlanPage(
             }
           : {}),
       },
+      ...(showUnpaid
+        ? [{ status: "PENDING_PAY" as const, inPackage: false }]
+        : []),
     ],
   };
 

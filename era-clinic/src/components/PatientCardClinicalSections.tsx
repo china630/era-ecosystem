@@ -412,7 +412,9 @@ export function PatientCardClinicalSections({
                 ? "statusCancelled"
                 : status === "PROPOSED"
                   ? "statusProposed"
-                  : "";
+                  : status === "PENDING_PAY"
+                    ? "statusUnpaid"
+                    : "";
     return key ? ts(key) : status;
   }
 
@@ -846,6 +848,7 @@ export function PatientCardClinicalSections({
                 const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
                 const scheduled = ev.type === "procedure" && ev.status === "SCHEDULED" && orderId;
                 const proposed = ev.type === "procedure" && ev.status === "PROPOSED" && orderId;
+                const unpaid = ev.status === "PENDING_PAY";
                 const actionable = scheduled || proposed;
                 return (
                   <li
@@ -855,8 +858,8 @@ export function PatientCardClinicalSections({
                     <div className="min-w-0">
                       <div className="font-medium">{eventTitle(ev, locale)}</div>
                       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {ev.at ? bakuDateTimeLabel(ev.at) : ""}
-                        {ev.status ? ` · ${planStatusLabel(ev.status)}` : ""}
+                        {!unpaid && ev.at ? bakuDateTimeLabel(ev.at) : ""}
+                        {ev.status ? `${!unpaid && ev.at ? " · " : ""}${planStatusLabel(ev.status)}` : ""}
                       </p>
                     </div>
                     {actionable ? (

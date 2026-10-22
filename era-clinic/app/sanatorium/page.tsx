@@ -620,6 +620,9 @@ export default function SanatoriumPage() {
                   {t("applyOpenPackages")}
                 </button>
               ) : null}
+              <Link href="/sanatorium/walk-in-parties" className={SECONDARY_BUTTON_CLASS}>
+                {t("registerWalkInGroup")}
+              </Link>
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
                 <Plus className="h-4 w-4" aria-hidden />
                 {t("registerWalkIn")}

@@ -54,7 +54,7 @@ export { LocaleToggle } from "./locale-toggle";
 export { SatelliteLocaleToggle } from "./satellite-locale-toggle";
 export { SatelliteHeaderLocale } from "./satellite-header-locale";
 export { PublicLegalFooter, resolveLegalUrls, type LegalUrls } from "./legal-footer";
-export { ModalFooter, ModalShell } from "./modal-shell";
+export { ModalFooter, ModalShell, ViewportOverlay } from "./modal-shell";
 export { EraToastProvider } from "./era-toast-provider";
 export { SatelliteAppProviders } from "./satellite-app-providers";
 export { parseApiError } from "../lib/parse-api-error";

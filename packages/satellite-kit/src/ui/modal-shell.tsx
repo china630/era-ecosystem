@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   MODAL_CLOSE_BUTTON_CLASS,
   MODAL_DIALOG_CONTENT_CLASS,
@@ -9,6 +10,36 @@ import {
   MODAL_FOOTER_OUTLINE_CLASS,
   MODAL_FOOTER_PRIMARY_CLASS,
 } from "./design-system";
+
+/**
+ * Several layers can lock scroll at once (fullscreen, then a modal on top).
+ * Each one must not restore the previous value while another lock is still open.
+ */
+let bodyScrollLocks = 0;
+let bodyScrollRestore = "";
+
+function lockBodyScroll(): () => void {
+  if (bodyScrollLocks === 0) {
+    bodyScrollRestore = document.body.style.overflow;
+  }
+  bodyScrollLocks += 1;
+  document.body.style.overflow = "hidden";
+  return () => {
+    bodyScrollLocks = Math.max(0, bodyScrollLocks - 1);
+    if (bodyScrollLocks === 0) {
+      document.body.style.overflow = bodyScrollRestore;
+    }
+  };
+}
+
+/** Page content sits in a z-0 stacking context under the fixed header and sidebar. */
+function useDocumentBody(): HTMLElement | null {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setHost(document.body);
+  }, []);
+  return host;
+}
 
 export function ModalShell({
   open = true,
@@ -39,16 +70,13 @@ export function ModalShell({
 }) {
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return lockBodyScroll();
   }, [open]);
 
-  if (!open) return null;
+  const host = useDocumentBody();
+  if (!open || !host) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[200] flex items-start justify-center overflow-hidden bg-black/40 p-4 pb-6 pt-10"
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
@@ -90,7 +118,32 @@ export function ModalShell({
 
         {footer != null ? <footer className={footerClassName}>{footer}</footer> : null}
       </div>
-    </div>
+    </div>,
+    host,
+  );
+}
+
+/**
+ * Full-screen ops layer (resource matrix, room plan, timesheet).
+ * Portaled like ModalShell, one step under it (z-180 vs z-200).
+ */
+export function ViewportOverlay({
+  children,
+  className,
+  label,
+}: {
+  children: ReactNode;
+  className: string;
+  label: string;
+}) {
+  const host = useDocumentBody();
+  useEffect(() => lockBodyScroll(), []);
+  if (!host) return null;
+  return createPortal(
+    <div className={className} role="dialog" aria-modal="true" aria-label={label}>
+      {children}
+    </div>,
+    host,
   );
 }
 
