@@ -2568,6 +2568,8 @@ model SettlementPendingCharge {
   currency         String                   @default("AZN")
   description      String
   payerLabel       String?
+  /// Shared clinic walk-in party receipt. Lines stay separate; Front Cash pays the basket once.
+  basketRef        String?                  @map("basket_ref")
   globalPersonId   String?
   reservationId    String?
   cashShiftId      String?
@@ -2584,6 +2586,7 @@ model SettlementPendingCharge {
 
   @@index([status, businessDate])
   @@index([sourceSystem, sourceRef])
+  @@index([organizationId, basketRef])
   @@index([organizationId])
   @@unique([organizationId, idempotencyKey])
 }

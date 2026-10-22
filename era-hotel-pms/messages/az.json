@@ -958,7 +958,8 @@
     "voidReason": "Səbəb",
     "voidConfirm": "Ləğv et",
     "voidSuccess": "Gözləyən ödəniş ləğv edildi.",
-    "voidFailed": "Ləğv uğursuz"
+    "voidFailed": "Ləğv uğursuz",
+    "basketLines": "{count} sətir"
   },
   "booking": {
     "title": "Yeni rezervasiya",

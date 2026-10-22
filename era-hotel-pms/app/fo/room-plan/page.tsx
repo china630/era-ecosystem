@@ -12,6 +12,7 @@ import {
   FilterMenuButton,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  ViewportOverlay,
   SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
@@ -464,11 +465,9 @@ export default function RoomPlanPage() {
   if (fullscreen) {
     return (
       <>
-        <div
+        <ViewportOverlay
           className="fixed inset-0 z-[180] flex flex-col bg-[#EBEDF0] px-4 py-3 sm:px-6"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('fullscreenTitle')}
+          label={t('fullscreenTitle')}
         >
           <div className="mb-3 flex shrink-0 flex-wrap items-center justify-end gap-2">{headerActions}</div>
           <div className="shrink-0">{filters}</div>
@@ -476,7 +475,7 @@ export default function RoomPlanPage() {
           <div className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden p-4`}>
             {grid}
           </div>
-        </div>
+        </ViewportOverlay>
         {modals}
       </>
     );

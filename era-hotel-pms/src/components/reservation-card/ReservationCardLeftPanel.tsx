@@ -27,6 +27,7 @@ import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/Res
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
+import { priceNoteChoosesHotel } from '@/lib/class-settlement-note';
 import { addHotelDays } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
 import type { AgencyOption, RatePlanOption, SelectOption, SourceOption } from './types';
@@ -115,6 +116,7 @@ function moveReasonLabel(
 
 function RoomMoves({
   changes,
+  slices,
 }: {
   changes?: Array<{
     id: string;
@@ -124,23 +126,45 @@ function RoomMoves({
     reasonCode?: string | null;
     notes?: string | null;
   }>;
+  slices?: Array<{
+    id: string;
+    fromDate: string;
+    toDate: string;
+    roomTypeCode?: string | null;
+    roomNumber?: string | null;
+  }>;
 }) {
   const t = useTranslations('reservationCard');
   const rows = [...(changes ?? [])].sort((a, b) =>
     String(b.effectiveAt).localeCompare(String(a.effectiveAt)),
   );
-  if (rows.length === 0) return null;
+  const segments = (slices ?? []).length > 1 ? (slices ?? []) : [];
+  if (rows.length === 0 && segments.length === 0) return null;
   return (
     <details className={`text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-moves">
       <summary className="cursor-pointer font-semibold">{t('roomMoves')}</summary>
-      <ul className="m-0 mt-1 list-none p-0">
-        {rows.map((c) => (
-          <li key={c.id}>
-            {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
-            {bakuDateTimeDisplay(c.effectiveAt)}, {moveReasonLabel(c.reasonCode, c.notes, t)}
-          </li>
-        ))}
-      </ul>
+      {rows.length > 0 ? (
+        <ul className="m-0 mt-1 list-none p-0">
+          {rows.map((c) => (
+            <li key={c.id}>
+              {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
+              {bakuDateTimeDisplay(c.effectiveAt)}, {moveReasonLabel(c.reasonCode, c.notes, t)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {segments.length > 0 ? (
+        <ul className="m-0 mt-1 list-none p-0">
+          {segments.map((slice) => (
+            <li key={slice.id}>
+              {String(slice.fromDate).slice(0, 10)} – {String(slice.toDate).slice(0, 10)}
+              {' · '}
+              {slice.roomTypeCode ?? '—'}
+              {slice.roomNumber ? ` · ${slice.roomNumber}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </details>
   );
 }
@@ -152,6 +176,7 @@ function ClassSettlement({
   givenNightly,
   hotelCovers,
   disabled,
+  openToken,
   onHotel,
   onGuestPays,
   onHotelRefund,
@@ -163,6 +188,8 @@ function ClassSettlement({
   givenNightly: number | null;
   hotelCovers: boolean;
   disabled: boolean;
+  /** Bumps when the user changes the charged or given class in this visit. */
+  openToken: number;
   onHotel: () => void;
   onGuestPays: () => void;
   onHotelRefund: () => void;
@@ -171,7 +198,10 @@ function ClassSettlement({
   const t = useTranslations('reservationCard');
   const givenLower =
     chargedNightly != null && givenNightly != null && givenNightly < chargedNightly;
-  const [open, setOpen] = useState(!hotelCovers);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (openToken > 0) setOpen(true);
+  }, [openToken]);
   if (hotelCovers) return null;
   const choose = (run: () => void) => {
     setOpen(false);
@@ -352,6 +382,8 @@ export type ReservationCardLeftPanelProps = {
   preferredLocation: string;
   preferredBed: string;
   givenRoomTypeId: string;
+  /** Billing price note. A recorded class choice keeps the settlement modal closed. */
+  priceNote?: string;
   /** Assigned door no longer matches Given / Room type physical category. */
   doorPhysicalMismatch?: boolean;
   assignedRoomLabel?: string;
@@ -418,9 +450,10 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const tc = useTranslations('common');
   const locale = useLocale();
   const [hotelCoversClass, setHotelCoversClass] = useState(false);
+  const [classAskToken, setClassAskToken] = useState(0);
   useEffect(() => {
-    setHotelCoversClass(false);
-  }, [props.givenRoomTypeId, props.roomTypeId]);
+    setHotelCoversClass(priceNoteChoosesHotel(props.priceNote));
+  }, [props.priceNote]);
   const tenderLocale = locale.startsWith('az') ? 'az' : locale.startsWith('ru') ? 'ru' : 'en';
   const {
     isCreate,
@@ -468,6 +501,16 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const { byKind, roomViews, bedTypes } = useHotelLookupOptions([...LOOKUP_KINDS]);
   const setCatalog = (key: string) => (v: string | string[]) =>
     onChange({ [key]: Array.isArray(v) ? v.join(',') : v });
+  const setRoomClass = (key: 'roomTypeId' | 'givenRoomTypeId') => (v: string | string[]) => {
+    const next = Array.isArray(v) ? (v[0] ?? '') : v;
+    onChange({ [key]: next });
+    const charged = key === 'roomTypeId' ? next : props.roomTypeId;
+    const given = key === 'givenRoomTypeId' ? next : props.givenRoomTypeId;
+    if (charged && given && charged !== given) {
+      setHotelCoversClass(false);
+      setClassAskToken((n) => n + 1);
+    }
+  };
 
   const filteredRatePlans = useMemo(() => {
     const list = ratePlans.filter(
@@ -623,7 +666,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               label={tb('roomType')}
               className="min-w-0"
               value={props.roomTypeId}
-              onChange={setCatalog('roomTypeId')}
+              onChange={setRoomClass('roomTypeId')}
               options={chargedRoomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
               required
               emptyLabel={null}
@@ -635,7 +678,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               label={t('givenRoomType')}
               className="min-w-0"
               value={props.givenRoomTypeId}
-              onChange={setCatalog('givenRoomTypeId')}
+              onChange={setRoomClass('givenRoomTypeId')}
               options={roomTypes.map((rt) => ({ value: rt.id, label: rt.label }))}
               emptyLabel="—"
               hint={t('givenRoomTypePhysicalHint')}
@@ -657,6 +700,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               givenNightly={nightlyForType(ratePlans, props.ratePlanId, props.givenRoomTypeId, props.adults, props.checkIn)}
               hotelCovers={hotelCoversClass}
               disabled={disabled}
+              openToken={classAskToken}
               onHotel={() => {
                 setHotelCoversClass(true);
                 props.onClassSettlement?.('HOTEL');
@@ -829,18 +873,6 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </Link>
             </div>
           ) : null}
-          {(props.staySlices?.length ?? 0) > 1 ? (
-            <ul className="m-0 space-y-1 p-0 text-[12px] text-[#34495E]">
-              {props.staySlices!.map((slice) => (
-                <li key={slice.id}>
-                  {String(slice.fromDate).slice(0, 10)} – {String(slice.toDate).slice(0, 10)}
-                  {' · '}
-                  {slice.roomTypeCode ?? '—'}
-                  {slice.roomNumber ? ` · ${slice.roomNumber}` : ''}
-                </li>
-              ))}
-            </ul>
-          ) : null}
           {props.onSplitStay && !props.isCreate ? (
             <label className="flex items-center gap-2 text-[12px] text-[#34495E]">
               <input
@@ -924,7 +956,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </FieldRow>
             </div>
           ) : null}
-          <RoomMoves changes={props.roomChanges} />
+          <RoomMoves changes={props.roomChanges} slices={props.staySlices} />
         </fieldset>
       </FieldPanel>
 
