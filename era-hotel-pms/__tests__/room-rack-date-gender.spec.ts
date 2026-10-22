@@ -77,6 +77,21 @@ describe('rack stay vs filter date', () => {
     expect(rackDoorUse([olga], '2026-10-03')).toBe('live');
   });
 
+  it('a door the guest already left does not keep the move morning', () => {
+    const left = {
+      status: 'IN_HOUSE' as const,
+      checkInDate: '2026-10-20T00:00:00.000Z',
+      checkOutDate: '2026-10-22T00:00:00.000Z',
+      pastDoor: true,
+    };
+    expect(pickRackStayForDate([left], '2026-10-22')).toBeUndefined();
+    expect(rackHasAssignedStay([left], '2026-10-22')).toBe(false);
+    expect(pickRackStayForDate([left], '2026-10-21')?.status).toBe('IN_HOUSE');
+    expect(pickRackStayForDate([{ ...left, pastDoor: false }], '2026-10-22')?.status).toBe(
+      'IN_HOUSE',
+    );
+  });
+
   it('paints OPTION as arrival on the check-in date and hides it afterwards', () => {
     const option = { ...olga, status: 'OPTION' as const };
     expect(

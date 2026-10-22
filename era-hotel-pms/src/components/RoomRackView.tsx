@@ -79,6 +79,8 @@ export type RoomRackRoom = {
     adults?: number;
     roomTypeId?: string;
     givenRoomTypeId?: string | null;
+    /** Left this door already. The end date does not keep the tile. */
+    pastDoor?: boolean;
   }>;
   rackDisplayState?: RackDisplayState;
   sharePool?: { gender: string; occupied: number; capacity: number } | null;

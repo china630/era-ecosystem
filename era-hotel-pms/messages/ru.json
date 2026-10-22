@@ -958,7 +958,8 @@
     "voidReason": "Причина",
     "voidConfirm": "Аннулировать",
     "voidSuccess": "Начисление аннулировано.",
-    "voidFailed": "Ошибка аннулирования"
+    "voidFailed": "Ошибка аннулирования",
+    "basketLines": "{count} строк"
   },
   "booking": {
     "title": "Новая резервация",

@@ -25,6 +25,8 @@ export type RackReservationSummary = {
   adults?: number;
   roomTypeId?: string;
   givenRoomTypeId?: string | null;
+  /** Door the guest has already left. The end date does not keep the tile. */
+  pastDoor?: boolean;
 };
 
 export type RackRoomDto = {
@@ -130,6 +132,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           adults: r.adults,
           roomTypeId: r.roomTypeId,
           givenRoomTypeId: r.givenRoomTypeId,
+          pastDoor: false,
         };
         const slices = r.staySlices ?? [];
         if (slices.length === 0) return [summary];
@@ -206,6 +209,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       adults: slice.reservation.adults,
       roomTypeId: slice.reservation.roomTypeId,
       givenRoomTypeId: slice.reservation.givenRoomTypeId,
+      pastDoor: true,
     });
   }
 
@@ -271,6 +275,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         adults: stay.adults,
         roomTypeId: stay.roomTypeId,
         givenRoomTypeId: stay.givenRoomTypeId,
+        pastDoor: span.roomId !== stay.roomId,
       });
     }
   }

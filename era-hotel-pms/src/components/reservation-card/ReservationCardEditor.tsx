@@ -2883,10 +2883,14 @@ export function ReservationCardEditor({
                   );
                 }
               }
-              setNotes((prev) => ({
-                ...prev,
-                PRICE_NOTE: [prev.PRICE_NOTE, note].filter(Boolean).join('\n'),
-              }));
+              setNotes((prev) => {
+                const existing = prev.PRICE_NOTE ?? '';
+                if (existing.includes(note)) return prev;
+                return {
+                  ...prev,
+                  PRICE_NOTE: [existing, note].filter(Boolean).join('\n'),
+                };
+              });
             }}
             reservationId={reservationId}
             folioBalance={guestFolioBalance}
@@ -2936,6 +2940,7 @@ export function ReservationCardEditor({
             }
             breakShareBusy={busy}
             {...leftPatch}
+            priceNote={notes.PRICE_NOTE ?? ''}
           />
 
           <div className="flex min-h-0 min-w-0 flex-col">

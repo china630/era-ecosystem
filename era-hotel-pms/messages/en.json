@@ -957,7 +957,8 @@
     "voidReason": "Reason",
     "voidConfirm": "Void",
     "voidSuccess": "Pending charge voided.",
-    "voidFailed": "Void failed"
+    "voidFailed": "Void failed",
+    "basketLines": "{count} lines"
   },
   "booking": {
     "title": "New booking (PMS-01)",

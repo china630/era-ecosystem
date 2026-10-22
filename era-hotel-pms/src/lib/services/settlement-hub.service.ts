@@ -21,6 +21,7 @@ export type CreatePendingInput = {
   payerLabel?: string;
   globalPersonId?: string;
   reservationId?: string;
+  basketRef?: string | null;
   businessDate?: Date;
 };
 
@@ -96,6 +97,7 @@ export async function createPendingCharge(input: CreatePendingInput) {
       payerLabel: input.payerLabel,
       globalPersonId: input.globalPersonId,
       reservationId: input.reservationId,
+      basketRef: input.basketRef?.trim() || null,
       businessDate,
     },
   });
@@ -172,6 +174,93 @@ async function notifySourceSettlementConfirmed(
     throw new Error(`Settlement callback failed: ${res.status} ${text}`);
   }
   return { dispatched: true as const };
+}
+
+export async function payPendingBasket(input: {
+  basketRef: string;
+  paymentMethod: 'CASH' | 'CARD';
+}) {
+  const basketRef = input.basketRef.trim();
+  if (!basketRef) throw new Error('basketRef required');
+  const { requestOrganizationId } = await import('@/lib/request-organization');
+  const orgId = requestOrganizationId();
+  const rows = await prisma.settlementPendingCharge.findMany({
+    where: { organizationId: orgId, basketRef, status: 'PENDING' },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (rows.length === 0) throw new Error('Basket is empty');
+
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
+  const businessDate = await getCurrentBusinessDate();
+  await assertYearBoundaryAllows(businessDate);
+  const shift = await requireOpenCashShift();
+
+  const total = rows.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+  let fiscalReceiptId: string | null = null;
+  let fiscalQrPayload: string | null = null;
+  const liveFiscal = process.env.ERA_FISCAL_LIVE === 'true';
+  if (total > 0 && ['CASH', 'CARD'].includes(input.paymentMethod)) {
+    const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
+    const { requestOrganizationId } = await import('@/lib/request-organization');
+    const orgId = requestOrganizationId();
+    try {
+      const receipt = await fiscalizeForSatellite(
+        {
+          documentRef: basketRef,
+          amount: total,
+          paymentMethod: input.paymentMethod,
+          registerRef: shift.registerId,
+          organizationId: orgId,
+          fiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+          bankTerminalId: shift.bankTerminalId ?? undefined,
+          shiftFiscalDeviceId: shift.fiscalDeviceId ?? undefined,
+          shiftBankTerminalId: shift.bankTerminalId ?? undefined,
+          lines: rows.map((row) => ({
+            name: row.description || 'Settlement',
+            qty: row.qty || 1,
+            unitPrice: decimalToNumber(row.amount),
+          })),
+        },
+        orgId,
+      );
+      if (!isFiscalSkipped(receipt)) {
+        fiscalReceiptId = receipt.receiptId;
+        fiscalQrPayload = receipt.qrPayload;
+      }
+    } catch (e) {
+      console.error('KKM fiscalize failed for pending basket', e);
+      if (liveFiscal || (e instanceof Error && e.name === 'FiscalError')) throw e;
+    }
+  }
+
+  const paidAt = new Date();
+  await prisma.settlementPendingCharge.updateMany({
+    where: { id: { in: rows.map((row) => row.id) }, status: 'PENDING' },
+    data: {
+      status: 'PAID',
+      cashShiftId: shift.id,
+      paymentMethod: input.paymentMethod,
+      fiscalReceiptId,
+      fiscalQrPayload,
+      paidAt,
+      businessDate,
+    },
+  });
+
+  const failed: string[] = [];
+  for (const row of rows) {
+    try {
+      await notifySourceSettlementConfirmed(row, input.paymentMethod, fiscalReceiptId);
+    } catch (err) {
+      console.error("settlement callback failed", row.id, err);
+      failed.push(row.sourceRef);
+    }
+  }
+  if (failed.length > 0) {
+    throw new Error(`Paid, but clinic did not confirm: ${failed.join(", ")}`);
+  }
+  return { basketRef, count: rows.length, total, fiscalReceiptId };
 }
 
 export async function payPendingCharge(input: PayPendingInput) {
