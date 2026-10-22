@@ -36,6 +36,7 @@ import {
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
 import { displayRoomChargeNote } from '@/lib/folio-charge-note';
+import { escapePrintHtml, openPrintDocument } from '@/lib/print-window';
 import { revenueLabel } from '@/lib/folio-article-summary';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -104,6 +105,12 @@ type LedgerRow = Record<string, unknown> & {
   voidedAt?: string | null;
   voidReason?: string | null;
 };
+
+function pocketName(t: (key: string) => string, folioType: string): string {
+  if (folioType === 'AGENCY') return t('folioTab.agency');
+  if (folioType === 'COMPANY') return t('folioTab.company');
+  return t('folioTab.guest');
+}
 
 function paxLabel(row: PaxRow, fallback: string): string {
   const name = [row.firstName, row.middleName, row.lastName].filter(Boolean).join(' ').trim();
@@ -329,6 +336,7 @@ export function ReservationCardFolioTab({
   const articleOptions = useMemo(() => {
     const seen = new Map<string, string>();
     for (const row of visibleRows) {
+      if (row.kind !== 'charge') continue;
       if (row.code && row.code !== '—') seen.set(row.code, row.code);
     }
     return Array.from(seen.entries()).map(([value, label]) => ({ value, label }));
@@ -446,8 +454,8 @@ export function ReservationCardFolioTab({
           />
         ),
       },
-      { key: 'folioType', header: t('folioType'), render: (row) => row.folioType },
-      { key: 'code', header: t('department'), render: (row) => row.code },
+      { key: 'folioType', header: tf('pocket'), render: (row) => pocketName(t, row.folioType) },
+      { key: 'code', header: tf('xercMaddesi'), render: (row) => row.code },
       { key: 'description', header: t('folioDesc'), render: (row) => row.description },
       { key: 'when', header: t('folioWhen'), className: 'whitespace-nowrap font-mono', render: (row) => row.when },
       {
@@ -456,7 +464,6 @@ export function ReservationCardFolioTab({
         className: 'text-right font-mono',
         render: (row) => (
           <span className={row.kind === 'charge' ? 'text-rose-700' : 'text-sky-700'}>
-            {row.kind === 'payment' ? t('folioLinesPayments') : t('folioLinesCharges')}{' '}
             {row.amount.toFixed(2)} {displayCurrency}
           </span>
         ),
@@ -532,16 +539,16 @@ export function ReservationCardFolioTab({
     <div className="flex flex-wrap gap-2">
       {canPostCharges && can(PERMISSIONS.FOLIO_CHARGE) ? (
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setChargeOpen(true)}>
-          {t('extraCharge')}
+          {tf('extraCharge')}
         </button>
       ) : (
         <button type="button" className={PRIMARY_BUTTON_CLASS} disabled title={t('postingAfterCheckIn')}>
-          {t('extraCharge')}
+          {tf('extraCharge')}
         </button>
       )}
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <button type="button" className={DANGER_BUTTON_CLASS} onClick={() => setPayOpen(true)}>
-          {t('extraPayment')}
+          {tf('extraPayment')}
         </button>
       ) : null}
       {can(PERMISSIONS.FOLIO_CHARGE) ? (
@@ -551,7 +558,7 @@ export function ReservationCardFolioTab({
           disabled={selectedCharges.length === 0}
           onClick={() => setTransferIds(selectedCharges.map((row) => row.chargeId!).filter(Boolean))}
         >
-          {t('transferSelected')}
+          {tf('transferSelected')}
         </button>
       ) : null}
     </div>
@@ -632,12 +639,10 @@ export function ReservationCardFolioTab({
     .reduce((sum, row) => sum + row.amount, 0);
 
   function printRows() {
-    const popup = window.open('', '_blank', 'noopener,noreferrer');
-    if (!popup) return;
     const body = filteredRows
       .map(
         (row, index) =>
-          `<tr><td>${index + 1}</td><td>${escapeHtml(row.when)}</td><td>${escapeHtml(row.code)}</td><td>${escapeHtml(row.description)}</td><td style="text-align:right">${row.amount.toFixed(2)}</td></tr>`,
+          `<tr><td>${index + 1}</td><td>${escapePrintHtml(row.when)}</td><td>${escapePrintHtml(pocketName(t, row.folioType))}</td><td>${escapePrintHtml(row.code)}</td><td>${escapePrintHtml(row.description)}</td><td style="text-align:right">${row.amount.toFixed(2)}</td></tr>`,
       )
       .join('');
     const netWords = formatFolioBalanceWords(chargeTotal - paymentTotal, {
@@ -646,12 +651,10 @@ export function ReservationCardFolioTab({
       settled: t('settled'),
     });
     const guest = namedPax[0]?.label ?? '';
-    popup.document.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(t('folioPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapeHtml(guest)} · ${escapeHtml(t('folioPrint'))}</h1><p>${escapeHtml(t('xercMaddesi'))}: ${escapeHtml(articleFilter)} · ${escapeHtml(lineKind)}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th>#</th><th>${escapeHtml(t('folioWhen'))}</th><th>${escapeHtml(t('department'))}</th><th>${escapeHtml(t('folioDesc'))}</th><th>${escapeHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapeHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapeHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapeHtml(netWords.text)}</strong></p></body></html>`,
-    );
-    popup.document.close();
-    popup.focus();
-    popup.print();
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapePrintHtml(t('folioPrint'))}</title>
+<style>body{font-family:"Segoe UI",sans-serif;margin:24px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f4f5f7}</style>
+</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioWhen'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(netWords.text)}</strong></p></body></html>`;
+    if (!openPrintDocument(html)) showApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 
   async function submitAdjustment() {
@@ -699,7 +702,8 @@ export function ReservationCardFolioTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2" data-testid="reservation-folio-tab">
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex w-full items-center gap-2">
+        <div className="min-w-0 flex-1">
         <FilterChips
           ariaLabel={t('folioTab.all')}
           value={folioFocus}
@@ -715,19 +719,20 @@ export function ReservationCardFolioTab({
             item.id === 'all' ? { ...item, hidden: hideAllChip } : item,
           )}
         />
+        </div>
         <button
           type="button"
-          className={`${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`}
+          className={`${GHOST_BUTTON_CLASS} ml-auto h-8 w-8 shrink-0 !px-0`}
           aria-label={t('folioPrint')}
           onClick={printRows}
         >
           <Printer className="h-4 w-4" />
         </button>
       </div>
-      <div className="flex shrink-0 flex-wrap items-end gap-2">
+      <div className="flex w-full shrink-0 flex-nowrap items-end gap-2">
         <CatalogField
           kind="CLOSED_SMALL"
-          label={t('xercMaddesi')}
+          label={tf('xercMaddesi')}
           value={articleFilter}
           onChange={(v) => setArticleFilter(String(v ?? 'all'))}
           options={[
@@ -738,7 +743,7 @@ export function ReservationCardFolioTab({
         />
         <CatalogField
           kind="CLOSED_SMALL"
-          label={t('lineKind')}
+          label={tf('lineKind')}
           value={lineKind}
           onChange={(v) => setLineKind((String(v ?? 'all') as 'all' | 'charge' | 'payment'))}
           options={[
@@ -754,7 +759,7 @@ export function ReservationCardFolioTab({
           onChange={(event) => setFolioQuery(event.target.value)}
           placeholder={t('folioSearch')}
           aria-label={t('folioSearch')}
-          className={`${MODAL_INPUT_CLASS} w-44`}
+          className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
         />
       </div>
       {folioFocus === 'deleted' ? (
@@ -845,14 +850,8 @@ export function ReservationCardFolioTab({
             onCancel={() => setSlip(null)}
             onSubmit={() => {
               if (!slip) return;
-              const popup = window.open('', '_blank', 'noopener,noreferrer');
-              if (!popup) return;
-              popup.document.write(
-                `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(tf('adjustPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapeHtml(tf('adjustSlip'))}</h1><p>${escapeHtml(slip.when)}</p><p>${escapeHtml(slip.description)}</p><p>${escapeHtml(slip.adjustmentReason ?? '')}</p><p><strong>${slip.amount.toFixed(2)} ${displayCurrency}</strong></p></body></html>`,
-              );
-              popup.document.close();
-              popup.focus();
-              popup.print();
+              const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapePrintHtml(tf('adjustPrint'))}</title></head><body style="font-family:ui-monospace,monospace;font-size:12px"><h1 style="font-size:16px">${escapePrintHtml(tf('adjustSlip'))}</h1><p>${escapePrintHtml(slip.when)}</p><p>${escapePrintHtml(slip.description)}</p><p>${escapePrintHtml(slip.adjustmentReason ?? '')}</p><p><strong>${slip.amount.toFixed(2)} ${displayCurrency}</strong></p></body></html>`;
+              if (!openPrintDocument(html)) showApiError({ error: t('printBlocked') }, t('printBlocked'));
             }}
             submitLabel={t('folioPrint')}
           />
@@ -869,12 +868,4 @@ export function ReservationCardFolioTab({
       </EraModal>
     </div>
   );
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

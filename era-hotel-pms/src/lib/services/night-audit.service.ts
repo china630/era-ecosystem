@@ -438,6 +438,10 @@ async function executeLockedNightAudit() {
             ]
               .filter(Boolean)
               .join(', ');
+            if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+              steps.push(`Step 3: Free stay — reservation ${res.id}; night price not required`);
+              continue;
+            }
             if ((await readPolicy()).stopIfZeroNightPrice) {
               throw new Error(`Night price is zero — ${who}`);
             }
@@ -476,6 +480,10 @@ async function executeLockedNightAudit() {
             ]
               .filter(Boolean)
               .join(', ');
+            if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+              steps.push(`Step 3: Free stay — reservation ${res.id}; night price not required`);
+              continue;
+            }
             if ((await readPolicy()).stopIfZeroNightPrice) {
               throw new Error(`Night price is zero — ${who}`);
             }
@@ -652,6 +660,7 @@ async function countZeroNightPrices(date: Date): Promise<number> {
   let missing = 0;
   for (const stay of inHouse) {
     if (hotelDateKey(stay.checkOutDate) <= nightKey) continue;
+    if (stay.billingMode === 'COMP' || stay.billingMode === 'HOUSE') continue;
     const daily = stay.dailyRates.find((row) => hotelDateKey(row.stayDate) === nightKey);
     if (daily) {
       if (!(decimalToNumber(daily.amount) > 0)) missing += 1;

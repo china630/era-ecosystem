@@ -63,7 +63,9 @@ import {
   type BookingStaySummary,
 } from '@/components/reservation-card/ReservationCardStaysBar';
 import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
+import { buildStayFormHtml, type StayPrintKind } from '@/components/reservation-card/stay-print-html';
 import { StayJournal } from '@/components/reservation-card/StayJournal';
+import { openPrintDocument } from '@/lib/print-window';
 import type { StayJournalEntry } from '@/lib/reservation-journal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -1519,17 +1521,123 @@ export function ReservationCardEditor({
     }
   }
 
-  function printStayForm(kind: 'registration' | 'proforma' | 'confirmation') {
-    const popup = window.open('', '_blank', 'noopener,noreferrer');
-    if (!popup) return;
+  async function printStayForm(kind: StayPrintKind) {
     const title =
       kind === 'registration' ? t('printRegistration') : kind === 'proforma' ? t('printProforma') : t('printConfirmation');
-    const guestName = (data?.guest as { fullName?: string } | undefined)?.fullName ?? '';
-    popup.document.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:sans-serif;padding:24px"><h1>${title}</h1><p>${guestName}</p><p>${checkIn} → ${checkOut}</p><p>${roomId ? rooms.find((r) => r.id === roomId)?.roomNumber ?? '' : ''}</p></body></html>`,
+    const profileRes = await fetch('/api/hotel/profile');
+    const profileJson = profileRes.ok ? ((await profileRes.json()) as { data?: Record<string, unknown> } | Record<string, unknown>) : null;
+    const profile = (profileJson && 'data' in profileJson && profileJson.data ? profileJson.data : profileJson) as {
+      name?: string;
+      printName?: string | null;
+      address?: string | null;
+      phone?: string | null;
+      email?: string | null;
+      website?: string | null;
+    } | null;
+    const guest = data?.guest as {
+      fullName?: string;
+      phone?: string | null;
+      email?: string | null;
+      nationality?: string | null;
+      sex?: string | null;
+      birthDate?: string | null;
+    } | undefined;
+    const primary = pax.find((row) => row.isPrimary) ?? pax[0];
+    const guestName =
+      [primary?.firstName, primary?.lastName].filter(Boolean).join(' ').trim() || guest?.fullName || '';
+    const priced = dailyRates.filter((row) => row.amount > 0);
+    const nightPrice = priced[0]?.amount ?? dailyRates[0]?.amount ?? 0;
+    const total = Number(data?.totalAmount ?? 0);
+    const roomType = roomTypes.find((row) => row.id === roomTypeId)?.label ?? '';
+    const board = mealPlans.find((row) => row.id === mealPlanId)?.label ?? '';
+    const agency = agencies.find((row) => row.id === agencyId)?.label ?? '';
+    const infants = Number(children1_0) || 0;
+    const children = (Number(children11_6) || 0) + (Number(children5_2) || 0);
+    const adultCount = Number(adults) || 0;
+    const opened = openPrintDocument(
+      buildStayFormHtml({
+        kind,
+        title,
+        hotel: {
+          name: profile?.printName || profile?.name || '',
+          address: profile?.address ?? '',
+          phone: profile?.phone ?? '',
+          email: profile?.email ?? '',
+          website: profile?.website ?? '',
+        },
+        resNo: resNo || String(data?.externalRef ?? ''),
+        guestName,
+        agency,
+        voucher: voucherNo,
+        rate: ratePlans.find((row) => row.id === ratePlanId)?.label ?? '',
+        arrival: checkIn,
+        departure: checkOut,
+        roomType,
+        roomNumber: rooms.find((row) => row.id === roomId)?.roomNumber ?? '',
+        board,
+        adults: adultCount,
+        children,
+        infants,
+        nights: priced.length || dailyRates.length,
+        nightPrice,
+        total,
+        deposit: depositHeldTotal,
+        balance: Math.max(0, total - depositHeldTotal),
+        phone: guest?.phone ?? '',
+        email: guest?.email ?? '',
+        documentNo: primary?.passportNo || primary?.idCardNo || '',
+        nationality: primary?.nationality || guest?.nationality || '',
+        birthDate: primary?.birthDate || (guest?.birthDate ? String(guest.birthDate).slice(0, 10) : ''),
+        sex: primary?.sex || guest?.sex || '',
+        currency: 'AZN',
+        notes: Object.values(notes).filter(Boolean).join('\n'),
+        nightsGrid: dailyRates.map((row) => ({
+          date: String(row.stayDate).slice(0, 10),
+          roomType,
+          board,
+          adults: adultCount,
+          children,
+          infants,
+          price: row.amount,
+        })),
+        labels: {
+          resNo: t('printForm.resNo'),
+          agency: t('printForm.agency'),
+          voucher: t('printForm.voucher'),
+          rate: t('printForm.rate'),
+          arrival: t('printForm.arrival'),
+          departure: t('printForm.departure'),
+          room: t('printForm.room'),
+          board: t('printForm.board'),
+          pax: t('printForm.pax'),
+          guest: t('printForm.guest'),
+          phone: t('printForm.phone'),
+          email: t('printForm.email'),
+          document: t('printForm.document'),
+          nationality: t('printForm.nationality'),
+          birth: t('printForm.birth'),
+          sex: t('printForm.sex'),
+          signature: t('printForm.signature'),
+          nightPrice: t('printForm.nightPrice'),
+          nights: t('printForm.nights'),
+          total: t('printForm.total'),
+          deposit: t('printForm.deposit'),
+          balance: t('printForm.balance'),
+          date: t('printForm.date'),
+          roomType: t('printForm.roomType'),
+          price: t('printForm.price'),
+          adults: t('printForm.adults'),
+          children: t('printForm.children'),
+          infants: t('printForm.infants'),
+          dear: t('printForm.dear'),
+          confirmed: t('printForm.confirmed'),
+          contact: t('printForm.contact'),
+          notes: t('printForm.notes'),
+          legal: [t('printForm.legalHours'), t('printForm.legalSafe'), t('printForm.legalNotify'), t('printForm.legalExpenses'), t('printForm.legalPenalty')],
+        },
+      }),
     );
-    popup.document.close();
-    popup.print();
+    if (!opened) showApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 
   async function warnGuestOverlaps(): Promise<boolean> {
@@ -3186,7 +3294,8 @@ export function ReservationCardEditor({
         open={historyOpen}
         title={t('stayJournal')}
         onClose={() => setHistoryOpen(false)}
-        maxWidthClass="max-w-4xl"
+        maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
+        bodyClassName="mt-3 min-h-0 flex-1 overflow-hidden flex flex-col"
       >
         <StayJournal
           entries={stayAudit}
