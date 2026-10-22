@@ -10,8 +10,8 @@ export async function deleteEmptyReservation(
   if (!note) throw new Error('DELETE_REASON_REQUIRED');
 
   const reservation = await getReservation(id);
-  if (!['OPTION', 'CONFIRMED'].includes(reservation.status)) {
-    throw new Error('Only an unused option or confirmed stay can be deleted');
+  if (!['OPTION', 'CONFIRMED', 'CHECKED_OUT'].includes(reservation.status)) {
+    throw new Error('Only an unused option, confirmed, or checked-out stay can be deleted');
   }
 
   const folios = await prisma.folio.findMany({
@@ -27,7 +27,10 @@ export async function deleteEmptyReservation(
   );
   const deposits = await prisma.folioDeposit.count({ where: { reservationId: id } }).catch(() => 0);
   if (hasMoney || deposits > 0) {
-    throw new Error('Stay has folio money and cannot be deleted');
+    throw Object.assign(new Error('Stay has folio money and cannot be deleted'), {
+      status: 409,
+      code: 'FOLIO_HAS_MONEY',
+    });
   }
 
   const { recordReservationAudit } = await import('@/lib/reservation-audit');

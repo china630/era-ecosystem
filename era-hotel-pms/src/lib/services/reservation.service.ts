@@ -863,25 +863,31 @@ export async function checkInReservation(
     );
   }
   const { isFreeStayBilling } = await import('@/lib/stay-billing');
-  let pulledLate = false;
-  if (!opts?.early && arrivalKey < bizKey && reservation.roomId) {
-    pulledLate = true;
-    await prisma.reservation.update({
-      where: { id },
-      data: { checkInDate: stayCheckIn(bizKey) },
+  const priorStay = await prisma.stay.findFirst({
+    where: { reservationId: id },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true },
+  });
+  // Re-check-in after checkout keeps the lived nights. Moving the arrival onto
+  // the business date and rebuilding rates is only for a guest who never arrived.
+  let nextCheckIn: Date | null = null;
+  if (!priorStay && !opts?.early && arrivalKey < bizKey && reservation.roomId) {
+    nextCheckIn = stayCheckIn(bizKey);
+  }
+  const rebuildRates =
+    nextCheckIn != null || (!priorStay && isFreeStayBilling(reservation.billingMode));
+  if (priorStay) {
+    const cityLedger = await prisma.folio.count({
+      where: { reservationId: id, status: { in: ['PENDING_AR', 'TRANSFERRED_AR'] } },
     });
-    reservation = await getReservation(id);
-    arrivalKey = hotelDateKey(reservation.checkInDate);
+    if (cityLedger > 0) {
+      throw Object.assign(new Error('City-ledger checkout cannot be checked in again'), {
+        status: 409,
+        code: 'CITY_LEDGER_CHECKIN',
+      });
+    }
   }
-  if (pulledLate || isFreeStayBilling(reservation.billingMode)) {
-    const { recalcReservationDailyRates } = await import(
-      '@/lib/services/reservation-pricing.service'
-    );
-    await recalcReservationDailyRates(id);
-    reservation = await getReservation(id);
-  }
-  if (!reservation.roomId) throw new Error('Assign a room before check-in');
-  const room = await prisma.room.findUnique({ where: { id: reservation.roomId } });
+  const room = await prisma.room.findUnique({ where: { id: reservation.roomId! } });
   if (room) {
     const physicalTypeId = reservation.givenRoomTypeId ?? reservation.roomTypeId;
     if (room.roomTypeId !== physicalTypeId) {
@@ -901,7 +907,11 @@ export async function checkInReservation(
       adults: reservation.adults,
     }) &&
     othersInHouse > 0;
-  if (
+  if (priorStay) {
+    if (!room || (room.inventoryStatus && room.inventoryStatus !== 'IN_SERVICE')) {
+      throw new Error(`Room ${room?.roomNumber ?? ''} is out of inventory`);
+    }
+  } else if (
     !room ||
     (!joiningSharePool && !roomStatusAllowedForShareAssign(room, false))
   ) {
@@ -960,9 +970,10 @@ export async function checkInReservation(
         .map((c) => (c ?? '').trim().toUpperCase())
         .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
       const stored = await prisma.reservationDailyRate.findMany({ where: { reservationId: id } });
-      const nightCount = countNights(reservation.checkInDate, reservation.checkOutDate);
+      const rateArrival = nextCheckIn ?? reservation.checkInDate;
+      const nightCount = countNights(rateArrival, reservation.checkOutDate);
       for (let i = 0; i < nightCount; i++) {
-        const stayDate = parseHotelNoon(addHotelDays(reservation.checkInDate, i));
+        const stayDate = parseHotelNoon(addHotelDays(rateArrival, i));
         const row = stored.find((d) => hotelDateKey(d.stayDate) === hotelDateKey(stayDate));
         if (row) continue;
         const amount = await ownerPackageNightlySell(stayDate, codes, {
@@ -985,7 +996,7 @@ export async function checkInReservation(
 
   const previousCheckIn = reservation.checkInDate;
   let pulledArrival = false;
-  if (opts?.early && arrivalKey > bizKey && reservation.roomId) {
+  if (!priorStay && opts?.early && arrivalKey > bizKey && reservation.roomId) {
     pulledArrival = true;
     const clash = await prisma.reservation.findFirst({
       where: {
@@ -1024,23 +1035,49 @@ export async function checkInReservation(
   }
 
   return prisma.$transaction(async (tx) => {
+    if (nextCheckIn) {
+      await tx.reservation.update({
+        where: { id },
+        data: { checkInDate: nextCheckIn },
+      });
+    }
     const updated = await tx.reservation.update({
       where: { id },
       data: { status: 'IN_HOUSE' },
       include: { room: true, guest: true, ratePlan: true, roomType: true },
     });
-    await tx.stay.create({
-      data: { reservationId: id, actualCheckIn: new Date() },
-    });
+    if (priorStay) {
+      await tx.stay.update({
+        where: { id: priorStay.id },
+        data: { actualCheckOut: null },
+      });
+      await tx.folio.updateMany({
+        where: { reservationId: id, type: 'GUEST', status: 'CLOSED' },
+        data: { status: 'OPEN' },
+      });
+    } else {
+      await tx.stay.create({
+        data: { reservationId: id, actualCheckIn: new Date() },
+      });
+    }
+    await openFoliosForReservation(id, updated.guest.voen);
     if (updated.roomId) {
       const { writeInServiceDoorHk } = await import('@/lib/services/room.service');
       await writeInServiceDoorHk(updated.roomId, 'DIRTY', tx);
     }
 
-    await openFoliosForReservation(id, updated.guest.voen);
-
     return updated;
   }).then(async (updated) => {
+    if (rebuildRates) {
+      try {
+        const { recalcReservationDailyRates } = await import(
+          '@/lib/services/reservation-pricing.service'
+        );
+        await recalcReservationDailyRates(id);
+      } catch (err) {
+        console.error('Check-in rate rebuild failed', err);
+      }
+    }
     const { applyHeldDepositsOnCheckIn } = await import('@/lib/services/folio-deposit.service');
     await applyHeldDepositsOnCheckIn(id, opts?.audit);
 
@@ -1131,7 +1168,7 @@ export async function checkInReservation(
           ...lifecycleDemographicsFromPax(pax),
         }).catch((e) => console.error('Guest lifecycle check-in failed', e));
       }
-      if (full) {
+      if (full && !priorStay) {
         const { usesMedicalPackageCompose } = await import(
           '@/lib/services/medical-package-resolve.service'
         );

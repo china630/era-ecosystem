@@ -1375,6 +1375,10 @@
       "legalExpenses": "Qalma müddətində yaranan bütün xərclərə məsuliyyət daşıyıram.",
       "legalPenalty": "Çıxış qaydası pozulduqda otelin daxili qaydasına görə 18% cərimə tətbiq oluna bilər. İmza ilə bu barədə məlumatlandığımı təsdiq edirəm."
     },
+    "stayRecordExists": "Bu bronun giriş qeydi artıq var. Yenidən giriş etmək əvəzinə onu bərpa edin.",
+    "staySaveFailed": "Bron saxlanılmadı. Ətraflı məlumat server jurnalındadır.",
+    "folioHasMoney": "Bu bronun foliosunda pul var, onu silmək olmaz.",
+    "cityLedgerCheckIn": "Bu çıxış şəhər hesabına keçirilib. Hesabı əllə bağlayın.",
     "deleteStay": "Rezervasiyanı sil",
     "deleteStayDone": "Rezervasiya silindi",
     "deleteReason": "Silinmə səbəbi",
