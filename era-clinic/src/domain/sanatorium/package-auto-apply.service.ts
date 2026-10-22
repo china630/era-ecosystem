@@ -163,6 +163,8 @@ export function overlayTemplateAxes(
       fulfillment: next.fulfillment,
       quotaBasis: row.quotaBasis,
       requiresDoctor: next.requiresDoctor,
+      showInProcedures: row.showInProcedures,
+      procedureOrder: row.procedureOrder,
     });
     return {
       ...row,
@@ -222,6 +224,8 @@ function axesFromLegacyTemplateProc(p: {
   procedureName: string;
   quotaTotal: number;
   sortOrder?: number | null;
+  showInProcedures?: boolean | null;
+  procedureOrder?: number | null;
 }): SnapshotProc {
   const assignMode =
     p.assignMode === "AUTO_ON_OPEN" ||
@@ -244,6 +248,8 @@ function axesFromLegacyTemplateProc(p: {
     quotaTotal: p.quotaTotal,
     kind: p.kind ?? null,
     sortOrder: p.sortOrder ?? 0,
+    showInProcedures: p.showInProcedures === true,
+    procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
     ...axes,
   };
 }

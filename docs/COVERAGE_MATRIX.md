@@ -516,6 +516,9 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-22 | Clinic walk-in groups: `/sanatorium/walk-in-parties` registers several day visitors (each a real WALK_IN episode). One cashier basket, one charge per SKU. Hotel pending list pays the basket as one fiscal receipt. Not SHIPPED. CLI-57 stays SCREEN. [ADR](./adr/clinic-walk-in-party.md) |
+| 2026-10-22 | Clinic procedure list is the block checkbox **Show in procedures** plus snapshot membership, ordered by `procedureOrder`. `+` follows fulfillment (procedure, lab, or visit). Block code is an internal key. CLI-57 stays SCREEN. |
+| 2026-10-22 | Paid extras: org setting `extraProcedureRoute`. `SHOW_ON_PLAN` (default) lists unpaid extras on the Plan tab and guest print (unpaid mark, empty time and room) without a cabin or nurse check-in. `HOLD_UNTIL_PAY` keeps them hidden until pay or folio. Print language is three chips. HOT-06 stays not SHIPPED. CLI-57 stays SCREEN. [ADR](./adr/clinic-extra-procedure-route.md) |
 | 2026-10-21 | Hotel door move is one command: a free clean door moves now; a future date or a door that is occupied or not Clean/Inspected stays PENDING until housekeeping marks it. A class change asks who pays. Guest nationality no longer defaults to AZ. HOT-FOLIO-DESK stays API. |
 | 2026-10-21 | Clinic plan card shows the whole open course. Reschedule from the plan card can change the day (matrix stays same-day) through the slot door: block cap, bath rest, weekly naftalan, checkout day only until 12:00. Procedure print always includes the checkout day and a 12:00 check-out line. CLI-57/58 stay SCREEN. |
 | 2026-10-19 | Clinic package daily cap is per block (physio 3, bath 1, paraffin 1 on the template; empty uses that default). Tenant `dailyPackageProcedureCap` and the day-1 auto button are gone. Bath/paraffin Əvəz et spends the predecessor block. CLI-57 stays SCREEN. |

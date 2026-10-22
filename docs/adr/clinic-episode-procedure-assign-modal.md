@@ -130,8 +130,10 @@ Doctor/reception uses a parallel modal (**same chrome:** searchable list + **phy
 
 ```text
 Doctor Save (extras modal)
-  → PENDING_PAY on episode card only (dedicated “Additional” block)
-  → NOT in resource schedule, NOT nurse-check-in-able
+  → PENDING_PAY on the episode card (dedicated “Additional” block)
+  → Plan tab and guest print follow Tenant.extraProcedureRoute
+    (default SHOW_ON_PLAN: listed, unpaid mark, empty time and room)
+  → NOT in the resource schedule, NOT nurse-check-in-able until pay or folio
 
 Guest declines explicitly
   → delete pending
@@ -218,7 +220,7 @@ Exact enum names are implementation choice; semantics required:
 | Semantic | Package | Extra |
 |----------|---------|-------|
 | Draft in open modal | local only | local only |
-| Prescribed, awaiting money | — | `PENDING_PAY` (card only) |
+| Prescribed, awaiting money | — | `PENDING_PAY` (card; plan and guest print when `extraProcedureRoute` is `SHOW_ON_PLAN`) |
 | On resources | `SCHEDULED` (+ later CHECKED_IN) | same, only after pay |
 | Done | `COMPLETED` (grey in modal) | same |
 | Removed before consume | cancelled; quota back | pending delete or paid reverse |
@@ -297,7 +299,7 @@ Exact enum names are implementation choice; semantics required:
 | Modal | **Pool rows hidden** from left menu (named SKUs only). Legacy pool burn helpers remain server-side |
 | Errors | `POOL_NOT_ASSIGNABLE`, `POOL_SKU_NOT_ELIGIBLE` |
 | Day-1 | Skips `isPool` balance rows |
-| Assign menu filter | Pools + labs / doctor exams excluded via `isPackageAssignTreatmentLine` |
+| Assign menu filter | Superseded 2026-10-22: snapshot membership + **Show in procedures**, not a code list |
 
 ## Amendment 2026-10-18 — bath quota transfer (SCREEN)
 
@@ -311,3 +313,17 @@ Unused **bath / naftalan / application** remaining (`quotaTotal − consumed −
 - Night package recalc must not shrink `XFER-*` lines. Paid extras refuse while `XFER-{sku}` remaining exists (`QUOTA_REMAINING`).
 
 Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).
+
+## Amendment 2026-10-22 — procedure list is a block checkbox (SCREEN)
+
+The left menu and the package-tab quota bars list a balance only when that code is in the course entitlement snapshot and `showInProcedures` is true, ordered by `procedureOrder`. A transferred remainder (`XFER-`) stays under **Əvəz edilmiş prosedurlar**. A balance left behind after a block left the template does not appear.
+
+`+` and **Hamısı** follow the block's fulfillment: `PROCEDURE_ORDER` keeps the cabin planner and the physio form; `LAB_ORDER` creates a lab order; `VISIT` creates a visit line. Save rejects a code that is not on that list (`NOT_IN_PROCEDURES`).
+
+The quota-block editor shows the name, the checkbox, and a procedure-list order. The block code stays the stored key (`BLK-…` for a new block) and is not printed. Night-matrix `sortOrder` is unchanged.
+
+Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, lab, or visit line stamps that code. Used leftovers stay in the database and stay off the screen. Migration `20261022160000_block_show_in_procedures` backfills the flags from fulfillment and strips the nine removed `*_POOL` codes from snapshots and unused balances.
+
+## Amendment 2026-10-22 — unpaid extra route (SCREEN)
+
+D8 “card only” is superseded for visibility. `Tenant.extraProcedureRoute` defaults to `SHOW_ON_PLAN`: the unpaid extra is on the Plan tab and on the guest procedure sheet and course summary, with an unpaid mark and empty time and room. `HOLD_UNTIL_PAY` keeps the old hide-until-pay behavior. Cabin seat, nurse check-in, QR, and the resource matrix stay closed until pay or folio. See [clinic-extra-procedure-route.md](./clinic-extra-procedure-route.md).

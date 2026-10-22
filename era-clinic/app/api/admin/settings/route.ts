@@ -75,6 +75,7 @@ const patchSchema = z.object({
   printSignatureLab: z.string().nullable().optional(),
   printSignatureDoctor: z.string().nullable().optional(),
   checkupSectionsJson: z.string().nullable().optional(),
+  extraProcedureRoute: z.enum(["SHOW_ON_PLAN", "HOLD_UNTIL_PAY"]).optional(),
 });
 
 export async function GET(req: Request) {

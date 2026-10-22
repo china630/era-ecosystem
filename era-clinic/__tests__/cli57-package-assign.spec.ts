@@ -10,7 +10,7 @@ import {
   isEntitlementBucket,
   eligibleSkusForPool,
   eligibleSkusForQuotaAlias,
-  isPackageAssignTreatmentLine,
+  showsInProcedureMenu,
   isBathQuotaLine,
   isBathTransferQuota,
   bathTransferQuotaCode,
@@ -40,23 +40,19 @@ describe("CLI-57 package assign helpers", () => {
     expect(isPackagePoolCode("NAFTALAN")).toBe(false);
   });
 
-  it("isPackageAssignTreatmentLine keeps pools WO/SVC/naftalan, drops labs exams", () => {
-    expect(isPackageAssignTreatmentLine("PHYSIO_POOL")).toBe(true);
-    expect(isPackageAssignTreatmentLine("PARAFFIN_POOL")).toBe(true);
-    expect(isPackageAssignTreatmentLine("WO-TR-83", "Ozon")).toBe(true);
-    expect(isPackageAssignTreatmentLine("SVC-OZONE", "Ozone")).toBe(true);
-    expect(isPackageAssignTreatmentLine("NAFTALAN_BATH", "Naftalan vannası")).toBe(true);
-    expect(isPackageAssignTreatmentLine("XFER-SVC-MASSAGE", "Massage")).toBe(true);
-
-    expect(isPackageAssignTreatmentLine("ALT", "ALAT")).toBe(false);
-    expect(isPackageAssignTreatmentLine("AST", "ASAT")).toBe(false);
-    expect(isPackageAssignTreatmentLine("GLU", "Şəkər qanda")).toBe(false);
-    expect(isPackageAssignTreatmentLine("ECG", "EKQ ve kardiolog muayinesi")).toBe(false);
-    expect(isPackageAssignTreatmentLine("GYN", "Ginekolog/urolog muayinesi")).toBe(false);
-    expect(isPackageAssignTreatmentLine("NEURO", "Nevropatolog muayinesi")).toBe(false);
-    expect(isPackageAssignTreatmentLine("LAB-CBC", "Qan umumi analiz")).toBe(false);
-    expect(isPackageAssignTreatmentLine("LAB-URINE", "Sidik")).toBe(false);
-    expect(isPackageAssignTreatmentLine("THERAPIST", "Hekim muayinesi")).toBe(false);
+  it("showsInProcedureMenu follows the snapshot checkbox, not the code", () => {
+    expect(
+      showsInProcedureMenu({ isTransfer: false, inSnapshot: true, showInProcedures: true }),
+    ).toBe(true);
+    expect(
+      showsInProcedureMenu({ isTransfer: true, inSnapshot: false, showInProcedures: false }),
+    ).toBe(true);
+    expect(
+      showsInProcedureMenu({ isTransfer: false, inSnapshot: true, showInProcedures: false }),
+    ).toBe(false);
+    expect(
+      showsInProcedureMenu({ isTransfer: false, inSnapshot: false, showInProcedures: true }),
+    ).toBe(false);
   });
 
   it("isBathQuotaLine and XFER codes", () => {

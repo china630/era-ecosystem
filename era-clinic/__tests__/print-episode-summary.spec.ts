@@ -1,3 +1,4 @@
+import { showsUnpaidExtraOnPlan } from "@/domain/sanatorium/extra-procedure-route";
 import { printLabel } from "@/domain/print/print-labels";
 import { PRINT_PROCEDURE_STATUSES } from "@/domain/print/print-procedures.service";
 
@@ -9,12 +10,14 @@ describe("course summary print", () => {
     expect(printLabel("en", "episodeSummaryInterim")).toMatch(/interim/i);
   });
 
-  it("reuses seated procedure statuses from the schedule sheet", () => {
+  it("reuses the seated status list; unpaid extras join the summary only on SHOW_ON_PLAN", () => {
     expect(PRINT_PROCEDURE_STATUSES).toEqual([
       "SCHEDULED",
       "CHECKED_IN",
       "COMPLETED",
       "NO_SHOW",
     ]);
+    expect(showsUnpaidExtraOnPlan("SHOW_ON_PLAN")).toBe(true);
+    expect(showsUnpaidExtraOnPlan("HOLD_UNTIL_PAY")).toBe(false);
   });
 });

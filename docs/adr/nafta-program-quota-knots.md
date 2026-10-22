@@ -38,7 +38,7 @@ Rules:
 8. When a block has **configured members**, `eligibleSkusForPool` uses that whitelist (no broad catalog heuristic). Empty members + legacy `*_POOL` → keep heuristic fallback for dual-run.
 9. Single configured member → assign may auto-resolve that SKU and burn the block balance (same idea as NAFTALAN_BATH + known sex).
 10. Premium vs Standart = different membership and/or higher block qtys — **not** a “paid-inside-package” flag.
-11. LAB / EXAM blocks may exist for package documentation / future checklist; package-assign treatment menu still filters non-treatment lines (`isPackageAssignTreatmentLine`).
+11. Each quota block has **Show in procedures** and a procedure-list order. The assign menu and the package-tab bars show a block only when it is in the course snapshot and the checkbox is on (transferred `XFER-` remainders stay). `+` / **Hamısı** follows the block fulfillment (procedure order, lab order, or visit). The block code is an internal key, not an editor field.
 
 ## Template versioning + guest pin (2026-09-07)
 

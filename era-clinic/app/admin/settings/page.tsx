@@ -73,6 +73,7 @@ type SchedulingDefaults = {
   doctorBonusPercentWalkIn: number;
   hotelFolioRevenueCode: string;
   noShowKeepsCharge: boolean;
+  extraProcedureRoute: "SHOW_ON_PLAN" | "HOLD_UNTIL_PAY";
 };
 
 const CARD_DEFAULTS: CardLimits = {
@@ -126,6 +127,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   doctorBonusPercentWalkIn: 0,
   hotelFolioRevenueCode: "",
   noShowKeepsCharge: true,
+  extraProcedureRoute: "SHOW_ON_PLAN",
 };
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -212,6 +214,8 @@ export default function ClinicAdminSettingsPage() {
           hotelFolioRevenueCode:
             row.hotelFolioRevenueCode ?? SCHED_DEFAULTS.hotelFolioRevenueCode,
           noShowKeepsCharge: row.noShowKeepsCharge !== false,
+          extraProcedureRoute:
+            row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN",
         };
         setSchedDefaults(sched);
         setDraftSched(sched);
@@ -306,6 +310,8 @@ export default function ClinicAdminSettingsPage() {
         hotelFolioRevenueCode:
           row.hotelFolioRevenueCode ?? draftSched.hotelFolioRevenueCode,
         noShowKeepsCharge: row.noShowKeepsCharge !== false,
+        extraProcedureRoute:
+          row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN",
       });
       setOpen(false);
       showSuccess(tc("saved"));
@@ -759,6 +765,24 @@ export default function ClinicAdminSettingsPage() {
             />
             {t("noShowKeepsCharge")}
           </label>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("extraProcedureRoute")}
+            hint={t("extraProcedureRouteHint")}
+            value={draftSched.extraProcedureRoute}
+            emptyLabel={null}
+            options={[
+              { value: "SHOW_ON_PLAN", label: t("extraProcedureRouteShow") },
+              { value: "HOLD_UNTIL_PAY", label: t("extraProcedureRouteHold") },
+            ]}
+            onChange={(next) => {
+              const value = Array.isArray(next) ? next[0] : next;
+              setDraftSched((prev) => ({
+                ...prev,
+                extraProcedureRoute: value === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN",
+              }));
+            }}
+          />
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("programSchedulingMode")}

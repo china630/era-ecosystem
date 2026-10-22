@@ -1,4 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { getClinicSettings } from "@/domain/settings/settings.service";
+import {
+  printsProcedureClock,
+  showsUnpaidExtraOnPlan,
+} from "@/domain/sanatorium/extra-procedure-route";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
@@ -92,7 +97,10 @@ export async function buildEpisodeSummaryPrint(
   });
   if (!episode) return null;
 
-  const branding = await getPrintBranding(lang);
+  const [branding, clinicSettings] = await Promise.all([
+    getPrintBranding(lang),
+    getClinicSettings(),
+  ]);
   const stay = await loadPrintEpisodeStay({
     episodeId: episode.id,
     patientRefId: patientId,
@@ -122,7 +130,14 @@ export async function buildEpisodeSummaryPrint(
       where: {
         patientRefId: patientId,
         clinicalEpisodeId: episode.id,
-        status: { in: [...PRINT_PROCEDURE_STATUSES] },
+        ...(showsUnpaidExtraOnPlan(clinicSettings.extraProcedureRoute)
+          ? {
+              OR: [
+                { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
+                { status: "PENDING_PAY" as const, inPackage: false },
+              ],
+            }
+          : { status: { in: [...PRINT_PROCEDURE_STATUSES] } }),
       },
       include: {
         resource: { include: { room: true } },
@@ -186,15 +201,16 @@ export async function buildEpisodeSummaryPrint(
   });
 
   const procedures = procedureOrders.map((order) => {
-    const room =
-      order.resource?.room?.name ??
-      order.resource?.name ??
-      order.resource?.code ??
-      "";
+    const seated = printsProcedureClock(order.status);
+    const room = seated
+      ? (order.resource?.room?.name ?? order.resource?.name ?? order.resource?.code ?? "")
+      : "";
     return {
-      when: bakuStamp(order.scheduledAt),
+      when: seated ? bakuStamp(order.scheduledAt) : "",
       title: resolveOrderDisplayName(order, catalogNames),
-      detail: [printLabel(lang, `procStatus_${order.status}`), room].filter(Boolean).join(" · "),
+      detail: seated
+        ? [printLabel(lang, `procStatus_${order.status}`), room].filter(Boolean).join(" · ")
+        : printLabel(lang, "unpaidExtra"),
     };
   });
 

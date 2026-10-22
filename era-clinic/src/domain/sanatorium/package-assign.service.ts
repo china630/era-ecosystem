@@ -212,65 +212,16 @@ export function resolvePackageQuotaSku(
 }
 
 /**
- * CLI-57 package assign left menu = treatment entitlements only.
- * Intake labs / doctor exams stay on ProgramProcedureBalance for quota truth but are out of scope
- * for this modal (ADR clinic-episode-procedure-assign-modal — intake on separate card blocks).
+ * Procedure assign list. The block checkbox and the course snapshot decide.
+ * A transferred bath/paraffin remainder stays on the list. A balance with no snapshot block does not.
  */
-export function isPackageAssignTreatmentLine(code: string, name?: string | null): boolean {
-  const c = code.trim().toUpperCase();
-  if (!c) return false;
-  if (isBathTransferQuota(c)) {
-    return isPackageAssignTreatmentLine(bathTransferSku(c), name);
-  }
-  // Pool buckets stay visible — modal opens a SKU picker (eligibleSkusForPool).
-  if (isPackagePoolCode(c)) return true;
-  if (c.startsWith("WO-TR-") || c.startsWith("SVC-")) return true;
-  if (c.includes("NAFTALAN") || c === "PHYSIO_PAID") return true;
-
-  // Explicit PDF / knot intake + lab + visit codes
-  const intakeExact = new Set([
-    "ALT",
-    "AST",
-    "GLU",
-    "ECG",
-    "ECG-12",
-    "CARDIO-ECG",
-    "USG",
-    "USG-ABD",
-    "THERAPIST",
-    "NEURO",
-    "GYN",
-    "URO",
-    "GYN-OR-URO",
-    "GYN-VISIT",
-    "URO-VISIT",
-    "VISIT-GYN",
-    "VISIT-URO",
-    "SANATORIUM-INTAKE",
-    "VISIT-SANATORIUM-INTAKE",
-    "LAB_PAID",
-    "LAB-CBC",
-    "LAB-URINE",
-    "LAB-SEROLOGY-CARD",
-  ]);
-  if (intakeExact.has(c)) return false;
-  if (c.startsWith("LAB-") || c.startsWith("LAB_")) return false;
-  if (c.startsWith("VISIT-") || c.endsWith("-VISIT")) return false;
-
-  const hay = foldHay(`${c} ${name ?? ""}`);
-  if (
-    /muayin|analiz|alat|asat|sekar|sidik|ekq|usm|kardiolog|ginekolog|urolog|nevropatolog|hekim\b|hbsag|serolog/.test(
-      hay,
-    )
-  ) {
-    return false;
-  }
-
-  // Unknown PDF-* leftovers: only keep if not clearly intake-shaped
-  if (c.startsWith("PDF-")) return false;
-
-  // Conservative: do not surface OTHER/DIAGNOSTIC/LAB-shaped codes in the assign menu
-  return false;
+export function showsInProcedureMenu(row: {
+  isTransfer: boolean;
+  inSnapshot: boolean;
+  showInProcedures: boolean;
+}): boolean {
+  if (row.isTransfer) return true;
+  return row.inSnapshot && row.showInProcedures;
 }
 
 function isParaffinType(code: string, name: string): boolean {
@@ -488,10 +439,14 @@ export type PackageBalanceRow = {
   /** When set, UI should open SKU picker (pool or unresolved quota alias). */
   needsSkuPicker: boolean;
   /**
-   * False for intake labs/exams (fulfilled via LabOrder/Visit auto-apply).
-   * Modal shows them read-only; only assignable rows open the picker.
+   * Checkbox on the quota block, frozen in the course snapshot.
+   * Transfers stay assignable. Balances missing from the snapshot do not.
    */
   assignable: boolean;
+  /** What Hamısı / + creates for this block. */
+  fulfillment?: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
+  /** Order in the procedure list. */
+  procedureOrder?: number;
   /** Quota moved from unused baths or paraffin — not auto-seated. */
   isTransfer?: boolean;
   transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
@@ -726,6 +681,12 @@ export async function getPackageAssignSnapshot(
     active: true as boolean | null,
   }));
   const patientSex = episode.patientRef?.sex ?? null;
+  const snapByCode = new Map(
+    (snapMeta?.procedures ?? []).map((row) => [row.procedureCode, row]),
+  );
+  const tplByCode = new Map(
+    (instance.template?.procedures ?? []).map((row) => [row.procedureCode, row]),
+  );
 
   const balances: PackageBalanceRow[] = instance.procedureLines.map((line) => {
     const c = counts.get(line.procedureCode) ?? { circ: 0, consumed: 0 };
@@ -741,7 +702,22 @@ export async function getPackageAssignSnapshot(
       catalogNames.get(displayCode) ??
       nameByCode.get(line.procedureCode) ??
       line.procedureCode;
-    const assignable = isPackageAssignTreatmentLine(line.procedureCode, displayName);
+    const snapRow = snapByCode.get(line.procedureCode);
+    const tplRow = tplByCode.get(line.procedureCode);
+    const inSnapshot = snapMeta ? Boolean(snapRow) : Boolean(tplRow);
+    const showFlag = snapRow?.showInProcedures ?? tplRow?.showInProcedures ?? false;
+    const procedureOrder =
+      snapRow?.procedureOrder ?? tplRow?.procedureOrder ?? tplRow?.sortOrder ?? 0;
+    const rawFulfillment = snapRow?.fulfillment ?? tplRow?.fulfillment ?? "PROCEDURE_ORDER";
+    const fulfillment =
+      rawFulfillment === "LAB_ORDER" || rawFulfillment === "VISIT"
+        ? rawFulfillment
+        : "PROCEDURE_ORDER";
+    const assignable = showsInProcedureMenu({
+      isTransfer: isBathTransferQuota(line.procedureCode),
+      inSnapshot,
+      showInProcedures: showFlag === true,
+    });
     let needsSkuPicker = false;
     if (assignable) {
       if (configured.length > 1) {
@@ -772,6 +748,8 @@ export async function getPackageAssignSnapshot(
       isQuotaAlias,
       needsSkuPicker,
       assignable,
+      fulfillment,
+      procedureOrder,
       isTransfer: isBathTransferQuota(line.procedureCode),
       transfers: (instance.quotaTransfers ?? [])
         .filter((row) => row.toQuotaCode === line.procedureCode)
@@ -870,18 +848,17 @@ export async function getPackageAssignSnapshot(
     }
   }
 
-  const templateOrder = new Map(
-    (instance.template?.procedures ?? []).map((row, index) => [row.procedureCode, index]),
-  );
-  balances.sort(
-    (a, b) =>
-      (templateOrder.get(a.procedureCode) ?? 10_000) -
-      (templateOrder.get(b.procedureCode) ?? 10_000),
-  );
+  const menuBalances = balances
+    .filter((row) => row.assignable)
+    .sort(
+      (a, b) =>
+        (a.procedureOrder ?? 0) - (b.procedureOrder ?? 0) ||
+        a.procedureName.localeCompare(b.procedureName),
+    );
   const sexBlocked = await blockedProcedureCodesForGuest(episode.patientRef?.sex);
 
   return {
-    balances,
+    balances: menuBalances,
     assigned: [...batchMap.values()],
     softWarnDay1,
     blockReason: null,
@@ -1777,4 +1754,194 @@ export async function cancelFutureScheduledPastEnd(
     await syncQuotaUsed(instanceId, instance.episodeId, line.procedureCode);
   }
   return result.count;
+}
+
+/**
+ * Menu Save. Procedure blocks keep the cabin planner. Lab and visit blocks
+ * create the document their fulfillment already names.
+ */
+export async function assignPackageMenuLines(
+  episodeId: string,
+  lines: AssignLineInput[],
+  opts?: { confirmedByUserId?: string; softWarnOnly?: boolean; startAt?: Date | null },
+): Promise<{
+  placed: number;
+  softWarn: string | null;
+  orderIds: string[];
+  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+}> {
+  const snap = await getPackageAssignSnapshot(episodeId);
+  const byCode = new Map(snap.balances.map((row) => [row.procedureCode, row]));
+  const procedures: AssignLineInput[] = [];
+  const studies: Array<AssignLineInput & { fulfillment: "LAB_ORDER" | "VISIT" }> = [];
+  for (const line of lines) {
+    if (line.qty < 1) continue;
+    const quota = line.burnPoolCode?.trim() || line.procedureCode;
+    const block = byCode.get(quota);
+    if (!block?.assignable) {
+      throw new PackageAssignError(
+        `Block ${quota} is not on the procedure list`,
+        "NOT_IN_PROCEDURES",
+        400,
+      );
+    }
+    if (block.fulfillment === "LAB_ORDER" || block.fulfillment === "VISIT") {
+      studies.push({ ...line, fulfillment: block.fulfillment });
+    } else {
+      procedures.push(line);
+    }
+  }
+
+  let placed = 0;
+  let softWarn: string | null = null;
+  const orderIds: string[] = [];
+  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> =
+    [];
+  if (procedures.length > 0) {
+    const result = await assignPackageProcedures(episodeId, procedures, opts);
+    placed += result.placed;
+    softWarn = result.softWarn;
+    orderIds.push(...result.orderIds);
+    if (result.misses) misses.push(...result.misses);
+  }
+  if (studies.length > 0) {
+    placed += await assignPackageStudies(episodeId, studies);
+  }
+  return { placed, softWarn, orderIds, misses };
+}
+
+async function assignPackageStudies(
+  episodeId: string,
+  lines: Array<AssignLineInput & { fulfillment: "LAB_ORDER" | "VISIT" }>,
+): Promise<number> {
+  const episode = await loadEpisodeForAssign(episodeId);
+  const instance = episode.programInstance!;
+  const patientRefId = episode.patientRefId;
+  if (!patientRefId) {
+    throw new PackageAssignError("Episode has no patient", "NOT_FOUND", 404);
+  }
+  const blockMemberRows = await prisma.programTemplateBlockMember.findMany({
+    where: { templateId: instance.templateId },
+    select: { blockCode: true, procedureCode: true },
+  });
+  const membersByBlock = resolveMembersByBlock({
+    entitlementSnapshot: instance.entitlementSnapshot,
+    templateMembers: blockMemberRows,
+  });
+  const doctor = await prisma.episodeCareDoctor.findFirst({
+    where: { episodeId },
+    orderBy: { assignedAt: "asc" },
+    select: { practitionerId: true },
+  });
+  const { createLabOrderWithItems } = await import("@/domain/lab/lab-order-write.service");
+  const { LAB_ALREADY_OPEN } = await import("@/domain/lab/lab-order-conflict.service");
+  const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
+    "@/domain/sanatorium/entitlement-charge.service"
+  );
+  const { syncEntitlementUsage } = await import("@/domain/sanatorium/entitlement-usage.service");
+  const origin = episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
+  const touched = new Set<string>();
+  let placed = 0;
+
+  for (const line of lines) {
+    const quota = line.burnPoolCode?.trim() || line.procedureCode;
+    const members = membersByBlock.get(quota) ?? [];
+    const picked = line.procedureCode !== quota ? line.procedureCode : "";
+    const serviceCode =
+      (picked && (members.length === 0 || members.includes(picked)) ? picked : "") ||
+      (members.length === 1 ? members[0] : "") ||
+      (members.includes(line.procedureCode) ? line.procedureCode : "") ||
+      (members.length === 0 && !quota.startsWith("BLK-") ? quota : "");
+    if (!serviceCode || serviceCode.startsWith("BLK-")) {
+      throw new PackageAssignError(
+        `Block ${quota} has no catalog service to book`,
+        "NO_SERVICE",
+        400,
+      );
+    }
+    if (line.fulfillment === "LAB_ORDER" && line.qty > 1) {
+      throw new PackageAssignError(
+        "A lab block books one open order at a time",
+        "LAB_ONE",
+        400,
+      );
+    }
+    if (line.fulfillment === "VISIT" && !doctor?.practitionerId) {
+      throw new PackageAssignError(
+        "A care-team doctor is required to book a visit",
+        "NO_CARE_TEAM",
+        409,
+      );
+    }
+    for (let n = 0; n < line.qty; n += 1) {
+      if (line.fulfillment === "LAB_ORDER") {
+        try {
+          await createLabOrderWithItems({
+            patientRefId,
+            clinicalEpisodeId: episodeId,
+            codes: [serviceCode],
+            source: "IN_HOUSE",
+            fasting: false,
+            confirmRepeat: true,
+            patientOrigin: origin,
+          });
+        } catch (err) {
+          const code = (err as { code?: string }).code;
+          if (code === LAB_ALREADY_OPEN) {
+            throw new PackageAssignError(
+              "An open lab order already exists for this study",
+              "LAB_ALREADY_OPEN",
+              409,
+            );
+          }
+          throw err;
+        }
+      } else {
+        const charge = applyPriceMissingFallback(
+          await resolveEntitlementCharge({
+            episodeId,
+            patientOrigin: origin,
+            quotaCode: quota,
+            serviceCode,
+            inPackage: true,
+          }),
+          { serviceCode, where: "package-assign-visit" },
+        );
+        const visit = await prisma.visit.create({
+          data: {
+            organizationId: episode.organizationId,
+            patientRefId,
+            practitionerId: doctor!.practitionerId,
+            clinicalEpisodeId: episodeId,
+            status: "IN_PROGRESS",
+            patientOrigin: origin,
+            reservationId: episode.reservationId,
+            roomNumber: episode.roomNumber,
+            amountNet: charge.amountNet,
+          },
+        });
+        await prisma.visitServiceLine.create({
+          data: {
+            visitId: visit.id,
+            serviceCode,
+            description: line.procedureCode,
+            amount: charge.amountNet,
+            inPackage: true,
+            packageQuotaCode: quota,
+          },
+        });
+      }
+      placed += 1;
+    }
+    touched.add(quota);
+  }
+
+  for (const quotaCode of touched) {
+    await syncEntitlementUsage({
+      instanceId: instance.id,
+      episodeId,
+      quotaCode,
+    });
+  }
+  return placed;
 }
