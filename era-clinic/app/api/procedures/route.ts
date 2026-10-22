@@ -22,6 +22,8 @@ import {
 import type { ProcedureOrderStatus, Prisma } from "@prisma/client";
 import { autoCompleteElapsedCheckedIn } from "@/domain/procedure/procedure-completion.service";
 import { getCheckInOpenState } from "@/domain/procedure/procedure-attendance.service";
+import { buildNurseInstruction } from "@/domain/procedure/nurse-order-instruction";
+import { readPhysioFields } from "@/domain/physio/physio-order-fields";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 
 const ACTIVE_STATUSES: ProcedureOrderStatus[] = ["SCHEDULED", "CHECKED_IN"];
@@ -92,7 +94,7 @@ export async function GET(request: Request) {
       status: { in: statuses },
     };
 
-    // CLI-57: unpaid / unticketed extras never appear on nurse agenda.
+    // CLI-57: unpaid / unticketed extras never appear on the nurse board.
     if (mine) {
       where.AND = [
         {
@@ -145,6 +147,15 @@ export async function GET(request: Request) {
           where: { role: "STAFF" },
           select: { practitionerId: true, role: true },
         },
+        sites: {
+          orderBy: { sortOrder: "asc" },
+          select: {
+            laterality: true,
+            site: {
+              select: { titleAz: true, titleRu: true, titleEn: true, titleLa: true },
+            },
+          },
+        },
       },
       orderBy: { scheduledAt: "asc" },
       take: 500,
@@ -154,6 +165,35 @@ export async function GET(request: Request) {
       orders.map((o) => o.procedureCode),
       locale,
     );
+    const listIds = [
+      ...new Set(
+        orders.flatMap((o) => {
+          const fields = readPhysioFields(o.physioFields);
+          return [fields.deviceProgramId, fields.substanceId].filter(
+            (id): id is string => Boolean(id),
+          );
+        }),
+      ),
+    ];
+    const bodyCodes = [
+      ...new Set(orders.map((o) => o.bodyPart).filter((code): code is string => Boolean(code))),
+    ];
+    const [listItems, bodyRows] = await Promise.all([
+      listIds.length
+        ? prisma.physioListItem.findMany({
+            where: { id: { in: listIds } },
+            select: { id: true, titleAz: true, titleRu: true, titleEn: true },
+          })
+        : Promise.resolve([]),
+      bodyCodes.length
+        ? prisma.clinicLookup.findMany({
+            where: { kind: "BODY_PART", code: { in: bodyCodes } },
+            select: { code: true, name: true },
+          })
+        : Promise.resolve([]),
+    ]);
+    const listTitles = new Map(listItems.map((row) => [row.id, row]));
+    const bodyNames = new Map(bodyRows.map((row) => [row.code, row.name]));
     const settings = await getSchedulingSettings();
     const enriched = await Promise.all(
       orders.map(async (o) => {
@@ -168,6 +208,15 @@ export async function GET(request: Request) {
           procedureGapMinutes: checkIn.resourceGapMinutes,
           dayStartHour: settings.dayStartHour,
           dayEndHour: settings.dayEndHour,
+          instruction: buildNurseInstruction({
+            locale,
+            bodyPartName: o.bodyPart ? (bodyNames.get(o.bodyPart) ?? o.bodyPart) : null,
+            siteApplyMode: o.siteApplyMode,
+            note: o.note,
+            physioFields: o.physioFields,
+            sites: o.sites,
+            listTitles,
+          }),
         };
       }),
     );

@@ -1,29 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Info, Maximize2, X } from "lucide-react";
 import {
+  APP_SHELL_CLASS,
   CARD_CONTAINER_CLASS,
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
+  DatePicker,
   EraListFilterBar,
-  useDebouncedValue,
+  isoDateToDisplay,
+  FIELD_SECTION_CLASS,
   Field,
   FieldSelect,
-  FORM_INPUT_CLASS,
-  LINK_ACCENT_CLASS,
-  MODAL_CHECKBOX_CLASS,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  TEXT_DANGER_CLASS,
+  SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
+  ViewportOverlay,
   showApiError,
   showSuccess,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+
+type NurseInstruction = {
+  bodyPart: string | null;
+  sites: string[];
+  applyMode: string | null;
+  fields: string[];
+  note: string | null;
+};
 
 type Proc = {
   id: string;
@@ -37,32 +48,47 @@ type Proc = {
   status: string;
   patientRef: { id: string; fullName: string; refCode?: string };
   resource?: { id: string; code: string; name: string } | null;
+  instruction?: NurseInstruction | null;
 };
-
-const STATUS_OPTIONS = [
-  "ACTIVE",
-  "SCHEDULED",
-  "CHECKED_IN",
-  "COMPLETED",
-  "NO_SHOW",
-  "CANCELLED",
-  "ALL",
-] as const;
 
 const STATUS_CHIP: Record<string, string> = {
   SCHEDULED: "bg-[#2980B9]/10 text-[#2980B9]",
   CHECKED_IN: `bg-[#27AE60]/10 ${TEXT_SUCCESS_CLASS}`,
   COMPLETED: "bg-slate-500/10 text-slate-700",
   NO_SHOW: "bg-amber-500/10 text-amber-800",
-  CANCELLED: `bg-[#E74C3C]/10 ${TEXT_DANGER_CLASS}`,
 };
+
+type Place = "queue" | "progress" | "late" | "done" | "waiting";
+
+function placeOrder(
+  order: Proc,
+  now: number,
+  dayEnd: number,
+  isToday: boolean,
+): Place | null {
+  if (order.status === "CHECKED_IN") return "progress";
+  if (order.status === "COMPLETED") return "done";
+  if (order.status === "NO_SHOW") {
+    if (isToday && now >= dayEnd) return null;
+    return "late";
+  }
+  if (order.status !== "SCHEDULED") return null;
+  if (order.checkInOpen) return "queue";
+  const start = new Date(order.scheduledAt).getTime();
+  const deadline = order.checkInDeadline
+    ? new Date(order.checkInDeadline).getTime()
+    : start;
+  // Deadline still ahead: the window has not closed. A stale checkInOpen must not
+  // dump the card into Late for the seconds before the next reload.
+  if (now < deadline) return "waiting";
+  return "late";
+}
 
 export default function NursePage() {
   const t = useTranslations("nurse");
   const tc = useTranslations("common");
   const locale = useLocale();
   const { auth } = useClinicAuth();
-  const checkInRequiresQr = auth?.checkInRequiresQr !== false;
   const isDemoStaffFilter = auth?.isPlatformSuperAdmin === true;
 
   const [orders, setOrders] = useState<Proc[]>([]);
@@ -73,23 +99,26 @@ export default function NursePage() {
   const [mineUnlinked, setMineUnlinked] = useState(false);
   const [mineDefaultApplied, setMineDefaultApplied] = useState(false);
   const [date, setDate] = useState(todayBakuYmd);
-  const [status, setStatus] = useState<string>("ALL");
   const [patient, setPatient] = useState("");
   const debouncedPatient = useDebouncedValue(patient, 300);
   const [procedure, setProcedure] = useState("");
   const debouncedProcedure = useDebouncedValue(procedure, 300);
-  const [overdueOnly, setOverdueOnly] = useState(false);
   const [demoPractitionerId, setDemoPractitionerId] = useState("");
   const [demoStaff, setDemoStaff] = useState<
     Array<{ id: string; fullName: string; code: string; staffKind: string; specialty: string | null }>
   >([]);
-  const [qrToken, setQrToken] = useState("");
-  const [activeQrToken, setActiveQrToken] = useState<string | null>(null);
-  const [qrOrders, setQrOrders] = useState<Proc[]>([]);
-  const [qrPatient, setQrPatient] = useState<string | null>(null);
-  const [qrPatientRefId, setQrPatientRefId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const [fullscreen, setFullscreen] = useState(false);
+  const [fourCols, setFourCols] = useState(false);
+  const [info, setInfo] = useState<Proc | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const loadSeq = useRef(0);
+  const loadRef = useRef<(opts?: { silent?: boolean }) => Promise<void>>(async () => {});
+  const busyRef = useRef(false);
+  const dateRef = useRef(date);
+  dateRef.current = date;
 
   useEffect(() => {
     if (mineDefaultApplied || !auth) return;
@@ -135,272 +164,180 @@ export default function NursePage() {
     };
   }, [auth, mineDefaultApplied]);
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
+  const load = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const seq = ++loadSeq.current;
+      if (!opts?.silent) setLoading(true);
+      try {
+        const params = new URLSearchParams({ date, locale, status: "ALL" });
+        if (debouncedPatient.trim()) params.set("patient", debouncedPatient.trim());
+        if (debouncedProcedure.trim()) params.set("procedure", debouncedProcedure.trim());
+        if (demoPractitionerId) {
+          params.set("practitionerId", demoPractitionerId);
+        } else if (mineOn) {
+          params.set("mine", "1");
+        }
+        const res = await fetch(`/api/procedures?${params}`);
+        const payload = await res.json().catch(() => ({}));
+        if (seq !== loadSeq.current) return;
+        if (!res.ok) {
+          if (!opts?.silent) showApiError(payload, tc("loadingFailed"));
+          return;
+        }
+        const body = (payload.data ?? payload) as {
+          orders?: Proc[];
+          mineUnlinked?: boolean;
+          dayStartHour?: number;
+          dayEndHour?: number;
+        };
+        const rows = Array.isArray(body) ? (body as Proc[]) : (body.orders ?? []);
+        setOrders(rows);
+        setMineUnlinked(body && !Array.isArray(body) ? body.mineUnlinked === true : false);
+        if (body && !Array.isArray(body)) {
+          if (typeof body.dayStartHour === "number") setDayStartHour(body.dayStartHour);
+          if (typeof body.dayEndHour === "number") setDayEndHour(body.dayEndHour);
+        }
+      } finally {
+        if (seq === loadSeq.current) setLoading(false);
+      }
+    },
+    [date, debouncedPatient, debouncedProcedure, mineOn, demoPractitionerId, locale, tc],
+  );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams({ date, locale, status });
-    if (debouncedPatient.trim()) params.set("patient", debouncedPatient.trim());
-    if (debouncedProcedure.trim()) params.set("procedure", debouncedProcedure.trim());
-    if (overdueOnly) params.set("overdueOnly", "1");
-    if (demoPractitionerId) {
-      params.set("practitionerId", demoPractitionerId);
-    } else if (mineOn) {
-      params.set("mine", "1");
-    }
-
-    const res = await fetch(`/api/procedures?${params}`);
-    const d = await res.json();
-    const payload = d.data ?? d;
-    const rows = (Array.isArray(payload) ? payload : (payload.orders ?? [])) as Proc[];
-    setOrders(rows);
-    setMineUnlinked(payload?.mineUnlinked === true);
-    if (typeof payload?.dayStartHour === "number") setDayStartHour(payload.dayStartHour);
-    if (typeof payload?.dayEndHour === "number") setDayEndHour(payload.dayEndHour);
-    setLoading(false);
-  }, [date, status, debouncedPatient, debouncedProcedure, overdueOnly, mineOn, demoPractitionerId, locale]);
+  loadRef.current = load;
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const procedureOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const o of orders) {
-      if (!map.has(o.procedureCode)) map.set(o.procedureCode, o.procedureName);
-    }
-    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [orders]);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNowTick(Date.now());
+      if (dateRef.current !== todayBakuYmd()) return;
+      if (busyRef.current) return;
+      void loadRef.current({ silent: true });
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
-  function statusLabel(s: string) {
-    const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW", "CANCELLED"] as const;
-    if ((known as readonly string[]).includes(s)) {
-      return t(`status.${s}` as "status.SCHEDULED");
-    }
-    return s;
-  }
+  useEffect(() => {
+    if (!fullscreen && !info) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (info) setInfo(null);
+      else setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen, info]);
 
-  function isCheckInOpen(o: Proc) {
-    if (o.status !== "SCHEDULED") return false;
-    if (typeof o.checkInOpen === "boolean") return o.checkInOpen;
-    const ends = o.effectiveEndsAt || o.endsAt || o.scheduledAt;
-    return new Date(ends).getTime() >= nowTick;
-  }
-
-  async function scanQr() {
-    const res = await fetch("/api/nurse/qr-scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: qrToken.trim() }),
+  useEffect(() => {
+    if (fullscreen) return;
+    const el = boardRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      setFourCols(width >= 1000);
     });
-    const data = await res.json();
-    if (!res.ok) {
-      showApiError(data, t("qrFailed"));
-      setQrOrders([]);
-      setQrPatient(null);
-      setQrPatientRefId(null);
-      setActiveQrToken(null);
-      return;
-    }
-    const payload = data.data ?? data;
-    setQrPatient(payload.patientName ?? null);
-    setQrPatientRefId(payload.patientRefId ?? null);
-    setQrOrders(payload.orders ?? []);
-    setActiveQrToken(payload.qrToken ?? qrToken.trim());
-    showSuccess(t("qrSuccess"));
-  }
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [fullscreen]);
 
-  async function checkIn(id: string) {
-    if (checkInRequiresQr && !activeQrToken) {
-      showApiError({ error: t("qrRequiredFirst") });
-      return;
-    }
-    const body =
-      checkInRequiresQr && activeQrToken ? { qrToken: activeQrToken } : {};
-    const res = await fetch(`/api/procedures/${id}/check-in`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showApiError(data, t("checkInFailed"));
-      return;
-    }
-    showSuccess(t("checkInOk"));
-    await load();
-    if (qrToken.trim()) await scanQr();
-  }
-
-  const buckets = useMemo(() => {
-    const overdue: Proc[] = [];
-    const upcoming: Proc[] = [];
-    const inProgress: Proc[] = [];
-    const completed: Proc[] = [];
-    for (const o of orders) {
-      if (o.status === "CHECKED_IN") {
-        inProgress.push(o);
-        continue;
-      }
-      if (o.status === "COMPLETED") {
-        completed.push(o);
-        continue;
-      }
-      if (o.status === "SCHEDULED") {
-        if (isCheckInOpen(o)) upcoming.push(o);
-        else overdue.push(o);
-      }
-    }
-    return { overdue, upcoming, inProgress, completed };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orders, nowTick]);
-
-  /** Agenda: one procedure before now … end of clinic day. */
-  const agenda = useMemo(() => {
-    const dayEnd = parseBakuDateTime(date, `${String(dayEndHour).padStart(2, "0")}:00`);
-    const eligible = [...orders]
-      .filter((o) =>
-        ["SCHEDULED", "CHECKED_IN", "COMPLETED"].includes(o.status),
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-      );
-    const pastOrNow = eligible.filter(
-      (o) => new Date(o.scheduledAt).getTime() <= nowTick,
-    );
-    const oneBefore = pastOrNow.length > 0 ? pastOrNow[pastOrNow.length - 1] : null;
-    const fromTs = oneBefore
-      ? new Date(oneBefore.scheduledAt).getTime()
-      : nowTick;
-    return eligible.filter((o) => {
-      const start = new Date(o.scheduledAt).getTime();
-      return start >= fromTs && start < dayEnd.getTime();
-    });
-  }, [orders, nowTick, dayEndHour, date]);
+  const isToday = date === todayBakuYmd();
 
   const dayProgress = useMemo(() => {
     const start = parseBakuDateTime(date, `${String(dayStartHour).padStart(2, "0")}:00`);
     const end = parseBakuDateTime(date, `${String(dayEndHour).padStart(2, "0")}:00`);
     const total = end.getTime() - start.getTime();
-    if (total <= 0) return { pct: 0, label: t("dayClosed"), closed: true };
-    if (nowTick < start.getTime()) {
-      return { pct: 0, label: t("dayNotStarted"), closed: true };
-    }
-    if (nowTick >= end.getTime()) {
-      return { pct: 100, label: t("dayEnded"), closed: true };
-    }
-    const leftMs = end.getTime() - nowTick;
-    const leftMin = Math.ceil(leftMs / 60_000);
+    if (total <= 0) return { label: t("dayClosed") };
+    if (nowTick < start.getTime()) return { label: t("dayNotStarted") };
+    if (nowTick >= end.getTime()) return { label: t("dayEnded") };
+    const leftMin = Math.ceil((end.getTime() - nowTick) / 60_000);
     const h = Math.floor(leftMin / 60);
     const m = leftMin % 60;
-    const pct = Math.round(((nowTick - start.getTime()) / total) * 100);
-    return {
-      pct,
-      label: t("dayRemaining", { hours: h, minutes: m }),
-      closed: false,
-    };
+    return { label: t("dayRemaining", { hours: h, minutes: m }) };
   }, [nowTick, dayStartHour, dayEndHour, date, t]);
 
-  function renderOrderCard(o: Proc, opts?: { allowCheckIn?: boolean }) {
-    const chip = STATUS_CHIP[o.status] ?? "bg-slate-100 text-slate-700";
-    const open = isCheckInOpen(o);
-    const canCheckIn = opts?.allowCheckIn && o.status === "SCHEDULED" && open;
-    const showDisabledCheckIn =
-      opts?.allowCheckIn && o.status === "SCHEDULED" && !open;
-    const qrBlocked = checkInRequiresQr && !activeQrToken;
+  const buckets = useMemo(() => {
+    const queue: Proc[] = [];
+    const progress: Proc[] = [];
+    const late: Proc[] = [];
+    const done: Proc[] = [];
+    const waiting: Proc[] = [];
+    const dayEnd = parseBakuDateTime(
+      date,
+      `${String(dayEndHour).padStart(2, "0")}:00`,
+    ).getTime();
+    for (const order of orders) {
+      const place = placeOrder(order, nowTick, dayEnd, isToday);
+      if (place === "queue") queue.push(order);
+      else if (place === "progress") progress.push(order);
+      else if (place === "late") late.push(order);
+      else if (place === "done") done.push(order);
+      else if (place === "waiting") waiting.push(order);
+    }
+    return { queue, progress, late, done, waiting };
+  }, [orders, nowTick, dayEndHour, date, isToday]);
+
+  const visibleCount =
+    buckets.queue.length +
+    buckets.progress.length +
+    buckets.late.length +
+    buckets.done.length +
+    buckets.waiting.length;
+
+  function statusLabel(status: string) {
+    const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] as const;
+    if ((known as readonly string[]).includes(status)) {
+      return t(`status.${status}` as "status.SCHEDULED");
+    }
+    return status;
+  }
+
+  function timeRange(order: Proc) {
+    const start = bakuTimeLabel(order.scheduledAt);
+    const endSrc = order.endsAt || order.effectiveEndsAt;
+    return endSrc ? `${start}–${bakuTimeLabel(endSrc)}` : start;
+  }
+
+  function cabinOf(order: Proc) {
+    return order.resource?.name || order.resource?.code || "—";
+  }
+
+  function infoButton(order: Proc) {
     return (
-      <li
-        key={o.id}
-        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#D5DADF]/80 bg-[#FAFBFC] p-3"
+      <button
+        type="button"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#D5DADF] bg-white text-[#2980B9]"
+        aria-label={t("detailsTitle")}
+        onClick={() => setInfo(order)}
       >
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`/patients/${o.patientRef.id}`}
-              className={`font-semibold ${LINK_ACCENT_CLASS}`}
-            >
-              {o.patientRef.fullName}
-            </Link>
-            <span className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${chip}`}>
-              {statusLabel(o.status)}
-            </span>
-          </div>
-          <p className="text-[13px] text-[#34495E]">
-            <span className="font-medium">{o.procedureName}</span>
-            <span className={TEXT_MUTED_CLASS}> · {o.procedureCode}</span>
-            <span className={TEXT_MUTED_CLASS}>
-              {" "}
-              · {bakuTimeLabel(o.scheduledAt)}
-              {o.endsAt || o.effectiveEndsAt
-                ? `–${bakuTimeLabel(o.endsAt || o.effectiveEndsAt!)}`
-                : ""}
-            </span>
-            {o.resource ? (
-              <span className={TEXT_MUTED_CLASS}>
-                {" "}
-                · {o.resource.name || o.resource.code}
-              </span>
-            ) : null}
-          </p>
-        </div>
-        <span className="flex flex-wrap gap-2">
-          {canCheckIn ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => void checkIn(o.id)}
-              disabled={qrBlocked}
-              title={qrBlocked ? t("qrRequiredFirst") : undefined}
-            >
-              {t("checkIn")}
-            </button>
-          ) : null}
-          {showDisabledCheckIn ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled
-              title={t("checkInClosed")}
-            >
-              {t("checkIn")}
-            </button>
-          ) : null}
-        </span>
-      </li>
+        <Info className="h-5 w-5" aria-hidden />
+      </button>
     );
   }
 
-  function Column({
-    title,
-    hint,
-    rows,
-    allowCheckIn,
-    tone,
-  }: {
-    title: string;
-    hint: string;
-    rows: Proc[];
-    allowCheckIn?: boolean;
-    tone?: string;
-  }) {
-    return (
-      <div
-        className={`${CARD_CONTAINER_CLASS} flex min-h-[12rem] flex-col p-3 ${tone ?? ""}`}
-      >
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className={`mb-2 text-[11px] ${TEXT_MUTED_CLASS}`}>{hint}</p>
-        <ul className="space-y-2 text-sm">
-          {rows.map((o) => renderOrderCard(o, { allowCheckIn }))}
-          {rows.length === 0 ? (
-            <li className="text-slate-500">{t("empty")}</li>
-          ) : null}
-        </ul>
-      </div>
-    );
+  async function checkIn(id: string) {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/procedures/${id}/check-in`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, t("checkInFailed"));
+        return;
+      }
+      showSuccess(t("checkInOk"));
+      await load();
+    } finally {
+      busyRef.current = false;
+      setBusyId(null);
+    }
   }
 
   function resetFilters() {
@@ -410,10 +347,8 @@ export default function NursePage() {
       !auth?.isPlatformSuperAdmin &&
       (deskMine || kind === "NURSE" || kind === "BATH" || kind === "MASSAGE");
     setDate(today);
-    setStatus("ALL");
     setPatient("");
     setProcedure("");
-    setOverdueOnly(false);
     setMineOn(defaultMine);
     setDemoPractitionerId("");
     setMineUnlinked(false);
@@ -426,237 +361,344 @@ export default function NursePage() {
     return t("staffKindNurse");
   }
 
-  return (
-    <>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-
-      {isDemoStaffFilter ? (
-        <div className="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 p-3">
-          <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-amber-950">
-            {t("demoStaffFilterTitle")}
-          </p>
-          <p className="mb-2 text-[12px] font-semibold text-amber-900">
-            {t("demoStaffFilterHint")}
-          </p>
-          <FieldSelect
-            label={t("demoStaffFilterLabel")}
-            preset="select"
-            value={demoPractitionerId}
-            onChange={(e) => {
-              const next = e.target.value;
-              setDemoPractitionerId(next);
-              if (next) {
-                setMineOn(false);
-              }
-            }}
-            className="font-bold"
-            selectClassName="font-bold"
-          >
-            <option value="">{t("demoStaffFilterAll")}</option>
-            {demoStaff.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.fullName} · {deskKindLabel(s.staffKind, s.specialty)}
-              </option>
-            ))}
-          </FieldSelect>
-        </div>
-      ) : null}
-
-      <EraListFilterBar
-        resetLabel={t("resetFilters")}
-        onReset={resetFilters}
-        actionsExtra={
-          <>
-            <label className="inline-flex items-center gap-2 text-[13px] text-[#34495E]">
-              <input
-                type="checkbox"
-                className={MODAL_CHECKBOX_CLASS}
-                checked={overdueOnly}
-                onChange={(e) => setOverdueOnly(e.target.checked)}
-              />
-              {t("filterOverdueOnly")}
-            </label>
-            <div className="inline-flex overflow-hidden rounded-lg border border-[#D5DADF] text-[12px]">
-              <button
-                type="button"
-                className={`px-3 py-1.5 ${mineOn ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !rounded-none !shadow-none`}
-                onClick={() => setMineOn(true)}
-              >
-                {t("filterMine")}
-              </button>
-              <button
-                type="button"
-                className={`px-3 py-1.5 ${!mineOn ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !rounded-none !shadow-none`}
-                onClick={() => setMineOn(false)}
-              >
-                {t("filterAll")}
-              </button>
-            </div>
-            <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-              {loading
-                ? tc("loading")
-                : t("resultCount", { count: orders.length })}
-            </span>
-          </>
-        }
+  function renderOrderCard(order: Proc, allowCheckIn?: boolean) {
+    const chip = STATUS_CHIP[order.status] ?? "bg-slate-100 text-slate-700";
+    const showCheckIn = allowCheckIn && order.status === "SCHEDULED" && order.checkInOpen === true;
+    return (
+      <li
+        key={order.id}
+        className="flex flex-col gap-1.5 rounded-xl border border-[#D5DADF]/80 bg-[#FAFBFC] p-2.5"
       >
-        <Field
-          label={t("filterDate")}
-          preset="shortText"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        <FieldSelect
-          label={t("filterStatusLabel")}
-          preset="select"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {t(`filterStatus.${s}` as "filterStatus.ACTIVE")}
-            </option>
-          ))}
-        </FieldSelect>
-        <Field
-          label={t("filterPatient")}
-          preset="shortText"
-          value={patient}
-          onChange={(e) => setPatient(e.target.value)}
-          placeholder={t("filterPatientPlaceholder")}
-        />
-        <Field
-          label={t("filterProcedure")}
-          preset="shortText"
-          value={procedure}
-          onChange={(e) => setProcedure(e.target.value)}
-          placeholder={t("filterProcedurePlaceholder")}
-          list="nurse-procedure-options"
-        />
-        <datalist id="nurse-procedure-options">
-          {procedureOptions.map(([code, name]) => (
-            <option key={code} value={code}>
-              {name}
-            </option>
-          ))}
-        </datalist>
-      </EraListFilterBar>
-      {mineUnlinked ? (
-        <p className="mb-3 text-[12px] text-amber-800">{t("mineUnlinked")}</p>
-      ) : null}
-      <p className={`mb-4 text-[12px] ${TEXT_MUTED_CLASS}`}>{t("lifecycleHint")}</p>
-
-      {checkInRequiresQr ? (
-        <div className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
-          <h2 className="text-sm font-semibold">{t("qrScanTitle")}</h2>
-          <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("qrHint")}</p>
-          <div className="flex flex-wrap gap-2">
-            <input
-              className={`${FORM_INPUT_CLASS} min-w-[16rem] flex-1`}
-              placeholder={t("qrTokenPlaceholder")}
-              value={qrToken}
-              onChange={(e) => setQrToken(e.target.value)}
-            />
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => void scanQr()}
-            >
-              {t("qrScan")}
-            </button>
-          </div>
-          {qrPatient ? (
-            <p className="text-sm">
-              {t("qrPatient")}:{" "}
-              {qrPatientRefId ? (
-                <Link
-                  href={`/patients/${qrPatientRefId}`}
-                  className={LINK_ACCENT_CLASS}
-                >
-                  {qrPatient}
-                </Link>
-              ) : (
-                qrPatient
-              )}
-            </p>
-          ) : null}
-          {qrOrders.length > 0 ? (
-            <ul className="space-y-2 text-sm">
-              {qrOrders.map((o) => renderOrderCard(o, { allowCheckIn: true }))}
-            </ul>
-          ) : null}
-        </div>
-      ) : (
-        <p className={`mb-3 text-[12px] ${TEXT_SUCCESS_CLASS}`}>{t("manualModeHint")}</p>
-      )}
-
-      <div className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">{t("agendaTitle")}</h2>
-          <span className="rounded-md bg-[#2980B9]/10 px-2 py-1 text-[12px] font-semibold text-[#2980B9]">
-            {dayProgress.label}
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 break-words text-sm font-semibold leading-snug text-[#34495E]">
+            {order.patientRef.fullName}
+          </p>
+          <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-semibold ${chip}`}>
+            {statusLabel(order.status)}
           </span>
         </div>
-        <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-[#EBEDF0]">
-          <div
-            className={`h-full ${dayProgress.closed ? "bg-slate-400" : "bg-[#2980B9]"}`}
-            style={{ width: `${dayProgress.pct}%` }}
-          />
-        </div>
-        <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>{t("agendaHint")}</p>
-        <ol className="relative space-y-2 border-l-2 border-[#D5DADF] pl-4">
-          {agenda.map((o) => {
-            const open = isCheckInOpen(o);
-            const isNow = o.status === "CHECKED_IN";
-            const isPast = o.status === "SCHEDULED" && !open;
-            return (
-              <li key={`agenda-${o.id}`} className="relative">
-                <span
-                  className={`absolute -left-[1.35rem] top-2 h-2.5 w-2.5 rounded-full ${
-                    isNow
-                      ? "bg-emerald-500"
-                      : isPast
-                        ? "bg-amber-500"
-                        : "bg-[#2980B9]"
-                  }`}
-                />
-                {renderOrderCard(o, { allowCheckIn: true })}
-              </li>
-            );
-          })}
-          {agenda.length === 0 ? (
-            <li className="text-slate-500">{t("empty")}</li>
-          ) : null}
-        </ol>
-      </div>
+        <p className="break-words text-[13px] font-medium leading-snug text-[#34495E]">
+          {order.procedureName}
+        </p>
+        <p className="text-[12px] text-[#34495E]">
+          <span className={TEXT_MUTED_CLASS}>{t("timeLabel")}: </span>
+          {timeRange(order)}
+        </p>
+        <p className="text-[12px] text-[#34495E]">
+          <span className={TEXT_MUTED_CLASS}>{t("cabinLabel")}: </span>
+          {cabinOf(order)}
+        </p>
+        <div className="self-start">{infoButton(order)}</div>
+        {showCheckIn ? (
+          <button
+            type="button"
+            className={`${PRIMARY_BUTTON_CLASS} w-full`}
+            disabled={busyId !== null}
+            onClick={() => void checkIn(order.id)}
+          >
+            {t("checkIn")}
+          </button>
+        ) : null}
+      </li>
+    );
+  }
 
-      <div className="mb-2 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <Column
-          title={t("queueOverdue")}
-          hint={t("queueOverdueHint")}
-          rows={buckets.overdue}
-          allowCheckIn
-          tone="border-amber-300 bg-amber-50/60"
-        />
+  function Column({
+    title,
+    hint,
+    rows,
+    empty,
+    allowCheckIn,
+    tone,
+  }: {
+    title: string;
+    hint: string;
+    rows: Proc[];
+    empty: string;
+    allowCheckIn?: boolean;
+    tone?: string;
+  }) {
+    return (
+      <div
+        className={`${CARD_CONTAINER_CLASS} flex min-h-0 min-w-0 flex-col p-2.5 ${tone ?? ""} ${
+          fullscreen ? "h-full overflow-hidden" : ""
+        }`}
+      >
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className={`mb-2 text-[11px] leading-snug ${TEXT_MUTED_CLASS}`}>{hint}</p>
+        <ul
+          className={`space-y-2 text-sm ${
+            fullscreen ? "min-h-0 flex-1 overflow-y-auto" : "max-h-[32rem] overflow-y-auto"
+          }`}
+        >
+          {rows.map((order) => renderOrderCard(order, allowCheckIn))}
+          {rows.length === 0 ? <li className="text-slate-500">{empty}</li> : null}
+        </ul>
+      </div>
+    );
+  }
+
+  const instruction = info?.instruction;
+  const instructionEmpty =
+    !instruction ||
+    (!instruction.bodyPart &&
+      instruction.sites.length === 0 &&
+      !instruction.applyMode &&
+      instruction.fields.length === 0 &&
+      !instruction.note);
+
+  const demoFilter = isDemoStaffFilter ? (
+    <div className="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 p-3">
+      <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-amber-950">
+        {t("demoStaffFilterTitle")}
+      </p>
+      <p className="mb-2 text-[12px] font-semibold text-amber-900">{t("demoStaffFilterHint")}</p>
+      <FieldSelect
+        label={t("demoStaffFilterLabel")}
+        preset="select"
+        value={demoPractitionerId}
+        onChange={(e) => {
+          const next = e.target.value;
+          setDemoPractitionerId(next);
+          if (next) setMineOn(false);
+        }}
+        className="font-bold"
+        selectClassName="font-bold"
+      >
+        <option value="">{t("demoStaffFilterAll")}</option>
+        {demoStaff.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.fullName} · {deskKindLabel(s.staffKind, s.specialty)}
+          </option>
+        ))}
+      </FieldSelect>
+    </div>
+  ) : null;
+
+  const filters = (
+    <EraListFilterBar
+      resetLabel={t("resetFilters")}
+      onReset={resetFilters}
+      actionsExtra={
+        <>
+          <div className="inline-flex overflow-hidden rounded-lg border border-[#D5DADF] text-[12px]">
+            <button
+              type="button"
+              className={`px-3 py-1.5 ${mineOn ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !rounded-none !shadow-none`}
+              onClick={() => setMineOn(true)}
+            >
+              {t("filterMine")}
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 ${!mineOn ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !rounded-none !shadow-none`}
+              onClick={() => setMineOn(false)}
+            >
+              {t("filterAll")}
+            </button>
+          </div>
+          <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+            {loading ? tc("loading") : t("resultCount", { count: visibleCount })}
+          </span>
+          {fullscreen ? null : (
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setFullscreen(true)}
+            >
+              <Maximize2 className="h-3.5 w-3.5" aria-hidden />
+              {t("enterFullscreen")}
+            </button>
+          )}
+        </>
+      }
+    >
+      <DatePicker
+        label={t("filterDate")}
+        value={date}
+        onChange={setDate}
+        placeholder={tc("datePlaceholder")}
+        openCalendarLabel={tc("openCalendar")}
+      />
+      <Field
+        label={t("filterPatient")}
+        preset="shortText"
+        value={patient}
+        onChange={(e) => setPatient(e.target.value)}
+        placeholder={t("filterPatientPlaceholder")}
+      />
+      <Field
+        label={t("filterProcedure")}
+        preset="shortText"
+        value={procedure}
+        onChange={(e) => setProcedure(e.target.value)}
+        placeholder={t("filterProcedurePlaceholder")}
+      />
+    </EraListFilterBar>
+  );
+
+  const board = (
+    <div
+      ref={boardRef}
+      className={`flex min-h-0 min-w-0 flex-col gap-2 ${fullscreen ? "flex-1" : ""}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="rounded-md bg-[#2980B9]/10 px-2 py-1 text-[12px] font-semibold text-[#2980B9]">
+          {dayProgress.label}
+        </span>
+      </div>
+      {buckets.waiting.length > 0 ? (
+        <div className={`${CARD_CONTAINER_CLASS} p-2.5`}>
+          <h3 className="mb-1 text-sm font-semibold">
+            {isToday ? t("waitingTitle") : t("waitingOther")}
+          </h3>
+          <ul className="max-h-40 space-y-1 overflow-y-auto text-[12px]">
+            {buckets.waiting.map((order) => (
+              <li key={order.id} className="flex items-start justify-between gap-2 text-[#34495E]">
+                <div className="min-w-0 leading-snug">
+                  <span className="block break-words font-semibold">{order.patientRef.fullName}</span>
+                  <span className="block break-words">{order.procedureName}</span>
+                  <span className={TEXT_MUTED_CLASS}>
+                    {timeRange(order)} · {cabinOf(order)}
+                  </span>
+                </div>
+                {infoButton(order)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div
+        className={`grid min-h-0 gap-2 ${
+          fullscreen || fourCols ? "grid-cols-4" : "grid-cols-2"
+        } ${fullscreen ? "h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)]" : ""}`}
+      >
         <Column
           title={t("queueUpcoming")}
           hint={t("queueUpcomingHint")}
-          rows={buckets.upcoming}
-          allowCheckIn
+          rows={buckets.queue}
+          empty={t("queueUpcomingEmpty")}
+          allowCheckIn={isToday}
         />
         <Column
           title={t("queueInProgress")}
           hint={t("queueInProgressHint")}
-          rows={buckets.inProgress}
+          rows={buckets.progress}
+          empty={t("queueInProgressEmpty")}
           tone="border-emerald-300 bg-emerald-50/50"
+        />
+        <Column
+          title={t("queueOverdue")}
+          hint={t("queueOverdueHint")}
+          rows={buckets.late}
+          empty={t("queueOverdueEmpty")}
+          tone="border-amber-300 bg-amber-50/60"
         />
         <Column
           title={t("queueCompleted")}
           hint={t("queueCompletedHint")}
-          rows={buckets.completed}
+          rows={buckets.done}
+          empty={t("queueCompletedEmpty")}
         />
       </div>
+    </div>
+  );
+
+  const hints = (
+    <>
+      {mineUnlinked ? (
+        <p className="mb-3 text-[12px] text-amber-800">{t("mineUnlinked")}</p>
+      ) : null}
+      <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>{t("lifecycleHint")}</p>
+    </>
+  );
+
+  return (
+    <>
+      {fullscreen ? (
+        <ViewportOverlay
+          className={`fixed inset-0 z-[180] flex flex-col ${APP_SHELL_CLASS}`}
+          label={t("fullscreenTitle")}
+        >
+          <div
+            className={`flex shrink-0 items-center justify-between gap-3 rounded-none border-x-0 border-t-0 bg-white px-4 py-3 sm:px-6 ${FIELD_SECTION_CLASS}`}
+          >
+            <div className="min-w-0">
+              <h2 className="m-0 truncate text-lg font-semibold">{t("fullscreenTitle")}</h2>
+              <p className={`m-0 truncate text-[13px] ${TEXT_MUTED_CLASS}`}>
+                {isoDateToDisplay(date) || date}
+              </p>
+            </div>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setFullscreen(false)}
+              aria-label={t("exitFullscreen")}
+            >
+              <X className="h-4 w-4" aria-hidden />
+              {t("exitFullscreen")}
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-2 sm:px-4">
+            <div className="shrink-0">{filters}</div>
+            <div className="shrink-0">{hints}</div>
+            {board}
+          </div>
+        </ViewportOverlay>
+      ) : (
+        <>
+          <PageHeader title={t("title")} subtitle={t("subtitle")} />
+          {demoFilter}
+          {filters}
+          {hints}
+          {board}
+        </>
+      )}
+
+      <ModalShell
+        open={info !== null}
+        title={info?.patientRef.fullName ?? t("detailsTitle")}
+        subtitle={info?.procedureName}
+        onClose={() => setInfo(null)}
+        closeLabel={tc("close")}
+      >
+        {instructionEmpty ? (
+          <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("detailsEmpty")}</p>
+        ) : (
+          <dl className="space-y-3 text-sm text-[#34495E]">
+            {instruction?.bodyPart ? (
+              <div>
+                <dt className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("detailsBodyPart")}</dt>
+                <dd className="m-0">{instruction.bodyPart}</dd>
+              </div>
+            ) : null}
+            {instruction && instruction.sites.length > 0 ? (
+              <div>
+                <dt className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("detailsSites")}</dt>
+                <dd className="m-0">{instruction.sites.join(", ")}</dd>
+              </div>
+            ) : null}
+            {instruction?.applyMode ? (
+              <div>
+                <dt className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("detailsMode")}</dt>
+                <dd className="m-0">{instruction.applyMode}</dd>
+              </div>
+            ) : null}
+            {instruction && instruction.fields.length > 0 ? (
+              <div>
+                <dt className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("detailsFields")}</dt>
+                <dd className="m-0">{instruction.fields.join(" · ")}</dd>
+              </div>
+            ) : null}
+            {instruction?.note ? (
+              <div>
+                <dt className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("detailsNote")}</dt>
+                <dd className="m-0 whitespace-pre-wrap">{instruction.note}</dd>
+              </div>
+            ) : null}
+          </dl>
+        )}
+      </ModalShell>
     </>
   );
 }

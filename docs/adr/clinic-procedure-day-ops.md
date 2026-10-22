@@ -25,7 +25,7 @@ The 2026-07-18 amendment treated short cabin procedures as “check-in = complet
 | Actor | Owns |
 |-------|------|
 | **RECEPTION** | Day inventory: resource×time matrix, reschedule, cancel, assign walk-in into free slots |
-| **NURSE** | Attendance: one click check-in when guest arrives → `CHECKED_IN`; mark **NO_SHOW** when guest never arrived (or leave to EOD sweep) |
+| **NURSE** | Attendance: one click check-in when the window is open → `CHECKED_IN`. No-show is the day sweep, not a nurse button |
 | **DOCTOR / CLINIC_ADMIN** | Check-in **override** with reason (supervisor path); medical program composition unchanged |
 
 Nurse does **not** orchestrate the matrix. Reception does **not** mark check-in (except admin tools if ever needed).
@@ -75,7 +75,7 @@ Manual `POST …/complete` remains only as admin/fallback for stuck `CHECKED_IN`
 5. **Resource occupancy:** at most `capacity` concurrent `CHECKED_IN` orders per `resourceId`.
 6. Audit: `checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`, `cancelledAt/By`, `cancelReason`, `manuallyAdjusted`.
 
-Nurse board shows only **Check-in** (no manual No-show). Past-deadline `SCHEDULED` rows appear in a visual “Missed” bucket with check-in disabled; status stays `SCHEDULED` until EOD sweep.
+Nurse board shows **Check-in** only on a today row whose window is open (no disabled control). Past-deadline `SCHEDULED` and `NO_SHOW` share the Late column. On today's live board, `NO_SHOW` stays there until `dayEndHour`, then drops off. Status stays `SCHEDULED` until the EOD sweep. Another selected date still lists that day's no-shows in Late.
 
 ### NO_SHOW and matrix evidence
 
@@ -123,7 +123,7 @@ Hotel room-plan analogy (Location **projection** of multi-resource SoR — see [
 
 ### Nurse board (`/nurse`)
 
-Agenda window: **one procedure before now → end of clinic day** (shrinks through the day) + day-progress indicator (“Xh Ym left” / closed). Kanban: Missed (visual overdue, check-in disabled) / Upcoming / In progress / Completed. Single check-in button; QR panel only when `checkInRequiresQr`. No nurse No-show button. Completion automatic.
+Four columns when the board itself is about 1000px wide, and always inside the fullscreen overlay (Esc or close): **Queue** (check-in window open; Check-in only here, one tap, held while the request is in flight), **In progress** (`CHECKED_IN`), **Late** (window passed and still `SCHEDULED`, plus `NO_SHOW`), **Done** (`COMPLETED`). Slots whose window has not opened sit in a short list above the columns, with the procedure name and the same doctor-order control, and without Check-in. On the live board (selected date is today in Asia/Baku) `NO_SHOW` leaves Late after `dayEndHour`. Opening another date keeps that day's no-shows in Late and does not offer Check-in. The list reloads every 30s while today is selected so a card moves when the window opens. One day-status line replaces the old agenda. No status dropdown and no overdue-only filter. Mine / All stays; a desk login opens Mine. Cards are a column: name (no patient-card link), status chip, procedure name, time, cabin, and an info modal (`ModalShell`: body area, sites, physio settings, doctor note). `GET /api/procedures` includes `sites` and a localized `instruction`. No nurse No-show button. Completion stays automatic. The QR panel is not on this board; manual check-in posts without a token.
 
 ### APIs (clinic)
 
