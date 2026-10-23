@@ -126,6 +126,7 @@ export async function postRoomCharge(
     amount: input.amount,
     qty,
     sku: input.productSku,
+    warehouseCode: input.warehouseCode,
     description: `[${input.outletCode ?? 'POS'}] ${input.description}`,
     externalRef: idempotencyKey || undefined,
     invoiceRef: input.sourceOrganizationId,

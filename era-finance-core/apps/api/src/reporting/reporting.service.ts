@@ -49,6 +49,8 @@ import { renderReconciliationPdfAz } from "./reconciliation-pdf.render";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { AccountingBookService } from "../accounting/accounting-book.service";
 import { assertCanAccessMgmtBook } from "../accounting/ops-book.guard";
+import { FactQueueService } from "./fact-queue.service";
+import { SchemePeriodService } from "./scheme-period.service";
 
 /**
  * Cash/Bank balances for dashboards — prefixes derived from posting roles
@@ -118,6 +120,8 @@ export class ReportingService {
     private readonly posting: PostingAccountResolver,
     private readonly accounting: AccountingService,
     private readonly accountingBooks: AccountingBookService,
+    private readonly factQueue?: FactQueueService,
+    private readonly schemePeriod?: SchemePeriodService,
   ) {}
 
   private async resolveBookScope(
@@ -389,18 +393,19 @@ export class ReportingService {
       new Decimal("0.0001"),
     );
 
-    const revenueRow = rows.find((r) => r.accountCode === revenueCode);
-    const cogsRow = rows.find((r) => r.accountCode === cogsCode);
+    const treeNet = (root: string, side: "credit" | "debit") =>
+      rows.reduce((sum, row) => {
+        if (row.accountCode !== root && !row.accountCode.startsWith(`${root}.`)) return sum;
+        const net =
+          side === "credit"
+            ? new Decimal(row.periodCredit).sub(new Decimal(row.periodDebit))
+            : new Decimal(row.periodDebit).sub(new Decimal(row.periodCredit));
+        return sum.add(net);
+      }, new Decimal(0));
     const payrollRow = rows.find((r) => r.accountCode === payrollExpenseCode);
     const fxRow = rows.find((r) => r.accountCode === fxGainCode);
-    const trialBalanceProfitProxy = (revenueRow
-      ? new Decimal(revenueRow.periodCredit).sub(new Decimal(revenueRow.periodDebit))
-      : new Decimal(0))
-      .sub(
-        cogsRow
-          ? new Decimal(cogsRow.periodDebit).sub(new Decimal(cogsRow.periodCredit))
-          : new Decimal(0),
-      )
+    const trialBalanceProfitProxy = treeNet(revenueCode, "credit")
+      .sub(treeNet(cogsCode, "debit"))
       .sub(
         payrollRow
           ? new Decimal(payrollRow.periodDebit).sub(new Decimal(payrollRow.periodCredit))
@@ -625,7 +630,7 @@ export class ReportingService {
         organizationId,
         ledgerType,
         accountingBookId: scope.accountingBookId,
-        code: { in: [...codes] },
+        OR: codes.flatMap((code) => [{ code }, { code: { startsWith: `${code}.` } }]),
       },
     });
     const byCode = new Map(accs.map((a) => [a.code, a]));
@@ -680,16 +685,26 @@ export class ReportingService {
 
     const pick = (code: string) => {
       const a = byCode.get(code);
-      if (!a) {
-        return { dr: new Decimal(0), cr: new Decimal(0) };
-      }
+      if (!a) return { dr: new Decimal(0), cr: new Decimal(0) };
       return sumMap.get(a.id) ?? { dr: new Decimal(0), cr: new Decimal(0) };
     };
+    const rollup = (code: string) => {
+      let dr = new Decimal(0);
+      let cr = new Decimal(0);
+      for (const account of accs) {
+        if (account.code !== code && !account.code.startsWith(`${code}.`)) continue;
+        const sum = sumMap.get(account.id);
+        if (!sum) continue;
+        dr = dr.add(sum.dr);
+        cr = cr.add(sum.cr);
+      }
+      return { dr, cr };
+    };
 
-    const r601 = pick(revenueCode);
+    const r601 = rollup(revenueCode);
     const revenueNet = r601.cr.sub(r601.dr);
 
-    const r701 = pick(cogsCode);
+    const r701 = rollup(cogsCode);
     const cogsNet = r701.dr.sub(r701.cr);
 
     const r721 = pick(payrollExpenseCode);
@@ -1424,13 +1439,14 @@ export class ReportingService {
         code: supplierPayableCode,
       },
     });
-    const revAcc = await this.prisma.account.findFirst({
+    const revAccs = await this.prisma.account.findMany({
       where: {
         organizationId,
         ledgerType,
         accountingBookId: scope.accountingBookId,
-        code: revenueCode,
+        OR: [{ code: revenueCode }, { code: { startsWith: `${revenueCode}.` } }],
       },
+      select: { id: true },
     });
 
     const cashIds = cashAccs.map((a) => a.id);
@@ -1556,13 +1572,13 @@ export class ReportingService {
     });
 
     let revenueByDay: { date: string; amount: string }[] = [];
-    if (revAcc) {
+    if (revAccs.length > 0) {
       const revRows = await this.prisma.journalEntry.findMany({
         where: {
           organizationId,
           ledgerType,
           accountingBookId: scope.accountingBookId,
-          accountId: revAcc.id,
+          accountId: { in: revAccs.map((account) => account.id) },
           transaction: {
             date: { gte: from30, lte: toDay },
             isFinal: true,
@@ -2278,7 +2294,13 @@ export class ReportingService {
     if (month < 1 || month > 12) {
       throw new BadRequestException("month must be 1-12");
     }
+    if (this.factQueue) {
+      await this.factQueue.assertEmptyForClose(organizationId, year, month);
+    }
     const key = `${year}-${String(month).padStart(2, "0")}`;
+    if (this.schemePeriod) {
+      await this.schemePeriod.assertCloseAllowed(organizationId, key);
+    }
     const { start, end } = monthRangeUtc(year, month);
     const book = await this.accountingBooks.resolveByIdOrLedgerAlias(
       organizationId,

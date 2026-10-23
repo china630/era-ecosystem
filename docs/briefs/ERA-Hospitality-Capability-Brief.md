@@ -194,10 +194,10 @@ This is the area closest to Opera cashiering — and the one ERA treats as a fir
 
 | Capability | ID | Status | Notes |
 |---|---|---|---|
-| Folio settle multi-tender | HOT-CASH-01 | SHIPPED | CASH / CARD / COMPANY / LOYALTY / DEPOSIT / BANK_TRANSFER (+ bankReference; match in Finance) |
+| Folio settle multi-tender | HOT-CASH-01 | SHIPPED | CASH / CARD / COMPANY / LOYALTY / BANK_TRANSFER (+ bankReference; match in Finance). DEPOSIT is refused |
 | Unified pending hub | HOT-CASH-02 | SHIPPED | F&B + clinic walk-in pay at reception (`/front-cash/pending`). Not the clinic cashier |
 | Front-cash journal + shift Z | HOT-CASH-06 | SHIPPED | Ops Z packet — **not** fiscal KKM Z |
-| Deposit hold / apply / refund | HOT-CASH-03 | SHIPPED | Apply at check-in and settle / checkout |
+| Old held rows | HOT-CASH-03 | API | Moved once onto a blue room payment. No deposit form. Not SHIPPED |
 | Payment refunds | HOT-CASH-04 | SHIPPED | Mock fiscal; blocked after TRANSFERRED_AR |
 | Checkout discounts | HOT-CASH-05 | SHIPPED | Manual + automatic promo |
 | Checkout close (zero balance) | HOT-CO-01 | SHIPPED | Guest must settle |
@@ -602,7 +602,8 @@ Statuses below are a snapshot of `docs/COVERAGE_MATRIX.md` and Product-Readiness
 | HOT-BOOK-03 | Allotment cutoff cron | HEADLESS |
 | HOT-FO-01/02 | Availability + sellable preview | SHIPPED |
 | HOT-FO-03 | Shared twin | API |
-| HOT-CASH-01..06 | Settle, pending, journal, deposit, refund, discount | SHIPPED |
+| HOT-CASH-01, 02, 04..06 | Settle, pending, journal, refund, discount | SHIPPED |
+| HOT-CASH-03 | Old held rows moved once onto a blue room payment | API |
 | HOT-CO-01..04 | Checkout, CL transfer, per-guest close, unused-nights | SHIPPED |
 | HOT-CL-01..05 | Routing, credit, agency CL, Finance snapshot, aging | SHIPPED |
 | HOT-NA-01..04 | Night audit + EOD + updates | SHIPPED |

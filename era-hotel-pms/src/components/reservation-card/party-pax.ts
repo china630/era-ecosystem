@@ -71,7 +71,7 @@ export function syncPaxToPartySize(
     next.push(
       emptyPax({
         isPrimary: isFirst && !equalMode,
-        ownsFolio: equalMode || isFirst,
+        ownsFolio: true,
       }),
     );
   }
@@ -84,16 +84,12 @@ export function syncPaxToPartySize(
 
   if (next.length === 0) return next;
 
-  if (equalMode) {
-    return next.map((row) => ({ ...row, isPrimary: false, ownsFolio: true }));
-  }
-
   const primaryIdx = next.findIndex((r) => r.isPrimary);
   const keep = primaryIdx >= 0 ? primaryIdx : 0;
   return next.map((row, i) => ({
     ...row,
     isPrimary: i === keep,
-    ownsFolio: i === keep,
+    ownsFolio: true,
   }));
 }
 
@@ -230,7 +226,7 @@ export function syncPaxToBandCounts(
         emptyPax({
           age: SLOT_AGE[band],
           isPrimary: isFirst && !equalMode,
-          ownsFolio: equalMode || isFirst,
+          ownsFolio: true,
         }),
       );
       have += 1;
@@ -271,8 +267,8 @@ export function attachGuestToPax(
       !opts.reservationGuestId;
     const next = pax.map((row, j) => {
       if (j !== fillIdx) {
-        if (!fillingPrimary || opts.equalMode) return row;
-        return { ...row, isPrimary: false, ownsFolio: opts.equalMode };
+        if (!fillingPrimary || opts.equalMode) return { ...row, ownsFolio: true };
+        return { ...row, isPrimary: false, ownsFolio: true };
       }
       return {
         ...row,
@@ -282,12 +278,14 @@ export function attachGuestToPax(
         birthDate: guest.birthDate || row.birthDate,
         age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : row.age,
         isPrimary: fillingPrimary && !opts.equalMode ? true : row.isPrimary && !opts.equalMode,
-        ownsFolio: opts.equalMode || (fillingPrimary && !opts.equalMode) || Boolean(row.ownsFolio),
+        ownsFolio: true,
       };
     });
     if (opts.equalMode) {
+      const primaryIdx = next.findIndex((row) => row.isPrimary);
+      const keep = primaryIdx >= 0 ? primaryIdx : 0;
       return {
-        pax: next.map((r) => ({ ...r, isPrimary: false, ownsFolio: true })),
+        pax: next.map((row, index) => ({ ...row, isPrimary: index === keep, ownsFolio: true })),
         guestId: fillingPrimary || !opts.reservationGuestId ? guest.id : opts.reservationGuestId,
         grew: false,
       };
@@ -327,7 +325,7 @@ export function attachGuestToPax(
         birthDate: guest.birthDate ?? '',
         age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : SLOT_AGE[band],
         isPrimary: false,
-        ownsFolio: opts.equalMode,
+        ownsFolio: true,
       }),
     ],
     guestId: opts.reservationGuestId,

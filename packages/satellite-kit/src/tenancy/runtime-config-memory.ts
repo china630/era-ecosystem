@@ -21,6 +21,11 @@ export type SatelliteRuntimeConfig = {
   /** Commercial / edition label from subscription (string; not a sell gate). */
   edition?: string;
   /**
+   * How this install reads reference catalogs.
+   * hub = era-data-hub. excel = org-local workbook, not the shared hub.
+   */
+  referenceSource?: "hub" | "excel";
+  /**
    * Process-wide vendor-bridge kill (Elektraweb dual-run ingest/write).
    * Not a per-org Nafta id — Super-Admin org policy is inbound/write.
    */

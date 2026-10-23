@@ -126,6 +126,17 @@ describe("billing-router", () => {
     expect(result.channel).toBe("hotel_folio");
   });
 
+  it("uses the department code when the procedure card has its own code", async () => {
+    const { prisma } = jest.requireMock("@/lib/prisma");
+    prisma.procedureType.findFirst.mockResolvedValue({ id: "p1", hotelRevenueCode: "4103" });
+    prisma.serviceCatalogCache.findFirst.mockResolvedValue({
+      departmentRef: { hotelRevenueCode: "2004" },
+    });
+    prisma.diagnosticService.findFirst.mockResolvedValue(null);
+    const { revenueCodeForServiceLine } = await import("@/lib/billing-router");
+    await expect(revenueCodeForServiceLine("MASSAGE")).resolves.toBe("2004");
+  });
+
   it("uses the department code when the procedure code is empty", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.procedureType.findFirst.mockResolvedValue({ hotelRevenueCode: null });

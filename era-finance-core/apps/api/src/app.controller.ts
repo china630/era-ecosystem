@@ -34,7 +34,7 @@ export class AppController {
         ok: false,
         error: message,
         path: "/api/fx/cbar/sample",
-        hint: "FX rates come from era-data-hub (ERA_DATA_HUB_ENABLED). Use GET /api/fx/rates with JWT for the dashboard.",
+        hint: "FX rates come from era-data-hub. Use GET /api/fx/rates with JWT for the dashboard.",
       };
     }
   }

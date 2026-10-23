@@ -14,7 +14,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | Wave | Gate | AC rollup (from Matrix) | Pilot-ready | Notes / log |
 |------|------|-------------------------|-------------|-------------|
 | W0 baseline | gate[x] | 🟡 | [ ] | `reports/hotel-stage-W0-signoff.md` scaffold-gate-pass |
-| W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED; BE deepen in W2 |
+| W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED for the signed cashier. 2026-10-24 folio pair and closed deposit intake do not change this gate or Pilot |
 | W2 BE scaffold green | gate[x] | ✅ (INT excl.) | [ ] | `reports/hotel-stage-W2-signoff.md` — negative-path suites |
 | W3 UI / Demo | gate[x] | ✅ | [ ] | `reports/hotel-demo-te-signoff.md` — UI/Demo ✅; lab open |
 
@@ -44,5 +44,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-22 | Card right-pane Guests density | [~] | HOT-BOOK-06 API |
 | S-23 | Card Rate Grid + Folio chrome | [~] | HOT-BOOK-07/08 API |
 | S-24 | Card Notes feed + alert | [~] | HOT-BOOK-09 API |
+| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; night audit not run — not SHIPPED; out of BE and SHOW rollup |
+| S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

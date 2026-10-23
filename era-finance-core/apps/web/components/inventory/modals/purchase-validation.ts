@@ -16,6 +16,7 @@ export type PurchaseFormValues = {
   currency: string;
   fxRateToAzn: string;
   pricesIncludeVat: boolean;
+  taxDocumentRef: string;
   goodsLines: PurchaseLineFormValue[];
   serviceLines: PurchaseLineFormValue[];
 };
@@ -121,6 +122,7 @@ export function buildPurchasePayload(values: PurchaseFormValues): {
   fxRateToAzn: number;
   pricesIncludeVat: boolean;
   reference: string;
+  taxDocumentRef?: string;
 } {
   const goodsLines = values.goodsLines
     .filter(
@@ -144,6 +146,7 @@ export function buildPurchasePayload(values: PurchaseFormValues): {
   if (cur === "AZN") {
     fx = 1;
   }
+  const taxDocumentRef = values.taxDocumentRef.trim();
 
   return {
     goodsLines,
@@ -154,6 +157,7 @@ export function buildPurchasePayload(values: PurchaseFormValues): {
     fxRateToAzn: fx,
     pricesIncludeVat: values.pricesIncludeVat,
     reference: "PURCHASE_INVOICE",
+    ...(taxDocumentRef ? { taxDocumentRef } : {}),
   };
 }
 

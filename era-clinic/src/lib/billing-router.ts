@@ -157,32 +157,21 @@ export async function completeVisitBilling(visitId: string) {
   return { channel: "finance" as const };
 }
 
-export async function revenueCodeForServiceLine(
-  serviceCode: string,
-  explicit?: string | null,
-): Promise<string> {
+/** Department or modality, otherwise the clinic default. A code on the service card is ignored. */
+export async function revenueCodeForServiceLine(serviceCode: string): Promise<string> {
   const tenant = await getDefaultTenant();
   const satellite = tenant.hotelFolioRevenueCode;
-  if (explicit?.trim()) {
-    return resolveHotelFolioRevenueCode(
-      resolveHotelRevenueCode({ product: explicit, satellite }),
-    );
-  }
   const procedure = await prisma.procedureType.findFirst({
     where: { code: serviceCode },
-    select: { hotelRevenueCode: true },
+    select: { id: true },
   });
   const catalog = await prisma.serviceCatalogCache.findFirst({
     where: { code: serviceCode },
-    select: {
-      hotelRevenueCode: true,
-      departmentRef: { select: { hotelRevenueCode: true } },
-    },
+    select: { departmentRef: { select: { hotelRevenueCode: true } } },
   });
   if (procedure) {
     return resolveHotelFolioRevenueCode(
       resolveHotelRevenueCode({
-        product: procedure.hotelRevenueCode,
         category: catalog?.departmentRef?.hotelRevenueCode,
         satellite,
       }),
@@ -190,15 +179,11 @@ export async function revenueCodeForServiceLine(
   }
   const diagnostic = await prisma.diagnosticService.findFirst({
     where: { OR: [{ code: serviceCode }, { serviceCode }] },
-    select: {
-      hotelRevenueCode: true,
-      modality: { select: { hotelRevenueCode: true } },
-    },
+    select: { modality: { select: { hotelRevenueCode: true } } },
   });
   if (diagnostic) {
     return resolveHotelFolioRevenueCode(
       resolveHotelRevenueCode({
-        product: diagnostic.hotelRevenueCode,
         category: diagnostic.modality?.hotelRevenueCode,
         satellite,
       }),
@@ -206,7 +191,6 @@ export async function revenueCodeForServiceLine(
   }
   return resolveHotelFolioRevenueCode(
     resolveHotelRevenueCode({
-      product: catalog?.hotelRevenueCode,
       category: catalog?.departmentRef?.hotelRevenueCode,
       satellite,
     }),
@@ -247,7 +231,7 @@ export async function postClinicHotelLines(input: {
         externalTicketId: key,
         productSku,
         qty,
-        revenueCode: await revenueCodeForServiceLine(line.serviceCode, input.revenueCode),
+        revenueCode: await revenueCodeForServiceLine(line.serviceCode),
         hotelOrganizationId: input.hotelOrganizationId,
       })) as { id?: string };
       const chargeId = String(charge.id ?? key);
@@ -263,7 +247,7 @@ export async function postClinicHotelLines(input: {
         idempotencyKey: key,
         sku: productSku,
         qty,
-        revenueCode: await revenueCodeForServiceLine(line.serviceCode, input.revenueCode),
+        revenueCode: await revenueCodeForServiceLine(line.serviceCode),
       });
       const pendingId = String((pending as { id?: string }).id ?? "");
       if (pendingId) ids.push(pendingId);

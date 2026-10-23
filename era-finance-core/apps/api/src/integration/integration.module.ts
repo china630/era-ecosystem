@@ -11,6 +11,7 @@ import { CounterpartiesModule } from "../counterparties/counterparties.module";
 import { InventoryModule } from "../inventory/inventory.module";
 import { HotelDayDocumentController } from "./hotel-day-document.controller";
 import { HotelDayDocumentInternalController } from "./hotel-day-document.internal.controller";
+import { QaimeDayCloseInternalController } from "./qaime-day-close.internal.controller";
 import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
 import { SatelliteEventIdempotencyService } from "./satellite-event-idempotency.service";
 import { SatelliteEventWorker } from "./satellite-event.worker";
@@ -22,7 +23,11 @@ import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.servic
 import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
 
 @Module({
-  controllers: [HotelDayDocumentController, HotelDayDocumentInternalController],
+  controllers: [
+    HotelDayDocumentController,
+    HotelDayDocumentInternalController,
+    QaimeDayCloseInternalController,
+  ],
   imports: [
     PrismaModule,
     AccountingModule,

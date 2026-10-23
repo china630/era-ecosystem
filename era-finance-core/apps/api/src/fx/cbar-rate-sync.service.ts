@@ -30,7 +30,7 @@ export class CbarRateSyncService {
     }
     if (!this.dataHub.isEnabled()) {
       throw new CbarExternalFetchDisabledError(
-        "ERA_DATA_HUB_ENABLED=false — CBAR rates require era-data-hub",
+        "DATA_HUB_SERVICE_TOKEN is empty — CBAR rates require era-data-hub",
       );
     }
     const dateKey = this.dataHub.isoDateBaku(date);
@@ -51,7 +51,11 @@ export class CbarRateSyncService {
     rates: FxDashboardRateRow[];
     isFallback: boolean;
   }> {
-    const codes = await this.systemConfig.getFxDashboardCurrencyCodes();
+    const remoteCodes = await this.dataHub.getFxDashboardCurrencyCodes();
+    const codes =
+      remoteCodes && remoteCodes.length > 0
+        ? remoteCodes
+        : await this.systemConfig.getFxDashboardCurrencyCodes();
     const todayKey = formatBakuDateDdMmYyyy(now);
     const hubDateKey = this.dataHub.isoDateBaku(now);
 

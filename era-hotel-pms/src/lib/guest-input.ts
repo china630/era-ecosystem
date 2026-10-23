@@ -30,7 +30,6 @@ export const createGuestSchema = z
     nationalIdFin: z.string().trim().optional().nullable(),
     passportNumber: z.string().trim().optional().nullable(),
     phone: z.string().trim().optional().nullable(),
-    voen: z.string().trim().optional().nullable(),
     globalPersonId: z.string().trim().optional().nullable(),
   });
 
@@ -54,7 +53,6 @@ export function normalizeGuestInput(input: CreateGuestInput) {
     birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
     nationality: input.nationality,
     phone: input.phone?.trim() || null,
-    voen: input.voen?.trim() || null,
     globalPersonId: input.globalPersonId?.trim() || null,
   };
 }

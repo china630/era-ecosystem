@@ -11,12 +11,14 @@ import {
   StockMovementReason,
   StockMovementType,
   TradeContext,
+  TransactionKind,
   UserRole,
   type PostingRole,
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
 import { AccessControlService } from "../access/access-control.service";
 import { getClosedPeriodKeys, monthKeyUtc } from "../reporting/reporting-period.util";
+import { purchaseVatLines, creditAdjustmentLines } from "../reporting/provisional-vat";
 import { randomUUID } from "node:crypto";
 import { AccountingService } from "../accounting/accounting.service";
 import { AccountingBookService } from "../accounting/accounting-book.service";
@@ -83,6 +85,62 @@ export class InventoryService {
     tx?: Prisma.TransactionClient,
   ): Promise<string> {
     return this.posting.resolveAccountCode(organizationId, role, tx);
+  }
+
+  private purchaseHasTaxDocument(dto: { taxDocumentRef?: string }): boolean {
+    return Boolean(dto.taxDocumentRef?.trim());
+  }
+
+  private async buildPurchaseVatPosting(
+    organizationId: string,
+    tx: Prisma.TransactionClient,
+    input: {
+      pricesIncludeVat: boolean;
+      hasTaxDocument: boolean;
+      netGoods: Decimal;
+      netServices: Decimal;
+      vat: Decimal;
+      gross: Decimal;
+    },
+  ) {
+    const [inventoryCode, expenseCode, vatInputCode, payableCode] = await Promise.all([
+      this.nas(organizationId, "INVENTORY_GOODS", tx),
+      this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
+      this.nas(organizationId, "VAT_INPUT", tx),
+      this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
+    ]);
+    return purchaseVatLines({
+      pricesIncludeVat: input.pricesIncludeVat,
+      hasTaxDocument: input.hasTaxDocument,
+      netGoods: input.netGoods.toFixed(2),
+      netServices: input.netServices.toFixed(2),
+      vat: input.vat.toFixed(2),
+      gross: input.gross.toFixed(2),
+      inventoryCode,
+      expenseCode,
+      vatInputCode,
+      payableCode,
+    });
+  }
+
+  private async saveProvisionalClaim(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    transactionId: string,
+    waitingDocument: boolean,
+    vat: Decimal,
+    netGoods: Decimal,
+  ) {
+    if (!waitingDocument || !vat.gt(0)) return;
+    await tx.provisionalVatClaim.create({
+      data: {
+        organizationId,
+        purchaseTransactionId: transactionId,
+        vatAmount: vat,
+        netGoodsAmount: netGoods,
+        status: "WAITING_DOCUMENT",
+      },
+    });
   }
 
   private async assertPurchaseLimitGateways(
@@ -654,72 +712,15 @@ export class InventoryService {
       const sAz = totalNetSvc.mul(fx);
       const vAz = totalVat.mul(fx);
       const grAz = totalGross.mul(fx);
-
-      const [inventoryCode, miscExpenseCode, vatInputCode, supplierPayableCode] =
-        await Promise.all([
-          this.nas(organizationId, "INVENTORY_GOODS", tx),
-          this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
-          this.nas(organizationId, "VAT_INPUT", tx),
-          this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
-        ]);
-
-      const lines =
-        vAz.gt(0) && pricesIncludeVat
-          ? [
-              ...(gAz.gt(0)
-                ? [
-                    {
-                      accountCode: inventoryCode,
-                      debit: gAz.toString(),
-                      credit: 0,
-                    },
-                  ]
-                : []),
-              ...(sAz.gt(0)
-                ? [
-                    {
-                      accountCode: miscExpenseCode,
-                      debit: sAz.toString(),
-                      credit: 0,
-                    },
-                  ]
-                : []),
-              {
-                accountCode: vatInputCode,
-                debit: vAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: supplierPayableCode,
-                debit: 0,
-                credit: grAz.toString(),
-              },
-            ]
-          : [
-              ...(gAz.gt(0)
-                ? [
-                    {
-                      accountCode: inventoryCode,
-                      debit: gAz.toString(),
-                      credit: 0,
-                    },
-                  ]
-                : []),
-              ...(sAz.gt(0)
-                ? [
-                    {
-                      accountCode: miscExpenseCode,
-                      debit: sAz.toString(),
-                      credit: 0,
-                    },
-                  ]
-                : []),
-              {
-                accountCode: supplierPayableCode,
-                debit: 0,
-                credit: grAz.toString(),
-              },
-            ];
+      const posted = await this.buildPurchaseVatPosting(organizationId, tx, {
+        pricesIncludeVat,
+        hasTaxDocument: this.purchaseHasTaxDocument(dto),
+        netGoods: gAz,
+        netServices: sAz,
+        vat: vAz,
+        gross: grAz,
+      });
+      const lines = posted.lines;
 
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
       const desc = pricesIncludeVat
@@ -744,6 +745,14 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
+      await this.saveProvisionalClaim(
+        tx,
+        organizationId,
+        transactionId,
+        posted.waitingDocument,
+        vAz,
+        new Decimal(posted.netGoods),
+      );
       await this.recordPurchaseLimitUsage(organizationId, dto, grAz, transactionId);
 
       return {
@@ -756,7 +765,7 @@ export class InventoryService {
   }
 
   /**
-   * Purchase invoice (goods): GL only (201 / 241 / 531). No StockMovement — warehouse receipt is a separate future document.
+   * Purchase invoice (goods): GL only. Input VAT posts only when a tax document is already known. No StockMovement — warehouse receipt is a separate future document.
    */
   private async recordGoodsPurchase(
     organizationId: string,
@@ -826,44 +835,14 @@ export class InventoryService {
       const nAz = totalNet.mul(fx);
       const vAz = totalVat.mul(fx);
       const gAz = totalGross.mul(fx);
-
-      const [inventoryCode, vatInputCode, supplierPayableCode] = await Promise.all([
-        this.nas(organizationId, "INVENTORY_GOODS", tx),
-        this.nas(organizationId, "VAT_INPUT", tx),
-        this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
-      ]);
-
-      const journalLines =
-        totalVat.gt(0) && pricesIncludeVat
-          ? [
-              {
-                accountCode: inventoryCode,
-                debit: nAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: vatInputCode,
-                debit: vAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: supplierPayableCode,
-                debit: 0,
-                credit: gAz.toString(),
-              },
-            ]
-          : [
-              {
-                accountCode: inventoryCode,
-                debit: nAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: supplierPayableCode,
-                debit: 0,
-                credit: gAz.toString(),
-              },
-            ];
+      const posted = await this.buildPurchaseVatPosting(organizationId, tx, {
+        pricesIncludeVat,
+        hasTaxDocument: this.purchaseHasTaxDocument(dto),
+        netGoods: nAz,
+        netServices: new Decimal(0),
+        vat: vAz,
+        gross: gAz,
+      });
 
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
       await this.assertPurchaseLimitGateways(organizationId, dto, gAz);
@@ -878,7 +857,7 @@ export class InventoryService {
           ? `Alış fakturası — mallar (${cur}, fx=${fx.toString()}, qiymətlər ƏDV daxil)`
           : `Alış fakturası — mallar (${cur}, fx=${fx.toString()})`,
         counterpartyId: dto.counterpartyId ?? null,
-        lines: journalLines,
+        lines: posted.lines,
       });
       await tx.transaction.update({
         where: { id: transactionId, organizationId },
@@ -886,6 +865,14 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
+      await this.saveProvisionalClaim(
+        tx,
+        organizationId,
+        transactionId,
+        posted.waitingDocument,
+        vAz,
+        new Decimal(posted.netGoods),
+      );
       await this.recordPurchaseLimitUsage(organizationId, dto, gAz, transactionId);
 
       return {
@@ -895,6 +882,58 @@ export class InventoryService {
         lines: purchaseLines.length,
       };
     });
+  }
+
+  /** GL-backed purchase invoices (no per-line product breakdown in this list). */
+  async linkProvisionalDocument(
+    organizationId: string,
+    purchaseTransactionId: string,
+    documentRef: string,
+  ) {
+    const ref = documentRef.trim();
+    if (!ref) throw new BadRequestException("documentRef is required");
+    const claim = await this.prisma.provisionalVatClaim.findFirst({
+      where: { organizationId, purchaseTransactionId },
+      include: { purchaseTransaction: { select: { date: true } } },
+    });
+    if (!claim || claim.status !== "WAITING_DOCUMENT") {
+      throw new NotFoundException("Purchase is not waiting for a document");
+    }
+    const [expenseCode, inventoryCode, vatInputCode, vatOutputCode] = await Promise.all([
+      this.nas(organizationId, "MISC_OPERATING_EXPENSE"),
+      this.nas(organizationId, "INVENTORY_GOODS"),
+      this.nas(organizationId, "VAT_INPUT"),
+      this.nas(organizationId, "VAT_OUTPUT"),
+    ]);
+    const lines = creditAdjustmentLines({
+      vat: claim.vatAmount.toString(),
+      netGoods: claim.netGoodsAmount.toString(),
+      expenseCode,
+      inventoryCode,
+      vatInputCode,
+      vatOutputCode,
+    });
+    const posted = await this.accounting.postTransaction({
+      organizationId,
+      date: claim.purchaseTransaction.date,
+      reference: `PROVISIONAL_VAT:${purchaseTransactionId}`,
+      description: `Input VAT credit ${ref}`,
+      isFinal: true,
+      kind: TransactionKind.SYSTEM,
+      lines,
+    });
+    await this.prisma.provisionalVatClaim.update({
+      where: { id: claim.id },
+      data: {
+        status: "CREDITED",
+        documentRef: ref,
+        adjustmentTransactionId: posted.transactionId,
+      },
+    });
+    return {
+      adjustmentTransactionId: posted.transactionId,
+      cashMovement: false,
+    };
   }
 
   /** GL-backed purchase invoices (no per-line product breakdown in this list). */
@@ -929,6 +968,9 @@ export class InventoryService {
         where,
         include: {
           journalEntries: { include: { account: { select: { code: true } } } },
+          provisionalVatClaim: {
+            select: { status: true, adjustmentTransactionId: true },
+          },
         },
         orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         skip,
@@ -989,6 +1031,8 @@ export class InventoryService {
         kind,
         receiptStatus,
         totalGross: credit531.toString(),
+        provisionalVatStatus: tr.provisionalVatClaim?.status ?? null,
+        provisionalAdjustmentId: tr.provisionalVatClaim?.adjustmentTransactionId ?? null,
       };
     });
 
@@ -1949,44 +1993,14 @@ export class InventoryService {
       const nAz = totalNet.mul(fx);
       const vAz = totalVat.mul(fx);
       const gAz = totalGross.mul(fx);
-
-      const [miscExpenseCode, vatInputCode, supplierPayableCode] = await Promise.all([
-        this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
-        this.nas(organizationId, "VAT_INPUT", tx),
-        this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
-      ]);
-
-      const journalLines =
-        totalVat.gt(0) && pricesIncludeVat
-          ? [
-              {
-                accountCode: miscExpenseCode,
-                debit: nAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: vatInputCode,
-                debit: vAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: supplierPayableCode,
-                debit: 0,
-                credit: gAz.toString(),
-              },
-            ]
-          : [
-              {
-                accountCode: miscExpenseCode,
-                debit: nAz.toString(),
-                credit: 0,
-              },
-              {
-                accountCode: supplierPayableCode,
-                debit: 0,
-                credit: gAz.toString(),
-              },
-            ];
+      const posted = await this.buildPurchaseVatPosting(organizationId, tx, {
+        pricesIncludeVat,
+        hasTaxDocument: this.purchaseHasTaxDocument(dto),
+        netGoods: new Decimal(0),
+        netServices: nAz,
+        vat: vAz,
+        gross: gAz,
+      });
 
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
       await this.assertPurchaseLimitGateways(organizationId, dto, gAz);
@@ -2001,7 +2015,7 @@ export class InventoryService {
           ? `Alış fakturası — xidmətlər (${cur}, fx=${fx.toString()}, qiymətlər ƏDV daxil)`
           : `Alış fakturası — xidmətlər (${cur}, fx=${fx.toString()})`,
         counterpartyId: dto.counterpartyId ?? null,
-        lines: journalLines,
+        lines: posted.lines,
       });
       await tx.transaction.update({
         where: { id: transactionId, organizationId },
@@ -2009,6 +2023,14 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
+      await this.saveProvisionalClaim(
+        tx,
+        organizationId,
+        transactionId,
+        posted.waitingDocument,
+        vAz,
+        new Decimal(posted.netGoods),
+      );
       await this.recordPurchaseLimitUsage(organizationId, dto, gAz, transactionId);
 
       return {

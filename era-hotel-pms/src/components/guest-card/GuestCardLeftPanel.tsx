@@ -54,7 +54,6 @@ export function GuestCardLeftPanel({
   verificationStatus = '',
   phoneVerified = false,
   emailVerified = false,
-  voen = '',
   visaType = '',
   visaNumber = '',
   visaExpiry = '',
@@ -96,7 +95,6 @@ export function GuestCardLeftPanel({
   verificationStatus?: string;
   phoneVerified?: boolean;
   emailVerified?: boolean;
-  voen?: string;
   visaType?: string;
   visaNumber?: string;
   visaExpiry?: string;
@@ -526,7 +524,6 @@ export function GuestCardLeftPanel({
             />
             <Field label={t('details.vehicle')} preset="shortText" value={vehiclePlate} onChange={set('vehiclePlate')} />
           </FieldRow>
-          <Field label={t('details.voen')} preset="voen" value={voen} onChange={set('voen')} hint={t('details.voenHint')} />
         </div>
       </FieldPanel>
       </fieldset>

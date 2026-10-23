@@ -27,13 +27,11 @@ import { notifyListRefresh } from "../../../lib/list-refresh-bus";
 import { useAuth } from "../../../lib/auth-context";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
-  DEFAULT_INVOICE_VAT_RATES,
   VAT_LINE_UNSET,
   fetchInvoiceVatRatesFromApi,
   type InvoiceVatRateValue,
   type VatRateFormChoice,
   formStringToVatRate,
-  normalizeProductVatRate,
   vatPercentForMath,
   vatRateToFormString,
 } from "../../../lib/vat-line-rates";
@@ -132,7 +130,8 @@ function vatLineSelectLabel(rate: InvoiceVatRateValue, t: (k: string) => string)
   if (rate === 0) return t("products.vatOption0");
   if (rate === 2) return t("products.vatOption2");
   if (rate === 8) return t("products.vatOption8");
-  return t("products.vatOption18");
+  if (rate === 18) return t("products.vatOption18");
+  return `${rate}%`;
 }
 
 /**
@@ -193,7 +192,7 @@ export function CreateInvoiceModal({
 }) {
   const { t } = useTranslation();
   const { currencyCodes } = useAuth();
-  const [vatRateOptions, setVatRateOptions] = useState<number[]>(() => [...DEFAULT_INVOICE_VAT_RATES]);
+  const [vatRateOptions, setVatRateOptions] = useState<number[]>(() => [18]);
   const { ledgerType, accountingBookId, ready: ledgerReady } = useLedger();
   const [busy, setBusy] = useState(false);
   const [netting, setNetting] = useState<NettingPreview | null>(null);
@@ -353,7 +352,10 @@ export function CreateInvoiceModal({
 
   useEffect(() => {
     if (!open) return;
-    void fetchInvoiceVatRatesFromApi().then(setVatRateOptions);
+    void fetchInvoiceVatRatesFromApi().then((rates) => {
+      const posted = rates.filter((rate) => rate >= 0);
+      setVatRateOptions(posted.length === 1 ? posted : [18]);
+    });
   }, [open]);
 
   useEffect(() => {
@@ -619,6 +621,11 @@ export function CreateInvoiceModal({
     onClose();
   };
 
+  function schemeVatChoice(): VatRateFormChoice {
+    const rate = vatRateOptions.find((value) => value >= 0);
+    return rate == null ? VAT_LINE_UNSET : vatRateToFormString(rate);
+  }
+
   function productOptionLabel(p: Product | ProductRow): string {
     if (p.isService) {
       return `${p.name} (Xidmət)`;
@@ -638,7 +645,7 @@ export function CreateInvoiceModal({
       const fx = cur === "AZN" ? 1 : parseFxRate(getValues("fxRateToAzn"));
       const docUnit = catalogAznUnitToDocUnit(priceAzn, cur, fx);
       setValue(`goods.${index}.unitPrice`, formatInvoiceUnitPrice4(docUnit));
-      setValue(`goods.${index}.vatRate`, vatRateToFormString(normalizeProductVatRate(Number(p.vatRate))));
+      setValue(`goods.${index}.vatRate`, schemeVatChoice());
     } else {
       setValue(`goods.${index}.unitPrice`, "0");
       setValue(`goods.${index}.vatRate`, VAT_LINE_UNSET);
@@ -657,7 +664,7 @@ export function CreateInvoiceModal({
       const fx = cur === "AZN" ? 1 : parseFxRate(getValues("fxRateToAzn"));
       const docUnit = catalogAznUnitToDocUnit(priceAzn, cur, fx);
       setValue(`services.${index}.unitPrice`, formatInvoiceUnitPrice4(docUnit));
-      setValue(`services.${index}.vatRate`, vatRateToFormString(normalizeProductVatRate(Number(p.vatRate))));
+      setValue(`services.${index}.vatRate`, schemeVatChoice());
       if (!String((p as { name?: string }).name ?? "").trim()) return;
       setValue(`services.${index}.description`, p.name);
     } else {

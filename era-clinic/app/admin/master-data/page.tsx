@@ -615,7 +615,6 @@ export default function MasterDataPage() {
       bodyPart: row.bodyPart ?? "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
       financeSku: row.financeSku?.trim() || row.code,
-      hotelRevenueCode: row.hotelRevenueCode ?? "",
     });
     setNeedsSite(row.needsSite !== false);
     setPhysioOrderFields(row.physioOrderFields ?? []);
@@ -736,7 +735,6 @@ export default function MasterDataPage() {
             ? Number(form.extendedEndHour)
             : null,
           financeSku: form.financeSku?.trim() || null,
-          hotelRevenueCode: form.hotelRevenueCode?.trim() || null,
         };
       }
     } else if (tab === "practitioners") {
@@ -1468,19 +1466,6 @@ export default function MasterDataPage() {
                     : financeServiceOptions
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
-              />
-              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
-              <CatalogField
-                kind="SEARCHABLE"
-                label={t("hotelRevenueCode")}
-                value={form.hotelRevenueCode ?? ""}
-                options={
-                  form.hotelRevenueCode &&
-                  !revenueOptions.some((option) => option.value === form.hotelRevenueCode)
-                    ? [{ value: form.hotelRevenueCode, label: form.hotelRevenueCode }, ...revenueOptions]
-                    : revenueOptions
-                }
-                onChange={(next) => setForm({ ...form, hotelRevenueCode: String(next ?? "") })}
               />
               <FieldRow cols={4}>
                 <Field

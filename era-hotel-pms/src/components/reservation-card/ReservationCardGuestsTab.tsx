@@ -150,7 +150,7 @@ export function ReservationCardGuestsTab({
       pax.map((p, j) => ({
         ...p,
         isPrimary: j === index,
-        ownsFolio: j === index,
+        ownsFolio: true,
       })),
     );
     if (row.guestId) onGuestId(row.guestId);
@@ -165,9 +165,7 @@ export function ReservationCardGuestsTab({
         isPrimary: true,
         ownsFolio: true,
       };
-      if (!equalMode) {
-        for (let i = 1; i < next.length; i++) next[i] = { ...next[i], ownsFolio: false };
-      }
+      for (let i = 1; i < next.length; i++) next[i] = { ...next[i], ownsFolio: true };
       if (next[0].guestId) onGuestId(next[0].guestId);
       else onGuestId('');
     } else if (next.length === 0) {
@@ -211,7 +209,7 @@ export function ReservationCardGuestsTab({
         render: (row) => {
           if (isMinorPax(row)) return <span className={TEXT_MUTED_CLASS}>—</span>;
           const adults = pax.filter((p) => !isMinorPax(p));
-          const isPrimary = !equalMode && Boolean(row.isPrimary);
+          const isPrimary = Boolean(row.isPrimary);
           const onlyAdult = adults.length <= 1;
           return (
             <button
@@ -219,19 +217,10 @@ export function ReservationCardGuestsTab({
               className="inline-flex items-center justify-center"
               aria-label={isPrimary ? t('primaryGuest') : t('companionGuest')}
               title={isPrimary ? t('primaryGuest') : t('companionGuest')}
-              disabled={onlyAdult && isPrimary}
+              disabled={isPrimary || onlyAdult}
               onClick={() => {
-                if (onlyAdult && isPrimary) return;
-                if (!isPrimary && pax.some(isMinorPax) === false) {
-                  setStarConfirm({ index: row._idx, kind: 'make' });
-                  return;
-                }
-                if (!isPrimary) {
-                  setStarConfirm({ index: row._idx, kind: 'make' });
-                  return;
-                }
-                if (pax.some(isMinorPax)) return;
-                setStarConfirm({ index: row._idx, kind: 'clear' });
+                if (isPrimary || onlyAdult) return;
+                setStarConfirm({ index: row._idx, kind: 'make' });
               }}
             >
               <Star
@@ -525,19 +514,10 @@ export function ReservationCardGuestsTab({
                       pax.map((p, j) => ({
                         ...p,
                         isPrimary: j === starConfirm.index,
-                        ownsFolio: j === starConfirm.index || isMinorPax(p) ? j === starConfirm.index : false,
+                        ownsFolio: true,
                       })),
                     );
                     if (row?.guestId) onGuestId(row.guestId);
-                  } else {
-                    onPartyBillingMode('EQUAL');
-                    onPax(
-                      pax.map((row) => ({
-                        ...row,
-                        isPrimary: false,
-                        ownsFolio: !isMinorPax(row),
-                      })),
-                    );
                   }
                   setStarConfirm(null);
                 }}

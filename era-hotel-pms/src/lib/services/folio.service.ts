@@ -13,6 +13,7 @@ import {
 } from '@/lib/integration/event-dispatcher';
 import { parseRoomChargeNote, roomChargeNote } from '@/lib/folio-charge-note';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 
 function chargeDescriptionForPost(
   systemRole: string | null,
@@ -43,37 +44,25 @@ export function folioBalance(
   return chargeSum - paySum;
 }
 
-export async function openFoliosForReservation(reservationId: string, guestVoen: string | null) {
+/** Guest folios only. Company and agency folios open when a charge or payment is routed there. */
+export async function openFoliosForReservation(reservationId: string) {
   const existing = await prisma.folio.findMany({ where: { reservationId } });
   if (existing.length > 0) return existing;
 
-  const reservation = await prisma.reservation.findUnique({
-    where: { id: reservationId },
-    select: {
-      agencyId: true,
-      companyId: true,
-      group: { select: { folioMode: true, agencyId: true } },
-    },
-  });
+  const { ensurePartyGuestFolios } = await import('@/lib/services/booking-folio.service');
+  const personal = await ensurePartyGuestFolios(reservationId);
+  if (personal.length > 0) return personal;
 
-  const types: FolioType[] = guestVoen || reservation?.companyId ? ['GUEST', 'COMPANY'] : ['GUEST'];
-  const needsAgency =
-    Boolean(reservation?.agencyId || reservation?.group?.agencyId) &&
-    (reservation?.group?.folioMode === 'MASTER' || reservation?.group?.folioMode === 'SPLIT' || Boolean(reservation?.agencyId));
-  if (needsAgency && !types.includes('AGENCY')) types.push('AGENCY');
-
-  return prisma.$transaction(
-    types.map((type) =>
-      prisma.folio.create({
-        data: {
-          organizationId: requestOrganizationId(),
-          reservationId,
-          type,
-          status: 'OPEN',
-        },
-      }),
-    ),
-  );
+  return [
+    await prisma.folio.create({
+      data: {
+        organizationId: requestOrganizationId(),
+        reservationId,
+        type: 'GUEST',
+        status: 'OPEN',
+      },
+    }),
+  ];
 }
 
 export async function resolveTargetFolioType(
@@ -98,11 +87,16 @@ export async function postCharge(input: {
   revenueCodeId: string;
   amount: number;
   qty?: number;
+  /** Quantity that moves stock. Defaults to qty. Money-only lines pass 0. */
+  stockQty?: number;
+  warehouseCode?: string | null;
   sku?: string | null;
   description: string;
   businessDate?: Date;
   departmentId?: string;
   folioType?: 'GUEST' | 'AGENCY' | 'COMPANY';
+  /** Guest who received an extra. Room and tax ignore this and use the room payer. */
+  reservationGuestId?: string | null;
   externalRef?: string;
   invoiceRef?: string;
   audit?: { userId?: string | null; request?: Request; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' };
@@ -123,47 +117,14 @@ export async function postCharge(input: {
   if (!revenueCode) throw new Error('Revenue code not found');
   assertActiveForNewUse(`Revenue code ${revenueCode.code}`, revenueCode.active);
 
-  const { resolveBookingChargeTarget, ensureOpenFolio } = await import(
-    '@/lib/services/booking-folio.service'
-  );
-  const bookingTarget = await resolveBookingChargeTarget({
+  const { resolveChargeFolio } = await import('@/lib/services/booking-folio.service');
+  const chargeReservationId = input.reservationId;
+  const folio = await resolveChargeFolio({
     reservationId: input.reservationId,
     revenueCodeId: input.revenueCodeId,
+    explicit: input.folioType ?? null,
+    reservationGuestId: input.reservationGuestId ?? null,
   });
-
-  let chargeReservationId = input.reservationId;
-  let targetType =
-    input.folioType ??
-    (await resolveTargetFolioType(
-      input.revenueCodeId,
-      reservation.guest.voen ? 'COMPANY' : 'GUEST',
-      input.reservationId,
-    ));
-  let folio = reservation.folios.find((f) => f.type === targetType && f.status === 'OPEN');
-
-  if (!input.folioType && bookingTarget) {
-    chargeReservationId = bookingTarget.reservationId;
-    targetType = bookingTarget.folioType;
-    if (chargeReservationId === input.reservationId) {
-      folio = reservation.folios.find((f) => f.type === targetType && f.status === 'OPEN');
-      if (!folio) {
-        folio = await ensureOpenFolio(chargeReservationId, targetType);
-      }
-    } else {
-      folio = await ensureOpenFolio(chargeReservationId, targetType);
-    }
-  } else if (!folio) {
-    folio = await prisma.folio.create({
-      data: {
-        organizationId: requestOrganizationId(),
-        reservationId: input.reservationId,
-        type: targetType,
-        status: 'OPEN',
-      },
-    });
-  }
-
-  if (!folio) throw new Error('Open folio missing after ensure');
 
   const businessDate = input.businessDate ?? (await getCurrentBusinessDate());
   const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
@@ -177,6 +138,8 @@ export async function postCharge(input: {
       departmentId: input.departmentId,
       amount: toDecimal(input.amount),
       qty: input.qty ?? 1,
+      stockQty: input.stockQty ?? input.qty ?? 1,
+      warehouseCode: input.warehouseCode?.trim() || null,
       sku: input.sku?.trim() || null,
       description,
       businessDate,
@@ -205,6 +168,7 @@ export async function postCharge(input: {
         departmentId: input.departmentId,
         amount: toDecimal(-input.amount),
         qty: input.qty ?? 1,
+        stockQty: 0,
         sku: input.sku?.trim() || null,
         description: `${description} (house use)`,
         businessDate,
@@ -228,7 +192,7 @@ export async function postCharge(input: {
   return charge;
 }
 
-async function allocatePaymentToCharges(
+export async function allocatePaymentToCharges(
   folioId: string,
   paymentId: string,
   amount: number,
@@ -320,6 +284,25 @@ export async function postPayment(input: {
   });
   if (!folio) throw new Error('Folio not found');
   const kind = input.kind ?? 'PAYMENT';
+  if (
+    kind === 'PAYMENT' &&
+    input.revenueCodeId &&
+    input.paymentMethod !== 'GUEST_DEBT' &&
+    input.paymentMethod !== 'CL_AGENCY' &&
+    input.paymentMethod !== 'CL_COMPANY'
+  ) {
+    const lines = await prisma.folio.findUnique({
+      where: { id: input.folioId },
+      include: { charges: true, payments: true },
+    });
+    const articleDebt = stayMoneyPair(
+      (lines?.charges ?? []).filter((row) => row.revenueCodeId === input.revenueCodeId),
+      (lines?.payments ?? []).filter((row) => row.revenueCodeId === input.revenueCodeId),
+    ).debt;
+    if (articleDebt > 0.01 && input.amount > articleDebt + 0.01) {
+      throw new Error(`PAYMENT_EXCEEDS_ARTICLE:${articleDebt.toFixed(2)}`);
+    }
+  }
   if (kind === 'PAYMENT' && (input.paymentMethod === 'CL_AGENCY' || input.paymentMethod === 'CL_COMPANY')) {
     const { assertCanPostCityLedgerTender } = await import('@/lib/services/city-ledger-gate.service');
     await assertCanPostCityLedgerTender(folio.reservationId, input.paymentMethod, input.amount);
@@ -556,7 +539,12 @@ export async function voidFolioPayment(input: {
   });
   if (!payment) throw new Error('Payment not found');
   if (payment.voidedAt) throw new Error('Payment is already deleted');
-  if (payment.kind !== 'PAYMENT') throw new Error('Only a posted payment can be deleted');
+  if (payment.kind !== 'PAYMENT' && payment.kind !== 'REFUND') {
+    throw new Error('Only a posted payment can be deleted');
+  }
+  if (payment.kind === 'REFUND' && payment.fiscalReceiptId) {
+    throw new Error('FISCAL_RECEIPT_VOID_BLOCKED');
+  }
   if (payment.folio.status === 'TRANSFERRED_AR') {
     throw new Error('Cannot delete a payment after City Ledger transfer');
   }
@@ -808,6 +796,7 @@ export async function postDiscount(input: {
     revenueCodeId: code.id,
     amount: -Math.abs(input.amount),
     qty: 1,
+    stockQty: 0,
     description: input.description || 'Discount',
     audit: input.audit,
   });
@@ -841,6 +830,7 @@ export async function postFolioAdjustment(input: {
       revenueCodeId: revenue.id,
       amount: toDecimal(amount),
       qty: 1,
+      stockQty: 0,
       description: reason,
       businessDate,
       adjustsChargeId: source.id,
@@ -950,6 +940,8 @@ export async function voidCharge(
           departmentId: row.departmentId,
           amount: row.amount,
           qty: -row.qty,
+          stockQty: -row.stockQty,
+          warehouseCode: row.warehouseCode,
           sku: row.sku,
           description: `Void ${row.description} — ${voidReason}`,
           businessDate: openDate,
@@ -982,7 +974,6 @@ export async function voidCharge(
     qty: charge.qty,
     description: charge.description,
     businessDate: charge.businessDate,
-    guestVoen: charge.folio.reservation.guest.voen,
   };
 
   await prisma.folioCharge.delete({ where: { id: chargeId } });

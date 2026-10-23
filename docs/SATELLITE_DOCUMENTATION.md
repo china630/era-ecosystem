@@ -175,7 +175,7 @@ Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-r
 ## Reference data (era-data-hub)
 
 - **SoR:** `era-data-hub` `/registry/v1/*` — FX, calendar, HS, banks, VÖEN directory, geo, UoM, tax, CoA templates.
-- **Primary consumers:** `era-finance-core`, `era-bank-core` (`ERA_DATA_HUB_ENABLED`, `DATA_HUB_SERVICE_TOKEN`).
+- **Primary consumers:** `era-finance-core`, `era-bank-core` (`ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`). Org mode `hub` or `excel` is runtime-config, not an env flag.
 - **Industry rule:** sync catalog reads via **Orchestrator Platform Gateway** `GET /platform/v1/catalog/*` (not data-hub or Finance handoffs). HS tariff preview and tenant counterparty ops remain Finance-only.
 - ADR: [orchestrator-platform-integration-gateway.md](./adr/orchestrator-platform-integration-gateway.md) · [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md)
 - Audit: [REFERENCE_DATA_CONSUMER_AUDIT.md](./REFERENCE_DATA_CONSUMER_AUDIT.md) · layer compliance [DATA_MODEL_INTEGRATION_AUDIT.md](./DATA_MODEL_INTEGRATION_AUDIT.md)

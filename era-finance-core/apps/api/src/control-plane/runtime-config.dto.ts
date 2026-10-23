@@ -102,4 +102,9 @@ export class RuntimeConfigBodyDto {
   @IsOptional()
   @IsBoolean()
   vendorBridgesEnabled?: boolean;
+
+  /** hub = data-hub. excel = this org's uploaded workbooks. */
+  @IsOptional()
+  @IsIn(["hub", "excel"])
+  referenceSource?: "hub" | "excel";
 }

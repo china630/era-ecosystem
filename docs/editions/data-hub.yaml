@@ -1,4 +1,4 @@
 product: data-hub
 status: mvp
 pilot_ready: false
-notes: "HEADLESS-heavy; inherits COVERAGE until wave filled"
+notes: "HEADLESS service. Super-admin settings live in orchestrator. AC-DH-POL Scaffold 🟡 (2026-10-23). pilot_ready stays false."

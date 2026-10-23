@@ -34,7 +34,7 @@ export class CustomsTaxCalculatorService {
   }> {
     if (!this.dataHub.isEnabled()) {
       throw new BadRequestException(
-        "ERA_DATA_HUB_ENABLED=false — customs tariffs require era-data-hub",
+        "DATA_HUB_SERVICE_TOKEN is empty — customs tariffs require era-data-hub",
       );
     }
 

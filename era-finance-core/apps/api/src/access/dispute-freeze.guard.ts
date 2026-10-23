@@ -19,6 +19,14 @@ function isFrozenWrite(method: string): boolean {
   return m === "POST" || m === "PATCH" || m === "PUT" || m === "DELETE";
 }
 
+function securityBlock(code: string, message: string): ForbiddenException {
+  return new ForbiddenException({
+    code,
+    message,
+    error: "FORBIDDEN",
+  });
+}
+
 @Injectable()
 export class DisputeFreezeGuard implements CanActivate {
   constructor(
@@ -58,7 +66,10 @@ export class DisputeFreezeGuard implements CanActivate {
     if (mode === SecurityMode.HARD_BLOCK_PLATFORM) {
       const m = (req.method ?? "GET").toUpperCase();
       if (m !== "GET" && m !== "HEAD" && m !== "OPTIONS") {
-        throw new ForbiddenException("Organization blocked by platform security (HARD_BLOCK_PLATFORM)");
+        throw securityBlock(
+          "HARD_BLOCK_PLATFORM",
+          "Organization blocked by platform security (HARD_BLOCK_PLATFORM)",
+        );
       }
       return true;
     }
@@ -68,24 +79,33 @@ export class DisputeFreezeGuard implements CanActivate {
     }
     const m = (req.method ?? "GET").toUpperCase();
     if (m === "DELETE") {
-      throw new ForbiddenException("Mutations frozen during dispute / rollback");
+      throw securityBlock("DISPUTE_DELETE_FROZEN", "Mutations frozen during dispute / rollback");
     }
     if (isFrozenWrite(m)) {
       const path = url.replace(/^.*\/api/, "/api");
       if (/\/archive\b/i.test(path)) {
-        throw new ForbiddenException("Archive frozen during dispute / rollback");
+        throw securityBlock("DISPUTE_ARCHIVE_FROZEN", "Archive frozen during dispute / rollback");
       }
       if (path.includes("/subscription")) {
-        throw new ForbiddenException("Subscription changes frozen during dispute / rollback");
+        throw securityBlock(
+          "DISPUTE_SUBSCRIPTION_FROZEN",
+          "Subscription changes frozen during dispute / rollback",
+        );
       }
       if (path.includes("/organizations") && path.includes("transfer-ownership")) {
-        throw new ForbiddenException("Ownership transfer frozen during dispute / rollback");
+        throw securityBlock(
+          "DISPUTE_OWNERSHIP_FROZEN",
+          "Ownership transfer frozen during dispute / rollback",
+        );
       }
       if (path.includes("/migration")) {
-        throw new ForbiddenException("Migration frozen during dispute / rollback");
+        throw securityBlock("DISPUTE_MIGRATION_FROZEN", "Migration frozen during dispute / rollback");
       }
       if (path.includes("/hard-delete")) {
-        throw new ForbiddenException("Hard-delete frozen during dispute / rollback");
+        throw securityBlock(
+          "DISPUTE_HARD_DELETE_FROZEN",
+          "Hard-delete frozen during dispute / rollback",
+        );
       }
     }
     return true;

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import type { FolioType } from '@prisma/client';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import { revenueRoleIn, STAY_NIGHT_ROLES } from '@/lib/revenue-code-match';
 
 /** Room & tax vs extras for MASTER / SPLIT booking folio mode. */
@@ -44,6 +45,29 @@ export async function ensureOpenFolio(reservationId: string, type: FolioType) {
  * EQUAL party billing: ensure each ReservationGuest with ownsFolio has an OPEN GUEST folio
  * linked via reservationGuestId.
  */
+/** One primary guest, and a folio for every guest on a live stay, including a child. */
+export async function ensurePrimaryAndGuestFolios(reservationId: string) {
+  const guests = await prisma.reservationGuest.findMany({
+    where: { reservationId },
+    orderBy: { sortOrder: 'asc' },
+  });
+  if (guests.length === 0) return;
+  const primary = guests.find((row) => row.isPrimary) ?? guests[0]!;
+  await prisma.reservationGuest.updateMany({
+    where: { reservationId },
+    data: { ownsFolio: true, isPrimary: false },
+  });
+  await prisma.reservationGuest.update({
+    where: { id: primary.id },
+    data: { isPrimary: true, ownsFolio: true },
+  });
+  await prisma.reservation.update({
+    where: { id: reservationId },
+    data: { partyBillingMode: 'PRIMARY' },
+  });
+  await ensurePartyGuestFolios(reservationId);
+}
+
 export async function ensurePartyGuestFolios(reservationId: string) {
   const guests = await prisma.reservationGuest.findMany({
     where: { reservationId, ownsFolio: true },
@@ -156,58 +180,154 @@ export async function reconcilePartyFolios(input: {
   }
 }
 
+function partyPresent(
+  type: FolioType,
+  stay: { companyId: string | null; agencyId: string | null },
+): boolean {
+  if (type === 'COMPANY') return Boolean(stay.companyId);
+  if (type === 'AGENCY') return Boolean(stay.agencyId);
+  return true;
+}
+
 /**
- * Resolve which reservation+folioType receives a charge under booking folioMode.
- * INDIVIDUAL → null (caller uses default).
- * MASTER / SPLIT → room&tax to AGENCY (or COMPANY) on master stay; extras on source stay GUEST.
+ * Where a new charge goes when nobody typed a folio.
+ * Stay route, then the hotel route, then company-on-this-room, then the primary guest.
+ * A route to a company or agency that is not on this stay falls through.
+ * A group master does not take the room.
  */
-export async function resolveBookingChargeTarget(input: {
+export async function resolveRoutedFolioType(input: {
   reservationId: string;
   revenueCodeId: string;
-}): Promise<{ reservationId: string; folioType: FolioType } | null> {
-  const reservation = await prisma.reservation.findUnique({
+  explicit?: FolioType | null;
+}): Promise<FolioType> {
+  const stay = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
-    select: {
-      id: true,
-      groupId: true,
-      agencyId: true,
-      guest: { select: { voen: true } },
-      group: { select: { id: true, folioMode: true, agencyId: true } },
+    select: { companyId: true, agencyId: true },
+  });
+  if (!stay) throw new Error('Reservation not found');
+
+  if (input.explicit && partyPresent(input.explicit, stay)) return input.explicit;
+
+  const override = await prisma.reservationFolioRoutingOverride.findUnique({
+    where: {
+      reservationId_revenueCodeId: {
+        reservationId: input.reservationId,
+        revenueCodeId: input.revenueCodeId,
+      },
     },
   });
-  if (!reservation?.groupId || !reservation.group) return null;
-  const mode = reservation.group.folioMode;
-  if (mode === 'INDIVIDUAL') return null;
+  if (override && partyPresent(override.targetFolioType, stay)) return override.targetFolioType;
+
+  const rule = await prisma.folioRoutingRule.findUnique({
+    where: { revenueCodeId: input.revenueCodeId },
+  });
+  if (rule && partyPresent(rule.targetFolioType, stay)) return rule.targetFolioType;
 
   const revenueCode = await prisma.revenueCode.findUnique({
     where: { id: input.revenueCodeId },
     include: { ratePlansRoom: { select: { id: true }, take: 1 } },
   });
-  if (!revenueCode) return null;
+  if (revenueCode && isRoomAndTaxRevenueCode(revenueCode) && stay.companyId) return 'COMPANY';
+  return 'GUEST';
+}
 
-  const roomTax = isRoomAndTaxRevenueCode(revenueCode);
+async function ensureGuestFolio(reservationId: string, reservationGuestId: string) {
+  const existing = await prisma.folio.findFirst({
+    where: { reservationGuestId, reservationId, type: 'GUEST' },
+  });
+  if (existing) {
+    if (existing.status !== 'OPEN') throw new Error('Guest folio is closed');
+    return existing;
+  }
+  return prisma.folio.create({
+    data: {
+      organizationId: requestOrganizationId(),
+      reservationId,
+      reservationGuestId,
+      type: 'GUEST',
+      status: 'OPEN',
+    },
+  });
+}
 
-  if (mode === 'SPLIT' && !roomTax) {
-    const rule = await prisma.folioRoutingRule.findUnique({
-      where: { revenueCodeId: input.revenueCodeId },
-    });
-    if (rule) {
-      return { reservationId: input.reservationId, folioType: rule.targetFolioType };
+async function primaryGuestId(reservationId: string): Promise<string | null> {
+  const marked = await prisma.reservationGuest.findFirst({
+    where: { reservationId, isPrimary: true },
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true },
+  });
+  if (marked) return marked.id;
+  const first = await prisma.reservationGuest.findFirst({
+    where: { reservationId },
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true },
+  });
+  return first?.id ?? null;
+}
+
+/** Folio that receives a charge. Does not open a company or agency folio the stay does not have. */
+export async function resolveChargeFolio(input: {
+  reservationId: string;
+  revenueCodeId: string;
+  explicit?: FolioType | null;
+  reservationGuestId?: string | null;
+}) {
+  const folioType = await resolveRoutedFolioType(input);
+  const revenueCode = await prisma.revenueCode.findUnique({
+    where: { id: input.revenueCodeId },
+    include: { ratePlansRoom: { select: { id: true }, take: 1 } },
+  });
+  const roomTax = revenueCode ? isRoomAndTaxRevenueCode(revenueCode) : false;
+  if (folioType === 'GUEST') {
+    const guestId = !roomTax && input.reservationGuestId
+      ? input.reservationGuestId
+      : await primaryGuestId(input.reservationId);
+    if (guestId) {
+      const onStay = await prisma.reservationGuest.findFirst({
+        where: { id: guestId, reservationId: input.reservationId },
+        select: { id: true },
+      });
+      if (!onStay) throw new Error('Guest is not on this stay');
+      return ensureGuestFolio(input.reservationId, guestId);
     }
-    return { reservationId: input.reservationId, folioType: 'GUEST' };
   }
+  return ensureOpenFolio(input.reservationId, folioType);
+}
 
+/**
+ * Room payment follows the open room charge. Before the night is posted it follows the room route.
+ * Any other article uses the route, then the guest the cashier named.
+ */
+export async function resolvePaymentFolio(input: {
+  reservationId: string;
+  revenueCodeId: string;
+  explicit?: FolioType | null;
+  reservationGuestId?: string | null;
+}) {
+  const revenueCode = await prisma.revenueCode.findUnique({
+    where: { id: input.revenueCodeId },
+    include: { ratePlansRoom: { select: { id: true }, take: 1 } },
+  });
+  const roomTax = revenueCode ? isRoomAndTaxRevenueCode(revenueCode) : false;
   if (roomTax) {
-    const masterId =
-      (await resolveBookingMasterReservationId(reservation.groupId)) ?? input.reservationId;
-    const masterFolioType: FolioType =
-      reservation.group.agencyId || reservation.agencyId
-        ? 'AGENCY'
-        : reservation.guest.voen
-          ? 'COMPANY'
-          : 'GUEST';
-    return { reservationId: masterId, folioType: masterFolioType };
+    const folios = await prisma.folio.findMany({
+      where: { reservationId: input.reservationId, status: 'OPEN' },
+      include: { charges: true, payments: true },
+    });
+    const articleCharges = (folio: (typeof folios)[number]) =>
+      folio.charges.filter((row) => row.revenueCodeId === input.revenueCodeId);
+    const articlePayments = (folio: (typeof folios)[number]) =>
+      folio.payments.filter((row) => row.revenueCodeId === input.revenueCodeId);
+    const withDebt = folios.find(
+      (folio) => stayMoneyPair(articleCharges(folio), articlePayments(folio)).debt > 0.01,
+    );
+    if (withDebt) return withDebt;
+    const withCharge = folios.find((folio) => articleCharges(folio).length > 0);
+    if (withCharge) return withCharge;
+    return resolveChargeFolio({
+      reservationId: input.reservationId,
+      revenueCodeId: input.revenueCodeId,
+    });
   }
-
-  return { reservationId: input.reservationId, folioType: 'GUEST' };
+  return resolveChargeFolio(input);
 }

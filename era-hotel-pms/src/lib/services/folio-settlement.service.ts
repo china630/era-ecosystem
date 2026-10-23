@@ -4,7 +4,7 @@ import { folioBalance, postPayment } from '@/lib/services/folio.service';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import type { PaymentMethod } from '@prisma/client';
 import { captureAuthorization } from '@/lib/services/card-auth.service';
-import { applyHeldDepositsToFolio } from '@/lib/services/folio-deposit.service';
+import { moveHeldDepositsOntoFolio } from '@/lib/services/folio-deposit.service';
 
 const CP_URL = process.env.CONTROL_PLANE_URL?.replace(/\/$/, '');
 const CP_TOKEN =
@@ -94,27 +94,11 @@ export async function settleFolio(input: {
     });
   }
 
-  if (input.applyDeposits || input.lines.some((l) => l.method === 'DEPOSIT')) {
-    const depositLines = input.lines.filter((l) => l.method === 'DEPOSIT');
-    const depositSum = depositLines.reduce((s, l) => s + l.amount, 0);
-    if (depositSum > 0) {
-      const held = await prisma.folioDeposit.findMany({
-        where: { reservationId: folio.reservationId, status: 'HELD' },
-      });
-      const heldTotal = held.reduce((s, d) => s + decimalToNumber(d.amount), 0);
-      if (depositSum > heldTotal + 0.01) {
-        throw new Error(
-          `DEPOSIT settle ${depositSum.toFixed(2)} exceeds HELD deposits ${heldTotal.toFixed(2)} AZN`,
-        );
-      }
-    }
-    if (depositSum > 0 || input.applyDeposits) {
-      await applyHeldDepositsToFolio(
-        input.folioId,
-        depositSum > 0 ? depositSum : undefined,
-        { userId: input.createdByUserId, request: input.auditRequest },
-      );
-    }
+  if (input.lines.some((l) => l.method === 'DEPOSIT')) {
+    throw new Error('DEPOSIT_INTAKE_CLOSED');
+  }
+  if (input.applyDeposits) {
+    await moveHeldDepositsOntoFolio(folio.reservationId);
   }
 
   const refreshed = await prisma.folio.findUnique({

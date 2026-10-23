@@ -243,6 +243,20 @@ export class AdminController {
     return this.catalog.listTaxRates();
   }
 
+  @Get("tax-schemes")
+  @ApiOperation({ summary: "Published statutory tax scheme versions (read-only)" })
+  adminTaxSchemes() {
+    return this.catalog.listTaxSchemes();
+  }
+
+  @Post("tax-schemes/package")
+  @ApiOperation({
+    summary: "Apply the statutory scheme package. Same row on SaaS and on-prem. Does not recalculate.",
+  })
+  adminApplyTaxSchemePackage() {
+    return this.catalog.applyStatutorySchemePackage();
+  }
+
   @Post("tax-rates")
   @ApiOperation({ summary: "Disabled — tax rates owned by era-data-hub (Phase 2)" })
   adminCreateTaxRate() {

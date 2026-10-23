@@ -35,6 +35,7 @@ type Row = {
   guestBalance: number;
   agencyBalance: number;
   companyBalance: number;
+  unused: number;
   roomCharges: number;
   extraCharges: number;
   firstGuestBalance: number | null;
@@ -151,6 +152,13 @@ export default function FolioBalancesPage() {
             sortValue: (r) => r.companyBalance,
             render: (r) => money(r.companyBalance),
           },
+          {
+            key: 'unused',
+            header: t('unusedTotal'),
+            sortable: true,
+            sortValue: (r) => r.unused,
+            render: (r) => money(r.unused),
+          },
           { key: 'roomCharges', header: t('colRoomChg'), sortable: true, sortValue: (r) => r.roomCharges, render: (r) => money(r.roomCharges) },
           { key: 'extraCharges', header: t('colExtraChg'), sortable: true, sortValue: (r) => r.extraCharges, render: (r) => money(r.extraCharges) },
           {
@@ -174,6 +182,9 @@ export default function FolioBalancesPage() {
         defaultSort={{ key: 'roomNumber', dir: 'asc' }}
         emptyMessage={t('empty')}
       />
+      <p className="mt-2 text-right font-mono text-[13px] text-[#34495E]">
+        {t('unusedTotal')}: {rows.reduce((sum, row) => sum + row.unused, 0).toFixed(2)} AZN
+      </p>
       <ReservationCardModal
         open={Boolean(folioReservationId)}
         reservationId={folioReservationId}

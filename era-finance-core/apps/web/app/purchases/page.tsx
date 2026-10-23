@@ -39,6 +39,8 @@ type PurchaseInvoiceRow = {
   kind: "goods" | "services" | "dual";
   receiptStatus: "pending" | "received" | "na";
   totalGross: string;
+  provisionalVatStatus: "WAITING_DOCUMENT" | "CREDITED" | null;
+  provisionalAdjustmentId: string | null;
 };
 
 function rowDate(m: PurchaseInvoiceRow): string {
@@ -86,6 +88,9 @@ export default function PurchasesPage() {
   const [payInvoiceId, setPayInvoiceId] = useState<string | undefined>();
   const [payDefaultAmount, setPayDefaultAmount] = useState<string | undefined>();
   const [ocrPrefill, setOcrPrefill] = useState<Record<string, unknown> | null>(null);
+  const [linkId, setLinkId] = useState<string | null>(null);
+  const [linkRef, setLinkRef] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
   const ocrInputRef = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(async () => {
@@ -183,6 +188,42 @@ export default function PurchasesPage() {
         }
       />
       <p className="text-sm text-slate-600 m-0">{t("inventory.purchaseRegistryHint")}</p>
+      {linkId ? (
+        <form
+          className="flex flex-wrap items-end gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setLinkError(null);
+            void apiFetch(`/api/inventory/purchase/${linkId}/tax-document`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ documentRef: linkRef.trim() }),
+            }).then(async (res) => {
+              if (!res.ok) {
+                setLinkError(await res.text());
+                return;
+              }
+              setLinkId(null);
+              setLinkRef("");
+              await load();
+            });
+          }}
+        >
+          <label className="text-sm text-slate-700">
+            {t("reporting.provisionalDocument")}
+            <input
+              className="mt-1 block rounded border border-slate-300 px-2 py-1"
+              value={linkRef}
+              onChange={(e) => setLinkRef(e.target.value)}
+              required
+            />
+          </label>
+          <button type="submit" className={PRIMARY_BUTTON_CLASS}>
+            {t("reporting.provisionalLink")}
+          </button>
+          {linkError ? <p className="text-sm text-red-600">{linkError}</p> : null}
+        </form>
+      ) : null}
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
@@ -196,6 +237,7 @@ export default function PurchasesPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.purchaseThKind")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.purchaseThReceipt")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("inventory.purchaseThTotal")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.provisionalWaiting")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.purchaseThDescription")}</th>
                 <th className={`${DATA_TABLE_TH_LEFT_CLASS} w-[3rem]`}>{t("inventory.purchaseThActions")}</th>
               </tr>
@@ -203,7 +245,7 @@ export default function PurchasesPage() {
             <tbody>
               {rows.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
+                  <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
                     {!error ? (
                       <EmptyState
                         icon={
@@ -239,6 +281,27 @@ export default function PurchasesPage() {
                     })()}
                   </td>
                   <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(m.totalGross)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {m.provisionalVatStatus === "WAITING_DOCUMENT" ? (
+                      <button
+                        type="button"
+                        className="text-teal-800 underline"
+                        onClick={() => {
+                          setLinkId(m.id);
+                          setLinkRef("");
+                          setLinkError(null);
+                        }}
+                      >
+                        {t("reporting.provisionalWaiting")}
+                      </button>
+                    ) : m.provisionalVatStatus === "CREDITED" && m.provisionalAdjustmentId ? (
+                      <Link className="text-teal-800 underline" href="/reporting/journal" title={m.provisionalAdjustmentId}>
+                        {t("reporting.provisionalCredited")} {m.provisionalAdjustmentId.slice(0, 8)}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>{m.description?.trim() || "—"}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} relative`}>
                     <div className="relative inline-block" id={`purchase-row-actions-${m.id}`}>

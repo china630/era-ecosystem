@@ -16,6 +16,7 @@ const schema = z.object({
   description: z.string().min(1),
   outletCode: z.string().optional(),
   productSku: z.string().min(1).optional(),
+  warehouseCode: z.string().min(1).optional(),
   externalTicketId: z.string().min(1).optional(),
   ticketNumber: z.string().optional(),
   sourceOrganizationId: z.string().min(1).optional(),
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       description: body.description,
       outletCode: body.outletCode,
       productSku: body.productSku,
+      warehouseCode: body.warehouseCode,
       sourceOrganizationId: body.sourceOrganizationId,
       idempotencyKey,
     });

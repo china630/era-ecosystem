@@ -15,7 +15,7 @@ import {
   type SatelliteHotelRoomChangedEvent,
 } from "@era/contracts";
 import { publishToOrchestratorGateway as publishViaKit } from "@era/satellite-kit/orchestrator-gateway";
-import type { IntegrationEnvelope } from "./event-types";
+import type { IntegrationEnvelope, NightAuditPayload } from "./event-types";
 
 export function envelopeToReservationCompletedEvent(
   envelope: IntegrationEnvelope,
@@ -63,20 +63,7 @@ export function envelopeToNightAuditClosedEvent(
   if (envelope.eventType !== SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED) {
     return null;
   }
-  const payload = envelope.payload as {
-    businessDate: string;
-    nightAuditId?: string;
-    currency: "AZN";
-    saleLines?: Array<{
-      sku: string;
-      qty: number;
-      amount: number;
-      revenueCode?: string;
-      glAccountCode?: string;
-    }>;
-    revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
-    paymentLines: Array<{ method: string; amount: number }>;
-  };
+  const payload = envelope.payload as NightAuditPayload;
   return {
     type: SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED,
     organizationId,
@@ -86,21 +73,39 @@ export function envelopeToNightAuditClosedEvent(
       businessDate: payload.businessDate,
       nightAuditId: payload.nightAuditId,
       currency: payload.currency,
+      documentVersion: payload.documentVersion,
+      moneyLines: (payload.moneyLines ?? []).map((line) => ({
+        revenueCode: line.revenueCode,
+        amount: line.amount,
+        vatRate: line.vatRate,
+        glAccountCode: line.glAccountCode?.trim() ?? "",
+        unmapped: line.unmapped,
+      })),
+      qtyLines: (payload.qtyLines ?? []).map((line) => ({
+        sku: line.sku.trim(),
+        qty: line.qty,
+        warehouseCode: line.warehouseCode?.trim() ?? "",
+        purpose: line.purpose,
+      })),
       saleLines: (payload.saleLines ?? [])
         .filter((line) => line.sku.trim().length > 0)
         .map((line) => ({
           sku: line.sku.trim(),
           qty: line.qty,
           amount: line.amount,
-          revenueCode: line.revenueCode?.trim() ?? '',
-          glAccountCode: line.glAccountCode?.trim() ?? '',
+          revenueCode: line.revenueCode?.trim() ?? "",
+          glAccountCode: line.glAccountCode?.trim() ?? "",
         })),
-      revenueLines: payload.revenueLines.map((line) => ({
+      revenueLines: (payload.revenueLines ?? []).map((line) => ({
         revenueCode: line.revenueCode,
         amount: line.amount,
         glAccountCode: line.glAccountCode ?? "",
+        unmapped: line.unmapped,
       })),
       paymentLines: payload.paymentLines,
+      depositReceiptLines: payload.depositReceiptLines,
+      depositCarryLines: payload.depositCarryLines,
+      depositPayoutLines: payload.depositPayoutLines,
     },
   };
 }

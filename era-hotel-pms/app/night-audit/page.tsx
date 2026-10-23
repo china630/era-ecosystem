@@ -29,6 +29,7 @@ const NIGHT_STEP_LABEL = {
   due: 'naDue',
   price: 'naPrice',
   folios: 'naFolios',
+  qaime: 'naQaime',
   moves: 'naMoves',
   night: 'naNight',
   finance: 'naFinance',
@@ -78,6 +79,11 @@ interface NightAuditStatus {
     dueCount: number;
   };
   unclosedCashRows?: number;
+  qaimeDayClose?: {
+    enabled: boolean;
+    unreachable: boolean;
+    gaps: Array<{ id: string; number: string; counterpartyName: string }>;
+  };
   posShiftStatus?: {
     hasOpenShift: boolean;
     confirmed?: boolean;
@@ -146,13 +152,16 @@ export default function OperationsPage() {
 
   const unclosedCashRows = status?.unclosedCashRows ?? 0;
   const cashBlocked = unclosedCashRows > 0;
+  const qaimeGaps = status?.qaimeDayClose?.enabled ? status.qaimeDayClose.gaps : [];
+  const qaimeUnreachable = status?.qaimeDayClose?.unreachable === true;
+  const qaimeBlocked = qaimeUnreachable || qaimeGaps.length > 0;
   const pendingCount = status?.pendingSettlement?.count ?? 0;
   const pendingBlocksNa =
     pendingCount > 0 && status?.pendingSettlement?.policy === 'BLOCK';
   const missedCount = status?.deskHold?.missedCount ?? 0;
   const dueOutCount = status?.deskHold?.dueCount ?? 0;
   const deskBlocked = missedCount > 0 || dueOutCount > 0;
-  const naBlocked = cashBlocked || pendingBlocksNa || deskBlocked;
+  const naBlocked = cashBlocked || pendingBlocksNa || deskBlocked || qaimeBlocked;
 
   async function checkDay() {
     const res = await fetch('/api/night-audit/preview');
@@ -179,7 +188,15 @@ export default function OperationsPage() {
     try {
       const res = await fetch('/api/night-audit/run', { method: 'POST' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? tc('failed'));
+      if (!res.ok) {
+        if (data.code === 'QAIME_REQUIRED') {
+          throw new Error(t('qaimeDayCloseBlock'));
+        }
+        if (data.code === 'QAIME_FINANCE_DOWN') {
+          throw new Error(t('qaimeDayCloseUnreachable'));
+        }
+        throw new Error(data.error ?? tc('failed'));
+      }
       const warning = typeof data.dispatch?.warning === 'string' ? data.dispatch.warning : '';
       setMsg(
         warning
@@ -287,6 +304,28 @@ export default function OperationsPage() {
               t('cashDeskOk')
             )}
           </li>
+          <li>
+            {t('qaimeDayCloseStatus')}{' '}
+            {qaimeUnreachable ? (
+              <span className="text-rose-600">{t('qaimeDayCloseUnreachable')}</span>
+            ) : qaimeGaps.length > 0 ? (
+              <span className="text-rose-600">
+                {t('qaimeDayCloseBlock')}
+                <ul className="mt-1 list-disc pl-5 text-[#34495E]">
+                  {qaimeGaps.map((gap) => (
+                    <li key={gap.id}>
+                      {gap.number}
+                      {gap.counterpartyName ? ` — ${gap.counterpartyName}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </span>
+            ) : status?.qaimeDayClose?.enabled ? (
+              t('qaimeDayCloseOk')
+            ) : (
+              t('qaimeDayCloseOff')
+            )}
+          </li>
           {status?.polishPreview ? (
             <li className="mt-2 rounded-lg border border-[#D5DADF] bg-[#F8FAFC] px-3 py-2">
               <p className="m-0 mb-1 text-[12px] font-semibold text-[#34495E]">
@@ -341,7 +380,9 @@ export default function OperationsPage() {
           </button>
           <button
             type="button"
-            disabled={busy || !canClose || !status?.businessDate?.currentBusinessDate}
+            disabled={
+              busy || !canClose || qaimeBlocked || !status?.businessDate?.currentBusinessDate
+            }
             onClick={runNightAudit}
             className={PRIMARY_BUTTON_CLASS}
           >

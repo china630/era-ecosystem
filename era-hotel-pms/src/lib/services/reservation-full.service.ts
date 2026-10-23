@@ -77,13 +77,24 @@ const fullInclude = {
   folios: {
     include: {
       charges: { include: { revenueCode: true, paymentAllocations: true } },
-      payments: true,
+      payments: { include: { revenueCode: true } },
     },
   },
   fiscalDocuments: true,
 } satisfies Prisma.ReservationInclude;
 
 export async function getReservationFull(id: string) {
+  const statusRow = await prisma.reservation.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+  if (!statusRow) throw new Error('Reservation not found');
+  if (['OPTION', 'CONFIRMED', 'IN_HOUSE'].includes(statusRow.status)) {
+    const { ensurePrimaryAndGuestFolios } = await import('@/lib/services/booking-folio.service');
+    const { moveHeldDepositsOntoFolio } = await import('@/lib/services/folio-deposit.service');
+    await ensurePrimaryAndGuestFolios(id);
+    await moveHeldDepositsOntoFolio(id);
+  }
   const reservation = await prisma.reservation.findUnique({
     where: { id },
     include: fullInclude,
@@ -480,6 +491,27 @@ export async function patchReservationFull(
   const shareFieldsDirty =
     shareEligible !== undefined || doorShareResolved || assignShareBedIndex !== undefined;
 
+  if (data.companyId === null && existing.companyId) {
+    const companyFolio = await prisma.folio.findFirst({
+      where: { reservationId: id, type: 'COMPANY' },
+      include: { charges: { select: { id: true } }, payments: { select: { id: true, voidedAt: true } } },
+    });
+    const companyLines =
+      (companyFolio?.charges.length ?? 0) > 0 ||
+      (companyFolio?.payments.some((row) => !row.voidedAt) ?? false);
+    if (companyLines) throw new Error('COMPANY_FOLIO_HAS_LINES');
+  }
+  if (data.agencyId === null && existing.agencyId) {
+    const agencyFolio = await prisma.folio.findFirst({
+      where: { reservationId: id, type: 'AGENCY' },
+      include: { charges: { select: { id: true } }, payments: { select: { id: true, voidedAt: true } } },
+    });
+    const agencyLines =
+      (agencyFolio?.charges.length ?? 0) > 0 ||
+      (agencyFolio?.payments.some((row) => !row.voidedAt) ?? false);
+    if (agencyLines) throw new Error('AGENCY_FOLIO_HAS_LINES');
+  }
+
   await prisma.reservation.update({
     where: { id },
     data: {
@@ -606,14 +638,16 @@ export async function patchReservationFull(
       },
     });
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
-    const billingMode: PartyBillingMode =
-      input.partyBillingMode ?? existing.partyBillingMode;
     const marked = paxGuests.findIndex((p) => p.isPrimary);
-    const primaryIdx = billingMode === 'EQUAL' ? -1 : marked >= 0 ? marked : 0;
+    const primaryIdx = marked >= 0 ? marked : 0;
+    await prisma.reservation.update({
+      where: { id },
+      data: { partyBillingMode: 'PRIMARY' },
+    });
     await prisma.reservationGuest.createMany({
       data: paxGuests.map((p, i) => {
         const isPrimary = i === primaryIdx;
-        const ownsFolio = billingMode === 'EQUAL' ? true : isPrimary;
+        const ownsFolio = true;
         return {
           organizationId: existing.organizationId,
           reservationId: id,

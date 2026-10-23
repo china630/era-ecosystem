@@ -12,4 +12,4 @@ Operational invoices are issued in hotel PMS; legal e-qaimə submit to e-taxes.g
 
 ## Consequences
 
-Hotel does not hold PKCS#12; Finance owns certs. Mock mode sufficient for Nafta UAT until accountant sign-off.
+Hotel does not hold PKCS#12; Finance owns certs. Mock mode sufficient for Nafta UAT until accountant sign-off. Night audit may ask Finance whether the org day-close rule is on; the hotel still does not issue the document.

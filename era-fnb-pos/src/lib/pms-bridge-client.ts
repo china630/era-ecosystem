@@ -14,6 +14,7 @@ export type RoomChargePayload = {
   externalTicketId?: string;
   productSku?: string;
   qty?: number;
+  warehouseCode?: string;
 };
 
 export type InHouseGuest = {

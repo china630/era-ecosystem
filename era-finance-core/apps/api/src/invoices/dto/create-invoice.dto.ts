@@ -48,7 +48,9 @@ export class CreateInvoiceItemDto {
   @Min(0)
   unitPrice?: number;
 
-  @ApiProperty({ description: "Ставка НДС строки: -1 (освобождение), 0, 2, 8 или 18 (%)" })
+  @ApiProperty({
+    description: "Sent by the form. The stored rate is the scheme vatPercent. -1 is refused.",
+  })
   @Type(() => Number)
   @IsNumber()
   @IsIn([-1, 0, 2, 8, 18])

@@ -41,7 +41,6 @@ export default function RetailCatalogPage() {
   const [categoryRevenue, setCategoryRevenue] = useState("");
   const [productId, setProductId] = useState("");
   const [productCategoryId, setProductCategoryId] = useState("");
-  const [productRevenue, setProductRevenue] = useState("");
 
   const load = useCallback(async () => {
     const [codesRes, outletRes, categoryRes, productRes] = await Promise.all([
@@ -144,7 +143,6 @@ export default function RetailCatalogPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         categoryId: productCategoryId || null,
-        revenueCode: productRevenue.trim() || null,
       }),
     });
     const data = await res.json().catch(() => null);
@@ -239,7 +237,6 @@ export default function RetailCatalogPage() {
             const row = products.find((item) => item.id === id);
             setProductId(id);
             setProductCategoryId(row?.categoryId ?? "");
-            setProductRevenue(row?.revenueCode ?? "");
           }}
         />
         {selectedProduct ? (
@@ -253,13 +250,6 @@ export default function RetailCatalogPage() {
               ]}
               value={productCategoryId}
               onChange={(next) => setProductCategoryId(String(next ?? ""))}
-            />
-            <CatalogField
-              kind="SEARCHABLE"
-              label={t("revenueCode")}
-              options={withCurrent(options, productRevenue)}
-              value={productRevenue}
-              onChange={(next) => setProductRevenue(String(next ?? ""))}
             />
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void saveProduct()}>
               {t("save")}

@@ -549,8 +549,10 @@ export async function createReservation(input: {
           create:
             input.paxGuests && input.paxGuests.length > 0
               ? input.paxGuests.map((p, i) => {
-                  const isPrimary =
-                    partyBillingMode === 'EQUAL' ? false : (p.isPrimary ?? i === 0);
+                  const primaryAt = input.paxGuests!.some((row) => row.isPrimary)
+                    ? input.paxGuests!.findIndex((row) => row.isPrimary)
+                    : 0;
+                  const isPrimary = i === primaryAt;
                   return {
                     guestId: p.guestId || null,
                     firstName: p.firstName ?? null,
@@ -563,8 +565,7 @@ export async function createReservation(input: {
                     idCardNo: p.idCardNo ?? null,
                     passportNo: p.passportNo ?? null,
                     isPrimary,
-                    ownsFolio:
-                      partyBillingMode === 'EQUAL' ? !isChildAge(p.age, p.birthDate) : isPrimary,
+                    ownsFolio: true,
                     medicalPackageCode:
                       guestPackageOnStay && p.medicalPackageCode?.trim()
                         ? p.medicalPackageCode.trim().toUpperCase()
@@ -576,7 +577,7 @@ export async function createReservation(input: {
                   guestId: input.guestId,
                   firstName: paxFirstName ?? null,
                   lastName: paxLastName ?? null,
-                  isPrimary: partyBillingMode !== 'EQUAL',
+                  isPrimary: true,
                   ownsFolio: true,
                   sortOrder: 0,
                 },
@@ -1060,7 +1061,6 @@ export async function checkInReservation(
         data: { reservationId: id, actualCheckIn: new Date() },
       });
     }
-    await openFoliosForReservation(id, updated.guest.voen);
     if (updated.roomId) {
       const { writeInServiceDoorHk } = await import('@/lib/services/room.service');
       await writeInServiceDoorHk(updated.roomId, 'DIRTY', tx);
@@ -1078,8 +1078,11 @@ export async function checkInReservation(
         console.error('Check-in rate rebuild failed', err);
       }
     }
-    const { applyHeldDepositsOnCheckIn } = await import('@/lib/services/folio-deposit.service');
-    await applyHeldDepositsOnCheckIn(id, opts?.audit);
+    const { ensurePrimaryAndGuestFolios } = await import('@/lib/services/booking-folio.service');
+    await ensurePrimaryAndGuestFolios(id);
+    await openFoliosForReservation(id);
+    const { moveHeldDepositsOntoFolio } = await import('@/lib/services/folio-deposit.service');
+    await moveHeldDepositsOntoFolio(id);
 
     const { postEarlyCheckInFee } = await import('@/lib/services/early-late-fees.service');
     if (opts?.checkInTime && opts.checkInTime < '14:00') {

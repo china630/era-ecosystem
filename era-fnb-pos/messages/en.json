@@ -133,6 +133,8 @@
       "save": "Save",
       "defaultOutletName": "Demo outlet",
       "outletRevenue": "Outlet revenue code",
+      "outletWarehouse": "Finance warehouse",
+      "outletWarehouseDefault": "default warehouse",
       "revenueEmpty": "No active hotel revenue codes for this organization.",
       "revenueUnavailable": "Hotel revenue catalog is unavailable.",
       "revenueNotLinked": "Hotel organization is not linked.",

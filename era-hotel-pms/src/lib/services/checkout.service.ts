@@ -9,6 +9,7 @@ import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { prisma } from '@/lib/prisma';
 import { dispatchReservationCompleted } from '@/lib/integration/event-dispatcher';
 import type { DispatchResult } from '@/lib/integration/event-types';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
   assertGuestFoliosZeroBalance,
   assertZeroBalance,
@@ -69,6 +70,21 @@ export function assertPayerDebtResolved(
     ),
     { status: 409, code: 'PAYER_DEBT_UNRESOLVED' },
   );
+}
+
+async function assertNoUnusedPayment(reservationId: string) {
+  const folios = await prisma.folio.findMany({
+    where: { reservationId, status: 'OPEN' },
+    include: { charges: true, payments: true },
+  });
+  let unused = 0;
+  for (const folio of folios) unused += stayMoneyPair(folio.charges, folio.payments).unused;
+  if (unused > 0.01) {
+    throw Object.assign(new Error(`UNUSED_PAYMENT:${unused.toFixed(2)}`), {
+      status: 409,
+      code: 'UNUSED_PAYMENT',
+    });
+  }
 }
 
 export async function checkoutReservation(
@@ -230,19 +246,15 @@ export async function checkoutReservation(
     });
   }
 
-  const { applyHeldDepositsToReservation } = await import('@/lib/services/folio-deposit.service');
-  await applyHeldDepositsToReservation(id, {
-    userId: opts?.createdByUserId,
-    request: opts?.auditRequest,
-  });
-
-  const { refundRemainingDeposits } = await import('@/lib/services/folio-deposit.service');
-  const depositRemainder = await refundRemainingDeposits(id);
+  const { moveHeldDepositsOntoFolio } = await import('@/lib/services/folio-deposit.service');
+  await moveHeldDepositsOntoFolio(id);
+  const depositRemainder = { appliedCount: 0, refundedHeld: 0, heldAmount: 0, heldIds: [] as string[] };
 
   const openFolios = await prisma.folio.findMany({
     where: { reservationId: id, status: 'OPEN' },
     include: { charges: true, payments: true },
   });
+  await assertNoUnusedPayment(id);
 
   const arCandidates = payerDebtFolios(openFolios);
   assertPayerDebtResolved(openFolios, opts?.transferToCityLedger);
@@ -302,12 +314,6 @@ export async function checkoutReservation(
       await assertCanTransferToCityLedger(id, f.id, bal);
     }
   } else {
-    const { refundGuestCredit } = await import('@/lib/services/folio-credit-refund');
-    await refundGuestCredit(id, {
-      method: opts?.procedureCreditRefundMethod,
-      bankTerminalId: opts?.procedureCreditBankTerminalId,
-      reason: 'Paid procedure removed before checkout',
-    });
     await assertZeroBalance(id);
   }
 

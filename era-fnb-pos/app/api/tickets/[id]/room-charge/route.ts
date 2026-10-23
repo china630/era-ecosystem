@@ -16,6 +16,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError } from "@/lib/api-utils";
 import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
+import { discountedLineAmounts } from "@/lib/ticket-line-amounts";
 
 const bodySchema = z
   .object({
@@ -112,13 +113,20 @@ export async function POST(
       }
     }
 
+    const amounts = discountedLineAmounts(
+      ticket.lines.map((line) => ({
+        id: line.id,
+        qty: Number(line.qty),
+        unitPriceAzn: Number(line.unitPriceAzn),
+      })),
+      Number(ticket.totalAzn),
+    );
     let result: { ok: boolean; status: number; body: unknown } | null = null;
     for (const line of ticket.lines) {
       const productSku = line.menuItem?.financeSku?.trim() ?? "";
       let revenueCode = "";
       try {
         revenueCode = resolveHotelRevenueCode({
-          product: line.menuItem?.revenueCode,
           category: line.menuItem?.category?.revenueCode,
           satellite: ticket.outlet.revenueCenterCode,
         });
@@ -128,7 +136,7 @@ export async function POST(
           { status: 400 },
         );
       }
-      const lineAmount = Number(line.qty) * Number(line.unitPriceAzn);
+      const lineAmount = amounts.get(line.id) ?? 0;
       const { fnbTicketLineRef } = await import("@era/satellite-kit/integration/folio-charge-ref");
       const lineKey = fnbTicketLineRef(ticket.id, line.id);
       result = await postRoomCharge(
@@ -139,6 +147,7 @@ export async function POST(
           amount: lineAmount,
           qty: line.qty,
           productSku,
+          warehouseCode: ticket.outlet.financeWarehouseCode ?? undefined,
           description: `${line.qty}x ${line.description}`,
           outletCode: ticket.outlet.code,
           externalTicketId: lineKey,

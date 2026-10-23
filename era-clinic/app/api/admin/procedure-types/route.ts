@@ -40,7 +40,6 @@ const createSchema = z.object({
   physioOrderFields: z.array(z.string().min(1)).optional(),
   allowedSiteCodes: z.array(z.string().min(1)).optional(),
   financeSku: z.string().nullable().optional(),
-  hotelRevenueCode: z.string().nullable().optional(),
 });
 
 export async function GET(req: Request) {

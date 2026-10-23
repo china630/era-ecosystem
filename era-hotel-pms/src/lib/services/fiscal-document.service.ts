@@ -26,7 +26,8 @@ export async function createFiscalDocumentsOnCheckout(reservationId: string) {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
     include: {
-      guest: true,
+      company: { select: { voen: true } },
+      agency: { select: { voen: true } },
       folios: { where: { status: 'CLOSED' } },
     },
   });
@@ -34,16 +35,17 @@ export async function createFiscalDocumentsOnCheckout(reservationId: string) {
 
   const created = [];
   for (const folio of reservation.folios) {
-    const needsInvoice =
-      folio.type === 'COMPANY' || (folio.type === 'GUEST' && reservation.guest.voen);
+    const needsInvoice = folio.type === 'COMPANY' || folio.type === 'AGENCY';
     if (!needsInvoice) continue;
+    const counterpartyVoen =
+      folio.type === 'AGENCY' ? reservation.agency?.voen ?? null : reservation.company?.voen ?? null;
 
     const doc = await prisma.fiscalDocument.create({
       data: {
         reservationId,
         folioId: folio.id,
         invoiceNumber: `INV-${reservationId.slice(0, 8)}-${folio.type}`,
-        counterpartyVoen: reservation.guest.voen,
+        counterpartyVoen,
         fiscalStatus: 'PENDING',
       },
     });
@@ -95,7 +97,7 @@ export async function issueFolioInvoice(folioId: string) {
     where: { id: folioId },
     include: {
       charges: true,
-      reservation: { include: { guest: true, agency: true } },
+      reservation: { include: { guest: true, agency: true, company: true } },
     },
   });
   if (!folio) throw new Error('Folio not found');
@@ -108,9 +110,11 @@ export async function issueFolioInvoice(folioId: string) {
 
   const invoiceNumber = `INV-${folio.reservationId.slice(0, 8)}-${folio.type}-${Date.now().toString(36)}`;
   const voen =
-    folio.type === 'COMPANY'
-      ? folio.reservation.agency?.voen ?? folio.reservation.guest.voen
-      : folio.reservation.guest.voen;
+    folio.type === 'AGENCY'
+      ? folio.reservation.agency?.voen ?? null
+      : folio.type === 'COMPANY'
+        ? folio.reservation.company?.voen ?? null
+        : null;
 
   if (doc) {
     doc = await prisma.fiscalDocument.update({

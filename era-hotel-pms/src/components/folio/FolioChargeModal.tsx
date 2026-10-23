@@ -4,8 +4,17 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CatalogField, Field, showApiError, showSuccess } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
+import type { PayerGuest } from '@/lib/folio-payer';
 
-type RevenueCode = { id: string; code: string; name?: string | null; active?: boolean };
+type RevenueCode = {
+  id: string;
+  code: string;
+  name?: string | null;
+  active?: boolean;
+  systemRole?: string | null;
+};
+
+const ROOM_ROLES = ['ROOM', 'PKG', 'RATE_ADJ', 'CITY_TAX'];
 
 export function FolioChargeModal({
   open,
@@ -13,18 +22,21 @@ export function FolioChargeModal({
   onDone,
   reservationId,
   pocketOptions,
+  guests,
 }: {
   open: boolean;
   onClose: () => void;
   onDone?: () => void;
   reservationId: string;
   pocketOptions?: Array<{ value: 'GUEST' | 'AGENCY' | 'COMPANY'; label: string }>;
+  guests?: PayerGuest[];
 }) {
   const t = useTranslations('folio');
   const tc = useTranslations('common');
   const [codes, setCodes] = useState<RevenueCode[]>([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
-  const [folioType, setFolioType] = useState<'GUEST' | 'AGENCY' | 'COMPANY'>('GUEST');
+  const [folioType, setFolioType] = useState<'' | 'GUEST' | 'AGENCY' | 'COMPANY'>('');
+  const [guestId, setGuestId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
@@ -33,20 +45,33 @@ export function FolioChargeModal({
     if (!open) return;
     setAmount('');
     setDescription('');
-    setFolioType(pocketOptions?.[0]?.value ?? 'GUEST');
+    setFolioType('');
+    setGuestId('');
+    setRevenueCodeId('');
     void fetch('/api/master/revenue-codes')
       .then((r) => r.json())
       .then((data) => {
         const rows = (data.data ?? data) as RevenueCode[];
         const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
         setCodes(list);
-        setRevenueCodeId(list[0]?.id ?? '');
       })
       .catch(() => setCodes([]));
   }, [open]);
 
+  const selected = codes.find((row) => row.id === revenueCodeId) ?? null;
+  const roomArticle = ROOM_ROLES.includes(selected?.systemRole ?? '');
+  const namedGuests = (guests ?? []).filter((guest) => guest.name.trim());
+  const selectedGuest =
+    namedGuests.length === 1 ? namedGuests[0]! : namedGuests.find((guest) => guest.id === guestId) ?? null;
+  const needsGuest = !roomArticle && folioType === 'GUEST' && namedGuests.length > 1 && !selectedGuest;
+  const needsPocket = !roomArticle && Boolean(pocketOptions && pocketOptions.length > 0) && !folioType;
   const amountN = Number(amount);
-  const canSubmit = Boolean(revenueCodeId) && amountN !== 0 && description.trim().length > 0;
+  const canSubmit =
+    Boolean(revenueCodeId) &&
+    !needsGuest &&
+    !needsPocket &&
+    amountN !== 0 &&
+    description.trim().length > 0;
 
   async function submit() {
     if (!canSubmit) return;
@@ -61,7 +86,8 @@ export function FolioChargeModal({
           amount: amountN,
           qty: 1,
           description: description.trim(),
-          folioType,
+          folioType: roomArticle ? undefined : folioType || undefined,
+          reservationGuestId: roomArticle || folioType !== 'GUEST' ? undefined : selectedGuest?.id,
         }),
       });
       const data = await res.json();
@@ -93,27 +119,41 @@ export function FolioChargeModal({
       }
     >
       <div className="space-y-3">
-        {pocketOptions && pocketOptions.length > 0 ? (
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t('pocket')}
-            value={folioType}
-            onChange={(v) => setFolioType((String(v ?? 'GUEST') as 'GUEST' | 'AGENCY' | 'COMPANY'))}
-            options={pocketOptions}
-            emptyLabel={null}
-          />
-        ) : null}
         <CatalogField
           kind="SEARCHABLE"
           label={t('xercMaddesi')}
           value={revenueCodeId}
-          onChange={(v) => setRevenueCodeId(String(v ?? ''))}
+          onChange={(v) => {
+            setRevenueCodeId(String(v ?? ''));
+            setFolioType('');
+            setGuestId('');
+          }}
           options={codes.map((c) => ({
             value: c.id,
             label: c.name ? `${c.code} — ${c.name}` : c.code,
           }))}
-          emptyLabel={null}
+          emptyLabel={t('pickArticle')}
         />
+        {!roomArticle && pocketOptions && pocketOptions.length > 0 && revenueCodeId ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('pocket')}
+            value={folioType}
+            onChange={(v) => setFolioType((String(v ?? '') as 'GUEST' | 'AGENCY' | 'COMPANY') || '')}
+            options={pocketOptions}
+            emptyLabel={t('pickPocket')}
+          />
+        ) : null}
+        {!roomArticle && folioType === 'GUEST' && namedGuests.length > 1 ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('pickGuest')}
+            value={guestId}
+            onChange={(v) => setGuestId(String(v ?? ''))}
+            options={namedGuests.map((guest) => ({ value: guest.id, label: guest.name }))}
+            emptyLabel={t('pickGuest')}
+          />
+        ) : null}
         <Field
           label={tc('amount')}
           preset="amount"

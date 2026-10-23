@@ -8,6 +8,7 @@ import {
   setControlPlaneTokens,
 } from "./session-keys";
 import { isPublicWebPath } from "./public-routes";
+import { parseApiErrorPayload } from "./api-error-text";
 
 /**
  * В браузере — относительный origin (`/api/...`), чтобы запросы шли через Next rewrites на бэкенд.
@@ -170,35 +171,14 @@ function clearFinanceSessionAndRedirectToLogin(): void {
   }
 }
 
-function parseApiErrorMessage(text: string): string {
-  const trimmed = text.trim().slice(0, 800);
-  if (!trimmed) return "";
-  try {
-    const j = JSON.parse(trimmed) as unknown;
-    if (!j || typeof j !== "object") return trimmed;
-    const o = j as Record<string, unknown>;
-    if (typeof o.message === "string") return o.message;
-    if (Array.isArray(o.message) && o.message.every((x) => typeof x === "string")) {
-      return o.message.join("; ");
-    }
-    if (typeof o.error === "string") return o.error;
-    if (o.message && typeof o.message === "object" && o.message !== null) {
-      const m = o.message as Record<string, unknown>;
-      if (typeof m.message === "string") return m.message;
-    }
-  } catch {
-    /* not JSON */
-  }
-  return trimmed;
-}
-
 async function emitApiErrorToast(res: Response): Promise<void> {
   try {
     const text = await res.clone().text();
-    const message = parseApiErrorMessage(text) || `HTTP ${res.status}`;
+    const parsed = parseApiErrorPayload(text);
+    const message = parsed.message || `HTTP ${res.status}`;
     window.dispatchEvent(
       new CustomEvent("erafinance:api-error", {
-        detail: { status: res.status, message },
+        detail: { status: res.status, message, code: parsed.code },
       }),
     );
   } catch {
@@ -223,7 +203,7 @@ export function emitClientApiError(status: number, message: string): void {
 export function apiFetch(
   path: string,
   init: RequestInit = {},
-  opts?: { allowCpRefresh?: boolean },
+  opts?: { allowCpRefresh?: boolean; skipErrorToast?: boolean },
 ): Promise<Response> {
   const allowCpRefresh = opts?.allowCpRefresh !== false;
   const headers = new Headers(init.headers);
@@ -332,6 +312,9 @@ export function apiFetch(
     if (
       typeof window !== "undefined" &&
       res.status >= 400 &&
+      !opts?.skipErrorToast &&
+      !opts?.skipErrorToast &&
+      !opts?.skipErrorToast &&
       !skipApiErrorToast &&
       !isRead &&
       (res.status !== 401 || isAuthLoginPost)

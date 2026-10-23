@@ -23,7 +23,7 @@ import {
   showSuccess,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
-import { formatFolioBalanceWords } from '@/components/reservation-card/folio-balance';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
@@ -100,6 +100,7 @@ type LedgerRow = Record<string, unknown> & {
   chargeId?: string;
   paymentId?: string;
   paymentKind?: string | null;
+  paymentMethod?: string;
   refundable?: boolean;
   refundMax?: number;
   voidedAt?: string | null;
@@ -188,9 +189,15 @@ export function ReservationCardFolioTab({
   const [payOpen, setPayOpen] = useState(false);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [voidId, setVoidId] = useState<string | null>(null);
-  const [refund, setRefund] = useState<{ id: string; max: number; folioStatus: string } | null>(null);
+  const [refund, setRefund] = useState<{
+    id: string;
+    max: number;
+    folioStatus: string;
+    paymentMethod?: string;
+  } | null>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [transferIds, setTransferIds] = useState<string[]>([]);
+  const [paymentTransferIds, setPaymentTransferIds] = useState<string[]>([]);
   const [folioFocus, setFolioFocus] = useState<string>('all');
   const [articleFilter, setArticleFilter] = useState('all');
   const [lineKind, setLineKind] = useState<'all' | 'charge' | 'payment'>('all');
@@ -284,6 +291,7 @@ export function ReservationCardFolioTab({
               : '—',
           paymentId: payment.id,
           paymentKind: payment.kind,
+          paymentMethod: payment.paymentMethod,
           refundable: payment.kind !== 'REFUND' && refundMax > 0.01,
           refundMax,
         });
@@ -497,8 +505,11 @@ export function ReservationCardFolioTab({
               ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_CHARGE) && row.folioStatus === 'OPEN'
                 ? [{ id: 'transfer', label: tf('transfer'), run: () => setTransferIds(row.chargeId ? [row.chargeId] : []) }]
                 : []),
-              ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_VOID) && row.paymentKind !== 'REFUND' && row.paymentId
+              ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_VOID) && row.paymentId
                 ? [{ id: 'delete', label: tf('deletePayment'), run: () => setDeletePaymentId(row.paymentId ?? null) }]
+                : []),
+              ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_PAYMENT) && row.folioStatus === 'OPEN' && row.paymentId
+                ? [{ id: 'transferPay', label: tf('transfer'), run: () => setPaymentTransferIds([row.paymentId!]) }]
                 : []),
               ...(row.kind === 'payment' && can(PERMISSIONS.FOLIO_PAYMENT) && row.refundable && row.paymentId
                 ? [
@@ -510,6 +521,7 @@ export function ReservationCardFolioTab({
                           id: row.paymentId!,
                           max: row.refundMax ?? Math.abs(row.amount),
                           folioStatus: row.folioStatus,
+                          paymentMethod: row.paymentMethod,
                         }),
                     },
                   ]
@@ -535,6 +547,9 @@ export function ReservationCardFolioTab({
   const selectedCharges = filteredRows.filter(
     (row) => row.kind === 'charge' && selectedIds.includes(row.id) && row.chargeId,
   );
+  const selectedPayments = filteredRows.filter(
+    (row) => row.kind === 'payment' && selectedIds.includes(row.id) && row.paymentId && row.folioStatus === 'OPEN',
+  );
   const cashBar = (
     <div className="flex flex-wrap gap-2">
       {canPostCharges && can(PERMISSIONS.FOLIO_CHARGE) ? (
@@ -555,8 +570,11 @@ export function ReservationCardFolioTab({
         <button
           type="button"
           className={SECONDARY_BUTTON_CLASS}
-          disabled={selectedCharges.length === 0}
-          onClick={() => setTransferIds(selectedCharges.map((row) => row.chargeId!).filter(Boolean))}
+          disabled={selectedCharges.length === 0 && selectedPayments.length === 0}
+          onClick={() => {
+            setTransferIds(selectedCharges.map((row) => row.chargeId!).filter(Boolean));
+            setPaymentTransferIds(selectedPayments.map((row) => row.paymentId!).filter(Boolean));
+          }}
         >
           {tf('transferSelected')}
         </button>
@@ -597,12 +615,15 @@ export function ReservationCardFolioTab({
         reservationId={reservationId}
         party={partyOf(folioTab)}
         guests={payers}
+        hasCompany={hasCompany || accounts.some((folio) => folio.type === 'COMPANY')}
+        hasAgency={hasAgency || accounts.some((folio) => folio.type === 'AGENCY')}
       />
       <FolioChargeModal
         open={chargeOpen}
         onClose={() => setChargeOpen(false)}
         onDone={onChanged}
         reservationId={reservationId}
+        guests={payers}
         pocketOptions={[
           { value: 'GUEST' as const, label: t('folioTab.guest') },
           ...(hasAgency || agencyLines > 0 || accounts.some((f) => f.type === 'AGENCY')
@@ -622,10 +643,18 @@ export function ReservationCardFolioTab({
         onDone={onChanged}
       />
       <FolioTransferModal
-        open={transferIds.length > 0}
+        open={transferIds.length > 0 || paymentTransferIds.length > 0}
         chargeId={transferIds[0] ?? null}
         chargeIds={transferIds}
-        onClose={() => setTransferIds([])}
+        paymentIds={paymentTransferIds}
+        reservationId={reservationId}
+        guests={payers}
+        hasCompany={hasCompany || accounts.some((folio) => folio.type === 'COMPANY')}
+        hasAgency={hasAgency || accounts.some((folio) => folio.type === 'AGENCY')}
+        onClose={() => {
+          setTransferIds([]);
+          setPaymentTransferIds([]);
+        }}
         onDone={onChanged}
       />
     </>
@@ -636,7 +665,29 @@ export function ReservationCardFolioTab({
     .reduce((sum, row) => sum + row.amount, 0);
   const paymentTotal = filteredRows
     .filter((row) => row.kind === 'payment')
-    .reduce((sum, row) => sum + row.amount, 0);
+    .reduce((sum, row) => sum + (row.paymentKind === 'REFUND' ? -row.amount : row.amount), 0);
+  const focusFolios =
+    folioFocus === 'agency'
+      ? accounts.filter((folio) => folio.type === 'AGENCY')
+      : folioFocus === 'company'
+        ? accounts.filter((folio) => folio.type === 'COMPANY')
+        : focusGuestId
+          ? accounts.filter((folio) => folio.type === 'GUEST' && folio.reservationGuestId === focusGuestId)
+          : accounts;
+  const moneyPair = stayMoneyPair(
+    focusFolios.flatMap((folio) =>
+      folio.charges.filter(
+        (charge) => articleFilter === 'all' || revenueLabel(charge.revenueCode, locale) === articleFilter,
+      ),
+    ),
+    focusFolios.flatMap((folio) =>
+      (folio.payments ?? []).filter(
+        (payment) =>
+          articleFilter === 'all' ||
+          (payment.revenueCode != null && revenueLabel(payment.revenueCode, locale) === articleFilter),
+      ),
+    ),
+  );
 
   function printRows() {
     const body = filteredRows
@@ -645,15 +696,11 @@ export function ReservationCardFolioTab({
           `<tr><td>${index + 1}</td><td>${escapePrintHtml(row.when)}</td><td>${escapePrintHtml(pocketName(t, row.folioType))}</td><td>${escapePrintHtml(row.code)}</td><td>${escapePrintHtml(row.description)}</td><td style="text-align:right">${row.amount.toFixed(2)}</td></tr>`,
       )
       .join('');
-    const netWords = formatFolioBalanceWords(chargeTotal - paymentTotal, {
-      guestOwes: t('guestOwes'),
-      overpaid: t('overpaid'),
-      settled: t('settled'),
-    });
+    const netWords = `${t('guestOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}. ${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`;
     const guest = namedPax[0]?.label ?? '';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapePrintHtml(t('folioPrint'))}</title>
 <style>body{font-family:"Segoe UI",sans-serif;margin:24px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f4f5f7}</style>
-</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioWhen'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(netWords.text)}</strong></p></body></html>`;
+</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioWhen'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(netWords)}</strong></p></body></html>`;
     if (!openPrintDocument(html)) showApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 
@@ -791,14 +838,10 @@ export function ReservationCardFolioTab({
               <td className="px-2 py-1 text-right text-[14px] font-medium text-[#95A5A6]">
                 {t('folioTotalPayments')}: {paymentTotal.toFixed(2)} {displayCurrency}
               </td>
-              <td className="whitespace-nowrap px-2 py-1.5 text-right text-[18px] font-semibold text-[#34495E]">
-                {
-                  formatFolioBalanceWords(chargeTotal - paymentTotal, {
-                    guestOwes: t('guestOwes'),
-                    overpaid: t('overpaid'),
-                    settled: t('settled'),
-                  }).text
-                }
+              <td className="whitespace-nowrap px-2 py-1.5 text-right text-[14px] font-semibold text-[#34495E]">
+                {t('guestOwes')}: {moneyPair.debt.toFixed(2)} {displayCurrency}
+                <br />
+                {t('overpaid')}: {moneyPair.unused.toFixed(2)} {displayCurrency}
               </td>
             </tr>
           </tbody>

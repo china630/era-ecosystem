@@ -42,6 +42,10 @@ P0 integrity gates NAS→IFRS mirroring. Period close and hard lock were org-glo
 - `lockedPeriodUntilByLedger` write via period-lock API + active ledger in UI.
 - Adj list filters by ledger; `canReverse` respects book closed month; template map warning.
 
+## Fact queue (2026-10-24)
+
+`closePeriod` counts the Asia/Baku month before it locks transactions or writes the balance snapshot. The queue is an unmatched bank line with no `factMeaning`, and a posted cash order with no invoice and no `factMeaning`. A chosen meaning either links the customer invoice or the purchase, or posts through an existing role (`FOUNDER_FUNDS`, `RETAINED_EARNINGS`, `MISC_OPERATING_EXPENSE`). A cash order that already has its own posted journal keeps that journal; the meaning is stored and a second journal is not written. A duplicate is explained and is not posted to revenue or expense. A manual adjusting journal does not clear the row. A cash order that already points at an invoice payment is not in the queue. The same refusal runs before `closePeriod` writes the lock and before a period-lock date is saved. Posting in a month that is still open is unchanged. Reopen is unchanged. Status is API, not SHIPPED. This does not extend AC-FIN-GL.
+
 ## References
 
 - Plan: P1 IFRS Product

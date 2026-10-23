@@ -22,7 +22,6 @@ import {
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal } from '@/components/EraModal';
-import { formatFolioBalanceWords } from '@/components/reservation-card/folio-balance';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
@@ -402,6 +401,7 @@ export type ReservationCardLeftPanelProps = {
   salesContractId: string;
   creditLimitAzn: string;
   folioBalance: number;
+  unusedAmount?: number;
   /** One-line GUEST / AGENCY / COMPANY routing summary (ADR D3). */
   billingRoutingSummary?: string;
   onFolioRouting?: () => void;
@@ -1137,15 +1137,11 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               <div className={SUBSECTION_SURFACE_CLASS}>
                 <div className="flex justify-between">
                   <span className={TEXT_MUTED_CLASS}>{t('folioBalance')}</span>
-                  <span className="font-mono">
-                    {
-                      formatFolioBalanceWords(props.folioBalance, {
-                        guestOwes: t('guestOwes'),
-                        overpaid: t('overpaid'),
-                        settled: t('settled'),
-                      }).text
-                    }
-                  </span>
+                  <span className="font-mono">{props.folioBalance.toFixed(2)} AZN</span>
+                </div>
+                <div className="mt-1 flex justify-between">
+                  <span className={TEXT_MUTED_CLASS}>{t('overpaid')}</span>
+                  <span className="font-mono">{(props.unusedAmount ?? 0).toFixed(2)} AZN</span>
                 </div>
                 {props.creditLimitAzn !== '' && !Number.isNaN(Number(props.creditLimitAzn)) ? (
                   <div className="mt-1 flex justify-between">
