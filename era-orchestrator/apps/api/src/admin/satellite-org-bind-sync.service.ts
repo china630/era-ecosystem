@@ -299,10 +299,18 @@ export class SatelliteOrgBindSyncService {
         subscriptionPlan: true,
         publicOrgNumber: true,
         deletedAt: true,
+        settings: true,
       },
     });
     if (org?.deploymentTopology) {
       body.deploymentTopology = org.deploymentTopology;
+    }
+    const settings = org?.settings;
+    if (settings && typeof settings === "object" && !Array.isArray(settings)) {
+      const source = (settings as Record<string, unknown>).referenceSource;
+      if (source === "hub" || source === "excel") {
+        body.referenceSource = source;
+      }
     }
     if (org?.deletedAt) {
       body.revokePublicOrgNumber = true;

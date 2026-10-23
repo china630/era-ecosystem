@@ -14,12 +14,14 @@ import {
   Clock,
   CreditCard,
   Database,
+  Library,
   Fingerprint,
   FolderInput,
   GitCompare,
   Gauge,
   Inbox,
   LayoutGrid,
+  Library,
   MapPin,
   Network,
   Package,
@@ -597,6 +599,14 @@ export function OrchSidebar({
                 onNavClick={onNavClick}
               />
             </CollapsibleNavSection>
+            <SideNavItem
+              href="/super-admin/reference"
+              label={t("platformReference")}
+              isActive={pathname.startsWith("/super-admin/reference")}
+              icon={Library}
+              nested
+              onNavClick={onNavClick}
+            />
             <SideNavItem
               href="/super-admin/early-access"
               label={t("platformEarlyAccess")}
