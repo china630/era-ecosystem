@@ -58,7 +58,7 @@ const STATUS_CHIP: Record<string, string> = {
   NO_SHOW: "bg-amber-500/10 text-amber-800",
 };
 
-type Place = "queue" | "progress" | "late" | "done" | "waiting";
+type Place = "queue" | "progress" | "late" | "done";
 
 function placeOrder(
   order: Proc,
@@ -78,9 +78,9 @@ function placeOrder(
   const deadline = order.checkInDeadline
     ? new Date(order.checkInDeadline).getTime()
     : start;
-  // Deadline still ahead: the window has not closed. A stale checkInOpen must not
-  // dump the card into Late for the seconds before the next reload.
-  if (now < deadline) return "waiting";
+  // Still ahead of the close: stays in the queue. Check-in is drawn only while
+  // checkInOpen is true, so a later slot does not get a button.
+  if (now < deadline) return "queue";
   return "late";
 }
 
@@ -92,7 +92,7 @@ export default function NursePage() {
   const isDemoStaffFilter = auth?.isPlatformSuperAdmin === true;
 
   const [orders, setOrders] = useState<Proc[]>([]);
-  const [dayStartHour, setDayStartHour] = useState(9);
+  const [appliedKey, setAppliedKey] = useState("");
   const [dayEndHour, setDayEndHour] = useState(18);
   const [mineOn, setMineOn] = useState(false);
   const [deskMine, setDeskMine] = useState(false);
@@ -164,6 +164,8 @@ export default function NursePage() {
     };
   }, [auth, mineDefaultApplied]);
 
+  const requestKey = `${date}|${debouncedPatient}|${debouncedProcedure}|${mineOn ? "1" : "0"}|${demoPractitionerId}|${locale}`;
+
   const load = useCallback(
     async (opts?: { silent?: boolean }) => {
       const seq = ++loadSeq.current;
@@ -181,27 +183,31 @@ export default function NursePage() {
         const payload = await res.json().catch(() => ({}));
         if (seq !== loadSeq.current) return;
         if (!res.ok) {
-          if (!opts?.silent) showApiError(payload, tc("loadingFailed"));
+          if (!opts?.silent) {
+            showApiError(payload, tc("loadingFailed"));
+            setOrders([]);
+            setMineUnlinked(false);
+            setAppliedKey(requestKey);
+          }
           return;
         }
         const body = (payload.data ?? payload) as {
           orders?: Proc[];
           mineUnlinked?: boolean;
-          dayStartHour?: number;
           dayEndHour?: number;
         };
         const rows = Array.isArray(body) ? (body as Proc[]) : (body.orders ?? []);
         setOrders(rows);
+        setAppliedKey(requestKey);
         setMineUnlinked(body && !Array.isArray(body) ? body.mineUnlinked === true : false);
-        if (body && !Array.isArray(body)) {
-          if (typeof body.dayStartHour === "number") setDayStartHour(body.dayStartHour);
-          if (typeof body.dayEndHour === "number") setDayEndHour(body.dayEndHour);
+        if (body && !Array.isArray(body) && typeof body.dayEndHour === "number") {
+          setDayEndHour(body.dayEndHour);
         }
       } finally {
         if (seq === loadSeq.current) setLoading(false);
       }
     },
-    [date, debouncedPatient, debouncedProcedure, mineOn, demoPractitionerId, locale, tc],
+    [date, debouncedPatient, debouncedProcedure, mineOn, demoPractitionerId, locale, requestKey, tc],
   );
 
   loadRef.current = load;
@@ -244,47 +250,33 @@ export default function NursePage() {
   }, [fullscreen]);
 
   const isToday = date === todayBakuYmd();
-
-  const dayProgress = useMemo(() => {
-    const start = parseBakuDateTime(date, `${String(dayStartHour).padStart(2, "0")}:00`);
-    const end = parseBakuDateTime(date, `${String(dayEndHour).padStart(2, "0")}:00`);
-    const total = end.getTime() - start.getTime();
-    if (total <= 0) return { label: t("dayClosed") };
-    if (nowTick < start.getTime()) return { label: t("dayNotStarted") };
-    if (nowTick >= end.getTime()) return { label: t("dayEnded") };
-    const leftMin = Math.ceil((end.getTime() - nowTick) / 60_000);
-    const h = Math.floor(leftMin / 60);
-    const m = leftMin % 60;
-    return { label: t("dayRemaining", { hours: h, minutes: m }) };
-  }, [nowTick, dayStartHour, dayEndHour, date, t]);
+  const boardReady = appliedKey === requestKey;
 
   const buckets = useMemo(() => {
     const queue: Proc[] = [];
     const progress: Proc[] = [];
     const late: Proc[] = [];
     const done: Proc[] = [];
-    const waiting: Proc[] = [];
     const dayEnd = parseBakuDateTime(
       date,
       `${String(dayEndHour).padStart(2, "0")}:00`,
     ).getTime();
-    for (const order of orders) {
+    const source = boardReady ? orders : [];
+    for (const order of source) {
       const place = placeOrder(order, nowTick, dayEnd, isToday);
       if (place === "queue") queue.push(order);
       else if (place === "progress") progress.push(order);
       else if (place === "late") late.push(order);
       else if (place === "done") done.push(order);
-      else if (place === "waiting") waiting.push(order);
     }
-    return { queue, progress, late, done, waiting };
-  }, [orders, nowTick, dayEndHour, date, isToday]);
+    return { queue, progress, late, done };
+  }, [orders, boardReady, nowTick, dayEndHour, date, isToday]);
 
   const visibleCount =
     buckets.queue.length +
     buckets.progress.length +
     buckets.late.length +
-    buckets.done.length +
-    buckets.waiting.length;
+    buckets.done.length;
 
   function statusLabel(status: string) {
     const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] as const;
@@ -369,26 +361,30 @@ export default function NursePage() {
         key={order.id}
         className="flex flex-col gap-1.5 rounded-xl border border-[#D5DADF]/80 bg-[#FAFBFC] p-2.5"
       >
-        <div className="flex items-start justify-between gap-2">
-          <p className="min-w-0 break-words text-sm font-semibold leading-snug text-[#34495E]">
-            {order.patientRef.fullName}
-          </p>
-          <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-semibold ${chip}`}>
-            {statusLabel(order.status)}
-          </span>
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="break-words text-sm font-semibold leading-snug text-[#34495E]">
+              {order.patientRef.fullName}
+            </p>
+            <p className="break-words text-[13px] font-medium leading-snug text-[#34495E]">
+              {order.procedureName}
+            </p>
+            <p className="text-[12px] text-[#34495E]">
+              <span className={TEXT_MUTED_CLASS}>{t("timeLabel")}: </span>
+              {timeRange(order)}
+            </p>
+            <p className="text-[12px] text-[#34495E]">
+              <span className={TEXT_MUTED_CLASS}>{t("cabinLabel")}: </span>
+              {cabinOf(order)}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${chip}`}>
+              {statusLabel(order.status)}
+            </span>
+            {infoButton(order)}
+          </div>
         </div>
-        <p className="break-words text-[13px] font-medium leading-snug text-[#34495E]">
-          {order.procedureName}
-        </p>
-        <p className="text-[12px] text-[#34495E]">
-          <span className={TEXT_MUTED_CLASS}>{t("timeLabel")}: </span>
-          {timeRange(order)}
-        </p>
-        <p className="text-[12px] text-[#34495E]">
-          <span className={TEXT_MUTED_CLASS}>{t("cabinLabel")}: </span>
-          {cabinOf(order)}
-        </p>
-        <div className="self-start">{infoButton(order)}</div>
         {showCheckIn ? (
           <button
             type="button"
@@ -405,14 +401,12 @@ export default function NursePage() {
 
   function Column({
     title,
-    hint,
     rows,
     empty,
     allowCheckIn,
     tone,
   }: {
     title: string;
-    hint: string;
     rows: Proc[];
     empty: string;
     allowCheckIn?: boolean;
@@ -421,18 +415,19 @@ export default function NursePage() {
     return (
       <div
         className={`${CARD_CONTAINER_CLASS} flex min-h-0 min-w-0 flex-col p-2.5 ${tone ?? ""} ${
-          fullscreen ? "h-full overflow-hidden" : ""
+          fullscreen ? "h-full min-h-0 overflow-hidden" : ""
         }`}
       >
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className={`mb-2 text-[11px] leading-snug ${TEXT_MUTED_CLASS}`}>{hint}</p>
+        <h3 className="mb-2 shrink-0 text-sm font-semibold">{title}</h3>
         <ul
           className={`space-y-2 text-sm ${
             fullscreen ? "min-h-0 flex-1 overflow-y-auto" : "max-h-[32rem] overflow-y-auto"
           }`}
         >
           {rows.map((order) => renderOrderCard(order, allowCheckIn))}
-          {rows.length === 0 ? <li className="text-slate-500">{empty}</li> : null}
+          {rows.length === 0 ? (
+            <li className="text-slate-500">{boardReady ? empty : tc("loading")}</li>
+          ) : null}
         </ul>
       </div>
     );
@@ -498,7 +493,7 @@ export default function NursePage() {
             </button>
           </div>
           <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-            {loading ? tc("loading") : t("resultCount", { count: visibleCount })}
+            {loading || !boardReady ? tc("loading") : t("resultCount", { count: visibleCount })}
           </span>
           {fullscreen ? null : (
             <button
@@ -537,80 +532,46 @@ export default function NursePage() {
     </EraListFilterBar>
   );
 
+  const unlinkedNotice =
+    boardReady && mineUnlinked ? (
+      <p className="mb-3 shrink-0 text-[12px] text-amber-800">{t("mineUnlinked")}</p>
+    ) : null;
+
   const board = (
     <div
       ref={boardRef}
-      className={`flex min-h-0 min-w-0 flex-col gap-2 ${fullscreen ? "flex-1" : ""}`}
+      className={`flex min-h-0 min-w-0 flex-col ${fullscreen ? "flex-1" : ""}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="rounded-md bg-[#2980B9]/10 px-2 py-1 text-[12px] font-semibold text-[#2980B9]">
-          {dayProgress.label}
-        </span>
-      </div>
-      {buckets.waiting.length > 0 ? (
-        <div className={`${CARD_CONTAINER_CLASS} p-2.5`}>
-          <h3 className="mb-1 text-sm font-semibold">
-            {isToday ? t("waitingTitle") : t("waitingOther")}
-          </h3>
-          <ul className="max-h-40 space-y-1 overflow-y-auto text-[12px]">
-            {buckets.waiting.map((order) => (
-              <li key={order.id} className="flex items-start justify-between gap-2 text-[#34495E]">
-                <div className="min-w-0 leading-snug">
-                  <span className="block break-words font-semibold">{order.patientRef.fullName}</span>
-                  <span className="block break-words">{order.procedureName}</span>
-                  <span className={TEXT_MUTED_CLASS}>
-                    {timeRange(order)} · {cabinOf(order)}
-                  </span>
-                </div>
-                {infoButton(order)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
       <div
         className={`grid min-h-0 gap-2 ${
           fullscreen || fourCols ? "grid-cols-4" : "grid-cols-2"
-        } ${fullscreen ? "h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)]" : ""}`}
+        } ${fullscreen ? "min-h-0 flex-1 grid-rows-[minmax(0,1fr)]" : ""}`}
       >
         <Column
           title={t("queueUpcoming")}
-          hint={t("queueUpcomingHint")}
           rows={buckets.queue}
           empty={t("queueUpcomingEmpty")}
           allowCheckIn={isToday}
         />
         <Column
           title={t("queueInProgress")}
-          hint={t("queueInProgressHint")}
           rows={buckets.progress}
           empty={t("queueInProgressEmpty")}
           tone="border-emerald-300 bg-emerald-50/50"
         />
         <Column
           title={t("queueOverdue")}
-          hint={t("queueOverdueHint")}
           rows={buckets.late}
           empty={t("queueOverdueEmpty")}
           tone="border-amber-300 bg-amber-50/60"
         />
         <Column
           title={t("queueCompleted")}
-          hint={t("queueCompletedHint")}
           rows={buckets.done}
           empty={t("queueCompletedEmpty")}
         />
       </div>
     </div>
-  );
-
-  const hints = (
-    <>
-      {mineUnlinked ? (
-        <p className="mb-3 text-[12px] text-amber-800">{t("mineUnlinked")}</p>
-      ) : null}
-      <p className={`mb-3 text-[12px] ${TEXT_MUTED_CLASS}`}>{t("lifecycleHint")}</p>
-    </>
   );
 
   return (
@@ -639,9 +600,8 @@ export default function NursePage() {
               {t("exitFullscreen")}
             </button>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-2 sm:px-4">
-            <div className="shrink-0">{filters}</div>
-            <div className="shrink-0">{hints}</div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 pt-2 sm:px-4">
+            {unlinkedNotice}
             {board}
           </div>
         </ViewportOverlay>
@@ -650,7 +610,7 @@ export default function NursePage() {
           <PageHeader title={t("title")} subtitle={t("subtitle")} />
           {demoFilter}
           {filters}
-          {hints}
+          {unlinkedNotice}
           {board}
         </>
       )}
