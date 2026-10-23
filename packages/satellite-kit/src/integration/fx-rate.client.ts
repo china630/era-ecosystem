@@ -28,8 +28,6 @@ const dateCache = new Map<string, CacheEntry<FxRatesResponse>>();
 
 function hubEnabled(opts?: FxRateClientOptions): boolean {
   if (opts?.enabled === false) return false;
-  const env = process.env.ERA_DATA_HUB_ENABLED;
-  if (env != null && env.toLowerCase() === "false") return false;
   return true;
 }
 

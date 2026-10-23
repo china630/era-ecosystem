@@ -4,7 +4,7 @@ Living baseline for FEAT-FC-DH-* vs code. Updated after integration gaps closure
 
 **Layer audit:** [DATA_MODEL_INTEGRATION_AUDIT.md](./DATA_MODEL_INTEGRATION_AUDIT.md) §5 — Wave 2 **COMPLIANT** for industry catalog reads via orchestrator gateway.
 
-**SoR target:** `era-data-hub` `/registry/v1/*` with `ERA_DATA_HUB_DATA_SOURCE=hub`.  
+**SoR:** `era-data-hub` `/registry/v1/*` always reads `era_data_hub`. Per-catalog fetch and FX codes: super-admin `/super-admin/reference`.  
 **Industry rule (Wave 2 shipped):** sync catalog reads via **Orchestrator Platform Gateway** `GET /platform/v1/catalog/*` — [orchestrator-platform-integration-gateway.md](./adr/orchestrator-platform-integration-gateway.md). HS tariff preview remains Finance-only.
 
 <!-- AUDIT:AUTO:reference-scan-summary -->

@@ -24,7 +24,7 @@
 
 ## Integrations
 
-- **Consumers:** `era-finance-core` (`ERA_DATA_HUB_ENABLED`), satellites via service token — see [doc/DATA-HUB-CONSUMER.md](doc/DATA-HUB-CONSUMER.md).
+- **Consumers:** `era-finance-core` and satellites via `DATA_HUB_SERVICE_TOKEN` — see [doc/DATA-HUB-CONSUMER.md](doc/DATA-HUB-CONSUMER.md). An org may keep an Excel copy in finance instead of reading the hub.
 - **Billing:** `era-orchestrator` — `platform_reference_data`, API keys live + audit meter stub.
 
 ## Changelog (§7)

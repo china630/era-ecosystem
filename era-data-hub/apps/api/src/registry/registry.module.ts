@@ -21,6 +21,7 @@ import { CalendarController } from "./calendar/calendar.controller";
 import { CalendarService } from "./calendar/calendar.service";
 import { IbanController } from "./iban/iban.controller";
 import { IbanService } from "./iban/iban.service";
+import { ReferencePolicyController } from "./admin/reference-policy.controller";
 import { AuthModule } from "../auth/auth.module";
 import { IngestModule } from "../ingest/ingest.module";
 
@@ -38,6 +39,7 @@ import { IngestModule } from "../ingest/ingest.module";
     ChartOfAccountsController,
     CalendarController,
     IbanController,
+    ReferencePolicyController,
   ],
   providers: [
     FxService,

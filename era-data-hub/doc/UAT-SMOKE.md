@@ -41,22 +41,14 @@ X-Api-Key: dev-data-hub-key
 
 Expect non-working day for 2026-01-01 (AZ holiday seed).
 
-## Pass 2 — Data source modes
+## Pass 2 — hub SoR
 
-### finance_ro (default)
-
-```bash
-ERA_DATA_HUB_DATA_SOURCE=finance_ro docker compose up -d data-hub
-node scripts/smoke-data-hub.mjs
-```
-
-Registry reads finance tables via RO URL; CBAR cron does not write hub DB.
-
-### hub (SoR cutover)
+Runtime always reads `era_data_hub`. One-time copy:
 
 ```bash
 cd era-data-hub && npm run db:sync-from-finance
-ERA_DATA_HUB_DATA_SOURCE=hub docker compose up -d data-hub
+docker compose up -d data-hub
+node scripts/smoke-data-hub.mjs
 ```
 
 After CBAR cron (or manual wait), verify:
@@ -69,14 +61,11 @@ in `era_data_hub`.
 
 ### CBAR ingest
 
-With `ERA_DATA_HUB_DATA_SOURCE=hub` and `CBAR_EXTERNAL_FETCH_ENABLED=true`, check logs for `CBAR rates upserted`.
-
-Finance side: `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true` when hub owns ingest.
+With the FX row of hub settings turned on (super-admin `/super-admin/reference`), check logs for `CBAR rates upserted`. Finance does not fetch CBAR.
 
 ## Finance consumer
 
 ```bash
-ERA_DATA_HUB_ENABLED=true
 ERA_DATA_HUB_URL=http://data-hub:4200
 DATA_HUB_SERVICE_TOKEN=dev-data-hub-service-token
 ```
