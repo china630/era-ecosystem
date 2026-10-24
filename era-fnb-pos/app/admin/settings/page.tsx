@@ -283,6 +283,7 @@ export default function AdminSettingsPage() {
         <CatalogField
           kind="FREE_TEXT"
           label={t("outletWarehouse")}
+          options={[]}
           value={warehouseDraft}
           onChange={(next) => setWarehouseDraft(String(next ?? ""))}
         />
