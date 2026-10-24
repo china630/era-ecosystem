@@ -23,6 +23,7 @@ describe("ReportingController accounting book scope", () => {
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
   );
 
   beforeEach(() => {

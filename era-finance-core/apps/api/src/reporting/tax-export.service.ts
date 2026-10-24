@@ -466,6 +466,12 @@ export class TaxExportService {
     periodTo: string;
     revenueAzn: Decimal;
     simplifiedTaxAmountAzn: Decimal;
+    cashAzn: string;
+    bankAzn: string;
+    cardPopulationAzn: string;
+    cardUnmarkedAzn: string;
+    defaultRatePercent: string;
+    posRatePercent: string;
   }> {
     const watch = await this.simplifiedWatch.watch(organizationId, period);
     const revenueAzn = new Decimal(watch.cashAzn)

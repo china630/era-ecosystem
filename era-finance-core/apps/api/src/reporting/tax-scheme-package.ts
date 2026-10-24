@@ -1,3 +1,5 @@
+import { Prisma } from "@erafinance/database";
+
 /**
  * One statutory scheme row for every placement.
  * SaaS and on-prem apply this package. Recalculation stays in SchemePeriodService.
@@ -21,13 +23,24 @@ export const AZ_STATUTORY_SCHEME_PACKAGE = {
   nameEn: "Azerbaijan statutory tax scheme",
 } as const;
 
+type SchemeRowWrite = {
+  parameters: Prisma.InputJsonValue;
+  nameAz: string;
+  nameRu: string;
+  nameEn: string;
+};
+
 type SchemeDb = {
   taxSchemeVersion: {
-    upsert: (args: {
+    upsert(args: {
       where: { code_effectiveFrom: { code: string; effectiveFrom: Date } };
-      create: Record<string, unknown>;
-      update: Record<string, unknown>;
-    }) => Promise<unknown>;
+      create: SchemeRowWrite & {
+        id: string;
+        code: string;
+        effectiveFrom: Date;
+      };
+      update: SchemeRowWrite;
+    }): Promise<unknown>;
   };
 };
 
