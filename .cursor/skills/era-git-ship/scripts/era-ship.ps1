@@ -633,9 +633,10 @@ if ($Wave) {
             # Also drop directory placeholders once children were staged
             # Porcelain can list an untracked directory as `foo/` after files
             # inside were staged; `$_/*` would then be `foo//*` and miss.
+            # -like treats [id] as a character class, so match by prefix instead.
             $dropDirs = @($remaining | Where-Object {
                 $prefix = $_.TrimEnd('/')
-                ($stagedBefore -like "$prefix/*") -or ($stagedBefore -contains $prefix)
+                $stagedBefore | Where-Object { $_ -eq $prefix -or $_.StartsWith("$prefix/") }
             })
             foreach ($d in $dropDirs) { [void]$remaining.Remove($d) }
         }
