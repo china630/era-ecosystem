@@ -641,10 +641,10 @@ export function ViewInvoiceModal({
                       ) : (
                         <span className="mt-2 flex flex-wrap items-center gap-2">
                           <input
+                            className={`${MODAL_INPUT_CLASS} max-w-xs`}
                             type="text"
                             value={eqaimeNumberDraft}
                             onChange={(e) => setEqaimeNumberDraft(e.target.value)}
-                            className={`${MODAL_INPUT_CLASS} max-w-xs`}
                           />
                           <button
                             type="button"

@@ -29,6 +29,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../lib/design-system";
+import { FORM_INPUT_CLASS } from "../../lib/form-styles";
 
 type PurchaseInvoiceRow = {
   id: string;
@@ -212,7 +213,7 @@ export default function PurchasesPage() {
           <label className="text-sm text-slate-700">
             {t("reporting.provisionalDocument")}
             <input
-              className="mt-1 block rounded border border-slate-300 px-2 py-1"
+              className={`${FORM_INPUT_CLASS} max-w-xs`}
               value={linkRef}
               onChange={(e) => setLinkRef(e.target.value)}
               required

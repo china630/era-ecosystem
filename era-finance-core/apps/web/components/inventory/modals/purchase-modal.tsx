@@ -434,7 +434,7 @@ export function PurchaseModal({
               <label className="block text-[13px] text-[#34495E]">
                 {t("reporting.provisionalDocument")}
                 <input
-                  className="mt-1 block w-full rounded border border-[#D5DADF] bg-white px-2 py-1"
+                  className={MODAL_INPUT_CLASS}
                   value={taxDocumentRef}
                   onChange={(e) => setTaxDocumentRef(e.target.value)}
                 />

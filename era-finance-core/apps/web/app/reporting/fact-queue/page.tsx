@@ -8,7 +8,8 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "../../../components/layout/page-header";
 import { apiFetch } from "../../../lib/api-client";
 import { parseApiErrorPayload } from "../../../lib/api-error-text";
-import { PRIMARY_BUTTON_CLASS } from "../../../lib/design-system";
+import { MODAL_CHECKBOX_CLASS, PRIMARY_BUTTON_CLASS } from "../../../lib/design-system";
+import { FORM_INPUT_CLASS } from "../../../lib/form-styles";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 
 type QueueRow = {
@@ -126,7 +127,7 @@ export default function FactQueuePage() {
           type="month"
           value={period}
           onChange={(event) => setPeriod(event.target.value)}
-          className="w-40 rounded border border-[#D5DADF] px-2 py-1"
+          className={`${FORM_INPUT_CLASS} w-40`}
         />
       </label>
       <p className="text-sm text-[#34495E]">
@@ -188,6 +189,7 @@ export default function FactQueuePage() {
               <label className="flex items-center gap-2 text-sm text-[#34495E]">
                 <input
                   type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
                   checked={confirm[row.id] === true}
                   onChange={(event) =>
                     setConfirm((prev) => ({ ...prev, [row.id]: event.target.checked }))

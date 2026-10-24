@@ -13,6 +13,7 @@ import { useLedger } from "../../../lib/ledger-context";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
+  MODAL_CHECKBOX_CLASS,
   LINK_ACCENT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -418,6 +419,7 @@ export default function OrganizationSettingsPage() {
                 <label className="flex items-center gap-2 text-[#34495E] text-sm">
                   <input
                     type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
                     checked={pricesIncludeTax}
                     onChange={(e) => setPricesIncludeTax(e.target.checked)}
                     disabled={!canEditGeneral}
@@ -427,6 +429,7 @@ export default function OrganizationSettingsPage() {
                 <label className="flex items-center gap-2 text-[#34495E] text-sm">
                   <input
                     type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
                     checked={requireEqaimeForDayClose}
                     onChange={(e) => setRequireEqaimeForDayClose(e.target.checked)}
                     disabled={!canEditGeneral}

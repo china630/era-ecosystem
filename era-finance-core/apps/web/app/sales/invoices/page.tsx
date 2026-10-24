@@ -36,6 +36,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -1101,7 +1102,7 @@ export default function InvoicesPage() {
                                       type="text"
                                       value={linkNumber}
                                       onChange={(e) => setLinkNumber(e.target.value)}
-                                      className="w-56 rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
+                                      className={`${MODAL_INPUT_CLASS} w-56`}
                                     />
                                   </label>
                                   <button

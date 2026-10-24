@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "../../../lib/design-system";
+import { FORM_INPUT_CLASS } from "../../../lib/form-styles";
 import { PageHeader } from "../../../components/layout/page-header";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 
@@ -87,6 +88,7 @@ export default function ReferenceDataSettingsPage() {
                 <span>{t(label)}</span>
                 <input
                   type="file"
+                  className={FORM_INPUT_CLASS}
                   accept=".xlsx"
                   disabled={busy !== null}
                   onChange={(event) => {
