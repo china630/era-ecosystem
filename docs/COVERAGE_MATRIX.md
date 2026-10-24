@@ -332,7 +332,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | DH-FX-01 | Hub FX ingest + `/fx/*` API | TZ §FX | Y | SHIPPED | FX switch in `/super-admin/reference` |
 | DH-CUR-01 | Hub ISO currency catalog `/currencies` | ADR | Y | SHIPPED | sync-from-finance; ≠ FX |
 | FC-DH-001 | Finance FX consumer | PRD §4.18 | Y | SHIPPED | — |
-| FC-REF-01 | Org-local Excel for FX, banks, calendar, HS | ADR reference-data | Y `/settings/reference-data` | API | SatAdmin upload. Reads stay in this org: FX spot/range/convert, banks, calendar day/range/business days, HS. Does not write the shared hub. Mode is orchestrator `referenceSource`. UAT not walked |
+| FC-REF-01 | Org-local Excel for FX, banks, calendar, HS | ADR reference-data | Y `/settings/reference-data` | API | SatAdmin upload requires `admin:org.settings`. Reads stay in this org: FX spot/range/convert, banks, calendar day/range/business days, HS. Does not write the shared hub. Mode is orchestrator `referenceSource`. UAT not walked |
 | FC-DH-002 | Finance HS/customs tariffs | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-003 | Finance calendar consumer | PRD §4.18 | Y | SHIPPED | Excel org reads the workbook (day, range, add-business-days) |
 | FC-DH-004…010 | Banks/IBAN/VÖEN/geo/UoM/tax/CoA | PRD §4.18 | Y | SHIPPED | hub + fallback |

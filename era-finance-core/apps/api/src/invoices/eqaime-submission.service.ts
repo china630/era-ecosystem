@@ -12,7 +12,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { InvoicesService } from "./invoices.service";
 import { EtaxesSubmissionAdapterFactory } from "../reporting/etaxes-submission.adapters";
 import { SignatureService } from "../signature/signature.service";
-import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { invoiceHoldsDayForMissingEqaime, manualEqaimeLinkPatch } from "./qaime-day-close";
 
 @Injectable()
@@ -279,7 +279,7 @@ export class EqaimeSubmissionService {
         currency: true,
         eqaimeNumber: true,
         counterparty: {
-          select: { name: true, kind: true, isVatPayer: true, taxIdCipher: true },
+          select: { nameCipher: true, kind: true, isVatPayer: true, taxIdCipher: true },
         },
       },
       orderBy: { number: "asc" },
@@ -302,7 +302,9 @@ export class EqaimeSubmissionService {
         .map((row) => ({
           id: row.id,
           number: row.number,
-          counterpartyName: row.counterparty.name,
+          counterpartyName: row.counterparty.nameCipher
+            ? decryptText(row.counterparty.nameCipher) ?? ""
+            : "",
         })),
     };
   }

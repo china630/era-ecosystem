@@ -1,3 +1,4 @@
+import { CP_PERMISSION } from "@era/contracts";
 import {
   BadRequestException,
   Controller,
@@ -5,12 +6,16 @@ import {
   Post,
   Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { OrganizationId } from "../common/org-id.decorator";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { ReferenceManualService } from "./reference-manual.service";
 
 type SheetRow = Record<string, unknown>;
@@ -41,6 +46,9 @@ async function sheetRows(file?: Express.Multer.File): Promise<SheetRow[]> {
 }
 
 @ApiTags("reference-manual")
+@ApiBearerAuth("bearer")
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
 @Controller("reference-manual")
 export class ReferenceManualController {
   constructor(private readonly manual: ReferenceManualService) {}
