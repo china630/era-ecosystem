@@ -17,12 +17,6 @@ export class FxController {
     return this.fx.getDisplayCodes();
   }
 
-  @Get("display-codes")
-  @ApiOperation({ summary: "Dashboard and CBAR-check currency codes from hub settings" })
-  displayCodes() {
-    return this.fx.getDisplayCodes();
-  }
-
   @Get("rates")
   @ApiOperation({ summary: "Official CBAR rates on date" })
   rates(@Query("date") date?: string, @Query("symbols") symbols?: string) {

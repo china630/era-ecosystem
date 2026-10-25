@@ -21,7 +21,6 @@ import {
   Gauge,
   Inbox,
   LayoutGrid,
-  Library,
   MapPin,
   Network,
   Package,

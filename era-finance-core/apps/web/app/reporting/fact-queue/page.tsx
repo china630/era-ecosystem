@@ -120,7 +120,7 @@ export default function FactQueuePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("reporting.factQueueTitle")} description={t("reporting.factQueueHint")} />
+      <PageHeader title={t("reporting.factQueueTitle")} subtitle={t("reporting.factQueueHint")} />
       <label className="flex flex-col gap-1 text-sm text-[#34495E]">
         {t("reporting.factQueuePeriod")}
         <input
