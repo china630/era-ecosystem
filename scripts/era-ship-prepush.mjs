@@ -233,7 +233,7 @@ if (hasPrefix(files, "era-finance-core")) {
   run(
     "finance integration tests",
     "npm",
-    ["run", "test:integration", "-w", "@erafinance/api", "--", "--ci"],
+    ["run", "test:integration", "-w", "@erafinance/api", "--", "--ci", "--maxWorkers=2"],
     cwd,
   );
 }
