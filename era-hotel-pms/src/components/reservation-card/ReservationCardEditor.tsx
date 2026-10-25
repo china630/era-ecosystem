@@ -94,7 +94,7 @@ import {
   type StayActionKind,
 } from '@/lib/stay-window-plane';
 import { canJoinOccupiedDoor } from '@/lib/share-door-join';
-import { doorAssignBlock, type DoorBlock } from '@/lib/door-assign-reason';
+import { doorAssignBlock, doorConflictToast, type DoorBlock } from '@/lib/door-assign-reason';
 import type {
   AgencyOption,
   AttachmentRow,
@@ -268,6 +268,11 @@ export function ReservationCardEditor({
     }
     if (code === 'CITY_LEDGER_CHECKIN') {
       showApiError({ error: t('cityLedgerCheckIn') }, fallback);
+      return;
+    }
+    const clash = doorConflictToast(body);
+    if (clash) {
+      showApiError({ error: t(clash.key, { from: clash.from, to: clash.to }) }, fallback);
       return;
     }
     showApiError(body, fallback);
@@ -2444,6 +2449,7 @@ export function ReservationCardEditor({
     if (block.code === 'OOS') return t('doorBlockedOos');
     if (block.code === 'OOO') return t('doorBlockedOoo');
     if (block.code === 'OCCUPIED') return t('doorBlockedOccupied');
+    if (block.code === 'BOOKED') return t('doorBlockedBooked');
     if (block.code === 'DIRTY') return t('doorBlockedDirty');
     return t('doorBlockedWrongType', { door: block.doorType ?? '—', need: block.needType ?? '—' });
   }
@@ -2453,7 +2459,8 @@ export function ReservationCardEditor({
     const needCode =
       rooms.find((r) => r.roomTypeId === typeId)?.roomType?.code ??
       roomTypes.find((rt) => rt.id === typeId)?.label?.split('—')[0]?.trim();
-    const ci = checkIn;
+    const today = todayBakuYmd();
+    const ci = status === 'IN_HOUSE' && checkIn && checkIn < today ? today : checkIn;
     const co = checkOut;
     return rooms.map((r) => {
       const overlapping = (r.reservations ?? []).filter((res) => {
@@ -2479,6 +2486,8 @@ export function ReservationCardEditor({
           })),
           maxBed: r.maxBed ?? r.roomType?.adultCapacity ?? 2,
         });
+      const held = overlapping.length > 0 && !canShare;
+      const inHouseHold = held && overlapping.some((res) => res.status === 'IN_HOUSE');
       const block = doorAssignBlock(
         {
           id: r.id,
@@ -2493,7 +2502,8 @@ export function ReservationCardEditor({
           needTypeId: typeId,
           needTypeCode: needCode,
           inHouse: status === 'IN_HOUSE',
-          occupied: overlapping.length > 0 && !canShare,
+          occupied: inHouseHold,
+          booked: held && !inHouseHold,
           currentAssignedId: roomId,
         },
       );
@@ -3419,13 +3429,14 @@ export function ReservationCardEditor({
             value={restoreRoomId}
             onChange={(v) => setRestoreRoomId(String(v ?? ''))}
             options={rooms.map((r) => {
-              const taken = (r.reservations ?? []).some((res) => {
+              const hits = (r.reservations ?? []).filter((res) => {
                 if (reservationId && res.id === reservationId) return false;
                 if (!['CONFIRMED', 'IN_HOUSE', 'OPTION'].includes(res.status)) return false;
                 const a = res.checkInDate.slice(0, 10);
                 const b = res.checkOutDate.slice(0, 10);
                 return Boolean(checkIn && checkOut && a < checkOut && b > checkIn);
               });
+              const inHouseHold = hits.some((res) => res.status === 'IN_HOUSE');
               const needCode =
                 rooms.find((row) => row.roomTypeId === restoreTypeId)?.roomType?.code ??
                 roomTypes.find((rt) => rt.id === restoreTypeId)?.label?.split('—')[0]?.trim();
@@ -3443,7 +3454,8 @@ export function ReservationCardEditor({
                   needTypeId: restoreTypeId,
                   needTypeCode: needCode,
                   inHouse: false,
-                  occupied: taken,
+                  occupied: inHouseHold,
+                  booked: hits.length > 0 && !inHouseHold,
                 },
               );
               return {

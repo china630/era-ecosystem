@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { doorClashWindow, hotelDateKey } from '@/lib/hotel-calendar';
 import { countsFromPax } from '@/components/reservation-card/party-pax';
 import { partyGuestLabel, paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
@@ -435,14 +435,23 @@ export async function patchReservationFull(
       isOta: await reservationIsOta(id),
       guestGender: existing.guest.sex,
     };
+    const clash = doorClashWindow(existing.status, checkIn, checkOut);
     const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
-      await assertRoomShareAssignable({
-        roomId: effectiveRoomId,
-        checkIn,
-        checkOut,
-        excludeReservationId: id,
-        candidate,
-      });
+      clash
+        ? await assertRoomShareAssignable({
+            roomId: effectiveRoomId,
+            checkIn: clash.from,
+            checkOut: clash.to,
+            excludeReservationId: id,
+            candidate,
+          })
+        : {
+            shareBedIndex: existing.shareBedIndex,
+            joiningPool: false,
+            shareEligible: nextShareEligible,
+            shareGender: nextShareGender,
+            autoShare: false,
+          };
     assignShareBedIndex = shareBedIndex;
     doorShareResolved = true;
     if (autoShare) {
@@ -479,7 +488,8 @@ export async function patchReservationFull(
   // one being written, not the type still stored on the row.
   if (typeChanged || windowGrows) {
     const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
-    await assertShareInventory(nextRoomTypeId, checkIn, checkOut, {
+    const quota = doorClashWindow(existing.status, checkIn, checkOut);
+    if (quota) await assertShareInventory(nextRoomTypeId, quota.from, quota.to, {
       id,
       shareEligible: nextShareEligible,
       shareGender: nextShareGender,

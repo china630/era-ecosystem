@@ -11,6 +11,7 @@ import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import RoomInfoModal from '@/components/RoomInfoModal';
 import RoomRackView from '@/components/RoomRackView';
+import { doorConflictToast } from '@/lib/door-assign-reason';
 import { computeRackDisplayState } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
@@ -165,7 +166,11 @@ export default function Chessboard() {
           });
           return;
         }
-        showApiError(data, tCommon('actionFailed'));
+        const clash = doorConflictToast(data);
+        showApiError(
+          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : data,
+          tCommon('actionFailed'),
+        );
         return;
       }
       showSuccess(
@@ -207,7 +212,11 @@ export default function Chessboard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showApiError(data, tCommon('actionFailed'));
+        const clash = doorConflictToast(data);
+        showApiError(
+          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : data,
+          tCommon('actionFailed'),
+        );
         return;
       }
       showSuccess(data?.pending ? t('movePlanned') : t('relocated'));

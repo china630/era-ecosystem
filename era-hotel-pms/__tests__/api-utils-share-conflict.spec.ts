@@ -1,6 +1,20 @@
 import { handleRouteError } from '@/lib/api-utils';
 
 describe('handleRouteError share / room conflicts', () => {
+  it('returns a door code when the clash carries one', async () => {
+    const err = Object.assign(new Error('Room conflict: overlapping stay (2026-10-24 – 2026-11-03)'), {
+      status: 409,
+      code: 'DOOR_BOOKED',
+      from: '2026-10-24',
+      to: '2026-11-03',
+    });
+    const res = handleRouteError(err);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe('DOOR_BOOKED');
+    expect(body.from).toBe('2026-10-24');
+  });
+
   it('maps room conflict to 409', async () => {
     const res = handleRouteError(
       new Error('Room conflict: overlapping stay (2026-08-20 – 2026-08-27)'),

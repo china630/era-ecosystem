@@ -189,8 +189,8 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-BOOK-02 | Reservation card Phase 0 agency-first layout | Y | Y ReservationCardEditor | SHIPPED | Assignment by stage; Additional collapsed; companion pax names from linked Guest (not booker-only) |
 | HOT-FO-01 | Room type availability (Avl/Occ) | Y | Y /availability | SHIPPED | FO chain ADR; Occ includes unassigned; hotel-noon night |
 | HOT-FO-02 | Sellable preview on reservation create | Y | Y ReservationCardLeftPanel | SHIPPED | GET /api/fo/sellable; same hotel-noon Occ as matrix; block save when Avl=0 |
-| HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door+overlap auto-pair (assign/import); N lanes without overlay; per-night `nextFreeShareBedIndex`; seed room 105 / backfill 307; UAT-SMOKE §30 not signed — not SHIPPED |
-| HOT-FO-04 | Stay amendment + Manual Price / stay % | Y ADR | Y relocate/amendments/pricing/spread | API | UI on card (stay billing, tariff journal, late arrival); UAT-SMOKE §35 not signed — not SHIPPED |
+| HOT-FO-03 | Shared twin assignment (union share pool) | Y | Y Assignment + room plan + rack | API | `shareEligible` + M/F only; door+overlap auto-pair (assign/import); N lanes without overlay; per-night `nextFreeShareBedIndex`; in-house door suggestions use today (Asia/Baku) through checkout, same clash window as a room move; seed room 105 / backfill 307; UAT-SMOKE §30 not signed — not SHIPPED |
+| HOT-FO-04 | Stay amendment + Manual Price / stay % | Y ADR | Y relocate/amendments/pricing/spread | API | OpsUI card, chessboard, and room plan. In-house door clash is today (Asia/Baku) through checkout; a past slice on the old door does not block. A confirmed hold on the tail stays blocked (list «забронирован», in-house neighbor «занят»). If the slice already ended, the move opens a tail on the new door. UAT-SMOKE §35 not signed — not SHIPPED |
 | HOT-BOOK-03 | Allotment cutoff soft-release cron | Y | — | HEADLESS | `POST /api/cron/allotment-block-cutoff` Bearer `HOTEL_CRON_SECRET` |
 | HOT-HK-01 | Room HK/inventory axes (no OCCUPIED write) | Y | Y rack/FO | API | FO cannot change `hkCondition` on IN_HOUSE (`OCCUPIED_HK_LOCKED`). Visit outcomes still can. UAT-SMOKE §34 open — not SHIPPED |
 | HOT-HK-02 | Roster / rotation / ƏG | Y | Y `/hk/roster` `/hk/rotation` | API | SCREEN; DnD; not SHIPPED |
@@ -521,6 +521,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-25 | Hotel in-house door move clashes from today (Asia/Baku) through checkout. A slice that already ended does not block the new door; a confirmed hold on the remaining nights does. The move opens a tail slice when none covers that window. Share-door suggestions use that same window. Assign, relocate, and plan date-change toasts say booked vs in-house. HOT-FO-03 and HOT-FO-04 stay API. Gate, Pilot, and edition unchanged. |
 | 2026-10-24 | Hotel folio desk: debt and unused payments are two sums; room route is company-on-this-stay then primary; guest VÖEN is not a route. HOT-FOLIO-DESK stays API. HOT-CASH-03 leaves SHIPPED: there is no deposit intake. Gate, Pilot, and edition unchanged. |
 | 2026-10-23 | CLI-26 nurse board: no countdown line and no lifecycle paragraph. Fullscreen hides filters and stretches the four columns to the bottom of the overlay. Same capability, still SHIPPED. CLI-57 stays SCREEN. |
 | 2026-10-23 | CLI-26 nurse board: today's still-ahead slots stay in the queue column (check-in only on the open window). No list above the columns. Same capability, still SHIPPED. CLI-57 stays SCREEN. |
