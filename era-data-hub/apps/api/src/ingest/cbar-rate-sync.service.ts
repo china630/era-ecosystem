@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CbarRateStatus, Prisma } from "@era/data-hub-database";
 import { PrismaHubService } from "../prisma/prisma-hub.service";
-import { HubFxConfigService } from "./hub-fx-config.service";
 import { CbarFxService, type ParsedCbarDoc } from "./cbar-fx.service";
+import { ReferencePolicyService } from "./reference-policy.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -41,7 +41,7 @@ export class CbarRateSyncService {
   constructor(
     private readonly hub: PrismaHubService,
     private readonly cbar: CbarFxService,
-    private readonly fxConfig: HubFxConfigService,
+    private readonly fxConfig: ReferencePolicyService,
   ) {}
 
   async syncTodayFromCbar(): Promise<void> {
@@ -181,7 +181,7 @@ export class CbarRateSyncService {
     doc: ParsedCbarDoc,
     rateDate: Date,
   ): Promise<boolean> {
-    const checkCodes = this.fxConfig.getFxCbarCheckCurrencyCodes();
+    const checkCodes = await this.fxConfig.getFxCbarCheckCurrencyCodes();
     for (const code of checkCodes) {
       const row = await this.hub.cbarOfficialRate.findUnique({
         where: {

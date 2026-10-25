@@ -18,7 +18,7 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { accountBalance } from '@/lib/folio-payer';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -145,8 +145,6 @@ export function FolioCheckoutModal({
   const [choices, setChoices] = useState<Record<string, Choice>>({});
   const [lines, setLines] = useState<Record<string, TenderLine[]>>({});
   const [guestDebtNote, setGuestDebtNote] = useState('');
-  const [heldDeposits, setHeldDeposits] = useState(0);
-  const [applyDeposits, setApplyDeposits] = useState(true);
   const [discountAmount, setDiscountAmount] = useState('');
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [early, setEarly] = useState<EarlyPreview | null>(null);
@@ -155,9 +153,6 @@ export function FolioCheckoutModal({
   const [refundReason, setRefundReason] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [remainder, setRemainder] = useState<{ ids: string[]; amount: number } | null>(null);
-  const [remainderMethod, setRemainderMethod] = useState('');
-  const [remainderTerminal, setRemainderTerminal] = useState('');
   const [clinic, setClinic] = useState<ClinicCheckout | null>(null);
   const [laundry, setLaundry] = useState<Array<{ id: string; guestName: string }>>([]);
   const [laundryScan, setLaundryScan] = useState('');
@@ -187,8 +182,6 @@ export function FolioCheckoutModal({
     setLines({});
     setGuestDebtNote('');
     setDiscountAmount('');
-    setApplyDeposits(true);
-    setHeldDeposits(0);
     setEarly(null);
     setRefundMethod('');
     setRefundTerminal('');
@@ -202,17 +195,7 @@ export function FolioCheckoutModal({
         setClinic(payload);
       })
       .catch(() => setClinic(null));
-    void loadFolios().then((rows) => {
-      const guest = rows.find((f) => f.type === 'GUEST' && f.status === 'OPEN');
-      if (!guest) return;
-      void fetch(`/api/folios/settle?folioId=${guest.id}`)
-        .then((r) => r.json())
-        .then((data) => {
-          const payload = data.data ?? data;
-          if (payload?.heldDeposits != null) setHeldDeposits(Number(payload.heldDeposits));
-        })
-        .catch(() => null);
-    });
+    void loadFolios();
     void fetch('/api/fiscal/devices?kind=BANK_POS')
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
@@ -241,31 +224,6 @@ export function FolioCheckoutModal({
   const stayGuest = folios[0]?.reservation?.guest?.fullName?.trim() ?? '';
   const stayRoom = folios[0]?.reservation?.room?.roomNumber?.trim() ?? '';
 
-  const guestTotals = useMemo(() => {
-    const guestFolios = folios.filter((folio) => folio.type === 'GUEST' && folio.status === 'OPEN');
-    const charged = guestFolios.reduce(
-      (sum, folio) =>
-        sum +
-        folio.charges.reduce((inner, charge) => inner + Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)), 0),
-      0,
-    );
-    const received = guestFolios.reduce((sum, folio) => {
-      const paid = (folio.payments ?? []).reduce((inner, payment) => {
-        if (payment.voidedAt) return inner;
-        const n = Number(payment.amount);
-        return inner + (payment.kind === 'REFUND' ? -n : n);
-      }, 0);
-      return sum + paid;
-    }, 0);
-    const moneyIn = Math.round((received + heldDeposits) * 100) / 100;
-    const net = Math.round((charged - moneyIn) * 100) / 100;
-    return {
-      charged: Math.round(charged * 100) / 100,
-      received: moneyIn,
-      net,
-    };
-  }, [folios, heldDeposits]);
-
   const blocks = useMemo<DebtBlock[]>(() => {
     const out: DebtBlock[] = [];
     for (const folio of folios) {
@@ -273,7 +231,7 @@ export function FolioCheckoutModal({
       const isPayer = folio.type === 'AGENCY' || folio.type === 'COMPANY';
       // Guest unused nights come back as a refund after check-out; payer unused nights only shrink AR.
       const reversed = isPayer && early?.applicable ? (early.reversalByFolio[folio.id] ?? 0) : 0;
-      const debt = Math.round((accountBalance(folio) - reversed) * 100) / 100;
+      const debt = Math.round((stayMoneyPair(folio.charges, folio.payments ?? []).debt - reversed) * 100) / 100;
       if (debt <= 0.01) continue;
       if (folio.type === 'GUEST') {
         const rg = folio.reservationGuest;
@@ -310,24 +268,20 @@ export function FolioCheckoutModal({
   const firstGuestBlockId = blocks.find((b) => b.party === 'GUEST')?.folio.id;
   const anyGuestDebt = blocks.some((b) => choices[b.folio.id] === 'DEBT');
   const allChosen = blocks.every((b) => Boolean(choices[b.folio.id]));
-  const procedureCredit = useMemo(() => {
+  const unusedPayment = useMemo(() => {
     return folios
-      .filter((folio) => folio.type === 'GUEST' && folio.status === 'OPEN')
-      .reduce((sum, folio) => sum + Math.max(0, -accountBalance(folio)), 0);
+      .filter((folio) => folio.status === 'OPEN')
+      .reduce((sum, folio) => sum + stayMoneyPair(folio.charges, folio.payments ?? []).unused, 0);
   }, [folios]);
-  const refundNeeded = Boolean(
-    (early?.applicable && early.guestCashRefund > 0) || procedureCredit > 0.01,
-  );
+  const refundNeeded = Boolean(early?.applicable && early.guestCashRefund > 0);
   const blocksCheckout = Boolean(clinic?.medical && clinic.blocksCheckout);
 
   const terminalOptions = bankTerminals.map((row) => ({ value: row.id, label: row.label }));
 
-  /** What tender lines must cover: debt less held deposits and discount on the first guest folio. */
   function tenderDue(block: DebtBlock): number {
     if (block.folio.id !== firstGuestBlockId) return block.debt;
-    const deposits = applyDeposits ? heldDeposits : 0;
     const discount = discountAmount ? Number(discountAmount) || 0 : 0;
-    return Math.max(0, Math.round((block.debt - deposits - discount) * 100) / 100);
+    return Math.max(0, Math.round((block.debt - discount) * 100) / 100);
   }
 
   function linesOf(block: DebtBlock): TenderLine[] {
@@ -376,14 +330,6 @@ export function FolioCheckoutModal({
         bankTerminalId: l.method === 'CARD' ? l.bankTerminalId || undefined : undefined,
       }))
       .filter((l) => l.amount > 0 && l.method);
-    if (tender.length === 0 && isFirstGuest && applyDeposits && heldDeposits > 0.01) {
-      tender.push({
-        method: 'DEPOSIT',
-        amount: Math.min(heldDeposits, block.debt),
-        bankReference: undefined,
-        bankTerminalId: undefined,
-      });
-    }
     if (tender.length === 0) return null;
     const res = await fetch('/api/folios/settle', {
       method: 'POST',
@@ -391,7 +337,7 @@ export function FolioCheckoutModal({
       body: JSON.stringify({
         folioId: block.folio.id,
         lines: tender,
-        applyDeposits: isFirstGuest ? applyDeposits : false,
+        applyDeposits: false,
         discountAmount: isFirstGuest && discountAmount ? Number(discountAmount) : undefined,
       }),
     });
@@ -425,25 +371,13 @@ export function FolioCheckoutModal({
         unusedNightsRefundMethod: refundNeeded ? refundMethod : undefined,
         unusedNightsBankTerminalId: refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
         unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
-        procedureCreditRefundMethod: procedureCredit > 0.01 ? (refundMethod as 'CASH' | 'CARD') : undefined,
-        procedureCreditBankTerminalId:
-          procedureCredit > 0.01 && refundMethod === 'CARD' ? refundTerminal : undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
     const payload = data.data ?? data;
     if (res.ok) {
-      const held = payload.depositRemainder as { heldAmount?: number; heldIds?: string[] } | undefined;
-      const heldAmount = Number(held?.heldAmount ?? 0);
-      const heldIds = Array.isArray(held?.heldIds) ? held.heldIds : [];
       onDone?.();
       onClose();
-      if (heldAmount > 0.01 && heldIds.length > 0) {
-        setRemainder({ ids: heldIds, amount: heldAmount });
-        setRemainderMethod('');
-        setRemainderTerminal('');
-        return;
-      }
       showSuccess(
         payload.cityLedgerTransferred?.length
           ? t('checkoutClSuccess', { count: payload.cityLedgerTransferred.length })
@@ -530,11 +464,6 @@ export function FolioCheckoutModal({
               value={discountAmount}
               onChange={(e) => setDiscountAmount(e.target.value)}
             />
-            {heldDeposits > 0.01 ? (
-              <p className={`m-0 pb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                {t('checkoutHeldIn', { amount: money(heldDeposits) })}
-              </p>
-            ) : null}
           </div>
         ) : null}
       </div>
@@ -559,7 +488,7 @@ export function FolioCheckoutModal({
               void submit().finally(() => setBusy(false));
             }}
             busy={busy}
-            submitDisabled={loading || loadFailed || !allChosen || blocksCheckout}
+            submitDisabled={loading || loadFailed || !allChosen || blocksCheckout || unusedPayment > 0.01}
             submitLabel={t('confirmCheckout')}
           />
         }
@@ -626,33 +555,20 @@ export function FolioCheckoutModal({
               </table>
             </div>
           ) : null}
-          {procedureCredit > 0.01 ? (
-            <p className="m-0">{t('procedureCreditHint', { amount: money(procedureCredit) })}</p>
+          {unusedPayment > 0.01 ? (
+            <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('checkoutUnused', { amount: money(unusedPayment) })}</p>
           ) : null}
           <FieldSection title={t('checkoutTotals')}>
-            <div className="grid grid-cols-3 gap-2 font-mono text-[13px]">
+            <div className="grid grid-cols-2 gap-2 font-mono text-[13px]">
               <div>
-                <div className={TEXT_MUTED_CLASS}>{t('checkoutCharges')}</div>
-                <div>{money(guestTotals.charged)}</div>
+                <div className={TEXT_MUTED_CLASS}>{t('guestOwes')}</div>
+                <div>{money(blocks.reduce((sum, block) => sum + block.debt, 0))}</div>
               </div>
               <div>
-                <div className={TEXT_MUTED_CLASS}>{t('checkoutReceived')}</div>
-                <div>{money(guestTotals.received)}</div>
-              </div>
-              <div>
-                <div className={TEXT_MUTED_CLASS}>{t('checkoutNet')}</div>
-                <div className={guestTotals.net > 0.01 ? TEXT_DANGER_CLASS : guestTotals.net < -0.01 ? 'text-sky-700' : ''}>
-                  {money(guestTotals.net)}
-                </div>
+                <div className={TEXT_MUTED_CLASS}>{t('overpaid')}</div>
+                <div>{money(unusedPayment)}</div>
               </div>
             </div>
-            <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
-              {guestTotals.net > 0.01
-                ? t('checkoutNetPayHint')
-                : guestTotals.net < -0.01
-                  ? t('checkoutNetRefundHint')
-                  : t('checkoutNoDebt')}
-            </p>
           </FieldSection>
           {loading ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{tc('loading')}</p> : null}
           {loadFailed ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{tc('loadError')}</p> : null}
@@ -760,121 +676,10 @@ export function FolioCheckoutModal({
               </div>
             </FieldSection>
           ) : null}
-          {procedureCredit > 0.01 && !early?.applicable ? (
-            <div className="flex flex-wrap items-end gap-2">
-              <CatalogField
-                kind="OPS_HOT"
-                label={t('earlyCheckoutTender')}
-                required
-                value={refundMethod}
-                onChange={(v) => setRefundMethod(String(v ?? ''))}
-                options={[
-                  { value: 'CASH', label: tPay('CASH') },
-                  { value: 'CARD', label: tPay('CARD') },
-                ]}
-                emptyLabel={null}
-              />
-              {refundMethod === 'CARD' && terminalOptions.length > 0 ? (
-                <CatalogField
-                  kind="CLOSED_SMALL"
-                  label={t('bankTerminal')}
-                  required
-                  value={refundTerminal}
-                  onChange={(v) => setRefundTerminal(String(v ?? ''))}
-                  options={terminalOptions}
-                  emptyLabel={t('pickTerminal')}
-                />
-              ) : null}
-            </div>
-          ) : null}
           {error ? (
             <p className={`m-0 ${TEXT_DANGER_CLASS}`} role="alert">
               {error}
             </p>
-          ) : null}
-        </div>
-      </EraModal>
-      <EraModal
-        open={remainder != null}
-        title={t('depositRemainderTitle')}
-        onClose={() => setRemainder(null)}
-        footer={
-          <EraModalFooter
-            onCancel={() => {
-              if (!remainder) return;
-              setBusy(true);
-              void Promise.all(
-                remainder.ids.map((depositId) =>
-                  fetch(`/api/reservations/${reservationId}/deposits/settle`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ depositId, action: 'carry' }),
-                  }),
-                ),
-              )
-                .then(() => {
-                  showSuccess(t('depositCarry'));
-                  setRemainder(null);
-                })
-                .finally(() => setBusy(false));
-            }}
-            cancelLabel={t('depositCarry')}
-            submitLabel={t('depositPayout')}
-            busy={busy}
-            submitDisabled={!remainderMethod || (remainderMethod === 'CARD' && !remainderTerminal)}
-            onSubmit={() => {
-              if (!remainder) return;
-              setBusy(true);
-              void Promise.all(
-                remainder.ids.map((depositId) =>
-                  fetch(`/api/reservations/${reservationId}/deposits/settle`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      depositId,
-                      action: 'payout',
-                      paymentMethod: remainderMethod,
-                      bankTerminalId: remainderMethod === 'CARD' ? remainderTerminal || undefined : undefined,
-                    }),
-                  }).then(async (res) => {
-                    if (!res.ok) throw await res.json();
-                  }),
-                ),
-              )
-                .then(() => {
-                  showSuccess(t('depositPayout'));
-                  setRemainder(null);
-                })
-                .catch((err) => showApiError(err, tc('error')))
-                .finally(() => setBusy(false));
-            }}
-          />
-        }
-      >
-        <div className="space-y-2">
-          <p className="m-0 text-[13px]">{t('depositRemainderHint', { amount: money(remainder?.amount ?? 0) })}</p>
-          <CatalogField
-            kind="OPS_HOT"
-            label={t('method')}
-            required
-            value={remainderMethod}
-            onChange={(v) => setRemainderMethod(String(v ?? ''))}
-            options={[
-              { value: 'CASH', label: tPay('CASH') },
-              { value: 'CARD', label: tPay('CARD') },
-            ]}
-            emptyLabel={null}
-          />
-          {remainderMethod === 'CARD' && terminalOptions.length > 0 ? (
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('bankTerminal')}
-              required
-              value={remainderTerminal}
-              onChange={(v) => setRemainderTerminal(String(v ?? ''))}
-              options={terminalOptions}
-              emptyLabel={t('pickTerminal')}
-            />
           ) : null}
         </div>
       </EraModal>

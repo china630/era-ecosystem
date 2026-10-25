@@ -74,6 +74,11 @@ export async function completeProcedureOrder(
       procedureCode: order.procedureCode,
     }));
 
+  const { enqueueProcedureConsumables } = await import(
+    "@/domain/procedure/procedure-consumption-outbox"
+  );
+  await enqueueProcedureConsumables(order.id, lines);
+
   const now = new Date();
   const updated = await prisma.procedureOrder.update({
     where: { id: orderId },

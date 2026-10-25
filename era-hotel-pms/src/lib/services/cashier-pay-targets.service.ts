@@ -38,6 +38,8 @@ export async function listCashierPayTargets(q: string): Promise<CashierPayTarget
     select: {
       id: true,
       status: true,
+      companyId: true,
+      agencyId: true,
       room: { select: { roomNumber: true } },
       guest: { select: { fullName: true, firstName: true, lastName: true } },
       paxGuests: {
@@ -73,6 +75,8 @@ export async function listCashierPayTargets(q: string): Promise<CashierPayTarget
       reservationId: stay.id,
       roomNumber: stay.room?.roomNumber ?? '—',
       status: stay.status,
+      hasCompany: Boolean(stay.companyId),
+      hasAgency: Boolean(stay.agencyId),
       guests,
     };
   });

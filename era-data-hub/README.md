@@ -30,7 +30,6 @@ Smoke: `node ../scripts/smoke-data-hub.mjs` (from repo root)
 1. Seed finance reference data (`era_finance`).
 2. Create/migrate `era_data_hub`: `npm run db:migrate` + `npm run db:seed`.
 3. Copy reference rows: `npm run db:sync-from-finance` (uses `FINANCE_RO_DATABASE_URL`).
-4. Set `ERA_DATA_HUB_DATA_SOURCE=hub` on `data-hub` service.
-5. Enable hub CBAR ingest; set `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true` on finance.
-6. Point consumers: `ERA_DATA_HUB_ENABLED=true`, `ERA_DATA_HUB_URL`, matching `DATA_HUB_SERVICE_TOKEN`.
-7. Run UAT: [doc/UAT-SMOKE.md](./doc/UAT-SMOKE.md).
+4. Runtime reads `era_data_hub`. Turn FX external fetch on at orchestrator `/super-admin/reference`.
+5. Point consumers at `ERA_DATA_HUB_URL` and the same `DATA_HUB_SERVICE_TOKEN`.
+6. Run UAT: [doc/UAT-SMOKE.md](./doc/UAT-SMOKE.md).

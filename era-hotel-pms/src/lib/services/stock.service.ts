@@ -84,29 +84,18 @@ export async function getStockBalance(productId: string, warehouseId: string) {
   return balance;
 }
 
-export async function postStockMovement(input: {
+/**
+ * Retired. Quantity is written off in finance by the night audit.
+ * This hotel table is not a second stock book.
+ */
+export async function postStockMovement(_input: {
   productId: string;
   warehouseId: string;
   type: 'RECEIPT' | 'ISSUE' | 'TRANSFER';
   qty: number;
   reference?: string;
-}) {
-  if (input.type === 'ISSUE') {
-    const bal = await getStockBalance(input.productId, input.warehouseId);
-    if (bal < input.qty && process.env.STOCK_ALLOW_NEGATIVE !== 'true') {
-      throw new Error(`Insufficient stock (balance ${bal})`);
-    }
-  }
-  return prisma.stockMovement.create({
-    data: {
-      productId: input.productId,
-      warehouseId: input.warehouseId,
-      type: input.type,
-      qty: toDecimal(input.qty),
-      reference: input.reference,
-    },
-    include: { product: true, warehouse: true },
-  });
+}): Promise<never> {
+  throw new Error('Stock is kept in finance. Night audit writes the quantity off.');
 }
 
 /**

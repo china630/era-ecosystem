@@ -61,7 +61,6 @@ const GUEST_PROFILES: Array<{
   email: string;
   passport: string;
   fin?: string;
-  voen?: string;
   vip?: string;
   greyList?: boolean;
   visitCount?: number;
@@ -88,9 +87,9 @@ const GUEST_PROFILES: Array<{
   { firstName: 'Fatima', lastName: 'Al Mansouri', nationality: 'AE', phone: '+971501234567', email: 'fatima.am@emirates.ae', passport: 'N1234567', vip: 'PLATINUM', visitCount: 4 },
   { firstName: 'Omar', lastName: 'Hassan', nationality: 'TR', phone: '+905321234567', email: 'omar.h@gmail.com', passport: 'U12345678', visitCount: 2 },
   { firstName: 'Leyla', lastName: 'Karimova', nationality: 'AZ', phone: '+994504445566', email: 'leyla.child@mail.az', passport: 'AA4567891', visitCount: 0 },
-  { firstName: 'Nafta', lastName: 'HR', nationality: 'AZ', phone: '+994125551100', email: 'hr@nafta.az', passport: 'CORP-HR-01', voen: '1234567891' },
-  { firstName: 'SOCAR', lastName: 'Wellness', nationality: 'AZ', phone: '+994125552200', email: 'wellness@socar.az', passport: 'CORP-SOCAR', voen: '9876543210' },
-  { firstName: 'Turizm', lastName: 'MMC', nationality: 'AZ', phone: '+994125553300', email: 'ops@travel-az.az', passport: 'CORP-TRAVEL', voen: '1122334455' },
+  { firstName: 'Nafta', lastName: 'HR', nationality: 'AZ', phone: '+994125551100', email: 'hr@nafta.az', passport: 'CORP-HR-01' },
+  { firstName: 'SOCAR', lastName: 'Wellness', nationality: 'AZ', phone: '+994125552200', email: 'wellness@socar.az', passport: 'CORP-SOCAR' },
+  { firstName: 'Turizm', lastName: 'MMC', nationality: 'AZ', phone: '+994125553300', email: 'ops@travel-az.az', passport: 'CORP-TRAVEL' },
   { firstName: 'Nurlan', lastName: 'Gurbanov', nationality: 'AZ', phone: '+994554445566', email: 'nurlan.g@mail.az', passport: 'AB3456789', visitCount: 1 },
   { firstName: 'Emin', lastName: 'Rustamov', nationality: 'AZ', phone: '+994555556677', email: 'emin.r@gmail.com', passport: 'AB4567890', visitCount: 3 },
   { firstName: 'Aynur', lastName: 'Shirinova', nationality: 'AZ', phone: '+994556667788', email: 'aynur.s@inbox.ru', passport: 'AB5678901', visitCount: 2 },
@@ -187,7 +186,6 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         nationality: p.nationality,
         phone: p.phone,
         email: p.email,
-        voen: p.voen ?? null,
         vipType: p.vip ?? null,
         greyList: p.greyList ?? false,
         visitCount: p.visitCount ?? 0,

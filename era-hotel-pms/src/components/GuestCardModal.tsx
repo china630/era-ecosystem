@@ -52,7 +52,6 @@ const DETAIL_FIELD_KEYS = [
   'registrationNumber',
   'vehiclePlate',
   'hotelName',
-  'voen',
   'marriageDate',
   'bonusPercent',
 ] as const;
@@ -240,7 +239,6 @@ export default function GuestCardModal({
         registrationNumber: String(g.registrationNumber ?? ''),
         vehiclePlate: String(g.vehiclePlate ?? ''),
         hotelName: String(g.hotelName ?? ''),
-        voen: String(g.voen ?? ''),
         marriageDate: g.marriageDate ? String(g.marriageDate).slice(0, 10) : '',
         bonusPercent: g.bonusPercent != null ? String(g.bonusPercent) : '',
       });
@@ -481,7 +479,6 @@ export default function GuestCardModal({
           registrationNumber: detailFields.registrationNumber || null,
           vehiclePlate: detailFields.vehiclePlate || null,
           hotelName: detailFields.hotelName || null,
-          voen: detailFields.voen || null,
           marriageDate: detailFields.marriageDate || null,
           bonusPercent: detailFields.bonusPercent ? Number(detailFields.bonusPercent) : null,
           phoneVerified,
@@ -653,7 +650,6 @@ export default function GuestCardModal({
               verificationStatus={detailFields.verificationStatus ?? ''}
               phoneVerified={phoneVerified}
               emailVerified={emailVerified}
-              voen={detailFields.voen ?? ''}
               visaType={detailFields.visaType ?? ''}
               visaNumber={detailFields.visaNumber ?? ''}
               visaExpiry={detailFields.visaExpiry ?? ''}

@@ -47,6 +47,18 @@ Missed nights: pricing grid only (`postNight` per row; batch top-right when more
 
 Menus: kit `EraMenu` (outside click, Escape, item click closes) on lightning, card kebab, row kebab. Card kebab holds registration / proforma / confirmation prints.
 
+### Money pair (2026-10-24)
+
+The header keeps three cells. Stay total (`Qalma məbləği`) is the price of the stay. `Folio balansı` is only uncovered charges. The cell that was `Depozit` is now `Artıq ödəniş`: the remainder of blue payment lines, not a second cash drawer. The two sums are not subtracted. A room payment does not cover a medical charge. A later night of the same article consumes that payment.
+
+There is no deposit intake form. `Əlavə ödəniş` is the only way to take money. Pocket, guest, and article start empty. Article comes first. A room article does not ask for a guest: the line follows the open room charge, or the room route when the night is not posted yet. Amount cannot exceed that article's open debt. When nothing is charged yet, the line is still written and stays visible.
+
+Checkout does not refund by itself and does not read `FolioDeposit`. While either sum is non-zero, checkout stays closed. The cashier returns a remainder from the blue line (`…` → `Geri qaytarma`). That return can be deleted like a payment. Same tender unless the cashier changes it and writes a reason. A return that already has a fiscal receipt is not deleted from the row menu.
+
+Old `HELD` rows are not a screen. Opening a live stay moves each of them once onto a blue room payment so the header sum does not disappear. New money is not written into that table.
+
+Room and room tax, with no explicit route: the company on this stay, otherwise the primary guest. An agency on the card does not take the room. A route to a company or agency that is not on the stay does not open an empty folio; the night goes to the primary guest and night audit continues. Guest VÖEN is not a route and is not on the guest card. Every guest, including a child, has a folio. One primary guest cannot be turned off. Charges, payments, and refunds transfer within the stay and to another open stay (option, confirmed, in-house) only when that party is on the target stay.
+
 ## Consequences
 
 Apply `20261014233000_folio_desk_journal` and `20261022010000_folio_payment_article` on the hotel database before the new screens are used. This ADR does not mark the flow SHIPPED: the UI is present and a UAT step is still missing (`HOT-FOLIO-DESK`).

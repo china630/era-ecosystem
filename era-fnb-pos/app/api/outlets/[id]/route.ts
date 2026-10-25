@@ -8,6 +8,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 
 const patchSchema = z.object({
   revenueCenterCode: z.string().min(1).max(32),
+  financeWarehouseCode: z.string().max(64).nullable().optional(),
 });
 
 export async function PATCH(
@@ -24,7 +25,12 @@ export async function PATCH(
     if (!existing) return jsonError("Outlet not found", 404);
     const updated = await prisma.outlet.update({
       where: { id },
-      data: { revenueCenterCode: body.revenueCenterCode.trim() },
+      data: {
+        revenueCenterCode: body.revenueCenterCode.trim(),
+        ...(body.financeWarehouseCode !== undefined
+          ? { financeWarehouseCode: body.financeWarehouseCode?.trim() || null }
+          : {}),
+      },
     });
     return NextResponse.json(updated);
   } catch (err) {

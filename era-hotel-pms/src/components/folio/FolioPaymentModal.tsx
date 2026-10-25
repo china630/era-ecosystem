@@ -4,10 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CatalogField, Field, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
-  accountBalance,
   pickTargetFolio,
-  resolvePayer,
   type FolioParty,
   type PayerGuest,
 } from '@/lib/folio-payer';
@@ -20,14 +19,29 @@ type FolioRow = {
   type: string;
   status: string;
   reservationGuestId?: string | null;
-  charges: Array<{ amount: number | string; qty?: number | null }>;
-  payments?: Array<{ amount: number | string; kind?: string | null }>;
+  charges: Array<{
+    amount: number | string;
+    qty?: number | null;
+    revenueCodeId?: string | null;
+    revenueCode?: { code?: string | null } | null;
+  }>;
+  payments?: Array<{
+    id?: string;
+    amount: number | string;
+    kind?: string | null;
+    voidedAt?: string | null;
+    revenueCodeId?: string | null;
+    refundOfPaymentId?: string | null;
+    revenueCode?: { code?: string | null } | null;
+  }>;
 };
 
 type StayTarget = {
   reservationId: string;
   roomNumber: string;
   guests: PayerGuest[];
+  hasCompany?: boolean;
+  hasAgency?: boolean;
 };
 
 export function FolioPaymentModal({
@@ -38,6 +52,8 @@ export function FolioPaymentModal({
   reservationId,
   party = 'guest',
   guests,
+  hasCompany,
+  hasAgency,
 }: {
   open: boolean;
   onClose: () => void;
@@ -48,6 +64,8 @@ export function FolioPaymentModal({
   reservationId?: string | null;
   party?: FolioParty;
   guests?: PayerGuest[];
+  hasCompany?: boolean;
+  hasAgency?: boolean;
 }) {
   const t = useTranslations('folio');
   const tc = useTranslations('common');
@@ -62,9 +80,11 @@ export function FolioPaymentModal({
   const [bankReference, setBankReference] = useState('');
   const [bankTerminalId, setBankTerminalId] = useState('');
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
-  const [codes, setCodes] = useState<Array<{ id: string; code: string; name?: string | null }>>([]);
+  const [codes, setCodes] = useState<
+    Array<{ id: string; code: string; name?: string | null; systemRole?: string | null }>
+  >([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
-  const [pocket, setPocket] = useState<FolioParty>(party);
+  const [pocket, setPocket] = useState<'' | FolioParty>('');
   const [busy, setBusy] = useState(false);
 
   const knownStay = Boolean(reservationId);
@@ -73,12 +93,22 @@ export function FolioPaymentModal({
     if (knownStay) return guests ?? [];
     return stays.find((s) => s.reservationId === stayId)?.guests ?? [];
   }, [knownStay, guests, stays, stayId]);
-  const payer = pocket === 'guest' ? resolvePayer(partyGuests) : { kind: 'none' as const };
+  const selectedCode = codes.find((row) => row.id === revenueCodeId) ?? null;
+  const roomArticle = ['ROOM', 'PKG', 'RATE_ADJ', 'CITY_TAX'].includes(selectedCode?.systemRole ?? '');
+  const namedGuests = partyGuests.filter((guest) => guest.name.trim());
+  const payer =
+    pocket === 'guest' && !roomArticle
+      ? namedGuests.length === 0
+        ? ({ kind: 'none' } as const)
+        : namedGuests.length === 1
+          ? ({ kind: 'fixed', guest: namedGuests[0]! } as const)
+          : ({ kind: 'pick' } as const)
+      : ({ kind: 'none' } as const);
   const selectedGuest =
     payer.kind === 'fixed'
       ? payer.guest
       : payer.kind === 'pick'
-        ? partyGuests.find((g) => g.id === guestId) ?? null
+        ? namedGuests.find((g) => g.id === guestId) ?? null
         : null;
 
   useEffect(() => {
@@ -91,18 +121,24 @@ export function FolioPaymentModal({
     setStayId(reservationId ?? '');
     setFolios([]);
     setRevenueCodeId('');
-    setPocket(party);
-  }, [open, reservationId, party]);
+    setPocket('');
+  }, [open, reservationId]);
 
   useEffect(() => {
     if (!open) return;
     void fetch('/api/master/revenue-codes')
       .then((r) => r.json())
       .then((data) => {
-        const rows = (data.data ?? data) as Array<{ id: string; code: string; name?: string | null; active?: boolean }>;
+        const rows = (data.data ?? data) as Array<{
+          id: string;
+          code: string;
+          name?: string | null;
+          active?: boolean;
+          systemRole?: string | null;
+        }>;
         const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
         setCodes(list);
-        setRevenueCodeId((prev) => prev || list[0]?.id || '');
+        setRevenueCodeId('');
       })
       .catch(() => setCodes([]));
   }, [open]);
@@ -146,15 +182,33 @@ export function FolioPaymentModal({
       .catch(() => setFolios([]));
   }, [open, activeStayId]);
 
-  const folio = pickTargetFolio(folios, pocket, selectedGuest);
-  const balance = folio ? accountBalance(folio) : 0;
+  const folio = roomArticle || !pocket ? undefined : pickTargetFolio(folios, pocket, selectedGuest);
+  const openFolios = folios.filter((row) => row.status === 'OPEN');
+  const roomFolio = roomArticle
+    ? openFolios.find(
+        (row) =>
+          stayMoneyPair(
+            row.charges.filter((charge) => charge.revenueCodeId === revenueCodeId),
+            (row.payments ?? []).filter((payment) => payment.revenueCodeId === revenueCodeId),
+          ).debt > 0.01,
+      ) ?? openFolios.find((row) => row.charges.some((charge) => charge.revenueCodeId === revenueCodeId))
+    : undefined;
+  const debtFolios = roomArticle ? (roomFolio ? [roomFolio] : []) : folio ? [folio] : [];
+  const articleDebt = stayMoneyPair(
+    debtFolios.flatMap((row) => row.charges).filter((row) => row.revenueCodeId === revenueCodeId),
+    debtFolios.flatMap((row) => row.payments ?? []).filter((row) => row.revenueCodeId === revenueCodeId),
+  ).debt;
   const methods = METHODS.filter((m) => m !== 'DEPOSIT');
-  const needsGuest = pocket === 'guest' && payer.kind === 'pick' && !selectedGuest;
+  const needsGuest = !roomArticle && pocket === 'guest' && payer.kind === 'pick' && !selectedGuest;
+  const needsPocket = !roomArticle && !pocket;
   const needsStay = !knownStay && !activeStayId;
   const amountN = Number(amount);
+  const overArticle = articleDebt > 0.01 && amountN > articleDebt + 0.01;
   const canSubmit =
     !needsStay &&
     !needsGuest &&
+    !needsPocket &&
+    !overArticle &&
     amountN > 0 &&
     Boolean(revenueCodeId) &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
@@ -167,9 +221,9 @@ export function FolioPaymentModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          folioId: folio?.id,
-          reservationId: folio ? undefined : activeStayId,
-          folioType: pocket === 'agency' ? 'AGENCY' : pocket === 'company' ? 'COMPANY' : 'GUEST',
+          reservationId: activeStayId,
+          folioType: roomArticle ? undefined : pocket === 'agency' ? 'AGENCY' : pocket === 'company' ? 'COMPANY' : 'GUEST',
+          reservationGuestId: roomArticle ? undefined : selectedGuest?.id,
           revenueCodeId,
           amount: amountN,
           paymentMethod: method,
@@ -190,8 +244,14 @@ export function FolioPaymentModal({
     }
   }
 
-  const payerLabel =
-    pocket === 'agency' ? t('partyAgency') : pocket === 'company' ? t('partyCompany') : selectedGuest?.name ?? '';
+  const pickedStay = knownStay ? null : stays.find((row) => row.reservationId === stayId);
+  const companyOnStay = knownStay ? hasCompany : pickedStay?.hasCompany;
+  const agencyOnStay = knownStay ? hasAgency : pickedStay?.hasAgency;
+  const pocketOptions = [
+    { value: 'guest', label: t('partyGuest') },
+    ...(agencyOnStay === false ? [] : [{ value: 'agency', label: t('partyAgency') }]),
+    ...(companyOnStay === false ? [] : [{ value: 'company', label: t('partyCompany') }]),
+  ];
 
   return (
     <EraModal
@@ -227,47 +287,46 @@ export function FolioPaymentModal({
             emptyLabel={null}
           />
         ) : null}
-        {activeStayId ? (
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t('xercMaddesi')}
+          value={revenueCodeId}
+          onChange={(v) => {
+            setRevenueCodeId(String(v ?? ''));
+            setPocket('');
+            setGuestId('');
+          }}
+          options={codes.map((c) => ({
+            value: c.id,
+            label: c.name ? `${c.code} — ${c.name}` : c.code,
+          }))}
+          emptyLabel={t('pickArticle')}
+        />
+        {activeStayId && revenueCodeId && !roomArticle ? (
           <CatalogField
             kind="CLOSED_SMALL"
             label={t('pocket')}
             value={pocket}
-            onChange={(v) => setPocket((String(v ?? 'guest') as FolioParty))}
-            options={[
-              { value: 'guest', label: t('partyGuest') },
-              { value: 'agency', label: t('partyAgency') },
-              { value: 'company', label: t('partyCompany') },
-            ]}
-            emptyLabel={null}
+            onChange={(v) => setPocket((String(v ?? '') as FolioParty) || '')}
+            options={pocketOptions}
+            emptyLabel={t('pickPocket')}
           />
         ) : null}
-        {pocket === 'guest' && payer.kind === 'pick' ? (
+        {!roomArticle && pocket === 'guest' && payer.kind === 'pick' ? (
           <CatalogField
             kind="CLOSED_SMALL"
             label={t('pickGuest')}
             value={guestId}
             onChange={(v) => setGuestId(String(v ?? ''))}
-            options={partyGuests.map((g) => ({ value: g.id, label: g.name }))}
-            emptyLabel={null}
+            options={namedGuests.map((g) => ({ value: g.id, label: g.name }))}
+            emptyLabel={t('pickGuest')}
           />
         ) : null}
-        {payerLabel ? (
-          <p className="m-0 text-[13px] text-[#34495E]">
-            {t('payer')}: <strong>{payerLabel}</strong>
-            {folio ? ` — ${balance.toFixed(2)} AZN` : ''}
+        {overArticle ? (
+          <p className="m-0 text-[12px] text-[#C0392B]">
+            {t('paymentExceedsArticle', { max: articleDebt.toFixed(2) })}
           </p>
         ) : null}
-        <CatalogField
-          kind="SEARCHABLE"
-          label={t('xercMaddesi')}
-          value={revenueCodeId}
-          onChange={(v) => setRevenueCodeId(String(v ?? ''))}
-          options={codes.map((c) => ({
-            value: c.id,
-            label: c.name ? `${c.code} — ${c.name}` : c.code,
-          }))}
-          emptyLabel={null}
-        />
         <Field
           label={tc('amount')}
           preset="amount"

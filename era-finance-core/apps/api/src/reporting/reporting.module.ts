@@ -6,10 +6,15 @@ import { IntangibleAssetsModule } from "../intangible-assets/intangible-assets.m
 import { PrismaModule } from "../prisma/prisma.module";
 import { SignatureModule } from "../signature/signature.module";
 import { StorageModule } from "../storage/storage.module";
+import { FactQueueController } from "./fact-queue.controller";
+import { FactQueueService } from "./fact-queue.service";
 import { ReportingController } from "./reporting.controller";
+import { SchemePeriodController } from "./scheme-period.controller";
+import { SchemePeriodService } from "./scheme-period.service";
 import { ReportingService } from "./reporting.service";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
 import { TaxExportService } from "./tax-export.service";
+import { SimplifiedTaxWatchService } from "./simplified-tax-watch.service";
 import { ProfitTaxService } from "./profit-tax.service";
 import { PropertyTaxService } from "./property-tax.service";
 import { VatAppendixExportService } from "./vat-appendix-export.service";
@@ -35,14 +40,17 @@ import { SystemConfigModule } from "../system-config/system-config.module";
     SignatureModule,
     StorageModule,
   ],
-  controllers: [ReportingController, StatformsController],
+  controllers: [ReportingController, StatformsController, FactQueueController, SchemePeriodController],
   providers: [
     ReportingService,
+    FactQueueService,
+    SchemePeriodService,
     StandardReportsService,
     VatQuarterDataService,
     VatAppendixExportService,
     ETaxesIntegrationService,
     TaxExportService,
+    SimplifiedTaxWatchService,
     ProfitTaxService,
     PropertyTaxService,
     StatformsService,
@@ -52,6 +60,8 @@ import { SystemConfigModule } from "../system-config/system-config.module";
   ],
   exports: [
     ReportingService,
+    FactQueueService,
+    SchemePeriodService,
     StandardReportsService,
     EtaxesSubmissionAdapterFactory,
     ETaxesIntegrationService,

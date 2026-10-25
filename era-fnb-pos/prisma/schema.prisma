@@ -44,6 +44,8 @@ model Outlet {
   code               String
   name               String
   revenueCenterCode  String   @default("FOOD") @map("revenue_center_code")
+  /// Finance warehouse name or id. Empty uses the finance default warehouse.
+  financeWarehouseCode String? @map("finance_warehouse_code")
   propertyCode       String?  @map("property_code")
   active             Boolean  @default(true)
   createdAt          DateTime @default(now()) @map("created_at")
@@ -141,7 +143,7 @@ model MenuCategory {
   outletId  String     @map("outlet_id")
   name      String
   code      String
-  /// Default hotel revenue article for a new dish. Existing dishes are not rewritten.
+  /// Hotel revenue article for every dish in the category. Read at charge time.
   revenueCode String?  @map("revenue_code")
   sortOrder Int        @default(0) @map("sort_order")
   items     MenuItem[]

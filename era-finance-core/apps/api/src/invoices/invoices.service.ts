@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InvoiceStatus, InvoicePaymentKind, Prisma, TradeContext, TransactionKind, isNasBankLedgerCode, isNasCashDeskCode, type UserRole } from "@erafinance/database";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { InvoicePrefillSchema, type InvoicePrefill } from "@erafinance/api-contracts";
 import { assertUserMayMutateInvoiceInPaidStatus } from "../auth/policies/invoice-finance.policy";
 import type { PolicySubject } from "../auth/policies/invoice-finance.policy";
@@ -25,6 +26,8 @@ import {
   type StorageService,
 } from "../storage/storage.interface";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
+import { salesVatPercent } from "../reporting/provisional-vat";
+import { AZ_TAX_SCHEME_CODE, parseSchemeParams } from "../reporting/simplified-tax-watch.calc";
 import { PatchInvoiceDto } from "./dto/patch-invoice.dto";
 import { AllocatePaymentDto } from "./dto/allocate-payment.dto";
 import { InvoicePdfQueueService } from "./invoice-pdf.queue";
@@ -1962,12 +1965,27 @@ export class InvoicesService {
     }> = [];
     let total = new Decimal(0);
     const vatInclusive = !!opts?.vatInclusive;
+    const schemeVat = await this.statutoryVatPercent(opts?.asOfDate);
 
     for (const row of items) {
       let productId: string | null = null;
       let description: string | null = row.description ?? null;
       let unitPriceInput: Decimal;
-      let vatRate = new Decimal(row.vatRate);
+      const requestedRate = new Decimal(row.vatRate);
+      let appliedRate: string;
+      try {
+        appliedRate = salesVatPercent({
+          schemeVatPercent: schemeVat,
+          exemptionChecked: requestedRate.toNumber() === -1,
+        });
+      } catch (error) {
+        throw new BadRequestException(
+          error instanceof Error
+            ? error.message
+            : "This slice does not apply an exemption after the fact",
+        );
+      }
+      const vatRate = new Decimal(appliedRate);
 
       let unitOfMeasureCode: string | null = null;
       if (row.productId) {
@@ -1988,7 +2006,6 @@ export class InvoicesService {
           });
           unitPriceInput = resolved.unitPrice;
         }
-        vatRate = new Decimal(row.vatRate);
         description = description ?? p.name;
         unitOfMeasureCode = p.unitOfMeasureCode;
       } else {
@@ -2011,10 +2028,10 @@ export class InvoicesService {
       }
 
       const vr = vatRate.toNumber();
-      const vatForCalc = vr === -1 ? new Decimal(0) : vatRate;
-      if (![-1, 0, 2, 8, 18].includes(vr)) {
-        throw new BadRequestException("vatRate must be -1 (exempt), 0, 2, 8, or 18");
+      if (!Number.isFinite(vr) || vr < 0) {
+        throw new BadRequestException("vatRate must come from the tax scheme");
       }
+      const vatForCalc = vatRate;
 
       const qty = new Decimal(row.quantity);
       let unitPriceNet: Decimal;
@@ -2047,6 +2064,21 @@ export class InvoicesService {
     }
 
     return { items: out, total };
+  }
+
+  private async statutoryVatPercent(asOfDate?: string): Promise<string> {
+    const day = asOfDate?.slice(0, 10) || todayBakuYmd();
+    const on = new Date(`${day}T00:00:00.000Z`);
+    const row = await this.prisma.taxSchemeVersion.findFirst({
+      where: {
+        code: AZ_TAX_SCHEME_CODE,
+        effectiveFrom: { lte: on },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: on } }],
+      },
+      orderBy: { effectiveFrom: "desc" },
+    });
+    if (!row) throw new BadRequestException("No tax scheme covers this invoice date");
+    return parseSchemeParams(row.parameters).vatPercent;
   }
 
   private async nextInvoiceNumber(organizationId: string): Promise<string> {

@@ -68,6 +68,7 @@ export type RoomRackRoom = {
     checkOutDate?: string;
     payStatus?: RackPayStatus;
     folioBalance?: number;
+    folioUnused?: number;
     procedureCount?: number;
     procedurePending?: number;
     agencyId?: string | null;
@@ -704,15 +705,14 @@ export default function RoomRackView({
                         ) : (
                           <span />
                         )}
-                        {active.folioBalance != null && Math.abs(active.folioBalance) > 0.01 ? (
-                          <span
-                            className={`font-mono text-[11px] font-semibold ${
-                              active.folioBalance > 0 ? 'text-[#E67E22]' : 'text-emerald-700'
-                            }`}
-                          >
-                            {active.folioBalance > 0
-                              ? `+${active.folioBalance.toFixed(2)}`
-                              : `−${Math.abs(active.folioBalance).toFixed(2)}`}
+                        {active.folioBalance != null && active.folioBalance > 0.01 ? (
+                          <span className="font-mono text-[11px] font-semibold text-[#E67E22]">
+                            +{active.folioBalance.toFixed(2)}
+                          </span>
+                        ) : null}
+                        {active.folioUnused != null && active.folioUnused > 0.01 ? (
+                          <span className="font-mono text-[11px] font-semibold text-sky-700">
+                            {active.folioUnused.toFixed(2)}
                           </span>
                         ) : null}
                         {(active.procedureCount ?? 0) > 0 ? (

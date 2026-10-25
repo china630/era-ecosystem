@@ -118,7 +118,7 @@ export async function moveGuestBetweenStays(
       data: {
         reservationId: toReservationId,
         isPrimary: false,
-        ownsFolio: to.partyBillingMode === 'EQUAL',
+        ownsFolio: true,
         sortOrder: maxSort + 1,
       },
     });

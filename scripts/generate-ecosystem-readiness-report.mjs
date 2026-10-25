@@ -233,8 +233,8 @@ const TOP_PRIORITIES = [
     status: "SHIPPED",
     coverageIds: "DH-FX-01 · FC-DH-* · HT-CAL-01 · CL-CAL-01 · LG-REF-01",
     action: [
-      "Prod `ERA_DATA_HUB_DATA_SOURCE=hub`",
-      "Enable `ERA_DATA_HUB_ENABLED=true` on consumers",
+      "Apply hub migration `20261023120000_reference_ingest_policy`",
+      "Turn FX external fetch on at `/super-admin/reference`",
       "Retire stale on-prem snapshots",
       "Monitor hub SLO / CBAR ingest",
     ],

@@ -20,6 +20,20 @@ export interface NightAuditPayload {
   businessDate: string;
   nightAuditId?: string;
   currency: 'AZN';
+  documentVersion?: 2;
+  moneyLines?: Array<{
+    revenueCode: string;
+    amount: number;
+    vatRate: number;
+    glAccountCode?: string;
+    unmapped?: boolean;
+  }>;
+  qtyLines?: Array<{
+    sku: string;
+    qty: number;
+    warehouseCode?: string;
+    purpose: 'sale' | 'house_use' | 'comp' | 'housekeeping' | 'procedure_consumable';
+  }>;
   saleLines?: Array<{
     sku: string;
     qty: number;
@@ -27,12 +41,13 @@ export interface NightAuditPayload {
     revenueCode?: string;
     glAccountCode?: string;
   }>;
-  revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
+  revenueLines?: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
   /** @deprecated use revenueLines */
   lines?: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
-  paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
+  paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string; population?: boolean }>;
+  depositReceiptLines?: Array<{ amount: number; method: string; bankTerminalId?: string; population?: boolean }>;
   depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
-  depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
+  depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string; population?: boolean }>;
 }
 
 export interface FolioChargePostedPayload {

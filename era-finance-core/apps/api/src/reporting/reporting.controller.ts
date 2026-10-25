@@ -47,6 +47,7 @@ import { CreateProfitTaxAdjustmentDto } from "./dto/create-profit-tax-adjustment
 import { UpdateProfitTaxAdjustmentDto } from "./dto/update-profit-tax-adjustment.dto";
 import { ReportingService } from "./reporting.service";
 import { TaxExportService } from "./tax-export.service";
+import { SimplifiedTaxWatchService } from "./simplified-tax-watch.service";
 import { ProfitTaxService } from "./profit-tax.service";
 import { PropertyTaxService } from "./property-tax.service";
 import { VatAppendixExportService } from "./vat-appendix-export.service";
@@ -81,6 +82,7 @@ export class ReportingController {
     private readonly vatAppendix: VatAppendixExportService,
     private readonly etaxes: ETaxesIntegrationService,
     private readonly taxExport: TaxExportService,
+    private readonly simplifiedWatch: SimplifiedTaxWatchService,
     private readonly profitTax: ProfitTaxService,
     private readonly propertyTax: PropertyTaxService,
     private readonly finance: FinanceService,
@@ -1056,6 +1058,21 @@ export class ReportingController {
       throw new BadRequestException("Invalid quarter (1–4)");
     }
     return this.etaxes.submitDeclarationToGateway(organizationId, year, quarter);
+  }
+
+  @Get("simplified-tax-watch")
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
+  @Permissions(CP_PERMISSION.API_LEDGER_READ)
+  @ApiOperation({
+    summary:
+      "Simplified-tax watcher for a month: tender buckets, threshold, e-qaimə share. Does not post.",
+  })
+  simplifiedTaxWatch(
+    @OrganizationId() organizationId: string,
+    @Query("period") period: string,
+  ) {
+    return this.simplifiedWatch.watch(organizationId, period ?? "");
   }
 
   @Get("tax-declarations")

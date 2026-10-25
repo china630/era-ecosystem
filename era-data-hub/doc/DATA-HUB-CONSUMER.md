@@ -19,10 +19,10 @@ Health (no auth): `GET /healthz`
 
 | Variable | Purpose |
 |----------|---------|
-| `ERA_DATA_HUB_ENABLED` | `true` — read FX / tariffs / calendar via hub |
 | `ERA_DATA_HUB_URL` | Hub base (no path suffix) |
-| `DATA_HUB_SERVICE_TOKEN` | Must match hub |
-| `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` | `true` — finance cron skips CBAR; hub ingests when `ERA_DATA_HUB_DATA_SOURCE=hub` |
+| `DATA_HUB_SERVICE_TOKEN` | Must match hub. Empty token skips hub calls |
+
+An organization reads the hub, or an Excel workbook stored only in finance (`reference.manual.<orgId>`). The switch is `Organization.settings.referenceSource`, edited at `/super-admin/reference` and pushed in runtime-config. Excel does not write the shared hub.
 
 Client: `apps/api/src/data-hub/data-hub-client.service.ts` — `getFxRates`, `getTariff`, `getCompanyByVoen`, `isWorkingDay`.
 
@@ -32,6 +32,7 @@ Customs: `CustomsTaxCalculatorService` resolves tariffs from hub when enabled. `
 
 | Endpoint | Mode | Notes |
 |----------|------|-------|
+| `GET /fx/display-codes` | Settings | Dashboard and CBAR-check currency codes |
 | `GET /fx/rates?date=&symbols=` | Strict | FINAL rates for accounting; Baku `YYYY-MM-DD` |
 | `GET /fx/rates/range?from=&to=&symbol=` | Strict | Historical series |
 | `GET /fx/convert?from=&to=&amount=&date=` | Operational | PRELIMINARY ok before ~10:00 Baku |
@@ -67,16 +68,13 @@ See [docs/adr/production-calendar-ecosystem.md](../../docs/adr/production-calend
 
 ## Data source (hub service)
 
-| `ERA_DATA_HUB_DATA_SOURCE` | Behaviour |
-|----------------------------|-----------|
-| `finance_ro` (default) | Registry reads `era_finance` via `FINANCE_RO_DATABASE_URL` (D1) |
-| `hub` | Registry + CBAR ingest write `era_data_hub` |
+Registry reads `era_data_hub`. External fetch per catalog and the FX code lists live in hub settings (`GET/PATCH /registry/v1/admin/reference-policy`, service token). The super-admin screen is orchestrator `/super-admin/reference`.
 
-Cutover: `npm run db:sync-from-finance` then set `ERA_DATA_HUB_DATA_SOURCE=hub`.
+`npm run db:sync-from-finance` is a one-time copy. It is the only reader of `FINANCE_RO_DATABASE_URL`.
 
 ## Fallback
 
-If hub HTTP fails or `ERA_DATA_HUB_ENABLED=false`, finance keeps local Prisma paths.
+If the hub call fails, finance accounting paths error instead of inventing a rate. An org set to Excel reads its workbook for FX, banks, calendar, and HS.
 
 ## Industry satellites (orchestrator gateway only)
 

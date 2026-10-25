@@ -19,6 +19,7 @@ const SECTIONS: {
       { href: "/admin/data/currencies", labelKey: "superAdmin.dataHubCurrencies" },
       { href: "/admin/data/units-of-measure", labelKey: "superAdmin.dataHubUom" },
       { href: "/admin/data/tax-rates", labelKey: "superAdmin.dataHubTaxRates" },
+      { href: "/admin/data/tax-schemes", labelKey: "superAdmin.dataHubTaxSchemes" },
       { href: "/admin/data/customs-tariffs", labelKey: "superAdmin.dataHubCustoms" },
     ],
   },

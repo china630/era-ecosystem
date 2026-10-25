@@ -1,8 +1,8 @@
 import { Type } from "class-transformer";
 import {
   IsArray,
-  IsDateString,
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsIn,
   IsOptional,
@@ -126,6 +126,24 @@ export class PatchOrganizationSettingsDto {
   @IsString()
   @MaxLength(128)
   asanUserId?: string | null;
+
+  /** Statutory family stored at Organization.settings.tax.regime. Does not copy the scheme. */
+  @IsOptional()
+  @IsIn(["SIMPLIFIED", "PROFIT", "PROFIT_VAT"])
+  taxRegime?: "SIMPLIFIED" | "PROFIT" | "PROFIT_VAT";
+
+  /** Shelf prices already include VAT. Stored at Organization.settings.tax.pricesIncludeTax. */
+  @IsOptional()
+  @IsBoolean()
+  pricesIncludeTax?: boolean;
+
+  /**
+   * When true, a Baku-day invoice to a registered counterparty without an e-qaimə number
+   * blocks the hotel night audit. Does not enable ERA_EQAIME_S2S_ENABLED.
+   */
+  @IsOptional()
+  @IsBoolean()
+  requireEqaimeForDayClose?: boolean;
 
   /** P0 Multi-GAAP: soft (default) | strict IFRS mirror policy */
   @IsOptional()

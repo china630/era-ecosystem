@@ -179,13 +179,9 @@ export class CbarFxService {
    * С TAX_LOOKUP_MOCK=1 (как в TaxService) внешние запросы к cbar.az отключены —
    * без таймаутов и шума в логах при локальной разработке.
    */
+  /** Test kill-switch only. Product on/off is the FX row of reference_ingest_policies. */
   isExternalCbarFetchEnabled(): boolean {
-    if (this.config.get<string>("TAX_LOOKUP_MOCK") === "1") return false;
-    const flag = this.config.get<string>("CBAR_EXTERNAL_FETCH_ENABLED");
-    if (flag != null && flag !== "") {
-      return flag.toLowerCase() === "true" || flag === "1";
-    }
-    return true;
+    return this.config.get<string>("TAX_LOOKUP_MOCK") !== "1";
   }
 
   private resetFetchHealth(): void {

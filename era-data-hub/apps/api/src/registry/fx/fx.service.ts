@@ -3,6 +3,7 @@ import { CbarRateStatus, Prisma } from "@era/data-hub-database";
 import { bakuDateKey, todayBakuYmd } from "@era/satellite-kit/time";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
+import { ReferencePolicyService } from "../../ingest/reference-policy.service";
 
 function parseDateParam(raw: string | undefined): Date {
   if (!raw) return new Date(`${todayBakuYmd()}T12:00:00.000Z`);
@@ -16,7 +17,17 @@ function parseDateParam(raw: string | undefined): Date {
 
 @Injectable()
 export class FxService {
-  constructor(private readonly ds: DataSourceService) {}
+  constructor(
+    private readonly ds: DataSourceService,
+    private readonly policy: ReferencePolicyService,
+  ) {}
+
+  async getDisplayCodes() {
+    return {
+      fxDashboardCurrencyCodes: await this.policy.getFxDashboardCurrencyCodes(),
+      fxCbarCheckCurrencyCodes: await this.policy.getFxCbarCheckCurrencyCodes(),
+    };
+  }
 
   async getRates(dateRaw: string | undefined, symbolsRaw: string | undefined) {
     const rateDate = parseDateParam(dateRaw);

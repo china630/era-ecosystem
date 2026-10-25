@@ -141,6 +141,8 @@
       "save": "Сохранить",
       "defaultOutletName": "Demo outlet",
       "outletRevenue": "Код дохода точки",
+      "outletWarehouse": "Склад в финансах",
+      "outletWarehouseDefault": "склад по умолчанию",
       "revenueEmpty": "Для этой организации нет активных кодов дохода отеля.",
       "revenueUnavailable": "Каталог кодов дохода отеля недоступен.",
       "revenueNotLinked": "Организация отеля не связана.",

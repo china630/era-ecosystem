@@ -107,7 +107,7 @@ import type {
   SourceOption,
   TabId,
 } from '@/components/reservation-card/types';
-import { computeGuestFolioBalance } from '@/components/reservation-card/folio-balance';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
   isOtaAgency,
   isWalkInRecordedAgency,
@@ -346,7 +346,6 @@ export function ReservationCardEditor({
   const [attachOpen, setAttachOpen] = useState(false);
   const [roomStatus, setRoomStatus] = useState('');
   const [roomHkCondition, setRoomHkCondition] = useState('');
-  const [depositHeldTotal, setDepositHeldTotal] = useState(0);
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
@@ -383,7 +382,7 @@ export function ReservationCardEditor({
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [companies, setCompanies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
-  const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('EQUAL');
+  const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('PRIMARY');
   const [roomTypes, setRoomTypes] = useState<SelectOption[]>([]);
   const [mealPlans, setMealPlans] = useState<SelectOption[]>([]);
   const [rooms, setRooms] = useState<
@@ -811,23 +810,6 @@ export function ReservationCardEditor({
       if (!res.ok) throw new Error(json.error ?? tc('loadError'));
       if (requestedId !== reservationId) return;
       applyJson(json);
-      try {
-        const depRes = await fetch(`/api/reservations/${reservationId}/deposits`);
-        if (seq !== loadSeq.current) return;
-        if (depRes.ok) {
-          const deps = (await depRes.json()) as Array<{ amount?: number; status?: string }>;
-          const held = Array.isArray(deps)
-            ? deps
-                .filter((d) => d.status === 'HELD')
-                .reduce((s, d) => s + Number(d.amount ?? 0), 0)
-            : 0;
-          setDepositHeldTotal(Math.round(held * 100) / 100);
-        } else {
-          setDepositHeldTotal(0);
-        }
-      } catch {
-        setDepositHeldTotal(0);
-      }
     } catch (e) {
       if (seq !== loadSeq.current) return;
       reportApiError({ error: e instanceof Error ? e.message : tc('loadError') });
@@ -976,7 +958,7 @@ export function ReservationCardEditor({
       setBookingName(null);
       setSiblingStays([]);
       setIsLocked(false);
-      setPartyBillingMode('EQUAL');
+      setPartyBillingMode('PRIMARY');
     } else {
       void load();
     }
@@ -1604,8 +1586,8 @@ export function ReservationCardEditor({
         nights: priced.length || dailyRates.length,
         nightPrice,
         total,
-        deposit: depositHeldTotal,
-        balance: Math.max(0, total - depositHeldTotal),
+        deposit: stayPair.unused,
+        balance: stayPair.debt,
         phone: guest?.phone ?? '',
         email: guest?.email ?? '',
         documentNo: primary?.passportNo || primary?.idCardNo || '',
@@ -1644,7 +1626,7 @@ export function ReservationCardEditor({
           nightPrice: t('printForm.nightPrice'),
           nights: t('printForm.nights'),
           total: t('printForm.total'),
-          deposit: t('printForm.deposit'),
+          deposit: t('overpaid'),
           balance: t('printForm.balance'),
           date: t('printForm.date'),
           roomType: t('printForm.roomType'),
@@ -2566,7 +2548,11 @@ export function ReservationCardEditor({
 
   const folios = (data?.folios as FolioAccount[] | undefined) ?? [];
 
-  const guestFolioBalance = computeGuestFolioBalance(folios);
+  const stayPair = stayMoneyPair(
+    folios.flatMap((folio) => folio.charges),
+    folios.flatMap((folio) => folio.payments ?? []),
+  );
+  const guestFolioBalance = stayPair.debt;
 
   const pricingDisplayCurrency =
     dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
@@ -2769,8 +2755,8 @@ export function ReservationCardEditor({
           <ReservationCardHeaderSnapshot
             isCreate={isCreate}
             totalAmount={Number(data?.totalAmount ?? 0)}
-            depositAmount={depositHeldTotal}
-            folioBalance={guestFolioBalance}
+            unusedAmount={stayPair.unused}
+            folioBalance={stayPair.debt}
             occupancyWorld={occupancyWorld}
             bookingRoomCount={siblingStays.length || undefined}
             onOccupancyClick={
@@ -2893,7 +2879,8 @@ export function ReservationCardEditor({
               });
             }}
             reservationId={reservationId}
-            folioBalance={guestFolioBalance}
+            folioBalance={stayPair.debt}
+            unusedAmount={stayPair.unused}
             billingRoutingSummary={billingRoutingSummary}
             stayStatus={status}
             earlyStayCheckoutBusy={busy}

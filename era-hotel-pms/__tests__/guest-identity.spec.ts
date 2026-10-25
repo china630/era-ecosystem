@@ -42,11 +42,11 @@ describe('guest-identity', () => {
       birthDate: null,
       nationality: 'AZ',
       phone: '+994501234567',
-      voen: null,
       globalPersonId: null,
     });
     expect(data).not.toHaveProperty('nationalIdFin');
     expect(data).not.toHaveProperty('passportNumber');
+    expect(data).not.toHaveProperty('voen');
   });
 
   it('normalizeGuestInput composes fullName from name parts', async () => {

@@ -8,7 +8,9 @@ export type OccupancyWorld = 'exclusive' | 'share' | 'booking';
 export type ReservationCardHeaderSnapshotProps = {
   isCreate: boolean;
   totalAmount: number;
-  depositAmount: number;
+  /** Remainder of blue payment lines. Not a second cash drawer. */
+  unusedAmount: number;
+  /** Charges not yet covered by a payment of the same article. */
   folioBalance: number;
   occupancyWorld: OccupancyWorld;
   bookingRoomCount?: number;
@@ -51,8 +53,8 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
     },
     {
       key: 'deposit',
-      label: t('headerDeposit'),
-      value: props.isCreate ? '—' : `${props.depositAmount.toFixed(2)} AZN`,
+      label: t('overpaid'),
+      value: props.isCreate ? '—' : `${props.unusedAmount.toFixed(2)} AZN`,
       danger: false,
       valueClass: 'text-sky-700',
       clickable: false,

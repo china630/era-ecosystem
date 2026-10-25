@@ -1011,7 +1011,6 @@ model Guest {
   /** M/F ops cache — physical column `gender`. */
   sex                String?        @map("gender")
   nationality        String?
-  voen               String?
   phone              String?
   email              String?
   loyaltyTier        String?
@@ -2047,7 +2046,21 @@ model HkConsumption {
   @@index([organizationId, businessDate])
 }
 
-/// One closed consumption line reversed onto an open-day row. Several closed days can net into one sku.
+/// Stock the guest is not billed for: housekeeping and clinic consumables.
+model InternalConsumption {
+  id             String   @id @default(uuid())
+  organizationId String
+  businessDate   DateTime @db.Date
+  sku            String
+  qty            Decimal  @db.Decimal(14, 4)
+  warehouseCode  String?  @map("warehouse_code")
+  source         String
+  sourceRef      String   @unique @map("source_ref")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, businessDate])
+}
+
 model HkConsumptionReversal {
   id             String   @id @default(uuid())
   organizationId String
@@ -2334,6 +2347,10 @@ model FolioCharge {
   department    Department? @relation(fields: [departmentId], references: [id])
   amount        Decimal     @db.Decimal(12, 2)
   qty           Int         @default(1)
+  /// Quantity that moves stock. Money-only lines (house-use offset, discount) are 0.
+  stockQty      Int         @default(0) @map("stock_qty")
+  /// Finance warehouse code for this quantity. Empty uses the finance default warehouse.
+  warehouseCode String?     @map("warehouse_code")
   /// Finance Product.sku. Empty for room and package lines that have no card yet.
   sku           String?
   description   String

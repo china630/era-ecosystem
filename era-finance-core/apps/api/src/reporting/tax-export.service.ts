@@ -13,13 +13,9 @@ import {
   TaxDeclarationType,
 } from "@erafinance/database";
 import ExcelJS from "exceljs";
-import { endOfUtcDay, monthRangeUtc } from "./reporting-period.util";
+import { monthRangeUtc } from "./reporting-period.util";
+import { monthEndYmd } from "./simplified-tax-watch.calc";
 import { PrismaService } from "../prisma/prisma.service";
-import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
-import {
-  AccountingBookService,
-  ledgerTypeForBookGaap,
-} from "../accounting/accounting-book.service";
 import { STORAGE_SERVICE, type StorageService } from "../storage/storage.interface";
 import type { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
@@ -35,6 +31,7 @@ import {
 import type { EtaxesSubmissionDestination } from "./etaxes-submission.adapter";
 import { ProfitTaxService } from "./profit-tax.service";
 import { SignatureService } from "../signature/signature.service";
+import { SimplifiedTaxWatchService } from "./simplified-tax-watch.service";
 
 type DeclarationRecord = {
   id: string;
@@ -153,13 +150,12 @@ export class TaxExportService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
-    private readonly posting: PostingAccountResolver,
-    private readonly accountingBooks: AccountingBookService,
     private readonly etaxes: ETaxesIntegrationService,
     private readonly mdm: OrchestratorMdmClientService,
     private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
     private readonly profitTax: ProfitTaxService,
     private readonly signatures: SignatureService,
+    private readonly simplifiedWatch: SimplifiedTaxWatchService,
   ) {}
 
   async list(organizationId: string): Promise<DeclarationRecord[]> {
@@ -470,45 +466,31 @@ export class TaxExportService {
     periodTo: string;
     revenueAzn: Decimal;
     simplifiedTaxAmountAzn: Decimal;
+    cashAzn: string;
+    bankAzn: string;
+    cardPopulationAzn: string;
+    cardUnmarkedAzn: string;
+    defaultRatePercent: string;
+    posRatePercent: string;
   }> {
-    const { year, month } = parsePeriod(period);
-    const { start, end } = monthRangeUtc(year, month);
-    const revenueCode = await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
-    const opsBook =
-      await this.accountingBooks.resolveOpsBookForMoneyPath(organizationId);
-    const ledgerType = ledgerTypeForBookGaap(opsBook.gaapKind);
-    const account = await this.prisma.account.findFirst({
-      where: {
-        organizationId,
-        code: revenueCode,
-        ledgerType,
-        accountingBookId: opsBook.id,
-      },
-      select: { id: true },
-    });
-    if (!account) {
-      throw new BadRequestException(
-        `Revenue account ${revenueCode} not found for organization`,
-      );
-    }
-
-    const agg = await this.prisma.journalEntry.aggregate({
-      where: {
-        organizationId,
-        accountId: account.id,
-        ledgerType,
-        accountingBookId: opsBook.id,
-        transaction: { date: { gte: start, lte: endOfUtcDay(end) } },
-      },
-      _sum: { credit: true },
-    });
-    const revenueAzn = agg._sum.credit ?? new Prisma.Decimal(0);
-    const simplifiedTaxAmountAzn = revenueAzn.mul(new Prisma.Decimal("0.02"));
+    const watch = await this.simplifiedWatch.watch(organizationId, period);
+    const revenueAzn = new Decimal(watch.cashAzn)
+      .plus(watch.bankAzn)
+      .plus(watch.cardPopulationAzn)
+      .plus(watch.cardUnmarkedAzn);
+    const simplifiedTaxAmountAzn = new Decimal(watch.simplifiedTaxAmountAzn);
+    const [year, month] = period.split("-").map(Number);
     return {
-      periodFrom: start.toISOString().slice(0, 10),
-      periodTo: end.toISOString().slice(0, 10),
+      periodFrom: `${period}-01`,
+      periodTo: monthEndYmd(year, month),
       revenueAzn,
       simplifiedTaxAmountAzn,
+      cashAzn: watch.cashAzn,
+      bankAzn: watch.bankAzn,
+      cardPopulationAzn: watch.cardPopulationAzn,
+      cardUnmarkedAzn: watch.cardUnmarkedAzn,
+      defaultRatePercent: watch.defaultRatePercent,
+      posRatePercent: watch.posRatePercent,
     };
   }
 
@@ -520,6 +502,12 @@ export class TaxExportService {
     periodTo: string;
     revenueAzn: Decimal;
     simplifiedTaxAmountAzn: Decimal;
+    cashAzn: string;
+    bankAzn: string;
+    cardPopulationAzn: string;
+    cardUnmarkedAzn: string;
+    defaultRatePercent: string;
+    posRatePercent: string;
   }): string {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <TaxDeclaration schemaVersion="2.0" target="e-taxes.gov.az">
@@ -533,7 +521,12 @@ export class TaxExportService {
     <PeriodFrom>${input.periodFrom}</PeriodFrom>
     <PeriodTo>${input.periodTo}</PeriodTo>
     <RevenueAZN>${input.revenueAzn.toFixed(2)}</RevenueAZN>
-    <TaxRatePercent>2.00</TaxRatePercent>
+    <CashAZN>${input.cashAzn}</CashAZN>
+    <BankAZN>${input.bankAzn}</BankAZN>
+    <CardPopulationAZN>${input.cardPopulationAzn}</CardPopulationAZN>
+    <CardUnmarkedAZN>${input.cardUnmarkedAzn}</CardUnmarkedAZN>
+    <DefaultRatePercent>${input.defaultRatePercent}</DefaultRatePercent>
+    <PosRatePercent>${input.posRatePercent}</PosRatePercent>
     <TaxAmountAZN>${input.simplifiedTaxAmountAzn.toFixed(2)}</TaxAmountAZN>
   </Computation>
   <ComplianceNote>Elektron Bildiriş uploaded separately after portal submission.</ComplianceNote>
@@ -548,6 +541,12 @@ export class TaxExportService {
     periodTo: string;
     revenueAzn: Decimal;
     simplifiedTaxAmountAzn: Decimal;
+    cashAzn: string;
+    bankAzn: string;
+    cardPopulationAzn: string;
+    cardUnmarkedAzn: string;
+    defaultRatePercent: string;
+    posRatePercent: string;
   }): Promise<Buffer> {
     const wb = new ExcelJS.Workbook();
     wb.creator = "ERA Finance";
@@ -565,7 +564,12 @@ export class TaxExportService {
       { field: "Period from", value: input.periodFrom },
       { field: "Period to", value: input.periodTo },
       { field: "Revenue (AZN)", value: input.revenueAzn.toFixed(2) },
-      { field: "Rate (%)", value: "2.00" },
+      { field: "Cash (AZN)", value: input.cashAzn },
+      { field: "Bank (AZN)", value: input.bankAzn },
+      { field: "Population card (AZN)", value: input.cardPopulationAzn },
+      { field: "Unmarked card (AZN)", value: input.cardUnmarkedAzn },
+      { field: "Default rate (%)", value: input.defaultRatePercent },
+      { field: "POS rate (%)", value: input.posRatePercent },
       { field: "Tax amount (AZN)", value: input.simplifiedTaxAmountAzn.toFixed(2) },
     ]);
     const raw = await wb.xlsx.writeBuffer();
@@ -798,6 +802,12 @@ export class TaxExportService {
       periodTo: agg.periodTo,
       revenueAzn: agg.revenueAzn,
       simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn,
+      cashAzn: agg.cashAzn,
+      bankAzn: agg.bankAzn,
+      cardPopulationAzn: agg.cardPopulationAzn,
+      cardUnmarkedAzn: agg.cardUnmarkedAzn,
+      defaultRatePercent: agg.defaultRatePercent,
+      posRatePercent: agg.posRatePercent,
     });
     const xlsx = await this.buildSimplifiedTaxXlsxBuffer({
       orgName: org.name,
@@ -807,6 +817,12 @@ export class TaxExportService {
       periodTo: agg.periodTo,
       revenueAzn: agg.revenueAzn,
       simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn,
+      cashAzn: agg.cashAzn,
+      bankAzn: agg.bankAzn,
+      cardPopulationAzn: agg.cardPopulationAzn,
+      cardUnmarkedAzn: agg.cardUnmarkedAzn,
+      defaultRatePercent: agg.defaultRatePercent,
+      posRatePercent: agg.posRatePercent,
     });
 
     const xmlKey = `${baseKey}.xml`;
@@ -826,6 +842,7 @@ export class TaxExportService {
         period: dto.period,
         generatedFileUrl: xmlKey,
         status: TaxDeclarationExportStatus.GENERATED,
+        amountAzn: agg.simplifiedTaxAmountAzn,
       },
     });
 

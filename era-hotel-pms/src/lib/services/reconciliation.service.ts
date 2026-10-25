@@ -33,7 +33,10 @@ export async function getReconciliationReport(businessDate: string) {
   if (e1Log) {
     try {
       const envelope = JSON.parse(e1Log.payloadJson) as { payload: NightAuditPayload };
-      for (const line of envelope.payload.revenueLines ?? envelope.payload.lines ?? []) {
+      for (const line of envelope.payload.moneyLines ??
+        envelope.payload.revenueLines ??
+        envelope.payload.lines ??
+        []) {
         e1ByCode.set(line.revenueCode, line.amount);
       }
     } catch {

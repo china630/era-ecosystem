@@ -154,4 +154,11 @@ export class PurchaseStockDto {
   @IsOptional()
   @IsUUID()
   budgetLineId?: string;
+
+  @ApiPropertyOptional({
+    description: "Act or e-qaimə number. Empty means the line waits for a document and does not post input VAT.",
+  })
+  @IsOptional()
+  @IsString()
+  taxDocumentRef?: string;
 }

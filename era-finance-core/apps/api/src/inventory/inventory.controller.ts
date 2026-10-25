@@ -24,6 +24,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
+import { LinkProvisionalVatDto } from "../reporting/dto/scheme-period.dto";
 import { CreateWarehouseDto } from "./dto/create-warehouse.dto";
 import { CreateWarehouseBinDto } from "./dto/create-warehouse-bin.dto";
 import { PatchInventorySettingsDto } from "./dto/patch-inventory-settings.dto";
@@ -267,13 +268,26 @@ export class InventoryController {
   @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
-      "Alış fakturası: kind=goods — Дт 201 (+241 при ценах с НДС) Кт 531 без StockMovement; kind=services — Дт 731 (+241) Кт 531. Складской приход — отдельный документ (roadmap).",
+      "Purchase invoice. Without an act or e-qaimə number the whole purchase posts to expense: no inventory and no input VAT. With taxDocumentRef, goods post to inventory and input VAT posts to the VAT_INPUT role. Linking the document later moves goods and the tax. Warehouse receipt is a separate document.",
   })
   purchase(
     @OrganizationId() organizationId: string,
     @Body() dto: PurchaseStockDto,
   ) {
     return this.inventory.recordPurchase(organizationId, dto);
+  }
+
+  @Post("purchase/:id/tax-document")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
+  @ApiOperation({
+    summary: "Link an act or e-qaimə. Posts input VAT against output VAT. No cash refund.",
+  })
+  linkTaxDocument(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: LinkProvisionalVatDto,
+  ) {
+    return this.inventory.linkProvisionalDocument(organizationId, id, body.documentRef);
   }
 
   @Post("receipts")

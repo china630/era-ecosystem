@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Eye,
   FileStack,
+  Link2,
   MoreHorizontal,
   Send,
   SendHorizontal,
@@ -35,6 +36,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -96,6 +98,7 @@ function formatEqaimeStatus(
     ACCEPTED: t("invoices.eqaimeStatusAccepted"),
     REJECTED: t("invoices.eqaimeStatusRejected"),
     CANCELLED: t("invoices.eqaimeStatusCancelled"),
+    MANUAL: t("invoices.eqaimeStatusManual"),
   };
   return map[status] ?? status;
 }
@@ -153,6 +156,8 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [payForId, setPayForId] = useState<string | null>(null);
+  const [linkForId, setLinkForId] = useState<string | null>(null);
+  const [linkNumber, setLinkNumber] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [payDate, setPayDate] = useState("");
   const [paySubmitting, setPaySubmitting] = useState(false);
@@ -473,6 +478,33 @@ export default function InvoicesPage() {
     const firstPayable = rows.find((r) => r.status === "SENT" || r.status === "PARTIALLY_PAID");
     if (firstPayable) openPay(firstPayable);
   }, [loading, rows, payForId, search]);
+
+  async function linkEqaime(id: string) {
+    const number = linkNumber.trim();
+    if (!number) {
+      toast.error(t("invoices.eqaimeLinkEmpty"));
+      return;
+    }
+    const key = `eqaime-link:${id}`;
+    setInvoiceActionBusy(key);
+    try {
+      const res = await apiFetch(`/api/invoices/${id}/eqaime/link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eqaimeNumber: number }),
+      });
+      if (!res.ok) {
+        toast.error(t("invoices.eqaimeLinkError"));
+        return;
+      }
+      toast.success(t("invoices.eqaimeLinkOk"));
+      setLinkForId(null);
+      setLinkNumber("");
+      await load();
+    } finally {
+      setInvoiceActionBusy((b) => (b === key ? null : b));
+    }
+  }
 
   async function submitEqaime(id: string) {
     const key = `eqaime:${id}`;
@@ -992,6 +1024,23 @@ export default function InvoicesPage() {
                                       </button>
                                     </>
                                   ) : null}
+                                  {!r.isInternational &&
+                                  r.status !== "DRAFT" &&
+                                  r.status !== "CANCELLED" &&
+                                  !r.eqaimeNumber ? (
+                                    <button
+                                      type="button"
+                                      disabled={invoiceActionBusy !== null}
+                                      className={TABLE_ROW_ICON_BTN_CLASS}
+                                      title={t("invoices.eqaimeLink")}
+                                      onClick={() => {
+                                        setLinkForId(r.id);
+                                        setLinkNumber("");
+                                      }}
+                                    >
+                                      <Link2 className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                                    </button>
+                                  ) : null}
                                   <button
                                     type="button"
                                     disabled={invoiceActionBusy !== null}
@@ -1042,7 +1091,39 @@ export default function InvoicesPage() {
                                 </div>
                               </td>
                             ) : null}
-                          </tr>
+                            </tr>
+                          {linkForId === r.id ? (
+                            <tr className={`${DATA_TABLE_TR_CLASS} bg-[#F8FAFC]`}>
+                              <td colSpan={10} className={`${DATA_TABLE_TD_CLASS} p-4`}>
+                                <div className="flex max-w-xl flex-wrap items-end gap-3">
+                                  <label className="flex flex-col gap-1 text-xs font-semibold text-[#475569]">
+                                    {t("invoices.eqaimeNumber")}
+                                    <input
+                                      type="text"
+                                      value={linkNumber}
+                                      onChange={(e) => setLinkNumber(e.target.value)}
+                                      className={`${MODAL_INPUT_CLASS} w-56`}
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    disabled={invoiceActionBusy !== null}
+                                    onClick={() => void linkEqaime(r.id)}
+                                    className={`${PRIMARY_BUTTON_CLASS} px-3 text-[13px]`}
+                                  >
+                                    {t("invoices.eqaimeLinkSave")}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setLinkForId(null)}
+                                    className="rounded-lg border border-[#D5DADF] px-3 py-1.5 text-[13px]"
+                                  >
+                                    {t("common.cancel")}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ) : null}
                           {payForId === r.id ? (
                             <tr className={`${DATA_TABLE_TR_CLASS} bg-[#F8FAFC]`}>
                               <td colSpan={10} className={`${DATA_TABLE_TD_CLASS} p-4`}>

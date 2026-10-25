@@ -14,6 +14,7 @@ import {
   legalFormToOrganizationKind,
   TaxRateKind,
 } from "@erafinance/database";
+import { applyStatutorySchemePackage } from "../reporting/tax-scheme-package";
 import {
   ORGANIZATION_BANK_ACCOUNT_CURRENCIES,
   ORGANIZATION_BANK_ACCOUNT_TYPES,
@@ -149,6 +150,17 @@ export class AdminCatalogService {
       usageTotal: r._count.systemProducts,
       _count: undefined,
     }));
+  }
+
+  async listTaxSchemes() {
+    return this.prisma.taxSchemeVersion.findMany({
+      orderBy: [{ effectiveFrom: "asc" }, { code: "asc" }],
+    });
+  }
+
+  /** Same statutory row for SaaS and on-prem. Does not recalculate a declaration. */
+  applyStatutorySchemePackage() {
+    return applyStatutorySchemePackage(this.prisma);
   }
 
   async createTaxRate(dto: CreateTaxRateDto) {

@@ -18,7 +18,7 @@ alwaysApply: false
 | Prescription queue | `POST /api/integration/prescription-queue` (service token), `POST /api/integration/prescription-queue/[id]` (`api:receipts.sell`) | `paid` posts the folio or hotel cashier line (price, SKU, revenue code). `dispense` rings the receipt. `return` moves the money back only after the goods are accepted |
 | Open shifts for hotel | `GET /api/internal/v1/shifts/open` | Night audit polls the hub organization |
 | Hotel settlement callback | `POST /api/integration/settlement-confirmed` | Walk-in `PENDING_HUB` → `PAID` and one sale event |
-| Revenue codes | `/admin/catalog`, `GET /api/admin/hotel-revenue-codes`, `/api/admin/outlets`, `/api/admin/product-categories`, `/api/admin/products` | `api:hotel.revenue_codes`. Outlet, category, and product pickers |
+| Revenue codes | `/admin/catalog`, `GET /api/admin/hotel-revenue-codes`, `/api/admin/outlets`, `/api/admin/product-categories` | `api:hotel.revenue_codes`. Outlet and category pickers. A code on the product is not used |
 | Shifts | `app/api/shifts/` | open pulls RETAIL channel prices into the product journal; close, X-report |
 | Products / stock | `products/`, `stock/`, `/api/import` (`stock-cards`) | search, check, replenishment; Nafta `#33` cutover wizard `/admin/import` |
 | Integrations | `integrations/marketplace`, `integration/` | prescription, stock write-off |

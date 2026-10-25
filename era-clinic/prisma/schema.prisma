@@ -2463,3 +2463,19 @@ model ClinicCutoverPolicy {
 
   @@map("clinic_cutover_policy")
 }
+
+/// Department clinic consumables waiting for the hotel journal. sourceRef is unique.
+model ConsumptionOutbox {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  sourceRef      String    @unique @map("source_ref")
+  payloadJson    String    @map("payload_json")
+  status         String    @default("PENDING")
+  attempts       Int       @default(0)
+  lastError      String?   @map("last_error")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  sentAt         DateTime? @map("sent_at")
+
+  @@index([organizationId, status])
+  @@map("consumption_outbox")
+}

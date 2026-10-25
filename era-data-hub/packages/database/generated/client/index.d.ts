@@ -68,6 +68,16 @@ export type City = $Result.DefaultSelection<Prisma.$CityPayload>
  * 
  */
 export type TaxRate = $Result.DefaultSelection<Prisma.$TaxRatePayload>
+/**
+ * Model ReferenceIngestPolicy
+ * 
+ */
+export type ReferenceIngestPolicy = $Result.DefaultSelection<Prisma.$ReferenceIngestPolicyPayload>
+/**
+ * Model HubPlatformSetting
+ * Platform settings owned by data-hub (FX dashboard codes, and similar).
+ */
+export type HubPlatformSetting = $Result.DefaultSelection<Prisma.$HubPlatformSettingPayload>
 
 /**
  * Enums
@@ -115,6 +125,22 @@ export const TaxRateKind: {
 
 export type TaxRateKind = (typeof TaxRateKind)[keyof typeof TaxRateKind]
 
+
+export const ReferenceCatalogKind: {
+  FX: 'FX',
+  BANKS: 'BANKS',
+  COMPANIES: 'COMPANIES',
+  HS: 'HS',
+  GEO: 'GEO',
+  UOM: 'UOM',
+  CURRENCIES: 'CURRENCIES',
+  TAX_RATES: 'TAX_RATES',
+  CHART_OF_ACCOUNTS: 'CHART_OF_ACCOUNTS',
+  CALENDAR: 'CALENDAR'
+};
+
+export type ReferenceCatalogKind = (typeof ReferenceCatalogKind)[keyof typeof ReferenceCatalogKind]
+
 }
 
 export type CbarRateStatus = $Enums.CbarRateStatus
@@ -132,6 +158,10 @@ export const UnitOfMeasureKind: typeof $Enums.UnitOfMeasureKind
 export type TaxRateKind = $Enums.TaxRateKind
 
 export const TaxRateKind: typeof $Enums.TaxRateKind
+
+export type ReferenceCatalogKind = $Enums.ReferenceCatalogKind
+
+export const ReferenceCatalogKind: typeof $Enums.ReferenceCatalogKind
 
 /**
  * ##  Prisma Client ʲˢ
@@ -363,6 +393,26 @@ export class PrismaClient<
     * ```
     */
   get taxRate(): Prisma.TaxRateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.referenceIngestPolicy`: Exposes CRUD operations for the **ReferenceIngestPolicy** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ReferenceIngestPolicies
+    * const referenceIngestPolicies = await prisma.referenceIngestPolicy.findMany()
+    * ```
+    */
+  get referenceIngestPolicy(): Prisma.ReferenceIngestPolicyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.hubPlatformSetting`: Exposes CRUD operations for the **HubPlatformSetting** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more HubPlatformSettings
+    * const hubPlatformSettings = await prisma.hubPlatformSetting.findMany()
+    * ```
+    */
+  get hubPlatformSetting(): Prisma.HubPlatformSettingDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -807,7 +857,9 @@ export namespace Prisma {
     Currency: 'Currency',
     Country: 'Country',
     City: 'City',
-    TaxRate: 'TaxRate'
+    TaxRate: 'TaxRate',
+    ReferenceIngestPolicy: 'ReferenceIngestPolicy',
+    HubPlatformSetting: 'HubPlatformSetting'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -823,7 +875,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "calendarDay" | "cbarOfficialRate" | "globalCompanyDirectory" | "bankGlossary" | "bankBranch" | "customsTariffRate" | "unitOfMeasure" | "currency" | "country" | "city" | "taxRate"
+      modelProps: "calendarDay" | "cbarOfficialRate" | "globalCompanyDirectory" | "bankGlossary" | "bankBranch" | "customsTariffRate" | "unitOfMeasure" | "currency" | "country" | "city" | "taxRate" | "referenceIngestPolicy" | "hubPlatformSetting"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1641,6 +1693,154 @@ export namespace Prisma {
           }
         }
       }
+      ReferenceIngestPolicy: {
+        payload: Prisma.$ReferenceIngestPolicyPayload<ExtArgs>
+        fields: Prisma.ReferenceIngestPolicyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ReferenceIngestPolicyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ReferenceIngestPolicyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>
+          }
+          findFirst: {
+            args: Prisma.ReferenceIngestPolicyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ReferenceIngestPolicyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>
+          }
+          findMany: {
+            args: Prisma.ReferenceIngestPolicyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>[]
+          }
+          create: {
+            args: Prisma.ReferenceIngestPolicyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>
+          }
+          createMany: {
+            args: Prisma.ReferenceIngestPolicyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ReferenceIngestPolicyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>[]
+          }
+          delete: {
+            args: Prisma.ReferenceIngestPolicyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>
+          }
+          update: {
+            args: Prisma.ReferenceIngestPolicyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>
+          }
+          deleteMany: {
+            args: Prisma.ReferenceIngestPolicyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ReferenceIngestPolicyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ReferenceIngestPolicyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>[]
+          }
+          upsert: {
+            args: Prisma.ReferenceIngestPolicyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferenceIngestPolicyPayload>
+          }
+          aggregate: {
+            args: Prisma.ReferenceIngestPolicyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReferenceIngestPolicy>
+          }
+          groupBy: {
+            args: Prisma.ReferenceIngestPolicyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ReferenceIngestPolicyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ReferenceIngestPolicyCountArgs<ExtArgs>
+            result: $Utils.Optional<ReferenceIngestPolicyCountAggregateOutputType> | number
+          }
+        }
+      }
+      HubPlatformSetting: {
+        payload: Prisma.$HubPlatformSettingPayload<ExtArgs>
+        fields: Prisma.HubPlatformSettingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.HubPlatformSettingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.HubPlatformSettingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>
+          }
+          findFirst: {
+            args: Prisma.HubPlatformSettingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.HubPlatformSettingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>
+          }
+          findMany: {
+            args: Prisma.HubPlatformSettingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>[]
+          }
+          create: {
+            args: Prisma.HubPlatformSettingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>
+          }
+          createMany: {
+            args: Prisma.HubPlatformSettingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.HubPlatformSettingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>[]
+          }
+          delete: {
+            args: Prisma.HubPlatformSettingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>
+          }
+          update: {
+            args: Prisma.HubPlatformSettingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>
+          }
+          deleteMany: {
+            args: Prisma.HubPlatformSettingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.HubPlatformSettingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.HubPlatformSettingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>[]
+          }
+          upsert: {
+            args: Prisma.HubPlatformSettingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HubPlatformSettingPayload>
+          }
+          aggregate: {
+            args: Prisma.HubPlatformSettingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateHubPlatformSetting>
+          }
+          groupBy: {
+            args: Prisma.HubPlatformSettingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<HubPlatformSettingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.HubPlatformSettingCountArgs<ExtArgs>
+            result: $Utils.Optional<HubPlatformSettingCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1760,6 +1960,8 @@ export namespace Prisma {
     country?: CountryOmit
     city?: CityOmit
     taxRate?: TaxRateOmit
+    referenceIngestPolicy?: ReferenceIngestPolicyOmit
+    hubPlatformSetting?: HubPlatformSettingOmit
   }
 
   /* Types for Logging */
@@ -14307,6 +14509,1950 @@ export namespace Prisma {
 
 
   /**
+   * Model ReferenceIngestPolicy
+   */
+
+  export type AggregateReferenceIngestPolicy = {
+    _count: ReferenceIngestPolicyCountAggregateOutputType | null
+    _min: ReferenceIngestPolicyMinAggregateOutputType | null
+    _max: ReferenceIngestPolicyMaxAggregateOutputType | null
+  }
+
+  export type ReferenceIngestPolicyMinAggregateOutputType = {
+    catalogKind: $Enums.ReferenceCatalogKind | null
+    externalFetchEnabled: boolean | null
+    updatedAt: Date | null
+  }
+
+  export type ReferenceIngestPolicyMaxAggregateOutputType = {
+    catalogKind: $Enums.ReferenceCatalogKind | null
+    externalFetchEnabled: boolean | null
+    updatedAt: Date | null
+  }
+
+  export type ReferenceIngestPolicyCountAggregateOutputType = {
+    catalogKind: number
+    externalFetchEnabled: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ReferenceIngestPolicyMinAggregateInputType = {
+    catalogKind?: true
+    externalFetchEnabled?: true
+    updatedAt?: true
+  }
+
+  export type ReferenceIngestPolicyMaxAggregateInputType = {
+    catalogKind?: true
+    externalFetchEnabled?: true
+    updatedAt?: true
+  }
+
+  export type ReferenceIngestPolicyCountAggregateInputType = {
+    catalogKind?: true
+    externalFetchEnabled?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ReferenceIngestPolicyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReferenceIngestPolicy to aggregate.
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReferenceIngestPolicies to fetch.
+     */
+    orderBy?: ReferenceIngestPolicyOrderByWithRelationInput | ReferenceIngestPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ReferenceIngestPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReferenceIngestPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReferenceIngestPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ReferenceIngestPolicies
+    **/
+    _count?: true | ReferenceIngestPolicyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ReferenceIngestPolicyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ReferenceIngestPolicyMaxAggregateInputType
+  }
+
+  export type GetReferenceIngestPolicyAggregateType<T extends ReferenceIngestPolicyAggregateArgs> = {
+        [P in keyof T & keyof AggregateReferenceIngestPolicy]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReferenceIngestPolicy[P]>
+      : GetScalarType<T[P], AggregateReferenceIngestPolicy[P]>
+  }
+
+
+
+
+  export type ReferenceIngestPolicyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReferenceIngestPolicyWhereInput
+    orderBy?: ReferenceIngestPolicyOrderByWithAggregationInput | ReferenceIngestPolicyOrderByWithAggregationInput[]
+    by: ReferenceIngestPolicyScalarFieldEnum[] | ReferenceIngestPolicyScalarFieldEnum
+    having?: ReferenceIngestPolicyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ReferenceIngestPolicyCountAggregateInputType | true
+    _min?: ReferenceIngestPolicyMinAggregateInputType
+    _max?: ReferenceIngestPolicyMaxAggregateInputType
+  }
+
+  export type ReferenceIngestPolicyGroupByOutputType = {
+    catalogKind: $Enums.ReferenceCatalogKind
+    externalFetchEnabled: boolean
+    updatedAt: Date
+    _count: ReferenceIngestPolicyCountAggregateOutputType | null
+    _min: ReferenceIngestPolicyMinAggregateOutputType | null
+    _max: ReferenceIngestPolicyMaxAggregateOutputType | null
+  }
+
+  type GetReferenceIngestPolicyGroupByPayload<T extends ReferenceIngestPolicyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ReferenceIngestPolicyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ReferenceIngestPolicyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ReferenceIngestPolicyGroupByOutputType[P]>
+            : GetScalarType<T[P], ReferenceIngestPolicyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ReferenceIngestPolicySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    catalogKind?: boolean
+    externalFetchEnabled?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["referenceIngestPolicy"]>
+
+  export type ReferenceIngestPolicySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    catalogKind?: boolean
+    externalFetchEnabled?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["referenceIngestPolicy"]>
+
+  export type ReferenceIngestPolicySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    catalogKind?: boolean
+    externalFetchEnabled?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["referenceIngestPolicy"]>
+
+  export type ReferenceIngestPolicySelectScalar = {
+    catalogKind?: boolean
+    externalFetchEnabled?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ReferenceIngestPolicyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"catalogKind" | "externalFetchEnabled" | "updatedAt", ExtArgs["result"]["referenceIngestPolicy"]>
+
+  export type $ReferenceIngestPolicyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ReferenceIngestPolicy"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      catalogKind: $Enums.ReferenceCatalogKind
+      externalFetchEnabled: boolean
+      updatedAt: Date
+    }, ExtArgs["result"]["referenceIngestPolicy"]>
+    composites: {}
+  }
+
+  type ReferenceIngestPolicyGetPayload<S extends boolean | null | undefined | ReferenceIngestPolicyDefaultArgs> = $Result.GetResult<Prisma.$ReferenceIngestPolicyPayload, S>
+
+  type ReferenceIngestPolicyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ReferenceIngestPolicyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ReferenceIngestPolicyCountAggregateInputType | true
+    }
+
+  export interface ReferenceIngestPolicyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ReferenceIngestPolicy'], meta: { name: 'ReferenceIngestPolicy' } }
+    /**
+     * Find zero or one ReferenceIngestPolicy that matches the filter.
+     * @param {ReferenceIngestPolicyFindUniqueArgs} args - Arguments to find a ReferenceIngestPolicy
+     * @example
+     * // Get one ReferenceIngestPolicy
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ReferenceIngestPolicyFindUniqueArgs>(args: SelectSubset<T, ReferenceIngestPolicyFindUniqueArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ReferenceIngestPolicy that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ReferenceIngestPolicyFindUniqueOrThrowArgs} args - Arguments to find a ReferenceIngestPolicy
+     * @example
+     * // Get one ReferenceIngestPolicy
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ReferenceIngestPolicyFindUniqueOrThrowArgs>(args: SelectSubset<T, ReferenceIngestPolicyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReferenceIngestPolicy that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyFindFirstArgs} args - Arguments to find a ReferenceIngestPolicy
+     * @example
+     * // Get one ReferenceIngestPolicy
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ReferenceIngestPolicyFindFirstArgs>(args?: SelectSubset<T, ReferenceIngestPolicyFindFirstArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReferenceIngestPolicy that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyFindFirstOrThrowArgs} args - Arguments to find a ReferenceIngestPolicy
+     * @example
+     * // Get one ReferenceIngestPolicy
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ReferenceIngestPolicyFindFirstOrThrowArgs>(args?: SelectSubset<T, ReferenceIngestPolicyFindFirstOrThrowArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ReferenceIngestPolicies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ReferenceIngestPolicies
+     * const referenceIngestPolicies = await prisma.referenceIngestPolicy.findMany()
+     * 
+     * // Get first 10 ReferenceIngestPolicies
+     * const referenceIngestPolicies = await prisma.referenceIngestPolicy.findMany({ take: 10 })
+     * 
+     * // Only select the `externalFetchEnabled`
+     * const referenceIngestPolicyWithExternalFetchEnabledOnly = await prisma.referenceIngestPolicy.findMany({ select: { externalFetchEnabled: true } })
+     * 
+     */
+    findMany<T extends ReferenceIngestPolicyFindManyArgs>(args?: SelectSubset<T, ReferenceIngestPolicyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ReferenceIngestPolicy.
+     * @param {ReferenceIngestPolicyCreateArgs} args - Arguments to create a ReferenceIngestPolicy.
+     * @example
+     * // Create one ReferenceIngestPolicy
+     * const ReferenceIngestPolicy = await prisma.referenceIngestPolicy.create({
+     *   data: {
+     *     // ... data to create a ReferenceIngestPolicy
+     *   }
+     * })
+     * 
+     */
+    create<T extends ReferenceIngestPolicyCreateArgs>(args: SelectSubset<T, ReferenceIngestPolicyCreateArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ReferenceIngestPolicies.
+     * @param {ReferenceIngestPolicyCreateManyArgs} args - Arguments to create many ReferenceIngestPolicies.
+     * @example
+     * // Create many ReferenceIngestPolicies
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ReferenceIngestPolicyCreateManyArgs>(args?: SelectSubset<T, ReferenceIngestPolicyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ReferenceIngestPolicies and returns the data saved in the database.
+     * @param {ReferenceIngestPolicyCreateManyAndReturnArgs} args - Arguments to create many ReferenceIngestPolicies.
+     * @example
+     * // Create many ReferenceIngestPolicies
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ReferenceIngestPolicies and only return the `externalFetchEnabled`
+     * const referenceIngestPolicyWithExternalFetchEnabledOnly = await prisma.referenceIngestPolicy.createManyAndReturn({
+     *   select: { externalFetchEnabled: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ReferenceIngestPolicyCreateManyAndReturnArgs>(args?: SelectSubset<T, ReferenceIngestPolicyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ReferenceIngestPolicy.
+     * @param {ReferenceIngestPolicyDeleteArgs} args - Arguments to delete one ReferenceIngestPolicy.
+     * @example
+     * // Delete one ReferenceIngestPolicy
+     * const ReferenceIngestPolicy = await prisma.referenceIngestPolicy.delete({
+     *   where: {
+     *     // ... filter to delete one ReferenceIngestPolicy
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ReferenceIngestPolicyDeleteArgs>(args: SelectSubset<T, ReferenceIngestPolicyDeleteArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ReferenceIngestPolicy.
+     * @param {ReferenceIngestPolicyUpdateArgs} args - Arguments to update one ReferenceIngestPolicy.
+     * @example
+     * // Update one ReferenceIngestPolicy
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ReferenceIngestPolicyUpdateArgs>(args: SelectSubset<T, ReferenceIngestPolicyUpdateArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ReferenceIngestPolicies.
+     * @param {ReferenceIngestPolicyDeleteManyArgs} args - Arguments to filter ReferenceIngestPolicies to delete.
+     * @example
+     * // Delete a few ReferenceIngestPolicies
+     * const { count } = await prisma.referenceIngestPolicy.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ReferenceIngestPolicyDeleteManyArgs>(args?: SelectSubset<T, ReferenceIngestPolicyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReferenceIngestPolicies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ReferenceIngestPolicies
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ReferenceIngestPolicyUpdateManyArgs>(args: SelectSubset<T, ReferenceIngestPolicyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReferenceIngestPolicies and returns the data updated in the database.
+     * @param {ReferenceIngestPolicyUpdateManyAndReturnArgs} args - Arguments to update many ReferenceIngestPolicies.
+     * @example
+     * // Update many ReferenceIngestPolicies
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ReferenceIngestPolicies and only return the `externalFetchEnabled`
+     * const referenceIngestPolicyWithExternalFetchEnabledOnly = await prisma.referenceIngestPolicy.updateManyAndReturn({
+     *   select: { externalFetchEnabled: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ReferenceIngestPolicyUpdateManyAndReturnArgs>(args: SelectSubset<T, ReferenceIngestPolicyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ReferenceIngestPolicy.
+     * @param {ReferenceIngestPolicyUpsertArgs} args - Arguments to update or create a ReferenceIngestPolicy.
+     * @example
+     * // Update or create a ReferenceIngestPolicy
+     * const referenceIngestPolicy = await prisma.referenceIngestPolicy.upsert({
+     *   create: {
+     *     // ... data to create a ReferenceIngestPolicy
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ReferenceIngestPolicy we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ReferenceIngestPolicyUpsertArgs>(args: SelectSubset<T, ReferenceIngestPolicyUpsertArgs<ExtArgs>>): Prisma__ReferenceIngestPolicyClient<$Result.GetResult<Prisma.$ReferenceIngestPolicyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ReferenceIngestPolicies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyCountArgs} args - Arguments to filter ReferenceIngestPolicies to count.
+     * @example
+     * // Count the number of ReferenceIngestPolicies
+     * const count = await prisma.referenceIngestPolicy.count({
+     *   where: {
+     *     // ... the filter for the ReferenceIngestPolicies we want to count
+     *   }
+     * })
+    **/
+    count<T extends ReferenceIngestPolicyCountArgs>(
+      args?: Subset<T, ReferenceIngestPolicyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ReferenceIngestPolicyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ReferenceIngestPolicy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ReferenceIngestPolicyAggregateArgs>(args: Subset<T, ReferenceIngestPolicyAggregateArgs>): Prisma.PrismaPromise<GetReferenceIngestPolicyAggregateType<T>>
+
+    /**
+     * Group by ReferenceIngestPolicy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferenceIngestPolicyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ReferenceIngestPolicyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ReferenceIngestPolicyGroupByArgs['orderBy'] }
+        : { orderBy?: ReferenceIngestPolicyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ReferenceIngestPolicyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetReferenceIngestPolicyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ReferenceIngestPolicy model
+   */
+  readonly fields: ReferenceIngestPolicyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ReferenceIngestPolicy.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ReferenceIngestPolicyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ReferenceIngestPolicy model
+   */
+  interface ReferenceIngestPolicyFieldRefs {
+    readonly catalogKind: FieldRef<"ReferenceIngestPolicy", 'ReferenceCatalogKind'>
+    readonly externalFetchEnabled: FieldRef<"ReferenceIngestPolicy", 'Boolean'>
+    readonly updatedAt: FieldRef<"ReferenceIngestPolicy", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ReferenceIngestPolicy findUnique
+   */
+  export type ReferenceIngestPolicyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * Filter, which ReferenceIngestPolicy to fetch.
+     */
+    where: ReferenceIngestPolicyWhereUniqueInput
+  }
+
+  /**
+   * ReferenceIngestPolicy findUniqueOrThrow
+   */
+  export type ReferenceIngestPolicyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * Filter, which ReferenceIngestPolicy to fetch.
+     */
+    where: ReferenceIngestPolicyWhereUniqueInput
+  }
+
+  /**
+   * ReferenceIngestPolicy findFirst
+   */
+  export type ReferenceIngestPolicyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * Filter, which ReferenceIngestPolicy to fetch.
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReferenceIngestPolicies to fetch.
+     */
+    orderBy?: ReferenceIngestPolicyOrderByWithRelationInput | ReferenceIngestPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReferenceIngestPolicies.
+     */
+    cursor?: ReferenceIngestPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReferenceIngestPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReferenceIngestPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReferenceIngestPolicies.
+     */
+    distinct?: ReferenceIngestPolicyScalarFieldEnum | ReferenceIngestPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ReferenceIngestPolicy findFirstOrThrow
+   */
+  export type ReferenceIngestPolicyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * Filter, which ReferenceIngestPolicy to fetch.
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReferenceIngestPolicies to fetch.
+     */
+    orderBy?: ReferenceIngestPolicyOrderByWithRelationInput | ReferenceIngestPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReferenceIngestPolicies.
+     */
+    cursor?: ReferenceIngestPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReferenceIngestPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReferenceIngestPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReferenceIngestPolicies.
+     */
+    distinct?: ReferenceIngestPolicyScalarFieldEnum | ReferenceIngestPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ReferenceIngestPolicy findMany
+   */
+  export type ReferenceIngestPolicyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * Filter, which ReferenceIngestPolicies to fetch.
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReferenceIngestPolicies to fetch.
+     */
+    orderBy?: ReferenceIngestPolicyOrderByWithRelationInput | ReferenceIngestPolicyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ReferenceIngestPolicies.
+     */
+    cursor?: ReferenceIngestPolicyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReferenceIngestPolicies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReferenceIngestPolicies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReferenceIngestPolicies.
+     */
+    distinct?: ReferenceIngestPolicyScalarFieldEnum | ReferenceIngestPolicyScalarFieldEnum[]
+  }
+
+  /**
+   * ReferenceIngestPolicy create
+   */
+  export type ReferenceIngestPolicyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ReferenceIngestPolicy.
+     */
+    data: XOR<ReferenceIngestPolicyCreateInput, ReferenceIngestPolicyUncheckedCreateInput>
+  }
+
+  /**
+   * ReferenceIngestPolicy createMany
+   */
+  export type ReferenceIngestPolicyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ReferenceIngestPolicies.
+     */
+    data: ReferenceIngestPolicyCreateManyInput | ReferenceIngestPolicyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ReferenceIngestPolicy createManyAndReturn
+   */
+  export type ReferenceIngestPolicyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * The data used to create many ReferenceIngestPolicies.
+     */
+    data: ReferenceIngestPolicyCreateManyInput | ReferenceIngestPolicyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ReferenceIngestPolicy update
+   */
+  export type ReferenceIngestPolicyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ReferenceIngestPolicy.
+     */
+    data: XOR<ReferenceIngestPolicyUpdateInput, ReferenceIngestPolicyUncheckedUpdateInput>
+    /**
+     * Choose, which ReferenceIngestPolicy to update.
+     */
+    where: ReferenceIngestPolicyWhereUniqueInput
+  }
+
+  /**
+   * ReferenceIngestPolicy updateMany
+   */
+  export type ReferenceIngestPolicyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ReferenceIngestPolicies.
+     */
+    data: XOR<ReferenceIngestPolicyUpdateManyMutationInput, ReferenceIngestPolicyUncheckedUpdateManyInput>
+    /**
+     * Filter which ReferenceIngestPolicies to update
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * Limit how many ReferenceIngestPolicies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReferenceIngestPolicy updateManyAndReturn
+   */
+  export type ReferenceIngestPolicyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * The data used to update ReferenceIngestPolicies.
+     */
+    data: XOR<ReferenceIngestPolicyUpdateManyMutationInput, ReferenceIngestPolicyUncheckedUpdateManyInput>
+    /**
+     * Filter which ReferenceIngestPolicies to update
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * Limit how many ReferenceIngestPolicies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReferenceIngestPolicy upsert
+   */
+  export type ReferenceIngestPolicyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ReferenceIngestPolicy to update in case it exists.
+     */
+    where: ReferenceIngestPolicyWhereUniqueInput
+    /**
+     * In case the ReferenceIngestPolicy found by the `where` argument doesn't exist, create a new ReferenceIngestPolicy with this data.
+     */
+    create: XOR<ReferenceIngestPolicyCreateInput, ReferenceIngestPolicyUncheckedCreateInput>
+    /**
+     * In case the ReferenceIngestPolicy was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ReferenceIngestPolicyUpdateInput, ReferenceIngestPolicyUncheckedUpdateInput>
+  }
+
+  /**
+   * ReferenceIngestPolicy delete
+   */
+  export type ReferenceIngestPolicyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+    /**
+     * Filter which ReferenceIngestPolicy to delete.
+     */
+    where: ReferenceIngestPolicyWhereUniqueInput
+  }
+
+  /**
+   * ReferenceIngestPolicy deleteMany
+   */
+  export type ReferenceIngestPolicyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReferenceIngestPolicies to delete
+     */
+    where?: ReferenceIngestPolicyWhereInput
+    /**
+     * Limit how many ReferenceIngestPolicies to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReferenceIngestPolicy without action
+   */
+  export type ReferenceIngestPolicyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReferenceIngestPolicy
+     */
+    select?: ReferenceIngestPolicySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReferenceIngestPolicy
+     */
+    omit?: ReferenceIngestPolicyOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model HubPlatformSetting
+   */
+
+  export type AggregateHubPlatformSetting = {
+    _count: HubPlatformSettingCountAggregateOutputType | null
+    _min: HubPlatformSettingMinAggregateOutputType | null
+    _max: HubPlatformSettingMaxAggregateOutputType | null
+  }
+
+  export type HubPlatformSettingMinAggregateOutputType = {
+    key: string | null
+    updatedAt: Date | null
+  }
+
+  export type HubPlatformSettingMaxAggregateOutputType = {
+    key: string | null
+    updatedAt: Date | null
+  }
+
+  export type HubPlatformSettingCountAggregateOutputType = {
+    key: number
+    value: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type HubPlatformSettingMinAggregateInputType = {
+    key?: true
+    updatedAt?: true
+  }
+
+  export type HubPlatformSettingMaxAggregateInputType = {
+    key?: true
+    updatedAt?: true
+  }
+
+  export type HubPlatformSettingCountAggregateInputType = {
+    key?: true
+    value?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type HubPlatformSettingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which HubPlatformSetting to aggregate.
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HubPlatformSettings to fetch.
+     */
+    orderBy?: HubPlatformSettingOrderByWithRelationInput | HubPlatformSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: HubPlatformSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HubPlatformSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HubPlatformSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned HubPlatformSettings
+    **/
+    _count?: true | HubPlatformSettingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: HubPlatformSettingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: HubPlatformSettingMaxAggregateInputType
+  }
+
+  export type GetHubPlatformSettingAggregateType<T extends HubPlatformSettingAggregateArgs> = {
+        [P in keyof T & keyof AggregateHubPlatformSetting]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateHubPlatformSetting[P]>
+      : GetScalarType<T[P], AggregateHubPlatformSetting[P]>
+  }
+
+
+
+
+  export type HubPlatformSettingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HubPlatformSettingWhereInput
+    orderBy?: HubPlatformSettingOrderByWithAggregationInput | HubPlatformSettingOrderByWithAggregationInput[]
+    by: HubPlatformSettingScalarFieldEnum[] | HubPlatformSettingScalarFieldEnum
+    having?: HubPlatformSettingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: HubPlatformSettingCountAggregateInputType | true
+    _min?: HubPlatformSettingMinAggregateInputType
+    _max?: HubPlatformSettingMaxAggregateInputType
+  }
+
+  export type HubPlatformSettingGroupByOutputType = {
+    key: string
+    value: JsonValue
+    updatedAt: Date
+    _count: HubPlatformSettingCountAggregateOutputType | null
+    _min: HubPlatformSettingMinAggregateOutputType | null
+    _max: HubPlatformSettingMaxAggregateOutputType | null
+  }
+
+  type GetHubPlatformSettingGroupByPayload<T extends HubPlatformSettingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<HubPlatformSettingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof HubPlatformSettingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], HubPlatformSettingGroupByOutputType[P]>
+            : GetScalarType<T[P], HubPlatformSettingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type HubPlatformSettingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["hubPlatformSetting"]>
+
+  export type HubPlatformSettingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["hubPlatformSetting"]>
+
+  export type HubPlatformSettingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["hubPlatformSetting"]>
+
+  export type HubPlatformSettingSelectScalar = {
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }
+
+  export type HubPlatformSettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "value" | "updatedAt", ExtArgs["result"]["hubPlatformSetting"]>
+
+  export type $HubPlatformSettingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "HubPlatformSetting"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      key: string
+      value: Prisma.JsonValue
+      updatedAt: Date
+    }, ExtArgs["result"]["hubPlatformSetting"]>
+    composites: {}
+  }
+
+  type HubPlatformSettingGetPayload<S extends boolean | null | undefined | HubPlatformSettingDefaultArgs> = $Result.GetResult<Prisma.$HubPlatformSettingPayload, S>
+
+  type HubPlatformSettingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<HubPlatformSettingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: HubPlatformSettingCountAggregateInputType | true
+    }
+
+  export interface HubPlatformSettingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['HubPlatformSetting'], meta: { name: 'HubPlatformSetting' } }
+    /**
+     * Find zero or one HubPlatformSetting that matches the filter.
+     * @param {HubPlatformSettingFindUniqueArgs} args - Arguments to find a HubPlatformSetting
+     * @example
+     * // Get one HubPlatformSetting
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends HubPlatformSettingFindUniqueArgs>(args: SelectSubset<T, HubPlatformSettingFindUniqueArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one HubPlatformSetting that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {HubPlatformSettingFindUniqueOrThrowArgs} args - Arguments to find a HubPlatformSetting
+     * @example
+     * // Get one HubPlatformSetting
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends HubPlatformSettingFindUniqueOrThrowArgs>(args: SelectSubset<T, HubPlatformSettingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first HubPlatformSetting that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingFindFirstArgs} args - Arguments to find a HubPlatformSetting
+     * @example
+     * // Get one HubPlatformSetting
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends HubPlatformSettingFindFirstArgs>(args?: SelectSubset<T, HubPlatformSettingFindFirstArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first HubPlatformSetting that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingFindFirstOrThrowArgs} args - Arguments to find a HubPlatformSetting
+     * @example
+     * // Get one HubPlatformSetting
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends HubPlatformSettingFindFirstOrThrowArgs>(args?: SelectSubset<T, HubPlatformSettingFindFirstOrThrowArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more HubPlatformSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all HubPlatformSettings
+     * const hubPlatformSettings = await prisma.hubPlatformSetting.findMany()
+     * 
+     * // Get first 10 HubPlatformSettings
+     * const hubPlatformSettings = await prisma.hubPlatformSetting.findMany({ take: 10 })
+     * 
+     * // Only select the `key`
+     * const hubPlatformSettingWithKeyOnly = await prisma.hubPlatformSetting.findMany({ select: { key: true } })
+     * 
+     */
+    findMany<T extends HubPlatformSettingFindManyArgs>(args?: SelectSubset<T, HubPlatformSettingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a HubPlatformSetting.
+     * @param {HubPlatformSettingCreateArgs} args - Arguments to create a HubPlatformSetting.
+     * @example
+     * // Create one HubPlatformSetting
+     * const HubPlatformSetting = await prisma.hubPlatformSetting.create({
+     *   data: {
+     *     // ... data to create a HubPlatformSetting
+     *   }
+     * })
+     * 
+     */
+    create<T extends HubPlatformSettingCreateArgs>(args: SelectSubset<T, HubPlatformSettingCreateArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many HubPlatformSettings.
+     * @param {HubPlatformSettingCreateManyArgs} args - Arguments to create many HubPlatformSettings.
+     * @example
+     * // Create many HubPlatformSettings
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends HubPlatformSettingCreateManyArgs>(args?: SelectSubset<T, HubPlatformSettingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many HubPlatformSettings and returns the data saved in the database.
+     * @param {HubPlatformSettingCreateManyAndReturnArgs} args - Arguments to create many HubPlatformSettings.
+     * @example
+     * // Create many HubPlatformSettings
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many HubPlatformSettings and only return the `key`
+     * const hubPlatformSettingWithKeyOnly = await prisma.hubPlatformSetting.createManyAndReturn({
+     *   select: { key: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends HubPlatformSettingCreateManyAndReturnArgs>(args?: SelectSubset<T, HubPlatformSettingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a HubPlatformSetting.
+     * @param {HubPlatformSettingDeleteArgs} args - Arguments to delete one HubPlatformSetting.
+     * @example
+     * // Delete one HubPlatformSetting
+     * const HubPlatformSetting = await prisma.hubPlatformSetting.delete({
+     *   where: {
+     *     // ... filter to delete one HubPlatformSetting
+     *   }
+     * })
+     * 
+     */
+    delete<T extends HubPlatformSettingDeleteArgs>(args: SelectSubset<T, HubPlatformSettingDeleteArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one HubPlatformSetting.
+     * @param {HubPlatformSettingUpdateArgs} args - Arguments to update one HubPlatformSetting.
+     * @example
+     * // Update one HubPlatformSetting
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends HubPlatformSettingUpdateArgs>(args: SelectSubset<T, HubPlatformSettingUpdateArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more HubPlatformSettings.
+     * @param {HubPlatformSettingDeleteManyArgs} args - Arguments to filter HubPlatformSettings to delete.
+     * @example
+     * // Delete a few HubPlatformSettings
+     * const { count } = await prisma.hubPlatformSetting.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends HubPlatformSettingDeleteManyArgs>(args?: SelectSubset<T, HubPlatformSettingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more HubPlatformSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many HubPlatformSettings
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends HubPlatformSettingUpdateManyArgs>(args: SelectSubset<T, HubPlatformSettingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more HubPlatformSettings and returns the data updated in the database.
+     * @param {HubPlatformSettingUpdateManyAndReturnArgs} args - Arguments to update many HubPlatformSettings.
+     * @example
+     * // Update many HubPlatformSettings
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more HubPlatformSettings and only return the `key`
+     * const hubPlatformSettingWithKeyOnly = await prisma.hubPlatformSetting.updateManyAndReturn({
+     *   select: { key: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends HubPlatformSettingUpdateManyAndReturnArgs>(args: SelectSubset<T, HubPlatformSettingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one HubPlatformSetting.
+     * @param {HubPlatformSettingUpsertArgs} args - Arguments to update or create a HubPlatformSetting.
+     * @example
+     * // Update or create a HubPlatformSetting
+     * const hubPlatformSetting = await prisma.hubPlatformSetting.upsert({
+     *   create: {
+     *     // ... data to create a HubPlatformSetting
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the HubPlatformSetting we want to update
+     *   }
+     * })
+     */
+    upsert<T extends HubPlatformSettingUpsertArgs>(args: SelectSubset<T, HubPlatformSettingUpsertArgs<ExtArgs>>): Prisma__HubPlatformSettingClient<$Result.GetResult<Prisma.$HubPlatformSettingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of HubPlatformSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingCountArgs} args - Arguments to filter HubPlatformSettings to count.
+     * @example
+     * // Count the number of HubPlatformSettings
+     * const count = await prisma.hubPlatformSetting.count({
+     *   where: {
+     *     // ... the filter for the HubPlatformSettings we want to count
+     *   }
+     * })
+    **/
+    count<T extends HubPlatformSettingCountArgs>(
+      args?: Subset<T, HubPlatformSettingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], HubPlatformSettingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a HubPlatformSetting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends HubPlatformSettingAggregateArgs>(args: Subset<T, HubPlatformSettingAggregateArgs>): Prisma.PrismaPromise<GetHubPlatformSettingAggregateType<T>>
+
+    /**
+     * Group by HubPlatformSetting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HubPlatformSettingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends HubPlatformSettingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: HubPlatformSettingGroupByArgs['orderBy'] }
+        : { orderBy?: HubPlatformSettingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, HubPlatformSettingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetHubPlatformSettingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the HubPlatformSetting model
+   */
+  readonly fields: HubPlatformSettingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for HubPlatformSetting.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__HubPlatformSettingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the HubPlatformSetting model
+   */
+  interface HubPlatformSettingFieldRefs {
+    readonly key: FieldRef<"HubPlatformSetting", 'String'>
+    readonly value: FieldRef<"HubPlatformSetting", 'Json'>
+    readonly updatedAt: FieldRef<"HubPlatformSetting", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * HubPlatformSetting findUnique
+   */
+  export type HubPlatformSettingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which HubPlatformSetting to fetch.
+     */
+    where: HubPlatformSettingWhereUniqueInput
+  }
+
+  /**
+   * HubPlatformSetting findUniqueOrThrow
+   */
+  export type HubPlatformSettingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which HubPlatformSetting to fetch.
+     */
+    where: HubPlatformSettingWhereUniqueInput
+  }
+
+  /**
+   * HubPlatformSetting findFirst
+   */
+  export type HubPlatformSettingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which HubPlatformSetting to fetch.
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HubPlatformSettings to fetch.
+     */
+    orderBy?: HubPlatformSettingOrderByWithRelationInput | HubPlatformSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for HubPlatformSettings.
+     */
+    cursor?: HubPlatformSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HubPlatformSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HubPlatformSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HubPlatformSettings.
+     */
+    distinct?: HubPlatformSettingScalarFieldEnum | HubPlatformSettingScalarFieldEnum[]
+  }
+
+  /**
+   * HubPlatformSetting findFirstOrThrow
+   */
+  export type HubPlatformSettingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which HubPlatformSetting to fetch.
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HubPlatformSettings to fetch.
+     */
+    orderBy?: HubPlatformSettingOrderByWithRelationInput | HubPlatformSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for HubPlatformSettings.
+     */
+    cursor?: HubPlatformSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HubPlatformSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HubPlatformSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HubPlatformSettings.
+     */
+    distinct?: HubPlatformSettingScalarFieldEnum | HubPlatformSettingScalarFieldEnum[]
+  }
+
+  /**
+   * HubPlatformSetting findMany
+   */
+  export type HubPlatformSettingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which HubPlatformSettings to fetch.
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HubPlatformSettings to fetch.
+     */
+    orderBy?: HubPlatformSettingOrderByWithRelationInput | HubPlatformSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing HubPlatformSettings.
+     */
+    cursor?: HubPlatformSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HubPlatformSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HubPlatformSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HubPlatformSettings.
+     */
+    distinct?: HubPlatformSettingScalarFieldEnum | HubPlatformSettingScalarFieldEnum[]
+  }
+
+  /**
+   * HubPlatformSetting create
+   */
+  export type HubPlatformSettingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * The data needed to create a HubPlatformSetting.
+     */
+    data: XOR<HubPlatformSettingCreateInput, HubPlatformSettingUncheckedCreateInput>
+  }
+
+  /**
+   * HubPlatformSetting createMany
+   */
+  export type HubPlatformSettingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many HubPlatformSettings.
+     */
+    data: HubPlatformSettingCreateManyInput | HubPlatformSettingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * HubPlatformSetting createManyAndReturn
+   */
+  export type HubPlatformSettingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * The data used to create many HubPlatformSettings.
+     */
+    data: HubPlatformSettingCreateManyInput | HubPlatformSettingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * HubPlatformSetting update
+   */
+  export type HubPlatformSettingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * The data needed to update a HubPlatformSetting.
+     */
+    data: XOR<HubPlatformSettingUpdateInput, HubPlatformSettingUncheckedUpdateInput>
+    /**
+     * Choose, which HubPlatformSetting to update.
+     */
+    where: HubPlatformSettingWhereUniqueInput
+  }
+
+  /**
+   * HubPlatformSetting updateMany
+   */
+  export type HubPlatformSettingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update HubPlatformSettings.
+     */
+    data: XOR<HubPlatformSettingUpdateManyMutationInput, HubPlatformSettingUncheckedUpdateManyInput>
+    /**
+     * Filter which HubPlatformSettings to update
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * Limit how many HubPlatformSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * HubPlatformSetting updateManyAndReturn
+   */
+  export type HubPlatformSettingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * The data used to update HubPlatformSettings.
+     */
+    data: XOR<HubPlatformSettingUpdateManyMutationInput, HubPlatformSettingUncheckedUpdateManyInput>
+    /**
+     * Filter which HubPlatformSettings to update
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * Limit how many HubPlatformSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * HubPlatformSetting upsert
+   */
+  export type HubPlatformSettingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * The filter to search for the HubPlatformSetting to update in case it exists.
+     */
+    where: HubPlatformSettingWhereUniqueInput
+    /**
+     * In case the HubPlatformSetting found by the `where` argument doesn't exist, create a new HubPlatformSetting with this data.
+     */
+    create: XOR<HubPlatformSettingCreateInput, HubPlatformSettingUncheckedCreateInput>
+    /**
+     * In case the HubPlatformSetting was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<HubPlatformSettingUpdateInput, HubPlatformSettingUncheckedUpdateInput>
+  }
+
+  /**
+   * HubPlatformSetting delete
+   */
+  export type HubPlatformSettingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+    /**
+     * Filter which HubPlatformSetting to delete.
+     */
+    where: HubPlatformSettingWhereUniqueInput
+  }
+
+  /**
+   * HubPlatformSetting deleteMany
+   */
+  export type HubPlatformSettingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which HubPlatformSettings to delete
+     */
+    where?: HubPlatformSettingWhereInput
+    /**
+     * Limit how many HubPlatformSettings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * HubPlatformSetting without action
+   */
+  export type HubPlatformSettingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HubPlatformSetting
+     */
+    select?: HubPlatformSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HubPlatformSetting
+     */
+    omit?: HubPlatformSettingOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -14508,12 +16654,37 @@ export namespace Prisma {
   export type TaxRateScalarFieldEnum = (typeof TaxRateScalarFieldEnum)[keyof typeof TaxRateScalarFieldEnum]
 
 
+  export const ReferenceIngestPolicyScalarFieldEnum: {
+    catalogKind: 'catalogKind',
+    externalFetchEnabled: 'externalFetchEnabled',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ReferenceIngestPolicyScalarFieldEnum = (typeof ReferenceIngestPolicyScalarFieldEnum)[keyof typeof ReferenceIngestPolicyScalarFieldEnum]
+
+
+  export const HubPlatformSettingScalarFieldEnum: {
+    key: 'key',
+    value: 'value',
+    updatedAt: 'updatedAt'
+  };
+
+  export type HubPlatformSettingScalarFieldEnum = (typeof HubPlatformSettingScalarFieldEnum)[keyof typeof HubPlatformSettingScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
   };
 
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -14530,6 +16701,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -14653,6 +16833,34 @@ export namespace Prisma {
    * Reference to a field of type 'TaxRateKind[]'
    */
   export type ListEnumTaxRateKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TaxRateKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ReferenceCatalogKind'
+   */
+  export type EnumReferenceCatalogKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReferenceCatalogKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'ReferenceCatalogKind[]'
+   */
+  export type ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReferenceCatalogKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -15608,6 +17816,90 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"TaxRate"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"TaxRate"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TaxRate"> | Date | string
+  }
+
+  export type ReferenceIngestPolicyWhereInput = {
+    AND?: ReferenceIngestPolicyWhereInput | ReferenceIngestPolicyWhereInput[]
+    OR?: ReferenceIngestPolicyWhereInput[]
+    NOT?: ReferenceIngestPolicyWhereInput | ReferenceIngestPolicyWhereInput[]
+    catalogKind?: EnumReferenceCatalogKindFilter<"ReferenceIngestPolicy"> | $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: BoolFilter<"ReferenceIngestPolicy"> | boolean
+    updatedAt?: DateTimeFilter<"ReferenceIngestPolicy"> | Date | string
+  }
+
+  export type ReferenceIngestPolicyOrderByWithRelationInput = {
+    catalogKind?: SortOrder
+    externalFetchEnabled?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ReferenceIngestPolicyWhereUniqueInput = Prisma.AtLeast<{
+    catalogKind?: $Enums.ReferenceCatalogKind
+    AND?: ReferenceIngestPolicyWhereInput | ReferenceIngestPolicyWhereInput[]
+    OR?: ReferenceIngestPolicyWhereInput[]
+    NOT?: ReferenceIngestPolicyWhereInput | ReferenceIngestPolicyWhereInput[]
+    externalFetchEnabled?: BoolFilter<"ReferenceIngestPolicy"> | boolean
+    updatedAt?: DateTimeFilter<"ReferenceIngestPolicy"> | Date | string
+  }, "catalogKind">
+
+  export type ReferenceIngestPolicyOrderByWithAggregationInput = {
+    catalogKind?: SortOrder
+    externalFetchEnabled?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ReferenceIngestPolicyCountOrderByAggregateInput
+    _max?: ReferenceIngestPolicyMaxOrderByAggregateInput
+    _min?: ReferenceIngestPolicyMinOrderByAggregateInput
+  }
+
+  export type ReferenceIngestPolicyScalarWhereWithAggregatesInput = {
+    AND?: ReferenceIngestPolicyScalarWhereWithAggregatesInput | ReferenceIngestPolicyScalarWhereWithAggregatesInput[]
+    OR?: ReferenceIngestPolicyScalarWhereWithAggregatesInput[]
+    NOT?: ReferenceIngestPolicyScalarWhereWithAggregatesInput | ReferenceIngestPolicyScalarWhereWithAggregatesInput[]
+    catalogKind?: EnumReferenceCatalogKindWithAggregatesFilter<"ReferenceIngestPolicy"> | $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: BoolWithAggregatesFilter<"ReferenceIngestPolicy"> | boolean
+    updatedAt?: DateTimeWithAggregatesFilter<"ReferenceIngestPolicy"> | Date | string
+  }
+
+  export type HubPlatformSettingWhereInput = {
+    AND?: HubPlatformSettingWhereInput | HubPlatformSettingWhereInput[]
+    OR?: HubPlatformSettingWhereInput[]
+    NOT?: HubPlatformSettingWhereInput | HubPlatformSettingWhereInput[]
+    key?: StringFilter<"HubPlatformSetting"> | string
+    value?: JsonFilter<"HubPlatformSetting">
+    updatedAt?: DateTimeFilter<"HubPlatformSetting"> | Date | string
+  }
+
+  export type HubPlatformSettingOrderByWithRelationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HubPlatformSettingWhereUniqueInput = Prisma.AtLeast<{
+    key?: string
+    AND?: HubPlatformSettingWhereInput | HubPlatformSettingWhereInput[]
+    OR?: HubPlatformSettingWhereInput[]
+    NOT?: HubPlatformSettingWhereInput | HubPlatformSettingWhereInput[]
+    value?: JsonFilter<"HubPlatformSetting">
+    updatedAt?: DateTimeFilter<"HubPlatformSetting"> | Date | string
+  }, "key">
+
+  export type HubPlatformSettingOrderByWithAggregationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+    _count?: HubPlatformSettingCountOrderByAggregateInput
+    _max?: HubPlatformSettingMaxOrderByAggregateInput
+    _min?: HubPlatformSettingMinOrderByAggregateInput
+  }
+
+  export type HubPlatformSettingScalarWhereWithAggregatesInput = {
+    AND?: HubPlatformSettingScalarWhereWithAggregatesInput | HubPlatformSettingScalarWhereWithAggregatesInput[]
+    OR?: HubPlatformSettingScalarWhereWithAggregatesInput[]
+    NOT?: HubPlatformSettingScalarWhereWithAggregatesInput | HubPlatformSettingScalarWhereWithAggregatesInput[]
+    key?: StringWithAggregatesFilter<"HubPlatformSetting"> | string
+    value?: JsonWithAggregatesFilter<"HubPlatformSetting">
+    updatedAt?: DateTimeWithAggregatesFilter<"HubPlatformSetting"> | Date | string
   }
 
   export type CalendarDayCreateInput = {
@@ -16701,6 +18993,90 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ReferenceIngestPolicyCreateInput = {
+    catalogKind: $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type ReferenceIngestPolicyUncheckedCreateInput = {
+    catalogKind: $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type ReferenceIngestPolicyUpdateInput = {
+    catalogKind?: EnumReferenceCatalogKindFieldUpdateOperationsInput | $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferenceIngestPolicyUncheckedUpdateInput = {
+    catalogKind?: EnumReferenceCatalogKindFieldUpdateOperationsInput | $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferenceIngestPolicyCreateManyInput = {
+    catalogKind: $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: boolean
+    updatedAt?: Date | string
+  }
+
+  export type ReferenceIngestPolicyUpdateManyMutationInput = {
+    catalogKind?: EnumReferenceCatalogKindFieldUpdateOperationsInput | $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferenceIngestPolicyUncheckedUpdateManyInput = {
+    catalogKind?: EnumReferenceCatalogKindFieldUpdateOperationsInput | $Enums.ReferenceCatalogKind
+    externalFetchEnabled?: BoolFieldUpdateOperationsInput | boolean
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HubPlatformSettingCreateInput = {
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type HubPlatformSettingUncheckedCreateInput = {
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type HubPlatformSettingUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HubPlatformSettingUncheckedUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HubPlatformSettingCreateManyInput = {
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type HubPlatformSettingUpdateManyMutationInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HubPlatformSettingUncheckedUpdateManyInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -17573,6 +19949,106 @@ export namespace Prisma {
     _max?: NestedEnumTaxRateKindFilter<$PrismaModel>
   }
 
+  export type EnumReferenceCatalogKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.ReferenceCatalogKind | EnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    in?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumReferenceCatalogKindFilter<$PrismaModel> | $Enums.ReferenceCatalogKind
+  }
+
+  export type ReferenceIngestPolicyCountOrderByAggregateInput = {
+    catalogKind?: SortOrder
+    externalFetchEnabled?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ReferenceIngestPolicyMaxOrderByAggregateInput = {
+    catalogKind?: SortOrder
+    externalFetchEnabled?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ReferenceIngestPolicyMinOrderByAggregateInput = {
+    catalogKind?: SortOrder
+    externalFetchEnabled?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumReferenceCatalogKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ReferenceCatalogKind | EnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    in?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumReferenceCatalogKindWithAggregatesFilter<$PrismaModel> | $Enums.ReferenceCatalogKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumReferenceCatalogKindFilter<$PrismaModel>
+    _max?: NestedEnumReferenceCatalogKindFilter<$PrismaModel>
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type HubPlatformSettingCountOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HubPlatformSettingMaxOrderByAggregateInput = {
+    key?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HubPlatformSettingMinOrderByAggregateInput = {
+    key?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -17753,6 +20229,10 @@ export namespace Prisma {
 
   export type EnumTaxRateKindFieldUpdateOperationsInput = {
     set?: $Enums.TaxRateKind
+  }
+
+  export type EnumReferenceCatalogKindFieldUpdateOperationsInput = {
+    set?: $Enums.ReferenceCatalogKind
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -18047,6 +20527,46 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTaxRateKindFilter<$PrismaModel>
     _max?: NestedEnumTaxRateKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumReferenceCatalogKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.ReferenceCatalogKind | EnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    in?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumReferenceCatalogKindFilter<$PrismaModel> | $Enums.ReferenceCatalogKind
+  }
+
+  export type NestedEnumReferenceCatalogKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ReferenceCatalogKind | EnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    in?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumReferenceCatalogKindWithAggregatesFilter<$PrismaModel> | $Enums.ReferenceCatalogKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumReferenceCatalogKindFilter<$PrismaModel>
+    _max?: NestedEnumReferenceCatalogKindFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type BankBranchCreateWithoutBankInput = {

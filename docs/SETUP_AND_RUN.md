@@ -379,15 +379,13 @@ npm run dev:api
 npm run dev:web
 ```
 
-### ERA Data Hub consumer flags (optional)
+### ERA Data Hub consumer
 
-When finance reads reference data from the hub:
+Finance reads the hub when the service token is set. Per-org Excel is chosen in the orchestrator, not here.
 
 ```env
-ERA_DATA_HUB_ENABLED=true
 ERA_DATA_HUB_URL=http://127.0.0.1:4200
 DATA_HUB_SERVICE_TOKEN=dev-data-hub-service-token
-ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true   # when hub owns CBAR (ERA_DATA_HUB_DATA_SOURCE=hub)
 ```
 
 See [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
@@ -420,8 +418,6 @@ cp .env.example .env
 
 ```env
 DATABASE_URL=postgresql://era:era_dev_password@127.0.0.1:5432/era_data_hub?schema=public
-FINANCE_RO_DATABASE_URL=postgresql://era:era_dev_password@127.0.0.1:5432/era_finance?schema=public
-ERA_DATA_HUB_DATA_SOURCE=finance_ro   # hub after cutover
 REDIS_URL=redis://127.0.0.1:6379/4
 DATA_HUB_SERVICE_TOKEN=dev-data-hub-service-token
 DATA_HUB_DEV_API_KEYS=dev-data-hub-key
@@ -429,7 +425,7 @@ CONTROL_PLANE_URL=http://127.0.0.1:4000
 CONTROL_PLANE_SERVICE_TOKEN=dev-control-plane-token
 ```
 
-Finance must be seeded first (`cbar_official_rates`, banks, geo, tariffs).
+`FINANCE_RO_DATABASE_URL` is only for the one-time copy below. Registry reads `era_data_hub`.
 
 ### Запуск
 
@@ -440,11 +436,10 @@ npm run db:seed
 npm run dev
 ```
 
-Phase 1 cutover (copy reference rows from finance RO):
+One-time copy of reference rows from finance RO (set `FINANCE_RO_DATABASE_URL` for this command only):
 
 ```bash
 npm run db:sync-from-finance
-# then ERA_DATA_HUB_DATA_SOURCE=hub
 ```
 
 Docker: `docker compose up -d data-hub` (depends on `finance-core` + `postgres` + `redis`).

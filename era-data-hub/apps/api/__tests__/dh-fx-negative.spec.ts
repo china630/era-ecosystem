@@ -10,7 +10,7 @@ describe("Data Hub FX negative paths (AC-DH-FX)", () => {
         cbarOfficialRate: { findUnique },
       }),
     } as unknown as DataSourceService;
-    const fx = new FxService(ds);
+    const fx = new FxService(ds, { getFxDashboardCurrencyCodes: async () => ["USD"], getFxCbarCheckCurrencyCodes: async () => ["USD"] } as never);
 
     await expect(fx.convert("USD", "AZN", "10", "2026-01-15")).rejects.toBeInstanceOf(
       BadRequestException,
@@ -31,7 +31,7 @@ describe("Data Hub FX negative paths (AC-DH-FX)", () => {
     const ds = {
       referenceDb: () => ({ cbarOfficialRate: { findUnique: jest.fn() } }),
     } as unknown as DataSourceService;
-    const fx = new FxService(ds);
+    const fx = new FxService(ds, { getFxDashboardCurrencyCodes: async () => ["USD"], getFxCbarCheckCurrencyCodes: async () => ["USD"] } as never);
     try {
       await fx.convert("USD", "AZN", "not-a-number", undefined);
       fail("expected BadRequestException");

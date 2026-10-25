@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-10-24
 
 ---
 
@@ -197,8 +197,8 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-HK-03 | Floor sheet + visit outcomes + laundry folio | Y | Y `/hk` `/hk/laundry` `/hk/mobile` | API | SCREEN; millət + duty + needed-by; UAT §34 |
 | HOT-HK-04 | Skip/Sleep discrepancy + HK forecast | Y | Y `/hk/discrepancy` `/hk/forecast` | API | SCREEN; Sleep ≠ SO; heads/linen/deep counts |
 | HOT-HK-05 | Linen/deep hotel policy | Y | Y `/settings/hk-policy` | API | SCREEN; no per-stay override; not SHIPPED |
-| HOT-HK-06 | HK consumption → day document | Y | Y `/hk/consumption` | API | Zero-price sku+qty; not a folio line; linen schedule does not post; UAT §34.12 unsigned — not SHIPPED |
-| HOT-REV-01 | Revenue code system role + numeric BOCC codes → NAS 601.BB.CCC / 521.01 | [ADR](./adr/hotel-revenue-code-resolution.md) | Y SatAdmin `/settings/integration?view=gl` (role + GL per code) | API | Hotel posts by role, satellites by exact code; no name match. Nafta data applied 2026-10-15 via `scripts/ops/nafta-revenue-*`; night audit with new codes not yet run — not SHIPPED |
+| HOT-HK-06 | HK consumption → day document | Y | Y `/hk/consumption` | API | Zero-price sku+qty on this table only; clinic consumables are `InternalConsumption`, not this table; linen schedule does not post; UAT §34.12 unsigned — not SHIPPED |
+| HOT-REV-01 | Revenue code system role + numeric BOCC codes → NAS 601.BB.CCC / 521.01 | [ADR](./adr/hotel-revenue-code-resolution.md) | Y SatAdmin hotel `/settings/integration?view=gl`; F&B `/admin/settings` warehouse; clinic department and modality | API | Hotel posts by role. Clinic, F&B, and retail post the category code, otherwise the satellite default; a code on the dish, procedure, or product is not read. Day document v2 splits money and quantity (VAT on the article, house-use stock once, clinic consumables via the hotel journal). OpsUI night audit has no new screen. Nafta data applied 2026-10-15 via `scripts/ops/nafta-revenue-*`; night audit with the new document not yet run — not SHIPPED |
 
 ### Hotel FO money / City Ledger / adjacent (2026-08-03 audit)
 
@@ -206,23 +206,23 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status | Blocker / gap |
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------------|
-| HOT-CASH-01 | Folio settle multi-method (CASH/CARD/COMPANY/LOYALTY/DEPOSIT/BANK_TRANSFER) | KKM policy | Y settle | Y `/folio/[id]` | — | — | — | SHIPPED | UAT-SMOKE §3/§27; BANK_TRANSFER ops tender + bankReference; match in Finance. Card now requires an explicit BANK_POS pick |
-| HOT-FOLIO-DESK | Guest personal debt, missed nights, folio transfer, stay journal, persisted bank terminals | ADR hotel-folio-desk | Y | Y folio card | — | — | hub devices | API | UI is on the folio card. Accept payment always (article required). Check-out is guest charges vs money in, then pay or refund; no per-article cashier match. One dialog for folio tab, rack, and card (UAT-SMOKE §27 step 1a). Stay journal is an event list + labeled expand from `SatelliteAuditLog` (no raw-key sausage). Missed nights, transfer, and journal still have no UAT step — not SHIPPED |
+| HOT-CASH-01 | Folio settle multi-method (CASH/CARD/COMPANY/LOYALTY/BANK_TRANSFER) | KKM policy | Y settle | Y `/folio/[id]` | — | — | — | SHIPPED | UAT-SMOKE §3/§27; BANK_TRANSFER ops tender + bankReference; match in Finance. Card requires an explicit BANK_POS pick. Method DEPOSIT is refused |
+| HOT-FOLIO-DESK | Guest personal debt, missed nights, folio transfer, stay journal, persisted bank terminals | ADR hotel-folio-desk | Y | Y folio card | — | — | hub devices | API | Header is stay total, uncovered debt, and unused blue payments (not a deposit pot). One payment button. Checkout does not auto-refund. Transfer includes payments. Missed nights, transfer, and journal still have no UAT step — not SHIPPED |
 | HOT-CASH-02 | Unified front-cash pending hub (F&B/clinic walk-in) | ADR settlement hub | Y | Y `/front-cash/pending` | — | — | — | SHIPPED | UAT-SMOKE §6b; not clinic cashier |
 | HOT-CASH-06 | Front cash journal + shift Z packet + close shift | MENU-IA | Y `/api/front-cash/transactions` | Y `/front-cash/transactions` | — | — | — | SHIPPED | UAT-SMOKE §28; ops Z print (not fiscal KKM Z) |
-| HOT-CASH-03 | Folio deposit hold / apply / refund HELD | H-BL-10/41 | Y deposits | Y folio settle DEPOSIT | — | — | — | SHIPPED | UAT-SMOKE §27; apply@check-in + settle/CO |
+| HOT-CASH-03 | Old HELD rows moved once onto a blue room payment | ADR hotel-folio-desk | Y move-once | Y folio card (blue line) | — | — | — | API | No deposit form. New money is not written to FolioDeposit. The old UAT §27 apply/settle path is gone — not SHIPPED |
 | HOT-CASH-04 | Folio payment refunds to guest | ADR CL | Y refund API | Y folio Refund | — | — | — | SHIPPED | UAT-SMOKE §27; mock fiscal; TRANSFERRED_AR blocked |
 | HOT-CASH-05 | Checkout discounts (manual + automatic) | ADR CL | Y DISCOUNT | Y settle/checkout | promo CRUD | — | — | SHIPPED | UAT-SMOKE §27; H-BL-43 |
 | HOT-CO-01 | Checkout close guest folios (zero balance) | clone-spec 05 | Y checkout | Y card / folio | — | — | — | SHIPPED | UAT-SMOKE §5/§27; guest must settle |
 | HOT-CO-02 | Transfer balance to City Ledger at checkout | ADR CL | Y gate+PENDING_AR | Y shared check-out dialog (folio tab, rack, card); explicit per-payer choice, no default | — | — | — | SHIPPED | UAT-SMOKE §27 steps 1, 1a; server needs `transferToCityLedger: true`, else 409 `PAYER_DEBT_UNRESOLVED`; H-BL-40 |
 | HOT-CO-03 | Selective / per-guest folio close | ADR CL | Y closeFolio | Y folio Close | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-45 |
 | HOT-CO-04 | Early checkout unused-nights refund (net of 18% VAT; tender picked in the dialog, API default CASH) | ADR hotel-early-checkout-unused-nights | Y preview + apply on check-out; payer preflight nets planned reversal | Y one check-out dialog (folio tab, room rack, card stay action); payer folio with reversal → City Ledger only | — | — | — | SHIPPED | UAT-SMOKE §33; all folios reverse; guest cash net VAT; H-BL-49 |
-| HOT-CL-01 | Folio routing rules + stay overrides (revenue → GUEST/COMPANY/AGENCY) | ADR CL | Y stay PUT | Y card routing table | Y master data | — | — | SHIPPED | Stay overrides > property FolioRoutingRule on postCharge |
+| HOT-CL-01 | Folio routing rules + stay overrides (revenue → GUEST/COMPANY/AGENCY) | ADR CL | Y stay PUT | Y card routing table | Y master data | — | — | SHIPPED | Stay override, then the property rule, then room and room tax to the company on this stay, else the primary guest. A company or agency that is not on the stay does not open an empty folio. Guest VÖEN is not a route |
 | HOT-CL-02 | Credit limit on stay / room charge | H-BL-03 | Y | Y Billing field | — | — | — | SHIPPED | UAT-SMOKE card billing; CL gate uses limit |
 | HOT-CL-03 | Agency City Ledger ops snapshot | Stage 23 | Y ledger+settle | Y `/front-cash/agency-ledger` | — | — | — | SHIPPED | UAT-SMOKE §27 agency settle; legacy `/reports/agency-ledger` redirects |
 | HOT-CL-04 | City Ledger → Finance snapshot + ops re-push | boundary | Y event + `/api/agencies/[id]/city-ledger-snapshot` + `/api/companies/[id]/city-ledger-snapshot` | Y agency and company ledger push | — | Y AR | — | SHIPPED | Company uses the same gate and event (`companyId`). Aging/match stays Finance |
 | HOT-CL-05 | Payment terms + aging + invoice matching | ADR CL D2 | — | — | terms on CP | Y aging+allocate | — | SHIPPED | Finance UAT aging+allocate; hotel handoff only |
-| HOT-NA-01 | Night Audit EOD (post room/package, roll day, E1) | clone-spec 07 | Y `/api/night-audit/*` | Y `/night-audit` | — | — | — | SHIPPED | UAT-SMOKE §6; legacy `/operations` redirects |
+| HOT-NA-01 | Night Audit EOD (post room/package, roll day, E1) | clone-spec 07 | Y `/api/night-audit/*` | Y `/night-audit` | — | — | — | SHIPPED | UAT-SMOKE §6; legacy `/operations` redirects. Optional e-qaimə hold is `FIN-EQAIME-DAY-01` API (rule off by default). A guest card payment and a card deposit refund with no company VÖEN are sent as population for `FIN-TAX-SCHEME-01`; that tag has no new hotel screen and does not unship this row |
 | HOT-NA-02 | Night Audit polish (exceptions, auto no-show, trial) | ADR CL | Y polish steps | Y `/night-audit` preview | — | — | — | SHIPPED | UAT-SMOKE §27; H-BL-44 |
 | HOT-NA-03 | EOD reports hub + P1 grids (+ no-show / room-move / VIP + CSV) | MENU-IA + ADR | Y `/api/night-audit/eod-reports` | Y `/night-audit/reports*` | — | — | — | SHIPPED | UAT-SMOKE §28; Management PDF catalog is HOT-RPT-01/02 (API, not SHIPPED) |
 | HOT-NA-04 | Reservation updates (action filter + CSV) | MENU-IA | Y `…/reservation-updates` | Y UI filter+CSV | — | — | — | SHIPPED | UAT-SMOKE §28; classify heuristics on audit text |
@@ -262,7 +262,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | FNB-06 | Recipe SKU + Finance deep-link | Y menu admin | SHIPPED | BOM SoT Finance |
 | FNB-07 | Dish image URL | Y `/admin/menu` + floor strip | SHIPPED | URL only, no upload |
 | FNB-08 | Nafta cutover Excel wizard | Y `/admin/import` | API | READY #30-#32; UAT-SMOKE UI open — not SHIPPED |
-| FNB-09 | Edition (`kafe` / `fnb`), hall presets (`cafe` / `restaurant`; `banquet` stored, no screens), and `hotelMode` as three fields; SatAdmin Halls modal on `/admin/settings` (`GET/PATCH /api/settings/presets`); menu rows by preset + kitchen module from one `/api/auth/me` read | Y `/admin/settings` | API | ADR era-kafe-edition §1a; UAT-SMOKE UI step and browser run open — not SHIPPED |
+| FNB-09 | Edition (`kafe` / `fnb`), hall presets (`cafe` / `restaurant`; `banquet` stored, no screens), and `hotelMode` as three fields; SatAdmin Halls modal on `/admin/settings` (`GET/PATCH /api/settings/presets`); menu rows by preset + kitchen module from one `/api/auth/me` read. Same screen stores the finance warehouse name for room-charge quantity (`PATCH /api/outlets/[id]`, empty = finance default) | Y `/admin/settings` | API | ADR era-kafe-edition §1a; UAT-SMOKE UI step and browser run open — not SHIPPED |
 | FNB-10 | OrgOwner upgrade ERA Kafe → full F&B (no new price line, `hotelMode` untouched, Sync re-run) | OrgOwner `/settings/subscription` card (`GET /v1/fnb/edition`, `POST /v1/fnb/edition/upgrade`) | API | ADR era-kafe-edition §1b; UAT-SMOKE UI step open — not SHIPPED |
 
 ---
@@ -289,18 +289,22 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | FIN-02 | Satellite event worker | — | HEADLESS | by design |
 | FIN-03 | e-qaimé | stub modal | STUB | prod cert |
 | FIN-EQAIME-01 | e-Qaimə S2S submit + invoice eqaime status | Y `/sales/invoices` | STUB/API | `ERA_EQAIME_S2S_ENABLED`; 503 `RPA_FALLBACK` — [ADR](./adr/eqaime-s2s-submission.md) |
+| FIN-EQAIME-DAY-01 | Org rule: night audit stays open until a registered invoice has an e-qaimə number; manual link does not submit | Finance org staff Y `/settings/organization` + `/sales/invoices` list and invoice card; Hotel OpsUI Y `/night-audit` gap list and check-day stop | API | Does not enable S2S. A blank number still holds the day. No UAT-SMOKE. `FIN-EQAIME-01` stays STUB/API. [ADR](./adr/finance-tax-scheme.md) |
+| FIN-FACT-QUEUE-01 | Month stays open while a bank line or posted cash order has no meaning from the closed list | Finance org staff Y `/reporting/fact-queue`, `/reporting` and dashboard close count, `/settings/organization` period-lock date | API | A payment already linked to the order is not a gap. Manual journal does not clear the row. Open-month posting still works. No UAT-SMOKE. Does not extend AC-FIN-GL. [ADR](./adr/finance-per-book-period-close.md) |
+| FIN-PROVISIONAL-VAT-01 | Purchase without an act or e-qaimə waits for the document; a filed declaration is not overwritten | Finance org staff Y `/purchases` status and document link, purchase form number; Y `/sales/invoices` create (scheme VAT list); Y `/reporting/tax-export` scheme recalc or amendment draft; Y period-lock date | API | No document posts the whole purchase to expense, not to inventory or input VAT. Linking the document moves goods to inventory and the tax against output VAT, with no cash movement. `GET /api/system/invoice-vat-rates` returns the scheme `vatPercent` only. Invoice lines store that percent; a line sent as exempt is refused. The recalc reads the scheme watcher and the saved export amount. An equal amount stays unchanged. `GENERATED` is recalculated in place. `CONFIRMED_BY_TAX` keeps the old amount. A non-retroactive higher tax does not draft an increase. The next month and the period-lock date stay open until the draft is marked sent. No live send. No UAT-SMOKE. Does not extend AC-FIN-TAX. [ADR](./adr/finance-tax-scheme.md) |
 | FIN-EQAIME-02 | EQF registry by debtor | Y `/reporting/eqf-registry` | API | tax/reporting |
 | FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
 | FIN-EQAIME-IN-01 | Incoming e-qaimə compare + ingest | Y network-inbox | API | amount/VÖEN MATCH/MISMATCH |
 | FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | Q-01 commercial kassa **221** / bank **223**; NAS-GOV **101/103**; İ-05 **221/223** |
 | FIN-TAX-01 | Tax declarations (simplified / profit / payroll); property = aggregate/preview | Y `/reporting/tax-export`, `/reporting/property-tax/preview` | API | tax_pro; property declaration-file export pending; UAT-SMOKE pending |
 | FIN-TAX-02 | Profit tax adjustments + preview | Y API + tax-export | API | tax_pro |
+| FIN-TAX-SCHEME-01 | Dated tax scheme + simplified-tax watcher (buckets, threshold, e-qaimə share, price marker) | Org staff Y `/reporting/tax-export` + org settings regime; SuperAdmin Y `/admin/data/tax-schemes` (list). Package apply is SuperAdmin API, no extra screen. Hotel night audit writes the guest-card tag; no new hotel control | API | Does not post and does not switch regime. A hotel guest card payment and a card deposit refund with no company VÖEN write the population tag; a company card, a bank transfer, cash, and a pending charge with no company link do not. `POST /api/admin/tax-schemes/package` upserts the same statutory row on SaaS and on-prem. No second formula. No UAT-SMOKE. [ADR](./adr/finance-tax-scheme.md) |
 | FIN-STAT-01 | Goskomstat engine (1-müəssisə, 1/4-əmək, 1-İKT) | Y `/reporting/statforms` | API | compliance_pro or tax_pro |
 | FIN-CTR-01 | Contract hard-block limit + expire cron | Y `/contracts` check-limit | API | contract_management_pro |
 | FIN-INV-F5 | Forma-5 / Forma-2 statutory PDF | Y inventory shipments/adjustments | API | pdfkit |
 | FIN-PRC-01 | Procurement protocols + Bid | Y `/procurement/protocols` | API | — |
 | FIN-AP-01 | AP aging + creditor payment plan | Y `/reporting/ap-aging` | API | — |
-| FC-FX-01 | Converter + revaluation on hub CBAR | Y | SHIPPED | `ERA_DATA_HUB_ENABLED` |
+| FC-FX-01 | Converter + revaluation on hub CBAR | Y | SHIPPED | hub SoR; Excel org uses `/settings/reference-data` |
 | FC-FX-02 | Customs auto CBAR on bgdDate | Y | SHIPPED | Finance Trade Pro |
 | FIN-ADV-01 | Advance reports registry (list/detail/post/print) | Y `/expenses/advance-reports` | SHIPPED | Wave 5 E7; `@RequiresModule(kassa_pro)` |
 | FIN-ADV-02 | Advance report expense lines (cost account, VAT, receipt) + MXO link | Y advance report modal | SHIPPED | Wave 5 E7 |
@@ -325,11 +329,12 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 | ID | Capability | Doc | API | Status | Blocker |
 |----|------------|-----|-----|--------|---------|
 | DH-REGISTRY | Hub `/registry/v1` health + auth | ADR | Y | HEADLESS | service token |
-| DH-FX-01 | Hub FX ingest + `/fx/*` API | TZ §FX | Y | SHIPPED | `ERA_DATA_HUB_DATA_SOURCE=hub` prod |
+| DH-FX-01 | Hub FX ingest + `/fx/*` API | TZ §FX | Y | SHIPPED | FX switch in `/super-admin/reference` |
 | DH-CUR-01 | Hub ISO currency catalog `/currencies` | ADR | Y | SHIPPED | sync-from-finance; ≠ FX |
 | FC-DH-001 | Finance FX consumer | PRD §4.18 | Y | SHIPPED | — |
+| FC-REF-01 | Org-local Excel for FX, banks, calendar, HS | ADR reference-data | Y `/settings/reference-data` | API | SatAdmin upload requires `admin:org.settings`. Reads stay in this org: FX spot/range/convert, banks, calendar day/range/business days, HS. Does not write the shared hub. Mode is orchestrator `referenceSource`. UAT not walked |
 | FC-DH-002 | Finance HS/customs tariffs | PRD §4.18 | Y | SHIPPED | — |
-| FC-DH-003 | Finance calendar consumer | PRD §4.18 | Y | SHIPPED | — |
+| FC-DH-003 | Finance calendar consumer | PRD §4.18 | Y | SHIPPED | Excel org reads the workbook (day, range, add-business-days) |
 | FC-DH-004…010 | Banks/IBAN/VÖEN/geo/UoM/tax/CoA | PRD §4.18 | Y | SHIPPED | hub + fallback |
 | FC-DH-011 | ISO currency catalog (hub SoR) | ADR hub | Y `/system/currencies` | SHIPPED | FK cache; admin read-only |
 | FC-DH-COA | PostingRole de-hardcode CI | TZ §28.3 | — | HEADLESS | `lint-nas-literals.mjs` |
@@ -361,7 +366,7 @@ Doc: [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.m
 
 | ID | Capability | OpsUI | SatAdmin | OrgOwner | Status | Blocker |
 |----|------------|-------|----------|----------|--------|---------|
-| FC-CAL-01 | Finance HR on hub calendar | — | Y | Y | SHIPPED | `ERA_DATA_HUB_ENABLED` |
+| FC-CAL-01 | Finance HR on hub calendar | — | Y | Y | SHIPPED | hub, or Excel calendar for that org |
 | BK-CAL-01 | Bank EOD skip non-working | Y | Y | — | SHIPPED | on-prem snapshot |
 | HT-CAL-01 | Hotel auto-BAR from hub | — | Y | Y | SHIPPED | MANUAL lock |
 | CL-CAL-01 | Clinic scheduling skip non-working/mourning | Y | Y | — | SHIPPED | — |
@@ -516,6 +521,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-24 | Hotel folio desk: debt and unused payments are two sums; room route is company-on-this-stay then primary; guest VÖEN is not a route. HOT-FOLIO-DESK stays API. HOT-CASH-03 leaves SHIPPED: there is no deposit intake. Gate, Pilot, and edition unchanged. |
 | 2026-10-23 | CLI-26 nurse board: no countdown line and no lifecycle paragraph. Fullscreen hides filters and stretches the four columns to the bottom of the overlay. Same capability, still SHIPPED. CLI-57 stays SCREEN. |
 | 2026-10-23 | CLI-26 nurse board: today's still-ahead slots stay in the queue column (check-in only on the open window). No list above the columns. Same capability, still SHIPPED. CLI-57 stays SCREEN. |
 | 2026-10-22 | CLI-26 nurse board: four columns (check-in only while the window is open), no-shows stay in Late until the clinic day ends, fullscreen overlay. Same capability, still SHIPPED. CLI-57 stays SCREEN. |

@@ -5,6 +5,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../lib/auth-context";
 import { apiFetch } from "../../lib/api-client";
+import { parseApiErrorPayload, securityBlockText } from "../../lib/api-error-text";
 import {
   canCloseAccountingPeriod,
   canUsePlDepartmentFilter,
@@ -116,6 +117,8 @@ export default function ReportingPage() {
   const [closeMonth, setCloseMonth] = useState(new Date().getUTCMonth() + 1);
   const [closing, setClosing] = useState(false);
   const [closeMsg, setCloseMsg] = useState<string | null>(null);
+  const [closeFailed, setCloseFailed] = useState(false);
+  const [factQueueCount, setFactQueueCount] = useState<number | null>(null);
   const canClose = canCloseAccountingPeriod(user?.role ?? undefined);
   const canFilterPlByDepartment = canUsePlDepartmentFilter(user?.role ?? undefined);
   const { can: canPerm } = useOrgPermissions();
@@ -144,24 +147,35 @@ export default function ReportingPage() {
     if (!token || !canClose) return;
     setClosing(true);
     setCloseMsg(null);
-    const res = await apiFetch("/api/reporting/close-period", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        year: closeYear,
-        month: closeMonth,
-        ledgerType,
-        accountingBookId,
-      }),
-    });
+    setCloseFailed(false);
+    const res = await apiFetch(
+      "/api/reporting/close-period",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: closeYear,
+          month: closeMonth,
+          ledgerType,
+          accountingBookId,
+        }),
+      },
+      { skipErrorToast: true },
+    );
     setClosing(false);
     if (!res.ok) {
-      const text = await res.text();
+      const parsed = parseApiErrorPayload(await res.text());
+      setCloseFailed(true);
       setCloseMsg(
-        t("dashboard.closeErr", {
-          status: String(res.status),
-          detail: text || "—",
-        }),
+        parsed.code === "FACT_QUEUE_NONEMPTY"
+          ? t("reporting.factQueueCloseBlocked")
+          : parsed.code === "TAX_AMENDMENT_UNSENT"
+            ? t("reporting.amendmentCloseBlocked")
+            : securityBlockText(t, parsed.code) ??
+            t("dashboard.closeErr", {
+              status: String(res.status),
+              detail: parsed.message || "—",
+            }),
       );
       return;
     }
@@ -274,6 +288,19 @@ export default function ReportingPage() {
   const showPlDepartmentFilter =
     canFilterPlByDepartment && (activeReport === "pl" || pl !== null);
   const closePeriodMonth = `${String(closeYear).padStart(4, "0")}-${String(closeMonth).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (!token || !canClose) return;
+    let cancelled = false;
+    void apiFetch(`/api/reporting/fact-queue?period=${encodeURIComponent(closePeriodMonth)}`).then(async (res) => {
+      if (!res.ok || cancelled) return;
+      const body = (await res.json()) as { count?: number };
+      if (!cancelled) setFactQueueCount(typeof body.count === "number" ? body.count : 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canClose, closePeriodMonth, token]);
 
   const segBtn = (isActive: boolean, disabled: boolean) =>
     [
@@ -414,13 +441,24 @@ export default function ReportingPage() {
                 >
                   {closing ? t("dashboard.closing") : t("reporting.closePeriodBtn")}
                 </button>
+                <Link href={`/reporting/fact-queue?period=${encodeURIComponent(closePeriodMonth)}`} className="text-sm text-[#34495E] underline">
+                  {t("reporting.factQueueCount", { count: factQueueCount ?? 0 })}
+                </Link>
               </Fragment>
             ) : null}
           </div>
         }
       />
       {closeMsg && (
-        <p className="rounded-lg border border-[#D5DADF] bg-[#F8F9FA] px-4 py-3 text-[13px] text-[#34495E]">{closeMsg}</p>
+        <p
+          className={`rounded-lg border px-4 py-3 text-[13px] ${
+            closeFailed
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-[#D5DADF] bg-[#F8F9FA] text-[#34495E]"
+          }`}
+        >
+          {closeMsg}
+        </p>
       )}
 
       {err && <p className="text-red-600 text-sm">{err}</p>}

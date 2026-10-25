@@ -26,7 +26,7 @@ export type ChartOfAccountsFile = {
   meta?: Record<string, unknown>;
 };
 
-/** Optional read-through from era-data-hub (finance API passes when ERA_DATA_HUB_ENABLED). */
+/** Optional read-through from era-data-hub (finance API passes when the service token is set). */
 export type ChartJsonRemoteLoader = (
   kind: OrganizationKind,
 ) => Promise<ChartAccountSeed[] | null>;

@@ -85,6 +85,14 @@ import { WorkforceEmploymentSyncService } from "./workforce-employment-sync.serv
 import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.service";
 import { blindIndex, normalizeVoen } from "../security/pii-crypto.util";
 
+function splitGross(gross: number, vatRate: number): { net: number; vat: number } {
+  const money = (value: number) => Math.round(value * 100) / 100;
+  if (!(vatRate > 0)) return { net: money(gross), vat: 0 };
+  const sign = gross < 0 ? -1 : 1;
+  const vat = money((Math.abs(gross) * vatRate) / (100 + vatRate)) * sign;
+  return { net: money(gross - vat), vat };
+}
+
 function dayDocumentTender(method: string): string {
   const key = method.trim().toUpperCase();
   if (key === "CARD") return "card";
@@ -94,6 +102,21 @@ function dayDocumentTender(method: string): string {
   if (key === "LOYALTY_POINTS" || key === "LOYALTY") return "loyalty";
   if (key === "CASH") return "cash";
   throw new Error(`Unknown day-document tender ${method}`);
+}
+
+/** Guest card stays apart from a company card so only the guest line is tagged as population. */
+function tenderBucket(line: { method: string; bankTerminalId?: string; population?: boolean }): string {
+  const method = line.method.trim().toUpperCase();
+  const population = method === "CARD" && line.population === true;
+  const bank = line.bankTerminalId?.trim();
+  if (method === "CARD" && bank) return `card:${bank}${population ? ":pop" : ""}`;
+  if (population) return "card:pop";
+  return dayDocumentTender(line.method);
+}
+
+function splitPopulationBucket(bucket: string): { key: string; population: boolean } {
+  const population = bucket.endsWith(":pop");
+  return { key: population ? bucket.slice(0, -4) : bucket, population };
 }
 
 export type SatelliteDispatchResult = {
@@ -794,6 +817,9 @@ export class SatelliteEventDispatchService {
     event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
   ): Promise<{ lines: PostTransactionLine[]; stockMoves: number; saleTotal: number }> {
     const money = (value: number) => Math.round(value * 100) / 100;
+    if (event.payload.documentVersion === 2) {
+      return this.buildSplitDayDocument(tx, organizationId, event, money);
+    }
     const saleLines = event.payload.saleLines ?? [];
     const revenueLines = event.payload.revenueLines;
     for (const line of saleLines) {
@@ -851,11 +877,7 @@ export class SatelliteEventDispatchService {
     };
     const tenderByBucket = new Map<string, number>();
     for (const line of event.payload.paymentLines) {
-      const bank = line.bankTerminalId?.trim();
-      const bucket =
-        line.method.trim().toUpperCase() === "CARD" && bank
-          ? `card:${bank}`
-          : dayDocumentTender(line.method);
+      const bucket = tenderBucket(line);
       tenderByBucket.set(bucket, money((tenderByBucket.get(bucket) ?? 0) + line.amount));
     }
     const tenderTotal = money([...tenderByBucket.values()].reduce((sum, amount) => sum + amount, 0));
@@ -864,28 +886,34 @@ export class SatelliteEventDispatchService {
     const advanceAmount = gap < 0 ? -gap : 0;
 
     const lines: PostTransactionLine[] = [];
-    const push = (accountCode: string, debit: number, credit: number) => {
+    const push = (accountCode: string, debit: number, credit: number, population = false) => {
       const debitAmount = money(debit);
       const creditAmount = money(credit);
       if (debitAmount === 0 && creditAmount === 0) return;
-      lines.push({ accountCode, debit: debitAmount, credit: creditAmount });
+      lines.push({
+        accountCode,
+        debit: debitAmount,
+        credit: creditAmount,
+        ...(population ? { population: true } : {}),
+      });
     };
     for (const [accountCode, signedCredit] of creditByAccount) {
       if (signedCredit > 0) push(accountCode, 0, signedCredit);
       else if (signedCredit < 0) push(accountCode, -signedCredit, 0);
     }
     for (const [bucket, signed] of tenderByBucket) {
-      const accountCode = bucket.startsWith("card:")
+      const parsed = splitPopulationBucket(bucket);
+      const accountCode = parsed.key.startsWith("card:")
         ? await this.satelliteGlAccount(
             organizationId,
-            `SATELLITE_GL_CARD_${bucket.slice(5).replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+            `SATELLITE_GL_CARD_${parsed.key.slice(5).replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
             "BANK_SETTLEMENT",
             tx,
           )
-        : tenderAccount[bucket];
+        : tenderAccount[parsed.key];
       if (!accountCode) throw new Error(`Unknown day-document tender ${bucket}`);
-      if (signed > 0) push(accountCode, signed, 0);
-      else if (signed < 0) push(accountCode, 0, -signed);
+      if (signed > 0) push(accountCode, signed, 0, parsed.population);
+      else if (signed < 0) push(accountCode, 0, -signed, parsed.population);
     }
     const carryAccount = await this.satelliteGlAccount(
       organizationId,
@@ -912,11 +940,12 @@ export class SatelliteEventDispatchService {
           : tenderAccount.cash;
       if (!cashOut) throw new Error(`Unknown deposit payout tender ${method}`);
       push(deposit, line.amount, 0);
-      push(cashOut, 0, line.amount);
+      push(cashOut, 0, line.amount, method === "CARD" && line.population === true);
     }
     if (ar > 0) push(receivable, ar, 0);
     if (advanceAmount > 0) push(advance, 0, advanceAmount);
 
+    await this.settleUncosted(tx, organizationId, lines);
     const stockMoves = await this.explodeDayDocumentRecipes(tx, organizationId, {
       businessDate: event.payload.businessDate,
       saleLines,
@@ -924,6 +953,385 @@ export class SatelliteEventDispatchService {
       lines,
     });
     return { lines, stockMoves, saleTotal };
+  }
+
+  private async buildSplitDayDocument(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
+    money: (value: number) => number,
+  ): Promise<{ lines: PostTransactionLine[]; stockMoves: number; saleTotal: number }> {
+    const moneyLines = event.payload.moneyLines ?? [];
+    const qtyLines = event.payload.qtyLines ?? [];
+    for (const line of qtyLines) {
+      if (line.qty === 0) continue;
+      const product = await tx.product.findFirst({
+        where: {
+          organizationId,
+          deletedAt: null,
+          sku: { equals: line.sku, mode: "insensitive" },
+        },
+        select: { id: true },
+      });
+      if (!product) throw new Error(`SKU not in the hotel catalog: ${line.sku}`);
+    }
+    const saleTotal = money(moneyLines.reduce((sum, line) => sum + line.amount, 0));
+    const [cash, card, deposit, city, bank, loyalty, receivable, advance, cogs, houseUse, comp, opsUse, vatOut] =
+      await Promise.all([
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_CASH_AZN", "CASH_AZN", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_CARD", "BANK_SETTLEMENT", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_DEPOSIT", "PREPAID_ASSET", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_CITY_LEDGER", "TRADE_RECEIVABLE_SERVICES", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_BANK", "MAIN_BANK", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_LOYALTY", "PREPAID_ASSET", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_RECEIVABLE", "TRADE_RECEIVABLE", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_ADVANCE", "PREPAID_ASSET", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_COGS", "COGS", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_HOUSE_USE", "MISC_OPERATING_EXPENSE", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_COMP", "MISC_OPERATING_EXPENSE", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_OPS_USE", "MISC_OPERATING_EXPENSE", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_VAT_OUTPUT", "VAT_OUTPUT", tx),
+      ]);
+    const debitForPurpose: Record<string, string> = {
+      sale: cogs,
+      house_use: houseUse,
+      comp: comp,
+      housekeeping: opsUse,
+      procedure_consumable: opsUse,
+    };
+    const creditByAccount = new Map<string, number>();
+    const addRevenue = async (accountCode: string, amount: number, label: string) => {
+      if (amount === 0) return;
+      const account = accountCode.trim();
+      if (!account) throw new Error(`Revenue account missing for ${label}`);
+      await this.assertLeafAccount(tx, organizationId, account);
+      creditByAccount.set(account, money((creditByAccount.get(account) ?? 0) + amount));
+    };
+    for (const line of moneyLines) {
+      const parts = splitGross(line.amount, line.vatRate);
+      await addRevenue(line.glAccountCode ?? "", parts.net, `revenue code ${line.revenueCode}`);
+      await addRevenue(vatOut, parts.vat, `VAT ${line.revenueCode}`);
+    }
+    const tenderAccount: Record<string, string> = { cash, card, deposit, city, bank, loyalty };
+    const tenderByBucket = new Map<string, number>();
+    for (const line of event.payload.paymentLines) {
+      const bucket = tenderBucket(line);
+      tenderByBucket.set(bucket, money((tenderByBucket.get(bucket) ?? 0) + line.amount));
+    }
+    const tenderTotal = money([...tenderByBucket.values()].reduce((sum, amount) => sum + amount, 0));
+    const gap = money(saleTotal - tenderTotal);
+    const lines: PostTransactionLine[] = [];
+    const push = (accountCode: string, debit: number, credit: number, population = false) => {
+      const debitAmount = money(debit);
+      const creditAmount = money(credit);
+      if (debitAmount === 0 && creditAmount === 0) return;
+      lines.push({
+        accountCode,
+        debit: debitAmount,
+        credit: creditAmount,
+        ...(population ? { population: true } : {}),
+      });
+    };
+    for (const [accountCode, signedCredit] of creditByAccount) {
+      if (signedCredit > 0) push(accountCode, 0, signedCredit);
+      else if (signedCredit < 0) push(accountCode, -signedCredit, 0);
+    }
+    const cardAccount = async (bucket: string) =>
+      this.satelliteGlAccount(
+        organizationId,
+        `SATELLITE_GL_CARD_${bucket.slice(5).replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+        "BANK_SETTLEMENT",
+        tx,
+      );
+    for (const [bucket, signed] of tenderByBucket) {
+      const parsed = splitPopulationBucket(bucket);
+      const accountCode = parsed.key.startsWith("card:") ? await cardAccount(parsed.key) : tenderAccount[parsed.key];
+      if (!accountCode) throw new Error(`Unknown day-document tender ${bucket}`);
+      if (signed > 0) push(accountCode, signed, 0, parsed.population);
+      else if (signed < 0) push(accountCode, 0, -signed, parsed.population);
+    }
+    for (const line of event.payload.depositReceiptLines ?? []) {
+      if (line.amount === 0) continue;
+      const method = line.method.trim().toUpperCase();
+      const cashIn =
+        method === "CARD"
+          ? await this.satelliteGlAccount(
+              organizationId,
+              `SATELLITE_GL_CARD_${(line.bankTerminalId ?? "CARD").replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+              "BANK_SETTLEMENT",
+              tx,
+            )
+          : tenderAccount[dayDocumentTender(line.method)];
+      if (!cashIn) throw new Error(`Unknown deposit receipt tender ${method}`);
+      push(cashIn, line.amount, 0, method === "CARD" && line.population === true);
+      push(deposit, 0, line.amount);
+    }
+    for (const line of event.payload.depositPayoutLines ?? []) {
+      if (line.amount === 0) continue;
+      const method = line.method.trim().toUpperCase();
+      const cashOut =
+        method === "CARD"
+          ? await this.satelliteGlAccount(
+              organizationId,
+              `SATELLITE_GL_CARD_${(line.bankTerminalId ?? "CARD").replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+              "BANK_SETTLEMENT",
+              tx,
+            )
+          : tenderAccount.cash;
+      if (!cashOut) throw new Error(`Unknown deposit payout tender ${method}`);
+      push(deposit, line.amount, 0);
+      push(cashOut, 0, line.amount, method === "CARD" && line.population === true);
+    }
+    if (gap > 0) push(receivable, gap, 0);
+    if (gap < 0) push(advance, 0, -gap);
+    await this.settleUncosted(tx, organizationId, lines);
+    const stockMoves = await this.explodeQtyLines(tx, organizationId, {
+      businessDate: event.payload.businessDate,
+      qtyLines: qtyLines.map((line) => ({
+        sku: line.sku,
+        qty: line.qty,
+        warehouseCode: line.warehouseCode,
+        debitAccount: debitForPurpose[line.purpose] ?? cogs,
+      })),
+      lines,
+    });
+    return { lines, stockMoves, saleTotal };
+  }
+
+  private async assertLeafAccount(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    code: string,
+  ) {
+    const account = await tx.account.findFirst({
+      where: { organizationId, code, deletedAt: null },
+      select: { id: true },
+    });
+    if (!account) throw new Error(`Account ${code} is not in the chart`);
+    const child = await tx.account.findFirst({
+      where: { organizationId, parentId: account.id, deletedAt: null },
+      select: { id: true },
+    });
+    if (child) throw new Error(`Account ${code} is a group — post the leaf`);
+  }
+
+  private async settleUncosted(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    lines: PostTransactionLine[],
+  ) {
+    const open = await tx.uncostedStockLine.findMany({
+      where: { organizationId, resolvedAt: null },
+      take: 200,
+    });
+    for (const row of open) {
+      const stock = await tx.stockItem.findUnique({
+        where: {
+          organizationId_warehouseId_productId: {
+            organizationId,
+            warehouseId: row.warehouseId,
+            productId: row.productId,
+          },
+        },
+      });
+      const average = stock?.averageCost ?? new Prisma.Decimal(0);
+      const onHand = stock?.quantity ?? new Prisma.Decimal(0);
+      if (average.lte(0) || onHand.lt(0)) continue;
+      const amount = new Prisma.Decimal(row.quantity).abs().mul(average).toNumber();
+      const rounded = Math.round(amount * 100) / 100;
+      if (rounded > 0) {
+        if (new Prisma.Decimal(row.quantity).gt(0)) {
+          lines.push({ accountCode: row.debitAccountCode, debit: rounded, credit: 0 });
+          lines.push({ accountCode: row.inventoryAccountCode, debit: 0, credit: rounded });
+        } else {
+          lines.push({ accountCode: row.inventoryAccountCode, debit: rounded, credit: 0 });
+          lines.push({ accountCode: row.debitAccountCode, debit: 0, credit: rounded });
+        }
+      }
+      await tx.uncostedStockLine.update({
+        where: { id: row.id },
+        data: { resolvedAt: new Date() },
+      });
+    }
+  }
+
+  private async resolveQtyWarehouse(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    code: string | undefined,
+  ): Promise<{ id: string; inventoryAccountCode: string | null } | null> {
+    const token = code?.trim();
+    if (token) {
+      const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token);
+      const found = await tx.warehouse.findFirst({
+        where: uuid
+          ? { organizationId, deletedAt: null, id: token }
+          : { organizationId, deletedAt: null, name: { equals: token, mode: "insensitive" } },
+        select: { id: true, inventoryAccountCode: true },
+      });
+      if (found) return found;
+    }
+    const fallback = await this.inventory.resolveDefaultWarehouseId(organizationId);
+    if (!fallback) return null;
+    return tx.warehouse.findFirst({
+      where: { id: fallback, organizationId },
+      select: { id: true, inventoryAccountCode: true },
+    });
+  }
+
+  private async explodeQtyLines(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    input: {
+      businessDate: string;
+      qtyLines: Array<{ sku: string; qty: number; warehouseCode?: string; debitAccount: string }>;
+      lines: PostTransactionLine[];
+    },
+  ): Promise<number> {
+    const active = input.qtyLines.filter((line) => line.qty !== 0);
+    if (active.length === 0) return 0;
+    const notePrefix = `hotel-na:${input.businessDate}`;
+    const already = await tx.stockMovement.findFirst({
+      where: { organizationId, note: { startsWith: notePrefix } },
+      select: { id: true },
+    });
+    if (already) return 0;
+    const planned: Array<{
+      productId: string;
+      signed: Prisma.Decimal;
+      sku: string;
+      warehouseId: string;
+      inventoryAccount: string;
+      debitAccount: string;
+    }> = [];
+    for (const line of active) {
+      const product = await tx.product.findFirst({
+        where: {
+          organizationId,
+          deletedAt: null,
+          sku: { equals: line.sku, mode: "insensitive" },
+        },
+        select: { id: true, isService: true },
+      });
+      if (!product) throw new Error(`SKU not in the hotel catalog: ${line.sku}`);
+      const warehouse = await this.resolveQtyWarehouse(tx, organizationId, line.warehouseCode);
+      if (!warehouse) throw new Error("Hotel warehouse is required to write off the day document");
+      const inventoryAccount =
+        warehouse.inventoryAccountCode?.trim() ||
+        (await this.satelliteGlAccount(organizationId, "SATELLITE_GL_INVENTORY", "INVENTORY_GOODS", tx));
+      const recipe = product.isService
+        ? null
+        : await tx.productRecipe.findFirst({
+            where: { organizationId, finishedProductId: product.id, deletedAt: null },
+            include: {
+              lines: {
+                where: { deletedAt: null },
+                include: { component: { select: { id: true, isService: true } } },
+              },
+            },
+          });
+      if (recipe) {
+        for (const componentLine of recipe.lines) {
+          if (componentLine.component.isService) continue;
+          const perUnit =
+            Number(componentLine.quantityPerUnit) * (1 + Number(componentLine.wasteFactor));
+          const componentQty = line.qty * perUnit;
+          if (Math.abs(componentQty) < 0.0000001) continue;
+          planned.push({
+            productId: componentLine.component.id,
+            signed: new Prisma.Decimal(componentQty),
+            sku: line.sku,
+            warehouseId: warehouse.id,
+            inventoryAccount,
+            debitAccount: line.debitAccount,
+          });
+        }
+        continue;
+      }
+      if (product.isService) continue;
+      planned.push({
+        productId: product.id,
+        signed: new Prisma.Decimal(line.qty),
+        sku: line.sku,
+        warehouseId: warehouse.id,
+        inventoryAccount,
+        debitAccount: line.debitAccount,
+      });
+    }
+    let moves = 0;
+    for (const move of planned) {
+      const existing = await tx.stockItem.findUnique({
+        where: {
+          organizationId_warehouseId_productId: {
+            organizationId,
+            warehouseId: move.warehouseId,
+            productId: move.productId,
+          },
+        },
+      });
+      const onHand = existing?.quantity ?? new Prisma.Decimal(0);
+      const averageCost = existing?.averageCost ?? new Prisma.Decimal(0);
+      const nextQty = onHand.minus(move.signed);
+      await tx.stockItem.upsert({
+        where: {
+          organizationId_warehouseId_productId: {
+            organizationId,
+            warehouseId: move.warehouseId,
+            productId: move.productId,
+          },
+        },
+        create: {
+          organizationId,
+          warehouseId: move.warehouseId,
+          productId: move.productId,
+          quantity: nextQty,
+          averageCost,
+        },
+        update: { quantity: nextQty },
+      });
+      await tx.stockMovement.create({
+        data: {
+          organizationId,
+          warehouseId: move.warehouseId,
+          productId: move.productId,
+          type: move.signed.gt(0) ? StockMovementType.OUT : StockMovementType.IN,
+          reason: StockMovementReason.SALE,
+          quantity: move.signed.abs(),
+          price: averageCost,
+          note: `${notePrefix}:${move.sku}`,
+          documentDate: new Date(`${input.businessDate}T12:00:00.000Z`),
+        },
+      });
+      const uncosted = averageCost.lte(0) || nextQty.lt(0);
+      const cost = move.signed.abs().mul(averageCost);
+      if (uncosted) {
+        await tx.uncostedStockLine.create({
+          data: {
+            organizationId,
+            businessDate: new Date(`${input.businessDate}T00:00:00.000Z`),
+            warehouseId: move.warehouseId,
+            productId: move.productId,
+            sku: move.sku,
+            quantity: move.signed,
+            debitAccountCode: move.debitAccount,
+            inventoryAccountCode: move.inventoryAccount,
+            reason: averageCost.lte(0) ? "NO_AVERAGE_COST" : "NEGATIVE_STOCK",
+            note: "cost not determined",
+          },
+        });
+      } else if (cost.gt(0)) {
+        const amount = cost.toNumber();
+        if (move.signed.gt(0)) {
+          input.lines.push({ accountCode: move.debitAccount, debit: amount, credit: 0 });
+          input.lines.push({ accountCode: move.inventoryAccount, debit: 0, credit: amount });
+        } else {
+          input.lines.push({ accountCode: move.inventoryAccount, debit: amount, credit: 0 });
+          input.lines.push({ accountCode: move.debitAccount, debit: 0, credit: amount });
+        }
+      }
+      moves += 1;
+    }
+    return moves;
   }
 
   private async explodeDayDocumentRecipes(
@@ -967,6 +1375,7 @@ export class SatelliteEventDispatchService {
         },
       });
       if (recipe) {
+        if (product.isService) continue;
         for (const componentLine of recipe.lines) {
           if (componentLine.component.isService) continue;
           const perUnit =
@@ -1047,7 +1456,23 @@ export class SatelliteEventDispatchService {
         },
       });
       const cost = signed.abs().mul(averageCost);
-      if (cost.gt(0)) {
+      const uncosted = averageCost.lte(0) || nextQty.lt(0);
+      if (uncosted) {
+        await tx.uncostedStockLine.create({
+          data: {
+            organizationId,
+            businessDate: new Date(`${input.businessDate}T00:00:00.000Z`),
+            warehouseId,
+            productId: move.productId,
+            sku: move.sku,
+            quantity: signed,
+            debitAccountCode: input.cogsAccount,
+            inventoryAccountCode: inventoryAccount,
+            reason: averageCost.lte(0) ? "NO_AVERAGE_COST" : "NEGATIVE_STOCK",
+            note: "cost not determined",
+          },
+        });
+      } else if (cost.gt(0)) {
         const amount = cost.toNumber();
         if (signed.gt(0)) {
           input.lines.push({ accountCode: input.cogsAccount, debit: amount, credit: 0 });

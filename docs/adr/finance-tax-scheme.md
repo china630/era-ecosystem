@@ -8,7 +8,7 @@
 
 Operational satellites already post facts into Finance by posting role. Managers are not meant to see debits and credits. What is still missing is the layer above the ledger: which tax regime applies, which rate and document the fact requires, and what blocks a period close.
 
-Today the simplified-tax export multiplies revenue by a flat **2%** (`tax-export.service.ts`). It does not apply the POS coefficient, the 2026 cashless rate, the e-qaimə share that ends simplified-tax eligibility, or a regime change. A VAT-threshold reminder exists; a regime switch does not.
+Today the simplified-tax export uses the dated scheme watcher (cash, bank, population card, unmarked card). A VAT-threshold reminder in compliance still uses a calendar year and does not switch the regime. The watcher does not switch it either: it raises a price-review marker.
 
 e-Qaimə server submit is a process environment flag, `ERA_EQAIME_S2S_ENABLED`, not an organization setting. The manual adjusting journal is the way a tail is closed, and it is gated to `OWNER` / `ADMIN` / `ACCOUNTANT`.
 
@@ -71,10 +71,11 @@ The environment flag must not be the only place this policy lives. Deployment ca
 
 ## Current code this decision does not pretend is done
 
-- Simplified-tax XML / amount: flat `0.02` on revenue credits.
-- VAT threshold: reminder only.
-- e-Qaimə S2S: env guard, COVERAGE `FIN-EQAIME-01` stays STUB/API until credentials and the org close rule exist.
-- No provisional-VAT status, no unclassified-fact queue on period close, no dated scheme publication.
+- Simplified-tax watcher is **API**, not SHIPPED: `GET /api/reporting/simplified-tax-watch`, scheme list `GET /api/admin/tax-schemes`, org facts `settings.tax.regime` and `pricesIncludeTax`. Flat `0.02` on revenue credits is gone from the simplified export. The XML/XLSX lists the tender buckets and both scheme rates; it does not stamp a single 2% rate. Population card is a `TaxSettlementTag`; unmarked card does not get the POS rate or the 0.5 coefficient. The watcher does not post and does not switch the regime. A later scheme version is another row with the same code and a new `effectiveFrom`.
+- Day close without an e-qaimə number is an org checkbox `settings.tax.requireEqaimeForDayClose` (**API**, not SHIPPED). Hotel night audit asks Finance and refuses the day when a registered domestic invoice for that Baku date has no number. A manual link (`POST /api/invoices/:id/eqaime/link`, status `MANUAL`) stores the number and does not call the gateway. The channel flag `ERA_EQAIME_S2S_ENABLED` is unchanged and still returns 503 when off. Clinic and F&B have no night-audit gate here. Month close is not gated.
+- VAT threshold reminder in compliance is still a calendar-year signal, separate from the watcher.
+- e-Qaimə S2S: env guard, COVERAGE `FIN-EQAIME-01` stays STUB/API. The org close rule does not turn the channel on.
+- Provisional input VAT and a filed-period amendment are **API**, not SHIPPED (`FIN-PROVISIONAL-VAT-01`). A purchase without `taxDocumentRef` posts the whole amount to expense, including goods, and does not post inventory or `VAT_INPUT`. Linking the act or e-qaimə moves the goods net onto inventory and the tax onto input VAT, then closes that tax against output VAT. It does not move cash. `POST /api/reporting/scheme-period/apply` reads the simplified-tax watcher for the new amount and the saved export for the old amount. `GENERATED` and `UPLOADED` are recalculated in place. `CONFIRMED_BY_TAX` keeps its amount. A higher tax under a non-retroactive norm does not create a draft. `closePeriod` and the period-lock date refuse the next month while an amendment draft is `DRAFT`. Marking the draft sent does not call the tax gateway. Invoice lines take `vatPercent` from the scheme. `GET /api/system/invoice-vat-rates` returns that percent only. A line sent as exempt is refused. A hotel guest card payment and a card deposit refund with no company VÖEN are tagged population; a company card and a bank transfer are not. `POST /api/admin/tax-schemes/package` writes the same statutory row on SaaS and on-prem. A cash refund is not implemented. This does not extend AC-FIN-TAX.
 
 ## Consequences
 

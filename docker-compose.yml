@@ -158,8 +158,6 @@ services:
       ERA_IN_DOCKER: "1"
       API_PORT: "4200"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${DATA_HUB_DB:-era_data_hub}?schema=public
-      FINANCE_RO_DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
-      ERA_DATA_HUB_DATA_SOURCE: ${ERA_DATA_HUB_DATA_SOURCE:-finance_ro}
       REDIS_URL: redis://redis:6379/4
       DATA_HUB_SERVICE_TOKEN: ${DATA_HUB_SERVICE_TOKEN:-dev-data-hub-service-token}
       DATA_HUB_DEV_API_KEYS: ${DATA_HUB_DEV_API_KEYS:-dev-data-hub-key}
@@ -190,8 +188,6 @@ services:
       ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
       ERA_DATA_HUB_URL: http://data-hub:4200
-      ERA_DATA_HUB_ENABLED: ${ERA_DATA_HUB_ENABLED:-false}
-      ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED: ${ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED:-false}
       DATA_HUB_SERVICE_TOKEN: ${DATA_HUB_SERVICE_TOKEN:-dev-data-hub-service-token}
       REDIS_URL: redis://redis:6379/1
       API_PORT: "4100"

@@ -1,6 +1,6 @@
 "use client";
 
-import { bakuCalendarYear } from "@era/satellite-kit/time";
+import { bakuCalendarYear, todayBakuYmd } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -74,11 +74,29 @@ function parseApiErrorBody(data: unknown): string {
   }
 }
 
+type SimplifiedWatch = {
+  cashAzn: string;
+  bankAzn: string;
+  cardPopulationAzn: string;
+  cardUnmarkedAzn: string;
+  simplifiedTaxAmountAzn: string;
+  adjustedTurnoverAzn: string;
+  thresholdAzn: string;
+  eqaimeShare: string;
+  priceReview: boolean;
+  priceReviewReasons: string[];
+  priceExample: {
+    grossAzn: string;
+    netAzn: string;
+    marginDropAzn: string;
+  } | null;
+};
+
 export default function TaxExportPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const now = new Date();
-  const [monthPeriod, setMonthPeriod] = useState(now.toISOString().slice(0, 7));
+  const [monthPeriod, setMonthPeriod] = useState(() => todayBakuYmd().slice(0, 7));
   const [year, setYear] = useState(() => bakuCalendarYear());
   const [quarter, setQuarter] = useState(Math.floor(now.getUTCMonth() / 3) + 1);
   const [taxType, setTaxType] = useState<TaxType>("SIMPLIFIED_TAX");
@@ -91,6 +109,18 @@ export default function TaxExportPage() {
   const [payrollPreview, setPayrollPreview] = useState<PayrollWithholdingPreview | null>(null);
   const [showPayrollPreview, setShowPayrollPreview] = useState(false);
   const [loadingPayrollPreview, setLoadingPayrollPreview] = useState(false);
+  const [watch, setWatch] = useState<SimplifiedWatch | null>(null);
+  const [watchErr, setWatchErr] = useState<string | null>(null);
+  const [amendNote, setAmendNote] = useState<string | null>(null);
+  const [amendments, setAmendments] = useState<
+    Array<{
+      id: string;
+      period: string;
+      taxType: string;
+      deltaAmount: string;
+      status: "DRAFT" | "SENT";
+    }>
+  >([]);
 
   const period = useMemo(() => {
     if (taxType === "VAT") return `${year}-Q${quarter}`;
@@ -121,6 +151,58 @@ export default function TaxExportPage() {
     if (!token) return;
     void load();
   }, [token, load]);
+
+  const loadAmendments = useCallback(async () => {
+    if (!token) return;
+    const res = await apiFetch("/api/reporting/scheme-period/amendments");
+    if (!res.ok) return;
+    const data = (await res.json()) as Array<{
+      id: string;
+      period: string;
+      taxType: string;
+      deltaAmount: string;
+      status: "DRAFT" | "SENT";
+    }>;
+    setAmendments(Array.isArray(data) ? data : []);
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    void loadAmendments();
+  }, [token, loadAmendments]);
+
+  useEffect(() => {
+    if (!token || taxType !== "SIMPLIFIED_TAX") {
+      setWatch(null);
+      setWatchErr(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await apiFetch(
+          `/api/reporting/simplified-tax-watch?period=${encodeURIComponent(monthPeriod)}`,
+        );
+        const data = (await res.json().catch(() => null)) as unknown;
+        if (cancelled) return;
+        if (!res.ok) {
+          setWatch(null);
+          setWatchErr(parseApiErrorBody(data));
+          return;
+        }
+        setWatchErr(null);
+        setWatch(data as SimplifiedWatch);
+      } catch {
+        if (!cancelled) {
+          setWatch(null);
+          setWatchErr(t("reporting.simplifiedWatchErr"));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, taxType, monthPeriod, t]);
 
   const generate = useCallback(async () => {
     setGenerating(true);
@@ -361,6 +443,44 @@ export default function TaxExportPage() {
         }
       />
 
+      {taxType === "SIMPLIFIED_TAX" && watchErr ? (
+        <p className="text-red-600 text-sm">{watchErr}</p>
+      ) : null}
+
+      {taxType === "SIMPLIFIED_TAX" && watch ? (
+        <section className="bg-white p-6 shadow-sm rounded-xl border border-slate-100 space-y-2 text-sm text-[#34495E]">
+          <h2 className="text-lg font-semibold text-gray-900">{t("reporting.simplifiedWatchTitle")}</h2>
+          <p>
+            {t("reporting.simplifiedWatchCash")}: {formatMoneyAzn(watch.cashAzn)} ·{" "}
+            {t("reporting.simplifiedWatchBank")}: {formatMoneyAzn(watch.bankAzn)} ·{" "}
+            {t("reporting.simplifiedWatchCard")}: {formatMoneyAzn(watch.cardPopulationAzn)} ·{" "}
+            {t("reporting.simplifiedWatchCardUnmarked")}: {formatMoneyAzn(watch.cardUnmarkedAzn)}
+          </p>
+          <p>
+            {t("reporting.simplifiedWatchTax")}: {formatMoneyAzn(watch.simplifiedTaxAmountAzn)}
+          </p>
+          <p>
+            {t("reporting.simplifiedWatchThreshold")}: {formatMoneyAzn(watch.adjustedTurnoverAzn)} /{" "}
+            {formatMoneyAzn(watch.thresholdAzn)}
+          </p>
+          <p>
+            {t("reporting.simplifiedWatchEqaime")}: {(Number(watch.eqaimeShare) * 100).toFixed(1)}%
+          </p>
+          {watch.priceReview ? (
+            <p className="font-medium text-[#1A5276]">{t("reporting.simplifiedWatchReviewPrices")}</p>
+          ) : null}
+          {watch.priceExample ? (
+            <p>
+              {t("reporting.simplifiedWatchPriceExample", {
+                gross: watch.priceExample.grossAzn,
+                net: watch.priceExample.netAzn,
+                drop: watch.priceExample.marginDropAzn,
+              })}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
       {taxType === "PROFIT_TAX" ? (
         <p className="text-sm text-[#34495E]">
           {t("reporting.taxExportProfitTaxHint")}{" "}
@@ -523,7 +643,68 @@ export default function TaxExportPage() {
             </div>
           </div>
         </div>
-      ) : null}
+        ) : null}
+
+      <section className="space-y-3 rounded border border-[#D5DADF] p-4">
+        <h2 className="text-base font-medium text-[#34495E]">
+          {t("reporting.amendmentTitle")} · {period}
+        </h2>
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setAmendNote(null);
+            void apiFetch("/api/reporting/scheme-period/apply", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ period, taxType }),
+            }).then(async (res) => {
+              const data = (await res.json().catch(() => null)) as
+                | { decision?: { kind?: string; delta?: string } }
+                | null;
+              if (!res.ok) {
+                setAmendNote(parseApiErrorBody(data));
+                return;
+              }
+              const kind = data?.decision?.kind;
+              const delta = data?.decision?.delta ?? "";
+              if (kind === "recalculate") setAmendNote(t("reporting.amendmentOpen", { delta }));
+              else if (kind === "amendment") setAmendNote(t("reporting.amendmentFiled", { delta }));
+              else if (kind === "keep_filed") setAmendNote(t("reporting.amendmentKept"));
+              else if (kind === "unchanged") setAmendNote(t("reporting.amendmentUnchanged"));
+              else setAmendNote(t("reporting.amendmentUnchanged"));
+              await loadAmendments();
+            });
+          }}
+        >
+          <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={taxType !== "SIMPLIFIED_TAX"}>
+            {t("reporting.amendmentApply")}
+          </button>
+        </form>
+        {amendNote ? <p className="text-sm text-[#34495E]">{amendNote}</p> : null}
+        <ul className="space-y-2">
+          {amendments.map((row) => (
+            <li key={row.id} className="flex flex-wrap items-center gap-3 text-sm text-[#34495E]">
+              <span>
+                {row.period} · {row.taxType} · {row.deltaAmount} · {row.status}
+              </span>
+              {row.status === "DRAFT" ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    void apiFetch(`/api/reporting/scheme-period/amendments/${row.id}/sent`, {
+                      method: "POST",
+                    }).then(() => loadAmendments());
+                  }}
+                >
+                  {t("reporting.amendmentSent")}
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

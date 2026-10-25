@@ -204,6 +204,7 @@ export function publicRuntimeConfigView(cfg: SatelliteRuntimeConfig): Record<str
     hotelModules: cfg.hotelModules ?? null,
     deploymentTopology: cfg.deploymentTopology ?? null,
     edition: cfg.edition ?? null,
+    referenceSource: cfg.referenceSource === "excel" ? "excel" : "hub",
     vendorBridgesEnabled:
       typeof cfg.vendorBridgesEnabled === "boolean" ? cfg.vendorBridgesEnabled : null,
     ssoSharedSecretConfigured: Boolean(cfg.ssoSharedSecret?.trim()),

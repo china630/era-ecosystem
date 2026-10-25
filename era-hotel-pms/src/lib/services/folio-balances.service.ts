@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { folioBalance } from '@/lib/services/folio.service';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import { decimalToNumber } from '@/lib/decimal';
 import { revenueRoleIs } from '@/lib/revenue-code-match';
 
@@ -22,6 +22,7 @@ export type FolioBalanceRow = {
   guestBalance: number;
   agencyBalance: number;
   companyBalance: number;
+  unused: number;
   roomCharges: number;
   extraCharges: number;
   firstGuestBalance: number | null;
@@ -33,10 +34,14 @@ export function passesFolioBalanceTab(
   guestBalance: number,
   agencyBalance: number,
   companyBalance: number,
+  unused = 0,
 ): boolean {
-  const absSum = Math.abs(guestBalance) + Math.abs(agencyBalance) + Math.abs(companyBalance);
+  const absSum =
+    Math.abs(guestBalance) + Math.abs(agencyBalance) + Math.abs(companyBalance) + Math.abs(unused);
   if (tab === 'inHouseBalanced' && absSum <= 0.01) return false;
-  if (tab === 'inHouseGuestBalanced' && Math.abs(guestBalance) <= 0.01) return false;
+  if (tab === 'inHouseGuestBalanced' && Math.abs(guestBalance) <= 0.01 && Math.abs(unused) <= 0.01) {
+    return false;
+  }
   return true;
 }
 
@@ -104,10 +109,13 @@ export async function listReservationFolioBalances(
     let companyBalance = 0;
     let roomCharges = 0;
     let extraCharges = 0;
+    let unused = 0;
     const personal: { sort: number; bal: number }[] = [];
 
     for (const f of r.folios) {
-      const bal = folioBalance(f.charges, f.payments);
+      const pair = stayMoneyPair(f.charges, f.payments);
+      const bal = pair.debt;
+      unused += pair.unused;
       if (f.type === 'GUEST') guestBalance += bal;
       else if (f.type === 'AGENCY') agencyBalance += bal;
       else if (f.type === 'COMPANY') companyBalance += bal;
@@ -122,7 +130,7 @@ export async function listReservationFolioBalances(
     }
     personal.sort((a, b) => a.sort - b.sort);
 
-    if (!passesFolioBalanceTab(tab, guestBalance, agencyBalance, companyBalance)) continue;
+    if (!passesFolioBalanceTab(tab, guestBalance, agencyBalance, companyBalance, unused)) continue;
 
     rows.push({
       id: r.id,
@@ -137,6 +145,7 @@ export async function listReservationFolioBalances(
       guestBalance: Math.round(guestBalance * 100) / 100,
       agencyBalance: Math.round(agencyBalance * 100) / 100,
       companyBalance: Math.round(companyBalance * 100) / 100,
+      unused: Math.round(unused * 100) / 100,
       roomCharges: Math.round(roomCharges * 100) / 100,
       extraCharges: Math.round(extraCharges * 100) / 100,
       firstGuestBalance: personal[0] ? Math.round(personal[0].bal * 100) / 100 : null,

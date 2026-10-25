@@ -91,12 +91,7 @@ GET responses include `ETag`, `Cache-Control: public, max-age=…` (Redis-backed
 
 ## Data sources
 
-| `ERA_DATA_HUB_DATA_SOURCE` | Reads | Ingest |
-|----------------------------|-------|--------|
-| `finance_ro` (default) | `era_finance` via `FINANCE_RO_DATABASE_URL` | CBAR cron no-op |
-| `hub` | `era_data_hub` (`DATABASE_URL`) | CBAR cron → `cbar_official_rates` |
-
-Phase 1 cutover: `npm run db:sync-from-finance` then `ERA_DATA_HUB_DATA_SOURCE=hub`.
+Registry reads `era_data_hub`. External fetch is per catalog in `reference_ingest_policies` (super-admin `/super-admin/reference`). `npm run db:sync-from-finance` is a one-time copy and the only use of `FINANCE_RO_DATABASE_URL`.
 
 Catalog JSON: `packages/database/catalog/{national,trade}` (or `DATA_HUB_FINANCE_CATALOG_ROOT`).
 

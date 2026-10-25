@@ -1,3 +1,4 @@
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { CP_PERMISSION } from "@era/contracts";
 import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
@@ -8,14 +9,12 @@ import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import {
   StockMovementReason,
   StockMovementType,
-  TaxRateKind,
   UserRole,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { AZ_TAX_SCHEME_CODE, parseSchemeParams } from "../reporting/simplified-tax-watch.calc";
+import { AZ_STATUTORY_SCHEME_PACKAGE } from "../reporting/tax-scheme-package";
 
-const DEFAULT_INVOICE_VAT_RATES = [-1, 0, 2, 8, 18] as const;
-
-/** Roles that may be assigned via team invite (excludes OWNER). */
 const TEAM_INVITE_ROLES: UserRole[] = [
   UserRole.USER,
   UserRole.ACCOUNTANT,
@@ -87,55 +86,30 @@ export class SystemCatalogController {
 
   @Get("invoice-vat-rates")
   @ApiOperation({
-    summary:
-      "Allowed ƏDV/НДС line percents for invoices (from tax_rates; fallback to product default list)",
+    summary: "Invoice line VAT percent from the statutory scheme. Exemption and catalog percents are not offered.",
   })
   async listInvoiceVatRates(
     @Query("date") date?: string,
   ): Promise<{ rates: number[] }> {
-    if (this.dataHub.isEnabled()) {
-      const remote = await this.dataHub.getTaxRates("VAT", date);
-      if (remote?.rates?.length) {
-        const rates = new Set<number>();
-        for (const r of remote.rates) {
-          const code = r.code.toUpperCase();
-          if (code.includes("EXEMPT")) {
-            rates.add(-1);
-            continue;
-          }
-          const p = Number(r.percent);
-          if (Number.isFinite(p)) {
-            rates.add(Math.round(p * 10000) / 10000);
-          }
-        }
-        if (rates.size > 0) {
-          return { rates: [...rates].sort((a, b) => a - b) };
-        }
-      }
-    }
-    const rows = await this.prisma.taxRate.findMany({
-      where: { kind: TaxRateKind.VAT, isActive: true },
-      select: { code: true, percent: true },
-      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
+    const fallback = Number(AZ_STATUTORY_SCHEME_PACKAGE.parameters.vatPercent);
+    const day = date?.trim().slice(0, 10) || todayBakuYmd();
+    const on = new Date(`${day}T00:00:00.000Z`);
+    const row = await this.prisma.taxSchemeVersion.findFirst({
+      where: {
+        code: AZ_TAX_SCHEME_CODE,
+        effectiveFrom: { lte: on },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: on } }],
+      },
+      orderBy: { effectiveFrom: "desc" },
     });
-    const rates = new Set<number>();
-    for (const r of rows) {
-      const code = r.code.toUpperCase();
-      if (code.includes("EXEMPT")) {
-        rates.add(-1);
-        continue;
-      }
-      const p = Number(r.percent);
-      if (!Number.isFinite(p)) {
-        continue;
-      }
-      const rounded = Math.round(p * 10000) / 10000;
-      rates.add(rounded);
+    if (!row) return { rates: [fallback] };
+    try {
+      const percent = Number(parseSchemeParams(row.parameters).vatPercent);
+      if (Number.isFinite(percent) && percent >= 0) return { rates: [percent] };
+    } catch {
+      return { rates: [fallback] };
     }
-    if (rates.size === 0) {
-      return { rates: [...DEFAULT_INVOICE_VAT_RATES] };
-    }
-    return { rates: [...rates].sort((a, b) => a - b) };
+    return { rates: [fallback] };
   }
 
   @Get("team-assignable-roles")

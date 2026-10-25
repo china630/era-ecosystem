@@ -14,7 +14,23 @@ describe("Invoices VAT and multi-currency rounding", () => {
 
   it("VAT inclusive math stays stable for non-AZN invoice rows", async () => {
     const service = new InvoicesService(
-      { product: { findFirst: jest.fn() } } as any,
+      {
+        product: { findFirst: jest.fn() },
+        taxSchemeVersion: {
+          findFirst: jest.fn().mockResolvedValue({
+            parameters: {
+              vatThresholdAzn: "200000",
+              posCoefficient: "0.5",
+              eqaimeShareLimit: "0.30",
+              defaultSimplifiedPercent: "2",
+              posSimplifiedPercent: "6",
+              posRateEffectiveFrom: "2026-01-01",
+              posRateEffectiveTo: "2028-12-31",
+              vatPercent: "18",
+            },
+          }),
+        },
+      } as any,
       noop,
       posting,
       createMockPostingJournalBuilder(undefined, posting),

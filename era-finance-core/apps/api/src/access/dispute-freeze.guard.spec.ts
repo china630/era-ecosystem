@@ -40,7 +40,12 @@ describe("DisputeFreezeGuard", () => {
     ).resolves.toBe(true);
     await expect(
       guard.canActivate(ctx({ method: "POST", originalUrl: "/api/invoices", user })),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    ).rejects.toMatchObject({
+      response: {
+        code: "HARD_BLOCK_PLATFORM",
+        message: "Organization blocked by platform security (HARD_BLOCK_PLATFORM)",
+      },
+    });
   });
 
   it("freezes DELETE during a dispute", async () => {

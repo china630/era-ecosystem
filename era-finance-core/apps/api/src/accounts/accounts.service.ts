@@ -837,8 +837,14 @@ export class AccountsService {
       throw new BadRequestException("Account code uses a dot (601.1), not a hyphen");
     }
     const prefix = `${parentCode}.`;
-    if (!code.startsWith(prefix) || !/^[A-Za-z0-9]+(\.[A-Za-z0-9]+)*$/.test(code.slice(prefix.length))) {
-      throw new BadRequestException(`code must be ${parentCode}.<suffix>`);
+    if (!code.startsWith(prefix)) {
+      throw new BadRequestException(`code must be ${parentCode}.<one segment>`);
+    }
+    const suffix = code.slice(prefix.length);
+    if (!/^[A-Za-z0-9]+$/.test(suffix)) {
+      throw new BadRequestException(
+        `code must be ${parentCode}.<one segment> — ${parentCode}.001 is not a child of a higher account`,
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {

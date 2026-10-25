@@ -10,8 +10,8 @@ Global read-only catalogs (FX, calendar, HS, banks, VÖEN directory, geo, UoM, t
 
 ## Decision
 
-1. **SoR:** `era-data-hub` `/registry/v1/*` when `ERA_DATA_HUB_DATA_SOURCE=hub`.
-2. **Expand/contract:** hub owns ingest → finance read-through + fallback → disable finance duplicate cron/seeds.
+1. **SoR:** `era-data-hub` `/registry/v1/*` always reads `era_data_hub`. External fetch is per catalog in hub settings (super-admin `/super-admin/reference`).
+2. **Consumers:** finance and satellites either read the hub, or keep an org-local Excel copy. Excel does not write the shared hub. `referenceSource` is `hub` | `excel` on the organization and is pushed with runtime-config.
 3. **Industry rule (updated 2026-06-16):** industry satellites **must not** call `era-data-hub` or `era-finance-core` for **sync global catalog reads** (calendar, FX display convert, VÖEN directory). Use **Orchestrator Platform Gateway** `GET /platform/v1/catalog/*` via `@era/satellite-kit` — see [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md). HS tariff preview and tenant counterparty operations remain Finance-only.
 3a. **Countries (debt, 2026-10-17):** hub `Country`/`City` remains geo SoR. The gateway does not yet expose `/platform/v1/catalog/countries`. Until it does, `@era/satellite-kit` ships a static ISO az/en/ru table and `countryLabel`; hotel/clinic only re-export that helper. This is a temporary kit bypass, not a hotel domain catalog. When the gateway lands, kit caches the same three locales and satellites keep calling `countryLabel`.
 4. **Split from MDM:** natural/legal person identity lives in orchestrator `era_mdm`, not data-hub. VÖEN **company directory** in hub ≠ MDM person registry.

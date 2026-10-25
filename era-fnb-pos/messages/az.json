@@ -141,6 +141,8 @@
       "save": "Saxla",
       "defaultOutletName": "Demo outlet",
       "outletRevenue": "Nöqtənin gəlir kodu",
+      "outletWarehouse": "Maliyyə anbarı",
+      "outletWarehouseDefault": "susmaya görə anbar",
       "revenueEmpty": "Bu təşkilat üçün aktiv otel gəlir kodu yoxdur.",
       "revenueUnavailable": "Otel gəlir kataloqu əlçatan deyil.",
       "revenueNotLinked": "Otel təşkilatı bağlanmayıb.",

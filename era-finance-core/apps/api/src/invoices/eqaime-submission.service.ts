@@ -6,12 +6,14 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { EqaimeStatus } from "@erafinance/database";
+import { CounterpartyKind, EqaimeStatus, InvoiceStatus } from "@erafinance/database";
+import { bakuDayBounds } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import { InvoicesService } from "./invoices.service";
 import { EtaxesSubmissionAdapterFactory } from "../reporting/etaxes-submission.adapters";
 import { SignatureService } from "../signature/signature.service";
-import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
+import { invoiceHoldsDayForMissingEqaime, manualEqaimeLinkPatch } from "./qaime-day-close";
 
 @Injectable()
 export class EqaimeSubmissionService {
@@ -118,7 +120,8 @@ export class EqaimeSubmissionService {
     }
     if (
       inv.eqaimeStatus === EqaimeStatus.SUBMITTED ||
-      inv.eqaimeStatus === EqaimeStatus.ACCEPTED
+      inv.eqaimeStatus === EqaimeStatus.ACCEPTED ||
+      inv.eqaimeStatus === EqaimeStatus.MANUAL
     ) {
       throw new BadRequestException("e-Qaimə already submitted for this invoice");
     }
@@ -183,6 +186,126 @@ export class EqaimeSubmissionService {
       eqaimeStatus: EqaimeStatus.SUBMITTED,
       eqaimeSubmittedAt: submittedAt.toISOString(),
       gatewayStatus: result.gatewayStatus,
+    };
+  }
+
+  /**
+   * Store a number typed by staff. Does not call the tax gateway and does not read ERA_EQAIME_S2S_ENABLED.
+   */
+  async linkManual(organizationId: string, invoiceId: string, rawNumber: string) {
+    const inv = await this.prisma.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
+      select: {
+        id: true,
+        status: true,
+        isInternational: true,
+        currency: true,
+        eqaimeNumber: true,
+      },
+    });
+    if (!inv) throw new NotFoundException("Invoice not found");
+    if (inv.status === InvoiceStatus.DRAFT || inv.status === InvoiceStatus.CANCELLED) {
+      throw new BadRequestException("A draft or cancelled invoice cannot take an e-qaimə number");
+    }
+    if (inv.isInternational || inv.currency !== "AZN") {
+      throw new BadRequestException("Only a domestic AZN invoice can take an e-qaimə number");
+    }
+    if (inv.eqaimeNumber?.trim()) {
+      throw new BadRequestException("e-qaimə number is already linked");
+    }
+    let patch: ReturnType<typeof manualEqaimeLinkPatch>;
+    try {
+      patch = manualEqaimeLinkPatch(rawNumber);
+    } catch {
+      throw new BadRequestException("e-qaimə number is empty");
+    }
+    await this.prisma.invoice.update({
+      where: { id: invoiceId },
+      data: {
+        eqaimeNumber: patch.eqaimeNumber,
+        eqaimeStatus: EqaimeStatus.MANUAL,
+      },
+    });
+    return {
+      invoiceId,
+      eqaimeNumber: patch.eqaimeNumber,
+      eqaimeStatus: EqaimeStatus.MANUAL,
+      submitted: false,
+    };
+  }
+
+  async dayClose(organizationId: string, businessDate: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(businessDate)) {
+      throw new BadRequestException("date must be YYYY-MM-DD");
+    }
+    const org = await this.prisma.organization.findFirst({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    if (!org) throw new BadRequestException("Organization not found");
+    const tax =
+      org.settings &&
+      typeof org.settings === "object" &&
+      !Array.isArray(org.settings) &&
+      (org.settings as Record<string, unknown>).tax &&
+      typeof (org.settings as Record<string, unknown>).tax === "object"
+        ? ((org.settings as Record<string, unknown>).tax as Record<string, unknown>)
+        : {};
+    const enabled = tax.requireEqaimeForDayClose === true;
+    if (!enabled) return { enabled: false, date: businessDate, gaps: [] };
+
+    const { start, end } = bakuDayBounds(businessDate);
+    const rows = await this.prisma.invoice.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        status: { notIn: [InvoiceStatus.DRAFT, InvoiceStatus.CANCELLED] },
+        isInternational: false,
+        currency: "AZN",
+        createdAt: { gte: start, lte: end },
+        counterparty: {
+          OR: [
+            { kind: CounterpartyKind.LEGAL_ENTITY },
+            { isVatPayer: true },
+            { taxIdCipher: { not: null } },
+          ],
+        },
+      },
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        isInternational: true,
+        currency: true,
+        eqaimeNumber: true,
+        counterparty: {
+          select: { nameCipher: true, kind: true, isVatPayer: true, taxIdCipher: true },
+        },
+      },
+      orderBy: { number: "asc" },
+    });
+    return {
+      enabled: true,
+      date: businessDate,
+      gaps: rows
+        .filter((row) =>
+          invoiceHoldsDayForMissingEqaime({
+            status: row.status,
+            isInternational: row.isInternational,
+            currency: row.currency,
+            counterpartyKind: row.counterparty.kind,
+            isVatPayer: row.counterparty.isVatPayer,
+            hasTaxId: row.counterparty.taxIdCipher != null,
+            eqaimeNumber: row.eqaimeNumber,
+          }),
+        )
+        .map((row) => ({
+          id: row.id,
+          number: row.number,
+          counterpartyName: row.counterparty.nameCipher
+            ? decryptText(row.counterparty.nameCipher) ?? ""
+            : "",
+        })),
     };
   }
 

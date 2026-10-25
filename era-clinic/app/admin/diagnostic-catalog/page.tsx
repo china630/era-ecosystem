@@ -502,7 +502,6 @@ export default function DiagnosticCatalogAdminPage() {
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
       financeSku: linkedSku,
-      hotelRevenueCode: row.hotelRevenueCode ?? "",
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
@@ -619,7 +618,6 @@ export default function DiagnosticCatalogAdminPage() {
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
         financeSku: form.financeSku?.trim() || null,
-        hotelRevenueCode: form.hotelRevenueCode?.trim() || null,
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
@@ -1483,19 +1481,6 @@ export default function DiagnosticCatalogAdminPage() {
                     : financeServiceOptions
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
-              />
-              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
-              <CatalogField
-                kind="SEARCHABLE"
-                label={t("hotelRevenueCode")}
-                value={form.hotelRevenueCode ?? ""}
-                options={
-                  form.hotelRevenueCode &&
-                  !revenueOptions.some((option) => option.value === form.hotelRevenueCode)
-                    ? [{ value: form.hotelRevenueCode, label: form.hotelRevenueCode }, ...revenueOptions]
-                    : revenueOptions
-                }
-                onChange={(next) => setForm({ ...form, hotelRevenueCode: String(next ?? "") })}
               />
               <Field
                 label={t("includes")}
