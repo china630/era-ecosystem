@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { isOtaAgency } from '@/lib/booking-source-kind';
 import {
   addHotelDays,
+  doorClashWindow,
   hotelDateKey,
   parseHotelNoon,
   reservationStayOverlaps,
@@ -121,6 +122,7 @@ export type DoorAssignmentResult = {
 
 type DoorOverlapRow = {
   id: string;
+  status: ReservationStatus;
   shareEligible: boolean;
   shareGender: string | null;
   adults: number;
@@ -130,6 +132,21 @@ type DoorOverlapRow = {
   guest: { sex: string | null };
   agency: { code: string; name: string } | null;
 };
+
+function throwDoorClash(row: DoorOverlapRow, sharePool: boolean): never {
+  const from = hotelDateKey(row.checkInDate);
+  const to = hotelDateKey(row.checkOutDate);
+  const inHouse = row.status === 'IN_HOUSE';
+  const message = sharePool
+    ? `Room conflict: overlapping stay cannot join share pool (${from} – ${to})`
+    : `Room conflict: overlapping stay (${from} – ${to})`;
+  throw Object.assign(new Error(message), {
+    status: 409,
+    code: inHouse ? 'DOOR_OCCUPIED' : 'DOOR_BOOKED',
+    from,
+    to,
+  });
+}
 
 async function loadDoorOverlaps(input: {
   roomId: string;
@@ -162,6 +179,7 @@ async function loadDoorOverlaps(input: {
     },
     select: {
       id: true,
+      status: true,
       roomId: true,
       roomTypeId: true,
       shareEligible: true,
@@ -390,9 +408,7 @@ export async function resolveDoorAssignment(input: {
     if (gate.reason === 'no_gender') {
       throw new Error('Gender is required for shared twin stays');
     }
-    throw new Error(
-      `Room conflict: overlapping stay (${first.checkInDate.toISOString().slice(0, 10)} – ${first.checkOutDate.toISOString().slice(0, 10)})`,
-    );
+    throwDoorClash(first, false);
   }
 
   const candGender = shareGender!;
@@ -419,15 +435,11 @@ export async function resolveDoorAssignment(input: {
       continue;
     }
     if (closedPair) {
-      throw new Error(
-        `Room conflict: overlapping stay cannot join share pool (${n.checkInDate.toISOString().slice(0, 10)} – ${n.checkOutDate.toISOString().slice(0, 10)})`,
-      );
+      throwDoorClash(n, true);
     }
     const nGate = gateRowForShare(n);
     if (!nGate.ok || nGate.gender !== candGender) {
-      throw new Error(
-        `Room conflict: overlapping stay cannot join share pool (${n.checkInDate.toISOString().slice(0, 10)} – ${n.checkOutDate.toISOString().slice(0, 10)})`,
-      );
+      throwDoorClash(n, true);
     }
     pullableNeighborIds.push(n.id);
   }
@@ -1109,6 +1121,8 @@ export async function suggestShareDoors(input: {
   }
   const gender = normalizeShareGender(reservation.shareGender)!;
   const maxBed = resolveMaxBed(null, reservation.roomType.adultCapacity);
+  const clash = doorClashWindow(reservation.status, reservation.checkInDate, reservation.checkOutDate);
+  if (!clash) return [];
 
   const rooms = await prisma.room.findMany({
     where: {
@@ -1133,8 +1147,8 @@ export async function suggestShareDoors(input: {
     try {
       const { joiningPool } = await assertRoomShareAssignable({
         roomId: room.id,
-        checkIn: reservation.checkInDate,
-        checkOut: reservation.checkOutDate,
+        checkIn: clash.from,
+        checkOut: clash.to,
         excludeReservationId: reservation.id,
         candidate: {
           shareEligible: true,
@@ -1147,8 +1161,8 @@ export async function suggestShareDoors(input: {
         where: {
           roomId: room.id,
           status: { in: [...SCHEDULABLE_STATUSES] },
-          checkInDate: { lt: reservation.checkOutDate },
-          checkOutDate: { gt: reservation.checkInDate },
+          checkInDate: { lt: clash.to },
+          checkOutDate: { gt: clash.from },
         },
         select: { shareEligible: true, shareGender: true, adults: true, shareBedIndex: true },
       });

@@ -29,8 +29,8 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | FO / front desk | chessboard, card, `/availability`, `/reports/reservations` | ✅ |
-| Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30) |
-| Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history | SCREEN (out of FO SHOW until UAT-SMOKE §35) |
+| Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge. In-house suggestions use today through checkout | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
+| Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history. 2026-10-25 in-house move uses today through checkout (card, chessboard, room plan) | SCREEN (out of FO SHOW until UAT-SMOKE §35). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ signed demo. The 2026-10-24 folio pair and the closed deposit intake are not a new Demo/TE walk and do not move Gate, Pilot, or edition |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
 | Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |

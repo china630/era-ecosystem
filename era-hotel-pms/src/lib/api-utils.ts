@@ -82,9 +82,17 @@ export function handleRouteError(err: unknown) {
     const status = (err as Error & { status?: number }).status;
     const lower = err.message.toLowerCase();
     if (typeof status === 'number' && status >= 400 && status < 600) {
-      const appCode = (err as { code?: unknown }).code;
-      if (typeof appCode === 'string' && !appCode.startsWith('P')) {
-        return NextResponse.json({ error: err.message, code: appCode }, { status });
+      const extra = err as { code?: unknown; from?: unknown; to?: unknown };
+      if (typeof extra.code === 'string' && !extra.code.startsWith('P')) {
+        return NextResponse.json(
+          {
+            error: err.message,
+            code: extra.code,
+            ...(typeof extra.from === 'string' ? { from: extra.from } : {}),
+            ...(typeof extra.to === 'string' ? { to: extra.to } : {}),
+          },
+          { status },
+        );
       }
       return jsonError(err.message, status);
     }

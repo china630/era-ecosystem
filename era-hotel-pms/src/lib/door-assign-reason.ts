@@ -1,7 +1,7 @@
 import { canAssignDoor, canBookDoor, resolveAxes, type RoomHkCondition, type RoomInventoryStatus } from '@/lib/room-state';
 import type { RoomStatus } from '@prisma/client';
 
-export type DoorBlockCode = 'OOS' | 'OOO' | 'WRONG_TYPE' | 'DIRTY' | 'OCCUPIED';
+export type DoorBlockCode = 'OOS' | 'OOO' | 'WRONG_TYPE' | 'DIRTY' | 'OCCUPIED' | 'BOOKED';
 
 export type DoorLike = {
   id: string;
@@ -34,7 +34,10 @@ export function doorAssignBlock(
     needTypeId?: string | null;
     needTypeCode?: string | null;
     inHouse: boolean;
+    /** A guest is in house on this door for the clash window. */
     occupied: boolean;
+    /** A confirmed or option stay holds the door, and nobody is in house on it. */
+    booked?: boolean;
     currentAssignedId?: string | null;
   },
 ): DoorBlock | null {
@@ -51,7 +54,23 @@ export function doorAssignBlock(
   if (axes.inventoryStatus === 'OOS') return { code: 'OOS' };
   if (axes.inventoryStatus === 'OOO') return { code: 'OOO' };
   if (opts.occupied) return { code: 'OCCUPIED' };
+  if (opts.booked) return { code: 'BOOKED' };
   const gate = opts.inHouse ? canAssignDoor : canBookDoor;
   if (!gate(asRoom(room), false)) return { code: 'DIRTY' };
   return null;
+}
+
+/** Desk toast for a door the server refused. Null when the body is some other error. */
+export function doorConflictToast(
+  body: unknown,
+): { key: 'doorOccupiedToast' | 'doorBookedToast'; from: string; to: string } | null {
+  if (!body || typeof body !== 'object') return null;
+  const row = body as { code?: unknown; from?: unknown; to?: unknown };
+  const code = String(row.code ?? '');
+  if (code !== 'DOOR_OCCUPIED' && code !== 'DOOR_BOOKED') return null;
+  return {
+    key: code === 'DOOR_OCCUPIED' ? 'doorOccupiedToast' : 'doorBookedToast',
+    from: String(row.from ?? ''),
+    to: String(row.to ?? ''),
+  };
 }

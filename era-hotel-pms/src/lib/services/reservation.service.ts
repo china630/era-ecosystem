@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
+import { addHotelDays, doorClashWindow, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
 import { BusinessDateLagError } from '@/lib/business-date-lag';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { todayBakuYmd } from '@era/satellite-kit/time';
@@ -1582,14 +1582,23 @@ export async function updateReservationSchedule(
       isOta: await reservationIsOta(id),
       guestGender: reservation.guest.sex,
     };
+    const clash = doorClashWindow(reservation.status, newCheckIn, newCheckOut);
     const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
-      await assertRoomShareAssignable({
-        roomId: newRoomId,
-        checkIn: newCheckIn,
-        checkOut: newCheckOut,
-        excludeReservationId: id,
-        candidate,
-      });
+      clash
+        ? await assertRoomShareAssignable({
+            roomId: newRoomId,
+            checkIn: clash.from,
+            checkOut: clash.to,
+            excludeReservationId: id,
+            candidate,
+          })
+        : {
+            shareBedIndex: reservation.shareBedIndex,
+            joiningPool: false,
+            shareEligible: reservation.shareEligible,
+            shareGender: reservation.shareGender,
+            autoShare: false,
+          };
     const doorOk =
       reservation.status === 'IN_HOUSE'
         ? roomStatusAllowedForShareAssign(room, joiningPool)
@@ -1597,13 +1606,15 @@ export async function updateReservationSchedule(
     if (!doorOk) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
-    await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {
-      id,
-      shareEligible: autoShare || resolvedShare ? true : reservation.shareEligible,
-      shareGender: autoShare ? resolvedGender : reservation.shareGender,
-      adults: reservation.adults,
-      roomId: newRoomId,
-    });
+    if (clash) {
+      await assertShareInventory(reservation.roomTypeId, clash.from, clash.to, {
+        id,
+        shareEligible: autoShare || resolvedShare ? true : reservation.shareEligible,
+        shareGender: autoShare ? resolvedGender : reservation.shareGender,
+        adults: reservation.adults,
+        roomId: newRoomId,
+      });
+    }
     const updated = await prisma.reservation.update({
       where: { id },
       data: {

@@ -2,7 +2,7 @@ import { todayBakuYmd, bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { dateOnlyUtc, isoDate } from '@/lib/services/door-type.policy';
-import { planDoorMove } from '@/lib/services/stay-door-move';
+import { forwardDoorGaps, planDoorMove } from '@/lib/services/stay-door-move';
 
 export async function resolveStaySliceForDate(reservationId: string, stayDate: Date) {
   const day = dateOnlyUtc(stayDate);
@@ -164,22 +164,43 @@ export async function moveStayDoor(input: {
   checkIn: Date;
 }) {
   if (!input.fromRoomId || input.fromRoomId === input.toRoomId) return;
-  const slices = await prisma.reservationStaySlice.findMany({
-    where: { reservationId: input.reservationId },
-  });
-  const pending = await prisma.roomChangePlan.findMany({
-    where: { reservationId: input.reservationId, status: 'PENDING' },
-    select: { toRoomId: true },
-  });
+  const [slices, pending, stay] = await Promise.all([
+    prisma.reservationStaySlice.findMany({
+      where: { reservationId: input.reservationId },
+    }),
+    prisma.roomChangePlan.findMany({
+      where: { reservationId: input.reservationId, status: 'PENDING' },
+      select: { toRoomId: true },
+    }),
+    prisma.reservation.findUnique({
+      where: { id: input.reservationId },
+      select: { checkOutDate: true, roomTypeId: true, ratePlanId: true, organizationId: true },
+    }),
+  ]);
+  if (!stay) return;
+  const effective = doorEffective(input.status, input.checkIn);
   const plan = planDoorMove({
     slices,
     fromRoomId: input.fromRoomId,
     toRoomId: input.toRoomId,
-    effective: doorEffective(input.status, input.checkIn),
+    effective,
     keepRoomIds: pending.map((row) => row.toRoomId).filter((id): id is string => Boolean(id)),
     dayKey: hotelDateKey,
   });
-  await applyDoorPlan(input.reservationId, slices[0]?.organizationId, plan);
+  const gaps = forwardDoorGaps({
+    slices,
+    updates: plan.updates,
+    creates: plan.creates,
+    effective,
+    checkOut: stay.checkOutDate,
+    toRoomId: input.toRoomId,
+    dayKey: hotelDateKey,
+    template: { roomTypeId: stay.roomTypeId, ratePlanId: stay.ratePlanId },
+  });
+  await applyDoorPlan(input.reservationId, slices[0]?.organizationId ?? stay.organizationId, {
+    updates: plan.updates,
+    creates: [...plan.creates, ...gaps],
+  });
 }
 
 async function applyDoorPlan(
