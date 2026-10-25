@@ -29,6 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | GL / invoices / adjustments | `/chart-of-accounts`, `/sales/invoices`, `/accounting/adjustments` | 🟡 |
+| P&L and trial-balance profit proxy | `/reporting` sums `601` with `601.*` (AC-FIN-DAY) | 🟡 — same reports; not a new SHOW |
 | Payroll / employees | `/payroll, /employees`, `/hr/emas-queue` | 🟡 — ƏMAS manual queue + extension prefill STUB (`FIN-EMAS-01`); wave 11 minute premiums API (`FIN-HR-MIN-01`); not sell-ready without portal UAT |
 | FA / reporting | `/fixed-assets, /reporting/*` | 🟡 |
 | Multi-GAAP mapping | `/accounting/ledger-mappings` | 🟡 |
@@ -38,8 +39,21 @@
 | Invoice register saved views | `/sales/invoices` filters + named views | 🟡 — W2 SCREEN; not sell; not SQL / not СКД |
 | Commercial invoice print | `/print/invoice/:id` + modal Print + `/settings/print-placeholders` | 🟡 — W3 SCREEN; not sell; not fiscal/e-qaimə |
 | CP grant doors (Wave 5) | Finance `can()` + Nest `PermissionsGuard`; matrix = Orch `/settings/access` | 🟡 — FIN-RBAC-01 SCREEN; AC-FIN-RBAC out of BE rollup; not SHOW |
+| Reference Excel | `/settings/reference-data` | 🟡 — FC-REF-01 SCREEN; upload stays in this org; UAT open; not SHOW |
+| Simplified-tax watch | `/reporting/tax-export`, org settings regime, SuperAdmin `/admin/data/tax-schemes` | 🟡 — SCREEN; FIN-TAX-SCHEME-01 API; AC-FIN-TAX-SCHEME 🟡 out of W6 BE rollup; does not post or switch regime; not SHOW |
+| e-qaimə day close | org settings checkbox, `/sales/invoices` list and invoice card, hotel `/night-audit` gap list and check-day stop | 🟡 — SCREEN; FIN-EQAIME-DAY-01 API; AC-FIN-EQAIME-DAY 🟡 out of W6 BE rollup; does not enable S2S; not SHOW |
+| Fact queue | `/reporting/fact-queue` meaning list; `/reporting` and dashboard close count; period-lock date refuses the same month | 🟡 — SCREEN; FIN-FACT-QUEUE-01 API; AC-FIN-FACT-QUEUE 🟡 out of W6 BE rollup; does not extend AC-FIN-GL; not SHOW |
+| Provisional VAT | `/purchases` waiting-document status, document number on the purchase form, later credit link; `/sales/invoices` create lists the scheme VAT percent; `/reporting/tax-export` scheme-driven recalc or amendment draft; period-lock date refuses the same month | 🟡 — SCREEN; FIN-PROVISIONAL-VAT-01 API; AC-FIN-PROVISIONAL-VAT 🟡 out of W6 BE rollup; whole purchase stays in expense until the document; exempt line sent to the API is refused; no cash refund; does not extend AC-FIN-TAX; not SHOW |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays ❌ until live sign-off.
+
+**Tax scheme watcher (2026-10-24):** the screen row above does not move Gate, Scaffold BE, Demo, Pilot, or Sell. Edition stays `mvp`. AC-FIN-TAX is not extended.
+
+**e-qaimə day close (2026-10-24):** the checkbox and the hotel gap list do not move Gate, Scaffold BE, Demo, Pilot, or Sell. Edition stays `mvp`. `FIN-EQAIME-01` stays STUB/API.
+
+**Fact queue (2026-10-24):** the meaning list does not move Gate, Scaffold BE, Demo, Pilot, or Sell. Edition stays `mvp`. AC-FIN-GL is not extended.
+
+**Provisional VAT (2026-10-24):** the waiting-document status, the scheme VAT rate on invoice create, and the amendment draft do not move Gate, Scaffold BE, Demo, Pilot, or Sell. Edition stays `mvp`. AC-FIN-TAX is not extended. A cash refund is not in this slice. The on-prem package is the same statutory row and has no extra screen.
 
 **FIN-GAAP engineering (2026-09):** Waves A–C + thin edges + structural tails eng-complete per [ADR residuals](../adr/finance-accounting-book.md) (selector, slots, wizard CoA strategies, multi-target mirror, book-scoped reports/exports/FY close, holdings `bookCode`, account uniqueness per book, Audit Hub ops vs non-ops). UI 🟡 / Demo/Pilot unchanged until Lab RT. Do not treat older agent “remaining gaps” lists as SSOT. Lab paths: [UAT-SMOKE](../../era-finance-core/doc/UAT-SMOKE.md).
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
-import { CatalogField } from '@era/satellite-kit/ui';
+import { bakuDateKey, bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { CatalogField, DatePicker } from '@era/satellite-kit/ui';
 import {
   JOURNAL_ACTION_GROUPS,
   guestNameHint,
@@ -207,6 +207,15 @@ function entrySummary(
   return `${fieldLabel(t, first.key, fields)}: ${formatFieldValue(t, tRes, first.key, first.from)} → ${formatFieldValue(t, tRes, first.key, first.to)}`;
 }
 
+function entryAmount(entry: StayJournalEntry): string {
+  const amount = entry.fields.find((item) => item.key === 'amount');
+  const direct = amount?.to ?? amount?.from;
+  if (direct && direct.trim()) return direct;
+  const night = entry.fields.find((item) => /^night\.\d{4}-\d{2}-\d{2}\.amount$/.test(item.key));
+  const nightly = night?.to ?? night?.from;
+  return nightly && nightly.trim() ? nightly : '—';
+}
+
 export function StayJournal({
   entries,
   loading,
@@ -222,6 +231,7 @@ export function StayJournal({
   const [section, setSection] = useState('');
   const [actor, setActor] = useState('');
   const [source, setSource] = useState('');
+  const [onDate, setOnDate] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
 
   const actors = useMemo(() => {
@@ -240,6 +250,7 @@ export function StayJournal({
       }
       if (section && row.section !== section) return false;
       if (source && row.source !== source) return false;
+      if (onDate && bakuDateKey(row.createdAt) !== onDate) return false;
       if (actor === '__system__') {
         if (row.actor) return false;
       } else if (actor && row.actor !== actor) {
@@ -247,18 +258,19 @@ export function StayJournal({
       }
       return true;
     });
-  }, [entries, actionGroup, section, actor, source]);
+  }, [entries, actionGroup, section, actor, source, onDate]);
 
   function catalogValue(next: string | string[]): string {
     return Array.isArray(next) ? (next[0] ?? '') : next;
   }
 
   return (
-    <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex shrink-0 flex-nowrap items-end gap-2">
+        <div className="min-w-0 flex-1">
         <CatalogField
           kind="CLOSED_SMALL"
-          label={t('stayJournalAction')}
+          label={t('stayJournalActionLabel')}
           value={actionGroup}
           onChange={(next) => setActionGroup(catalogValue(next))}
           options={ACTION_GROUPS.map((id) => ({
@@ -267,6 +279,8 @@ export function StayJournal({
           }))}
           emptyLabel={t('stayJournalFilterAll')}
         />
+        </div>
+        <div className="min-w-0 flex-1">
         <CatalogField
           kind="CLOSED_SMALL"
           label={t('stayJournalSectionLabel')}
@@ -278,6 +292,8 @@ export function StayJournal({
           }))}
           emptyLabel={t('stayJournalFilterAll')}
         />
+        </div>
+        <div className="min-w-0 flex-1">
         <CatalogField
           kind="CLOSED_SMALL"
           label={t('stayJournalActor')}
@@ -289,6 +305,8 @@ export function StayJournal({
           ]}
           emptyLabel={t('stayJournalFilterAll')}
         />
+        </div>
+        <div className="min-w-0 flex-1">
         <CatalogField
           kind="CLOSED_SMALL"
           label={t('stayJournalSourceLabel')}
@@ -300,6 +318,10 @@ export function StayJournal({
           }))}
           emptyLabel={t('stayJournalFilterAll')}
         />
+        </div>
+        <div className="min-w-0 flex-1">
+          <DatePicker label={t('stayJournalDate')} value={onDate} onChange={setOnDate} placeholder={t('stayJournalDate')} />
+        </div>
       </div>
       {loading ? (
         <p className="m-0 text-[13px] text-[#7F8C8D]">{t('stayJournalLoading')}</p>
@@ -310,72 +332,71 @@ export function StayJournal({
           {entries.length === 0 ? t('stayJournalEmpty') : t('stayJournalNoMatch')}
         </p>
       ) : (
-        <ul className="m-0 list-none divide-y divide-[#E8EEF2] p-0">
-          {visible.map((row) => {
-            const open = openId === row.id;
-            return (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  className="flex w-full items-start justify-between gap-3 py-2.5 text-left"
-                  aria-expanded={open}
-                  onClick={() => setOpenId(open ? null : row.id)}
-                >
-                  <span className="min-w-0">
-                    <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-                      {actionLabel(t, row.action)}
-                      {' · '}
-                      {t(`stayJournalSection.${row.section}` as 'stayJournalSection.card')}
-                    </span>
-                    <span className="block text-[13px] font-medium text-[#34495E]">
-                      {entrySummary(t, tRes, row)}
-                    </span>
-                    <span className="mt-0.5 block text-[12px] text-[#7F8C8D]">
-                      {row.actor ?? t('stayJournalActorSystem')}
-                      {' · '}
-                      {t(`stayJournalSource.${row.source}` as 'stayJournalSource.user')}
-                      {row.ipAddress ? ` · ${row.ipAddress}` : ''}
-                    </span>
-                  </span>
-                  <span className="shrink-0 whitespace-nowrap text-[12px] text-[#7F8C8D]">
-                    {bakuDateTimeDisplay(row.createdAt)}
-                  </span>
-                </button>
-                {open && row.fields.length > 0 ? (
-                  <div className="overflow-x-auto pb-3">
-                    <table className="w-full border-collapse text-left text-[12px] text-[#34495E]">
-                      <thead>
-                        <tr className="border-b border-[#E8EEF2] text-[#7F8C8D]">
-                          <th className="py-1 pr-3 font-medium">{t('stayJournalField')}</th>
-                          <th className="py-1 pr-3 font-medium">{t('stayJournalFrom')}</th>
-                          <th className="py-1 font-medium">{t('stayJournalTo')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {row.fields.map((field) => (
-                          <tr key={`${row.id}:${field.key}`} className="border-b border-[#F0F4F6]">
-                            <td className="py-1 pr-3 font-medium">
-                              {fieldLabel(t, field.key, row.fields)}
-                            </td>
-                            <td className="py-1 pr-3">
-                              {formatFieldValue(t, tRes, field.key, field.from)}
-                            </td>
-                            <td className="py-1">
-                              {formatFieldValue(t, tRes, field.key, field.to)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : null}
-                {open && row.fields.length === 0 ? (
-                  <p className="m-0 pb-3 text-[12px] text-[#7F8C8D]">{t('stayJournalNoFieldDiff')}</p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+        <div className="min-h-0 flex-1 overflow-auto">
+          <table className="w-full border-collapse text-left text-[13px] text-[#34495E]">
+            <thead className="sticky top-0 bg-[#F8FAFC] text-[12px] text-[#7F8C8D]">
+              <tr>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalTime')}</th>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalActionLabel')}</th>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalWhere')}</th>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalAmount')}</th>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalSummary')}</th>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalActor')}</th>
+                <th className="border-b border-[#E8EEF2] px-2 py-2 font-medium">{t('stayJournalSourceLabel')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((row) => {
+                const open = openId === row.id;
+                const where = t(`stayJournalSection.${row.section}` as 'stayJournalSection.card');
+                return (
+                  <Fragment key={row.id}>
+                    <tr
+                      className="cursor-pointer border-b border-[#F0F4F6] hover:bg-[#F8FAFC]"
+                      onClick={() => setOpenId(open ? null : row.id)}
+                    >
+                      <td className="whitespace-nowrap px-2 py-2 font-medium">{bakuDateTimeDisplay(row.createdAt)}</td>
+                      <td className="px-2 py-2">{actionLabel(t, row.action)}</td>
+                      <td className="px-2 py-2 font-semibold">{where}</td>
+                      <td className="whitespace-nowrap px-2 py-2 font-semibold">{entryAmount(row)}</td>
+                      <td className="px-2 py-2">{entrySummary(t, tRes, row)}</td>
+                      <td className="px-2 py-2 font-semibold">{row.actor ?? t('stayJournalActorSystem')}</td>
+                      <td className="px-2 py-2">{t(`stayJournalSource.${row.source}` as 'stayJournalSource.user')}</td>
+                    </tr>
+                    {open ? (
+                      <tr key={`${row.id}-diff`} className="border-b border-[#E8EEF2] bg-[#F8FAFC]">
+                        <td colSpan={7} className="px-2 py-2">
+                          {row.fields.length === 0 ? (
+                            <p className="m-0 text-[12px] text-[#7F8C8D]">{t('stayJournalNoFieldDiff')}</p>
+                          ) : (
+                            <table className="w-full border-collapse text-left text-[12px]">
+                              <thead>
+                                <tr className="text-[#7F8C8D]">
+                                  <th className="py-1 pr-3 font-medium">{t('stayJournalField')}</th>
+                                  <th className="py-1 pr-3 font-medium">{t('stayJournalFrom')}</th>
+                                  <th className="py-1 font-medium">{t('stayJournalTo')}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {row.fields.map((field) => (
+                                  <tr key={`${row.id}:${field.key}`}>
+                                    <td className="py-1 pr-3 font-medium">{fieldLabel(t, field.key, row.fields)}</td>
+                                    <td className="py-1 pr-3">{formatFieldValue(t, tRes, field.key, field.from)}</td>
+                                    <td className="py-1">{formatFieldValue(t, tRes, field.key, field.to)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

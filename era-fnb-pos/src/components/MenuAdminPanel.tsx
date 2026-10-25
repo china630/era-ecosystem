@@ -66,7 +66,6 @@ type ItemForm = {
   priceAzn: string;
   recipeSku: string;
   financeSku: string;
-  revenueCode: string;
   imageUrl: string;
   active: boolean;
   priceReason: string;
@@ -79,7 +78,6 @@ const emptyItemForm = (categoryId = ""): ItemForm => ({
   priceAzn: "",
   recipeSku: "",
   financeSku: "",
-  revenueCode: "",
   imageUrl: "",
   active: true,
   priceReason: "",
@@ -294,7 +292,6 @@ export default function MenuAdminPanel() {
       priceAzn: String(item.priceAzn),
       recipeSku: item.recipeSku ?? "",
       financeSku: item.financeSku ?? "",
-      revenueCode: item.revenueCode ?? "",
       imageUrl: item.imageUrl ?? "",
       active: item.active,
       priceReason: "",
@@ -325,7 +322,6 @@ export default function MenuAdminPanel() {
       priceAzn: price,
       recipeSku: itemForm.recipeSku.trim() || null,
       financeSku: itemForm.financeSku.trim() || null,
-      revenueCode: itemForm.revenueCode.trim() || null,
       imageUrl: itemForm.imageUrl.trim() || null,
       active: itemForm.active,
       ...(itemModal === "create"
@@ -680,24 +676,6 @@ export default function MenuAdminPanel() {
               setItemForm((f) => ({
                 ...f,
                 financeSku: Array.isArray(next) ? next[0] ?? "" : next,
-              }))
-            }
-          />
-          {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
-          <CatalogField
-            kind="SEARCHABLE"
-            label={t("revenueCode")}
-            value={itemForm.revenueCode}
-            options={
-              itemForm.revenueCode &&
-              !revenueOptions.some((option) => option.value === itemForm.revenueCode)
-                ? [{ value: itemForm.revenueCode, label: itemForm.revenueCode }, ...revenueOptions]
-                : revenueOptions
-            }
-            onChange={(next) =>
-              setItemForm((f) => ({
-                ...f,
-                revenueCode: Array.isArray(next) ? next[0] ?? "" : next,
               }))
             }
           />

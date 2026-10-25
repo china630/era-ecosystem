@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { folioBalance } from '@/lib/services/folio.service';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import { roomPlanSpans } from '@/lib/services/room-plan-spans';
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 
@@ -12,8 +12,10 @@ export type RackReservationSummary = {
   checkInDate: string;
   checkOutDate: string;
   payStatus: 'PAID' | 'PARTIAL' | 'UNPAID' | 'NONE';
-  /** Guest folio balance. Positive is debt, negative is a credit. */
+  /** Uncovered charges. */
   folioBalance: number;
+  /** Remainder of blue payment lines. */
+  folioUnused?: number;
   procedureCount: number;
   procedurePending: number;
   agencyId: string | null;
@@ -25,6 +27,8 @@ export type RackReservationSummary = {
   adults?: number;
   roomTypeId?: string;
   givenRoomTypeId?: string | null;
+  /** Door the guest has already left. The end date does not keep the tile. */
+  pastDoor?: boolean;
 };
 
 export type RackRoomDto = {
@@ -107,8 +111,10 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       },
       reservations: room.reservations.flatMap((r) => {
         let balance = 0;
+        let unused = 0;
         for (const f of r.folios) {
-          balance += folioBalance(f.charges, f.payments);
+          balance += stayMoneyPair(f.charges, f.payments).debt;
+          unused += stayMoneyPair(f.charges, f.payments).unused;
         }
         const pending = r.medicalOrders.filter((o) => o.status === 'PENDING').length;
         const summary = {
@@ -119,6 +125,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           checkOutDate: r.checkOutDate.toISOString(),
           payStatus: resolvePayStatus(balance, r.folios.length > 0),
           folioBalance: Math.round(balance * 100) / 100,
+          folioUnused: Math.round(unused * 100) / 100,
           procedureCount: r.medicalOrders.length,
           procedurePending: pending,
           agencyId: r.agencyId,
@@ -130,6 +137,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
           adults: r.adults,
           roomTypeId: r.roomTypeId,
           givenRoomTypeId: r.givenRoomTypeId,
+          pastDoor: false,
         };
         const slices = r.staySlices ?? [];
         if (slices.length === 0) return [summary];
@@ -195,6 +203,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       checkOutDate: slice.toDate.toISOString(),
       payStatus: 'NONE',
       folioBalance: 0,
+      folioUnused: 0,
       procedureCount: 0,
       procedurePending: 0,
       agencyId: slice.reservation.agencyId,
@@ -206,6 +215,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
       adults: slice.reservation.adults,
       roomTypeId: slice.reservation.roomTypeId,
       givenRoomTypeId: slice.reservation.givenRoomTypeId,
+      pastDoor: true,
     });
   }
 
@@ -260,6 +270,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         checkOutDate: span.to.toISOString(),
         payStatus: 'NONE',
         folioBalance: 0,
+        folioUnused: 0,
         procedureCount: 0,
         procedurePending: 0,
         agencyId: stay.agencyId,
@@ -271,6 +282,7 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         adults: stay.adults,
         roomTypeId: stay.roomTypeId,
         givenRoomTypeId: stay.givenRoomTypeId,
+        pastDoor: span.roomId !== stay.roomId,
       });
     }
   }

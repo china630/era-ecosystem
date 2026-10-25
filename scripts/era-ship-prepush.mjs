@@ -56,7 +56,32 @@ function isNeverCommitPath(p) {
   return false;
 }
 
+/** Prisma generate on Windows rewrites tracked *.d.ts as CRLF. That is not a content change. */
+function restoreEolOnlyDirt(files) {
+  const restored = [];
+  for (const file of files) {
+    const content = spawnSync("git", ["diff", "--ignore-cr-at-eol", "--numstat", "--", file], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    const known = spawnSync("git", ["ls-files", "--error-unmatch", "--", file], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    if (content.status !== 0 || known.status !== 0) continue;
+    if ((content.stdout ?? "").trim() !== "") continue;
+    const back = spawnSync("git", ["checkout", "--", file], { cwd: root, encoding: "utf8" });
+    if (back.status === 0) restored.push(file);
+  }
+  if (restored.length > 0) {
+    console.log(
+      `Restored ${restored.length} file(s) whose only change was Windows CRLF.`,
+    );
+  }
+}
+
 function assertWorkingTreeShipClean() {
+  restoreEolOnlyDirt(porcelainPaths().filter((f) => !isNeverCommitPath(f)));
   const dirty = porcelainPaths().filter((f) => !isNeverCommitPath(f));
   if (dirty.length === 0) return;
   console.error(
@@ -97,8 +122,8 @@ function gitLines(args) {
   if (r.status !== 0) return [];
   return r.stdout
     .split(/\r?\n/)
-    .map((s) => s.trim().replace(/\\/g, "/"))
-    .filter(Boolean);
+    .map((s) => s.trimEnd().replace(/\\/g, "/"))
+    .filter((s) => s.trim() !== "");
 }
 
 function refExists(ref) {
@@ -208,7 +233,7 @@ if (hasPrefix(files, "era-finance-core")) {
   run(
     "finance integration tests",
     "npm",
-    ["run", "test:integration", "-w", "@erafinance/api", "--", "--ci"],
+    ["run", "test:integration", "-w", "@erafinance/api", "--", "--ci", "--maxWorkers=2"],
     cwd,
   );
 }

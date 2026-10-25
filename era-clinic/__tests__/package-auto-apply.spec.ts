@@ -446,12 +446,16 @@ describe("applyPackageAutoBlocks", () => {
           requiresDoctor: false,
           kind: "LAB",
           sortOrder: 0,
+          showInProcedures: true,
+          procedureOrder: 4,
         },
       ],
       [{ procedureCode: "ALT", assignMode: "AUTO_ON_OPEN", fulfillment: "LAB_ORDER", kind: "LAB" }],
     );
     expect(row?.quotaTotal).toBe(7);
     expect(row?.assignMode).toBe("AUTO_ON_OPEN");
+    expect(row?.showInProcedures).toBe(true);
+    expect(row?.procedureOrder).toBe(4);
   });
 
   it("CARE_TEAM creates a day-1 lab together with the other auto blocks", async () => {

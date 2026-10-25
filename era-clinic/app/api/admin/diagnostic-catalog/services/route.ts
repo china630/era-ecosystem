@@ -25,7 +25,6 @@ const createSchema = z.object({
   titleAz: z.string().min(1),
   serviceCode: z.string().min(1),
   financeSku: z.string().nullable().optional(),
-  hotelRevenueCode: z.string().nullable().optional(),
   fields: z.array(fieldDefSchema).nullable().optional(),
   includes: z.array(z.string()).nullable().optional(),
   sortOrder: z.number().int().optional(),

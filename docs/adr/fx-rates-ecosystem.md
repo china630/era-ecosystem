@@ -13,7 +13,7 @@ CBAR official FX rates were partially duplicated in `era-finance-core` (direct c
 
 | Layer | Role |
 |-------|------|
-| **era-data-hub** | Ingest CBAR XML when `ERA_DATA_HUB_DATA_SOURCE=hub`; serve `/registry/v1/fx/*` |
+| **era-data-hub** | SoR for official FX. External CBAR pull is the FX row of `reference_ingest_policies` (super-admin, after MDM). Serves `/registry/v1/fx/*` |
 | **era-finance-core** | Strict accounting conversion, revaluation, customs `currencyRate`, holdings dashboard |
 | **era-bank-core** | Dated FINAL rates for EOD/treasury |
 | **Industry satellites** | Read-only display via Orchestrator `GET /platform/v1/catalog/fx/convert` (`platformFxConvert` / deprecated alias `financeFxPreview` in satellite-kit) — [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md) |
@@ -29,7 +29,7 @@ CBAR official FX rates were partially duplicated in `era-finance-core` (direct c
 
 - Industry satellites calling `/registry/v1/fx/*`, `ERA_DATA_HUB_URL`, or Finance `ERA_FINANCE_API_*` for display convert
 - Industry satellites calling cbar.az directly
-- Finance CBAR ingest when hub owns ingest (`ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true`)
+- Finance running its own CBAR HTTP/cron (hub owns ingest; the FX switch is in hub settings)
 - Silent `1.7` FX fallback in bank-core production paths
 
 ### Customs chain
@@ -49,7 +49,7 @@ Finance `CustomsService.createFullDraftFromCapture` auto-fills `currencyRate` fr
 
 ## Consequences
 
-- Local dev requires hub + token OR finance local DB cache for FX
+- Local dev requires hub + `DATA_HUB_SERVICE_TOKEN`, or the org set to Excel with a workbook uploaded in finance `/settings/reference-data`
 - On-prem bank uses `packages/ref-data-snapshot/snapshot.json` with dated `fxRates[]`
 
 ## Related

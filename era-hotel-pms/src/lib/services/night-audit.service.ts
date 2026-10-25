@@ -23,6 +23,13 @@ import {
 } from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
 import { countUnclosedCashDesk } from '@/lib/services/cash-desk.service';
+import {
+  assertFinanceQaimeDayClose,
+  fetchQaimeDayClose,
+  QaimeDayCloseBlockedError,
+  QaimeDayCloseUnreachableError,
+  type QaimeDayGap,
+} from '@/lib/services/qaime-day-close-gate';
 import { resolveSettlementPolicy } from '@era/satellite-kit';
 
 export async function getNightAuditStatus() {
@@ -52,6 +59,7 @@ export async function getNightAuditStatus() {
     },
   });
   const unclosedCashRows = await countUnclosedCashDesk(hotelDateKey(currentBiz));
+  const qaimeDayClose = await readQaimeDayCloseForStatus(hotelDateKey(currentBiz));
   const deskHold = await listNightAuditDeskHolds(currentBiz);
 
   return {
@@ -71,87 +79,147 @@ export async function getNightAuditStatus() {
     },
     deskHold,
     unclosedCashRows,
+    qaimeDayClose,
   };
+}
+
+async function readQaimeDayCloseForStatus(businessDate: string): Promise<{
+  enabled: boolean;
+  unreachable: boolean;
+  gaps: QaimeDayGap[];
+}> {
+  try {
+    const answer = await fetchQaimeDayClose(businessDate);
+    return { enabled: answer.enabled, unreachable: false, gaps: answer.enabled ? answer.gaps : [] };
+  } catch (err) {
+    if (err instanceof QaimeDayCloseBlockedError) {
+      return { enabled: true, unreachable: false, gaps: err.gaps };
+    }
+    if (err instanceof QaimeDayCloseUnreachableError) {
+      return { enabled: false, unreachable: true, gaps: [] };
+    }
+    return { enabled: false, unreachable: true, gaps: [] };
+  }
 }
 
 function money2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Folio money follows folioBalance (amount × qty). Pending amount is the cashier line total. */
+type QtyPurpose = 'sale' | 'house_use' | 'comp' | 'housekeeping' | 'procedure_consumable';
+
+function vatRateOf(taxTag: string | null, systemRole: string | null): number {
+  if (systemRole === 'CITY_TAX') return 0;
+  const parsed = Number(String(taxTag ?? '').replace('%', '').trim());
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return parsed;
+}
+
+function purposeForCharge(billingMode: string | null | undefined, amount: number): QtyPurpose {
+  if (billingMode === 'HOUSE') return 'house_use';
+  if (billingMode === 'COMP' && amount === 0) return 'comp';
+  return 'sale';
+}
+
+/** Money and quantity are separate. A zero amount drops revenue only. */
 async function collectDayDocument(date: Date) {
   const charges = await prisma.folioCharge.findMany({
     where: { businessDate: date },
-    include: { revenueCode: true },
+    include: {
+      revenueCode: true,
+      folio: { select: { reservation: { select: { billingMode: true } } } },
+    },
   });
   const pending = await prisma.settlementPendingCharge.findMany({
     where: { status: 'PAID', businessDate: date },
   });
   const payments = await prisma.folioPayment.findMany({
     where: { businessDate: date },
+    include: {
+      folio: { select: { reservation: { select: { company: { select: { voen: true } } } } } },
+    },
   });
 
-  const saleByKey = new Map<
+  const moneyByCode = new Map<string, { revenueCode: string; amount: number; vatRate: number }>();
+  const addMoney = (revenueCode: string, amount: number, vatRate: number) => {
+    const rounded = money2(amount);
+    if (rounded === 0) return;
+    const code = revenueCode.trim();
+    const row = moneyByCode.get(code) ?? { revenueCode: code, amount: 0, vatRate };
+    row.amount = money2(row.amount + rounded);
+    moneyByCode.set(code, row);
+  };
+  const qtyByKey = new Map<
     string,
-    { sku: string; qty: number; amount: number; revenueCode: string }
+    { sku: string; qty: number; warehouseCode: string; purpose: QtyPurpose }
   >();
-  const revenueByCode = new Map<string, number>();
-  const addSale = (
+  const addQty = (
     sku: string | null | undefined,
     qty: number,
-    amount: number,
-    revenueCode: string,
+    warehouseCode: string | null | undefined,
+    purpose: QtyPurpose,
   ) => {
     const trimmed = sku?.trim();
-    if (!trimmed) return false;
-    const code = revenueCode.trim();
-    const key = `${trimmed.toLowerCase()}|${code}`;
-    const row = saleByKey.get(key) ?? { sku: trimmed, qty: 0, amount: 0, revenueCode: code };
+    if (!trimmed || qty === 0) return;
+    const warehouse = warehouseCode?.trim() ?? '';
+    const key = `${trimmed.toLowerCase()}|${purpose}|${warehouse}`;
+    const row = qtyByKey.get(key) ?? { sku: trimmed, qty: 0, warehouseCode: warehouse, purpose };
     row.qty += qty;
-    row.amount = money2(row.amount + amount);
-    saleByKey.set(key, row);
-    return true;
+    qtyByKey.set(key, row);
   };
 
   for (const charge of charges) {
     const amount = money2(decimalToNumber(charge.amount) * charge.qty);
-    const code = charge.revenueCode.code;
-    if (!addSale(charge.sku, charge.qty, amount, code)) {
-      revenueByCode.set(code, (revenueByCode.get(code) ?? 0) + amount);
-    }
+    addMoney(charge.revenueCode.code, amount, vatRateOf(charge.revenueCode.taxTag, charge.revenueCode.systemRole));
+    addQty(
+      charge.sku,
+      charge.stockQty,
+      charge.warehouseCode,
+      purposeForCharge(charge.folio.reservation.billingMode, amount),
+    );
   }
   for (const row of pending) {
     const amount = money2(decimalToNumber(row.amount));
     const code = row.revenueCode?.trim() || 'UNKNOWN';
-    if (!addSale(row.sku, row.qty, amount, code)) {
-      revenueByCode.set(code, (revenueByCode.get(code) ?? 0) + amount);
-    }
+    addMoney(code, amount, 0);
+    addQty(row.sku, row.qty, '', 'sale');
   }
-  const consumption = await prisma.hkConsumption.findMany({ where: { businessDate: date } });
-  for (const row of consumption) {
-    addSale(row.sku, decimalToNumber(row.qty), 0, '');
+  const housekeeping = await prisma.hkConsumption.findMany({ where: { businessDate: date } });
+  for (const row of housekeeping) {
+    addQty(row.sku, decimalToNumber(row.qty), '', 'housekeeping');
+  }
+  const internal = await prisma.internalConsumption.findMany({ where: { businessDate: date } });
+  for (const row of internal) {
+    const purpose: QtyPurpose = row.source === 'clinic' ? 'procedure_consumable' : 'housekeeping';
+    addQty(row.sku, decimalToNumber(row.qty), row.warehouseCode, purpose);
   }
 
-  const saleLines = [...saleByKey.values()].filter((line) => line.qty !== 0 || line.amount !== 0);
-  const revenueLines = [...revenueByCode.entries()]
-    .filter(([, amount]) => amount !== 0)
-    .map(([revenueCode, amount]) => ({ revenueCode, amount: money2(amount) }));
+  const moneyLines = [...moneyByCode.values()].filter((line) => line.amount !== 0);
+  const qtyLines = [...qtyByKey.values()].filter((line) => line.qty !== 0);
 
-  const payByMethod = new Map<string, { method: string; amount: number; bankTerminalId?: string }>();
-  const addPay = (method: string, signed: number, bankTerminalId?: string | null) => {
+  const payByMethod = new Map<string, { method: string; amount: number; bankTerminalId?: string; population?: boolean }>();
+  const addPay = (method: string, signed: number, bankTerminalId?: string | null, population = false) => {
     const name = method.trim() || 'CASH';
     const bank = name === 'CARD' ? bankTerminalId?.trim() || undefined : undefined;
-    const key = bank ? `${name}|${bank}` : name;
-    const row = payByMethod.get(key) ?? { method: name, amount: 0, bankTerminalId: bank };
+    const guestCard = name === 'CARD' && population;
+    const key = `${name}|${bank ?? ''}|${guestCard ? 'pop' : 'other'}`;
+    const row = payByMethod.get(key) ?? {
+      method: name,
+      amount: 0,
+      ...(bank ? { bankTerminalId: bank } : {}),
+      ...(guestCard ? { population: true } : {}),
+    };
     row.amount = money2(row.amount + signed);
     payByMethod.set(key, row);
   };
   for (const payment of payments) {
     const amount = decimalToNumber(payment.amount);
+    const voen = payment.folio.reservation.company?.voen?.trim();
     addPay(
       payment.paymentMethod,
       payment.kind === 'REFUND' ? -amount : amount,
       payment.bankTerminalId,
+      payment.paymentMethod === 'CARD' && !voen,
     );
   }
   for (const row of pending) {
@@ -159,25 +227,29 @@ async function collectDayDocument(date: Date) {
   }
   const paymentLines = [...payByMethod.values()].filter((row) => row.amount !== 0);
 
+  const receipts = await prisma.folioDeposit.findMany({
+    where: { businessDate: date },
+    include: { reservation: { select: { company: { select: { voen: true } } } } },
+  });
+  const depositReceiptLines = receipts.map((row) => ({
+    amount: money2(decimalToNumber(row.amount)),
+    method: row.paymentMethod,
+    population: row.paymentMethod === 'CARD' && !row.reservation.company?.voen?.trim(),
+  }));
   const day = bakuDayBounds(hotelDateKey(date));
   const inDay = { gte: day.start, lt: day.end };
-  const carried = await prisma.folioDeposit.findMany({
-    where: { status: 'CARRIED', appliedAt: inDay },
-  });
-  const depositCarryLines = carried.map((row) => ({
-    amount: money2(decimalToNumber(row.amount)),
-    kind: 'LIABILITY_TRANSFER' as const,
-  }));
   const payouts = await prisma.folioDeposit.findMany({
     where: { status: 'REFUNDED', refundedAt: inDay },
+    include: { reservation: { select: { company: { select: { voen: true } } } } },
   });
   const depositPayoutLines = payouts.map((row) => ({
     amount: money2(decimalToNumber(row.amount)),
     method: row.paymentMethod,
     bankTerminalId: row.payoutBankTerminalId ?? undefined,
+    population: row.paymentMethod === 'CARD' && !row.reservation.company?.voen?.trim(),
   }));
 
-  return { saleLines, revenueLines, paymentLines, depositCarryLines, depositPayoutLines };
+  return { moneyLines, qtyLines, paymentLines, depositReceiptLines, depositPayoutLines };
 }
 
 export async function listNightAuditRuns(limit = 5) {
@@ -250,6 +322,7 @@ export async function runNightAudit() {
     throw new Error('Close front cash rows for this business date before night audit');
   }
   await assertNoOpenPosShifts();
+  await assertFinanceQaimeDayClose(businessDateForCash);
   await lockBusinessDateForAudit();
   try {
     return await withNightAuditPosting(() => executeLockedNightAudit());
@@ -279,6 +352,7 @@ async function executeLockedNightAudit() {
 
   try {
     steps.push('Step 1: Pre-check cash + POS shifts — OK');
+    steps.push('Step 1a: e-qaimə day rule — OK');
 
     const orgId = requestOrganizationId();
     const settlementPolicy = orgId
@@ -438,6 +512,10 @@ async function executeLockedNightAudit() {
             ]
               .filter(Boolean)
               .join(', ');
+            if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+              steps.push(`Step 3: Free stay — reservation ${res.id}; night price not required`);
+              continue;
+            }
             if ((await readPolicy()).stopIfZeroNightPrice) {
               throw new Error(`Night price is zero — ${who}`);
             }
@@ -476,6 +554,10 @@ async function executeLockedNightAudit() {
             ]
               .filter(Boolean)
               .join(', ');
+            if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+              steps.push(`Step 3: Free stay — reservation ${res.id}; night price not required`);
+              continue;
+            }
             if ((await readPolicy()).stopIfZeroNightPrice) {
               throw new Error(`Night price is zero — ${who}`);
             }
@@ -510,10 +592,10 @@ async function executeLockedNightAudit() {
     const dispatch = await dispatchNightAuditClosed({
       businessDate: businessDateKey,
       nightAuditId: run.id,
-      saleLines: document.saleLines,
-      revenueLines: document.revenueLines,
+      moneyLines: document.moneyLines,
+      qtyLines: document.qtyLines,
       paymentLines: document.paymentLines,
-      depositCarryLines: document.depositCarryLines,
+      depositReceiptLines: document.depositReceiptLines,
       depositPayoutLines: document.depositPayoutLines,
     });
     if (dispatch.warning) {
@@ -525,7 +607,7 @@ async function executeLockedNightAudit() {
       errors.push(message);
     } else {
       steps.push(
-        `Step 4: Day document — ${dispatch.skipped ? 'skipped' : 'posted'} (${document.saleLines.length} sale lines)`,
+        `Step 4: Day document — ${dispatch.skipped ? 'skipped' : 'posted'} (${document.moneyLines.length} money, ${document.qtyLines.length} qty)`,
       );
     }
     const { resolveNightAuditPackSlugs } = await import('@/lib/reports/night-audit-pack');
@@ -652,6 +734,7 @@ async function countZeroNightPrices(date: Date): Promise<number> {
   let missing = 0;
   for (const stay of inHouse) {
     if (hotelDateKey(stay.checkOutDate) <= nightKey) continue;
+    if (stay.billingMode === 'COMP' || stay.billingMode === 'HOUSE') continue;
     const daily = stay.dailyRates.find((row) => hotelDateKey(row.stayDate) === nightKey);
     if (daily) {
       if (!(decimalToNumber(daily.amount) > 0)) missing += 1;
@@ -705,6 +788,22 @@ export async function previewNightAudit(): Promise<{
   const owingGuests = policy.stopIfGuestFolioBalance ? await countDueGuestFoliosNotZero(date) : 0;
   const checkedOut = policy.checkCheckedOutFolios ? await countCheckedOutOpenBalances() : 0;
   const folioStops = owingGuests + checkedOut;
+  let qaimeStops = false;
+  let qaimeDetail = '';
+  try {
+    const qaime = await fetchQaimeDayClose(key);
+    if (qaime.enabled && qaime.gaps.length > 0) {
+      qaimeStops = true;
+      qaimeDetail = String(qaime.gaps.length);
+    }
+  } catch (err) {
+    if (err instanceof QaimeDayCloseUnreachableError) {
+      qaimeStops = true;
+      qaimeDetail = 'down';
+    } else {
+      throw err;
+    }
+  }
   const steps: NightAuditStepView[] = [
     { id: 'cash', state: unclosed > 0 ? 'stop' : 'done', detail: String(unclosed) },
     { id: 'pos', state: pos.hasOpenShift ? 'stop' : 'done', detail: pos.hasOpenShift ? 'open' : '' },
@@ -721,6 +820,7 @@ export async function previewNightAudit(): Promise<{
     },
     { id: 'price', state: zeroPrices > 0 ? 'stop' : 'done', detail: String(zeroPrices) },
     { id: 'folios', state: folioStops > 0 ? 'stop' : 'done', detail: String(folioStops) },
+    { id: 'qaime', state: qaimeStops ? 'stop' : 'done', detail: qaimeDetail },
     { id: 'moves', state: 'done', detail: '' },
     { id: 'night', state: yearStops ? 'stop' : 'wait', detail: yearStops ? 'YEAR_NOT_OPEN' : '' },
     { id: 'finance', state: 'wait', detail: '' },

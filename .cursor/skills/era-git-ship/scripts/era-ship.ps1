@@ -303,12 +303,8 @@ function Stage-ScopeFiles {
     $entry = Resolve-ScopeEntry $ScopeName
     $toStage = @()
     foreach ($f in $Files) {
-        if ($ScopeName -eq 'rest') {
-            if (Test-PathMatch $f $entry $(if ($manifest.satellites.ContainsKey($ScopeName)) { $manifest.satellites[$ScopeName].dir } else { "" })) {
-                $toStage += $f
-            }
-        }
-        elseif ((Get-BestWaveScope $f) -eq $ScopeName) {
+        # rest has empty paths; longest-prefix returns "rest" for leftovers.
+        if ((Get-BestWaveScope $f) -eq $ScopeName) {
             $toStage += $f
         }
     }
@@ -316,9 +312,6 @@ function Stage-ScopeFiles {
         if ($Files -contains $extra) { $toStage += $extra }
     }
     $toStage = $toStage | Select-Object -Unique
-    if ($toStage.Count -eq 0 -and $ScopeName -eq 'rest' -and $Files.Count -gt 0) {
-        $toStage = @($Files | Where-Object { -not (Test-NeverCommit $_ $manifest.never_commit) })
-    }
     if ($toStage.Count -eq 0) { return 0 }
     foreach ($f in $toStage) {
         if ($DryRun) { Write-Host "[dry-run] git add $f" }
@@ -627,19 +620,23 @@ if ($changed.Count -eq 0 -and -not $PublishDev -and -not $PublishMaster -and -no
 
 if ($Wave) {
     $remaining = [System.Collections.Generic.List[string]]::new()
-    foreach ($c in $changed) { [void]$remaining.Add(($c -replace '\\', '/')) }
+    # PS 5.1: AddRange rejects Object[]; normalize slashes so later Remove matches git paths.
+    foreach ($c in @($changed)) { [void]$remaining.Add([string]($c -replace '\\', '/')) }
     foreach ($waveName in $manifest.full_wave_order) {
         if ($remaining.Count -eq 0) { break }
         $n = Stage-ScopeFiles -ScopeName $waveName -Files @($remaining)
         if ($n -gt 0) {
+            # Capture staged paths BEFORE commit (index is empty after a successful commit).
             $stagedBefore = @(git diff --cached --name-only | ForEach-Object { $_ -replace '\\', '/' })
             New-CommitMessage -ScopeName $waveName -Subj $Subject -Bod $Body
             foreach ($s in $stagedBefore) { [void]$remaining.Remove($s) }
+            # Also drop directory placeholders once children were staged
             # Porcelain can list an untracked directory as `foo/` after files
             # inside were staged; `$_/*` would then be `foo//*` and miss.
+            # -like treats [id] as a character class, so match by prefix instead.
             $dropDirs = @($remaining | Where-Object {
                 $prefix = $_.TrimEnd('/')
-                ($stagedBefore -like "$prefix/*") -or ($stagedBefore -contains $prefix)
+                $stagedBefore | Where-Object { $_ -eq $prefix -or $_.StartsWith("$prefix/") }
             })
             foreach ($d in $dropDirs) { [void]$remaining.Remove($d) }
         }

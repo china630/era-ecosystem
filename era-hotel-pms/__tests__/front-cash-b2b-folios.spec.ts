@@ -28,11 +28,13 @@ describe('passesFolioBalanceTab', () => {
   it('inHouseBalanced drops fully settled stays', () => {
     expect(passesFolioBalanceTab('inHouseBalanced', 0, 0, 0)).toBe(false);
     expect(passesFolioBalanceTab('inHouseBalanced', 0, 12, 0)).toBe(true);
+    expect(passesFolioBalanceTab('inHouseBalanced', 0, 0, 0, 2770)).toBe(true);
   });
 
   it('inHouseGuestBalanced requires guest folio balance', () => {
     expect(passesFolioBalanceTab('inHouseGuestBalanced', 0, 40, 0)).toBe(false);
     expect(passesFolioBalanceTab('inHouseGuestBalanced', 5, 0, 0)).toBe(true);
+    expect(passesFolioBalanceTab('inHouseGuestBalanced', 0, 0, 0, 2770)).toBe(true);
   });
 });
 

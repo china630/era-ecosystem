@@ -10,6 +10,8 @@ export async function refundFolioPayment(input: {
   paymentId: string;
   amount?: number;
   reason?: string;
+  paymentMethod?: 'CASH' | 'CARD';
+  bankTerminalId?: string;
   createdByUserId?: string;
   auditRequest?: Request;
 }) {
@@ -41,11 +43,15 @@ export async function refundFolioPayment(input: {
     throw new Error(`Refund ${amount.toFixed(2)} exceeds remaining ${remaining.toFixed(2)}`);
   }
 
+  const method = input.paymentMethod ?? original.paymentMethod;
+  if (method !== original.paymentMethod && !(input.reason && input.reason.trim())) {
+    throw new Error('REFUND_REASON_REQUIRED');
+  }
   return postPayment({
     folioId: original.folioId,
     amount,
-    paymentMethod: original.paymentMethod,
-    bankTerminalId: original.bankTerminalId ?? undefined,
+    paymentMethod: method,
+    bankTerminalId: input.bankTerminalId ?? original.bankTerminalId ?? undefined,
     kind: 'REFUND',
     refundOfPaymentId: original.id,
     createdByUserId: input.createdByUserId,

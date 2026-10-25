@@ -138,13 +138,10 @@ type ServicePersistData<T> = Omit<T, "fields" | "includes"> & {
 function toServicePersistData<T extends Partial<ServiceInput>>(
   data: T,
 ): ServicePersistData<T> {
-  const { fields, includes, financeSku, hotelRevenueCode, ...rest } = data;
+  const { fields, includes, financeSku, hotelRevenueCode: _ignoredRevenue, ...rest } = data;
   return {
     ...rest,
     ...(financeSku !== undefined ? { financeSku: financeSku?.trim() || null } : {}),
-    ...(hotelRevenueCode !== undefined
-      ? { hotelRevenueCode: hotelRevenueCode?.trim() || null }
-      : {}),
     ...(fields !== undefined
       ? { fieldsJson: fields && fields.length > 0 ? JSON.stringify(fields) : null }
       : {}),
@@ -156,10 +153,7 @@ function toServicePersistData<T extends Partial<ServiceInput>>(
 
 export async function createService(ctx: AuditCtx, data: ServiceInput) {
   const row = await prisma.diagnosticService.create({
-    data: toServicePersistData({
-      ...data,
-      hotelRevenueCode: data.hotelRevenueCode?.trim() || null,
-    }),
+    data: toServicePersistData(data),
   });
   await audit(ctx, "diagnosticService", row.id, "CREATE", data);
   invalidateDiagnosticCatalogCache();

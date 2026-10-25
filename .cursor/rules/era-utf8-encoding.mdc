@@ -32,10 +32,12 @@ A UTF-8 ASCII file has no `0x00` byte at index 1; a UTF-16LE file does. That sin
 - `.vscode/settings.json` — `files.encoding: utf8`, `files.autoGuessEncoding: false`, `files.eol: \n`.
 - Windows PowerShell 5.1 `$PROFILE` patched with UTF-8 console + `$PSDefaultParameterValues['*:Encoding']='utf8'`.
 
-## PowerShell 7 — installed (best UTF-8 host)
+## Best fix (manual, needs admin) — install PowerShell 7
 
-pwsh 7 writes **UTF-8 (no BOM)** by default. Installed at `C:\Program Files\PowerShell\7\pwsh.exe` (v7.6.3) and set as the default Cursor/VSCode terminal profile in `.vscode/settings.json`.
+pwsh 7 writes **UTF-8 (no BOM)** by default. Install once from an **elevated** terminal, then it becomes the default terminal profile (already set in `.vscode/settings.json`):
 
-- winget failed on this box (`0x80080005` non-elevated / `0x8a15005e` source-cert); installed via the GitHub MSI `PowerShell-7.6.3-win-x64.msi` with elevation.
-- Upgrade later: `winget upgrade Microsoft.PowerShell` or a newer GitHub MSI.
-- Restart Cursor so new terminals spawn as pwsh 7.
+```powershell
+winget install --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements
+```
+
+(Non-elevated install fails with `0x80080005`.)

@@ -246,18 +246,21 @@ export function FolioRefundModal({
   open: boolean;
   onClose: () => void;
   onDone?: () => void;
-  payment: { id: string; max: number; folioStatus: string } | null;
+  payment: { id: string; max: number; folioStatus: string; paymentMethod?: string } | null;
 }) {
   const t = useTranslations('folio');
   const tc = useTranslations('common');
+  const tPay = useTranslations('paymentMethod');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
+  const [method, setMethod] = useState<'CASH' | 'CARD'>('CASH');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!payment) return;
     setAmount(payment.max.toFixed(2));
     setReason('');
+    setMethod(payment.paymentMethod === 'CARD' ? 'CARD' : 'CASH');
   }, [payment]);
 
   async function submit() {
@@ -271,6 +274,7 @@ export function FolioRefundModal({
         body: JSON.stringify({
           amount: n && n > 0 ? n : undefined,
           reason: reason.trim(),
+          paymentMethod: method,
         }),
       });
       const data = await res.json();
@@ -305,6 +309,17 @@ export function FolioRefundModal({
         <p className="m-0 text-[13px] text-[#7F8C8D]">
           {t('refundModalHint', { max: payment?.max.toFixed(2) ?? '0' })}
         </p>
+        <CatalogField
+          kind="OPS_HOT"
+          label={t('method')}
+          value={method}
+          onChange={(v) => setMethod(String(v) === 'CARD' ? 'CARD' : 'CASH')}
+          options={[
+            { value: 'CASH', label: tPay('CASH') },
+            { value: 'CARD', label: tPay('CARD') },
+          ]}
+          emptyLabel={null}
+        />
         <Field
           label={tc('amount')}
           preset="amount"
@@ -376,12 +391,22 @@ export function FolioTransferModal({
   onDone,
   chargeId,
   chargeIds,
+  paymentIds,
+  reservationId,
+  guests = [],
+  hasCompany = false,
+  hasAgency = false,
 }: {
   open: boolean;
   onClose: () => void;
   onDone?: () => void;
   chargeId: string | null;
   chargeIds?: string[];
+  paymentIds?: string[];
+  reservationId?: string;
+  guests?: Array<{ id: string; name: string }>;
+  hasCompany?: boolean;
+  hasAgency?: boolean;
 }) {
   const t = useTranslations('folio');
   const tf = useTranslations('foStatus');
@@ -392,7 +417,7 @@ export function FolioTransferModal({
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
   const [targets, setTargets] = useState<
-    { value: string; label: string; guests: { id: string; name: string }[] }[]
+    { value: string; label: string; guests: { id: string; name: string }[]; hasCompany?: boolean; hasAgency?: boolean }[]
   >([]);
   const [targetGuestId, setTargetGuestId] = useState('');
   const [targetError, setTargetError] = useState('');
@@ -408,7 +433,7 @@ export function FolioTransferModal({
     setQuery('');
     setTargets([]);
     setTargetError('');
-  }, [open, chargeId, chargeIds?.join('|')]);
+  }, [open, chargeId, chargeIds?.join('|'), paymentIds?.join('|')]);
 
   useEffect(() => {
     if (!open || scope !== 'OTHER') return;
@@ -423,6 +448,8 @@ export function FolioTransferModal({
           const rows = (await r.json()) as {
             reservationId: string;
             roomNumber: string;
+            hasCompany?: boolean;
+            hasAgency?: boolean;
             guests: { id: string; name: string }[];
           }[];
           setTargetError('');
@@ -433,6 +460,8 @@ export function FolioTransferModal({
                 .filter(Boolean)
                 .join(' · '),
               guests: (row.guests ?? []).filter((g) => g.id && g.id !== 'primary-guest'),
+              hasCompany: row.hasCompany,
+              hasAgency: row.hasAgency,
             })),
           );
         })
@@ -446,23 +475,36 @@ export function FolioTransferModal({
 
   async function submit() {
     const ids = (chargeIds && chargeIds.length > 0 ? chargeIds : chargeId ? [chargeId] : []).filter(Boolean);
-    if (ids.length === 0 || !note.trim()) return;
+    const payIds = (paymentIds ?? []).filter(Boolean);
+    if ((ids.length === 0 && payIds.length === 0) || !note.trim()) return;
     if (scope === 'OTHER' && !targetReservationId) return;
+    const guestOnTarget =
+      targetFolioType === 'GUEST' ? targetGuestId || undefined : undefined;
+    const body = {
+      note: note.trim(),
+      targetFolioType,
+      targetReservationId: scope === 'OTHER' ? targetReservationId : reservationId,
+      targetReservationGuestId: guestOnTarget,
+    };
     setBusy(true);
     try {
       for (const id of ids) {
         const res = await fetch(`/api/folios/charges/${id}/transfer`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            note: note.trim(),
-            targetFolioType,
-            targetReservationId: scope === 'OTHER' ? targetReservationId : undefined,
-            targetReservationGuestId:
-              scope === 'OTHER' && targetFolioType === 'GUEST' && targetGuestId
-                ? targetGuestId
-                : undefined,
-          }),
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showApiError(data, tc('error'));
+          return;
+        }
+      }
+      for (const id of payIds) {
+        const res = await fetch(`/api/folios/payments/${id}/transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -519,8 +561,12 @@ export function FolioTransferModal({
           onChange={(v) => setTargetFolioType(String(v) as 'GUEST' | 'AGENCY' | 'COMPANY')}
           options={[
             { value: 'GUEST', label: tf('folioGuest') },
-            { value: 'AGENCY', label: tf('folioAgency') },
-            { value: 'COMPANY', label: tf('folioCompany') },
+            ...((scope === 'WITHIN' ? hasAgency : targets.find((row) => row.value === targetReservationId)?.hasAgency)
+              ? [{ value: 'AGENCY' as const, label: tf('folioAgency') }]
+              : []),
+            ...((scope === 'WITHIN' ? hasCompany : targets.find((row) => row.value === targetReservationId)?.hasCompany)
+              ? [{ value: 'COMPANY' as const, label: tf('folioCompany') }]
+              : []),
           ]}
           emptyLabel={null}
         />
@@ -537,6 +583,15 @@ export function FolioTransferModal({
             }}
             onQueryChange={setQuery}
             options={targets}
+          />
+        ) : null}
+        {scope === 'WITHIN' && targetFolioType === 'GUEST' ? (
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('transferGuest')}
+            value={targetGuestId}
+            onChange={(v) => setTargetGuestId(String(v ?? ''))}
+            options={guests.map((guest) => ({ value: guest.id, label: guest.name }))}
           />
         ) : null}
         {scope === 'OTHER' && targetFolioType === 'GUEST' && targetReservationId ? (

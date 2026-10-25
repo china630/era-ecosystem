@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { apiFetch } from "../lib/api-client";
+import { parseApiErrorPayload, securityBlockText } from "../lib/api-error-text";
 import { useAuth } from "../lib/auth-context";
 import { canCloseAccountingPeriod } from "../lib/role-utils";
 import { ledgerQueryParam, useLedger } from "../lib/ledger-context";
@@ -183,6 +184,7 @@ export function DashboardWidgets() {
   const [closeMonth, setCloseMonth] = useState(new Date().getUTCMonth() + 1);
   const [closing, setClosing] = useState(false);
   const [closeMsg, setCloseMsg] = useState<string | null>(null);
+  const [closeFailed, setCloseFailed] = useState(false);
   const [fxRates, setFxRates] = useState<FxRatesPayload | null>(null);
   const [fxErr, setFxErr] = useState<string | null>(null);
   const [closePrompt, setClosePrompt] = useState<ClosePeriodPromptPayload | null>(
@@ -193,6 +195,21 @@ export function DashboardWidgets() {
   const [exec, setExec] = useState<ExecutiveWidgetsPayload | null>(null);
   const [execErr, setExecErr] = useState<string | null>(null);
   const canClose = canCloseAccountingPeriod(user?.role ?? undefined);
+  const [factQueueCount, setFactQueueCount] = useState<number | null>(null);
+  const closePeriodKey = `${String(closeYear).padStart(4, "0")}-${String(closeMonth).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (!token || !canClose) return;
+    let cancelled = false;
+    void apiFetch(`/api/reporting/fact-queue?period=${encodeURIComponent(closePeriodKey)}`).then(async (res) => {
+      if (!res.ok || cancelled) return;
+      const body = (await res.json()) as { count?: number };
+      if (!cancelled) setFactQueueCount(typeof body.count === "number" ? body.count : 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canClose, closePeriodKey, token]);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -310,24 +327,35 @@ export function DashboardWidgets() {
     if (!token) return;
     setClosing(true);
     setCloseMsg(null);
-    const res = await apiFetch("/api/reporting/close-period", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        year: closeYear,
-        month: closeMonth,
-        ledgerType,
-        accountingBookId,
-      }),
-    });
+    setCloseFailed(false);
+    const res = await apiFetch(
+      "/api/reporting/close-period",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: closeYear,
+          month: closeMonth,
+          ledgerType,
+          accountingBookId,
+        }),
+      },
+      { skipErrorToast: true },
+    );
     setClosing(false);
     if (!res.ok) {
-      const text = await res.text();
+      const parsed = parseApiErrorPayload(await res.text());
+      setCloseFailed(true);
       setCloseMsg(
-        t("dashboard.closeErr", {
-          status: String(res.status),
-          detail: text || "—",
-        }),
+        parsed.code === "FACT_QUEUE_NONEMPTY"
+          ? t("reporting.factQueueCloseBlocked")
+          : parsed.code === "TAX_AMENDMENT_UNSENT"
+            ? t("reporting.amendmentCloseBlocked")
+            : securityBlockText(t, parsed.code) ??
+            t("dashboard.closeErr", {
+              status: String(res.status),
+              detail: parsed.message || "—",
+            }),
       );
       return;
     }
@@ -423,6 +451,12 @@ export function DashboardWidgets() {
                 >
                   {closing ? t("dashboard.closing") : t("dashboard.closeBtn")}
                 </button>
+                <Link
+                  href={`/reporting/fact-queue?period=${encodeURIComponent(closePeriodKey)}`}
+                  className="text-[13px] text-[#34495E] underline"
+                >
+                  {t("reporting.factQueueCount", { count: factQueueCount ?? 0 })}
+                </Link>
               </div>
             ) : (
               <p className="m-0 text-[13px] text-[#7F8C8D] lg:max-w-sm">
@@ -431,7 +465,9 @@ export function DashboardWidgets() {
             )}
           </div>
           {closeMsg ? (
-            <p className="mt-3 border-t border-amber-100/80 pt-3 text-[13px] text-[#34495E]">
+            <p
+              className={`mt-3 border-t border-amber-100/80 pt-3 text-[13px] ${closeFailed ? "text-red-700" : "text-[#34495E]"}`}
+            >
               {closeMsg}
             </p>
           ) : null}

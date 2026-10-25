@@ -85,7 +85,6 @@ export function GuestCardDetailsTab({
     ['registrationNumber', t('details.registration')],
     ['vehiclePlate', t('details.vehicle')],
     ['hotelName', t('details.hotelName')],
-    ['voen', t('details.voen')],
   ];
 
   const maskedFin =

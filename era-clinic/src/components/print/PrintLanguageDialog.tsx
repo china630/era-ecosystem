@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { FieldSelect, ModalFooter, ModalShell } from "@era/satellite-kit/ui";
+import { CatalogField, ModalFooter, ModalShell } from "@era/satellite-kit/ui";
 import type { PrintLang } from "@/domain/print/print-types";
 import { normalizePrintLang } from "@/domain/print/print-types";
 
@@ -37,16 +37,22 @@ export function PrintLanguageDialog({ open, onClose, href, title }: Props) {
       title={title ?? t("chooseLanguage")}
       onClose={onClose}
     >
-      <FieldSelect
+      <CatalogField
+        kind="CLOSED_SMALL"
+        preferChips
         label={t("chooseLanguage")}
-        preset="select"
         value={lang}
-        onChange={(e) => setLang(normalizePrintLang(e.target.value))}
-      >
-        <option value="az">Azərbaycan</option>
-        <option value="ru">Русский</option>
-        <option value="en">English</option>
-      </FieldSelect>
+        emptyLabel={null}
+        options={[
+          { value: "az", label: "Azərbaycan" },
+          { value: "ru", label: "Русский" },
+          { value: "en", label: "English" },
+        ]}
+        onChange={(next) => {
+          const value = Array.isArray(next) ? next[0] : next;
+          setLang(normalizePrintLang(value));
+        }}
+      />
       <ModalFooter
         onCancel={onClose}
         onSubmit={submit}

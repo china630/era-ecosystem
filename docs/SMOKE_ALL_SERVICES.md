@@ -91,7 +91,7 @@ Full bank stack UAT: [era-bank-core/doc/UAT-SMOKE-FULL.md](./era-bank-core/doc/U
 
 See [era-data-hub/doc/UAT-SMOKE.md](../era-data-hub/doc/UAT-SMOKE.md).
 
-From repo root (hub + ingest when `ERA_DATA_HUB_DATA_SOURCE=hub`):
+From repo root (hub ingest follows the FX switch in `/super-admin/reference`):
 
 ```bash
 node scripts/smoke-data-hub.mjs

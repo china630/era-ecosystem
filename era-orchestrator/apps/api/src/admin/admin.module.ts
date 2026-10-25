@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { SatelliteEventsModule } from "../satellite-events/satellite-events.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SubscriptionTrialModule } from "../subscription/subscription-trial.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
@@ -20,9 +21,11 @@ import { ElektrawebBridgePolicyService } from "./elektraweb-bridge-policy.servic
 import { FiscalHardwareDeviceController } from "./fiscal-hardware-device.controller";
 import { FiscalHardwareDeviceService } from "./fiscal-hardware-device.service";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { AdminReferenceController } from "./admin-reference.controller";
+import { DataHubAdminClient } from "./data-hub-admin.client";
 
 @Module({
-  imports: [PrismaModule, SystemConfigModule, SubscriptionTrialModule],
+  imports: [PrismaModule, SystemConfigModule, SubscriptionTrialModule, SatelliteEventsModule],
   controllers: [
     AdminBillingController,
     AdminLandingController,
@@ -33,6 +36,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     AdminOrganizationsController,
     ElektrawebBridgePolicyController,
     FiscalHardwareDeviceController,
+    AdminReferenceController,
   ],
   providers: [
     AdminBillingService,
@@ -43,6 +47,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
     AdminOrganizationsService,
     ElektrawebBridgePolicyService,
     FiscalHardwareDeviceService,
+    DataHubAdminClient,
     PermissionsGuard,
   ],
   exports: [

@@ -220,11 +220,35 @@ export async function recalcProgramQuotas(
     }
   }
 
-  // Codes only in old package: remaining 0 (keep used for history).
-  // Bath-transfer buckets (XFER-*) are not template lines — do not wipe them.
+  // Codes removed from the package: delete an unused balance. Keep a row that
+  // already has a document. Bath-transfer buckets (XFER-*) are not template lines.
   for (const line of instance.procedureLines) {
     if (line.procedureCode.toUpperCase().startsWith("XFER-")) continue;
     if (!newCodes.has(line.procedureCode)) {
+      const [orders, labs, visits] = await Promise.all([
+        prisma.procedureOrder.count({
+          where: {
+            clinicalEpisodeId: instance.episodeId,
+            packageQuotaCode: line.procedureCode,
+          },
+        }),
+        prisma.labOrderItem.count({
+          where: {
+            packageQuotaCode: line.procedureCode,
+            labOrder: { clinicalEpisodeId: instance.episodeId },
+          },
+        }),
+        prisma.visitServiceLine.count({
+          where: {
+            packageQuotaCode: line.procedureCode,
+            visit: { clinicalEpisodeId: instance.episodeId },
+          },
+        }),
+      ]);
+      if (line.quotaUsed === 0 && orders + labs + visits === 0) {
+        await prisma.programProcedureBalance.delete({ where: { id: line.id } });
+        continue;
+      }
       await prisma.programProcedureBalance.update({
         where: { id: line.id },
         data: { quotaTotal: Math.max(line.quotaUsed, 0) },

@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { toDecimal, decimalToNumber } from '@/lib/decimal';
+import { decimalToNumber } from '@/lib/decimal';
 import type { PaymentMethod } from '@prisma/client';
-import { folioBalance, postPayment } from '@/lib/services/folio.service';
 import type { ReservationAuditActor } from '@/lib/reservation-audit';
 
 export async function listDeposits(reservationId: string) {
@@ -11,110 +10,34 @@ export async function listDeposits(reservationId: string) {
   });
 }
 
-export async function recordDeposit(input: {
+export async function recordDeposit(_input: {
   reservationId: string;
   amount: number;
   paymentMethod: PaymentMethod;
   registerRef?: string;
   externalRef?: string;
   audit?: { userId?: string | null; request?: Request };
-}) {
-  if (input.paymentMethod === 'DEPOSIT') {
-    throw new Error('Cannot record a deposit with method DEPOSIT');
-  }
-  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
-  const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
-  const businessDate = await getCurrentBusinessDate();
-  await assertYearBoundaryAllows(businessDate);
-  const created = await prisma.folioDeposit.create({
-    data: {
-      reservationId: input.reservationId,
-      amount: toDecimal(input.amount),
-      paymentMethod: input.paymentMethod,
-      registerRef: input.registerRef,
-      externalRef: input.externalRef,
-      status: 'HELD',
-      businessDate,
-    },
-  });
-  const { recordReservationAudit } = await import('@/lib/reservation-audit');
-  await recordReservationAudit(input.reservationId, 'DEPOSIT', input.audit, {
-    section: 'folio',
-    source: 'user',
-    fields: [
-      { key: 'amount', from: null, to: String(input.amount) },
-      { key: 'paymentMethod', from: null, to: input.paymentMethod },
-    ],
-  });
-  return created;
+}): Promise<never> {
+  throw new Error('DEPOSIT_INTAKE_CLOSED');
 }
 
-/** Apply HELD deposits to an OPEN folio (FIFO), up to maxAmount. */
+/** Old HELD rows become one blue room payment. This does not take new money. */
 export async function applyHeldDepositsToFolio(
   folioId: string,
-  maxAmount?: number,
-  audit?: ReservationAuditActor,
+  _maxAmount?: number,
+  _audit?: ReservationAuditActor,
 ) {
   const folio = await prisma.folio.findUnique({
     where: { id: folioId },
-    include: { charges: true, payments: true },
+    select: { reservationId: true },
   });
   if (!folio) throw new Error('Folio not found');
-  if (folio.status !== 'OPEN') throw new Error('Folio is not open');
-
   const held = await prisma.folioDeposit.findMany({
     where: { reservationId: folio.reservationId, status: 'HELD' },
-    orderBy: { heldAt: 'asc' },
   });
-  if (held.length === 0) return { applied: 0, amount: 0 };
-
-  const balance = folioBalance(folio.charges, folio.payments);
-  let remaining = maxAmount != null ? Math.min(maxAmount, Math.max(0, balance)) : Math.max(0, balance);
-  if (remaining <= 0.01) return { applied: 0, amount: 0 };
-
-  let applied = 0;
-  let amount = 0;
-  for (const dep of held) {
-    if (remaining <= 0.01) break;
-    const depAmt = decimalToNumber(dep.amount);
-    const use = Math.min(depAmt, remaining);
-    if (use <= 0.01) continue;
-
-    await postPayment({
-      folioId: folio.id,
-      amount: use,
-      paymentMethod: 'DEPOSIT',
-      registerRef: dep.registerRef ?? `deposit:${dep.id}`,
-      createdByUserId: audit?.userId ?? undefined,
-      auditRequest: audit?.request,
-    });
-    const leftover = Math.round((depAmt - use) * 100) / 100;
-    await prisma.folioDeposit.update({
-      where: { id: dep.id },
-      data: {
-        amount: toDecimal(use),
-        status: 'APPLIED',
-        appliedAt: new Date(),
-        folioId: folio.id,
-      },
-    });
-    if (leftover > 0.01) {
-      await prisma.folioDeposit.create({
-        data: {
-          reservationId: folio.reservationId,
-          amount: toDecimal(leftover),
-          paymentMethod: dep.paymentMethod,
-          registerRef: dep.registerRef,
-          status: 'HELD',
-          businessDate: dep.businessDate,
-        },
-      });
-    }
-    applied += 1;
-    amount += use;
-    remaining -= use;
-  }
-  return { applied, amount };
+  const moved = await moveHeldDepositsOntoFolio(folio.reservationId);
+  const amount = held.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
+  return { applied: moved, amount: moved > 0 ? amount : 0 };
 }
 
 export async function applyHeldDepositsOnCheckIn(
@@ -145,6 +68,54 @@ export async function applyHeldDepositsToReservation(
   });
   if (company) return applyHeldDepositsToFolio(company.id, undefined, audit);
   return { applied: 0, amount: 0 };
+}
+
+/**
+ * Old HELD rows have no folio line and only fed the header sum.
+ * Move each one onto a blue payment of the room article once. New money is not written here.
+ */
+export async function moveHeldDepositsOntoFolio(reservationId: string): Promise<number> {
+  const held = await prisma.folioDeposit.findMany({
+    where: { reservationId, status: 'HELD' },
+    orderBy: { heldAt: 'asc' },
+  });
+  if (held.length === 0) return 0;
+  const room = await prisma.revenueCode.findFirst({
+    where: { active: true, systemRole: 'ROOM' },
+    orderBy: { code: 'asc' },
+  });
+  const { resolveChargeFolio } = await import('@/lib/services/booking-folio.service');
+  const folio = room
+    ? await resolveChargeFolio({ reservationId, revenueCodeId: room.id })
+    : await prisma.folio.findFirst({
+        where: { reservationId, type: 'GUEST', status: 'OPEN' },
+      });
+  if (!folio) return 0;
+  const { allocatePaymentToCharges } = await import('@/lib/services/folio.service');
+  let moved = 0;
+  for (const dep of held) {
+    const payment = await prisma.folioPayment.create({
+      data: {
+        organizationId: dep.organizationId,
+        folioId: folio.id,
+        amount: dep.amount,
+        paymentMethod: dep.paymentMethod,
+        kind: 'PAYMENT',
+        revenueCodeId: room?.id ?? null,
+        businessDate: dep.businessDate,
+        registerRef: `moved-from-held:${dep.id}`,
+      },
+    });
+    if (room) {
+      await allocatePaymentToCharges(folio.id, payment.id, decimalToNumber(dep.amount), room.id);
+    }
+    await prisma.folioDeposit.update({
+      where: { id: dep.id },
+      data: { status: 'APPLIED', folioId: folio.id, appliedAt: new Date() },
+    });
+    moved += 1;
+  }
+  return moved;
 }
 
 /** Held remainder stays HELD until the cashier pays it out or carries it. */

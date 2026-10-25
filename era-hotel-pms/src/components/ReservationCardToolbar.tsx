@@ -3,13 +3,16 @@
 import { type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  ClipboardList,
   CreditCard,
+  FileCheck,
+  FileSpreadsheet,
   History,
   Lock,
   LockOpen,
   MoreVertical,
+  Trash2,
   Paperclip,
-  Printer,
   Zap,
 } from 'lucide-react';
 import {
@@ -147,15 +150,21 @@ export function ReservationCardActions({
         >
           <EraMenuItem onSelect={() => onPrintForm?.('registration') ?? onPrint?.() ?? window.print()}>
             <span className="inline-flex items-center gap-2">
-              <Printer className="h-3.5 w-3.5" />
+              <ClipboardList className="h-3.5 w-3.5" />
               {t('printRegistration')}
             </span>
           </EraMenuItem>
           <EraMenuItem onSelect={() => onPrintForm?.('proforma')}>
-            {t('printProforma')}
+            <span className="inline-flex items-center gap-2">
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              {t('printProforma')}
+            </span>
           </EraMenuItem>
           <EraMenuItem onSelect={() => onPrintForm?.('confirmation')}>
-            {t('printConfirmation')}
+            <span className="inline-flex items-center gap-2">
+              <FileCheck className="h-3.5 w-3.5" />
+              {t('printConfirmation')}
+            </span>
           </EraMenuItem>
           {showLock ? (
             <EraMenuItem disabled={!onToggleLock} onSelect={() => onToggleLock?.()}>
@@ -167,7 +176,10 @@ export function ReservationCardActions({
           ) : null}
           {onDeleteStay ? (
             <EraMenuItem onSelect={onDeleteStay} className="text-[#C0392B]">
-              {t('deleteStay')}
+              <span className="inline-flex items-center gap-2">
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('deleteStay')}
+              </span>
             </EraMenuItem>
           ) : null}
         </EraMenu>

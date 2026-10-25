@@ -56,31 +56,59 @@ export interface SatelliteHotelNightAuditClosedEvent {
     businessDate: string;
     nightAuditId?: string;
     currency: "AZN";
+    /** 2 splits money and quantity. Missing means the older sale/revenue shape. */
+    documentVersion?: 2;
+    moneyLines?: Array<{
+      revenueCode: string;
+      amount: number;
+      vatRate: number;
+      glAccountCode?: string;
+      unmapped?: boolean;
+    }>;
+    qtyLines?: Array<{
+      sku: string;
+      qty: number;
+      warehouseCode?: string;
+      purpose: "sale" | "house_use" | "comp" | "housekeeping" | "procedure_consumable";
+    }>;
     /**
-     * Lines that have a Finance sku. Revenue is credited to glAccountCode
-     * from the hotel revenue-code map. SKU is quantity and stock only.
-     * A zero amount with an empty account is a stock write-off (housekeeping).
+     * Older shape. Revenue and quantity were one line.
+     * A new hotel sends moneyLines and qtyLines instead.
      */
-    saleLines: Array<{
+    saleLines?: Array<{
       sku: string;
       qty: number;
       amount: number;
       revenueCode?: string;
       glAccountCode?: string;
     }>;
-    /** Rollup for lines that have no sku (room, package without a card). */
-    revenueLines: Array<{
+    revenueLines?: Array<{
       revenueCode: string;
       amount: number;
       glAccountCode: string;
-      /** True when the code has no GL map and fell back to 601. */
       unmapped?: boolean;
     }>;
-    paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
+    paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string; population?: boolean }>;
+    depositReceiptLines?: Array<{ amount: number; method: string; bankTerminalId?: string; population?: boolean }>;
     depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
-    depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
+    depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string; population?: boolean }>;
   };
 }
+
+const nightAuditMoneyLineSchema = z.object({
+  revenueCode: z.string(),
+  amount: z.number(),
+  vatRate: z.number().nonnegative().default(0),
+  glAccountCode: z.string().optional().default(""),
+  unmapped: z.boolean().optional(),
+});
+
+const nightAuditQtyLineSchema = z.object({
+  sku: z.string().min(1),
+  qty: z.number(),
+  warehouseCode: z.string().optional().default(""),
+  purpose: z.enum(["sale", "house_use", "comp", "housekeeping", "procedure_consumable"]),
+});
 
 const nightAuditSaleLineSchema = z.object({
   sku: z.string().min(1),
@@ -106,15 +134,29 @@ export const satelliteHotelNightAuditClosedSchema = z.object({
     businessDate: z.string().min(1),
     nightAuditId: z.string().optional(),
     currency: z.literal("AZN"),
+    documentVersion: z.literal(2).optional(),
+    moneyLines: z.array(nightAuditMoneyLineSchema).default([]),
+    qtyLines: z.array(nightAuditQtyLineSchema).default([]),
     saleLines: z.array(nightAuditSaleLineSchema).default([]),
-    revenueLines: z.array(nightAuditRevenueLineSchema),
+    revenueLines: z.array(nightAuditRevenueLineSchema).default([]),
     paymentLines: z.array(
       z.object({
         method: z.string(),
         amount: z.number(),
         bankTerminalId: z.string().min(1).optional(),
+        population: z.boolean().optional(),
       }),
     ),
+    depositReceiptLines: z
+      .array(
+        z.object({
+          amount: z.number(),
+          method: z.string(),
+          bankTerminalId: z.string().min(1).optional(),
+          population: z.boolean().optional(),
+        }),
+      )
+      .optional(),
     depositCarryLines: z
       .array(
         z.object({
@@ -129,6 +171,7 @@ export const satelliteHotelNightAuditClosedSchema = z.object({
           amount: z.number(),
           method: z.string(),
           bankTerminalId: z.string().min(1).optional(),
+          population: z.boolean().optional(),
         }),
       )
       .optional(),

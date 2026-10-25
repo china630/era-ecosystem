@@ -42,9 +42,9 @@ Source of truth for implementation checkboxes.
 
 ## Wave 6 — Finance consumer
 
-- [x] `DataHubClientService` + `ERA_DATA_HUB_ENABLED`
+- [x] `DataHubClientService` (service token; org Excel does not write the hub)
 - [x] `getFinalOfficialAznPerUnit` read-through
-- [x] `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` for cron skip
+- [x] Finance no longer runs CBAR cron; hub FX fetch is the policy row
 - [x] `getTariff`, `getCompany`, `isWorkingDay` on client
 - [x] Customs tax calculator hub tariff resolve
 
@@ -67,7 +67,7 @@ Source of truth for implementation checkboxes.
 ### A1 — CBAR ingest
 
 - [x] Port `cbar-fx.service.ts`, `cbar-rate-sync.service.ts`, cron
-- [x] Writes only when `ERA_DATA_HUB_DATA_SOURCE=hub`
+- [x] Writes `era_data_hub` when the FX external-fetch switch is on
 
 ### A2 — Phase 1 cutover
 

@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const patchSchema = z.object({
-  revenueCode: z.string().max(32).nullable().optional(),
   categoryId: z.string().nullable().optional(),
 });
 
@@ -22,7 +21,6 @@ export async function PATCH(
     const row = await prisma.productCache.update({
       where: { id },
       data: {
-        ...(body.revenueCode !== undefined ? { revenueCode: body.revenueCode?.trim() || null } : {}),
         ...(body.categoryId !== undefined ? { categoryId: body.categoryId } : {}),
       },
     });

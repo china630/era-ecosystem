@@ -2,14 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import { TEXT_DANGER_CLASS } from '@era/satellite-kit/ui';
-import { formatFolioBalanceWords } from '@/components/reservation-card/folio-balance';
 
 export type OccupancyWorld = 'exclusive' | 'share' | 'booking';
 
 export type ReservationCardHeaderSnapshotProps = {
   isCreate: boolean;
   totalAmount: number;
-  depositAmount: number;
+  /** Remainder of blue payment lines. Not a second cash drawer. */
+  unusedAmount: number;
+  /** Charges not yet covered by a payment of the same article. */
   folioBalance: number;
   occupancyWorld: OccupancyWorld;
   bookingRoomCount?: number;
@@ -35,7 +36,14 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
         ? t('occupancyBooking', { count: props.bookingRoomCount ?? 2 })
         : t('occupancyExclusive');
 
-  const items = [
+  const items: Array<{
+    key: string;
+    label: string;
+    value: string;
+    danger: boolean;
+    valueClass?: string;
+    clickable: boolean;
+  }> = [
     {
       key: 'total',
       label: t('headerTotal'),
@@ -45,28 +53,17 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
     },
     {
       key: 'deposit',
-      label: t('headerDeposit'),
-      value: props.isCreate ? '—' : `${props.depositAmount.toFixed(2)} AZN`,
+      label: t('overpaid'),
+      value: props.isCreate ? '—' : `${props.unusedAmount.toFixed(2)} AZN`,
       danger: false,
+      valueClass: 'text-sky-700',
       clickable: false,
     },
     {
       key: 'balance',
       label: t('folioBalance'),
-      value: props.isCreate
-        ? '—'
-        : formatFolioBalanceWords(props.folioBalance, {
-            guestOwes: t('guestOwes'),
-            overpaid: t('overpaid'),
-            settled: t('settled'),
-          }).text,
-      danger:
-        !props.isCreate &&
-        formatFolioBalanceWords(props.folioBalance, {
-          guestOwes: t('guestOwes'),
-          overpaid: t('overpaid'),
-          settled: t('settled'),
-        }).danger,
+      value: props.isCreate ? '—' : `${props.folioBalance.toFixed(2)} AZN`,
+      danger: !props.isCreate && props.folioBalance > 0.01,
       clickable: false,
     },
   ];
@@ -98,7 +95,7 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
               </p>
               <p
                 className={`text-base font-bold ${
-                  s.danger ? TEXT_DANGER_CLASS : 'text-[#34495E]'
+                  s.danger ? TEXT_DANGER_CLASS : s.valueClass ?? 'text-[#34495E]'
                 }`}
               >
                 {s.value}

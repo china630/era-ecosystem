@@ -1,10 +1,15 @@
-import { todayBakuYmd } from '@era/satellite-kit/time';
+import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { hotelDateKey, stayCheckOut } from '@/lib/hotel-calendar';
+import {
+  earlyCheckoutSliceAction,
+  type EarlyCheckoutRevert,
+} from '@/lib/early-checkout-revert';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { prisma } from '@/lib/prisma';
 import { dispatchReservationCompleted } from '@/lib/integration/event-dispatcher';
 import type { DispatchResult } from '@/lib/integration/event-types';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
   assertGuestFoliosZeroBalance,
   assertZeroBalance,
@@ -67,6 +72,21 @@ export function assertPayerDebtResolved(
   );
 }
 
+async function assertNoUnusedPayment(reservationId: string) {
+  const folios = await prisma.folio.findMany({
+    where: { reservationId, status: 'OPEN' },
+    include: { charges: true, payments: true },
+  });
+  let unused = 0;
+  for (const folio of folios) unused += stayMoneyPair(folio.charges, folio.payments).unused;
+  if (unused > 0.01) {
+    throw Object.assign(new Error(`UNUSED_PAYMENT:${unused.toFixed(2)}`), {
+      status: 409,
+      code: 'UNUSED_PAYMENT',
+    });
+  }
+}
+
 export async function checkoutReservation(
   id: string,
   opts?: {
@@ -121,25 +141,98 @@ export async function checkoutReservation(
   }).catch((e) => console.error('Early checkout unused-nights failed', e));
 
   const todayKey = todayBakuYmd();
+  let earlyCheckoutRevert: EarlyCheckoutRevert | null = null;
   if (hotelDateKey(existing.checkOutDate) > todayKey) {
-    await prisma.reservation.update({
-      where: { id },
-      data: { checkOutDate: stayCheckOut(todayKey) },
+    const endDay = bakuCivilUtcDate(todayKey);
+    const nextOut = stayCheckOut(todayKey);
+    const [futureRates, slices] = await Promise.all([
+      prisma.reservationDailyRate.findMany({
+        where: { reservationId: id, stayDate: { gte: nextOut } },
+      }),
+      prisma.reservationStaySlice.findMany({ where: { reservationId: id } }),
+    ]);
+    const sliceSnaps = slices.flatMap((slice) => {
+      const action = earlyCheckoutSliceAction(slice, endDay);
+      if (action === 'keep') return [];
+      return [
+        {
+          id: slice.id,
+          fromDate: slice.fromDate.toISOString(),
+          toDate: slice.toDate.toISOString(),
+          roomId: slice.roomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+          organizationId: slice.organizationId,
+          deleted: action === 'delete',
+        },
+      ];
     });
-    await prisma.reservationDailyRate.deleteMany({
-      where: { reservationId: id, stayDate: { gte: stayCheckOut(todayKey) } },
-    });
-    const summed = await prisma.reservationDailyRate.aggregate({
-      where: { reservationId: id },
-      _sum: { amount: true },
-    });
-    await prisma.reservation.update({
-      where: { id },
-      data: {
-        totalAmount: toDecimal(
-          summed._sum.amount == null ? 0 : decimalToNumber(summed._sum.amount),
-        ),
-      },
+    earlyCheckoutRevert = {
+      checkOut: existing.checkOutDate.toISOString(),
+      totalAmount: String(decimalToNumber(existing.totalAmount)),
+      rates: futureRates.map((rate) => ({
+        stayDate: rate.stayDate.toISOString(),
+        amount: String(decimalToNumber(rate.amount)),
+        tariffAmount: rate.tariffAmount == null ? null : String(decimalToNumber(rate.tariffAmount)),
+        currencyCode: rate.currencyCode,
+        fixPrice: rate.fixPrice,
+        discountPct: rate.discountPct == null ? null : String(decimalToNumber(rate.discountPct)),
+        manualFlag: rate.manualFlag,
+      })),
+      slices: sliceSnaps,
+    };
+    const revertSnapshot = earlyCheckoutRevert;
+    await prisma.$transaction(async (tx) => {
+      await tx.reservation.update({
+        where: { id },
+        data: { checkOutDate: nextOut },
+      });
+      await tx.reservationDailyRate.deleteMany({
+        where: { reservationId: id, stayDate: { gte: nextOut } },
+      });
+      for (const snap of sliceSnaps) {
+        if (snap.deleted) {
+          await tx.reservationStaySlice.delete({ where: { id: snap.id } });
+        } else {
+          await tx.reservationStaySlice.update({
+            where: { id: snap.id },
+            data: { toDate: endDay },
+          });
+        }
+      }
+      const summed = await tx.reservationDailyRate.aggregate({
+        where: { reservationId: id },
+        _sum: { amount: true },
+      });
+      await tx.reservation.update({
+        where: { id },
+        data: {
+          totalAmount: toDecimal(
+            summed._sum.amount == null ? 0 : decimalToNumber(summed._sum.amount),
+          ),
+        },
+      });
+      await tx.satelliteAuditLog.create({
+        data: {
+          organizationId: existing.organizationId,
+          entityType: 'Reservation',
+          entityId: id,
+          action: 'EARLY_CHECKOUT',
+          changesJson: JSON.stringify({
+            section: 'status',
+            source: 'system',
+            summary: 'EARLY_CHECKOUT',
+            fields: [
+              {
+                key: 'checkOutDate',
+                from: revertSnapshot.checkOut.slice(0, 10),
+                to: todayKey,
+              },
+            ],
+            refs: { earlyCheckout: JSON.stringify(revertSnapshot) },
+          }),
+        },
+      });
     });
   }
 
@@ -153,19 +246,15 @@ export async function checkoutReservation(
     });
   }
 
-  const { applyHeldDepositsToReservation } = await import('@/lib/services/folio-deposit.service');
-  await applyHeldDepositsToReservation(id, {
-    userId: opts?.createdByUserId,
-    request: opts?.auditRequest,
-  });
-
-  const { refundRemainingDeposits } = await import('@/lib/services/folio-deposit.service');
-  const depositRemainder = await refundRemainingDeposits(id);
+  const { moveHeldDepositsOntoFolio } = await import('@/lib/services/folio-deposit.service');
+  await moveHeldDepositsOntoFolio(id);
+  const depositRemainder = { appliedCount: 0, refundedHeld: 0, heldAmount: 0, heldIds: [] as string[] };
 
   const openFolios = await prisma.folio.findMany({
     where: { reservationId: id, status: 'OPEN' },
     include: { charges: true, payments: true },
   });
+  await assertNoUnusedPayment(id);
 
   const arCandidates = payerDebtFolios(openFolios);
   assertPayerDebtResolved(openFolios, opts?.transferToCityLedger);
@@ -225,12 +314,6 @@ export async function checkoutReservation(
       await assertCanTransferToCityLedger(id, f.id, bal);
     }
   } else {
-    const { refundGuestCredit } = await import('@/lib/services/folio-credit-refund');
-    await refundGuestCredit(id, {
-      method: opts?.procedureCreditRefundMethod,
-      bankTerminalId: opts?.procedureCreditBankTerminalId,
-      reason: 'Paid procedure removed before checkout',
-    });
     await assertZeroBalance(id);
   }
 
@@ -337,6 +420,9 @@ export async function checkoutReservation(
       ...(opts?.transferToGuestDebt ? [{ key: 'guestDebt', from: null, to: opts.guestDebtNote ?? 'yes' }] : []),
       ...(opts?.transferToCityLedger ? [{ key: 'cityLedger', from: null, to: 'true' }] : []),
     ],
+    ...(earlyCheckoutRevert
+      ? { refs: { earlyCheckout: JSON.stringify(earlyCheckoutRevert) } }
+      : {}),
   });
 
   return { reservation, dispatch, cityLedgerTransferred, depositRemainder };

@@ -12,6 +12,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { handleRouteError } from "@/lib/api-utils";
 import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
+import { discountedLineAmounts } from "@/lib/ticket-line-amounts";
 
 export async function POST(
   _request: Request,
@@ -68,12 +69,19 @@ export async function POST(
       ticket.table?.code ||
       "Walk-in";
 
+    const amounts = discountedLineAmounts(
+      ticket.lines.map((line) => ({
+        id: line.id,
+        qty: Number(line.qty),
+        unitPriceAzn: Number(line.unitPriceAzn),
+      })),
+      amount,
+    );
     const pendingIds: string[] = [];
     for (const line of ticket.lines) {
       let revenueCode = "";
       try {
         revenueCode = resolveHotelRevenueCode({
-          product: line.menuItem?.revenueCode,
           category: line.menuItem?.category?.revenueCode,
           satellite: ticket.outlet.revenueCenterCode,
         });
@@ -86,7 +94,7 @@ export async function POST(
       const pending = await postHotelSettlementPending({
         sourceSystem: "FNB_POS",
         sourceRef: ticket.id,
-        amount: Number(line.qty) * Number(line.unitPriceAzn),
+        amount: amounts.get(line.id) ?? 0,
         description: `${line.qty}x ${line.description}`,
         payerLabel,
         idempotencyKey: `ticket-${ticket.id}-${line.id}`,

@@ -55,12 +55,8 @@ function mapRevenueToItemType(row: { systemRole: string | null }): BreakdownItem
   return 'RESTAURANT';
 }
 
-function requiresEInvoicing(guestVoen: string | null): boolean {
-  return guestVoen != null && guestVoen.length > 0;
-}
-
 type ReservationWithFolios = Reservation & {
-  guest: { fullName: string; voen: string | null };
+  guest: { fullName: string };
   folios: Array<{
     charges: Array<{
       qty: number;
@@ -104,7 +100,7 @@ export async function buildReservationCompletedEvent(
     payload: {
       reservationId: reservation.id,
       guestName: reservation.guest.fullName,
-      guestVoen: reservation.guest.voen,
+      guestVoen: null,
       amountNet,
       currency: 'AZN',
       breakdown: items,
@@ -116,18 +112,15 @@ export function buildNightAuditEvent(
   input: {
     businessDate: string;
     nightAuditId?: string;
-    saleLines?: Array<{
-      sku: string;
-      qty: number;
-      amount: number;
-      revenueCode?: string;
-      glAccountCode?: string;
-      unmapped?: boolean;
-    }>;
-    revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string; unmapped?: boolean }>;
-    paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
-    depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
-    depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
+    documentVersion?: 2;
+    moneyLines?: NightAuditPayload['moneyLines'];
+    qtyLines?: NightAuditPayload['qtyLines'];
+    saleLines?: NightAuditPayload['saleLines'];
+    revenueLines?: NightAuditPayload['revenueLines'];
+    paymentLines: NightAuditPayload['paymentLines'];
+    depositReceiptLines?: NightAuditPayload['depositReceiptLines'];
+    depositCarryLines?: NightAuditPayload['depositCarryLines'];
+    depositPayoutLines?: NightAuditPayload['depositPayoutLines'];
   },
   hotelId: string,
 ): IntegrationEnvelope {
@@ -140,10 +133,14 @@ export function buildNightAuditEvent(
       businessDate: input.businessDate,
       nightAuditId: input.nightAuditId,
       currency: 'AZN',
+      documentVersion: input.documentVersion,
+      moneyLines: input.moneyLines ?? [],
+      qtyLines: input.qtyLines ?? [],
       saleLines: input.saleLines ?? [],
-      revenueLines: input.revenueLines,
-      lines: input.revenueLines,
+      revenueLines: input.revenueLines ?? [],
+      lines: input.revenueLines ?? [],
       paymentLines: input.paymentLines,
+      depositReceiptLines: input.depositReceiptLines ?? [],
       depositCarryLines: input.depositCarryLines ?? [],
       depositPayoutLines: input.depositPayoutLines ?? [],
     } as NightAuditPayload,
@@ -169,8 +166,8 @@ export async function buildFolioChargePostedEvent(chargeId: string): Promise<Int
     qty: charge.qty,
     description: charge.description,
     businessDate: charge.businessDate.toISOString().slice(0, 10),
-    guestVoen: charge.folio.reservation.guest.voen,
-    requiresEInvoicing: requiresEInvoicing(charge.folio.reservation.guest.voen),
+    guestVoen: null,
+    requiresEInvoicing: false,
     currency: 'AZN',
   };
   return {
@@ -219,7 +216,6 @@ export function buildFolioChargeVoidedEvent(input: {
   qty: number;
   description: string;
   businessDate: Date;
-  guestVoen: string | null;
 }): Promise<IntegrationEnvelope> {
   return getPropertyCode().then((hotelId) => {
     const payload: FolioChargeVoidedPayload = {
@@ -232,8 +228,8 @@ export function buildFolioChargeVoidedEvent(input: {
       qty: input.qty,
       description: input.description,
       businessDate: input.businessDate.toISOString().slice(0, 10),
-      guestVoen: input.guestVoen,
-      requiresEInvoicing: requiresEInvoicing(input.guestVoen),
+      guestVoen: null,
+      requiresEInvoicing: false,
       currency: 'AZN',
     };
     return {
@@ -571,28 +567,38 @@ export async function dispatchReservationCompleted(
 export async function dispatchNightAuditClosed(input: {
   businessDate: string;
   nightAuditId?: string;
-  saleLines?: Array<{ sku: string; qty: number; amount: number; revenueCode: string }>;
-  revenueLines: Array<{ revenueCode: string; amount: number }>;
-  paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string }>;
-  depositCarryLines?: Array<{ amount: number; kind: "LIABILITY_TRANSFER" }>;
-  depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string }>;
+  moneyLines?: Array<{ revenueCode: string; amount: number; vatRate: number }>;
+  qtyLines?: NightAuditPayload['qtyLines'];
+  paymentLines: Array<{ method: string; amount: number; bankTerminalId?: string; population?: boolean }>;
+  depositReceiptLines?: Array<{ amount: number; method: string; bankTerminalId?: string; population?: boolean }>;
+  depositPayoutLines?: Array<{ amount: number; method: string; bankTerminalId?: string; population?: boolean }>;
 }): Promise<DispatchResult> {
   const hotelId = await getPropertyCode();
-  const { enrichRevenueLinesWithGl, enrichSaleLinesWithGl } = await import(
+  const { enrichRevenueLinesWithGl } = await import(
     '@/lib/services/revenue-gl-mapping.service'
   );
-  const saleLines = await enrichSaleLinesWithGl(input.saleLines ?? []);
-  const revenueLines = await enrichRevenueLinesWithGl(input.revenueLines);
-  const missing = [
-    ...saleLines.filter((line) => line.unmapped && line.amount !== 0),
-    ...revenueLines.filter((line) => line.unmapped && line.amount !== 0),
-  ];
+  const moneyLines = await enrichRevenueLinesWithGl(
+    (input.moneyLines ?? []).map((line) => ({
+      revenueCode: line.revenueCode,
+      amount: line.amount,
+      vatRate: line.vatRate,
+    })),
+  );
+  const missing = moneyLines.filter((line) => line.unmapped && line.amount !== 0);
   if (missing.length > 0) {
     throw new Error(
       `GL account is not saved for revenue code ${missing.map((line) => line.revenueCode).join(', ')}`,
     );
   }
-  const envelope = buildNightAuditEvent({ ...input, saleLines, revenueLines }, hotelId);
+  const envelope = buildNightAuditEvent(
+    {
+      ...input,
+      documentVersion: 2,
+      moneyLines,
+      qtyLines: input.qtyLines ?? [],
+    },
+    hotelId,
+  );
   return publishEvent(envelope);
 }
 
@@ -628,7 +634,7 @@ export async function buildInvoiceIssuedEvent(
     invoiceNumber: doc.invoiceNumber ?? doc.id,
     issueDate: todayBakuYmd(),
     counterpartyType,
-    counterpartyTaxId: doc.counterpartyVoen ?? res.guest.voen,
+    counterpartyTaxId: doc.counterpartyVoen,
     reservationId: doc.reservationId,
     folioId: doc.folioId!,
     folioType: doc.folio.type,
@@ -762,7 +768,6 @@ export async function dispatchFolioChargeVoided(input: {
   qty: number;
   description: string;
   businessDate: Date;
-  guestVoen: string | null;
 }): Promise<DispatchResult> {
   const envelope = await buildFolioChargeVoidedEvent(input);
   return publishEvent(envelope);

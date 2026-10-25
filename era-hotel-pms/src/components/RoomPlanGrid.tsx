@@ -775,7 +775,7 @@ const RoomPlanGrid = forwardRef<
       {hover && dateHeaders[hover.dayIndex]
         ? createPortal(
             <div
-              className="pointer-events-none fixed z-[180] rounded-md bg-[#2C3E50] px-2 py-1 text-[11px] font-semibold text-white shadow-md"
+              className="pointer-events-none fixed z-[190] rounded-md bg-[#2C3E50] px-2 py-1 text-[11px] font-semibold text-white shadow-md"
               style={{
                 left: Math.min(hover.clientX + 12, window.innerWidth - 140),
                 top: hover.clientY + 14,

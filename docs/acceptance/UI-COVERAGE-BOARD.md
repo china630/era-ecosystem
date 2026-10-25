@@ -52,7 +52,7 @@ Worst **in-scope** class (NONE < PARTIAL < SCREEN < SHIPPED < SHOW). HEADLESS / 
 
 | Product | PRM UI | Demo / TE | UI class rollup | NONE (holes) | Notes |
 |---------|--------|-----------|-----------------|--------------|-------|
-| Hotel | ✅ | ✅ | **SHOW** | HOT-RPT-01/02 **SCREEN** (out of Hotel SHOW rollup) | HOT-06 **HEADLESS** (extension); KKM VENDOR; HOT-UE-01 SCREEN; HOT-CO-04 **SHIPPED** (unused-nights) |
+| Hotel | ✅ | ✅ | **SHOW** | HOT-RPT-01/02 **SCREEN** (out of Hotel SHOW rollup); HOT-REV-01 **SCREEN** (out of Hotel SHOW rollup) | HOT-06 **HEADLESS** (extension); KKM VENDOR; HOT-UE-01 SCREEN; HOT-CO-04 **SHIPPED** (unused-nights) |
 | Bank | ✅ lab | ✅ | **SHOW** | — | BANK-REF-01 **HEADLESS** (file/env snapshot); rails VENDOR; ≠ full ABS |
 | Bank DBO | ✅ lab | ✅ | **SHOW** | — | `/open-api` **SCREEN** (keys UI); AC-DBO-OPEN still Scaffold 🟡; ASAN VENDOR |
 | Platform | 🟡 | 🟡 | **SCREEN** | — | Placement `/super-admin/orgs/{id}/placement` **SCREEN**; AC-CP-TOPO still Scaffold 🟡 |
@@ -101,6 +101,10 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | FIN-CTR-01 | Finance | contract limits | Y | `/contracts` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-PRC-01 / FIN-AP-01 | Finance | procurement / AP aging | Y | `/procurement/protocols`, `/reporting/ap-aging` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-EQAIME-02 / IN-01 | Finance | EQF + incoming | Y | registry / inbox | **SCREEN** | UAT-SMOKE UI | submit S2S = VENDOR/STUB |
+| FIN-TAX-SCHEME-01 | Finance | simplified-tax watcher | Y | `/reporting/tax-export`, `/admin/data/tax-schemes`, org settings regime | **SCREEN** | COVERAGE **API**; no UAT | Package apply has no screen. Guest-card tag has no new hotel screen. Does not post; not SHOW / not SHIPPED |
+| FIN-EQAIME-DAY-01 | Finance | e-qaimə day-close rule | Y | org settings checkbox, `/sales/invoices` list and invoice card, hotel `/night-audit` gap list and check-day stop | **SCREEN** | COVERAGE **API**; no UAT | Does not enable S2S; not SHOW / not SHIPPED |
+| FIN-FACT-QUEUE-01 | Finance | fact queue before month close | Y | `/reporting/fact-queue`, close count, period-lock date | **SCREEN** | COVERAGE **API**; no UAT | Manual journal does not clear it; not SHOW / not SHIPPED |
+| FIN-PROVISIONAL-VAT-01 | Finance | provisional VAT and filed amendment | Y | `/purchases`, purchase form document number, `/sales/invoices` create, `/reporting/tax-export`, period-lock date | **SCREEN** | COVERAGE **API**; no UAT | Create lists the scheme percent. An exempt line sent to the API is refused. No cash refund; not SHOW / not SHIPPED |
 | FIN-HR-PAY / FA / IA | Finance | payroll / FA / IA | Y | `/payroll`, `/fixed-assets`, `/intangible-assets` | **SCREEN** | UAT-SMOKE UI | |
 | FIN-HR-MIN-01 | Finance | CP minutes → payroll premiums | Y | `/payroll` slip lines (existing) | **SCREEN** | UAT open; Status=API | Wave 11; not SHOW / not SHIPPED |
 | CP-WF-SELF-01 | Platform | Employee phone cabinet | Y | `/workspace/me` + `/workspace/workforce/requests` | **SCREEN** | UAT open; Status=API | Wave 12; not SHOW / not SHIPPED |
@@ -146,7 +150,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |
 | HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey` | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
 | HOT-TOUR-01 | Hotel | Nafta weekend tours | Y | `/tours` `/tours/[id]/print` `/fleet` | **SCREEN** | Out of Hotel SHOW rollup (no Demo/TE); SHIPPED ops | ADR hotel-guest-tours |
-| HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | UAT §42 open; Status=API | out of Hotel SHOW rollup |
+| HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | Balances are uncovered debt plus unused payments, not one net. UAT §42 open; Status=API | out of Hotel SHOW rollup |
 | HOT-CL-06 | Hotel | Company profile + company CL statement | Y Company + ledger+lines | `/distribution/companies` + `/front-cash/company-ledger` | **SHOW** | UAT §27.11 / §42; Status=SHIPPED | Opera split; ADR hotel-agency-vs-company-profiles |
 | BANK-GL / PAY-APPR / LOAN-* / ECL / CAP | Bank | ops lab | Y | paths Y | **SHOW** lab | field / cert is VENDOR or Pilot — not a missing screen | Inventory OUT |
 | CLI-* admin/ops | Clinic | catalogs / appts / cash | Y | `/admin/*`, `/appointments`, `/cashier` | **SCREEN** | Demo/TE sign-off | Nafta 2026-06 API-only master-data is closed |
@@ -154,7 +158,9 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CP-BIND-01 / CP-CFG-01 | Platform | no ops card | Y | SuperAdmin plumbing | **HEADLESS** | — | not a cashier screen |
 | CP-TENANT-01 | All | schema | Y | — | **HEADLESS** | — | out of BE rollup |
 | ORCH-MDM-HR-01 | Platform | PII in MDM | Y internal | — | **HEADLESS** | — | |
-| DH-* / era-bank-core | Data Hub / Bank | no ops UI | Y | n/a | **HEADLESS** | — | |
+| DH-* / era-bank-core | Data Hub / Bank | no hub web app | Y | n/a on the hub process | **HEADLESS** | Settings screen is orchestrator, not this row | |
+| DH-POL-01 | Platform | hub fetch + FX codes | Y policy API | `/super-admin/reference` | **SCREEN** | After MDM; UAT open → not SHOW / not SHIPPED | AC-DH-POL 🟡 |
+| FC-REF-01 | Finance | org Excel copy | Y reference-manual | `/settings/reference-data` | **SCREEN** | Does not write the hub; UAT open → not SHOW | AC-FIN-REF out of BE rollup |
 | HOT-03/04, FNB-02, AC-RET-FISCAL, AC-CRM-WA, AC-DH-VOEN, Clinic HL7/KKM | various | field vendor | stub | stub badge | **VENDOR** | vendor program | out of that product BE rollup |
 
 ---
@@ -182,6 +188,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-09-30 | CP-WF-FLOOR-01 live floor **SCREEN** (`/workspace/workforce/floor`); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-24 | CP-WF-MIG-01 migration wizard **SCREEN** (`/workspace/workforce/migration`); COVERAGE Status=API. Class stays **SCREEN** (not SHOW / not SHIPPED). |
 | 2026-09-24 | CP-WF-ROSTER-01 brigades transfer + history **SCREEN** (`/workspace/workforce/shifts/brigades`); dated membership API landed. Class stays **SCREEN** (not SHOW / not SHIPPED). |
+| 2026-10-23 | DH-POL-01 SuperAdmin `/super-admin/reference` and FC-REF-01 `/settings/reference-data` **SCREEN** (UAT open, not SHOW, not SHIPPED). Data Hub process stays HEADLESS. AC-DH-POL Scaffold 🟡. Edition `mvp`, `pilot_ready: false`. |
 | 2026-09-23 | Platform Workforce lists: EraListWorkspace/EraDataGrid fill + empty row; ModalShell footer stripe removed; roster vs timesheet copy. Class stays **SCREEN** (not SHOW / not SHIPPED). |
 | 2026-09-21 | Platform Workforce UI hygiene: nested shifts/attendance SCREENs; employments server q; modals for import/bulk/materialize; Status=API (not SHOW / not SHIPPED). |
 | 2026-10-04 | RET-RBAC-01, CRM-RBAC-01, WS-RBAC-01, AS-RBAC-01, CN-RBAC-01, LOG-RBAC-01 Variant A access matrix `/admin/access` **SCREEN** (not SHOW); AC-*-RBAC out of BE rollup; UAT open. |

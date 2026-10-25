@@ -25,6 +25,7 @@ const chargeSchema = z.object({
   qty: z.number().int().positive().optional(),
   description: z.string().min(1),
   folioType: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
+  reservationGuestId: z.string().uuid().optional(),
 });
 
 const paymentSchema = z.object({
@@ -37,6 +38,7 @@ const paymentSchema = z.object({
   bankReference: z.string().max(120).optional(),
   bankTerminalId: z.string().min(1).max(64).optional(),
   folioType: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
+  reservationGuestId: z.string().uuid().optional(),
 }).refine((row) => Boolean(row.folioId || row.reservationId), {
   message: 'folioId or reservationId is required',
 });
@@ -50,8 +52,14 @@ export async function POST(request: Request) {
       const data = paymentSchema.parse(body);
       let folioId = data.folioId;
       if (!folioId && data.reservationId) {
-        const { ensureOpenFolio } = await import('@/lib/services/booking-folio.service');
-        const folio = await ensureOpenFolio(data.reservationId, data.folioType ?? 'GUEST');
+        if (!data.revenueCodeId) throw new Error('Revenue code is required');
+        const { resolvePaymentFolio } = await import('@/lib/services/booking-folio.service');
+        const folio = await resolvePaymentFolio({
+          reservationId: data.reservationId,
+          revenueCodeId: data.revenueCodeId,
+          explicit: data.folioType,
+          reservationGuestId: data.reservationGuestId,
+        });
         folioId = folio.id;
       }
       const payment = await postPayment({
@@ -74,6 +82,7 @@ export async function POST(request: Request) {
         await postCharge({
           ...data,
           folioType: data.folioType,
+          reservationGuestId: data.reservationGuestId,
           audit: { userId: session?.sub, request },
         }),
       ),

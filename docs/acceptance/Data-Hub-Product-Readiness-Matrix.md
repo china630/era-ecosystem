@@ -10,7 +10,7 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
-**Closeout (2026-08-18 Green Scaffold BE Wave 8):** Scaffold BE ✅ (REG/FX/BANK/HS; VOEN excl. from rollup — e-taxes BLOCKED). UI n/a / Demo / Pilot / Sell unchanged — do **not** claim GA; edition stays `mvp`.
+**Closeout (2026-10-23):** Scaffold BE **🟡** because AC-DH-POL (per-catalog fetch + FX codes) has no negative spec. REG/FX/BANK/HS stay ✅. VOEN stays excluded (e-taxes BLOCKED). Hub process is still HEADLESS; the settings screen is orchestrator `/super-admin/reference` (SCREEN, UAT open). Do **not** claim GA; edition stays `mvp`.
 
 ---
 
@@ -18,7 +18,7 @@
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Data Hub** | ✅ | ✅ | n/a | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — API product; pilot/field open |
+| **Data Hub** | ✅ | 🟡 | n/a | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — API product; pilot/field open; policy AC 🟡 |
 
 ---
 
@@ -30,6 +30,7 @@
 |---------|------|-------|
 | Ops UI | `n/a — API-only Nest service` | n/a |
 | Swagger registry | `/registry/v1/docs` | 🟡 |
+| Settings screen | orchestrator `/super-admin/reference` (not a hub app) | SCREEN — UAT open; not SHOW |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. HEADLESS lines use `n/a` with reason.
 

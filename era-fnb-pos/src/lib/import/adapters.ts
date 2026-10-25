@@ -163,6 +163,12 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
       }
       revenueCode = resolved;
     }
+    if (revenueCode && category && !category.revenueCode && !dryRun) {
+      category = await tx.menuCategory.update({
+        where: { id: category.id },
+        data: { revenueCode },
+      });
+    }
     const existing = await tx.menuItem.findFirst({
       where: { categoryId: category.id, plu: row.plu },
     });
@@ -170,7 +176,7 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
       name: row.name,
       priceAzn: toDecimal(row.price),
       active: row.active,
-      revenueCode,
+      revenueCode: null,
     };
     if (!existing) {
       await tx.menuItem.create({

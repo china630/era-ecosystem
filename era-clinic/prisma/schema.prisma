@@ -95,6 +95,8 @@ model Tenant {
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Paid no-show keeps the folio charge (default). False lets the hotel void it.
   noShowKeepsCharge              Boolean                  @default(true) @map("no_show_keeps_charge")
+  /// Unpaid extra: show on the plan and guest print, or hide until pay/folio.
+  extraProcedureRoute            ExtraProcedureRoute      @default(SHOW_ON_PLAN) @map("extra_procedure_route")
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
@@ -215,6 +217,12 @@ enum ProcedureOverQuotaPolicy {
   WARN_ONLY
 }
 
+/// Where an unpaid extra (inPackage = false, PENDING_PAY) is visible before pay or folio.
+enum ExtraProcedureRoute {
+  SHOW_ON_PLAN
+  HOLD_UNTIL_PAY
+}
+
 enum ClinicReceiptStatus {
   OPEN
   PAID
@@ -319,6 +327,7 @@ model PatientRef {
   inpatientAdmissions   InpatientAdmission[]
   receipts              ClinicReceipt[]
   procedureChargeLogs   ProcedureChargeLog[]
+  walkInPartyGuests     WalkInPartyGuest[]
   createdAt             DateTime                  @default(now())
 
   @@unique([organizationId, refCode])
@@ -633,6 +642,9 @@ model LabOrder {
   fasting               Boolean          @default(false)
   /// Planned collection slot (e.g. next morning fasting)
   scheduledCollectionAt DateTime?        @map("scheduled_collection_at")
+  /// Hotel cashier pending id once a walk-in party sent this lab.
+  settlementPendingId   String?          @map("settlement_pending_id")
+  settledAt             DateTime?        @map("settled_at")
   patientRef            PatientRef       @relation(fields: [patientRefId], references: [id])
   visit                 Visit?           @relation(fields: [visitId], references: [id])
   episode               ClinicalEpisode? @relation(fields: [clinicalEpisodeId], references: [id])
@@ -951,11 +963,53 @@ model ClinicalEpisode {
   programInstance            ProgramInstance?
   /// CLI-56 — doctors on this course (therapist, gyn, uro, …).
   careDoctors                EpisodeCareDoctor[]
+  walkInPartyGuests          WalkInPartyGuest[]
 
   @@index([reservationId])
   @@index([organizationId, status])
   @@index([reservationId, patientRefId, status])
   @@index([anamnesisByPractitionerId])
+}
+
+enum WalkInPartyStatus {
+  DRAFT
+  SENT_TO_CASHIER
+  PAID
+}
+
+/// One walk-in crowd (no hotel rooms). Each guest is a normal WALK_IN episode.
+model WalkInParty {
+  id              String             @id @default(cuid())
+  organizationId  String
+  name            String
+  visitDate       DateTime           @db.Date
+  status          WalkInPartyStatus  @default(DRAFT)
+  receiptRef      String?            @map("receipt_ref")
+  createdByUserId String?            @map("created_by_user_id")
+  guests          WalkInPartyGuest[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([organizationId, visitDate])
+  @@map("walk_in_parties")
+}
+
+model WalkInPartyGuest {
+  id                String          @id @default(cuid())
+  organizationId    String
+  partyId           String          @map("party_id")
+  sortOrder         Int             @map("sort_order")
+  patientRefId      String          @map("patient_ref_id")
+  clinicalEpisodeId String          @map("clinical_episode_id")
+  party             WalkInParty     @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  patientRef        PatientRef      @relation(fields: [patientRefId], references: [id])
+  episode           ClinicalEpisode @relation(fields: [clinicalEpisodeId], references: [id])
+  createdAt         DateTime        @default(now())
+
+  @@unique([partyId, sortOrder])
+  @@index([organizationId])
+  @@index([clinicalEpisodeId])
+  @@map("walk_in_party_guests")
 }
 
 /// CLI-56 — multi-doctor care team for a sanatorium / walk-in course.
@@ -1819,6 +1873,10 @@ model ProgramTemplateProcedure {
   requiresDoctor Boolean         @default(false) @map("requires_doctor")
   /** Distinct in-package SKUs per Asia/Baku day for this block. Null = family default. */
   dailyDistinctCap Int?          @map("daily_distinct_cap")
+  /** Doctor assign list. Independent of kind: any block may be shown. */
+  showInProcedures Boolean       @default(false) @map("show_in_procedures")
+  /** Order in the procedure assign list among blocks with the checkbox on. */
+  procedureOrder   Int           @default(0) @map("procedure_order")
   template       ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([templateId])
@@ -2404,4 +2462,20 @@ model ClinicCutoverPolicy {
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@map("clinic_cutover_policy")
+}
+
+/// Department clinic consumables waiting for the hotel journal. sourceRef is unique.
+model ConsumptionOutbox {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  sourceRef      String    @unique @map("source_ref")
+  payloadJson    String    @map("payload_json")
+  status         String    @default("PENDING")
+  attempts       Int       @default(0)
+  lastError      String?   @map("last_error")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  sentAt         DateTime? @map("sent_at")
+
+  @@index([organizationId, status])
+  @@map("consumption_outbox")
 }

@@ -61,6 +61,9 @@ type InvoiceDetail = {
   dueDate: string;
   totalAmount: unknown;
   currency: string;
+  isInternational?: boolean;
+  eqaimeNumber?: string | null;
+  eqaimeStatus?: string | null;
   paidTotal: string;
   remaining: string;
   extraAttributes?: Record<string, unknown>;
@@ -137,6 +140,8 @@ export function ViewInvoiceModal({
   const [creditDate, setCreditDate] = useState(() => todayBakuYmd());
   const [creditReason, setCreditReason] = useState("");
   const [creditOffset, setCreditOffset] = useState<"REVENUE" | "EXPENSE">("REVENUE");
+  const [eqaimeNumberDraft, setEqaimeNumberDraft] = useState("");
+  const [eqaimeLinkBusy, setEqaimeLinkBusy] = useState(false);
   const [creditBusy, setCreditBusy] = useState(false);
   const [creditErr, setCreditErr] = useState<string | null>(null);
   const [viewTab, setViewTab] = useState<"details" | "history" | "activity">("details");
@@ -191,11 +196,38 @@ export function ViewInvoiceModal({
       setSimQrDataUrl(null);
       setActiveSignProvider(null);
       setNetModal(false);
+      setEqaimeNumberDraft("");
       return;
     }
     if (!ready || !token || !id) return;
     void load();
   }, [open, ready, token, id, load]);
+
+  async function linkEqaimeNumber() {
+    const number = eqaimeNumberDraft.trim();
+    if (!number || !id) {
+      toast.error(t("invoices.eqaimeLinkEmpty"));
+      return;
+    }
+    setEqaimeLinkBusy(true);
+    try {
+      const res = await apiFetch(`/api/invoices/${id}/eqaime/link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eqaimeNumber: number }),
+      });
+      if (!res.ok) {
+        toast.error(t("invoices.eqaimeLinkError"));
+        return;
+      }
+      toast.success(t("invoices.eqaimeLinkOk"));
+      setEqaimeNumberDraft("");
+      await load();
+      onInvoicesUpdated?.();
+    } finally {
+      setEqaimeLinkBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!token || !inv || !ledgerReady) {
@@ -591,6 +623,39 @@ export function ViewInvoiceModal({
                     <div>
                       <span className="text-[#7F8C8D]">{t("invoices.remainingCol")}: </span>
                       <span>{formatMoneyAzn(inv.remaining)}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-[#7F8C8D]">{t("invoices.eqaimeNumber")}: </span>
+                      {inv.eqaimeNumber?.trim() ? (
+                        <span className="font-medium">
+                          {inv.eqaimeNumber}
+                          {inv.eqaimeStatus === "MANUAL"
+                            ? ` (${t("invoices.eqaimeStatusManual")})`
+                            : ""}
+                        </span>
+                      ) : inv.isInternational ||
+                        inv.currency !== "AZN" ||
+                        inv.status === "DRAFT" ||
+                        inv.status === "CANCELLED" ? (
+                        <span>{t("invoices.eqaimeStatusNone")}</span>
+                      ) : (
+                        <span className="mt-2 flex flex-wrap items-center gap-2">
+                          <input
+                            className={`${MODAL_INPUT_CLASS} max-w-xs`}
+                            type="text"
+                            value={eqaimeNumberDraft}
+                            onChange={(e) => setEqaimeNumberDraft(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            disabled={eqaimeLinkBusy}
+                            onClick={() => void linkEqaimeNumber()}
+                            className={MODAL_FOOTER_BUTTON_CLASS}
+                          >
+                            {t("invoices.eqaimeLinkSave")}
+                          </button>
+                        </span>
+                      )}
                     </div>
                   </div>
                   {extraDefs.some((d) => d.active) ? (

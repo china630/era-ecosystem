@@ -112,25 +112,44 @@ export type RackStaySlice = {
   shareEligible?: boolean;
   shareGender?: string | null;
   adults?: number;
+  /**
+   * Slice on a door the guest has already left. The end date is the move morning
+   * and does not keep that door for housekeeping or a new arrival.
+   */
+  pastDoor?: boolean;
 };
+
+function rangeKeys(fromKey: string, toKey: string): { lo: string; hi: string } {
+  return fromKey <= toKey
+    ? { lo: fromKey, hi: toKey }
+    : { lo: toKey, hi: fromKey };
+}
+
+/**
+ * Current door includes the checkout morning. A door already left occupies
+ * nights only: the civil end date belongs to the new door.
+ */
+export function rackStayTouchesRange(
+  stay: RackStaySlice,
+  fromKey: string,
+  toKey: string = fromKey,
+): boolean {
+  if (!stay.checkInDate || !stay.checkOutDate) return false;
+  if (!stay.pastDoor) {
+    return stayTouchesHotelDateRange(stay.checkInDate, stay.checkOutDate, fromKey, toKey);
+  }
+  const { lo, hi } = rangeKeys(fromKey, toKey);
+  const ci = hotelDateKey(stay.checkInDate);
+  const co = hotelDateKey(stay.checkOutDate);
+  return ci <= hi && co > lo;
+}
 
 export function reservationsTouchingDate<T extends RackStaySlice>(
   reservations: T[],
   fromKey: string,
   toKey: string = fromKey,
 ): T[] {
-  return reservations.filter(
-    (r) =>
-      Boolean(r.checkInDate) &&
-      Boolean(r.checkOutDate) &&
-      stayTouchesHotelDateRange(r.checkInDate!, r.checkOutDate!, fromKey, toKey),
-  );
-}
-
-function rangeKeys(fromKey: string, toKey: string): { lo: string; hi: string } {
-  return fromKey <= toKey
-    ? { lo: fromKey, hi: toKey }
-    : { lo: toKey, hi: fromKey };
+  return reservations.filter((r) => rackStayTouchesRange(r, fromKey, toKey));
 }
 
 /** In-house on the door, or a pre-arrival stay whose check-in falls in the rack interval. */
@@ -140,7 +159,7 @@ export function isRackLiveStay(
   toKey: string = fromKey,
 ): boolean {
   if (!stay.checkInDate || !stay.checkOutDate) return false;
-  if (!stayTouchesHotelDateRange(stay.checkInDate, stay.checkOutDate, fromKey, toKey)) {
+  if (!rackStayTouchesRange(stay, fromKey, toKey)) {
     return false;
   }
   if (stay.status === 'IN_HOUSE') return true;

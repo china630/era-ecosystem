@@ -41,6 +41,7 @@ import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
 import { PatchInvoiceDto } from "./dto/patch-invoice.dto";
 import { InvoicesService } from "./invoices.service";
 import { EqaimeSubmissionService } from "./eqaime-submission.service";
+import { LinkEqaimeNumberDto } from "./dto/link-eqaime-number.dto";
 
 @ApiTags("invoices")
 @ApiBearerAuth("bearer")
@@ -214,6 +215,19 @@ export class InvoicesController {
   })
   submitEqaime(@OrganizationId() orgId: string, @Param("id") id: string) {
     return this.eqaime.submit(orgId, id);
+  }
+
+  @Post(":id/eqaime/link")
+  @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
+  @ApiOperation({
+    summary: "Link an e-qaimə number by hand. Does not call the tax gateway.",
+  })
+  linkEqaime(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+    @Body() dto: LinkEqaimeNumberDto,
+  ) {
+    return this.eqaime.linkManual(orgId, id, dto.eqaimeNumber);
   }
 
   @Get(":id")

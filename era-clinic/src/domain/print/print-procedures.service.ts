@@ -1,4 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { getClinicSettings } from "@/domain/settings/settings.service";
+import {
+  printsProcedureClock,
+  showsUnpaidExtraOnPlan,
+} from "@/domain/sanatorium/extra-procedure-route";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print/print-types";
@@ -20,9 +25,10 @@ import {
 export { episodeCareTeamPrintName } from "@/domain/print/print-patient-strip";
 
 /**
- * Guest sheet is the placed course only.
- * PENDING_PAY extras still have a placeholder clock (now + 1 min each) and are not on the folio.
- * PROPOSED rows are not seated yet.
+ * Guest sheet lists seated rows, plus unpaid extras when the org route is SHOW_ON_PLAN.
+ * Those extras keep a placeholder clock in the database. The sheet prints an unpaid mark
+ * and leaves time and room empty. They are not seated and do not reach nurse check-in.
+ * HOLD_UNTIL_PAY omits them. PROPOSED rows are not seated yet.
  */
 export const PRINT_PROCEDURE_STATUSES = [
   "SCHEDULED",
@@ -115,7 +121,10 @@ export async function buildProceduresPrint(
   const patient = await prisma.patientRef.findUnique({ where: { id: patientId } });
   if (!patient) return null;
 
-  const branding = await getPrintBranding(lang);
+  const [branding, clinicSettings] = await Promise.all([
+    getPrintBranding(lang),
+    getClinicSettings(),
+  ]);
   const episode = episodeId
     ? await prisma.clinicalEpisode.findFirst({
         where: { id: episodeId, patientRefId: patientId },
@@ -125,11 +134,19 @@ export async function buildProceduresPrint(
         orderBy: { openedAt: "desc" },
       });
 
+  const showUnpaid = showsUnpaidExtraOnPlan(clinicSettings.extraProcedureRoute);
   const orders = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: patientId,
-      status: { in: [...PRINT_PROCEDURE_STATUSES] },
       ...(episode ? { clinicalEpisodeId: episode.id } : {}),
+      ...(showUnpaid
+        ? {
+            OR: [
+              { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
+              { status: "PENDING_PAY" as const, inPackage: false },
+            ],
+          }
+        : { status: { in: [...PRINT_PROCEDURE_STATUSES] } }),
     },
     include: {
       resource: { include: { room: true } },
@@ -163,13 +180,12 @@ export async function buildProceduresPrint(
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
   for (const o of orders) {
-    const date = bakuDate(o.scheduledAt);
-    const room =
-      o.resource?.room?.name ??
-      o.resource?.name ??
-      o.resource?.code ??
-      "—";
-    const ends = o.endsAt ? `-${bakuTime(o.endsAt)}` : "";
+    const seated = printsProcedureClock(o.status);
+    const date = seated ? bakuDate(o.scheduledAt) : printDateFromYmd(todayBakuYmd());
+    const room = seated
+      ? (o.resource?.room?.name ?? o.resource?.name ?? o.resource?.code ?? "—")
+      : "";
+    const ends = seated && o.endsAt ? `-${bakuTime(o.endsAt)}` : "";
     const siteBits = o.sites.map((row) => {
       const local =
         lang === "ru" ? row.site.titleRu : lang === "az" ? row.site.titleAz : row.site.titleEn;
@@ -220,10 +236,12 @@ export async function buildProceduresPrint(
       zones,
       settings,
       quantity: o.quantity ?? 1,
-      time: `${bakuTime(o.scheduledAt)}${ends}`,
-        room,
-        price: `${Number(o.amountNet).toFixed(2)} AZN`,
-        note: (o.note ?? "").trim(),
+      time: seated ? `${bakuTime(o.scheduledAt)}${ends}` : "",
+      room,
+      price: `${Number(o.amountNet).toFixed(2)} AZN`,
+      note: [seated ? "" : printLabel(lang, "unpaidExtra"), (o.note ?? "").trim()]
+        .filter(Boolean)
+        .join(" · "),
     };
     const list = map.get(date) ?? [];
     list.push(row);

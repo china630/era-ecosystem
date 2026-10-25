@@ -21,7 +21,6 @@ const writeSchema = z.object({
   departmentCode: z.string().optional().nullable(),
   kind: z.nativeEnum(ServiceCatalogKind).optional(),
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  hotelRevenueCode: z.string().nullable().optional(),
 });
 
 export async function GET(req: Request) {
@@ -93,7 +92,6 @@ export async function POST(req: Request) {
       ? bakuDayBounds(body.effectiveFrom).start
       : new Date();
     const dept = await resolveDepartmentWrite(organizationId, body);
-    const hotelRevenueCode = body.hotelRevenueCode?.trim() || null;
     const row = await prisma.serviceCatalogCache.create({
       data: {
         organizationId,
@@ -108,7 +106,6 @@ export async function POST(req: Request) {
         department: dept.department,
         departmentCode: dept.departmentCode,
         kind: body.kind ?? "OTHER",
-        hotelRevenueCode,
         syncedAt: new Date(),
       },
     });

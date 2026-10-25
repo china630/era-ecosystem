@@ -42,6 +42,7 @@ Do not call this table «product readiness».
 | AC-CP-MDM | UAT MDM depth / companies UI | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-WF | UAT-SMOKE workforce screens | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-SA | UAT-SMOKE-PLATFORM lab signoff | Code | Out of Scaffold ✅ (Pilot) |
+| AC-CP-SA | Reference settings screen UAT (`/super-admin/reference`) | Code | Same SuperAdmin guard; no separate negative spec; not SHIPPED |
 | AC-CP-INT | Integration audit residual shrink (ongoing) | Code | Gate G1 + negative suite |
 | AC-CP-BIND | UAT bind smoke / field isolation | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-CFG | UAT runtime-config signoff | Code | Out of Scaffold ✅ (Pilot) |

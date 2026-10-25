@@ -38,12 +38,15 @@ export default function AdminSettingsPage() {
   const [presets, setPresets] = useState<PresetState | null>(null);
   const [presetOpen, setPresetOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<string[]>([]);
-  const [outlets, setOutlets] = useState<Array<{ id: string; code: string; name: string; revenueCenterCode: string }>>([]);
+  const [outlets, setOutlets] = useState<
+    Array<{ id: string; code: string; name: string; revenueCenterCode: string; financeWarehouseCode?: string | null }>
+  >([]);
   const [outletId, setOutletId] = useState("");
   const [revenueOptions, setRevenueOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [revenueNotice, setRevenueNotice] = useState("");
   const [revenueOpen, setRevenueOpen] = useState(false);
   const [revenueDraft, setRevenueDraft] = useState("");
+  const [warehouseDraft, setWarehouseDraft] = useState("");
 
   useEffect(() => {
     void fetch("/api/settings/business-day")
@@ -96,7 +99,10 @@ export default function AdminSettingsPage() {
     const res = await fetch(`/api/outlets/${outletId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ revenueCenterCode: revenueDraft.trim() }),
+      body: JSON.stringify({
+        revenueCenterCode: revenueDraft.trim(),
+        financeWarehouseCode: warehouseDraft.trim() || null,
+      }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
@@ -104,7 +110,11 @@ export default function AdminSettingsPage() {
       return;
     }
     setOutlets((rows) =>
-      rows.map((row) => (row.id === outletId ? { ...row, revenueCenterCode: revenueDraft.trim() } : row)),
+      rows.map((row) =>
+        row.id === outletId
+          ? { ...row, revenueCenterCode: revenueDraft.trim(), financeWarehouseCode: warehouseDraft.trim() || null }
+          : row,
+      ),
     );
     setRevenueOpen(false);
     showSuccess(t("saved"));
@@ -172,6 +182,9 @@ export default function AdminSettingsPage() {
             <td className="p-3">
               {outlets.find((row) => row.id === outletId)?.revenueCenterCode || "—"}
               {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
+              <p className="text-[12px] text-[#7F8C8D]">
+                {t("outletWarehouse")}: {outlets.find((row) => row.id === outletId)?.financeWarehouseCode || t("outletWarehouseDefault")}
+              </p>
             </td>
             <td className="p-3 text-right">
               <button
@@ -179,7 +192,9 @@ export default function AdminSettingsPage() {
                 className={PRIMARY_BUTTON_CLASS}
                 disabled={!outletId}
                 onClick={() => {
-                  setRevenueDraft(outlets.find((row) => row.id === outletId)?.revenueCenterCode ?? "");
+                  const row = outlets.find((item) => item.id === outletId);
+                  setRevenueDraft(row?.revenueCenterCode ?? "");
+                  setWarehouseDraft(row?.financeWarehouseCode ?? "");
                   setRevenueOpen(true);
                 }}
               >
@@ -248,8 +263,10 @@ export default function AdminSettingsPage() {
           value={outletId}
           onChange={(next) => {
             const id = String(next ?? "");
+            const row = outlets.find((item) => item.id === id);
             setOutletId(id);
-            setRevenueDraft(outlets.find((row) => row.id === id)?.revenueCenterCode ?? "");
+            setRevenueDraft(row?.revenueCenterCode ?? "");
+            setWarehouseDraft(row?.financeWarehouseCode ?? "");
           }}
         />
         <CatalogField
@@ -262,6 +279,13 @@ export default function AdminSettingsPage() {
           }
           value={revenueDraft}
           onChange={(next) => setRevenueDraft(String(next ?? ""))}
+        />
+        <CatalogField
+          kind="FREE_TEXT"
+          label={t("outletWarehouse")}
+          options={[]}
+          value={warehouseDraft}
+          onChange={(next) => setWarehouseDraft(String(next ?? ""))}
         />
         <ModalFooter
           onCancel={() => setRevenueOpen(false)}

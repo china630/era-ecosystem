@@ -215,14 +215,13 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Storage add-on gate | `PLATFORM_STORAGE_ENABLED` | `true` — enables upload API routes |
 | S3 driver | `STORAGE_DRIVER`, `S3_*`, `AWS_*` | See [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) § platform_storage |
 | Data Hub (internal) | `ERA_DATA_HUB_URL` | `http://data-hub:4200` |
-| Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `true` on **finance-core** and **bank-core** (Phase 2 contract default) |
-| Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required when hub consumer enabled |
-| Finance CBAR ingest | `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` | `true` — finance no longer runs CBAR HTTP/cron (hub SoR) |
+| Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required for finance, bank, and orchestrator hub calls. Empty token skips the call |
+| Reference fetch / FX codes | super-admin `/super-admin/reference` | Per-catalog external fetch and dashboard currency codes. Not env |
 | Industry reference data | `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` | Industry sync reads via orchestrator `GET /platform/v1/catalog/*` ([ADR](./adr/orchestrator-platform-integration-gateway.md)). Orchestrator backend: `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. HS tariff preview remains Finance-only. Prefer Sync bind + `satelliteOrganizationId()` over baking org UUID into compose. |
 | Industry desired-state (Sync + pull) | orch → `POST …/organization/bind` + `POST …/runtime-config`; satellite → `GET /v1/internal/satellites/desired-state` | SSO / PSA / event URL+token / `activeModules` / optional `deploymentTopology` + `edition`; env = bootstrap. Boot pull default on when `ERA_IN_DOCKER=1` (`ERA_DESIRED_STATE_PULL`, `ERA_DESIRED_STATE_POLL_MS`). See [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md). |
 | Satellite entitlement snapshot | `SATELLITE_EVENT_SERVICE_TOKEN` (hotel pattern). `CONTROL_PLANE_SERVICE_TOKEN` optional alias. | Must not inject folklore `dev-control-plane-token` when a real event token exists — that 401s snapshot → `Industry module not active`. |
 | Finance → Orchestrator S2S | `CONTROL_PLANE_SERVICE_TOKEN` (alias `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); URL via kit `resolveOrchestratorBaseUrl` (memory → `CONTROL_PLANE_URL` / `ORCHESTRATOR_*` bootstrap) | Same token value on orch + finance. Health reports configured booleans only. |
-| Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
+| Data Hub one-time copy | `FINANCE_RO_DATABASE_URL` | Only `npm run db:sync-from-finance`. Runtime reads `era_data_hub` |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
 | Bank Core org | `ERA_BANK_ORGANIZATION_ID` | Emergency / appliance process bind. SHARED request tenant is JWT / `X-Organization-Id` / Host — not this env as login SoT |
 | Bank Core ref-data mode | `ERA_DATA_HUB_ONPREM` | `true` for isolated on-prem bank deployments |

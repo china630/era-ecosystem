@@ -15,6 +15,7 @@ import {
   ModalFooter,
   ModalShell,
   PageHeader,
+  ViewportOverlay,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
@@ -394,11 +395,9 @@ export default function SanatoriumResourcesPage() {
           <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
         </>
       ) : (
-        <div
+        <ViewportOverlay
           className={`fixed inset-0 z-[180] flex flex-col ${APP_SHELL_CLASS}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label={t("fullscreenTitle")}
+          label={t("fullscreenTitle")}
         >
           <div
             className={`flex shrink-0 items-center justify-between gap-3 rounded-none border-x-0 border-t-0 bg-white px-4 py-3 sm:px-6 ${FIELD_SECTION_CLASS}`}
@@ -423,7 +422,7 @@ export default function SanatoriumResourcesPage() {
             {filters}
             <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
           </div>
-        </div>
+        </ViewportOverlay>
       )}
 
       <ModalShell

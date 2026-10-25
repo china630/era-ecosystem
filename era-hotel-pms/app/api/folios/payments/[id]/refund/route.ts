@@ -9,6 +9,8 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 const schema = z.object({
   amount: z.number().positive().optional(),
   reason: z.string().trim().min(1).max(500),
+  paymentMethod: z.enum(['CASH', 'CARD']).optional(),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(
@@ -24,6 +26,8 @@ export async function POST(
       paymentId: id,
       amount: body.amount,
       reason: body.reason,
+      paymentMethod: body.paymentMethod,
+      bankTerminalId: body.bankTerminalId,
       createdByUserId: session?.sub,
       auditRequest: request,
     });

@@ -21,9 +21,11 @@
 | AC-DH-BANK | Banks + IBAN validate | ✅ | [ ] | `__tests__/dh-bank-negative.spec.ts` | Negative: empty / format / MOD-97 IBAN |
 | AC-DH-VOEN | VÖEN company lookup + PII masking | 🟡 | [ ] | Wave 3; IND-VOEN live e-taxes BLOCKED | External ⏸ — e-taxes BLOCKED; **excluded from Scaffold BE rollup** (Hotel INT) |
 | AC-DH-HS | HS / tariff + static catalogs | ✅ | [ ] | `__tests__/dh-hs-negative.spec.ts` | Negative: HS_NOT_FOUND; TARIFF_NOT_FOUND |
+| AC-DH-POL | Per-catalog external fetch + FX code lists | 🟡 | [ ] | `reference-policy.controller.ts`; COVERAGE DH-POL-01 | No negative spec for unknown kind / empty token on PATCH. SuperAdmin screen is orchestrator, UAT not walked. Not Scaffold ✅ |
 
-**Edition / wave rollup (BE only)** = worst(REG, FX, BANK, HS) → **✅**.  
+**Edition / wave rollup (BE only)** = worst(REG, FX, BANK, HS, POL) → **🟡** (POL).  
 AC-DH-VOEN remains 🟡 and is **out of Scaffold BE rollup** until live e-taxes clears BLOCKED. Do **not** mark VOEN Scaffold ✅.  
+AC-DH-POL is **in** the rollup (settings replaced the env switch) and stays 🟡 until a negative path exists.  
 Do not call this table «product readiness».
 
 ### Residual register
@@ -31,6 +33,7 @@ Do not call this table «product readiness».
 | AC | Residual | Severity | Status |
 |----|----------|----------|--------|
 | AC-DH-VOEN | Live e-taxes VÖEN lookup | External ⏸ | BLOCKED (e-taxes); **Excluded from Scaffold BE rollup** (Wave 8; Hotel INT) |
+| AC-DH-POL | Policy PATCH negative path + SuperAdmin UAT | Code | In BE rollup; Scaffold 🟡 |
 
 ### Negative-path proof index
 

@@ -19,6 +19,7 @@ import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { parsePendingReceiptLines } from '@/lib/pending-receipt-lines';
+import { collapsePendingBaskets, type BasketGridRow } from '@/lib/pending-baskets';
 
 type PendingRow = {
   id: string;
@@ -33,7 +34,10 @@ type PendingRow = {
   revenueCode?: string | null;
   createdAt: string;
   businessDate: string;
+  basketRef?: string | null;
 };
+
+type GridRow = BasketGridRow<PendingRow>;
 
 export default function FrontCashPendingPage() {
   const { can } = useAuth();
@@ -42,7 +46,7 @@ export default function FrontCashPendingPage() {
   const [rows, setRows] = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [receipt, setReceipt] = useState<PendingRow | null>(null);
+  const [receipt, setReceipt] = useState<GridRow | null>(null);
   const [voidReason, setVoidReason] = useState('');
   const [voidOpen, setVoidOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -72,12 +76,22 @@ export default function FrontCashPendingPage() {
   async function pay(method: 'CASH' | 'CARD') {
     if (!receipt) return;
     setBusy(true);
+    const basket = Boolean(receipt.basketRef) && receipt.basketCount > 1;
     try {
-      const res = await fetch(`/api/settlement/pending/${receipt.id}/pay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentMethod: method }),
-      });
+      const res = await fetch(
+        basket
+          ? '/api/settlement/pending/basket/pay'
+          : `/api/settlement/pending/${receipt.members[0]?.id ?? receipt.id}/pay`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            basket
+              ? { basketRef: receipt.basketRef, paymentMethod: method }
+              : { paymentMethod: method },
+          ),
+        },
+      );
       const data = await res.json();
       if (!res.ok) {
         showApiError(data, t('payFailed'));
@@ -117,15 +131,16 @@ export default function FrontCashPendingPage() {
 
   const canPay = can(PERMISSIONS.FOLIO_PAYMENT);
   const canVoid = can(PERMISSIONS.FOLIO_VOID);
+  const collapsed = useMemo(() => collapsePendingBaskets(rows), [rows]);
   const visibleRows = useMemo(() => {
     const needle = debouncedQ.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter((row) =>
-      `${row.sourceSystem} ${row.sourceRef} ${row.sku ?? ''} ${row.payerLabel ?? ''} ${row.description}`
+    if (!needle) return collapsed;
+    return collapsed.filter((row) =>
+      `${row.sourceSystem} ${row.basketRef ?? ''} ${row.sourceRef} ${row.sku ?? ''} ${row.payerLabel ?? ''} ${row.description} ${row.members.map((member) => member.description).join(' ')}`
         .toLowerCase()
         .includes(needle),
     );
-  }, [rows, debouncedQ]);
+  }, [collapsed, debouncedQ]);
 
   const lines = receipt ? parsePendingReceiptLines(receipt.description) : [];
 
@@ -140,13 +155,17 @@ export default function FrontCashPendingPage() {
           onChange={(e) => setQ(e.target.value)}
         />
       </EraListFilterBar>
-      <HotelDataGrid<PendingRow & Record<string, unknown>>
+      <HotelDataGrid<GridRow & Record<string, unknown>>
         columns={[
           { key: 'sourceSystem', header: t('colSource') },
-          { key: 'sourceRef', header: t('colRef'), render: (r) => r.sourceRef.slice(0, 12) },
+          {
+            key: 'sourceRef',
+            header: t('colRef'),
+            render: (r) => (r.basketCount > 1 ? t('basketLines', { count: r.basketCount }) : r.sourceRef.slice(0, 12)),
+          },
           { key: 'payerLabel', header: t('colPayer'), render: (r) => r.payerLabel ?? '—' },
-          { key: 'sku', header: t('colSku'), render: (r) => r.sku ?? '—' },
-          { key: 'qty', header: t('colQty'), render: (r) => String(r.qty ?? 1) },
+          { key: 'sku', header: t('colSku'), render: (r) => (r.basketCount > 1 ? '—' : r.sku ?? '—') },
+          { key: 'qty', header: t('colQty'), render: (r) => (r.basketCount > 1 ? String(r.basketCount) : String(r.qty ?? 1)) },
           { key: 'description', header: t('colDescription') },
           {
             key: 'amount',
@@ -154,7 +173,7 @@ export default function FrontCashPendingPage() {
             render: (r) => `${Number(r.amount).toFixed(2)} ${r.currency}`,
           },
         ]}
-        rows={visibleRows as (PendingRow & Record<string, unknown>)[]}
+        rows={visibleRows as (GridRow & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
         onRowDoubleClick={(r) => {
           setReceipt(r);
@@ -173,7 +192,7 @@ export default function FrontCashPendingPage() {
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setReceipt(null)}>
               {tc('cancel')}
             </button>
-            {canVoid ? (
+            {canVoid && receipt?.basketCount === 1 ? (
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -208,8 +227,20 @@ export default function FrontCashPendingPage() {
         {receipt ? (
           <div className="space-y-3 text-sm">
             <p className="text-xs text-[#7F8C8D]">
-              {receipt.sourceSystem} · {receipt.sourceRef} · {receipt.payerLabel ?? '—'}
+              {receipt.basketCount > 1
+                ? `${receipt.payerLabel ?? '—'} · ${t('basketLines', { count: receipt.basketCount })}`
+                : `${receipt.sourceSystem} · ${receipt.sourceRef} · ${receipt.payerLabel ?? '—'}`}
             </p>
+            {receipt.basketCount > 1 ? (
+              <ul className="space-y-1 text-sm">
+                {receipt.members.map((member) => (
+                  <li key={member.id} className="flex justify-between gap-3">
+                    <span>{member.description}</span>
+                    <span>{Number(member.amount).toFixed(2)} {member.currency}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <p className="text-xs text-[#7F8C8D]">
               {receipt.businessDate?.slice?.(0, 10) ?? receipt.businessDate} · {receipt.sku ?? '—'} ·{' '}
               {t('lineQty')} {receipt.qty ?? 1}

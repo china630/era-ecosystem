@@ -18,6 +18,8 @@ import { mergeLockedPeriodUntil } from "../reporting/reporting-period.util";
 import type { PatchOrganizationSettingsDto } from "./dto/patch-organization-settings.dto";
 import { InventoryValuationMethod } from "@erafinance/database";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { FactQueueService } from "../reporting/fact-queue.service";
+import { SchemePeriodService } from "../reporting/scheme-period.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import {
   mergeNetworkDocumentsSettings,
@@ -34,6 +36,8 @@ export class OrganizationSettingsService {
     private readonly directory: GlobalCompanyDirectoryService,
     private readonly quota: QuotaService,
     private readonly posting: PostingAccountResolver,
+    private readonly factQueue: FactQueueService,
+    private readonly schemePeriod: SchemePeriodService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
   ) {}
 
@@ -63,6 +67,11 @@ export class OrganizationSettingsService {
       throw new NotFoundException("Organization not found");
     }
 
+    if (dto.lockedPeriodUntil) {
+      await this.assertFactQueueForLock(organizationId, dto.lockedPeriodUntil);
+      await this.assertAmendmentForLock(organizationId, dto.lockedPeriodUntil);
+    }
+
     const valuation =
       dto.inventoryValuation ?? dto.valuationMethod ?? undefined;
     const baseSettings =
@@ -74,6 +83,9 @@ export class OrganizationSettingsService {
     if (
       valuation !== undefined ||
       dto.asanUserId !== undefined ||
+      dto.taxRegime !== undefined ||
+      dto.pricesIncludeTax !== undefined ||
+      dto.requireEqaimeForDayClose !== undefined ||
       dto.ledgerMirrorMode !== undefined ||
       dto.emasMode !== undefined ||
       dto.internalRateVisibleToHrManager !== undefined
@@ -89,7 +101,12 @@ export class OrganizationSettingsService {
           inventoryValuation: valuation,
         };
       }
-      if (dto.asanUserId !== undefined) {
+      if (
+        dto.asanUserId !== undefined ||
+        dto.taxRegime !== undefined ||
+        dto.pricesIncludeTax !== undefined ||
+        dto.requireEqaimeForDayClose !== undefined
+      ) {
         const prevTax =
           baseSettings.tax &&
           typeof baseSettings.tax === "object" &&
@@ -99,7 +116,14 @@ export class OrganizationSettingsService {
         const trimmed = dto.asanUserId?.trim() || null;
         mergedSettings.tax = {
           ...prevTax,
-          asanUserId: trimmed,
+          ...(dto.asanUserId !== undefined ? { asanUserId: trimmed } : {}),
+          ...(dto.taxRegime !== undefined ? { regime: dto.taxRegime } : {}),
+          ...(dto.pricesIncludeTax !== undefined
+            ? { pricesIncludeTax: dto.pricesIncludeTax }
+            : {}),
+          ...(dto.requireEqaimeForDayClose !== undefined
+            ? { requireEqaimeForDayClose: dto.requireEqaimeForDayClose }
+            : {}),
         };
       }
       if (dto.ledgerMirrorMode !== undefined) {
@@ -209,6 +233,30 @@ export class OrganizationSettingsService {
     return serializeForAudit(fresh);
   }
 
+  private async assertFactQueueForLock(
+    organizationId: string,
+    lockedPeriodUntil: string | null,
+  ): Promise<void> {
+    const trimmed = lockedPeriodUntil?.trim() ?? "";
+    const match = /^(\d{4})-(0[1-9]|1[0-2])-\d{2}$/.exec(trimmed);
+    if (!match) return;
+    await this.factQueue.assertEmptyForClose(
+      organizationId,
+      Number(match[1]),
+      Number(match[2]),
+    );
+  }
+
+  private async assertAmendmentForLock(
+    organizationId: string,
+    lockedPeriodUntil: string | null,
+  ): Promise<void> {
+    const trimmed = lockedPeriodUntil?.trim() ?? "";
+    const match = /^(\d{4})-(0[1-9]|1[0-2])-\d{2}$/.exec(trimmed);
+    if (!match) return;
+    await this.schemePeriod.assertCloseAllowed(organizationId, `${match[1]}-${match[2]}`);
+  }
+
   async patchNetworkDocumentsSettings(
     organizationId: string,
     dto: PatchNetworkDocumentsSettingsDto,
@@ -259,6 +307,8 @@ export class OrganizationSettingsService {
         throw new BadRequestException("Active accounting book not found");
       }
     }
+    await this.assertFactQueueForLock(organizationId, lockedPeriodUntil);
+    await this.assertAmendmentForLock(organizationId, lockedPeriodUntil);
     await this.prisma.organization.update({
       where: { id: organizationId },
       data: {

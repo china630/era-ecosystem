@@ -16,18 +16,11 @@ test("exact hotel revenue path wins over a query string", () => {
   assert.equal(sharedApiPermission("/api/admin/other"), null);
 });
 
-test("resolveHotelRevenueCode prefers product, then category, then satellite", () => {
-  assert.equal(
-    resolveHotelRevenueCode({ product: "13", category: "14", satellite: "15" }),
-    "13",
-  );
-  assert.equal(
-    resolveHotelRevenueCode({ product: "  ", category: "14", satellite: "15" }),
-    "14",
-  );
-  assert.equal(resolveHotelRevenueCode({ product: "", category: "", satellite: "15" }), "15");
+test("resolveHotelRevenueCode uses the category, otherwise the satellite", () => {
+  assert.equal(resolveHotelRevenueCode({ category: "4101", satellite: "4102" }), "4101");
+  assert.equal(resolveHotelRevenueCode({ category: "  ", satellite: "4102" }), "4102");
   assert.throws(
-    () => resolveHotelRevenueCode({ product: "", category: null, satellite: " " }),
+    () => resolveHotelRevenueCode({ category: "", satellite: " " }),
     /Hotel revenue code is not configured/,
   );
 });

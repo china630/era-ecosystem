@@ -1061,6 +1061,13 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
+            href="/reporting/fact-queue"
+            label={t("reporting.factQueueLink")}
+            isActive={pathname.startsWith("/reporting/fact-queue")}
+            icon={ClipboardList}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/reporting/statforms"
             label={t("reporting.statforms.nav")}
             isActive={pathname.startsWith("/reporting/statforms")}
@@ -1271,6 +1278,22 @@ export function MainSidebar({
                       href="/settings/organization"
                       label={t("nav.orgCompany")}
                       isActive={pathname.startsWith("/settings/organization")}
+                      icon={Briefcase}
+                      nested
+                      onNavClick={onNavClick}
+                    />
+                    <SideNavItem
+                      href="/settings/reference-data"
+                      label={t("nav.referenceData")}
+                      isActive={pathname.startsWith("/settings/reference-data")}
+                      icon={Briefcase}
+                      nested
+                      onNavClick={onNavClick}
+                    />
+                    <SideNavItem
+                      href="/settings/reference-data"
+                      label={t("nav.referenceData")}
+                      isActive={pathname.startsWith("/settings/reference-data")}
                       icon={Briefcase}
                       nested
                       onNavClick={onNavClick}

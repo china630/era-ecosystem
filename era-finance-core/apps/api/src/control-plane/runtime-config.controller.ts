@@ -76,6 +76,7 @@ export class RuntimeConfigController {
         hotelModules: body.hotelModules,
         deploymentTopology: body.deploymentTopology,
         edition: body.edition,
+        referenceSource: body.referenceSource,
       },
       updatedBy: body.updatedBy,
       prisma: this.prisma,

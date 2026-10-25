@@ -41,10 +41,43 @@ export async function POST(request: Request) {
       return jsonOk({ ok: true, prescription: true });
     }
 
+    const { recordWalkInPartySettlement } = await import(
+      "@/domain/sanatorium/walk-in-party.service"
+    );
+
+    if (body.sourceRef.startsWith("lab:")) {
+      const labId = body.sourceRef.slice(4);
+      const lab = await prisma.labOrder.findUnique({ where: { id: labId } });
+      if (!lab) return jsonError("Lab order not found", 404);
+      if (!lab.settledAt) {
+        await prisma.labOrder.update({
+          where: { id: lab.id },
+          data: { settledAt: new Date(), settlementPendingId: body.pendingId },
+        });
+      }
+      await recordWalkInPartySettlement(body.sourceRef, "Hotel cashier");
+      return jsonOk({ ok: true, labOrderId: lab.id, settled: true });
+    }
+
     const walkIn = await import("@/domain/sanatorium/extras-assign.service").then((mod) =>
       mod.scheduleWalkInExtraAfterSettlement(body.sourceRef),
     );
-    if (walkIn) return jsonOk({ ok: true, procedureOrderId: body.sourceRef, scheduled: true });
+    if (walkIn) {
+      await recordWalkInPartySettlement(body.sourceRef, "Hotel cashier");
+      return jsonOk({ ok: true, procedureOrderId: body.sourceRef, scheduled: true });
+    }
+
+    const procedure = await prisma.procedureOrder.findUnique({
+      where: { id: body.sourceRef },
+      select: { id: true, status: true },
+    });
+    if (procedure) {
+      if (procedure.status === "PENDING_PAY") {
+        return jsonError("Procedure was not seated", 409);
+      }
+      await recordWalkInPartySettlement(body.sourceRef, "Hotel cashier");
+      return jsonOk({ ok: true, procedureOrderId: procedure.id, already: true });
+    }
 
     const visit = await prisma.visit.findUnique({
       where: { id: body.sourceRef },
@@ -99,6 +132,7 @@ export async function POST(request: Request) {
       });
     }
 
+    await recordWalkInPartySettlement(body.sourceRef, "Hotel cashier");
     return jsonOk({ ok: true, visitId: visit.id, settled: true });
   } catch (err) {
     return handleRouteError(err);

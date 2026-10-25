@@ -84,7 +84,6 @@ export async function patchGuestFull(
     emailConsent: boolean;
     callBack: boolean;
     nationalIdFin: string | null;
-    voen: string | null;
     passportNumber: string | null;
     occupation: string | null;
     registrationNumber: string | null;

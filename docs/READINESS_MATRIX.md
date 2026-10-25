@@ -143,7 +143,7 @@ Commercial API lives on **era-orchestrator**; Finance web proxies via `/cp/*` ([
 | **reference_data** `validate-key` | Live | — | — | — | — | — | — | — | — | — | — |
 | Registry API (`data.era-365.online`) | — | — | — | — | — | — | — | — | — | — | — |
 
-**Data Hub registry:** **Live** on dedicated service `era-data-hub` (:4200); Finance consumer **Live** when `ERA_DATA_HUB_ENABLED=true`. External B2B uses API keys via orchestrator validate-key.
+**Data Hub registry:** **Live** on dedicated service `era-data-hub` (:4200). Finance reads it when `DATA_HUB_SERVICE_TOKEN` is set, unless the org is on Excel. External B2B uses API keys via orchestrator validate-key.
 
 ### 2.4 Event bus and Finance worker
 

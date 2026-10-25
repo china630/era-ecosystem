@@ -7,9 +7,6 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { payFolioCharge } from '@/lib/services/tour.service';
 import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
-import { prisma } from '@/lib/prisma';
-import { decimalToNumber } from '@/lib/decimal';
-import { applyHeldDepositsToFolio } from '@/lib/services/folio-deposit.service';
 
 const bodySchema = z.object({
   paymentMethod: z.enum(DESK_PAYMENT_METHODS),
@@ -24,18 +21,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ chargeId: stri
     const { chargeId } = await ctx.params;
     const body = bodySchema.parse(await req.json());
     if (body.paymentMethod === 'DEPOSIT') {
-      const charge = await prisma.folioCharge.findUnique({
-        where: { id: chargeId },
-        select: { amount: true, qty: true, folioId: true },
-      });
-      if (!charge) return jsonError('Charge not found', 404);
-      const applied = await applyHeldDepositsToFolio(
-        charge.folioId,
-        decimalToNumber(charge.amount) * charge.qty,
-        { userId: session?.sub, request: req },
-      );
-      if (applied.amount <= 0.01) return jsonError('No held deposit to apply', 400);
-      return jsonOk(serialize(applied));
+      return jsonError('DEPOSIT_INTAKE_CLOSED', 400);
     }
     return jsonOk(
       serialize(

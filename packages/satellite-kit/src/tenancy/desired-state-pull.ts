@@ -145,6 +145,9 @@ function processWideConfigFromPayload(
   if (typeof raw.edition === "string") {
     next.edition = raw.edition;
   }
+  if (raw.referenceSource === "hub" || raw.referenceSource === "excel") {
+    next.referenceSource = raw.referenceSource;
+  }
   if (typeof raw.vendorBridgesEnabled === "boolean") {
     next.vendorBridgesEnabled = raw.vendorBridgesEnabled;
   }

@@ -53,7 +53,7 @@ After changing kit or contracts, rebuild the package and restart the app dev ser
 
 `CONTROL_PLANE_URL` / `NEXT_PUBLIC_CONTROL_PLANE_URL` → **`http://127.0.0.1:4000`** (Orchestrator API, not Finance).
 
-**ERA Data Hub:** `ERA_DATA_HUB_DATA_SOURCE=finance_ro` (default) reads finance via `FINANCE_RO_DATABASE_URL`; `hub` uses `era_data_hub` after `npm run db:sync-from-finance` in `era-data-hub/`. Redis db **4**.
+**ERA Data Hub:** runtime reads `era_data_hub` only. `npm run db:sync-from-finance` is a one-time copy and is the only use of `FINANCE_RO_DATABASE_URL`. Redis db **4**. FX fetch and dashboard codes: orchestrator `/super-admin/reference`.
 
 ---
 

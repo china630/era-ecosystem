@@ -32,6 +32,21 @@ describe('handleRouteError share / room conflicts', () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe('Could not save this stay');
+    expect(body.code).toBe('STAY_SAVE_FAILED');
     expect(String(body.error)).not.toMatch(/append/);
+  });
+
+  it('maps a duplicate stay row to a code instead of the save mask', async () => {
+    const err = new Error(
+      'Invalid `prisma.stay.create()` invocation:\n\nUnique constraint failed on the fields: (`reservationId`)',
+    );
+    err.name = 'PrismaClientKnownRequestError';
+    (err as Error & { code: string; meta: { target: string[] } }).code = 'P2002';
+    (err as Error & { meta: { target: string[] } }).meta = { target: ['reservationId'] };
+    const res = handleRouteError(err);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe('STAY_RECORD_EXISTS');
+    expect(body.error).not.toBe('Could not save this stay');
   });
 });

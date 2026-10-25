@@ -47,6 +47,13 @@ export function assertDottedGlAccount(glAccountCode: string): string {
 
 export async function upsertRevenueGlMapping(revenueCodeId: string, glAccountCode: string) {
   const account = assertDottedGlAccount(glAccountCode);
+  const children = await prisma.hotelRevenueGlMapping.findFirst({
+    where: { glAccountCode: { startsWith: `${account}.` } },
+    select: { id: true },
+  });
+  if (children) {
+    throw new Error(`${account} is a group account — post the leaf`);
+  }
   return prisma.hotelRevenueGlMapping.upsert({
     where: { revenueCodeId },
     create: { revenueCodeId, glAccountCode: account },
@@ -96,9 +103,9 @@ export async function enrichSaleLinesWithGl(
   return enriched;
 }
 
-export async function enrichRevenueLinesWithGl(
-  lines: Array<{ revenueCode: string; amount: number }>,
-): Promise<Array<{ revenueCode: string; amount: number; glAccountCode: string; unmapped: boolean }>> {
+export async function enrichRevenueLinesWithGl<T extends { revenueCode: string; amount: number }>(
+  lines: T[],
+): Promise<Array<T & { glAccountCode: string; unmapped: boolean }>> {
   const enriched = [];
   for (const line of lines) {
     const resolved = await resolveGlAccountCode(line.revenueCode);

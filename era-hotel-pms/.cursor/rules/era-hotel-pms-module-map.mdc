@@ -116,10 +116,11 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | (internal bind) | `GET/POST /api/internal/v1/organization/bind` | Orchestrator Sync — persist deployment `organizationId` (ADR satellite-organization-bind) |
 | (clinic cutover glue) | `GET /api/internal/v1/stays/by-external-ref` | Clinic `#21` — Elektraweb RESID/RESNAMEID → `Guest.globalPersonId` (Bearer event token) |
 | (revenue catalog) | `GET /api/internal/v1/revenue-codes` | Active `RevenueCode` `code` + `name` for department satellites (Bearer event token) |
+| (consumption journal) | `POST /api/internal/v1/consumption` | Clinic consumables for the night-audit quantity lines. Same bearer token. A closed business date lands on the open day. |
 | (folio received) | `POST /api/internal/v1/folio-charges/received` | Clinic check-in marks the existing folio line received. Lookup accepts the shared key and an old `pay-` prefix |
 | (clinic checkout) | `GET /api/reservations/[id]/clinic-checkout` | Medical rate only. Proxies clinic stay procedures; planned paid lines block checkout |
 | (checked-out fact) | `POST /api/internal/v1/reservations/checked-out` | Clinic cron asks which reservation ids are already CHECKED_OUT |
-| (deposit remainder) | `POST /api/reservations/[id]/deposits/settle` | Cashier pays out (fiscal receipt, night-audit debit deposit / credit cash or card terminal) or carries the unused deposit |
+| (old held rows) | `POST /api/reservations/[id]/deposits/apply` | Moves existing HELD rows once onto a blue room payment. New money is not written there. The cashier returns a remainder from the blue line |
 | Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. Guest column only on Medical Rates family (four SKUs). Infotur stay tariff does not list medical packages. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |
 | Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO reservation card pricing tab `packageCompose` | Wave D; not SHIPPED |
 | Per-pax lifecycle (HOT-PKG-04) | check-in **N events** per `ReservationGuest` (`programCode` + `paxKey` + `globalPersonId`); clinic opens one episode per pax | Wave E; share rooms stay two reservations |
@@ -145,7 +146,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/front-cash/company-ledger` | `GET /api/companies` + ledger + `GET /api/companies/[id]/settlement` + statement lines | Company CL (HOT-CL-06); no commission; no Finance snapshot yet |
 | `/agency/ledger` | `GET /api/agency/ledger` (session-scoped) | Portal own CL statement (HOT-AGP-04); read-only |
 | `/folio/[reservationId]` | redirect → room plan `?folioStay=` | Opens the reservation card on the Folio tab. Settle, deposit, void, and payment run in modals (HOT-CASH-01) |
-| `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); the run button confirms the business date being closed and a second start is refused while the date is locked; polish H-BL-44 |
+| `/night-audit` | pending count badge + NA pre-check / run | Night Audit core (HOT-NA-01); the run button confirms the business date being closed and a second start is refused while the date is locked; polish H-BL-44. When `requireEqaimeForDayClose` is on, the run asks Finance and stays open while a registered invoice has no e-qaimə number |
 | `/night-audit/reports` | hub (P1 grids + no-show / room-move / VIP + ops) | EOD ops grids (HOT-NA-03); Management pack deep-links → `/reports` (HOT-RPT spec) |
 | `/night-audit/reports/[report]` | `GET /api/night-audit/eod-reports?type&date` | cancelled / created / folio-transactions / room-price-control / no-shows / room-moves / vip-in-house (+ CSV) |
 | `/night-audit/reservation-updates` | `GET …/reservation-updates?from&to&action&format=csv` | Not in the night-audit menu. Linked from the EOD pack. Filters + CSV (HOT-NA-04) |

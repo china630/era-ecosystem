@@ -31,7 +31,7 @@
 | FO / front desk | chessboard, card, `/availability`, `/reports/reservations` | ✅ |
 | Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30) |
 | Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history | SCREEN (out of FO SHOW until UAT-SMOKE §35) |
-| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ |
+| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ signed demo. The 2026-10-24 folio pair and the closed deposit intake are not a new Demo/TE walk and do not move Gate, Pilot, or edition |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
 | Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
@@ -39,6 +39,8 @@
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
 | Nafta HK deepen | `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open) |
 | Management reports catalog / nightly ZIP | `/reports` workspace (Start/End + radios) + nightly pack + cubes (HOT-RPT W1–W3); one layout for screen/PDF/Excel with hotel letterhead (`/settings/policies#letterhead`) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
+| Revenue codes + day document (HOT-REV-01) | `/settings/integration?view=gl`; F&B `/admin/settings` warehouse | SCREEN / 🟡 (out of Hotel SHOW rollup — night audit not run; not SHIPPED) |
+| e-qaimə day close (FIN-EQAIME-DAY-01) | `/night-audit` gap list and check-day stop when the finance checkbox is on | SCREEN / 🟡 — API, not SHOW. Rule off by default. Does not move Hotel Gate, UI ✅, Demo ✅, or Sell |
 
 Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab still requires UAT-SMOKE §27 artifact.  
 HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW rollup only if Demo-TE not refreshed; does not claim GA.

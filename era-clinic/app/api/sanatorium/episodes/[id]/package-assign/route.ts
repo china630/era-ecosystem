@@ -10,7 +10,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import {
   PackageAssignError,
-  assignPackageProcedures,
+  assignPackageMenuLines,
   getPackageAssignSnapshot,
 } from "@/domain/sanatorium/package-assign.service";
 import { readUiLocale } from "@/lib/request-locale";
@@ -89,7 +89,7 @@ export async function POST(
       body.startOn && body.startHour != null
         ? parseBakuDateTime(body.startOn, `${String(body.startHour).padStart(2, "0")}:00`)
         : null;
-    const result = await assignPackageProcedures(id, body.lines, {
+    const result = await assignPackageMenuLines(id, body.lines, {
       confirmedByUserId: session.sub,
       startAt,
     });

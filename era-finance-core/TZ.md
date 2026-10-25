@@ -37,7 +37,7 @@
 | POST | `/api/accounts/import-from-template` | Импорт NAS-счёта из шаблона: body `{ templateAccountId }`; роли OWNER/ADMIN/ACCOUNTANT |
 | POST | `/api/organizations` | Создание организации (JWT), эквивалент `POST /api/auth/organizations`; body: **`legalForm`** (`CounterpartyLegalForm`) |
 | GET | `/api/system/currencies` | Активные валюты (`Currency`) для UI |
-| GET | `/api/system/invoice-vat-rates` | Допустимые ставки ƏDV для строк счёта/номенклатуры (`tax_rates`, VAT) |
+| GET | `/api/system/invoice-vat-rates` | Ставка НДС строки счёта из версии схемы (`vatPercent`). Льгота и ставки справочника в список не входят. |
 | GET | `/api/system/team-assignable-roles` | Роли, доступные для приглашения в организацию |
 | GET | `/api/system/inventory-movement-enums` | Списки `StockMovementType` и `StockMovementReason` (как в Prisma) для складских фильтров и согласованности UI |
 | GET/POST/* | `/api/billing/*` | **UI contract** → исполняется на **orchestrator** (Finance web `resolveApiUrl`); доступ **OWNER** на CP |
@@ -545,7 +545,7 @@ Control-plane JWT (Wave 4+): `permissions[]` are canonical `api:*` / `screen:*` 
 - **Назначение:** экспорт налоговой декларации для e-taxes.gov.az с управляемым жизненным циклом статусов.
 - **Модель данных:** `TaxDeclarationExport` (`organizationId`, `taxType`, `period`, `generatedFileUrl`, `receiptFileUrl`, `status`).
 - **State-machine:** `GENERATED` (файл создан) -> `UPLOADED` (файл скачан бухгалтером) -> `CONFIRMED_BY_TAX` (загружен `Elektron Bildiriş` в PDF).
-- **Источник данных:** агрегирование `JournalEntry` за выбранный период; в v2 поддержан `SIMPLIFIED_TAX` (Sadələşdirilmiş vergi) с расчётным блоком и выгрузкой XML/XLSX.
+- **Источник данных:** `SIMPLIFIED_TAX` считает сторож по уже проведённым кассе, банку и карте. Файл XML/XLSX пишет эти ковши и обе ставки схемы; одной ставки 2% в файле нет.
 - **Хранилище артефактов:** generated/receipt файлы сохраняются через `StorageService` с ключами в tenant-префиксе `orgs/{organizationId}/tax-exports/...`.
 - **UI workflow (Reports -> e-Taxes):**
   1. Выбор периода/налога + `Generate file`.
@@ -3180,7 +3180,7 @@ Active org context = O_k:
 
 **⚠️ HARD_BLOCK_PLATFORM при «Yarat» (ответ на вопрос — это НЕ баг prepaid).**
 - Ошибка `{"statusCode":403,"message":"Organization blocked by platform security (HARD_BLOCK_PLATFORM)","error":"FORBIDDEN"}` возвращает **`DisputeFreezeGuard`** (`apps/api/src/platform-recovery/dispute/dispute-freeze.guard.ts`).
-- Логика: если `OrganizationSecurityState.mode === HARD_BLOCK_PLATFORM`, то **любые** не-GET методы (`POST/PATCH/PUT/DELETE`) по всей организации отклоняются с 403; чтения (GET) проходят. Это платформенный «жёсткий блок» (контур Dispute & Recovery, §21), а не ограничение модуля prepaid.
+- Логика: если `OrganizationSecurityState.mode === HARD_BLOCK_PLATFORM`, то **любые** не-GET методы (`POST/PATCH/PUT/DELETE`) по всей организации отклоняются с 403 и кодом `HARD_BLOCK_PLATFORM`. Клиент показывает перевод `common.securityBlock.*` в тосте, а при закрытии месяца — в карточке этого действия, без сырого JSON. Чтения (GET) проходят. `lock_until` гард не читает. Это платформенный «жёсткий блок» (контур Dispute & Recovery, §21), а не ограничение модуля prepaid.
 - **Кто ставит блок:** не диспут, а ночной cron целостности аудита **`AuditChainCronService.verifyAuditChainDaily`** (`@Cron("0 2 * * *")`, `apps/api/src/audit/audit-chain-cron.service.ts`). Он зовёт `AuditService.verifyOrganizationChain(orgId)`; если хоть одна запись `audit_logs` не проходит проверку хеша (в т.ч. **`hash IS NULL`**) — орг переводится в `HARD_BLOCK_PLATFORM`.
 - **Фактическая первопричина (локальный стенд `localhost:3100`, 2026-06):** демо-сиды вставляли строки `audit_logs` с **`hash = NULL`** (≈260 на орг) в обход рантайма `AuditService` (который пломбирует хеш-цепочку). Ночной cron пометил все 4 демо-орги как скомпрометированные → `HARD_BLOCK_PLATFORM`. Это **не** подмена данных, а пробел сидера.
 - **Recovery-процедура (выполнена):**
@@ -3270,7 +3270,7 @@ Active org context = O_k:
 - **D-DH-2.** В scope первой волны входят **все** справочники DH-003…010 (банки/IBAN, VÖEN, календарь, эталон CoA, налоговые ставки/UoM/гео) — приоритет внутри волны по таблице §28.1, но без отсечения.
 - **D-COA-1.** Де-хардкод плана счетов выполняется в **полном объёме** (P1+P2+P3) и закрывается **CI-гард-рейлом** (§28.3), который фиксирует отсутствие новых литералов NAS-кодов.
 
-**Адаптер (есть):** `apps/api/src/data-hub/data-hub-client.service.ts` (`DataHubClientService`): методы `getFxRates`, `getTariff`, `getCompanyByVoen`, `isWorkingDay`. Auth — `Authorization: Bearer <DATA_HUB_SERVICE_TOKEN>` по `era-network`. Флаги: `ERA_DATA_HUB_ENABLED`, `ERA_DATA_HUB_URL`, `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED`. Контракт хаба — `era-data-hub/TZ.md`. Везде сохраняется **fallback** на локальный путь при недоступности хаба или `ERA_DATA_HUB_ENABLED=false`.
+**Адаптер (есть):** `apps/api/src/data-hub/data-hub-client.service.ts` (`DataHubClientService`): методы `getFxRates`, `getTariff`, `getCompanyByVoen`, `isWorkingDay`. Auth — `Authorization: Bearer <DATA_HUB_SERVICE_TOKEN>` по `era-network`. Подключение: `ERA_DATA_HUB_URL` и токен. Режим организации `hub` или `excel` приходит в runtime-config; Excel лежит в `system_config` этой организации и в хаб не пишется. Контракт хаба — `era-data-hub/TZ.md`.
 
 ### 28.1. Расширение потребления справочников
 
@@ -3289,7 +3289,7 @@ Active org context = O_k:
 | FEAT-FC-DH-009 | Налоговые ставки | `GET /tax-rates?type=&date=` | `SystemCatalogController` | [x] hub-first VAT path |
 | FEAT-FC-DH-010 | Эталон плана счетов | `GET /chart-of-accounts?profile=` | org onboarding `chartRemoteLoader` | [x] hub primary, JSON fallback |
 
-**Контур работ для каждой строки:** (1) метод в `DataHubClientService` + типы; (2) перевод потребителя на клиент с локальным кэшем (read-through) и fallback; (3) фича-флаг (общий `ERA_DATA_HUB_ENABLED` + при необходимости частный per-domain); (4) на фазе «contract» — отключение/удаление локального ingest (cron/seeds) после стабилизации.
+**Контур работ для каждой строки:** (1) метод в `DataHubClientService` + типы; (2) чтение хаба при наличии `DATA_HUB_SERVICE_TOKEN`; (3) режим организации `hub` или `excel` приходит в runtime-config; (4) локальный ingest в ядре снят. Excel этой организации в хаб не пишется.
 
 ### 28.2. БД граждан (оркестратор) — FEAT-FC-CIT-001
 

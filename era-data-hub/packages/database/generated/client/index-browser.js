@@ -275,9 +275,25 @@ exports.Prisma.TaxRateScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ReferenceIngestPolicyScalarFieldEnum = {
+  catalogKind: 'catalogKind',
+  externalFetchEnabled: 'externalFetchEnabled',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.HubPlatformSettingScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -288,6 +304,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 exports.CbarRateStatus = exports.$Enums.CbarRateStatus = {
   PRELIMINARY: 'PRELIMINARY',
@@ -320,6 +342,19 @@ exports.TaxRateKind = exports.$Enums.TaxRateKind = {
   OTHER: 'OTHER'
 };
 
+exports.ReferenceCatalogKind = exports.$Enums.ReferenceCatalogKind = {
+  FX: 'FX',
+  BANKS: 'BANKS',
+  COMPANIES: 'COMPANIES',
+  HS: 'HS',
+  GEO: 'GEO',
+  UOM: 'UOM',
+  CURRENCIES: 'CURRENCIES',
+  TAX_RATES: 'TAX_RATES',
+  CHART_OF_ACCOUNTS: 'CHART_OF_ACCOUNTS',
+  CALENDAR: 'CALENDAR'
+};
+
 exports.Prisma.ModelName = {
   CalendarDay: 'CalendarDay',
   CbarOfficialRate: 'CbarOfficialRate',
@@ -331,7 +366,9 @@ exports.Prisma.ModelName = {
   Currency: 'Currency',
   Country: 'Country',
   City: 'City',
-  TaxRate: 'TaxRate'
+  TaxRate: 'TaxRate',
+  ReferenceIngestPolicy: 'ReferenceIngestPolicy',
+  HubPlatformSetting: 'HubPlatformSetting'
 };
 
 /**

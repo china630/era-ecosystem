@@ -11,15 +11,15 @@ export function sharedApiPermission(pathname: string): string | null {
 }
 
 /**
- * First non-empty hotel revenue key: product, then category, then the satellite default.
- * All three empty refuses the post.
+ * Hotel revenue key for a clinic, F&B, or retail charge: the category, otherwise
+ * the satellite default. A code stored on the dish, procedure, or product is not read.
+ * Both empty refuses the post.
  */
 export function resolveHotelRevenueCode(input: {
-  product?: string | null;
   category?: string | null;
   satellite?: string | null;
 }): string {
-  const code = [input.product, input.category, input.satellite]
+  const code = [input.category, input.satellite]
     .map((value) => value?.trim() ?? "")
     .find((value) => value.length > 0);
   if (!code) throw new Error("Hotel revenue code is not configured");

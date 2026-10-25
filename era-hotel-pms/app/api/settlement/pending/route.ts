@@ -20,6 +20,7 @@ const schema = z.object({
   payerLabel: z.string().optional(),
   globalPersonId: z.string().optional(),
   reservationId: z.string().uuid().optional(),
+  basketRef: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(request: Request) {

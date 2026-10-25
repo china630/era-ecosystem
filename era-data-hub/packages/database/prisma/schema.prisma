@@ -229,3 +229,34 @@ model TaxRate {
   @@index([kind, region, effectiveFrom])
   @@map("tax_rates")
 }
+
+/// External pull switch per reference catalog. Consumers never read finance for these.
+enum ReferenceCatalogKind {
+  FX
+  BANKS
+  COMPANIES
+  HS
+  GEO
+  UOM
+  CURRENCIES
+  TAX_RATES
+  CHART_OF_ACCOUNTS
+  CALENDAR
+}
+
+model ReferenceIngestPolicy {
+  catalogKind          ReferenceCatalogKind @id @map("catalog_kind")
+  externalFetchEnabled Boolean              @default(false) @map("external_fetch_enabled")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  @@map("reference_ingest_policies")
+}
+
+/// Platform settings owned by data-hub (FX dashboard codes, and similar).
+model HubPlatformSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("hub_platform_settings")
+}

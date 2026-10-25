@@ -64,6 +64,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/super-admin/mdm` | `app/super-admin/mdm/page.tsx` | MDM health overview |
 | `/super-admin/mdm/companies` | `app/super-admin/mdm/companies/page.tsx` | Legal entities |
 | `/super-admin/mdm/persons` | `app/super-admin/mdm/persons/page.tsx` | Natural persons directory + resolve/merge modals |
+| `/super-admin/reference` | `app/super-admin/reference/page.tsx` | Hub fetch switches, FX codes, per-org hub or Excel |
 
 ## Super-admin trial
 
@@ -102,6 +103,9 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable |
 | `GET /v1/billing/module-states` | `billing.controller.ts` — pending deactivation flags |
 | `GET /v1/admin/mdm/companies` | `admin-mdm.controller.ts` — legal entities (name decrypt + org fallback) |
+| `GET/PATCH /v1/admin/reference/policy` | `admin-reference.controller.ts` — proxies hub reference policy |
+| `GET /v1/admin/reference/orgs` | per-org `referenceSource` |
+| `PATCH /v1/admin/reference/orgs/:orgId` | set `hub` or `excel`, then runtime-config sync |
 | `GET /v1/admin/organizations` | `admin-organizations.controller.ts` — list/search |
 | `GET /v1/admin/organizations/:id/subscription-tree` | `admin-billing.controller.ts` |
 | `PATCH /v1/admin/organizations/:id/subscription/trial` | `admin-billing.controller.ts` — date / perpetual / ± months |

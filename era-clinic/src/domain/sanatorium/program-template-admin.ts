@@ -23,6 +23,8 @@ const procedureSchema = z.object({
     .optional(),
   dailyDistinctCap: z.number().int().min(1).max(12).nullable().optional(),
   sortOrder: z.number().int().nonnegative().optional(),
+  showInProcedures: z.boolean().optional(),
+  procedureOrder: z.number().int().nonnegative().optional(),
   memberCodes: z.array(z.string().min(1)).optional(),
   assignMode: assignModeSchema.optional(),
   fulfillment: fulfillmentSchema.optional(),
@@ -90,6 +92,8 @@ export type EntitlementSnapshot = {
     kind?: string | null;
     sortOrder?: number;
     dailyDistinctCap?: number | null;
+    showInProcedures?: boolean;
+    procedureOrder?: number;
   } & EntitlementBlockAxes>;
   knots: Array<{ nights: number; procedureCode: string; qty: number }>;
   members: Array<{ blockCode: string; procedureCode: string }>;
@@ -245,6 +249,8 @@ export function buildEntitlementSnapshot(input: {
     kind?: string | null;
     sortOrder?: number;
     dailyDistinctCap?: number | null;
+    showInProcedures?: boolean;
+    procedureOrder?: number;
     assignMode?: string | null;
     fulfillment?: string | null;
     quotaBasis?: string | null;
@@ -264,6 +270,8 @@ export function buildEntitlementSnapshot(input: {
       kind: p.kind ?? null,
       sortOrder: p.sortOrder ?? 0,
       dailyDistinctCap: p.dailyDistinctCap ?? null,
+      showInProcedures: p.showInProcedures === true,
+      procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
       ...normalizeBlockAxes(p),
     })),
     knots: input.knots.map((k) => ({
@@ -335,6 +343,8 @@ export async function replaceTemplateProceduresAndKnots(
           avoidAfterHour: p.avoidAfterHour ?? null,
           kind: p.kind ?? null,
           sortOrder: p.sortOrder ?? i,
+          showInProcedures: p.showInProcedures === true,
+          procedureOrder: p.procedureOrder ?? p.sortOrder ?? i,
           assignMode: axes.assignMode,
           fulfillment: axes.fulfillment,
           quotaBasis: axes.quotaBasis,
@@ -386,6 +396,8 @@ function compositionFingerprint(
         quotaTotal: p.quotaTotal,
         kind: p.kind ?? null,
         sortOrder: p.sortOrder ?? 0,
+        showInProcedures: p.showInProcedures === true,
+        procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
         memberCodes: [...(p.memberCodes ?? [])].sort(),
         ...axes,
       };
@@ -412,6 +424,8 @@ export function compositionChanged(
       fulfillment?: string | null;
       quotaBasis?: string | null;
       requiresDoctor?: boolean | null;
+      showInProcedures?: boolean | null;
+      procedureOrder?: number | null;
     }>;
     quotaKnots: Array<{ nights: number; procedureCode: string; qty: number }>;
     blockMembers: Array<{ blockCode: string; procedureCode: string }>;
@@ -434,6 +448,8 @@ export function compositionChanged(
         quotaTotal: p.quotaTotal,
         kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
         sortOrder: p.sortOrder,
+        showInProcedures: p.showInProcedures === true,
+        procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
         memberCodes: p.memberCodes,
         ...axes,
       };

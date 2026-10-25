@@ -99,6 +99,9 @@ model Organization {
   accountMappings                 AccountMapping[]
   ledgerMappingSets               LedgerMappingSet[]
   accountingBooks                 AccountingBook[]
+  taxSettlementTags               TaxSettlementTag[]
+  provisionalVatClaims            ProvisionalVatClaim[]
+  taxAmendmentDrafts              TaxAmendmentDraft[]
   accountBalances                 AccountBalance[]
   accounts                        Account[]
   advanceReports                  AdvanceReport[]
@@ -928,6 +931,38 @@ model TaxRate {
   @@map("tax_rates")
 }
 
+/// Dated statutory parameter set. Organizations bind by date; they do not copy the row.
+model TaxSchemeVersion {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code          String
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  parameters    Json
+  nameAz        String    @map("name_az")
+  nameRu        String    @map("name_ru")
+  nameEn        String    @map("name_en")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([code, effectiveFrom])
+  @@index([effectiveFrom])
+  @@map("tax_scheme_versions")
+}
+
+/// Population flag on a card-tender journal line. Absent tag means the card amount is unmarked.
+model TaxSettlementTag {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  journalEntryId String       @unique @map("journal_entry_id") @db.Uuid
+  population     Boolean      @default(false)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("tax_settlement_tags")
+}
+
 model SystemProductTemplate {
   id                 String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   code               String            @unique
@@ -1197,6 +1232,26 @@ model StockMovement {
   @@index([organizationId, warehouseId, documentDate, createdAt])
   @@index([organizationId, productId, documentDate, createdAt])
   @@map("stock_movements")
+}
+
+/// Night-audit quantity whose cost could not be posted. The next night posts it once an average exists.
+model UncostedStockLine {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String    @map("organization_id") @db.Uuid
+  businessDate         DateTime  @map("business_date") @db.Date
+  warehouseId          String    @map("warehouse_id") @db.Uuid
+  productId            String    @map("product_id") @db.Uuid
+  sku                  String
+  quantity             Decimal   @db.Decimal(19, 4)
+  debitAccountCode     String    @map("debit_account_code")
+  inventoryAccountCode String    @map("inventory_account_code")
+  reason               String
+  note                 String
+  resolvedAt           DateTime? @map("resolved_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  @@index([organizationId, resolvedAt])
+  @@map("uncosted_stock_lines")
 }
 
 model WarehouseBin {
@@ -3019,6 +3074,8 @@ model Transaction {
   departmentId                 String?                       @map("department_id") @db.Uuid
   /// Snapshot for purchase invoices (line-level goods/services payload for downstream documents).
   purchaseSnapshot             Json?                         @map("purchase_snapshot")
+  provisionalVatClaim          ProvisionalVatClaim?          @relation("ProvisionalVatPurchase")
+  provisionalVatAdjustment     ProvisionalVatClaim?          @relation("ProvisionalVatAdjustment")
   /// Snapshot for sales recognition (goods lines + invoiceId basis for shipment flows).
   salesSnapshot                Json?                         @map("sales_snapshot")
   tradeContext                 TradeContext                  @default(DOMESTIC) @map("trade_context")
@@ -3083,6 +3140,7 @@ model JournalEntry {
   mirroredEntries      JournalEntry[]          @relation("JournalEntryMirrorSource")
   mappingLine          LedgerMappingLine?      @relation(fields: [mappingLineId], references: [id], onDelete: SetNull)
   dimensions           JournalEntryDimension[]
+  taxSettlementTag     TaxSettlementTag?
 
   @@index([organizationId, transactionId])
   @@index([organizationId, accountId])
@@ -3114,6 +3172,8 @@ model Counterparty {
   email                         String?
   /// Плательщик НДС (учётный статус контрагента)
   isVatPayer                    Boolean                    @default(false) @map("is_vat_payer")
+  /// Founder / owner. A supplier meaning needs an explicit mismatch confirmation.
+  isFounder                     Boolean                    @default(false) @map("is_founder")
   directorNameCipher            String?                    @map("director_name_cipher")
   phonesJson                    Json?                      @default("[]") @map("phones_json")
   finCodeCipher                 String?                    @map("fin_code_cipher")
@@ -4343,6 +4403,9 @@ model TaxDeclarationExport {
   period           String
   generatedFileUrl String                     @map("generated_file_url")
   receiptFileUrl   String?                    @map("receipt_file_url")
+  /// Last computed tax for this export. A filed row is not overwritten.
+  amountAzn        Decimal?                   @map("amount_azn") @db.Decimal(19, 4)
+  previousAmountAzn Decimal?                  @map("previous_amount_azn") @db.Decimal(19, 4)
   status           TaxDeclarationExportStatus @default(GENERATED)
   createdAt        DateTime                   @default(now()) @map("created_at")
   updatedAt        DateTime                   @updatedAt @map("updated_at")
@@ -4355,6 +4418,46 @@ model TaxDeclarationExport {
   @@index([organizationId, status], map: "tax_decl_org_status_idx")
   @@index([organizationId, deletedAt], map: "tax_declaration_exports_org_deleted_at_idx")
   @@map("tax_declaration_exports")
+}
+
+/// Purchase or expense posted without an act or e-qaimə. Input VAT stays in expense until a document is linked.
+model ProvisionalVatClaim {
+  id                        String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId            String                @map("organization_id") @db.Uuid
+  purchaseTransactionId     String                @unique @map("purchase_transaction_id") @db.Uuid
+  status                    ProvisionalVatStatus  @default(WAITING_DOCUMENT)
+  vatAmount                 Decimal               @map("vat_amount") @db.Decimal(19, 4)
+  /// Net goods sitting in expense until the act or e-qaimə moves them to inventory.
+  netGoodsAmount            Decimal               @default(0) @map("net_goods_amount") @db.Decimal(19, 4)
+  adjustmentTransactionId   String?               @unique @map("adjustment_transaction_id") @db.Uuid
+  documentRef               String?               @map("document_ref")
+  createdAt                 DateTime              @default(now()) @map("created_at")
+  organization              Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchaseTransaction       Transaction           @relation("ProvisionalVatPurchase", fields: [purchaseTransactionId], references: [id], onDelete: Cascade)
+  adjustmentTransaction     Transaction?          @relation("ProvisionalVatAdjustment", fields: [adjustmentTransactionId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status])
+  @@map("provisional_vat_claims")
+}
+
+/// Difference draft for a filed declaration. The confirmed export amount is not rewritten.
+model TaxAmendmentDraft {
+  id               String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String                   @map("organization_id") @db.Uuid
+  taxType          TaxDeclarationType       @map("tax_type")
+  period           String
+  sourceExportId   String?                  @map("source_export_id") @db.Uuid
+  previousAmount   Decimal                  @map("previous_amount") @db.Decimal(19, 4)
+  revisedAmount    Decimal                  @map("revised_amount") @db.Decimal(19, 4)
+  deltaAmount      Decimal                  @map("delta_amount") @db.Decimal(19, 4)
+  status           TaxAmendmentDraftStatus  @default(DRAFT)
+  sentAt           DateTime?                @map("sent_at")
+  createdAt        DateTime                 @default(now()) @map("created_at")
+  organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, taxType, period])
+  @@index([organizationId, status])
+  @@map("tax_amendment_drafts")
 }
 
 /// Global catalog row for Goskomstat statistical report forms (mapping engine config).
@@ -4463,6 +4566,12 @@ model BankStatementLine {
   integrationKey    String?                 @map("integration_key")
   origin            BankStatementLineOrigin @default(FILE_IMPORT) @map("origin")
   cashFlowItemId    String?                 @map("cash_flow_item_id") @db.Uuid
+  /// Closed meaning for the month-close queue. A manual journal does not set this.
+  factMeaning                 FactMeaning? @map("fact_meaning")
+  factPurchaseTransactionId   String?      @map("fact_purchase_transaction_id") @db.Uuid
+  factCounterpartyId          String?      @map("fact_counterparty_id") @db.Uuid
+  factTransactionId           String?      @map("fact_transaction_id") @db.Uuid
+  factConfirmedMismatch       Boolean      @default(false) @map("fact_confirmed_mismatch")
   bankStatement     BankStatement           @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
   cashFlowItem      CashFlowItem?           @relation(fields: [cashFlowItemId], references: [id])
   matchedInvoice    Invoice?                @relation("InvoiceBankMatch", fields: [matchedInvoiceId], references: [id])
@@ -4528,6 +4637,11 @@ model CashOrder {
   cashDeskId             String?              @map("cash_desk_id") @db.Uuid
   cashFlowItemId         String?              @map("cash_flow_item_id") @db.Uuid
   withholdingTaxAmount   Decimal?             @map("withholding_tax_amount") @db.Decimal(19, 4)
+  /// Closed meaning for the month-close queue. A manual journal does not set this.
+  factMeaning               FactMeaning? @map("fact_meaning")
+  factPurchaseTransactionId String?      @map("fact_purchase_transaction_id") @db.Uuid
+  factTransactionId         String?      @map("fact_transaction_id") @db.Uuid
+  factConfirmedMismatch     Boolean      @default(false) @map("fact_confirmed_mismatch")
   cashDesk               CashDesk?            @relation(fields: [cashDeskId], references: [id])
   cashFlowItem           CashFlowItem?        @relation(fields: [cashFlowItemId], references: [id])
   counterparty           Counterparty?        @relation(fields: [counterpartyId], references: [id])
@@ -5218,12 +5332,25 @@ enum EqaimeStatus {
   ACCEPTED
   REJECTED
   CANCELLED
+  /// Number typed on the invoice. No call to the tax gateway.
+  MANUAL
 }
 
 enum VatDepositLedgerKind {
   INCOMING_ROUTE
   REMITTANCE
   ADJUSTMENT
+}
+
+/// Meaning chosen for a bank line or cash order before the month can close.
+enum FactMeaning {
+  CUSTOMER_PAYMENT
+  SUPPLIER_PAYMENT
+  FOUNDER_LOAN_IN
+  FOUNDER_LOAN_RETURN
+  OWNER_WITHDRAWAL
+  BANK_COMMISSION
+  DUPLICATE_OR_ERROR
 }
 
 enum BankStatementLineType {
@@ -5464,6 +5591,16 @@ enum TaxDeclarationExportStatus {
   GENERATED
   UPLOADED
   CONFIRMED_BY_TAX
+}
+
+enum ProvisionalVatStatus {
+  WAITING_DOCUMENT
+  CREDITED
+}
+
+enum TaxAmendmentDraftStatus {
+  DRAFT
+  SENT
 }
 
 enum PaymentOrderStatus {

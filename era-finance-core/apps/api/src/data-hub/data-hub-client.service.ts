@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Prisma } from "@erafinance/database";
 import { bakuDateKey } from "@era/satellite-kit/time";
+import { ReferenceManualService } from "./reference-manual.service";
 
 export type DataHubFxRate = {
   currencyCode: string;
@@ -73,16 +74,19 @@ export type DataHubIbanValidation = {
 
 /**
  * HTTP client for era-data-hub (internal era-network).
- * When ERA_DATA_HUB_ENABLED=false, callers fall back to local finance services.
+ * A missing service token skips the call. Excel mode reads the org workbook instead.
  */
 @Injectable()
 export class DataHubClientService {
   private readonly logger = new Logger(DataHubClientService.name);
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly manual: ReferenceManualService,
+  ) {}
 
   isEnabled(): boolean {
-    return (this.config.get<string>("ERA_DATA_HUB_ENABLED") ?? "false").toLowerCase() === "true";
+    return this.serviceToken().length > 0 || this.manual.usesExcel();
   }
 
   private baseUrl(): string {
@@ -97,7 +101,6 @@ export class DataHubClientService {
   }
 
   private async getJson<T>(path: string): Promise<T | null> {
-    if (!this.isEnabled()) return null;
     const token = this.serviceToken();
     if (!token) {
       this.logger.warn("DATA_HUB_SERVICE_TOKEN missing; skip data-hub call");
@@ -126,10 +129,33 @@ export class DataHubClientService {
   }
 
   async getFxRates(date?: string, symbols = "USD,EUR"): Promise<DataHubFxRate[] | null> {
+    if (this.manual.usesExcel()) {
+      const wanted = new Set(
+        symbols.split(",").map((code) => code.trim().toUpperCase()).filter(Boolean),
+      );
+      const bundle = await this.manual.bundle();
+      const rows = bundle.fx.filter((row) => {
+        if (wanted.size && !wanted.has(row.currencyCode)) return false;
+        if (date && row.rateDate !== date.slice(0, 10)) return false;
+        return true;
+      });
+      return rows.map((row) => ({
+        currencyCode: row.currencyCode,
+        rate: row.rate,
+        rateDate: row.rateDate,
+      }));
+    }
     const q = new URLSearchParams({ symbols });
     if (date) q.set("date", date);
     const body = await this.getJson<{ rates: DataHubFxRate[] }>(`/fx/rates?${q}`);
     return body?.rates ?? null;
+  }
+
+  async getFxDashboardCurrencyCodes(): Promise<string[] | null> {
+    if (this.manual.usesExcel()) return null;
+    const body = await this.getJson<{ fxDashboardCurrencyCodes?: string[] }>("/fx/display-codes");
+    const codes = body?.fxDashboardCurrencyCodes?.filter((code) => /^[A-Z]{3}$/.test(code));
+    return codes && codes.length > 0 ? codes : null;
   }
 
   async getCompanyByVoen(voen: string): Promise<Record<string, unknown> | null> {
@@ -145,6 +171,26 @@ export class DataHubClientService {
 
   async getTariff(hsCode: string, date: string): Promise<DataHubTariff | null> {
     const code = hsCode.replace(/\D/g, "");
+    if (this.manual.usesExcel()) {
+      const hit = (await this.manual.bundle()).hs.find((row) => row.hsCode === code);
+      if (!hit) return null;
+      return {
+        hsCode: hit.hsCode,
+        dutyRatePercent: hit.dutyRatePercent,
+        vatRatePercent: hit.vatRatePercent,
+        excisePercent: hit.excisePercent,
+      };
+    }
+    if (this.manual.usesExcel()) {
+      const hit = (await this.manual.bundle()).hs.find((row) => row.hsCode === code);
+      if (!hit) return null;
+      return {
+        hsCode: hit.hsCode,
+        dutyRatePercent: hit.dutyRatePercent,
+        vatRatePercent: hit.vatRatePercent,
+        excisePercent: hit.excisePercent,
+      };
+    }
     const q = new URLSearchParams({ date });
     const body = await this.getJson<{
       hsCode: string;
@@ -162,6 +208,10 @@ export class DataHubClientService {
   }
 
   async isWorkingDay(date: string, country = "az"): Promise<boolean | null> {
+    if (this.manual.usesExcel()) {
+      const hit = (await this.manual.bundle()).calendar.find((row) => row.date === date.slice(0, 10));
+      return hit ? hit.isWorking : null;
+    }
     const body = await this.getJson<{ isWorking: boolean }>(
       `/calendar/${country}/is-working-day?date=${encodeURIComponent(date)}`,
     );
@@ -177,6 +227,15 @@ export class DataHubClientService {
     dayType: string;
     labelEn?: string | null;
   } | null> {
+    if (this.manual.usesExcel()) {
+      const hit = (await this.manual.bundle()).calendar.find((row) => row.date === date.slice(0, 10));
+      if (!hit) return null;
+      return {
+        isWorking: hit.isWorking,
+        dayType: hit.isWorking ? "working" : "weekend",
+        labelEn: hit.label ?? null,
+      };
+    }
     const body = await this.getJson<{
       isWorking: boolean;
       dayType: string;
@@ -196,6 +255,17 @@ export class DataHubClientService {
       dayType: string;
     }> | null
   > {
+    if (this.manual.usesExcel()) {
+      const start = from.slice(0, 10);
+      const end = to.slice(0, 10);
+      return (await this.manual.bundle()).calendar
+        .filter((row) => row.date >= start && row.date <= end)
+        .map((row) => ({
+          date: row.date,
+          isWorking: row.isWorking,
+          dayType: row.isWorking ? "working" : "weekend",
+        }));
+    }
     const q = new URLSearchParams({
       from: from.trim(),
       to: to.trim(),
@@ -207,6 +277,14 @@ export class DataHubClientService {
   }
 
   async getBanks(): Promise<{ banks: DataHubBank[] } | null> {
+    if (this.manual.usesExcel()) {
+      const banks = (await this.manual.bundle()).banks.map((row) => ({
+        nameAz: row.nameAz,
+        voen: row.voen,
+        code: row.code,
+      }));
+      return { banks };
+    }
     return this.getJson<{ banks: DataHubBank[] }>("/banks");
   }
 
@@ -262,6 +340,25 @@ export class DataHubClientService {
     n: number,
     country = "az",
   ): Promise<string | null> {
+    if (this.manual.usesExcel()) {
+      const calendar = (await this.manual.bundle()).calendar;
+      const cursor = new Date(`${date.slice(0, 10)}T12:00:00.000Z`);
+      let left = n;
+      const ymd = (value: Date) => {
+        const y = value.getUTCFullYear();
+        const m = String(value.getUTCMonth() + 1).padStart(2, "0");
+        const d = String(value.getUTCDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      };
+      while (left > 0) {
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+        const key = ymd(cursor);
+        const hit = calendar.find((row) => row.date === key);
+        const working = hit ? hit.isWorking : cursor.getUTCDay() !== 0 && cursor.getUTCDay() !== 6;
+        if (working) left -= 1;
+      }
+      return ymd(cursor);
+    }
     const q = new URLSearchParams({
       date: date.trim(),
       n: String(n),
@@ -277,6 +374,15 @@ export class DataHubClientService {
     to: string,
     symbol: string,
   ): Promise<{ symbol: string; points: Array<{ rateDate: string; rate: number }> } | null> {
+    if (this.manual.usesExcel()) {
+      const code = symbol.trim().toUpperCase();
+      const start = from.slice(0, 10);
+      const end = to.slice(0, 10);
+      const points = (await this.manual.bundle()).fx
+        .filter((row) => row.currencyCode === code && row.rateDate >= start && row.rateDate <= end)
+        .map((row) => ({ rateDate: row.rateDate, rate: row.rate }));
+      return { symbol: code, points };
+    }
     const q = new URLSearchParams({
       from: from.trim(),
       to: to.trim(),
@@ -302,6 +408,25 @@ export class DataHubClientService {
       to: to.trim().toUpperCase(),
       amount: String(amount),
     });
+    if (this.manual.usesExcel()) {
+      const fromU = from.trim().toUpperCase();
+      const toU = to.trim().toUpperCase();
+      const day = (date?.trim() || "").slice(0, 10);
+      const rateOf = async (code: string): Promise<number | null> => {
+        if (code === "AZN" || code === "AZM") return 1;
+        const rows = (await this.getFxRates(day || undefined, code)) ?? [];
+        const hit = day
+          ? rows.find((row) => row.currencyCode === code)
+          : [...rows].sort((a, b) => (a.rateDate < b.rateDate ? 1 : -1))[0];
+        return hit?.rate ?? null;
+      };
+      const fromRate = await rateOf(fromU);
+      const toRate = await rateOf(toU);
+      if (fromRate == null || toRate == null || toRate === 0) return null;
+      const azn = fromU === "AZN" || fromU === "AZM" ? amount : amount * fromRate;
+      const result = toU === "AZN" || toU === "AZM" ? azn : azn / toRate;
+      return { from: fromU, to: toU, amount, result, rateDate: day || undefined };
+    }
     if (date?.trim()) q.set("date", date.trim());
     return this.getJson(`/fx/convert?${q}`);
   }

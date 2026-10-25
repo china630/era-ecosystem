@@ -63,7 +63,9 @@ import {
   type BookingStaySummary,
 } from '@/components/reservation-card/ReservationCardStaysBar';
 import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
+import { buildStayFormHtml, type StayPrintKind } from '@/components/reservation-card/stay-print-html';
 import { StayJournal } from '@/components/reservation-card/StayJournal';
+import { openPrintDocument } from '@/lib/print-window';
 import type { StayJournalEntry } from '@/lib/reservation-journal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -105,7 +107,7 @@ import type {
   SourceOption,
   TabId,
 } from '@/components/reservation-card/types';
-import { computeGuestFolioBalance } from '@/components/reservation-card/folio-balance';
+import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
   isOtaAgency,
   isWalkInRecordedAgency,
@@ -247,6 +249,29 @@ export function ReservationCardEditor({
 }: ReservationCardEditorProps) {
   const isCreate = !reservationId;
   const t = useTranslations('reservationCard');
+  const reportApiError = (body: unknown, fallback?: string) => {
+    const code =
+      body && typeof body === 'object' && 'code' in body
+        ? String((body as { code?: unknown }).code ?? '')
+        : '';
+    if (code === 'STAY_RECORD_EXISTS') {
+      showApiError({ error: t('stayRecordExists') }, fallback);
+      return;
+    }
+    if (code === 'STAY_SAVE_FAILED') {
+      showApiError({ error: t('staySaveFailed') }, fallback);
+      return;
+    }
+    if (code === 'FOLIO_HAS_MONEY') {
+      showApiError({ error: t('folioHasMoney') }, fallback);
+      return;
+    }
+    if (code === 'CITY_LEDGER_CHECKIN') {
+      showApiError({ error: t('cityLedgerCheckIn') }, fallback);
+      return;
+    }
+    showApiError(body, fallback);
+  };
   const tb = useTranslations('booking');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -321,7 +346,6 @@ export function ReservationCardEditor({
   const [attachOpen, setAttachOpen] = useState(false);
   const [roomStatus, setRoomStatus] = useState('');
   const [roomHkCondition, setRoomHkCondition] = useState('');
-  const [depositHeldTotal, setDepositHeldTotal] = useState(0);
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
@@ -358,7 +382,7 @@ export function ReservationCardEditor({
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [companies, setCompanies] = useState<AgencyOption[]>([]);
   const [sources, setSources] = useState<SourceOption[]>([]);
-  const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('EQUAL');
+  const [partyBillingMode, setPartyBillingMode] = useState<PartyBillingMode>('PRIMARY');
   const [roomTypes, setRoomTypes] = useState<SelectOption[]>([]);
   const [mealPlans, setMealPlans] = useState<SelectOption[]>([]);
   const [rooms, setRooms] = useState<
@@ -786,26 +810,9 @@ export function ReservationCardEditor({
       if (!res.ok) throw new Error(json.error ?? tc('loadError'));
       if (requestedId !== reservationId) return;
       applyJson(json);
-      try {
-        const depRes = await fetch(`/api/reservations/${reservationId}/deposits`);
-        if (seq !== loadSeq.current) return;
-        if (depRes.ok) {
-          const deps = (await depRes.json()) as Array<{ amount?: number; status?: string }>;
-          const held = Array.isArray(deps)
-            ? deps
-                .filter((d) => d.status === 'HELD')
-                .reduce((s, d) => s + Number(d.amount ?? 0), 0)
-            : 0;
-          setDepositHeldTotal(Math.round(held * 100) / 100);
-        } else {
-          setDepositHeldTotal(0);
-        }
-      } catch {
-        setDepositHeldTotal(0);
-      }
     } catch (e) {
       if (seq !== loadSeq.current) return;
-      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+      reportApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     } finally {
       if (seq === loadSeq.current) setLoading(false);
     }
@@ -876,7 +883,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       setBookingName((json.name as string | null | undefined) ?? (nextName || null));
@@ -951,7 +958,7 @@ export function ReservationCardEditor({
       setBookingName(null);
       setSiblingStays([]);
       setIsLocked(false);
-      setPartyBillingMode('EQUAL');
+      setPartyBillingMode('PRIMARY');
     } else {
       void load();
     }
@@ -1299,7 +1306,7 @@ export function ReservationCardEditor({
       const res = await fetch(`/api/reservations/${reservationId}/pricing/recalc`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(tc('success'));
@@ -1316,7 +1323,7 @@ export function ReservationCardEditor({
       const res = await fetch(`/api/reservations/${reservationId}/missed-nights`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(t('missedNightsPosted', { count: json.nights?.length ?? 0 }));
@@ -1337,7 +1344,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(t('postNightDone'));
@@ -1437,7 +1444,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setCancelOpen(false);
@@ -1462,7 +1469,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setRestoreOpen(false);
@@ -1484,7 +1491,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setUndoCheckoutOpen(false);
@@ -1508,7 +1515,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       setDeleteOpen(false);
@@ -1519,17 +1526,123 @@ export function ReservationCardEditor({
     }
   }
 
-  function printStayForm(kind: 'registration' | 'proforma' | 'confirmation') {
-    const popup = window.open('', '_blank', 'noopener,noreferrer');
-    if (!popup) return;
+  async function printStayForm(kind: StayPrintKind) {
     const title =
       kind === 'registration' ? t('printRegistration') : kind === 'proforma' ? t('printProforma') : t('printConfirmation');
-    const guestName = (data?.guest as { fullName?: string } | undefined)?.fullName ?? '';
-    popup.document.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:sans-serif;padding:24px"><h1>${title}</h1><p>${guestName}</p><p>${checkIn} → ${checkOut}</p><p>${roomId ? rooms.find((r) => r.id === roomId)?.roomNumber ?? '' : ''}</p></body></html>`,
+    const profileRes = await fetch('/api/hotel/profile');
+    const profileJson = profileRes.ok ? ((await profileRes.json()) as { data?: Record<string, unknown> } | Record<string, unknown>) : null;
+    const profile = (profileJson && 'data' in profileJson && profileJson.data ? profileJson.data : profileJson) as {
+      name?: string;
+      printName?: string | null;
+      address?: string | null;
+      phone?: string | null;
+      email?: string | null;
+      website?: string | null;
+    } | null;
+    const guest = data?.guest as {
+      fullName?: string;
+      phone?: string | null;
+      email?: string | null;
+      nationality?: string | null;
+      sex?: string | null;
+      birthDate?: string | null;
+    } | undefined;
+    const primary = pax.find((row) => row.isPrimary) ?? pax[0];
+    const guestName =
+      [primary?.firstName, primary?.lastName].filter(Boolean).join(' ').trim() || guest?.fullName || '';
+    const priced = dailyRates.filter((row) => row.amount > 0);
+    const nightPrice = priced[0]?.amount ?? dailyRates[0]?.amount ?? 0;
+    const total = Number(data?.totalAmount ?? 0);
+    const roomType = roomTypes.find((row) => row.id === roomTypeId)?.label ?? '';
+    const board = mealPlans.find((row) => row.id === mealPlanId)?.label ?? '';
+    const agency = agencies.find((row) => row.id === agencyId)?.label ?? '';
+    const infants = Number(children1_0) || 0;
+    const children = (Number(children11_6) || 0) + (Number(children5_2) || 0);
+    const adultCount = Number(adults) || 0;
+    const opened = openPrintDocument(
+      buildStayFormHtml({
+        kind,
+        title,
+        hotel: {
+          name: profile?.printName || profile?.name || '',
+          address: profile?.address ?? '',
+          phone: profile?.phone ?? '',
+          email: profile?.email ?? '',
+          website: profile?.website ?? '',
+        },
+        resNo: resNo || String(data?.externalRef ?? ''),
+        guestName,
+        agency,
+        voucher: voucherNo,
+        rate: ratePlans.find((row) => row.id === ratePlanId)?.label ?? '',
+        arrival: checkIn,
+        departure: checkOut,
+        roomType,
+        roomNumber: rooms.find((row) => row.id === roomId)?.roomNumber ?? '',
+        board,
+        adults: adultCount,
+        children,
+        infants,
+        nights: priced.length || dailyRates.length,
+        nightPrice,
+        total,
+        deposit: stayPair.unused,
+        balance: stayPair.debt,
+        phone: guest?.phone ?? '',
+        email: guest?.email ?? '',
+        documentNo: primary?.passportNo || primary?.idCardNo || '',
+        nationality: primary?.nationality || guest?.nationality || '',
+        birthDate: primary?.birthDate || (guest?.birthDate ? String(guest.birthDate).slice(0, 10) : ''),
+        sex: primary?.sex || guest?.sex || '',
+        currency: 'AZN',
+        notes: Object.values(notes).filter(Boolean).join('\n'),
+        nightsGrid: dailyRates.map((row) => ({
+          date: String(row.stayDate).slice(0, 10),
+          roomType,
+          board,
+          adults: adultCount,
+          children,
+          infants,
+          price: row.amount,
+        })),
+        labels: {
+          resNo: t('printForm.resNo'),
+          agency: t('printForm.agency'),
+          voucher: t('printForm.voucher'),
+          rate: t('printForm.rate'),
+          arrival: t('printForm.arrival'),
+          departure: t('printForm.departure'),
+          room: t('printForm.room'),
+          board: t('printForm.board'),
+          pax: t('printForm.pax'),
+          guest: t('printForm.guest'),
+          phone: t('printForm.phone'),
+          email: t('printForm.email'),
+          document: t('printForm.document'),
+          nationality: t('printForm.nationality'),
+          birth: t('printForm.birth'),
+          sex: t('printForm.sex'),
+          signature: t('printForm.signature'),
+          nightPrice: t('printForm.nightPrice'),
+          nights: t('printForm.nights'),
+          total: t('printForm.total'),
+          deposit: t('overpaid'),
+          balance: t('printForm.balance'),
+          date: t('printForm.date'),
+          roomType: t('printForm.roomType'),
+          price: t('printForm.price'),
+          adults: t('printForm.adults'),
+          children: t('printForm.children'),
+          infants: t('printForm.infants'),
+          dear: t('printForm.dear'),
+          confirmed: t('printForm.confirmed'),
+          contact: t('printForm.contact'),
+          notes: t('printForm.notes'),
+          legal: [t('printForm.legalHours'), t('printForm.legalSafe'), t('printForm.legalNotify'), t('printForm.legalExpenses'), t('printForm.legalPenalty')],
+        },
+      }),
     );
-    popup.document.close();
-    popup.print();
+    if (!opened) reportApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 
   async function warnGuestOverlaps(): Promise<boolean> {
@@ -1584,7 +1697,7 @@ export function ReservationCardEditor({
           });
           return;
         }
-        showApiError(json, tc('error'));
+        reportApiError(json, tc('error'));
         return;
       }
       const pending = Boolean((json as { movePending?: boolean } | null)?.movePending);
@@ -1616,7 +1729,7 @@ export function ReservationCardEditor({
       const json = await res.json();
       if (!res.ok) {
         if (json?.code === 'BUSINESS_DATE_LAG') {
-          showApiError(
+          reportApiError(
             {
               error: t('checkInBusinessDateLag', {
                 businessDate: String(json.businessDate ?? ''),
@@ -1625,14 +1738,15 @@ export function ReservationCardEditor({
             },
             tc('failed'),
           );
-          return;
+        } else {
+          reportApiError(
+            json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
+              ? { error: formatOperationalGaps(json.people, t) }
+              : json,
+            tc('failed'),
+          );
         }
-        showApiError(
-          json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
-            ? { error: formatOperationalGaps(json.people, t) }
-            : json,
-          tc('failed'),
-        );
+        await load();
         return;
       }
       showSuccess(early ? t('earlyCheckInDone') : t('checkInDone'));
@@ -1654,7 +1768,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(t('breakShareDone'));
@@ -2011,7 +2125,7 @@ export function ReservationCardEditor({
           pax,
         });
       if (namesBlocked && pendingRoomId && pendingRoomId !== roomId) {
-        showApiError({ error: tb('namesIncomplete') }, tc('failed'));
+        reportApiError({ error: tb('namesIncomplete') }, tc('failed'));
         return;
       }
       const selectedType = roomTypes.find((r) => r.id === roomTypeId);
@@ -2022,7 +2136,7 @@ export function ReservationCardEditor({
       const capacity = doorCap != null && doorCap > 0 ? Math.min(typeCap, doorCap) : typeCap;
       const adultCount = Math.max(0, Number(adults) || 0);
       if (roomTypeId && adultCount > capacity) {
-        showApiError(
+        reportApiError(
           {
             error: t('adultsExceedCapacity', {
               adults: adultCount,
@@ -2041,14 +2155,14 @@ export function ReservationCardEditor({
         if (!checkIn) missing.push(tb('checkIn'));
         if (!checkOut) missing.push(tb('checkOut'));
         if (missing.length > 0) {
-          showApiError(
+          reportApiError(
             { error: t('missingRequired', { fields: missing.join(', ') }) },
             tc('failed'),
           );
           return;
         }
         if (sellable && sellable.available < 1) {
-          showApiError({ error: t('noSellableInventory') }, tc('failed'));
+          reportApiError({ error: t('noSellableInventory') }, tc('failed'));
           return;
         }
         const res = await fetch('/api/reservations', {
@@ -2135,9 +2249,9 @@ export function ReservationCardEditor({
         if (!res.ok) {
           const err = String(json.error ?? '');
           if (/no availability/i.test(err)) {
-            showApiError({ error: t('noSellableInventory') }, tc('failed'));
+            reportApiError({ error: t('noSellableInventory') }, tc('failed'));
           } else {
-            showApiError(json, tc('failed'));
+            reportApiError(json, tc('failed'));
           }
           return;
         }
@@ -2151,12 +2265,12 @@ export function ReservationCardEditor({
       if (creditLimitAzn.trim() !== '') {
         const limit = Number(creditLimitAzn);
         if (Number.isNaN(limit) || limit < 0) {
-          showApiError({ error: t('creditLimitInvalid') }, tc('failed'));
+          reportApiError({ error: t('creditLimitInvalid') }, tc('failed'));
           return;
         }
       }
       if (shareEligible && !guestGender) {
-        showApiError({ error: t('shareGenderRequired') }, tc('failed'));
+        reportApiError({ error: t('shareGenderRequired') }, tc('failed'));
         return;
       }
       if (guestId && guestGender) {
@@ -2280,7 +2394,7 @@ export function ReservationCardEditor({
           setCardMoveAsk({ askReason: data?.status === 'IN_HOUSE', askSettlement: true });
           return;
         }
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       showSuccess(json.movePending ? t('splitStayPlanned') : tc('success'));
@@ -2434,7 +2548,11 @@ export function ReservationCardEditor({
 
   const folios = (data?.folios as FolioAccount[] | undefined) ?? [];
 
-  const guestFolioBalance = computeGuestFolioBalance(folios);
+  const stayPair = stayMoneyPair(
+    folios.flatMap((folio) => folio.charges),
+    folios.flatMap((folio) => folio.payments ?? []),
+  );
+  const guestFolioBalance = stayPair.debt;
 
   const pricingDisplayCurrency =
     dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
@@ -2456,7 +2574,7 @@ export function ReservationCardEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('failed'));
+        reportApiError(json, tc('failed'));
         return;
       }
       await load();
@@ -2531,7 +2649,7 @@ export function ReservationCardEditor({
     onUndoCheckout: status === 'CHECKED_OUT' ? () => setUndoCheckoutOpen(true) : undefined,
     onDeleteStay:
       !isCreate &&
-      (status === 'OPTION' || status === 'CONFIRMED') &&
+      (status === 'OPTION' || status === 'CONFIRMED' || status === 'CHECKED_OUT') &&
       can(PERMISSIONS.RESERVATIONS_CANCEL)
         ? () => setDeleteOpen(true)
         : undefined,
@@ -2637,8 +2755,8 @@ export function ReservationCardEditor({
           <ReservationCardHeaderSnapshot
             isCreate={isCreate}
             totalAmount={Number(data?.totalAmount ?? 0)}
-            depositAmount={depositHeldTotal}
-            folioBalance={guestFolioBalance}
+            unusedAmount={stayPair.unused}
+            folioBalance={stayPair.debt}
             occupancyWorld={occupancyWorld}
             bookingRoomCount={siblingStays.length || undefined}
             onOccupancyClick={
@@ -2751,13 +2869,18 @@ export function ReservationCardEditor({
                   );
                 }
               }
-              setNotes((prev) => ({
-                ...prev,
-                PRICE_NOTE: [prev.PRICE_NOTE, note].filter(Boolean).join('\n'),
-              }));
+              setNotes((prev) => {
+                const existing = prev.PRICE_NOTE ?? '';
+                if (existing.includes(note)) return prev;
+                return {
+                  ...prev,
+                  PRICE_NOTE: [existing, note].filter(Boolean).join('\n'),
+                };
+              });
             }}
             reservationId={reservationId}
-            folioBalance={guestFolioBalance}
+            folioBalance={stayPair.debt}
+            unusedAmount={stayPair.unused}
             billingRoutingSummary={billingRoutingSummary}
             stayStatus={status}
             earlyStayCheckoutBusy={busy}
@@ -2804,6 +2927,7 @@ export function ReservationCardEditor({
             }
             breakShareBusy={busy}
             {...leftPatch}
+            priceNote={notes.PRICE_NOTE ?? ''}
           />
 
           <div className="flex min-h-0 min-w-0 flex-col">
@@ -3006,7 +3130,7 @@ export function ReservationCardEditor({
             .then(async (res) => {
               const json = await res.json();
               if (!res.ok) {
-                showApiError(json, tc('failed'));
+                reportApiError(json, tc('failed'));
                 return;
               }
               const payload = (json.data ?? json) as {
@@ -3055,7 +3179,7 @@ export function ReservationCardEditor({
             .then(async (res) => {
               const json = await res.json();
               if (!res.ok) {
-                showApiError(json, tc('failed'));
+                reportApiError(json, tc('failed'));
                 return;
               }
               showSuccess(t('moveGuestDone'));
@@ -3186,7 +3310,8 @@ export function ReservationCardEditor({
         open={historyOpen}
         title={t('stayJournal')}
         onClose={() => setHistoryOpen(false)}
-        maxWidthClass="max-w-4xl"
+        maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
+        bodyClassName="mt-3 min-h-0 flex-1 overflow-hidden flex flex-col"
       >
         <StayJournal
           entries={stayAudit}

@@ -82,6 +82,7 @@ export function PurchaseModal({
   const [currency, setCurrency] = useState<string>("AZN");
   const [fxRateToAzn, setFxRateToAzn] = useState("1.0000");
   const [pricesIncludeVat, setPricesIncludeVat] = useState(false);
+  const [taxDocumentRef, setTaxDocumentRef] = useState("");
   const [goodsLines, setGoodsLines] = useState<LineRow[]>(() => [newGoodsLine()]);
   const [serviceLines, setServiceLines] = useState<LineRow[]>(() => [newServiceLine()]);
   const [productLabels, setProductLabels] = useState<Record<string, string>>({});
@@ -107,6 +108,7 @@ export function PurchaseModal({
     setCurrency("AZN");
     setFxRateToAzn("1.0000");
     setPricesIncludeVat(false);
+    setTaxDocumentRef("");
     setGoodsLines([newGoodsLine()]);
     setServiceLines([newServiceLine()]);
     setProductLabels({});
@@ -212,6 +214,7 @@ export function PurchaseModal({
       currency,
       fxRateToAzn,
       pricesIncludeVat,
+      taxDocumentRef,
       goodsLines: goodsLines.map(({ productId, quantity, unitPrice, vatMode }) => ({
         productId,
         quantity,
@@ -427,6 +430,14 @@ export function PurchaseModal({
                   className={MODAL_CHECKBOX_CLASS}
                 />
                 <span>{t("inventory.purchasePricesIncludeVat")}</span>
+              </label>
+              <label className="block text-[13px] text-[#34495E]">
+                {t("reporting.provisionalDocument")}
+                <input
+                  className={MODAL_INPUT_CLASS}
+                  value={taxDocumentRef}
+                  onChange={(e) => setTaxDocumentRef(e.target.value)}
+                />
               </label>
               <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-1 text-[13px] text-[#34495E]">
                 <span>

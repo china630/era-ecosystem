@@ -56,6 +56,8 @@ export type PostTransactionLine = {
   accountCode: string;
   debit: string | number;
   credit: string | number;
+  /** Guest card tender. The simplified-tax watcher reads this tag. */
+  population?: boolean;
   dimensions?: Array<{
     subcontoTypeId: string;
     valueId?: string | null;
@@ -295,6 +297,15 @@ export class AccountingService {
           ...(accountingBook ? { accountingBookId: accountingBook.id } : {}),
         },
       });
+      if (line.population) {
+        await tx.taxSettlementTag.create({
+          data: {
+            organizationId,
+            journalEntryId: journalEntry.id,
+            population: true,
+          },
+        });
+      }
       sourceLines.push({
         accountCode: line.accountCode,
         accountId: account.id,

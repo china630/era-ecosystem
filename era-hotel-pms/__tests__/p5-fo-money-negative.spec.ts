@@ -44,6 +44,7 @@ jest.mock('@/lib/services/folio.service', () => {
 
 jest.mock('@/lib/services/folio-deposit.service', () => ({
   applyHeldDepositsToFolio: jest.fn(),
+  moveHeldDepositsOntoFolio: jest.fn(),
 }));
 
 jest.mock('@/lib/services/card-auth.service', () => ({
@@ -205,7 +206,7 @@ describe('P5 FO money negative paths (AC-HOT-CASH)', () => {
     );
   });
 
-  it('refuses DEPOSIT settle lines exceeding HELD total', async () => {
+  it('refuses DEPOSIT settle lines', async () => {
     const { prisma } = jest.requireMock('@/lib/prisma');
     prisma.folio.findUnique.mockResolvedValue({
       id: 'f1',
@@ -222,7 +223,7 @@ describe('P5 FO money negative paths (AC-HOT-CASH)', () => {
         folioId: 'f1',
         lines: [{ method: 'DEPOSIT', amount: 50 }],
       }),
-    ).rejects.toThrow(/exceeds HELD deposits/);
+    ).rejects.toThrow(/DEPOSIT_INTAKE_CLOSED/);
   });
 
   it('postDiscount rejects non-positive amount', async () => {

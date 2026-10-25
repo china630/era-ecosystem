@@ -299,10 +299,19 @@ export class SatelliteOrgBindSyncService {
         subscriptionPlan: true,
         publicOrgNumber: true,
         deletedAt: true,
+        settings: true,
       },
     });
     if (org?.deploymentTopology) {
       body.deploymentTopology = org.deploymentTopology;
+    }
+    const settings =
+      org?.settings && typeof org.settings === "object" && !Array.isArray(org.settings)
+        ? (org.settings as Record<string, unknown>)
+        : {};
+    const source = settings.referenceSource;
+    if (source === "hub" || source === "excel") {
+      body.referenceSource = source;
     }
     if (org?.deletedAt) {
       body.revokePublicOrgNumber = true;
@@ -358,16 +367,6 @@ export class SatelliteOrgBindSyncService {
       (sub?.currentTier ? String(sub.currentTier) : "");
     if (edition) body.edition = edition;
 
-    const orgSettings = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { settings: true },
-    });
-    const settings =
-      orgSettings?.settings &&
-      typeof orgSettings.settings === "object" &&
-      !Array.isArray(orgSettings.settings)
-        ? (orgSettings.settings as Record<string, unknown>)
-        : {};
     // Upgraded street cafés keep signupSource=kafe; their edition is full F&B.
     if (String(settings.edition ?? "").trim().toLowerCase() === "fnb") {
       body.edition = "fnb";

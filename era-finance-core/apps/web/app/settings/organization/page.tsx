@@ -6,12 +6,14 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CatalogField } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
+import { parseApiErrorPayload } from "../../../lib/api-error-text";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { CP_PERMISSION } from "../../../lib/role-utils";
 import { useLedger } from "../../../lib/ledger-context";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
+  MODAL_CHECKBOX_CLASS,
   LINK_ACCENT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -41,6 +43,9 @@ type OrgSettings = {
     };
     tax?: {
       asanUserId?: string | null;
+      regime?: "SIMPLIFIED" | "PROFIT" | "PROFIT_VAT";
+      pricesIncludeTax?: boolean;
+      requireEqaimeForDayClose?: boolean;
     };
     hr?: {
       emasMode?: "OFF" | "SELECTIVE" | "FULL";
@@ -72,6 +77,11 @@ export default function OrganizationSettingsPage() {
   const [taxId, setTaxId] = useState("");
   const [lockedPeriodUntil, setLockedPeriodUntil] = useState("");
   const [asanUserId, setAsanUserId] = useState("");
+  const [taxRegime, setTaxRegime] = useState<"SIMPLIFIED" | "PROFIT" | "PROFIT_VAT">(
+    "SIMPLIFIED",
+  );
+  const [pricesIncludeTax, setPricesIncludeTax] = useState(false);
+  const [requireEqaimeForDayClose, setRequireEqaimeForDayClose] = useState(false);
   const [emasMode, setEmasMode] = useState<"OFF" | "SELECTIVE" | "FULL">("OFF");
   const [internalRateVisibleToHrManager, setInternalRateVisibleToHrManager] =
     useState(false);
@@ -103,6 +113,13 @@ export default function OrganizationSettingsPage() {
         "",
     );
     setAsanUserId(o.settings?.tax?.asanUserId ?? "");
+    setTaxRegime(
+      o.settings?.tax?.regime === "PROFIT" || o.settings?.tax?.regime === "PROFIT_VAT"
+        ? o.settings.tax.regime
+        : "SIMPLIFIED",
+    );
+    setPricesIncludeTax(o.settings?.tax?.pricesIncludeTax === true);
+    setRequireEqaimeForDayClose(o.settings?.tax?.requireEqaimeForDayClose === true);
     setEmasMode(
       o.settings?.hr?.emasMode === "SELECTIVE" ||
         o.settings?.hr?.emasMode === "FULL"
@@ -136,6 +153,9 @@ export default function OrganizationSettingsPage() {
         logoUrl: logoUrl || null,
         valuationMethod,
         asanUserId: asanUserId.trim() || null,
+        taxRegime,
+        pricesIncludeTax,
+        requireEqaimeForDayClose,
         emasMode,
         internalRateVisibleToHrManager,
       }),
@@ -244,6 +264,18 @@ export default function OrganizationSettingsPage() {
           );
           return;
         }
+        const queueRes = await apiFetch(
+          `/api/reporting/fact-queue?period=${encodeURIComponent(month)}`,
+        );
+        if (!queueRes.ok) {
+          toast.error(t("reporting.factQueueErr"));
+          return;
+        }
+        const queue = (await queueRes.json()) as { count?: number };
+        if ((queue.count ?? 0) > 0) {
+          toast.error(t("reporting.factQueueCloseBlocked"));
+          return;
+        }
       }
     }
     setSaving(true);
@@ -258,7 +290,14 @@ export default function OrganizationSettingsPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      toast.error(t("orgSettings.saveErr"));
+      const parsed = parseApiErrorPayload(await res.text());
+      toast.error(
+        parsed.code === "FACT_QUEUE_NONEMPTY"
+          ? t("reporting.factQueueCloseBlocked")
+          : parsed.code === "TAX_AMENDMENT_UNSENT"
+            ? t("reporting.amendmentCloseBlocked")
+            : t("orgSettings.saveErr"),
+      );
       return;
     }
     toast.success(t("orgSettings.periodLockSaved"));
@@ -361,6 +400,41 @@ export default function OrganizationSettingsPage() {
                   <span className="mt-1 block text-xs text-[#7F8C8D]">
                     {t("orgSettings.asanUserIdHelp")}
                   </span>
+                </label>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("orgSettings.taxRegime")}
+                  value={taxRegime}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "SIMPLIFIED" : String(next ?? "SIMPLIFIED");
+                    if (v === "SIMPLIFIED" || v === "PROFIT" || v === "PROFIT_VAT") setTaxRegime(v);
+                  }}
+                  options={[
+                    { value: "SIMPLIFIED", label: t("orgSettings.taxRegimeSimplified") },
+                    { value: "PROFIT", label: t("orgSettings.taxRegimeProfit") },
+                    { value: "PROFIT_VAT", label: t("orgSettings.taxRegimeProfitVat") },
+                  ]}
+                  disabled={!canEditGeneral}
+                />
+                <label className="flex items-center gap-2 text-[#34495E] text-sm">
+                  <input
+                    type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
+                    checked={pricesIncludeTax}
+                    onChange={(e) => setPricesIncludeTax(e.target.checked)}
+                    disabled={!canEditGeneral}
+                  />
+                  {t("orgSettings.pricesIncludeTax")}
+                </label>
+                <label className="flex items-center gap-2 text-[#34495E] text-sm">
+                  <input
+                    type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
+                    checked={requireEqaimeForDayClose}
+                    onChange={(e) => setRequireEqaimeForDayClose(e.target.checked)}
+                    disabled={!canEditGeneral}
+                  />
+                  {t("orgSettings.requireEqaimeForDayClose")}
                 </label>
                 <div className="max-w-md">
                   <CatalogField
