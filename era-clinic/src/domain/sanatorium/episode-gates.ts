@@ -28,7 +28,7 @@ export const LIVE_PROCEDURE_STATUSES = [
   "SCHEDULED",
   "CHECKED_IN",
 ] as const;
-/** PENDING_PAY is purged on episode close — not a close blocker. */
+/** PENDING_PAY becomes UNPAID_MISSED on episode close — not a close blocker. */
 
 /** Open lab statuses that block walk-in close. */
 export const OPEN_LAB_STATUSES = ["ORDERED", "COLLECTED", "IN_PROGRESS"] as const;

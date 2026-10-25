@@ -95,8 +95,8 @@ model Tenant {
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Paid no-show keeps the folio charge (default). False lets the hotel void it.
   noShowKeepsCharge              Boolean                  @default(true) @map("no_show_keeps_charge")
-  /// Unpaid extra: show on the plan and guest print, or hide until pay/folio.
-  extraProcedureRoute            ExtraProcedureRoute      @default(SHOW_ON_PLAN) @map("extra_procedure_route")
+  /// Unpaid extra: seat before pay (default) or hide until pay/folio.
+  extraProcedureRoute            ExtraProcedureRoute      @default(PLAN_BEFORE_PAY) @map("extra_procedure_route")
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
@@ -167,12 +167,14 @@ enum ProcedureStaffMode {
 enum ProcedureOrderStatus {
   /// Package line shown on patient card; not on resources until doctor confirms
   PROPOSED
-  /// Paid extra prescribed; not scheduled until reception Pay (CLI-57)
+  /// Paid extra prescribed. PLAN_BEFORE_PAY may already hold a cabin.
   PENDING_PAY
   SCHEDULED
   CHECKED_IN
   COMPLETED
   NO_SHOW
+  /// Seated extra still unpaid at day end or checkout. No folio charge, no bonus, no package quota.
+  UNPAID_MISSED
   CANCELLED
 }
 
@@ -217,10 +219,13 @@ enum ProcedureOverQuotaPolicy {
   WARN_ONLY
 }
 
-/// Where an unpaid extra (inPackage = false, PENDING_PAY) is visible before pay or folio.
+/// Where an unpaid extra (inPackage = false, PENDING_PAY) sits before pay or folio.
 enum ExtraProcedureRoute {
+  /// Legacy name. Reads and writes as PLAN_BEFORE_PAY.
   SHOW_ON_PLAN
   HOLD_UNTIL_PAY
+  /// Planner seats each extra on its own day and cabin before payment.
+  PLAN_BEFORE_PAY
 }
 
 enum ClinicReceiptStatus {

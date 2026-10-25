@@ -27,8 +27,8 @@ export async function POST(req: Request) {
     );
     if (denied) return denied;
     const body = schema.parse(await req.json());
-    await cancelPaidExtraWithFolioReverse(body.orderId, session.sub);
-    return jsonOk({ ok: true });
+    const reversed = await cancelPaidExtraWithFolioReverse(body.orderId, session.sub);
+    return jsonOk({ ok: true, ...reversed });
   } catch (err) {
     if (err instanceof PackageAssignError) {
       return jsonError(err.message, err.status, { code: err.code });

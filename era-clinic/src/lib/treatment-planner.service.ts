@@ -8,7 +8,7 @@ import {
   bakuHourMinute,
   parseBakuDateTime,
 } from "@/lib/baku-day";
-import { dailyCapForQuota, loadEpisodeDailyCaps } from "@/domain/sanatorium/block-daily-cap";
+import { loadEpisodeDailyCaps, quotaForGuestDay } from "@/domain/sanatorium/block-daily-cap";
 import {
   DEFAULT_WORK_HOURS,
   alignDurationToSlotMinutes,
@@ -83,7 +83,12 @@ export async function validatePatientConsecutiveGap(input: {
     where: {
       patientRefId: input.patientRefId,
       scheduledAt: { gte: start, lt: end },
-      status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] },
+      AND: [
+        { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "UNPAID_MISSED"] } },
+        {
+          OR: [{ status: { not: "PENDING_PAY" } }, { resourceId: { not: null } }],
+        },
+      ],
       ...(input.excludeOrderId ? { id: { not: input.excludeOrderId } } : {}),
     },
     select: {
@@ -134,7 +139,10 @@ export async function hasProcedureSameDay(
       patientRefId,
       procedureCode,
       scheduledAt: { gte: start, lt: end },
-      status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY"] },
+      OR: [
+        { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
+        { status: "PENDING_PAY", resourceId: { not: null } },
+      ],
       ...(excludeOrderId ? { id: { not: excludeOrderId } } : {}),
     },
   });
@@ -398,7 +406,10 @@ export async function placeConfirmedProcedures(
   const existing = await prisma.procedureOrder.findMany({
     where: {
       patientRefId,
-      status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY"] },
+      OR: [
+        { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
+        { status: "PENDING_PAY", resourceId: { not: null } },
+      ],
     },
     select: {
       status: true,
@@ -408,23 +419,30 @@ export async function placeConfirmedProcedures(
       endsAt: true,
       inPackage: true,
       packageQuotaCode: true,
+      resourceId: true,
       procedureType: { select: { patientRestMinutes: true } },
     },
     orderBy: { scheduledAt: "asc" },
   });
 
-  const patientSlots = existing.map((row) => ({
-    code: row.procedureCode,
-    bodyPart: row.bodyPart,
-    start: row.scheduledAt,
-    end: row.endsAt ?? row.scheduledAt,
-    patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
-    inPackage: row.inPackage === true,
-    quotaKey: dailyCaps
-      ? dailyCapForQuota(dailyCaps, row.packageQuotaCode, row.procedureCode).quotaKey
-      : row.procedureCode,
-    countsForRest: row.status !== "NO_SHOW",
-  }));
+  const patientSlots = existing.map((row) => {
+    const quota = quotaForGuestDay(dailyCaps, {
+      inPackage: row.inPackage === true,
+      packageQuotaCode: row.packageQuotaCode,
+      procedureCode: row.procedureCode,
+    });
+    return {
+      code: row.procedureCode,
+      bodyPart: row.bodyPart,
+      start: row.scheduledAt,
+      end: row.endsAt ?? row.scheduledAt,
+      patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
+      inPackage: row.inPackage === true,
+      quotaKey: quota.quotaKey,
+      countsForRest: row.status !== "NO_SHOW",
+      holdsGuestDay: row.inPackage !== true && Boolean(row.resourceId),
+    };
+  });
   const rotationContext: RotationContextSlot[] = existing
     .filter((row) => row.status !== "NO_SHOW")
     .map((row) => ({
@@ -516,9 +534,18 @@ export async function placeConfirmedProcedures(
       procedureName: order.procedureName?.trim() || order.procedureCode,
       bodyPart: order.bodyPart ?? pt.bodyPart ?? null,
       inPackage: order.inPackage === true,
-      ...(order.inPackage && dailyCaps
-        ? dailyCapForQuota(dailyCaps, order.packageQuotaCode, order.procedureCode)
-        : { quotaKey: order.procedureCode, dailyCap: null }),
+      ...(() => {
+        const quota = quotaForGuestDay(dailyCaps, {
+          inPackage: order.inPackage === true,
+          packageQuotaCode: order.packageQuotaCode,
+          procedureCode: order.procedureCode,
+        });
+        return {
+          quotaKey: quota.quotaKey,
+          dailyCap: order.inPackage ? quota.dailyCap : quota.shareGuestDayCap ? quota.dailyCap : null,
+          shareGuestDayCap: quota.shareGuestDayCap,
+        };
+      })(),
       durationMin: alignDurationToSlotMinutes(pt.durationMin ?? slotMinutes, slotMinutes),
       dayEndHour: 0,
       patientRestMinutes: pt.patientRestMinutes ?? 15,
@@ -682,7 +709,7 @@ export async function loadOccupancyForScan(
     where: {
       startsAt: { lt: to },
       endsAt: { gt: lookback },
-      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "UNPAID_MISSED"] } },
       OR: [
         ...(resourceIds.length
           ? [{ role: { in: ["LOCATION" as const, "EQUIPMENT" as const] }, resourceId: { in: resourceIds } }]

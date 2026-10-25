@@ -25,10 +25,9 @@ import {
 export { episodeCareTeamPrintName } from "@/domain/print/print-patient-strip";
 
 /**
- * Guest sheet lists seated rows, plus unpaid extras when the org route is SHOW_ON_PLAN.
- * Those extras keep a placeholder clock in the database. The sheet prints an unpaid mark
- * and leaves time and room empty. They are not seated and do not reach nurse check-in.
- * HOLD_UNTIL_PAY omits them. PROPOSED rows are not seated yet.
+ * Guest sheet lists seated rows. PLAN_BEFORE_PAY also lists unpaid extras with their
+ * real time, room, and an unpaid mark. HOLD_UNTIL_PAY omits them. A hold-until-pay
+ * row has no cabin, so its placeholder clock is not printed.
  */
 export const PRINT_PROCEDURE_STATUSES = [
   "SCHEDULED",
@@ -180,7 +179,7 @@ export async function buildProceduresPrint(
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
   for (const o of orders) {
-    const seated = printsProcedureClock(o.status);
+    const seated = printsProcedureClock(o.status, o.resourceId);
     const date = seated ? bakuDate(o.scheduledAt) : printDateFromYmd(todayBakuYmd());
     const room = seated
       ? (o.resource?.room?.name ?? o.resource?.name ?? o.resource?.code ?? "—")
@@ -239,7 +238,10 @@ export async function buildProceduresPrint(
       time: seated ? `${bakuTime(o.scheduledAt)}${ends}` : "",
       room,
       price: `${Number(o.amountNet).toFixed(2)} AZN`,
-      note: [seated ? "" : printLabel(lang, "unpaidExtra"), (o.note ?? "").trim()]
+      note: [
+        o.status === "PENDING_PAY" ? printLabel(lang, "unpaidExtra") : "",
+        (o.note ?? "").trim(),
+      ]
         .filter(Boolean)
         .join(" · "),
     };

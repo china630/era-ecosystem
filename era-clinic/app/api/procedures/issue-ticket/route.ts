@@ -51,6 +51,7 @@ export async function GET(request: Request) {
         patientOrigin: o.patientOrigin,
         status: o.status,
         scheduledAt: o.scheduledAt.toISOString(),
+        resourceId: o.resourceId,
         patientRefId: o.patientRefId,
         patientName: o.patientRef.fullName,
         refCode: o.patientRef.refCode,

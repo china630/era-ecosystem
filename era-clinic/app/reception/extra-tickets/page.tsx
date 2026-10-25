@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Banknote, ChevronDown, ChevronRight } from "lucide-react";
+import { Banknote, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
+import { bakuDateTimeLabel } from "@/lib/baku-day";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
@@ -17,6 +18,8 @@ import {
   Field,
   LIST_PAGE_SHELL_CLASS,
   PageHeader,
+  ModalFooter,
+  ModalShell,
   PRIMARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
@@ -32,6 +35,7 @@ type ExtraRow = {
   amountNet: number;
   patientOrigin: string;
   scheduledAt: string;
+  resourceId?: string | null;
   patientRefId: string;
   patientName: string;
   refCode: string;
@@ -58,6 +62,7 @@ export default function ExtraTicketsPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [lockHint, setLockHint] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [cancelAskId, setCancelAskId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [room, setRoom] = useState("");
   const [origin, setOrigin] = useState("");
@@ -251,6 +256,31 @@ export default function ExtraTicketsPage() {
     }
   }
 
+  async function cancelRow(id: string) {
+    setCancelAskId(null);
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/procedures/${id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "reception_unpaid_cancel" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, t("cancelFailed"));
+        return;
+      }
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function originLabel(code: string): string {
     if (code === "IN_HOUSE") return t("origin_IN_HOUSE");
     if (code === "WALK_IN") return t("origin_WALK_IN");
@@ -316,6 +346,7 @@ export default function ExtraTicketsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS} />
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patient")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("filterRoom")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("when")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedure")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("amount")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("origin")}</th>
@@ -325,7 +356,7 @@ export default function ExtraTicketsPage() {
             <tbody>
               {groups.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                  <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
                     {rows.length === 0 ? t("empty") : t("noMatch")}
                   </td>
                 </tr>
@@ -351,6 +382,7 @@ export default function ExtraTicketsPage() {
                       procedureCountLabel={t("procedureCount", { count: group.items.length })}
                       payLabel={t("pay")}
                       payRowLabel={t("payRow")}
+                      cancelRowLabel={t("cancelRow")}
                       originLabel={originLabel}
                       onTogglePatient={() => togglePatient(group)}
                       onToggleExpanded={() => toggleExpanded(group.patientRefId)}
@@ -362,6 +394,7 @@ export default function ExtraTicketsPage() {
                         }
                         void issue([id]);
                       }}
+                      onCancel={setCancelAskId}
                     />
                   );
                 })
@@ -370,6 +403,23 @@ export default function ExtraTicketsPage() {
           </table>
         }
       />
+      <ModalShell
+        open={Boolean(cancelAskId)}
+        title={t("cancelRow")}
+        onClose={() => setCancelAskId(null)}
+        footer={
+          <ModalFooter
+            onCancel={() => setCancelAskId(null)}
+            onSubmit={() => {
+              if (cancelAskId) void cancelRow(cancelAskId);
+            }}
+            busy={busy}
+            submitLabel={t("cancelRow")}
+          />
+        }
+      >
+        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("confirmCancel")}</p>
+      </ModalShell>
     </div>
   );
 }
@@ -386,11 +436,13 @@ function PatientBlock({
   procedureCountLabel,
   payLabel,
   payRowLabel,
+  cancelRowLabel,
   originLabel,
   onTogglePatient,
   onToggleExpanded,
   onToggleProcedure,
   onPay,
+  onCancel,
 }: {
   group: PatientGroup;
   open: boolean;
@@ -403,11 +455,13 @@ function PatientBlock({
   procedureCountLabel: string;
   payLabel: string;
   payRowLabel: string;
+  cancelRowLabel: string;
   originLabel: (code: string) => string;
   onTogglePatient: () => void;
   onToggleExpanded: () => void;
   onToggleProcedure: (row: ExtraRow) => void;
   onPay: (id: string) => void;
+  onCancel: (id: string) => void;
 }) {
   return (
     <>
@@ -443,6 +497,7 @@ function PatientBlock({
           </button>
         </td>
         <td className={DATA_TABLE_TD_CLASS}>{group.roomNumber || "—"}</td>
+        <td className={DATA_TABLE_TD_CLASS} />
         <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>{procedureCountLabel}</td>
         <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
           {group.total.toFixed(2)} AZN
@@ -465,6 +520,9 @@ function PatientBlock({
                 />
               </td>
               <td className={DATA_TABLE_TD_CLASS}>{row.roomNumber || "—"}</td>
+              <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap tabular-nums`}>
+                {row.resourceId && row.scheduledAt ? bakuDateTimeLabel(row.scheduledAt) : "—"}
+              </td>
               <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
               <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
                 {Number(row.amountNet).toFixed(2)} AZN
@@ -480,6 +538,16 @@ function PatientBlock({
                   onClick={() => onPay(row.id)}
                 >
                   <Banknote className={`h-4 w-4 ${TEXT_SUCCESS_CLASS}`} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  disabled={busy}
+                  aria-label={cancelRowLabel}
+                  title={cancelRowLabel}
+                  onClick={() => onCancel(row.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                 </button>
               </td>
             </tr>

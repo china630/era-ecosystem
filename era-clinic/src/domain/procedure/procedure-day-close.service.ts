@@ -82,5 +82,28 @@ export async function runProcedureDayClose(now = new Date()) {
   );
   const completed = await autoCompleteElapsedCheckedIn(now);
   const noShows = await sweepNoShowScheduled(now);
-  return { completed, noShows };
+  const unpaidMissed = await sweepUnpaidMissed(now);
+  return { completed, noShows, unpaidMissed };
+}
+
+/**
+ * After the clinic day ends, today's seated extras that are still unpaid leave
+ * the cheque list and free the cabin. Future days stay. This is not NO_SHOW:
+ * no folio charge, no bonus, no package quota.
+ */
+export async function sweepUnpaidMissed(now = new Date()): Promise<{ marked: number }> {
+  const hours = await getTenantWorkHours();
+  const ymd = todayBakuYmd(now);
+  const dayEnd = parseBakuDateTime(ymd, `${String(hours.dayEndHour).padStart(2, "0")}:00`);
+  if (now.getTime() < dayEnd.getTime()) return { marked: 0 };
+  const { start, end } = bakuDayBounds(ymd);
+  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  const marked = await closeUnpaidExtras(
+    {
+      resourceId: { not: null },
+      scheduledAt: { gte: start, lt: end },
+    },
+    "unpaid_missed",
+  );
+  return { marked };
 }

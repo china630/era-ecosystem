@@ -127,12 +127,11 @@ export async function closeOpenEpisodesForReservation(reservationId: string) {
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
     });
   }
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      status: "PENDING_PAY",
-      OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }],
-    },
-  });
+  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  await closeUnpaidExtras(
+    { OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }] },
+    "unpaid_checkout",
+  );
   return { closed: episodes.length, cancelled: orderIds.length };
 }
 
@@ -195,12 +194,11 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
       },
     });
   }
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      clinicalEpisodeId: { in: targetIds },
-      status: "PENDING_PAY",
-    },
-  });
+  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  await closeUnpaidExtras(
+    { clinicalEpisodeId: { in: targetIds } },
+    "unpaid_checkout",
+  );
 }
 
 export async function handleGuestMoved(event: SatelliteHotelGuestMovedEvent) {

@@ -17,6 +17,7 @@ describe("course summary print", () => {
       "COMPLETED",
       "NO_SHOW",
     ]);
+    expect(showsUnpaidExtraOnPlan("PLAN_BEFORE_PAY")).toBe(true);
     expect(showsUnpaidExtraOnPlan("SHOW_ON_PLAN")).toBe(true);
     expect(showsUnpaidExtraOnPlan("HOLD_UNTIL_PAY")).toBe(false);
   });
