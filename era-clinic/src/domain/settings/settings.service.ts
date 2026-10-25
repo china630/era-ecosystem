@@ -12,10 +12,7 @@ import type {
   ProgramSchedulingMode,
   ProcedureCheckInMode,
 } from "@prisma/client";
-import {
-  parseExtraProcedureRoute,
-  type ExtraProcedureRoute,
-} from "@/domain/sanatorium/extra-procedure-route";
+import { parseExtraProcedureRoute } from "@/domain/sanatorium/extra-procedure-route";
 
 const DEFAULT_TENANT_CODE = "default";
 
@@ -181,7 +178,7 @@ export async function updateClinicSettings(input: {
   doctorBonusPercentWalkIn?: number;
   hotelFolioRevenueCode?: string | null;
   noShowKeepsCharge?: boolean;
-  extraProcedureRoute?: ExtraProcedureRoute;
+  extraProcedureRoute?: string | null;
 }) {
   const presets = input.enabledPresets?.filter(isClinicPreset) ?? undefined;
   if (input.enabledPresets && presets && presets.length !== input.enabledPresets.length) {
@@ -364,7 +361,7 @@ export async function updateClinicSettings(input: {
         ? { noShowKeepsCharge: input.noShowKeepsCharge }
         : {}),
       ...(input.extraProcedureRoute
-        ? { extraProcedureRoute: input.extraProcedureRoute }
+        ? { extraProcedureRoute: parseExtraProcedureRoute(input.extraProcedureRoute) }
         : {}),
     },
   });

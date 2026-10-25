@@ -171,10 +171,13 @@ export async function loadExtraTicketPrint(ticketId: string, organizationId: str
   });
   const receipt = seed.find((row) => row.paymentReceiptRef?.trim())?.paymentReceiptRef?.trim();
   const patientRefId = seed[0]?.patientRefId;
-  if (!receipt || !patientRefId) return seed;
-  return prisma.procedureOrder.findMany({
+  if (!receipt || !patientRefId) {
+    return seed.filter((row) => row.status !== "CANCELLED" && row.status !== "UNPAID_MISSED");
+  }
+  const rows = await prisma.procedureOrder.findMany({
     where: { paymentReceiptRef: receipt, patientRefId },
     include: printInclude,
     orderBy: { createdAt: "asc" },
   });
+  return rows.filter((row) => row.status !== "CANCELLED" && row.status !== "UNPAID_MISSED");
 }

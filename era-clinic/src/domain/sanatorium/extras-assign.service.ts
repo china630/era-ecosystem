@@ -3,6 +3,7 @@
  */
 import { catalogUnitPrice } from "@/domain/catalog/catalog-price.service";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
@@ -32,6 +33,8 @@ import {
 import { enterSatelliteTenant } from "@era/satellite-kit";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
+import { plansExtraBeforePay } from "@/domain/sanatorium/extra-procedure-route";
+import { getClinicSettings } from "@/domain/settings/settings.service";
 
 export type ExtraPrescribeLine = {
   procedureCode: string;
@@ -120,12 +123,16 @@ export async function remainingPackageQuotaCode(
   return null;
 }
 
-/** Doctor prescribe: PENDING_PAY only (not on schedule). */
+/**
+ * Doctor prescribe. PLAN_BEFORE_PAY seats each row on its own day and cabin and
+ * leaves it PENDING_PAY. HOLD_UNTIL_PAY keeps a placeholder clock and no cabin.
+ */
 export async function prescribeExtras(
   episodeId: string,
   lines: ExtraPrescribeLine[],
 ): Promise<{ orderIds: string[] }> {
   const episode = await loadEpisode(episodeId);
+  const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
   const types = await prisma.procedureType.findMany();
   const typeByCode = new Map(types.map((t) => [t.code, t]));
   const orgId = requestOrganizationId();
@@ -200,7 +207,26 @@ export async function prescribeExtras(
       ids.push(order.id);
     }
   }
+  if (planFirst && ids.length > 0) {
+    await seatUnpaidExtras(ids);
+  }
   return { orderIds: ids };
+}
+
+/** Place as PROPOSED, then return every row to PENDING_PAY so the cabin stays held. */
+async function seatUnpaidExtras(ids: string[]): Promise<void> {
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: ids }, status: "PENDING_PAY" },
+    data: { status: "PROPOSED" },
+  });
+  try {
+    await placeConfirmedProcedures(ids, {});
+  } finally {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+      data: { status: "PENDING_PAY" },
+    });
+  }
 }
 
 export async function listPendingExtras(episodeId: string) {
@@ -376,14 +402,33 @@ export async function payAndScheduleExtras(
     };
   }
 
-  await prisma.procedureOrder.updateMany({
-    where: { id: { in: chargedMeta.map((c) => c.orderId) } },
-    data: {
-      status: "PROPOSED",
-      paymentReceiptRef: opts?.paymentReceiptRef?.trim() || receipt,
-      inPackage: false,
-    },
-  });
+  const receiptRef = opts?.paymentReceiptRef?.trim() || receipt;
+  const seatedIds = chargedMeta
+    .filter((c) => byId.get(c.orderId)?.resourceId)
+    .map((c) => c.orderId);
+  const looseIds = chargedMeta
+    .filter((c) => !byId.get(c.orderId)?.resourceId)
+    .map((c) => c.orderId);
+  if (seatedIds.length > 0) {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: seatedIds } },
+      data: {
+        status: "SCHEDULED",
+        paymentReceiptRef: receiptRef,
+        inPackage: false,
+      },
+    });
+  }
+  if (looseIds.length > 0) {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: looseIds } },
+      data: {
+        status: "PROPOSED",
+        paymentReceiptRef: receiptRef,
+        inPackage: false,
+      },
+    });
+  }
   for (const c of chargedMeta) {
     await prisma.procedureOrder.update({
       where: { id: c.orderId },
@@ -391,18 +436,17 @@ export async function payAndScheduleExtras(
     });
   }
 
-  let placed = 0;
-  try {
-    placed = (
-      await placeConfirmedProcedures(
-        chargedMeta.map((c) => c.orderId),
-        { confirmedByUserId: actorUserId },
-      )
-    ).placed;
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : "schedule failed";
-    for (const line of accepted) {
-      line.reason = reason;
+  let placed = seatedIds.length;
+  if (looseIds.length > 0) {
+    try {
+      placed += (
+        await placeConfirmedProcedures(looseIds, { confirmedByUserId: actorUserId })
+      ).placed;
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "schedule failed";
+      for (const line of accepted) {
+        if (looseIds.includes(line.id)) line.reason = reason;
+      }
     }
   }
 
@@ -441,11 +485,18 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
     return false;
   }
   const ticketId = extraTicketIdForOrder(order.id);
-  await prisma.procedureOrder.update({
-    where: { id: order.id },
-    data: { status: "PROPOSED", inPackage: false },
-  });
-  await placeConfirmedProcedures([order.id], {});
+  if (order.resourceId) {
+    await prisma.procedureOrder.update({
+      where: { id: order.id },
+      data: { status: "SCHEDULED", inPackage: false },
+    });
+  } else {
+    await prisma.procedureOrder.update({
+      where: { id: order.id },
+      data: { status: "PROPOSED", inPackage: false },
+    });
+    await placeConfirmedProcedures([order.id], {});
+  }
   await prisma.procedureOrder.update({
     where: { id: order.id },
     data: { extraTicketIssuedAt: new Date(), extraTicketId: ticketId },
@@ -459,7 +510,7 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
 export async function cancelPaidExtraWithFolioReverse(
   orderId: string,
   actorUserId: string,
-): Promise<void> {
+): Promise<{ stornoPrintPath: string }> {
   const order = await prisma.procedureOrder.findUnique({ where: { id: orderId } });
   if (!order) throw new PackageAssignError("Not found", "NOT_FOUND", 404);
   if (!["SCHEDULED", "PROPOSED"].includes(order.status)) {
@@ -509,6 +560,8 @@ export async function cancelPaidExtraWithFolioReverse(
     "EXTRA_FOLIO_REVERSE",
     { amount },
   );
+  const { extraStornoPrintPath } = await import("@/domain/procedure/extra-ticket");
+  return { stornoPrintPath: extraStornoPrintPath(orderId, order.organizationId) };
 }
 
 /**
@@ -550,10 +603,61 @@ export async function applyHotelVoidToExtra(input: {
   return { cancelled: true };
 }
 
-/** Purge PENDING_PAY when episode closes. */
-export async function purgePendingExtrasForEpisode(episodeId: string): Promise<number> {
-  const r = await prisma.procedureOrder.deleteMany({
-    where: { clinicalEpisodeId: episodeId, status: "PENDING_PAY" },
+/**
+ * Close unpaid extras without a folio charge. Seated rows release the cabin.
+ * Day-end passes only today's seated rows. Checkout passes the whole episode.
+ */
+export async function closeUnpaidExtras(
+  where: Prisma.ProcedureOrderWhereInput,
+  reason: string,
+): Promise<number> {
+  const rows = await prisma.procedureOrder.findMany({
+    where: { ...where, status: "PENDING_PAY", inPackage: false },
+    select: { id: true },
   });
-  return r.count;
+  if (rows.length === 0) return 0;
+  const ids = rows.map((row) => row.id);
+  await releaseProcedureOccupancy(ids);
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: ids }, status: "PENDING_PAY" },
+    data: {
+      status: "UNPAID_MISSED",
+      resourceId: null,
+      cancelledAt: new Date(),
+      cancelReason: reason,
+    },
+  });
+  return ids.length;
+}
+
+/** Reception drops one unpaid row. It does not return to the pay basket. */
+export async function cancelUnpaidExtra(orderId: string, actorUserId: string): Promise<void> {
+  const order = await prisma.procedureOrder.findUnique({ where: { id: orderId } });
+  if (!order) throw new PackageAssignError("Not found", "NOT_FOUND", 404);
+  if (order.status !== "PENDING_PAY" || order.inPackage) {
+    throw new PackageAssignError("Only an unpaid extra can be cancelled here", "INVALID_STATUS", 400);
+  }
+  await releaseProcedureOccupancy([order.id]);
+  await prisma.procedureOrder.update({
+    where: { id: order.id },
+    data: {
+      status: "CANCELLED",
+      resourceId: null,
+      cancelledAt: new Date(),
+      cancelledByUserId: actorUserId,
+      cancelReason: "reception_unpaid_cancel",
+    },
+  });
+  await recordClinicAudit(
+    { userId: actorUserId },
+    "ProcedureOrder",
+    order.id,
+    "EXTRA_UNPAID_CANCEL",
+    { before: { status: "PENDING_PAY" }, after: { status: "CANCELLED" } },
+  );
+}
+
+/** Checkout: remaining unpaid extras become missed-unpaid and free their cabins. */
+export async function purgePendingExtrasForEpisode(episodeId: string): Promise<number> {
+  return closeUnpaidExtras({ clinicalEpisodeId: episodeId }, "unpaid_checkout");
 }

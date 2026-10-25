@@ -33,7 +33,7 @@ export async function countStaffHardBusy(
       startsAt: { lt: endsAt },
       endsAt: { gt: startsAt },
       ...(excludeOrderId ? { procedureOrderId: { not: excludeOrderId } } : {}),
-      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "UNPAID_MISSED"] } },
     },
   });
 }
@@ -63,7 +63,7 @@ export async function countResourceAllocations(
       startsAt: { lt: endsAt },
       endsAt: { gt: lookbackStart },
       ...(excludeOrderId ? { procedureOrderId: { not: excludeOrderId } } : {}),
-      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "UNPAID_MISSED"] } },
     },
     select: {
       startsAt: true,

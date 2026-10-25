@@ -117,7 +117,8 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CP-WF-MIG-01 | Platform | Evrostar workforce migration wizard | Y | `/workspace/workforce/migration` | **SCREEN** | UAT open; COVERAGE **API** | nine steps + skip; not SHOW / not SHIPPED |
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
 | CP-BILL-OWNER-01 | Platform | invoices / orders | Y | `/settings/subscription\|invoices\|orders` | **SCREEN** | UAT-SMOKE | |
-| HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | FO SHOW rollup unchanged |
+| HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | In-house suggestions use today (Asia/Baku) through checkout. FO SHOW rollup unchanged |
+| HOT-FO-04 | Hotel | stay amendment / in-house door move | Y | card, chessboard, `/fo/room-plan` | **SCREEN** | UAT §35 not signed; Status=API on COVERAGE | Clash is today through checkout. A finished slice does not block; a confirmed tail does. AC-HOT-AMEND stays 🟡. FO SHOW rollup unchanged |
 | HOT-BOOK-04 | Hotel | reservation card IA | Y | header snapshot + Stay Details regroup | **SCREEN** | UAT open; Status=API | ADR hotel-reservation-card-and-party-ops |
 | HOT-BOOK-06…09 | Hotel | card right-pane density | Y | Guests/Pricing/Folio/Notes tabs | **SCREEN** | UAT §45–§48 open | no Opera windows |
 | HOT-FO-05 | Hotel | Depart guest | Y | Guests ⋮ + DepartGuestModal | **SCREEN** | UAT §43 open | stay IN_HOUSE; person event |
@@ -134,7 +135,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E |
 | CLI-55 | Clinic | Episode as care course (switcher, children, walk-in close) | Y | Y | **SCREEN** | Card CatalogField + Close + cron; UAT open → not SHOW | not CLI-54 list rows alone |
 | CLI-56 | Clinic | Episode care team (multi-doctor) | Y | Y | **SCREEN** | Card identity+package+`+ Doctor`; clinical gated; UAT open → not SHOW | extends CLI-55 / assigned scope |
-| CLI-57 | Clinic | Package balance assign + extras Pay→plan→ticket | Y package-assign / extras-prescribe / Pay | Y Patient card Package tab + assign modal + schedule cards | **SCREEN** | UAT open → not SHOW; amends CLI-52 proposed confirm UX | ADR clinic-episode-procedure-assign-modal |
+| CLI-57 | Clinic | Package balance assign + extras seated before pay | Y package-assign / extras-prescribe / Pay keeps cabin / unpaid cancel / storno / day-end cron `UNPAID_MISSED` | Y Plan tab, guest print, `/reception/extra-tickets` date column + cancel, `/nurse` red block only when seated | **SCREEN** | UAT open → not SHOW; check-in stays closed until pay | ADR clinic-extra-procedure-route |
 | CLI-RBAC-01 | Clinic | Role×screen/API matrix + custom roles | Y ops+admin permission catalog; system seed; clone | `/admin/access` | **SCREEN** | AC-CLI-RBAC 🟡; UAT open → not SHOW | Phase A + custom roles |
 | HOT-RBAC-01 | Hotel | Role×permission matrix + custom roles | Y FO/folio/HK/admin catalog; system seed; clone | `/settings/access` | **SCREEN** | AC-HOT-RBAC 🟡; UAT open → not SHOW | Variant A |
 | FNB-RBAC-01 | F&B | Role×permission matrix + custom roles | Y till/KDS/admin catalog; system seed; clone; PIN bind | `/admin/access` | **SCREEN** | AC-FNB-RBAC 🟡; UAT open → not SHOW | Variant A |
@@ -181,6 +182,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-10-25 | HOT-FO-04 stay amendment **SCREEN** (card, chessboard, room plan). In-house door clash is today (Asia/Baku) through checkout. HOT-FO-03 suggestions use that window. Both stay API. AC-HOT-AMEND stays 🟡. Gate, Pilot, and edition unchanged. |
 | 2026-09-30 | CP-WF-FIT-01 fitness files **SCREEN** (employments + floor); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-30 | CP-WF-SELF-01 employee cabinet **SCREEN** (`/workspace/me` + requests); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-30 | FIN-HR-MIN-01 CP minutes → payroll premiums **SCREEN** (existing `/payroll` slip); COVERAGE Status=API. Not SHOW / not SHIPPED. |

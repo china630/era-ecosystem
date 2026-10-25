@@ -104,7 +104,12 @@ export async function listAvailableResourceSlots(input: {
           where: {
             patientRefId: input.patientRefId,
             scheduledAt: { gte: sameDayStart, lt: sameDayEnd },
-            status: { notIn: ["CANCELLED", "NO_SHOW"] },
+            AND: [
+              { status: { notIn: ["CANCELLED", "NO_SHOW", "UNPAID_MISSED"] } },
+              {
+                OR: [{ status: { not: "PENDING_PAY" } }, { resourceId: { not: null } }],
+              },
+            ],
             id: input.excludeOrderId ? { not: input.excludeOrderId } : undefined,
           },
         });

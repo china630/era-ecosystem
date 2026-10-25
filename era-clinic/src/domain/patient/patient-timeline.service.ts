@@ -23,6 +23,8 @@ export type PatientTimelineEvent = {
   titleL10n?: L10n;
   subtitle?: string;
   status: string;
+  /** False when an unpaid extra has no cabin yet. */
+  showClock?: boolean;
   href?: string;
   codes?: string[];
   amountNet?: string;

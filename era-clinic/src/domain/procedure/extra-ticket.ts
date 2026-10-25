@@ -20,6 +20,12 @@ export function extraTicketPrintPath(ticketId: string, organizationId: string): 
   return `/print/extra-ticket/${encodeURIComponent(ticketId)}?${qs.toString()}`;
 }
 
+/** One-line void for a single procedure taken off a multi-line cheque. */
+export function extraStornoPrintPath(orderId: string, organizationId: string): string {
+  const qs = new URLSearchParams({ organizationId, autoprint: "1" });
+  return `/print/extra-storno/${encodeURIComponent(orderId)}?${qs.toString()}`;
+}
+
 export function extraNeedsPaperTicket(input: {
   amountNet: number;
   packageIncluded?: boolean;

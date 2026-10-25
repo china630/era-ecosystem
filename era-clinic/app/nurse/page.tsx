@@ -72,6 +72,7 @@ function placeOrder(
     if (isToday && now >= dayEnd) return null;
     return "late";
   }
+  if (order.status === "PENDING_PAY") return "queue";
   if (order.status !== "SCHEDULED") return null;
   if (order.checkInOpen) return "queue";
   const start = new Date(order.scheduledAt).getTime();
@@ -279,7 +280,7 @@ export default function NursePage() {
     buckets.done.length;
 
   function statusLabel(status: string) {
-    const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] as const;
+    const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW", "PENDING_PAY"] as const;
     if ((known as readonly string[]).includes(status)) {
       return t(`status.${status}` as "status.SCHEDULED");
     }
@@ -385,6 +386,11 @@ export default function NursePage() {
             {infoButton(order)}
           </div>
         </div>
+        {order.status === "PENDING_PAY" ? (
+          <p className="rounded-lg bg-[#E74C3C] px-2 py-1.5 text-center text-[12px] font-semibold text-white">
+            {t("unpaidBlock")}
+          </p>
+        ) : null}
         {showCheckIn ? (
           <button
             type="button"

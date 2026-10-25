@@ -137,7 +137,12 @@ export async function getCapacitySummary(
   const scheduledSlots = await prisma.procedureOrder.count({
     where: {
       scheduledAt: { gte: weekStart, lt: weekEnd },
-      status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      AND: [
+        { status: { notIn: ["CANCELLED", "NO_SHOW", "UNPAID_MISSED"] } },
+        {
+          OR: [{ status: { not: "PENDING_PAY" } }, { resourceId: { not: null } }],
+        },
+      ],
     },
   });
 

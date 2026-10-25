@@ -7,7 +7,11 @@ import {
 } from "@/domain/planning/bath-calendar";
 import { listClinicDays } from "@/domain/planning/clinic-day";
 import { addBakuDays, bakuDateKey, bakuDayBounds, parseBakuDateTime } from "@/lib/baku-day";
-import { dailyCapForQuota, loadEpisodeDailyCaps } from "@/domain/sanatorium/block-daily-cap";
+import {
+  dailyCapForQuota,
+  loadEpisodeDailyCaps,
+  quotaForGuestDay,
+} from "@/domain/sanatorium/block-daily-cap";
 import {
   alignDurationToSlotMinutes,
   bathPolicyFromSettings,
@@ -224,8 +228,11 @@ export async function placeManualProcedureSlot(input: {
   const existing = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: order.patientRefId,
-      status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY"] },
       id: { not: order.id },
+      OR: [
+        { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
+        { status: "PENDING_PAY", resourceId: { not: null } },
+      ],
     },
     select: {
       status: true,
@@ -235,6 +242,7 @@ export async function placeManualProcedureSlot(input: {
       endsAt: true,
       inPackage: true,
       packageQuotaCode: true,
+      resourceId: true,
       clinicalEpisodeId: true,
       physioFields: true,
       procedureType: { select: { patientRestMinutes: true } },
@@ -262,10 +270,13 @@ export async function placeManualProcedureSlot(input: {
     end: row.endsAt ?? row.scheduledAt,
     patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
     inPackage: row.inPackage === true,
-    quotaKey: dailyCaps
-      ? dailyCapForQuota(dailyCaps, row.packageQuotaCode, row.procedureCode).quotaKey
-      : row.procedureCode,
+    quotaKey: quotaForGuestDay(dailyCaps, {
+      inPackage: row.inPackage === true,
+      packageQuotaCode: row.packageQuotaCode,
+      procedureCode: row.procedureCode,
+    }).quotaKey,
     countsForRest: row.status !== "NO_SHOW",
+    holdsGuestDay: row.inPackage !== true && Boolean(row.resourceId),
   }));
   const rotationContext: RotationContextSlot[] = existing
     .filter((row) => row.status !== "NO_SHOW")

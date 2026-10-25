@@ -6,6 +6,8 @@ import { parseEntitlementSnapshot } from "@/domain/sanatorium/program-template-a
 export type EpisodeDailyCaps = {
   caps: Map<string, number | null>;
   predecessorByQuota: Map<string, string>;
+  /** Procedure SKU → package block whose daily cap it shares. */
+  blockByProcedure: Map<string, string>;
 };
 
 export async function loadEpisodeDailyCaps(episodeId: string): Promise<EpisodeDailyCaps> {
@@ -20,6 +22,7 @@ export async function loadEpisodeDailyCaps(episodeId: string): Promise<EpisodeDa
               procedures: {
                 select: { procedureCode: true, kind: true, dailyDistinctCap: true },
               },
+              blockMembers: { select: { blockCode: true, procedureCode: true } },
             },
           },
           quotaTransfers: { select: { fromCode: true, toQuotaCode: true, createdAt: true } },
@@ -49,7 +52,34 @@ export async function loadEpisodeDailyCaps(episodeId: string): Promise<EpisodeDa
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
   );
   for (const row of transfers) predecessorByQuota.set(row.toQuotaCode, row.fromCode);
-  return { caps: capsByBlock([...byCode.values()]), predecessorByQuota };
+  const blockByProcedure = new Map<string, string>();
+  for (const member of episode?.programInstance?.template?.blockMembers ?? []) {
+    blockByProcedure.set(member.procedureCode, member.blockCode);
+  }
+  return { caps: capsByBlock([...byCode.values()]), predecessorByQuota, blockByProcedure };
+}
+
+/**
+ * Package lines spend their quota line. A paid extra spends the block that lists its SKU,
+ * so it shares that block's daily distinct cap with the package.
+ */
+export function quotaForGuestDay(
+  loaded: EpisodeDailyCaps | null,
+  input: { inPackage: boolean; packageQuotaCode?: string | null; procedureCode: string },
+): { quotaKey: string; dailyCap: number | null; shareGuestDayCap: boolean } {
+  if (!loaded) {
+    return { quotaKey: input.procedureCode, dailyCap: null, shareGuestDayCap: false };
+  }
+  if (input.inPackage) {
+    const cap = dailyCapForQuota(loaded, input.packageQuotaCode, input.procedureCode);
+    return { quotaKey: cap.quotaKey, dailyCap: cap.dailyCap, shareGuestDayCap: false };
+  }
+  const block = loaded.blockByProcedure.get(input.procedureCode);
+  if (block && loaded.caps.has(block)) {
+    const dailyCap = loaded.caps.get(block) ?? null;
+    return { quotaKey: block, dailyCap, shareGuestDayCap: dailyCap != null };
+  }
+  return { quotaKey: input.procedureCode, dailyCap: null, shareGuestDayCap: false };
 }
 
 export function dailyCapForQuota(

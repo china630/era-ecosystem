@@ -65,6 +65,7 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
       where: {
         startsAt: { lt: dayEnd },
         endsAt: { gt: dayStart },
+        procedureOrder: { status: { not: "UNPAID_MISSED" } },
       },
       include: {
         procedureOrder: { include: { patientRef: true, procedureType: { select: { resourceGapMinutes: true } } } },
@@ -75,7 +76,7 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
         role: { in: ["LOCATION", "EQUIPMENT"] },
         startsAt: { lt: dayEnd },
         endsAt: { gt: new Date(dayStart.getTime() - 240 * 60_000) },
-        procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED"] } },
+        procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "UNPAID_MISSED"] } },
       },
       include: {
         procedureOrder: {

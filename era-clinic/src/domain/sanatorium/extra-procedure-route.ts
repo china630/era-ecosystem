@@ -1,21 +1,33 @@
-export const EXTRA_PROCEDURE_ROUTES = ["SHOW_ON_PLAN", "HOLD_UNTIL_PAY"] as const;
+export const EXTRA_PROCEDURE_ROUTES = ["PLAN_BEFORE_PAY", "HOLD_UNTIL_PAY"] as const;
 
 export type ExtraProcedureRoute = (typeof EXTRA_PROCEDURE_ROUTES)[number];
 
-/** Unknown or missing values follow the shipped default: the unpaid extra is on the plan. */
+/**
+ * SHOW_ON_PLAN is the old name of plan-before-pay. Unknown values follow the
+ * Nafta default: seat the unpaid extra, do not hide it until the cashier.
+ */
 export function parseExtraProcedureRoute(value: string | null | undefined): ExtraProcedureRoute {
-  return value === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN";
+  return value === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY";
+}
+
+/** Planner seats each unpaid extra on its own day and cabin before payment. */
+export function plansExtraBeforePay(route: string | null | undefined): boolean {
+  return parseExtraProcedureRoute(route) !== "HOLD_UNTIL_PAY";
+}
+
+/** Plan tab and the guest print list an unpaid extra. */
+export function showsUnpaidExtraOnPlan(route: string | null | undefined): boolean {
+  return plansExtraBeforePay(route);
 }
 
 /**
- * Plan tab and the guest print may list an unpaid extra.
- * Cabin seat, nurse check-in, QR, and the resource matrix stay closed until pay or folio.
+ * A seated unpaid extra prints its real clock. A hold-until-pay row has no cabin
+ * and must not print the placeholder time.
  */
-export function showsUnpaidExtraOnPlan(route: string | null | undefined): boolean {
-  return parseExtraProcedureRoute(route) === "SHOW_ON_PLAN";
-}
-
-/** PENDING_PAY still stores a placeholder clock. The guest sheet must not print it. */
-export function printsProcedureClock(status: string): boolean {
-  return status !== "PENDING_PAY";
+export function printsProcedureClock(
+  status: string,
+  resourceId?: string | null,
+): boolean {
+  if (status !== "PENDING_PAY") return true;
+  return Boolean(resourceId);
 }

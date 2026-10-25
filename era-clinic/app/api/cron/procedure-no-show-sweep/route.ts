@@ -1,5 +1,8 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
-import { sweepNoShowScheduled } from "@/domain/procedure/procedure-day-close.service";
+import {
+  sweepNoShowScheduled,
+  sweepUnpaidMissed,
+} from "@/domain/procedure/procedure-day-close.service";
 import { fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { runCronForEachTenant } from "@era/satellite-kit";
 
@@ -14,7 +17,8 @@ export async function POST(req: Request) {
       },
       async (organizationId) => {
         const result = await sweepNoShowScheduled();
-        return { organizationId, ...result };
+        const unpaidMissed = await sweepUnpaidMissed();
+        return { organizationId, ...result, unpaidMissed };
       },
     );
     if (!gate.ok) {
