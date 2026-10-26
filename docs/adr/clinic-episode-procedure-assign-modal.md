@@ -322,7 +322,7 @@ The left menu and the package-tab quota bars list a balance only when that code 
 
 The quota-block editor shows the name, the checkbox, and a procedure-list order. The block code stays the stored key (`BLK-…` for a new block) and is not printed. Night-matrix `sortOrder` is unchanged.
 
-Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, lab, or visit line stamps that code. Used leftovers stay in the database and stay off the screen. Migration `20261022160000_block_show_in_procedures` backfills the flags from fulfillment and strips the nine removed `*_POOL` codes from snapshots and unused balances.
+Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, lab, or visit line stamps that code. Used leftovers stay in the database and stay off the screen. They are also off the SKU picker: Save and replace burn a block only when that balance is on the procedure list. A leftover `*_POOL` must not become `burnPoolCode`. Migration `20261022160000_block_show_in_procedures` backfills the flags from fulfillment and strips the nine removed `*_POOL` codes from snapshots and unused balances.
 
 ## Amendment 2026-10-22 — unpaid extra route (SCREEN)
 

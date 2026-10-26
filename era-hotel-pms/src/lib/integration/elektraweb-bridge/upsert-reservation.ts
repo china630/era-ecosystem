@@ -28,6 +28,7 @@ import {
   dispatchRoomChanged,
   lifecycleDemographicsFromPax,
 } from '@/lib/integration/guest-lifecycle-events';
+import { paxLifecycleGlobalPersonId } from '@/lib/integration/pax-lifecycle-person';
 import {
   isClinicHttpBridgeEnabled,
   notifyClinicCheckIn,
@@ -289,12 +290,17 @@ export async function upsertReservationFromElektrawebRow(
       );
       if (!guestProgram) continue;
       clinicDispatched += 1;
+      const globalPersonId = paxLifecycleGlobalPersonId({
+        isPrimary: "isPrimary" in pax ? Boolean(pax.isPrimary) : false,
+        guestId: "guestId" in pax ? pax.guestId : pax.guest?.id,
+        guest: pax.guest,
+        primaryGuest: full?.guest,
+      });
       await dispatchGuestCheckedIn({
         reservationId: reservation.id,
         roomNumber: newRoom ?? undefined,
         programCode: guestProgram,
-        globalPersonId:
-          pax.guest?.globalPersonId ?? full?.guest.globalPersonId ?? undefined,
+        globalPersonId,
         guestName: name,
         checkInDate: checkInDate.toISOString(),
         checkOutDate: checkOutDate.toISOString(),
@@ -305,7 +311,7 @@ export async function upsertReservationFromElektrawebRow(
         await notifyClinicCheckIn({
           reservationId: reservation.id,
           guestName: name,
-          globalPersonId: pax.guest?.globalPersonId ?? full?.guest.globalPersonId,
+          globalPersonId,
           programCode: guestProgram,
           roomNumber: newRoom ?? null,
           paxKey,

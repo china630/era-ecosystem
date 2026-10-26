@@ -1130,6 +1130,9 @@ export async function checkInReservation(
       const { dispatchGuestCheckedIn, lifecycleDemographicsFromPax } = await import(
         '@/lib/integration/guest-lifecycle-events'
       );
+      const { paxLifecycleGlobalPersonId } = await import(
+        '@/lib/integration/pax-lifecycle-person'
+      );
       const paxList =
         full && full.paxGuests.length > 0
           ? full.paxGuests
@@ -1162,8 +1165,12 @@ export async function checkInReservation(
           reservationId: id,
           roomNumber: updated.room?.roomNumber ?? undefined,
           programCode,
-          globalPersonId:
-            pax.guest?.globalPersonId ?? updated.guest.globalPersonId ?? undefined,
+          globalPersonId: paxLifecycleGlobalPersonId({
+            isPrimary: "isPrimary" in pax ? Boolean(pax.isPrimary) : false,
+            guestId: "guestId" in pax ? pax.guestId : pax.guest?.id,
+            guest: pax.guest,
+            primaryGuest: updated.guest,
+          }),
           guestName: name,
           checkInDate: reservation.checkInDate.toISOString(),
           checkOutDate: reservation.checkOutDate.toISOString(),

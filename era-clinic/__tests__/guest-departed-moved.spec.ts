@@ -107,6 +107,28 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
     );
   });
 
+  it("handleGuestDeparted finds a companion chart by pax stay id without an MDM id", async () => {
+    mockedEpisodes.findMany.mockResolvedValue([]);
+    await handleGuestDeparted({
+      type: SATELLITE_HOTEL_GUEST_DEPARTED,
+      organizationId: "org-1",
+      correlationId: "c-pax",
+      occurredAt: new Date().toISOString(),
+      payload: {
+        reservationId: "res-9",
+        paxKey: "pax-child",
+      },
+    });
+    expect(mockedEpisodes.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([{ hotelStayId: "res-9::pax:pax-child" }]),
+        }),
+      }),
+    );
+    expect(mockedEpisodes.updateMany).not.toHaveBeenCalled();
+  });
+
   it("handleGuestDeparted no-ops when no episode matches", async () => {
     mockedEpisodes.findMany.mockResolvedValue([]);
     await handleGuestDeparted({
@@ -150,7 +172,7 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
         }),
         data: expect.objectContaining({
           reservationId: "to-res",
-          hotelStayId: "to-res",
+          hotelStayId: "to-res::mdm:mdm-1",
           roomNumber: "102",
         }),
       }),

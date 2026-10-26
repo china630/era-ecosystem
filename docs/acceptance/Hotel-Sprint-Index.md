@@ -34,7 +34,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-10 | Nafta HK deepen (roster, floor sheet, laundry) | [~] | Engineering SCREEN — [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED |
 | S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + agency table + FO pax SKU; **pilot punch open** |
 | S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; sell-versions catalog + main-SKU night audit; UAT §40 open |
-| S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; **pilot punch open** |
+| S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; companion MDM id stays on that row; **pilot punch open** |
 | S-16 | Reservation card IA D7 W1 | [~] | HOT-BOOK-04 API; ADR hotel-reservation-card-and-party-ops |
 | S-17 | Depart guest (D7 W2) | [~] | HOT-FO-05 API; UAT §43 open |
 | S-18 | Family booking navigator (D7 W3) | [~] | HOT-BOOK-05 API |

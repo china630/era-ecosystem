@@ -8,6 +8,7 @@ import {
   type OccupancyCounts,
 } from '@/lib/services/depart-guest.service';
 import { dispatchGuestMoved } from '@/lib/integration/guest-lifecycle-events';
+import { paxLifecycleGlobalPersonId } from '@/lib/integration/pax-lifecycle-person';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
 import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
 
@@ -168,8 +169,12 @@ export async function moveGuestBetweenStays(
   ]);
 
   const guestName = [pax.firstName, pax.lastName].filter(Boolean).join(' ').trim();
-  const paxGlobalPersonId =
-    pax.guest?.globalPersonId ?? from.guest?.globalPersonId ?? undefined;
+  const paxGlobalPersonId = paxLifecycleGlobalPersonId({
+    isPrimary: pax.isPrimary,
+    guestId: pax.guestId,
+    guest: pax.guest,
+    primaryGuest: from.guest,
+  });
   await dispatchGuestMoved({
     reservationId: toReservationId,
     fromReservationId,

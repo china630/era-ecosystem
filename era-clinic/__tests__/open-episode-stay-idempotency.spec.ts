@@ -1,4 +1,5 @@
 import {
+  legacyOpenEpisodeReusable,
   resolveHotelPatientRefCode,
   resolveHotelStayId,
 } from "@/lib/services/sanatorium.service";
@@ -49,5 +50,46 @@ describe("openEpisodeFromStay stay identity (idempotency)", () => {
     const b = resolveHotelStayId({ reservationId: "uuid-res-77" });
     expect(a).toBe(b);
     expect(a).toBe("uuid-res-77");
+  });
+
+  it("does not reuse a pax-scoped episode that only shares a surname", () => {
+    expect(
+      legacyOpenEpisodeReusable({
+        reservationId: "res-1",
+        hotelStayId: "res-1::pax:gulnara",
+        patientFullName: "Gulnara GALMULLINA",
+        guestName: "Süleyman GALMULLINA",
+      }),
+    ).toBe(false);
+  });
+
+  it("does not reuse the only legacy episode for a different full name", () => {
+    expect(
+      legacyOpenEpisodeReusable({
+        reservationId: "res-1",
+        hotelStayId: "res-1",
+        patientFullName: "Gulnara GALMULLINA",
+        guestName: "Süleyman GALMULLINA",
+      }),
+    ).toBe(false);
+    expect(
+      legacyOpenEpisodeReusable({
+        reservationId: "res-1",
+        hotelStayId: null,
+        patientFullName: "Aliyev",
+        guestName: "Ali",
+      }),
+    ).toBe(false);
+  });
+
+  it("reuses a legacy unbound episode only for the same full name", () => {
+    expect(
+      legacyOpenEpisodeReusable({
+        reservationId: "res-1",
+        hotelStayId: "res-1",
+        patientFullName: "Gulnara  GALMULLINA",
+        guestName: "gulnara galmullina",
+      }),
+    ).toBe(true);
   });
 });
