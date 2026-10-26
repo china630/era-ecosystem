@@ -1651,6 +1651,7 @@ export async function updateReservationSchedule(
       const { recalcReservationDailyRates } = await import('./reservation-pricing.service');
       await recalcReservationDailyRates(id).catch(() => undefined);
     }
+    await alignScheduleSlices(id, reservation, newCheckIn, newCheckOut, newRoomId);
     return updated;
   }
 
@@ -1691,7 +1692,24 @@ export async function updateReservationSchedule(
     await recalcReservationDailyRates(id).catch(() => undefined);
   }
 
+  await alignScheduleSlices(id, reservation, newCheckIn, newCheckOut, newRoomId);
   return updated;
+}
+
+async function alignScheduleSlices(
+  id: string,
+  reservation: { checkInDate: Date; checkOutDate: Date; roomId: string | null },
+  newCheckIn: Date,
+  newCheckOut: Date,
+  newRoomId: string | null,
+) {
+  const datesChanged =
+    newCheckIn.getTime() !== reservation.checkInDate.getTime() ||
+    newCheckOut.getTime() !== reservation.checkOutDate.getTime();
+  const roomChanged = newRoomId !== reservation.roomId;
+  if (!datesChanged && !roomChanged) return;
+  const { alignReservationStaySlices } = await import('./stay-slice.service');
+  await alignReservationStaySlices(id);
 }
 
 export async function addQuickCharge(

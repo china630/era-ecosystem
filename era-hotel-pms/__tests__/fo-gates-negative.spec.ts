@@ -206,11 +206,14 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         {
           id: 'other',
           roomId: null,
+          roomTypeId: 'rt1',
           shareEligible: false,
           shareGender: null,
           adults: 1,
           checkInDate: new Date('2026-08-10'),
           checkOutDate: new Date('2026-08-13'),
+          room: null,
+          staySlices: [],
         },
       ]);
       prisma.room.findUnique.mockResolvedValue(null);

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { doorClashWindow, hotelDateKey } from '@/lib/hotel-calendar';
 import { countsFromPax } from '@/components/reservation-card/party-pax';
+import { isDepartedPartyRow, partyDepartedAt, primaryIndexForParty } from '@/lib/party-departed-stamp';
 import { partyGuestLabel, paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios, reconcilePartyFolios } from '@/lib/services/booking-folio.service';
@@ -259,6 +260,7 @@ export async function patchReservationFull(
       payStatus?: string | null;
       externalResId?: string | null;
       guestState?: string | null;
+      departedAt?: string | null;
       isPrimary?: boolean;
       ownsFolio?: boolean;
       /** FO Guests tab medical SKU (PKG-* or empty). */
@@ -308,7 +310,7 @@ export async function patchReservationFull(
         kept.map((row) => ({
           birthDate: row.birthDate ?? '',
           age: row.age == null ? '' : String(row.age),
-          departedAt: null,
+          departedAt: row.departedAt ?? null,
         })),
       );
       data.adults = counts.adults;
@@ -648,16 +650,17 @@ export async function patchReservationFull(
       },
     });
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
-    const marked = paxGuests.findIndex((p) => p.isPrimary);
-    const primaryIdx = marked >= 0 ? marked : 0;
+    const primaryIdx = primaryIndexForParty(paxGuests);
     await prisma.reservation.update({
       where: { id },
       data: { partyBillingMode: 'PRIMARY' },
     });
     await prisma.reservationGuest.createMany({
       data: paxGuests.map((p, i) => {
-        const isPrimary = i === primaryIdx;
-        const ownsFolio = true;
+        const departedAt = partyDepartedAt(p.departedAt);
+        const departed = isDepartedPartyRow(p);
+        const isPrimary = i === primaryIdx && !departed;
+        const ownsFolio = !departed;
         return {
           organizationId: existing.organizationId,
           reservationId: id,
@@ -675,8 +678,9 @@ export async function patchReservationFull(
           memberNo: p.memberNo ?? null,
           payStatus: p.payStatus ?? null,
           externalResId: p.externalResId ?? null,
-          guestState: p.guestState ?? null,
-          /** Contact / PRIMARY-mode folio owner */
+          guestState: p.guestState ?? (departed ? 'DEPARTED' : null),
+          departedAt,
+          /** Contact / PRIMARY-mode folio owner. A departed guest does not own a new folio. */
           isPrimary,
           ownsFolio,
           medicalPackageCode:
@@ -731,6 +735,7 @@ export async function patchReservationFull(
   const datesChanged =
     (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
     (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
+  const roomChanged = data.roomId !== undefined && data.roomId !== existing.roomId;
 
   const clientDailyRates = datesChanged ? undefined : dailyRates;
   if (datesChanged) {
@@ -742,6 +747,10 @@ export async function patchReservationFull(
         OR: [{ stayDate: { lt: checkIn } }, { stayDate: { gte: checkOut } }],
       },
     });
+  }
+  if (datesChanged || roomChanged) {
+    const { alignReservationStaySlices } = await import('@/lib/services/stay-slice.service');
+    await alignReservationStaySlices(id);
   }
 
   if (clientDailyRates?.length) {
@@ -1096,7 +1105,7 @@ export async function listReservationsForGrid(
       status: true,
       adults: true,
       guest: { select: { fullName: true } },
-      room: { select: { roomNumber: true, status: true } },
+      room: { select: { roomNumber: true, status: true, hkCondition: true } },
       roomType: { select: { code: true } },
       agency: { select: { code: true, name: true } },
       company: { select: { code: true, name: true } },
@@ -1113,7 +1122,7 @@ export async function listReservationsForGrid(
       case 'room':
         return row.room?.roomNumber ?? '';
       case 'hk':
-        return row.room?.status ?? '';
+        return row.room?.hkCondition ?? row.room?.status ?? '';
       case 'guest':
         return row.guest.fullName ?? '';
       case 'arrival':

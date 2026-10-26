@@ -28,8 +28,9 @@ export type DoorSliceTemplate = {
 
 /**
  * Move the door on stay slices from `effective` forward.
- * Nights before that date stay on the old door. A slice with no door follows
- * the reservation header and is left alone. A pending future door is kept.
+ * Nights before that date stay on the old door. A slice with no door is pinned
+ * to the door being left (past) or the door being taken (from `effective`).
+ * A pending future door is kept. Tariff `roomTypeId` is not rewritten.
  */
 export function planDoorMove(input: {
   slices: DoorSlice[];
@@ -45,9 +46,30 @@ export function planDoorMove(input: {
   const creates: DoorSliceCreate[] = [];
 
   for (const slice of input.slices) {
-    if (!slice.roomId || slice.roomId === input.toRoomId) continue;
+    if (slice.roomId && keep.has(slice.roomId)) continue;
+    if (!slice.roomId) {
+      if (input.dayKey(slice.toDate) <= effectiveKey) {
+        updates.push({ id: slice.id, roomId: input.fromRoomId });
+        continue;
+      }
+      if (input.dayKey(slice.fromDate) >= effectiveKey) {
+        if (input.toRoomId) updates.push({ id: slice.id, roomId: input.toRoomId });
+        continue;
+      }
+      updates.push({ id: slice.id, toDate: input.effective, roomId: input.fromRoomId });
+      if (input.toRoomId) {
+        creates.push({
+          fromDate: input.effective,
+          toDate: slice.toDate,
+          roomId: input.toRoomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+        });
+      }
+      continue;
+    }
+    if (slice.roomId === input.toRoomId) continue;
     if (slice.roomId !== input.fromRoomId) continue;
-    if (keep.has(slice.roomId)) continue;
     if (input.dayKey(slice.toDate) <= effectiveKey) continue;
 
     if (input.dayKey(slice.fromDate) >= effectiveKey) {

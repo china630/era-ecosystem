@@ -255,11 +255,13 @@ export async function updateRoomAxes(
   inventory: RoomInventoryStatus,
   reason?: string | null,
   audit?: RoomAuditCtx,
+  opts?: { allowOccupiedHk?: boolean },
 ) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');
   if (hk !== room.hkCondition && (await roomHasInHouseStay(id))) {
-    throw new OccupiedHkLockedError();
+    const occupiedCleanliness = opts?.allowOccupiedHk && hk !== 'INSPECTED';
+    if (!occupiedCleanliness) throw new OccupiedHkLockedError();
   }
   const updated = await prisma.room.update({
     where: { id },

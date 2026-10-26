@@ -356,6 +356,9 @@ export async function upsertReservationFromElektrawebRow(
     { source: 'elektraweb' },
   );
 
+  const { alignReservationStaySlices } = await import('@/lib/services/stay-slice.service');
+  await alignReservationStaySlices(reservation.id);
+
   return {
     action: existing ? 'updated' : 'created',
     key: externalRef,

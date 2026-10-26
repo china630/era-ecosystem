@@ -54,16 +54,21 @@ export function hotelNightBounds(isoOrKey: string | Date): { start: Date; end: D
   };
 }
 
-/** True when a stay consumes a door on hotel night D (FO Avl/Occ / sellable / create). */
+/**
+ * True when a stay consumes a door on hotel night D (FO Avl/Occ / sellable / create).
+ * Compared as Asia/Baku civil dates: arrival day inclusive, checkout day exclusive.
+ * A `@db.Date` at UTC midnight is that civil day, so it does not also occupy the night before.
+ * Same result as the 12:00 Baku window for stays stored at 14:00 check-in and 12:00 check-out.
+ */
 export function stayOccupiesHotelNight(
   checkIn: Date | string,
   checkOut: Date | string,
   night: string | Date,
 ): boolean {
-  const cin = checkIn instanceof Date ? checkIn : new Date(checkIn);
-  const cout = checkOut instanceof Date ? checkOut : new Date(checkOut);
-  const { start, end } = hotelNightBounds(night);
-  return cin < end && cout > start;
+  const cin = hotelDateKey(checkIn);
+  const cout = hotelDateKey(checkOut);
+  const key = hotelDateKey(night);
+  return cin <= key && key < cout;
 }
 
 /** True stay overlap (double booking), not adjacent checkout/check-in turnover. */

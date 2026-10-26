@@ -2385,6 +2385,7 @@ export function ReservationCardEditor({
             payStatus: p.payStatus || null,
             externalResId: p.externalResId || null,
             guestState: p.guestState || null,
+            departedAt: p.departedAt || null,
             isPrimary: p.isPrimary,
             ownsFolio: p.ownsFolio ?? false,
             medicalPackageCode: p.medicalPackageCode?.trim()

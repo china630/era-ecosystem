@@ -206,9 +206,18 @@ async function loadDoorOverlaps(input: {
     } else {
       for (const slice of slices) {
         const onDoor =
-          slice.roomId === input.roomId ||
-          (!slice.roomId && row.roomId === input.roomId && slice.roomTypeId === row.roomTypeId);
-        if (onDoor) windows.push({ from: slice.fromDate, to: slice.toDate });
+          slice.roomId === input.roomId || (!slice.roomId && row.roomId === input.roomId);
+        if (!onDoor) continue;
+        const fromKey =
+          hotelDateKey(slice.fromDate) > hotelDateKey(row.checkInDate)
+            ? hotelDateKey(slice.fromDate)
+            : hotelDateKey(row.checkInDate);
+        const toKey =
+          hotelDateKey(slice.toDate) < hotelDateKey(row.checkOutDate)
+            ? hotelDateKey(slice.toDate)
+            : hotelDateKey(row.checkOutDate);
+        if (fromKey >= toKey) continue;
+        windows.push({ from: parseHotelNoon(fromKey), to: parseHotelNoon(toKey) });
       }
     }
     for (const window of windows) {
@@ -503,14 +512,26 @@ function overlapsNight(r: ShareReservationSlice, night: Date): boolean {
   return stayOccupiesHotelNight(r.checkInDate, r.checkOutDate, night);
 }
 
+/** One stay counts once per night. A row that already has a door wins over a door-less duplicate. */
+function dedupeStaysOnNight(rows: ShareReservationSlice[]): ShareReservationSlice[] {
+  const byId = new Map<string, ShareReservationSlice>();
+  for (const row of rows) {
+    const prev = byId.get(row.id);
+    if (!prev || (!prev.roomId && row.roomId)) byId.set(row.id, row);
+  }
+  return [...byId.values()];
+}
+
 /** Count physical doors consumed on one hotel night. */
 export function countDoorsUsedOnNight(
   reservations: ShareReservationSlice[],
   night: Date,
   maxBedDefault: number,
 ): number {
-  const active = reservations.filter((r) => overlapsNight(r, night));
+  const active = dedupeStaysOnNight(reservations.filter((r) => overlapsNight(r, night)));
   let doors = 0;
+  const exclusiveRooms = new Set<string>();
+  let unassignedExclusive = 0;
   const assignedShareByRoom = new Map<string, ShareReservationSlice[]>();
   let unassignedM = 0;
   let unassignedF = 0;
@@ -520,7 +541,8 @@ export function countDoorsUsedOnNight(
       continue;
     }
     if (!isEffectiveShare(r)) {
-      doors += 1;
+      if (r.roomId) exclusiveRooms.add(r.roomId);
+      else unassignedExclusive += 1;
       continue;
     }
     const gender = normalizeShareGender(r.shareGender)!;
@@ -535,6 +557,8 @@ export function countDoorsUsedOnNight(
     }
   }
 
+  doors += exclusiveRooms.size;
+  doors += unassignedExclusive;
   doors += assignedShareByRoom.size;
   doors += Math.ceil(unassignedM / maxBedDefault);
   doors += Math.ceil(unassignedF / maxBedDefault);
@@ -557,19 +581,100 @@ export function maxDoorsUsedInRange(
   return maxDoors;
 }
 
-export async function loadShareSlicesForType(
+export type InventorySlice = {
+  fromDate: Date;
+  toDate: Date;
+  roomId: string | null;
+  roomTypeId: string;
+  /** Room.roomTypeId of slice.roomId. Null when that door is missing. */
+  doorTypeId: string | null;
+};
+
+/** One live stay plus the physical type of its header door. */
+export type InventoryStay = {
+  id: string;
+  roomId: string | null;
+  roomTypeId: string;
+  doorTypeId: string | null;
+  shareEligible: boolean;
+  shareGender: string | null;
+  adults: number;
+  checkInDate: Date;
+  checkOutDate: Date;
+  slices: InventorySlice[];
+};
+
+function laterKey(a: string, b: string): string {
+  return a > b ? a : b;
+}
+
+function earlierKey(a: string, b: string): string {
+  return a < b ? a : b;
+}
+
+/**
+ * Segments that consume `roomTypeId` on this stay.
+ * An assigned door consumes that door's physical type, clamped to the header dates.
+ * The sold type consumes a door only while the segment has no door.
+ */
+export function segmentsConsumingType(
   roomTypeId: string,
+  stays: InventoryStay[],
+): ShareReservationSlice[] {
+  const out: ShareReservationSlice[] = [];
+  for (const stay of stays) {
+    const headerFrom = hotelDateKey(stay.checkInDate);
+    const headerTo = hotelDateKey(stay.checkOutDate);
+    if (headerFrom >= headerTo) continue;
+    const slices = stay.slices ?? [];
+    if (slices.length === 0) {
+      const doorType = stay.roomId ? stay.doorTypeId : null;
+      const consumes = doorType ? doorType === roomTypeId : stay.roomTypeId === roomTypeId;
+      if (!consumes) continue;
+      out.push({
+        id: stay.id,
+        roomId: stay.roomId,
+        shareEligible: stay.shareEligible,
+        shareGender: stay.shareGender,
+        adults: stay.adults,
+        checkInDate: stay.checkInDate,
+        checkOutDate: stay.checkOutDate,
+      });
+      continue;
+    }
+    for (const slice of slices) {
+      const fromKey = laterKey(hotelDateKey(slice.fromDate), headerFrom);
+      const toKey = earlierKey(hotelDateKey(slice.toDate), headerTo);
+      if (fromKey >= toKey) continue;
+      const doorId = slice.roomId ?? stay.roomId;
+      const doorType = slice.roomId ? slice.doorTypeId : stay.roomId ? stay.doorTypeId : null;
+      const consumes = doorId ? doorType === roomTypeId : slice.roomTypeId === roomTypeId;
+      if (!consumes) continue;
+      out.push({
+        id: stay.id,
+        roomId: doorId,
+        shareEligible: stay.shareEligible,
+        shareGender: stay.shareGender,
+        adults: stay.adults,
+        checkInDate: parseHotelNoon(fromKey),
+        checkOutDate: parseHotelNoon(toKey),
+      });
+    }
+  }
+  return out;
+}
+
+export async function loadInventoryStays(
   from: Date,
   to: Date,
   excludeReservationId?: string,
-): Promise<ShareReservationSlice[]> {
+): Promise<InventoryStay[]> {
   const rows = await prisma.reservation.findMany({
     where: {
       ...(excludeReservationId ? { id: { not: excludeReservationId } } : {}),
       status: { in: [...SCHEDULABLE_STATUSES] },
       checkInDate: { lt: to },
       checkOutDate: { gt: from },
-      OR: [{ roomTypeId }, { staySlices: { some: { roomTypeId } } }],
     },
     select: {
       id: true,
@@ -580,39 +685,46 @@ export async function loadShareSlicesForType(
       adults: true,
       checkInDate: true,
       checkOutDate: true,
-      staySlices: { select: { fromDate: true, toDate: true, roomTypeId: true, roomId: true } },
+      room: { select: { roomTypeId: true } },
+      staySlices: {
+        select: {
+          fromDate: true,
+          toDate: true,
+          roomTypeId: true,
+          roomId: true,
+          room: { select: { roomTypeId: true } },
+        },
+      },
     },
   });
-  const out: ShareReservationSlice[] = [];
-  for (const row of rows) {
-    const slices = Array.isArray(row.staySlices) ? row.staySlices : null;
-    if (!slices || slices.length === 0) {
-      if (slices && row.roomTypeId && row.roomTypeId !== roomTypeId) continue;
-      out.push({
-        id: row.id,
-        roomId: row.roomId,
-        shareEligible: row.shareEligible,
-        shareGender: row.shareGender,
-        adults: row.adults,
-        checkInDate: row.checkInDate,
-        checkOutDate: row.checkOutDate,
-      });
-      continue;
-    }
-    for (const slice of slices) {
-      if (slice.roomTypeId !== roomTypeId) continue;
-      out.push({
-        id: row.id,
-        roomId: slice.roomId ?? (slice.roomTypeId === row.roomTypeId ? row.roomId : null),
-        shareEligible: row.shareEligible,
-        shareGender: row.shareGender,
-        adults: row.adults,
-        checkInDate: slice.fromDate,
-        checkOutDate: slice.toDate,
-      });
-    }
-  }
-  return out;
+  return rows.map((row) => ({
+    id: row.id,
+    roomId: row.roomId,
+    roomTypeId: row.roomTypeId,
+    doorTypeId: row.room?.roomTypeId ?? null,
+    shareEligible: row.shareEligible,
+    shareGender: row.shareGender,
+    adults: row.adults,
+    checkInDate: row.checkInDate,
+    checkOutDate: row.checkOutDate,
+    slices: (row.staySlices ?? []).map((slice) => ({
+      fromDate: slice.fromDate,
+      toDate: slice.toDate,
+      roomId: slice.roomId,
+      roomTypeId: slice.roomTypeId,
+      doorTypeId: slice.room?.roomTypeId ?? null,
+    })),
+  }));
+}
+
+export async function loadShareSlicesForType(
+  roomTypeId: string,
+  from: Date,
+  to: Date,
+  excludeReservationId?: string,
+): Promise<ShareReservationSlice[]> {
+  const stays = await loadInventoryStays(from, to, excludeReservationId);
+  return segmentsConsumingType(roomTypeId, stays);
 }
 
 export async function countDoorsUsedForRoomType(

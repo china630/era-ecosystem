@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { CatalogField, PageHeader, showApiError } from '@era/satellite-kit/ui';
+import { HkStatusMark } from '@/components/HkStatusMark';
 
 type SheetRow = {
   roomId: string;
@@ -23,8 +24,7 @@ type Rot = {
 };
 
 const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
-const JOBS = new Set(['STAYOVER', 'DEPARTURE', 'ARRIVAL_PREP', 'NSR', 'OTHER', 'DEEP', 'LINEN', 'OK']);
-const HK = new Set(['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED']);
+const JOBS = new Set(['STAYOVER', 'DEPARTURE', 'ARRIVAL_PREP', 'NSR', 'OTHER', 'DEEP', 'LINEN', 'OK', 'STAY', 'NONE']);
 
 export default function HkMobilePage() {
   const t = useTranslations('housekeeping');
@@ -106,11 +106,12 @@ export default function HkMobilePage() {
             <p className="text-sm font-medium text-[#34495E]">
               {row.roomNumber} · {t('floor')} {row.floor}
             </p>
-            <p className="text-[12px] text-[#7F8C8D]">
-              {row.hkCondition && HK.has(row.hkCondition) ? t(`hkCond.${row.hkCondition}`) : row.hkCondition ?? ''}
-              {' · '}
-              {row.jobType && JOBS.has(row.jobType) ? t(`job.${row.jobType}`) : row.jobType ?? ''}
-              {row.guests ? ` · ${row.guests}` : ''}
+            <p className="flex flex-wrap items-center gap-1 text-[12px] text-[#7F8C8D]">
+              <HkStatusMark status={row.hkCondition} />
+              <span>
+                {row.jobType && JOBS.has(row.jobType) ? t(`job.${row.jobType}`) : row.jobType ?? ''}
+                {row.guests ? ` · ${row.guests}` : ''}
+              </span>
             </p>
             <div className="mt-2">
               <CatalogField

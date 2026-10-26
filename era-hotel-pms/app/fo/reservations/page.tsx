@@ -18,6 +18,7 @@ import {
   usePaginatedList,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
+import { HkStatusMark } from '@/components/HkStatusMark';
 import { Cake, MessageSquare, Plus } from 'lucide-react';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { birthdayIconVisible, birthdayNightInStay } from '@/lib/stay-birthday';
@@ -45,7 +46,7 @@ type Row = {
   guest: { fullName: string; birthDate?: string | null };
   guestLabel?: string;
   noteText?: string | null;
-  room: { roomNumber: string; status: string } | null;
+  room: { roomNumber: string; status: string; hkCondition?: string | null } | null;
   roomType: { code: string };
   agency: { code: string; name?: string | null } | null;
   company?: { code: string; name?: string | null } | null;
@@ -334,7 +335,8 @@ export default function ReservationsListPage() {
                 key: 'hk',
                 header: t('hk'),
                 sortable: true,
-                render: (r) => (r.room ? r.room.status.slice(0, 1) : '—'),
+                render: (r) =>
+                  r.room ? <HkStatusMark status={r.room.hkCondition ?? r.room.status} /> : '—',
               },
               {
                 key: 'agency',

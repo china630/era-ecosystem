@@ -407,11 +407,13 @@ async function executeLockedNightAudit() {
       if (owing > 0) throw new Error('Departing guest folio is not zero');
     }
     if (naPolicy.autoExtendUndeparted) {
+      const { alignReservationStaySlices } = await import('@/lib/services/stay-slice.service');
       for (const row of holds.dueOuts) {
         await prisma.reservation.update({
           where: { id: row.id },
           data: { checkOutDate: stayCheckOut(addHotelDays(row.checkOutDate, 1)) },
         });
+        await alignReservationStaySlices(row.id);
       }
       steps.push(`Step 2b: Stays extended — ${holds.dueCount}`);
     }

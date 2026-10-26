@@ -39,7 +39,7 @@ Do **not** add Pickup, SO, or DND as extra `RoomStatus` values.
 |------|--------|----------------|
 | Inventory | In service / **OOS** / **OOO** | HK + engineering; date range (`RoomClosure`) |
 | FO occupancy | Vacant / Occupied | Reservation `IN_HOUSE` (prefer derived) |
-| HK condition | Dirty / **Pickup** / Clean / Inspected | Maid / supervisor / system checkout-move. FO rack, chessboard, and RoomInfo cannot change it while `IN_HOUSE`. |
+| HK condition | Dirty / **Pickup** / Clean / Inspected | Maid / supervisor / system checkout-move. FO rack and RoomInfo cannot change it while `IN_HOUSE`. `/hk/rooms` may set Dirty, Pickup, or Clean on an occupied door for housekeeping; Inspected stays vacant-only. |
 
 `MAINTENANCE` collapses to OOS or OOO plus a reason from a managed list.
 
@@ -59,7 +59,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 |------|------|
 | Three axes + check-in does not write OCCUPIED | Landed |
 | Roster week grid + rotation pair board | Landed (SCREEN). Cells are E/L/N/OFF/ƏG selects. Pairs swap from the day board. |
-| Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN). Sheet filter, readable job labels, NSR toggle, print in the page header. |
+| Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN). Floor chips, maid in the title, visit outcome (İstəmədi is an outcome, not a second button), fullscreen. Hotel-wide board `/hk/rooms`. |
 | Laundry ticket + immediate post on accept | **Superseded** — accept is IN_PLANT only |
 | Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
 | HK forecast 7/14 + linen/deep/heads | Landed (SCREEN) |
@@ -67,7 +67,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Needed-by time on sheet | Landed (SCREEN); stored as Asia/Baku wall clock |
 | DND×2 / SO×3 → OPEN GuestTask | Landed (SCREEN) |
 | Print | Floor-sheet PDF, one floor per page, DejaVu, UI locale. Browser print of the ops page is not the form. |
-| Elektra time columns / Q Saati | Arrival/departure clocks from Stay actual times; Q Saati still empty |
+| Elektra time columns / Q Saati | Arrival/departure clock is the planned stay time, replaced by the actual check-in/out when that exists. Q Saati still empty |
 | Per-stay linen/deep N | **Coded** (HK job on stay, **not** a folio line) |
 | Laundry cycle §9 (intake ≠ return, post on Delivered, FO fallback, checkout stop) | **Coded** (SCREEN) — UAT unsigned |
 | UAT-SMOKE §34 pass / SHIPPED | **Open** |
@@ -210,7 +210,9 @@ From `Kat Hizmetleri Raporları` (2026-08-22, floor 4):
 | 23 | Ayrılış Saati | **Today** departure time | |
 | 24 | Q Saati | TBD | Empty in export — keep slot, do not invent UI until HK manager names it |
 
-Header also: hotel, print timestamp, floor, maid, shift, “in list : N”.
+Header also: hotel, print timestamp, floor, maid names, “in list : N”. The ops screen shows the maid in the sheet title, not as a column. The PDF does the same.
+
+Screen columns on `/hk` are the working set (room, cleanliness, occupancy, type, guest, VIP, job, duty, arrival and departure with the clock under the date, needed-by, visit outcome). The PDF keeps the paper columns except maid. Cleanliness uses the shared blue (dirty / pickup) and green (clean / inspected) mark, including the room plan bar and the reservation list.
 
 ### 7.2 Columns Elektra lacks (add)
 

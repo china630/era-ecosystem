@@ -66,4 +66,21 @@ describe('hotel night bounds (door occupancy)', () => {
       ),
     ).toBe(true);
   });
+
+  it('a civil date at UTC midnight does not occupy the previous hotel night', () => {
+    expect(
+      stayOccupiesHotelNight(
+        new Date('2026-10-27T00:00:00.000Z'),
+        new Date('2026-10-28T00:00:00.000Z'),
+        '2026-10-26',
+      ),
+    ).toBe(false);
+    expect(
+      stayOccupiesHotelNight(
+        new Date('2026-10-27T00:00:00.000Z'),
+        new Date('2026-10-28T00:00:00.000Z'),
+        '2026-10-27',
+      ),
+    ).toBe(true);
+  });
 });
