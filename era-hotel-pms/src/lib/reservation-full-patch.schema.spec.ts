@@ -20,6 +20,7 @@ describe('reservationFullPatchSchema', () => {
           isPrimary: true,
           ownsFolio: true,
           guestId: '550e8400-e29b-41d4-a716-446655440001',
+          departedAt: '2026-10-26T15:07:00.000Z',
         },
       ],
       partyBillingMode: 'PRIMARY',
@@ -30,6 +31,7 @@ describe('reservationFullPatchSchema', () => {
     expect(parsed.paxGuests?.[0].firstName).toBe('Ali');
     expect(parsed.partyBillingMode).toBe('PRIMARY');
     expect(parsed.paxGuests?.[0].ownsFolio).toBe(true);
+    expect(parsed.paxGuests?.[0].departedAt).toBe('2026-10-26T15:07:00.000Z');
   });
 
   it('rejects invalid uuid for sourceId', () => {

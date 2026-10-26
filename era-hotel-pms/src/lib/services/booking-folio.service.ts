@@ -41,20 +41,24 @@ export async function ensureOpenFolio(reservationId: string, type: FolioType) {
   });
 }
 
-/**
- * EQUAL party billing: ensure each ReservationGuest with ownsFolio has an OPEN GUEST folio
- * linked via reservationGuestId.
- */
-/** One primary guest, and a folio for every guest on a live stay, including a child. */
+/** One primary guest, and a folio for every guest still in the room, including a child. */
 export async function ensurePrimaryAndGuestFolios(reservationId: string) {
   const guests = await prisma.reservationGuest.findMany({
     where: { reservationId },
     orderBy: { sortOrder: 'asc' },
   });
-  if (guests.length === 0) return;
-  const primary = guests.find((row) => row.isPrimary) ?? guests[0]!;
+  const live = guests.filter((row) => row.departedAt == null && row.guestState !== 'DEPARTED');
   await prisma.reservationGuest.updateMany({
-    where: { reservationId },
+    where: {
+      reservationId,
+      OR: [{ departedAt: { not: null } }, { guestState: 'DEPARTED' }],
+    },
+    data: { ownsFolio: false, isPrimary: false },
+  });
+  if (live.length === 0) return;
+  const primary = live.find((row) => row.isPrimary) ?? live[0]!;
+  await prisma.reservationGuest.updateMany({
+    where: { reservationId, departedAt: null, NOT: { guestState: 'DEPARTED' } },
     data: { ownsFolio: true, isPrimary: false },
   });
   await prisma.reservationGuest.update({
@@ -70,7 +74,7 @@ export async function ensurePrimaryAndGuestFolios(reservationId: string) {
 
 export async function ensurePartyGuestFolios(reservationId: string) {
   const guests = await prisma.reservationGuest.findMany({
-    where: { reservationId, ownsFolio: true },
+    where: { reservationId, ownsFolio: true, departedAt: null, NOT: { guestState: 'DEPARTED' } },
     select: { id: true },
   });
   const created = [];
@@ -80,9 +84,9 @@ export async function ensurePartyGuestFolios(reservationId: string) {
         reservationId,
         reservationGuestId: g.id,
         type: 'GUEST',
-        status: 'OPEN',
       },
     });
+    // A closed folio still holds the unique reservationGuestId. Do not insert a second row.
     if (existing) {
       created.push(existing);
       continue;

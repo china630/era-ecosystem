@@ -1423,6 +1423,7 @@
     "grantRevoke": "Geri çək",
     "grantRevoked": "Geri çəkildi",
     "grantRestore": "Geri qaytar",
+    "grantAlreadyActive": "Bu əməkdaş üçün bu peyk və rol üzrə aktiv qrant artıq var.",
     "linkExport": "1C / CSV ixracı",
     "linkAudit": "Tam audit jurnalı",
     "filterSearch": "Axtarış",

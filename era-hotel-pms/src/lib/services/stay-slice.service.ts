@@ -2,6 +2,7 @@ import { todayBakuYmd, bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { dateOnlyUtc, isoDate } from '@/lib/services/door-type.policy';
+import { alignStaySlices } from '@/lib/services/stay-slice-align';
 import { forwardDoorGaps, planDoorMove } from '@/lib/services/stay-door-move';
 
 export async function resolveStaySliceForDate(reservationId: string, stayDate: Date) {
@@ -244,11 +245,113 @@ async function applyDoorPlan(
   });
 }
 
+const ALIGN_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT'] as const;
+
+type AlignStayRow = {
+  id: string;
+  status: string;
+  roomId: string | null;
+  roomTypeId: string;
+  ratePlanId: string;
+  checkInDate: Date;
+  checkOutDate: Date;
+  organizationId: string;
+  staySlices: AlignSliceRow[];
+};
+
+type AlignSliceRow = {
+  id: string;
+  fromDate: Date;
+  toDate: Date;
+  roomId: string | null;
+  roomTypeId: string;
+  ratePlanId: string;
+};
+
+async function applyStaySliceAlign(stay: AlignStayRow) {
+  if (!ALIGN_STATUSES.includes(stay.status as (typeof ALIGN_STATUSES)[number])) return;
+  const plan = alignStaySlices({
+    checkIn: stay.checkInDate,
+    checkOut: stay.checkOutDate,
+    roomId: stay.roomId,
+    roomTypeId: stay.roomTypeId,
+    ratePlanId: stay.ratePlanId,
+    slices: stay.staySlices,
+    datesOnly: stay.status === 'CHECKED_OUT',
+  });
+  if (plan.updates.length === 0 && plan.deletes.length === 0 && plan.creates.length === 0) return;
+  await prisma.$transaction(async (tx) => {
+    if (plan.deletes.length > 0) {
+      await tx.reservationStaySlice.deleteMany({ where: { id: { in: plan.deletes } } });
+    }
+    for (const update of plan.updates) {
+      await tx.reservationStaySlice.update({
+        where: { id: update.id },
+        data: {
+          ...(update.fromDate ? { fromDate: update.fromDate } : {}),
+          ...(update.toDate ? { toDate: update.toDate } : {}),
+          ...(update.roomId !== undefined ? { roomId: update.roomId } : {}),
+        },
+      });
+    }
+    if (plan.creates.length > 0) {
+      await tx.reservationStaySlice.createMany({
+        data: plan.creates.map((slice) => ({
+          organizationId: stay.organizationId,
+          reservationId: stay.id,
+          fromDate: slice.fromDate,
+          toDate: slice.toDate,
+          roomId: slice.roomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+        })),
+      });
+    }
+  });
+}
+
+/** Clamp slices to the header stay and pin a missing door. Checked-out stays only lose extra dates. */
+export async function alignReservationStaySlices(reservationId: string) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    select: {
+      id: true,
+      status: true,
+      roomId: true,
+      roomTypeId: true,
+      ratePlanId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      organizationId: true,
+      staySlices: true,
+    },
+  });
+  if (!stay) return;
+  await applyStaySliceAlign(stay);
+}
+
 /**
  * Live stays whose header door moved but a future slice still pins the old door.
- * A pending scheduled door is left on its slice.
+ * A pending scheduled door is left on its slice. Slice dates are clamped to the header first.
  */
 export async function repairLiveStayDoors() {
+  const live = await prisma.reservation.findMany({
+    where: { status: { in: [...LIVE_STAY] } },
+    select: {
+      id: true,
+      status: true,
+      roomId: true,
+      roomTypeId: true,
+      ratePlanId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      organizationId: true,
+      staySlices: true,
+    },
+  });
+  for (const stay of live) {
+    await applyStaySliceAlign(stay);
+  }
   const stays = await prisma.reservation.findMany({
     where: { status: { in: [...LIVE_STAY] }, roomId: { not: null } },
     select: {

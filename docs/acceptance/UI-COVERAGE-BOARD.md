@@ -118,12 +118,13 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
 | CP-BILL-OWNER-01 | Platform | invoices / orders | Y | `/settings/subscription\|invoices\|orders` | **SCREEN** | UAT-SMOKE | |
 | HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | In-house suggestions use today (Asia/Baku) through checkout. FO SHOW rollup unchanged |
-| HOT-FO-04 | Hotel | stay amendment / in-house door move | Y | card, chessboard, `/fo/room-plan` | **SCREEN** | UAT §35 not signed; Status=API on COVERAGE | Clash is today through checkout. A finished slice does not block; a confirmed tail does. AC-HOT-AMEND stays 🟡. FO SHOW rollup unchanged |
+| HOT-FO-04 | Hotel | stay amendment / in-house door move | Y | card, chessboard, `/fo/room-plan` | **SCREEN** | UAT §35 not signed; Status=API on COVERAGE | Clash is today through checkout. A finished slice does not block; a confirmed tail does. Saving dates clamps the plan bar to the header checkout. AC-HOT-AMEND stays 🟡. FO SHOW rollup unchanged |
 | HOT-BOOK-04 | Hotel | reservation card IA | Y | header snapshot + Stay Details regroup | **SCREEN** | UAT open; Status=API | ADR hotel-reservation-card-and-party-ops |
 | HOT-BOOK-06…09 | Hotel | card right-pane density | Y | Guests/Pricing/Folio/Notes tabs | **SCREEN** | UAT §45–§48 open | no Opera windows |
-| HOT-FO-05 | Hotel | Depart guest | Y | Guests ⋮ + DepartGuestModal | **SCREEN** | UAT §43 open | stay IN_HOUSE; person event |
-| HOT-FO-06/07 | Hotel | Move guest / Swap rooms | Y | move/swap APIs + StaysBar | **SCREEN** | UAT §44 open | sibling group only |
+| HOT-FO-05 | Hotel | Depart guest | Y | Guests ⋮ + DepartGuestModal | **SCREEN** | UAT §43 open | stay IN_HOUSE; a closed folio on a departed guest is not recreated; stay save keeps the departure |
+| HOT-FO-06/07 | Hotel | Move guest / Swap rooms | Y | move/swap APIs + StaysBar | **SCREEN** | UAT §44 open | sibling group only; move dialog copy az/ru/en |
 | HOT-FO-08 | Hotel | reissue key task | Y tasks create | FO task after Depart/Move/Swap | **STUB** | no encoder hardware | — |
+| HOT-HK-03 | Hotel | Floor sheet + hotel cleanliness board | Y | `/hk` `/hk/rooms` `/hk/mobile` | **SCREEN** | UAT §34 open; Status=API | Maid in the sheet title. Occupied Dirty/Pickup/Clean only on the housekeeping condition route. Inspected stays vacant-only. Out of Hotel SHOW rollup |
 | HOT-UE-01 | Hotel | unit economics | Y | `/executive/unit-economics` | **SCREEN** | deepen + UAT | Hotel SHOW rollup unchanged (core FO SHOW) |
 | HOT-RPT-01/02 | Hotel | management PDF catalog + nightly ZIP | Y | `/reports/*` hubs + cubes | **SCREEN** | W1–W3 catalog + ZIP; email cron HEADLESS; out of Hotel SHOW rollup | HOT-NA-03 ops grids already SHIPPED |
 | HOT-AGP-01/02/03 | Hotel | agency portal + FO inbox | Y | `/agency/*` + `/fo/agency-inbox` | **SCREEN** | P0–P1; AC-HOT-AGP 🟡; out of Hotel SHOW rollup | ADR hotel-agency-portal |
@@ -182,6 +183,8 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-10-26 | HOT-FO-04 stays **SCREEN**. Saving dates clamps the room-plan bar to the header checkout. No new screen. AC-HOT-AMEND stays 🟡. Hotel SHOW rollup unchanged. |
+| 2026-10-26 | HOT-HK-03 floor sheet + `/hk/rooms` **SCREEN** (shared cleanliness pill). UAT §34 open. Not SHOW / not SHIPPED. Hotel SHOW rollup unchanged. |
 | 2026-10-25 | HOT-FO-04 stay amendment **SCREEN** (card, chessboard, room plan). In-house door clash is today (Asia/Baku) through checkout. HOT-FO-03 suggestions use that window. Both stay API. AC-HOT-AMEND stays 🟡. Gate, Pilot, and edition unchanged. |
 | 2026-09-30 | CP-WF-FIT-01 fitness files **SCREEN** (employments + floor); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-30 | CP-WF-SELF-01 employee cabinet **SCREEN** (`/workspace/me` + requests); COVERAGE Status=API. Not SHOW / not SHIPPED. |

@@ -10,7 +10,8 @@ Do not clone Opera (folio windows, upgrade offers, share split). Copy Opera **la
 
 - Posted nights are not rewritten.
 - New charged product (`roomTypeId` + `ratePlanId`) starts from an **effective date** (stay slices: `[from, to)` exclusive).
-- Physical door type may differ from charged type (`givenRoomTypeId` / complimentary relocate).
+- Saving the reservation card clamps those slices to the header stay. A missing door on a live segment is pinned to the header door. The charged `roomTypeId` on an existing slice is not rewritten. A slice must not run past checkout, so the room plan bar ends with the card.
+- Physical door type may differ from charged type (`givenRoomTypeId` / complimentary relocate). Inventory follows the physical door once a door is assigned.
 - Manual Price is **stay-level** (nightly or stay total spread). Stay % is mutually exclusive. Per-night lock only.
 
 Occupancy drop when a companion **departs** mid-stay (adults/children from an effective date, stay remains `IN_HOUSE`) is the same pricing law — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D4. It is not unused-nights refund of the whole stay.

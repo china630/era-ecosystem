@@ -47,7 +47,7 @@ describe('planDoorMove', () => {
     ]);
   });
 
-  it('leaves a slice with no door and a pending future door alone', () => {
+  it('pins a door-less slice and keeps a pending future door', () => {
     const plan = planDoorMove({
       slices: [
         slice({ id: 'open', fromDate: day('2026-10-08'), toDate: day('2026-10-20'), roomId: null }),
@@ -59,8 +59,16 @@ describe('planDoorMove', () => {
       keepRoomIds: ['planned'],
       dayKey: hotelDateKey,
     });
-    expect(plan.updates).toEqual([]);
-    expect(plan.creates).toEqual([]);
+    expect(plan.updates).toEqual([{ id: 'open', toDate: day('2026-10-13'), roomId: 'old' }]);
+    expect(plan.creates).toEqual([
+      {
+        fromDate: day('2026-10-13'),
+        toDate: day('2026-10-20'),
+        roomId: 'new',
+        roomTypeId: 'type',
+        ratePlanId: 'rate',
+      },
+    ]);
   });
 });
 

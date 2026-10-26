@@ -31,14 +31,14 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-7 | Management reports catalog + Nafta nightly ZIP | [~] | W1–W3 API/SCREEN (P0 pack + P1 catalog + cubes/3-year + email ZIP link HEADLESS); HOT-RPT-01/02 not SHIPPED — no UAT evidence |
 | S-8 | Agency portal P0–P1 | [~] | ADR hotel-agency-portal; AC-HOT-AGP 🟡; HOT-AGP-01/02/03 API |
 | S-9 | Early checkout unused-nights refund (HOT-CO-04) | [x] | ADR Accepted; preview+apply+UI; UAT §33; AC-HOT-CO-EARLY 🟡 |
-| S-10 | Nafta HK deepen (roster, floor sheet, laundry) | [~] | Engineering SCREEN — [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED |
+| S-10 | Nafta HK deepen (roster, floor sheet, `/hk/rooms`, laundry) | [~] | Engineering SCREEN — floor sheet + hotel board + shared cleanliness pill; [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED. Does not move Gate, Pilot, or edition |
 | S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + agency table + FO pax SKU; **pilot punch open** |
 | S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; sell-versions catalog + main-SKU night audit; UAT §40 open |
 | S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; companion MDM id stays on that row; **pilot punch open** |
 | S-16 | Reservation card IA D7 W1 | [~] | HOT-BOOK-04 API; ADR hotel-reservation-card-and-party-ops |
-| S-17 | Depart guest (D7 W2) | [~] | HOT-FO-05 API; UAT §43 open |
+| S-17 | Depart guest (D7 W2) | [~] | HOT-FO-05 API; closed folio on a departed guest is not recreated; stay save keeps `departedAt`; UAT §43 open |
 | S-18 | Family booking navigator (D7 W3) | [~] | HOT-BOOK-05 API |
-| S-19 | Move guest / Swap rooms (D7 W4–W5) | [~] | HOT-FO-06/07 API; UAT §44 open |
+| S-19 | Move guest / Swap rooms (D7 W4–W5) | [~] | HOT-FO-06/07 API; move dialog copy az/ru/en; UAT §44 open |
 | S-20 | Keys / HK pickup polish (D7 W6) | [~] | HOT-FO-08 STUB — reissue-key task on Depart/Move/Swap |
 | S-21 | Hotel RBAC Variant A + custom roles | [~] | AC-HOT-RBAC 🟡; `/settings/access` clone; system seed; UAT open — not Pilot |
 | S-22 | Card right-pane Guests density | [~] | HOT-BOOK-06 API |

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -15,6 +16,20 @@ import { WorkforceProvisionService } from "./workforce-provision.service";
 import { WorkforceSatelliteRoleCatalogService } from "./workforce-satellite-role-catalog.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
 import { staffCodeFromEmployment } from "./workforce-staff-login";
+
+function grantAlreadyActive(): ConflictException {
+  return new ConflictException({
+    code: "GRANT_ALREADY_ACTIVE",
+    message:
+      "An active manual grant already exists for this employment, satellite, and role",
+  });
+}
+
+function isGrantUniqueViolation(err: unknown): boolean {
+  return Boolean(
+    err && typeof err === "object" && (err as { code?: string }).code === "P2002",
+  );
+}
 
 @Injectable()
 export class WorkforceManualGrantService {
@@ -126,16 +141,23 @@ export class WorkforceManualGrantService {
     });
     if (!employment) throw new NotFoundException("Active employment not found");
 
-    const grant = await this.prisma.workforceManualGrant.create({
-      data: {
-        employmentId: dto.employmentId,
-        satelliteKey: dto.satelliteKey,
-        satelliteRole: role,
-        reason: dto.reason.trim(),
-        grantedByUserId: actorUserId,
-        ...(dto.expiresAt ? { expiresAt: new Date(dto.expiresAt) } : {}),
-      },
-    });
+    await this.assertNoActiveGrant(dto.employmentId, dto.satelliteKey, role);
+    let grant: { id: string };
+    try {
+      grant = await this.prisma.workforceManualGrant.create({
+        data: {
+          employmentId: dto.employmentId,
+          satelliteKey: dto.satelliteKey,
+          satelliteRole: role,
+          reason: dto.reason.trim(),
+          grantedByUserId: actorUserId,
+          ...(dto.expiresAt ? { expiresAt: new Date(dto.expiresAt) } : {}),
+        },
+      });
+    } catch (err) {
+      if (isGrantUniqueViolation(err)) throw grantAlreadyActive();
+      throw err;
+    }
 
     const binding = await this.prisma.workforceRoleBinding.upsert({
       where: {
@@ -280,10 +302,20 @@ export class WorkforceManualGrantService {
       throw new BadRequestException("Satellite not entitled");
     }
 
-    await this.prisma.workforceManualGrant.update({
-      where: { id: grantId },
-      data: { revokedAt: null },
-    });
+    await this.assertNoActiveGrant(
+      grant.employmentId,
+      grant.satelliteKey,
+      grant.satelliteRole,
+    );
+    try {
+      await this.prisma.workforceManualGrant.update({
+        where: { id: grantId },
+        data: { revokedAt: null },
+      });
+    } catch (err) {
+      if (isGrantUniqueViolation(err)) throw grantAlreadyActive();
+      throw err;
+    }
 
     await this.prisma.workforceRoleBinding.upsert({
       where: {
@@ -318,5 +350,22 @@ export class WorkforceManualGrantService {
 
     await this.provision.reprovision(organizationId, grant.employmentId, actorUserId);
     return { ok: true };
+  }
+
+  private async assertNoActiveGrant(
+    employmentId: string,
+    satelliteKey: string,
+    satelliteRole: string,
+  ): Promise<void> {
+    const existing = await this.prisma.workforceManualGrant.findFirst({
+      where: {
+        employmentId,
+        satelliteKey,
+        satelliteRole,
+        revokedAt: null,
+      },
+      select: { id: true },
+    });
+    if (existing) throw grantAlreadyActive();
   }
 }

@@ -505,7 +505,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
-3. `/hk` floor sheet — columns include occupancy, millət, job type; set outcome V/VC/OK/İstəmədi/DND/SO; print uses page-break per floor.
+3. `/hk` floor sheet — one floor; chips All / To clean / Dirty / For inspection; maid in the title (not a column); arrival and departure time under the date; outcome V/VC/OK/İstəmədi/DND/SO with no NSR button; a dirty door without a task is marked on the row; fullscreen. PDF is one floor per page, maid names in the title.
 4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` **grid** (empty headers + guest/room/status/date filters) + fallback Delivered on the **same** ticket only.
 5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
 6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates. Return to service puts the door back to IN_SERVICE (DIRTY).
@@ -515,6 +515,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 10. `/settings/policies#hk` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
 11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
 12. `/hk/consumption` — pick a Finance sku and a quantity for the open business day. The line is not a folio charge. An empty day still closes. Changing linen/deep N on `/settings/policies#hk` does not add a line. Minibar on `/hk/minibar` still posts to the guest folio.
+13. `/hk/rooms` — whole hotel. Chips: Dirty vacant, Clean vacant, For inspection, OOO, OOS. Set Dirty, Pickup, Clean, Inspected. Inspected is disabled on an occupied door. Occupied number is pink, vacant number is green. The same pill is on `/fo/reservations`, the room plan, the rack, and the reservation card.
 
 ## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
 
@@ -661,7 +662,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 2. Adults 2→1; remaining unlocked nights recalc from depart date; HK **PICKUP** + STAYOVER task (not DIRTY).
 3. Clinic: only departed pax episode CLOSED (`SATELLITE_HOTEL_GUEST_DEPARTED` via orch fan-out); remaining spouse OPEN.
 4. Share-pool roommate → 409 (use stay checkout). Last live pax → `needs_checkout` → FO redirected to folio checkout (no blind Depart checkout).
-5. Reissue-key task created **server-side** (HOT-FO-08 STUB). CLOSE_PERSONAL only when pax `ownsFolio`.
+5. Reissue-key task created **server-side** (HOT-FO-08 STUB). CLOSE_PERSONAL only when pax `ownsFolio`. Opening the stay afterwards does not mint a second folio for a departed guest whose folio is already closed. Saving the stay keeps `departedAt`.
 
 ## 44. Move guest / Swap rooms (HOT-FO-06/07)
 

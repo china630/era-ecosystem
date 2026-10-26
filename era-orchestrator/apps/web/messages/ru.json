@@ -1423,6 +1423,7 @@
     "grantRevoke": "Отозвать",
     "grantRevoked": "Отозван",
     "grantRestore": "Восстановить",
+    "grantAlreadyActive": "У этого сотрудника уже есть активный грант на этот сателлит и роль.",
     "linkExport": "Экспорт 1С / CSV",
     "linkAudit": "Полный журнал аудита",
     "filterSearch": "Поиск",

@@ -4,6 +4,8 @@ import {
   countLivePax,
   previewOccupancyAfterDepart,
 } from '@/lib/occupancy-party';
+import { isDepartedPartyRow, primaryIndexForParty } from '@/lib/party-departed-stamp';
+import { reservationFullPatchSchema } from '@/lib/reservation-full-patch.schema';
 import { departGuestFromStay } from '@/lib/services/depart-guest.service';
 import { moveGuestBetweenStays } from '@/lib/services/move-guest.service';
 
@@ -275,5 +277,29 @@ describe('moveGuestBetweenStays gates', () => {
       status: 409,
       message: expect.stringMatching(/departed/),
     });
+  });
+});
+
+describe('party departure survives a stay save', () => {
+  it('does not treat a departed companion as the contact', () => {
+    const rows = [
+      { isPrimary: false, departedAt: '2026-10-26T15:07:00.000Z', guestState: 'DEPARTED' },
+      { isPrimary: true, departedAt: null, guestState: 'IN_HOUSE' },
+    ];
+    expect(isDepartedPartyRow(rows[0])).toBe(true);
+    expect(isDepartedPartyRow(rows[1])).toBe(false);
+    expect(primaryIndexForParty(rows)).toBe(1);
+  });
+
+  it('keeps a guest departed when only the state says so', () => {
+    expect(isDepartedPartyRow({ departedAt: null, guestState: 'DEPARTED' })).toBe(true);
+    expect(primaryIndexForParty([{ isPrimary: true, guestState: 'DEPARTED' }, { isPrimary: false }])).toBe(1);
+  });
+
+  it('keeps departedAt on the stay patch', () => {
+    const parsed = reservationFullPatchSchema.parse({
+      paxGuests: [{ departedAt: '2026-10-26T15:07:00.000Z', guestState: 'DEPARTED' }],
+    });
+    expect(parsed.paxGuests?.[0].departedAt).toBe('2026-10-26T15:07:00.000Z');
   });
 });

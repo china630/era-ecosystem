@@ -120,7 +120,8 @@ export type SatelliteRoleCatalog = $Result.DefaultSelection<Prisma.$SatelliteRol
 export type WorkforceRoleBinding = $Result.DefaultSelection<Prisma.$WorkforceRoleBindingPayload>
 /**
  * Model WorkforceManualGrant
- * 
+ * At most one active row (revokedAt null) per employment + satellite + role.
+ * Partial unique index workforce_manual_grants_one_active lives in SQL, same as the staff-login index.
  */
 export type WorkforceManualGrant = $Result.DefaultSelection<Prisma.$WorkforceManualGrantPayload>
 /**

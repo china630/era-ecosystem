@@ -337,7 +337,14 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
     where: { workDate },
     include: { housekeeper: true, pair: true },
   });
-  const maid = rotation.find((r) => floor >= r.pair.floorLow && floor <= r.pair.floorHigh);
+  const maidNames = [
+    ...new Set(
+      rotation
+        .filter((r) => floor >= r.pair.floorLow && floor <= r.pair.floorHigh)
+        .map((r) => r.housekeeper.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ];
 
   const rows = rooms.map((room) => {
     const stay = room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
@@ -380,8 +387,17 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       vip: stay?.guest.vipType ?? stay?.vipType ?? '',
       agency: stay?.agency?.name ?? '',
       arrival: ci,
-      arrivalTime: stay?.stay?.actualCheckIn ? bakuClockHhmm(stay.stay.actualCheckIn) : '',
+      arrivalTime: stay?.stay?.actualCheckIn
+        ? bakuClockHhmm(stay.stay.actualCheckIn)
+        : stay
+          ? bakuClockHhmm(stay.checkInDate)
+          : '',
       departure: co,
+      departureTime: stay?.stay?.actualCheckOut
+        ? bakuClockHhmm(stay.stay.actualCheckOut)
+        : stay
+          ? bakuClockHhmm(stay.checkOutDate)
+          : '',
       lateCheckout: stay?.stay?.actualCheckOut ? bakuClockHhmm(stay.stay.actualCheckOut) : '',
       extraPax: stay?.extraBeds ?? 0,
       adults: stay?.adults ?? 0,
@@ -400,7 +416,8 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       visitOutcome: (stay && nsrSet.has(stay.id) ? 'REFUSED' : outcomeByRoom.get(room.id)) ?? '',
       visitTime: '',
       neededByAt: neededByMap.get(room.id)?.toISOString() ?? null,
-      maidName: maid?.housekeeper.name ?? '',
+      maidName: maidNames[0] ?? '',
+      maidNames,
       maidChef: '',
       reservationId: stay?.id ?? null,
     };
@@ -439,17 +456,17 @@ const SHEET_PDF_LABELS = {
   az: {
     title: 'Mərtəbə vərəqi',
     floor: 'Mərtəbə',
-    headers: ['Otaq', 'Dolu', 'Tip', 'Qonaq', 'İş', 'Xidmətçi', 'Nəticə', 'Gəliş', 'Gediş', 'Böyük', 'Uşaq'],
+    headers: ['Otaq', 'Dolu', 'Tip', 'Qonaq', 'İş', 'Nəticə', 'Gəliş', 'Gediş', 'Böyük', 'Uşaq'],
   },
   en: {
     title: 'Floor sheet',
     floor: 'Floor',
-    headers: ['Room', 'Occ', 'Type', 'Guest', 'Job', 'Maid', 'Outcome', 'Arrival', 'Depart', 'Ad', 'Ch'],
+    headers: ['Room', 'Occ', 'Type', 'Guest', 'Job', 'Outcome', 'Arrival', 'Depart', 'Ad', 'Ch'],
   },
   ru: {
     title: 'Лист этажа',
     floor: 'Этаж',
-    headers: ['Номер', 'Зан.', 'Тип', 'Гость', 'Работа', 'Горничная', 'Итог', 'Заезд', 'Выезд', 'Взр', 'Дет'],
+    headers: ['Номер', 'Зан.', 'Тип', 'Гость', 'Работа', 'Итог', 'Заезд', 'Выезд', 'Взр', 'Дет'],
   },
 } as const;
 
@@ -483,11 +500,20 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
   });
-  const cols = [42, 36, 44, 130, 64, 88, 52, 58, 58, 32, 32];
+  const cols = [48, 40, 48, 160, 72, 56, 64, 64, 36, 36];
   pages.forEach((page, index) => {
     if (index > 0) doc.addPage();
     drawSheetLetterhead();
-    doc.font(PDF_FONT_UNICODE).fontSize(14).text(`${labels.title} · ${labels.floor} ${page.floor} · ${workDateIso}`, 28, doc.y);
+    const names = [
+      ...new Set(
+        page.rows.flatMap((row) => {
+          const named = (row as { maidNames?: string[] }).maidNames;
+          return named?.length ? named : [String((row as { maidName?: string }).maidName ?? '')];
+        }).filter(Boolean),
+      ),
+    ];
+    const maidBit = names.length ? ` · ${names.join(', ')}` : '';
+    doc.font(PDF_FONT_UNICODE).fontSize(14).text(`${labels.title} · ${labels.floor} ${page.floor}${maidBit} · ${workDateIso}`, 28, doc.y);
     doc.moveDown(0.4);
     let y = doc.y;
     const headers = labels.headers;
@@ -513,7 +539,6 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
         String(r.roomType ?? ''),
         String(r.guests ?? ''),
         String(r.jobDuty ?? r.jobType ?? ''),
-        String(r.maidName ?? ''),
         String(r.visitOutcome ?? ''),
         String(r.arrival ?? ''),
         String(r.departure ?? ''),

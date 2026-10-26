@@ -25,8 +25,8 @@ Operators confused Room plan empty cells (free doors) with sellable inventory. E
 | Booking | ReservationGroup envelope |
 | RoomStay | Prisma Reservation (one sold room intent, roomCount=1) |
 | Assignment | roomId (+ share pool + shareBedIndex 1..maxBed at assign; Stay at check-in) |
-| Sellable (Avl) | quota minus **door** consumption (exclusive = 1 door; share packs beds by gender) — [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
-| Hotel night D | Occupied iff `checkIn < noon(D+1)` and `checkOut > noon(D)` (12:00 Baku). Same-day 12:00 checkout is turnover, not Occ on D. Matrix cells, `GET /api/fo/sellable`, and create all use this window — card `available` = min matrix Avl over `[check-in, check-out)`. Civil `bakuDayBounds` is not a door-night. |
+| Sellable (Avl) | quota minus **door** consumption. An assigned door counts as that door's physical type. The sold type counts only while that segment has no door. Exclusive stays on one door count once; share packs beds by gender — [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
+| Hotel night D | Occupied when the Asia/Baku civil arrival date is on or before D and the civil checkout date is after D. A `@db.Date` at UTC midnight does not occupy the previous night. Checkout morning is turnover, not Occ on D. Matrix cells, `GET /api/fo/sellable`, and create all use this window — card `available` = min matrix Avl over `[check-in, check-out)`. Civil `bakuDayBounds` is not a door-night. |
 | Free door | Physical room without overlapping assigned stay (share pool may be n/maxBed occupied) |
 | Share door | Up to maxBed independent RoomStays on one door, same gender (M or F only); checkbox on card, not guest count |
 

@@ -299,7 +299,18 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
     it('rejects when doors exceed quota', async () => {
       prisma.roomType.findUnique.mockResolvedValue({ baseQuota: 1, adultCapacity: 2 });
       prisma.reservation.findMany.mockResolvedValue([
-        slice({ id: 'm1', shareEligible: true, shareGender: 'M' }),
+        {
+          id: 'm1',
+          roomId: null,
+          roomTypeId: 'rt-1',
+          shareEligible: true,
+          shareGender: 'M',
+          adults: 1,
+          checkInDate: new Date('2026-08-10T12:00:00Z'),
+          checkOutDate: new Date('2026-08-15T12:00:00Z'),
+          room: null,
+          staySlices: [],
+        },
       ]);
 
       await expect(
@@ -395,6 +406,29 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
       shareEligible: false,
       checkInDate: new Date('2026-10-10T10:00:00.000Z'),
       checkOutDate: new Date('2026-10-20T08:00:00.000Z'),
+    });
+
+    it('two exclusive stays on one door count as one door', () => {
+      const night = parseHotelNoon('2026-10-26');
+      const used = countDoorsUsedOnNight(
+        [
+          slice({
+            id: 'a',
+            roomId: '905',
+            checkInDate: new Date('2026-10-20T10:00:00.000Z'),
+            checkOutDate: new Date('2026-10-28T08:00:00.000Z'),
+          }),
+          slice({
+            id: 'b',
+            roomId: '905',
+            checkInDate: new Date('2026-10-20T10:00:00.000Z'),
+            checkOutDate: new Date('2026-10-28T08:00:00.000Z'),
+          }),
+        ],
+        night,
+        2,
+      );
+      expect(used).toBe(1);
     });
 
     it('12:00 Baku checkout occupies the last night, not the departure morning', () => {

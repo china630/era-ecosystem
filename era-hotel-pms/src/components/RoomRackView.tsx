@@ -12,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   ColorLegend,
 } from '@era/satellite-kit/ui';
+import { HkStatusMark, hkMarkClass } from '@/components/HkStatusMark';
 import {
   RACK_BORDER_CLASS,
   RACK_SWATCH_CLASS,
@@ -192,6 +193,7 @@ export default function RoomRackView({
   const t = useTranslations('roomRack');
   const tc = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
+  const tHk = useTranslations('housekeeping.hkCond');
   const tPay = useTranslations('rackPayStatus');
   const [dragResId, setDragResId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
@@ -593,24 +595,19 @@ export default function RoomRackView({
               >
                 {onHkStatus && room.inventoryStatus !== 'OOO' && room.inventoryStatus !== 'OOS' ? (
                   occupiedOnDates ? (
-                    <div
-                      className="mx-auto mb-1 text-center text-[10px] font-semibold uppercase text-[#7F8C8D]"
-                      title={t('occupiedHkLocked')}
-                    >
-                      {t(
-                        `hkOpt.${
-                          room.hkCondition === 'DIRTY' ||
-                          room.hkCondition === 'PICKUP' ||
-                          room.hkCondition === 'CLEAN' ||
-                          room.hkCondition === 'INSPECTED'
-                            ? room.hkCondition
-                            : 'CLEAN'
-                        }`,
-                      )}
+                    <div className="mb-1 flex justify-center" title={t('occupiedHkLocked')}>
+                      <HkStatusMark status={room.hkCondition ?? room.status} />
                     </div>
                   ) : (
                   <select
-                    className={`${FORM_INPUT_CLASS} mx-auto mb-1 block h-7 min-h-0 max-w-full px-1 py-0.5 text-center text-[10px] font-semibold uppercase`}
+                    className={`mx-auto mb-1 block h-7 min-h-0 max-w-full rounded-full border-0 px-2 py-0.5 text-center text-[10px] font-semibold ${hkMarkClass(
+                      room.hkCondition === 'DIRTY' ||
+                        room.hkCondition === 'PICKUP' ||
+                        room.hkCondition === 'CLEAN' ||
+                        room.hkCondition === 'INSPECTED'
+                        ? room.hkCondition
+                        : room.status,
+                    )}`}
                     aria-label={t('hkStatus')}
                     value={
                       room.hkCondition === 'DIRTY' ||
@@ -630,7 +627,7 @@ export default function RoomRackView({
                   >
                     {(['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED'] as const).map((hk) => (
                       <option key={hk} value={hk}>
-                        {t(`hkOpt.${hk}`)}
+                        {tHk(hk)}
                       </option>
                     ))}
                   </select>

@@ -1,39 +1,64 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
   EraListFilterBar,
-  FieldSelect,
+  FilterChips,
+  PageHeader,
   SECONDARY_BUTTON_CLASS,
+  ViewportOverlay,
   showApiError,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
 import { bakuTimeLabel } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { stayListHasInHouse } from '@/lib/occupied-hk-lock';
+import { HkStatusMark } from '@/components/HkStatusMark';
 
 interface Task {
   id: string;
   status: string;
-  notes: string | null;
-  room: { id: string; roomNumber: string; status: string; roomType: { code: string } };
+  room: { id: string };
 }
 
-interface Room {
-  id: string;
+interface SheetRow {
+  roomId: string;
   roomNumber: string;
-  floor?: number;
-  status: string;
-  roomType: { code: string };
-  reservations?: Array<{ status?: string }>;
+  hkCondition?: string;
+  status?: string;
+  occupancy?: string;
+  roomType?: string;
+  guests?: string;
+  vip?: string;
+  arrival?: string;
+  arrivalTime?: string;
+  departure?: string;
+  departureTime?: string;
+  jobType?: string;
+  jobDuty?: string;
+  visitOutcome?: string;
+  neededByAt?: string | null;
+  maidNames?: string[];
+  reservationId?: string | null;
 }
 
-type HkFilter = 'all' | 'pending' | 'dirty' | 'clean';
+type HkFilter = 'all' | 'pending' | 'dirty' | 'inspect';
+
+const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
+
+function clockUnder(date: string, time: string) {
+  return (
+    <div className="leading-tight">
+      <div>{date || '—'}</div>
+      {time ? <div className="text-[11px] text-[#7F8C8D]">{time}</div> : null}
+    </div>
+  );
+}
 
 export default function HousekeepingPage() {
   const { can } = useAuth();
@@ -42,13 +67,17 @@ export default function HousekeepingPage() {
   const tRoom = useTranslations('roomStatus');
   const locale = useLocale();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const searchParams = useSearchParams();
+  const focusRoomId = searchParams.get('roomId');
+  const focusedOnce = useRef(false);
+  const scrolledToRoom = useRef(false);
+  const [rooms, setRooms] = useState<Array<{ id?: string; floor?: number }>>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [filter, setFilter] = useState<HkFilter>('all');
   const [sheetFloor, setSheetFloor] = useState('2');
-  const [sheetRows, setSheetRows] = useState<Array<Record<string, unknown>>>([]);
+  const [sheetRows, setSheetRows] = useState<SheetRow[]>([]);
   const [sheetDate] = useState(() => hotelDateKey());
-  const OUTCOMES = ['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO'] as const;
+  const [fullscreen, setFullscreen] = useState(false);
 
   const load = useCallback(async () => {
     const [tRes, rRes, sRes] = await Promise.all([
@@ -66,6 +95,94 @@ export default function HousekeepingPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [fullscreen]);
+
+  useEffect(() => {
+    if (!focusRoomId || focusedOnce.current) return;
+    const room = rooms.find((row) => row.id === focusRoomId);
+    if (!room) return;
+    focusedOnce.current = true;
+    setFilter('all');
+    if (typeof room.floor === 'number') setSheetFloor(String(room.floor));
+  }, [focusRoomId, rooms]);
+
+  const floors = useMemo(() => {
+    const set = new Set<number>();
+    for (const room of rooms) {
+      if (typeof room.floor === 'number') set.add(room.floor);
+    }
+    return [...set].sort((a, b) => a - b);
+  }, [rooms]);
+
+  const openTaskByRoom = useMemo(() => {
+    const map = new Map<string, Task>();
+    for (const task of tasks) {
+      if (task.status === 'DONE') continue;
+      if (!map.has(task.room.id)) map.set(task.room.id, task);
+    }
+    return map;
+  }, [tasks]);
+
+  function knownLabel(group: 'job' | 'hkCond' | 'occ', code: string) {
+    const allowed: Record<typeof group, string[]> = {
+      job: ['STAYOVER', 'DEPARTURE', 'ARRIVAL_PREP', 'NSR', 'OTHER', 'DEEP', 'LINEN', 'OK', 'STAY', 'NONE'],
+      hkCond: ['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED'],
+      occ: ['OCC', 'AVL'],
+    };
+    if (!code || !allowed[group].includes(code)) return code || '—';
+    return t(`${group}.${code}`);
+  }
+
+  function matches(row: SheetRow, task: Task | undefined) {
+    const hk = String(row.hkCondition ?? row.status ?? '');
+    if (filter === 'dirty') return hk === 'DIRTY' || hk === 'PICKUP';
+    if (filter === 'inspect') return hk === 'CLEAN' && row.occupancy === 'AVL';
+    if (filter === 'pending') {
+      const duty = String(row.jobDuty ?? '');
+      const openDuty = Boolean(duty) && duty !== 'OTHER' && duty !== 'NONE' && !row.visitOutcome;
+      return Boolean(task) || openDuty;
+    }
+    return true;
+  }
+
+  const visibleSheet = sheetRows.filter((row) => matches(row, openTaskByRoom.get(row.roomId)));
+
+  const counts = useMemo(() => {
+    const base = { all: sheetRows.length, pending: 0, dirty: 0, inspect: 0 };
+    for (const row of sheetRows) {
+      const task = openTaskByRoom.get(row.roomId);
+      const hk = String(row.hkCondition ?? row.status ?? '');
+      const duty = String(row.jobDuty ?? '');
+      const openDuty = Boolean(duty) && duty !== 'OTHER' && duty !== 'NONE' && !row.visitOutcome;
+      if (task || openDuty) base.pending += 1;
+      if (hk === 'DIRTY' || hk === 'PICKUP') base.dirty += 1;
+      if (hk === 'CLEAN' && row.occupancy === 'AVL') base.inspect += 1;
+    }
+    return base;
+  }, [sheetRows, openTaskByRoom]);
+
+  const maidNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const row of sheetRows) {
+      for (const name of row.maidNames ?? []) {
+        if (name) names.add(name);
+      }
+    }
+    return [...names];
+  }, [sheetRows]);
+
   async function completeTask(taskId: string) {
     const res = await fetch('/api/housekeeping/tasks', {
       method: 'POST',
@@ -82,16 +199,16 @@ export default function HousekeepingPage() {
     await load();
   }
 
-  async function markInspected(roomId: string) {
+  async function markInspected(roomId: string, roomNumber: string) {
     const res = await fetch(`/api/rooms/${roomId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'INSPECTED' }),
+      body: JSON.stringify({ hkCondition: 'INSPECTED' }),
     });
     const data = await res.json();
     setMsg(
       res.ok
-        ? t('roomInspected', { room: data.roomNumber })
+        ? t('roomInspected', { room: data.roomNumber ?? roomNumber })
         : data?.code === 'OCCUPIED_HK_LOCKED'
           ? t('occupiedHkLocked')
           : data.error,
@@ -99,306 +216,239 @@ export default function HousekeepingPage() {
     await load();
   }
 
-  const floors = useMemo(() => {
-    const set = new Set<number>();
-    for (const room of rooms) {
-      if (typeof room.floor === 'number') set.add(room.floor);
-    }
-    return [...set].sort((a, b) => a - b);
-  }, [rooms]);
-
-  const dirtyRooms = rooms.filter((r) => r.status === 'DIRTY');
-  const cleanRooms = rooms.filter(
-    (r) => r.status === 'CLEAN' && !stayListHasInHouse(r.reservations),
-  );
-  const pendingTasks = useMemo(
-    () => tasks.filter((task) => task.status !== 'DONE'),
-    [tasks],
-  );
-
-  const showPending = filter === 'all' || filter === 'pending';
-  const showClean = filter === 'all' || filter === 'clean';
-  const showDirty = filter === 'all' || filter === 'dirty';
-
-  const visibleSheet = useMemo(() => {
-    return sheetRows.filter((r) => {
-      const hk = String(r.hkCondition ?? r.status ?? '');
-      if (filter === 'dirty') return hk === 'DIRTY' || hk === 'PICKUP';
-      if (filter === 'clean') return hk === 'CLEAN';
-      if (filter === 'pending') return hk === 'DIRTY' || hk === 'PICKUP';
-      return true;
-    });
-  }, [sheetRows, filter]);
-
-  function knownLabel(group: 'job' | 'hkCond' | 'occ', code: string) {
-    const allowed: Record<typeof group, string[]> = {
-      job: ['STAYOVER', 'DEPARTURE', 'ARRIVAL_PREP', 'NSR', 'OTHER', 'DEEP', 'LINEN', 'OK'],
-      hkCond: ['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED'],
-      occ: ['OCC', 'AVL'],
-    };
-    if (!code || !allowed[group].includes(code)) return code;
-    return t(`${group}.${code}`);
+  if (!can(PERMISSIONS.HOUSEKEEPING_MANAGE) && !can(PERMISSIONS.ROOMS_STATUS)) {
+    return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionHousekeeping')}</p>;
   }
 
-  if (!can(PERMISSIONS.HOUSEKEEPING_MANAGE) && !can(PERMISSIONS.ROOMS_STATUS)) {
+  const pdfLang = locale === 'en' || locale === 'ru' ? locale : 'az';
+  const headerActions = (
+    <div className="flex flex-wrap gap-2 print:hidden">
+      <a
+        className={SECONDARY_BUTTON_CLASS}
+        href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}&lang=${pdfLang}`}
+      >
+        {t('downloadSheetPdf')}
+      </a>
+      <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setFullscreen((v) => !v)}>
+        {fullscreen ? (
+          <>
+            <Minimize2 className="h-3.5 w-3.5" aria-hidden />
+            {t('exitFullscreen')}
+          </>
+        ) : (
+          <>
+            <Maximize2 className="h-3.5 w-3.5" aria-hidden />
+            {t('enterFullscreen')}
+          </>
+        )}
+      </button>
+    </div>
+  );
+
+  const filters = (
+    <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setFilter('all')}>
+      <div className="w-40">
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('floor')}
+          value={sheetFloor}
+          onChange={(v) => setSheetFloor(String(v))}
+          options={(floors.length ? floors : [Number(sheetFloor)]).map((f) => ({
+            value: String(f),
+            label: String(f),
+          }))}
+        />
+      </div>
+      <FilterChips
+        ariaLabel={t('filterStatus')}
+        value={filter}
+        onChange={(id) => setFilter(id as HkFilter)}
+        items={[
+          { id: 'all', label: `${t('filterAll')} (${counts.all})` },
+          { id: 'pending', label: `${t('filterPending')} (${counts.pending})` },
+          { id: 'dirty', label: `${t('filterDirty')} (${counts.dirty})` },
+          { id: 'inspect', label: `${t('chipInspect')} (${counts.inspect})` },
+        ]}
+      />
+    </EraListFilterBar>
+  );
+
+  const sheet = (
+    <section className={`${CARD_CONTAINER_CLASS} flex min-h-0 flex-1 flex-col p-4 print:shadow-none`} id="hk-floor-sheet">
+      <h2 className="mb-3 text-sm font-semibold text-[#34495E]">
+        {t('sheetTitle')}
+        {' · '}
+        {t('maidLine', {
+          floor: sheetFloor,
+          names: maidNames.length ? maidNames.join(', ') : tc('dash'),
+        })}
+        {' · '}
+        {t('inList')}: {visibleSheet.length}
+      </h2>
+      <div className="min-h-0 flex-1 overflow-auto">
+        <table className="w-full min-w-[960px] border-separate border-spacing-0 text-[12px]">
+          <thead>
+            <tr className="text-left text-[11px] text-[#7F8C8D]">
+              {[
+                t('colRoom'),
+                t('hk'),
+                t('colOcc'),
+                t('colType'),
+                t('colGuest'),
+                'VIP',
+                t('colJob'),
+                t('colDuty'),
+                t('colArrive'),
+                t('colDepart'),
+                t('neededBy'),
+                t('outcome'),
+              ].map((label, index) => (
+                <th
+                  key={label}
+                  className={`sticky top-0 z-20 border-b border-[#D5DADF] bg-white px-1 py-2 ${
+                    index === 0 ? 'left-0 z-30' : ''
+                  }`}
+                >
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleSheet.length === 0 ? (
+              <tr>
+                <td colSpan={12} className="py-3 text-[#7F8C8D]">
+                  {sheetRows.length === 0 ? t('sheetEmpty') : t('sheetEmptyFocus')}
+                </td>
+              </tr>
+            ) : null}
+            {visibleSheet.map((row) => {
+              const task = openTaskByRoom.get(row.roomId);
+              const hk = String(row.hkCondition ?? row.status ?? '');
+              const noTask = (hk === 'DIRTY' || hk === 'PICKUP') && !task;
+              const vacantClean = hk === 'CLEAN' && row.occupancy === 'AVL';
+              const rowBg = noTask ? 'bg-amber-50' : 'bg-white';
+              return (
+                <tr key={row.roomId} className={rowBg}>
+                  <td
+                    ref={
+                      focusRoomId === row.roomId
+                        ? (el) => {
+                            if (!el || scrolledToRoom.current) return;
+                            scrolledToRoom.current = true;
+                            el.scrollIntoView({ block: 'nearest' });
+                          }
+                        : undefined
+                    }
+                    className={`sticky left-0 z-10 px-1 py-1 font-semibold ${rowBg} ${
+                      focusRoomId === row.roomId ? 'ring-2 ring-inset ring-[#2980B9]' : ''
+                    }`}
+                  >
+                    {row.roomNumber}
+                    {noTask ? <div className="text-[11px] font-normal text-amber-800">{t('noTask')}</div> : null}
+                  </td>
+                  <td className="px-1 py-1">
+                    <HkStatusMark status={hk} />
+                  </td>
+                  <td className="px-1 py-1">{knownLabel('occ', String(row.occupancy ?? ''))}</td>
+                  <td className="px-1 py-1">{row.roomType}</td>
+                  <td className="px-1 py-1">{row.guests || '—'}</td>
+                  <td className="px-1 py-1">{row.vip || '—'}</td>
+                  <td className="px-1 py-1">{knownLabel('job', String(row.jobType ?? ''))}</td>
+                  <td className="px-1 py-1">{knownLabel('job', String(row.jobDuty ?? ''))}</td>
+                  <td className="px-1 py-1">{clockUnder(String(row.arrival ?? ''), String(row.arrivalTime ?? ''))}</td>
+                  <td className="px-1 py-1">{clockUnder(String(row.departure ?? ''), String(row.departureTime ?? ''))}</td>
+                  <td className="px-1 py-1">
+                    <input
+                      type="time"
+                      className="w-24 rounded border border-[#D5DADF] px-1 py-0.5 text-[11px]"
+                      aria-label={t('neededBy')}
+                      defaultValue={row.neededByAt ? bakuTimeLabel(String(row.neededByAt)) : ''}
+                      onBlur={(e) => {
+                        const time = e.target.value;
+                        if (!time) return;
+                        void fetch('/api/housekeeping/needed-by', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ roomId: row.roomId, date: sheetDate, time }),
+                        }).then(() => load());
+                      }}
+                    />
+                  </td>
+                  <td className="px-1 py-1">
+                    <div className="flex min-w-[9rem] flex-col gap-1 [&_label]:sr-only">
+                      {row.reservationId ? (
+                        <CatalogField
+                          kind="CLOSED_SMALL"
+                          label={t('outcome')}
+                          value={String(row.visitOutcome ?? '')}
+                          onChange={(v) => {
+                            void fetch('/api/housekeeping/outcome', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                roomId: row.roomId,
+                                date: sheetDate,
+                                outcome: v,
+                              }),
+                            }).then(() => load());
+                          }}
+                          options={OUTCOMES.map((code) => ({
+                            value: code,
+                            label: code === 'REFUSED' ? t('refused') : code,
+                          }))}
+                        />
+                      ) : null}
+                      {task && can(PERMISSIONS.HOUSEKEEPING_MANAGE) ? (
+                        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => completeTask(task.id)}>
+                          {t('completeClean')}
+                        </button>
+                      ) : null}
+                      {vacantClean && can(PERMISSIONS.ROOMS_STATUS) ? (
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          onClick={() => markInspected(row.roomId, row.roomNumber)}
+                        >
+                          {t('inspectAction')}
+                        </button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+
+  if (fullscreen) {
     return (
-      <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionHousekeeping')}</p>
+      <ViewportOverlay
+        className="fixed inset-0 z-[180] flex flex-col bg-[#EBEDF0] px-4 py-3 sm:px-6"
+        label={t('fullscreenTitle')}
+      >
+        <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-semibold text-[#2C3E50]">{t('sheetTitle')}</h1>
+          {headerActions}
+        </div>
+        <div className="shrink-0">{filters}</div>
+        {msg ? <p className="mb-2 rounded-lg bg-white px-4 py-2 text-[13px] text-[#34495E]">{msg}</p> : null}
+        {sheet}
+      </ViewportOverlay>
     );
   }
 
   return (
     <>
-      <PageHeader
-        title={t('title')}
-        subtitle={t('hint')}
-        actions={
-          <div className="flex flex-wrap gap-2 print:hidden">
-            <a
-              className={SECONDARY_BUTTON_CLASS}
-              href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}&lang=${locale === 'en' || locale === 'ru' ? locale : 'az'}`}
-            >
-              {t('downloadSheetPdf')}
-            </a>
-          </div>
-        }
-      />
+      <PageHeader title={t('title')} subtitle={t('sheetHint')} actions={headerActions} />
       {msg ? (
-        <p className="mb-4 rounded-lg border border-[#D5DADF] bg-white px-4 py-2 text-[13px] text-[#34495E]">
-          {msg}
-        </p>
+        <p className="mb-4 rounded-lg border border-[#D5DADF] bg-white px-4 py-2 text-[13px] text-[#34495E]">{msg}</p>
       ) : null}
-
-      <EraListFilterBar
-        resetLabel={tc('filterReset')}
-        onReset={() => setFilter('all')}
-      >
-        <FieldSelect
-          label={t('filterStatus')}
-          preset="select"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value as HkFilter)}
-        >
-          <option value="all">{t('filterAll')}</option>
-          <option value="pending">{t('filterPending')}</option>
-          <option value="dirty">{t('filterDirty')}</option>
-          <option value="clean">{t('filterClean')}</option>
-        </FieldSelect>
-      </EraListFilterBar>
-      <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('sheetHint')}</p>
-      <p className="mb-4 text-[12px] text-[#7F8C8D]">{t('nsrHint')}</p>
-
-      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 print:shadow-none`} id="hk-floor-sheet">
-        <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
-          <h2 className="text-sm font-semibold">{t('sheetTitle')}</h2>
-          <div className="w-40">
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('floor')}
-              value={sheetFloor}
-              onChange={(v) => setSheetFloor(String(v))}
-              options={(floors.length ? floors : [Number(sheetFloor)]).map((f) => ({
-                value: String(f),
-                label: String(f),
-              }))}
-            />
-          </div>
-        </div>
-        {[{ floor: Number(sheetFloor), rows: visibleSheet }].map((page) => (
-          <div key={page.floor} className="hk-print-floor" style={{ pageBreakAfter: 'always' }}>
-            <p className="mb-1 hidden text-xs print:block">
-              {t('sheetTitle')} · {t('floor')} {page.floor} · {sheetDate} · {t('inList')}: {page.rows.length}
-            </p>
-            <table className="w-full table-fixed text-[11px]">
-              <thead>
-                <tr>
-                  <th>{t('colRoom')}</th>
-                  <th>HK</th>
-                  <th>{t('colOcc')}</th>
-                  <th>{t('colType')}</th>
-                  <th>{t('colMaid')}</th>
-                  <th>{t('floor')}</th>
-                  <th>{t('colLoc')}</th>
-                  <th>{t('colGuest')}</th>
-                  <th>VIP</th>
-                  <th>{t('colAgency')}</th>
-                  <th>{t('colArrive')}</th>
-                  <th>{t('colDepart')}</th>
-                  <th>{t('colAdults')}</th>
-                  <th>{t('colChild')}</th>
-                  <th>{t('colJob')}</th>
-                  <th>{t('colDuty')}</th>
-                  <th>{t('colNat')}</th>
-                  <th>{t('colExtra')}</th>
-                  <th>{t('colTodayArr')}</th>
-                  <th>{t('colTodayDep')}</th>
-                  <th>Q</th>
-                  <th className="print:hidden">{t('neededBy')}</th>
-                  <th className="print:hidden">{t('outcome')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {page.rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={23} className="py-3 text-[#7F8C8D]">
-                      {t('sheetEmpty')}
-                    </td>
-                  </tr>
-                ) : null}
-                {page.rows.map((r) => (
-                  <tr key={String(r.roomId)} className="break-inside-avoid">
-                    <td>{String(r.roomNumber)}</td>
-                    <td>{knownLabel('hkCond', String(r.hkCondition ?? r.status ?? ''))}</td>
-                    <td>{knownLabel('occ', String(r.occupancy ?? ''))}</td>
-                    <td>{String(r.roomType)}</td>
-                    <td>{String(r.maidName)}</td>
-                    <td>{String(r.floor)}</td>
-                    <td>{String(r.location)}</td>
-                    <td>{String(r.guests)}</td>
-                    <td>{String(r.vip)}</td>
-                    <td>{String(r.agency)}</td>
-                    <td>{String(r.arrival)}</td>
-                    <td>{String(r.departure)}</td>
-                    <td>{String(r.adults)}</td>
-                    <td>{String(r.children)}</td>
-                    <td>{knownLabel('job', String(r.jobType ?? ''))}</td>
-                    <td>{knownLabel('job', String(r.jobDuty ?? ''))}</td>
-                    <td>{String(r.nationality)}</td>
-                    <td>{String(r.extraPax ?? 0)}</td>
-                    <td>{String(r.todayArrivalPax ?? 0)}</td>
-                    <td>{String(r.todayDepartPax ?? 0)}</td>
-                    <td>{String(r.qHour ?? '')}</td>
-                    <td className="print:hidden">
-                      <input
-                        type="time"
-                        className="w-24 rounded border border-[#D5DADF] px-1 py-0.5 text-[11px]"
-                        defaultValue={
-                          r.neededByAt
-                            ? bakuTimeLabel(String(r.neededByAt))
-                            : ''
-                        }
-                        onBlur={(e) => {
-                          const time = e.target.value;
-                          if (!time) return;
-                          void fetch('/api/housekeeping/needed-by', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ roomId: r.roomId, date: sheetDate, time }),
-                          }).then(() => load());
-                        }}
-                      />
-                    </td>
-                    <td className="print:hidden">
-                      {r.reservationId ? (
-                        <div className="flex flex-col gap-1">
-                          <CatalogField
-                            kind="CLOSED_SMALL"
-                            label={t('outcome')}
-                            value={String(r.visitOutcome ?? '')}
-                            onChange={(v) => {
-                              void fetch('/api/housekeeping/outcome', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  roomId: r.roomId,
-                                  date: sheetDate,
-                                  outcome: v,
-                                }),
-                              }).then(() => load());
-                            }}
-                            options={OUTCOMES.map((o) => ({
-                              value: o,
-                              label: o === 'REFUSED' ? t('refused') : o,
-                            }))}
-                          />
-                          <button
-                            type="button"
-                            className={`rounded px-2 py-0.5 text-[11px] ${
-                              String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR' || String(r.visitOutcome) === 'REFUSED'
-                                ? 'bg-[#34495E] text-white'
-                                : 'border border-[#D5DADF] text-[#34495E]'
-                            }`}
-                            title={t('nsrHint')}
-                            onClick={() => {
-                              const on =
-                                String(r.jobType) === 'NSR' ||
-                                String(r.jobDuty) === 'NSR' ||
-                                String(r.visitOutcome) === 'REFUSED';
-                              void fetch('/api/housekeeping/nsr', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  reservationId: r.reservationId,
-                                  roomId: r.roomId,
-                                  date: sheetDate,
-                                  clear: on,
-                                }),
-                              }).then(() => load());
-                            }}
-                          >
-                            {String(r.jobType) === 'NSR' || String(r.jobDuty) === 'NSR' || String(r.visitOutcome) === 'REFUSED'
-                              ? t('nsrClear')
-                              : t('nsr')}
-                          </button>
-                        </div>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </section>
-
-      {showPending ? (
-        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
-          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('pendingTasks')}</h2>
-          <ul className="space-y-2 text-[13px] text-[#34495E]">
-            {pendingTasks.map((task) => (
-              <li key={task.id} className="flex flex-wrap items-center gap-2">
-                <span>
-                  {task.room.roomNumber} ({task.room.roomType.code}) —{' '}
-                  {t('taskStatusLabel', { status: task.status })} ·{' '}
-                  {tRoom(task.room.status as 'DIRTY')}
-                </span>
-                {can(PERMISSIONS.HOUSEKEEPING_MANAGE) && (
-                  <button
-                    type="button"
-                    onClick={() => completeTask(task.id)}
-                    className={SECONDARY_BUTTON_CLASS}
-                  >
-                    {t('completeClean')}
-                  </button>
-                )}
-              </li>
-            ))}
-            {pendingTasks.length === 0 && (
-              <li className="text-[#7F8C8D]">{t('noOpenTasks')}</li>
-            )}
-          </ul>
-        </section>
-      ) : null}
-
-      {showClean && can(PERMISSIONS.ROOMS_STATUS) && cleanRooms.length > 0 ? (
-        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6`}>
-          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('markInspected')}</h2>
-          <ul className="flex flex-wrap gap-2">
-            {cleanRooms.map((r) => (
-              <li key={r.id}>
-                <button type="button" onClick={() => markInspected(r.id)} className={SECONDARY_BUTTON_CLASS}>
-                  {t('roomToInspected', { room: r.roomNumber })}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {showDirty && dirtyRooms.length > 0 ? (
-        <section className={`${CARD_CONTAINER_CLASS} p-4 mb-6 border-amber-200 bg-amber-50 text-[13px] text-amber-900`}>
-          {t('dirtyWithoutTask')} {dirtyRooms.map((r) => r.roomNumber).join(', ')}
-        </section>
-      ) : null}
+      {filters}
+      {sheet}
     </>
   );
 }

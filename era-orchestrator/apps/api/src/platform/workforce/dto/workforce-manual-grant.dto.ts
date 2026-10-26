@@ -39,9 +39,15 @@ export class ListManualGrantsQueryDto {
   satelliteKey?: string;
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === "true" || value === true) return true;
-    if (value === "false" || value === false) return false;
+  @Transform(({ value, obj }) => {
+    // class-transformer 0.5.1 runs Boolean("false") === true before @Transform.
+    // Read the raw query string from the source object.
+    const raw =
+      obj && typeof obj === "object" && "revoked" in obj
+        ? (obj as { revoked?: unknown }).revoked
+        : value;
+    if (raw === "true" || raw === true) return true;
+    if (raw === "false" || raw === false) return false;
     return undefined;
   })
   @IsBoolean()

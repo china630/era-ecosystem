@@ -93,6 +93,7 @@ export const reservationFullPatchSchema = z.object({
         payStatus: z.string().nullable().optional(),
         externalResId: z.string().nullable().optional(),
         guestState: z.string().nullable().optional(),
+        departedAt: z.string().nullable().optional(),
         isPrimary: z.boolean().optional(),
         ownsFolio: z.boolean().optional(),
         /** FO Guests tab medical SKU (PKG-* or empty). */

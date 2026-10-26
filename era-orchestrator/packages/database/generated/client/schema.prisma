@@ -784,6 +784,8 @@ model WorkforceRoleBinding {
   @@map("workforce_role_bindings")
 }
 
+/// At most one active row (revokedAt null) per employment + satellite + role.
+/// Partial unique index workforce_manual_grants_one_active lives in SQL, same as the staff-login index.
 model WorkforceManualGrant {
   id              String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   employmentId    String                 @map("employment_id") @db.Uuid

@@ -92,7 +92,8 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 
 | Menu item | URL | Description |
 |-----------|-----|-------------|
-| Housekeeping | `/hk` | Tasks, room statuses, DIRTY → CLEAN → INSPECTED |
+| Housekeeping | `/hk` | Floor sheet: one floor, row actions, fullscreen |
+| HK rooms | `/hk/rooms` | Hotel-wide cleanliness board |
 | HK mobile | `/hk/mobile` | Maid mobile client |
 | Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
 | HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. A closed day, including an earlier one, reverses onto the open day |
