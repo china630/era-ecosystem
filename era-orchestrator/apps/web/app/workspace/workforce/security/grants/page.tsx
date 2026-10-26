@@ -35,6 +35,7 @@ import {
 import { useSubscription } from "../../../../../lib/subscription-context";
 import {
   isWorkforceGate403,
+  parseWorkforceApiError,
   workforceFetch as wfFetch,
 } from "../../../../../lib/workforce-fetch";
 import { WorkforceGate } from "../../../../../components/workspace/workforce-gate";
@@ -95,6 +96,7 @@ export default function WorkforceSecurityGrantsPage() {
   const [grantOpen, setGrantOpen] = useState(false);
   const [grantForm, setGrantForm] = useState(EMPTY_GRANT_FORM);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
 
   const [filterText, setFilterText] = useState("");
   const debouncedFilterText = useDebouncedValue(filterText, 300);
@@ -376,26 +378,42 @@ export default function WorkforceSecurityGrantsPage() {
     if (res.ok) {
       setGrantOpen(false);
       setGrantForm(EMPTY_GRANT_FORM);
+      setListError(null);
       await load();
       return;
     }
-    setModalError((await res.text()) || tCommon("saveFailed"));
+    setModalError(grantActionErrorText(await parseWorkforceApiError(res)));
+  }
+
+  function grantActionErrorText(err: { code?: string; message: string }) {
+    if (err.code === "GRANT_ALREADY_ACTIVE") return t("grantAlreadyActive");
+    return err.message || tCommon("saveFailed");
   }
 
   async function onRevokeGrant(id: string) {
     if (busy) return;
     setBusy(true);
+    setListError(null);
     const res = await wfFetch(`manual-grants/${id}/revoke`, { method: "POST", body: "{}" });
     setBusy(false);
-    if (res.ok) await load();
+    if (res.ok) {
+      await load();
+      return;
+    }
+    setListError(grantActionErrorText(await parseWorkforceApiError(res)));
   }
 
   async function onRestoreGrant(id: string) {
     if (busy) return;
     setBusy(true);
+    setListError(null);
     const res = await wfFetch(`manual-grants/${id}/restore`, { method: "POST", body: "{}" });
     setBusy(false);
-    if (res.ok) await load();
+    if (res.ok) {
+      await load();
+      return;
+    }
+    setListError(grantActionErrorText(await parseWorkforceApiError(res)));
   }
 
   if (!ready) return null;
@@ -419,6 +437,9 @@ export default function WorkforceSecurityGrantsPage() {
           }
         />
       </div>
+      {listError ? (
+        <p className="mb-2 text-[13px] text-[#C0392B]">{listError}</p>
+      ) : null}
       <EraListWorkspace
         filter={
           <EraListFilterBar
@@ -431,6 +452,7 @@ export default function WorkforceSecurityGrantsPage() {
               setFilterSatellite("");
               setFilterRole("");
               setFilterStatus("ACTIVE");
+              setListError(null);
             }}
             actionsExtra={
               hasActiveFilters ? (
