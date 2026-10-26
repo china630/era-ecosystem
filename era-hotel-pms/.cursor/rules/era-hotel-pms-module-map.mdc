@@ -13,7 +13,8 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 
 | Route | API | Role |
 |-------|-----|------|
-| `/hk` | `GET /api/housekeeping/tasks`, `GET /api/housekeeping/sheet` | Board + floor sheet PDF (one floor per page) |
+| `/hk` | `GET /api/housekeeping/tasks`, `GET /api/housekeeping/sheet` | One-floor sheet. Maid in the title. Screen columns are the working set; PDF keeps the paper columns except the maid column |
+| `/hk/rooms` | `GET /api/rooms`, `POST /api/housekeeping/condition` | Hotel-wide cleanliness board. Occupied door accepts Dirty/Pickup/Clean from HK; Inspected stays vacant-only |
 | `/hk/maids` | `GET/POST /api/housekeeping/maids`, `GET /api/housekeeping/personnel` | Link a CP workforce employment; hotel stores department and ƏG |
 | `/hk/mobile` | sheet + `POST /api/housekeeping/outcome` + `POST /api/housekeeping/discrepancy` | Maid outcomes including İstəmədi; Skip/Sleep sent to the board |
 | `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week E/L/N/OFF/ƏG |

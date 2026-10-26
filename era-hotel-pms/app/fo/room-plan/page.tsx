@@ -18,6 +18,7 @@ import {
   showSuccess,
 } from '@era/satellite-kit/ui';
 import ReservationCardModal from '@/components/ReservationCardModal';
+import { doorConflictToast } from '@/lib/door-assign-reason';
 import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
 import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
@@ -95,6 +96,7 @@ function guestMatches(name: string, q: string): boolean {
 export default function RoomPlanPage() {
   const { can } = useAuth();
   const t = useTranslations('roomPlan');
+  const tCard = useTranslations('reservationCard');
   const tc = useTranslations('common');
   const [fromDate, setFromDate] = useState(() => bakuYmd());
   const [days, setDays] = useState(14);
@@ -218,7 +220,11 @@ export default function RoomPlanPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        showApiError(json, tc('updateFailed'));
+        const clash = doorConflictToast(json);
+        showApiError(
+          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : json,
+          tc('updateFailed'),
+        );
         return;
       }
       showSuccess(json?.pending ? t('movePlanned') : t('moved'));
@@ -252,7 +258,11 @@ export default function RoomPlanPage() {
         });
         const json = await res.json();
         if (!res.ok) {
-          showApiError(json, tc('updateFailed'));
+          const clash = doorConflictToast(json);
+          showApiError(
+            clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : json,
+            tc('updateFailed'),
+          );
           return;
         }
       }

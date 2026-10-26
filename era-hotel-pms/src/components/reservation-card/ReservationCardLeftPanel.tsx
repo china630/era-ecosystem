@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { HkStatusMark } from '@/components/HkStatusMark';
 import { useEffect, useMemo, useState } from 'react';
 import { Lock, PlaneLanding, PlaneTakeoff, Search } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -791,11 +792,11 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                   {props.roomId ? (
                     <Link
                       href={`/hk?roomId=${props.roomId}`}
-                      className={`${SECONDARY_BUTTON_CLASS} min-w-[4.75rem] justify-center text-[11px]`}
+                      className="inline-flex"
                       title={t('roomHk')}
                       data-testid="reservation-hk-badge"
                     >
-                      {hkBadge ?? 'HK'}
+                      <HkStatusMark status={hkBadge} />
                     </Link>
                   ) : (
                     <span
@@ -865,11 +866,11 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </span>
               <Link
                 href={`/hk?roomId=${props.roomId}`}
-                className={`${SECONDARY_BUTTON_CLASS} min-w-[4.75rem] justify-center text-[11px]`}
+                className="inline-flex"
                 title={t('roomHk')}
                 data-testid="reservation-hk-badge"
               >
-                {hkBadge ?? 'HK'}
+                <HkStatusMark status={hkBadge} />
               </Link>
             </div>
           ) : null}

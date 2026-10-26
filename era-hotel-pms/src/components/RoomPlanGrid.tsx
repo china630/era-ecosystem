@@ -13,6 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 import { ColorLegend } from '@era/satellite-kit/ui';
+import { HkStatusBar } from '@/components/HkStatusMark';
 import { rackNumberTextClass } from '@/lib/room-rack-display';
 import { RoomPlanBar } from '@/components/room-plan/RoomPlanBar';
 import { hoverMarkerLabel, planHeaderParts } from '@/components/room-plan/format';
@@ -76,7 +77,7 @@ export type {
   RoomStatus,
 } from '@/components/room-plan/types';
 
-const ROOM_COL_W = 120;
+const ROOM_COL_W = 136;
 const DAY_MIN_W = 56;
 const ROW_H_BASE = 36;
 const DATE_HEADER_H = 44;
@@ -202,7 +203,8 @@ function RoomLabelCell({
       )} flex flex-col justify-center border-t border-[#D5DADF] px-2 py-1`}
       style={{ minHeight: rowHeight }}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
+        <HkStatusBar status={room.hkCondition ?? room.status} />
         <span className={`text-[13px] font-bold leading-tight ${numCls}`}>{room.roomNumber}</span>
       </div>
       <span className="text-[10px] leading-tight text-[#7F8C8D]">

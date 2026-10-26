@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { doorClashWindow, hotelDateKey } from '@/lib/hotel-calendar';
 import { countsFromPax } from '@/components/reservation-card/party-pax';
+import { isDepartedPartyRow, partyDepartedAt, primaryIndexForParty } from '@/lib/party-departed-stamp';
 import { partyGuestLabel, paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios, reconcilePartyFolios } from '@/lib/services/booking-folio.service';
@@ -259,6 +260,7 @@ export async function patchReservationFull(
       payStatus?: string | null;
       externalResId?: string | null;
       guestState?: string | null;
+      departedAt?: string | null;
       isPrimary?: boolean;
       ownsFolio?: boolean;
       /** FO Guests tab medical SKU (PKG-* or empty). */
@@ -308,7 +310,7 @@ export async function patchReservationFull(
         kept.map((row) => ({
           birthDate: row.birthDate ?? '',
           age: row.age == null ? '' : String(row.age),
-          departedAt: null,
+          departedAt: row.departedAt ?? null,
         })),
       );
       data.adults = counts.adults;
@@ -435,14 +437,23 @@ export async function patchReservationFull(
       isOta: await reservationIsOta(id),
       guestGender: existing.guest.sex,
     };
+    const clash = doorClashWindow(existing.status, checkIn, checkOut);
     const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
-      await assertRoomShareAssignable({
-        roomId: effectiveRoomId,
-        checkIn,
-        checkOut,
-        excludeReservationId: id,
-        candidate,
-      });
+      clash
+        ? await assertRoomShareAssignable({
+            roomId: effectiveRoomId,
+            checkIn: clash.from,
+            checkOut: clash.to,
+            excludeReservationId: id,
+            candidate,
+          })
+        : {
+            shareBedIndex: existing.shareBedIndex,
+            joiningPool: false,
+            shareEligible: nextShareEligible,
+            shareGender: nextShareGender,
+            autoShare: false,
+          };
     assignShareBedIndex = shareBedIndex;
     doorShareResolved = true;
     if (autoShare) {
@@ -479,7 +490,8 @@ export async function patchReservationFull(
   // one being written, not the type still stored on the row.
   if (typeChanged || windowGrows) {
     const { assertShareInventory } = await import('@/lib/services/share-assignment.service');
-    await assertShareInventory(nextRoomTypeId, checkIn, checkOut, {
+    const quota = doorClashWindow(existing.status, checkIn, checkOut);
+    if (quota) await assertShareInventory(nextRoomTypeId, quota.from, quota.to, {
       id,
       shareEligible: nextShareEligible,
       shareGender: nextShareGender,
@@ -638,16 +650,17 @@ export async function patchReservationFull(
       },
     });
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
-    const marked = paxGuests.findIndex((p) => p.isPrimary);
-    const primaryIdx = marked >= 0 ? marked : 0;
+    const primaryIdx = primaryIndexForParty(paxGuests);
     await prisma.reservation.update({
       where: { id },
       data: { partyBillingMode: 'PRIMARY' },
     });
     await prisma.reservationGuest.createMany({
       data: paxGuests.map((p, i) => {
-        const isPrimary = i === primaryIdx;
-        const ownsFolio = true;
+        const departedAt = partyDepartedAt(p.departedAt);
+        const departed = isDepartedPartyRow(p);
+        const isPrimary = i === primaryIdx && !departed;
+        const ownsFolio = !departed;
         return {
           organizationId: existing.organizationId,
           reservationId: id,
@@ -665,8 +678,9 @@ export async function patchReservationFull(
           memberNo: p.memberNo ?? null,
           payStatus: p.payStatus ?? null,
           externalResId: p.externalResId ?? null,
-          guestState: p.guestState ?? null,
-          /** Contact / PRIMARY-mode folio owner */
+          guestState: p.guestState ?? (departed ? 'DEPARTED' : null),
+          departedAt,
+          /** Contact / PRIMARY-mode folio owner. A departed guest does not own a new folio. */
           isPrimary,
           ownsFolio,
           medicalPackageCode:
@@ -721,6 +735,7 @@ export async function patchReservationFull(
   const datesChanged =
     (data.checkInDate && data.checkInDate.getTime() !== existing.checkInDate.getTime()) ||
     (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
+  const roomChanged = data.roomId !== undefined && data.roomId !== existing.roomId;
 
   const clientDailyRates = datesChanged ? undefined : dailyRates;
   if (datesChanged) {
@@ -732,6 +747,10 @@ export async function patchReservationFull(
         OR: [{ stayDate: { lt: checkIn } }, { stayDate: { gte: checkOut } }],
       },
     });
+  }
+  if (datesChanged || roomChanged) {
+    const { alignReservationStaySlices } = await import('@/lib/services/stay-slice.service');
+    await alignReservationStaySlices(id);
   }
 
   if (clientDailyRates?.length) {
@@ -858,9 +877,25 @@ export async function patchReservationFull(
     });
   }
 
-  // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
-  // only when the stay window did not change.
-  if (datesChanged || !clientDailyRates?.length) {
+  if (ratePlanChanged) {
+    const { retariffStaySlices } = await import('@/lib/services/stay-slice.service');
+    await retariffStaySlices({
+      reservationId: id,
+      previousRatePlanId: existing.ratePlanId,
+      nextRatePlanId: chargedPlanId,
+    });
+  }
+
+  // One rebuild after the slice tariff matches the card. A sent grid is kept
+  // only when the window, tariff, meal, billing and package did not change.
+  const rebuildNights =
+    datesChanged ||
+    !clientDailyRates?.length ||
+    ratePlanChanged ||
+    paxSkuChanged ||
+    mealPlanChanged ||
+    billingModeChanged;
+  if (rebuildNights) {
     const { usesMedicalPackageCompose } = await import(
       '@/lib/services/medical-package-resolve.service'
     );
@@ -881,13 +916,6 @@ export async function patchReservationFull(
       );
       await recalcReservationDailyRates(id);
     }
-  }
-
-  if (ratePlanChanged || paxSkuChanged || mealPlanChanged || billingModeChanged) {
-    const { recalcReservationDailyRates } = await import(
-      '@/lib/services/reservation-pricing.service'
-    );
-    await recalcReservationDailyRates(id);
   }
 
   const summed = await prisma.reservationDailyRate.aggregate({
@@ -1086,7 +1114,7 @@ export async function listReservationsForGrid(
       status: true,
       adults: true,
       guest: { select: { fullName: true } },
-      room: { select: { roomNumber: true, status: true } },
+      room: { select: { roomNumber: true, status: true, hkCondition: true } },
       roomType: { select: { code: true } },
       agency: { select: { code: true, name: true } },
       company: { select: { code: true, name: true } },
@@ -1103,7 +1131,7 @@ export async function listReservationsForGrid(
       case 'room':
         return row.room?.roomNumber ?? '';
       case 'hk':
-        return row.room?.status ?? '';
+        return row.room?.hkCondition ?? row.room?.status ?? '';
       case 'guest':
         return row.guest.fullName ?? '';
       case 'arrival':

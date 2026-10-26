@@ -1,5 +1,7 @@
+import { ConflictException, ValidationPipe } from "@nestjs/common";
 import { SATELLITE_STAFF_DEACTIVATED } from "@era/contracts";
 import { RoleBindingStatus } from "@era365/database";
+import { ListManualGrantsQueryDto } from "./dto/workforce-manual-grant.dto";
 import { WorkforceManualGrantService } from "./workforce-manual-grant.service";
 
 const ORG = "44444444-4444-4444-8444-444444444444";
@@ -13,6 +15,7 @@ describe("WorkforceManualGrantService", () => {
     workforceManualGrant: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
@@ -54,6 +57,7 @@ describe("WorkforceManualGrantService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     entitlement.assertWorkforceHub.mockResolvedValue(undefined);
+    prisma.workforceManualGrant.findFirst.mockResolvedValue(null);
     audit.log.mockResolvedValue(undefined);
     provision.reprovision.mockResolvedValue({ reprovisioned: 1 });
     satelliteEvents.enqueue.mockResolvedValue({ jobId: "j1" });
@@ -174,6 +178,91 @@ describe("WorkforceManualGrantService", () => {
       skip: 0,
       take: 50,
     });
+  });
+
+  it("grant rejects a second active row for the same role", async () => {
+    prisma.workforceEmployment.findFirst.mockResolvedValue({
+      id: EMP,
+      organizationId: ORG,
+      status: "ACTIVE",
+    });
+    prisma.workforceManualGrant.findFirst.mockResolvedValue({ id: GRANT_ID });
+
+    await expect(
+      svc.grant(ORG, "actor", {
+        employmentId: EMP,
+        satelliteKey: "industry_clinic",
+        satelliteRole: "CHIEF_DOCTOR",
+        reason: "again",
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.workforceManualGrant.create).not.toHaveBeenCalled();
+    expect(provision.reprovision).not.toHaveBeenCalled();
+  });
+
+  it("grant maps a unique-index race to GRANT_ALREADY_ACTIVE", async () => {
+    prisma.workforceEmployment.findFirst.mockResolvedValue({
+      id: EMP,
+      organizationId: ORG,
+      status: "ACTIVE",
+    });
+    prisma.workforceManualGrant.create.mockRejectedValue({ code: "P2002" });
+
+    try {
+      await svc.grant(ORG, "actor", {
+        employmentId: EMP,
+        satelliteKey: "industry_clinic",
+        satelliteRole: "CHIEF_DOCTOR",
+        reason: "race",
+      });
+      throw new Error("expected conflict");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).getResponse()).toMatchObject({
+        code: "GRANT_ALREADY_ACTIVE",
+      });
+    }
+    expect(provision.reprovision).not.toHaveBeenCalled();
+  });
+
+  it("restore rejects when another active grant already covers the role", async () => {
+    prisma.workforceManualGrant.findUnique.mockResolvedValue({
+      id: GRANT_ID,
+      employmentId: EMP,
+      satelliteKey: "industry_clinic",
+      satelliteRole: "CHIEF_DOCTOR",
+      revokedAt: new Date(),
+      employment: {
+        organizationId: ORG,
+        globalPersonId: "person-1",
+        status: "ACTIVE",
+      },
+    });
+    prisma.workforceManualGrant.findFirst.mockResolvedValue({ id: "other-grant" });
+
+    await expect(svc.restore(ORG, GRANT_ID, "actor")).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(prisma.workforceManualGrant.update).not.toHaveBeenCalled();
+    expect(provision.reprovision).not.toHaveBeenCalled();
+  });
+
+  it("list query revoked=false stays false after implicit boolean conversion", async () => {
+    const pipe = new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    });
+    const active = await pipe.transform(
+      { revoked: "false", page: "1", pageSize: "25" },
+      { type: "query", metatype: ListManualGrantsQueryDto },
+    );
+    const revoked = await pipe.transform(
+      { revoked: "true" },
+      { type: "query", metatype: ListManualGrantsQueryDto },
+    );
+    expect(active).toMatchObject({ revoked: false, page: 1, pageSize: 25 });
+    expect(revoked).toMatchObject({ revoked: true });
   });
 
   it("list returns empty when org has no employments", async () => {

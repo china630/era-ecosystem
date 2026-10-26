@@ -119,6 +119,23 @@ export function usesMedicalPackageCompose(plan: {
   return stayProductFamily(plan) === "medical";
 }
 
+/** Night audit posts a package split for medical and Infotur. A plain BAR night posts ROOM. */
+export function postsStayAsPackage(plan: {
+  code?: string | null;
+  medicalFlag?: boolean | null;
+}): boolean {
+  const family = stayProductFamily(plan);
+  return family === "medical" || family === "infotur" || Boolean(plan.medicalFlag);
+}
+
+/**
+ * Infotur with no package lines still posts the stored nightly amount as a room charge.
+ * A medical stay does not fall through onto ROOM.
+ */
+export function packageSkipPostsRoom(plan: { code?: string | null }): boolean {
+  return stayProductFamily(plan) === "infotur";
+}
+
 /** Guest-column options: the four medical SKUs only. Never Infotur. */
 export function medicalPackageChoices(
   plans: Array<{ code?: string | null; label?: string | null }>,

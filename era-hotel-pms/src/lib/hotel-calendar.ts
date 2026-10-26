@@ -5,7 +5,7 @@
  * Stored as UTC instants (14:00 Baku = 10:00Z, 12:00 Baku = 08:00Z).
  */
 
-import { ERA_TIME_ZONE, bakuDateKey } from '@era/satellite-kit/time';
+import { ERA_TIME_ZONE, bakuCivilUtcDate, bakuDateKey, todayBakuYmd } from '@era/satellite-kit/time';
 
 export const HOTEL_TIME_ZONE = ERA_TIME_ZONE;
 export const CHECK_IN_HOUR_BAKU = 14;
@@ -54,16 +54,21 @@ export function hotelNightBounds(isoOrKey: string | Date): { start: Date; end: D
   };
 }
 
-/** True when a stay consumes a door on hotel night D (FO Avl/Occ / sellable / create). */
+/**
+ * True when a stay consumes a door on hotel night D (FO Avl/Occ / sellable / create).
+ * Compared as Asia/Baku civil dates: arrival day inclusive, checkout day exclusive.
+ * A `@db.Date` at UTC midnight is that civil day, so it does not also occupy the night before.
+ * Same result as the 12:00 Baku window for stays stored at 14:00 check-in and 12:00 check-out.
+ */
 export function stayOccupiesHotelNight(
   checkIn: Date | string,
   checkOut: Date | string,
   night: string | Date,
 ): boolean {
-  const cin = checkIn instanceof Date ? checkIn : new Date(checkIn);
-  const cout = checkOut instanceof Date ? checkOut : new Date(checkOut);
-  const { start, end } = hotelNightBounds(night);
-  return cin < end && cout > start;
+  const cin = hotelDateKey(checkIn);
+  const cout = hotelDateKey(checkOut);
+  const key = hotelDateKey(night);
+  return cin <= key && key < cout;
 }
 
 /** True stay overlap (double booking), not adjacent checkout/check-in turnover. */
@@ -114,6 +119,32 @@ export function reservationStayOverlaps(
   const bIn = b.checkInDate instanceof Date ? b.checkInDate : new Date(b.checkInDate);
   const bOut = b.checkOutDate instanceof Date ? b.checkOutDate : new Date(b.checkOutDate);
   return staysOverlap(aIn, aOut, bIn, bOut);
+}
+
+/**
+ * Door clash window. An in-house move only needs the tail from today (Asia/Baku)
+ * through checkout. Nights already lived stay on the old door and do not block
+ * the new one. A pre-arrival stay still clashes on the whole reservation.
+ * Null when no night remains (checkout is today or earlier).
+ */
+export function doorClashWindow(
+  status: string,
+  checkIn: Date | string,
+  checkOut: Date | string,
+  todayKey = todayBakuYmd(),
+): { from: Date; to: Date } | null {
+  const out = checkOut instanceof Date ? checkOut : new Date(checkOut);
+  const checkoutKey = hotelDateKey(out);
+  const arrivalKey = hotelDateKey(checkIn);
+  const fromKey = status === 'IN_HOUSE' && arrivalKey < todayKey ? todayKey : arrivalKey;
+  if (fromKey >= checkoutKey) return null;
+  const from =
+    status === 'IN_HOUSE'
+      ? bakuCivilUtcDate(fromKey)
+      : checkIn instanceof Date
+        ? checkIn
+        : new Date(checkIn);
+  return { from, to: out };
 }
 
 /** Calendar nights between stay edges (minimum 1). */

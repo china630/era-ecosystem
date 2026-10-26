@@ -44,6 +44,7 @@ type TimelineEvent = {
   titleL10n?: L10n;
   subtitle?: string;
   status: string;
+  showClock?: boolean;
   href?: string;
   hasCritical?: boolean;
   resultSummary?: Array<{ code: string; value: string; flag?: string }>;
@@ -378,6 +379,16 @@ export function PatientCardClinicalSections({
     setPrintOpen(true);
   }
 
+  function openStornoCopies(path: string) {
+    const withLang = path.includes("lang=")
+      ? path
+      : `${path}${path.includes("?") ? "&" : "?"}lang=${encodeURIComponent(locale)}`;
+    const base = withLang.includes("sheets=") ? withLang : `${withLang}&sheets=1`;
+    for (let i = 0; i < 3; i++) {
+      window.open(`${base}&copy=${i + 1}`, `extra_storno_copy_${i + 1}`);
+    }
+  }
+
   async function cancelPlanOrder(orderId: string) {
     setCancelAskId(null);
     setPlanBusy(true);
@@ -392,6 +403,8 @@ export function PatientCardClinicalSections({
         showApiError(data, tc("failed"));
         return;
       }
+      const payload = (data?.data ?? data) as { stornoPrintPath?: string };
+      if (payload.stornoPrintPath) openStornoCopies(payload.stornoPrintPath);
       await loadPlan(true);
     } finally {
       setPlanBusy(false);
@@ -849,7 +862,7 @@ export function PatientCardClinicalSections({
                 const scheduled = ev.type === "procedure" && ev.status === "SCHEDULED" && orderId;
                 const proposed = ev.type === "procedure" && ev.status === "PROPOSED" && orderId;
                 const unpaid = ev.status === "PENDING_PAY";
-                const actionable = scheduled || proposed;
+                const actionable = scheduled || proposed || unpaid;
                 return (
                   <li
                     key={ev.id}
@@ -858,8 +871,10 @@ export function PatientCardClinicalSections({
                     <div className="min-w-0">
                       <div className="font-medium">{eventTitle(ev, locale)}</div>
                       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {!unpaid && ev.at ? bakuDateTimeLabel(ev.at) : ""}
-                        {ev.status ? `${!unpaid && ev.at ? " · " : ""}${planStatusLabel(ev.status)}` : ""}
+                        {ev.showClock !== false && ev.at ? bakuDateTimeLabel(ev.at) : ""}
+                        {ev.status
+                          ? `${ev.showClock !== false && ev.at ? " · " : ""}${planStatusLabel(ev.status)}`
+                          : ""}
                       </p>
                     </div>
                     {actionable ? (

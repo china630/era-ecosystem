@@ -15,7 +15,9 @@ export async function GET(request: Request) {
     if (sp.get('format') === 'pdf') {
       const rawLang = sp.get('lang');
       const lang = rawLang === 'en' || rawLang === 'ru' ? rawLang : 'az';
-      const buf = await generateFloorSheetPdf(date, lang);
+      const floorRaw = sp.get('floor');
+      const floorNum = floorRaw == null || floorRaw === '' ? undefined : Number(floorRaw);
+      const buf = await generateFloorSheetPdf(date, lang, Number.isFinite(floorNum) ? floorNum : undefined);
       return new Response(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'application/pdf',

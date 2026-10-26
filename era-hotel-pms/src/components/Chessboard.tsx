@@ -11,6 +11,7 @@ import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import RoomInfoModal from '@/components/RoomInfoModal';
 import RoomRackView from '@/components/RoomRackView';
+import { doorConflictToast } from '@/lib/door-assign-reason';
 import { computeRackDisplayState } from '@/lib/room-rack-display';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
@@ -86,9 +87,7 @@ export default function Chessboard() {
   const t = useTranslations('chessboard');
   const tCard = useTranslations('reservationCard');
   const tCommon = useTranslations('common');
-  const tRoom = useTranslations('roomStatus');
-
-  const roomStatusLabel = (status: RoomStatus) => tRoom(status);
+  const tHk = useTranslations('housekeeping.hkCond');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
   const [filterDateFrom, setFilterDateFrom] = useState(() => hotelDateKey(new Date()));
@@ -165,7 +164,11 @@ export default function Chessboard() {
           });
           return;
         }
-        showApiError(data, tCommon('actionFailed'));
+        const clash = doorConflictToast(data);
+        showApiError(
+          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : data,
+          tCommon('actionFailed'),
+        );
         return;
       }
       showSuccess(
@@ -207,7 +210,11 @@ export default function Chessboard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showApiError(data, tCommon('actionFailed'));
+        const clash = doorConflictToast(data);
+        showApiError(
+          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : data,
+          tCommon('actionFailed'),
+        );
         return;
       }
       showSuccess(data?.pending ? t('movePlanned') : t('relocated'));
@@ -219,14 +226,15 @@ export default function Chessboard() {
     }
   }
 
-  async function setRoomStatus(status: RoomStatus) {
+  async function setRoomHk(hk: 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED') {
     if (!selected) return;
+    const roomId = selected.id;
     setBusy(true);
     try {
-      const res = await fetch(`/api/rooms/${selected.id}/status`, {
+      const res = await fetch(`/api/rooms/${roomId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ hkCondition: hk }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -237,7 +245,16 @@ export default function Chessboard() {
         return;
       }
       showSuccess(
-        t('roomStatusUpdated', { number: selected.roomNumber, status: roomStatusLabel(status) }),
+        t('roomStatusUpdated', { number: selected.roomNumber, status: tHk(hk) }),
+      );
+      setSelected((prev) =>
+        prev && prev.id === roomId
+          ? {
+              ...prev,
+              hkCondition: hk,
+              status: (data.status as Room['status'] | undefined) ?? prev.status,
+            }
+          : prev,
       );
       await load();
     } catch (e) {
@@ -360,7 +377,7 @@ export default function Chessboard() {
             description: t('quickPosting'),
           })
         }
-        onSetStatus={setRoomStatus}
+        onSetHk={setRoomHk}
         onOpenReservation={(id) => {
           setSelected(null);
           openReservationCard(id);

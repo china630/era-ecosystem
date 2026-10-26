@@ -486,7 +486,7 @@ export async function reassignFutureStaffToApprovedRoster(
       id: { notIn: movableIds },
       startsAt: { lt: monthEnd },
       endsAt: { gt: from },
-      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "PENDING_PAY"] } },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "PROPOSED", "UNPAID_MISSED"] } },
     },
     select: {
       practitionerId: true,

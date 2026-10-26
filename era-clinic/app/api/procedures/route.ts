@@ -33,6 +33,7 @@ const ALL_FILTER_STATUSES: ProcedureOrderStatus[] = [
   "COMPLETED",
   "NO_SHOW",
   "CANCELLED",
+  "PENDING_PAY",
 ];
 
 export async function GET(request: Request) {
@@ -94,16 +95,23 @@ export async function GET(request: Request) {
       status: { in: statuses },
     };
 
-    // CLI-57: unpaid / unticketed extras never appear on the nurse board.
+    // HOLD_UNTIL_PAY rows have no cabin and stay off every nurse board.
+    const seatedUnpaidOnly: Prisma.ProcedureOrderWhereInput = {
+      OR: [{ status: { not: "PENDING_PAY" } }, { resourceId: { not: null } }],
+    };
     if (mine) {
       where.AND = [
+        seatedUnpaidOnly,
         {
           OR: [
             { inPackage: true },
             { extraTicketIssuedAt: { not: null } },
+            { status: "PENDING_PAY", resourceId: { not: null } },
           ],
         },
       ];
+    } else {
+      where.AND = [seatedUnpaidOnly];
     }
 
     if (patientQ) {

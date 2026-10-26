@@ -127,12 +127,11 @@ export async function closeOpenEpisodesForReservation(reservationId: string) {
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
     });
   }
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      status: "PENDING_PAY",
-      OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }],
-    },
-  });
+  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  await closeUnpaidExtras(
+    { OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }] },
+    "unpaid_checkout",
+  );
   return { closed: episodes.length, cancelled: orderIds.length };
 }
 
@@ -143,28 +142,51 @@ export async function handleGuestCheckedOut(
   await closeOpenEpisodesForReservation(event.payload.reservationId);
 }
 
+/** Stay key check-in writes, plus the legacy HOTEL- ref from before P-codes. */
+function episodeMatchForPax(input: {
+  reservationId: string;
+  paxKey: string;
+  globalPersonId?: string;
+}) {
+  const gpid = input.globalPersonId?.trim() || undefined;
+  const resPrefix = input.reservationId.slice(0, 8);
+  const expectedRef = `HOTEL-${resPrefix}-${input.paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
+  const hotelStayId = resolveHotelStayId({
+    reservationId: input.reservationId,
+    globalPersonId: gpid,
+    paxKey: input.paxKey,
+  });
+  return {
+    hotelStayId,
+    or: [
+      { hotelStayId },
+      ...(gpid
+        ? [
+            { globalPersonId: gpid },
+            { patientRef: { globalPersonId: gpid } },
+          ]
+        : []),
+      { patientRef: { refCode: expectedRef } },
+    ],
+  };
+}
+
 /** Person-level Depart guest — close only that pax episode (ADR hotel-reservation-card-and-party-ops D4/D6). */
 export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEvent) {
   enterRequestTenant(event.organizationId);
   const p = event.payload;
-  const paxKey = p.paxKey;
   const gpid = p.globalPersonId ?? event.globalPersonId;
-  const resPrefix = p.reservationId.slice(0, 8);
-  const expectedRef = `HOTEL-${resPrefix}-${paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
+  const match = episodeMatchForPax({
+    reservationId: p.reservationId,
+    paxKey: p.paxKey,
+    globalPersonId: gpid,
+  });
 
   const episodes = await prisma.clinicalEpisode.findMany({
     where: {
       reservationId: p.reservationId,
       status: "OPEN",
-      OR: [
-        ...(gpid
-          ? [
-              { globalPersonId: gpid },
-              { patientRef: { globalPersonId: gpid } },
-            ]
-          : []),
-        { patientRef: { refCode: expectedRef } },
-      ],
+      OR: match.or,
     },
     select: { id: true },
   });
@@ -195,36 +217,37 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
       },
     });
   }
-  await prisma.procedureOrder.deleteMany({
-    where: {
-      clinicalEpisodeId: { in: targetIds },
-      status: "PENDING_PAY",
-    },
-  });
+  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  await closeUnpaidExtras(
+    { clinicalEpisodeId: { in: targetIds } },
+    "unpaid_checkout",
+  );
 }
 
 export async function handleGuestMoved(event: SatelliteHotelGuestMovedEvent) {
   enterRequestTenant(event.organizationId);
   const p = event.payload;
-  const paxKey = p.paxKey;
   const gpid = p.globalPersonId ?? event.globalPersonId;
-  const resPrefix = p.fromReservationId.slice(0, 8);
-  const expectedRef = `HOTEL-${resPrefix}-${paxKey.replace(/\s+/g, "-").slice(0, 16)}`;
+  const fromMatch = episodeMatchForPax({
+    reservationId: p.fromReservationId,
+    paxKey: p.paxKey,
+    globalPersonId: gpid,
+  });
+  const toStayId = resolveHotelStayId({
+    reservationId: p.toReservationId,
+    globalPersonId: gpid,
+    paxKey: p.paxKey,
+  });
 
   await prisma.clinicalEpisode.updateMany({
     where: {
       status: "OPEN",
       reservationId: p.fromReservationId,
-      OR: [
-        ...(gpid
-          ? [{ globalPersonId: gpid }, { patientRef: { globalPersonId: gpid } }]
-          : []),
-        { patientRef: { refCode: expectedRef } },
-      ],
+      OR: fromMatch.or,
     },
     data: {
       reservationId: p.toReservationId,
-      hotelStayId: p.toReservationId,
+      hotelStayId: toStayId,
       roomNumber: p.newRoomNumber,
     },
   });

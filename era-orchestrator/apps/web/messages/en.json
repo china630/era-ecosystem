@@ -1424,6 +1424,7 @@
     "grantRevoke": "Revoke",
     "grantRevoked": "Revoked",
     "grantRestore": "Restore",
+    "grantAlreadyActive": "This employee already has an active grant for this satellite and role.",
     "linkExport": "1C / CSV export",
     "linkAudit": "Full audit log",
     "filterSearch": "Search",

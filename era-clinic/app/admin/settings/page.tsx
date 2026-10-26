@@ -73,7 +73,7 @@ type SchedulingDefaults = {
   doctorBonusPercentWalkIn: number;
   hotelFolioRevenueCode: string;
   noShowKeepsCharge: boolean;
-  extraProcedureRoute: "SHOW_ON_PLAN" | "HOLD_UNTIL_PAY";
+  extraProcedureRoute: "PLAN_BEFORE_PAY" | "HOLD_UNTIL_PAY";
 };
 
 const CARD_DEFAULTS: CardLimits = {
@@ -127,7 +127,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   doctorBonusPercentWalkIn: 0,
   hotelFolioRevenueCode: "",
   noShowKeepsCharge: true,
-  extraProcedureRoute: "SHOW_ON_PLAN",
+  extraProcedureRoute: "PLAN_BEFORE_PAY",
 };
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -215,7 +215,7 @@ export default function ClinicAdminSettingsPage() {
             row.hotelFolioRevenueCode ?? SCHED_DEFAULTS.hotelFolioRevenueCode,
           noShowKeepsCharge: row.noShowKeepsCharge !== false,
           extraProcedureRoute:
-            row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN",
+            row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
         };
         setSchedDefaults(sched);
         setDraftSched(sched);
@@ -311,7 +311,7 @@ export default function ClinicAdminSettingsPage() {
           row.hotelFolioRevenueCode ?? draftSched.hotelFolioRevenueCode,
         noShowKeepsCharge: row.noShowKeepsCharge !== false,
         extraProcedureRoute:
-          row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN",
+          row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
       });
       setOpen(false);
       showSuccess(tc("saved"));
@@ -772,14 +772,14 @@ export default function ClinicAdminSettingsPage() {
             value={draftSched.extraProcedureRoute}
             emptyLabel={null}
             options={[
-              { value: "SHOW_ON_PLAN", label: t("extraProcedureRouteShow") },
+              { value: "PLAN_BEFORE_PAY", label: t("extraProcedureRouteShow") },
               { value: "HOLD_UNTIL_PAY", label: t("extraProcedureRouteHold") },
             ]}
             onChange={(next) => {
               const value = Array.isArray(next) ? next[0] : next;
               setDraftSched((prev) => ({
                 ...prev,
-                extraProcedureRoute: value === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "SHOW_ON_PLAN",
+                extraProcedureRoute: value === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
               }));
             }}
           />

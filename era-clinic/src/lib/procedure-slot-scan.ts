@@ -88,6 +88,8 @@ export type ScanPatientSlot = {
   quotaKey?: string;
   /** NO_SHOW blocks a second session the same day and does not create a rest gap. */
   countsForRest: boolean;
+  /** Seated paid extra counts toward the block cap. */
+  holdsGuestDay?: boolean;
 };
 
 type ScanRule = {
@@ -124,6 +126,8 @@ export type ScanOrder = {
   quotaKey?: string;
   /** Null = this block has no daily cap. Unset = caller still uses packageCap. */
   dailyCap?: number | null;
+  /** Paid extra shares the package block cap without burning quota. */
+  shareGuestDayCap?: boolean;
 };
 
 export type PlannedPlacement = {
@@ -407,14 +411,15 @@ export function evaluateCandidateSlot(
   if (!order.afterLunchAllowed && startHm.hour >= order.typeHours.lunchEndHour) return fail("lunch");
   if (!order.beforeLunchAllowed && startHm.hour < order.typeHours.lunchEndHour) return fail("lunch");
 
-  if (order.inPackage && order.dailyCap !== null) {
+  const shareCap = order.inPackage || order.shareGuestDayCap === true;
+  if (shareCap && order.dailyCap !== null) {
     if (order.quotaKey && order.dailyCap != null) {
       if (
         packageBlockIsFull({
           slots: input.patientSlots.map((slot) => ({
             code: slot.code,
             start: slot.start,
-            inPackage: slot.inPackage,
+            inPackage: slot.inPackage || slot.holdsGuestDay === true,
             quotaKey: slot.quotaKey || slot.code,
           })),
           day: slotStart,
@@ -425,7 +430,7 @@ export function evaluateCandidateSlot(
       ) {
         return fail("day_full");
       }
-    } else if (order.dailyCap === undefined) {
+    } else if (order.inPackage && order.dailyCap === undefined) {
       const codesOnDay = inPackageCodesOnBakuDay(
         input.patientSlots.map((slot) => ({
           code: slot.code,
@@ -683,6 +688,7 @@ export function scanProcedureSlots(input: {
         inPackage: order.inPackage,
         quotaKey: order.quotaKey,
         countsForRest: true,
+        holdsGuestDay: order.shareGuestDayCap === true,
       });
       input.rotationContext.push({
         procedureCode: order.procedureCode,

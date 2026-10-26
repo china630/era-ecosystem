@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { SatelliteEventsModule } from "../satellite-events/satellite-events.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SubscriptionTrialModule } from "../subscription/subscription-trial.module";
@@ -25,7 +25,15 @@ import { AdminReferenceController } from "./admin-reference.controller";
 import { DataHubAdminClient } from "./data-hub-admin.client";
 
 @Module({
-  imports: [PrismaModule, SystemConfigModule, SubscriptionTrialModule, SatelliteEventsModule],
+  // SatelliteEventsModule imports SubscriptionModule, which imports AdminModule.
+  // A direct import is still undefined when this decorator runs (CJS cycle) and
+  // Nest exits before /health can listen.
+  imports: [
+    PrismaModule,
+    SystemConfigModule,
+    SubscriptionTrialModule,
+    forwardRef(() => SatelliteEventsModule),
+  ],
   controllers: [
     AdminBillingController,
     AdminLandingController,

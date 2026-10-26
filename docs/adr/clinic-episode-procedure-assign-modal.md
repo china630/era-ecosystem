@@ -132,7 +132,7 @@ Doctor/reception uses a parallel modal (**same chrome:** searchable list + **phy
 Doctor Save (extras modal)
   → PENDING_PAY on the episode card (dedicated “Additional” block)
   → Plan tab and guest print follow Tenant.extraProcedureRoute
-    (default SHOW_ON_PLAN: listed, unpaid mark, empty time and room)
+    (default PLAN_BEFORE_PAY: seated on its own day and cabin, unpaid mark)
   → NOT in the resource schedule, NOT nurse-check-in-able until pay or folio
 
 Guest declines explicitly
@@ -220,7 +220,7 @@ Exact enum names are implementation choice; semantics required:
 | Semantic | Package | Extra |
 |----------|---------|-------|
 | Draft in open modal | local only | local only |
-| Prescribed, awaiting money | — | `PENDING_PAY` (card; plan and guest print when `extraProcedureRoute` is `SHOW_ON_PLAN`) |
+| Prescribed, awaiting money | — | `PENDING_PAY` (card; plan and guest print when `extraProcedureRoute` is `PLAN_BEFORE_PAY`) |
 | On resources | `SCHEDULED` (+ later CHECKED_IN) | same, only after pay |
 | Done | `COMPLETED` (grey in modal) | same |
 | Removed before consume | cancelled; quota back | pending delete or paid reverse |
@@ -322,8 +322,8 @@ The left menu and the package-tab quota bars list a balance only when that code 
 
 The quota-block editor shows the name, the checkbox, and a procedure-list order. The block code stays the stored key (`BLK-…` for a new block) and is not printed. Night-matrix `sortOrder` is unchanged.
 
-Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, lab, or visit line stamps that code. Used leftovers stay in the database and stay off the screen. Migration `20261022160000_block_show_in_procedures` backfills the flags from fulfillment and strips the nine removed `*_POOL` codes from snapshots and unused balances.
+Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, lab, or visit line stamps that code. Used leftovers stay in the database and stay off the screen. They are also off the SKU picker: Save and replace burn a block only when that balance is on the procedure list. A leftover `*_POOL` must not become `burnPoolCode`. Migration `20261022160000_block_show_in_procedures` backfills the flags from fulfillment and strips the nine removed `*_POOL` codes from snapshots and unused balances.
 
 ## Amendment 2026-10-22 — unpaid extra route (SCREEN)
 
-D8 “card only” is superseded for visibility. `Tenant.extraProcedureRoute` defaults to `SHOW_ON_PLAN`: the unpaid extra is on the Plan tab and on the guest procedure sheet and course summary, with an unpaid mark and empty time and room. `HOLD_UNTIL_PAY` keeps the old hide-until-pay behavior. Cabin seat, nurse check-in, QR, and the resource matrix stay closed until pay or folio. See [clinic-extra-procedure-route.md](./clinic-extra-procedure-route.md).
+D8 “card only” is superseded for visibility. `Tenant.extraProcedureRoute` defaults to `PLAN_BEFORE_PAY`: the unpaid extra is seated, on the Plan tab and the guest sheet with its time and room, and on the nurse board as a red unpaid block. Check-in and QR stay closed until pay. `HOLD_UNTIL_PAY` hides the row until pay. See [clinic-extra-procedure-route.md](./clinic-extra-procedure-route.md). Amended 2026-10-25.

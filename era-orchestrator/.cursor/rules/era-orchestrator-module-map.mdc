@@ -176,7 +176,7 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `POST /platform/v1/workforce/migration/:stepId/apply` | apply one pack step; leave = APPROVED + ISSUED `source=import`; salary/vacation via Finance opening |
 | `POST /platform/v1/workforce/migration/:stepId/skip` | mark skippable step unused; org-structure → 400 |
 | Web `/workspace/workforce/security` | matrix + seats; **ACTIVE positions only**; optimistic cell save (no full reload); client filters (search, org unit `{ items }`, position, satellite, access state); deep-link `?orgUnitId=` / `?positionId=`; SSOT `@/lib/workforce-satellites` |
-| Web `/workspace/workforce/security/grants` | manual grants; server page + `satelliteKey`/`revoked`/`search`; client org/position/role on page; status default Active |
+| Web `/workspace/workforce/security/grants` | manual grants; server page + `satelliteKey`/`revoked`/`search`; client org/position/role on page; status default Active (`revoked=false` = `revokedAt` null). One active grant per employment + satellite + role; a second POST is `409 GRANT_ALREADY_ACTIVE` |
 | Web `/workspace/workforce/security/bindings` | server-paginated bindings (not overview); person column; filters parse org-unit `{ items }` + provisionState |
 | Web `/workspace/workforce/security/audit` | audit log |
 | Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |

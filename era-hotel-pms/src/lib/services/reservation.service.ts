@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { addHotelDays, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
+import { addHotelDays, doorClashWindow, hotelDateKey, parseHotelNoon, stayCheckIn } from '@/lib/hotel-calendar';
 import { BusinessDateLagError } from '@/lib/business-date-lag';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { todayBakuYmd } from '@era/satellite-kit/time';
@@ -1035,6 +1035,37 @@ export async function checkInReservation(
     arrivalKey = hotelDateKey(reservation.checkInDate);
   }
 
+  if (!isFreeStayBilling(reservation.billingMode)) {
+    const { stayNightsArePriced } = await import('@/lib/services/reservation-pricing.service');
+    const priced = await stayNightsArePriced(
+      id,
+      nextCheckIn ?? reservation.checkInDate,
+      reservation.checkOutDate,
+    );
+    if (!priced) {
+      const { usesMedicalPackageCompose } = await import(
+        '@/lib/services/medical-package-resolve.service'
+      );
+      if (usesMedicalPackageCompose(reservation.ratePlan)) {
+        const { syncComposedDailyRates } = await import(
+          '@/lib/services/nafta-package-compose-apply.service'
+        );
+        const composed = await syncComposedDailyRates(id);
+        if (!composed.applied) {
+          const { recalcReservationDailyRates } = await import(
+            '@/lib/services/reservation-pricing.service'
+          );
+          await recalcReservationDailyRates(id);
+        }
+      } else {
+        const { recalcReservationDailyRates } = await import(
+          '@/lib/services/reservation-pricing.service'
+        );
+        await recalcReservationDailyRates(id);
+      }
+    }
+  }
+
   return prisma.$transaction(async (tx) => {
     if (nextCheckIn) {
       await tx.reservation.update({
@@ -1130,6 +1161,9 @@ export async function checkInReservation(
       const { dispatchGuestCheckedIn, lifecycleDemographicsFromPax } = await import(
         '@/lib/integration/guest-lifecycle-events'
       );
+      const { paxLifecycleGlobalPersonId } = await import(
+        '@/lib/integration/pax-lifecycle-person'
+      );
       const paxList =
         full && full.paxGuests.length > 0
           ? full.paxGuests
@@ -1162,8 +1196,12 @@ export async function checkInReservation(
           reservationId: id,
           roomNumber: updated.room?.roomNumber ?? undefined,
           programCode,
-          globalPersonId:
-            pax.guest?.globalPersonId ?? updated.guest.globalPersonId ?? undefined,
+          globalPersonId: paxLifecycleGlobalPersonId({
+            isPrimary: "isPrimary" in pax ? Boolean(pax.isPrimary) : false,
+            guestId: "guestId" in pax ? pax.guestId : pax.guest?.id,
+            guest: pax.guest,
+            primaryGuest: updated.guest,
+          }),
           guestName: name,
           checkInDate: reservation.checkInDate.toISOString(),
           checkOutDate: reservation.checkOutDate.toISOString(),
@@ -1172,19 +1210,23 @@ export async function checkInReservation(
         }).catch((e) => console.error('Guest lifecycle check-in failed', e));
       }
       if (full && !priorStay) {
-        const { usesMedicalPackageCompose } = await import(
-          '@/lib/services/medical-package-resolve.service'
-        );
-        if (usesMedicalPackageCompose(full.ratePlan)) {
-          const { syncComposedDailyRates } = await import(
-            '@/lib/services/nafta-package-compose-apply.service'
+        try {
+          const { usesMedicalPackageCompose } = await import(
+            '@/lib/services/medical-package-resolve.service'
           );
-          await syncComposedDailyRates(id);
-        } else {
-          const { recalcReservationDailyRates } = await import(
-            '@/lib/services/reservation-pricing.service'
-          );
-          await recalcReservationDailyRates(id);
+          if (usesMedicalPackageCompose(full.ratePlan)) {
+            const { syncComposedDailyRates } = await import(
+              '@/lib/services/nafta-package-compose-apply.service'
+            );
+            await syncComposedDailyRates(id);
+          } else {
+            const { recalcReservationDailyRates } = await import(
+              '@/lib/services/reservation-pricing.service'
+            );
+            await recalcReservationDailyRates(id);
+          }
+        } catch (err) {
+          console.error('Check-in rate rebuild failed', err);
         }
       }
     }
@@ -1582,14 +1624,23 @@ export async function updateReservationSchedule(
       isOta: await reservationIsOta(id),
       guestGender: reservation.guest.sex,
     };
+    const clash = doorClashWindow(reservation.status, newCheckIn, newCheckOut);
     const { shareBedIndex, joiningPool, shareEligible: resolvedShare, shareGender: resolvedGender, autoShare } =
-      await assertRoomShareAssignable({
-        roomId: newRoomId,
-        checkIn: newCheckIn,
-        checkOut: newCheckOut,
-        excludeReservationId: id,
-        candidate,
-      });
+      clash
+        ? await assertRoomShareAssignable({
+            roomId: newRoomId,
+            checkIn: clash.from,
+            checkOut: clash.to,
+            excludeReservationId: id,
+            candidate,
+          })
+        : {
+            shareBedIndex: reservation.shareBedIndex,
+            joiningPool: false,
+            shareEligible: reservation.shareEligible,
+            shareGender: reservation.shareGender,
+            autoShare: false,
+          };
     const doorOk =
       reservation.status === 'IN_HOUSE'
         ? roomStatusAllowedForShareAssign(room, joiningPool)
@@ -1597,13 +1648,15 @@ export async function updateReservationSchedule(
     if (!doorOk) {
       throw new Error(`Room ${room.roomNumber} is ${room.status} and cannot be assigned`);
     }
-    await assertShareInventory(reservation.roomTypeId, newCheckIn, newCheckOut, {
-      id,
-      shareEligible: autoShare || resolvedShare ? true : reservation.shareEligible,
-      shareGender: autoShare ? resolvedGender : reservation.shareGender,
-      adults: reservation.adults,
-      roomId: newRoomId,
-    });
+    if (clash) {
+      await assertShareInventory(reservation.roomTypeId, clash.from, clash.to, {
+        id,
+        shareEligible: autoShare || resolvedShare ? true : reservation.shareEligible,
+        shareGender: autoShare ? resolvedGender : reservation.shareGender,
+        adults: reservation.adults,
+        roomId: newRoomId,
+      });
+    }
     const updated = await prisma.reservation.update({
       where: { id },
       data: {
@@ -1633,6 +1686,7 @@ export async function updateReservationSchedule(
       const { recalcReservationDailyRates } = await import('./reservation-pricing.service');
       await recalcReservationDailyRates(id).catch(() => undefined);
     }
+    await alignScheduleSlices(id, reservation, newCheckIn, newCheckOut, newRoomId);
     return updated;
   }
 
@@ -1673,7 +1727,24 @@ export async function updateReservationSchedule(
     await recalcReservationDailyRates(id).catch(() => undefined);
   }
 
+  await alignScheduleSlices(id, reservation, newCheckIn, newCheckOut, newRoomId);
   return updated;
+}
+
+async function alignScheduleSlices(
+  id: string,
+  reservation: { checkInDate: Date; checkOutDate: Date; roomId: string | null },
+  newCheckIn: Date,
+  newCheckOut: Date,
+  newRoomId: string | null,
+) {
+  const datesChanged =
+    newCheckIn.getTime() !== reservation.checkInDate.getTime() ||
+    newCheckOut.getTime() !== reservation.checkOutDate.getTime();
+  const roomChanged = newRoomId !== reservation.roomId;
+  if (!datesChanged && !roomChanged) return;
+  const { alignReservationStaySlices } = await import('./stay-slice.service');
+  await alignReservationStaySlices(id);
 }
 
 export async function addQuickCharge(

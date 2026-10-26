@@ -117,12 +117,14 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CP-WF-MIG-01 | Platform | Evrostar workforce migration wizard | Y | `/workspace/workforce/migration` | **SCREEN** | UAT open; COVERAGE **API** | nine steps + skip; not SHOW / not SHIPPED |
 | CP-SA-ORGS/REF/LAND | Platform | org catalog / referrals / landing | Y | `/super-admin/*` | **SCREEN** | UAT-SMOKE | |
 | CP-BILL-OWNER-01 | Platform | invoices / orders | Y | `/settings/subscription\|invoices\|orders` | **SCREEN** | UAT-SMOKE | |
-| HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | FO SHOW rollup unchanged |
+| HOT-FO-03 | Hotel | shared twin assign | Y | card Assignment + `/fo/room-plan` + rack badge | **SCREEN** | UAT §30 not signed; Status=API on COVERAGE | In-house suggestions use today (Asia/Baku) through checkout. FO SHOW rollup unchanged |
+| HOT-FO-04 | Hotel | stay amendment / in-house door move | Y | card, chessboard, `/fo/room-plan` | **SCREEN** | UAT §35 not signed; Status=API on COVERAGE | Clash is today through checkout. A finished slice does not block; a confirmed tail does. Card save, Elektra, and an OTA modify move the slice plan from the first open night. No new screen. AC-HOT-AMEND stays 🟡. FO SHOW rollup unchanged |
 | HOT-BOOK-04 | Hotel | reservation card IA | Y | header snapshot + Stay Details regroup | **SCREEN** | UAT open; Status=API | ADR hotel-reservation-card-and-party-ops |
 | HOT-BOOK-06…09 | Hotel | card right-pane density | Y | Guests/Pricing/Folio/Notes tabs | **SCREEN** | UAT §45–§48 open | no Opera windows |
-| HOT-FO-05 | Hotel | Depart guest | Y | Guests ⋮ + DepartGuestModal | **SCREEN** | UAT §43 open | stay IN_HOUSE; person event |
-| HOT-FO-06/07 | Hotel | Move guest / Swap rooms | Y | move/swap APIs + StaysBar | **SCREEN** | UAT §44 open | sibling group only |
+| HOT-FO-05 | Hotel | Depart guest | Y | Guests ⋮ + DepartGuestModal | **SCREEN** | UAT §43 open | stay IN_HOUSE; a closed folio on a departed guest is not recreated; stay save keeps the departure |
+| HOT-FO-06/07 | Hotel | Move guest / Swap rooms | Y | move/swap APIs + StaysBar | **SCREEN** | UAT §44 open | sibling group only; move dialog copy az/ru/en |
 | HOT-FO-08 | Hotel | reissue key task | Y tasks create | FO task after Depart/Move/Swap | **STUB** | no encoder hardware | — |
+| HOT-HK-03 | Hotel | Floor sheet + hotel cleanliness board | Y | `/hk` `/hk/rooms` `/hk/mobile` | **SCREEN** | UAT §34 open; Status=API | Business date editable; other dates read-only. PDF is that date and floor. Row color matches the reservation list. Out of Hotel SHOW rollup |
 | HOT-UE-01 | Hotel | unit economics | Y | `/executive/unit-economics` | **SCREEN** | deepen + UAT | Hotel SHOW rollup unchanged (core FO SHOW) |
 | HOT-RPT-01/02 | Hotel | management PDF catalog + nightly ZIP | Y | `/reports/*` hubs + cubes | **SCREEN** | W1–W3 catalog + ZIP; email cron HEADLESS; out of Hotel SHOW rollup | HOT-NA-03 ops grids already SHIPPED |
 | HOT-AGP-01/02/03 | Hotel | agency portal + FO inbox | Y | `/agency/*` + `/fo/agency-inbox` | **SCREEN** | P0–P1; AC-HOT-AGP 🟡; out of Hotel SHOW rollup | ADR hotel-agency-portal |
@@ -131,10 +133,10 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CLI-51 | Clinic | PDF quota knots + versioned entitlement editor | Y `quotaFor` / version bump + snapshot | `/admin/program-templates` blocks+vN; member picker cascaded by kind | **SCREEN** | UAT CLI-51 open; AC-CLI-SAN-QUOTA 🟡 | Wave B; open stays pinned |
 | CLI-52 | Clinic | Doctor first-day confirm 2–3; no Confirm all; AFTER_CHECKUP; 4th same-day paid | Y exam-prefix + daily-cap + POST guard | `/sanatorium` + card + `/admin/settings` | **SCREEN** | UAT CLI-52 open; AC-CLI-SAN-DAY1 🟡 | Wave C; FIFO unchanged |
 | CLI-53 | Clinic | Doctor bonus extras-only + origin buckets | Y `bonusEligible` + % settings | `/reports/procedures` doctor-bonus | **SCREEN** | UAT CLI-53 open; AC-CLI-BONUS 🟡 | Wave D |
-| CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E |
+| CLI-54 | Clinic | One reservation → two episodes (per pax) | Y openEpisode + patient-scoped charge; exact-name legacy reuse; depart/move by stay id | `/sanatorium` one row per episode | **SCREEN** | UAT CLI-54 open; AC-CLI-SAN-PAX 🟡 | Wave E; shared surname does not merge |
 | CLI-55 | Clinic | Episode as care course (switcher, children, walk-in close) | Y | Y | **SCREEN** | Card CatalogField + Close + cron; UAT open → not SHOW | not CLI-54 list rows alone |
 | CLI-56 | Clinic | Episode care team (multi-doctor) | Y | Y | **SCREEN** | Card identity+package+`+ Doctor`; clinical gated; UAT open → not SHOW | extends CLI-55 / assigned scope |
-| CLI-57 | Clinic | Package balance assign + extras Pay→plan→ticket | Y package-assign / extras-prescribe / Pay | Y Patient card Package tab + assign modal + schedule cards | **SCREEN** | UAT open → not SHOW; amends CLI-52 proposed confirm UX | ADR clinic-episode-procedure-assign-modal |
+| CLI-57 | Clinic | Package balance assign + extras seated before pay | Y package-assign / extras-prescribe / Pay keeps cabin / unpaid cancel / storno / day-end cron `UNPAID_MISSED`; leftover `*_POOL` off the list is not `burnPoolCode` on Save or replace | Y Plan tab, guest print, `/reception/extra-tickets` date column + cancel, `/nurse` red block only when seated; SKU on a menu block burns that block (plus on an assigned row too), otherwise a paid extra | **SCREEN** | UAT open → not SHOW; check-in stays closed until pay | ADR clinic-extra-procedure-route + clinic-episode-procedure-assign-modal |
 | CLI-RBAC-01 | Clinic | Role×screen/API matrix + custom roles | Y ops+admin permission catalog; system seed; clone | `/admin/access` | **SCREEN** | AC-CLI-RBAC 🟡; UAT open → not SHOW | Phase A + custom roles |
 | HOT-RBAC-01 | Hotel | Role×permission matrix + custom roles | Y FO/folio/HK/admin catalog; system seed; clone | `/settings/access` | **SCREEN** | AC-HOT-RBAC 🟡; UAT open → not SHOW | Variant A |
 | FNB-RBAC-01 | F&B | Role×permission matrix + custom roles | Y till/KDS/admin catalog; system seed; clone; PIN bind | `/admin/access` | **SCREEN** | AC-FNB-RBAC 🟡; UAT open → not SHOW | Variant A |
@@ -148,7 +150,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | CLI-WF-PWD-01 | Clinic | Local staff change own password | Y `PATCH /api/auth/password` | `/account/password` | **SHIPPED** | UAT first login 0000 then change; SSO 403 | not CP password UI |
 | HOT-PKG-02 | Hotel | Medical SKU resolve + notes | Y resolve + notes import | import wizard / notes tab | **SCREEN** | UAT §38 open; AC-HOT-PKG-NAFTA 🟡 | Wave A |
 | HOT-PKG-03 | Hotel | Composed nightly sell from per-pax SKUs | Y compose + dailyRates + night audit | `/folio/[id]` packageCompose | **SCREEN** | UAT §40 open; AC-HOT-PKG-COMPOSE 🟡 | Wave D; COVERAGE API until UAT signed |
-| HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey` | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
+| HOT-PKG-04 | Hotel | Per-pax check-in lifecycle events | Y fan-out + `paxKey`; companion MDM id is not the primary's | FO Guests tab SKU Select | **SCREEN** | UAT §41 / punch open | Wave E + polish FO SKU |
 | HOT-TOUR-01 | Hotel | Nafta weekend tours | Y | `/tours` `/tours/[id]/print` `/fleet` | **SCREEN** | Out of Hotel SHOW rollup (no Demo/TE); SHIPPED ops | ADR hotel-guest-tours |
 | HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | Balances are uncovered debt plus unused payments, not one net. UAT §42 open; Status=API | out of Hotel SHOW rollup |
 | HOT-CL-06 | Hotel | Company profile + company CL statement | Y Company + ledger+lines | `/distribution/companies` + `/front-cash/company-ledger` | **SHOW** | UAT §27.11 / §42; Status=SHIPPED | Opera split; ADR hotel-agency-vs-company-profiles |
@@ -181,6 +183,11 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-10-27 | HOT-HK-03 stays **SCREEN**. Archive dates are read-only; PDF is the open date and floor. Not SHOW / not SHIPPED. Hotel SHOW rollup unchanged. |
+| 2026-10-27 | HOT-FO-04 stays **SCREEN**. Card save, Elektra, and an OTA modify move the slice plan from the first open night. No new screen. AC-HOT-AMEND stays 🟡. Hotel SHOW rollup unchanged. |
+| 2026-10-26 | HOT-FO-04 stays **SCREEN**. Saving dates clamps the room-plan bar to the header checkout. No new screen. AC-HOT-AMEND stays 🟡. Hotel SHOW rollup unchanged. |
+| 2026-10-26 | HOT-HK-03 floor sheet + `/hk/rooms` **SCREEN** (shared cleanliness pill). UAT §34 open. Not SHOW / not SHIPPED. Hotel SHOW rollup unchanged. |
+| 2026-10-25 | HOT-FO-04 stay amendment **SCREEN** (card, chessboard, room plan). In-house door clash is today (Asia/Baku) through checkout. HOT-FO-03 suggestions use that window. Both stay API. AC-HOT-AMEND stays 🟡. Gate, Pilot, and edition unchanged. |
 | 2026-09-30 | CP-WF-FIT-01 fitness files **SCREEN** (employments + floor); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-30 | CP-WF-SELF-01 employee cabinet **SCREEN** (`/workspace/me` + requests); COVERAGE Status=API. Not SHOW / not SHIPPED. |
 | 2026-09-30 | FIN-HR-MIN-01 CP minutes → payroll premiums **SCREEN** (existing `/payroll` slip); COVERAGE Status=API. Not SHOW / not SHIPPED. |

@@ -24,9 +24,9 @@
 | AC-CLI-SAN-PKG | Staff assign 4 Nafta SKUs + episode without hotel program (Wave A) | 🟡 | [ ] | `cli-san-negative` unknown template; CLI-50 | **Out of AC-CLI-SAN rollup** — dual-run assign; do not flip SAN |
 | AC-CLI-SAN-QUOTA | PDF knots + nights recalc + charge by quota (Wave B) | 🟡 | [ ] | `__tests__/program-quota.spec.ts`; `__tests__/entitlement-usage.spec.ts`; CLI-51 | **Out of AC-CLI-SAN rollup** — W1: Lab/Visit burn via COUNT SoT |
 | AC-CLI-SAN-DAY1 | Doctor first-day 2–3 confirm; no Confirm all (Wave C) | 🟡 | [ ] | FIFO gates unchanged; CLI-52 | **Out of AC-CLI-SAN rollup** — does not reopen SAN ✅ |
-| AC-CLI-ASSIGN | Package lazy-assign modal + unpaid extras on the plan before pay (`SHOW_ON_PLAN`); Pay→folio→seat (CLI-57) | 🟡 | [ ] | `__tests__/cli57-package-assign.spec.ts` | **Out of BE rollup** until UAT; SCREEN UI landed |
+| AC-CLI-ASSIGN | Package lazy-assign modal + plan-before-pay seating of unpaid extras (`PLAN_BEFORE_PAY`); Pay keeps the cabin (CLI-57) | 🟡 | [ ] | `__tests__/cli57-package-assign.spec.ts` | **Out of BE rollup** until UAT; SCREEN UI landed. Picker helper unit only: a leftover `*_POOL` off the list is not a burn target. Save, replace, and plus follow that rule in code. No field negative path — not Scaffold ✅ |
 | AC-CLI-BONUS | Doctor bonus extras-only buckets (Wave D) | 🟡 | [ ] | CLI-53; bonusEligible | **Out of AC-CLI-SAN rollup** |
-| AC-CLI-SAN-PAX | One stay two episodes (Wave E) | 🟡 | [ ] | CLI-54; openEpisode per patient | **Out of AC-CLI-SAN rollup** |
+| AC-CLI-SAN-PAX | One stay two episodes (Wave E) | 🟡 | [ ] | CLI-54; openEpisode per patient; `__tests__/open-episode-stay-idempotency.spec.ts` same surname does not reuse a pax-scoped episode; `__tests__/guest-departed-moved.spec.ts` companion without MDM matches `::pax:` stay id | **Out of AC-CLI-SAN rollup** — negative path is unit-only; field UAT open, Scaffold stays 🟡 |
 | AC-CLI-EPISODE | Episode as care course (card switcher, children, walk-in close) | 🟡 | [ ] | CLI-55; ADR clinic-episode-as-clinical-course; `__tests__/cli-episode-negative.spec.ts` + `cli-episode-gates.spec.ts` | **Out of BE rollup** until field UAT; SCREEN UI landed; Scaffold stays 🟡 |
 | AC-CLI-RBAC | Configurable role×screen/API matrix + custom roles (Variant A) | 🟡 | [ ] | `cli-rbac-negative` + `cli-rbac-admin-negative` + `cli-rbac-ops-negative` + `clinic-system-roles` + staff-provision unknown role; ADR clinic-domain-permissions-and-rbac; `/admin/access` clone | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 | AC-CLI-CASH | Cashier settle / ops | ✅ | [ ] | `__tests__/cli-cash-negative.spec.ts` + CLI-33 | **Settle/ops only** — visit/shift deny; live fiscal = External |
@@ -34,13 +34,14 @@
 | AC-CLI-CAP | Clinic→hotel capacity foresight | ✅ | [ ] | `__tests__/cli-cap-negative.spec.ts` + CLI-27 | Negative: critical risk blocks booking |
 | AC-CLI-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit fail-closed tenant extension; Wave 2 clinic login/JWT/`enterSatelliteTenant` + lifecycle ALS; Wave 4 cron + capacity POST multi-org; Wave 5 lab `saas-wave5-two-org-isolation`; Wave 9 live pool smoke; Wave 10 cron User DISTINCT discover | **Excluded from Scaffold BE rollup.** Lab + live-smoke + cron discover available; still not Scaffold ✅ (field two-org UAT open). Signoff: [`reports/two-org-isolation-signoff.md`](../../reports/two-org-isolation-signoff.md) |
 
-**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT, AC-CLI-SAN-PKG, AC-CLI-SAN-QUOTA, AC-CLI-SAN-DAY1, AC-CLI-BONUS, AC-CLI-SAN-PAX, AC-CLI-EPISODE, AC-CLI-RBAC) → **✅**.
+**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CLI-TENANT, AC-CLI-SAN-PKG, AC-CLI-SAN-QUOTA, AC-CLI-SAN-DAY1, AC-CLI-ASSIGN, AC-CLI-BONUS, AC-CLI-SAN-PAX, AC-CLI-EPISODE, AC-CLI-RBAC) → **✅**.
 AC-CLI-TENANT is 🟡 (Nafta clinic placement is SHARED; schema+filter) and stays **out of Scaffold BE rollup** until field isolation UAT.
 AC-CLI-SAN-PKG is 🟡 and stays **out of Scaffold BE rollup** (does not reopen AC-CLI-SAN).
 AC-CLI-SAN-QUOTA is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-SAN-DAY1 is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-BONUS is 🟡 and stays **out of Scaffold BE rollup**.
 AC-CLI-SAN-PAX is 🟡 and stays **out of Scaffold BE rollup**.
+AC-CLI-ASSIGN is 🟡 (plan-before-pay seated; leftover-pool picker, replace, and plus are unit-tested only for the picker helper; UAT open; no field negative path) and stays **out of Scaffold BE rollup**.
 AC-CLI-EPISODE is 🟡 (SCREEN landed; field UAT open) and stays **out of Scaffold BE rollup**.
 AC-CLI-RBAC is 🟡 (Phase A shipped; field UAT open) and stays **out of Scaffold BE rollup**.
 Do not call this table «product readiness».
@@ -59,7 +60,7 @@ Do not call this table «product readiness».
 | Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 | CLI-55 / AC-CLI-EPISODE | Episode as care course | Out of BE plan | ADR `clinic-episode-as-clinical-course`; SCREEN W1–W5; AC stays 🟡 until field UAT; do not reopen AC-CLI-PT demographics anamnesis |
 | CLI-56 | Episode care team (multi-doctor) | Out of BE plan | ADR `clinic-episode-care-team`; SCREEN; assigned-only scope + card gate; appointments link deferred |
-| CLI-57 | Package/extras assign modal | Out of BE plan | ADR `clinic-episode-procedure-assign-modal`; SCREEN; UAT open |
+| CLI-57 | Package/extras assign + plan-before-pay | Out of BE plan | ADR `clinic-extra-procedure-route` + assign-modal leftover `*_POOL` off Save, replace, and plus; day-end cron wired; SCREEN; UAT open; no field negative path; not Scaffold ✅ |
 
 ### Negative-path proof index
 

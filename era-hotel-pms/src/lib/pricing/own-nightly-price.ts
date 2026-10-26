@@ -14,6 +14,19 @@ export function usesBarCalendar(plan: {
   return Boolean(plan.derivedFromId && plan.adjustmentMode && plan.adjustmentValue != null);
 }
 
+/**
+ * A slice tariff replaces the header only when that segment has its own price.
+ * A flat zero (Medical Rates with no parent) is not the guest's tariff.
+ */
+export function slicePlanOverridesHeader(input: {
+  samePlan: boolean;
+  sliceUsesBar: boolean;
+  sliceFlatPrice: number;
+}): boolean {
+  if (input.samePlan || input.sliceUsesBar) return false;
+  return input.sliceFlatPrice > 0;
+}
+
 /** Night audit names this stay and continues. The business date still rolls. */
 export class NightlyPriceMissingError extends Error {
   readonly code = 'NIGHTLY_PRICE_MISSING';

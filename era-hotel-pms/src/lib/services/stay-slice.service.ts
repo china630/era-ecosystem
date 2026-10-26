@@ -1,8 +1,12 @@
 import { todayBakuYmd, bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { parsePackageNight, parseRoomChargeNote } from '@/lib/folio-charge-note';
+import { revenueRoleIn, STAY_NIGHT_ROLES } from '@/lib/revenue-code-token';
 import { dateOnlyUtc, isoDate } from '@/lib/services/door-type.policy';
-import { planDoorMove } from '@/lib/services/stay-door-move';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
+import { alignStaySlices, planRatePlanRetariff } from '@/lib/services/stay-slice-align';
+import { forwardDoorGaps, planDoorMove } from '@/lib/services/stay-door-move';
 
 export async function resolveStaySliceForDate(reservationId: string, stayDate: Date) {
   const day = dateOnlyUtc(stayDate);
@@ -164,22 +168,43 @@ export async function moveStayDoor(input: {
   checkIn: Date;
 }) {
   if (!input.fromRoomId || input.fromRoomId === input.toRoomId) return;
-  const slices = await prisma.reservationStaySlice.findMany({
-    where: { reservationId: input.reservationId },
-  });
-  const pending = await prisma.roomChangePlan.findMany({
-    where: { reservationId: input.reservationId, status: 'PENDING' },
-    select: { toRoomId: true },
-  });
+  const [slices, pending, stay] = await Promise.all([
+    prisma.reservationStaySlice.findMany({
+      where: { reservationId: input.reservationId },
+    }),
+    prisma.roomChangePlan.findMany({
+      where: { reservationId: input.reservationId, status: 'PENDING' },
+      select: { toRoomId: true },
+    }),
+    prisma.reservation.findUnique({
+      where: { id: input.reservationId },
+      select: { checkOutDate: true, roomTypeId: true, ratePlanId: true, organizationId: true },
+    }),
+  ]);
+  if (!stay) return;
+  const effective = doorEffective(input.status, input.checkIn);
   const plan = planDoorMove({
     slices,
     fromRoomId: input.fromRoomId,
     toRoomId: input.toRoomId,
-    effective: doorEffective(input.status, input.checkIn),
+    effective,
     keepRoomIds: pending.map((row) => row.toRoomId).filter((id): id is string => Boolean(id)),
     dayKey: hotelDateKey,
   });
-  await applyDoorPlan(input.reservationId, slices[0]?.organizationId, plan);
+  const gaps = forwardDoorGaps({
+    slices,
+    updates: plan.updates,
+    creates: plan.creates,
+    effective,
+    checkOut: stay.checkOutDate,
+    toRoomId: input.toRoomId,
+    dayKey: hotelDateKey,
+    template: { roomTypeId: stay.roomTypeId, ratePlanId: stay.ratePlanId },
+  });
+  await applyDoorPlan(input.reservationId, slices[0]?.organizationId ?? stay.organizationId, {
+    updates: plan.updates,
+    creates: [...plan.creates, ...gaps],
+  });
 }
 
 async function applyDoorPlan(
@@ -223,11 +248,214 @@ async function applyDoorPlan(
   });
 }
 
+const ALIGN_STATUSES = ['OPTION', 'CONFIRMED', 'IN_HOUSE', 'CHECKED_OUT'] as const;
+
+type AlignStayRow = {
+  id: string;
+  status: string;
+  roomId: string | null;
+  roomTypeId: string;
+  ratePlanId: string;
+  checkInDate: Date;
+  checkOutDate: Date;
+  organizationId: string;
+  staySlices: AlignSliceRow[];
+};
+
+type AlignSliceRow = {
+  id: string;
+  fromDate: Date;
+  toDate: Date;
+  roomId: string | null;
+  roomTypeId: string;
+  ratePlanId: string;
+};
+
+async function applyStaySliceAlign(stay: AlignStayRow) {
+  if (!ALIGN_STATUSES.includes(stay.status as (typeof ALIGN_STATUSES)[number])) return;
+  const plan = alignStaySlices({
+    checkIn: stay.checkInDate,
+    checkOut: stay.checkOutDate,
+    roomId: stay.roomId,
+    roomTypeId: stay.roomTypeId,
+    ratePlanId: stay.ratePlanId,
+    slices: stay.staySlices,
+    datesOnly: stay.status === 'CHECKED_OUT',
+  });
+  if (plan.updates.length === 0 && plan.deletes.length === 0 && plan.creates.length === 0) return;
+  await prisma.$transaction(async (tx) => {
+    if (plan.deletes.length > 0) {
+      await tx.reservationStaySlice.deleteMany({ where: { id: { in: plan.deletes } } });
+    }
+    for (const update of plan.updates) {
+      await tx.reservationStaySlice.update({
+        where: { id: update.id },
+        data: {
+          ...(update.fromDate ? { fromDate: update.fromDate } : {}),
+          ...(update.toDate ? { toDate: update.toDate } : {}),
+          ...(update.roomId !== undefined ? { roomId: update.roomId } : {}),
+        },
+      });
+    }
+    if (plan.creates.length > 0) {
+      await tx.reservationStaySlice.createMany({
+        data: plan.creates.map((slice) => ({
+          organizationId: stay.organizationId,
+          reservationId: stay.id,
+          fromDate: slice.fromDate,
+          toDate: slice.toDate,
+          roomId: slice.roomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+        })),
+      });
+    }
+  });
+}
+
+/** First night that may take a new tariff: not before the business date, and not already posted. */
+export async function firstOpenNightKey(
+  reservationId: string,
+  checkIn: Date,
+  checkOut: Date,
+): Promise<string | null> {
+  const start = hotelDateKey(checkIn);
+  const end = hotelDateKey(checkOut);
+  const biz = hotelDateKey(await getCurrentBusinessDate());
+  let cursor = start > biz ? start : biz;
+  if (cursor >= end) return null;
+  const charges = await prisma.folioCharge.findMany({
+    where: { folio: { reservationId } },
+    select: {
+      businessDate: true,
+      description: true,
+      revenueCode: { select: { code: true, name: true, systemRole: true } },
+    },
+  });
+  const posted = new Set<string>();
+  for (const charge of charges) {
+    const description = charge.description ?? '';
+    const noted = parseRoomChargeNote(description);
+    const packageNight = parsePackageNight(description);
+    if (noted?.date) posted.add(noted.date);
+    else if (packageNight) posted.add(packageNight);
+    else if (revenueRoleIn(charge.revenueCode, STAY_NIGHT_ROLES)) {
+      posted.add(hotelDateKey(charge.businessDate));
+    }
+  }
+  while (cursor < end) {
+    if (!posted.has(cursor)) return cursor;
+    cursor = addHotelDays(cursor, 1);
+  }
+  return null;
+}
+
+/**
+ * Card tariff change. Slices still on the previous plan take the new plan from the
+ * first open night. Posted nights and charged room types stay as they are.
+ */
+export async function retariffStaySlices(input: {
+  reservationId: string;
+  previousRatePlanId: string;
+  nextRatePlanId: string;
+}) {
+  if (input.previousRatePlanId === input.nextRatePlanId) return;
+  const stay = await prisma.reservation.findUnique({
+    where: { id: input.reservationId },
+    select: {
+      roomId: true,
+      roomTypeId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      organizationId: true,
+      staySlices: true,
+    },
+  });
+  if (!stay) return;
+  const fromKey = await firstOpenNightKey(
+    input.reservationId,
+    stay.checkInDate,
+    stay.checkOutDate,
+  );
+  if (!fromKey) return;
+  const plan = planRatePlanRetariff({
+    slices: stay.staySlices,
+    previousRatePlanId: input.previousRatePlanId,
+    nextRatePlanId: input.nextRatePlanId,
+    fromKey,
+    checkOutKey: hotelDateKey(stay.checkOutDate),
+    roomTypeId: stay.roomTypeId,
+    roomId: stay.roomId,
+  });
+  if (plan.updates.length === 0 && plan.creates.length === 0) return;
+  await prisma.$transaction(async (tx) => {
+    for (const update of plan.updates) {
+      await tx.reservationStaySlice.update({
+        where: { id: update.id },
+        data: {
+          ...(update.toDate ? { toDate: update.toDate } : {}),
+          ...(update.ratePlanId ? { ratePlanId: update.ratePlanId } : {}),
+        },
+      });
+    }
+    if (plan.creates.length > 0) {
+      await tx.reservationStaySlice.createMany({
+        data: plan.creates.map((slice) => ({
+          organizationId: stay.organizationId,
+          reservationId: input.reservationId,
+          fromDate: slice.fromDate,
+          toDate: slice.toDate,
+          roomId: slice.roomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+        })),
+      });
+    }
+  });
+}
+
+/** Clamp slices to the header stay and pin a missing door. Checked-out stays only lose extra dates. */
+export async function alignReservationStaySlices(reservationId: string) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    select: {
+      id: true,
+      status: true,
+      roomId: true,
+      roomTypeId: true,
+      ratePlanId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      organizationId: true,
+      staySlices: true,
+    },
+  });
+  if (!stay) return;
+  await applyStaySliceAlign(stay);
+}
+
 /**
  * Live stays whose header door moved but a future slice still pins the old door.
- * A pending scheduled door is left on its slice.
+ * A pending scheduled door is left on its slice. Slice dates are clamped to the header first.
  */
 export async function repairLiveStayDoors() {
+  const live = await prisma.reservation.findMany({
+    where: { status: { in: [...LIVE_STAY] } },
+    select: {
+      id: true,
+      status: true,
+      roomId: true,
+      roomTypeId: true,
+      ratePlanId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      organizationId: true,
+      staySlices: true,
+    },
+  });
+  for (const stay of live) {
+    await applyStaySliceAlign(stay);
+  }
   const stays = await prisma.reservation.findMany({
     where: { status: { in: [...LIVE_STAY] }, roomId: { not: null } },
     select: {

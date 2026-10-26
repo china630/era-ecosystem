@@ -2,12 +2,10 @@ import { prisma } from '@/lib/prisma';
 import { isStopSellForDate } from '@/lib/services/channel.service';
 import {
   countDoorsUsedOnNight,
-  loadShareSlicesForType,
-  type ShareReservationSlice,
+  loadInventoryStays,
+  segmentsConsumingType,
 } from '@/lib/services/share-assignment.service';
 import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
-
-const SELLABLE_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
 type DayCell = {
   date: string;
@@ -35,27 +33,11 @@ function eachHotelNight(fromKey: string, toKey: string): string[] {
   return keys;
 }
 
-/** Occupancy for one hotel-night: door consumption (share-aware). */
-async function occupiedDoorsOnNight(roomTypeId: string, nightKey: string): Promise<number> {
-  const nightStart = parseHotelNoon(nightKey);
-  const nightEnd = parseHotelNoon(addHotelDays(nightKey, 1));
-  const roomType = await prisma.roomType.findUnique({
-    where: { id: roomTypeId },
-    select: { adultCapacity: true },
-  });
-  const maxBed = roomType?.adultCapacity ?? 2;
-  const slices: ShareReservationSlice[] = await loadShareSlicesForType(
-    roomTypeId,
-    nightStart,
-    nightEnd,
-  );
-  return countDoorsUsedOnNight(slices, nightStart, maxBed);
-}
-
 /**
  * FO Room Type Availability matrix (Electra-style Avl / Occ).
- * Occ includes unassigned stays. Avl may be negative (overbook signal).
- * Per-night window is hotel noon — same `stayOccupiesHotelNight` as sellable/create.
+ * An assigned door counts as that door's type. An unassigned stay counts as the sold type.
+ * Avl may be negative (overbook signal).
+ * Night membership is the Asia/Baku civil date — same `stayOccupiesHotelNight` as sellable/create.
  */
 export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   const fromKey = hotelDateKey(from);
@@ -68,14 +50,20 @@ export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   const roomTypes = await prisma.roomType.findMany({
     where: { active: true },
     orderBy: { code: 'asc' },
-    select: { id: true, code: true, name: true, baseQuota: true },
+    select: { id: true, code: true, name: true, baseQuota: true, adultCapacity: true },
   });
+  const stays = await loadInventoryStays(
+    parseHotelNoon(nights[0]!),
+    parseHotelNoon(addHotelDays(nights[nights.length - 1]!, 1)),
+  );
 
   const rows: TypeRow[] = [];
   for (const rt of roomTypes) {
+    const segments = segmentsConsumingType(rt.id, stays);
+    const maxBed = rt.adultCapacity ?? 2;
     const days: DayCell[] = [];
     for (const night of nights) {
-      const occupied = await occupiedDoorsOnNight(rt.id, night);
+      const occupied = countDoorsUsedOnNight(segments, parseHotelNoon(night), maxBed);
       const stopSell = await isStopSellForDate(parseHotelNoon(night), rt.id);
       const available = stopSell ? 0 : rt.baseQuota - occupied;
       days.push({

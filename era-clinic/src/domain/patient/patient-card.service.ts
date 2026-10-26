@@ -104,7 +104,7 @@ function mapLabEvent(
 }
 
 function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
-  if (ev.status === "PENDING_PAY") return ev;
+  if (ev.showClock === false) return ev;
   return {
     ...ev,
     subtitle: ev.subtitle
@@ -116,6 +116,7 @@ function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
 function mapProcedureEvent(p: {
   id: string;
   scheduledAt: Date;
+  resourceId?: string | null;
   procedureName: string;
   procedureCode: string;
   status: string;
@@ -137,8 +138,8 @@ function mapProcedureEvent(p: {
   return {
     id: `procedure:${p.id}`,
     type: "procedure",
-    at:
-      p.status === "PENDING_PAY" ? new Date().toISOString() : p.scheduledAt.toISOString(),
+    at: p.scheduledAt.toISOString(),
+    showClock: p.status !== "PENDING_PAY" || Boolean(p.resourceId),
     title: `Procedure · ${p.procedureName}`,
     subtitle: [p.procedureCode ? `type ${p.procedureCode}` : null, siteCodes, p.bodyPart]
       .filter(Boolean)

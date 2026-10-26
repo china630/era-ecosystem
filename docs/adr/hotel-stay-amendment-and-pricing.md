@@ -10,20 +10,23 @@ Do not clone Opera (folio windows, upgrade offers, share split). Copy Opera **la
 
 - Posted nights are not rewritten.
 - New charged product (`roomTypeId` + `ratePlanId`) starts from an **effective date** (stay slices: `[from, to)` exclusive).
-- Physical door type may differ from charged type (`givenRoomTypeId` / complimentary relocate).
+- Saving the reservation card clamps those slices to the header stay. A missing door on a live segment is pinned to the header door. The charged `roomTypeId` on an existing slice is not rewritten. A slice must not run past checkout, so the room plan bar ends with the card.
+- Physical door type may differ from charged type (`givenRoomTypeId` / complimentary relocate). Inventory follows the physical door once a door is assigned.
 - Manual Price is **stay-level** (nightly or stay total spread). Stay % is mutually exclusive. Per-night lock only.
 
 Occupancy drop when a companion **departs** mid-stay (adults/children from an effective date, stay remains `IN_HOUSE`) is the same pricing law — [hotel-reservation-card-and-party-ops.md](./hotel-reservation-card-and-party-ops.md) D4. It is not unused-nights refund of the whole stay.
 
 Three FO actions:
 
-1. **Door move** (rack DnD) — same charged type, or the hotel covers another type (`givenRoomTypeId`). Not a paid upgrade. On the reservation card, a different given type asks who pays: hotel covers (charged type unchanged), guest pays the given class (charged type becomes the given type for remaining nights), or a downgrade (hotel refund vs guest asked for cheaper). Never label a cheaper given type as an upgrade.
+1. **Door move** (rack DnD) — same charged type, or the hotel covers another type (`givenRoomTypeId`). Not a paid upgrade. An in-house move checks and paints only nights from today (Asia/Baku) through checkout. Nights already lived stay on the old door and do not block the new one. A confirmed hold that overlaps that tail still blocks the door. On the reservation card, a different given type asks who pays: hotel covers (charged type unchanged), guest pays the given class (charged type becomes the given type for remaining nights), or a downgrade (hotel refund vs guest asked for cheaper). Never label a cheaper given type as an upgrade.
 2. **Product change from date** — wizard (preview + apply). Recalc remaining unlocked nights; Manual Price freezes remaining amounts.
 3. **Clinic remaining replan** — `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` cancels future `PROPOSED`/`SCHEDULED` procedures and updates program code. Does not cancel `COMPLETED` / `CHECKED_IN` / `NO_SHOW`.
 
 Same-day folio: if tonight is already posted, add one `RATE_ADJ` difference line (`externalRef` `rate-adj:{resId}:{date}`). Package EOD lines **scale** so Σ = that night’s sell (`ReservationDailyRate.amount`).
 
 A rate-plan change (card save or the wizard) appends `StayTariffChange` (from code, to code, effective time). The reservation journal shows that line next to room moves. Posted nights stay as they were.
+
+Card save, an Elektra upsert, and an OTA modify move `ratePlanId` on slices that still carry the previous plan, from the first night that is not posted and not before the open business date. A slice that already has a different plan is left as its own segment. Charged `roomTypeId` is not rewritten. The nightly rebuild runs once, after that move. Check-in prices any night that has no daily-rate row before the stay becomes `IN_HOUSE`. A rebuild that fails after the status is saved does not fail the check-in. Night audit posts medical and Infotur from the card tariff: the sell amount is the stored night price, and the revenue lines are that tariff's package lines. Infotur with nothing to split still posts the stored amount as a room charge. A flat zero on a stale slice is not the guest's price.
 
 ## Stay billing
 

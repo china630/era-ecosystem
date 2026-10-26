@@ -396,6 +396,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
+              id: 'hk-rooms',
+              href: '/hk/rooms',
+              labelKey: 'hkRoomOps',
+              icon: LayoutGrid,
+              permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
               id: 'hk-mobile',
               href: '/hk/mobile',
               labelKey: 'hkMobile',

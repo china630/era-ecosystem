@@ -478,6 +478,7 @@ const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermis
     { prefix: "/visits/", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     { prefix: "/lab-orders/", permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS },
     { prefix: "/print/extra-ticket", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
+    { prefix: "/print/extra-storno", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
     { prefix: "/print/lab-order", permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS },
     { prefix: "/print/checkup", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     { prefix: "/sanatorium/nurse-roster", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER },

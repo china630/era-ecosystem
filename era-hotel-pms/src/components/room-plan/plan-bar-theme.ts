@@ -86,8 +86,8 @@ export const PLAN_BAR_COLORS: Record<PlanBarDayState, PlanBarTheme> = {
 export type HkSquareKind = 'clean' | 'dirty' | 'maintenance' | 'closed' | null;
 
 export const HK_SQUARE_COLORS: Record<Exclude<HkSquareKind, null>, string> = {
-  clean: '#81D4FA',
-  dirty: '#FF9800',
+  clean: '#43A047',
+  dirty: '#29B6F6',
   maintenance: '#F44336',
   closed: '#212121',
 };

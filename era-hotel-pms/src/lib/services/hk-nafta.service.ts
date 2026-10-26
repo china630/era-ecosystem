@@ -337,7 +337,14 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
     where: { workDate },
     include: { housekeeper: true, pair: true },
   });
-  const maid = rotation.find((r) => floor >= r.pair.floorLow && floor <= r.pair.floorHigh);
+  const maidNames = [
+    ...new Set(
+      rotation
+        .filter((r) => floor >= r.pair.floorLow && floor <= r.pair.floorHigh)
+        .map((r) => r.housekeeper.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ];
 
   const rows = rooms.map((room) => {
     const stay = room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
@@ -380,8 +387,17 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       vip: stay?.guest.vipType ?? stay?.vipType ?? '',
       agency: stay?.agency?.name ?? '',
       arrival: ci,
-      arrivalTime: stay?.stay?.actualCheckIn ? bakuClockHhmm(stay.stay.actualCheckIn) : '',
+      arrivalTime: stay?.stay?.actualCheckIn
+        ? bakuClockHhmm(stay.stay.actualCheckIn)
+        : stay
+          ? bakuClockHhmm(stay.checkInDate)
+          : '',
       departure: co,
+      departureTime: stay?.stay?.actualCheckOut
+        ? bakuClockHhmm(stay.stay.actualCheckOut)
+        : stay
+          ? bakuClockHhmm(stay.checkOutDate)
+          : '',
       lateCheckout: stay?.stay?.actualCheckOut ? bakuClockHhmm(stay.stay.actualCheckOut) : '',
       extraPax: stay?.extraBeds ?? 0,
       adults: stay?.adults ?? 0,
@@ -400,7 +416,8 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       visitOutcome: (stay && nsrSet.has(stay.id) ? 'REFUSED' : outcomeByRoom.get(room.id)) ?? '',
       visitTime: '',
       neededByAt: neededByMap.get(room.id)?.toISOString() ?? null,
-      maidName: maid?.housekeeper.name ?? '',
+      maidName: maidNames[0] ?? '',
+      maidNames,
       maidChef: '',
       reservationId: stay?.id ?? null,
     };
@@ -435,28 +452,100 @@ export async function generateAllFloorSheets(workDateIso: string) {
   return pages;
 }
 
-const SHEET_PDF_LABELS = {
+type SheetLang = 'az' | 'en' | 'ru';
+
+const SHEET_PDF_LABELS: Record<
+  SheetLang,
+  { title: string; floor: string; headers: string[]; hk: Record<string, string>; occ: Record<string, string>; job: Record<string, string>; outcome: Record<string, string> }
+> = {
   az: {
     title: 'Mərtəbə vərəqi',
     floor: 'Mərtəbə',
-    headers: ['Otaq', 'Dolu', 'Tip', 'Qonaq', 'İş', 'Xidmətçi', 'Nəticə', 'Gəliş', 'Gediş', 'Böyük', 'Uşaq'],
+    headers: ['Otaq', 'Təmizlik', 'Dolu', 'Tip', 'Qonaq', 'VIP', 'Agentlik', 'Millət', 'Səbəb', 'Tapşırıq', 'Gəliş', 'Çıxış', 'Gec', 'Böyük', 'Uşaq', 'Bu gün gələn', 'Bu gün gedən', 'Saat', 'Nəticə', 'Q'],
+    hk: { DIRTY: 'Çirkli', PICKUP: 'Yığışdırma', CLEAN: 'Təmiz', INSPECTED: 'Yoxlanılıb' },
+    occ: { OCC: 'Dolu', AVL: 'Boş' },
+    job: {
+      STAYOVER: 'Qalan qonaq',
+      DEPARTURE: 'Çıxış',
+      ARRIVAL_PREP: 'Gəliş hazırlığı',
+      NSR: 'Xidmət yox',
+      OTHER: '—',
+      DEEP: 'Dərin təmizlik',
+      LINEN: 'Ağ dəyişimi',
+      OK: 'Dərin (OK)',
+      STAY: 'Adi təmizlik',
+      NONE: '—',
+    },
+    outcome: { V: 'V', VC: 'VC', OK: 'OK', REFUSED: 'İstəmədi', DND: 'DND', SO: 'SO' },
   },
   en: {
     title: 'Floor sheet',
     floor: 'Floor',
-    headers: ['Room', 'Occ', 'Type', 'Guest', 'Job', 'Maid', 'Outcome', 'Arrival', 'Depart', 'Ad', 'Ch'],
+    headers: ['Room', 'Clean', 'Occ', 'Type', 'Guest', 'VIP', 'Agency', 'Nation', 'Reason', 'Task', 'Arrival', 'Depart', 'Late', 'Ad', 'Ch', 'Arr today', 'Dep today', 'Needed', 'Outcome', 'Q'],
+    hk: { DIRTY: 'Dirty', PICKUP: 'Pickup', CLEAN: 'Clean', INSPECTED: 'Inspected' },
+    occ: { OCC: 'Occupied', AVL: 'Vacant' },
+    job: {
+      STAYOVER: 'Stayover',
+      DEPARTURE: 'Departure',
+      ARRIVAL_PREP: 'Arrival prep',
+      NSR: 'No service',
+      OTHER: '—',
+      DEEP: 'Deep clean',
+      LINEN: 'Linen change',
+      OK: 'Deep (OK)',
+      STAY: 'Regular clean',
+      NONE: '—',
+    },
+    outcome: { V: 'V', VC: 'VC', OK: 'OK', REFUSED: 'İstəmədi', DND: 'DND', SO: 'SO' },
   },
   ru: {
     title: 'Лист этажа',
     floor: 'Этаж',
-    headers: ['Номер', 'Зан.', 'Тип', 'Гость', 'Работа', 'Горничная', 'Итог', 'Заезд', 'Выезд', 'Взр', 'Дет'],
+    headers: ['Номер', 'Чистота', 'Занят', 'Тип', 'Гость', 'VIP', 'Агентство', 'Гражданство', 'Повод', 'Задание', 'Заезд', 'Выезд', 'Поздний', 'Взр', 'Дет', 'Заезд сегодня', 'Выезд сегодня', 'Час', 'Итог', 'Q'],
+    hk: { DIRTY: 'Грязный', PICKUP: 'Сбор', CLEAN: 'Чистый', INSPECTED: 'Проверен' },
+    occ: { OCC: 'Занят', AVL: 'Свободен' },
+    job: {
+      STAYOVER: 'Проживание',
+      DEPARTURE: 'Выезд',
+      ARRIVAL_PREP: 'Подготовка к заезду',
+      NSR: 'Без обслуживания',
+      OTHER: '—',
+      DEEP: 'Глубокая уборка',
+      LINEN: 'Смена белья',
+      OK: 'Глубокая (OK)',
+      STAY: 'Обычная уборка',
+      NONE: '—',
+    },
+    outcome: { V: 'V', VC: 'VC', OK: 'OK', REFUSED: 'İstəmədi', DND: 'DND', SO: 'SO' },
   },
-} as const;
+};
 
-export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'en' | 'ru' = 'az'): Promise<Buffer> {
+export async function generateFloorSheetPdf(
+  workDateIso: string,
+  lang: SheetLang = 'az',
+  floor?: number,
+): Promise<Buffer> {
   const PDFDocument = (await import('pdfkit')).default;
-  const pages = await generateAllFloorSheets(workDateIso);
+  const allPages = await generateAllFloorSheets(workDateIso);
+  const pages = floor == null ? allPages : allPages.filter((page) => page.floor === floor);
   const labels = SHEET_PDF_LABELS[lang];
+  const word = (map: Record<string, string>, code: unknown) => {
+    const key = String(code ?? '');
+    if (!key) return '';
+    return map[key] ?? key;
+  };
+  const clockLine = (date: unknown, time: unknown) => {
+    const day = String(date ?? '');
+    const clock = String(time ?? '');
+    if (!day && !clock) return '';
+    return clock ? `${day}\n${clock}` : day;
+  };
+  const paxLine = (count: unknown, time: unknown) => {
+    const n = Number(count ?? 0);
+    const clock = String(time ?? '');
+    if (!n && !clock) return '';
+    return clock ? `${n}\n${clock}` : String(n);
+  };
   const [{ drawLetterhead }, { formatReportTimestamp }, { getReportLetterhead }] = await Promise.all([
     import('@/lib/reports/pdf-render'),
     import('@/lib/reports/pdf-i18n'),
@@ -483,49 +572,90 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
   });
-  const cols = [42, 36, 44, 130, 64, 88, 52, 58, 58, 32, 32];
+  const weights = [28, 46, 40, 32, 78, 28, 52, 40, 58, 58, 48, 48, 32, 24, 22, 42, 42, 32, 44, 16];
+  const weightSum = weights.reduce((sum, n) => sum + n, 0);
+  const drawGridRow = (y: number, cells: string[], rowH: number, header: boolean) => {
+    const tableW = doc.page.width - 56;
+    const widths = weights.map((weight, i) =>
+      i === weights.length - 1 ? 0 : Math.floor((tableW * weight) / weightSum),
+    );
+    widths[widths.length - 1] = tableW - widths.reduce((sum, n) => sum + n, 0);
+    let x = 28;
+    doc.lineWidth(0.4).strokeColor('#B0B8C0');
+    widths.forEach((w, i) => {
+      if (header) {
+        doc.save();
+        doc.rect(x, y, w, rowH).fill('#F4F6F7');
+        doc.restore();
+      }
+      doc.rect(x, y, w, rowH).stroke();
+      doc.fillColor('#34495E').font(PDF_FONT_UNICODE).fontSize(header ? 6 : 6.5).text(cells[i] ?? '', x + 1.5, y + 2, {
+        width: Math.max(4, w - 3),
+        height: rowH - 3,
+        lineBreak: true,
+      });
+      x += w;
+    });
+    return y + rowH;
+  };
   pages.forEach((page, index) => {
     if (index > 0) doc.addPage();
     drawSheetLetterhead();
-    doc.font(PDF_FONT_UNICODE).fontSize(14).text(`${labels.title} · ${labels.floor} ${page.floor} · ${workDateIso}`, 28, doc.y);
-    doc.moveDown(0.4);
+    const names = [
+      ...new Set(
+        page.rows.flatMap((row) => {
+          const named = (row as { maidNames?: string[] }).maidNames;
+          return named?.length ? named : [String((row as { maidName?: string }).maidName ?? '')];
+        }).filter(Boolean),
+      ),
+    ];
+    const maidBit = names.length ? ` · ${names.join(', ')}` : '';
+    doc.fillColor('#2C3E50').font(PDF_FONT_UNICODE).fontSize(12).text(
+      `${labels.title} · ${labels.floor} ${page.floor}${maidBit} · ${workDateIso}`,
+      28,
+      doc.y,
+      { width: doc.page.width - 56 },
+    );
+    doc.moveDown(0.3);
     let y = doc.y;
-    const headers = labels.headers;
-    doc.font(PDF_FONT_UNICODE).fontSize(8);
-    let x = 28;
-    headers.forEach((h, i) => {
-      doc.text(h, x, y, { width: cols[i], continued: false });
-      x += cols[i] ?? 40;
-    });
-    y += 16;
-    doc.moveTo(28, y).lineTo(800, y).stroke();
-    y += 6;
+    y = drawGridRow(y, [...labels.headers], 22, true);
     for (const row of page.rows) {
-      if (y > 540) {
+      if (y > 520) {
         doc.addPage();
-        doc.font(PDF_FONT_UNICODE).fontSize(8);
-        y = 40;
+        y = 36;
+        y = drawGridRow(y, [...labels.headers], 22, true);
       }
       const r = row as Record<string, unknown>;
-      const cells = [
-        String(r.roomNumber ?? ''),
-        String(r.occupancy ?? ''),
-        String(r.roomType ?? ''),
-        String(r.guests ?? ''),
-        String(r.jobDuty ?? r.jobType ?? ''),
-        String(r.maidName ?? ''),
-        String(r.visitOutcome ?? ''),
-        String(r.arrival ?? ''),
-        String(r.departure ?? ''),
-        String(r.adults ?? ''),
-        String(r.children ?? ''),
-      ];
-      x = 28;
-      cells.forEach((cell, i) => {
-        doc.text(cell.slice(0, 28), x, y, { width: (cols[i] ?? 60) - 4, lineBreak: false });
-        x += cols[i] ?? 60;
-      });
-      y += 14;
+      const todayArrTime = String(r.todayArrivalTime ?? '') || String(r.arrivalTime ?? '');
+      const todayDepTime = String(r.todayDepartTime ?? '') || String(r.departureTime ?? '');
+      const needed = r.neededByAt ? bakuClockHhmm(new Date(String(r.neededByAt))) : '';
+      y = drawGridRow(
+        y,
+        [
+          String(r.roomNumber ?? ''),
+          word(labels.hk, r.hkCondition ?? r.status),
+          word(labels.occ, r.occupancy),
+          String(r.roomType ?? ''),
+          String(r.guests ?? ''),
+          String(r.vip ?? ''),
+          String(r.agency ?? ''),
+          String(r.nationality ?? ''),
+          word(labels.job, r.jobType),
+          word(labels.job, r.jobDuty),
+          clockLine(r.arrival, r.arrivalTime),
+          clockLine(r.departure, r.departureTime),
+          String(r.lateCheckout ?? ''),
+          String(r.adults ?? ''),
+          String(r.children ?? ''),
+          paxLine(r.todayArrivalPax, Number(r.todayArrivalPax) ? todayArrTime : ''),
+          paxLine(r.todayDepartPax, Number(r.todayDepartPax) ? todayDepTime : ''),
+          needed,
+          word(labels.outcome, r.visitOutcome),
+          '',
+        ],
+        20,
+        false,
+      );
     }
     doc.y = y;
   });
@@ -535,6 +665,21 @@ export async function generateFloorSheetPdf(workDateIso: string, lang: 'az' | 'e
   }
   doc.end();
   return done;
+}
+
+/** Drop the visit result back to empty. Cleanliness already written by V/VC/OK stays. */
+export async function clearSheetOutcome(roomId: string, workDateIso: string) {
+  const workDate = new Date(`${workDateIso}T00:00:00.000Z`);
+  await prisma.housekeepingTask.updateMany({
+    where: { roomId, businessDate: workDate, visitOutcome: { not: null } },
+    data: { visitOutcome: null },
+  });
+  await prisma.housekeepingTask.updateMany({
+    where: { roomId, businessDate: workDate, jobType: 'NSR' },
+    data: { jobType: 'OTHER' },
+  });
+  await prisma.hkNsrDay.deleteMany({ where: { roomId, workDate } });
+  return { cleared: true };
 }
 
 export async function applySheetOutcome(

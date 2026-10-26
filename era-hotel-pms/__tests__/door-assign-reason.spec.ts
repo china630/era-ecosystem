@@ -1,4 +1,4 @@
-import { doorAssignBlock } from '../src/lib/door-assign-reason';
+import { doorAssignBlock, doorConflictToast } from '../src/lib/door-assign-reason';
 
 const base = {
   id: 'r1',
@@ -48,6 +48,35 @@ describe('doorAssignBlock', () => {
         { needTypeId: 'stwn', needTypeCode: 'STWN', inHouse: true, occupied: false },
       ),
     ).toEqual({ code: 'DIRTY' });
+  });
+
+  it('labels an in-house neighbor separately from a confirmed hold', () => {
+    expect(
+      doorAssignBlock(base, {
+        needTypeId: 'sdbl',
+        inHouse: true,
+        occupied: true,
+        booked: false,
+      }),
+    ).toEqual({ code: 'OCCUPIED' });
+    expect(
+      doorAssignBlock(base, {
+        needTypeId: 'sdbl',
+        inHouse: true,
+        occupied: false,
+        booked: true,
+      }),
+    ).toEqual({ code: 'BOOKED' });
+  });
+
+  it('reads a door conflict toast from the API body', () => {
+    expect(
+      doorConflictToast({ code: 'DOOR_BOOKED', from: '2026-10-24', to: '2026-11-03' }),
+    ).toEqual({ key: 'doorBookedToast', from: '2026-10-24', to: '2026-11-03' });
+    expect(doorConflictToast({ code: 'DOOR_OCCUPIED', from: '2026-10-25', to: '2026-10-28' })?.key).toBe(
+      'doorOccupiedToast',
+    );
+    expect(doorConflictToast({ error: 'Room not found' })).toBeNull();
   });
 
   it('keeps the already assigned door selectable', () => {

@@ -1,3 +1,4 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
@@ -17,6 +18,9 @@ export async function POST(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
+    if (body.date !== todayBakuYmd()) {
+      throw new Error('Cannot edit a floor sheet that is not the business date');
+    }
     return jsonOk(serialize(await setNeededByAt(body.roomId, body.date, body.time)));
   } catch (err) {
     return handleRouteError(err);

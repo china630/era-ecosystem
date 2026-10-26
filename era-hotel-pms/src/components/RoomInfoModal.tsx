@@ -10,6 +10,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { EraModal } from '@/components/EraModal';
+import { HkStatusMark, hkMarkClass } from '@/components/HkStatusMark';
 
 type RoomStatus =
   | 'AVAILABLE'
@@ -40,10 +41,13 @@ type Reservation = {
   checkOutDate?: string;
 };
 
+type HkCode = 'DIRTY' | 'PICKUP' | 'CLEAN' | 'INSPECTED';
+
 type Room = {
   id: string;
   roomNumber: string;
   status: RoomStatus;
+  hkCondition?: HkCode | null;
   roomType: { code: string; name: string };
   reservations: Reservation[];
 };
@@ -61,7 +65,7 @@ export type RoomInfoModalProps = {
   onCheckIn: (reservationId: string) => void;
   onCheckOut: (reservationId: string) => void;
   onAddCharge: (reservationId: string, revenueCodeId: string) => void;
-  onSetStatus: (status: RoomStatus) => void;
+  onSetHk: (hk: HkCode) => void;
   onOpenReservation?: (reservationId: string) => void;
   filterDateFrom?: string;
   filterDateTo?: string;
@@ -80,7 +84,7 @@ export default function RoomInfoModal({
   onCheckIn,
   onCheckOut,
   onAddCharge,
-  onSetStatus,
+  onSetHk,
   onOpenReservation,
   filterDateFrom,
   filterDateTo,
@@ -88,6 +92,7 @@ export default function RoomInfoModal({
   const t = useTranslations('chessboard');
   const tRoom = useTranslations('roomStatus');
   const tRes = useTranslations('reservationStatus');
+  const tHk = useTranslations('housekeeping.hkCond');
 
   if (!room) return null;
 
@@ -101,7 +106,7 @@ export default function RoomInfoModal({
     : '';
   const arrivalReached = !arrivalKey || arrivalKey <= todayBakuYmd();
   const occupied = activeReservation?.status === 'IN_HOUSE';
-  const hkLockedStatus = new Set(['CLEAN', 'INSPECTED', 'DIRTY', 'AVAILABLE']);
+  const hkCodes = ['DIRTY', 'PICKUP', 'CLEAN', 'INSPECTED'] as const;
 
   return (
     <EraModal
@@ -183,20 +188,23 @@ export default function RoomInfoModal({
 
       <div className="mt-6 border-t border-[#D5DADF] pt-4">
         <p className="mb-2 text-xs font-semibold uppercase text-[#7F8C8D]">{t('housekeeping')}</p>
+        <div className="mb-2">
+          <HkStatusMark status={room.hkCondition ?? room.status} />
+        </div>
         {occupied ? (
           <p className="mb-2 text-[12px] text-[#7F8C8D]">{t('occupiedHkLocked')}</p>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          {(['CLEAN', 'INSPECTED', 'DIRTY', 'AVAILABLE', 'OOO'] as RoomStatus[]).map((s) => (
+          {hkCodes.map((code) => (
             <button
-              key={s}
+              key={code}
               type="button"
-              disabled={busy || (occupied && hkLockedStatus.has(s))}
-              title={occupied && hkLockedStatus.has(s) ? t('occupiedHkLocked') : undefined}
-              onClick={() => onSetStatus(s)}
-              className={SECONDARY_BUTTON_CLASS}
+              disabled={busy || occupied}
+              title={occupied ? t('occupiedHkLocked') : undefined}
+              onClick={() => onSetHk(code)}
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none disabled:opacity-40 ${hkMarkClass(code)}`}
             >
-              {tRoom(s)}
+              {tHk(code)}
             </button>
           ))}
         </div>

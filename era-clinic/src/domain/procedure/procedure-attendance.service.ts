@@ -135,7 +135,7 @@ export async function isNextGapOccupied(
       startsAt: { lt: gapEnd },
       endsAt: { gt: endsAt },
       ...(excludeOrderId ? { procedureOrderId: { not: excludeOrderId } } : {}),
-      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+      procedureOrder: { status: { notIn: ["CANCELLED", "NO_SHOW", "UNPAID_MISSED"] } },
     },
     select: { id: true },
   });

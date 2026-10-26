@@ -11,6 +11,7 @@ import {
   eligibleSkusForPool,
   eligibleSkusForQuotaAlias,
   showsInProcedureMenu,
+  procedurePickerBalances,
   isBathQuotaLine,
   isBathTransferQuota,
   bathTransferQuotaCode,
@@ -53,6 +54,15 @@ describe("CLI-57 package assign helpers", () => {
     expect(
       showsInProcedureMenu({ isTransfer: false, inSnapshot: false, showInProcedures: true }),
     ).toBe(false);
+  });
+
+  it("a leftover pool that is off the procedure list is not a burn target", () => {
+    const picker = procedurePickerBalances([
+      { procedureCode: "SVC-VANNA", assignable: true },
+      { procedureCode: "SVC_VANNA_POOL", assignable: false },
+      { procedureCode: "SVC-FIZIO", assignable: true },
+    ]);
+    expect(picker.map((row) => row.procedureCode)).toEqual(["SVC-VANNA", "SVC-FIZIO"]);
   });
 
   it("isBathQuotaLine and XFER codes", () => {

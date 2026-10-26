@@ -56,6 +56,9 @@ describe("clinic page route inventory (Wave 3 fail-closed)", () => {
     expect(routePermission("/print/extra-ticket/x")).toBe(
       CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
     );
+    expect(routePermission("/print/extra-storno/x")).toBe(
+      CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
+    );
     expect(routePermission("/print/lab-order/x")).toBe(
       CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
     );
