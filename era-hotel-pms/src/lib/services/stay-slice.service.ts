@@ -1,8 +1,11 @@
 import { todayBakuYmd, bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { parsePackageNight, parseRoomChargeNote } from '@/lib/folio-charge-note';
+import { revenueRoleIn, STAY_NIGHT_ROLES } from '@/lib/revenue-code-token';
 import { dateOnlyUtc, isoDate } from '@/lib/services/door-type.policy';
-import { alignStaySlices } from '@/lib/services/stay-slice-align';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
+import { alignStaySlices, planRatePlanRetariff } from '@/lib/services/stay-slice-align';
 import { forwardDoorGaps, planDoorMove } from '@/lib/services/stay-door-move';
 
 export async function resolveStaySliceForDate(reservationId: string, stayDate: Date) {
@@ -299,6 +302,107 @@ async function applyStaySliceAlign(stay: AlignStayRow) {
         data: plan.creates.map((slice) => ({
           organizationId: stay.organizationId,
           reservationId: stay.id,
+          fromDate: slice.fromDate,
+          toDate: slice.toDate,
+          roomId: slice.roomId,
+          roomTypeId: slice.roomTypeId,
+          ratePlanId: slice.ratePlanId,
+        })),
+      });
+    }
+  });
+}
+
+/** First night that may take a new tariff: not before the business date, and not already posted. */
+export async function firstOpenNightKey(
+  reservationId: string,
+  checkIn: Date,
+  checkOut: Date,
+): Promise<string | null> {
+  const start = hotelDateKey(checkIn);
+  const end = hotelDateKey(checkOut);
+  const biz = hotelDateKey(await getCurrentBusinessDate());
+  let cursor = start > biz ? start : biz;
+  if (cursor >= end) return null;
+  const charges = await prisma.folioCharge.findMany({
+    where: { folio: { reservationId } },
+    select: {
+      businessDate: true,
+      description: true,
+      revenueCode: { select: { code: true, name: true, systemRole: true } },
+    },
+  });
+  const posted = new Set<string>();
+  for (const charge of charges) {
+    const description = charge.description ?? '';
+    const noted = parseRoomChargeNote(description);
+    const packageNight = parsePackageNight(description);
+    if (noted?.date) posted.add(noted.date);
+    else if (packageNight) posted.add(packageNight);
+    else if (revenueRoleIn(charge.revenueCode, STAY_NIGHT_ROLES)) {
+      posted.add(hotelDateKey(charge.businessDate));
+    }
+  }
+  while (cursor < end) {
+    if (!posted.has(cursor)) return cursor;
+    cursor = addHotelDays(cursor, 1);
+  }
+  return null;
+}
+
+/**
+ * Card tariff change. Slices still on the previous plan take the new plan from the
+ * first open night. Posted nights and charged room types stay as they are.
+ */
+export async function retariffStaySlices(input: {
+  reservationId: string;
+  previousRatePlanId: string;
+  nextRatePlanId: string;
+}) {
+  if (input.previousRatePlanId === input.nextRatePlanId) return;
+  const stay = await prisma.reservation.findUnique({
+    where: { id: input.reservationId },
+    select: {
+      roomId: true,
+      roomTypeId: true,
+      checkInDate: true,
+      checkOutDate: true,
+      organizationId: true,
+      staySlices: true,
+    },
+  });
+  if (!stay) return;
+  const fromKey = await firstOpenNightKey(
+    input.reservationId,
+    stay.checkInDate,
+    stay.checkOutDate,
+  );
+  if (!fromKey) return;
+  const plan = planRatePlanRetariff({
+    slices: stay.staySlices,
+    previousRatePlanId: input.previousRatePlanId,
+    nextRatePlanId: input.nextRatePlanId,
+    fromKey,
+    checkOutKey: hotelDateKey(stay.checkOutDate),
+    roomTypeId: stay.roomTypeId,
+    roomId: stay.roomId,
+  });
+  if (plan.updates.length === 0 && plan.creates.length === 0) return;
+  await prisma.$transaction(async (tx) => {
+    for (const update of plan.updates) {
+      await tx.reservationStaySlice.update({
+        where: { id: update.id },
+        data: {
+          ...(update.toDate ? { toDate: update.toDate } : {}),
+          ...(update.ratePlanId ? { ratePlanId: update.ratePlanId } : {}),
+        },
+      });
+    }
+    if (plan.creates.length > 0) {
+      await tx.reservationStaySlice.createMany({
+        data: plan.creates.map((slice) => ({
+          organizationId: stay.organizationId,
+          reservationId: input.reservationId,
           fromDate: slice.fromDate,
           toDate: slice.toDate,
           roomId: slice.roomId,

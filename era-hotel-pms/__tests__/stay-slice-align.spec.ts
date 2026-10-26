@@ -1,7 +1,7 @@
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { parseHotelNoon } from '@/lib/hotel-calendar';
 import { segmentsConsumingType, type InventoryStay } from '@/lib/services/share-assignment.service';
-import { alignStaySlices, type AlignSlice } from '@/lib/services/stay-slice-align';
+import { alignStaySlices, planRatePlanRetariff, type AlignSlice } from '@/lib/services/stay-slice-align';
 
 const day = (ymd: string) => bakuCivilUtcDate(ymd);
 
@@ -216,5 +216,81 @@ describe('segmentsConsumingType', () => {
       }),
     ]);
     expect(rows[0]?.checkOutDate.toISOString()).toBe(parseHotelNoon('2026-10-28').toISOString());
+  });
+});
+
+describe('planRatePlanRetariff', () => {
+  const stay = {
+    previousRatePlanId: 'medical',
+    nextRatePlanId: 'infotur',
+    roomTypeId: 'sdbl',
+    roomId: 'room-804',
+  };
+
+  it('moves the open slice onto the card tariff and keeps the charged type', () => {
+    const plan = planRatePlanRetariff({
+      ...stay,
+      fromKey: '2026-10-26',
+      checkOutKey: '2026-10-27',
+      slices: [
+        slice({
+          id: 'night',
+          fromDate: day('2026-10-26'),
+          toDate: day('2026-10-27'),
+          roomTypeId: 'sdbl',
+          ratePlanId: 'medical',
+          roomId: 'room-804',
+        }),
+      ],
+    });
+    expect(plan.creates).toEqual([]);
+    expect(plan.updates).toEqual([{ id: 'night', ratePlanId: 'infotur' }]);
+    expect(plan.updates[0]).not.toHaveProperty('roomTypeId');
+  });
+
+  it('leaves a posted night on the old tariff and starts the new one after it', () => {
+    const plan = planRatePlanRetariff({
+      ...stay,
+      fromKey: '2026-10-27',
+      checkOutKey: '2026-10-29',
+      slices: [
+        slice({
+          id: 'stay',
+          fromDate: day('2026-10-26'),
+          toDate: day('2026-10-29'),
+          roomTypeId: 'stwn',
+          ratePlanId: 'medical',
+          roomId: 'room-604',
+        }),
+      ],
+    });
+    expect(plan.updates).toEqual([{ id: 'stay', toDate: day('2026-10-27') }]);
+    expect(plan.creates).toEqual([
+      {
+        fromDate: day('2026-10-27'),
+        toDate: day('2026-10-29'),
+        roomId: 'room-604',
+        roomTypeId: 'stwn',
+        ratePlanId: 'infotur',
+      },
+    ]);
+  });
+
+  it('does not retariff a segment that already has its own plan', () => {
+    const plan = planRatePlanRetariff({
+      ...stay,
+      fromKey: '2026-10-26',
+      checkOutKey: '2026-10-28',
+      slices: [
+        slice({
+          id: 'other',
+          fromDate: day('2026-10-26'),
+          toDate: day('2026-10-28'),
+          ratePlanId: 'walkin',
+        }),
+      ],
+    });
+    expect(plan.updates).toEqual([]);
+    expect(plan.creates).toEqual([]);
   });
 });

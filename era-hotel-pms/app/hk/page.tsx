@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  DatePicker,
   EraListFilterBar,
   FilterChips,
   PageHeader,
@@ -76,20 +77,22 @@ export default function HousekeepingPage() {
   const [filter, setFilter] = useState<HkFilter>('all');
   const [sheetFloor, setSheetFloor] = useState('2');
   const [sheetRows, setSheetRows] = useState<SheetRow[]>([]);
-  const [sheetDate] = useState(() => hotelDateKey());
+  const businessDate = hotelDateKey();
+  const [sheetDate, setSheetDate] = useState(businessDate);
+  const readOnly = sheetDate !== businessDate;
   const [fullscreen, setFullscreen] = useState(false);
 
   const load = useCallback(async () => {
     const [tRes, rRes, sRes] = await Promise.all([
       fetch('/api/housekeeping/tasks'),
       fetch('/api/rooms'),
-      fetch(`/api/housekeeping/sheet?floor=${sheetFloor}`),
+      fetch(`/api/housekeeping/sheet?floor=${sheetFloor}&date=${sheetDate}`),
     ]);
     if (tRes.ok) setTasks(await tRes.json());
     else showApiError(await tRes.json(), tc('loadError'));
     if (rRes.ok) setRooms(await rRes.json());
     if (sRes.ok) setSheetRows(await sRes.json());
-  }, [tc, sheetFloor]);
+  }, [tc, sheetFloor, sheetDate]);
 
   useEffect(() => {
     void load();
@@ -157,12 +160,14 @@ export default function HousekeepingPage() {
     return true;
   }
 
-  const visibleSheet = sheetRows.filter((row) => matches(row, openTaskByRoom.get(row.roomId)));
+  const visibleSheet = sheetRows.filter((row) =>
+    matches(row, readOnly ? undefined : openTaskByRoom.get(row.roomId)),
+  );
 
   const counts = useMemo(() => {
     const base = { all: sheetRows.length, pending: 0, dirty: 0, inspect: 0 };
     for (const row of sheetRows) {
-      const task = openTaskByRoom.get(row.roomId);
+      const task = readOnly ? undefined : openTaskByRoom.get(row.roomId);
       const hk = String(row.hkCondition ?? row.status ?? '');
       const duty = String(row.jobDuty ?? '');
       const openDuty = Boolean(duty) && duty !== 'OTHER' && duty !== 'NONE' && !row.visitOutcome;
@@ -171,7 +176,7 @@ export default function HousekeepingPage() {
       if (hk === 'CLEAN' && row.occupancy === 'AVL') base.inspect += 1;
     }
     return base;
-  }, [sheetRows, openTaskByRoom]);
+  }, [sheetRows, openTaskByRoom, readOnly]);
 
   const maidNames = useMemo(() => {
     const names = new Set<string>();
@@ -225,7 +230,7 @@ export default function HousekeepingPage() {
     <div className="flex flex-wrap gap-2 print:hidden">
       <a
         className={SECONDARY_BUTTON_CLASS}
-        href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}&lang=${pdfLang}`}
+        href={`/api/housekeeping/sheet?format=pdf&date=${sheetDate}&floor=${sheetFloor}&lang=${pdfLang}`}
       >
         {t('downloadSheetPdf')}
       </a>
@@ -246,7 +251,25 @@ export default function HousekeepingPage() {
   );
 
   const filters = (
-    <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setFilter('all')}>
+    <EraListFilterBar
+      resetLabel={tc('filterReset')}
+      onReset={() => {
+        setFilter('all');
+        setSheetDate(businessDate);
+      }}
+    >
+      <div className="w-40">
+        <DatePicker
+          label={t('sheetDate')}
+          value={sheetDate}
+          onChange={(next) => {
+            if (next) setSheetDate(next);
+          }}
+          placeholder={tc('datePlaceholder')}
+          preset="date"
+          fluid
+        />
+      </div>
       <div className="w-40">
         <CatalogField
           kind="CLOSED_SMALL"
@@ -323,9 +346,9 @@ export default function HousekeepingPage() {
               </tr>
             ) : null}
             {visibleSheet.map((row) => {
-              const task = openTaskByRoom.get(row.roomId);
+              const task = readOnly ? undefined : openTaskByRoom.get(row.roomId);
               const hk = String(row.hkCondition ?? row.status ?? '');
-              const noTask = (hk === 'DIRTY' || hk === 'PICKUP') && !task;
+              const noTask = !readOnly && (hk === 'DIRTY' || hk === 'PICKUP') && !task;
               const vacantClean = hk === 'CLEAN' && row.occupancy === 'AVL';
               const rowBg = noTask ? 'bg-amber-50' : 'bg-white';
               return (
@@ -361,8 +384,10 @@ export default function HousekeepingPage() {
                   <td className="px-1 py-1">
                     <input
                       type="time"
-                      className="w-24 rounded border border-[#D5DADF] px-1 py-0.5 text-[11px]"
+                      className="w-24 rounded border border-[#D5DADF] px-1 py-0.5 text-[11px] disabled:bg-[#F4F6F7]"
+                      key={`${row.roomId}-${sheetDate}`}
                       aria-label={t('neededBy')}
+                      disabled={readOnly}
                       defaultValue={row.neededByAt ? bakuTimeLabel(String(row.neededByAt)) : ''}
                       onBlur={(e) => {
                         const time = e.target.value;
@@ -376,38 +401,46 @@ export default function HousekeepingPage() {
                     />
                   </td>
                   <td className="px-1 py-1">
-                    <div className="flex min-w-[9rem] flex-col gap-1 [&_label]:sr-only">
+                    <div className="flex flex-wrap items-center gap-1 [&_label]:sr-only">
                       {row.reservationId ? (
-                        <CatalogField
-                          kind="CLOSED_SMALL"
-                          label={t('outcome')}
-                          value={String(row.visitOutcome ?? '')}
-                          onChange={(v) => {
-                            void fetch('/api/housekeeping/outcome', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                roomId: row.roomId,
-                                date: sheetDate,
-                                outcome: v,
-                              }),
-                            }).then(() => load());
-                          }}
-                          options={OUTCOMES.map((code) => ({
-                            value: code,
-                            label: code === 'REFUSED' ? t('refused') : code,
-                          }))}
-                        />
+                        <div className="w-28">
+                          <CatalogField
+                            kind="CLOSED_SMALL"
+                            label={t('outcome')}
+                            value={String(row.visitOutcome ?? '')}
+                            disabled={readOnly}
+                            onChange={(v) => {
+                              const next = String(v ?? '');
+                              void fetch('/api/housekeeping/outcome', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(
+                                  next
+                                    ? { roomId: row.roomId, date: sheetDate, outcome: next }
+                                    : { roomId: row.roomId, date: sheetDate, clear: true },
+                                ),
+                              }).then(() => load());
+                            }}
+                            options={OUTCOMES.map((code) => ({
+                              value: code,
+                              label: code === 'REFUSED' ? t('refused') : code,
+                            }))}
+                          />
+                        </div>
                       ) : null}
                       {task && can(PERMISSIONS.HOUSEKEEPING_MANAGE) ? (
-                        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => completeTask(task.id)}>
+                        <button
+                          type="button"
+                          className="shrink-0 rounded border border-[#D5DADF] bg-white px-1.5 py-0.5 text-[11px] leading-none text-[#34495E]"
+                          onClick={() => completeTask(task.id)}
+                        >
                           {t('completeClean')}
                         </button>
                       ) : null}
-                      {vacantClean && can(PERMISSIONS.ROOMS_STATUS) ? (
+                      {!readOnly && vacantClean && can(PERMISSIONS.ROOMS_STATUS) ? (
                         <button
                           type="button"
-                          className={SECONDARY_BUTTON_CLASS}
+                          className="shrink-0 rounded border border-[#D5DADF] bg-white px-1.5 py-0.5 text-[11px] leading-none text-[#34495E]"
                           onClick={() => markInspected(row.roomId, row.roomNumber)}
                         >
                           {t('inspectAction')}
@@ -431,7 +464,10 @@ export default function HousekeepingPage() {
         label={t('fullscreenTitle')}
       >
         <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
-          <h1 className="text-lg font-semibold text-[#2C3E50]">{t('sheetTitle')}</h1>
+          <h1 className="text-lg font-semibold text-[#2C3E50]">
+            {t('sheetTitle')}
+            {readOnly ? <span className="ml-2 text-[13px] font-normal text-[#7F8C8D]">{t('sheetReadOnly')}</span> : null}
+          </h1>
           {headerActions}
         </div>
         <div className="shrink-0">{filters}</div>
@@ -443,7 +479,7 @@ export default function HousekeepingPage() {
 
   return (
     <>
-      <PageHeader title={t('title')} subtitle={t('sheetHint')} actions={headerActions} />
+      <PageHeader title={t('title')} subtitle={readOnly ? t('sheetReadOnly') : t('sheetHint')} actions={headerActions} />
       {msg ? (
         <p className="mb-4 rounded-lg border border-[#D5DADF] bg-white px-4 py-2 text-[13px] text-[#34495E]">{msg}</p>
       ) : null}

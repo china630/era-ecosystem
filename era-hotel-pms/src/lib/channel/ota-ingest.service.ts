@@ -142,6 +142,14 @@ export async function upsertOtaReservation(payload: OtaReservationPayload) {
         status: 'CONFIRMED',
       },
     });
+    if (existing.ratePlanId !== ratePlanId) {
+      const { retariffStaySlices } = await import('@/lib/services/stay-slice.service');
+      await retariffStaySlices({
+        reservationId: updated.id,
+        previousRatePlanId: existing.ratePlanId,
+        nextRatePlanId: ratePlanId,
+      });
+    }
     return { action: 'updated' as const, reservationId: updated.id };
   }
 

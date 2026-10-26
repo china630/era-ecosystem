@@ -66,7 +66,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Linen/deep every N (`/settings/policies#hk`) + sheet duty | Landed (SCREEN); stay-level override on reservation |
 | Needed-by time on sheet | Landed (SCREEN); stored as Asia/Baku wall clock |
 | DND×2 / SO×3 → OPEN GuestTask | Landed (SCREEN) |
-| Print | Floor-sheet PDF, one floor per page, DejaVu, UI locale. Browser print of the ops page is not the form. |
+| Print | Floor-sheet PDF for the date and floor on screen, DejaVu, UI locale, working columns. A past date is read-only. Browser print of the ops page is not the form. |
 | Elektra time columns / Q Saati | Arrival/departure clock is the planned stay time, replaced by the actual check-in/out when that exists. Q Saati still empty |
 | Per-stay linen/deep N | **Coded** (HK job on stay, **not** a folio line) |
 | Laundry cycle §9 (intake ≠ return, post on Delivered, FO fallback, checkout stop) | **Coded** (SCREEN) — UAT unsigned |
@@ -210,9 +210,11 @@ From `Kat Hizmetleri Raporları` (2026-08-22, floor 4):
 | 23 | Ayrılış Saati | **Today** departure time | |
 | 24 | Q Saati | TBD | Empty in export — keep slot, do not invent UI until HK manager names it |
 
-Header also: hotel, print timestamp, floor, maid names, “in list : N”. The ops screen shows the maid in the sheet title, not as a column. The PDF does the same.
+Header also: hotel, print timestamp, floor, maid names. The ops screen shows the maid in the sheet title, not as a column. The PDF does the same.
 
-Screen columns on `/hk` are the working set (room, cleanliness, occupancy, type, guest, VIP, job, duty, arrival and departure with the clock under the date, needed-by, visit outcome). The PDF keeps the paper columns except maid. Cleanliness uses the shared blue (dirty / pickup) and green (clean / inspected) mark, including the room plan bar and the reservation list.
+`/hk` opens on the business date and can be edited. Any other date is the same sheet, read-only. The PDF button prints that date and the selected floor.
+
+Screen columns are room, cleanliness, occupancy, type, guest, VIP, reason, shift task, arrival and departure with the clock under the date, needed-by, visit outcome. The PDF is the working sheet: those fields plus agency, nationality, late checkout, adults, children, and today’s arrival and departure counts with the clock. Values follow the PDF language. Q Saati stays an empty column. Cleanliness uses the shared blue (dirty / pickup) and green (clean / inspected) mark, including the room plan bar and the reservation list. `/hk/rooms` paints the whole row with the reservation-list status color.
 
 ### 7.2 Columns Elektra lacks (add)
 

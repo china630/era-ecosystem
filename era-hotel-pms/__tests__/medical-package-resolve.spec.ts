@@ -7,9 +7,12 @@ import {
   ratePlanRequiresGuestPackage,
   resolveAgencyPackageCode,
   resolveMedicalSku,
+  packageSkipPostsRoom,
+  postsStayAsPackage,
   stayProductFamily,
   usesMedicalPackageCompose,
 } from "@/lib/services/medical-package-resolve.service";
+import { slicePlanOverridesHeader } from "@/lib/pricing/own-nightly-price";
 
 describe("medical-package-resolve", () => {
   it("normalizes FO aliases without PKG- prefix", () => {
@@ -217,6 +220,25 @@ describe("medical-package-resolve", () => {
     ).toBe(true);
     expect(usesMedicalPackageCompose({ code: "PKG-INFOTUR" })).toBe(false);
     expect(usesMedicalPackageCompose({ code: "PKG-PREMIUM" })).toBe(true);
+    expect(postsStayAsPackage({ code: "PKG-INFOTUR", medicalFlag: true })).toBe(true);
+    expect(postsStayAsPackage({ code: "MEDICAL RATES (MEDIKAL +FB)" })).toBe(true);
+    expect(postsStayAsPackage({ code: "WALKIN", medicalFlag: false })).toBe(false);
+    expect(packageSkipPostsRoom({ code: "PKG-INFOTUR" })).toBe(true);
+    expect(packageSkipPostsRoom({ code: "MEDICAL RATES (MEDIKAL +FB)" })).toBe(false);
+    expect(
+      slicePlanOverridesHeader({
+        samePlan: false,
+        sliceUsesBar: false,
+        sliceFlatPrice: 0,
+      }),
+    ).toBe(false);
+    expect(
+      slicePlanOverridesHeader({
+        samePlan: false,
+        sliceUsesBar: false,
+        sliceFlatPrice: 105,
+      }),
+    ).toBe(true);
     expect(normalizeMedicalPackageCode("PKG-INFOTUR")).toBeNull();
     expect(clinicProgramCodeFromTariff({ code: "PKG-INFOTUR" })).toBeUndefined();
     expect(clinicProgramCodeFromTariff({ code: "PKG-STANDART" })).toBe(

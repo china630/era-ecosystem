@@ -34,15 +34,10 @@ export async function postNightlyPackageCharges(
   if (!reservation) return { posted: 0, skipped: true };
 
   const slice = await resolveStaySliceForDate(reservationId, businessDate);
-  const ratePlanId = slice?.ratePlanId ?? reservation.ratePlanId;
-  const ratePlan =
-    ratePlanId === reservation.ratePlanId
-      ? reservation.ratePlan
-      : await prisma.ratePlan.findUnique({
-          where: { id: ratePlanId },
-          include: { packageLines: { include: { revenueCode: true } } },
-        });
-  if (!ratePlan?.medicalFlag && !reservation.medicalPackageCode) {
+  // Tonight's articles follow the card tariff. A stale slice plan must not skip the night.
+  const ratePlan = reservation.ratePlan;
+  const { postsStayAsPackage } = await import('@/lib/services/medical-package-resolve.service');
+  if (!postsStayAsPackage(ratePlan) && !reservation.medicalPackageCode) {
     const anyPaxSku = await prisma.reservationGuest.findFirst({
       where: { reservationId, medicalPackageCode: { not: null } },
       select: { id: true },
@@ -50,9 +45,6 @@ export async function postNightlyPackageCharges(
     if (!anyPaxSku) {
       return { posted: 0, skipped: true };
     }
-  }
-  if (!ratePlan) {
-    return { posted: 0, skipped: true };
   }
 
   const lines = ratePlan.packageLines;
@@ -165,7 +157,7 @@ export async function postNightlyPackageCharges(
     posted += 1;
   }
 
-  return { posted, skipped: posted === 0 };
+  return { posted, skipped: false };
 }
 
 export async function isProcedureIncludedInPackage(

@@ -205,11 +205,11 @@ export default function HkRoomsPage() {
         {t('roomsBoardTitle')} · {t('inList')}: {visible.length}
       </h2>
       <div className="min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[720px] border-separate border-spacing-0 text-[13px]">
+        <table className="w-full min-w-[720px] border-collapse text-[13px]">
           <thead>
             <tr className="text-left text-[11px] text-[#7F8C8D]">
               {[t('colOcc'), t('colRoom'), t('colType'), t('floor'), t('hk'), t('setHk')].map((label) => (
-                <th key={label} className="sticky top-0 z-10 border-b border-[#D5DADF] bg-white px-2 py-2">
+                <th key={label} className="sticky top-0 z-10 border border-[#D5DADF] bg-white px-2 py-1.5 font-medium">
                   {label}
                 </th>
               ))}
@@ -227,21 +227,42 @@ export default function HkRoomsPage() {
               const occ = occupied(room);
               const closed = room.inventoryStatus === 'OOO' || room.inventoryStatus === 'OOS' || room.status === 'OOO' || room.status === 'OOS';
               const hk = hkOf(room);
-              const numberBg = closed ? 'bg-[#ECEFF1]' : occ ? 'bg-rose-100' : 'bg-emerald-50';
+              const stayStatus = room.reservations?.some((stay) => stay.status === 'IN_HOUSE')
+                ? 'IN_HOUSE'
+                : room.reservations?.some((stay) => stay.status === 'NO_SHOW')
+                  ? 'NO_SHOW'
+                  : room.reservations?.some((stay) => stay.status === 'CANCELLED')
+                    ? 'CANCELLED'
+                    : room.reservations?.some((stay) => stay.status === 'CHECKED_OUT')
+                      ? 'CHECKED_OUT'
+                      : room.reservations?.some((stay) => stay.status === 'OPTION')
+                        ? 'OPTION'
+                        : 'CONFIRMED';
+              const rowBg =
+                closed
+                  ? 'bg-[#EBEDF0]'
+                  : stayStatus === 'IN_HOUSE'
+                    ? 'bg-amber-50'
+                    : stayStatus === 'OPTION'
+                      ? 'bg-slate-50'
+                      : stayStatus === 'CHECKED_OUT'
+                        ? 'bg-[#EBEDF0]'
+                        : stayStatus === 'CANCELLED'
+                          ? 'bg-rose-50/50'
+                          : stayStatus === 'NO_SHOW'
+                            ? 'bg-rose-50'
+                            : 'bg-white';
+              const cell = 'border border-[#D5DADF] px-2 py-1';
               return (
-                <tr key={room.id}>
-                  <td className="px-2 py-1">{occ ? t('occ.OCC') : t('occ.AVL')}</td>
-                  <td className="px-2 py-1">
-                    <span className={`inline-flex min-w-[3.5rem] justify-center rounded px-2 py-0.5 font-semibold ${numberBg}`}>
-                      {room.roomNumber}
-                    </span>
-                  </td>
-                  <td className="px-2 py-1">{room.roomType.code}</td>
-                  <td className="px-2 py-1">{room.floor ?? '—'}</td>
-                  <td className="px-2 py-1">
+                <tr key={room.id} className={rowBg}>
+                  <td className={cell}>{occ ? t('occ.OCC') : t('occ.AVL')}</td>
+                  <td className={`${cell} font-semibold`}>{room.roomNumber}</td>
+                  <td className={cell}>{room.roomType.code}</td>
+                  <td className={cell}>{room.floor ?? '—'}</td>
+                  <td className={cell}>
                     {closed ? <span className="text-[12px] text-[#7F8C8D]">{room.inventoryStatus || room.status}</span> : <HkStatusMark status={hk} />}
                   </td>
-                  <td className="px-2 py-1">
+                  <td className={cell}>
                     {closed || !canSet ? null : (
                       <div className="w-40 [&_label]:sr-only">
                         <CatalogField

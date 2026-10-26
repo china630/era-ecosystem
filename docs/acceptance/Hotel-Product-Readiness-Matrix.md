@@ -30,7 +30,7 @@
 |---------|------|-------|
 | FO / front desk | chessboard, card, `/availability`, `/reports/reservations`. Avl follows the assigned door; an unassigned stay still holds the sold type. Card save clamps the room-plan bar to the header checkout | ✅ |
 | Shared twin (HOT-FO-03) | card Assignment + `/fo/room-plan` + rack badge. In-house suggestions use today through checkout | SCREEN (out of FO SHOW rollup until UAT-SMOKE §30). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
-| Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history. In-house move uses today through checkout. Saving dates clamps slices to the header checkout | SCREEN (out of FO SHOW until UAT-SMOKE §35). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
+| Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history. In-house move uses today through checkout. Saving a tariff, an Elektra upsert, and an OTA modify move the slice plan from the first open night. The charged type stays | SCREEN (out of FO SHOW until UAT-SMOKE §35). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Depart guest (HOT-FO-05) | Guests ⋮ DepartGuestModal. Opening the stay does not recreate a closed folio for a departed guest. Saving the stay keeps the departure | SCREEN (out of FO SHOW until UAT-SMOKE §43). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Move guest (HOT-FO-06) | MoveGuestModal | SCREEN (out of FO SHOW until UAT-SMOKE §44). Dialog copy az/ru/en. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ signed demo. The 2026-10-24 folio pair and the closed deposit intake are not a new Demo/TE walk and do not move Gate, Pilot, or edition |
@@ -39,7 +39,7 @@
 | B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
 | Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
-| Nafta HK deepen | `/hk` `/hk/rooms` `/hk/mobile` `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open). Shared cleanliness pill on the sheet, the board, reservations, the room plan, the rack, and the reservation card. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
+| Nafta HK deepen | `/hk` `/hk/rooms` `/hk/mobile` `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open). Business date is editable; other dates are read-only. PDF is that date and floor. Shared cleanliness pill on the sheet, the board, reservations, the room plan, the rack, and the reservation card. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Management reports catalog / nightly ZIP | `/reports` workspace (Start/End + radios) + nightly pack + cubes (HOT-RPT W1–W3); one layout for screen/PDF/Excel with hotel letterhead (`/settings/policies#letterhead`) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
 | Revenue codes + day document (HOT-REV-01) | `/settings/integration?view=gl`; F&B `/admin/settings` warehouse | SCREEN / 🟡 (out of Hotel SHOW rollup — night audit not run; not SHIPPED) |
 | e-qaimə day close (FIN-EQAIME-DAY-01) | `/night-audit` gap list and check-day stop when the finance checkbox is on | SCREEN / 🟡 — API, not SHOW. Rule off by default. Does not move Hotel Gate, UI ✅, Demo ✅, or Sell |

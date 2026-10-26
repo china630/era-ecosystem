@@ -4,12 +4,18 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import {
   MEDICAL_PACKAGE_CODES,
+  packageSkipPostsRoom,
+  postsStayAsPackage,
   stayProductFamily,
   usesMedicalPackageCompose,
 } from '@/lib/services/medical-package-resolve.service';
 import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
 import { ownerPackageNightlySell } from '@/lib/services/nafta-package-compose-apply.service';
-import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
+import {
+  NightlyPriceMissingError,
+  slicePlanOverridesHeader,
+  usesBarCalendar,
+} from '@/lib/pricing/own-nightly-price';
 import { getNightlyRoomChargeForDate, quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
@@ -212,6 +218,22 @@ async function writeOwnerNightly(
   };
 }
 
+/** Every stay night already has a daily-rate row. Check-in can finish without a new quote. */
+export async function stayNightsArePriced(
+  reservationId: string,
+  checkIn: Date,
+  checkOut: Date,
+): Promise<boolean> {
+  const nights = eachNight(checkIn, checkOut);
+  if (nights.length === 0) return true;
+  const rows = await prisma.reservationDailyRate.findMany({
+    where: { reservationId },
+    select: { stayDate: true },
+  });
+  const keys = new Set(rows.map((row) => hotelDateKey(row.stayDate)));
+  return nights.every((night) => keys.has(hotelDateKey(night)));
+}
+
 export async function recalcReservationDailyRates(
   reservationId: string,
   opts?: { remainingFrom?: Date },
@@ -288,12 +310,20 @@ export async function recalcReservationDailyRates(
     };
   }
 
-  const planId = slice?.ratePlanId ?? res.ratePlanId;
-  const plan =
-    planId === res.ratePlan.id
+  const slicePlanId = slice?.ratePlanId ?? res.ratePlanId;
+  const slicePlan =
+    slicePlanId === res.ratePlan.id
       ? res.ratePlan
-      : await prisma.ratePlan.findUnique({ where: { id: planId } });
-  if (!plan) throw new Error('Rate plan not found');
+      : await prisma.ratePlan.findUnique({ where: { id: slicePlanId } });
+  const plan =
+    slicePlan &&
+    slicePlanOverridesHeader({
+      samePlan: slicePlan.id === res.ratePlan.id,
+      sliceUsesBar: usesBarCalendar(slicePlan),
+      sliceFlatPrice: decimalToNumber(slicePlan.pricePerNight),
+    })
+      ? slicePlan
+      : res.ratePlan;
   if (stayProductFamily(plan) !== 'medical' && res.mealPlanId && roomTypeId) {
     const { ratePlanGridNightlySell } = await import(
       '@/lib/services/nafta-package-compose-apply.service'
@@ -505,14 +535,16 @@ export async function chargeAllRoomNights(reservationId: string) {
     throw new Error('Room nights post after check-in, one night at a time');
   }
 
-  if (res.ratePlan.medicalFlag) {
+  if (postsStayAsPackage(res.ratePlan)) {
     const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
     const biz = await getCurrentBusinessDate();
     const result = await postNightlyPackageCharges(reservationId, biz);
     const key = hotelDateKey(biz);
-    return result.skipped
-      ? { posted: [] as string[], skipped: [key] }
-      : { posted: [key], skipped: [] as string[] };
+    if (!(result.skipped && packageSkipPostsRoom(res.ratePlan))) {
+      return result.skipped
+        ? { posted: [] as string[], skipped: [key] }
+        : { posted: [key], skipped: [] as string[] };
+    }
   }
 
   const revenueRoom = await requireRevenueCodeByRole('ROOM');
@@ -573,7 +605,7 @@ export async function chargeAllRoomNights(reservationId: string) {
 export async function postRoomNight(reservationId: string, ymd: string) {
   const res = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    include: { dailyRates: true, ratePlan: { select: { medicalFlag: true } } },
+    include: { dailyRates: true, ratePlan: { select: { code: true, medicalFlag: true } } },
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
@@ -589,12 +621,14 @@ export async function postRoomNight(reservationId: string, ymd: string) {
   const closed = await closedNightKeys(reservationId);
   if (closed.posted.has(ymd)) return { posted: [] as string[], skipped: [ymd] };
 
-  if (res.ratePlan.medicalFlag) {
+  if (postsStayAsPackage(res.ratePlan)) {
     const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
     const result = await postNightlyPackageCharges(reservationId, bakuCivilUtcDate(ymd));
-    return result.skipped
-      ? { posted: [] as string[], skipped: [ymd] }
-      : { posted: [ymd], skipped: [] as string[] };
+    if (!(result.skipped && packageSkipPostsRoom(res.ratePlan))) {
+      return result.skipped
+        ? { posted: [] as string[], skipped: [ymd] }
+        : { posted: [ymd], skipped: [] as string[] };
+    }
   }
 
   const revenueRoom = await requireRevenueCodeByRole('ROOM');
