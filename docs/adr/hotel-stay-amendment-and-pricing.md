@@ -26,6 +26,8 @@ Same-day folio: if tonight is already posted, add one `RATE_ADJ` difference line
 
 A rate-plan change (card save or the wizard) appends `StayTariffChange` (from code, to code, effective time). The reservation journal shows that line next to room moves. Posted nights stay as they were.
 
+Card save, an Elektra upsert, and an OTA modify move `ratePlanId` on slices that still carry the previous plan, from the first night that is not posted and not before the open business date. A slice that already has a different plan is left as its own segment. Charged `roomTypeId` is not rewritten. The nightly rebuild runs once, after that move. Check-in prices any night that has no daily-rate row before the stay becomes `IN_HOUSE`. A rebuild that fails after the status is saved does not fail the check-in. Night audit posts medical and Infotur from the card tariff: the sell amount is the stored night price, and the revenue lines are that tariff's package lines. Infotur with nothing to split still posts the stored amount as a room charge. A flat zero on a stale slice is not the guest's price.
+
 ## Stay billing
 
 `Reservation.billingMode`:

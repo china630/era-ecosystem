@@ -1,5 +1,9 @@
 import { decimalToNumber } from '@/lib/decimal';
-import { NightlyPriceMissingError, usesBarCalendar } from '@/lib/pricing/own-nightly-price';
+import {
+  NightlyPriceMissingError,
+  slicePlanOverridesHeader,
+  usesBarCalendar,
+} from '@/lib/pricing/own-nightly-price';
 import { quoteStay, PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { quoteBookingRate } from '@/lib/services/contract-pricing.service';
 import { prisma } from '@/lib/prisma';
@@ -194,26 +198,34 @@ export async function getNightlyRoomChargeForDate(
     return nightly;
   }
 
+  const slicePlanId = slice?.ratePlanId ?? res.ratePlanId;
+  const slicePlan =
+    slicePlanId === res.ratePlan.id
+      ? res.ratePlan
+      : await prisma.ratePlan.findUnique({ where: { id: slicePlanId } });
+  const plan =
+    slicePlan &&
+    slicePlanOverridesHeader({
+      samePlan: slicePlan.id === res.ratePlan.id,
+      sliceUsesBar: usesBarCalendar(slicePlan),
+      sliceFlatPrice: decimalToNumber(slicePlan.pricePerNight),
+    })
+      ? slicePlan
+      : res.ratePlan;
+
   const gridRoomTypeId = slice?.roomTypeId ?? res.roomTypeId;
-  if (stayProductFamily(res.ratePlan) !== 'medical' && gridRoomTypeId && res.mealPlanId) {
+  if (stayProductFamily(plan) !== 'medical' && gridRoomTypeId && res.mealPlanId) {
     const { ratePlanGridNightlySell } = await import(
       "@/lib/services/nafta-package-compose-apply.service"
     );
     const grid = await ratePlanGridNightlySell(businessDate, {
-      ratePlanId: res.ratePlanId,
+      ratePlanId: plan.id,
       roomTypeId: gridRoomTypeId,
       mealPlanId: res.mealPlanId,
       occupancy: Math.max(1, res.adults),
     });
     if (grid != null) return grid;
   }
-
-  const planId = slice?.ratePlanId ?? res.ratePlanId;
-  const plan =
-    planId === res.ratePlan.id
-      ? res.ratePlan
-      : await prisma.ratePlan.findUnique({ where: { id: planId } });
-  if (!plan) throw new Error('Rate plan not found');
 
   const ownPrice = () => {
     const amount = decimalToNumber(plan.pricePerNight);

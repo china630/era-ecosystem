@@ -1035,6 +1035,37 @@ export async function checkInReservation(
     arrivalKey = hotelDateKey(reservation.checkInDate);
   }
 
+  if (!isFreeStayBilling(reservation.billingMode)) {
+    const { stayNightsArePriced } = await import('@/lib/services/reservation-pricing.service');
+    const priced = await stayNightsArePriced(
+      id,
+      nextCheckIn ?? reservation.checkInDate,
+      reservation.checkOutDate,
+    );
+    if (!priced) {
+      const { usesMedicalPackageCompose } = await import(
+        '@/lib/services/medical-package-resolve.service'
+      );
+      if (usesMedicalPackageCompose(reservation.ratePlan)) {
+        const { syncComposedDailyRates } = await import(
+          '@/lib/services/nafta-package-compose-apply.service'
+        );
+        const composed = await syncComposedDailyRates(id);
+        if (!composed.applied) {
+          const { recalcReservationDailyRates } = await import(
+            '@/lib/services/reservation-pricing.service'
+          );
+          await recalcReservationDailyRates(id);
+        }
+      } else {
+        const { recalcReservationDailyRates } = await import(
+          '@/lib/services/reservation-pricing.service'
+        );
+        await recalcReservationDailyRates(id);
+      }
+    }
+  }
+
   return prisma.$transaction(async (tx) => {
     if (nextCheckIn) {
       await tx.reservation.update({
@@ -1179,19 +1210,23 @@ export async function checkInReservation(
         }).catch((e) => console.error('Guest lifecycle check-in failed', e));
       }
       if (full && !priorStay) {
-        const { usesMedicalPackageCompose } = await import(
-          '@/lib/services/medical-package-resolve.service'
-        );
-        if (usesMedicalPackageCompose(full.ratePlan)) {
-          const { syncComposedDailyRates } = await import(
-            '@/lib/services/nafta-package-compose-apply.service'
+        try {
+          const { usesMedicalPackageCompose } = await import(
+            '@/lib/services/medical-package-resolve.service'
           );
-          await syncComposedDailyRates(id);
-        } else {
-          const { recalcReservationDailyRates } = await import(
-            '@/lib/services/reservation-pricing.service'
-          );
-          await recalcReservationDailyRates(id);
+          if (usesMedicalPackageCompose(full.ratePlan)) {
+            const { syncComposedDailyRates } = await import(
+              '@/lib/services/nafta-package-compose-apply.service'
+            );
+            await syncComposedDailyRates(id);
+          } else {
+            const { recalcReservationDailyRates } = await import(
+              '@/lib/services/reservation-pricing.service'
+            );
+            await recalcReservationDailyRates(id);
+          }
+        } catch (err) {
+          console.error('Check-in rate rebuild failed', err);
         }
       }
     }

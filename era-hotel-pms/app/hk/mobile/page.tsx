@@ -79,7 +79,11 @@ export default function HkMobilePage() {
     const res = await fetch('/api/housekeeping/outcome', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId, date, outcome: code }),
+      body: JSON.stringify(
+        code
+          ? { roomId, date, outcome: code }
+          : { roomId, date, clear: true },
+      ),
     });
     if (!res.ok) showApiError(await res.json(), tc('failed'));
     await load();

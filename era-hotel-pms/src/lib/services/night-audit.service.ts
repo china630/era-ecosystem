@@ -31,6 +31,7 @@ import {
   type QaimeDayGap,
 } from '@/lib/services/qaime-day-close-gate';
 import { resolveSettlementPolicy } from '@era/satellite-kit';
+import { packageSkipPostsRoom, postsStayAsPackage } from '@/lib/services/medical-package-resolve.service';
 
 export async function getNightAuditStatus() {
   await ensureCurrentBusinessDayOpen();
@@ -495,15 +496,19 @@ async function executeLockedNightAudit() {
         steps.push(`Step 3: Stay ended — reservation ${res.id}; night not posted`);
         continue;
       }
-      if (res.ratePlan.medicalFlag) {
+      if (postsStayAsPackage(res.ratePlan)) {
         const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
         try {
           const pkgResult = await postNightlyPackageCharges(res.id, date);
           if (pkgResult.posted > 0) {
             steps.push(`Step 3: Package charges posted (${pkgResult.posted} lines) — reservation ${res.id}`);
-          } else if (!pkgResult.skipped) {
-            steps.push(`Step 3: Package already posted — reservation ${res.id}`);
+            continue;
           }
+          if (!pkgResult.skipped) {
+            steps.push(`Step 3: Package already posted — reservation ${res.id}`);
+            continue;
+          }
+          if (!packageSkipPostsRoom(res.ratePlan)) continue;
         } catch (err) {
           if (err instanceof NightlyPriceMissingError) {
             const who = [
@@ -528,7 +533,6 @@ async function executeLockedNightAudit() {
           }
           throw err;
         }
-        continue;
       }
 
       const alreadyPosted = res.folios.some((f) =>

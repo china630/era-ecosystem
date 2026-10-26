@@ -356,8 +356,17 @@ export async function upsertReservationFromElektrawebRow(
     { source: 'elektraweb' },
   );
 
-  const { alignReservationStaySlices } = await import('@/lib/services/stay-slice.service');
+  const { alignReservationStaySlices, retariffStaySlices } = await import(
+    '@/lib/services/stay-slice.service'
+  );
   await alignReservationStaySlices(reservation.id);
+  if (existing && existing.ratePlanId !== reservation.ratePlanId) {
+    await retariffStaySlices({
+      reservationId: reservation.id,
+      previousRatePlanId: existing.ratePlanId,
+      nextRatePlanId: reservation.ratePlanId,
+    });
+  }
 
   return {
     action: existing ? 'updated' : 'created',

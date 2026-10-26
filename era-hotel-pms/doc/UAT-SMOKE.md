@@ -505,7 +505,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
-3. `/hk` floor sheet — one floor; chips All / To clean / Dirty / For inspection; maid in the title (not a column); arrival and departure time under the date; outcome V/VC/OK/İstəmədi/DND/SO with no NSR button; a dirty door without a task is marked on the row; fullscreen. PDF is one floor per page, maid names in the title.
+3. `/hk` floor sheet — one floor; date defaults to the business date (any other date is read-only); chips All / To clean / Dirty / For inspection; maid in the title (not a column); reason and shift task are different words; arrival and departure time under the date; outcome V/VC/OK/İstəmədi/DND/SO can be cleared back to empty; no NSR button; a dirty door without a task is marked on the row; fullscreen. PDF is the selected date and floor, working columns in the UI language, maid names in the title.
 4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` **grid** (empty headers + guest/room/status/date filters) + fallback Delivered on the **same** ticket only.
 5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
 6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates. Return to service puts the door back to IN_SERVICE (DIRTY).

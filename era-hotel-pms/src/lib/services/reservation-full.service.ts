@@ -877,9 +877,25 @@ export async function patchReservationFull(
     });
   }
 
-  // Rebuild nights when dates moved or the card had no grid. A sent grid is kept
-  // only when the stay window did not change.
-  if (datesChanged || !clientDailyRates?.length) {
+  if (ratePlanChanged) {
+    const { retariffStaySlices } = await import('@/lib/services/stay-slice.service');
+    await retariffStaySlices({
+      reservationId: id,
+      previousRatePlanId: existing.ratePlanId,
+      nextRatePlanId: chargedPlanId,
+    });
+  }
+
+  // One rebuild after the slice tariff matches the card. A sent grid is kept
+  // only when the window, tariff, meal, billing and package did not change.
+  const rebuildNights =
+    datesChanged ||
+    !clientDailyRates?.length ||
+    ratePlanChanged ||
+    paxSkuChanged ||
+    mealPlanChanged ||
+    billingModeChanged;
+  if (rebuildNights) {
     const { usesMedicalPackageCompose } = await import(
       '@/lib/services/medical-package-resolve.service'
     );
@@ -900,13 +916,6 @@ export async function patchReservationFull(
       );
       await recalcReservationDailyRates(id);
     }
-  }
-
-  if (ratePlanChanged || paxSkuChanged || mealPlanChanged || billingModeChanged) {
-    const { recalcReservationDailyRates } = await import(
-      '@/lib/services/reservation-pricing.service'
-    );
-    await recalcReservationDailyRates(id);
   }
 
   const summed = await prisma.reservationDailyRate.aggregate({
