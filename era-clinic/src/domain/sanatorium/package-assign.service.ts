@@ -224,6 +224,14 @@ export function showsInProcedureMenu(row: {
   return row.inSnapshot && row.showInProcedures;
 }
 
+/**
+ * SKU picker and burn-pool auto-bind. A leftover *_POOL that is no longer on
+ * the procedure list stays in the database and must not steal the save.
+ */
+export function procedurePickerBalances<T extends { assignable: boolean }>(rows: T[]): T[] {
+  return rows.filter((row) => row.assignable);
+}
+
 function isParaffinType(code: string, name: string): boolean {
   const hay = foldHay(`${code} ${name}`);
   return /parafin|paraffin/.test(hay);
@@ -763,7 +771,7 @@ export async function getPackageAssignSnapshot(
   });
 
   const poolEligible: Record<string, PoolEligibleSku[]> = {};
-  for (const b of balances) {
+  for (const b of procedurePickerBalances(balances)) {
     const configured = membersByBlock.get(b.procedureCode) ?? [];
     if (configured.length > 0 || isPackagePoolCode(b.procedureCode)) {
       poolEligible[b.procedureCode] = eligibleSkusForPool(
@@ -1043,6 +1051,13 @@ export async function assignPackageProcedures(
         400,
       );
     }
+    if (!bal.assignable) {
+      throw new PackageAssignError(
+        `Block ${quotaCode} is not on the procedure list`,
+        "NOT_IN_PROCEDURES",
+        400,
+      );
+    }
     if (line.qty > bal.remaining) {
       throw new PackageAssignError(
         `Qty ${line.qty} exceeds remaining ${bal.remaining} for ${quotaCode}`,
@@ -1294,8 +1309,7 @@ export async function replacePackageProcedures(
   }
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
-  const packageCodes = new Set(instance.procedureLines.map((l) => l.procedureCode));
-  const balanceCodes = [...packageCodes];
+  const balanceCodes = instance.procedureLines.map((l) => l.procedureCode);
 
   if (isPackagePoolCode(input.toCode)) {
     throw new PackageAssignError(
@@ -1306,7 +1320,28 @@ export async function replacePackageProcedures(
   }
 
   let burnPoolCode: string | null = null;
-  let inPackageTarget = packageCodes.has(input.toCode);
+  const snapMeta = parseEntitlementSnapshot(instance.entitlementSnapshot);
+  const snapByCode = new Map(
+    (snapMeta?.procedures ?? []).map((row) => [row.procedureCode, row]),
+  );
+  const tplByCode = new Map(
+    (instance.template?.procedures ?? []).map((row) => [row.procedureCode, row]),
+  );
+  const pickerCodes = new Set(
+    instance.procedureLines
+      .filter((line) => {
+        const snapRow = snapByCode.get(line.procedureCode);
+        const tplRow = tplByCode.get(line.procedureCode);
+        const showFlag = snapRow?.showInProcedures ?? tplRow?.showInProcedures ?? false;
+        return showsInProcedureMenu({
+          isTransfer: isBathTransferQuota(line.procedureCode),
+          inSnapshot: snapMeta ? Boolean(snapRow) : Boolean(tplRow),
+          showInProcedures: showFlag === true,
+        });
+      })
+      .map((line) => line.procedureCode),
+  );
+  let inPackageTarget = pickerCodes.has(input.toCode);
   if (!inPackageTarget) {
     const types = await prisma.procedureType.findMany({
       select: { code: true, name: true, needsSite: true },
@@ -1320,6 +1355,7 @@ export async function replacePackageProcedures(
       templateMembers: blockMemberRows,
     });
     for (const pool of balanceCodes) {
+      if (!pickerCodes.has(pool)) continue;
       const configured = membersByBlock.get(pool) ?? [];
       if (!isEntitlementBucket(pool, configured) && !isPackageQuotaAlias(pool)) continue;
       const eligible =
@@ -1348,7 +1384,7 @@ export async function replacePackageProcedures(
       "@/domain/sanatorium/extras-assign.service"
     );
     const openQuota = await remainingPackageQuotaCode(episodeId, input.toCode);
-    if (openQuota) {
+    if (openQuota && pickerCodes.has(openQuota)) {
       inPackageTarget = true;
       if (openQuota !== input.toCode) burnPoolCode = openQuota;
     }

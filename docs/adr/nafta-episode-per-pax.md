@@ -12,6 +12,7 @@
 6. Share rooms (`707` / `707S`) remain **two reservations** → two episodes — out of scope for merge.
 7. Same-SKU couple still gets **two** charts (two patients, same program code).
 8. Folio stays **one** reservation / Wave D composed nightly sell.
+9. A shared surname is not the same person. Clinic may reuse an OPEN episode only when it is still unbound (`hotelStayId` empty or equal to the reservation id) **and** the full name matches. An episode already keyed `::pax:` or `::mdm:` is that guest’s chart. Hotel check-in, Elektra check-in, Depart guest, and Move guest send `globalPersonId` from that party row only. The primary guest’s MDM id is used only when the row is the primary guest. Depart and Move select that chart by the same stay id (`reservationId::pax:` or `reservationId::mdm:`). Move writes the destination stay id in that shape, not the bare reservation id. A clinic-native `P-` code is not the lookup key.
 
 ## Related
 

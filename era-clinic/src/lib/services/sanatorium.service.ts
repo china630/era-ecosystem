@@ -69,14 +69,22 @@ function looseGuestName(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function guestNamesMatch(a: string, b: string): boolean {
-  const left = looseGuestName(a);
-  const right = looseGuestName(b);
-  if (!left || !right) return false;
-  if (left === right || left.includes(right) || right.includes(left)) return true;
-  const leftParts = left.split(" ");
-  const rightParts = new Set(right.split(" "));
-  return leftParts.some((part) => part.length > 2 && rightParts.has(part));
+/**
+ * A pre-pax episode (stay id empty or equal to the reservation) may be reused
+ * only when the full name is the same person. A shared surname is not identity.
+ * An episode already keyed `::pax:` / `::mdm:` belongs to that guest.
+ */
+export function legacyOpenEpisodeReusable(input: {
+  reservationId: string;
+  hotelStayId?: string | null;
+  patientFullName?: string | null;
+  guestName: string;
+}): boolean {
+  const stay = input.hotelStayId?.trim() ?? "";
+  if (stay && stay !== input.reservationId) return false;
+  const left = looseGuestName(input.patientFullName ?? "");
+  const right = looseGuestName(input.guestName);
+  return left.length > 0 && left === right;
 }
 
 /** An older check-in stored the episode on the reservation id, not the guest-row key. */
@@ -94,16 +102,19 @@ async function findReusableOpenEpisode(
     include: episodeInclude,
     orderBy: { openedAt: "asc" },
   });
-  const named = rows.filter((row: { patientRef?: { fullName?: string | null } }) =>
-    guestNamesMatch(row.patientRef?.fullName ?? "", input.guestName),
+  const legacy = rows.filter(
+    (row: {
+      hotelStayId?: string | null;
+      patientRef?: { fullName?: string | null };
+    }) =>
+      legacyOpenEpisodeReusable({
+        reservationId: input.reservationId,
+        hotelStayId: row.hotelStayId,
+        patientFullName: row.patientRef?.fullName,
+        guestName: input.guestName,
+      }),
   );
-  if (named.length > 0) return named[0];
-  const unbound = rows.filter(
-    (row: { hotelStayId?: string | null }) =>
-      !row.hotelStayId || row.hotelStayId === input.reservationId,
-  );
-  if (unbound.length === 1) return unbound[0];
-  return null;
+  return legacy[0] ?? null;
 }
 
 async function findOpenEpisodeForStay(

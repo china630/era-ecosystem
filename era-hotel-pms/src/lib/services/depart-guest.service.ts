@@ -3,6 +3,7 @@ import { isEffectiveShare } from '@/lib/services/share-assignment.service';
 import { closeFolio } from '@/lib/services/folio.service';
 import { recalcReservationDailyRates } from '@/lib/services/reservation-pricing.service';
 import { dispatchGuestDeparted } from '@/lib/integration/guest-lifecycle-events';
+import { paxLifecycleGlobalPersonId } from '@/lib/integration/pax-lifecycle-person';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
 import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
 import {
@@ -180,8 +181,12 @@ export async function departGuestFromStay(
   }).catch((e) => console.error('Depart guest pricing recalc failed', e));
 
   const guestName = [pax.firstName, pax.lastName].filter(Boolean).join(' ').trim();
-  const paxGlobalPersonId =
-    pax.guest?.globalPersonId ?? reservation.guest?.globalPersonId ?? undefined;
+  const paxGlobalPersonId = paxLifecycleGlobalPersonId({
+    isPrimary: pax.isPrimary,
+    guestId: pax.guestId,
+    guest: pax.guest,
+    primaryGuest: reservation.guest,
+  });
   await dispatchGuestDeparted({
     reservationId,
     paxKey: paxId,

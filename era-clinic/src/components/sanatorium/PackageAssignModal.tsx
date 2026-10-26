@@ -217,9 +217,12 @@ function mergeParamLabel(a: string, b: string): string {
   return out.join(" · ");
 }
 
-function draftMatchesAssigned(d: DraftLine, row: PackageAssignedAgg): boolean {
+function draftMatchesAssigned(
+  d: DraftLine,
+  row: PackageAssignedAgg,
+  rowQuota = row.packageQuotaCode || row.procedureCode,
+): boolean {
   const quota = d.burnPoolCode || d.procedureCode;
-  const rowQuota = row.packageQuotaCode || row.procedureCode;
   return d.procedureCode === row.procedureCode && quota === rowQuota;
 }
 
@@ -490,6 +493,17 @@ export function PackageAssignModal({
   }, [formBurnPool, formCode, balances]);
   const formIsStudy = formFulfillment === "LAB_ORDER" || formFulfillment === "VISIT";
 
+  function menuQuotaForAssigned(row: PackageAssignedAgg): string {
+    const stamped = row.packageQuotaCode || row.procedureCode;
+    if (balances.some((b) => b.procedureCode === stamped)) return stamped;
+    const menuCodes = new Set(balances.map((b) => b.procedureCode));
+    for (const [pool, skus] of Object.entries(poolEligible)) {
+      if (!menuCodes.has(pool)) continue;
+      if (skus.some((sku) => sku.code === row.procedureCode)) return pool;
+    }
+    return stamped;
+  }
+
   function lineIsStudy(line: DraftLine): boolean {
     const quota = line.burnPoolCode || line.procedureCode;
     const fulfillment =
@@ -506,12 +520,12 @@ export function PackageAssignModal({
     for (const row of assigned) {
       if (row.locked) continue;
       const key = assignedKey(row);
-      const quota = row.packageQuotaCode || row.procedureCode;
+      const quota = menuQuotaForAssigned(row);
       const cut = pendingCancel.has(key) ? row.qty : pendingCut[key] ?? 0;
       if (cut > 0) map.set(quota, (map.get(quota) ?? 0) + cut);
     }
     return map;
-  }, [balances, draft, assigned, pendingCancel, pendingCut]);
+  }, [balances, poolEligible, draft, assigned, pendingCancel, pendingCut]);
 
   const hasPendingAdjust =
     pendingCancel.size > 0 || Object.values(pendingCut).some((n) => n > 0);
@@ -536,12 +550,12 @@ export function PackageAssignModal({
       const key = assignedKey(row);
       if (pendingCancel.has(key)) continue;
       const match = draft.find(
-        (d) => !used.has(d.key) && draftMatchesAssigned(d, row),
+        (d) => !used.has(d.key) && draftMatchesAssigned(d, row, menuQuotaForAssigned(row)),
       );
       if (match) used.add(match.key);
     }
     return draft.filter((d) => !used.has(d.key));
-  }, [assigned, draft, pendingCancel]);
+  }, [assigned, draft, pendingCancel, balances, poolEligible]);
 
   const bathFromOptions = useMemo(
     () =>
@@ -690,7 +704,9 @@ export function PackageAssignModal({
     if (balances.some((b) => b.procedureCode === code && !b.isPool && !b.isQuotaAlias)) {
       return { rem: draftRemaining.get(code) ?? 0, burnPool: null };
     }
+    const menuCodes = new Set(balances.map((row) => row.procedureCode));
     for (const [pool, skus] of Object.entries(poolEligible)) {
+      if (!menuCodes.has(pool)) continue;
       if (skus.some((sku) => sku.code === code)) {
         return { rem: draftRemaining.get(pool) ?? 0, burnPool: pool };
       }
@@ -1142,7 +1158,7 @@ export function PackageAssignModal({
       });
       return;
     }
-    const quota = row.packageQuotaCode || row.procedureCode;
+    const quota = menuQuotaForAssigned(row);
     const rem = draftRemaining.get(quota) ?? 0;
     if (rem < 1) return;
     pushDraft({
@@ -1178,7 +1194,7 @@ export function PackageAssignModal({
     if (row.locked) return;
     if (row.qty < 1) return;
     const key = assignedKey(row);
-    const matching = draft.find((d) => draftMatchesAssigned(d, row));
+    const matching = draft.find((d) => draftMatchesAssigned(d, row, menuQuotaForAssigned(row)));
     if (matching) {
       setDraft((prev) =>
         prev.flatMap((d) => {
@@ -1231,7 +1247,7 @@ export function PackageAssignModal({
     if (row.locked) return;
     const key = assignedKey(row);
     setPendingCancel((prev) => new Set(prev).add(key));
-    setDraft((prev) => prev.filter((d) => !draftMatchesAssigned(d, row)));
+    setDraft((prev) => prev.filter((d) => !draftMatchesAssigned(d, row, menuQuotaForAssigned(row))));
   }
 
   function openReplace(fromCode?: string) {
@@ -1664,7 +1680,7 @@ export function PackageAssignModal({
             for (const row of assigned) {
               const key = assignedKey(row);
               if (pendingCancel.has(key)) continue;
-              const pkgDraft = draft.find((d) => draftMatchesAssigned(d, row));
+              const pkgDraft = draft.find((d) => draftMatchesAssigned(d, row, menuQuotaForAssigned(row)));
               const cut = pendingCut[key] ?? 0;
               pushLane(
                 row.procedureCode,
