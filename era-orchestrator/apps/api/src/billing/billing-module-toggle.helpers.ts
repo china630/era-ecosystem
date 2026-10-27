@@ -151,3 +151,11 @@ export function hasConstructorModulesInCustomConfig(
   const m = o.modules;
   return Array.isArray(m) && m.length > 0;
 }
+
+/**
+ * TIER_3 is the top quota ceiling only. Module SKUs stay à-la-carte in `activeModules`.
+ * Historical `ENTERPRISE_ALL_MODULES` early-return is retired — always allow toggle.
+ */
+export function blocksModuleToggleForTier(_tier: unknown): boolean {
+  return false;
+}

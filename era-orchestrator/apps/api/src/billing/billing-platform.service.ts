@@ -170,12 +170,13 @@ export class BillingPlatformService {
     for (const o of orgs) {
       const snap = await this.subscriptionAccess.getOrganizationSnapshot(o.id);
       const active = snap.activeModules;
-      const isEnterprise = snap.tier === TariffTier.TIER_3;
 
       let monthly = catalog.basePrice;
       for (const m of catalog.modules) {
-        const on = isEnterprise || isModuleActiveInSubscription(active, m.key);
-        if (on) monthly += Number(m.pricePerMonth);
+        // TIER_3 is quota-only; bill what is in activeModules (à-la-carte).
+        if (isModuleActiveInSubscription(active, m.key)) {
+          monthly += Number(m.pricePerMonth);
+        }
       }
 
       estimatedTotal += monthly;
@@ -211,11 +212,11 @@ export class BillingPlatformService {
     );
     const catalog = await this.pricing.getConstructorData();
     const active = snap.activeModules;
-    const isEnterprise = snap.tier === TariffTier.TIER_3;
     let monthly = catalog.basePrice;
     for (const m of catalog.modules) {
-      const on = isEnterprise || isModuleActiveInSubscription(active, m.key);
-      if (on) monthly += Number(m.pricePerMonth);
+      if (isModuleActiveInSubscription(active, m.key)) {
+        monthly += Number(m.pricePerMonth);
+      }
     }
     return monthly;
   }

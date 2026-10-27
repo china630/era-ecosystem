@@ -8,6 +8,7 @@ import {
   MODAL_FOOTER_OUTLINE_CLASS,
   ModalShell,
 } from "@era/satellite-kit/ui";
+import { orchBillingErrorMessage } from "../../lib/orch-billing-error";
 import { getOrchAccessToken, orchFetch } from "../../lib/orch-api";
 import {
   catalogModulesForSatellite,
@@ -164,8 +165,8 @@ export function WorkspaceSatelliteModulesModal({
       });
 
       if (!res.ok) {
-        const err = (await res.json().catch(() => null)) as { message?: string } | null;
-        toast.error(err?.message ?? tCommon("failed"));
+        const err = await res.json().catch(() => null);
+        toast.error(orchBillingErrorMessage(err, tCommon("failed")));
         return;
       }
 
