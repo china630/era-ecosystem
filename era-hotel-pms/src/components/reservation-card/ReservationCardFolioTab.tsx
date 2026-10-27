@@ -934,11 +934,11 @@ export function ReservationCardFolioTab({
         />
         <input
           type="search"
+          className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
           value={folioQuery}
           onChange={(event) => setFolioQuery(event.target.value)}
           placeholder={t('folioSearch')}
           aria-label={t('folioSearch')}
-          className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
         />
       </div>
       {folioFocus === 'deleted' ? (

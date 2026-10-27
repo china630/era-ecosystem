@@ -17,6 +17,7 @@ import {
   CatalogField,
   FORM_STACK_CLASS,
   GHOST_BUTTON_CLASS,
+  MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
@@ -433,6 +434,7 @@ export function TourRosterModal({ open, departureId, onClose, onEdit, onChanged 
                     b.status === 'RESERVED' ? (
                       <input
                         type="checkbox"
+                        className={MODAL_CHECKBOX_CLASS}
                         checked={!!selected[b.id]}
                         onChange={(e) =>
                           setSelected((prev) => ({ ...prev, [b.id]: e.target.checked }))

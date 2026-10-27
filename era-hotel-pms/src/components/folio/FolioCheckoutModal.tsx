@@ -10,6 +10,7 @@ import {
   Field,
   FieldSection,
   FieldTextarea,
+  FORM_INPUT_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_DANGER_CLASS,
   TEXT_MUTED_CLASS,
@@ -896,7 +897,7 @@ export function FolioCheckoutModal({
         ) : null}
         <input
           type="file"
-          className="mb-2 text-xs"
+          className={`mb-2 text-xs ${FORM_INPUT_CLASS}`}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;

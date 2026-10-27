@@ -364,8 +364,8 @@ export function ReservationCardPricingTab({
                     <td className="px-2 py-1 text-right">
                       <input
                         type="number"
-                        step="0.01"
                         className={`h-7 w-24 ${MODAL_INPUT_CLASS} !py-0 text-[12px] text-right disabled:bg-transparent disabled:text-[#95A5A6]`}
+                        step="0.01"
                         value={row.amount}
                         disabled={locked}
                         onChange={(e) => {
