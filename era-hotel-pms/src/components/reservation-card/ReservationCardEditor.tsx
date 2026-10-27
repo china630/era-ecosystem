@@ -2705,7 +2705,19 @@ export function ReservationCardEditor({
     folios.flatMap((folio) => folio.charges),
     folios.flatMap((folio) => folio.payments ?? []),
   );
-  const guestFolioBalance = stayPair.debt;
+  const guestPocketDebt = stayMoneyPair(
+    folios.filter((folio) => folio.type === 'GUEST').flatMap((folio) => folio.charges),
+    folios.filter((folio) => folio.type === 'GUEST').flatMap((folio) => folio.payments ?? []),
+  ).debt;
+  const companyPocketDebt = stayMoneyPair(
+    folios.filter((folio) => folio.type === 'COMPANY').flatMap((folio) => folio.charges),
+    folios.filter((folio) => folio.type === 'COMPANY').flatMap((folio) => folio.payments ?? []),
+  ).debt;
+  const agencyPocketDebt = stayMoneyPair(
+    folios.filter((folio) => folio.type === 'AGENCY').flatMap((folio) => folio.charges),
+    folios.filter((folio) => folio.type === 'AGENCY').flatMap((folio) => folio.payments ?? []),
+  ).debt;
+  const guestFolioBalance = guestPocketDebt;
 
   const pricingDisplayCurrency =
     dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
@@ -2978,9 +2990,21 @@ export function ReservationCardEditor({
           {earlyCheckoutPreview?.unusedNights ? (
             <p className="m-0">{t('earlyStayCheckoutUnused', { nights: earlyCheckoutPreview.unusedNights })}</p>
           ) : null}
-          {guestFolioBalance > 0.01 &&
-          (pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') ? (
+          {(pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') &&
+          guestPocketDebt > 0.01 ? (
             <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('earlyStayCheckoutFolioHint')}</p>
+          ) : null}
+          {(pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') &&
+          companyPocketDebt > 0.01 ? (
+            <p className={`m-0 ${TEXT_DANGER_CLASS}`}>
+              {t('earlyStayCheckoutCompanyDebtHint', { amount: companyPocketDebt.toFixed(2) })}
+            </p>
+          ) : null}
+          {(pendingStayAction === 'earlyCheckOut' || pendingStayAction === 'checkOut') &&
+          agencyPocketDebt > 0.01 ? (
+            <p className={`m-0 ${TEXT_DANGER_CLASS}`}>
+              {t('earlyStayCheckoutAgencyDebtHint', { amount: agencyPocketDebt.toFixed(2) })}
+            </p>
           ) : null}
         </div>
       </EraModal>

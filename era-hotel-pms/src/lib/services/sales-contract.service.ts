@@ -1,11 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { computeUtilizationPercent } from '@/lib/services/contract-allotment-core';
+import { assertSalesContractStatusTransition } from '@/lib/services/sales-contract-status';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type {
   SalesContractStatus,
   SalesContractCounterpartyType,
   CommissionBasis,
 } from '@prisma/client';
+
+export { assertSalesContractStatusTransition } from '@/lib/services/sales-contract-status';
 
 const contractInclude = {
   agency: true,
@@ -16,11 +19,16 @@ const contractInclude = {
   _count: { select: { reservations: true } },
 } as const;
 
-export async function listSalesContracts(filters?: { status?: SalesContractStatus; agencyId?: string }) {
+export async function listSalesContracts(filters?: {
+  status?: SalesContractStatus;
+  agencyId?: string;
+  companyId?: string;
+}) {
   return prisma.salesContract.findMany({
     where: {
       ...(filters?.status ? { status: filters.status } : {}),
       ...(filters?.agencyId ? { agencyId: filters.agencyId } : {}),
+      ...(filters?.companyId ? { companyId: filters.companyId } : {}),
     },
     include: contractInclude,
     orderBy: [{ validFrom: 'desc' }, { code: 'asc' }],
@@ -39,7 +47,7 @@ export async function getSalesContract(id: string) {
 export async function createSalesContract(input: {
   code: string;
   name: string;
-  counterpartyType?: SalesContractCounterpartyType;
+  counterpartyType: SalesContractCounterpartyType;
   agencyId?: string;
   companyId?: string;
   companyGuestId?: string;
@@ -57,12 +65,19 @@ export async function createSalesContract(input: {
   notes?: string;
   externalRef?: string;
 }) {
-  const counterpartyType = input.counterpartyType ?? 'AGENCY';
-  if (counterpartyType === 'AGENCY' && !input.agencyId) {
-    throw new Error('Agency is required for AGENCY counterparty type');
+  const counterpartyType = input.counterpartyType;
+  if (counterpartyType !== 'AGENCY' && counterpartyType !== 'CORPORATE') {
+    throw Object.assign(new Error('counterpartyType is required'), { status: 400 });
   }
-  if (counterpartyType === 'CORPORATE' && !input.companyId && !input.companyGuestId) {
-    throw new Error('Company is required for CORPORATE counterparty type');
+  if (counterpartyType === 'AGENCY' && !input.agencyId) {
+    throw Object.assign(new Error('Agency is required for AGENCY counterparty type'), {
+      status: 400,
+    });
+  }
+  if (counterpartyType === 'CORPORATE' && !input.companyId) {
+    throw Object.assign(new Error('Company is required for CORPORATE counterparty type'), {
+      status: 400,
+    });
   }
 
   const ratePlan = await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
@@ -75,7 +90,9 @@ export async function createSalesContract(input: {
       counterpartyType,
       agencyId: counterpartyType === 'AGENCY' ? input.agencyId : null,
       companyId: counterpartyType === 'CORPORATE' ? input.companyId ?? null : null,
-      companyGuestId: counterpartyType === 'CORPORATE' ? input.companyGuestId ?? null : null,
+      // Legacy merge FK only — never a substitute for companyId on CORPORATE.
+      companyGuestId:
+        counterpartyType === 'CORPORATE' ? input.companyGuestId ?? null : null,
       validFrom: input.validFrom,
       validTo: input.validTo,
       status: input.status ?? 'DRAFT',
@@ -118,14 +135,41 @@ export async function updateSalesContract(
     externalRef: string | null;
   }>,
 ) {
-  if (input.counterpartyType === 'AGENCY' && input.agencyId === null) {
-    throw new Error('Agency is required for AGENCY counterparty type');
-  }
-  if (input.counterpartyType === 'CORPORATE' && input.companyId === null && !input.companyGuestId) {
-    throw new Error('Company is required for CORPORATE counterparty type');
+  const existing = await prisma.salesContract.findUnique({ where: { id } });
+  if (!existing) throw new Error('Sales contract not found');
+
+  if (input.status != null) {
+    assertSalesContractStatusTransition(existing.status, input.status);
   }
 
-  const counterpartyType = input.counterpartyType;
+  const nextType = input.counterpartyType ?? existing.counterpartyType;
+  const nextAgencyId =
+    input.agencyId !== undefined ? input.agencyId : existing.agencyId;
+  const nextCompanyId =
+    input.companyId !== undefined ? input.companyId : existing.companyId;
+
+  if (nextType === 'AGENCY' && !nextAgencyId) {
+    throw Object.assign(new Error('Agency is required for AGENCY counterparty type'), {
+      status: 400,
+    });
+  }
+  if (nextType === 'CORPORATE' && !nextCompanyId) {
+    throw Object.assign(new Error('Company is required for CORPORATE counterparty type'), {
+      status: 400,
+    });
+  }
+
+  const terminal = existing.status === 'EXPIRED' || existing.status === 'CANCELLED';
+  if (terminal && input.status == null) {
+    const allowedKeys = new Set(['notes', 'externalRef']);
+    const touching = Object.keys(input).filter((k) => input[k as keyof typeof input] !== undefined);
+    if (touching.some((k) => !allowedKeys.has(k))) {
+      throw Object.assign(
+        new Error('Expired or cancelled contracts only allow notes and externalRef updates'),
+        { status: 400 },
+      );
+    }
+  }
 
   return prisma.salesContract.update({
     where: { id },
@@ -133,19 +177,19 @@ export async function updateSalesContract(
       name: input.name,
       counterpartyType: input.counterpartyType,
       agencyId:
-        counterpartyType === 'CORPORATE'
+        nextType === 'CORPORATE'
           ? null
           : input.agencyId !== undefined
             ? input.agencyId
             : undefined,
       companyId:
-        counterpartyType === 'AGENCY'
+        nextType === 'AGENCY'
           ? null
           : input.companyId !== undefined
             ? input.companyId
             : undefined,
       companyGuestId:
-        counterpartyType === 'AGENCY'
+        nextType === 'AGENCY'
           ? null
           : input.companyGuestId !== undefined
             ? input.companyGuestId

@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
-import { CatalogField, DatePicker, PageHeader, PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  DatePicker,
+  EraListFilterBar,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+} from '@era/satellite-kit/ui';
 
 type Cell = {
   id: string;
@@ -110,18 +118,26 @@ export default function HkRosterPage() {
         title={t('rosterTitle')}
         subtitle={t('rosterHint')}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void propose()}>
               {t('proposeWeek')}
             </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void accrue()}>
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void accrue()}>
               {t('accrueEg')}
             </button>
           </div>
         }
       />
       {calendarNote ? <p className="mb-2 text-sm text-amber-800">{calendarNote}</p> : null}
-      <div className="mb-4 max-w-xs">
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          const today = hotelDateKey();
+          const dow = parseHotelNoon(today).getUTCDay();
+          const diff = dow === 0 ? -6 : 1 - dow;
+          setWeekStart(addHotelDays(today, diff));
+        }}
+      >
         <DatePicker
           label={t('weekStart')}
           value={weekStart}
@@ -134,24 +150,29 @@ export default function HkRosterPage() {
           placeholder={tc('datePlaceholder')}
           preset="date"
         />
-      </div>
-      {people.length === 0 ? <p className="text-sm text-[#7F8C8D]">{t('rosterEmpty')}</p> : null}
-      {people.length > 0 ? (
-        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-          <table className="w-full min-w-[880px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-                <th className="px-2 py-2">{t('colMaid')}</th>
-                <th className="px-2 py-2">{t('floor')}</th>
-                {days.map((d) => (
-                  <th key={d} className="px-2 py-2">
-                    {d.slice(5)}
-                  </th>
-                ))}
+      </EraListFilterBar>
+      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        <table className="w-full min-w-[880px] text-sm">
+          <thead>
+            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+              <th className="px-2 py-2">{t('colMaid')}</th>
+              <th className="px-2 py-2">{t('floor')}</th>
+              {days.map((d) => (
+                <th key={d} className="px-2 py-2">
+                  {d.slice(5)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {people.length === 0 ? (
+              <tr className="border-b border-[#ECF0F1]">
+                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={2 + days.length}>
+                  {t('rosterEmpty')}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {people.map((p) => (
+            ) : (
+              people.map((p) => (
                 <tr key={p.id} className="border-b border-[#ECF0F1] align-top">
                   <td className="px-2 py-2 font-medium">{p.name}</td>
                   <td className="px-2 py-2">{todayPair[p.id] ?? '—'}</td>
@@ -174,11 +195,11 @@ export default function HkRosterPage() {
                     );
                   })}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

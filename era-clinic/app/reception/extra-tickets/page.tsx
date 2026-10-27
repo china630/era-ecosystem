@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
-import { bakuDateTimeLabel } from "@/lib/baku-day";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
@@ -521,7 +521,7 @@ function PatientBlock({
               </td>
               <td className={DATA_TABLE_TD_CLASS}>{row.roomNumber || "—"}</td>
               <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap tabular-nums`}>
-                {row.resourceId && row.scheduledAt ? bakuDateTimeLabel(row.scheduledAt) : "—"}
+                {row.scheduledAt ? bakuDateTimeDisplay(row.scheduledAt) : "—"}
               </td>
               <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
               <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>

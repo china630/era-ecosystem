@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import {
   CatalogField,
   DatePicker,
+  EraListFilterBar,
   Field,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -14,6 +14,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 
 type Disc = { id: string; roomId: string; roomNumber?: string; kind: string; notes: string | null; status: string };
 type Esc = { roomNumber: string; kind: string; days: number };
@@ -26,6 +27,7 @@ export default function HkDiscrepancyPage() {
   const [rows, setRows] = useState<Disc[]>([]);
   const [escalations, setEscalations] = useState<Esc[]>([]);
   const [rooms, setRooms] = useState<RoomOpt[]>([]);
+  const [open, setOpen] = useState(false);
   const [roomId, setRoomId] = useState('');
   const [kind, setKind] = useState<'SKIP' | 'SLEEP'>('SKIP');
   const [notes, setNotes] = useState('');
@@ -92,6 +94,7 @@ export default function HkDiscrepancyPage() {
         return;
       }
       showSuccess(tc('saved'));
+      setOpen(false);
       setRoomId('');
       setNotes('');
       await load();
@@ -102,8 +105,28 @@ export default function HkDiscrepancyPage() {
 
   return (
     <>
-      <PageHeader title={t('discrepancyTitle')} subtitle={t('discrepancyHint')} />
-      <div className="mb-4 max-w-xs">
+      <PageHeader
+        title={t('discrepancyTitle')}
+        subtitle={t('discrepancyHint')}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => {
+              setRoomId('');
+              setKind('SKIP');
+              setNotes('');
+              setOpen(true);
+            }}
+          >
+            + {t('discrepancyCreate')}
+          </button>
+        }
+      />
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setDate(hotelDateKey())}
+      >
         <DatePicker
           label={tc('datePlaceholder')}
           value={date}
@@ -113,10 +136,65 @@ export default function HkDiscrepancyPage() {
           placeholder={tc('datePlaceholder')}
           preset="date"
         />
+      </EraListFilterBar>
+      {escalations.length > 0 ? (
+        <div className="mb-3 space-y-1 text-sm">
+          {escalations.map((e) => (
+            <p key={`${e.roomNumber}-${e.kind}`} className="rounded border border-amber-300 bg-amber-50 px-2 py-1">
+              {e.kind === 'SO' ? t('soEscalation') : t('dndEscalation')} · {e.roomNumber} · {e.days}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+              <th className="px-3 py-2">{t('colRoom')}</th>
+              <th className="px-3 py-2">{t('discrepancyKind')}</th>
+              <th className="px-3 py-2">{t('outcome')}</th>
+              <th className="px-3 py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr className="border-b border-[#ECF0F1]">
+                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={4}>
+                  {t('discrepancyEmpty')}
+                </td>
+              </tr>
+            ) : (
+              rows.map((row) => (
+                <tr key={row.id} className="border-b border-[#ECF0F1]">
+                  <td className="px-3 py-2 font-medium">{row.roomNumber || row.roomId}</td>
+                  <td className="px-3 py-2">{row.kind === 'SKIP' ? t('skip') : t('sleep')}</td>
+                  <td className="px-3 py-2 text-[#7F8C8D]">{row.status}</td>
+                  <td className="px-3 py-2">
+                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void clear(row.roomId)}>
+                      {tc('remove')}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-      <section className="mb-4 rounded border border-[#D5DADF] bg-white p-3">
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('discrepancyCreateTitle')}</h2>
-        <form onSubmit={(e) => void create(e)} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+      <EraModal
+        open={open}
+        title={t('discrepancyCreateTitle')}
+        onClose={() => setOpen(false)}
+        footer={
+          <EraModalFooter
+            formId="disc-create"
+            onCancel={() => setOpen(false)}
+            busy={busy}
+            submitDisabled={!roomId}
+            submitLabel={t('discrepancyCreate')}
+          />
+        }
+      >
+        <form id="disc-create" onSubmit={(e) => void create(e)} className="space-y-3">
           <CatalogField
             kind="ENTITY_REF"
             label={t('colRoom')}
@@ -141,64 +219,8 @@ export default function HkDiscrepancyPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
-          <div className="flex items-end">
-            <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy || !roomId}>
-              {t('discrepancyCreate')}
-            </button>
-          </div>
         </form>
-      </section>
-      <section className="mb-4 rounded border border-[#D5DADF] bg-white p-3">
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('escalationsTitle')}</h2>
-        {escalations.length === 0 ? (
-          <p className="text-sm text-[#7F8C8D]">{t('escalationsEmpty')}</p>
-        ) : (
-          <div className="space-y-1 text-sm">
-            {escalations.map((e) => (
-              <p key={`${e.roomNumber}-${e.kind}`} className="rounded border border-amber-300 bg-amber-50 px-2 py-1">
-                {e.kind === 'SO' ? t('soEscalation') : t('dndEscalation')} · {e.roomNumber} · {e.days}
-              </p>
-            ))}
-          </div>
-        )}
-      </section>
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              <th className="px-3 py-2">{t('colRoom')}</th>
-              <th className="px-3 py-2">{t('discrepancyKind')}</th>
-              <th className="px-3 py-2">{t('outcome')}</th>
-              <th className="px-3 py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={4}>
-                  {t('discrepancyEmpty')}{' '}
-                  <Link href="/hk/mobile" className="text-[#2980B9] underline">
-                    {t('mobileTitle')}
-                  </Link>
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <tr key={row.id} className="border-b border-[#ECF0F1]">
-                  <td className="px-3 py-2 font-medium">{row.roomNumber || row.roomId}</td>
-                  <td className="px-3 py-2">{row.kind === 'SKIP' ? t('skip') : t('sleep')}</td>
-                  <td className="px-3 py-2 text-[#7F8C8D]">{row.status}</td>
-                  <td className="px-3 py-2">
-                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void clear(row.roomId)}>
-                      {tc('remove')}
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      </EraModal>
     </>
   );
 }

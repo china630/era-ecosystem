@@ -39,6 +39,8 @@ const paymentSchema = z.object({
   bankTerminalId: z.string().min(1).max(64).optional(),
   folioType: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
   reservationGuestId: z.string().uuid().optional(),
+  /** Explicit prepay / credit when the stay still has open debt on other articles. */
+  allowCredit: z.boolean().optional(),
 }).refine((row) => Boolean(row.folioId || row.reservationId), {
   message: 'folioId or reservationId is required',
 });
@@ -70,6 +72,7 @@ export async function POST(request: Request) {
         bankReference: data.bankReference,
         bankTerminalId: data.bankTerminalId,
         revenueCodeId: data.revenueCodeId,
+        allowCredit: data.allowCredit === true,
         createdByUserId: session?.sub,
         auditRequest: request,
       });

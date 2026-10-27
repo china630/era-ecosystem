@@ -188,7 +188,23 @@ export async function getWalkInParty(id: string) {
       ? prisma.procedureOrder.findMany({
           where: { clinicalEpisodeId: { in: episodeIds }, inPackage: false },
           orderBy: { createdAt: "asc" },
-          include: { prescribedByPractitioner: { select: { fullName: true } } },
+          include: {
+            prescribedByPractitioner: { select: { fullName: true } },
+            sites: {
+              orderBy: { sortOrder: "asc" },
+              include: {
+                site: {
+                  select: {
+                    id: true,
+                    code: true,
+                    titleAz: true,
+                    titleRu: true,
+                    titleEn: true,
+                  },
+                },
+              },
+            },
+          },
         })
       : [],
     episodeIds.length
@@ -245,6 +261,20 @@ export async function getWalkInParty(id: string) {
           status: row.status,
           sent: Boolean(row.paymentReceiptRef),
           doctorName: row.prescribedByPractitioner?.fullName ?? "",
+          note: row.note ?? "",
+          physioFields:
+            row.physioFields && typeof row.physioFields === "object" && !Array.isArray(row.physioFields)
+              ? (row.physioFields as Record<string, unknown>)
+              : null,
+          siteApplyMode: row.siteApplyMode ?? null,
+          sites: row.sites.map((s) => ({
+            id: s.site.id,
+            code: s.site.code,
+            titleAz: s.site.titleAz,
+            titleRu: s.site.titleRu,
+            titleEn: s.site.titleEn,
+            laterality: s.laterality ?? null,
+          })),
         })),
       labs: labs
         .filter((row) => row.clinicalEpisodeId === guest.clinicalEpisodeId)
@@ -461,6 +491,11 @@ export async function addWalkInPartyLine(
     code: string;
     qty?: number;
     practitionerId?: string | null;
+    note?: string | null;
+    physioFields?: Record<string, unknown> | null;
+    siteIds?: string[];
+    siteApplyMode?: "TURN" | "TOGETHER" | null;
+    siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
   },
   actor: Actor,
 ) {
@@ -492,7 +527,7 @@ export async function addWalkInPartyLine(
     const now = new Date();
     for (let i = 0; i < qty; i += 1) {
       const scheduledAt = new Date(now.getTime() + (existing + i) * 60_000);
-      await prisma.procedureOrder.create({
+      const order = await prisma.procedureOrder.create({
         data: {
           organizationId: orgId,
           patientRefId: guest.patientRefId,
@@ -509,8 +544,22 @@ export async function addWalkInPartyLine(
           bonusEligible: true,
           inPackage: false,
           prescribedByPractitionerId: practitioner.id,
+          note: input.note ?? undefined,
+          physioFields: input.physioFields ?? undefined,
+          siteApplyMode: input.siteApplyMode ?? undefined,
         },
       });
+      if (input.siteIds?.length) {
+        await prisma.procedureOrderSite.createMany({
+          data: input.siteIds.map((siteId, sortOrder) => ({
+            organizationId: orgId,
+            procedureOrderId: order.id,
+            siteId,
+            sortOrder,
+            laterality: input.siteLaterality?.[siteId] ?? undefined,
+          })),
+        });
+      }
     }
     await audit(actor, partyId, "LINE_ADD", `${guest.patientRef.fullName}: ${code} ×${qty}`);
   } else if (input.kind === "lab") {

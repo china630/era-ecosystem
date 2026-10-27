@@ -53,6 +53,8 @@ export function ModalShell({
   bodyClassName = "mt-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
   footerClassName = "shrink-0",
   closeLabel = "Close",
+  /** Overlay stacking. Nested modals (confirm over editor) use a higher value. */
+  overlayZClass = "z-[200]",
 }: {
   /** When omitted, the shell is open (typical `{show ? <ModalShell>` mounts). */
   open?: boolean;
@@ -67,6 +69,7 @@ export function ModalShell({
   bodyClassName?: string;
   footerClassName?: string;
   closeLabel?: string;
+  overlayZClass?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -78,7 +81,7 @@ export function ModalShell({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-start justify-center overflow-hidden bg-black/40 p-4 pb-6 pt-10"
+      className={`fixed inset-0 ${overlayZClass} flex items-start justify-center overflow-hidden bg-black/40 p-4 pb-6 pt-10`}
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
       role="presentation"
       aria-hidden="true"

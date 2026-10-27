@@ -605,7 +605,8 @@ export async function applyHotelVoidToExtra(input: {
 
 /**
  * Close unpaid extras without a folio charge. Seated rows release the cabin.
- * Day-end passes only today's seated rows. Checkout passes the whole episode.
+ * Day-end may pass today's seated, overdue scheduledAt, or unseated created
+ * before today. Checkout passes every remaining unpaid row on the episode.
  */
 export async function closeUnpaidExtras(
   where: Prisma.ProcedureOrderWhereInput,

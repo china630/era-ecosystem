@@ -5,7 +5,6 @@ import {
 } from "@nestjs/common";
 import {
   PaymentOrderStatus,
-  TariffTier,
   UserRole,
 } from "@erafinance/database";
 import PDFDocument from "pdfkit";
@@ -121,7 +120,6 @@ export class BillingPaymentOrdersService {
     );
     const catalog = await this.pricing.getConstructorData();
     const active = snap.activeModules;
-    const isEnterprise = snap.tier === TariffTier.TIER_3;
 
     const lines: Array<{ label: string; amount: number }> = [];
     lines.push({
@@ -130,8 +128,8 @@ export class BillingPaymentOrdersService {
     });
 
     for (const m of catalog.modules) {
-      const on = isEnterprise || isModuleActiveInSubscription(active, m.key);
-      if (on) {
+      // TIER_3 is quota-only; invoice lines follow activeModules.
+      if (isModuleActiveInSubscription(active, m.key)) {
         lines.push({
           label: `${m.name} (${m.key})`,
           amount: Number(m.pricePerMonth),

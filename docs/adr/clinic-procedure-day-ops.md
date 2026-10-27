@@ -87,7 +87,7 @@ Nurse board shows **Check-in** only on a today row whose window is open (no disa
 | Endpoint | Action |
 |----------|--------|
 | `POST /api/cron/procedure-auto-complete` | `CHECKED_IN` with effective end `< now` → `COMPLETED` |
-| `POST /api/cron/procedure-no-show-sweep` | stale `SCHEDULED` → `NO_SHOW`, then today's seated unpaid extras → `UNPAID_MISSED` |
+| `POST /api/cron/procedure-no-show-sweep` | stale `SCHEDULED` → `NO_SHOW`, then after `dayEndHour` unpaid extras → `UNPAID_MISSED` (today seated + overdue + unseated before today; see ADR clinic-extra-procedure-route) |
 | `POST /api/cron/episode-walkin-close` | idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55) |
 | `GET /api/procedures` (nurse board) | lazy `autoCompleteElapsedCheckedIn` before list |
 

@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { orchBillingErrorMessage } from "../../lib/orch-billing-error";
 import { useSubscription } from "../../lib/subscription-context";
 import { enableWorkforceModule } from "../../lib/workforce-fetch";
 import {
@@ -25,6 +27,7 @@ export function WorkforceGate({
   onEnabled?: () => void | Promise<void>;
 }) {
   const t = useTranslations("workforceGate");
+  const tCommon = useTranslations("common");
   const pathname = usePathname() ?? "";
   const { snapshot, refresh } = useSubscription();
   const [enabling, setEnabling] = useState(false);
@@ -37,14 +40,16 @@ export function WorkforceGate({
 
   async function enable() {
     setEnabling(true);
-    const ok = await enableWorkforceModule(
+    const result = await enableWorkforceModule(
       upgrade ? upgradeSlug : "platform_workforce",
     );
     setEnabling(false);
-    if (ok) {
-      await refresh();
-      await onEnabled?.();
+    if (!result.ok) {
+      toast.error(orchBillingErrorMessage(result.errorBody, tCommon("failed")));
+      return;
     }
+    await refresh();
+    await onEnabled?.();
   }
 
   return (

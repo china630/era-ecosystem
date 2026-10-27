@@ -20,6 +20,7 @@ import {
   MODAL_CHECKBOX_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -156,7 +157,7 @@ export default function StockAdminPage() {
               <Plus className="h-4 w-4" aria-hidden />
               {tc('add')}
             </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setReceiptModalOpen(true)}>
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setReceiptModalOpen(true)}>
               {t('receipt')}
             </button>
           </div>

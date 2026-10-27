@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Plus, Settings, SlidersHorizontal } from "lucide-react";
 import {
   SANATORIUM_SYSTEM_KEYS,
@@ -32,6 +33,7 @@ import { fetchPublicPricingSnapshot } from "../../lib/pricing/fetch-public-prici
 import { useAuth } from "../../lib/auth-context";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { useSubscription } from "../../lib/subscription-context";
+import { orchBillingErrorMessage } from "../../lib/orch-billing-error";
 import {
   industryNavItemForKey,
   workforceHubStatus,
@@ -295,6 +297,7 @@ export default function WorkspacePage() {
   const { ready, user } = useRequireAuth();
   const { snapshot, loading, refresh } = useSubscription();
   const t = useTranslations("workspace");
+  const tCommon = useTranslations("common");
   const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addingWorkforce, setAddingWorkforce] = useState(false);
@@ -335,7 +338,12 @@ export default function WorkspacePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
       });
-      if (res.ok) await refresh();
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        toast.error(orchBillingErrorMessage(err, tCommon("failed")));
+        return;
+      }
+      await refresh();
     } finally {
       setAddingWorkforce(false);
     }

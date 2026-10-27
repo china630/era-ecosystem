@@ -1326,7 +1326,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
   - **BasePrice** — за организацию (ориентир **29 AZN/мес.**; факт — `SystemConfig` / `basePriceSnapshot`); включает **базовый учёт** и **1 пользователя** в рамках этой организации (§7.1).
   - **Active modules** — сумма цен включённых модулей из каталога; ориентиры цен — §7.1 (таблица Module Marketplace).
   - **Overlimit quotas** — доплата за превышение включённых лимитов (§7.12.3).
-  - **Оценка для владельца (`GET /billing/summary` и аналоги):** при **`tier === ENTERPRISE`** в помесячную **оценку** входят **все** позиции каталога **`PricingModules`** (как полный набор модулей в деньгах); **`POST /api/billing/toggle-module`** для такой организации **не применяется** (код `ENTERPRISE_ALL_MODULES` — Enterprise уже включает все модули по гейтингу).
+  - **Оценка для владельца (`GET /billing/summary` и аналоги):** **TIER_3 / Enterprise** — только потолок квот; помесячная оценка и PDF order lines считают **`activeModules`** (à-la-carte). **`POST …/billing/toggle-module`** (SoT: orchestrator) разрешён на TIER_3; исторический код `ENTERPRISE_ALL_MODULES` снят.
 
 Каталог **`PricingModules`** — источник правды по ценам модулей; **`basePriceSnapshot`** на организации фиксирует базу на дату.
 

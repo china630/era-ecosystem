@@ -1,10 +1,13 @@
 "use client";
 
-import { MODAL_INPUT_CLASS, SECONDARY_BUTTON_CLASS } from "./design-system";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { GHOST_BUTTON_CLASS, MODAL_INPUT_CLASS } from "./design-system";
 import {
   DEFAULT_LIST_PAGE_SIZE,
   LIST_PAGE_SIZE_OPTIONS,
 } from "./paginated-list";
+
+const PAGE_ICON_BTN = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
 
 export { LIST_PAGE_SIZE_OPTIONS, DEFAULT_LIST_PAGE_SIZE };
 
@@ -87,19 +90,23 @@ export function ListPaginationFooter({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className={SECONDARY_BUTTON_CLASS}
+          className={PAGE_ICON_BTN}
           disabled={page <= 1}
+          title={labels.prev}
+          aria-label={labels.prev}
           onClick={() => onPageChange(Math.max(1, page - 1))}
         >
-          {labels.prev}
+          <ChevronLeft className="h-4 w-4" aria-hidden />
         </button>
         <button
           type="button"
-          className={SECONDARY_BUTTON_CLASS}
+          className={PAGE_ICON_BTN}
           disabled={page >= totalPages}
+          title={labels.next}
+          aria-label={labels.next}
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
         >
-          {labels.next}
+          <ChevronRight className="h-4 w-4" aria-hidden />
         </button>
       </div>
     </div>

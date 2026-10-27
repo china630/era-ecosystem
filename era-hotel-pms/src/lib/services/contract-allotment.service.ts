@@ -32,6 +32,12 @@ export async function upsertContractAllotment(input: {
 
   const contract = await prisma.salesContract.findUnique({ where: { id: input.salesContractId } });
   if (!contract) throw new Error('Sales contract not found');
+  if (contract.status === 'EXPIRED' || contract.status === 'CANCELLED') {
+    throw Object.assign(
+      new Error('Cannot change allotments on an expired or cancelled contract'),
+      { status: 400 },
+    );
+  }
 
   const seasonFrom = new Date(contract.validFrom.toISOString().slice(0, 10));
   const allotFrom = new Date(input.validFrom.toISOString().slice(0, 10));
@@ -77,6 +83,17 @@ export async function upsertContractAllotment(input: {
 }
 
 export async function deleteContractAllotment(id: string) {
+  const row = await prisma.contractAllotment.findUnique({
+    where: { id },
+    include: { salesContract: { select: { status: true } } },
+  });
+  if (!row) throw new Error('Allotment not found');
+  if (row.salesContract.status === 'EXPIRED' || row.salesContract.status === 'CANCELLED') {
+    throw Object.assign(
+      new Error('Cannot change allotments on an expired or cancelled contract'),
+      { status: 400 },
+    );
+  }
   return prisma.contractAllotment.delete({ where: { id } });
 }
 
