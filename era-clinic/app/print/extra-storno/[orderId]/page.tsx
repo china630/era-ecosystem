@@ -5,7 +5,7 @@ import { PrintShell } from "@/components/print/PrintShell";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { normalizePrintLang } from "@/domain/print/print-types";
-import { bakuDateTimeLabel } from "@/lib/baku-day";
+import { bakuDateTimeDisplay } from "@/lib/baku-day";
 import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import {
   loadCatalogDisplayNameMap,
@@ -57,7 +57,7 @@ export default async function PrintExtraStornoPage({ params, searchParams }: Pro
     birthDate: order.patientRef.birthDate,
     phone: order.patientRef.phone,
     nationality: order.patientRef.nationality,
-    date: bakuDateTimeLabel(order.scheduledAt),
+    date: order.scheduledAt ? bakuDateTimeDisplay(order.scheduledAt) : "—",
     stay,
     roomNumber: order.clinicalEpisode?.roomNumber ?? stay.roomNumber,
   });
@@ -91,7 +91,9 @@ export default async function PrintExtraStornoPage({ params, searchParams }: Pro
               </tr>
               <tr className="border-b border-black/30">
                 <td className="p-1">{printLabel(lang, "time")}</td>
-                <td className="p-1">{bakuDateTimeLabel(order.scheduledAt)}</td>
+                <td className="p-1">
+                  {order.scheduledAt ? bakuDateTimeDisplay(order.scheduledAt) : "—"}
+                </td>
               </tr>
               <tr className="border-b border-black/30">
                 <td className="p-1">{printLabel(lang, "price")}</td>

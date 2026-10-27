@@ -14,6 +14,7 @@ import { useSubscription } from "../../../lib/subscription-context";
 import type { PublicPricingResponse } from "../../../lib/public-pricing-types";
 import { fetchPublicPricingSnapshot } from "../../../lib/pricing/fetch-public-pricing";
 import { buildModuleLabeler } from "../../../lib/module-labels";
+import { orchBillingErrorMessage } from "../../../lib/orch-billing-error";
 import { getOrchAccessToken, orchFetch } from "../../../lib/orch-api";
 import { useAuth } from "../../../lib/auth-context";
 import { FnbEditionCard } from "../../../components/settings/fnb-edition-card";
@@ -423,7 +424,12 @@ export default function SubscriptionPage() {
                               enabled: !b.active,
                             }),
                           });
-                          if (!res.ok) throw new Error(tSub("bundleFailed"));
+                          if (!res.ok) {
+                            const err = await res.json().catch(() => null);
+                            throw new Error(
+                              orchBillingErrorMessage(err, tSub("bundleFailed")),
+                            );
+                          }
                           setBillingMsg(tSub("bundleOk"));
                           const mRes = await orchFetch("/v1/billing/marketplace", {
                             token: token!,

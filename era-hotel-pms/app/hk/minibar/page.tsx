@@ -4,14 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
+  EraListFilterBar,
   Field,
   ModalFooter,
   ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+
+type ViewMode = 'catalog' | 'postings';
 
 export default function MinibarPage() {
   const t = useTranslations('minibarControl');
@@ -20,13 +24,15 @@ export default function MinibarPage() {
   const [items, setItems] = useState<Array<{ id: string; code: string; name: string; price: number }>>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string; floor?: number }>>([]);
   const [floor, setFloor] = useState('');
+  const [view, setView] = useState<ViewMode>('catalog');
   const [postings, setPostings] = useState<
     Array<{ id: string; qty: number; item?: { name: string }; room?: { roomNumber: string } }>
   >([]);
   const [roomId, setRoomId] = useState('');
   const [itemId, setItemId] = useState('');
   const [qty, setQty] = useState('1');
-  const [open, setOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const [postOpen, setPostOpen] = useState(false);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('5');
@@ -55,7 +61,7 @@ export default function MinibarPage() {
   }, [load]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!productOpen) return;
     let cancelled = false;
     void (async () => {
       const res = await fetch('/api/housekeeping/finance-products?limit=50');
@@ -69,17 +75,24 @@ export default function MinibarPage() {
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [productOpen]);
 
-  function openModal() {
+  function openProductModal() {
     setCode('');
     setName('');
     setPrice('5');
     setFinanceSku('');
-    setOpen(true);
+    setProductOpen(true);
   }
 
-  async function submit() {
+  function openPostModal() {
+    setRoomId('');
+    setItemId('');
+    setQty('1');
+    setPostOpen(true);
+  }
+
+  async function submitProduct() {
     if (!code.trim() || !name.trim()) {
       showApiError({ error: tc('required') });
       return;
@@ -102,10 +115,36 @@ export default function MinibarPage() {
         return;
       }
       showSuccess(tc('saved'));
-      setOpen(false);
+      setProductOpen(false);
       await load();
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('failed') });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitPost() {
+    if (!roomId || !itemId) {
+      showApiError({ error: tc('required') });
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch('/api/housekeeping/minibar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, itemId, qty: Number(qty) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, tc('failed'));
+        return;
+      }
+      showSuccess(tc('saved'));
+      setPostOpen(false);
+      setView('postings');
+      await load();
     } finally {
       setBusy(false);
     }
@@ -120,6 +159,11 @@ export default function MinibarPage() {
   }, [rooms]);
   const visibleRooms = floor ? rooms.filter((r) => String(r.floor) === floor) : rooms;
   const catalogEmpty = items.length === 0;
+  const filteredPostings = useMemo(() => {
+    if (!floor) return postings;
+    const roomNums = new Set(visibleRooms.map((r) => r.roomNumber));
+    return postings.filter((p) => (p.room?.roomNumber ? roomNums.has(p.room.roomNumber) : true));
+  }, [postings, floor, visibleRooms]);
 
   return (
     <>
@@ -127,14 +171,51 @@ export default function MinibarPage() {
         title={t('title')}
         subtitle={t('hint')}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openModal}>
-            {tc('add')}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openProductModal}>
+              {tc('add')}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={catalogEmpty}
+              onClick={openPostModal}
+            >
+              {t('post')}
+            </button>
+          </div>
         }
       />
-      <section className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('catalog')}</h2>
-        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setFloor('');
+          setView('catalog');
+        }}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('viewMode')}
+          value={view}
+          onChange={(v) => setView(String(v) === 'postings' ? 'postings' : 'catalog')}
+          options={[
+            { value: 'catalog', label: t('catalog') },
+            { value: 'postings', label: t('recent') },
+          ]}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('floorFilter')}
+          value={floor}
+          onChange={(v) => setFloor(String(v))}
+          options={[
+            { value: '', label: t('floorAll') },
+            ...floors.map((f) => ({ value: String(f), label: String(f) })),
+          ]}
+        />
+      </EraListFilterBar>
+      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        {view === 'catalog' ? (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
@@ -155,86 +236,13 @@ export default function MinibarPage() {
                   <tr key={i.id} className="border-b border-[#ECF0F1]">
                     <td className="px-3 py-2 font-medium">{i.code}</td>
                     <td className="px-3 py-2">{i.name}</td>
-                    <td className="px-3 py-2">{i.price} AZN</td>
+                    <td className="px-3 py-2">{Number(i.price).toFixed(2)} AZN</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-      </section>
-      <section className="mb-6 max-w-lg space-y-2">
-        <h2 className="text-sm font-semibold text-[#34495E]">{t('postTitle')}</h2>
-        {catalogEmpty ? <p className="text-sm text-[#7F8C8D]">{t('postNeedsCatalog')}</p> : null}
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t('floorFilter')}
-          value={floor}
-          onChange={(v) => {
-            setFloor(String(v));
-            setRoomId('');
-          }}
-          options={[
-            { value: '', label: t('floorAll') },
-            ...floors.map((f) => ({ value: String(f), label: String(f) })),
-          ]}
-        />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={th('roomSelect')}
-          value={roomId}
-          onChange={(v) => setRoomId(String(v))}
-          options={visibleRooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
-        />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t('item')}
-          value={itemId}
-          onChange={(v) => setItemId(String(v))}
-          options={items.map((i) => ({ value: i.id, label: `${i.code} · ${i.name} · ${i.price} AZN` }))}
-        />
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-[#7F8C8D]">{t('qty')}</span>
-          <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Math.max(1, Number(qty) - 1)))}>
-            −
-          </button>
-          <span className="w-6 text-center">{qty}</span>
-          <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Number(qty) + 1))}>
-            +
-          </button>
-        </div>
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={busy || catalogEmpty || !roomId || !itemId}
-          onClick={() => {
-            void (async () => {
-              setBusy(true);
-              try {
-                const res = await fetch('/api/housekeeping/minibar', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ roomId, itemId, qty: Number(qty) }),
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                  showApiError(data, tc('failed'));
-                  return;
-                }
-                showSuccess(tc('saved'));
-                await load();
-              } finally {
-                setBusy(false);
-              }
-            })();
-          }}
-        >
-          {t('post')}
-        </button>
-      </section>
-      <section>
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recent')}</h2>
-        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
@@ -244,14 +252,14 @@ export default function MinibarPage() {
               </tr>
             </thead>
             <tbody>
-              {postings.length === 0 ? (
+              {filteredPostings.length === 0 ? (
                 <tr>
                   <td className="px-3 py-3 text-[#7F8C8D]" colSpan={3}>
-                    {t('noPostings')}
+                    {catalogEmpty ? t('postNeedsCatalog') : t('noPostings')}
                   </td>
                 </tr>
               ) : (
-                postings.map((p) => (
+                filteredPostings.map((p) => (
                   <tr key={p.id} className="border-b border-[#ECF0F1]">
                     <td className="px-3 py-2">{p.room?.roomNumber ?? '—'}</td>
                     <td className="px-3 py-2">{p.item?.name ?? '—'}</td>
@@ -261,17 +269,17 @@ export default function MinibarPage() {
               )}
             </tbody>
           </table>
-        </div>
-      </section>
+        )}
+      </div>
       <ModalShell
-        open={open}
+        open={productOpen}
         title={t('title')}
-        onClose={() => !busy && setOpen(false)}
+        onClose={() => !busy && setProductOpen(false)}
         closeLabel={tc('close')}
         footer={
           <ModalFooter
-            onCancel={() => !busy && setOpen(false)}
-            onSubmit={() => void submit()}
+            onCancel={() => !busy && setProductOpen(false)}
+            onSubmit={() => void submitProduct()}
             busy={busy}
             cancelLabel={tc('cancel')}
             submitLabel={tc('save')}
@@ -314,6 +322,63 @@ export default function MinibarPage() {
             }
             onChange={(next) => setFinanceSku(Array.isArray(next) ? next[0] ?? '' : next)}
           />
+        </div>
+      </ModalShell>
+      <ModalShell
+        open={postOpen}
+        title={t('postTitle')}
+        onClose={() => !busy && setPostOpen(false)}
+        closeLabel={tc('close')}
+        footer={
+          <ModalFooter
+            onCancel={() => !busy && setPostOpen(false)}
+            onSubmit={() => void submitPost()}
+            busy={busy}
+            cancelLabel={tc('cancel')}
+            submitLabel={t('post')}
+            submitDisabled={catalogEmpty || !roomId || !itemId}
+          />
+        }
+      >
+        <div className="space-y-3">
+          {catalogEmpty ? <p className="text-sm text-[#7F8C8D]">{t('postNeedsCatalog')}</p> : null}
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('floorFilter')}
+            value={floor}
+            onChange={(v) => {
+              setFloor(String(v));
+              setRoomId('');
+            }}
+            options={[
+              { value: '', label: t('floorAll') },
+              ...floors.map((f) => ({ value: String(f), label: String(f) })),
+            ]}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={th('roomSelect')}
+            value={roomId}
+            onChange={(v) => setRoomId(String(v))}
+            options={visibleRooms.map((r) => ({ value: r.id, label: r.roomNumber }))}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('item')}
+            value={itemId}
+            onChange={(v) => setItemId(String(v))}
+            options={items.map((i) => ({ value: i.id, label: `${i.code} · ${i.name} · ${Number(i.price).toFixed(2)} AZN` }))}
+          />
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-[#7F8C8D]">{t('qty')}</span>
+            <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Math.max(1, Number(qty) - 1)))}>
+              −
+            </button>
+            <span className="w-6 text-center">{qty}</span>
+            <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Number(qty) + 1))}>
+              +
+            </button>
+          </div>
         </div>
       </ModalShell>
     </>

@@ -1065,6 +1065,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         brandTitle={tMeta('title')}
         navSections={visibleSections}
         resolveActive={resolveActive}
+        barePublicPrefixes={pathname.endsWith('/print') ? [pathname] : []}
         headerLeft={headerLeft}
         profile={
         profile ? (

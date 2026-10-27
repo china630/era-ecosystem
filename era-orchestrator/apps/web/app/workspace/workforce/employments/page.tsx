@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   ArrowRightLeft,
   KeyRound,
@@ -40,6 +41,7 @@ import {
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
+import { orchBillingErrorMessage } from "../../../../lib/orch-billing-error";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useSubscription } from "../../../../lib/subscription-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -1654,10 +1656,13 @@ export default function WorkforceEmploymentsPage() {
       body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
     }).catch(() => null);
     setEnabling(false);
-    if (res?.ok) {
-      setNotEntitled(false);
-      await load();
+    if (!res?.ok) {
+      const err = res ? await res.json().catch(() => null) : null;
+      toast.error(orchBillingErrorMessage(err, tCommon("failed")));
+      return;
     }
+    setNotEntitled(false);
+    await load();
   }
 
   if (!ready) return null;

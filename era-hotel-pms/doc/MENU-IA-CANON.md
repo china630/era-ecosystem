@@ -98,9 +98,9 @@ Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
 | Housekeeping | `/hk` | Floor sheet: one floor, row actions, fullscreen |
 | HK rooms | `/hk/rooms` | Hotel-wide cleanliness board |
 | Skip / Sleep | `/hk/discrepancy` | FO occupied vs empty (Skip) / vacant vs occupied (Sleep). Sleep ≠ SO |
-| Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |
+| Closed rooms (OOO/OOS) | `/hk/closed-rooms` | One grid + kind filter; close in modal; `RoomClosure` dates |
 | HK mobile | `/hk/mobile` | Maid mobile client (one click; not under a group) |
-| HK forecast | `/hk/forecast` | Load 7/14 by floor |
+| HK forecast | `/hk/forecast` | Load 1/7/14/30 by floor |
 | **HK staff** ▸ | | Maid assignment → roster → daily floor pairs |
 | Maid management | `/hk/maids` | Link CP employment; hotel keeps HK department and ƏG |
 | HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |

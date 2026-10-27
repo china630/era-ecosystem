@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CatalogField, PageHeader, showApiError } from '@era/satellite-kit/ui';
+import { CatalogField, EraListFilterBar, PageHeader, showApiError } from '@era/satellite-kit/ui';
 
 type Floor = {
   floor: number;
@@ -18,6 +18,7 @@ type Floor = {
 
 export default function HkForecastPage() {
   const t = useTranslations('housekeeping');
+  const tc = useTranslations('common');
   const [days, setDays] = useState('7');
   const [floors, setFloors] = useState<Floor[]>([]);
 
@@ -50,18 +51,20 @@ export default function HkForecastPage() {
   return (
     <>
       <PageHeader title={t('forecastTitle')} />
-      <div className="mb-4 max-w-xs">
+      <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setDays('7')}>
         <CatalogField
           kind="CLOSED_SMALL"
           label={t('forecastHorizon')}
           value={days}
           onChange={(v) => setDays(String(v))}
           options={[
+            { value: '1', label: t('days1') },
             { value: '7', label: t('days7') },
             { value: '14', label: t('days14') },
+            { value: '30', label: t('days30') },
           ]}
         />
-      </div>
+      </EraListFilterBar>
       <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
         <table className="w-full text-sm">
           <thead>

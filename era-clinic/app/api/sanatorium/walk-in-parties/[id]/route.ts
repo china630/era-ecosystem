@@ -43,6 +43,13 @@ const patchSchema = z.discriminatedUnion("action", [
     code: z.string().min(1),
     qty: z.number().int().min(1).max(20).optional(),
     practitionerId: z.string().nullable().optional(),
+    note: z.string().nullable().optional(),
+    physioFields: z.record(z.unknown()).nullable().optional(),
+    siteIds: z.array(z.string()).optional(),
+    siteApplyMode: z.enum(["TURN", "TOGETHER"]).nullable().optional(),
+    siteLaterality: z
+      .record(z.enum(["LEFT", "RIGHT", "BOTH"]).nullable())
+      .optional(),
   }),
   z.object({
     action: z.literal("removeLine"),

@@ -123,6 +123,11 @@ export default function FoLaundryPage() {
     });
   }
 
+  function money(n: number | string | null | undefined) {
+    const v = Number(n);
+    return `${(Number.isFinite(v) ? v : 0).toFixed(2)} AZN`;
+  }
+
   return (
     <>
       <PageHeader title={t('foLaundryTitle')} />
@@ -200,7 +205,7 @@ export default function FoLaundryPage() {
             header: tc('amount'),
             sortable: true,
             sortValue: (tk) => ticketAmount(tk),
-            render: (tk) => `${ticketAmount(tk).toFixed(2)} AZN`,
+            render: (tk) => money(ticketAmount(tk)),
           },
           {
             key: 'status',

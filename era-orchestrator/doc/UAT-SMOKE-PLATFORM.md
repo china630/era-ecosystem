@@ -133,6 +133,7 @@ Apply to shared PostgreSQL (or `npx prisma db push` in `packages/database`):
 4. Orch Finance tile — `?ticket=` handoff (no JWT in query).
 5. Hotel GET /api/hotel/integration-settings — platformSubscription from CP.
 6. POST internal/v1/quota/assert — whatsapp kind (Finance parity).
+7. Owner on TIER_3 org (e.g. Nafta): `/workspace` → satellite modules modal → enable an industry submodule (e.g. F&B Buffet / `fnb_buffet_planner`) — toggle succeeds (no `ENTERPRISE_ALL_MODULES`); toast shows Nest message on failure; estimate/order PDF lines follow `activeModules` only.
 
 ## Consumer Live (CP-B3–B8)
 

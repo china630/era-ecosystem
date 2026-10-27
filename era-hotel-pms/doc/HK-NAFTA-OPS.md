@@ -25,7 +25,7 @@ Paper / export sources (2026-08):
 | Housekeeper | Code + name | Department, pin-shift, ƏG, daily floor pair |
 | Mobile | All hotel tasks | Assigned floors today + outcome codes |
 | OOO / OOS | Reports subtracted both | Occupancy denominator **OOO only** |
-| Forecast | Occupancy forecast only | HK load by floor 7–14 + linen/deep/heads |
+| Forecast | Occupancy forecast only | HK load by floor 1/7/14/30 + linen/deep/heads |
 | Laundry | Revenue code + postCharge | §9: IN_PLANT then Delivered → `LAUNDRY`; checkout blocked while open |
 | Linen / deep | Paper 3rd / 5th night | Hotel policy UI + sheet duty; **no per-stay N override** |
 
@@ -62,7 +62,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Floor sheet columns + print page-break + outcomes/NSR | Landed (SCREEN). Floor chips, maid in the title, visit outcome (İstəmədi is an outcome, not a second button), fullscreen. Hotel-wide board `/hk/rooms`. |
 | Laundry ticket + immediate post on accept | **Superseded** — accept is IN_PLANT only |
 | Skip/Sleep board `/hk/discrepancy` | Landed (SCREEN) |
-| HK forecast 7/14 + linen/deep/heads | Landed (SCREEN) |
+| HK forecast 1/7/14/30 + linen/deep/heads | Landed (SCREEN) |
 | Linen/deep every N (`/settings/policies#hk`) + sheet duty | Landed (SCREEN); stay-level override on reservation |
 | Needed-by time on sheet | Landed (SCREEN); stored as Asia/Baku wall clock |
 | DND×2 / SO×3 → OPEN GuestTask | Landed (SCREEN) |
@@ -96,7 +96,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | OOO ≠ OOS | **IN** |
 | Skip / Sleep (FO vs physical) | **IN** — separate from SO |
 | Rush / Queue + push | **OUT**. Soft sort: departures → VIP → needed-by → DIRTY → duty → room# |
-| HK forecast (load) | **IN** (7–14 days). Consumption is a manual sku line; automatic stock norms stay later |
+| HK forecast (load) | **IN** (1/7/14/30 days). Consumption is a manual sku line; automatic stock norms stay later |
 | Turndown | **OUT** |
 | Guest laundry → folio | **IN** |
 
@@ -260,7 +260,7 @@ Skip / Sleep stay on a discrepancy board; they are not maid sheet codes.
 
 ## 8. Forecast and priority
 
-**Daily forecast (IN):** 7–14 days from the reservation book: departures, arrivals, stayovers, NSR, VIP, heads on duty — **by floor**. Manager reads it **before** overriding rotation.
+**Daily forecast (IN):** 1/7/14/30 days from the reservation book: departures, arrivals, stayovers, NSR, VIP, heads on duty — **by floor**. Manager reads it **before** overriding rotation.
 
 **Soft priority (IN):** sort the sheet and PDF the same way — departures, then VIP, then needed-by HH:MM, then DIRTY, then duty rank, then numeric room#. Optional “needed by HH:MM”. FO sees arrival vs not Inspected. No push notification in this edition.
 
@@ -336,10 +336,10 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/hk/rotation` | Day board of floor pairs; rotate, then swap two people |
 | `/hk` | Floor sheets, VIP strip, derived job type |
 | `/hk/mobile` | My floors today + outcome codes |
-| `/hk/forecast` | 7–14 day load |
+| `/hk/forecast` | 1/7/14/30 day load |
 | `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY`; void IN_PLANT |
 | `/fo/laundry` | Same tickets + amount; fallback Delivered or void IN_PLANT (no invent) |
-| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS in separate lanes, can close a door, and return it to service. |
+| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio (catalog/postings via filter + modals). Lost & found stores room number and a photo. Closed rooms: one grid with kind filter (OOO/OOS), close in modal, return secondary. |
 
 Sidebar groups (URLs unchanged): floor work (`/hk`, `/hk/rooms`, Skip/Sleep, closed rooms) stay top-level with mobile and forecast; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not `/hk/consumption`); **Guest services** = laundry + lost & found. Empty secondary screens keep table chrome and a next-step empty state.
 
@@ -358,7 +358,7 @@ Change a shift cell with a closed select (E / L / N / OFF / ƏG). Swap two peopl
 | **0** | Three axes + building/floor (`Konumu`) + task type + business date |
 | **1** | Three departments, roster, ƏG, daily pair rotation, Elektra sheet + outcomes, Pickup, OOO≠OOS stats |
 | **2** | Stayover/NSR on the reservation, DND×2 / SO×3, Skip/Sleep, soft priority, nationality on the sheet |
-| **3** | HK forecast 7–14 days |
+| **3** | HK forecast 1/7/14/30 days |
 | **Later** | Credits (default off); automatic linen norms from VC/DEEP/Departure; **laundry cycle §9 recode** |
 | **OUT** | Turndown; rush-push; ƏG cash payout |
 

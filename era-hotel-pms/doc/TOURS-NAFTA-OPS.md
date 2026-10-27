@@ -29,7 +29,7 @@ Menu section **Transfers** (`hotel_transfers`):
 |------|------|--------|
 | Transfers | `/transfers` | A→B; filter «with flight» replaces Airport |
 | Tours | `/tours` | Departures grid; create/edit in modals |
-| Departure | `/tours/[id]` | Summary + roster grid; boarding checkboxes |
+| Departure roster | `/tours` roster modal (`?roster=`) | Summary + roster grid; boarding checkboxes; icon toolbar |
 | Fleet | `/fleet` | TransferVehicle CRUD (grid + modal) |
 | Policy | `/settings/policies#tours` | `TourOpsPolicy` |
 

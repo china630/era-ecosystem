@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
@@ -18,14 +18,25 @@ import {
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
   countryOptions,
   showApiError,
   showSuccess,
   type EraDataGridColumn,
 } from "@era/satellite-kit/ui";
-import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
+import { todayBakuYmd } from "@/lib/baku-day";
 import { isLabBlockCatalogKind } from "@/domain/sanatorium/program-block-catalog";
+import { PatientCardModal } from "@/components/patients/PatientCardModal";
+import {
+  PhysioSiteChips,
+  type PhysioCatalogListItem,
+  type PhysioCatalogSite,
+  type PhysioChipsValue,
+} from "@/components/physio/PhysioSiteChips";
+import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
+import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
+import { formatPhysioFieldsPrint, type PhysioOrderFields } from "@/domain/physio/physio-order-fields";
 
 type PartyListRow = {
   id: string;
@@ -34,6 +45,15 @@ type PartyListRow = {
   status: "DRAFT" | "SENT_TO_CASHIER" | "PAID";
   receiptRef: string | null;
   guestCount: number;
+};
+
+type LineSite = {
+  id: string;
+  code: string;
+  titleAz: string;
+  titleRu: string;
+  titleEn: string;
+  laterality: string | null;
 };
 
 type Line = {
@@ -45,6 +65,10 @@ type Line = {
   status: string;
   sent: boolean;
   doctorName?: string;
+  note?: string;
+  physioFields?: Record<string, unknown> | null;
+  siteApplyMode?: string | null;
+  sites?: LineSite[];
 };
 
 type Guest = {
@@ -52,6 +76,7 @@ type Guest = {
   sortOrder: number;
   label: string;
   patientRefId: string;
+  episodeId: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -73,15 +98,6 @@ type Party = {
   guests: Guest[];
 };
 
-type JournalRow = {
-  id: string;
-  action: string;
-  createdAt: string;
-  actor: string | null;
-  summary: string;
-  fields: Array<{ key: string; from: string | null; to: string | null }>;
-};
-
 type Option = { value: string; label: string };
 
 type GuestDraft = {
@@ -93,7 +109,7 @@ type GuestDraft = {
 };
 
 type LineDraft = {
-  kind: "procedure" | "lab" | "visit";
+  kind: "" | "procedure" | "lab" | "visit";
   code: string;
   practitionerId: string;
 };
@@ -108,30 +124,35 @@ const SEX_OPTIONS = [
   { value: "FEMALE", labelKey: "walkInPartyFemale" },
 ] as const;
 
-const JOURNAL_ACTIONS = [
-  "PARTY_CREATE",
-  "GUEST_ADD",
-  "GUEST_UPDATE",
-  "GUEST_REMOVE",
-  "LINE_ADD",
-  "LINE_REMOVE",
-  "SENT_TO_CASHIER",
-  "HOTEL_PAID",
-] as const;
-
 const EMPTY_GUEST: GuestDraft = {
   firstName: "",
   lastName: "",
-  sex: "MALE",
+  sex: "",
   nationality: "",
   patientRefId: "",
 };
 
 const EMPTY_LINE: LineDraft = {
-  kind: "procedure",
+  kind: "",
   code: "",
   practitionerId: "",
 };
+
+const EMPTY_PHYSIO: PhysioChipsValue = {
+  needsSite: false,
+  physioOrderFields: [],
+  allowedSiteCodes: [],
+  forceSiteTogether: false,
+  hideSitePicker: false,
+  sitesHintKey: null,
+  siteIds: [],
+  siteApplyMode: null,
+  siteLaterality: {},
+  physioFields: {},
+  note: null,
+};
+
+const NESTED_Z = "z-[220]";
 
 async function readError(res: Response) {
   try {
@@ -139,15 +160,6 @@ async function readError(res: Response) {
   } catch {
     return { error: res.statusText };
   }
-}
-
-function journalAction(t: ReturnType<typeof useTranslations<"sanatorium">>, action: string) {
-  const known = JOURNAL_ACTIONS.find((item) => item === action);
-  return known ? t(`walkInPartyAct_${known}`) : action;
-}
-
-function localizeGuest(t: ReturnType<typeof useTranslations<"sanatorium">>, summary: string) {
-  return summary.replace(/Guest (\d+)/g, (_match, n: string) => t("walkInPartyGuest", { n: Number(n) }));
 }
 
 function paidLine(line: { status: string }) {
@@ -180,14 +192,52 @@ function hasSendableLines(party: Party) {
   );
 }
 
+function gateToPhysio(code: string, name: string): PhysioChipsValue {
+  const gate = inferPhysioTypeGate(code, name);
+  return {
+    ...EMPTY_PHYSIO,
+    needsSite: gate.needsSite,
+    physioOrderFields: gate.fields,
+    allowedSiteCodes: gate.allowedSiteCodes,
+    forceSiteTogether: gate.forceSiteTogether,
+    hideSitePicker: gate.hideSitePicker,
+    sitesHintKey: gate.sitesHintKey,
+    siteApplyMode: gate.forceSiteTogether ? "TOGETHER" : null,
+    physioFields: gate.hideSitePicker ? { naftalanFill: "TAM" } : {},
+  };
+}
+
+function lineParamsLabel(line: Line, locale: string): string {
+  if (line.kind !== "procedure") return "";
+  const parts: string[] = [];
+  const siteNames = (line.sites ?? [])
+    .map((site) => {
+      const local = locale.startsWith("ru")
+        ? site.titleRu
+        : locale.startsWith("en")
+          ? site.titleEn
+          : site.titleAz;
+      return (local || site.titleEn || site.code).trim();
+    })
+    .filter(Boolean);
+  if (siteNames.length) parts.push(siteNames.join(", "));
+  if (line.physioFields && typeof line.physioFields === "object") {
+    const lang = locale.startsWith("ru") ? "ru" : locale.startsWith("en") ? "en" : "az";
+    parts.push(...formatPhysioFieldsPrint(lang, line.physioFields as PhysioOrderFields));
+  }
+  if (line.note?.trim()) parts.push(line.note.trim());
+  return parts.join(" · ");
+}
+
 export default function WalkInPartiesPage() {
   const t = useTranslations("sanatorium");
   const tc = useTranslations("common");
+  const tPhysio = useTranslations("patientCard");
   const locale = useLocale();
+  const physioLabels = useMemo(() => buildPhysioChipsLabels(tPhysio), [tPhysio]);
+
   const [rows, setRows] = useState<PartyListRow[]>([]);
   const [party, setParty] = useState<Party | null>(null);
-  const [journal, setJournal] = useState<JournalRow[]>([]);
-  const [openJournal, setOpenJournal] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
@@ -196,12 +246,20 @@ export default function WalkInPartiesPage() {
   const [guestDraft, setGuestDraft] = useState<GuestDraft>(EMPTY_GUEST);
   const [lineGuestId, setLineGuestId] = useState<string | null>(null);
   const [lineDraft, setLineDraft] = useState<LineDraft>(EMPTY_LINE);
+  const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
+  const [doctorByGuest, setDoctorByGuest] = useState<Record<string, string>>({});
   const [confirm, setConfirm] = useState<ConfirmState>(null);
+  const [lineDetail, setLineDetail] = useState<Line | null>(null);
+  const [cardPatientId, setCardPatientId] = useState<string | null>(null);
+  const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
   const [procedures, setProcedures] = useState<Option[]>([]);
   const [labs, setLabs] = useState<Option[]>([]);
   const [visits, setVisits] = useState<Option[]>([]);
   const [doctors, setDoctors] = useState<Option[]>([]);
   const [patientHits, setPatientHits] = useState<Option[]>([]);
+  const [physioCatalog, setPhysioCatalog] = useState<PhysioCatalogSite[]>([]);
+  const [programs, setPrograms] = useState<PhysioCatalogListItem[]>([]);
+  const [substances, setSubstances] = useState<PhysioCatalogListItem[]>([]);
 
   const editable = party?.status === "DRAFT";
 
@@ -215,16 +273,12 @@ export default function WalkInPartiesPage() {
   }, []);
 
   const loadParty = useCallback(async (id: string) => {
-    const [detailRes, journalRes] = await Promise.all([
-      fetch(`/api/sanatorium/walk-in-parties/${id}`),
-      fetch(`/api/sanatorium/walk-in-parties/${id}?journal=1`),
-    ]);
+    const detailRes = await fetch(`/api/sanatorium/walk-in-parties/${id}`);
     if (!detailRes.ok) {
       showApiError(await readError(detailRes));
       return;
     }
     setParty((await detailRes.json()) as Party);
-    setJournal(journalRes.ok ? ((await journalRes.json()) as JournalRow[]) : []);
   }, []);
 
   useEffect(() => {
@@ -235,10 +289,11 @@ export default function WalkInPartiesPage() {
     if (!party) return;
     let cancelled = false;
     void (async () => {
-      const [typesRes, catalogRes, doctorsRes] = await Promise.all([
+      const [typesRes, catalogRes, doctorsRes, physioRes] = await Promise.all([
         fetch("/api/procedure-types"),
         fetch("/api/diagnostic-catalog"),
         fetch("/api/admin/practitioners?staffKind=DOCTOR"),
+        fetch("/api/physio-catalog"),
       ]);
       if (cancelled) return;
       if (typesRes.ok) {
@@ -284,6 +339,12 @@ export default function WalkInPartiesPage() {
           | Array<{ id: string; fullName?: string; code?: string }>;
         const items = Array.isArray(body) ? body : body.items ?? [];
         setDoctors(items.map((item) => ({ value: item.id, label: item.fullName || item.code || item.id })));
+      }
+      if (physioRes.ok) {
+        const data = await physioRes.json();
+        setPhysioCatalog((data.sites ?? data.data?.sites ?? []) as PhysioCatalogSite[]);
+        setPrograms((data.programs ?? data.data?.programs ?? []) as PhysioCatalogListItem[]);
+        setSubstances((data.substances ?? data.data?.substances ?? []) as PhysioCatalogListItem[]);
       }
     })();
     return () => {
@@ -347,7 +408,7 @@ export default function WalkInPartiesPage() {
     setGuestDraft({
       firstName: guest.firstName,
       lastName: guest.lastName,
-      sex: guest.sex === "FEMALE" ? "FEMALE" : "MALE",
+      sex: guest.sex === "FEMALE" || guest.sex === "MALE" ? guest.sex : "",
       nationality: guest.nationality,
       patientRefId: "",
     });
@@ -356,12 +417,17 @@ export default function WalkInPartiesPage() {
   }
 
   function openAddLine(guestId: string) {
-    setLineDraft(EMPTY_LINE);
+    setLineDraft({
+      kind: "",
+      code: "",
+      practitionerId: doctorByGuest[guestId] ?? "",
+    });
+    setFormPhysio(EMPTY_PHYSIO);
     setLineGuestId(guestId);
   }
 
   async function saveGuest() {
-    if (!guestDraft.nationality) return;
+    if (!guestDraft.nationality || !guestDraft.sex) return;
     if (guestModal?.mode === "edit") {
       const ok = await patch({
         action: "updateGuest",
@@ -386,16 +452,49 @@ export default function WalkInPartiesPage() {
   }
 
   async function saveLine() {
-    if (!lineGuestId || !lineDraft.code) return;
+    if (!lineGuestId || !lineDraft.kind || !lineDraft.code) return;
     if ((lineDraft.kind === "procedure" || lineDraft.kind === "visit") && !lineDraft.practitionerId) return;
-    const ok = await patch({
+
+    let payload: Record<string, unknown> = {
       action: "addLine",
       guestId: lineGuestId,
       kind: lineDraft.kind,
       code: lineDraft.code,
       practitionerId: lineDraft.practitionerId || null,
-    });
-    if (ok) setLineGuestId(null);
+    };
+
+    if (lineDraft.kind === "procedure") {
+      const fill = formPhysio.physioFields?.naftalanFill;
+      const fillCode = fill === "OTURAQ" || fill === "QURSAQ" || fill === "TAM" ? fill : "TAM";
+      const occupancy =
+        formPhysio.hideSitePicker && formPhysio.siteIds.length === 0
+          ? (() => {
+              const row = physioCatalog.find((s) => s.code === siteCodeForNaftalanFill(fillCode));
+              return row ? [row.id] : [];
+            })()
+          : formPhysio.siteIds;
+      payload = {
+        ...payload,
+        note: formPhysio.note ?? null,
+        physioFields: formPhysio.physioFields ?? null,
+        siteIds: occupancy,
+        siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
+        siteLaterality: formPhysio.siteLaterality ?? {},
+      };
+    }
+
+    const ok = await patch(payload);
+    if (!ok) return;
+    if (lineDraft.practitionerId) {
+      setDoctorByGuest((prev) => ({ ...prev, [lineGuestId]: lineDraft.practitionerId }));
+    }
+    setLineDraft((prev) => ({
+      kind: prev.kind,
+      code: "",
+      practitionerId: prev.practitionerId,
+    }));
+    setFormPhysio(EMPTY_PHYSIO);
+    showSuccess(t("walkInPartyLineAdded"));
   }
 
   async function runConfirm() {
@@ -445,6 +544,14 @@ export default function WalkInPartiesPage() {
   const lineCodeOptions =
     lineDraft.kind === "lab" ? labs : lineDraft.kind === "visit" ? visits : procedures;
   const lineNeedsDoctor = lineDraft.kind === "procedure" || lineDraft.kind === "visit";
+
+  function closeParty() {
+    setParty(null);
+    setGuestModal(null);
+    setLineGuestId(null);
+    setConfirm(null);
+    setLineDetail(null);
+  }
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
@@ -532,12 +639,7 @@ export default function WalkInPartiesPage() {
               }`
             : undefined
         }
-        onClose={() => {
-          setParty(null);
-          setGuestModal(null);
-          setLineGuestId(null);
-          setConfirm(null);
-        }}
+        onClose={closeParty}
         closeLabel={tc("close")}
         maxWidthClass="max-w-4xl"
         footer={
@@ -547,23 +649,14 @@ export default function WalkInPartiesPage() {
                 {t("walkInPartyTotal")}: {money(party.total)}
               </span>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  onClick={() => {
-                    setParty(null);
-                    setGuestModal(null);
-                    setLineGuestId(null);
-                    setConfirm(null);
-                  }}
-                >
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={closeParty}>
                   {tc("close")}
                 </button>
-                {editable ? (
+                {editable && hasSendableLines(party) ? (
                   <button
                     type="button"
                     className={PRIMARY_BUTTON_CLASS}
-                    disabled={busy || !hasSendableLines(party)}
+                    disabled={busy}
                     onClick={() =>
                       void (async () => {
                         const result = await patch({ action: "send" });
@@ -606,12 +699,30 @@ export default function WalkInPartiesPage() {
               return (
                 <section key={guest.id} className="rounded-lg border border-border p-3">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{title}</p>
-                      <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
-                        {guestSexLabel(t, guest.sex)}
-                        {guest.nationality ? ` · ${guest.nationality}` : ""}
-                      </p>
+                    <div className="flex min-w-0 items-start gap-2">
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={t("patientCard")}
+                        title={t("patientCard")}
+                        onClick={() => {
+                          setGuestModal(null);
+                          setLineGuestId(null);
+                          setConfirm(null);
+                          setLineDetail(null);
+                          setCardPatientId(guest.patientRefId);
+                          setCardEpisodeId(guest.episodeId);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                      </button>
+                      <div>
+                        <p className="font-medium">{title}</p>
+                        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+                          {guestSexLabel(t, guest.sex)}
+                          {guest.nationality ? ` · ${guest.nationality}` : ""}
+                        </p>
+                      </div>
                     </div>
                     {editable ? (
                       <div className="flex flex-wrap gap-2">
@@ -645,74 +756,83 @@ export default function WalkInPartiesPage() {
                   {lines.length === 0 ? (
                     <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("walkInPartyNoLines")}</p>
                   ) : (
-                    <ul className="space-y-1 text-sm">
-                      {lines.map((line) => (
-                        <li key={line.id} className="flex flex-wrap items-center justify-between gap-2">
-                          <span>
-                            {line.name} · {money(line.amount)} ·{" "}
-                            {paidLine(line)
-                              ? t("walkInPartyPaid")
-                              : line.sent
-                                ? t("walkInPartySent")
-                                : t("statusUnpaid")}
-                            {line.doctorName ? ` · ${line.doctorName}` : ""}
-                          </span>
-                          {editable && !line.sent ? (
-                            <button
-                              type="button"
-                              className={SECONDARY_BUTTON_CLASS}
-                              disabled={busy}
-                              onClick={() =>
-                                setConfirm({
-                                  type: "removeLine",
-                                  guestId: guest.id,
-                                  lineId: line.id,
-                                  kind: line.kind,
-                                  label: line.name,
-                                })
-                              }
-                            >
-                              {t("walkInPartyRemoveLine")}
-                            </button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[36rem] text-left text-sm">
+                        <thead>
+                          <tr className={`border-b border-border ${TEXT_MUTED_CLASS}`}>
+                            <th className="py-1 pr-2 font-medium">{t("walkInPartyLineKind")}</th>
+                            <th className="py-1 pr-2 font-medium">{t("walkInPartyService")}</th>
+                            <th className="py-1 pr-2 font-medium">{t("walkInPartyParams")}</th>
+                            <th className="py-1 pr-2 font-medium">{t("walkInPartyDoctor")}</th>
+                            <th className="py-1 pr-2 font-medium">{t("walkInPartyAmount")}</th>
+                            <th className="py-1 pr-2 font-medium">{t("walkInPartyStatus")}</th>
+                            <th className="py-1 font-medium" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lines.map((line) => {
+                            const params = lineParamsLabel(line, locale);
+                            return (
+                              <tr key={line.id} className="border-b border-border/60">
+                                <td className="py-1.5 pr-2">
+                                  {line.kind === "lab"
+                                    ? t("walkInPartyLab")
+                                    : line.kind === "visit"
+                                      ? t("walkInPartyVisit")
+                                      : t("walkInPartyProcedure")}
+                                </td>
+                                <td className="py-1.5 pr-2">{line.name}</td>
+                                <td className={`py-1.5 pr-2 ${TEXT_MUTED_CLASS}`}>{params || "—"}</td>
+                                <td className="py-1.5 pr-2">{line.doctorName || "—"}</td>
+                                <td className="py-1.5 pr-2">{money(line.amount)}</td>
+                                <td className="py-1.5 pr-2">
+                                  {paidLine(line)
+                                    ? t("walkInPartyPaid")
+                                    : line.sent
+                                      ? t("walkInPartySent")
+                                      : t("statusUnpaid")}
+                                </td>
+                                <td className="py-1.5">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button
+                                      type="button"
+                                      className={TABLE_ROW_ICON_BTN_CLASS}
+                                      aria-label={t("walkInPartyLineDetail")}
+                                      title={t("walkInPartyLineDetail")}
+                                      onClick={() => setLineDetail(line)}
+                                    >
+                                      <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                                    </button>
+                                    {editable && !line.sent ? (
+                                      <button
+                                        type="button"
+                                        className={SECONDARY_BUTTON_CLASS}
+                                        disabled={busy}
+                                        onClick={() =>
+                                          setConfirm({
+                                            type: "removeLine",
+                                            guestId: guest.id,
+                                            lineId: line.id,
+                                            kind: line.kind,
+                                            label: line.name,
+                                          })
+                                        }
+                                      >
+                                        {t("walkInPartyRemoveLine")}
+                                      </button>
+                                    ) : null}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </section>
               );
             })}
-
-            <div className="rounded-lg border border-border p-3">
-              <h3 className="mb-2 font-medium">{t("walkInPartyJournal")}</h3>
-              {journal.length === 0 ? <p className={TEXT_MUTED_CLASS}>{t("walkInPartyJournalEmpty")}</p> : null}
-              <ul className="space-y-2">
-                {journal.map((row) => (
-                  <li key={row.id} className="rounded border border-border px-3 py-2 text-sm">
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between gap-3 text-left"
-                      onClick={() => setOpenJournal(openJournal === row.id ? null : row.id)}
-                    >
-                      <span>
-                        {bakuDateTimeDisplay(row.createdAt)} · {journalAction(t, row.action)} ·{" "}
-                        {localizeGuest(t, row.summary)}
-                      </span>
-                      <span className={TEXT_MUTED_CLASS}>{row.actor ?? "—"}</span>
-                    </button>
-                    {openJournal === row.id && row.fields.length > 0 ? (
-                      <ul className="mt-2 space-y-1 text-xs">
-                        {row.fields.map((field) => (
-                          <li key={field.key}>
-                            {field.key}: {field.from ?? "—"} → {field.to ?? "—"}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         ) : null}
       </ModalShell>
@@ -722,13 +842,14 @@ export default function WalkInPartiesPage() {
         title={guestModal?.mode === "edit" ? t("walkInPartyEditGuest") : t("walkInPartyAddGuest")}
         onClose={() => setGuestModal(null)}
         closeLabel={tc("close")}
+        overlayZClass={NESTED_Z}
         maxWidthClass="max-w-2xl"
         footer={
           <ModalFooter
             onCancel={() => setGuestModal(null)}
             onSubmit={() => void saveGuest()}
             busy={busy}
-            submitDisabled={!guestDraft.nationality}
+            submitDisabled={!guestDraft.nationality || !guestDraft.sex}
             submitLabel={t("walkInPartySaveGuest")}
             cancelLabel={tc("cancel")}
           />
@@ -752,8 +873,9 @@ export default function WalkInPartiesPage() {
               kind="CLOSED_SMALL"
               label={t("walkInPartySex")}
               value={guestDraft.sex}
-              onChange={(value) => setGuestDraft({ ...guestDraft, sex: String(value) })}
+              onChange={(value) => setGuestDraft({ ...guestDraft, sex: String(value ?? "") })}
               options={sexOptions}
+              emptyLabel={t("walkInSexEmpty")}
             />
             <CatalogField
               kind="SEARCHABLE"
@@ -761,6 +883,7 @@ export default function WalkInPartiesPage() {
               value={guestDraft.nationality}
               onChange={(value) => setGuestDraft({ ...guestDraft, nationality: String(value ?? "").toUpperCase() })}
               options={countryOptions(locale, guestDraft.nationality)}
+              emptyLabel={t("walkInSexEmpty")}
             />
             {guestModal?.mode === "add" ? (
               <CatalogField
@@ -782,17 +905,20 @@ export default function WalkInPartiesPage() {
         title={t("walkInPartyAddLine")}
         onClose={() => setLineGuestId(null)}
         closeLabel={tc("close")}
-        maxWidthClass="max-w-lg"
+        overlayZClass={NESTED_Z}
+        maxWidthClass="max-w-2xl"
         footer={
           <ModalFooter
             onCancel={() => setLineGuestId(null)}
             onSubmit={() => void saveLine()}
             busy={busy}
             submitDisabled={
-              !lineDraft.code || ((lineDraft.kind === "procedure" || lineDraft.kind === "visit") && !lineDraft.practitionerId)
+              !lineDraft.kind ||
+              !lineDraft.code ||
+              ((lineDraft.kind === "procedure" || lineDraft.kind === "visit") && !lineDraft.practitionerId)
             }
             submitLabel={t("walkInPartyAdd")}
-            cancelLabel={tc("cancel")}
+            cancelLabel={tc("close")}
           />
         }
       >
@@ -802,28 +928,42 @@ export default function WalkInPartiesPage() {
               kind="CLOSED_SMALL"
               label={t("walkInPartyLineKind")}
               value={lineDraft.kind}
-              onChange={(value) =>
+              onChange={(value) => {
+                const kind = String(value ?? "") as LineDraft["kind"];
                 setLineDraft({
-                  kind: String(value) as LineDraft["kind"],
+                  kind,
                   code: "",
                   practitionerId: lineDraft.practitionerId,
-                })
-              }
+                });
+                setFormPhysio(EMPTY_PHYSIO);
+              }}
               options={kindOptions}
+              emptyLabel={t("walkInPartyPickKind")}
             />
-            <CatalogField
-              kind="SEARCHABLE"
-              label={
-                lineDraft.kind === "lab"
-                  ? t("walkInPartyLab")
-                  : lineDraft.kind === "visit"
-                    ? t("walkInPartyVisit")
-                    : t("walkInPartyProcedure")
-              }
-              value={lineDraft.code}
-              onChange={(value) => setLineDraft({ ...lineDraft, code: String(value ?? "") })}
-              options={lineCodeOptions}
-            />
+            {lineDraft.kind ? (
+              <CatalogField
+                kind="SEARCHABLE"
+                label={
+                  lineDraft.kind === "lab"
+                    ? t("walkInPartyLab")
+                    : lineDraft.kind === "visit"
+                      ? t("walkInPartyVisit")
+                      : t("walkInPartyProcedure")
+                }
+                value={lineDraft.code}
+                onChange={(value) => {
+                  const code = String(value ?? "");
+                  setLineDraft({ ...lineDraft, code });
+                  if (lineDraft.kind === "procedure" && code) {
+                    const opt = procedures.find((p) => p.value === code);
+                    setFormPhysio(gateToPhysio(code, opt?.label ?? code));
+                  } else {
+                    setFormPhysio(EMPTY_PHYSIO);
+                  }
+                }}
+                options={lineCodeOptions}
+              />
+            ) : null}
             {lineNeedsDoctor ? (
               <CatalogField
                 kind="SEARCHABLE"
@@ -834,6 +974,34 @@ export default function WalkInPartiesPage() {
               />
             ) : null}
           </FieldRow>
+          {lineDraft.kind === "procedure" && lineDraft.code ? (
+            <PhysioSiteChips
+              value={formPhysio}
+              hideFields={
+                /NAFTALAN|VANN|BATH/i.test(lineDraft.code) ? ["DAY_BLOCK", "BATH_SEQUENCE"] : []
+              }
+              catalog={physioCatalog}
+              programs={programs}
+              substances={substances}
+              locale={locale}
+              editable
+              compact
+              labels={physioLabels}
+              onSitesChange={(siteIds) => setFormPhysio((prev) => ({ ...prev, siteIds }))}
+              onModeChange={(siteApplyMode) => setFormPhysio((prev) => ({ ...prev, siteApplyMode }))}
+              onNoteBlur={(note) => setFormPhysio((prev) => ({ ...prev, note }))}
+              onLateralityChange={(siteId, laterality) =>
+                setFormPhysio((prev) => ({
+                  ...prev,
+                  siteLaterality: { ...prev.siteLaterality, [siteId]: laterality },
+                }))
+              }
+              onFieldsChange={(physioFields) =>
+                setFormPhysio((prev) => ({ ...prev, physioFields }))
+              }
+            />
+          ) : null}
+          <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("walkInPartyAddLineHint")}</p>
         </div>
       </ModalShell>
 
@@ -842,6 +1010,7 @@ export default function WalkInPartiesPage() {
         title={confirm?.type === "removeGuest" ? t("walkInPartyRemoveGuest") : t("walkInPartyRemoveLine")}
         onClose={() => setConfirm(null)}
         closeLabel={tc("close")}
+        overlayZClass={NESTED_Z}
         maxWidthClass="max-w-md"
         footer={
           <ModalFooter
@@ -861,6 +1030,77 @@ export default function WalkInPartiesPage() {
               : null}
         </p>
       </ModalShell>
+
+      <ModalShell
+        open={Boolean(lineDetail)}
+        title={lineDetail?.name ?? t("walkInPartyLineDetail")}
+        onClose={() => setLineDetail(null)}
+        closeLabel={tc("close")}
+        overlayZClass={NESTED_Z}
+        maxWidthClass="max-w-lg"
+        footer={
+          <div className="flex justify-end">
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setLineDetail(null)}>
+              {tc("close")}
+            </button>
+          </div>
+        }
+      >
+        {lineDetail ? (
+          <dl className="space-y-2 text-sm">
+            <div>
+              <dt className={`font-medium ${TEXT_MUTED_CLASS}`}>{t("walkInPartyLineKind")}</dt>
+              <dd>
+                {lineDetail.kind === "lab"
+                  ? t("walkInPartyLab")
+                  : lineDetail.kind === "visit"
+                    ? t("walkInPartyVisit")
+                    : t("walkInPartyProcedure")}
+              </dd>
+            </div>
+            <div>
+              <dt className={`font-medium ${TEXT_MUTED_CLASS}`}>{t("walkInPartyService")}</dt>
+              <dd>
+                {lineDetail.name} ({lineDetail.code})
+              </dd>
+            </div>
+            <div>
+              <dt className={`font-medium ${TEXT_MUTED_CLASS}`}>{t("walkInPartyParams")}</dt>
+              <dd>{lineParamsLabel(lineDetail, locale) || "—"}</dd>
+            </div>
+            <div>
+              <dt className={`font-medium ${TEXT_MUTED_CLASS}`}>{t("walkInPartyDoctor")}</dt>
+              <dd>{lineDetail.doctorName || "—"}</dd>
+            </div>
+            <div>
+              <dt className={`font-medium ${TEXT_MUTED_CLASS}`}>{t("walkInPartyAmount")}</dt>
+              <dd>{money(lineDetail.amount)}</dd>
+            </div>
+            <div>
+              <dt className={`font-medium ${TEXT_MUTED_CLASS}`}>{t("walkInPartyStatus")}</dt>
+              <dd>
+                {paidLine(lineDetail)
+                  ? t("walkInPartyPaid")
+                  : lineDetail.sent
+                    ? t("walkInPartySent")
+                    : t("statusUnpaid")}
+              </dd>
+            </div>
+          </dl>
+        ) : null}
+      </ModalShell>
+
+      <PatientCardModal
+        patientId={cardPatientId}
+        open={Boolean(cardPatientId)}
+        onClose={() => {
+          setCardPatientId(null);
+          setCardEpisodeId(null);
+        }}
+        initialEpisodeId={cardEpisodeId}
+        panel="plan"
+        overlayZClass={NESTED_Z}
+      />
     </div>
   );
 }

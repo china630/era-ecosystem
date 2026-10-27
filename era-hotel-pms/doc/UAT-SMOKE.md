@@ -58,8 +58,8 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 ## 3. Check-in & folio (PMS-03, FIN-01)
 
 1. Assign room (INSPECTED/CLEAN), check-in. Check-in does not post the arrival night. Night audit posts that night.
-2. `/folio/[reservationId]` — post charge (ROOM or FOOD).
-3. Post cash payment 50 AZN. Card asks for a bank terminal. From-deposit applies a held deposit. E-point, CL agency, and CL company are in the same list. Check-in does not post the arrival night; night audit does. Pricing grid shows tariff and actual. New guest card starts empty and stays open after save. Reservation list source column shows the real source and the default sort is room number. Folio chips are per guest. Delete a payment with a reason: it leaves the live folio, shows on Deleted, and on `/reports/payment-voids`. Card asks for a bank terminal. Deposit applies a held deposit. E-point, CL agency, and CL company are in the same list.
+2. `/folio/[reservationId]` — post charge (ROOM or FOOD). Card Folio tab: signed rose/sky ledger + date/time; Extra payment prefers open-debt articles (§27 1c).
+3. Post cash payment 50 AZN on the article that owes. Card asks for a bank terminal. E-point, CL agency, and CL company are in the same list. Check-in does not post the arrival night; night audit does. Pricing grid shows tariff and actual. New guest card starts empty and stays open after save. Reservation list source column shows the real source and the default sort is room number. Folio chips are per guest. Delete a payment with a reason: it leaves the live folio, shows on Deleted, and on `/reports/payment-voids`.
 4. As `manager` — void one charge (FIN-03). Delete a payment with a reason: it leaves the live folio, shows on the Deleted chip, and on `/reports/payment-voids`.
 5. Pricing grid shows tariff and actual, with the tariff sum under the tariff column. New guest card starts empty and stays open after save. A new reservation starts with no primary guest. Reservation list source column shows the real source. Default sort is room number. Folio chips are per guest, with no primary star until one is set.
 
@@ -150,15 +150,16 @@ Room plan UI (Wave C+ / EW palette):
 
 Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`. Policy: `/settings/policies#tours` default `CHARGE_ON_BOARDING`.
 
-1. `/tours` — grid; **New departure** modal (DatePicker, optional template, vehicle).
-2. `/tours/[id]` — add stay via autocomplete → roster **RESERVED** (no folio yet).
-3. Check «boarded» / **Board** / **Close boarding** → `TOUR` charge on guest folio; status **CHARGED**. Unchecked RESERVED dropped when close boarding (default policy).
-4. **Pay** modal CASH/CARD/BANK → **PAID**. Alternate: pay TOUR line on folio; or settle GUEST folio with guest tender. City-ledger-only → **ON_CITY_LEDGER**.
-5. Cancel after CHARGED/PAID → void/refund (money returned).
-6. Vehicle conflict with airport transfer window — API 409, UI `showApiError`.
-7. `/tours/[id]/print` — room, name, phone, money status. Re-print does not change data.
+1. `/tours` — grid + **New departure** modal (DatePicker, optional template, vehicle). Primary = `+` only. Row Eye/Pencil icons; row click opens roster **modal** (no full-page detail).
+2. Roster modal — add stay via autocomplete → **RESERVED** (no folio yet). Edit departure = Pencil → edit modal on the list.
+3. Check «boarded» + **Board selected** / **Close boarding** (icon toolbar) → `TOUR` charge; status **CHARGED**. Unchecked RESERVED dropped on close (default). Toast shows boarded/dropped counts.
+4. **Pay** (card icon) CASH/CARD/BANK → **PAID**. CARD requires BANK_POS. Alternate: folio settle. City-ledger-only → **ON_CITY_LEDGER**.
+5. Cancel after CHARGED/PAID → void/refund.
+6. Vehicle conflict with airport transfer window — API 409, UI `showApiError`. Departed icon disabled without vehicle.
+7. `/tours/[id]/print` — **no sidebar/header** (bare print); letterhead when profile set; boarded + money columns. Re-print does not change data. `?autoprint=1` opens print dialog.
 8. Confirm **no** extra row on `/front-cash/pending` for the tour.
 9. Optional: switch policy to `CHARGE_ON_ADD` → add posts `TOUR` immediately (legacy).
+10. Legacy `/tours/[id]` redirects to `/tours?roster=<id>`.
 
 ## 15. BANQUET BEO / MICE (Stage 21 / HN-8 / H-BL-31)
 
@@ -185,14 +186,16 @@ Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`. Policy:
 
 ## 18. B2B SALES CONTRACTS (Stage 24 / NW-3 PROC-24 / H-BL-30)
 
-1. `/distribution/contracts` — create DRAFT contract for TRAVEL-AZ (explicit agency + DERIVED plan, no silent defaults); set commission/notes/minStay as needed; **Activate** (confirm if no allotments).
-2. **Edit** contract — change notes/commission/CTA; code stays locked.
-3. **Allotments** — add STANDARD nightly quota (+ release days) inside the contract season; edit and delete work from the same modal.
-4. **Create block** — opens `/distribution/allotment-blocks?contractId=` with season/agency prefilled; add multi-line hold → DEFINITE → Pickup.
-5. `GET /api/admin/contracts/{id}?utilization=1` — utilization metrics after bookings.
-6. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
-7. `/reports/agency-profitability` — contract-sourced revenue visible.
-8. Legacy `/admin/contracts` and `/admin/contract-pricing` redirect to `/distribution/contracts`.
+1. `/distribution/contracts` — **New contract**: party type starts empty (no silent Agency default); pick Agency **or** Company, DERIVED/BASE rate plan, season, commission, optional external ref, notes (`textarea`). Saves as DRAFT. Row actions are **icons** (no overflow menu).
+2. **Activate** (check icon) — confirm if no allotments. **Cancel** / **Expire** icons change status (`DRAFT→CANCELLED`, `ACTIVE→EXPIRED|CANCELLED`); no reopen in this edition. ACTIVE past `validTo` shows past-season hint (sell path still date-gated). Create-block icon hidden on EXPIRED/CANCELLED.
+3. **Edit** — change notes/commission/externalRef; code stays locked. Expired/cancelled: notes + externalRef only.
+4. **Allotments** (layers icon) — add STANDARD nightly quota (+ release days, hint: not enforced yet / SC-REL-01) inside the contract season; edit and delete work from the same modal. On EXPIRED/CANCELLED: read-only list (no add/edit/delete; API 400).
+5. **Create block** (link icon) — opens `/distribution/allotment-blocks?contractId=` with season/agency prefilled; add multi-line hold → DEFINITE → Pickup.
+6. `GET /api/admin/contracts/{id}?utilization=1` (pie icon) — utilization metrics after bookings. List also supports `?companyId=` / `?agencyId=` / `?status=`.
+7. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
+8. `/reports/agency-profitability` — contract-sourced revenue visible.
+9. Legacy `/admin/contracts` and `/admin/contract-pricing` redirect to `/distribution/contracts`.
+10. **Out of this UAT (Open debts ADR):** date-scoped minStay/CTA/CTD (SC-REST-01), deposit enforcement (SC-DEP-01), releaseDays engine (SC-REL-01) — fields hidden or hinted, not claimed.
 
 ## 19. CHANNEL stop-sell regression (NW-4 / PROC-23)
 
@@ -428,11 +431,12 @@ Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-cor
 UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
 1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR` only after invoice succeeds; guest folio still requires zero balance. Settlement status → PENDING then INVOICED.
-1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. The top of the dialog shows charges, money in, and net (pay or refund). Stay with no net → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists. Held cash is already in "money in"; the pay amount is the net. User without folio payment right (Night auditor) → "Pay now" is not offered, a hint explains why.
+1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. The top of the dialog shows charges, money in, and net (pay or refund), with **guest / company / agency debt** labeled separately when those pockets owe. Stay with no net → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists. Held cash is already in "money in"; the pay amount is the net. User without folio payment right (Night auditor) → "Pay now" is not offered, a hint explains why.
 1b. **Move guest → payer + City Ledger:** stay with company/agency; room (or other) charges still on GUEST folio → check-out → guest block choice "Move … to {payer} and City Ledger" → guest lines move to COMPANY (else AGENCY) → payer goes PENDING_AR → invoice → TRANSFERRED_AR; toast success or warning if invoice/snapshot fails; `/front-cash/unsettled-departures` lists the stay until Finance settles.
+1c. **Signed ledger + open-debt Accept payment (HOT-CASH-01 deepen):** reservation card Folio tab → ledger shows rose charges / sky payments with `+`/`−` and date+time columns; header splits guest vs company/agency debt. Company (or agency) PKG open debt while guest has no ROOM debt → **Extra payment** opens with PKG (debt article) first and amount autofilled; picking ROOM (or other zero-debt article) without credit confirm → submit blocked / toast (server `PAYMENT_ARTICLE_NO_OPEN_DEBT`); check “post as credit” → payment posts. Refund row stays sky with minus badge (not a charge).
 2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error (toast `showApiError`).
-3. **Deposit on settle:** HELD deposit → `/folio/[id]` settle wizard → Apply deposits / method DEPOSIT → balance reduces; deposit APPLIED.
-4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
+3. **Deposit on settle (legacy / not SHIPPED for HOT-CASH-03):** old HELD → move-once onto blue room payment is the live path; method DEPOSIT on settle is refused (`DEPOSIT_INTAKE_CLOSED`). Do not treat Apply-deposits wizard as current product.
+4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line (sky −); mock fiscal.
 5. **Discount:** settle or check-out with discount amount → negative DISCOUNT charge.
 6. **Per-guest close:** EQUAL party → Close on one personal folio when balance 0.
 7. **Agency settle handoff:** `/front-cash/agency-ledger` → TRANSFERRED_AR list (AGENCY folios only) → bank match **or** allocate payment in Finance (hotel POST settle returns 409). Expect hotel folio → CLOSED and stay `checkoutSettlementStatus=SETTLED` (callback / outbox). If hotel was down during pay, after hotel up wait ≤15m cron or re-allocate — unsettled clears.
@@ -507,18 +511,18 @@ UI paths (OpsUI) — ADR: [hotel-early-checkout-unused-nights.md](../../docs/adr
 
 UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED until this section is signed.
 
-1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
-2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
+1. `/hk/roster` — week filter bar; **Propose week** PRIMARY; Accrue ƏG SECONDARY; change cell via closed select (not free text); ƏG balance visible.
+2. `/hk/rotation` — date filter; **Rotate pairs** PRIMARY; Swap pairs in modal (SECONDARY); floors 2–11 pairs on one grid.
 3. `/hk` floor sheet — one floor; date defaults to the business date (any other date is read-only); chips All / To clean / Dirty / For inspection; maid in the title (not a column); reason and shift task are different words; arrival and departure time under the date; outcome V/VC/OK/İstəmədi/DND/SO can be cleared back to empty; no NSR button; a dirty door without a task is marked on the row; fullscreen. PDF is the selected date and floor, working columns in the UI language, maid names in the title.
-4. `/hk/laundry` — pick in-house room; wash/iron qty + unit price + line sum + order total preview; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void IN_PLANT on the grid (or void posted charge) → ticket VOIDED. FO `/fo/laundry` **grid** with amount (incl. express %) + void IN_PLANT + fallback Delivered on the **same** ticket only.
+4. `/hk/laundry` — `+` intake modal; wash/iron qty + unit price + line sum + order total preview; **accept does not post**; Delivered + return-form / void = secondary on the grid → folio `LAUNDRY` / VOIDED. FO `/fo/laundry` **grid** with amount (incl. express %) + void IN_PLANT + fallback Delivered on the **same** ticket only.
 5. Check-out with IN_PLANT laundry — **blocked** (`LAUNDRY_OPEN` toast); check-out dialog stays open; laundry dialog: room + guest list, Delivered + return form, **void**, or wait; after last clear, check-out retries — no skip.
-6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates. Return to service puts the door back to IN_SERVICE (DIRTY).
-7. `/hk/discrepancy` — record Skip and Sleep from the board (Sleep not labelled SO); FO banner for DND×2 / SO×3.
-8. `/hk/forecast` — 7 and 14 day load by floor; empty floors show empty chrome.
+6. `/hk/closed-rooms` — one grid + kind filter (All/OOO/OOS) + room search; Close in modal; Return secondary. Return to service → IN_SERVICE (DIRTY).
+7. `/hk/discrepancy` — date filter; create Skip/Sleep in modal (Sleep not labelled SO); FO banner for DND×2 / SO×3.
+8. `/hk/forecast` — horizon **1 / 7 / 14 / 30**; empty floors show empty chrome.
 9. `/hk/mobile` — auto-select self when the session name matches rotation (or sole assignment); same outcome codes (OK, not dərin).
 10. `/settings/policies#hk` — set linen/deep N; reservation card Additional can override stay N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
 11. `/hk` soft sort — departures → VIP → needed-by → DIRTY → duty → room# (sheet + PDF); FO DND/SO creates GuestTask.
-12. `/hk/consumption` — pick a Finance sku and a quantity for the open business day. The line is not a folio charge. An empty day still closes. Changing linen/deep N on `/settings/policies#hk` does not add a line. Minibar on `/hk/minibar` still posts to the guest folio.
+12. `/hk/consumption` — open/closed lane filter; add sku/qty in modal. The line is not a folio charge. An empty day still closes. Changing linen/deep N on `/settings/policies#hk` does not add a line. Minibar on `/hk/minibar` still posts to the guest folio (catalog/postings filter + post modal).
 13. `/hk/rooms` — whole hotel. Chips: Dirty vacant, Clean vacant, For inspection, OOO, OOS. Set Dirty, Pickup, Clean, Inspected. Inspected is disabled on an occupied door. Occupied number is pink, vacant number is green. The same pill is on `/fo/reservations`, the room plan, the rack, and the reservation card.
 
 ## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed

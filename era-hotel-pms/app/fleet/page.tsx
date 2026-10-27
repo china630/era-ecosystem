@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, RotateCcw, Ban } from 'lucide-react';
 import {
   CatalogField,
   EraListFilterBar,
@@ -10,7 +10,6 @@ import {
   FORM_STACK_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   GHOST_BUTTON_CLASS,
   showApiError,
   showSuccess,
@@ -30,6 +29,7 @@ type Vehicle = {
 };
 
 const formId = 'fleet-vehicle-form';
+const ICON_BTN = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
 
 export default function FleetPage() {
   const t = useTranslations('fleet');
@@ -183,17 +183,35 @@ export default function FleetPage() {
             key: 'actions',
             header: tc('actions'),
             render: (v) => (
-              <div className="flex flex-wrap gap-1">
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openEdit(v)}>
-                  {tc('edit')}
+              <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className={ICON_BTN}
+                  title={tc('edit')}
+                  aria-label={tc('edit')}
+                  onClick={() => openEdit(v)}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
                 </button>
                 {v.active ? (
-                  <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => void setActive(v.id, false)}>
-                    {t('retire')}
+                  <button
+                    type="button"
+                    className={ICON_BTN}
+                    title={t('retire')}
+                    aria-label={t('retire')}
+                    onClick={() => void setActive(v.id, false)}
+                  >
+                    <Ban className="h-3.5 w-3.5" aria-hidden />
                   </button>
                 ) : (
-                  <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void setActive(v.id, true)}>
-                    {t('reactivate')}
+                  <button
+                    type="button"
+                    className={ICON_BTN}
+                    title={t('reactivate')}
+                    aria-label={t('reactivate')}
+                    onClick={() => void setActive(v.id, true)}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden />
                   </button>
                 )}
               </div>
@@ -203,6 +221,7 @@ export default function FleetPage() {
         rows={visible}
         rowKey={(r) => r.id}
         emptyMessage={tc('empty')}
+        onRowClick={(v) => openEdit(v)}
       />
 
       <EraModal

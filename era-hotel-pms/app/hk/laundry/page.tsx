@@ -35,8 +35,9 @@ type Ticket = {
   lines?: LaundryLineView[];
 };
 
-function money(n: number) {
-  return `${n.toFixed(2)} AZN`;
+function money(n: number | string | null | undefined) {
+  const v = Number(n);
+  return `${(Number.isFinite(v) ? v : 0).toFixed(2)} AZN`;
 }
 
 export default function HkLaundryPage() {
@@ -94,7 +95,7 @@ export default function HkLaundryPage() {
 
   function lineSum(item: Item, key: 'wash' | 'iron') {
     const count = qty[item.id]?.[key] ?? 0;
-    const price = key === 'wash' ? item.washPrice : item.ironPrice;
+    const price = Number(key === 'wash' ? item.washPrice : item.ironPrice) || 0;
     return Math.round(count * price * 100) / 100;
   }
 
@@ -108,8 +109,8 @@ export default function HkLaundryPage() {
       const i = qty[item.id]?.iron ?? 0;
       washQty += w;
       ironQty += i;
-      washSum += w * item.washPrice;
-      ironSum += i * item.ironPrice;
+      washSum += w * (Number(item.washPrice) || 0);
+      ironSum += i * (Number(item.ironPrice) || 0);
     }
     washSum = Math.round(washSum * 100) / 100;
     ironSum = Math.round(ironSum * 100) / 100;
@@ -235,7 +236,7 @@ export default function HkLaundryPage() {
           {
             key: 'amount',
             header: tc('amount'),
-            render: (tk) => `${ticketAmount(tk).toFixed(2)} AZN`,
+            render: (tk) => money(ticketAmount(tk)),
           },
           {
             key: 'actions',

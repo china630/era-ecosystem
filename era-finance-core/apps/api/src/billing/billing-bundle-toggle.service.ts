@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Injectable,
 } from "@nestjs/common";
-import { Prisma, TariffTier } from "@erafinance/database";
+import { Prisma } from "@erafinance/database";
 import { AccessControlService } from "../access/access-control.service";
 import { PricingService } from "../admin/pricing.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -65,12 +65,7 @@ export class BillingBundleToggleService {
       organizationId,
     );
 
-    if (snap.tier === TariffTier.TIER_3) {
-      throw new BadRequestException({
-        code: "ENTERPRISE_ALL_MODULES",
-        message: "Enterprise includes all modules; bundle toggle is not applicable.",
-      });
-    }
+    // TIER_3 is quota-only — à-la-carte bundle toggles always allowed (see blocksModuleToggleForTier).
 
     if (hasConstructorModulesInCustomConfig(snap.customConfig)) {
       throw new BadRequestException({

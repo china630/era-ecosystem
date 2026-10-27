@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay, bakuTimeLabel } from '@era/satellite-kit/time';
 import { Printer } from 'lucide-react';
 import {
   CatalogField,
@@ -24,6 +24,12 @@ import {
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { stayMoneyPair } from '@/lib/folio-money-pair';
+import {
+  formatLedgerAmount,
+  ledgerAmountClass,
+  ledgerMoneyKind,
+  ledgerRowClass,
+} from '@/lib/folio-ledger-display';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
@@ -59,6 +65,7 @@ export type FolioAccount = {
     adjustmentReason?: string | null;
     paxNo?: number | null;
     invoiceRef?: string | null;
+    revenueCodeId?: string | null;
     revenueCode?: {
       code: string;
       name?: string | null;
@@ -79,6 +86,7 @@ export type FolioAccount = {
     voidReason?: string | null;
     refundReason?: string | null;
     refundOfPaymentId?: string | null;
+    revenueCodeId?: string | null;
     revenueCode?: { code: string; name?: string | null } | null;
   }>;
 };
@@ -92,6 +100,9 @@ type LedgerRow = Record<string, unknown> & {
   description: string;
   code: string;
   amount: number;
+  whenDate: string;
+  whenTime: string;
+  /** Legacy combined stamp for print/search. */
   when: string;
   rowNo?: number;
   adjustsChargeId?: string | null;
@@ -105,7 +116,27 @@ type LedgerRow = Record<string, unknown> & {
   refundMax?: number;
   voidedAt?: string | null;
   voidReason?: string | null;
+  isCityLedger?: boolean;
 };
+
+function stampParts(isoOrDate?: string | null, dateOnly?: string | null): {
+  whenDate: string;
+  whenTime: string;
+  when: string;
+} {
+  if (isoOrDate) {
+    return {
+      whenDate: bakuDateDisplay(isoOrDate),
+      whenTime: bakuTimeLabel(isoOrDate),
+      when: bakuDateTimeDisplay(isoOrDate),
+    };
+  }
+  if (dateOnly) {
+    const day = dateOnly.slice(0, 10);
+    return { whenDate: day, whenTime: '—', when: day };
+  }
+  return { whenDate: '—', whenTime: '—', when: '—' };
+}
 
 function pocketName(t: (key: string) => string, folioType: string): string {
   if (folioType === 'AGENCY') return t('folioTab.agency');
@@ -247,52 +278,55 @@ export function ReservationCardFolioTab({
         const received = (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
           ? ` · ${tf('serviceReceived')}`
           : '';
+        const isCity =
+          raw === 'City ledger agency' || raw === 'City ledger company';
         const cityLine =
           raw === 'City ledger agency'
             ? tf('cityLedgerAgency')
             : raw === 'City ledger company'
               ? tf('cityLedgerCompany')
               : note;
+        const stamp = stampParts(charge.createdAt, charge.businessDate);
+        const isAdjust = Boolean(charge.adjustsChargeId);
         rows.push({
           id: charge.id,
           folioId: folio.id,
           folioType: folio.type,
           folioStatus: folio.status,
           kind: 'charge',
-          description: `${cityLine}${received}`,
+          description: `${isAdjust ? `${tf('adjustBadge')}: ` : ''}${cityLine}${received}`,
           code: revenueLabel(charge.revenueCode, locale),
           amount: Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)),
-          when: charge.businessDate ? charge.businessDate.slice(0, 10) : '—',
+          ...stamp,
           adjustsChargeId: charge.adjustsChargeId,
           adjustmentReason: charge.adjustmentReason,
           paxNo: charge.paxNo,
           chargeId: charge.id,
+          isCityLedger: isCity,
         });
       }
       for (const payment of folio.payments ?? []) {
         if (!payment.id) continue;
         if (payment.voidedAt) continue;
         const refundMax = Math.max(0, Number(payment.amount) - (refunded.get(payment.id) ?? 0));
+        const isRefund = payment.kind === 'REFUND';
+        const stamp = stampParts(payment.createdAt, payment.businessDate);
         rows.push({
           id: `pay-${payment.id}`,
           folioId: folio.id,
           folioType: folio.type,
           folioStatus: folio.status,
           kind: 'payment',
-          description: payment.kind === 'REFUND' ? tf('refund') : tf('ledgerPayment'),
+          description: isRefund ? tf('refund') : tf('ledgerPayment'),
           code: payment.revenueCode
             ? revenueLabel(payment.revenueCode, locale)
             : tPay(payment.paymentMethod as 'CASH'),
           amount: Number(payment.amount),
-          when: payment.createdAt
-            ? bakuDateTimeDisplay(payment.createdAt)
-            : payment.businessDate
-              ? payment.businessDate.slice(0, 10)
-              : '—',
+          ...stamp,
           paymentId: payment.id,
           paymentKind: payment.kind,
           paymentMethod: payment.paymentMethod,
-          refundable: payment.kind !== 'REFUND' && refundMax > 0.01,
+          refundable: !isRefund && refundMax > 0.01,
           refundMax,
         });
       }
@@ -305,6 +339,7 @@ export function ReservationCardFolioTab({
     for (const folio of accounts) {
       for (const payment of folio.payments ?? []) {
         if (!payment.id || !payment.voidedAt) continue;
+        const stamp = stampParts(payment.createdAt, payment.businessDate);
         rows.push({
           id: `void-${payment.id}`,
           folioId: folio.id,
@@ -314,7 +349,7 @@ export function ReservationCardFolioTab({
           description: payment.voidReason?.trim() || tf('deletePayment'),
           code: payment.paymentMethod,
           amount: Number(payment.amount),
-          when: payment.createdAt ? bakuDateTimeDisplay(payment.createdAt) : '—',
+          ...stamp,
           paymentId: payment.id,
           paymentKind: payment.kind,
           voidedAt: payment.voidedAt,
@@ -464,17 +499,57 @@ export function ReservationCardFolioTab({
       },
       { key: 'folioType', header: tf('pocket'), render: (row) => pocketName(t, row.folioType) },
       { key: 'code', header: tf('xercMaddesi'), render: (row) => row.code },
-      { key: 'description', header: t('folioDesc'), render: (row) => row.description },
-      { key: 'when', header: t('folioWhen'), className: 'whitespace-nowrap font-mono', render: (row) => row.when },
+      {
+        key: 'description',
+        header: t('folioDesc'),
+        render: (row) => {
+          const moneyKind = ledgerMoneyKind(row);
+          const badge =
+            moneyKind === 'refund'
+              ? tf('refundBadge')
+              : moneyKind === 'adjust'
+                ? tf('adjustBadge')
+                : row.isCityLedger
+                  ? tf('cityLedgerBadge')
+                  : moneyKind === 'payment'
+                    ? tf('paymentBadge')
+                    : null;
+          return (
+            <span>
+              {badge ? (
+                <span className="mr-1 inline-block rounded bg-white/80 px-1 text-[10px] font-semibold uppercase tracking-wide text-[#34495E]">
+                  {badge}
+                </span>
+              ) : null}
+              {row.description}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'whenDate',
+        header: t('folioDate'),
+        className: 'whitespace-nowrap font-mono',
+        render: (row) => row.whenDate,
+      },
+      {
+        key: 'whenTime',
+        header: t('folioTime'),
+        className: 'whitespace-nowrap font-mono',
+        render: (row) => row.whenTime,
+      },
       {
         key: 'amount',
         header: t('amount'),
         className: 'text-right font-mono',
-        render: (row) => (
-          <span className={row.kind === 'charge' ? 'text-rose-700' : 'text-sky-700'}>
-            {row.amount.toFixed(2)} {displayCurrency}
-          </span>
-        ),
+        render: (row) => {
+          const moneyKind = ledgerMoneyKind(row);
+          return (
+            <span className={ledgerAmountClass(moneyKind)}>
+              {formatLedgerAmount(row.amount, moneyKind)} {displayCurrency}
+            </span>
+          );
+        },
       },
       {
         key: 'actions',
@@ -601,7 +676,7 @@ export function ReservationCardFolioTab({
         page={1}
         pageSize={Math.max(numbered.length, 1)}
         total={numbered.length}
-        rowClassName={(row) => (row.kind === 'charge' ? 'bg-rose-50' : 'bg-sky-50')}
+        rowClassName={(row) => ledgerRowClass(ledgerMoneyKind(row))}
       />
     );
   }
@@ -689,18 +764,75 @@ export function ReservationCardFolioTab({
     ),
   );
 
+  const guestFocusDebt = stayMoneyPair(
+    accounts
+      .filter((folio) => folio.status === 'OPEN' && folio.type === 'GUEST')
+      .flatMap((folio) => folio.charges),
+    accounts
+      .filter((folio) => folio.status === 'OPEN' && folio.type === 'GUEST')
+      .flatMap((folio) => folio.payments ?? []),
+  ).debt;
+  const companyFocusDebt = stayMoneyPair(
+    accounts
+      .filter((folio) => folio.status === 'OPEN' && folio.type === 'COMPANY')
+      .flatMap((folio) => folio.charges),
+    accounts
+      .filter((folio) => folio.status === 'OPEN' && folio.type === 'COMPANY')
+      .flatMap((folio) => folio.payments ?? []),
+  ).debt;
+  const agencyFocusDebt = stayMoneyPair(
+    accounts
+      .filter((folio) => folio.status === 'OPEN' && folio.type === 'AGENCY')
+      .flatMap((folio) => folio.charges),
+    accounts
+      .filter((folio) => folio.status === 'OPEN' && folio.type === 'AGENCY')
+      .flatMap((folio) => folio.payments ?? []),
+  ).debt;
+
+  const debtSummaryLines = (() => {
+    if (folioFocus === 'agency') {
+      return [
+        `${t('agencyOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`,
+        `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
+      ];
+    }
+    if (folioFocus === 'company') {
+      return [
+        `${t('companyOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`,
+        `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
+      ];
+    }
+    if (focusGuestId || folioFocus.startsWith('guest:')) {
+      return [
+        `${t('guestOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`,
+        `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
+      ];
+    }
+    const lines: string[] = [];
+    if (guestFocusDebt > 0.01) lines.push(`${t('guestOwes')}: ${guestFocusDebt.toFixed(2)} ${displayCurrency}`);
+    if (companyFocusDebt > 0.01) {
+      lines.push(`${t('companyOwes')}: ${companyFocusDebt.toFixed(2)} ${displayCurrency}`);
+    }
+    if (agencyFocusDebt > 0.01) {
+      lines.push(`${t('agencyOwes')}: ${agencyFocusDebt.toFixed(2)} ${displayCurrency}`);
+    }
+    if (lines.length === 0) lines.push(`${t('guestOwes')}: 0.00 ${displayCurrency}`);
+    lines.push(`${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`);
+    return lines;
+  })();
+
   function printRows() {
     const body = filteredRows
-      .map(
-        (row, index) =>
-          `<tr><td>${index + 1}</td><td>${escapePrintHtml(row.when)}</td><td>${escapePrintHtml(pocketName(t, row.folioType))}</td><td>${escapePrintHtml(row.code)}</td><td>${escapePrintHtml(row.description)}</td><td style="text-align:right">${row.amount.toFixed(2)}</td></tr>`,
-      )
+      .map((row, index) => {
+        const moneyKind = ledgerMoneyKind(row);
+        return `<tr><td>${index + 1}</td><td>${escapePrintHtml(row.whenDate)}</td><td>${escapePrintHtml(row.whenTime)}</td><td>${escapePrintHtml(pocketName(t, row.folioType))}</td><td>${escapePrintHtml(row.code)}</td><td>${escapePrintHtml(row.description)}</td><td style="text-align:right">${escapePrintHtml(formatLedgerAmount(row.amount, moneyKind))}</td></tr>`;
+      })
       .join('');
-    const netWords = `${t('guestOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}. ${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`;
+    const debtWords = debtSummaryLines.join(' · ');
     const guest = namedPax[0]?.label ?? '';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapePrintHtml(t('folioPrint'))}</title>
 <style>body{font-family:"Segoe UI",sans-serif;margin:24px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f4f5f7}</style>
-</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioWhen'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(netWords)}</strong></p></body></html>`;
+</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioDate'))}</th><th>${escapePrintHtml(t('folioTime'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(debtWords)}</strong></p></body></html>`;
     if (!openPrintDocument(html)) showApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 
@@ -802,11 +934,11 @@ export function ReservationCardFolioTab({
         />
         <input
           type="search"
+          className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
           value={folioQuery}
           onChange={(event) => setFolioQuery(event.target.value)}
           placeholder={t('folioSearch')}
           aria-label={t('folioSearch')}
-          className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
         />
       </div>
       {folioFocus === 'deleted' ? (
@@ -839,9 +971,9 @@ export function ReservationCardFolioTab({
                 {t('folioTotalPayments')}: {paymentTotal.toFixed(2)} {displayCurrency}
               </td>
               <td className="whitespace-nowrap px-2 py-1.5 text-right text-[14px] font-semibold text-[#34495E]">
-                {t('guestOwes')}: {moneyPair.debt.toFixed(2)} {displayCurrency}
-                <br />
-                {t('overpaid')}: {moneyPair.unused.toFixed(2)} {displayCurrency}
+                {debtSummaryLines.map((line) => (
+                  <div key={line}>{line}</div>
+                ))}
               </td>
             </tr>
           </tbody>

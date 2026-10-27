@@ -422,10 +422,12 @@ export async function closeTourBoarding(departureId: string, boardedBookingIds: 
     results.push(await markTourBoarded(b.id));
   }
 
+  let droppedCount = 0;
   if (policy.dropUnboardedOnClose) {
     const drop = departure.bookings.filter(
       (b) => b.status === 'RESERVED' && !boardedSet.has(b.id),
     );
+    droppedCount = drop.length;
     for (const b of drop) {
       await prisma.tourBooking.update({
         where: { id: b.id },
@@ -439,7 +441,8 @@ export async function closeTourBoarding(departureId: string, boardedBookingIds: 
     data: { status: 'CLOSED' },
   });
 
-  return getTourDeparture(departureId);
+  const dep = await getTourDeparture(departureId);
+  return { ...dep, boardedCount: results.length, droppedCount };
 }
 
 /** Cancel / remove. Post-boarding cancel refunds money (void unpaid / refund paid). */
