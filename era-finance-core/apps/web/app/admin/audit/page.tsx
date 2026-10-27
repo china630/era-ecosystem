@@ -18,7 +18,10 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
 } from "../../../../lib/design-system";
-import { TOOLBAR_MONTH_INPUT_CLASS } from "../../../../lib/form-styles";
+import {
+  FORM_INPUT_CLASS,
+  TOOLBAR_MONTH_INPUT_CLASS,
+} from "../../../../lib/form-styles";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { PageHeader } from "../../../../components/layout/page-header";
 import { Button } from "../../../../components/ui/button";
@@ -193,10 +196,10 @@ export default function AdminMutationAuditPage() {
           {t("auditPage.filterEntityId")}
         </span>
         <input
+          className={`h-8 w-36 ${FORM_INPUT_CLASS} ${TOOLBAR_MONTH_INPUT_CLASS} px-2`}
           value={entityId}
           onChange={(e) => setEntityId(e.target.value)}
           placeholder="id"
-          className={`h-8 w-36 ${TOOLBAR_MONTH_INPUT_CLASS} px-2`}
         />
       </label>
       <label className="text-[12px] text-[#34495E]">
