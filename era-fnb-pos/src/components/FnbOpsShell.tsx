@@ -15,6 +15,7 @@ import {
   Settings,
   Upload,
   Shield,
+  Soup,
 } from "lucide-react";
 import {
   EraAppRouteShell,
@@ -42,9 +43,11 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/kds": PERMISSIONS.SCREEN_KDS,
   "/admin/menu": PERMISSIONS.SCREEN_ADMIN_MENU,
   "/admin/tables": PERMISSIONS.SCREEN_ADMIN_TABLES,
+  "/admin/buffet": PERMISSIONS.SCREEN_ADMIN_BUFFET,
   "/admin/settings": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
   "/admin/import": PERMISSIONS.SCREEN_ADMIN_IMPORT,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
+  "/admin/audit": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
   "/sales": PERMISSIONS.SCREEN_SALES,
 };
 
@@ -58,9 +61,17 @@ const SHELL_LINKS: (OpsNavCondition & { href: string; key: string; icon: typeof 
   { href: "/kds", key: "kds", icon: ChefHat, preset: HALLS, module: "fnb_kitchen_kds" },
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed, preset: HALLS },
   { href: "/admin/tables", key: "tables", icon: LayoutPanelTop, preset: HALLS },
+  {
+    href: "/admin/buffet",
+    key: "buffet",
+    icon: Soup,
+    preset: HALLS,
+    module: "fnb_buffet_planner",
+  },
   { href: "/sales", key: "sales", icon: ScrollText, preset: HALLS },
   { href: "/admin/import", key: "import", icon: Upload, preset: HALLS },
   { href: "/admin/settings", key: "settings", icon: Settings, preset: HALLS },
+  { href: "/admin/audit", key: "audit", icon: ScrollText, preset: HALLS },
   { href: "/admin/access", key: "access", icon: Shield, preset: HALLS },
 ];
 

@@ -129,9 +129,18 @@ export async function undoCheckout(
         }
       }
     }
+    // Keep settlement status when City Ledger AR folios remain (after-NA restore).
+    const settlementPatch =
+      transferred > 0
+        ? {}
+        : { checkoutSettlementStatus: 'NOT_APPLICABLE' as const };
+
     return tx.reservation.update({
       where: { id },
-      data: { status: nextStatus },
+      data: {
+        status: nextStatus,
+        ...settlementPatch,
+      },
       include: { room: true, guest: true, ratePlan: true, roomType: true },
     });
   });

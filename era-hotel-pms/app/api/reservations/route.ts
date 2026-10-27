@@ -21,6 +21,8 @@ const createSchema = z.object({
   walkInProfileCode: z.string().max(40).nullable().optional(),
   companyId: z.string().uuid().optional(),
   salesContractId: z.string().uuid().optional(),
+  roomPayer: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
+  commissionBasis: z.enum(['GROSS', 'NET']).optional(),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),
   paymentMethod: reservationPaymentMethodSchema,

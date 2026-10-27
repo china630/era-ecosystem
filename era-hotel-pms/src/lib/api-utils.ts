@@ -12,8 +12,11 @@ import { RoomTypeSettlementRequiredError } from '@/lib/services/room-move-reques
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 import { TourConflictError } from '@/lib/services/tour.service';
 import { BusinessDateLagError } from '@/lib/business-date-lag';
+import { scheduleHotelHttpMutationAudit } from '@/lib/mutation-audit-belt';
 
 export function jsonOk<T>(data: T, status = 200) {
+  // Layer A HTTP belt — ADR era-mutation-audit-standard / HOT-AUD-01
+  scheduleHotelHttpMutationAudit(status);
   return NextResponse.json(data, { status });
 }
 
@@ -64,6 +67,20 @@ export function handleRouteError(err: unknown) {
   if (err instanceof RoomTypeSettlementRequiredError) {
     return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
   }
+  if (err instanceof Error) {
+    const known = [
+      'COMMERCIAL_AMEND_REQUIRED',
+      'AGENCY_FOLIO_HAS_LINES',
+      'COMPANY_FOLIO_HAS_LINES',
+      'CONTRACT_REQUIRED_FOR_PAYER',
+      'AGENCY_REQUIRED_FOR_PAYER',
+      'COMPANY_REQUIRED_FOR_PAYER',
+      'COMMERCIAL_MOVE_REASON_REQUIRED',
+    ];
+    if (known.includes(err.message)) {
+      return NextResponse.json({ error: err.message, code: err.message }, { status: 409 });
+    }
+  }
   if (err instanceof BusinessDateLagError) {
     return NextResponse.json(
       {
@@ -106,6 +123,7 @@ export function handleRouteError(err: unknown) {
       lower.includes('idempotency conflict') ||
       lower.includes('duplicate') ||
       lower.includes('no contract allotment') ||
+      lower.includes('contract allotment') ||
       lower.includes('no availability') ||
       lower.includes('room conflict') ||
       lower.includes('share pool') ||

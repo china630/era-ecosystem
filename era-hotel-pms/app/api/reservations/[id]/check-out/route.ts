@@ -9,6 +9,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 const bodySchema = z
   .object({
     transferToCityLedger: z.boolean().optional(),
+    moveGuestDebtToPayer: z.boolean().optional(),
     transferToGuestDebt: z.boolean().optional(),
     guestDebtNote: z.string().max(500).optional(),
     discountAmount: z.number().positive().optional(),

@@ -116,6 +116,17 @@ export async function issueFolioInvoice(folioId: string) {
         ? folio.reservation.company?.voen ?? null
         : null;
 
+  if ((folio.type === 'AGENCY' || folio.type === 'COMPANY') && !voen?.trim()) {
+    throw Object.assign(
+      new Error(
+        folio.type === 'AGENCY'
+          ? 'City Ledger invoice requires agency VÖEN'
+          : 'City Ledger invoice requires company VÖEN',
+      ),
+      { status: 409, code: 'CL_INVOICE_VOEN_REQUIRED' },
+    );
+  }
+
   if (doc) {
     doc = await prisma.fiscalDocument.update({
       where: { id: doc.id },

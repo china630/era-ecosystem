@@ -195,7 +195,7 @@ function partyPresent(
 
 /**
  * Where a new charge goes when nobody typed a folio.
- * Stay route, then the hotel route, then company-on-this-room, then the primary guest.
+ * Stay route, then the hotel route, then the stay roomPayer for ROOM/tax, then the primary guest.
  * A route to a company or agency that is not on this stay falls through.
  * A group master does not take the room.
  */
@@ -206,7 +206,7 @@ export async function resolveRoutedFolioType(input: {
 }): Promise<FolioType> {
   const stay = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
-    select: { companyId: true, agencyId: true },
+    select: { companyId: true, agencyId: true, roomPayer: true },
   });
   if (!stay) throw new Error('Reservation not found');
 
@@ -231,7 +231,13 @@ export async function resolveRoutedFolioType(input: {
     where: { id: input.revenueCodeId },
     include: { ratePlansRoom: { select: { id: true }, take: 1 } },
   });
-  if (revenueCode && isRoomAndTaxRevenueCode(revenueCode) && stay.companyId) return 'COMPANY';
+  if (revenueCode && isRoomAndTaxRevenueCode(revenueCode)) {
+    if (stay.roomPayer === 'COMPANY' && stay.companyId) return 'COMPANY';
+    if (stay.roomPayer === 'AGENCY' && stay.agencyId) return 'AGENCY';
+    // Legacy stays: company on the card without an explicit roomPayer still takes ROOM.
+    if (stay.roomPayer === 'GUEST' && stay.companyId && !stay.agencyId) return 'COMPANY';
+    return 'GUEST';
+  }
   return 'GUEST';
 }
 

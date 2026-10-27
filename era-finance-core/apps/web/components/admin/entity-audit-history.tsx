@@ -90,7 +90,7 @@ export function EntityAuditHistory({
       page: String(page),
       pageSize: String(pageSize),
     });
-    const res = await apiFetch(`/api/audit/logs?${q.toString()}`);
+    const res = await apiFetch(`/api/admin/audit?${q.toString()}`);
     if (!res.ok) {
       setErr(String(res.status));
       setRows([]);

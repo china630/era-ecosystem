@@ -10,7 +10,7 @@ Living snapshot of **code + DELIVERY** readiness (engineering API levels and che
 
 **R1 re-audit (2026-06-16):** Integration domains A–E **COMPLIANT**; automated strict audit **0 issues**. See [audit-snapshots/r1-delta-2026-06-16.md](./audit-snapshots/r1-delta-2026-06-16.md).
 
-Last updated: 2026-08-17 (topology waves 9–18 — PlacementJob API scaffold; CP-PLACE-01 = API; live SHARED pool open)
+Last updated: 2026-10-27 (F&B DELIVERY §1 recount after Buffet Planner `[~]` M15; sell/show unchanged — see Fnb-Product-Readiness)
 
 > **Deployment topology (2026-08-17 waves 9–18):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + slice metadata stub (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md).
 
@@ -20,7 +20,9 @@ Last updated: 2026-08-17 (topology waves 9–18 — PlacementJob API scaffold; C
 
 > **Clinic (`era-clinic`):** Matrix gaps closure (Phases 0–7). See [CLINIC_DOC_API_UI_AUDIT.md](./CLINIC_DOC_API_UI_AUDIT.md), [COVERAGE_MATRIX CLI-*](./COVERAGE_MATRIX.md#era-clinic-cli), [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md).
 
-> **Hotel FO money / City Ledger (2026-08-04):** P5 COVERAGE SHIPPED + BE Scaffold ✅ (INT STUB excl.) + UI/Demo ✅ (`reports/hotel-demo-te-signoff.md`). Product Readiness **mvp showable** — Pilot lab/field open — [Hotel-Product-Readiness-Matrix](./acceptance/Hotel-Product-Readiness-Matrix.md).
+> **Hotel FO money / City Ledger (2026-10-27 closeout):** P5 COVERAGE SHIPPED (HOT-CO-02/05, HOT-CL-*) + BE Scaffold ✅ (INT STUB excl.) + UI/Demo ✅ (`reports/hotel-demo-te-signoff.md`). MOVE_PAYER_CL / unsettled deepen ops; sell still **mvp showable** — Pilot lab/field open — [Hotel-Product-Readiness-Matrix](./acceptance/Hotel-Product-Readiness-Matrix.md). Full §4 API/% refresh not required (no consumer DELIVERY % change).
+>
+> **Peer URL + CL payment sync (2026-10-27):** HOT-CL-07 / CP-PEER-01 **API** — Finance allocate+bank match → hotel `payment-applied` (outbox/reconcile); peer base from SatelliteEndpoint (kit). Env hotel URLs deprecated as SoR. No sell/Pilot change.
 
 ### Bank Ops UX (2026-06) — ops-mvp (not edition ga)
 
@@ -219,7 +221,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | Application | DELIVERY file | Done | Open | **%** |
 |-------------|---------------|------|------|-------|
 | era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 226 | 0 | 100% |
-| era-fnb-pos | [DELIVERY-FB.md](../era-fnb-pos/doc/DELIVERY-FB.md) | 43 | 0 | 100% |
+| era-fnb-pos | [DELIVERY-FB.md](../era-fnb-pos/doc/DELIVERY-FB.md) | 46 | 0 | 100% |
 | era-retail-pos | [DELIVERY-RETAIL.md](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 45 | 0 | 100% |
 | era-clinic | [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md) | 75 | 0 | 100% |
 | era-construction | [DELIVERY-CONSTRUCTION.md](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 21 | 0 | 100% |
@@ -234,7 +236,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | era-finance-core | [DELIVERY-FINANCE.md](../era-finance-core/doc/DELIVERY-FINANCE.md) | 10 | 0 | 100% |
 | era-data-hub | [DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) | 48 | 0 | 100% |
 
-**Aggregate (15 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. 744/744 (**100%**). Regenerate: `node scripts/delivery-readiness.mjs`.
+**Aggregate (15 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. 868/877 (**99%**). Strict SHIPPED-only: `node scripts/readiness-strict-delivery.mjs` (F&B M15 Buffet Planner is `[~]` API — not strict SHIPPED).
 
 ### ElectraWeb FO product readiness (≠ DELIVERY %)
 

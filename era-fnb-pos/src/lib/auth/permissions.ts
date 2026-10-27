@@ -17,6 +17,7 @@ export const PERMISSIONS = {
   SCREEN_ADMIN_MENU: "screen:admin.menu",
   SCREEN_ADMIN_TABLES: "screen:admin.tables",
   SCREEN_ADMIN_DAILY_MENU: "screen:admin.daily_menu",
+  SCREEN_ADMIN_BUFFET: "screen:admin.buffet",
   SCREEN_ADMIN_IMPORT: "screen:admin.import",
   SCREEN_ADMIN_SETTINGS: "screen:admin.settings",
   SCREEN_ADMIN_INTEGRATION: "screen:admin.integration",
@@ -57,6 +58,7 @@ export const PERMISSIONS = {
   LABOR_ROSTER_READ: "api:labor.roster.read",
   LABOR_ROSTER_WRITE: "api:labor.roster.write",
   ADMIN_DAILY_MENU: "api:admin.daily_menu",
+  ADMIN_BUFFET: "api:admin.buffet",
   ADMIN_INTEGRATION: "api:admin.integration",
   IMPORT_CUTOVER: "api:import.cutover",
 } as const;
@@ -113,6 +115,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       PERMISSIONS.SCREEN_ADMIN_MENU,
       PERMISSIONS.SCREEN_ADMIN_TABLES,
       PERMISSIONS.SCREEN_ADMIN_DAILY_MENU,
+      PERMISSIONS.SCREEN_ADMIN_BUFFET,
       PERMISSIONS.SCREEN_ADMIN_IMPORT,
       PERMISSIONS.SCREEN_ADMIN_SETTINGS,
       PERMISSIONS.SCREEN_ADMIN_INTEGRATION,
@@ -163,6 +166,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       PERMISSIONS.TABLES_MANAGE,
       PERMISSIONS.OUTLETS_MANAGE,
       PERMISSIONS.ADMIN_DAILY_MENU,
+      PERMISSIONS.ADMIN_BUFFET,
       PERMISSIONS.ADMIN_INTEGRATION,
       PERMISSIONS.IMPORT_CUTOVER,
       PERMISSIONS.LABOR_ROSTER_READ,
@@ -227,6 +231,8 @@ export function kitchenPermissions(): Permission[] {
     PERMISSIONS.SCREEN_HOME,
     PERMISSIONS.SCREEN_KDS,
     PERMISSIONS.KDS_BUMP,
+    PERMISSIONS.SCREEN_ADMIN_BUFFET,
+    PERMISSIONS.ADMIN_BUFFET,
   ];
 }
 

@@ -49,6 +49,12 @@ export async function POST(request: Request) {
         where: { id: refreshed.id },
         data: { status: nextStatus },
       });
+      if (nextStatus === 'CLOSED') {
+        const { maybeMarkReservationSettled } = await import(
+          '@/lib/services/unsettled-departures.service'
+        );
+        await maybeMarkReservationSettled(refreshed.reservationId);
+      }
 
       return jsonOk({
         id: existing.id,
@@ -82,6 +88,7 @@ export async function POST(request: Request) {
       paymentMethod: 'COMPANY_ACCOUNT',
       registerRef: body.paymentId,
       bankReference: body.invoiceId,
+      skipCityLedgerGate: true,
     });
 
     const refreshed = await prisma.folio.findUnique({
@@ -98,6 +105,12 @@ export async function POST(request: Request) {
       where: { id: folio.id },
       data: { status: nextStatus },
     });
+    if (nextStatus === 'CLOSED') {
+      const { maybeMarkReservationSettled } = await import(
+        '@/lib/services/unsettled-departures.service'
+      );
+      await maybeMarkReservationSettled(folio.reservationId);
+    }
 
     return jsonOk({
       id: payment.id,

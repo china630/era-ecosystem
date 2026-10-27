@@ -59,4 +59,12 @@ describe("hotel page route inventory (Wave 1 fail-closed)", () => {
     ]);
     expect(routePermissions("/hk")).toEqual([PERMISSIONS.SCREEN_HK]);
   });
+
+  it("mutation audit /admin/audit uses reports grants, not SCREEN_ADMIN", () => {
+    expect(routePermissions("/admin/audit")).toEqual([
+      PERMISSIONS.SCREEN_REPORTS,
+      PERMISSIONS.REPORTS_READ,
+    ]);
+    expect(routePermissions("/admin/users")).toEqual([PERMISSIONS.SCREEN_ADMIN]);
+  });
 });

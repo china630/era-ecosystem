@@ -13,6 +13,7 @@
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (see era-coverage-definition) |
+| AC-HOT-AUD Scaffold ✅ | Layer A belt on hotel mutations + deny-list/`audit-exempt` + negative: exempt path skips row, money path still succeeds if audit insert fails; UAT shows `/admin/audit` `HTTP_MUTATION` **and** a Layer B money/lifecycle sample; reports-without-admin can open the page. ADR era-mutation-audit-standard. Until then max 🟡 |
 
 ## Forbidden as sole proof
 

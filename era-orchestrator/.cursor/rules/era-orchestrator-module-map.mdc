@@ -97,6 +97,9 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `POST /auth/switch-organization` | `membership.controller.ts` |
 | `GET /v1/invites/pending` | `organization.controller.ts` — pending invites for current user email (company-less onboarding) |
 | `POST /v1/invites/:id/accept` | `organization.controller.ts` — accept invite → create membership |
+| `GET/PATCH /platform/v1/organizations/me/profile` | `organization-profile.controller.ts` — OrgOwner branding SoR (multi-contact/address); CP-ORG-PROFILE-01 |
+| `GET/PATCH /platform/v1/organizations/:id/profile` | same; membership or super-admin |
+| `GET /internal/v1/organizations/:id/profile-snapshot` | `internal-organizations.controller.ts` — S2S branding snapshot (service token) |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
 | `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint (env fallback) |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |

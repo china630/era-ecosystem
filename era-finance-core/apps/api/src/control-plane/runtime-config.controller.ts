@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Post, UnauthorizedException } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import type { OrganizationProfileSnapshot } from "@era/contracts";
 import {
   applyOrganizationBind,
   applySatelliteRuntimeConfig,
@@ -8,6 +9,7 @@ import {
   onSatelliteBoot,
   publicRuntimeConfigView,
   satelliteRuntimeConfig,
+  setCachedOrgProfile,
 } from "@era/satellite-kit";
 import { Public } from "../auth/decorators/public.decorator";
 import { PrismaService } from "../prisma/prisma.service";
@@ -64,6 +66,13 @@ export class RuntimeConfigController {
         prisma: this.prisma,
       });
     }
+    const orgProfile =
+      body.orgProfile && typeof body.orgProfile === "object"
+        ? (body.orgProfile as OrganizationProfileSnapshot)
+        : undefined;
+    if (body.organizationId && orgProfile) {
+      setCachedOrgProfile(body.organizationId, orgProfile);
+    }
     const cfg = await applySatelliteRuntimeConfig({
       config: {
         organizationId: body.organizationId,
@@ -77,6 +86,8 @@ export class RuntimeConfigController {
         deploymentTopology: body.deploymentTopology,
         edition: body.edition,
         referenceSource: body.referenceSource,
+        orgProfile:
+          body.deploymentTopology === "SHARED" ? undefined : orgProfile,
       },
       updatedBy: body.updatedBy,
       prisma: this.prisma,

@@ -277,6 +277,8 @@ export async function postPayment(input: {
   refundReason?: string;
   revenueCodeId?: string;
   auditRequest?: Request;
+  /** Finance City Ledger apply-back already passed hotel AR handoff — do not re-gate. */
+  skipCityLedgerGate?: boolean;
 }) {
   const folio = await prisma.folio.findUnique({
     where: { id: input.folioId },
@@ -303,7 +305,13 @@ export async function postPayment(input: {
       throw new Error(`PAYMENT_EXCEEDS_ARTICLE:${articleDebt.toFixed(2)}`);
     }
   }
-  if (kind === 'PAYMENT' && (input.paymentMethod === 'CL_AGENCY' || input.paymentMethod === 'CL_COMPANY')) {
+  if (
+    kind === 'PAYMENT' &&
+    !input.skipCityLedgerGate &&
+    (input.paymentMethod === 'CL_AGENCY' ||
+      input.paymentMethod === 'CL_COMPANY' ||
+      input.paymentMethod === 'COMPANY_ACCOUNT')
+  ) {
     const { assertCanPostCityLedgerTender } = await import('@/lib/services/city-ledger-gate.service');
     await assertCanPostCityLedgerTender(folio.reservationId, input.paymentMethod, input.amount);
   }
@@ -432,6 +440,8 @@ export async function postPayment(input: {
       method: input.paymentMethod,
       amount: input.amount,
       businessDate: payment.businessDate,
+      sourcePaymentId: payment.id,
+      sourceFolioId: folio.id,
     });
   }
 
@@ -495,6 +505,8 @@ async function mirrorCityLedgerCharge(input: {
   method: 'CL_AGENCY' | 'CL_COMPANY';
   amount: number;
   businessDate: Date;
+  sourcePaymentId?: string;
+  sourceFolioId?: string;
 }) {
   const type = input.method === 'CL_AGENCY' ? 'AGENCY' : 'COMPANY';
   const organizationId = requestOrganizationId();
@@ -512,6 +524,15 @@ async function mirrorCityLedgerCharge(input: {
       },
     }));
   const revenue = await requireRevenueCodeByRole('ROOM');
+  const refs = [
+    input.sourcePaymentId ? `payment:${input.sourcePaymentId}` : null,
+    input.sourceFolioId ? `fromFolio:${input.sourceFolioId}` : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const description =
+    (input.method === 'CL_AGENCY' ? 'City ledger agency' : 'City ledger company') +
+    (refs ? ` (${refs})` : '');
   await prisma.folioCharge.create({
     data: {
       organizationId,
@@ -519,7 +540,7 @@ async function mirrorCityLedgerCharge(input: {
       revenueCodeId: revenue.id,
       amount: toDecimal(input.amount),
       qty: 1,
-      description: input.method === 'CL_AGENCY' ? 'City ledger agency' : 'City ledger company',
+      description,
       businessDate: input.businessDate,
     },
   });

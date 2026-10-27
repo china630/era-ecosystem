@@ -42,6 +42,7 @@ ERA deployments span multiple legal entities, department satellites, and multipl
 ## Consequences
 
 - New satellites with multiple POS surfaces should add `Outlet` first; do not create a second org for the same VOEN.
+- Legal/branding contacts for the **organization** live on the control-plane profile ([cp-organization-profile-and-branding.md](./cp-organization-profile-and-branding.md)); Outlet may overlay operational phones for that POS only.
 - Do not issue a second public `orgNo` for a second restaurant/bar — [org-public-number-and-login-host.md](./org-public-number-and-login-host.md).
 - Department deployments must register `SatelliteEndpoint` on the orchestrator and honor parent routing helpers on every B2C pay path.
 - **Do not** use `DEPARTMENT` or `STANDALONE` to mean “own VM”. Placement is [deployment-topology.md](./deployment-topology.md). A DEPARTMENT clinic may live in a SHARED clinic pool.

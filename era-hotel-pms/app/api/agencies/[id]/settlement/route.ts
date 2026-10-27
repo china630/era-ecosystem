@@ -1,4 +1,4 @@
-import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
+import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import {
   listAgencyTransferredFolios,
@@ -29,8 +29,13 @@ export async function POST(
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     // Hotel does not accept agency money: it must be booked in Finance.
-    // Cash (5–10% edge cases) is handled as a manual "handoff to accountant" process.
-    return jsonError('Agency settlement is paid in Finance only (City Ledger handoff).', 409);
+    return Response.json(
+      {
+        error: 'Agency settlement is paid in Finance only (City Ledger handoff).',
+        code: 'FINANCE_ONLY_SETTLEMENT',
+      },
+      { status: 409 },
+    );
   } catch (err) {
     return handleRouteError(err);
   }

@@ -175,10 +175,12 @@ export class BankMatchService {
           invoiceStatus: InvoiceStatus.PAID,
           ledgerPosted: false,
           reason: "invoice_already_paid",
+          allocatedAmount: 0,
         };
       }
 
       const payDate = line.valueDate ?? new Date();
+      const allocatedAmount = Number(line.amount);
 
       const { newStatus, paymentReceived, transactionId, firstRevenueRecognition } =
         await this.invoices.applyBankPaymentInTransaction(
@@ -201,6 +203,7 @@ export class BankMatchService {
         ledgerPosted: true,
         transactionId,
         firstRevenueRecognition: firstRevenueRecognition === true,
+        allocatedAmount,
       };
     }).then((result) => {
       if (result.firstRevenueRecognition) {
@@ -210,6 +213,18 @@ export class BankMatchService {
         this.invoices.notifyTradeCreditReclassifyForInvoice(
           organizationId,
           invoiceId,
+        );
+      }
+      if (
+        result.paymentReceived &&
+        result.transactionId &&
+        result.allocatedAmount > 0
+      ) {
+        this.invoices.notifyHotelPaymentAppliedForInvoice(
+          organizationId,
+          invoiceId,
+          result.transactionId,
+          result.allocatedAmount,
         );
       }
       return result;

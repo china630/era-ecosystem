@@ -13,6 +13,7 @@
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (see era-coverage-definition) |
+| AC-FIN-AUD Scaffold ✅ | Kit deny-list / redaction naming aligned to era-mutation-audit-standard + dedicated negatives: ledger-read non-owner → mutation OK / security-audit 403; OWNER → both OK; non-superadmin OWNER → security-audit OK. Paths `/admin/audit` + `/admin/security-audit`. Partial: `admin-security-audit.controller.spec.ts` covers OWNER door only — until kit-align + fuller suite, max 🟡 (FIN-AUD-01 COVERAGE may stay SHIPPED independently) |
 
 ## Forbidden as sole proof
 

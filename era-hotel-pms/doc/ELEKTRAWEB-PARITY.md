@@ -50,7 +50,7 @@
 | SPA places | `/spa/places` | `SpaPlace` CRUD |
 | SPA reservations view | `/spa/reservations` | Links to `/procedures` |
 | SPA staff match | `/spa/staff-match` | Aggregated grid |
-| Airport transfers | `/transfers/airport` | Filter `flightNo` |
+| Airport transfers | `/transfers?hasFlight=1` (legacy `/transfers/airport` redirects) | Filter `flightNo` |
 | NA polish | `/operations` | Link to EOD logs |
 | Room plan print | `/room-plan` | `window.print()` |
 
@@ -130,7 +130,7 @@ Index of removed root folder: [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/E
 | Night audit / EOD | `/operations`, `/reports/end-of-day-logs` | B |
 | Distribution | `/channel`, `/admin/*` | B |
 | HK | `/housekeeping/*` | B |
-| SPA / Transfers | `/spa/*`, `/transfers/airport` | B (MVP), C (depth) |
+| SPA / Transfers | `/spa/*`, `/transfers` | B (MVP), C (depth) |
 
 ---
 

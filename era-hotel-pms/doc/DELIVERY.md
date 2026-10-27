@@ -273,7 +273,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 ### Stage 20b — GUEST TOURS (2026-08-23)
 - [x] `TourTemplate` / `TourDeparture` / `TourBooking` + revenue `TOUR` + `FolioPaymentAllocation`
 - [x] Charge-level payment on GUEST folio; city ledger ≠ Paid
-- [x] `/api/tours/*` + `/tours` UI + pay-from-roster + folio line-pay + settle-to-zero + `/fleet` + print
+- [x] `/api/tours/*` + `/tours` UI (grid+modals) + boarding-first `TOUR` (policy `CHARGE_ON_BOARDING` default) + pay-from-roster + folio line-pay + settle-to-zero + `/fleet` + print + `/settings/policies#tours`
 - [x] Spec: [TOURS-NAFTA-OPS.md](TOURS-NAFTA-OPS.md) · ADR `docs/adr/hotel-guest-tours.md` · HOT-TOUR-01 SHIPPED
 
 ### Stage 22 — GL-BRIDGE
@@ -470,7 +470,8 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 
 ## Nafta W1–W2 gap closure (2026-06-13)
 
-- [x] Satellite mutation audit — ADR + `@era/satellite-kit` + `GET /api/audit` ([ADR satellite-mutation-audit](../../docs/adr/satellite-mutation-audit.md))
+- [x] Satellite mutation audit — first-wave storage + helpers + `GET /api/admin/audit` ([ADR satellite-mutation-audit](../../docs/adr/satellite-mutation-audit.md))
+- [~] Ecosystem mutation audit Layer A HTTP belt — kit + `jsonOk` + `/admin/audit` HTTP_MUTATION ([ADR era-mutation-audit-standard](../../docs/adr/era-mutation-audit-standard.md)); HOT-AUD-01 API until UAT; CI `check:mutation-audit-belt`
 - [x] Agency profitability — `/reports/agency-profitability`
 - [x] OTA pull — `POST /api/channel/sync/pull` + cancel/modify ingest tests
 - [x] glPosted read-only — `FiscalDocument.glPostedAt` + `POST /api/integration/gl-status`
@@ -548,7 +549,7 @@ Wave A (Nafta ops slice) + Wave B (OTA safety / ARI / honest live STUB):
 - [~] HOT-CASH-07 reservation folio balances + HOT-CASH-08 folio journal (API/SCREEN; UAT §42)
 - [x] HOT-CL-06 Company profile + company CL statement at `/front-cash/company-ledger` (lines + TRANSFERRED_AR; ADR hotel-agency-vs-company-profiles)
 - [x] HOT-AGP-04 Agency portal own CL statement `/agency/ledger` + `GET /api/agency/ledger` (session-scoped, read-only)
-- [x] HOT-XFER-01 transfer charge via routing + cancel/void + day-board driver print
+- [x] HOT-XFER-01 transfer charge via routing + cancel/void + day-board driver print; Airport menu → `/transfers?hasFlight=1`
 - [x] HOT-CASH-01 `BANK_TRANSFER` tender + `bankReference` on pay/settle
 - [x] HOT-NA-03 EOD no-shows / room-moves / VIP + CSV
 - [x] HOT-BEO-01 printable HTML day sheet + preferred folio on confirm

@@ -16,7 +16,8 @@ export class WorkforceEmploymentPickerController {
 
   @Get("organizations/:organizationId/picker")
   @ApiOperation({
-    summary: "S2S: active CP employments for a satellite staff picker (display name, no rates)",
+    summary:
+      "S2S: active CP employments for a satellite staff picker (display name, org unit, position; no rates)",
   })
   picker(
     @Param("organizationId", ParseUUIDPipe) organizationId: string,

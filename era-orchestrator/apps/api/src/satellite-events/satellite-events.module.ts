@@ -14,10 +14,18 @@ import { SatelliteFanoutWorker } from "./satellite-fanout.worker";
 import { SatelliteLaunchUrlController } from "./satellite-launch-url.controller";
 import { SatellitePoolMembersController } from "./satellite-pool-members.controller";
 import { SatelliteDesiredStateController } from "./satellite-desired-state.controller";
+import { SatellitePeerEndpointController } from "./satellite-peer-endpoint.controller";
 import { WorkforceModule } from "../workforce/workforce.module";
+import { OrganizationModule } from "../organization/organization.module";
 
 @Module({
-  imports: [PrismaModule, SubscriptionModule, AuthModule, WorkforceModule],
+  imports: [
+    PrismaModule,
+    SubscriptionModule,
+    AuthModule,
+    WorkforceModule,
+    OrganizationModule,
+  ],
   controllers: [
     SatelliteEventsController,
     SatelliteEndpointsController,
@@ -25,6 +33,7 @@ import { WorkforceModule } from "../workforce/workforce.module";
     SatelliteLaunchUrlController,
     SatellitePoolMembersController,
     SatelliteDesiredStateController,
+    SatellitePeerEndpointController,
   ],
   providers: [
     SatelliteEventsService,

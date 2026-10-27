@@ -21,7 +21,11 @@ import {
 } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
+import { scheduleClinicHttpMutationAudit } from "@/lib/mutation-audit-belt";
+
 export function jsonOk<T>(data: T, status = 200) {
+  // Layer A HTTP belt — ADR era-mutation-audit-standard / CLI-19 Layer A
+  scheduleClinicHttpMutationAudit(status);
   return NextResponse.json(data, { status });
 }
 

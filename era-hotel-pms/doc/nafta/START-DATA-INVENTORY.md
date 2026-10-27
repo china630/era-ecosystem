@@ -79,7 +79,7 @@ No Excel wizard yet. Load via upcoming `nafta-clinic:*` import or seed scripts. 
 | Data | File | Source | Put in | Status |
 |------|------|--------|--------|--------|
 | House / walk-in POS ledger | READY `fnb/32-FnB-Transactions.xlsx` (**8 559**) | `START/fnb/_source/ew-2026-999-fb` (Jan–3 Jul, 5 860) + `ew-2026-xudmani` CASH FOLIO (Jul–Aug, 1 219) + prior CASH FOLIO. From ~July EW stopped guest `999 FB` and punches department Xudmani | **FnB wizard** `fnb-transactions` — **not** hotel folio | HAVE |
-| Menu groups + PLU | READY `fnb/30-Product-Group-List.xlsx` + `fnb/31-Product-Cards.xlsx` | EW 31.08 | FnB wizard `/admin/import` (`product-groups` → `product-cards`). Empty code → `ERA-FNB-{Id}` until 1C | HAVE |
+| Menu groups + PLU | READY `fnb/30-Product-Groups.xlsx` + `fnb/31-Product-Cards.xlsx` | Nafta cleaned EN cutover (`era-fnb-pos/scripts/ops/data/`) | FnB wizard `/admin/import` (`product-groups` → `product-cards`). `Revenue Code` on category; empty `Product Code` → `ERA-FNB-{Id}` | HAVE |
 | Recipes / TTK (brutto/netto, yield) | — | 1C or chef | FnB recipes | **ASK** — needed for cost; POS can start on PLU-only |
 | F&B stock by warehouse | — | 1C сч. 10/41/43 | FnB stock | **ASK** for valued stock; ops can start at zero + count |
 | Retail price list (restaurant, lobby, RS) | — | 1C / current menu | FnB prices | **ASK** |

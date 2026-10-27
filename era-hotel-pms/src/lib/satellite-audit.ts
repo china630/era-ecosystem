@@ -25,9 +25,11 @@ export async function recordHotelAudit(
 }
 
 export type AuditListFilters = {
-  entityType: string;
+  /** Omit or pass HTTP_MUTATION for org-wide Layer A list. */
+  entityType?: string;
   entityId?: string;
   action?: string;
+  userId?: string;
   dateFrom?: Date;
   dateTo?: Date;
   limit?: number;
@@ -35,14 +37,17 @@ export type AuditListFilters = {
 
 export async function listAuditLogs(filters: AuditListFilters) {
   const where: {
-    entityType: string;
+    entityType?: string;
     entityId?: string;
     action?: string;
+    userId?: string;
     createdAt?: { gte?: Date; lte?: Date };
-  } = { entityType: filters.entityType };
+  } = {};
 
+  if (filters.entityType) where.entityType = filters.entityType;
   if (filters.entityId) where.entityId = filters.entityId;
   if (filters.action) where.action = filters.action;
+  if (filters.userId) where.userId = filters.userId;
   if (filters.dateFrom || filters.dateTo) {
     where.createdAt = {};
     if (filters.dateFrom) where.createdAt.gte = filters.dateFrom;

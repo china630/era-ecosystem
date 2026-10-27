@@ -17,6 +17,7 @@ import { ReportingModule } from "../reporting/reporting.module";
 import { TradeCreditModule } from "../trade-credit/trade-credit.module";
 import { ExtraFieldsModule } from "../extra-fields/extra-fields.module";
 import { EqaimeSubmissionService } from "./eqaime-submission.service";
+import { HotelPaymentCallbackService } from "./hotel-payment-callback.service";
 
 @Module({
   imports: [
@@ -37,7 +38,13 @@ import { EqaimeSubmissionService } from "./eqaime-submission.service";
     InvoiceSignatureController,
     PublicInvoiceController,
   ],
-  providers: [InvoicesService, EqaimeSubmissionService, InvoicePdfQueueService, InvoicePdfWorker],
-  exports: [InvoicesService, EqaimeSubmissionService],
+  providers: [
+    InvoicesService,
+    EqaimeSubmissionService,
+    InvoicePdfQueueService,
+    InvoicePdfWorker,
+    HotelPaymentCallbackService,
+  ],
+  exports: [InvoicesService, EqaimeSubmissionService, HotelPaymentCallbackService],
 })
 export class InvoicesModule {}

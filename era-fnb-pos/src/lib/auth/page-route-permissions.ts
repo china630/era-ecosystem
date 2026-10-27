@@ -23,12 +23,17 @@ export function routePermissions(pathname: string): Permission[] | null {
   ) {
     return [PERMISSIONS.SCREEN_ADMIN_DAILY_MENU];
   }
+  if (pathname === "/admin/buffet" || pathname.startsWith("/admin/buffet/")) {
+    return [PERMISSIONS.SCREEN_ADMIN_BUFFET];
+  }
   if (pathname === "/admin/import" || pathname.startsWith("/admin/import/")) {
     return [PERMISSIONS.SCREEN_ADMIN_IMPORT];
   }
   if (
     pathname === "/admin/settings" ||
-    pathname.startsWith("/admin/settings/")
+    pathname.startsWith("/admin/settings/") ||
+    pathname === "/admin/audit" ||
+    pathname.startsWith("/admin/audit/")
   ) {
     return [PERMISSIONS.SCREEN_ADMIN_SETTINGS];
   }

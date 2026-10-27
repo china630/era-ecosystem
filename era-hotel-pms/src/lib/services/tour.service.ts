@@ -4,8 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { folioBalance, postCharge, postPayment, voidCharge } from '@/lib/services/folio.service';
+import { refundFolioPayment } from '@/lib/services/folio-refund.service';
+import { getTourOpsPolicy } from '@/lib/services/tour-ops-policy.service';
 
 export const TRANSFER_OCCUPANCY_MS = 90 * 60 * 1000;
+
+const LIVE_ROSTER: TourBookingStatus[] = ['RESERVED', 'CHARGED', 'PAID', 'ON_CITY_LEDGER'];
+const BOARDED_STATUSES: TourBookingStatus[] = ['CHARGED', 'PAID', 'ON_CITY_LEDGER'];
 
 export class TourConflictError extends Error {
   constructor(message: string) {
@@ -25,6 +30,14 @@ function orgId() {
 function seatCap(departure: { capacity: number; vehicle: { maxSeats: number } | null }) {
   if (!departure.vehicle) return departure.capacity;
   return Math.min(departure.capacity, departure.vehicle.maxSeats);
+}
+
+function countLive(bookings: Array<{ status: TourBookingStatus }>) {
+  return bookings.filter((b) => LIVE_ROSTER.includes(b.status)).length;
+}
+
+function countBoarded(bookings: Array<{ status: TourBookingStatus }>) {
+  return bookings.filter((b) => BOARDED_STATUSES.includes(b.status)).length;
 }
 
 export async function listTourTemplates(activeOnly = true) {
@@ -73,13 +86,49 @@ export async function listTourDepartures(filters?: { from?: Date; to?: Date; sta
     include: {
       vehicle: true,
       template: true,
-      _count: { select: { bookings: { where: { status: { in: ['CHARGED', 'PAID'] } } } } },
+      _count: {
+        select: {
+          bookings: { where: { status: { in: LIVE_ROSTER } } },
+        },
+      },
     },
     orderBy: [{ date: 'asc' }, { pickupAt: 'asc' }],
   });
 }
 
+/** Drop RESERVED seats past AUTO_CUTOFF; closes boarding when policy says so. */
+async function applyAutoCutoffIfDue(departureId: string) {
+  const policy = await getTourOpsPolicy();
+  if (policy.boardingCloseMode !== 'AUTO_CUTOFF') return;
+  const minutes = policy.autoCutoffMinutesBeforePickup;
+  if (minutes == null || minutes < 1) return;
+
+  const departure = await prisma.tourDeparture.findUnique({
+    where: { id: departureId },
+    include: { bookings: true },
+  });
+  if (!departure) return;
+  if (!['DRAFT', 'OPEN'].includes(departure.status)) return;
+
+  const cutoffAt = new Date(departure.pickupAt.getTime() - minutes * 60 * 1000);
+  if (Date.now() < cutoffAt.getTime()) return;
+
+  // AUTO_CUTOFF always clears unboarded RESERVED seats and closes boarding.
+  const reserved = departure.bookings.filter((b) => b.status === 'RESERVED');
+  for (const b of reserved) {
+    await prisma.tourBooking.update({
+      where: { id: b.id },
+      data: { status: 'CANCELLED' },
+    });
+  }
+  await prisma.tourDeparture.update({
+    where: { id: departureId },
+    data: { status: 'CLOSED' },
+  });
+}
+
 export async function getTourDeparture(id: string) {
+  await applyAutoCutoffIfDue(id);
   const row = await prisma.tourDeparture.findUnique({
     where: { id },
     include: {
@@ -221,9 +270,9 @@ export async function updateTourDeparture(
       to: returnAt,
       exceptDepartureId: id,
     });
-    const live = current.bookings.filter((b) => b.status === 'CHARGED' || b.status === 'PAID').length;
+    const boarded = countBoarded(current.bookings);
     const cap = Math.min(patch.capacity ?? current.capacity, v.maxSeats);
-    if (live > cap) throw new Error('Vehicle seat count is below current roster');
+    if (boarded > cap) throw new Error('Vehicle seat count is below boarded roster');
   }
 
   return prisma.tourDeparture.update({
@@ -243,7 +292,21 @@ export async function updateTourDeparture(
   });
 }
 
+async function postTourCharge(
+  reservationId: string,
+  departure: { agenda: string; date: Date; price: Parameters<typeof decimalToNumber>[0] },
+) {
+  const revenue = await tourRevenue();
+  return postCharge({
+    reservationId,
+    revenueCodeId: revenue.id,
+    amount: decimalToNumber(departure.price),
+    description: `Tour: ${departure.agenda || departure.date.toISOString().slice(0, 10)}`,
+  });
+}
+
 export async function addTourBooking(input: { departureId: string; reservationId: string; notes?: string }) {
+  const policy = await getTourOpsPolicy();
   const departure = await prisma.tourDeparture.findUnique({
     where: { id: input.departureId },
     include: { vehicle: true, bookings: true },
@@ -257,46 +320,172 @@ export async function addTourBooking(input: { departureId: string; reservationId
     where: { id: input.reservationId },
     include: { guest: true },
   });
-  if (!reservation || reservation.status !== 'IN_HOUSE') {
-    throw new Error('Guest must be IN_HOUSE');
+  const allowedStatuses =
+    policy.chargeMode === 'CHARGE_ON_ADD' ? ['IN_HOUSE'] : ['CONFIRMED', 'IN_HOUSE'];
+  if (!reservation || !allowedStatuses.includes(reservation.status)) {
+    throw new Error(
+      policy.chargeMode === 'CHARGE_ON_ADD'
+        ? 'Guest must be IN_HOUSE'
+        : 'Guest must be CONFIRMED or IN_HOUSE',
+    );
   }
 
-  const live = departure.bookings.filter((b) => b.status === 'CHARGED' || b.status === 'PAID').length;
-  if (live >= seatCap(departure)) throw new Error('Tour is full');
+  const cap = seatCap(departure);
+  const live = countLive(departure.bookings);
+  if (!policy.allowOverbook && live >= cap) throw new Error('Tour is full');
+  if (policy.chargeMode === 'CHARGE_ON_ADD' && live >= cap) throw new Error('Tour is full');
 
   const dup = departure.bookings.find(
     (b) => b.reservationId === input.reservationId && b.status !== 'CANCELLED',
   );
   if (dup) throw new Error('Guest is already on this departure');
 
-  const revenue = await tourRevenue();
-  const charge = await postCharge({
-    reservationId: reservation.id,
-    revenueCodeId: revenue.id,
-    amount: decimalToNumber(departure.price),
-    description: `Tour: ${departure.agenda || departure.date.toISOString().slice(0, 10)}`,
-  });
+  if (policy.chargeMode === 'CHARGE_ON_ADD') {
+    const charge = await postTourCharge(reservation.id, departure);
+    return prisma.tourBooking.create({
+      data: {
+        departureId: departure.id,
+        reservationId: reservation.id,
+        guestId: reservation.guestId,
+        folioChargeId: charge.id,
+        status: 'CHARGED',
+        notes: input.notes,
+      },
+      include: { reservation: { include: { guest: true, room: true } } },
+    });
+  }
 
   return prisma.tourBooking.create({
     data: {
       departureId: departure.id,
       reservationId: reservation.id,
       guestId: reservation.guestId,
-      folioChargeId: charge.id,
-      status: 'CHARGED',
+      status: 'RESERVED',
       notes: input.notes,
     },
     include: { reservation: { include: { guest: true, room: true } } },
   });
 }
 
-export async function removeTourBooking(id: string) {
+export async function markTourBoarded(bookingId: string) {
+  const booking = await prisma.tourBooking.findUnique({
+    where: { id: bookingId },
+    include: {
+      departure: { include: { vehicle: true, bookings: true } },
+      reservation: true,
+    },
+  });
+  if (!booking) throw new Error('Tour booking not found');
+  if (booking.status === 'CANCELLED') throw new Error('Cannot board a cancelled booking');
+  if (BOARDED_STATUSES.includes(booking.status)) return booking;
+  if (booking.status !== 'RESERVED') throw new Error('Booking is not awaiting boarding');
+  if (booking.reservation.status !== 'IN_HOUSE') {
+    throw new Error('Guest must be IN_HOUSE to board');
+  }
+
+  const cap = seatCap(booking.departure);
+  if (countBoarded(booking.departure.bookings) >= cap) {
+    throw new Error('Tour boarding capacity is full');
+  }
+
+  const charge = await postTourCharge(booking.reservationId, booking.departure);
+  return prisma.tourBooking.update({
+    where: { id: bookingId },
+    data: { status: 'CHARGED', folioChargeId: charge.id },
+    include: { reservation: { include: { guest: true, room: true } } },
+  });
+}
+
+export async function closeTourBoarding(departureId: string, boardedBookingIds: string[]) {
+  const policy = await getTourOpsPolicy();
+  const departure = await prisma.tourDeparture.findUnique({
+    where: { id: departureId },
+    include: { vehicle: true, bookings: true },
+  });
+  if (!departure) throw new Error('Tour departure not found');
+  if (['CANCELLED', 'DEPARTED'].includes(departure.status)) {
+    throw new Error('Departure cannot close boarding');
+  }
+
+  const boardedSet = new Set(boardedBookingIds);
+  const cap = seatCap(departure);
+  const alreadyBoarded = countBoarded(departure.bookings);
+  const toBoard = departure.bookings.filter(
+    (b) => b.status === 'RESERVED' && boardedSet.has(b.id),
+  );
+  if (alreadyBoarded + toBoard.length > cap) {
+    throw new Error('Tour boarding capacity is full');
+  }
+
+  const results = [];
+  for (const b of toBoard) {
+    results.push(await markTourBoarded(b.id));
+  }
+
+  if (policy.dropUnboardedOnClose) {
+    const drop = departure.bookings.filter(
+      (b) => b.status === 'RESERVED' && !boardedSet.has(b.id),
+    );
+    for (const b of drop) {
+      await prisma.tourBooking.update({
+        where: { id: b.id },
+        data: { status: 'CANCELLED' },
+      });
+    }
+  }
+
+  await prisma.tourDeparture.update({
+    where: { id: departureId },
+    data: { status: 'CLOSED' },
+  });
+
+  return getTourDeparture(departureId);
+}
+
+/** Cancel / remove. Post-boarding cancel refunds money (void unpaid / refund paid). */
+export async function removeTourBooking(id: string, reason?: string) {
   const booking = await prisma.tourBooking.findUnique({ where: { id } });
   if (!booking) throw new Error('Tour booking not found');
-  if (booking.status === 'PAID') throw new Error('Cannot remove a paid tour booking');
   if (booking.status === 'CANCELLED') return booking;
-  if (booking.folioChargeId) {
-    await voidCharge(booking.folioChargeId, 'Tour booking removed');
+
+  const cancelReason = reason?.trim() || 'Tour booking cancelled';
+
+  if (booking.status === 'RESERVED') {
+    return prisma.tourBooking.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
+  }
+
+  if (booking.status === 'PAID') {
+    if (!booking.folioPaymentId) {
+      throw new Error('Paid tour booking has no payment to refund');
+    }
+    await refundFolioPayment({
+      paymentId: booking.folioPaymentId,
+      reason: cancelReason,
+    });
+    if (booking.folioChargeId) {
+      await voidCharge(booking.folioChargeId, cancelReason);
+    }
+    return prisma.tourBooking.update({
+      where: { id },
+      data: { status: 'CANCELLED', folioChargeId: null, folioPaymentId: null },
+    });
+  }
+
+  if (booking.status === 'ON_CITY_LEDGER') {
+    if (booking.folioChargeId) {
+      await voidCharge(booking.folioChargeId, cancelReason);
+    }
+    return prisma.tourBooking.update({
+      where: { id },
+      data: { status: 'CANCELLED', folioChargeId: null, folioPaymentId: null },
+    });
+  }
+
+  if (booking.status === 'CHARGED' && booking.folioChargeId) {
+    await voidCharge(booking.folioChargeId, cancelReason);
   }
   return prisma.tourBooking.update({
     where: { id },
@@ -350,6 +539,7 @@ export async function payTourBooking(
   paymentMethod: PaymentMethod,
   createdByUserId?: string,
   auditRequest?: Request,
+  bankTerminalId?: string,
 ) {
   const booking = await prisma.tourBooking.findUnique({ where: { id } });
   if (!booking) throw new Error('Tour booking not found');
@@ -360,7 +550,7 @@ export async function payTourBooking(
   return payFolioCharge(
     booking.folioChargeId,
     paymentMethod,
-    undefined,
+    bankTerminalId,
     createdByUserId,
     auditRequest,
   );
@@ -390,12 +580,20 @@ export async function getTourManifestPrint(id: string) {
   return getTourDeparture(id);
 }
 
-
-export async function listInHouseForTour() {
+/** Eligible stays for tour roster autocomplete. */
+export async function listEligibleStaysForTour() {
+  const policy = await getTourOpsPolicy();
+  const statuses =
+    policy.chargeMode === 'CHARGE_ON_ADD' ? (['IN_HOUSE'] as const) : (['CONFIRMED', 'IN_HOUSE'] as const);
   return prisma.reservation.findMany({
-    where: { status: 'IN_HOUSE' },
+    where: { status: { in: [...statuses] } },
     include: { guest: true, room: true },
     orderBy: { createdAt: 'desc' },
     take: 200,
   });
+}
+
+/** @deprecated use listEligibleStaysForTour */
+export async function listInHouseForTour() {
+  return listEligibleStaysForTour();
 }

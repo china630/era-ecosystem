@@ -3,6 +3,8 @@ import {
   contractCounterpartyType,
   contractsForSource,
   fksFromSalesContract,
+  defaultRoomPayerFromContract,
+  defaultsFromSalesContract,
   inferSourceKindFromAgency,
   isManualFoSourceKind,
   isOtaAgency,
@@ -87,6 +89,24 @@ describe('contractsForSource', () => {
   it('a company contract does not clear the agency', () => {
     expect(fksFromSalesContract(corp)).toEqual({ agencyId: undefined, companyId: 'co-1' });
     expect(fksFromSalesContract(agency)).toEqual({ agencyId: 'ag-1', companyId: undefined });
+  });
+
+  it('defaults room payer from contract (corp→COMPANY, agency→GUEST on create)', () => {
+    expect(defaultRoomPayerFromContract(corp)).toBe('COMPANY');
+    expect(defaultRoomPayerFromContract(agency)).toBe('GUEST');
+    expect(
+      defaultsFromSalesContract({ ...corp, commissionBasis: 'NET' }),
+    ).toEqual({
+      agencyId: undefined,
+      companyId: 'co-1',
+      roomPayer: 'COMPANY',
+      commissionBasis: 'NET',
+    });
+    // Agency pick must not wipe a desk-chosen AGENCY payer — only FKs/basis.
+    expect(defaultsFromSalesContract(agency)).toEqual({
+      agencyId: 'ag-1',
+      companyId: undefined,
+    });
   });
 
   it('walk-in drops a travel agent, a company source keeps both profiles', () => {

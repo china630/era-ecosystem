@@ -36,14 +36,30 @@ function bridgeHeaders(organizationId?: string): Record<string, string> {
   return headers;
 }
 
-function pmsBaseUrl(): string | null {
+async function pmsBaseUrl(organizationId?: string): Promise<string | null> {
+  if (process.env.FB_POS_PMS_STUB === "1") return null;
+  const org = organizationId?.trim();
+  if (org) {
+    try {
+      const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
+        "@era/satellite-kit"
+      );
+      const peer = await resolvePeerSatelliteBaseUrl({
+        organizationId: org,
+        satelliteKey: PEER_SATELLITE_HOTEL,
+      });
+      return peer.baseUrl;
+    } catch {
+      /* env bootstrap below */
+    }
+  }
   const url = process.env.HOTEL_PMS_URL ?? process.env.PMS_BRIDGE_URL;
   if (!url?.trim()) return null;
   return url.replace(/\/$/, "");
 }
 
 export function isPmsStubMode(): boolean {
-  return !pmsBaseUrl() || process.env.FB_POS_PMS_STUB === "1";
+  return process.env.FB_POS_PMS_STUB === "1";
 }
 
 export async function postRoomCharge(
@@ -72,12 +88,14 @@ export async function postRoomCharge(
   ]);
   const hotelOrg = policy.hubOrganizationId?.trim() || mode.parentOrgId?.trim() || "";
   if (!hotelOrg) throw new Error("hotelOrganizationId required for hotel room charge");
+  const base = await pmsBaseUrl(hotelOrg);
+  if (!base) throw new Error("Hotel PMS peer URL is not configured");
   const headers: Record<string, string> = {
     ...bridgeHeaders(hotelOrg || undefined),
   };
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
 
-  const res = await fetch(`${pmsBaseUrl()}/api/pos/room-charge`, {
+  const res = await fetch(`${base}/api/pos/room-charge`, {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -103,7 +121,8 @@ export async function fetchGuestEntitlements(input: {
   if (isPmsStubMode()) {
     return { found: true, breakfastIncluded: true, mealPlanCode: 'BB', allInclusive: false };
   }
-  const base = pmsBaseUrl();
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const base = await pmsBaseUrl(requestOrganizationId());
   if (!base) return null;
   const q = new URLSearchParams();
   if (input.roomNumber) q.set('roomNumber', input.roomNumber);
@@ -128,8 +147,11 @@ export async function listInHouseGuests(query?: string): Promise<InHouseGuest[]>
     ];
   }
 
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const base = await pmsBaseUrl(requestOrganizationId());
+  if (!base) return [];
   const params = query ? `?query=${encodeURIComponent(query)}` : "";
-  const res = await fetch(`${pmsBaseUrl()}/api/pms/in-house${params}`, {
+  const res = await fetch(`${base}/api/pms/in-house${params}`, {
     headers: bridgeHeaders(),
     cache: "no-store",
   });
@@ -148,7 +170,9 @@ export async function reportPosShiftStatus(payload: {
   const { requestOrganizationId } = await import("@/lib/request-organization");
   const { resolveCatalogOrganizationId } = await import("@era/satellite-kit");
   const organizationId = await resolveCatalogOrganizationId(requestOrganizationId());
-  const res = await fetch(`${pmsBaseUrl()}/api/pms/pos-shift-status`, {
+  const base = await pmsBaseUrl(organizationId);
+  if (!base) throw new Error("Hotel PMS peer URL is not configured");
+  const res = await fetch(`${base}/api/pms/pos-shift-status`, {
     method: "PUT",
     headers: bridgeHeaders(organizationId),
     body: JSON.stringify(payload),
@@ -190,7 +214,8 @@ export async function listActiveBanquets(): Promise<ActiveBanquetEvent[]> {
     ];
   }
 
-  const base = pmsBaseUrl();
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const base = await pmsBaseUrl(requestOrganizationId());
   if (!base) return [];
 
   const today = todayBakuYmd();

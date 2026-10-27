@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
@@ -13,7 +13,7 @@ import {
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
-import { formatLaundryPieces, type LaundryLineView } from '@/lib/laundry-pieces';
+import { formatLaundryPieces, laundryTicketAmount, type LaundryLineView } from '@/lib/laundry-pieces';
 
 type Item = { id: string; code: string; name: string; washPrice: number; ironPrice: number };
 type Stay = {
@@ -31,8 +31,13 @@ type Ticket = {
   createdAt?: string;
   dueAt: string | null;
   folioChargeId: string | null;
+  express?: boolean;
   lines?: LaundryLineView[];
 };
+
+function money(n: number) {
+  return `${n.toFixed(2)} AZN`;
+}
 
 export default function HkLaundryPage() {
   const t = useTranslations('housekeeping');
@@ -43,6 +48,7 @@ export default function HkLaundryPage() {
   const [roomId, setRoomId] = useState('');
   const [express, setExpress] = useState(false);
   const [expressEnabled, setExpressEnabled] = useState(false);
+  const [expressPercent, setExpressPercent] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
@@ -59,6 +65,9 @@ export default function HkLaundryPage() {
     setStays(json.stays ?? []);
     setTickets(json.tickets ?? []);
     setExpressEnabled(Boolean(json.laundryExpressEnabled));
+    setExpressPercent(
+      typeof json.laundryExpressPercent === 'number' ? json.laundryExpressPercent : null,
+    );
   }, [tc]);
 
   useEffect(() => {
@@ -82,6 +91,34 @@ export default function HkLaundryPage() {
       },
     }));
   }
+
+  function lineSum(item: Item, key: 'wash' | 'iron') {
+    const count = qty[item.id]?.[key] ?? 0;
+    const price = key === 'wash' ? item.washPrice : item.ironPrice;
+    return Math.round(count * price * 100) / 100;
+  }
+
+  const totals = useMemo(() => {
+    let washQty = 0;
+    let ironQty = 0;
+    let washSum = 0;
+    let ironSum = 0;
+    for (const item of items) {
+      const w = qty[item.id]?.wash ?? 0;
+      const i = qty[item.id]?.iron ?? 0;
+      washQty += w;
+      ironQty += i;
+      washSum += w * item.washPrice;
+      ironSum += i * item.ironPrice;
+    }
+    washSum = Math.round(washSum * 100) / 100;
+    ironSum = Math.round(ironSum * 100) / 100;
+    let grand = Math.round((washSum + ironSum) * 100) / 100;
+    if (express && expressPercent && expressPercent > 0) {
+      grand = Math.round(grand * (1 + expressPercent / 100) * 100) / 100;
+    }
+    return { washQty, ironQty, washSum, ironSum, grand };
+  }, [items, qty, express, expressPercent]);
 
   function closeModal() {
     setOpen(false);
@@ -141,6 +178,40 @@ export default function HkLaundryPage() {
     }
   }
 
+  async function voidTicket(tk: Ticket) {
+    const res = await fetch('/api/housekeeping/laundry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ voidTicketId: tk.id }),
+    });
+    if (!res.ok) showApiError(await res.json(), tc('failed'));
+    else {
+      showSuccess(tc('saved'));
+      await load();
+    }
+  }
+
+  function ticketAmount(tk: Ticket) {
+    return laundryTicketAmount(tk.lines, {
+      express: Boolean(tk.express),
+      expressPercent,
+    });
+  }
+
+  function qtyCell(id: string, key: 'wash' | 'iron') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(id, key, -1)}>
+          −
+        </button>
+        <span className="w-6 text-center">{qty[id]?.[key] ?? 0}</span>
+        <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(id, key, 1)}>
+          +
+        </button>
+      </span>
+    );
+  }
+
   return (
     <>
       <PageHeader
@@ -162,6 +233,11 @@ export default function HkLaundryPage() {
           },
           { key: 'pieces', header: t('laundryPieces'), render: (tk) => pieces(tk) },
           {
+            key: 'amount',
+            header: tc('amount'),
+            render: (tk) => `${ticketAmount(tk).toFixed(2)} AZN`,
+          },
+          {
             key: 'actions',
             header: tc('actions'),
             render: (tk) =>
@@ -182,6 +258,9 @@ export default function HkLaundryPage() {
                   <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void deliver(tk)}>
                     {t('deliverLaundry')}
                   </button>
+                  <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void voidTicket(tk)}>
+                    {t('voidLaundryTicket')}
+                  </button>
                 </span>
               ) : (
                 '—'
@@ -197,7 +276,7 @@ export default function HkLaundryPage() {
         open={open}
         title={t('addLaundry')}
         onClose={closeModal}
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-5xl"
         footer={
           <EraModalFooter
             formId="laundry-intake"
@@ -237,46 +316,54 @@ export default function HkLaundryPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-                  <th className="px-3 py-2">{t('laundryPieces')}</th>
-                  <th className="px-3 py-2">{t('laundryWash')}</th>
-                  <th className="px-3 py-2">{t('laundryIron')}</th>
+                  <th className="px-2 py-2">{t('laundryPieces')}</th>
+                  <th className="px-2 py-2">{t('laundryWash')}</th>
+                  <th className="px-2 py-2">{t('laundryWashPrice')}</th>
+                  <th className="px-2 py-2">{t('laundryWashSum')}</th>
+                  <th className="px-2 py-2">{t('laundryIron')}</th>
+                  <th className="px-2 py-2">{t('laundryIronPrice')}</th>
+                  <th className="px-2 py-2">{t('laundryIronSum')}</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((i) => (
-                  <tr key={i.id} className="border-b border-[#ECF0F1]">
-                    <td className="px-3 py-2">
-                      {i.name}
-                      <span className="ml-2 text-[12px] text-[#7F8C8D]">
-                        {i.washPrice}/{i.ironPrice}
-                      </span>
+                {items.length === 0 ? (
+                  <tr>
+                    <td className="px-2 py-3 text-[#7F8C8D]" colSpan={7}>
+                      {t('laundryCatalogEmpty')}
                     </td>
-                    {(['wash', 'iron'] as const).map((k) => (
-                      <td key={k} className="px-3 py-2">
-                        <span className="inline-flex items-center gap-1">
-                          <button
-                            type="button"
-                            className="h-6 w-6 rounded border border-[#D5DADF]"
-                            onClick={() => bump(i.id, k, -1)}
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center">{qty[i.id]?.[k] ?? 0}</span>
-                          <button
-                            type="button"
-                            className="h-6 w-6 rounded border border-[#D5DADF]"
-                            onClick={() => bump(i.id, k, 1)}
-                          >
-                            +
-                          </button>
-                        </span>
-                      </td>
-                    ))}
                   </tr>
-                ))}
+                ) : (
+                  items.map((i) => (
+                    <tr key={i.id} className="border-b border-[#ECF0F1]">
+                      <td className="px-2 py-2 font-medium">{i.name}</td>
+                      <td className="px-2 py-2">{qtyCell(i.id, 'wash')}</td>
+                      <td className="px-2 py-2 text-[#7F8C8D]">{money(i.washPrice)}</td>
+                      <td className="px-2 py-2">{money(lineSum(i, 'wash'))}</td>
+                      <td className="px-2 py-2">{qtyCell(i.id, 'iron')}</td>
+                      <td className="px-2 py-2 text-[#7F8C8D]">{money(i.ironPrice)}</td>
+                      <td className="px-2 py-2">{money(lineSum(i, 'iron'))}</td>
+                    </tr>
+                  ))
+                )}
+                <tr className="border-t border-[#D5DADF] bg-[#F8FAFB] font-medium">
+                  <td className="px-2 py-2">{t('laundryTotalRow')}</td>
+                  <td className="px-2 py-2">{totals.washQty}</td>
+                  <td className="px-2 py-2">—</td>
+                  <td className="px-2 py-2">{money(totals.washSum)}</td>
+                  <td className="px-2 py-2">{totals.ironQty}</td>
+                  <td className="px-2 py-2">—</td>
+                  <td className="px-2 py-2">{money(totals.ironSum)}</td>
+                </tr>
               </tbody>
             </table>
           </div>
+          <p className="text-sm font-semibold text-[#34495E]">
+            {t('laundryGrandTotal')}: {money(totals.grand)}
+            {express && expressPercent && expressPercent > 0
+              ? ` (${t('express')} +${expressPercent}%)`
+              : ''}
+          </p>
+          <p className="text-xs text-[#7F8C8D]">{t('laundryPreviewHint')}</p>
         </form>
       </EraModal>
     </>

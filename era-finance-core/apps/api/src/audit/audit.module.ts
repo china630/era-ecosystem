@@ -5,7 +5,7 @@ import { ActivityStreamModule } from "../activity-stream/activity-stream.module"
 import { PrismaModule } from "../prisma/prisma.module";
 import { AuditArchiveQueueService } from "./audit-archive.queue";
 import { AuditArchiveWorker } from "./audit-archive.worker";
-import { AuditController } from "./audit.controller";
+import { AdminMutationAuditController } from "../admin/admin-mutation-audit.controller";
 import { AuditMutationInterceptor } from "./audit-mutation.interceptor";
 import { DataMaskingService } from "../privacy/data-masking.service";
 import { AuditService } from "./audit.service";
@@ -13,7 +13,7 @@ import { AuditChainCronService } from "./audit-chain-cron.service";
 
 @Module({
   imports: [PrismaModule, ConfigModule, ActivityStreamModule],
-  controllers: [AuditController],
+  controllers: [AdminMutationAuditController],
   providers: [
     DataMaskingService,
     AuditService,

@@ -544,10 +544,27 @@ export class SatelliteEventDispatchService {
     if (!partyId || !partyCode) {
       throw new Error("City ledger snapshot needs an agency or a company");
     }
-    const counterpartyId = await this.resolveCounterpartyId(
-      organizationId,
-      event.payload.financeCounterpartyId ?? event.payload.agencyId,
-    );
+    const partyKind =
+      event.payload.partyKind ??
+      (event.payload.companyId ? ("COMPANY" as const) : ("AGENCY" as const));
+    // Do not fall back to the first org counterparty — wrong AR link is worse than null.
+    let counterpartyId: string | null = null;
+    if (event.payload.financeCounterpartyId) {
+      const cp = await this.prisma.counterparty.findFirst({
+        where: {
+          id: event.payload.financeCounterpartyId,
+          organizationId,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      counterpartyId = cp?.id ?? null;
+    }
+    if (!counterpartyId) {
+      this.logger.warn(
+        `City ledger snapshot party=${partyCode}: no Finance counterparty link (financeCounterpartyId missing or unknown)`,
+      );
+    }
     const snapshot = await this.prisma.agencyCityLedgerSnapshot.create({
       data: {
         organizationId,
@@ -563,12 +580,13 @@ export class SatelliteEventDispatchService {
       },
     });
     this.logger.log(
-      `City ledger snapshot persisted id=${snapshot.id} party=${partyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
+      `City ledger snapshot persisted id=${snapshot.id} partyKind=${partyKind} party=${partyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
     );
-    const partyLabel = event.payload.companyId ? "company" : "agency";
+    const partyLabel = partyKind === "COMPANY" ? "company" : "agency";
     return {
       meta: {
         snapshotId: snapshot.id,
+        partyKind,
         agencyId: event.payload.agencyId,
         agencyCode: event.payload.agencyCode,
         companyId: event.payload.companyId,

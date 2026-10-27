@@ -664,7 +664,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/admin/user-logins", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
   { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
-  { prefix: "/api/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
+  { prefix: "/api/admin/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
 ];
 

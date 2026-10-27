@@ -5,7 +5,8 @@
 | Подход | Nafta | Комментарий |
 |--------|-------|-------------|
 | **Мастер в fb-pos** | Да v1 | PLU, цены, категории |
-| Синхрон из ERP | Фаза 2 | Import products/recipes |
+| Cutover Excel `#30`/`#31` | Да | EN headers; category `Revenue Code` (41xx); dish `Finance SKU` + `Recipe SKU` (BOM SoT = Finance) |
+| Синхрон из ERP | Фаза 2 | Full recipe lines stay in Finance |
 | Синхрон из hotel-pms | Нет | Только revenue codes согласованы |
 
 Revenue codes `FOOD`, `BAR` — те же коды, что в PMS master ([09-master-data.md](../clone-spec/09-master-data.md)), маппинг GL в Finance.
@@ -32,6 +33,7 @@ Revenue codes `FOOD`, `BAR` — те же коды, что в PMS master ([09-ma
 | Categories | Modal CRUD, sort order (`/admin/menu`) |
 | Items | Modal CRUD: price, recipeSku, imageUrl, active; price history journal |
 | Tables | Modal CRUD `/admin/tables` — static codes per outlet |
+| Buffet planner | Module `fnb_buffet_planner` — `/admin/buffet` per-outlet meal plans; publish merges into daily board |
 | Recipes / BOM | Finance Manufacturing — FnB stores `recipeSku` + deep-link only |
 | Modifiers | groups, min/max select (later) |
 | Combos | Фаза 2 |

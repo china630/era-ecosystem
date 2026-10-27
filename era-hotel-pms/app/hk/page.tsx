@@ -160,9 +160,10 @@ export default function HousekeepingPage() {
     return true;
   }
 
-  const visibleSheet = sheetRows.filter((row) =>
-    matches(row, readOnly ? undefined : openTaskByRoom.get(row.roomId)),
-  );
+  // Soft priority comes from the sheet API (departure → VIP → needed-by → dirty → duty → room#).
+  const visibleSheet = useMemo(() => {
+    return sheetRows.filter((row) => matches(row, readOnly ? undefined : openTaskByRoom.get(row.roomId)));
+  }, [sheetRows, filter, readOnly, openTaskByRoom]);
 
   const counts = useMemo(() => {
     const base = { all: sheetRows.length, pending: 0, dirty: 0, inspect: 0 };
@@ -325,9 +326,10 @@ export default function HousekeepingPage() {
                 t('colDepart'),
                 t('neededBy'),
                 t('outcome'),
+                tc('actions'),
               ].map((label, index) => (
                 <th
-                  key={label}
+                  key={`${label}-${index}`}
                   className={`sticky top-0 z-20 border-b border-[#D5DADF] bg-white px-1 py-2 ${
                     index === 0 ? 'left-0 z-30' : ''
                   }`}
@@ -340,7 +342,7 @@ export default function HousekeepingPage() {
           <tbody>
             {visibleSheet.length === 0 ? (
               <tr>
-                <td colSpan={12} className="py-3 text-[#7F8C8D]">
+                <td colSpan={13} className="py-3 text-[#7F8C8D]">
                   {sheetRows.length === 0 ? t('sheetEmpty') : t('sheetEmptyFocus')}
                 </td>
               </tr>
@@ -400,53 +402,65 @@ export default function HousekeepingPage() {
                       }}
                     />
                   </td>
-                  <td className="px-1 py-1">
-                    <div className="flex flex-wrap items-center gap-1 [&_label]:sr-only">
-                      {row.reservationId ? (
-                        <div className="w-28">
-                          <CatalogField
-                            kind="CLOSED_SMALL"
-                            label={t('outcome')}
-                            value={String(row.visitOutcome ?? '')}
-                            disabled={readOnly}
-                            onChange={(v) => {
-                              const next = String(v ?? '');
-                              void fetch('/api/housekeeping/outcome', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(
-                                  next
-                                    ? { roomId: row.roomId, date: sheetDate, outcome: next }
-                                    : { roomId: row.roomId, date: sheetDate, clear: true },
-                                ),
-                              }).then(() => load());
-                            }}
-                            options={OUTCOMES.map((code) => ({
-                              value: code,
-                              label: code === 'REFUSED' ? t('refused') : code,
-                            }))}
-                          />
+                  <td className="px-1 py-1 align-middle">
+                    {row.reservationId ? (
+                      <div className="w-[4.5rem]">
+                        <CatalogField
+                          kind="CLOSED_SMALL"
+                          className="!space-y-0 [&_label]:sr-only [&_select]:h-7 [&_select]:min-h-0 [&_select]:py-0 [&_select]:text-[11px] [&_select]:leading-tight"
+                          label={t('outcome')}
+                          value={String(row.visitOutcome ?? '')}
+                          disabled={readOnly}
+                          onChange={(v) => {
+                            const next = String(v ?? '');
+                            void fetch('/api/housekeeping/outcome', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(
+                                next
+                                  ? { roomId: row.roomId, date: sheetDate, outcome: next }
+                                  : { roomId: row.roomId, date: sheetDate, clear: true },
+                              ),
+                            }).then(() => load());
+                          }}
+                          options={OUTCOMES.map((code) => ({
+                            value: code,
+                            label: code === 'REFUSED' ? t('refused') : code,
+                          }))}
+                        />
+                      </div>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="px-1 py-1 align-middle">
+                    {(() => {
+                      const canComplete = Boolean(task && can(PERMISSIONS.HOUSEKEEPING_MANAGE));
+                      const canInspect = !readOnly && vacantClean && can(PERMISSIONS.ROOMS_STATUS);
+                      if (!canComplete && !canInspect) return '—';
+                      return (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {canComplete && task ? (
+                            <button
+                              type="button"
+                              className="shrink-0 rounded border border-[#D5DADF] bg-white px-1.5 py-0.5 text-[11px] leading-none text-[#34495E]"
+                              onClick={() => completeTask(task.id)}
+                            >
+                              {t('completeClean')}
+                            </button>
+                          ) : null}
+                          {canInspect ? (
+                            <button
+                              type="button"
+                              className="shrink-0 rounded border border-[#D5DADF] bg-white px-1.5 py-0.5 text-[11px] leading-none text-[#34495E]"
+                              onClick={() => markInspected(row.roomId, row.roomNumber)}
+                            >
+                              {t('inspectAction')}
+                            </button>
+                          ) : null}
                         </div>
-                      ) : null}
-                      {task && can(PERMISSIONS.HOUSEKEEPING_MANAGE) ? (
-                        <button
-                          type="button"
-                          className="shrink-0 rounded border border-[#D5DADF] bg-white px-1.5 py-0.5 text-[11px] leading-none text-[#34495E]"
-                          onClick={() => completeTask(task.id)}
-                        >
-                          {t('completeClean')}
-                        </button>
-                      ) : null}
-                      {!readOnly && vacantClean && can(PERMISSIONS.ROOMS_STATUS) ? (
-                        <button
-                          type="button"
-                          className="shrink-0 rounded border border-[#D5DADF] bg-white px-1.5 py-0.5 text-[11px] leading-none text-[#34495E]"
-                          onClick={() => markInspected(row.roomId, row.roomNumber)}
-                        >
-                          {t('inspectAction')}
-                        </button>
-                      ) : null}
-                    </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

@@ -22,10 +22,21 @@ export class AdminAuditLogsQueryDto {
   @IsString()
   entityId?: string;
 
+  /** Prefer dateFrom (YYYY-MM-DD Baku). Legacy `from` still accepted. */
+  @IsOptional()
+  @IsString()
+  dateFrom?: string;
+
+  @IsOptional()
+  @IsString()
+  dateTo?: string;
+
+  /** @deprecated use dateFrom */
   @IsOptional()
   @IsString()
   from?: string;
 
+  /** @deprecated use dateTo */
   @IsOptional()
   @IsString()
   to?: string;

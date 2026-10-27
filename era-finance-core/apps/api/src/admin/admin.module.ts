@@ -2,7 +2,7 @@ import { Module, forwardRef } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
-import { AdminAuditLogsController } from "./admin-audit-logs.controller";
+import { AdminSecurityAuditController } from "./admin-security-audit.controller";
 import { AdminController } from "./admin.controller";
 import { AdminCatalogService } from "./admin-catalog.service";
 import { AdminService } from "./admin.service";
@@ -14,7 +14,7 @@ import { PublicTranslationsController } from "./public-translations.controller";
   imports: [PrismaModule, SystemConfigModule, forwardRef(() => AuthModule)],
   controllers: [
     AdminController,
-    AdminAuditLogsController,
+    AdminSecurityAuditController,
     PublicTranslationsController,
   ],
   providers: [AdminService, AdminCatalogService, AdminAuditLogsService, PricingService],

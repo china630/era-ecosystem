@@ -86,6 +86,12 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.SCREEN_REPORTS),
     },
     {
+      href: '/front-cash/unsettled-departures',
+      labelKey: 'unsettledDepartures',
+      icon: ClipboardList,
+      show: can(PERMISSIONS.SCREEN_REPORTS),
+    },
+    {
       href: '/reports/reconciliation',
       labelKey: 'reconciliation',
       icon: Activity,

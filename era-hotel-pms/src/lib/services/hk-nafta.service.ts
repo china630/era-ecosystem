@@ -13,6 +13,7 @@ import {
   laundryIntakeBlockReason as laundryWindowBlock,
   neededByBakuToUtc,
 } from '@/lib/services/laundry-windows';
+import { compareFloorSheetRows } from '@/lib/hk-sheet-sort';
 
 export const DEFAULT_FLOOR_PAIRS = [
   [2, 3],
@@ -422,20 +423,7 @@ export async function generateFloorSheet(workDateIso: string, floor: number) {
       reservationId: stay?.id ?? null,
     };
   });
-  const rank = (duty: string) =>
-    duty === 'DEPARTURE' ? 0 : duty === 'DEEP' ? 1 : duty === 'LINEN' ? 2 : duty === 'ARRIVAL_PREP' ? 3 : 4;
-  return rows.sort((a, b) => {
-    if (a.jobDuty === 'DEPARTURE' && b.jobDuty !== 'DEPARTURE') return -1;
-    if (b.jobDuty === 'DEPARTURE' && a.jobDuty !== 'DEPARTURE') return 1;
-    const vip = Number(Boolean(b.vip)) - Number(Boolean(a.vip));
-    if (vip !== 0) return vip;
-    const na = a.neededByAt ? new Date(a.neededByAt).getTime() : Number.POSITIVE_INFINITY;
-    const nb = b.neededByAt ? new Date(b.neededByAt).getTime() : Number.POSITIVE_INFINITY;
-    if (na !== nb) return na - nb;
-    const dirty = Number(b.hkCondition === 'DIRTY') - Number(a.hkCondition === 'DIRTY');
-    if (dirty !== 0) return dirty;
-    return rank(String(a.jobDuty)) - rank(String(b.jobDuty));
-  });
+  return rows.sort(compareFloorSheetRows);
 }
 
 export async function generateAllFloorSheets(workDateIso: string) {
@@ -1043,8 +1031,10 @@ export async function voidLaundryForCharge(chargeId: string) {
 export class LaundryOpenError extends Error {
   status = 409;
   code = 'LAUNDRY_OPEN' as const;
-  tickets: Array<{ id: string; guestName: string; dueAt: Date | null }>;
-  constructor(tickets: Array<{ id: string; guestName: string; dueAt: Date | null }>) {
+  tickets: Array<{ id: string; guestName: string; roomNumber: string | null; dueAt: Date | null }>;
+  constructor(
+    tickets: Array<{ id: string; guestName: string; roomNumber: string | null; dueAt: Date | null }>,
+  ) {
     super('Open laundry tickets block check-out');
     this.tickets = tickets;
   }
@@ -1053,9 +1043,33 @@ export class LaundryOpenError extends Error {
 export async function assertNoOpenLaundry(reservationId: string) {
   const open = await prisma.laundryTicket.findMany({
     where: { reservationId, status: 'IN_PLANT' },
-    select: { id: true, guestName: true, dueAt: true },
+    select: { id: true, guestName: true, dueAt: true, roomId: true },
   });
-  if (open.length > 0) throw new LaundryOpenError(open);
+  if (open.length === 0) return;
+  const rooms = await prisma.room.findMany({
+    where: { id: { in: open.map((t) => t.roomId) } },
+    select: { id: true, roomNumber: true },
+  });
+  const num = new Map(rooms.map((r) => [r.id, r.roomNumber]));
+  throw new LaundryOpenError(
+    open.map((t) => ({
+      id: t.id,
+      guestName: t.guestName,
+      roomNumber: num.get(t.roomId) ?? null,
+      dueAt: t.dueAt,
+    })),
+  );
+}
+
+/** Cancel an IN_PLANT ticket before Delivered (no folio charge yet). */
+export async function voidOpenLaundryTicket(ticketId: string) {
+  const ticket = await prisma.laundryTicket.findUnique({ where: { id: ticketId } });
+  if (!ticket) throw new Error('Laundry ticket not found');
+  if (ticket.status !== 'IN_PLANT') throw new Error('Only IN_PLANT tickets can be voided here');
+  return prisma.laundryTicket.update({
+    where: { id: ticketId },
+    data: { status: 'VOIDED', folioChargeId: null },
+  });
 }
 
 export async function saveStayLinenOverride(

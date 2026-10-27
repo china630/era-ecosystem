@@ -1,9 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -15,10 +14,13 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   DatePicker,
   EraListFilterBar,
+  EraMenu,
+  EraMenuItem,
   useDebouncedValue,
   Field,
   FieldRow,
   FORM_STACK_CLASS,
+  GHOST_BUTTON_CLASS,
   MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -53,6 +55,7 @@ type Contract = {
   validFrom: string;
   validTo: string | null;
   commissionPercent: number | string | null;
+  commissionBasis: 'GROSS' | 'NET' | string;
   depositRequired: boolean;
   depositAmount: number | string | null;
   notes: string | null;
@@ -89,6 +92,7 @@ function emptyContractForm() {
     validFrom: '',
     validTo: '',
     commissionPercent: '',
+    commissionBasis: 'GROSS' as 'GROSS' | 'NET',
     depositRequired: false,
     depositAmount: '',
     notes: '',
@@ -140,6 +144,9 @@ export default function SalesContractsPage() {
   const [form, setForm] = useState(emptyContractForm);
   const [allotForm, setAllotForm] = useState(emptyAllotmentForm);
   const [q, setQ] = useState('');
+  const [filterType, setFilterType] = useState<'ALL' | CounterpartyType>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | string>('ALL');
+  const [draftTouched, setDraftTouched] = useState(false);
   const debouncedQ = useDebouncedValue(q, 300);
 
   const agencyOptions = useMemo(
@@ -201,18 +208,52 @@ export default function SalesContractsPage() {
 
   const filteredContracts = useMemo(() => {
     const needle = debouncedQ.trim().toLowerCase();
-    if (!needle) return contracts;
-    return contracts.filter(
-      (c) =>
+    return contracts.filter((c) => {
+      if (filterType !== 'ALL' && c.counterpartyType !== filterType) return false;
+      if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
+      if (!needle) return true;
+      return (
         c.code.toLowerCase().includes(needle) ||
         c.name.toLowerCase().includes(needle) ||
         (c.agency?.code ?? '').toLowerCase().includes(needle) ||
         (c.agency?.name ?? '').toLowerCase().includes(needle) ||
         (c.company?.code ?? '').toLowerCase().includes(needle) ||
         (c.company?.name ?? '').toLowerCase().includes(needle) ||
-        c.ratePlan.code.toLowerCase().includes(needle),
-    );
-  }, [contracts, debouncedQ]);
+        c.ratePlan.code.toLowerCase().includes(needle)
+      );
+    });
+  }, [contracts, debouncedQ, filterType, filterStatus]);
+
+  function statusLabel(status: string) {
+    if (status === 'DRAFT') return t('statusDraft');
+    if (status === 'ACTIVE') return t('statusActive');
+    if (status === 'EXPIRED') return t('statusExpired');
+    if (status === 'CANCELLED') return t('statusCancelled');
+    return status;
+  }
+
+  function applyDraftCodeName(next: {
+    counterpartyType?: CounterpartyType;
+    agencyId?: string;
+    companyId?: string;
+    ratePlanId?: string;
+  }) {
+    if (editingId || draftTouched) return;
+    const type = next.counterpartyType ?? form.counterpartyType;
+    const agencyId = next.agencyId ?? form.agencyId;
+    const companyId = next.companyId ?? form.companyId;
+    const ratePlanId = next.ratePlanId ?? form.ratePlanId;
+    const party =
+      type === 'CORPORATE'
+        ? companies.find((c) => c.id === companyId)
+        : agencies.find((a) => a.id === agencyId);
+    const rate = ratePlans.find((p) => p.id === ratePlanId);
+    if (!party || !rate) return;
+    const rateShort = rate.code.replace(/[^A-Za-z0-9]+/g, '').slice(0, 12).toUpperCase() || 'RATE';
+    const code = `${party.code}-${rateShort}`.slice(0, 32).toUpperCase();
+    const name = `${party.name} — ${rate.name || rate.code}`;
+    setForm((f) => ({ ...f, code, name }));
+  }
 
   const managedLive = useMemo(() => {
     if (!manageContract) return null;
@@ -232,12 +273,14 @@ export default function SalesContractsPage() {
 
   function openCreate() {
     setEditingId(null);
+    setDraftTouched(false);
     setForm(emptyContractForm());
     setModalOpen(true);
   }
 
   function openEdit(c: Contract) {
     setEditingId(c.id);
+    setDraftTouched(true);
     setForm({
       code: c.code,
       name: c.name,
@@ -251,6 +294,7 @@ export default function SalesContractsPage() {
         c.commissionPercent != null && c.commissionPercent !== ''
           ? String(c.commissionPercent)
           : '',
+      commissionBasis: c.commissionBasis === 'NET' ? 'NET' : 'GROSS',
       depositRequired: Boolean(c.depositRequired),
       depositAmount:
         c.depositAmount != null && c.depositAmount !== '' ? String(c.depositAmount) : '',
@@ -292,6 +336,10 @@ export default function SalesContractsPage() {
   }
 
   function validateForm(): boolean {
+    if (!form.code.trim() || !form.name.trim()) {
+      showApiError({ error: t('codeNameRequired') });
+      return false;
+    }
     if (!form.ratePlanId) {
       showApiError({ error: t('ratePlanRequired') });
       return false;
@@ -314,6 +362,7 @@ export default function SalesContractsPage() {
       ratePlanId: form.ratePlanId,
       validFrom: form.validFrom,
       commissionPercent: form.commissionPercent ? Number(form.commissionPercent) : null,
+      commissionBasis: form.commissionBasis,
       depositRequired: form.depositRequired,
       depositAmount:
         form.depositRequired && form.depositAmount ? Number(form.depositAmount) : null,
@@ -474,12 +523,46 @@ export default function SalesContractsPage() {
       />
       <p className="mb-4 text-xs text-[#7F8C8D]">{t('productNote')}</p>
 
-      <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setQ('')}>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setQ('');
+          setFilterType('ALL');
+          setFilterStatus('ALL');
+        }}
+      >
         <Field
           label={tc('search')}
           preset="longText"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('filterType')}
+          value={filterType}
+          onChange={(v) => {
+            const next = catalogStr(v);
+            setFilterType(next === 'AGENCY' || next === 'CORPORATE' ? next : 'ALL');
+          }}
+          options={[
+            { value: 'ALL', label: t('filterAll') },
+            { value: 'AGENCY', label: t('typeAgency') },
+            { value: 'CORPORATE', label: t('typeCorporate') },
+          ]}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('filterStatus')}
+          value={filterStatus}
+          onChange={(v) => setFilterStatus(catalogStr(v) || 'ALL')}
+          options={[
+            { value: 'ALL', label: t('filterAll') },
+            { value: 'DRAFT', label: t('statusDraft') },
+            { value: 'ACTIVE', label: t('statusActive') },
+            { value: 'EXPIRED', label: t('statusExpired') },
+            { value: 'CANCELLED', label: t('statusCancelled') },
+          ]}
         />
       </EraListFilterBar>
 
@@ -493,6 +576,8 @@ export default function SalesContractsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('counterparty')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('ratePlan')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('validity')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('commissionPercent')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('commissionBasis')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('allotments')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('status')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
@@ -504,7 +589,7 @@ export default function SalesContractsPage() {
                   <td className={DATA_TABLE_TD_CLASS}>{c.code}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{c.name}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <span className="block text-[11px] uppercase text-[#7F8C8D]">
+                    <span className="block text-[11px] text-[#7F8C8D]">
                       {c.counterpartyType === 'CORPORATE' ? t('typeCorporate') : t('typeAgency')}
                     </span>
                     {counterpartyLabel(c)}
@@ -514,10 +599,18 @@ export default function SalesContractsPage() {
                     {bakuDateDisplay(c.validFrom)} —{' '}
                     {c.validTo ? bakuDateDisplay(c.validTo) : '∞'}
                   </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{c.allotments.length}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{c.status}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="flex flex-wrap gap-2">
+                    {c.commissionPercent != null && c.commissionPercent !== ''
+                      ? String(c.commissionPercent)
+                      : '—'}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {c.commissionBasis === 'NET' ? t('basisNet') : t('basisGross')}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{c.allotments.length}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{statusLabel(c.status)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         className={SECONDARY_BUTTON_CLASS}
@@ -525,7 +618,7 @@ export default function SalesContractsPage() {
                       >
                         {tc('edit')}
                       </button>
-                      {c.status === 'DRAFT' && (
+                      {c.status === 'DRAFT' ? (
                         <button
                           type="button"
                           className={SECONDARY_BUTTON_CLASS}
@@ -533,34 +626,40 @@ export default function SalesContractsPage() {
                         >
                           {t('activate')}
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => void showUtilization(c.id)}
+                      ) : null}
+                      <EraMenu
+                        align="right"
+                        trigger={
+                          <button
+                            type="button"
+                            className={GHOST_BUTTON_CLASS}
+                            aria-label={t('moreActions')}
+                          >
+                            <MoreHorizontal className="h-4 w-4" aria-hidden />
+                          </button>
+                        }
                       >
-                        {t('utilization')}
-                      </button>
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => setManageContract(c)}
-                      >
-                        {t('manageAllotments')}
-                      </button>
-                      <Link
-                        href={`/distribution/allotment-blocks?contractId=${encodeURIComponent(c.id)}`}
-                        className={SECONDARY_BUTTON_CLASS}
-                      >
-                        {t('createBlock')}
-                      </Link>
+                        <EraMenuItem onSelect={() => void showUtilization(c.id)}>
+                          {t('utilization')}
+                        </EraMenuItem>
+                        <EraMenuItem onSelect={() => setManageContract(c)}>
+                          {t('manageAllotments')}
+                        </EraMenuItem>
+                        <EraMenuItem
+                          onSelect={() => {
+                            window.location.href = `/distribution/allotment-blocks?contractId=${encodeURIComponent(c.id)}`;
+                          }}
+                        >
+                          {t('createBlock')}
+                        </EraMenuItem>
+                      </EraMenu>
                     </div>
                   </td>
                 </tr>
               ))}
               {filteredContracts.length === 0 && (
                 <tr>
-                  <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                  <td colSpan={10} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
                     {t('empty')}
                   </td>
                 </tr>
@@ -590,24 +689,6 @@ export default function SalesContractsPage() {
         }
       >
         <form id="contract-form" onSubmit={saveContract} className={FORM_STACK_CLASS}>
-          <FieldRow cols={2}>
-            <Field
-              label={t('code')}
-              preset="code"
-              value={form.code}
-              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-              required
-              disabled={Boolean(editingId)}
-            />
-            <Field
-              label={t('name')}
-              preset="shortText"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-          </FieldRow>
-
           <CatalogField
             kind="CLOSED_SMALL"
             label={t('counterpartyType')}
@@ -620,6 +701,11 @@ export default function SalesContractsPage() {
                 agencyId: next === 'CORPORATE' ? '' : f.agencyId,
                 companyId: next === 'AGENCY' ? '' : f.companyId,
               }));
+              applyDraftCodeName({
+                counterpartyType: next,
+                agencyId: next === 'CORPORATE' ? '' : form.agencyId,
+                companyId: next === 'AGENCY' ? '' : form.companyId,
+              });
             }}
             options={[
               { value: 'AGENCY', label: t('typeAgency') },
@@ -632,7 +718,11 @@ export default function SalesContractsPage() {
               kind="SEARCHABLE"
               label={t('agency')}
               value={form.agencyId}
-              onChange={(v) => setForm((f) => ({ ...f, agencyId: catalogStr(v) }))}
+              onChange={(v) => {
+                const agencyId = catalogStr(v);
+                setForm((f) => ({ ...f, agencyId }));
+                applyDraftCodeName({ agencyId });
+              }}
               options={agencyOptions}
               emptyLabel={t('selectAgency')}
               required
@@ -642,7 +732,11 @@ export default function SalesContractsPage() {
               kind="SEARCHABLE"
               label={t('company')}
               value={form.companyId}
-              onChange={(v) => setForm((f) => ({ ...f, companyId: catalogStr(v) }))}
+              onChange={(v) => {
+                const companyId = catalogStr(v);
+                setForm((f) => ({ ...f, companyId }));
+                applyDraftCodeName({ companyId });
+              }}
               options={companyOptions}
               emptyLabel={t('selectCompany')}
               required
@@ -653,7 +747,11 @@ export default function SalesContractsPage() {
             kind="SEARCHABLE"
             label={t('ratePlan')}
             value={form.ratePlanId}
-            onChange={(v) => setForm((f) => ({ ...f, ratePlanId: catalogStr(v) }))}
+            onChange={(v) => {
+              const ratePlanId = catalogStr(v);
+              setForm((f) => ({ ...f, ratePlanId }));
+              applyDraftCodeName({ ratePlanId });
+            }}
             options={ratePlanOptions}
             emptyLabel={t('selectRatePlan')}
             required
@@ -689,15 +787,59 @@ export default function SalesContractsPage() {
               value={form.commissionPercent}
               onChange={(e) => setForm((f) => ({ ...f, commissionPercent: e.target.value }))}
             />
-            <Field
-              label={t('minStay')}
-              preset="count"
-              type="number"
-              min={1}
-              value={form.minStay}
-              onChange={(e) => setForm((f) => ({ ...f, minStay: e.target.value }))}
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('commissionBasis')}
+              value={form.commissionBasis}
+              onChange={(v) =>
+                setForm((f) => ({
+                  ...f,
+                  commissionBasis: catalogStr(v) === 'NET' ? 'NET' : 'GROSS',
+                }))
+              }
+              options={[
+                { value: 'GROSS', label: t('basisGross') },
+                { value: 'NET', label: t('basisNet') },
+              ]}
             />
           </FieldRow>
+          <p className="text-xs text-[#7F8C8D]">
+            {form.commissionBasis === 'NET' ? t('basisNetHint') : t('basisGrossHint')}
+          </p>
+
+          <FieldRow cols={2}>
+            <Field
+              label={t('code')}
+              preset="code"
+              value={form.code}
+              onChange={(e) => {
+                setDraftTouched(true);
+                setForm((f) => ({ ...f, code: e.target.value }));
+              }}
+              required
+              disabled={Boolean(editingId)}
+            />
+            <Field
+              label={t('name')}
+              preset="shortText"
+              value={form.name}
+              onChange={(e) => {
+                setDraftTouched(true);
+                setForm((f) => ({ ...f, name: e.target.value }));
+              }}
+              required
+            />
+          </FieldRow>
+
+          <p className="m-0 text-[12px] font-medium text-[#34495E]">{t('conditions')}</p>
+          <Field
+            label={t('minStay')}
+            preset="count"
+            type="number"
+            min={1}
+            value={form.minStay}
+            onChange={(e) => setForm((f) => ({ ...f, minStay: e.target.value }))}
+          />
 
           <FieldRow cols={2}>
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">

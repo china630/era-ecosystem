@@ -78,6 +78,8 @@ node scripts/quartet-smoke.mjs
 - [x] M11: KDS course timing / fire delay
 - [x] M12: Recipe depletion on ticket close (link Finance manufacturing)
 - [x] M13: Delivery aggregator order inbox
+- [~] M15: Buffet Planner (`fnb_buffet_planner`) — `/admin/buffet` tables+modals, APIs, materials SKU preview, publish→daily board; UAT FB-5 open (API/SCREEN, not SHIPPED). ADR `docs/adr/fnb-buffet-planner.md`
+- [~] FNB-AUD-01: Mutation audit Layer A via `jsonOk` + `/admin/audit` (`HTTP_MUTATION`); UAT open — not SHIPPED. ADR `docs/adr/era-mutation-audit-standard.md`
 
 ## Planned — v1.1
 

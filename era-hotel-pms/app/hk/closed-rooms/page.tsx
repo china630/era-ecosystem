@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
@@ -55,6 +55,9 @@ export default function ClosedRoomsPage() {
     void load();
   }, [load]);
 
+  const ooo = useMemo(() => rows.filter((r) => r.inventoryStatus !== 'OOS'), [rows]);
+  const oos = useMemo(() => rows.filter((r) => r.inventoryStatus === 'OOS'), [rows]);
+
   async function closeRoom(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -95,39 +98,32 @@ export default function ClosedRoomsPage() {
     return value ? String(value).slice(0, 10) : '—';
   }
 
-  return (
-    <>
-      <PageHeader
-        title={t('closedRoomsTitle')}
-        actions={
-          canClose ? (
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
-              {t('closeRoom')}
-            </button>
-          ) : null
-        }
-      />
-      {rows.length === 0 ? <p className="text-sm text-[#7F8C8D]">{t('closedEmpty')}</p> : null}
-      {rows.length > 0 ? (
-        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-                <th className="px-3 py-2">{t('colRoom')}</th>
-                <th className="px-3 py-2">{t('closeKind')}</th>
-                <th className="px-3 py-2">{t('closedFrom')}</th>
-                <th className="px-3 py-2">{t('closedTo')}</th>
-                <th className="px-3 py-2">{t('closedReason')}</th>
-                {canClose ? <th className="px-3 py-2" /> : null}
+  function laneTable(list: Row[], emptyKey: 'closedEmptyOoo' | 'closedEmptyOos') {
+    return (
+      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+              <th className="px-3 py-2">{t('colRoom')}</th>
+              <th className="px-3 py-2">{t('closedFrom')}</th>
+              <th className="px-3 py-2">{t('closedTo')}</th>
+              <th className="px-3 py-2">{t('closedReason')}</th>
+              {canClose ? <th className="px-3 py-2" /> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {list.length === 0 ? (
+              <tr className="border-b border-[#ECF0F1]">
+                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={canClose ? 5 : 4}>
+                  {t(emptyKey)}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
+            ) : (
+              list.map((r) => {
                 const c = r.closures?.[0];
                 return (
                   <tr key={r.id} className="border-b border-[#ECF0F1]">
                     <td className="px-3 py-2 font-medium">{r.roomNumber}</td>
-                    <td className="px-3 py-2">{r.inventoryStatus === 'OOS' ? t('kindOos') : t('kindOoo')}</td>
                     <td className="px-3 py-2">{ymd(c?.startDate)}</td>
                     <td className="px-3 py-2">{ymd(c?.endDate)}</td>
                     <td className="px-3 py-2">{r.inventoryReason ?? c?.reason ?? '—'}</td>
@@ -145,11 +141,35 @@ export default function ClosedRoomsPage() {
                     ) : null}
                   </tr>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader
+        title={t('closedRoomsTitle')}
+        subtitle={t('closedRoomsHint')}
+        actions={
+          canClose ? (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
+              {t('closeRoom')}
+            </button>
+          ) : null
+        }
+      />
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('kindOoo')}</h2>
+        {laneTable(ooo, 'closedEmptyOoo')}
+      </section>
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('kindOos')}</h2>
+        {laneTable(oos, 'closedEmptyOos')}
+      </section>
       <EraModal
         open={open}
         title={t('closeRoom')}

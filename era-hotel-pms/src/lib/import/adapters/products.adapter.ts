@@ -120,7 +120,7 @@ export const productCardsAdapter = buildProductAdapter(
   'product-cards',
   'Product Cards',
   31,
-  '31-Product-Cards.xlsx — EW Ürün Kartları',
+  '31-Product-Cards.xlsx — Product Code, Product Name, Product Group Name, Price (hotel sellable; F&B menu uses F&B /admin/import)',
   'SELLABLE',
 );
 
@@ -128,6 +128,6 @@ export const stockCardsAdapter = buildProductAdapter(
   'stock-cards',
   'Stock Cards',
   32,
-  '33-Stock-Cards.xlsx — EW Ürün Tanımları / Stock Cards',
+  '33-Stock-Cards.xlsx — Stock Code, Stock Name, Stock Group, Price',
   'STOCK',
 );

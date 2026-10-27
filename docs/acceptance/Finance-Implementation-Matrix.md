@@ -16,7 +16,7 @@
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-FIN-GL | GL / NAS / journal posting | ✅ | [ ] | `__tests__/fin-gl-negative.spec.ts` | Negative: unbalanced journal; closed period; lockedPeriodUntil; **manual voucher**: short reason; USER denied; foreign counterparty; **AR template without CP**. Catalog: Q-01 commercial kassa **221** / bank **223** (not NAS-GOV 101); `PostingRole` maps per kind |
-| AC-FIN-ARAP | AR/AP invoices + payment/netting | ✅ | [ ] | `__tests__/fin-arap-negative.spec.ts` | Negative: foreign counterparty netting; over-max net; overpay refuse; **credit-adjustment**: amount > remaining; PAID/CANCELLED; short reason; **REVENUE VAT 601/545/211**; EXPENSE no 545 |
+| AC-FIN-ARAP | AR/AP invoices + payment/netting | ✅ | [ ] | `__tests__/fin-arap-negative.spec.ts` | Negative: foreign counterparty netting; over-max net; overpay refuse; **credit-adjustment**: amount > remaining; PAID/CANCELLED; short reason; **REVENUE VAT 601/545/211**; EXPENSE no 545. **2026-10-27:** hotel `sourceFolioId` allocate + bank match → `HotelPaymentCallbackOutbox` / peer URL (HOT-CL-07) — does not reopen Scaffold; Pilot open |
 | AC-FIN-INV | Inventory + stock/GL atomicity | ✅ | [ ] | `__tests__/fin-inv-negative.spec.ts` | Negative: stock+GL rollback when journal fails inside `$transaction` |
 | AC-FIN-HR | HR payroll depth + MDM person read-through | ✅ | [ ] | `__tests__/fin-hr-negative.spec.ts`; `emas-wave7.spec.ts`; `payroll-minute-premiums.spec.ts` | Negative: USER denied payroll finance (OWNER/ACCOUNTANT only). UI depth still 🟡 in Readiness. **Step 5:** Employee name SoR = MDM parts. **Evrostar wave 7:** `emasMode` + PENDING_MANUAL queue (`FIN-EMAS-01` = STUB) — [evrostar-wave-7.md](../runbooks/evrostar-wave-7.md). **Wave 11:** CP minute buckets → premiums (`FIN-HR-MIN-01` = API) — [evrostar-wave-11.md](../runbooks/evrostar-wave-11.md). **P1:** TRANSFER enqueue + Excel→queue markSubmitted + terminate CTA→CP — Demo/Pilot unchanged |
 | AC-FIN-TAX | Tax / Goskomstat statforms | ✅ | [ ] | `__tests__/fin-tax-negative.spec.ts` | Negative: invalid VÖEN length on taxpayer lookup |
@@ -35,9 +35,10 @@
 | AC-FIN-RBAC | Finance consumes CP JWT grants (`api:*` / `admin:*` / `screen:*`) | 🟡 | [ ] | UAT-SMOKE § FIN-RBAC-01; ADR finance-domain-permissions-and-rbac; `rbac-bridge-sprint.spec.ts` (auditor belt) | **Out of BE rollup.** Door = `PermissionsGuard` keys (Post/Approve = `api:ledger.post`). No Finance matrix UI. SCREEN until field UAT — not SHOW/GA. Do **not** flip AC-FIN-GL. |
 | AC-FIN-REF | Org Excel copy of FX, banks, calendar, HS | 🟡 | [ ] | `reference-manual.controller.ts`; COVERAGE FC-REF-01 | **Out of W6 BE rollup.** Uploads require `admin:org.settings`. No negative spec for a bad workbook. Reads cover FX spot/range/convert and calendar day/range/business days. Does not write the hub. SCREEN until UAT. Do **not** flip AC-FIN-GL or the finance BE ✅ rollup. |
 | AC-FIN-DAY | Hotel day document v2: article VAT, leaf post, `601.*` rollup, uncosted qty | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01 | **Out of W6 BE rollup.** No negative spec (group account, zero average, house-use qty). Reports already on screen. Does **not** flip AC-FIN-GL, AC-FIN-EVT, or the finance BE ✅ rollup. |
+| AC-FIN-AUD | Mutation audit Layer A align to ecosystem standard (deny-list naming / shared redaction) | 🟡 | [ ] | Finance TZ §9 / §11.1; `AuditMutationInterceptor`; FIN-AUD-01; `/admin/audit` + OWNER `/admin/security-audit`; `admin-security-audit.controller.spec.ts` (OWNER door) | **Out of W6 BE rollup.** Live Finance belt already COVERAGE **SHIPPED** (FIN-AUD-01); UI/API parity + OWNER door unit 2026-10-27. This AC tracks kit/standard alignment only — OWNER door alone is not Scaffold ✅. Does not darken BE ✅ or reopen AC-FIN-GL. ADR era-mutation-audit-standard. |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
-**AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, and AC-FIN-PROVISIONAL-VAT are out of Scaffold BE rollup** (SCREEN / UAT open, or API-only watcher) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX.  
+**AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, AC-FIN-PROVISIONAL-VAT, and AC-FIN-AUD are out of Scaffold BE rollup** (SCREEN / UAT open, API-only watcher, or alignment residual) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX.  
 Do not call this table «product readiness».
 
 **SaaS Wave 3 (audit only):** Finance already request-tenants via Nest `TenantContextInterceptor` + membership ALS from JWT. Wave 3 did **not** port kit `enterSatelliteTenant`. No silent process-bind stamps via kit in production paths.
@@ -52,6 +53,7 @@ Do not call this table «product readiness».
 | AC-FIN-EQAIME-DAY | No UAT; does not enable S2S; clinic and F&B have no night-audit gate | Code | Out of BE rollup (🟡 API) |
 | AC-FIN-FACT-QUEUE | No UAT; does not block open-month posting; clinic and hotel night audit are not this gate | Code | Out of BE rollup (🟡 API) |
 | AC-FIN-PROVISIONAL-VAT | No UAT; no cash refund; no live amendment send; does not extend AC-FIN-TAX | Code | Out of BE rollup (🟡 API) |
+| AC-FIN-AUD | Kit deny-list / redaction naming vs era-mutation-audit-standard | Code | Out of BE rollup (🟡); OWNER door unit landed; FIN-AUD-01 COVERAGE stays SHIPPED; paths `/admin/audit` + OWNER `/admin/security-audit` |
 
 ### Negative-path proof index
 

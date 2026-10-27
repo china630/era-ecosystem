@@ -16,6 +16,7 @@ import {
   parseApiError,
   showApiError,
   showSuccess,
+  showWarning,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { stayMoneyPair } from '@/lib/folio-money-pair';
@@ -44,8 +45,10 @@ type FolioRow = {
   reservation?: {
     guest?: { fullName?: string | null } | null;
     room?: { roomNumber?: string | null } | null;
-    agency?: { name?: string | null } | null;
-    company?: { name?: string | null } | null;
+    agency?: { id?: string | null; name?: string | null } | null;
+    company?: { id?: string | null; name?: string | null } | null;
+    agencyId?: string | null;
+    companyId?: string | null;
   } | null;
   charges: Array<{
     id?: string;
@@ -97,7 +100,7 @@ type EarlyPreview = {
   reversalByFolio: Record<string, number>;
 };
 
-type Choice = '' | 'PAY' | 'DEBT' | 'CL';
+type Choice = '' | 'PAY' | 'DEBT' | 'CL' | 'MOVE_PAYER_CL';
 
 type TenderLine = { method: string; amount: string; bankReference: string; bankTerminalId: string };
 
@@ -154,8 +157,12 @@ export function FolioCheckoutModal({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [clinic, setClinic] = useState<ClinicCheckout | null>(null);
-  const [laundry, setLaundry] = useState<Array<{ id: string; guestName: string }>>([]);
+  const [laundry, setLaundry] = useState<
+    Array<{ id: string; guestName: string; roomNumber?: string | null; dueAt?: string | null }>
+  >([]);
+  const [laundryTicketId, setLaundryTicketId] = useState('');
   const [laundryScan, setLaundryScan] = useState('');
+  const [laundryBusy, setLaundryBusy] = useState(false);
 
   const loadFolios = useCallback(async () => {
     setLoading(true);
@@ -266,8 +273,41 @@ export function FolioCheckoutModal({
   }, [folios, early, stayGuest, t]);
 
   const firstGuestBlockId = blocks.find((b) => b.party === 'GUEST')?.folio.id;
+  const stayMeta = folios[0]?.reservation;
+  const hasPayerOnStay = Boolean(
+    stayMeta?.companyId ||
+      stayMeta?.company?.id ||
+      stayMeta?.agencyId ||
+      stayMeta?.agency?.id ||
+      stayMeta?.company?.name ||
+      stayMeta?.agency?.name ||
+      folios.some((f) => f.type === 'AGENCY' || f.type === 'COMPANY'),
+  );
+  const suggestedPayerKind: 'COMPANY' | 'AGENCY' | null =
+    stayMeta?.companyId || stayMeta?.company?.id || stayMeta?.company?.name
+      ? 'COMPANY'
+      : stayMeta?.agencyId || stayMeta?.agency?.id || stayMeta?.agency?.name
+        ? 'AGENCY'
+        : folios.some((f) => f.type === 'COMPANY')
+          ? 'COMPANY'
+          : folios.some((f) => f.type === 'AGENCY')
+            ? 'AGENCY'
+            : null;
+  const suggestedPayerName = (() => {
+    if (suggestedPayerKind === 'COMPANY') {
+      return stayMeta?.company?.name?.trim() || '—';
+    }
+    if (suggestedPayerKind === 'AGENCY') {
+      return stayMeta?.agency?.name?.trim() || '—';
+    }
+    return '—';
+  })();
+  const anyMovePayerCl = blocks.some((b) => choices[b.folio.id] === 'MOVE_PAYER_CL');
   const anyGuestDebt = blocks.some((b) => choices[b.folio.id] === 'DEBT');
-  const allChosen = blocks.every((b) => Boolean(choices[b.folio.id]));
+  const allChosen = blocks.every((b) => {
+    if (anyMovePayerCl && (b.party === 'AGENCY' || b.party === 'COMPANY')) return true;
+    return Boolean(choices[b.folio.id]);
+  });
   const unusedPayment = useMemo(() => {
     return folios
       .filter((folio) => folio.status === 'OPEN')
@@ -361,37 +401,61 @@ export function FolioCheckoutModal({
         return;
       }
     }
-    const res = await fetch(`/api/reservations/${reservationId}/check-out`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transferToCityLedger: blocks.some((b) => choices[b.folio.id] === 'CL'),
-        transferToGuestDebt: anyGuestDebt,
-        guestDebtNote: anyGuestDebt ? guestDebtNote.trim() : undefined,
-        unusedNightsRefundMethod: refundNeeded ? refundMethod : undefined,
-        unusedNightsBankTerminalId: refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
-        unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    const payload = data.data ?? data;
-    if (res.ok) {
-      onDone?.();
-      onClose();
-      showSuccess(
-        payload.cityLedgerTransferred?.length
-          ? t('checkoutClSuccess', { count: payload.cityLedgerTransferred.length })
-          : t('checkoutSuccess'),
-      );
-      return;
+    const moveGuestDebtToPayer = anyMovePayerCl;
+    const transferToCityLedger =
+      moveGuestDebtToPayer || blocks.some((b) => choices[b.folio.id] === 'CL');
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/check-out`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transferToCityLedger,
+          moveGuestDebtToPayer: moveGuestDebtToPayer || undefined,
+          transferToGuestDebt: anyGuestDebt,
+          guestDebtNote: anyGuestDebt ? guestDebtNote.trim() : undefined,
+          unusedNightsRefundMethod: refundNeeded ? refundMethod : undefined,
+          unusedNightsBankTerminalId:
+            refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
+          unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const payload = data.data ?? data;
+      if (res.ok) {
+        onDone?.();
+        onClose();
+        const warningList = Array.isArray(payload.warnings) ? payload.warnings : [];
+        if (warningList.length > 0) {
+          showWarning(warningList[0] as string);
+        }
+        if (payload.cityLedgerTransferred?.length) {
+          showSuccess(t('checkoutClSuccess', { count: payload.cityLedgerTransferred.length }));
+        } else if (moveGuestDebtToPayer) {
+          showSuccess(t('checkoutMovePayerClSuccess'));
+        } else {
+          showSuccess(t('checkoutSuccess'));
+        }
+        return;
+      }
+      if (payload.code === 'LAUNDRY_OPEN' && Array.isArray(payload.tickets)) {
+        const tickets = payload.tickets as Array<{
+          id: string;
+          guestName: string;
+          roomNumber?: string | null;
+          dueAt?: string | null;
+        }>;
+        setLaundry(tickets);
+        setLaundryTicketId(tickets[0]?.id ?? '');
+        setLaundryScan('');
+        showApiError({ error: tHk('laundryOpenCheckout'), code: 'LAUNDRY_OPEN' });
+        return;
+      }
+      showApiError(data, tc('error'));
+      await loadFolios();
+    } finally {
+      setBusy(false);
     }
-    if (payload.code === 'LAUNDRY_OPEN' && Array.isArray(payload.tickets)) {
-      setLaundry(payload.tickets);
-      onClose();
-      return;
-    }
-    setError(parseApiError(data, tc('error')));
-    await loadFolios();
   }
 
   function renderTender(block: DebtBlock) {
@@ -575,7 +639,39 @@ export function FolioCheckoutModal({
           {blocks.map((block) => {
             const choice = choices[block.folio.id] ?? '';
             const isGuest = block.party === 'GUEST';
+            const isPayer = block.party === 'AGENCY' || block.party === 'COMPANY';
             const payAllowed = canPay && !block.pendingReversal;
+            const payerImpliedByMove = anyMovePayerCl && isPayer;
+            if (payerImpliedByMove) {
+              return (
+                <FieldSection
+                  key={block.folio.id}
+                  title={block.title}
+                  badge={`${money(block.debt)} AZN`}
+                >
+                  <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{t('checkoutPayerImpliedByMove')}</p>
+                </FieldSection>
+              );
+            }
+            const guestOptions = [
+              ...(payAllowed ? [{ value: 'PAY', label: t('checkoutPayNow') }] : []),
+              ...(hasPayerOnStay
+                ? [
+                    {
+                      value: 'MOVE_PAYER_CL',
+                      label: t('checkoutMovePayerCl', {
+                        payer: suggestedPayerName,
+                        amount: money(block.debt),
+                      }),
+                    },
+                  ]
+                : []),
+              { value: 'DEBT', label: t('checkoutLeaveGuestDebt') },
+            ];
+            const payerOptions = [
+              ...(payAllowed ? [{ value: 'PAY', label: t('checkoutPayNow') }] : []),
+              { value: 'CL', label: t('checkoutToCityLedger') },
+            ];
             return (
               <FieldSection
                 key={block.folio.id}
@@ -590,14 +686,20 @@ export function FolioCheckoutModal({
                     value={choice}
                     onChange={(v) => {
                       setError('');
-                      setChoices((prev) => ({ ...prev, [block.folio.id]: String(v ?? '') as Choice }));
+                      const next = String(v ?? '') as Choice;
+                      setChoices((prev) => {
+                        const updated = { ...prev, [block.folio.id]: next };
+                        if (next === 'MOVE_PAYER_CL') {
+                          for (const other of blocks) {
+                            if (other.party === 'AGENCY' || other.party === 'COMPANY') {
+                              updated[other.folio.id] = 'CL';
+                            }
+                          }
+                        }
+                        return updated;
+                      });
                     }}
-                    options={[
-                      ...(payAllowed ? [{ value: 'PAY', label: t('checkoutPayNow') }] : []),
-                      isGuest
-                        ? { value: 'DEBT', label: t('checkoutLeaveGuestDebt') }
-                        : { value: 'CL', label: t('checkoutToCityLedger') },
-                    ]}
+                    options={isGuest ? guestOptions : payerOptions}
                     emptyLabel={null}
                   />
                   {!canPay ? (
@@ -613,7 +715,12 @@ export function FolioCheckoutModal({
                           : t('checkoutPayerPayHint')
                         : choice === 'DEBT'
                           ? t('checkoutGuestDebtHint')
-                          : t('checkoutClHint')}
+                          : choice === 'MOVE_PAYER_CL'
+                            ? t('checkoutMovePayerClHint', {
+                                payer: suggestedPayerName,
+                                kind: suggestedPayerKind === 'COMPANY' ? t('checkoutPayerCompany') : t('checkoutPayerAgency'),
+                              })
+                            : t('checkoutClHint')}
                     </p>
                   ) : null}
                   {choice === 'PAY' ? renderTender(block) : null}
@@ -683,12 +790,81 @@ export function FolioCheckoutModal({
           ) : null}
         </div>
       </EraModal>
-      <EraModal open={laundry.length > 0} title={tHk('laundryOpenCheckout')} onClose={() => setLaundry([])}>
-        <ul className="mb-3 text-[13px]">
+      <EraModal
+        open={laundry.length > 0}
+        title={tHk('laundryOpenCheckout')}
+        onClose={() => {
+          setLaundry([]);
+          setLaundryTicketId('');
+          setLaundryScan('');
+        }}
+      >
+        <p className="mb-2 text-[13px] text-[#7F8C8D]">{tHk('laundryOpenCheckoutHint')}</p>
+        <ul className="mb-3 space-y-2 text-[13px]">
           {laundry.map((tk) => (
-            <li key={tk.id}>{tk.guestName}</li>
+            <li
+              key={tk.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded border border-[#ECF0F1] px-2 py-1.5"
+            >
+              <span>
+                {tk.roomNumber ? `${tHk('laundryRoom')} ${tk.roomNumber} · ` : ''}
+                {tk.guestName}
+              </span>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={laundryBusy}
+                onClick={() => {
+                  setLaundryBusy(true);
+                  void fetch('/api/housekeeping/laundry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voidTicketId: tk.id }),
+                  })
+                    .then(async (res) => {
+                      if (!res.ok) {
+                        showApiError(await res.json(), tc('error'));
+                        return;
+                      }
+                      const remaining = laundry.filter((row) => row.id !== tk.id);
+                      setLaundry(remaining);
+                      setLaundryTicketId(remaining[0]?.id ?? '');
+                      setLaundryScan('');
+                      await loadFolios();
+                      if (remaining.length === 0) {
+                        showSuccess(tHk('laundryVoidedContinueCheckout'));
+                        setBusy(true);
+                        try {
+                          await submit();
+                        } finally {
+                          setBusy(false);
+                        }
+                      } else {
+                        showSuccess(tHk('laundryDeliveredMoreOpen'));
+                      }
+                    })
+                    .finally(() => setLaundryBusy(false));
+                }}
+              >
+                {tHk('voidLaundryTicket')}
+              </button>
+            </li>
           ))}
         </ul>
+        {laundry.length > 1 ? (
+          <div className="mb-2">
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={tHk('laundryGuest')}
+              value={laundryTicketId || laundry[0]?.id || ''}
+              onChange={(v) => setLaundryTicketId(String(v))}
+              options={laundry.map((tk) => ({
+                value: tk.id,
+                label: `${tk.roomNumber ? `${tk.roomNumber} · ` : ''}${tk.guestName}`,
+              }))}
+            />
+          </div>
+        ) : null}
         <input
           type="file"
           className="mb-2 text-xs"
@@ -701,27 +877,54 @@ export function FolioCheckoutModal({
           }}
         />
         <EraModalFooter
-          onCancel={() => setLaundry([])}
+          onCancel={() => {
+            setLaundry([]);
+            setLaundryTicketId('');
+            setLaundryScan('');
+          }}
           cancelLabel={tHk('waitLaundry')}
           submitLabel={tHk('deliverLaundry')}
+          busy={laundryBusy}
           onSubmit={() => {
-            const first = laundry[0];
-            if (!first || !laundryScan) {
+            const targetId = laundryTicketId || laundry[0]?.id;
+            const target = laundry.find((tk) => tk.id === targetId) ?? laundry[0];
+            if (!target || !laundryScan) {
               showApiError({ error: tHk('returnScanRequired') }, tc('error'));
               return;
             }
+            setLaundryBusy(true);
             void fetch('/api/housekeeping/laundry', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ deliverTicketId: first.id, returnScanKey: laundryScan, actorRole: 'FO' }),
-            }).then(async (res) => {
-              if (!res.ok) showApiError(await res.json(), tc('error'));
-              else {
-                showSuccess(tc('saved'));
-                setLaundry([]);
-                onDone?.();
-              }
-            });
+              body: JSON.stringify({
+                deliverTicketId: target.id,
+                returnScanKey: laundryScan,
+                actorRole: 'FO',
+              }),
+            })
+              .then(async (res) => {
+                if (!res.ok) {
+                  showApiError(await res.json(), tc('error'));
+                  return;
+                }
+                const remaining = laundry.filter((tk) => tk.id !== target.id);
+                setLaundryScan('');
+                setLaundry(remaining);
+                setLaundryTicketId(remaining[0]?.id ?? '');
+                await loadFolios();
+                if (remaining.length === 0) {
+                  showSuccess(tHk('laundryDeliveredContinueCheckout'));
+                  setBusy(true);
+                  try {
+                    await submit();
+                  } finally {
+                    setBusy(false);
+                  }
+                } else {
+                  showSuccess(tHk('laundryDeliveredMoreOpen'));
+                }
+              })
+              .finally(() => setLaundryBusy(false));
           }}
         />
       </EraModal>

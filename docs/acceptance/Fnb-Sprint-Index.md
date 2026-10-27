@@ -24,5 +24,9 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-fnb-pos/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-RBAC | F&B RBAC Variant A + custom roles | [~] | AC-FNB-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
+| S-BUFFET | Buffet Planner module (`fnb_buffet_planner`) | [~] | FNB-BUFFET-01 API/SCREEN; UAT FB-5 open; Gate/Pilot/edition unchanged (`mvp`) |
+| S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | FNB-AUD-01 / AC-FNB-AUD 🟡; `jsonOk` + `/admin/audit` + `GET /api/admin/audit` SCREEN + canonical filters; UAT open — not SHIPPED; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
+
+**2026-10-27:** Buffet Planner landed as module (not gate flip). Sell claim and `docs/editions/fnb.yaml` stay `mvp` / `pilot_ready: false`.

@@ -22,4 +22,5 @@
 - [sanatorium-vnext](./sanatorium-vnext.md) SV7/SV14
 - [era-fiscal-kkm-kit.md](./era-fiscal-kkm-kit.md) — N KKM / bank POS per org; kit credentials not env
 - [cp-workforce-org-units.md](./cp-workforce-org-units.md) — commercial `Organization` DEPARTMENT ≠ HR `OrgUnit`; ops DB unchanged
+- [cp-organization-profile-and-branding.md](./cp-organization-profile-and-branding.md) — DEPARTMENT may own contacts (e.g. clinic phone) while inheriting unset legal/logo/VÖEN display from parent; money routing unchanged
 - Orchestrator: `org-operating-mode.service.ts`, migration `20260604120000_org_operating_mode`

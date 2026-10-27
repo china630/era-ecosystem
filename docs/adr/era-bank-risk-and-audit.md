@@ -2,7 +2,7 @@
 
 **Status:** Proposed (pre-development; extends the accepted `era-bank-core` MVP)
 **Decision owners:** Platform architecture + banking domain.
-**Related:** [era-bank-core.md](./era-bank-core.md) · [org-operating-mode.md](./org-operating-mode.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md) · [workforce-dual-audit.md](./workforce-dual-audit.md) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
+**Related:** [era-bank-core.md](./era-bank-core.md) · [org-operating-mode.md](./org-operating-mode.md) · [era-mutation-audit-standard.md](./era-mutation-audit-standard.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md) · [workforce-dual-audit.md](./workforce-dual-audit.md) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
 **Product docs:** [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md) · [era-bank/PRD.md](../../era-bank/PRD.md)
 **Module map:** [era-bank-core-module-map.mdc](../../.cursor/rules/era-bank-core-module-map.mdc) · [MODULES_CATALOG.md](../MODULES_CATALOG.md)
 

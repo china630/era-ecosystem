@@ -30,6 +30,7 @@ export async function GET(req: Request) {
     const guestId = url.searchParams.get('guestId') ?? undefined;
     const status = url.searchParams.get('status') ?? undefined;
     const direction = url.searchParams.get('direction') ?? undefined;
+    const hasFlight = url.searchParams.get('hasFlight');
     const fromStr = url.searchParams.get('from');
     const toStr = url.searchParams.get('to');
 
@@ -39,6 +40,7 @@ export async function GET(req: Request) {
         guestId,
         status,
         direction,
+        hasFlight: hasFlight === '1' || hasFlight === 'true',
         from: fromStr ? new Date(fromStr) : undefined,
         to: toStr ? new Date(toStr) : undefined,
       }),

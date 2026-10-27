@@ -23,9 +23,12 @@ describe("InternalOrganizationsController byPublicNumber", () => {
   }
 
   function controller(findFirst: (args: unknown) => Promise<unknown>) {
-    return new InternalOrganizationsController({
-      organization: { findFirst },
-    } as never);
+    return new InternalOrganizationsController(
+      {
+        organization: { findFirst },
+      } as never,
+      { getSnapshot: jest.fn() } as never,
+    );
   }
 
   it("rejects missing Bearer in production", async () => {

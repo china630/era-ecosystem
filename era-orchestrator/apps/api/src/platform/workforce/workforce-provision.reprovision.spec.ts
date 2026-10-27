@@ -29,6 +29,10 @@ describe("WorkforceProvisionService.reprovision", () => {
       upsert: jest.fn(),
       count: jest.fn(),
     },
+    workforceManualGrant: {
+      findMany: jest.fn(),
+      updateMany: jest.fn(),
+    },
     workforceSeatAllocation: {
       findFirst: jest.fn(),
       updateMany: jest.fn(),
@@ -83,6 +87,8 @@ describe("WorkforceProvisionService.reprovision", () => {
       satelliteRole: "RECEPTION",
     });
     prisma.workforceRoleBinding.update.mockResolvedValue({});
+    prisma.workforceManualGrant.findMany.mockResolvedValue([]);
+    prisma.workforceManualGrant.updateMany.mockResolvedValue({ count: 0 });
   });
 
   it("rejects login save when no active bindings", async () => {
@@ -149,6 +155,7 @@ describe("WorkforceProvisionService.reprovision", () => {
       satelliteKey: "industry_clinic",
       satelliteRole: "RECEPTION",
       satelliteUserId: "sat-user-2",
+      manualGrantId: null,
     };
     prisma.workforceRoleBinding.findMany
       .mockResolvedValueOnce([hotel, clinic])
@@ -165,6 +172,14 @@ describe("WorkforceProvisionService.reprovision", () => {
       where: { id: "bind-clinic" },
       data: { status: "REVOKED" },
     });
+    expect(prisma.workforceManualGrant.updateMany).toHaveBeenCalledWith({
+      where: {
+        employmentId: EMP,
+        satelliteKey: "industry_clinic",
+        revokedAt: null,
+      },
+      data: { revokedAt: expect.any(Date) },
+    });
     expect(
       satelliteEvents.enqueue.mock.calls.some(
         (c: [{ type: string }]) => c[0].type === SATELLITE_STAFF_DEACTIVATED,
@@ -176,6 +191,129 @@ describe("WorkforceProvisionService.reprovision", () => {
           c[0].payload?.satelliteKey === "industry_clinic",
       ),
     ).toBe(true);
+  });
+
+  it("revokes the linked manual grant when a satellite is unchecked", async () => {
+    const grantId = "grant-clinic-admin";
+    const hotel = {
+      id: "bind-hotel",
+      satelliteKey: "industry_hotel_pms",
+      satelliteRole: "RECEPTION",
+      satelliteUserId: "sat-user-1",
+      manualGrantId: null,
+    };
+    const clinic = {
+      id: "bind-clinic",
+      satelliteKey: "industry_clinic",
+      satelliteRole: "CLINIC_ADMIN",
+      satelliteUserId: "sat-user-2",
+      manualGrantId: grantId,
+    };
+    prisma.workforceRoleBinding.findMany
+      .mockResolvedValueOnce([hotel, clinic])
+      .mockResolvedValueOnce([hotel]);
+    prisma.workforceRoleBinding.count.mockResolvedValue(1);
+    subscriptionAccess.hasModule.mockResolvedValue(true);
+
+    await svc.reprovision(ORG, EMP, "actor", {
+      satelliteKeys: ["industry_hotel_pms"],
+    });
+
+    expect(prisma.workforceManualGrant.updateMany).toHaveBeenCalledWith({
+      where: { id: grantId, revokedAt: null },
+      data: { revokedAt: expect.any(Date) },
+    });
+    expect(prisma.workforceManualGrant.updateMany).toHaveBeenCalledWith({
+      where: {
+        employmentId: EMP,
+        satelliteKey: "industry_clinic",
+        revokedAt: null,
+      },
+      data: { revokedAt: expect.any(Date) },
+    });
+  });
+
+  it("heals an active grant whose binding was revoked before emitting", async () => {
+    const grantId = "grant-clinic-admin";
+    prisma.workforceManualGrant.findMany.mockResolvedValue([
+      {
+        id: grantId,
+        employmentId: EMP,
+        satelliteKey: "industry_clinic",
+        satelliteRole: "CLINIC_ADMIN",
+        revokedAt: null,
+      },
+    ]);
+    prisma.workforceRoleBinding.upsert.mockResolvedValue({
+      id: "bind-admin",
+      satelliteKey: "industry_clinic",
+      satelliteRole: "CLINIC_ADMIN",
+      source: "MANUAL_GRANT",
+    });
+    prisma.workforceRoleBinding.findMany.mockResolvedValue([
+      {
+        id: "bind-admin",
+        satelliteKey: "industry_clinic",
+        satelliteRole: "CLINIC_ADMIN",
+        source: "MANUAL_GRANT",
+        updatedAt: new Date("2026-10-26T08:00:00.000Z"),
+      },
+    ]);
+
+    const result = await svc.reprovision(ORG, EMP, "actor");
+
+    expect(prisma.workforceRoleBinding.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          employmentId_satelliteKey_satelliteRole: {
+            employmentId: EMP,
+            satelliteKey: "industry_clinic",
+            satelliteRole: "CLINIC_ADMIN",
+          },
+        },
+        update: expect.objectContaining({
+          status: "ACTIVE",
+          source: "MANUAL_GRANT",
+          manualGrantId: grantId,
+        }),
+      }),
+    );
+    expect(result.reprovisioned).toBe(1);
+    expect(
+      satelliteEvents.enqueue.mock.calls.some(
+        (c: [{ type: string; payload?: { satelliteRole?: string } }]) =>
+          c[0].type === SATELLITE_STAFF_PROVISIONED &&
+          c[0].payload?.satelliteRole === "CLINIC_ADMIN",
+      ),
+    ).toBe(true);
+  });
+
+  it("emits MANUAL_GRANT after HIRE_DEFAULT so the grant role is the last write", async () => {
+    const now = new Date("2026-10-27T12:00:00.000Z");
+    prisma.workforceRoleBinding.findMany.mockResolvedValue([
+      {
+        id: "bind-admin",
+        satelliteKey: "industry_clinic",
+        satelliteRole: "CLINIC_ADMIN",
+        source: "MANUAL_GRANT",
+        updatedAt: now,
+      },
+      {
+        id: "bind-reception",
+        satelliteKey: "industry_clinic",
+        satelliteRole: "RECEPTION",
+        source: "HIRE_DEFAULT",
+        updatedAt: now,
+      },
+    ]);
+
+    await svc.reprovision(ORG, EMP, "actor");
+
+    const provisioned = satelliteEvents.enqueue.mock.calls
+      .map((c: [{ type: string; payload?: { satelliteRole?: string } }]) => c[0])
+      .filter((e) => e.type === SATELLITE_STAFF_PROVISIONED)
+      .map((e) => e.payload?.satelliteRole);
+    expect(provisioned).toEqual(["RECEPTION", "CLINIC_ADMIN"]);
   });
 
   it("adds a satellite, allocates no extra seat, and emits STAFF_PROVISIONED", async () => {

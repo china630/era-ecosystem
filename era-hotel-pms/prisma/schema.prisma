@@ -157,6 +157,19 @@ enum FolioType {
   AGENCY
 }
 
+/** Who receives ROOM / room-tax on the stay. Agency on the card alone does not pay the room. */
+enum RoomPayer {
+  GUEST
+  AGENCY
+  COMPANY
+}
+
+/** Commission basis for agency stays and sales contracts. */
+enum CommissionBasis {
+  GROSS
+  NET
+}
+
 enum FolioStatus {
   OPEN
   CLOSED
@@ -165,6 +178,14 @@ enum FolioStatus {
   PENDING_AR
   /** Handed off to Finance / invoice issued */
   TRANSFERRED_AR
+}
+
+/** Physical check-out vs B2B City Ledger settlement (T-room parity). */
+enum CheckoutSettlementStatus {
+  NOT_APPLICABLE
+  PENDING
+  INVOICED
+  SETTLED
 }
 
 enum BusinessDayStatus {
@@ -289,10 +310,22 @@ enum TourDepartureStatus {
 }
 
 enum TourBookingStatus {
+  /// Seat hold without folio charge (CHARGE_ON_BOARDING default).
+  RESERVED
   CHARGED
   PAID
   CANCELLED
   ON_CITY_LEDGER
+}
+
+enum TourChargeMode {
+  CHARGE_ON_BOARDING
+  CHARGE_ON_ADD
+}
+
+enum TourBoardingCloseMode {
+  MANUAL
+  AUTO_CUTOFF
 }
 
 enum StockMovementType {
@@ -960,6 +993,8 @@ model SalesContract {
   cta               Boolean                       @default(false)
   ctd               Boolean                       @default(false)
   commissionPercent Decimal?                      @db.Decimal(5, 2)
+  /** GROSS = full room price on folio, commission accrued separately. NET = already net of commission. */
+  commissionBasis   CommissionBasis               @default(GROSS)
   depositRequired   Boolean                       @default(false)
   depositAmount     Decimal?                      @db.Decimal(12, 2)
   notes             String?
@@ -1512,9 +1547,15 @@ model Reservation {
   group         ReservationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   salesContractId String?
   salesContract SalesContract?  @relation(fields: [salesContractId], references: [id], onDelete: SetNull)
+  /** Who pays ROOM. Default GUEST; company on stay may be set to COMPANY by the desk. Agency alone stays GUEST. */
+  roomPayer     RoomPayer         @default(GUEST)
+  /** Agency commission basis for this stay. Ignored when there is no agency. */
+  commissionBasis CommissionBasis @default(GROSS)
   checkInDate   DateTime
   checkOutDate  DateTime
   status        ReservationStatus @default(CONFIRMED)
+  /** B2B / City Ledger financial settlement after physical departure. */
+  checkoutSettlementStatus CheckoutSettlementStatus @default(NOT_APPLICABLE)
   /** Unset until the desk picks a tender. Not defaulted to cash or card. */
   paymentMethod PaymentMethod?
   totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
@@ -1600,10 +1641,12 @@ model Reservation {
   packageLines      ReservationPackageLine[]
   tasks             ReservationTask[]
   folioRoutingOverrides ReservationFolioRoutingOverride[]
+  commercialPeriods ReservationCommercialPeriod[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   @@index([status])
+  @@index([checkoutSettlementStatus])
   @@index([roomId])
   @@index([guestId])
   @@index([bookerGuestId])
@@ -1729,6 +1772,33 @@ model ReservationNote {
 
   @@unique([reservationId, noteType])
   @@index([reservationId])
+  @@index([organizationId])
+}
+
+/**
+ * Timeline of who pays the room and gross/net for commission.
+ * A mid-stay change closes the open period and opens a new one from effectiveFrom.
+ */
+model ReservationCommercialPeriod {
+  id                 String          @id @default(uuid())
+  organizationId     String
+  reservationId      String
+  reservation        Reservation     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fromDate           DateTime        @db.Date
+  toDate             DateTime?       @db.Date
+  roomPayer          RoomPayer
+  commissionBasis    CommissionBasis @default(GROSS)
+  agencyId           String?
+  companyId          String?
+  salesContractId    String?
+  commissionPercent  Decimal?        @db.Decimal(5, 2)
+  movePostedNights   Boolean         @default(false)
+  reason             String?
+  note               String?
+  createdByUserId    String?
+  createdAt          DateTime        @default(now())
+
+  @@index([reservationId, fromDate])
   @@index([organizationId])
 }
 
@@ -2026,6 +2096,20 @@ model HkHotelPolicy {
   laundryExpressEnabled   Boolean   @default(false)
   laundryExpressPercent   Int?
   egPressureFrom          DateTime? @db.Date
+}
+
+/// Org policy for guest tours (HOT-TOUR-01). Defaults: seat ≠ sale until boarding.
+model TourOpsPolicy {
+  id                              String                @id @default(uuid())
+  organizationId                  String                @unique
+  chargeMode                      TourChargeMode        @default(CHARGE_ON_BOARDING)
+  boardingCloseMode               TourBoardingCloseMode @default(MANUAL)
+  /// Minutes before pickupAt when AUTO_CUTOFF drops unboarded RESERVED seats.
+  autoCutoffMinutesBeforePickup   Int?
+  allowOverbook                   Boolean               @default(true)
+  dropUnboardedOnClose            Boolean               @default(true)
+  createdAt                       DateTime              @default(now())
+  updatedAt                       DateTime              @updatedAt
 }
 
 /// Housekeeping chemical or linen use for one business day. Not a guest folio charge.
@@ -3097,7 +3181,7 @@ model TourBooking {
   folioChargeId  String?
   folioCharge    FolioCharge?      @relation(fields: [folioChargeId], references: [id], onDelete: SetNull)
   folioPaymentId String?
-  status         TourBookingStatus @default(CHARGED)
+  status         TourBookingStatus @default(RESERVED)
   notes          String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
