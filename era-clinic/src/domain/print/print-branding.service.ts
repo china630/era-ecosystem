@@ -15,25 +15,58 @@ function pick(lang: PrintLang, en: string | null, ru: string | null, az: string 
 
 export async function getPrintBranding(lang: PrintLang): Promise<PrintBranding> {
   const tenant = await getDefaultTenant();
+
+  // CP-ORG-PROFILE-01: prefer orch snapshot for name/address/phone/logo; keep footers/signatures local.
+  let cpName: string | null = null;
+  let cpAddress: string | null = null;
+  let cpPhone: string | null = null;
+  let cpEmail: string | null = null;
+  let cpWebsite: string | null = null;
+  let cpLogoUrl: string | null = null;
+  try {
+    const kit = await import("@era/satellite-kit");
+    let orgId: string | null = null;
+    try {
+      orgId = kit.satelliteOrganizationId();
+    } catch {
+      orgId = null;
+    }
+    const snap = kit.getCachedOrgProfile(orgId);
+    if (snap) {
+      const resolved = kit.resolvePrintContacts({ org: snap, lang });
+      cpName = resolved.name || null;
+      cpAddress = resolved.address || null;
+      cpPhone = resolved.phone || null;
+      cpEmail = resolved.email || null;
+      cpWebsite = resolved.website || null;
+      cpLogoUrl = resolved.logoUrl || null;
+    }
+  } catch {
+    /* offline / unbound — fall back to tenant print fields */
+  }
+
+  const localName = pick(
+    lang,
+    tenant.printClinicNameEn,
+    tenant.printClinicNameRu,
+    tenant.printClinicNameAz,
+    tenant.name,
+  );
+  const localAddress = pick(
+    lang,
+    tenant.printAddressEn,
+    tenant.printAddressRu,
+    tenant.printAddressAz,
+    "",
+  );
+
   return {
-    logoDataUrl: tenant.printLogoDataUrl ?? null,
-    clinicName: pick(
-      lang,
-      tenant.printClinicNameEn,
-      tenant.printClinicNameRu,
-      tenant.printClinicNameAz,
-      tenant.name,
-    ),
-    address: pick(
-      lang,
-      tenant.printAddressEn,
-      tenant.printAddressRu,
-      tenant.printAddressAz,
-      "",
-    ),
-    phone: tenant.printPhone ?? null,
-    email: tenant.printEmail ?? null,
-    website: tenant.printWebsite ?? null,
+    logoDataUrl: tenant.printLogoDataUrl ?? (cpLogoUrl || null),
+    clinicName: cpName || localName,
+    address: cpAddress || localAddress,
+    phone: cpPhone || tenant.printPhone || null,
+    email: cpEmail || tenant.printEmail || null,
+    website: cpWebsite || tenant.printWebsite || null,
     footer: pick(
       lang,
       tenant.printFooterEn,

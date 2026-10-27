@@ -96,6 +96,16 @@ const runtimeBodySchema = z.object({
     )
     .max(64)
     .optional(),
+  /** Org branding snapshot (validated loosely; full Zod lives in @era/contracts). */
+  orgProfile: z
+    .object({
+      organizationId: z.string().uuid(),
+      legalName: z.string(),
+      etag: z.string().optional(),
+      updatedAt: z.string().optional(),
+    })
+    .passthrough()
+    .optional(),
 });
 
 export type ElektrawebBridgeSyncPayload = z.infer<typeof elektrawebBridgeSchema>;
@@ -126,6 +136,7 @@ export type RuntimeConfigHandlerOptions = {
       edition?: string;
       activeModules?: string[];
       hotelModules?: Record<string, boolean>;
+      orgProfile?: import("@era/contracts").OrganizationProfileSnapshot;
     },
   ) => Promise<void>;
 };
@@ -183,6 +194,9 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
     const topology =
       body.deploymentTopology ?? satelliteRuntimeConfig().deploymentTopology;
     const isShared = topology === "SHARED";
+    const orgProfile = body.orgProfile
+      ? (body.orgProfile as import("@era/contracts").OrganizationProfileSnapshot)
+      : undefined;
     const patch: SatelliteRuntimeConfig = {
       // SHARED: do not stamp process-wide blob with last Sync org id.
       organizationId: isShared ? undefined : body.organizationId,
@@ -196,7 +210,13 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       hotelModules: body.hotelModules,
       deploymentTopology: body.deploymentTopology,
       edition: isShared ? undefined : body.edition,
+      // DEDICATED/ONPREM: keep on process memory. SHARED uses per-org cache below.
+      orgProfile: isShared ? undefined : orgProfile,
     };
+    if (body.organizationId && orgProfile) {
+      const { setCachedOrgProfile } = await import("../organization/org-profile-cache");
+      setCachedOrgProfile(body.organizationId, orgProfile);
+    }
     if (body.organizationId && !isShared) {
       await applyOrganizationBind({
         organizationId: body.organizationId,
@@ -241,6 +261,7 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
         edition: body.edition,
         activeModules: body.activeModules,
         hotelModules: body.hotelModules,
+        orgProfile,
       });
     }
     const cfg = await applySatelliteRuntimeConfig({

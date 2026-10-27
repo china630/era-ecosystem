@@ -70,6 +70,7 @@ import {
   buildInvoicePrintSnapshot,
   renderFinanceInvoiceCommercialHtml,
 } from "./invoice-print-snapshot.build";
+import { HotelPaymentCallbackService } from "./hotel-payment-callback.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -111,6 +112,7 @@ export class InvoicesService {
     @Optional() private readonly networkDocs?: NetworkDocumentService,
     @Optional() private readonly tradeCreditPolicy?: TradeCreditPolicyService,
     @Optional() private readonly extraFields?: ExtraFieldsService,
+    @Optional() private readonly hotelPaymentCallbacks?: HotelPaymentCallbackService,
   ) {}
 
   /** Fire-and-forget A–D reclassify when SKU + facility exist. */
@@ -120,6 +122,51 @@ export class InvoicesService {
   ): void {
     if (!counterpartyId || !this.tradeCreditPolicy) return;
     this.tradeCreditPolicy.scheduleReclassify(organizationId, counterpartyId);
+  }
+
+  /**
+   * Bank match / external: push allocated hotel CL payment to hotel PMS
+   * when invoice has sourceFolioId (ADR satellite-peer-url-resolution).
+   */
+  notifyHotelPaymentAppliedForInvoice(
+    organizationId: string,
+    invoiceId: string,
+    paymentId: string,
+    amountAzn: number,
+  ): void {
+    if (!this.hotelPaymentCallbacks || !(amountAzn > 0)) return;
+    void runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.prisma.invoice.findFirst({
+          where: { id: invoiceId, organizationId },
+          select: {
+            sourceFolioId: true,
+            status: true,
+            totalAmount: true,
+            paidAmount: true,
+          },
+        }),
+    )
+      .then((inv) => {
+        if (!inv?.sourceFolioId) return;
+        const fullyPaid =
+          inv.status === InvoiceStatus.PAID ||
+          Number(inv.paidAmount) + 0.01 >= Number(inv.totalAmount);
+        this.hotelPaymentCallbacks!.enqueueAndDeliver({
+          organizationId,
+          folioId: inv.sourceFolioId,
+          invoiceId,
+          paymentId,
+          amountAzn,
+          fullyPaid,
+        });
+      })
+      .catch((e) => {
+        this.logger.warn(
+          `notifyHotelPaymentAppliedForInvoice failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      });
   }
 
   /** Bank match / external callers: reclassify by invoice id. */
@@ -1382,47 +1429,22 @@ export class InvoicesService {
       };
     });
 
-    // Fire-and-forget hotel callbacks; do not roll back or fail the allocation.
-    if (hotelPaymentCallbacks.length) {
-      const base = process.env.ERA_HOTEL_PMS_INTERNAL_URL?.replace(/\/$/, '').trim();
-      const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
-
-      if (base && token) {
-        void Promise.all(
-          hotelPaymentCallbacks.map((cb) =>
-            fetch(`${base}/api/internal/v1/city-ledger/payment-applied`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                folioId: cb.folioId,
-                invoiceId: cb.invoiceId,
-                paymentId: result.transactionId,
-                amount: cb.amountAzn,
-                currency: 'AZN',
-                fullyPaid: cb.fullyPaid,
-              }),
-            }).then(async (res) => {
-              if (!res.ok) {
-                const detail = await res.text().catch(() => '');
-                this.logger.warn(
-                  `Hotel payment callback failed: HTTP ${res.status} ${detail}`.slice(0, 400),
-                );
-              }
-            }),
-          ),
-        ).catch((e) => {
-          this.logger.warn(
-            `Hotel payment callback fan-out failed: ${e instanceof Error ? e.message : String(e)}`,
-          );
+    // Durable outbox + best-effort deliver; do not roll back the allocation.
+    if (hotelPaymentCallbacks.length && this.hotelPaymentCallbacks) {
+      for (const cb of hotelPaymentCallbacks) {
+        this.hotelPaymentCallbacks.enqueueAndDeliver({
+          organizationId,
+          folioId: cb.folioId,
+          invoiceId: cb.invoiceId,
+          paymentId: result.transactionId,
+          amountAzn: cb.amountAzn,
+          fullyPaid: cb.fullyPaid,
         });
-      } else {
-        this.logger.warn(
-          'ERA_HOTEL_PMS_INTERNAL_URL and/or SATELLITE_EVENT_SERVICE_TOKEN are not configured; skipping hotel payment-applied callbacks',
-        );
       }
+    } else if (hotelPaymentCallbacks.length) {
+      this.logger.warn(
+        "HotelPaymentCallbackService unavailable; hotel payment-applied not enqueued",
+      );
     }
 
     this.scheduleTradeCreditReclassify(organizationId, dto.counterpartyId);

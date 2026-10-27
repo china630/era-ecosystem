@@ -24,6 +24,7 @@ const createSchema = z.object({
   cta: z.boolean().optional(),
   ctd: z.boolean().optional(),
   commissionPercent: z.number().min(0).max(100).optional(),
+  commissionBasis: z.enum(['GROSS', 'NET']).optional(),
   depositRequired: z.boolean().optional(),
   depositAmount: z.number().nonnegative().optional(),
   notes: z.string().optional(),

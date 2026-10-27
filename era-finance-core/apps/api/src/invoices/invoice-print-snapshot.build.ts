@@ -206,12 +206,27 @@ export async function buildInvoicePrintSnapshot(
     : "";
 
   const L = LABELS[lang];
+  // CP-ORG-PROFILE-01: prefer control-plane snapshot when Sync cached it.
+  let cpPrint: Partial<Record<string, string>> = {};
+  try {
+    const { getCachedOrgProfile, projectOrgPrintKeys } = await import(
+      "@era/satellite-kit"
+    );
+    const snap = getCachedOrgProfile(organizationId);
+    if (snap) cpPrint = projectOrgPrintKeys(snap, lang);
+  } catch {
+    cpPrint = {};
+  }
   const values: Record<string, PrintSnapshotScalar> = {
-    "org.name": inv.organization.name ?? "",
-    "org.taxId": decodeOrganizationTaxId(inv.organization) || "",
-    "org.legalAddress": inv.organization.legalAddress ?? "",
-    "org.logoUrl": inv.organization.logoUrl ?? "",
-    "org.bankLine": formatBankLine(inv.organization.bankAccountsOrg),
+    "org.name": cpPrint["org.name"] || inv.organization.name || "",
+    "org.taxId":
+      cpPrint["org.taxId"] || decodeOrganizationTaxId(inv.organization) || "",
+    "org.legalAddress":
+      cpPrint["org.legalAddress"] || inv.organization.legalAddress || "",
+    "org.logoUrl": cpPrint["org.logoUrl"] || inv.organization.logoUrl || "",
+    "org.bankLine":
+      cpPrint["org.bankLine"] ||
+      formatBankLine(inv.organization.bankAccountsOrg),
     "buyer.name": buyerName,
     "buyer.taxId": buyerTax,
     "invoice.number": inv.number,

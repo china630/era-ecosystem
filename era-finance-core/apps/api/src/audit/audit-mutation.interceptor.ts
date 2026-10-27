@@ -1,7 +1,9 @@
 /**
+ * Layer A mutation belt (ERA reference) — docs/adr/era-mutation-audit-standard.md / FIN-AUD-01.
  * Глобальная фиксация мутаций: POST / PATCH / PUT / DELETE (кроме auth login/register/refresh).
  * Записывает oldValues/newValues для Invoice, Employee, Product, JournalEntry (quick-expense),
  * иначе — HTTP_MUTATION с телом запроса в changes. Хеш SHA-256 для проверки целостности.
+ * Deny-list below should stay aligned with kit DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES (AC-FIN-AUD).
  */
 import {
   CallHandler,

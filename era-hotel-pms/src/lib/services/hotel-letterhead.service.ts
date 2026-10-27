@@ -58,14 +58,57 @@ export async function getReportLetterhead(): Promise<ReportLetterhead> {
       logoPath: true,
     },
   });
-  if (!profile) return emptyLetterhead();
+
+  // Prefer CP legal contacts/address/logo; property printName stays hotel-local.
+  let cp: {
+    name: string;
+    phone: string;
+    email: string;
+    website: string;
+    address: string;
+    logoUrl: string;
+  } | null = null;
+  try {
+    const { getCachedOrgProfile, resolvePrintContacts } = await import(
+      '@era/satellite-kit'
+    );
+    const { requestOrganizationId } = await import('@/lib/request-organization');
+    const snap = getCachedOrgProfile(requestOrganizationId());
+    if (snap) {
+      cp = resolvePrintContacts({
+        org: snap,
+        outlet: {
+          name: blankToNull(profile?.printName) ?? blankToNull(profile?.name),
+        },
+      });
+    }
+  } catch {
+    cp = null;
+  }
+
+  if (!profile && !cp) return emptyLetterhead();
+
+  let logo = await readLogo(profile?.logoPath ?? null);
+  if (!logo && cp?.logoUrl) {
+    try {
+      const res = await fetch(cp.logoUrl);
+      if (res.ok) logo = Buffer.from(await res.arrayBuffer());
+    } catch {
+      /* keep null */
+    }
+  }
+
   return {
-    name: blankToNull(profile.printName) ?? profile.name ?? '',
-    address: blankToNull(profile.address),
-    phone: blankToNull(profile.phone),
-    email: blankToNull(profile.email),
-    website: blankToNull(profile.website),
-    logo: await readLogo(profile.logoPath),
+    name:
+      blankToNull(profile?.printName) ||
+      blankToNull(cp?.name) ||
+      profile?.name ||
+      '',
+    address: blankToNull(cp?.address) || blankToNull(profile?.address),
+    phone: blankToNull(cp?.phone) || blankToNull(profile?.phone),
+    email: blankToNull(cp?.email) || blankToNull(profile?.email),
+    website: blankToNull(cp?.website) || blankToNull(profile?.website),
+    logo,
   };
 }
 

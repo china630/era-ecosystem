@@ -19,12 +19,20 @@ export async function listTransferOrders(filters?: {
   guestId?: string;
   status?: string;
   direction?: string;
+  /** When true, only rows with a non-empty flight number (airport board). */
+  hasFlight?: boolean;
 }) {
   const where: Record<string, unknown> = {};
   if (filters?.reservationId) where.reservationId = filters.reservationId;
   if (filters?.guestId) where.reservation = { guestId: filters.guestId };
   if (filters?.status) where.status = filters.status;
   if (filters?.direction) where.direction = filters.direction;
+  if (filters?.hasFlight) {
+    where.AND = [
+      { flightNo: { not: null } },
+      { flightNo: { not: '' } },
+    ];
+  }
   if (filters?.from || filters?.to) {
     where.pickupAt = {
       ...(filters.from ? { gte: filters.from } : {}),

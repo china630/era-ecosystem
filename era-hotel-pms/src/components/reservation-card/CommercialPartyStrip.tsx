@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
   Field,
   FieldRow,
   SECONDARY_BUTTON_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -24,15 +26,22 @@ type ContractOption = SalesContractPick & {
   code: string;
   validFrom?: string | null;
   validTo?: string | null;
+  commissionPercent?: number | string | null;
+  commissionBasis?: 'GROSS' | 'NET' | string | null;
+  ratePlanId?: string | null;
 };
 
-/** Source, agency, and company above the stay dates. One contract under that row. */
+export type RoomPayerValue = 'GUEST' | 'AGENCY' | 'COMPANY';
+export type CommissionBasisValue = 'GROSS' | 'NET';
+
+/** Source, agency, and company above the stay dates. Contract + room payer under that row. */
 export function CommercialPartyStrip({
   sourceId,
   agencyId,
   companyId,
   salesContractId,
-  contractRef,
+  roomPayer,
+  commissionBasis,
   checkIn,
   sources,
   agencies,
@@ -43,7 +52,8 @@ export function CommercialPartyStrip({
   onAgency,
   onCompany,
   onContract,
-  onContractRef,
+  onRoomPayer,
+  onCommissionBasis,
   onAgencyCreated,
   onCompanyCreated,
   walkInProfiles = [],
@@ -54,7 +64,8 @@ export function CommercialPartyStrip({
   agencyId: string;
   companyId: string;
   salesContractId: string;
-  contractRef: string;
+  roomPayer: RoomPayerValue;
+  commissionBasis: CommissionBasisValue;
   checkIn?: string;
   sources: SourceOption[];
   agencies: AgencyOption[];
@@ -65,7 +76,8 @@ export function CommercialPartyStrip({
   onAgency: (id: string) => void;
   onCompany: (id: string) => void;
   onContract: (id: string) => void;
-  onContractRef: (value: string) => void;
+  onRoomPayer: (value: RoomPayerValue) => void;
+  onCommissionBasis: (value: CommissionBasisValue) => void;
   onAgencyCreated: (row: AgencyOption) => void;
   onCompanyCreated: (row: AgencyOption) => void;
   walkInProfiles?: Array<{ code: string; label: string }>;
@@ -81,6 +93,7 @@ export function CommercialPartyStrip({
   const [companyName, setCompanyName] = useState('');
   const [companyVoen, setCompanyVoen] = useState('');
   const [busy, setBusy] = useState(false);
+  const payerTouched = useRef(false);
 
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
@@ -127,6 +140,24 @@ export function CommercialPartyStrip({
   }, [contracts, sourceKind, agencyId, companyId, checkIn, salesContractId]);
   const knownAgencyId = agencies.some((a) => a.id === agencyId) ? agencyId : '';
   const knownCompanyId = companies.some((c) => c.id === companyId) ? companyId : '';
+  const showCommercial = Boolean(knownAgencyId || knownCompanyId || salesContractId);
+  const showAgencyPlus = canQuickAddAgency && !agencyPickerLocked;
+  const contractRequired = roomPayer === 'AGENCY' || roomPayer === 'COMPANY';
+  const showPayerRow = Boolean(knownAgencyId || knownCompanyId);
+
+  useEffect(() => {
+    if (payerTouched.current) return;
+    if (knownCompanyId && roomPayer !== 'COMPANY') onRoomPayer('COMPANY');
+    else if (!knownCompanyId && knownAgencyId && roomPayer === 'COMPANY') onRoomPayer('GUEST');
+    else if (!knownCompanyId && !knownAgencyId && roomPayer !== 'GUEST') onRoomPayer('GUEST');
+  }, [knownAgencyId, knownCompanyId, roomPayer, onRoomPayer]);
+
+  useEffect(() => {
+    if (!contractRequired) return;
+    if (salesContractId) return;
+    if (visibleContracts.length !== 1) return;
+    onContract(visibleContracts[0]!.id);
+  }, [contractRequired, salesContractId, visibleContracts, onContract]);
 
   async function createAgency() {
     if (!agencyName.trim() || agencyPhone.trim().length < 5) {
@@ -206,10 +237,35 @@ export function CommercialPartyStrip({
     }
   }
 
-  const showContract = Boolean(
-    knownAgencyId || knownCompanyId || salesContractId || contractRef.trim(),
-  );
-  const showAgencyPlus = canQuickAddAgency && !agencyPickerLocked;
+  const selectedContract = visibleContracts.find((c) => c.id === salesContractId);
+  const agencyLabel = agencies.find((a) => a.id === knownAgencyId)?.label ?? '';
+  const companyLabel = companies.find((c) => c.id === knownCompanyId)?.label ?? '';
+  const commissionPct =
+    selectedContract?.commissionPercent != null && selectedContract.commissionPercent !== ''
+      ? Number(selectedContract.commissionPercent)
+      : null;
+  const payerSentence =
+    roomPayer === 'AGENCY'
+      ? t('roomPaidByAgency', { name: agencyLabel || '—' })
+      : roomPayer === 'COMPANY'
+        ? t('roomPaidByCompany', { name: companyLabel || '—' })
+        : t('roomPaidByGuest');
+  const basisSentence = knownAgencyId
+    ? commissionBasis === 'NET'
+      ? selectedContract
+        ? t('basisNetWithContract', { contract: selectedContract.label })
+        : t('basisNetOnly')
+      : commissionPct != null && !Number.isNaN(commissionPct)
+        ? t('basisGrossWithPct', { pct: commissionPct })
+        : t('basisGrossOnly')
+    : '';
+  const billingSentence = [payerSentence, basisSentence].filter(Boolean).join(' · ');
+
+  const payerOptions = [
+    { value: 'GUEST', label: t('roomPayerGuest') },
+    ...(knownAgencyId ? [{ value: 'AGENCY', label: t('roomPayerAgency') }] : []),
+    ...(knownCompanyId ? [{ value: 'COMPANY', label: t('roomPayerCompany') }] : []),
+  ];
 
   return (
     <div className="space-y-2" data-testid="commercial-party-strip">
@@ -378,25 +434,74 @@ export function CommercialPartyStrip({
           </button>
         </div>
       ) : null}
-      {showContract ? (
-        <FieldRow cols={2}>
+      {showCommercial ? (
+        <div className="space-y-1.5">
           <CatalogField
             kind="ENTITY_REF"
-            label={t('stayContract')}
+            label={
+              contractRequired ? `${t('stayContract')} (${t('contractRequiredMark')})` : t('stayContract')
+            }
             value={salesContractId}
             onChange={(v) => onContract(Array.isArray(v) ? (v[0] ?? '') : v)}
             options={visibleContracts.map((c) => ({ value: c.id, label: c.label }))}
             emptyLabel="—"
             disabled={disabled || visibleContracts.length === 0}
           />
-          <Field
-            label={t('contractRef')}
-            preset="code"
-            value={contractRef}
-            disabled={disabled}
-            onChange={(e) => onContractRef(e.target.value)}
-          />
-        </FieldRow>
+          {contractRequired && visibleContracts.length === 0 ? (
+            <p className={`m-0 text-[12px] text-rose-800`} data-testid="contract-create-hint">
+              {t('contractCreateHint')}{' '}
+              <Link href="/distribution/contracts" className="underline">
+                {t('openB2bContracts')}
+              </Link>
+            </p>
+          ) : null}
+          {contractRequired && !salesContractId && visibleContracts.length > 0 ? (
+            <p className={`m-0 text-[12px] text-rose-800`} data-testid="contract-required-hint">
+              {t('contractRequiredHint')}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {showPayerRow ? (
+        <div className="space-y-1.5">
+          <FieldRow cols={2}>
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t('roomPayer')}
+              value={roomPayer}
+              onChange={(v) => {
+                payerTouched.current = true;
+                const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                if (next === 'AGENCY' || next === 'COMPANY' || next === 'GUEST') onRoomPayer(next);
+              }}
+              options={payerOptions}
+              disabled={disabled}
+            />
+            {knownAgencyId ? (
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t('commissionBasis')}
+                value={commissionBasis}
+                onChange={(v) => {
+                  const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                  onCommissionBasis(next === 'NET' ? 'NET' : 'GROSS');
+                }}
+                options={[
+                  { value: 'GROSS', label: t('basisGross') },
+                  { value: 'NET', label: t('basisNet') },
+                ]}
+                disabled={disabled}
+              />
+            ) : (
+              <div />
+            )}
+          </FieldRow>
+          {billingSentence ? (
+            <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-payer-sentence">
+              {billingSentence}
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -23,7 +23,7 @@ Hotel and F&B POS are **Industry Solutions** tiles like the other verticals. Ope
 | Domain | Finance (source of truth) | Hotel / fb-pos (read / sync) |
 |--------|---------------------------|------------------------------|
 | Sales invoices | `/sales/invoices` | `/reports/invoices` — operational list + `integrateToAccounting` flag + deep link |
-| Agency receivables | `/crm/counterparties/[id]/reconciliation` + `AgencyCityLedgerSnapshot` history | `/reports/agency-ledger` — city ledger snapshot; event `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` persisted in Finance |
+| Agency / company receivables | Counterparty edit modal + reconciliation: `AgencyCityLedgerSnapshot` history (`partyKind` agency|company; link via `financeCounterpartyId`) | `/front-cash/agency-ledger` + `/front-cash/company-ledger` — ops snapshot push; event `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` persisted in Finance (display only, not AR aging) |
 | Purchases | `/purchases` | — (hotel does not duplicate PO) |
 | Inventory / stock | `/inventory/*` | `/admin/stock` — local MVP movements only; link to Finance warehouse |
 | GL / NAS | Night audit worker, journal entries | Revenue GL mapping on `/admin/integration` |
@@ -39,6 +39,8 @@ Satellites emit typed events → orchestrator → finance `SatelliteEventWorker`
 Hotel night audit (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`): mapped `revenueLines` post multi-line NAS journal (cash + receivable debits, revenue credits per GL account).
 
 **Live** in Finance dispatch: `SATELLITE_HOTEL_INVOICE_ISSUED`, `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` (persisted to `agency_city_ledger_snapshots`) — [INTEGRATION_SSO_EVENTS.md](../../docs/INTEGRATION_SSO_EVENTS.md).
+
+**Finance → Hotel payment apply:** when an invoice with `sourceFolioId` is paid (allocate UI **or** bank statement match), Finance enqueues `HotelPaymentCallbackOutbox` and POSTs hotel `POST /api/internal/v1/city-ledger/payment-applied`. Hotel peer base URL from CP `SatelliteEndpoint` (`resolvePeerSatelliteBaseUrl`), not `ERA_HOTEL_PMS_INTERNAL_URL` as SoR. Cron retries outbox + hourly reconcile. ADR [satellite-peer-url-resolution.md](../../docs/adr/satellite-peer-url-resolution.md).
 
 ## CRM boundary
 

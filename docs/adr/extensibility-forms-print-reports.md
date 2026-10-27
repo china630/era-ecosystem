@@ -4,7 +4,7 @@
 **Date:** 2026-09-18  
 **Scope:** Cross-cutting — all cores and industry satellites. Placement + commercial packaging. Not a full schema spec.  
 **Implementation:** Wave 1 hardening (finance invoice extras) + Wave 2 hardening (invoice register saved views). Platform studio is not started.  
-**Related:** [deployment-topology.md](./deployment-topology.md) · [era-commercial-catalog.md](./era-commercial-catalog.md) · [platform-trial-hierarchy.md](./platform-trial-hierarchy.md) · [managed-lists-vs-enums.md](./managed-lists-vs-enums.md) · [subconto-analytical-dimensions.md](./subconto-analytical-dimensions.md) · [clinic-print-forms.md](./clinic-print-forms.md) · [statform-engine.md](./statform-engine.md) · [sanatorium-vnext.md](./sanatorium-vnext.md) (external 1C accounting adapter) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
+**Related:** [deployment-topology.md](./deployment-topology.md) · [era-commercial-catalog.md](./era-commercial-catalog.md) · [platform-trial-hierarchy.md](./platform-trial-hierarchy.md) · [managed-lists-vs-enums.md](./managed-lists-vs-enums.md) · [subconto-analytical-dimensions.md](./subconto-analytical-dimensions.md) · [clinic-print-forms.md](./clinic-print-forms.md) · [cp-organization-profile-and-branding.md](./cp-organization-profile-and-branding.md) (org logo/names/contacts SoR on orch) · [statform-engine.md](./statform-engine.md) · [sanatorium-vnext.md](./sanatorium-vnext.md) (external 1C accounting adapter) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md)
 
 ## Context
 
@@ -77,7 +77,7 @@ Do **not** wait for DEDICATED to ship SaaS core. Extra fields, branding, saved v
 **Print**
 
 - Statutory / fiscal / KO-1 / e-qaimə / MHBS layouts stay **vendor-owned**.
-- Tenant branding (logo, legal names, footers) is SaaS core.
+- Tenant branding (logo, legal names, shared contacts/addresses) is SaaS core on the orchestrator — [cp-organization-profile-and-branding.md](./cp-organization-profile-and-branding.md). Product print footers/signatures may stay satellite-local.
 - Customer-uploaded DOCX/HTML is Studio light/deep, placeholders from the **print snapshot** only — no SQL in templates.
 - Clinic HTML print routes remain the current implementation until a templating wave; this ADR does not require Puppeteer on every reception click.
 - **W3 (finance commercial invoice):** live `PrintSnapshot` (flat dotted keys + one `{{#lines}}` loop) interpolated into a **checked-in** vendor HTML blank (`FINANCE_INVOICE_COMMERCIAL`). Placeholder catalog is read-only. Not a frozen issued-copy row; not fiscal equivalence.

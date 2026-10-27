@@ -25,10 +25,25 @@ import {
 } from '@/lib/services/medical-package-resolve.service';
 import { releaseDoorAfterShareDeparture } from '@/lib/services/share-assignment.service';
 
+export interface CheckoutCityLedgerHandoff {
+  folioId: string;
+  invoiceOk: boolean;
+  invoiceError?: string;
+  snapshotOk?: boolean;
+  snapshotError?: string;
+}
+
 export interface CheckoutResult {
   reservation: Awaited<ReturnType<typeof getReservation>>;
   dispatch: DispatchResult;
   cityLedgerTransferred: string[];
+  cityLedgerHandoff: CheckoutCityLedgerHandoff[];
+  warnings: string[];
+  movedGuestToPayer?: {
+    payerType: 'COMPANY' | 'AGENCY';
+    transferredCharges: number;
+    transferredPayments: number;
+  };
   depositRemainder: Awaited<
     ReturnType<typeof import('@/lib/services/folio-deposit.service').refundRemainingDeposits>
   >;
@@ -91,6 +106,7 @@ export async function checkoutReservation(
   id: string,
   opts?: {
     transferToCityLedger?: boolean;
+    moveGuestDebtToPayer?: boolean;
     transferToGuestDebt?: boolean;
     guestDebtNote?: string;
     createdByUserId?: string;
@@ -113,6 +129,16 @@ export async function checkoutReservation(
     throw new Error('Check-out is only allowed for IN_HOUSE reservations');
   }
 
+  if (opts?.moveGuestDebtToPayer && opts?.transferToGuestDebt) {
+    throw Object.assign(new Error('Cannot move guest debt to payer and leave guest debt together'), {
+      status: 409,
+      code: 'CONFLICTING_GUEST_DEBT_CHOICE',
+    });
+  }
+
+  const wantMove = opts?.moveGuestDebtToPayer === true;
+  const wantClExplicit = opts?.transferToCityLedger === true || wantMove;
+
   const { assertNoOpenLaundry } = await import('@/lib/services/hk-nafta.service');
   await assertNoOpenLaundry(id);
 
@@ -121,14 +147,17 @@ export async function checkoutReservation(
   );
   const earlyPreview = await previewEarlyCheckoutUnusedNights(id).catch(() => null);
 
-  assertPayerDebtResolved(
-    await prisma.folio.findMany({
-      where: { reservationId: id, status: 'OPEN', type: { in: ['AGENCY', 'COMPANY'] } },
-      include: { charges: true, payments: true },
-    }),
-    opts?.transferToCityLedger,
-    earlyPreview?.applicable ? earlyReversalByFolio(earlyPreview.chargePlans) : {},
-  );
+  // Payer debt check runs again after optional guest→payer move (below).
+  if (!wantMove) {
+    assertPayerDebtResolved(
+      await prisma.folio.findMany({
+        where: { reservationId: id, status: 'OPEN', type: { in: ['AGENCY', 'COMPANY'] } },
+        include: { charges: true, payments: true },
+      }),
+      wantClExplicit,
+      earlyPreview?.applicable ? earlyReversalByFolio(earlyPreview.chargePlans) : {},
+    );
+  }
 
   const { postLateCheckOutFee } = await import('@/lib/services/early-late-fees.service');
   await postLateCheckOutFee(id).catch((e) => console.error('Late check-out fee failed', e));
@@ -250,6 +279,18 @@ export async function checkoutReservation(
   await moveHeldDepositsOntoFolio(id);
   const depositRemainder = { appliedCount: 0, refundedHeld: 0, heldAmount: 0, heldIds: [] as string[] };
 
+  let movedGuestToPayer: CheckoutResult['movedGuestToPayer'];
+  if (wantMove) {
+    const { transferOpenGuestChargesToPayer } = await import(
+      '@/lib/services/checkout-move-payer.service'
+    );
+    movedGuestToPayer = await transferOpenGuestChargesToPayer({
+      reservationId: id,
+      actorUserId: opts?.createdByUserId,
+      request: opts?.auditRequest,
+    });
+  }
+
   const openFolios = await prisma.folio.findMany({
     where: { reservationId: id, status: 'OPEN' },
     include: { charges: true, payments: true },
@@ -257,8 +298,8 @@ export async function checkoutReservation(
   await assertNoUnusedPayment(id);
 
   const arCandidates = payerDebtFolios(openFolios);
-  assertPayerDebtResolved(openFolios, opts?.transferToCityLedger);
-  const wantCl = opts?.transferToCityLedger === true && arCandidates.length > 0;
+  assertPayerDebtResolved(openFolios, wantClExplicit);
+  const wantCl = wantClExplicit && arCandidates.length > 0;
 
   if (opts?.transferToGuestDebt) {
     const note = opts.guestDebtNote?.trim() ?? '';
@@ -318,6 +359,8 @@ export async function checkoutReservation(
   }
 
   const cityLedgerTransferred: string[] = [];
+  const cityLedgerHandoff: CheckoutCityLedgerHandoff[] = [];
+  const warnings: string[] = [];
 
   const completed = await prisma.$transaction(async (tx) => {
     await closeFolios(id, { onlyTypes: ['GUEST'], targetStatus: 'CLOSED' });
@@ -333,7 +376,10 @@ export async function checkoutReservation(
 
     const reservation = await tx.reservation.update({
       where: { id },
-      data: { status: 'CHECKED_OUT' },
+      data: {
+        status: 'CHECKED_OUT',
+        ...(wantCl ? { checkoutSettlementStatus: 'PENDING' as const } : {}),
+      },
       include: {
         room: { include: { roomType: true } },
         guest: true,
@@ -369,24 +415,70 @@ export async function checkoutReservation(
     const pending = await prisma.folio.findMany({
       where: { reservationId: id, status: 'PENDING_AR' },
     });
+    let anyInvoiceOk = false;
     for (const f of pending) {
-      await prisma.folio.update({ where: { id: f.id }, data: { status: 'TRANSFERRED_AR' } });
-      cityLedgerTransferred.push(f.id);
-      await issueFolioInvoice(f.id).catch((e) => console.error('CL invoice issue failed', e));
+      const handoff: CheckoutCityLedgerHandoff = { folioId: f.id, invoiceOk: false };
+      try {
+        await issueFolioInvoice(f.id);
+        handoff.invoiceOk = true;
+        anyInvoiceOk = true;
+        await prisma.folio.update({ where: { id: f.id }, data: { status: 'TRANSFERRED_AR' } });
+        cityLedgerTransferred.push(f.id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'CL invoice issue failed';
+        handoff.invoiceError = msg;
+        warnings.push(`Invoice failed for folio ${f.id}: ${msg}`);
+        console.error('CL invoice issue failed', e);
+      }
+      cityLedgerHandoff.push(handoff);
     }
+
+    if (anyInvoiceOk) {
+      await prisma.reservation.update({
+        where: { id },
+        data: { checkoutSettlementStatus: 'INVOICED' },
+      });
+    }
+
     const asOf = todayBakuYmd();
     const { dispatchCityLedgerSnapshot, dispatchCompanyCityLedgerSnapshot } = await import(
       '@/lib/integration/event-dispatcher'
     );
     if (completed.agencyId && pending.some((folio) => folio.type === 'AGENCY')) {
-      await dispatchCityLedgerSnapshot(completed.agencyId, asOf).catch((e) =>
-        console.error('CL snapshot failed', e),
-      );
+      try {
+        await dispatchCityLedgerSnapshot(completed.agencyId, asOf);
+        for (const row of cityLedgerHandoff) {
+          if (pending.find((f) => f.id === row.folioId)?.type === 'AGENCY') row.snapshotOk = true;
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'CL snapshot failed';
+        warnings.push(`Agency City Ledger snapshot failed: ${msg}`);
+        console.error('CL snapshot failed', e);
+        for (const row of cityLedgerHandoff) {
+          if (pending.find((f) => f.id === row.folioId)?.type === 'AGENCY') {
+            row.snapshotOk = false;
+            row.snapshotError = msg;
+          }
+        }
+      }
     }
     if (completed.companyId && pending.some((folio) => folio.type === 'COMPANY')) {
-      await dispatchCompanyCityLedgerSnapshot(completed.companyId, asOf).catch((e) =>
-        console.error('Company CL snapshot failed', e),
-      );
+      try {
+        await dispatchCompanyCityLedgerSnapshot(completed.companyId, asOf);
+        for (const row of cityLedgerHandoff) {
+          if (pending.find((f) => f.id === row.folioId)?.type === 'COMPANY') row.snapshotOk = true;
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Company CL snapshot failed';
+        warnings.push(`Company City Ledger snapshot failed: ${msg}`);
+        console.error('Company CL snapshot failed', e);
+        for (const row of cityLedgerHandoff) {
+          if (pending.find((f) => f.id === row.folioId)?.type === 'COMPANY') {
+            row.snapshotOk = false;
+            row.snapshotError = msg;
+          }
+        }
+      }
     }
   }
 
@@ -418,12 +510,21 @@ export async function checkoutReservation(
     fields: [
       { key: 'status', from: 'IN_HOUSE', to: 'CHECKED_OUT' },
       ...(opts?.transferToGuestDebt ? [{ key: 'guestDebt', from: null, to: opts.guestDebtNote ?? 'yes' }] : []),
-      ...(opts?.transferToCityLedger ? [{ key: 'cityLedger', from: null, to: 'true' }] : []),
+      ...(wantClExplicit ? [{ key: 'cityLedger', from: null, to: 'true' }] : []),
+      ...(wantMove ? [{ key: 'moveGuestToPayer', from: null, to: movedGuestToPayer?.payerType ?? 'true' }] : []),
     ],
     ...(earlyCheckoutRevert
       ? { refs: { earlyCheckout: JSON.stringify(earlyCheckoutRevert) } }
       : {}),
   });
 
-  return { reservation, dispatch, cityLedgerTransferred, depositRemainder };
+  return {
+    reservation,
+    dispatch,
+    cityLedgerTransferred,
+    cityLedgerHandoff,
+    warnings,
+    movedGuestToPayer,
+    depositRemainder,
+  };
 }

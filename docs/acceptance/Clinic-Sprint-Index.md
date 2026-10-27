@@ -37,5 +37,6 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-15 | Nafta one stay two episodes (Wave E) | [~] | CLI-54 SCREEN; AC-CLI-SAN-PAX 🟡; openEpisode per patient; shared surname does not merge; depart/move by stay id; **pilot punch open** |
 | S-16 | Episode as care course (CLI-55) | [~] | SCREEN waves W1–W5; AC-CLI-EPISODE 🟡; UAT open — not Pilot |
 | S-17 | Clinic RBAC Variant A + custom roles | [~] | AC-CLI-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
+| S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | CLI-19 SHIPPED viewer; `jsonOk` + `/admin/audit` + `GET /api/admin/audit` canonical filters; HTTP_MUTATION UAT open; ADR open debts; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

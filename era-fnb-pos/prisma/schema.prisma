@@ -38,6 +38,25 @@ enum PosShiftStatus {
   CLOSED
 }
 
+enum BuffetMeal {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+enum BuffetPlanStatus {
+  DRAFT
+  LOCKED
+  SERVED
+  CLOSED
+}
+
+enum BuffetCoversSource {
+  MANUAL
+  HOTEL
+  MIXED
+}
+
 model Outlet {
   id                 String   @id @default(cuid())
   organizationId String @map("organization_id")
@@ -56,6 +75,7 @@ model Outlet {
   shifts             PosShift[]
   menuCategories     MenuCategory[]
   dailyMenuEntries   DailyMenuEntry[]
+  buffetPlans        BuffetPlan[]
   soldOut            MenuItemSoldOut[]
   staff              StaffRoster[]
   publicSlug         String?  @unique @map("public_slug")
@@ -171,6 +191,7 @@ model MenuItem {
   category   MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   lines      TicketLine[]
   dailyEntries DailyMenuEntry[]
+  buffetLines  BuffetPlanLine[]
   priceHistory MenuItemPrice[]
   soldOut      MenuItemSoldOut[]
 
@@ -228,6 +249,46 @@ model DailyMenuEntry {
   @@index([outletId, boardDate])
   @@index([organizationId])
   @@map("daily_menu_entries")
+}
+
+/// Per-outlet meal production plan (module `fnb_buffet_planner`). ADR docs/adr/fnb-buffet-planner.md
+model BuffetPlan {
+  id               String             @id @default(cuid())
+  organizationId   String             @map("organization_id")
+  outletId         String             @map("outlet_id")
+  serviceDate      DateTime           @map("service_date") @db.Date
+  meal             BuffetMeal
+  status           BuffetPlanStatus   @default(DRAFT)
+  coversAdult      Int                @default(0) @map("covers_adult")
+  coversChild      Int                @default(0) @map("covers_child")
+  coversSource     BuffetCoversSource @default(MANUAL) @map("covers_source")
+  notes            String?
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  outlet           Outlet             @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  lines            BuffetPlanLine[]
+
+  @@unique([outletId, serviceDate, meal])
+  @@index([organizationId, serviceDate])
+  @@map("buffet_plans")
+}
+
+model BuffetPlanLine {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  planId          String    @map("plan_id")
+  menuItemId      String    @map("menu_item_id")
+  station         String    @default("MAIN")
+  plannedPortions Int       @map("planned_portions")
+  wastePct        Decimal   @default(0) @map("waste_pct") @db.Decimal(5, 2)
+  sortOrder       Int       @default(0) @map("sort_order")
+  plan            BuffetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@unique([planId, menuItemId, station])
+  @@index([organizationId])
+  @@map("buffet_plan_lines")
 }
 
 model Ticket {

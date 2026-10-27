@@ -232,6 +232,12 @@ export default function CompanyLedgerPage() {
       </EraListFilterBar>
 
       <FinanceBoundaryBanner target="counterparties" />
+      <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('financeOnlySettlementBanner')}</p>
+      <p className="mb-3 text-[13px]">
+        <a className="text-[#2980B9] hover:underline" href="/front-cash/unsettled-departures">
+          {t('unsettledDeparturesLink')}
+        </a>
+      </p>
 
       <HotelDataGrid<SummaryRow & Record<string, unknown>>
         columns={[

@@ -35,5 +35,6 @@ Current rollup: Gate ✅ · BE ✅ · UI 🟡 · Demo ❌ · Sell: do not claim 
 | S-12 | e-qaimə day-close rule | [~] | ADR finance-tax-scheme; FIN-EQAIME-DAY-01 API; AC-FIN-EQAIME-DAY 🟡 out of W6; FIN-EQAIME-01 stays STUB/API; not SHOW |
 | S-13 | Fact queue on month close | [~] | ADR finance-per-book-period-close; FIN-FACT-QUEUE-01 API; AC-FIN-FACT-QUEUE 🟡 out of W6; period-lock uses the same refusal; does not extend AC-FIN-GL; not SHOW |
 | S-14 | Provisional VAT and filed-period amendment | [~] | ADR finance-tax-scheme; FIN-PROVISIONAL-VAT-01 API; AC-FIN-PROVISIONAL-VAT 🟡 out of W6; whole purchase stays in expense until the document; recalc reads the scheme and the saved amount; invoice rate comes from the scheme; period-lock uses the same refusal; no cash refund; does not extend AC-FIN-TAX; not SHOW |
+| S-15 | Mutation audit ecosystem align (deny-list / redaction kit) | [~] | FIN-AUD-01 COVERAGE SHIPPED; UI/API `/admin/audit` + OWNER `/admin/security-audit`; entityId filter + EN i18n; OWNER door unit; AC-FIN-AUD 🟡 kit-align residual out of W6; does not move Gate/Pilot/edition |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

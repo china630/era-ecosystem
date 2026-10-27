@@ -58,12 +58,20 @@ describe("menu card import", () => {
         price: 20,
         revenueGroup: "SPA MEDIKAL",
       },
+      {
+        productCode: "V1",
+        productGroup: "Suvenirlər",
+        name: "Magnet",
+        price: 2,
+        revenueGroup: "OTHER",
+      },
     ]);
+    expect(plan.categories.map((category) => category.name).sort()).toEqual(["HOT FOOD", "WİNE"]);
     expect(plan.categories.map((category) => category.revenueCode).sort()).toEqual(["4101", "4103"]);
     expect(plan.dishes.map((dish) => dish.plu).sort()).toEqual(["F1", "W1", "W2"]);
     expect(plan.dishes.every((dish) => !("revenueCode" in dish && dish.revenueCode))).toBe(true);
     const glass = plan.dishes.find((dish) => dish.plu === "W1");
     expect(glass?.recipeSku).toBe("W2");
-    expect(plan.skipped.map((row) => row.split(" ")[0]).sort()).toEqual(["L1", "S1"]);
+    expect(plan.skipped.map((row) => row.split(" ")[0]).sort()).toEqual(["L1", "S1", "V1"]);
   });
 });

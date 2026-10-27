@@ -14,7 +14,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | Wave | Gate | AC rollup (from Matrix) | Pilot-ready | Notes / log |
 |------|------|-------------------------|-------------|-------------|
 | W0 baseline | gate[x] | 🟡 | [ ] | `reports/hotel-stage-W0-signoff.md` scaffold-gate-pass |
-| W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED for the signed cashier. 2026-10-24 folio pair and closed deposit intake do not change this gate or Pilot |
+| W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED for the signed cashier. 2026-10-27 MOVE_PAYER_CL + unsettled (shell nav) + invoice-gated TRANSFERRED_AR; room payer + gross/net on card; corp contract→COMPANY default + contract sellable allotment preview; HOT-CL-07 API Finance→Hotel payment-applied (outbox/peer URL — not SHIPPED/SHOW). Pilot lab still needs UAT §27 / §29 1a–1b artifact |
 | W2 BE scaffold green | gate[x] | ✅ (INT excl.) | [ ] | `reports/hotel-stage-W2-signoff.md` — negative-path suites |
 | W3 UI / Demo | gate[x] | ✅ | [ ] | `reports/hotel-demo-te-signoff.md` — UI/Demo ✅; lab open |
 
@@ -31,7 +31,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-7 | Management reports catalog + Nafta nightly ZIP | [~] | W1–W3 API/SCREEN (P0 pack + P1 catalog + cubes/3-year + email ZIP link HEADLESS); HOT-RPT-01/02 not SHIPPED — no UAT evidence |
 | S-8 | Agency portal P0–P1 | [~] | ADR hotel-agency-portal; AC-HOT-AGP 🟡; HOT-AGP-01/02/03 API |
 | S-9 | Early checkout unused-nights refund (HOT-CO-04) | [x] | ADR Accepted; preview+apply+UI; UAT §33; AC-HOT-CO-EARLY 🟡 |
-| S-10 | Nafta HK deepen (roster, floor sheet, `/hk/rooms`, laundry) | [~] | Engineering SCREEN — floor sheet (archive dates read-only), selected-floor PDF, hotel board; [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED. Does not move Gate, Pilot, or edition |
+| S-10 | Nafta HK deepen (roster, floor sheet, `/hk/rooms`, laundry) | [~] | Engineering SCREEN — soft sort+room#; void IN_PLANT on grids+checkout; FO amount+express; stay linen edit-only; maids edit/unlink; discrepancy create; [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED. Does not move Gate, Pilot, or edition |
 | S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + agency table + FO pax SKU; **pilot punch open** |
 | S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; sell-versions catalog + main-SKU night audit; UAT §40 open |
 | S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; companion MDM id stays on that row; **pilot punch open** |
@@ -46,5 +46,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-24 | Card Notes feed + alert | [~] | HOT-BOOK-09 API |
 | S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; night audit not run — not SHIPPED; out of BE and SHOW rollup |
 | S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
+| S-27 | Transfers/Tours boarding-first + Airport fold | [x] | HOT-XFER-01 / HOT-TOUR-01 SHIPPED SCREEN; AC-HOT-XFER/TOUR Scaffold ✅ out of BE rollup; second-pass (AUTO_CUTOFF lazy, CARD terminal); UAT §14/§14b; edition `mvp` unchanged |
+| S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit` + `GET /api/admin/audit` (reports grant); canonical filters; CI `check:mutation-audit-belt`; HOT-AUD-01 / AC-HOT-AUD 🟡; UAT open — not SHIPPED; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

@@ -14,13 +14,19 @@ async function postHotelConsumption(payload: {
   source: string;
   sourceRef: string;
 }) {
-  const base = (
-    process.env.HOTEL_PMS_URL?.trim() ||
-    process.env.ERA_HOTEL_PMS_ORIGIN?.trim() ||
-    "http://127.0.0.1:3201"
-  ).replace(/\/$/, "");
-  const secret = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
+  const {
+    PEER_SATELLITE_HOTEL,
+    resolvePeerSatelliteBaseUrl,
+    resolveSatelliteEventServiceToken,
+  } = await import("@era/satellite-kit");
+  const secret = resolveSatelliteEventServiceToken();
   if (!secret) throw new Error("SATELLITE_EVENT_SERVICE_TOKEN not configured");
+  const base = (
+    await resolvePeerSatelliteBaseUrl({
+      organizationId: payload.organizationId,
+      satelliteKey: PEER_SATELLITE_HOTEL,
+    })
+  ).baseUrl;
   const res = await fetch(`${base}/api/internal/v1/consumption`, {
     method: "POST",
     headers: {

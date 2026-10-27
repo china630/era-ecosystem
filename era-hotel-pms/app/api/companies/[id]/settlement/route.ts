@@ -18,3 +18,23 @@ export async function GET(
     return handleRouteError(err);
   }
 }
+
+export async function POST(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await getSatelliteSession();
+    assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
+    await params;
+    return Response.json(
+      {
+        error: 'Company settlement is paid in Finance only (City Ledger handoff).',
+        code: 'FINANCE_ONLY_SETTLEMENT',
+      },
+      { status: 409 },
+    );
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}

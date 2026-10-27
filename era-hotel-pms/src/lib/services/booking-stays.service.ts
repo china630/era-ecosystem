@@ -120,6 +120,8 @@ export async function createGroupBookingWithStays(input: {
   paymentMethod?: PaymentMethod | null;
   sourceId?: string;
   salesContractId?: string;
+  roomPayer?: 'GUEST' | 'AGENCY' | 'COMPANY';
+  commissionBasis?: 'GROSS' | 'NET';
   booker?: string;
   guestRep?: string;
   paidBy?: string;
@@ -160,6 +162,8 @@ export async function createGroupBookingWithStays(input: {
         agencyId: input.agencyId,
         walkInProfileCode: input.walkInProfileCode ?? null,
         salesContractId: input.salesContractId,
+        roomPayer: input.roomPayer,
+        commissionBasis: input.commissionBasis,
         sourceId: input.sourceId,
         companyId: input.companyId,
         groupId: group.id,

@@ -52,8 +52,10 @@
 | Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; UAT open — not SHOW / not Pilot) |
 | Role access matrix (CLI-RBAC-01) | `/admin/access` | 🟡 SCREEN (Phase A + custom roles/seed; UAT listed; not SHOW / not Pilot) |
 | Package/extras assign (CLI-57) | `/sanatorium` patient card Package tab + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay seats the cabin; nurse red block only if seated; day-end cron writes `UNPAID_MISSED`; a leftover `*_POOL` off the procedure list is not a burn target on Save, replace, or plus; UAT open — not SHOW) |
+| Walk-in groups (CLI-61) | `/sanatorium/walk-in-parties` list + ModalShell CRUD | 🟡 SCREEN (create/open/guest/line in modals; hotel pending basket; UAT §11a open — not SHOW) |
+| Mutation audit (CLI-19) | `/admin/audit` + `GET /api/admin/audit` (canonical filters; nav Mutation audit en/az/ru) | 🟡 SCREEN/SHIPPED viewer — Layer A via `jsonOk` + path/API parity (ADR era-mutation-audit-standard); HTTP_MUTATION UAT open. Does not move Gate, Demo, Pilot, or Sell |
 
-**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA). CLI-55 episode-course card is **SCREEN** (built; UAT open) — not SHOW / not Pilot. CLI-57 plan-before-pay is **SCREEN** on the same row: it does not lift UI, Demo, or Pilot. Line rollup stays 🟡.
+**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA). CLI-55 episode-course card is **SCREEN** (built; UAT open) — not SHOW / not Pilot. CLI-57 plan-before-pay is **SCREEN** on the same row: it does not lift UI, Demo, or Pilot. CLI-61 walk-in groups are **SCREEN** on the same rule. Line rollup stays 🟡.
 
 ---
 

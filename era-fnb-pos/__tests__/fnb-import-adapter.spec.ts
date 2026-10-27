@@ -23,14 +23,26 @@ describe("F&B cutover import adapters", () => {
     expect(IMPORT_PHASES[1]?.entities).toEqual(["fnb-transactions"]);
   });
 
-  it("maps product groups and skips empty names", () => {
+  it("maps product groups with revenue code and skips empty names", () => {
     const row = productGroupsAdapter.mapRow(
       mapHeaders(
-        { "Group Code": "ERA-PG-1", "Product Group Name": "Drinks", "Display Order": "3" },
+        {
+          "Group Code": "SOYUQ-ICKILER",
+          "Product Group Name": "SOYUQ İÇKİLƏR",
+          "Revenue Code": "4102",
+          "Display Order": "3",
+          Active: "true",
+        },
         productGroupsAdapter.headerAliases,
       ),
     );
-    expect(row).toMatchObject({ code: "ERA-PG-1", name: "Drinks", sortOrder: 3 });
+    expect(row).toMatchObject({
+      code: "SOYUQ-ICKILER",
+      name: "SOYUQ İÇKİLƏR",
+      sortOrder: 3,
+      revenueCode: "4102",
+      active: true,
+    });
     expect(
       productGroupsAdapter.mapRow(
         mapHeaders({ "Product Group Name": "" }, productGroupsAdapter.headerAliases),
@@ -38,14 +50,52 @@ describe("F&B cutover import adapters", () => {
     ).toBeNull();
   });
 
-  it("stamps ERA-FNB-{Id} when Ürün Kodu is empty", () => {
+  it("maps English product cards and stamps ERA-FNB-{Id} when Product Code is empty", () => {
     const row = productCardsAdapter.mapRow(
       mapHeaders(
-        { Id: "42", "Ürün Adı": "Çay", Fiyat: "4.5" },
+        {
+          Id: "42",
+          "Product Name": "Çay",
+          "Product Group Name": "İSTİ İÇKİLƏR",
+          Price: "4.5",
+          "Revenue Code": "4102",
+          Active: "true",
+        },
         productCardsAdapter.headerAliases,
       ),
     );
-    expect(row).toMatchObject({ plu: "ERA-FNB-42", name: "Çay", price: 4.5 });
+    expect(row).toMatchObject({
+      plu: "ERA-FNB-42",
+      name: "Çay",
+      price: 4.5,
+      groupName: "İSTİ İÇKİLƏR",
+      revenueCode: "4102",
+      financeSku: "ERA-FNB-42",
+      active: true,
+    });
+  });
+
+  it("maps Finance SKU and Recipe SKU when present", () => {
+    const row = productCardsAdapter.mapRow(
+      mapHeaders(
+        {
+          "Product Code": "W1",
+          "Product Name": "Wine glass",
+          "Product Group Name": "WINE",
+          Price: "8",
+          "Finance SKU": "W1",
+          "Recipe SKU": "W2",
+          "Revenue Code": "4103",
+        },
+        productCardsAdapter.headerAliases,
+      ),
+    );
+    expect(row).toMatchObject({
+      plu: "W1",
+      financeSku: "W1",
+      recipeSku: "W2",
+      revenueCode: "4103",
+    });
   });
 
   it("skips POS PAYMENT and non-positive amounts", () => {

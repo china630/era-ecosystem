@@ -110,7 +110,7 @@ describe("Clinic RBAC admin matrix (Wave 2)", () => {
     expect(adminApiRoutePermission("/api/import/patients")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
     );
-    expect(adminApiRoutePermission("/api/audit")).toBe(
+    expect(adminApiRoutePermission("/api/admin/audit")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
     );
     expect(adminApiRoutePermission("/api/catalog/sync")).toBe(

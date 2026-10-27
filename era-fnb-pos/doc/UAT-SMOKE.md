@@ -97,6 +97,20 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 6. Daily menu board: pick `Date`, bulk-select menu items (checkboxes), then `Save board` (PUT)
 7. Optional: `Copy from yesterday` (POST) and re-open `/admin/daily-menu` to verify selection persists
 
+## FB-5 — Buffet planner (UI) — open
+
+Prerequisite: org has module `fnb_buffet_planner` in `activeModules` (and `industry_fnb_pos`).
+
+1. Nav: **Buffet planner** → `/admin/buffet` (hidden without module)
+2. Filter by café/outlet (DB list) and date range
+3. **New plan** modal: outlet + service date + meal + covers → save (table row appears)
+4. Select plan → **Add dish** modal: dish from that outlet’s menu (`CatalogField`), station, portions, waste %
+5. **Materials** modal shows effective portions + missing recipe SKU count (Finance BOM explode later)
+6. **Publish to daily board** → open `/admin/daily-menu` for that date/outlet and confirm dishes (merge — other meals’ board rows stay)
+7. Edit a DRAFT line (portions / waste) via pencil; Status: Lock → Mark served → Close (lines read-only after Lock)
+
+Evidence: not signed — FNB-BUFFET-01 stays API/SCREEN, not SHIPPED.
+
 ## Quartet (Track C)
 
 1. `GET /api/outlets` + `POST /api/outlets/select` â€” multi-outlet session
@@ -114,6 +128,12 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 ## v1.1 — M14 (DONE)
 
 - [x] `POST /api/labor/clock` PIN clock-in/out
+
+## FNB-AUD-01 — Mutation audit Layer A (open — not SHIPPED)
+
+1. Manager with `screen:admin.settings` voids a ticket line (or any successful POST) → open `/admin/audit` → entity type **HTTP mutations (Layer A)** → row shows method + path (`GET /api/admin/audit`).
+2. Filters: entityId / action / userId / date range work; TicketLine shows Layer B void.
+3. Login/logout must not appear under HTTP_MUTATION.
 
 ## Deny (Scaffold BE negative paths)
 

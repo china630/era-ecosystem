@@ -325,7 +325,7 @@
 
 | ID | Модуль | Роли | Предусловия | Шаги | Ожидаемый результат |
 |----|--------|------|-------------|------|---------------------|
-| **AUD-01** | §4.8 | `ADMIN` / `OWNER` | Были мутации | `/settings/audit`: просмотр записей по сущностям | `oldValues`/`newValues` без сырых секретов |
+| **AUD-01** | §4.8 | `ADMIN` / `OWNER` | Были мутации | `/admin/audit`: просмотр записей по сущностям | `oldValues`/`newValues` без сырых секретов |
 | **AUD-02** | §4.8 | Технический | Доступ к Swagger/curl | `POST /api/audit/verify-chain` | `compromisedIds` пустой на чистой БД |
 
 ---
@@ -385,7 +385,7 @@
 | Команда | `/settings/team` |
 | Подписка | `/settings/subscription` |
 | Миграция | `/settings/migration` |
-| Аудит настроек | `/settings/audit` |
+| Журнал изменений | `/admin/audit` |
 | План счетов | `/accounting/chart`, `/accounting/mapping`, `/accounting/ifrs-mapping` |
 | Контрагенты | `/crm/counterparties`, `/crm/counterparties/[id]/reconciliation` |
 | Каталог | `/catalog/products` |

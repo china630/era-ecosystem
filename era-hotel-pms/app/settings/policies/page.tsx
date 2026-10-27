@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
+  Field,
   MODAL_CHECKBOX_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -29,23 +31,34 @@ type PricingPolicy = {
   cancelRoomChangePlans: boolean;
 };
 
+type TourOpsPolicy = {
+  chargeMode: 'CHARGE_ON_BOARDING' | 'CHARGE_ON_ADD';
+  boardingCloseMode: 'MANUAL' | 'AUTO_CUTOFF';
+  autoCutoffMinutesBeforePickup: number | null;
+  allowOverbook: boolean;
+  dropUnboardedOnClose: boolean;
+};
+
 export default function PoliciesPage() {
   const t = useTranslations('policies');
   const tn = useTranslations('operations');
   const th = useTranslations('housekeeping');
   const tp = useTranslations('pricingPolicy');
+  const tt = useTranslations('tourOpsPolicy');
   const tr = useTranslations();
   const tc = useTranslations('common');
   const { can } = useAuth();
   const canHk = can(PERMISSIONS.HOUSEKEEPING_MANAGE);
   const canPrice = can(PERMISSIONS.MASTER_DATA_MANAGE);
   const canPack = can(PERMISSIONS.USERS_MANAGE);
+  const canTours = can(PERMISSIONS.MASTER_DATA_MANAGE);
 
   const [linen, setLinen] = useState(3);
   const [deep, setDeep] = useState(5);
   const [policy, setPolicy] = useState<PricingPolicy | null>(null);
+  const [tourOps, setTourOps] = useState<TourOpsPolicy | null>(null);
   const [pack, setPack] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState<'hk' | 'price' | 'pack' | null>(null);
+  const [busy, setBusy] = useState<'hk' | 'price' | 'pack' | 'tours' | null>(null);
   const eligible = getPackEligibleReports();
 
   const load = useCallback(async () => {
@@ -75,6 +88,19 @@ export default function PoliciesPage() {
         });
       }
     }
+    if (canTours) {
+      const tourRes = await fetch('/api/tours/policy');
+      if (tourRes.ok) {
+        const data = await tourRes.json();
+        setTourOps({
+          chargeMode: data.chargeMode === 'CHARGE_ON_ADD' ? 'CHARGE_ON_ADD' : 'CHARGE_ON_BOARDING',
+          boardingCloseMode: data.boardingCloseMode === 'AUTO_CUTOFF' ? 'AUTO_CUTOFF' : 'MANUAL',
+          autoCutoffMinutesBeforePickup: data.autoCutoffMinutesBeforePickup ?? null,
+          allowOverbook: data.allowOverbook !== false,
+          dropUnboardedOnClose: data.dropUnboardedOnClose !== false,
+        });
+      }
+    }
     if (canPack) {
       const packRes = await fetch('/api/admin/report-pack');
       if (packRes.ok) {
@@ -82,7 +108,7 @@ export default function PoliciesPage() {
         setPack(new Set(data.reportIds ?? []));
       }
     }
-  }, [canHk, canPrice, canPack]);
+  }, [canHk, canPrice, canPack, canTours]);
 
   useEffect(() => {
     void load();
@@ -150,6 +176,33 @@ export default function PoliciesPage() {
     }
   }
 
+  async function saveTourOps() {
+    if (!tourOps) return;
+    setBusy('tours');
+    try {
+      const res = await fetch('/api/tours/policy', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tourOps),
+      });
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc('failed'));
+        return;
+      }
+      const data = await res.json();
+      setTourOps({
+        chargeMode: data.chargeMode === 'CHARGE_ON_ADD' ? 'CHARGE_ON_ADD' : 'CHARGE_ON_BOARDING',
+        boardingCloseMode: data.boardingCloseMode === 'AUTO_CUTOFF' ? 'AUTO_CUTOFF' : 'MANUAL',
+        autoCutoffMinutesBeforePickup: data.autoCutoffMinutesBeforePickup ?? null,
+        allowOverbook: data.allowOverbook !== false,
+        dropUnboardedOnClose: data.dropUnboardedOnClose !== false,
+      });
+      showSuccess(tc('saved'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   function togglePrice(key: keyof PricingPolicy) {
     if (!policy) return;
     setPolicy({ ...policy, [key]: !policy[key] });
@@ -177,8 +230,88 @@ export default function PoliciesPage() {
     <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       <div className="flex max-w-3xl flex-col gap-4">
-        {!canHk && !canPrice && !canPack ? (
+        {!canHk && !canPrice && !canPack && !canTours ? (
           <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
+        ) : null}
+        {canTours && tourOps ? (
+        <section id="tours" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{tt('title')}</h2>
+          <p className="m-0 text-[13px] text-[#7F8C8D]">{tt('subtitle')}</p>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={tt('chargeMode')}
+            value={tourOps.chargeMode}
+            onChange={(v) =>
+              setTourOps({
+                ...tourOps,
+                chargeMode: String(v) === 'CHARGE_ON_ADD' ? 'CHARGE_ON_ADD' : 'CHARGE_ON_BOARDING',
+              })
+            }
+            options={[
+              { value: 'CHARGE_ON_BOARDING', label: tt('chargeOnBoarding') },
+              { value: 'CHARGE_ON_ADD', label: tt('chargeOnAdd') },
+            ]}
+          />
+          <p className="m-0 text-[12px] text-[#7F8C8D]">{tt('chargeModeHint')}</p>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={tt('boardingCloseMode')}
+            value={tourOps.boardingCloseMode}
+            onChange={(v) =>
+              setTourOps({
+                ...tourOps,
+                boardingCloseMode: String(v) === 'AUTO_CUTOFF' ? 'AUTO_CUTOFF' : 'MANUAL',
+              })
+            }
+            options={[
+              { value: 'MANUAL', label: tt('closeManual') },
+              { value: 'AUTO_CUTOFF', label: tt('closeAuto') },
+            ]}
+          />
+          {tourOps.boardingCloseMode === 'AUTO_CUTOFF' ? (
+            <Field
+              label={tt('autoCutoffMinutes')}
+              preset="code"
+              type="number"
+              min={1}
+              value={String(tourOps.autoCutoffMinutesBeforePickup ?? 30)}
+              onChange={(e) =>
+                setTourOps({
+                  ...tourOps,
+                  autoCutoffMinutesBeforePickup: Number(e.target.value) || null,
+                })
+              }
+            />
+          ) : null}
+          <label className="flex items-start gap-3 text-[13px] text-[#34495E]">
+            <input
+              type="checkbox"
+              className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+              checked={tourOps.allowOverbook}
+              onChange={() => setTourOps({ ...tourOps, allowOverbook: !tourOps.allowOverbook })}
+            />
+            <span>{tt('allowOverbook')}</span>
+          </label>
+          <label className="flex items-start gap-3 text-[13px] text-[#34495E]">
+            <input
+              type="checkbox"
+              className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+              checked={tourOps.dropUnboardedOnClose}
+              onChange={() =>
+                setTourOps({ ...tourOps, dropUnboardedOnClose: !tourOps.dropUnboardedOnClose })
+              }
+            />
+            <span>{tt('dropUnboardedOnClose')}</span>
+          </label>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy === 'tours'}
+            onClick={() => void saveTourOps()}
+          >
+            {tc('save')}
+          </button>
+        </section>
         ) : null}
         {canHk ? (
         <section id="hk" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

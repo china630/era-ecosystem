@@ -114,7 +114,7 @@ import {
   inferSourceKindFromAgency,
   bookingSourceKind,
   persistCounterpartyIds,
-  fksFromSalesContract,
+  defaultsFromSalesContract,
   contractCounterpartyType,
 } from '@/lib/booking-source-kind';
 import { previewOccupancyAfterDepart } from '@/lib/occupancy-party';
@@ -270,6 +270,18 @@ export function ReservationCardEditor({
       showApiError({ error: t('cityLedgerCheckIn') }, fallback);
       return;
     }
+    if (code === 'CONTRACT_REQUIRED_FOR_PAYER') {
+      showApiError({ error: t('contractRequiredToast') }, fallback);
+      return;
+    }
+    if (code === 'AGENCY_REQUIRED_FOR_PAYER') {
+      showApiError({ error: t('agencyRequiredForPayerToast') }, fallback);
+      return;
+    }
+    if (code === 'COMPANY_REQUIRED_FOR_PAYER') {
+      showApiError({ error: t('companyRequiredForPayerToast') }, fallback);
+      return;
+    }
     const clash = doorConflictToast(body);
     if (clash) {
       showApiError({ error: t(clash.key, { from: clash.from, to: clash.to }) }, fallback);
@@ -325,6 +337,8 @@ export function ReservationCardEditor({
   const [shareNeighborHint, setShareNeighborHint] = useState('');
   const [optionDate, setOptionDate] = useState('');
   const [optionState, setOptionState] = useState('');
+  const [linenEveryNights, setLinenEveryNights] = useState('');
+  const [deepEveryNights, setDeepEveryNights] = useState('');
   const [salesProject, setSalesProject] = useState('');
   const [specialStates, setSpecialStates] = useState('');
   const [resGroup, setResGroup] = useState('');
@@ -334,6 +348,11 @@ export function ReservationCardEditor({
   const [givenRoomTypeId, setGivenRoomTypeId] = useState('');
   const [contractRef, setContractRef] = useState('');
   const [salesContractId, setSalesContractId] = useState('');
+  const [roomPayer, setRoomPayer] = useState<'GUEST' | 'AGENCY' | 'COMPANY'>('GUEST');
+  const [commissionBasis, setCommissionBasis] = useState<'GROSS' | 'NET'>('GROSS');
+  const [commercialAmendOpen, setCommercialAmendOpen] = useState(false);
+  const [commercialAmendReason, setCommercialAmendReason] = useState('');
+  const [commercialAmendBusy, setCommercialAmendBusy] = useState(false);
   const [salesContracts, setSalesContracts] = useState<
     Array<{
       id: string;
@@ -345,6 +364,8 @@ export function ReservationCardEditor({
       code: string;
       validFrom?: string | null;
       validTo?: string | null;
+      commissionPercent?: number | string | null;
+      commissionBasis?: string | null;
     }>
   >([]);
   const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
@@ -426,6 +447,9 @@ export function ReservationCardEditor({
     booked: number;
     quota: number;
     stopSell: boolean;
+    contractScoped?: boolean;
+    contractAllotment?: number | null;
+    reason?: string | null;
   } | null>(null);
   const [guestCardOpen, setGuestCardOpen] = useState(false);
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
@@ -511,6 +535,16 @@ export function ReservationCardEditor({
     }
     setOptionDate(json.optionDate ? String(json.optionDate).slice(0, 10) : '');
     setOptionState(String(json.optionState ?? ''));
+    setLinenEveryNights(
+      json.linenEveryNights == null || json.linenEveryNights === ''
+        ? ''
+        : String(json.linenEveryNights),
+    );
+    setDeepEveryNights(
+      json.deepEveryNights == null || json.deepEveryNights === ''
+        ? ''
+        : String(json.deepEveryNights),
+    );
     setSalesProject(String(json.salesProject ?? ''));
     setSpecialStates(String(json.specialStates ?? ''));
     setResGroup(String(json.resGroup ?? ''));
@@ -520,6 +554,10 @@ export function ReservationCardEditor({
     setGivenRoomTypeId(String(json.givenRoomTypeId ?? ''));
     setContractRef(String(json.contractRef ?? ''));
     setSalesContractId(String(json.salesContractId ?? ''));
+    setRoomPayer(
+      json.roomPayer === 'AGENCY' || json.roomPayer === 'COMPANY' ? json.roomPayer : 'GUEST',
+    );
+    setCommissionBasis(json.commissionBasis === 'NET' ? 'NET' : 'GROSS');
     setAttachments((json.attachments as AttachmentRow[]) ?? []);
     const gid = (json.groupId as string | null | undefined) ?? null;
     setBookingGroupId(gid);
@@ -939,6 +977,8 @@ export function ReservationCardEditor({
       setShareNo('');
       setOptionDate('');
       setOptionState('');
+      setLinenEveryNights('');
+      setDeepEveryNights('');
       setSalesProject('');
       setSpecialStates('');
       setResGroup('');
@@ -1158,6 +1198,8 @@ export function ReservationCardEditor({
               ratePlanId: string;
               validFrom?: string | null;
               validTo?: string | null;
+              commissionPercent?: number | string | null;
+              commissionBasis?: string | null;
             }) => ({
               id: x.id,
               code: x.code,
@@ -1167,6 +1209,8 @@ export function ReservationCardEditor({
               ratePlanId: x.ratePlanId,
               validFrom: x.validFrom,
               validTo: x.validTo,
+              commissionPercent: x.commissionPercent,
+              commissionBasis: x.commissionBasis,
               label: `${x.code} — ${x.name}`,
             }),
           ),
@@ -1224,11 +1268,12 @@ export function ReservationCardEditor({
   }, [open, guestId]);
 
   const billingRoutingSummary = useMemo(() => {
-    const parts: string[] = ['GUEST'];
-    if (agencyId) parts.push('AGENCY');
-    if (companyId) parts.push('COMPANY');
-    return parts.join(' · ');
-  }, [agencyId, companyId]);
+    const agencyName = agencies.find((a) => a.id === agencyId)?.label;
+    const companyName = companies.find((c) => c.id === companyId)?.label;
+    if (roomPayer === 'AGENCY') return t('roomPaidByAgency', { name: agencyName || '—' });
+    if (roomPayer === 'COMPANY') return t('roomPaidByCompany', { name: companyName || '—' });
+    return t('roomPaidByGuest');
+  }, [agencyId, companyId, roomPayer, agencies, companies, t]);
 
   const departOccupancyPreview = useMemo(() => {
     if (departPaxIdx == null || !pax[departPaxIdx]) return null;
@@ -1277,7 +1322,13 @@ export function ReservationCardEditor({
       return;
     }
     let cancelled = false;
-    fetch(`/api/fo/sellable?roomTypeId=${roomTypeId}&from=${checkIn}&to=${checkOut}`)
+    const qs = new URLSearchParams({
+      roomTypeId,
+      from: checkIn,
+      to: checkOut,
+    });
+    if (salesContractId) qs.set('salesContractId', salesContractId);
+    fetch(`/api/fo/sellable?${qs}`)
       .then((r) => r.json())
       .then((s) => {
         if (cancelled || s.error) {
@@ -1289,6 +1340,10 @@ export function ReservationCardEditor({
           booked: Number(s.booked ?? 0),
           quota: Number(s.quota ?? 0),
           stopSell: Boolean(s.stopSell),
+          contractScoped: Boolean(s.contractScoped),
+          contractAllotment:
+            s.contractAllotment == null ? null : Number(s.contractAllotment),
+          reason: typeof s.reason === 'string' ? s.reason : null,
         });
       })
       .catch(() => {
@@ -1297,7 +1352,7 @@ export function ReservationCardEditor({
     return () => {
       cancelled = true;
     };
-  }, [isCreate, roomTypeId, checkIn, checkOut]);
+  }, [isCreate, roomTypeId, checkIn, checkOut, salesContractId]);
 
   async function loadGuests() {
     const g = await fetch('/api/guests').then((r) => r.json());
@@ -1812,6 +1867,8 @@ export function ReservationCardEditor({
       shareNeighborHint,
       optionDate,
       optionState,
+      linenEveryNights,
+      deepEveryNights,
       salesProject,
       specialStates,
       resGroup,
@@ -1819,8 +1876,9 @@ export function ReservationCardEditor({
       preferredLocation,
       preferredBed,
       givenRoomTypeId,
-      contractRef,
       salesContractId,
+      roomPayer,
+      commissionBasis,
       creditLimitAzn,
       booker,
       guestRep,
@@ -1857,6 +1915,8 @@ export function ReservationCardEditor({
       shareNeighborHint,
       optionDate,
       optionState,
+      linenEveryNights,
+      deepEveryNights,
       salesProject,
       specialStates,
       resGroup,
@@ -1864,8 +1924,9 @@ export function ReservationCardEditor({
       preferredLocation,
       preferredBed,
       givenRoomTypeId,
-      contractRef,
       salesContractId,
+      roomPayer,
+      commissionBasis,
       creditLimitAzn,
       booker,
       guestRep,
@@ -1921,10 +1982,11 @@ export function ReservationCardEditor({
         const contract = salesContracts.find((c) => c.id === cid);
         if (contract) {
           setRatePlanId(contract.ratePlanId);
-          const fks = fksFromSalesContract(contract);
-          if (fks.agencyId !== undefined) setAgencyId(fks.agencyId ?? '');
-          if (fks.companyId !== undefined) setCompanyId(fks.companyId ?? '');
-          setContractRef(contract.code);
+          const defaults = defaultsFromSalesContract(contract);
+          if (defaults.agencyId !== undefined) setAgencyId(defaults.agencyId ?? '');
+          if (defaults.companyId !== undefined) setCompanyId(defaults.companyId ?? '');
+          if (defaults.commissionBasis) setCommissionBasis(defaults.commissionBasis);
+          if (defaults.roomPayer) setRoomPayer(defaults.roomPayer);
           const linkedRp = ratePlans.find((r) => r.id === contract.ratePlanId);
           if (linkedRp?.mealPlanId) setMealPlanId(linkedRp.mealPlanId);
           if (linkedRp?.roomTypeId) setRoomTypeId(linkedRp.roomTypeId);
@@ -1938,16 +2000,32 @@ export function ReservationCardEditor({
             setPax((rows) => rows.map((row) => ({ ...row, medicalPackageCode: '' })));
           }
         }
-      } else {
-        setContractRef('');
       }
       const rest = { ...patch };
       delete rest.salesContractId;
       if (Object.keys(rest).length === 0) return;
       patch = rest;
     }
+    if (patch.roomPayer === 'GUEST' || patch.roomPayer === 'AGENCY' || patch.roomPayer === 'COMPANY') {
+      setRoomPayer(patch.roomPayer);
+      const rest = { ...patch };
+      delete rest.roomPayer;
+      if (Object.keys(rest).length === 0) return;
+      patch = rest;
+    }
+    if (patch.commissionBasis === 'GROSS' || patch.commissionBasis === 'NET') {
+      setCommissionBasis(patch.commissionBasis);
+      const rest = { ...patch };
+      delete rest.commissionBasis;
+      if (Object.keys(rest).length === 0) return;
+      patch = rest;
+    }
     if (patch.ratePlanId !== undefined) {
       const rp = ratePlans.find((r) => r.id === patch.ratePlanId);
+      const contract = salesContracts.find((c) => c.id === salesContractId);
+      if (contract && patch.ratePlanId && patch.ratePlanId !== contract.ratePlanId) {
+        showWarning(t('rateNotContractToast'));
+      }
       // Package / BAR → meal from plan; scoped package may set room type; medical → segment
       if (rp?.mealPlanId) setMealPlanId(rp.mealPlanId);
       else if (!patch.ratePlanId) setMealPlanId('');
@@ -2039,6 +2117,8 @@ export function ReservationCardEditor({
       guestGender: setGuestGender,
       optionDate: setOptionDate,
       optionState: setOptionState,
+      linenEveryNights: setLinenEveryNights,
+      deepEveryNights: setDeepEveryNights,
       salesProject: setSalesProject,
       specialStates: setSpecialStates,
       resGroup: setResGroup,
@@ -2046,8 +2126,13 @@ export function ReservationCardEditor({
       preferredLocation: setPreferredLocation,
       preferredBed: setPreferredBed,
       givenRoomTypeId: setGivenRoomTypeId,
-      contractRef: setContractRef,
       salesContractId: setSalesContractId,
+      roomPayer: (v) => {
+        if (v === 'GUEST' || v === 'AGENCY' || v === 'COMPANY') setRoomPayer(v);
+      },
+      commissionBasis: (v) => {
+        if (v === 'GROSS' || v === 'NET') setCommissionBasis(v);
+      },
       creditLimitAzn: setCreditLimitAzn,
       booker: setBooker,
       guestRep: setGuestRep,
@@ -2152,6 +2237,10 @@ export function ReservationCardEditor({
         );
         return;
       }
+      if ((roomPayer === 'AGENCY' || roomPayer === 'COMPANY') && !salesContractId) {
+        reportApiError({ error: t('contractRequiredToast') }, tc('failed'));
+        return;
+      }
       if (isCreate) {
         const missing: string[] = [];
         if (!roomTypeId) missing.push(tb('roomType'));
@@ -2167,7 +2256,17 @@ export function ReservationCardEditor({
           return;
         }
         if (sellable && sellable.available < 1) {
-          reportApiError({ error: t('noSellableInventory') }, tc('failed'));
+          reportApiError(
+            {
+              error:
+                sellable.reason === 'NO_ALLOTMENT'
+                  ? t('noContractAllotmentInventory')
+                  : sellable.contractScoped
+                    ? t('noContractSellableInventory')
+                    : t('noSellableInventory'),
+            },
+            tc('failed'),
+          );
           return;
         }
         const res = await fetch('/api/reservations', {
@@ -2183,6 +2282,8 @@ export function ReservationCardEditor({
             companyId: parties.companyId ?? undefined,
             sourceId: sourceId || undefined,
             salesContractId: salesContractId || undefined,
+            roomPayer,
+            commissionBasis,
             mealPlanId: mealPlanId || undefined,
             partyBillingMode,
             checkInDate: mergeDateTime(checkIn, checkInTime),
@@ -2252,8 +2353,12 @@ export function ReservationCardEditor({
         });
         const json = await res.json();
         if (!res.ok) {
-          const err = String(json.error ?? '');
-          if (/no availability/i.test(err)) {
+          const err = String(json.error ?? json.code ?? '');
+          if (/contract allotment exhausted/i.test(err)) {
+            reportApiError({ error: t('noContractSellableInventory') }, tc('failed'));
+          } else if (/no contract allotment|contract allotment/i.test(err)) {
+            reportApiError({ error: t('noContractAllotmentInventory') }, tc('failed'));
+          } else if (/no availability/i.test(err)) {
             reportApiError({ error: t('noSellableInventory') }, tc('failed'));
           } else {
             reportApiError(json, tc('failed'));
@@ -2329,6 +2434,14 @@ export function ReservationCardEditor({
           shareEligible: shareEligible && Number(adults) === 1,
           optionDate: optionDate ? new Date(optionDate).toISOString() : null,
           optionState: optionState || null,
+          linenEveryNights: (() => {
+            const n = Number(linenEveryNights);
+            return linenEveryNights.trim() === '' || !Number.isFinite(n) ? null : n;
+          })(),
+          deepEveryNights: (() => {
+            const n = Number(deepEveryNights);
+            return deepEveryNights.trim() === '' || !Number.isFinite(n) ? null : n;
+          })(),
           salesProject: salesProject || null,
           specialStates: specialStates || null,
           resGroup: resGroup || null,
@@ -2336,8 +2449,9 @@ export function ReservationCardEditor({
           preferredLocation: preferredLocation || null,
           preferredBed: preferredBed || null,
           givenRoomTypeId: givenRoomTypeId || null,
-          contractRef: contractRef || null,
           salesContractId: salesContractId || null,
+          roomPayer,
+          commissionBasis,
           creditLimitAzn:
             creditLimitAzn.trim() === '' ? null : Math.round(Number(creditLimitAzn) * 100) / 100,
           useManualRate,
@@ -2398,6 +2512,34 @@ export function ReservationCardEditor({
       if (!res.ok) {
         if (json?.code === 'ROOM_TYPE_SETTLEMENT_REQUIRED') {
           setCardMoveAsk({ askReason: data?.status === 'IN_HOUSE', askSettlement: true });
+          return;
+        }
+        const errText = String(json?.error ?? json?.code ?? '');
+        if (
+          errText === 'COMMERCIAL_AMEND_REQUIRED' ||
+          json?.code === 'COMMERCIAL_AMEND_REQUIRED'
+        ) {
+          setCommercialAmendOpen(true);
+          return;
+        }
+        if (errText === 'AGENCY_FOLIO_HAS_LINES' || json?.code === 'AGENCY_FOLIO_HAS_LINES') {
+          showApiError({ error: t('agencyHasLinesToast') }, tc('failed'));
+          return;
+        }
+        if (errText === 'COMPANY_FOLIO_HAS_LINES' || json?.code === 'COMPANY_FOLIO_HAS_LINES') {
+          showApiError({ error: t('companyHasLinesToast') }, tc('failed'));
+          return;
+        }
+        if (errText === 'CONTRACT_REQUIRED_FOR_PAYER' || json?.code === 'CONTRACT_REQUIRED_FOR_PAYER') {
+          showApiError({ error: t('contractRequiredToast') }, tc('failed'));
+          return;
+        }
+        if (errText === 'AGENCY_REQUIRED_FOR_PAYER' || json?.code === 'AGENCY_REQUIRED_FOR_PAYER') {
+          showApiError({ error: t('agencyRequiredForPayerToast') }, tc('failed'));
+          return;
+        }
+        if (errText === 'COMPANY_REQUIRED_FOR_PAYER' || json?.code === 'COMPANY_REQUIRED_FOR_PAYER') {
+          showApiError({ error: t('companyRequiredForPayerToast') }, tc('failed'));
           return;
         }
         reportApiError(json, tc('failed'));
@@ -2626,6 +2768,41 @@ export function ReservationCardEditor({
             ? t('confirmCheckOut')
             : undefined;
 
+  async function saveWithCommercialAmend(mode: 'NEXT_NIGHTS' | 'MOVE_POSTED') {
+    if (!reservationId) return;
+    if (mode === 'MOVE_POSTED' && !commercialAmendReason.trim()) {
+      showApiError({ error: t('moveReasonRequired') }, tc('failed'));
+      return;
+    }
+    setCommercialAmendBusy(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/full`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomPayer,
+          commissionBasis,
+          agencyId: agencyId || null,
+          companyId: companyId || null,
+          salesContractId: salesContractId || null,
+          commercialAmendMode: mode,
+          commercialAmendReason: commercialAmendReason.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        reportApiError(json, tc('failed'));
+        return;
+      }
+      setCommercialAmendOpen(false);
+      setCommercialAmendReason('');
+      showSuccess(tc('success'));
+      applyJson(json);
+    } finally {
+      setCommercialAmendBusy(false);
+    }
+  }
+
   const actionProps = {
     busy,
     loading,
@@ -2668,6 +2845,61 @@ export function ReservationCardEditor({
 
   const body = (
     <>
+      <EraModal
+        open={commercialAmendOpen}
+        title={t('changeRoomPayerTitle')}
+        onClose={() => {
+          if (commercialAmendBusy) return;
+          setCommercialAmendOpen(false);
+          setCommercialAmendReason('');
+        }}
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={commercialAmendBusy}
+              onClick={() => {
+                setCommercialAmendOpen(false);
+                setCommercialAmendReason('');
+              }}
+            >
+              {tc('cancel')}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={commercialAmendBusy}
+              onClick={() => void saveWithCommercialAmend('NEXT_NIGHTS')}
+            >
+              {t('nextNightsOnly')}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={commercialAmendBusy}
+              onClick={() => void saveWithCommercialAmend('MOVE_POSTED')}
+            >
+              {t('alsoMovePosted')}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-[13px] text-[#34495E]">
+          <p className="m-0">
+            {t('changeRoomPayerBody', {
+              date: todayBakuYmd(),
+              summary: billingRoutingSummary,
+            })}
+          </p>
+          <FieldTextarea
+            label={t('moveReasonLabel')}
+            value={commercialAmendReason}
+            onChange={(e) => setCommercialAmendReason(e.target.value)}
+            rows={3}
+          />
+        </div>
+      </EraModal>
       {attachOpen && reservationId ? (
         <ReservationCardAttachPanel
           attachments={attachments}

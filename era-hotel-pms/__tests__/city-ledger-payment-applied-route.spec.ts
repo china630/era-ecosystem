@@ -36,6 +36,10 @@ jest.mock("@/lib/services/folio.service", () => {
   };
 });
 
+jest.mock("@/lib/services/unsettled-departures.service", () => ({
+  maybeMarkReservationSettled: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe("city-ledger payment-applied (idempotency)", () => {
   const mockedPrisma = jest.requireMock("@/lib/prisma").prisma;
   const mockedFolioService = jest.requireMock("@/lib/services/folio.service");
@@ -57,6 +61,7 @@ describe("city-ledger payment-applied (idempotency)", () => {
       // idempotency branch: refreshed folio with charges/payments
       .mockResolvedValueOnce({
         id: "folio-1",
+        reservationId: "res-1",
         status: "TRANSFERRED_AR",
         charges: [],
         payments: [],

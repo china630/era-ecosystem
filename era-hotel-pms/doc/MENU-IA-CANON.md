@@ -56,6 +56,7 @@ Legacy cutover (temporary redirects OK): `/` → `/fo/rack`, `/availability` →
 | Folio journal | `/front-cash/folio-journal` | Day charges+payments (read-only); click → stay folio |
 | Agency city ledger | `/front-cash/agency-ledger` | Travel-agent CL; AGENCY folios; commission %; Finance snapshot |
 | Company city ledger | `/front-cash/company-ledger` | Corporate CL; COMPANY folios; prepaid/postpaid; no commission |
+| Unsettled departures | `/front-cash/unsettled-departures` | CHECKED_OUT stays with City Ledger settlement PENDING/INVOICED; retry invoice / push snapshot |
 | Day journal | `/front-cash/transactions` | Night-audit report 05. One business day, all cash points. Not in the cash menu |
 | Folio (not a screen) | reservation card, Folio tab | Stay ledger. Payment, charge, invoice, checkout, void, and refund are modals on that tab. Header “Accept payment” opens the same payment modal. `/folio/[id]` redirects to the card. |
 
@@ -90,23 +91,30 @@ Legacy: `/operations` → `/night-audit`, `/reports/end-of-day-logs` → `/night
 
 ### 2.4 Housekeeping — all under `/hk`
 
+Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
+
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | Housekeeping | `/hk` | Floor sheet: one floor, row actions, fullscreen |
 | HK rooms | `/hk/rooms` | Hotel-wide cleanliness board |
-| HK mobile | `/hk/mobile` | Maid mobile client |
-| Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
-| HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. A closed day, including an earlier one, reverses onto the open day |
-| Minibar catalog | `/settings/stock` | Local hotel product catalog (minibar). Screen permission stays Settings |
-| Maid management | `/hk/maids` | Maid list (scaffold; roster is not this page) |
+| Skip / Sleep | `/hk/discrepancy` | FO occupied vs empty (Skip) / vacant vs occupied (Sleep). Sleep ≠ SO |
 | Closed rooms (OOO/OOS) | `/hk/closed-rooms` | Separate OOO vs OOS + `RoomClosure` dates |
-| Lost & found | `/hk/lost-and-found` | Lost & found |
-| HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
-| Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap DnD |
-| Guest laundry | `/hk/laundry` | Accept IN_PLANT; Delivered + return form → folio `LAUNDRY` |
+| HK mobile | `/hk/mobile` | Maid mobile client (one click; not under a group) |
 | HK forecast | `/hk/forecast` | Load 7/14 by floor |
-| `/hk/discrepancy` | Skip / Sleep (Sleep ≠ SO) |
+| **HK staff** ▸ | | Maid assignment → roster → daily floor pairs |
+| Maid management | `/hk/maids` | Link CP employment; hotel keeps HK department and ƏG |
+| HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
+| Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap |
+| **Minibar** ▸ | | Folio sale + catalog (not HK consumption) |
+| Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
+| Minibar catalog | `/settings/stock` | Local hotel product catalog. Screen permission stays Settings |
+| HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. Separate from Minibar |
+| **Guest services** ▸ | | Laundry + lost & found |
+| Guest laundry | `/hk/laundry` | Intake grid with price/sum preview; Accept → IN_PLANT; Delivered + return form → folio `LAUNDRY` |
+| Lost & found | `/hk/lost-and-found` | Lost & found |
 | Policies | `/settings/policies#hk` | Linen / deep every N nights (hotel-wide). Old `/settings/hk-policy` redirects |
+
+First open on secondary HK screens shows table/board chrome and an empty-state next step (not a bare page).
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
@@ -186,10 +194,9 @@ Deep clinical / lab → **Clinic** (external).
 
 | Menu item | URL | Description |
 |-----------|-----|-------------|
-| Transfers | `/transfers` | Transfers → folio |
-| Airport | `/transfers/airport` | Airport transfer flow |
-| Tours | `/tours` | Group excursions / Nafta weekend roster (HOT-TOUR-01). Nav under Transfers. Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md) |
-| Fleet | `/fleet` | TransferVehicle CRUD for tours and airport |
+| Transfers | `/transfers` | A→B transfers → folio `TRANSFER` on complete. Filter «with flight» replaces legacy Airport page (`/transfers/airport` redirects). |
+| Tours | `/tours` | Group excursions / Nafta weekend roster (HOT-TOUR-01). Boarding-first `TOUR` folio. Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md) |
+| Fleet | `/fleet` | TransferVehicle CRUD for tours and transfers |
 
 ---
 
@@ -219,7 +226,7 @@ Deep clinical / lab → **Clinic** (external).
 | Outbound events | `/settings/integration` | Event toggles and URLs |
 | Revenue codes | `/settings/integration?view=gl` | Revenue code → GL |
 | Outbound journal | `/settings/integration?view=journal` | Sent events |
-| Audit viewer | `/settings/audit` | Entity type is a closed list of types that are written |
+| Audit viewer | `/admin/audit` | Canonical filters (entityType default HTTP_MUTATION, entityId, action, userId, dates). Page grant = reports, not admin. Stay journal on the card is Layer B only. HOT-AUD-01 UAT open |
 | Import | `/settings/import` | Column profile includes Elektraweb; the screen name is Import |
 
 Legacy: `/admin/*` → `/settings/*` for these screens.

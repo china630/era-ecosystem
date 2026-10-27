@@ -1,6 +1,6 @@
 # ADR: Deferred corporate checkout (Elektraweb T-room parity)
 
-**Status:** Accepted (design); implementation phased  
+**Status:** Implemented (ops path 2026-10-27) — `CheckoutSettlementStatus` + `/front-cash/unsettled-departures` + checkout MOVE_PAYER_CL; Elektraweb T-room import classifier still phased  
 **Date:** 2026-06-15  
 **Scope:** `era-hotel-pms` — B2B / agency settlement after physical departure
 
@@ -15,11 +15,13 @@ Examples from Nafta operations (confirmed by property GM):
 
 Elektraweb also uses `T*` rows for **system ledger accounts** (not guest stays), e.g. `999 FB`, `DEBITORLAR`, `TIBB AMBULATOR FOLIO`, agency `Sanal Folyo`. These must **not** appear on the room plan as occupied rooms.
 
-ERA Hotel PMS today:
+ERA Hotel PMS (ops, 2026-10-27):
 
-- `checkoutReservation` requires **`assertZeroBalance`** on all open folios before `CHECKED_OUT`.
-- Agency **city ledger** and `FolioType.AGENCY | COMPANY` exist, but checkout cannot complete with an open agency balance.
-- Import from FOCP / Folio Transactions must classify `T` rows without storing `T{resId}` as a physical `Room.roomNumber`.
+- Check-out with open **agency/company** balance is allowed when the desk chooses **Transfer to City Ledger** (`transferToCityLedger`) or **Move guest → payer + CL** (`moveGuestDebtToPayer`).
+- Guest personal balance still must be zero (or left as `GUEST_DEBT`, or moved to payer first).
+- `Reservation.checkoutSettlementStatus`: `PENDING` → `INVOICED` (after invoice) → `SETTLED` (Finance payment-applied).
+- Unsettled list: `/front-cash/unsettled-departures`.
+- Import from FOCP / Folio Transactions must still classify `T` rows without storing `T{resId}` as a physical `Room.roomNumber` (import classifier phased).
 
 ## Decision
 

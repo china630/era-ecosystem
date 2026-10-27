@@ -9,13 +9,14 @@ import {
   Field,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
 import { bakuDateKey, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
-import { formatLaundryPieces, type LaundryLineView } from '@/lib/laundry-pieces';
+import { formatLaundryPieces, laundryTicketAmount, type LaundryLineView } from '@/lib/laundry-pieces';
 
 type Ticket = {
   id: string;
@@ -37,6 +38,7 @@ export default function FoLaundryPage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [expressPercent, setExpressPercent] = useState<number | null>(null);
   const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
   const [guestQ, setGuestQ] = useState('');
   const [roomQ, setRoomQ] = useState('');
@@ -54,6 +56,9 @@ export default function FoLaundryPage() {
       return;
     }
     setTickets(json.tickets ?? []);
+    setExpressPercent(
+      typeof json.laundryExpressPercent === 'number' ? json.laundryExpressPercent : null,
+    );
   }, [tc]);
 
   useEffect(() => {
@@ -96,6 +101,26 @@ export default function FoLaundryPage() {
       showSuccess(tc('saved'));
       await load();
     }
+  }
+
+  async function voidTicket(tk: Ticket) {
+    const res = await fetch('/api/housekeeping/laundry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ voidTicketId: tk.id }),
+    });
+    if (!res.ok) showApiError(await res.json(), tc('failed'));
+    else {
+      showSuccess(tc('saved'));
+      await load();
+    }
+  }
+
+  function ticketAmount(tk: Ticket) {
+    return laundryTicketAmount(tk.lines, {
+      express: Boolean(tk.express),
+      expressPercent,
+    });
   }
 
   return (
@@ -171,6 +196,13 @@ export default function FoLaundryPage() {
               formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }) || '—',
           },
           {
+            key: 'amount',
+            header: tc('amount'),
+            sortable: true,
+            sortValue: (tk) => ticketAmount(tk),
+            render: (tk) => `${ticketAmount(tk).toFixed(2)} AZN`,
+          },
+          {
             key: 'status',
             header: tc('status'),
             sortable: true,
@@ -232,6 +264,13 @@ export default function FoLaundryPage() {
                     onClick={() => void deliver(tk)}
                   >
                     {t('deliverLaundry')}
+                  </button>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() => void voidTicket(tk)}
+                  >
+                    {t('voidLaundryTicket')}
                   </button>
                 </span>
               ) : (

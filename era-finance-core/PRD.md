@@ -364,7 +364,7 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 - Записи журнала защищены **контрольной суммой (SHA-256)** по каноническому содержимому и секрету среды (`AUDIT_HASH_SECRET` или `JWT_SECRET`), чтобы выявлять несанкционированное изменение логов.
 - **Retention:** записи старше **1 года** переносятся в архивную таблицу (`AuditLogArchive`) по расписанию (BullMQ).
 - **PII / секреты в интеграциях (M8):** перед записью в `AuditLog` и в серверных логах банковских адаптеров сырые JSON-пейлоады проходят **рекурсивное маскирование** по списку чувствительных ключей (`password`, `token`, `iban`, `fin`, `balance` и т.д.); значения заменяются на **`***MASKED***`** (см. [TZ.md](./TZ.md) §15.0).
-- [x] **COMPLETED (Hash Chain Verification, v95+):** аудит реализует криптографическую цепочку неизменности (`prevHash -> hash`) для последовательности записей; endpoint `POST /api/audit/verify-chain` программно проверяет целостность chain/legacy-совместимо и возвращает `compromisedIds` при обнаружении ручных правок в БД.
+- [x] **COMPLETED (Hash Chain Verification, v95+):** аудит реализует криптографическую цепочку неизменности (`prevHash -> hash`) для последовательности записей; endpoint `POST /api/admin/audit/verify-chain` программно проверяет целостность chain/legacy-совместимо и возвращает `compromisedIds` при обнаружении ручных правок в БД.
 
 #### 4.8.1. Add-on «Audit Hub» (платное расширение к модулю 8)
 

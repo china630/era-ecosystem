@@ -846,7 +846,7 @@ export function MainSidebar({
           />
           <SideNavSubItem
             href="/inventory/audits"
-            label={t("nav.inventoryAudits")}
+            label={t("nav.inventoryStocktake")}
             isActive={pathname.startsWith("/inventory/audit")}
             icon={ClipboardList}
             onNavClick={onNavClick}
@@ -1323,9 +1323,12 @@ export function MainSidebar({
                       onNavClick={onNavClick}
                     />
                     <SideNavItem
-                      href="/settings/audit"
-                      label={t("nav.settingsAudit")}
-                      isActive={pathname.startsWith("/settings/audit")}
+                      href="/admin/audit"
+                      label={t("nav.mutationAudit")}
+                      isActive={
+                        pathname === "/admin/audit" ||
+                        pathname.startsWith("/admin/audit/")
+                      }
                       icon={History}
                       nested
                       onNavClick={onNavClick}
@@ -1335,9 +1338,9 @@ export function MainSidebar({
                 {perms.canAccessBilling ? (
                   <>
                     <SideNavItem
-                      href="/admin/audit-log"
-                      label={t("nav.securityAuditLog")}
-                      isActive={pathname.startsWith("/admin/audit-log")}
+                      href="/admin/security-audit"
+                      label={t("nav.securityAudit")}
+                      isActive={pathname.startsWith("/admin/security-audit")}
                       icon={Shield}
                       nested
                       onNavClick={onNavClick}

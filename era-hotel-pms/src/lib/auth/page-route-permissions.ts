@@ -75,6 +75,10 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname.startsWith("/concierge") || pathname.startsWith("/pos")) {
     return [PERMISSIONS.SCREEN_FO];
   }
+  // Mutation audit journal — reports grant, not blanket SCREEN_ADMIN (ADR era-mutation-audit-standard).
+  if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) {
+    return [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.REPORTS_READ];
+  }
   if (pathname.startsWith("/admin")) {
     return [PERMISSIONS.SCREEN_ADMIN];
   }

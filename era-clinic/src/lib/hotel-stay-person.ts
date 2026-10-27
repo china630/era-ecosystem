@@ -1,14 +1,6 @@
 import { getClinicHotelOrganizationId } from "@/domain/physio/clinic-cutover.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 
-function hotelBaseUrl(): string {
-  return (
-    process.env.HOTEL_PMS_URL?.trim() ||
-    process.env.ERA_HOTEL_PMS_ORIGIN?.trim() ||
-    "http://127.0.0.1:3201"
-  ).replace(/\/$/, "");
-}
-
 function serviceToken(): string | undefined {
   return (
     process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
@@ -31,6 +23,21 @@ async function hotelOrganizationId(): Promise<string | null> {
   }
 }
 
+async function hotelBaseUrl(organizationId: string): Promise<string | null> {
+  try {
+    const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
+      "@era/satellite-kit"
+    );
+    const peer = await resolvePeerSatelliteBaseUrl({
+      organizationId,
+      satelliteKey: PEER_SATELLITE_HOTEL,
+    });
+    return peer.baseUrl;
+  } catch {
+    return null;
+  }
+}
+
 /** Check-in / check-out for a clinic reservation id. Fail-soft. */
 export async function lookupHotelStayWindow(
   reservationId: string,
@@ -40,10 +47,12 @@ export async function lookupHotelStayWindow(
   const token = serviceToken();
   const organizationId = await hotelOrganizationId();
   if (!token || !organizationId) return null;
+  const base = await hotelBaseUrl(organizationId);
+  if (!base) return null;
 
   const qs = new URLSearchParams({ externalRef, organizationId });
   try {
-    const res = await fetch(`${hotelBaseUrl()}/api/internal/v1/stays/by-external-ref?${qs}`, {
+    const res = await fetch(`${base}/api/internal/v1/stays/by-external-ref?${qs}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-service-token": token,
@@ -76,13 +85,15 @@ export async function lookupHotelStayGlobalPerson(input: {
   const token = serviceToken();
   const organizationId = await hotelOrganizationId();
   if (!token || !organizationId) return null;
+  const base = await hotelBaseUrl(organizationId);
+  if (!base) return null;
 
   const folio = Number(input.folioPerson);
   const qs = new URLSearchParams({ externalRef, organizationId });
   if (Number.isFinite(folio) && folio > 0) qs.set("folioPerson", String(folio));
 
   try {
-    const res = await fetch(`${hotelBaseUrl()}/api/internal/v1/stays/by-external-ref?${qs}`, {
+    const res = await fetch(`${base}/api/internal/v1/stays/by-external-ref?${qs}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-service-token": token,
@@ -114,12 +125,14 @@ export async function lookupHotelGuestByIdentity(input: {
   const token = serviceToken();
   const organizationId = await hotelOrganizationId();
   if (!token || !organizationId) return null;
+  const base = await hotelBaseUrl(organizationId);
+  if (!base) return null;
 
   const qs = new URLSearchParams({ organizationId, fullName, birthDate });
   if (input.phone?.trim()) qs.set("phone", input.phone.trim());
 
   try {
-    const res = await fetch(`${hotelBaseUrl()}/api/internal/v1/guests/by-identity?${qs}`, {
+    const res = await fetch(`${base}/api/internal/v1/guests/by-identity?${qs}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-service-token": token,

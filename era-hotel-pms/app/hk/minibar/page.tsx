@@ -119,6 +119,7 @@ export default function MinibarPage() {
     return [...set].sort((a, b) => a - b);
   }, [rooms]);
   const visibleRooms = floor ? rooms.filter((r) => String(r.floor) === floor) : rooms;
+  const catalogEmpty = items.length === 0;
 
   return (
     <>
@@ -131,17 +132,40 @@ export default function MinibarPage() {
           </button>
         }
       />
-      <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('catalog')}</h2>
-      {items.length === 0 ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{t('emptyCatalog')}</p> : null}
-      <ul className="mb-6 space-y-2 text-[13px]">
-        {items.map((i) => (
-          <li key={i.id} className="rounded border border-[#D5DADF] bg-white px-3 py-2">
-            {i.code} — {i.name} · {i.price} AZN
-          </li>
-        ))}
-      </ul>
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('catalog')}</h2>
+        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+                <th className="px-3 py-2">{tc('code')}</th>
+                <th className="px-3 py-2">{tc('name')}</th>
+                <th className="px-3 py-2">{tc('amount')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catalogEmpty ? (
+                <tr>
+                  <td className="px-3 py-3 text-[#7F8C8D]" colSpan={3}>
+                    {t('emptyCatalog')}
+                  </td>
+                </tr>
+              ) : (
+                items.map((i) => (
+                  <tr key={i.id} className="border-b border-[#ECF0F1]">
+                    <td className="px-3 py-2 font-medium">{i.code}</td>
+                    <td className="px-3 py-2">{i.name}</td>
+                    <td className="px-3 py-2">{i.price} AZN</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <section className="mb-6 max-w-lg space-y-2">
         <h2 className="text-sm font-semibold text-[#34495E]">{t('postTitle')}</h2>
+        {catalogEmpty ? <p className="text-sm text-[#7F8C8D]">{t('postNeedsCatalog')}</p> : null}
         <CatalogField
           kind="CLOSED_SMALL"
           label={t('floorFilter')}
@@ -182,7 +206,7 @@ export default function MinibarPage() {
         <button
           type="button"
           className={PRIMARY_BUTTON_CLASS}
-          disabled={busy || !roomId || !itemId}
+          disabled={busy || catalogEmpty || !roomId || !itemId}
           onClick={() => {
             void (async () => {
               setBusy(true);
@@ -208,15 +232,37 @@ export default function MinibarPage() {
           {t('post')}
         </button>
       </section>
-      <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recent')}</h2>
-      {postings.length === 0 ? <p className="text-[13px] text-[#7F8C8D]">{t('noPostings')}</p> : null}
-      <ul className="space-y-1 text-[13px]">
-        {postings.map((p) => (
-          <li key={p.id}>
-            {p.room?.roomNumber ?? '—'} · {p.item?.name ?? '—'} · ×{p.qty}
-          </li>
-        ))}
-      </ul>
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recent')}</h2>
+        <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+                <th className="px-3 py-2">{th('colRoom')}</th>
+                <th className="px-3 py-2">{t('item')}</th>
+                <th className="px-3 py-2">{t('qty')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {postings.length === 0 ? (
+                <tr>
+                  <td className="px-3 py-3 text-[#7F8C8D]" colSpan={3}>
+                    {t('noPostings')}
+                  </td>
+                </tr>
+              ) : (
+                postings.map((p) => (
+                  <tr key={p.id} className="border-b border-[#ECF0F1]">
+                    <td className="px-3 py-2">{p.room?.roomNumber ?? '—'}</td>
+                    <td className="px-3 py-2">{p.item?.name ?? '—'}</td>
+                    <td className="px-3 py-2">×{p.qty}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <ModalShell
         open={open}
         title={t('title')}

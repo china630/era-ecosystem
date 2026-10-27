@@ -107,4 +107,9 @@ export class RuntimeConfigBodyDto {
   @IsOptional()
   @IsIn(["hub", "excel"])
   referenceSource?: "hub" | "excel";
+
+  /** CP-ORG-PROFILE-01 branding snapshot from orchestrator Sync. */
+  @IsOptional()
+  @Allow()
+  orgProfile?: unknown;
 }

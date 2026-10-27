@@ -24,7 +24,7 @@ import { NightsCountField } from '@/components/reservation-card/NightsCountField
 import {
   bookingSourceKind,
   contractCounterpartyType,
-  fksFromSalesContract,
+  defaultsFromSalesContract,
   isOtaAgency,
   isWalkInRecordedAgency,
   persistCounterpartyIds,
@@ -64,6 +64,7 @@ type ContractOpt = {
   companyId: string | null;
   counterpartyType?: string | null;
   ratePlanId: string;
+  commissionBasis?: 'GROSS' | 'NET' | string | null;
   validFrom?: string | null;
   validTo?: string | null;
 };
@@ -146,6 +147,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [companyId, setCompanyId] = useState('');
   const [salesContractId, setSalesContractId] = useState('');
   const [contractRef, setContractRef] = useState('');
+  const [roomPayer, setRoomPayer] = useState<'GUEST' | 'AGENCY' | 'COMPANY'>('GUEST');
+  const [commissionBasis, setCommissionBasis] = useState<'GROSS' | 'NET'>('GROSS');
   const [booker, setBooker] = useState('');
   const [guestRep, setGuestRep] = useState('');
   const [paidBy, setPaidBy] = useState('');
@@ -163,6 +166,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [roomTypes, setRoomTypes] = useState<SelectOpt[]>([]);
   const [salesContracts, setSalesContracts] = useState<ContractOpt[]>([]);
   const [avlByType, setAvlByType] = useState<Record<string, number>>({});
+  const [avlContractScoped, setAvlContractScoped] = useState(false);
+  const [avlNoAllotment, setAvlNoAllotment] = useState(false);
 
   const selectedSource = sources.find((s) => s.id === sourceId);
   const sourceKind = bookingSourceKind(selectedSource?.code);
@@ -355,6 +360,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               companyId: string | null;
               counterpartyType?: string | null;
               ratePlanId: string;
+              commissionBasis?: string | null;
               validFrom?: string | null;
               validTo?: string | null;
             }) => ({
@@ -364,6 +370,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               companyId: x.companyId,
               counterpartyType: x.counterpartyType,
               ratePlanId: x.ratePlanId,
+              commissionBasis: x.commissionBasis,
               validFrom: x.validFrom,
               validTo: x.validTo,
               label: `${x.code} — ${x.name}`,
@@ -377,37 +384,70 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   useEffect(() => {
     if (!open || !checkIn || !checkOut) {
       setAvlByType({});
+      setAvlContractScoped(false);
+      setAvlNoAllotment(false);
       return;
     }
     const ids = Object.keys(neededByType);
     if (!ids.length) {
       setAvlByType({});
+      setAvlContractScoped(Boolean(salesContractId));
+      setAvlNoAllotment(false);
       return;
     }
     let cancelled = false;
     void Promise.all(
       ids.map(async (roomTypeId) => {
         try {
-          const res = await fetch(
-            `/api/fo/sellable?roomTypeId=${roomTypeId}&from=${checkIn}&to=${checkOut}`,
-          );
+          const qs = new URLSearchParams({
+            roomTypeId,
+            from: checkIn,
+            to: checkOut,
+          });
+          if (salesContractId) qs.set('salesContractId', salesContractId);
+          const res = await fetch(`/api/fo/sellable?${qs}`);
           const s = await res.json();
-          if (s.error) return [roomTypeId, 0] as const;
-          return [roomTypeId, Number(s.available ?? 0)] as const;
+          if (s.error) {
+            return {
+              roomTypeId,
+              available: 0,
+              contractScoped: Boolean(salesContractId),
+              reason: null as string | null,
+            };
+          }
+          return {
+            roomTypeId,
+            available: Number(s.available ?? 0),
+            contractScoped: Boolean(s.contractScoped),
+            reason: typeof s.reason === 'string' ? s.reason : null,
+          };
         } catch {
-          return [roomTypeId, 0] as const;
+          return {
+            roomTypeId,
+            available: 0,
+            contractScoped: Boolean(salesContractId),
+            reason: null as string | null,
+          };
         }
       }),
-    ).then((pairs) => {
+    ).then((rows) => {
       if (cancelled) return;
       const next: Record<string, number> = {};
-      for (const [id, avl] of pairs) next[id] = avl;
+      let scoped = false;
+      let noAllotment = false;
+      for (const row of rows) {
+        next[row.roomTypeId] = row.available;
+        if (row.contractScoped) scoped = true;
+        if (row.reason === 'NO_ALLOTMENT') noAllotment = true;
+      }
       setAvlByType(next);
+      setAvlContractScoped(scoped || Boolean(salesContractId));
+      setAvlNoAllotment(noAllotment);
     });
     return () => {
       cancelled = true;
     };
-  }, [open, checkIn, checkOut, neededByType]);
+  }, [open, checkIn, checkOut, neededByType, salesContractId]);
 
   function setCheckInSafe(iso: string) {
     setCheckIn(iso);
@@ -447,9 +487,11 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     const c = salesContracts.find((x) => x.id === nextId);
     if (!c) return;
     setContractRef(c.code);
-    const fks = fksFromSalesContract(c);
-    if (fks.agencyId !== undefined) setAgencyId(fks.agencyId ?? '');
-    if (fks.companyId !== undefined) setCompanyId(fks.companyId ?? '');
+    const defaults = defaultsFromSalesContract(c);
+    if (defaults.agencyId !== undefined) setAgencyId(defaults.agencyId ?? '');
+    if (defaults.companyId !== undefined) setCompanyId(defaults.companyId ?? '');
+    if (defaults.commissionBasis) setCommissionBasis(defaults.commissionBasis);
+    if (defaults.roomPayer) setRoomPayer(defaults.roomPayer);
     if (c.ratePlanId) applyRatePlan(c.ratePlanId);
   }
 
@@ -519,7 +561,20 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       }
     }
     if (avlBlocked) {
-      showApiError({ error: t('insufficientAvl') }, tc('failed'));
+      showApiError(
+        {
+          error: avlNoAllotment
+            ? tr('noContractAllotmentInventory')
+            : avlContractScoped
+              ? tr('noContractSellableInventory')
+              : t('insufficientAvl'),
+        },
+        tc('failed'),
+      );
+      return;
+    }
+    if ((roomPayer === 'AGENCY' || roomPayer === 'COMPANY') && !salesContractId) {
+      showApiError({ error: tr('contractRequiredToast') }, tc('failed'));
       return;
     }
 
@@ -542,6 +597,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
         walkInProfileCode: sourceKind === 'WALKIN' ? walkInProfileCode || undefined : undefined,
         companyId: parties.companyId ?? undefined,
         salesContractId: salesContractId || undefined,
+        roomPayer,
+        commissionBasis,
         contractRef: contractRef.trim() || undefined,
         booker: booker.trim() || undefined,
         guestRep: guestRep.trim() || undefined,
@@ -572,7 +629,21 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       });
       const data = await res.json();
       if (!res.ok) {
-        showApiError(data, tc('failed'));
+        const code = String(data?.code ?? '');
+        const err = String(data?.error ?? code);
+        if (code === 'CONTRACT_REQUIRED_FOR_PAYER') {
+          showApiError({ error: tr('contractRequiredToast') }, tc('failed'));
+        } else if (code === 'AGENCY_REQUIRED_FOR_PAYER') {
+          showApiError({ error: tr('agencyRequiredForPayerToast') }, tc('failed'));
+        } else if (code === 'COMPANY_REQUIRED_FOR_PAYER') {
+          showApiError({ error: tr('companyRequiredForPayerToast') }, tc('failed'));
+        } else if (/contract allotment exhausted/i.test(err)) {
+          showApiError({ error: tr('noContractSellableInventory') }, tc('failed'));
+        } else if (/no contract allotment|contract allotment/i.test(err)) {
+          showApiError({ error: tr('noContractAllotmentInventory') }, tc('failed'));
+        } else {
+          showApiError(data, tc('failed'));
+        }
         return;
       }
       showSuccess(t('created'));
@@ -619,7 +690,8 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
             agencyId={agencyId}
             companyId={companyId}
             salesContractId={salesContractId}
-            contractRef={contractRef}
+            roomPayer={roomPayer}
+            commissionBasis={commissionBasis}
             checkIn={checkIn}
             sources={sources.map((s) => ({ id: s.id, label: s.label, code: s.code ?? '' }))}
             walkInProfiles={walkInProfiles}
@@ -646,14 +718,12 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               setAgencyId('');
               setWalkInProfileCode('');
               setSalesContractId('');
-              setContractRef('');
             }}
             onAgency={(id) => {
               setAgencyId(id);
               const current = salesContracts.find((c) => c.id === salesContractId);
               if (current && contractCounterpartyType(current) === 'AGENCY') {
                 setSalesContractId('');
-                setContractRef('');
               }
             }}
             onCompany={(id) => {
@@ -661,11 +731,11 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
               const current = salesContracts.find((c) => c.id === salesContractId);
               if (current && contractCounterpartyType(current) === 'CORPORATE') {
                 setSalesContractId('');
-                setContractRef('');
               }
             }}
             onContract={(id) => applySalesContract(id)}
-            onContractRef={setContractRef}
+            onRoomPayer={setRoomPayer}
+            onCommissionBasis={setCommissionBasis}
             onAgencyCreated={(row) =>
               setAgencies((prev) =>
                 prev.some((a) => a.id === row.id)
@@ -971,7 +1041,15 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                     );
                   })}
                 </ul>
-                {avlBlocked ? <div className="mt-1">{t('avlBlockedHint')}</div> : null}
+                {avlBlocked ? (
+                  <div className="mt-1">
+                    {avlNoAllotment
+                      ? tr('noContractAllotmentHint')
+                      : avlContractScoped
+                        ? t('avlBlockedHintContract')
+                        : t('avlBlockedHint')}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div

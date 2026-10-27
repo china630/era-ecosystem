@@ -207,6 +207,9 @@ services:
       SATELLITE_EVENT_WORKER_DISABLED: ${SATELLITE_EVENT_WORKER_DISABLED:-0}
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
+      # Peer hotel URL SoR = SatelliteEndpoint; env fallback until Sync rows always present (ADR satellite-peer-url-resolution)
+      ERA_PEER_URL_ENV_FALLBACK: ${ERA_PEER_URL_ENV_FALLBACK:-1}
+      ERA_HOTEL_PMS_INTERNAL_URL: ${ERA_HOTEL_PMS_INTERNAL_URL:-http://hotel-pms:3201}
     depends_on:
       postgres:
         condition: service_healthy
@@ -310,8 +313,10 @@ services:
       REDIS_URL: redis://redis:6379/3
       PORT: "3202"
       HOSTNAME: 0.0.0.0
+      # DEPRECATED SoR — prefer SatelliteEndpoint; kept as peer URL bootstrap
       HOTEL_PMS_URL: http://hotel-pms:3201
       PMS_BRIDGE_URL: http://hotel-pms:3201
+      ERA_PEER_URL_ENV_FALLBACK: ${ERA_PEER_URL_ENV_FALLBACK:-1}
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       FNB_POS_WEBHOOK_SECRET: ${FNB_POS_WEBHOOK_SECRET:-dev-fnb-pos-webhook-secret}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
@@ -355,6 +360,8 @@ services:
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_RETAIL_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+      HOTEL_PMS_URL: http://hotel-pms:3201
+      ERA_PEER_URL_ENV_FALLBACK: ${ERA_PEER_URL_ENV_FALLBACK:-1}
     ports:
       - "3204:3204"
     depends_on:
@@ -520,7 +527,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CLINIC_DB:-era_clinic}?schema=public
       PORT: "3203"
       HOSTNAME: 0.0.0.0
+      # DEPRECATED SoR — prefer SatelliteEndpoint; kept as peer URL bootstrap
       HOTEL_PMS_URL: http://hotel-pms:3201
+      ERA_PEER_URL_ENV_FALLBACK: ${ERA_PEER_URL_ENV_FALLBACK:-1}
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       CLINIC_BRIDGE_SECRET: ${CLINIC_BRIDGE_SECRET:-${SATELLITE_BRIDGE_SECRET:-dev-satellite-bridge-secret}}

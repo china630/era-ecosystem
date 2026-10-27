@@ -258,6 +258,7 @@ export interface SatelliteHotelCityLedgerSnapshotEvent {
     agencyCode?: string;
     companyId?: string;
     companyCode?: string;
+    partyKind?: "AGENCY" | "COMPANY";
     financeCounterpartyId?: string;
     asOfDate: string;
     balance: number;
@@ -278,6 +279,7 @@ export const satelliteHotelCityLedgerSnapshotSchema = z.object({
       agencyCode: z.string().min(1).optional(),
       companyId: z.string().min(1).optional(),
       companyCode: z.string().min(1).optional(),
+      partyKind: z.enum(["AGENCY", "COMPANY"]).optional(),
       financeCounterpartyId: z.string().min(1).optional(),
       asOfDate: z.string().min(1),
       balance: z.number(),

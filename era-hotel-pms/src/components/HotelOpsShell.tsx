@@ -157,7 +157,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     if (path === '/') return pathname === '/';
     // Parent items that have their own siblings under the same prefix.
     // `/night-audit` must not stay lit on `/night-audit/logs`.
-    const exactOnly = path === '/reports' || path === '/night-audit';
+    const exactOnly = path === '/reports' || path === '/night-audit' || path === '/hk';
     const pathOk = exactOnly ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
     if (!pathOk) return false;
     if (!query) {
@@ -346,6 +346,27 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: ClipboardList,
               anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_FOLIO, PERMISSIONS.SCREEN_REPORTS],
             },
+            {
+              id: 'fc-agency-ledger',
+              href: '/front-cash/agency-ledger',
+              labelKey: 'agencyLedger',
+              icon: ClipboardList,
+              anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_REPORTS],
+            },
+            {
+              id: 'fc-company-ledger',
+              href: '/front-cash/company-ledger',
+              labelKey: 'companyLedger',
+              icon: Building2,
+              anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_REPORTS],
+            },
+            {
+              id: 'fc-unsettled',
+              href: '/front-cash/unsettled-departures',
+              labelKey: 'unsettledDepartures',
+              icon: ClipboardList,
+              anyPermission: [PERMISSIONS.FOLIO_READ, PERMISSIONS.SCREEN_REPORTS],
+            },
           ]),
         },
         {
@@ -403,69 +424,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
-              id: 'hk-mobile',
-              href: '/hk/mobile',
-              labelKey: 'hkMobile',
-              icon: Smartphone,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-minibar',
-              href: '/hk/minibar',
-              labelKey: 'minibarControl',
-              icon: Package,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-consumption',
-              href: '/hk/consumption',
-              labelKey: 'hkConsumption',
-              icon: Package,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-stock',
-              href: '/settings/stock',
-              labelKey: 'minibarCatalog',
-              icon: Package,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'hk-maids',
-              href: '/hk/maids',
-              labelKey: 'maidManagement',
-              icon: Users,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-roster',
-              href: '/hk/roster',
-              labelKey: 'hkRoster',
-              icon: Users,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-rotation',
-              href: '/hk/rotation',
-              labelKey: 'hkRotation',
-              icon: SprayCan,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-laundry',
-              href: '/hk/laundry',
-              labelKey: 'hkLaundry',
-              icon: Package,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'hk-forecast',
-              href: '/hk/forecast',
-              labelKey: 'hkForecast',
-              icon: CalendarDays,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
               id: 'hk-discrepancy',
               href: '/hk/discrepancy',
               labelKey: 'hkDiscrepancy',
@@ -480,11 +438,98 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_HK,
             },
             {
-              id: 'hk-lost',
-              href: '/hk/lost-and-found',
-              labelKey: 'lostAndFound',
+              id: 'hk-mobile',
+              href: '/hk/mobile',
+              labelKey: 'hkMobile',
+              icon: Smartphone,
+              permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
+              id: 'hk-forecast',
+              href: '/hk/forecast',
+              labelKey: 'hkForecast',
+              icon: CalendarDays,
+              permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
+              id: 'hk-staff',
+              labelKey: 'hkStaffGroup',
+              icon: Users,
+              permission: PERMISSIONS.SCREEN_HK,
+              children: [
+                {
+                  id: 'hk-maids',
+                  href: '/hk/maids',
+                  labelKey: 'maidManagement',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'hk-roster',
+                  href: '/hk/roster',
+                  labelKey: 'hkRoster',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'hk-rotation',
+                  href: '/hk/rotation',
+                  labelKey: 'hkRotation',
+                  icon: SprayCan,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+              ],
+            },
+            {
+              id: 'hk-minibar-group',
+              labelKey: 'hkMinibarGroup',
+              icon: Package,
+              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
+              children: [
+                {
+                  id: 'hk-minibar',
+                  href: '/hk/minibar',
+                  labelKey: 'minibarControl',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'hk-stock',
+                  href: '/settings/stock',
+                  labelKey: 'minibarCatalog',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
+            },
+            {
+              id: 'hk-consumption',
+              href: '/hk/consumption',
+              labelKey: 'hkConsumption',
               icon: Package,
               permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
+              id: 'hk-guest-services',
+              labelKey: 'hkGuestServicesGroup',
+              icon: Package,
+              permission: PERMISSIONS.SCREEN_HK,
+              children: [
+                {
+                  id: 'hk-laundry',
+                  href: '/hk/laundry',
+                  labelKey: 'hkLaundry',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'hk-lost',
+                  href: '/hk/lost-and-found',
+                  labelKey: 'lostAndFound',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+              ],
             },
           ]),
         },
@@ -704,13 +749,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_TOURS,
             },
             {
-              id: 'tr-airport',
-              href: '/transfers/airport',
-              labelKey: 'airportTransfer',
-              icon: Car,
-              permission: PERMISSIONS.SCREEN_TOURS,
-            },
-            {
               id: 'tr-fleet',
               href: '/fleet',
               labelKey: 'fleet',
@@ -907,7 +945,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
             },
             {
               id: 'set-audit',
-              href: '/settings/audit',
+              href: '/admin/audit',
               labelKey: 'auditViewer',
               icon: ClipboardList,
               permission: PERMISSIONS.SCREEN_REPORTS,

@@ -66,7 +66,15 @@ export default function DebtsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title={t('debtsTitle')} subtitle={t('debtsHint')} />
+      <PageHeader
+        title={t('debtsTitle')}
+        subtitle={t('debtsHint')}
+        actions={
+          <a className="text-[13px] text-[#2980B9] hover:underline" href="/front-cash/unsettled-departures">
+            {t('debtsUnsettledLink')}
+          </a>
+        }
+      />
       <div className="mb-3 shrink-0">
         <FilterChips
           value={kind}

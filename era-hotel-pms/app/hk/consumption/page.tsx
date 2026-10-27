@@ -197,20 +197,26 @@ export default function HkConsumptionPage() {
           </tbody>
         </table>
       </div>
-      {closedLines.length > 0 ? (
-        <div className={`${DATA_TABLE_VIEWPORT_CLASS} mt-6`}>
-          <h2 className="mb-2 text-sm font-semibold">{t('closedTitle')}</h2>
-          <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('date')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('sku')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('qty')}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS} />
+      <div className={`${DATA_TABLE_VIEWPORT_CLASS} mt-6`}>
+        <h2 className="mb-2 text-sm font-semibold">{t('closedTitle')}</h2>
+        <table className={DATA_TABLE_CLASS}>
+          <thead>
+            <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('date')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('sku')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('qty')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS} />
+            </tr>
+          </thead>
+          <tbody>
+            {closedLines.length === 0 ? (
+              <tr className={DATA_TABLE_TR_CLASS}>
+                <td className={DATA_TABLE_TD_CLASS} colSpan={4}>
+                  {t('closedEmpty')}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {closedLines.map((line) => (
+            ) : (
+              closedLines.map((line) => (
                 <tr key={line.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{line.businessDate}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{line.sku}</td>
@@ -226,11 +232,11 @@ export default function HkConsumptionPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

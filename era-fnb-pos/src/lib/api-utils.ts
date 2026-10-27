@@ -10,8 +10,11 @@ import {
 import { FnbSoldOutError } from "@/lib/fnb-sold-out";
 import { FnbWaiterNoPayError } from "@/lib/fnb-roles";
 import { ShiftRequiredError, ShiftStaleError } from "@/lib/open-shift";
+import { scheduleFnbHttpMutationAudit } from "@/lib/mutation-audit-belt";
 
 export function jsonOk<T>(data: T, status = 200) {
+  // Layer A HTTP belt — ADR era-mutation-audit-standard / FNB-AUD-01
+  scheduleFnbHttpMutationAudit(status);
   return NextResponse.json(data, { status });
 }
 

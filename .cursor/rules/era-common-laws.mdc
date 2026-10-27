@@ -27,7 +27,7 @@ Inherits nothing; app-specific rules add detail on top. User chat — **Russian*
 ## Security
 
 - **NestJS apps:** global `ValidationPipe` — `whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`.
-- **Mutations** (POST/PATCH/PUT/DELETE): audit trail where the app supports it (Finance `AuditMutationInterceptor`; satellites — equivalent or documented exceptions for auth/public).
+- **Mutations** (POST/PATCH/PUT/DELETE): audit trail per [era-mutation-audit-standard.md](../../docs/adr/era-mutation-audit-standard.md) — Layer A HTTP belt (Finance `AuditMutationInterceptor` is the Nest reference; satellites use kit + `SatelliteAuditLog`) plus Layer B domain enrich on high-risk ops. Deny-list only with `// audit-exempt:` reason.
 - **Internal / event APIs:** `Authorization: Bearer` service token (`SATELLITE_EVENT_SERVICE_TOKEN`, MDM internal token). Do not leave write endpoints unauthenticated in production paths.
 - No loose `any` on API inputs; use DTO + `class-validator` / Zod.
 

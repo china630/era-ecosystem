@@ -312,6 +312,18 @@ export function FolioPaymentModal({
             emptyLabel={t('pickPocket')}
           />
         ) : null}
+        {roomArticle && activeStayId ? (
+          <p className="m-0 text-[12px] text-[#7F8C8D]">
+            {t('roomPaymentFollowsPayer', {
+              name:
+                roomFolio?.type === 'AGENCY'
+                  ? t('partyAgency')
+                  : roomFolio?.type === 'COMPANY'
+                    ? t('partyCompany')
+                    : t('partyGuest'),
+            })}
+          </p>
+        ) : null}
         {!roomArticle && pocket === 'guest' && payer.kind === 'pick' ? (
           <CatalogField
             kind="CLOSED_SMALL"
@@ -342,6 +354,9 @@ export function FolioPaymentModal({
           options={methods.map((m) => ({ value: m, label: tPay(m) }))}
           emptyLabel={null}
         />
+        {method === 'CL_AGENCY' || method === 'CL_COMPANY' || method === 'COMPANY_ACCOUNT' ? (
+          <p className="m-0 text-[12px] text-[#7F8C8D]">{t('cityLedgerTenderHint')}</p>
+        ) : null}
         {method === 'CARD' ? (
           bankTerminals.length > 0 ? (
             <CatalogField

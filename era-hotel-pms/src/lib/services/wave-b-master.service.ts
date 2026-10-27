@@ -181,6 +181,18 @@ export async function createHousekeeper(input: {
   });
 }
 
+export async function updateHousekeeperDepartment(
+  id: string,
+  department: 'ROOMS' | 'PUBLIC_AREA' | 'LAUNDRY',
+) {
+  return prisma.housekeeper.update({ where: { id }, data: { department } });
+}
+
+/** Soft-remove from the active maid list (roster no longer sees them). */
+export async function deactivateHousekeeper(id: string) {
+  return prisma.housekeeper.update({ where: { id }, data: { active: false } });
+}
+
 export async function assignTaskHousekeeper(taskId: string, housekeeperId: string | null) {
   return prisma.housekeepingTask.update({
     where: { id: taskId },

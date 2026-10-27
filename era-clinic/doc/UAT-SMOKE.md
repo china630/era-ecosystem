@@ -44,6 +44,7 @@
 - [ ] `/appointments` — practitioner day matrix from `GET /api/appointments/calendar?date=`
 - [ ] CLI-36 shifts: `/admin/master-data` → practitioner **Shifts** → add a WEEKLY rule (Mon–Wed 09:00–14:00), Save; on `/appointments` that doctor's Thu/Fri + afternoon cells are blocked (off-shift); booking an off-shift slot returns 409; a doctor with no rules stays fully available
 - [ ] `POST /api/visits/[id]/discount` — `CLINIC_ADMIN` or `BUSINESS_OWNER` only; audit row created
+- [ ] **Mutation audit Layer A (CLI-19 belt — open):** after any successful admin mutation, open `/admin/audit` (`GET /api/admin/audit`) → filter **HTTP mutations (Layer A)** (+ entityId / action / user / dates) → row shows method + path; ProcedureOrder / Visit still show Layer B. Login must not appear.
 - [ ] Home `/` (owner, `canViewExecutive`) — `ExecutiveDashboard` renders as first block above ops summary; date + practitioner filters; KPI from `GET /api/executive/summary`
 - [ ] Home `/` (non-owner role) — no executive block; only ops day summary
 - [ ] `GET /api/executive/summary` — 403 for non-owner roles
@@ -113,7 +114,7 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 9. Dispute path: audit on ProcedureOrder (`checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`).
 10. Reschedule procedure time on chart → conflict rules enforced (cabin + staff).
 11. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
-11a. **Register a group** (`/sanatorium/walk-in-parties`): name + visit date; each row needs sex and country (name optional, shown as Guest N). Add a priced procedure, lab, and doctor visit. **To cashier** sends one hotel pending line per service under one receipt. The hotel pending list shows one basket; Cash/Card writes one fiscal receipt. Unpaid procedures follow the extra-procedure route. Not a hotel group booking. Not SHIPPED.
+11a. **Register a group** (`/sanatorium/walk-in-parties`, CLI-61): list only; **Create group** opens a modal (name + visit date). Row click opens the party modal. **Add guest** / **Edit guest** / **Add service** / remove confirms are nested modals (sex + country required; name optional → Guest N). Add a priced procedure, lab, and doctor visit. **To cashier** sends one hotel pending line per service under one receipt. The hotel pending list shows one basket; Cash/Card writes one fiscal receipt. Unpaid procedures follow the extra-procedure route. Not a hotel group booking. Not SHIPPED / not SHOW.
 12. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).
 13. Hotel stay product change from date (`SATELLITE_HOTEL_STAY_PRODUCT_CHANGED`) → remaining **PROPOSED** and **SCHEDULED** orders from the effective date are cancelled; completed/checked-in stay. Clinic rebuilds a new **PROPOSED** plan for the new program when a matching template exists. The same event fills an empty patient nationality.
 14. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default) and drops an empty EQUIPMENT row plus a second STAFF row.

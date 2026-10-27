@@ -9,6 +9,14 @@ const PII_KEYS = new Set([
   "email",
   "documentnumber",
   "nationalid",
+  "token",
+  "secret",
+  "authorization",
+  "apikey",
+  "accessToken",
+  "refreshToken",
+  "cardpan",
+  "cvv",
 ]);
 
 export type SatelliteAuditInput = {

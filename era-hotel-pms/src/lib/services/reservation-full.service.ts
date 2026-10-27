@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { doorClashWindow, hotelDateKey } from '@/lib/hotel-calendar';
 import { countsFromPax } from '@/components/reservation-card/party-pax';
 import { isDepartedPartyRow, partyDepartedAt, primaryIndexForParty } from '@/lib/party-departed-stamp';
@@ -194,6 +195,10 @@ export async function patchReservationFull(
     walkInProfileCode?: string | null;
     companyId?: string | null;
     salesContractId?: string | null;
+    roomPayer?: 'GUEST' | 'AGENCY' | 'COMPANY';
+    commissionBasis?: 'GROSS' | 'NET';
+    commercialAmendMode?: 'NEXT_NIGHTS' | 'MOVE_POSTED';
+    commercialAmendReason?: string;
     sourceId?: string | null;
     roomId?: string | null;
     moveReasonCode?: 'GUEST_REFUSED' | 'DID_NOT_OCCUPY' | 'HOTEL';
@@ -298,6 +303,8 @@ export async function patchReservationFull(
     moveReasonCode,
     settlement,
     audit,
+    commercialAmendMode,
+    commercialAmendReason,
     ...data
   } = input;
 
@@ -522,6 +529,67 @@ export async function patchReservationFull(
       (agencyFolio?.charges.length ?? 0) > 0 ||
       (agencyFolio?.payments.some((row) => !row.voidedAt) ?? false);
     if (agencyLines) throw new Error('AGENCY_FOLIO_HAS_LINES');
+  }
+
+  const nextRoomPayer = data.roomPayer ?? existing.roomPayer;
+  const nextBasis = data.commissionBasis ?? existing.commissionBasis;
+  const commercialChanged =
+    (data.roomPayer !== undefined && data.roomPayer !== existing.roomPayer) ||
+    (data.commissionBasis !== undefined && data.commissionBasis !== existing.commissionBasis) ||
+    (data.agencyId !== undefined && data.agencyId !== existing.agencyId) ||
+    (data.companyId !== undefined && data.companyId !== existing.companyId);
+  const postedRoom = await prisma.folioCharge.count({
+    where: {
+      folio: { reservationId: id },
+      revenueCode: { systemRole: { in: ['ROOM', 'CITY_TAX', 'PKG', 'RATE_ADJ'] } },
+    },
+  });
+  if (commercialChanged && postedRoom > 0 && !commercialAmendMode) {
+    throw new Error('COMMERCIAL_AMEND_REQUIRED');
+  }
+  const nextAgencyId = data.agencyId !== undefined ? data.agencyId : existing.agencyId;
+  const nextCompanyId = data.companyId !== undefined ? data.companyId : existing.companyId;
+  if (nextRoomPayer === 'AGENCY' && !nextAgencyId) {
+    throw new Error('AGENCY_REQUIRED_FOR_PAYER');
+  }
+  if (nextRoomPayer === 'COMPANY' && !nextCompanyId) {
+    throw new Error('COMPANY_REQUIRED_FOR_PAYER');
+  }
+  if (
+    (nextRoomPayer === 'AGENCY' || nextRoomPayer === 'COMPANY') &&
+    (data.salesContractId !== undefined ? !data.salesContractId : !existing.salesContractId)
+  ) {
+    throw new Error('CONTRACT_REQUIRED_FOR_PAYER');
+  }
+  if (commercialChanged && commercialAmendMode) {
+    const { applyCommercialAmend } = await import(
+      '@/lib/services/reservation-commercial.service'
+    );
+    const wasPayer = existing.roomPayer;
+    const wasBasis = existing.commissionBasis;
+    const note = [
+      `From ${todayBakuYmd()} room payer ${nextRoomPayer} ${nextBasis}`,
+      `(was: ${wasPayer} ${wasBasis}).`,
+      commercialAmendMode === 'MOVE_POSTED'
+        ? 'Posted room nights were moved to the new payer.'
+        : 'Nights already posted were not recalculated.',
+    ].join(' ');
+    await applyCommercialAmend({
+      reservationId: id,
+      roomPayer: nextRoomPayer,
+      commissionBasis: nextBasis,
+      agencyId: nextAgencyId,
+      companyId: nextCompanyId,
+      salesContractId:
+        data.salesContractId !== undefined ? data.salesContractId : existing.salesContractId,
+      mode: commercialAmendMode,
+      reason: commercialAmendReason,
+      actorUserId: audit?.userId ?? null,
+      note,
+    });
+    // roomPayer / commissionBasis already written inside applyCommercialAmend
+    delete data.roomPayer;
+    delete data.commissionBasis;
   }
 
   await prisma.reservation.update({

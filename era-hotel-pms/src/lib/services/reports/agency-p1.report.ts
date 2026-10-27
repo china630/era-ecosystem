@@ -19,6 +19,8 @@ type ResWithAgency = {
   id: string;
   agencyId: string | null;
   agency: { code: string; name: string; commissionPercent: unknown } | null;
+  salesContract: { commissionPercent: unknown } | null;
+  commissionBasis: 'GROSS' | 'NET' | string;
   roomTypeId: string;
   roomType: { code: string; name: string };
   guest: { nationality: string };
@@ -33,6 +35,8 @@ const AGENCY_RES_SELECT = {
   id: true,
   agencyId: true,
   agency: { select: { code: true, name: true, commissionPercent: true } },
+  salesContract: { select: { commissionPercent: true } },
+  commissionBasis: true,
   roomTypeId: true,
   roomType: { select: { code: true, name: true } },
   guest: { select: { nationality: true } },
@@ -77,13 +81,25 @@ export async function queryAgencyAnalysis(from: Date, to: Date): Promise<AgencyA
   const end = addDays(dayStart(toIso(to)), 1);
   const reservations = await fetchReservations(start, end);
 
-  const map = new Map<string, { code: string; name: string; nights: number; revenue: number; commPct: number }>();
+  const map = new Map<
+    string,
+    { code: string; name: string; nights: number; revenue: number; commission: number; commPct: number }
+  >();
   for (const r of reservations) {
     if (!r.agency) continue;
     const code = r.agency.code;
-    const e = map.get(code) ?? { code, name: r.agency.name, nights: 0, revenue: 0, commPct: Number(r.agency.commissionPercent ?? 0) };
+    const pct = Number(
+      r.salesContract?.commissionPercent ?? r.agency.commissionPercent ?? 0,
+    );
+    const revenue = Number(r.totalAmount);
+    const commission = r.commissionBasis === 'NET' ? 0 : (revenue * pct) / 100;
+    const e =
+      map.get(code) ??
+      { code, name: r.agency.name, nights: 0, revenue: 0, commission: 0, commPct: pct };
     e.nights++;
-    e.revenue += Number(r.totalAmount);
+    e.revenue += revenue;
+    e.commission += commission;
+    e.commPct = pct;
     map.set(code, e);
   }
 
@@ -96,7 +112,7 @@ export async function queryAgencyAnalysis(from: Date, to: Date): Promise<AgencyA
       revenue: Math.round(v.revenue * 100) / 100,
       avgRate: safeDiv(v.revenue, v.nights),
       commissionPct: v.commPct,
-      commissionAmount: Math.round(v.revenue * v.commPct / 100 * 100) / 100,
+      commissionAmount: Math.round(v.commission * 100) / 100,
     }));
 
   return {
@@ -533,20 +549,30 @@ export async function queryAgencyProfitability(from: Date, to: Date): Promise<Ag
   const end = addDays(dayStart(toIso(to)), 1);
   const reservations = await fetchReservations(start, end);
 
-  const map = new Map<string, { code: string; name: string; nights: number; revenue: number; commPct: number }>();
+  const map = new Map<
+    string,
+    { code: string; name: string; nights: number; revenue: number; commission: number; commPct: number }
+  >();
   for (const r of reservations) {
     if (!r.agency) continue;
     const code = r.agency.code;
-    const e = map.get(code) ?? { code, name: r.agency.name, nights: 0, revenue: 0, commPct: Number(r.agency.commissionPercent ?? 0) };
+    const pct = Number(r.salesContract?.commissionPercent ?? r.agency.commissionPercent ?? 0);
+    const revenue = Number(r.totalAmount);
+    const commission = r.commissionBasis === 'NET' ? 0 : (revenue * pct) / 100;
+    const e =
+      map.get(code) ??
+      { code, name: r.agency.name, nights: 0, revenue: 0, commission: 0, commPct: pct };
     e.nights++;
-    e.revenue += Number(r.totalAmount);
+    e.revenue += revenue;
+    e.commission += commission;
+    e.commPct = pct;
     map.set(code, e);
   }
 
   const rows: AgencyProfitabilityRow[] = [...map.values()]
     .sort((a, b) => b.revenue - a.revenue)
     .map((v) => {
-      const comm = Math.round(v.revenue * v.commPct / 100 * 100) / 100;
+      const comm = Math.round(v.commission * 100) / 100;
       const net = Math.round((v.revenue - comm) * 100) / 100;
       return {
         agencyCode: v.code,
