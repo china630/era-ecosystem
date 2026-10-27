@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { apiFetch } from "../../../../lib/api-client";
+import { apiFetch } from "../../../lib/api-client";
 import {
   CARD_CONTAINER_CLASS,
   MODAL_CLOSE_BUTTON_CLASS,
@@ -17,19 +17,19 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-} from "../../../../lib/design-system";
+} from "../../../lib/design-system";
 import {
   FORM_INPUT_CLASS,
   TOOLBAR_MONTH_INPUT_CLASS,
-} from "../../../../lib/form-styles";
-import { useRequireAuth } from "../../../../lib/use-require-auth";
-import { PageHeader } from "../../../../components/layout/page-header";
-import { Button } from "../../../../components/ui/button";
+} from "../../../lib/form-styles";
+import { useRequireAuth } from "../../../lib/use-require-auth";
+import { PageHeader } from "../../../components/layout/page-header";
+import { Button } from "../../../components/ui/button";
 import {
   ListPaginationFooter,
   DEFAULT_LIST_PAGE_SIZE,
-} from "../../../../components/list-pagination-footer";
-import { parsePaginatedList } from "../../../../lib/paginated-list";
+} from "../../../components/list-pagination-footer";
+import { parsePaginatedList } from "../../../lib/paginated-list";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
 type AuditRow = {

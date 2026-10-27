@@ -92,7 +92,7 @@ export class OrganizationProfileService {
   async assertOrgMember(userId: string, organizationId: string) {
     const membership = await this.prisma.organizationMembership.findFirst({
       where: { userId, organizationId },
-      select: { id: true },
+      select: { userId: true },
     });
     if (!membership) {
       throw new ForbiddenException("Not a member of this organization");
