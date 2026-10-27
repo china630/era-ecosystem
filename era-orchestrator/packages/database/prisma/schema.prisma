@@ -1813,11 +1813,100 @@ model Organization {
   holding            Holding?       @relation(fields: [holdingId], references: [id], onDelete: SetNull)
   agencyPropertyGrants AgencyPropertyGrant[]
   buyerOrgGrants       BuyerOrgGrant[]
+  profile              OrganizationProfile?
 
   @@index([ownerId])
   @@index([parentOrgId])
   @@index([holdingId])
   @@map("organizations")
+}
+
+enum OrgContactKind {
+  PHONE
+  MOBILE
+  FAX
+  EMAIL
+  WEBSITE
+  WHATSAPP
+  TELEGRAM
+}
+
+enum OrgContactPurpose {
+  GENERAL
+  LEGAL
+  BILLING
+  BOOKING
+  EMERGENCY
+  PRINT
+}
+
+enum OrgAddressKind {
+  LEGAL
+  POSTAL
+  SITE
+  BRANCH
+}
+
+/// Legal/branding SoR for print, letterhead, receipts (CP-ORG-PROFILE-01).
+model OrganizationProfile {
+  organizationId         String                       @id @map("organization_id") @db.Uuid
+  tradeName              String?                      @map("trade_name")
+  nameAz                 String?                      @map("name_az")
+  nameRu                 String?                      @map("name_ru")
+  nameEn                 String?                      @map("name_en")
+  directorName           String?                      @map("director_name")
+  directorTitle          String?                      @map("director_title")
+  logoUrl                String?                      @map("logo_url")
+  stampUrl               String?                      @map("stamp_url")
+  signatureDirectorUrl   String?                      @map("signature_director_url")
+  bankLine               String?                      @map("bank_line")
+  createdAt              DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization           Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts               OrganizationContactChannel[]
+  addresses              OrganizationAddress[]
+
+  @@map("organization_profiles")
+}
+
+model OrganizationContactChannel {
+  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  kind           OrgContactKind
+  value          String
+  label          String?
+  purpose        OrgContactPurpose @default(GENERAL)
+  isPrimary      Boolean           @default(false) @map("is_primary")
+  sortOrder      Int               @default(0) @map("sort_order")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  profile        OrganizationProfile @relation(fields: [organizationId], references: [organizationId], onDelete: Cascade)
+
+  @@index([organizationId, kind], map: "organization_contact_channels_org_kind_idx")
+  @@map("organization_contact_channels")
+}
+
+model OrganizationAddress {
+  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  kind           OrgAddressKind
+  line1          String
+  line2          String?
+  city           String?
+  region         String?
+  postalCode     String?        @map("postal_code")
+  country        String?        @default("AZ")
+  lineAz         String?        @map("line_az")
+  lineRu         String?        @map("line_ru")
+  lineEn         String?        @map("line_en")
+  isPrimary      Boolean        @default(false) @map("is_primary")
+  sortOrder      Int            @default(0) @map("sort_order")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  profile        OrganizationProfile @relation(fields: [organizationId], references: [organizationId], onDelete: Cascade)
+
+  @@index([organizationId, kind], map: "organization_addresses_org_kind_idx")
+  @@map("organization_addresses")
 }
 
 /// Per-hotel-org Elektraweb dual-run policy (SaaS SoR). Synced to hotel satellite keyed by organizationId.

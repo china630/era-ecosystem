@@ -18,6 +18,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteEndpointRegistryService } from "../satellite-events/satellite-endpoint-registry.service";
 import { resolveDomainEntitlements } from "../platform/domains/domain-pack-limits";
 import { decryptText } from "../security/pii-crypto.util";
+import { OrganizationProfileService } from "../organization/organization-profile.service";
 
 const BIND_PATH = "/api/internal/v1/organization/bind";
 const RUNTIME_CONFIG_PATH = "/api/internal/v1/runtime-config";
@@ -93,6 +94,7 @@ export class SatelliteOrgBindSyncService {
     private readonly prisma: PrismaService,
     private readonly registry: SatelliteEndpointRegistryService,
     private readonly config: ConfigService,
+    private readonly orgProfiles: OrganizationProfileService,
   ) {}
 
   async syncForOrg(orgId: string): Promise<{
@@ -428,6 +430,16 @@ export class SatelliteOrgBindSyncService {
       }));
     } else {
       body.fiscalDevices = [];
+    }
+
+    try {
+      body.orgProfile = await this.orgProfiles.getSnapshot(organizationId);
+    } catch (err) {
+      this.logger.warn(
+        `orgProfile snapshot skipped for ${organizationId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
     }
 
     return body;

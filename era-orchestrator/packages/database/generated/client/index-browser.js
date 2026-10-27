@@ -977,6 +977,54 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrganizationProfileScalarFieldEnum = {
+  organizationId: 'organizationId',
+  tradeName: 'tradeName',
+  nameAz: 'nameAz',
+  nameRu: 'nameRu',
+  nameEn: 'nameEn',
+  directorName: 'directorName',
+  directorTitle: 'directorTitle',
+  logoUrl: 'logoUrl',
+  stampUrl: 'stampUrl',
+  signatureDirectorUrl: 'signatureDirectorUrl',
+  bankLine: 'bankLine',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrganizationContactChannelScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  kind: 'kind',
+  value: 'value',
+  label: 'label',
+  purpose: 'purpose',
+  isPrimary: 'isPrimary',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrganizationAddressScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  kind: 'kind',
+  line1: 'line1',
+  line2: 'line2',
+  city: 'city',
+  region: 'region',
+  postalCode: 'postalCode',
+  country: 'country',
+  lineAz: 'lineAz',
+  lineRu: 'lineRu',
+  lineEn: 'lineEn',
+  isPrimary: 'isPrimary',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ElektrawebBridgePolicyScalarFieldEnum = {
   organizationId: 'organizationId',
   inboundEnabled: 'inboundEnabled',
@@ -1746,6 +1794,32 @@ exports.OrgRouting = exports.$Enums.OrgRouting = {
   PARENT: 'PARENT'
 };
 
+exports.OrgContactKind = exports.$Enums.OrgContactKind = {
+  PHONE: 'PHONE',
+  MOBILE: 'MOBILE',
+  FAX: 'FAX',
+  EMAIL: 'EMAIL',
+  WEBSITE: 'WEBSITE',
+  WHATSAPP: 'WHATSAPP',
+  TELEGRAM: 'TELEGRAM'
+};
+
+exports.OrgContactPurpose = exports.$Enums.OrgContactPurpose = {
+  GENERAL: 'GENERAL',
+  LEGAL: 'LEGAL',
+  BILLING: 'BILLING',
+  BOOKING: 'BOOKING',
+  EMERGENCY: 'EMERGENCY',
+  PRINT: 'PRINT'
+};
+
+exports.OrgAddressKind = exports.$Enums.OrgAddressKind = {
+  LEGAL: 'LEGAL',
+  POSTAL: 'POSTAL',
+  SITE: 'SITE',
+  BRANCH: 'BRANCH'
+};
+
 exports.HoldingAccessRole = exports.$Enums.HoldingAccessRole = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
@@ -1948,6 +2022,9 @@ exports.Prisma.ModelName = {
   WorkforceApprovalDecision: 'WorkforceApprovalDecision',
   WorkforceVacationPlanRevision: 'WorkforceVacationPlanRevision',
   Organization: 'Organization',
+  OrganizationProfile: 'OrganizationProfile',
+  OrganizationContactChannel: 'OrganizationContactChannel',
+  OrganizationAddress: 'OrganizationAddress',
   ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
   ClinicCutoverPolicy: 'ClinicCutoverPolicy',
   FiscalHardwareDevice: 'FiscalHardwareDevice',

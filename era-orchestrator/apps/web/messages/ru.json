@@ -75,21 +75,6 @@
     },
     "reference": {
       "title": "Справочники",
-      "subtitle": "Источник — data-hub. Внешняя загрузка включается отдельно по каждому каталогу. Организация читает хаб или хранит свой Excel.",
-      "loadFailed": "Не удалось загрузить настройки data-hub",
-      "saved": "Сохранено",
-      "saveFailed": "Не сохранилось",
-      "fetchHeading": "Внешняя загрузка",
-      "codesHeading": "Валюты дашборда",
-      "checkHeading": "Валюты, по которым бюллетень ЦБ считается окончательным",
-      "savePolicy": "Сохранить настройки хаба",
-      "orgsHeading": "Как организация читает справочники",
-      "sourceHub": "Data hub",
-      "sourceExcel": "Excel",
-      "saving": "Сохранение…"
-    },
-    "reference": {
-      "title": "Справочники",
       "subtitle": "Источник — data-hub. Внешняя загрузка включается отдельно по каждому типу. Организация либо читает hub, либо держит свою копию из Excel.",
       "loadFailed": "Не удалось загрузить настройки data-hub",
       "saved": "Сохранено",
@@ -681,7 +666,6 @@
     "platformMdmCompanies": "Компании",
     "platformMdmPersons": "Персоны",
     "platformReference": "Справочники",
-    "platformReference": "Справочники",
     "platformEarlyAccess": "Early access",
     "platformSecurity": "Безопасность",
     "platformChannex": "Channex",
@@ -711,7 +695,8 @@
     "wfFloor": "Доска пола",
     "wfRequests": "Заявки",
     "wfHrSettings": "Кадровые настройки",
-    "wfMe": "Мой кабинет"
+    "wfMe": "Мой кабинет",
+    "orgProfile": "Профиль организации"
   },
   "headerStrip": {
     "trialUntil": "Пробный период до {date}",
@@ -2380,5 +2365,35 @@
       "LEADERSHIP": "Только руководящие должности",
       "ORDINARY": "Только рядовые должности"
     }
+  },
+  "orgProfile": {
+    "title": "Профиль организации",
+    "subtitle": "Юр. название, логотип, телефоны и адреса для hotel, clinic, finance и F&B.",
+    "departmentBanner": "Юридическая идентичность может браться у родителя. Контакты ниже — этой единицы (например телефон ресепшн клиники).",
+    "legalBlock": "Юр. данные и брендинг",
+    "legalName": "Юридическое название",
+    "tradeName": "Торговое / печатное имя",
+    "directorName": "Директор",
+    "directorTitle": "Должность директора",
+    "logoUrl": "URL логотипа",
+    "bankLine": "Основная банковская строка",
+    "contacts": "Контакты",
+    "contactsEmpty": "Контактов нет. Добавьте телефон или email.",
+    "addContact": "Добавить контакт",
+    "addresses": "Адреса",
+    "addAddress": "Добавить адрес",
+    "addressLine": "Строка адреса",
+    "primary": "Основной",
+    "save": "Сохранить",
+    "saving": "Сохранение…",
+    "saved": "Сохранено",
+    "reload": "Обновить",
+    "remove": "Удалить",
+    "loadError": "Не удалось загрузить профиль",
+    "saveError": "Не удалось сохранить профиль",
+    "contactKind": "Тип",
+    "purpose": "Назначение",
+    "contactValue": "Значение",
+    "addressKind": "Тип"
   }
 }

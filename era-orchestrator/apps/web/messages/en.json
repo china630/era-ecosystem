@@ -88,21 +88,6 @@
       "sourceExcel": "Excel",
       "saving": "Saving…"
     },
-    "reference": {
-      "title": "Reference data",
-      "subtitle": "Data hub is the source. Turn external fetch on per catalog. Organizations either read the hub or keep their own Excel copy.",
-      "loadFailed": "Could not load data hub settings",
-      "saved": "Saved",
-      "saveFailed": "Save failed",
-      "fetchHeading": "External fetch",
-      "codesHeading": "Dashboard currencies",
-      "checkHeading": "Currencies used to confirm a final CBAR bulletin",
-      "savePolicy": "Save hub settings",
-      "orgsHeading": "How each organization reads reference data",
-      "sourceHub": "Data hub",
-      "sourceExcel": "Excel",
-      "saving": "Saving…"
-    },
     "mdmPersons": {
       "title": "MDM — persons",
       "hint": "Super-admin directory: list, filter, resolve/create, merge duplicates. PII decrypted for platform operators only.",
@@ -682,7 +667,6 @@
     "platformMdmCompanies": "Companies",
     "platformMdmPersons": "Persons",
     "platformReference": "Reference data",
-    "platformReference": "Reference data",
     "platformEarlyAccess": "Early access",
     "platformSecurity": "Security",
     "platformChannex": "Channex",
@@ -712,7 +696,8 @@
     "wfFloor": "Floor",
     "wfRequests": "Requests",
     "wfHrSettings": "HR settings",
-    "wfMe": "My cabinet"
+    "wfMe": "My cabinet",
+    "orgProfile": "Organization profile"
   },
   "headerStrip": {
     "trialUntil": "Trial until {date}",
@@ -2383,5 +2368,35 @@
       "LEADERSHIP": "Leadership positions only",
       "ORDINARY": "Ordinary positions only"
     }
+  },
+  "orgProfile": {
+    "title": "Organization profile",
+    "subtitle": "Legal name, logo, phones and addresses shared with hotel, clinic, finance and F&B.",
+    "departmentBanner": "Legal identity may come from the parent organization. Contacts below are this unit’s (for example the clinic reception phone).",
+    "legalBlock": "Legal & branding",
+    "legalName": "Legal name",
+    "tradeName": "Trade / print name",
+    "directorName": "Director",
+    "directorTitle": "Director title",
+    "logoUrl": "Logo URL",
+    "bankLine": "Primary bank line",
+    "contacts": "Contacts",
+    "contactsEmpty": "No contacts yet. Add a phone or email.",
+    "addContact": "Add contact",
+    "addresses": "Addresses",
+    "addAddress": "Add address",
+    "addressLine": "Address line",
+    "primary": "Primary",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "reload": "Reload",
+    "remove": "Remove",
+    "loadError": "Could not load organization profile",
+    "saveError": "Could not save organization profile",
+    "contactKind": "Kind",
+    "purpose": "Purpose",
+    "contactValue": "Value",
+    "addressKind": "Kind"
   }
 }

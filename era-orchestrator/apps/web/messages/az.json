@@ -75,21 +75,6 @@
     },
     "reference": {
       "title": "Sorğu kitabları",
-      "subtitle": "Mənbə data-hub-dur. Xarici yükləmə hər kataloq üçün ayrıca açılır. Təşkilat hub-dan oxuyur və ya öz Excel-ini saxlayır.",
-      "loadFailed": "Data-hub parametrləri yüklənmədi",
-      "saved": "Saxlanıldı",
-      "saveFailed": "Saxlanılmadı",
-      "fetchHeading": "Xarici yükləmə",
-      "codesHeading": "İdarə paneli valyutaları",
-      "checkHeading": "CBAR bülletenini yekun sayan valyutalar",
-      "savePolicy": "Hub parametrlərini saxla",
-      "orgsHeading": "Təşkilat sorğu kitabını necə oxuyur",
-      "sourceHub": "Data hub",
-      "sourceExcel": "Excel",
-      "saving": "Saxlanılır…"
-    },
-    "reference": {
-      "title": "Sorğu kitabları",
       "subtitle": "Mənbə data-hub-dır. Xarici yükləmə hər növ üçün ayrıca açılır. Təşkilat ya hub-dan oxuyur, ya da öz Excel nüsxəsini saxlayır.",
       "loadFailed": "Data-hub ayarları yüklənmədi",
       "saved": "Saxlanıldı",
@@ -681,7 +666,6 @@
     "platformMdmCompanies": "Şirkətlər",
     "platformMdmPersons": "Şəxslər",
     "platformReference": "Sorğu kitabları",
-    "platformReference": "Sorğu kitabları",
     "platformEarlyAccess": "Early access",
     "platformSecurity": "Təhlükəsizlik",
     "platformChannex": "Channex",
@@ -711,7 +695,8 @@
     "wfFloor": "Doska",
     "wfRequests": "Sorğular",
     "wfHrSettings": "Kadr tənzimləri",
-    "wfMe": "Kabinetim"
+    "wfMe": "Kabinetim",
+    "orgProfile": "Təşkilat profili"
   },
   "headerStrip": {
     "trialUntil": "Sınaq dövrü {date}-dək",
@@ -2381,5 +2366,35 @@
       "LEADERSHIP": "Yalnız rəhbər vəzifələr",
       "ORDINARY": "Yalnız adi vəzifələr"
     }
+  },
+  "orgProfile": {
+    "title": "Təşkilat profili",
+    "subtitle": "Hüquqi ad, loqo, telefon və ünvanlar hotel, klinika, maliyyə və F&B ilə paylaşılır.",
+    "departmentBanner": "Hüquqi kimlik ana təşkilatdan gələ bilər. Aşağıdakı kontaktlar bu bölməyə aiddir (məs. klinika qəbul telefonu).",
+    "legalBlock": "Hüquqi və brendinq",
+    "legalName": "Hüquqi ad",
+    "tradeName": "Ticarət / çap adı",
+    "directorName": "Direktor",
+    "directorTitle": "Direktor vəzifəsi",
+    "logoUrl": "Loqo URL",
+    "bankLine": "Əsas bank sətri",
+    "contacts": "Kontaktlar",
+    "contactsEmpty": "Kontakt yoxdur. Telefon və ya e-poçt əlavə edin.",
+    "addContact": "Kontakt əlavə et",
+    "addresses": "Ünvanlar",
+    "addAddress": "Ünvan əlavə et",
+    "addressLine": "Ünvan sətri",
+    "primary": "Əsas",
+    "save": "Yadda saxla",
+    "saving": "Saxlanılır…",
+    "saved": "Saxlanıldı",
+    "reload": "Yenilə",
+    "remove": "Sil",
+    "loadError": "Profil yüklənmədi",
+    "saveError": "Profil saxlanılmadı",
+    "contactKind": "Növ",
+    "purpose": "Məqsəd",
+    "contactValue": "Dəyər",
+    "addressKind": "Növ"
   }
 }
