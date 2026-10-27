@@ -624,14 +624,43 @@ export function FolioCheckoutModal({
           ) : null}
           <FieldSection title={t('checkoutTotals')}>
             <div className="grid grid-cols-2 gap-2 font-mono text-[13px]">
-              <div>
-                <div className={TEXT_MUTED_CLASS}>{t('guestOwes')}</div>
-                <div>{money(blocks.reduce((sum, block) => sum + block.debt, 0))}</div>
-              </div>
-              <div>
-                <div className={TEXT_MUTED_CLASS}>{t('overpaid')}</div>
-                <div>{money(unusedPayment)}</div>
-              </div>
+              {(() => {
+                const guestDebt = blocks
+                  .filter((b) => b.party === 'GUEST')
+                  .reduce((sum, b) => sum + b.debt, 0);
+                const companyDebt = blocks
+                  .filter((b) => b.party === 'COMPANY')
+                  .reduce((sum, b) => sum + b.debt, 0);
+                const agencyDebt = blocks
+                  .filter((b) => b.party === 'AGENCY')
+                  .reduce((sum, b) => sum + b.debt, 0);
+                return (
+                  <>
+                    {guestDebt > 0.01 || (companyDebt <= 0.01 && agencyDebt <= 0.01) ? (
+                      <div>
+                        <div className={TEXT_MUTED_CLASS}>{t('guestOwes')}</div>
+                        <div>{money(guestDebt)}</div>
+                      </div>
+                    ) : null}
+                    {companyDebt > 0.01 ? (
+                      <div>
+                        <div className={TEXT_MUTED_CLASS}>{t('companyOwes')}</div>
+                        <div>{money(companyDebt)}</div>
+                      </div>
+                    ) : null}
+                    {agencyDebt > 0.01 ? (
+                      <div>
+                        <div className={TEXT_MUTED_CLASS}>{t('agencyOwes')}</div>
+                        <div>{money(agencyDebt)}</div>
+                      </div>
+                    ) : null}
+                    <div>
+                      <div className={TEXT_MUTED_CLASS}>{t('overpaid')}</div>
+                      <div>{money(unusedPayment)}</div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </FieldSection>
           {loading ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{tc('loading')}</p> : null}

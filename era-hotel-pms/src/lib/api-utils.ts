@@ -76,6 +76,7 @@ export function handleRouteError(err: unknown) {
       'AGENCY_REQUIRED_FOR_PAYER',
       'COMPANY_REQUIRED_FOR_PAYER',
       'COMMERCIAL_MOVE_REASON_REQUIRED',
+      'PAYMENT_ARTICLE_NO_OPEN_DEBT',
     ];
     if (known.includes(err.message)) {
       return NextResponse.json({ error: err.message, code: err.message }, { status: 409 });

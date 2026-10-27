@@ -15,6 +15,7 @@ const updateSchema = z.object({
   counterpartyType: z.enum(['AGENCY', 'CORPORATE']).optional(),
   agencyId: z.string().uuid().nullable().optional(),
   companyId: z.string().uuid().nullable().optional(),
+  /** Legacy merge FK only — not a substitute for companyId. */
   companyGuestId: z.string().uuid().nullable().optional(),
   validFrom: z.coerce.date().optional(),
   validTo: z.coerce.date().nullable().optional(),

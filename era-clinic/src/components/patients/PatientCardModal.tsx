@@ -13,6 +13,8 @@ type Props = {
   panel?: string | null;
   initialEpisodeId?: string | null;
   onCareTeamSize?: (episodeId: string, count: number) => void;
+  /** When opened over another modal (e.g. walk-in party), pass a higher overlay z. */
+  overlayZClass?: string;
 };
 
 export function PatientCardModal({
@@ -22,6 +24,7 @@ export function PatientCardModal({
   panel,
   initialEpisodeId,
   onCareTeamSize,
+  overlayZClass,
 }: Props) {
   const t = useTranslations("patientRegistry");
   const [patient, setPatient] = useState<PatientCardPatient | null>(null);
@@ -34,6 +37,7 @@ export function PatientCardModal({
       title={patient?.fullName ?? t("openCard")}
       onClose={onClose}
       maxWidthClass={EPISODE_MODAL_CLASS}
+      overlayZClass={overlayZClass}
     >
       <PatientCardBody
         patientId={patientId}

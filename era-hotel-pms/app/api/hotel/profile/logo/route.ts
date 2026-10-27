@@ -9,7 +9,11 @@ import { deleteHotelLogo, readHotelLogo, saveHotelLogo } from '@/lib/services/ho
 export async function GET() {
   try {
     const session = await getSatelliteSession();
-    assertAnyPermission(session, [PERMISSIONS.MASTER_DATA_MANAGE, PERMISSIONS.REPORTS_READ]);
+    assertAnyPermission(session, [
+      PERMISSIONS.MASTER_DATA_MANAGE,
+      PERMISSIONS.REPORTS_READ,
+      PERMISSIONS.RESERVATIONS_READ,
+    ]);
     const logo = await readHotelLogo();
     if (!logo) return jsonError('Logo not set', 404);
     return new NextResponse(new Uint8Array(logo.buffer), {

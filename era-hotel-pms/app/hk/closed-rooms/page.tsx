@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
+  EraListFilterBar,
   Field,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -30,6 +31,8 @@ export default function ClosedRoomsPage() {
   const canClose = can(PERMISSIONS.HOUSEKEEPING_MANAGE);
   const [rows, setRows] = useState<Row[]>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string }>>([]);
+  const [kindFilter, setKindFilter] = useState('');
+  const [roomQuery, setRoomQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [roomId, setRoomId] = useState('');
   const [kind, setKind] = useState('OOO');
@@ -55,8 +58,16 @@ export default function ClosedRoomsPage() {
     void load();
   }, [load]);
 
-  const ooo = useMemo(() => rows.filter((r) => r.inventoryStatus !== 'OOS'), [rows]);
-  const oos = useMemo(() => rows.filter((r) => r.inventoryStatus === 'OOS'), [rows]);
+  const visible = useMemo(() => {
+    const q = roomQuery.trim().toLowerCase();
+    return rows.filter((r) => {
+      const isOos = r.inventoryStatus === 'OOS';
+      if (kindFilter === 'OOO' && isOos) return false;
+      if (kindFilter === 'OOS' && !isOos) return false;
+      if (q && !String(r.roomNumber).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [rows, kindFilter, roomQuery]);
 
   async function closeRoom(e: React.FormEvent) {
     e.preventDefault();
@@ -98,13 +109,54 @@ export default function ClosedRoomsPage() {
     return value ? String(value).slice(0, 10) : '—';
   }
 
-  function laneTable(list: Row[], emptyKey: 'closedEmptyOoo' | 'closedEmptyOos') {
-    return (
+  function kindLabel(status: string) {
+    return status === 'OOS' ? t('kindOos') : t('kindOoo');
+  }
+
+  return (
+    <>
+      <PageHeader
+        title={t('closedRoomsTitle')}
+        subtitle={t('closedRoomsHint')}
+        actions={
+          canClose ? (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
+              {t('closeRoom')}
+            </button>
+          ) : null
+        }
+      />
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setKindFilter('');
+          setRoomQuery('');
+        }}
+      >
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('kindFilter')}
+          value={kindFilter}
+          onChange={(v) => setKindFilter(String(v))}
+          options={[
+            { value: '', label: t('kindAll') },
+            { value: 'OOO', label: t('kindOoo') },
+            { value: 'OOS', label: t('kindOos') },
+          ]}
+        />
+        <Field
+          label={t('colRoom')}
+          preset="shortText"
+          value={roomQuery}
+          onChange={(e) => setRoomQuery(e.target.value)}
+        />
+      </EraListFilterBar>
       <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
               <th className="px-3 py-2">{t('colRoom')}</th>
+              <th className="px-3 py-2">{t('kindFilter')}</th>
               <th className="px-3 py-2">{t('closedFrom')}</th>
               <th className="px-3 py-2">{t('closedTo')}</th>
               <th className="px-3 py-2">{t('closedReason')}</th>
@@ -112,18 +164,19 @@ export default function ClosedRoomsPage() {
             </tr>
           </thead>
           <tbody>
-            {list.length === 0 ? (
+            {visible.length === 0 ? (
               <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={canClose ? 5 : 4}>
-                  {t(emptyKey)}
+                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={canClose ? 6 : 5}>
+                  {t('closedEmpty')}
                 </td>
               </tr>
             ) : (
-              list.map((r) => {
+              visible.map((r) => {
                 const c = r.closures?.[0];
                 return (
                   <tr key={r.id} className="border-b border-[#ECF0F1]">
                     <td className="px-3 py-2 font-medium">{r.roomNumber}</td>
+                    <td className="px-3 py-2">{kindLabel(r.inventoryStatus)}</td>
                     <td className="px-3 py-2">{ymd(c?.startDate)}</td>
                     <td className="px-3 py-2">{ymd(c?.endDate)}</td>
                     <td className="px-3 py-2">{r.inventoryReason ?? c?.reason ?? '—'}</td>
@@ -146,30 +199,6 @@ export default function ClosedRoomsPage() {
           </tbody>
         </table>
       </div>
-    );
-  }
-
-  return (
-    <>
-      <PageHeader
-        title={t('closedRoomsTitle')}
-        subtitle={t('closedRoomsHint')}
-        actions={
-          canClose ? (
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setOpen(true)}>
-              {t('closeRoom')}
-            </button>
-          ) : null
-        }
-      />
-      <section className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('kindOoo')}</h2>
-        {laneTable(ooo, 'closedEmptyOoo')}
-      </section>
-      <section className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('kindOos')}</h2>
-        {laneTable(oos, 'closedEmptyOos')}
-      </section>
       <EraModal
         open={open}
         title={t('closeRoom')}

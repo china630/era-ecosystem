@@ -2,9 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CatalogField, Field, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  Field,
+  MODAL_CHECKBOX_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { stayMoneyPair } from '@/lib/folio-money-pair';
+import { articleHasOpenDebt, openDebtByArticle, stayHasOpenDebt } from '@/lib/folio-open-debt';
 import {
   pickTargetFolio,
   type FolioParty,
@@ -85,6 +93,7 @@ export function FolioPaymentModal({
   >([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
   const [pocket, setPocket] = useState<'' | FolioParty>('');
+  const [allowCredit, setAllowCredit] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const knownStay = Boolean(reservationId);
@@ -111,6 +120,20 @@ export function FolioPaymentModal({
         ? namedGuests.find((g) => g.id === guestId) ?? null
         : null;
 
+  const debtArticles = useMemo(() => openDebtByArticle(folios), [folios]);
+  const stayDebtOpen = stayHasOpenDebt(folios);
+  const selectedHasDebt = revenueCodeId ? articleHasOpenDebt(folios, revenueCodeId) : false;
+  const needsCreditConfirm = Boolean(revenueCodeId && stayDebtOpen && !selectedHasDebt);
+
+  const sortedCodes = useMemo(() => {
+    const debtIds = new Set(debtArticles.map((row) => row.revenueCodeId));
+    const withDebt = codes.filter((row) => debtIds.has(row.id));
+    const without = codes.filter((row) => !debtIds.has(row.id));
+    const debtOrder = new Map(debtArticles.map((row, index) => [row.revenueCodeId, index]));
+    withDebt.sort((a, b) => (debtOrder.get(a.id) ?? 0) - (debtOrder.get(b.id) ?? 0));
+    return [...withDebt, ...without];
+  }, [codes, debtArticles]);
+
   useEffect(() => {
     if (!open) return;
     setAmount('');
@@ -122,6 +145,7 @@ export function FolioPaymentModal({
     setFolios([]);
     setRevenueCodeId('');
     setPocket('');
+    setAllowCredit(false);
   }, [open, reservationId]);
 
   useEffect(() => {
@@ -138,7 +162,6 @@ export function FolioPaymentModal({
         }>;
         const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
         setCodes(list);
-        setRevenueCodeId('');
       })
       .catch(() => setCodes([]));
   }, [open]);
@@ -182,6 +205,14 @@ export function FolioPaymentModal({
       .catch(() => setFolios([]));
   }, [open, activeStayId]);
 
+  useEffect(() => {
+    if (!open || revenueCodeId || debtArticles.length === 0) return;
+    const first = debtArticles[0]!;
+    setRevenueCodeId(first.revenueCodeId);
+    setAllowCredit(false);
+    if (first.debt > 0.01) setAmount(first.debt.toFixed(2));
+  }, [open, debtArticles, revenueCodeId]);
+
   const folio = roomArticle || !pocket ? undefined : pickTargetFolio(folios, pocket, selectedGuest);
   const openFolios = folios.filter((row) => row.status === 'OPEN');
   const roomFolio = roomArticle
@@ -204,11 +235,13 @@ export function FolioPaymentModal({
   const needsStay = !knownStay && !activeStayId;
   const amountN = Number(amount);
   const overArticle = articleDebt > 0.01 && amountN > articleDebt + 0.01;
+  const creditBlocked = needsCreditConfirm && !allowCredit;
   const canSubmit =
     !needsStay &&
     !needsGuest &&
     !needsPocket &&
     !overArticle &&
+    !creditBlocked &&
     amountN > 0 &&
     Boolean(revenueCodeId) &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
@@ -229,10 +262,16 @@ export function FolioPaymentModal({
           paymentMethod: method,
           bankReference: method === 'BANK_TRANSFER' ? bankReference.trim() : undefined,
           bankTerminalId: method === 'CARD' ? bankTerminalId.trim() || undefined : undefined,
+          allowCredit: needsCreditConfirm ? true : undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
+        const code = String(data?.code ?? data?.error ?? '');
+        if (code === 'PAYMENT_ARTICLE_NO_OPEN_DEBT') {
+          showApiError({ error: t('paymentArticleNoOpenDebtToast') }, tc('error'));
+          return;
+        }
         showApiError(data, tc('error'));
         return;
       }
@@ -292,16 +331,29 @@ export function FolioPaymentModal({
           label={t('xercMaddesi')}
           value={revenueCodeId}
           onChange={(v) => {
-            setRevenueCodeId(String(v ?? ''));
+            const nextId = String(v ?? '');
+            setRevenueCodeId(nextId);
             setPocket('');
             setGuestId('');
+            setAllowCredit(false);
+            const debt = debtArticles.find((row) => row.revenueCodeId === nextId)?.debt;
+            if (debt != null && debt > 0.01) {
+              setAmount(debt.toFixed(2));
+            }
           }}
-          options={codes.map((c) => ({
-            value: c.id,
-            label: c.name ? `${c.code} — ${c.name}` : c.code,
-          }))}
+          options={sortedCodes.map((c) => {
+            const debt = debtArticles.find((row) => row.revenueCodeId === c.id)?.debt;
+            const base = c.name ? `${c.code} — ${c.name}` : c.code;
+            return {
+              value: c.id,
+              label: debt != null && debt > 0.01 ? `${base} (${debt.toFixed(2)})` : base,
+            };
+          })}
           emptyLabel={t('pickArticle')}
         />
+        {stayDebtOpen ? (
+          <p className="m-0 text-[12px] text-[#7F8C8D]">{t('payOpenDebtHint')}</p>
+        ) : null}
         {activeStayId && revenueCodeId && !roomArticle ? (
           <CatalogField
             kind="CLOSED_SMALL"
@@ -333,6 +385,17 @@ export function FolioPaymentModal({
             options={namedGuests.map((g) => ({ value: g.id, label: g.name }))}
             emptyLabel={t('pickGuest')}
           />
+        ) : null}
+        {needsCreditConfirm ? (
+          <label className="flex items-start gap-2 text-[12px] text-[#34495E]">
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              checked={allowCredit}
+              onChange={(e) => setAllowCredit(e.target.checked)}
+            />
+            <span>{t('allowCreditWhileDebtHint')}</span>
+          </label>
         ) : null}
         {overArticle ? (
           <p className="m-0 text-[12px] text-[#C0392B]">

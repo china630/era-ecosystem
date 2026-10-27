@@ -1,10 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { CatalogField, DatePicker, PageHeader, PRIMARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  DatePicker,
+  EraListFilterBar,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
+} from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 
 type Row = {
   id: string;
@@ -12,22 +22,16 @@ type Row = {
   pair: { floorLow: number; floorHigh: number };
 };
 
-const DEFAULT_PAIRS: Array<{ floorLow: number; floorHigh: number }> = [
-  { floorLow: 2, floorHigh: 3 },
-  { floorLow: 4, floorHigh: 5 },
-  { floorLow: 6, floorHigh: 7 },
-  { floorLow: 8, floorHigh: 9 },
-  { floorLow: 10, floorHigh: 11 },
-];
-
 export default function HkRotationPage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
   const [date, setDate] = useState(() => hotelDateKey());
   const [rows, setRows] = useState<Row[]>([]);
   const [warn, setWarn] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/housekeeping/rotation?date=${date}`);
@@ -55,29 +59,28 @@ export default function HkRotationPage() {
     await load();
   }
 
-  async function swap() {
+  async function swap(e: React.FormEvent) {
+    e.preventDefault();
     if (!a || !b || a === b) return;
-    const res = await fetch('/api/housekeeping/rotation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rowIdA: a, rowIdB: b }),
-    });
-    if (!res.ok) showApiError(await res.json(), t('title'));
-    else showSuccess(tc('saved'));
-    await load();
+    setBusy(true);
+    try {
+      const res = await fetch('/api/housekeeping/rotation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rowIdA: a, rowIdB: b }),
+      });
+      if (!res.ok) showApiError(await res.json(), t('title'));
+      else {
+        showSuccess(tc('saved'));
+        setSwapOpen(false);
+        setA('');
+        setB('');
+      }
+      await load();
+    } finally {
+      setBusy(false);
+    }
   }
-
-  const groups = useMemo(() => {
-    const map = new Map<string, Row[]>();
-    for (const pair of DEFAULT_PAIRS) {
-      map.set(`${pair.floorLow}–${pair.floorHigh}`, []);
-    }
-    for (const row of rows) {
-      const key = `${row.pair.floorLow}–${row.pair.floorHigh}`;
-      map.set(key, [...(map.get(key) ?? []), row]);
-    }
-    return [...map.entries()];
-  }, [rows]);
 
   const people = rows.map((r) => ({
     value: r.id,
@@ -90,12 +93,26 @@ export default function HkRotationPage() {
         title={t('rotationTitle')}
         subtitle={t('rotationHint')}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void rotate()}>
-            {t('rotateToday')}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void rotate()}>
+              {t('rotateToday')}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={rows.length < 2}
+              onClick={() => {
+                setA('');
+                setB('');
+                setSwapOpen(true);
+              }}
+            >
+              {t('swapPairs')}
+            </button>
+          </div>
         }
       />
-      <div className="mb-4 max-w-xs">
+      <EraListFilterBar resetLabel={tc('filterReset')} onReset={() => setDate(hotelDateKey())}>
         <DatePicker
           label={tc('datePlaceholder')}
           value={date}
@@ -105,64 +122,76 @@ export default function HkRotationPage() {
           placeholder={tc('datePlaceholder')}
           preset="date"
         />
-      </div>
+      </EraListFilterBar>
       {warn ? <p className="mb-2 text-sm text-amber-800">{t('pairsLeftover')}</p> : null}
-      {rows.length === 0 ? (
-        <p className="mb-4 text-sm text-[#7F8C8D]">
-          {t('rotationEmpty')}{' '}
-          <Link href="/hk/maids" className="text-[#2980B9] underline">
-            {t('maidsLink')}
-          </Link>
-          {' · '}
-          <Link href="/hk/roster" className="text-[#2980B9] underline">
-            {t('rosterLink')}
-          </Link>
-        </p>
-      ) : null}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {groups.map(([label, list]) => (
-          <section key={label} className="rounded border border-[#D5DADF] bg-white p-3">
-            <h2 className="text-sm font-semibold text-[#34495E]">
-              {t('floor')} {label}
-            </h2>
-            {list.length === 0 ? (
-              <p className="mt-2 text-sm text-[#7F8C8D]">{t('rotationSlotEmpty')}</p>
+      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
+              <th className="px-3 py-2">{t('colMaid')}</th>
+              <th className="px-3 py-2">{t('floor')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr className="border-b border-[#ECF0F1]">
+                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={2}>
+                  {t('rotationEmpty')}{' '}
+                  <Link href="/hk/maids" className="text-[#2980B9] underline">
+                    {t('maidsLink')}
+                  </Link>
+                  {' · '}
+                  <Link href="/hk/roster" className="text-[#2980B9] underline">
+                    {t('rosterLink')}
+                  </Link>
+                </td>
+              </tr>
             ) : (
-              <ul className="mt-2 space-y-1 text-sm">
-                {list.map((r) => (
-                  <li key={r.id}>{r.housekeeper.name}</li>
-                ))}
-              </ul>
+              rows.map((r) => (
+                <tr key={r.id} className="border-b border-[#ECF0F1]">
+                  <td className="px-3 py-2 font-medium">{r.housekeeper.name}</td>
+                  <td className="px-3 py-2">
+                    {r.pair.floorLow}–{r.pair.floorHigh}
+                  </td>
+                </tr>
+              ))
             )}
-          </section>
-        ))}
+          </tbody>
+        </table>
       </div>
-      <div className="grid max-w-lg gap-2">
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t('swapA')}
-          value={a}
-          onChange={(v) => setA(String(v))}
-          options={people}
-          emptyLabel={t('rotationSwapNeed')}
-        />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t('swapB')}
-          value={b}
-          onChange={(v) => setB(String(v))}
-          options={people}
-          emptyLabel={t('rotationSwapNeed')}
-        />
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={rows.length < 2 || !a || !b || a === b}
-          onClick={() => void swap()}
-        >
-          {t('swapPairs')}
-        </button>
-      </div>
+      <EraModal
+        open={swapOpen}
+        title={t('swapPairs')}
+        onClose={() => setSwapOpen(false)}
+        footer={
+          <EraModalFooter
+            formId="rotation-swap"
+            onCancel={() => setSwapOpen(false)}
+            busy={busy}
+            submitDisabled={!a || !b || a === b}
+            submitLabel={t('swapPairs')}
+          />
+        }
+      >
+        <form id="rotation-swap" onSubmit={(e) => void swap(e)} className="space-y-3">
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('swapA')}
+            value={a}
+            onChange={(v) => setA(String(v))}
+            options={people}
+            emptyLabel={t('rotationSwapNeed')}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('swapB')}
+            value={b}
+            onChange={(v) => setB(String(v))}
+            options={people}
+            emptyLabel={t('rotationSwapNeed')}
+          />
+        </form>
+      </EraModal>
     </>
   );
 }

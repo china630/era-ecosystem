@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted, 2026-10-22. Amended 2026-10-25: plan-before-pay seats a real cabin.
+Accepted, 2026-10-22. Amended 2026-10-25: plan-before-pay seats a real cabin. Amended 2026-10-27: day-end also closes overdue and unseated-before-today unpaid extras; extra-tickets show full `DD.MM.YYYY HH:mm`.
 
 ## Context
 
@@ -21,7 +21,13 @@ One org setting on `Tenant.extraProcedureRoute`:
 
 Payment of a seated row does not search for a new slot. A batch pays the ticked rows; the cheque list is ordered by time so the nearest rows are first. Cancelling one unpaid row cancels that procedure only. Cancelling one line of a printed multi-line cheque reverses only that amount and prints a three-copy storno. The other lines stay paid.
 
-At clinic day end (`POST /api/cron/procedure-no-show-sweep`, after the no-show pass), today's seated unpaid rows become `UNPAID_MISSED`: off the cheque list, cabin freed, no folio charge, no bonus, no package quota. Future days stay. Checkout closes every remaining unpaid extra the same way. This is not `NO_SHOW`.
+At clinic day end (`POST /api/cron/procedure-no-show-sweep`, after the no-show pass and only after tenant `dayEndHour` on the Baku calendar day), unpaid extras become `UNPAID_MISSED` in three passes (cabin freed when held; no folio charge, no bonus, no package quota):
+
+1. **Today seated** — `resourceId` set and `scheduledAt` on today (`cancelReason` `unpaid_missed`).
+2. **Overdue** — any `PENDING_PAY` with `scheduledAt` before today, seated or not (`unpaid_missed_overdue`).
+3. **Unseated before today** — `resourceId` null and `createdAt` before today (`unpaid_missed_unseated`). `scheduledAt` is required on `ProcedureOrder`; the cheque list shows `—` when there is no cabin. Same-day unseated rows wait until the next evening or checkout.
+
+Future-dated seated rows stay. Checkout / guest departed / walk-in episode close still closes **every** remaining unpaid extra on that episode (`unpaid_checkout`), including unseated — no `resourceId` filter. This is not `NO_SHOW`. Ops one-shot: `era-clinic/scripts/ops/purge-stale-pending-extras.mjs` (dry-run default; `--apply`).
 
 Package lines and `XFER-` leftovers are not this setting. A paid extra that belongs to a package block shares that block's daily cap and does not burn quota. Money routing is unchanged: in-house with a reservation posts to the hotel folio; walk-in stays `PENDING_PAY` until the hotel accepts payment. A rejected charge does not seat an unseated row.
 

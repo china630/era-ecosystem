@@ -1,25 +1,26 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import {
   CatalogField,
   DatePicker,
   EraListFilterBar,
   Field,
   FORM_STACK_CLASS,
+  GHOST_BUTTON_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { TourRosterModal, type TourDepartureDetail } from '@/components/tours/TourRosterModal';
+import { TourDepartureStatusBadge } from '@/components/tours/tour-status-badge';
 
 type Departure = {
   id: string;
@@ -38,9 +39,18 @@ type Departure = {
 };
 
 type Vehicle = { id: string; code: string; licensePlate: string; active: boolean };
-type Template = { id: string; code: string; name: string; defaultAgenda: string; defaultCapacity: number; defaultPrice: number | string };
+type Template = {
+  id: string;
+  code: string;
+  name: string;
+  defaultAgenda: string;
+  defaultCapacity: number;
+  defaultPrice: number | string;
+};
 
 const formId = 'tour-departure-form';
+const editFormId = 'tour-departure-edit-form';
+const ICON_BTN = `${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`;
 
 export default function ToursPage() {
   const t = useTranslations('tours');
@@ -52,6 +62,9 @@ export default function ToursPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [rosterId, setRosterId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -67,6 +80,12 @@ export default function ToursPage() {
   const [vehicleId, setVehicleId] = useState('');
   const [capacity, setCapacity] = useState('20');
   const [price, setPrice] = useState('80');
+  const [editAgenda, setEditAgenda] = useState('');
+  const [editMeeting, setEditMeeting] = useState('');
+  const [editGuide, setEditGuide] = useState('');
+  const [editCapacity, setEditCapacity] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editVehicleId, setEditVehicleId] = useState('');
 
   const statusOpts = useMemo(
     () => [
@@ -98,10 +117,18 @@ export default function ToursPage() {
   }, [load]);
 
   useEffect(() => {
-    if (searchParams.get('new') === '1') setModalOpen(true);
-  }, [searchParams]);
+    if (searchParams.get('new') === '1') void openCreateModal();
+    const roster = searchParams.get('roster');
+    if (roster) setRosterId(roster);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps -- open once from query
 
-  async function openModal() {
+  async function loadCatalogs() {
+    const [vRes, tRes] = await Promise.all([fetch('/api/fleet/vehicles'), fetch('/api/tours/templates')]);
+    if (vRes.ok) setVehicles((await vRes.json()).filter((v: Vehicle) => v.active));
+    if (tRes.ok) setTemplates(await tRes.json());
+  }
+
+  async function openCreateModal() {
     setTemplateId('');
     setDate('');
     setPickupDate('');
@@ -114,12 +141,7 @@ export default function ToursPage() {
     setVehicleId('');
     setCapacity('20');
     setPrice('80');
-    const [vRes, tRes] = await Promise.all([
-      fetch('/api/fleet/vehicles'),
-      fetch('/api/tours/templates'),
-    ]);
-    if (vRes.ok) setVehicles((await vRes.json()).filter((v: Vehicle) => v.active));
-    if (tRes.ok) setTemplates(await tRes.json());
+    await loadCatalogs();
     setModalOpen(true);
   }
 
@@ -163,7 +185,60 @@ export default function ToursPage() {
     }
     showSuccess(t('saved'));
     setModalOpen(false);
-    router.push(`/tours/${data.id}`);
+    await load();
+    setRosterId(data.id as string);
+    router.replace(`/tours?roster=${data.id}`);
+  }
+
+  async function openEditFromRow(r: Departure) {
+    await loadCatalogs();
+    setEditId(r.id);
+    setEditAgenda(r.agenda);
+    setEditMeeting(r.meetingPoint);
+    setEditGuide(r.guideName ?? '');
+    setEditCapacity(String(r.capacity));
+    setEditPrice(String(r.price));
+    setEditVehicleId(r.vehicleId ?? '');
+    setEditOpen(true);
+  }
+
+  async function openEditFromRoster(dep: TourDepartureDetail) {
+    await loadCatalogs();
+    setEditId(dep.id);
+    setEditAgenda(dep.agenda);
+    setEditMeeting(dep.meetingPoint);
+    setEditGuide(dep.guideName ?? '');
+    setEditCapacity(String(dep.capacity));
+    setEditPrice(String(dep.price));
+    setEditVehicleId(dep.vehicleId ?? '');
+    setEditOpen(true);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editId) return;
+    setBusy(true);
+    const res = await fetch(`/api/tours/departures/${editId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agenda: editAgenda,
+        meetingPoint: editMeeting,
+        guideName: editGuide || null,
+        capacity: Number(editCapacity),
+        price: Number(editPrice),
+        vehicleId: editVehicleId || null,
+        status: editVehicleId ? 'OPEN' : undefined,
+      }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => ({ error: res.statusText })));
+      return;
+    }
+    showSuccess(t('saved'));
+    setEditOpen(false);
+    await load();
   }
 
   function statusLabel(s: string) {
@@ -177,13 +252,21 @@ export default function ToursPage() {
     return map[s] ?? s;
   }
 
+  function closeRoster() {
+    setRosterId(null);
+    const q = new URLSearchParams(searchParams.toString());
+    q.delete('roster');
+    const qs = q.toString();
+    router.replace(qs ? `/tours?${qs}` : '/tours');
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
         title={t('title')}
         subtitle={t('subtitle')}
         actions={
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openModal()}>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openCreateModal()}>
             <Plus className="h-4 w-4" aria-hidden />
             {t('newDeparture')}
           </button>
@@ -240,26 +323,46 @@ export default function ToursPage() {
           {
             key: 'vehicle',
             header: t('vehicle'),
-            render: (r) => (r.vehicle ? `${r.vehicle.code}` : '—'),
+            render: (r) => (r.vehicle ? `${r.vehicle.code}` : t('vehicleMissing')),
           },
           {
             key: 'status',
             header: t('status'),
-            render: (r) => statusLabel(r.status),
+            render: (r) => <TourDepartureStatusBadge status={r.status} label={statusLabel(r.status)} />,
           },
           {
-            key: 'open',
+            key: 'actions',
             header: tc('actions'),
             render: (r) => (
-              <Link href={`/tours/${r.id}`} className={SECONDARY_BUTTON_CLASS}>
-                {t('open')}
-              </Link>
+              <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className={ICON_BTN}
+                  title={t('open')}
+                  aria-label={t('open')}
+                  onClick={() => setRosterId(r.id)}
+                >
+                  <Eye className="h-3.5 w-3.5" aria-hidden />
+                </button>
+                {r.status !== 'DEPARTED' && r.status !== 'CANCELLED' ? (
+                  <button
+                    type="button"
+                    className={ICON_BTN}
+                    title={t('edit')}
+                    aria-label={t('edit')}
+                    onClick={() => void openEditFromRow(r)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                ) : null}
+              </div>
             ),
           },
         ]}
         rows={rows}
         rowKey={(r) => r.id}
         emptyMessage={tc('empty')}
+        onRowClick={(r) => setRosterId(r.id)}
       />
 
       <EraModal
@@ -381,6 +484,73 @@ export default function ToursPage() {
           </div>
         </form>
       </EraModal>
+
+      <EraModal
+        open={editOpen}
+        title={t('edit')}
+        onClose={() => setEditOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={editFormId}
+            onCancel={() => setEditOpen(false)}
+            busy={busy}
+            submitLabel={t('save')}
+          />
+        }
+      >
+        <form id={editFormId} onSubmit={saveEdit} className={FORM_STACK_CLASS}>
+          <Field
+            label={t('agenda')}
+            preset="longText"
+            value={editAgenda}
+            onChange={(e) => setEditAgenda(e.target.value)}
+          />
+          <Field
+            label={t('meetingPoint')}
+            preset="shortText"
+            value={editMeeting}
+            onChange={(e) => setEditMeeting(e.target.value)}
+          />
+          <Field
+            label={t('guide')}
+            preset="shortText"
+            value={editGuide}
+            onChange={(e) => setEditGuide(e.target.value)}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t('vehicle')}
+            value={editVehicleId}
+            onChange={(v) => setEditVehicleId(String(v ?? ''))}
+            options={vehicles.map((v) => ({ value: v.id, label: `${v.code} ${v.licensePlate}` }))}
+            emptyLabel="—"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label={t('capacity')}
+              preset="code"
+              type="number"
+              value={editCapacity}
+              onChange={(e) => setEditCapacity(e.target.value)}
+            />
+            <Field
+              label={t('price')}
+              preset="amount"
+              type="number"
+              value={editPrice}
+              onChange={(e) => setEditPrice(e.target.value)}
+            />
+          </div>
+        </form>
+      </EraModal>
+
+      <TourRosterModal
+        open={!!rosterId}
+        departureId={rosterId}
+        onClose={closeRoster}
+        onEdit={(dep) => void openEditFromRoster(dep)}
+        onChanged={() => void load()}
+      />
     </div>
   );
 }

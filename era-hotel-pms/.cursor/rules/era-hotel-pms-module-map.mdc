@@ -17,15 +17,15 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rooms` | `GET /api/rooms`, `POST /api/housekeeping/condition` | Hotel-wide cleanliness board. Occupied door accepts Dirty/Pickup/Clean from HK; Inspected stays vacant-only |
 | `/hk/maids` | `GET/POST /api/housekeeping/maids`, `GET /api/housekeeping/personnel` (CP picker: name, org unit, position) | Link CP employment; org-unit filter; `Name (position)`; change department; unlink (soft); hotel stores HK department and ƏG |
 | `/hk/mobile` | sheet + `POST /api/housekeeping/outcome` + `POST /api/housekeeping/discrepancy` | Auto-select self when session name matches rotation; outcomes including İstəmədi; Skip/Sleep; empty CTA to rotation |
-| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week E/L/N/OFF/ƏG |
-| `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Daily floor pairs 2–11; empty pair slots always shown |
+| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week filter; Propose PRIMARY / Accrue ƏG SECONDARY; E/L/N/OFF/ƏG cells |
+| `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Date filter; Rotate PRIMARY; Swap in modal; pairs 2–11 on one grid |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Wash/iron qty + price/sum preview; Accept → IN_PLANT; Delivered → folio `LAUNDRY`; void IN_PLANT on grid |
 | `/fo/laundry` | same API + Delivered/void | FO fallback grid + amount (incl. express %); Delivered or void IN_PLANT; no invent |
-| `/hk/minibar` | `GET/POST /api/housekeeping/minibar`, `GET /api/housekeeping/finance-products` | Item card stores the Finance sellable sku. Guest folio sale, not the consumption line. Catalog / post / recent tables keep chrome when empty |
-| `/hk/consumption` | `GET/POST /api/housekeeping/consumption`, `DELETE /api/housekeeping/consumption/:id`, `POST /api/housekeeping/consumption/:id/reverse`, `GET /api/housekeeping/finance-products` | Open business day: Finance sku + qty, guest price 0. A closed-day line reverses onto the next open day. Night audit adds a day-document line. Linen schedule does not create it |
-| `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 7/14 days by floor; empty chrome |
-| `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Create Skip/Sleep from the board; escalations + table chrome when empty |
-| `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms`, `POST …/closed-rooms/:id/return` | Separate OOO and OOS lanes + return to service |
+| `/hk/minibar` | `GET/POST /api/housekeeping/minibar`, `GET /api/housekeeping/finance-products` | Item card stores the Finance sellable sku. Guest folio sale, not the consumption line. Catalog/postings via view filter; add product + post modals |
+| `/hk/consumption` | `GET/POST /api/housekeeping/consumption`, `DELETE /api/housekeeping/consumption/:id`, `POST /api/housekeeping/consumption/:id/reverse`, `GET /api/housekeeping/finance-products` | Open/closed lane filter; add sku+qty in modal; guest price 0. Closed-day reverse onto open day. Night audit day-document line. Linen schedule does not create it |
+| `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 1/7/14/30 days by floor; empty chrome |
+| `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Date filter + one grid; create Skip/Sleep in modal; escalations when present |
+| `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms`, `POST …/closed-rooms/:id/return` | One grid + kind filter (All/OOO/OOS); close in modal; return secondary |
 | `/settings/policies#hk` | `GET/PUT /api/housekeeping/policy`; `POST /api/housekeeping/stay-linen` | Linen/deep every N (hotel-wide). Stay override on reservation card Additional. `/settings/hk-policy` redirects here |
 | Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops. FO cannot PATCH cleanliness on `IN_HOUSE` (`OCCUPIED_HK_LOCKED`) |
 
@@ -52,7 +52,7 @@ Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → roster �
 
 | Route | API | Role |
 |-------|-----|------|
-| `/distribution/contracts` | `GET/POST /api/admin/contracts`, `GET/PATCH /api/admin/contracts/:id`, `?utilization=1` | B2B sales contract CRUD + pick-up |
+| `/distribution/contracts` | `GET/POST /api/admin/contracts` (`companyId`/`agencyId`/`status`), `GET/PATCH /api/admin/contracts/:id` (Activate/Cancel/Expire), `?utilization=1`, allotments CRUD | B2B sales contracts — DRAFT-first, explicit party type (no silent Agency), icon row actions; terminal = notes/externalRef + read-only allotments |
 | `/distribution/travel-agencies` | `GET/POST /api/admin/travel-agencies` | Travel agent master (commission + settlementMode) |
 | `/distribution/companies` | `GET/POST /api/admin/companies` | Corporate master (settlementMode, no commission) |
 | `/distribution/allotment-blocks` | `GET/POST /api/admin/allotment-blocks`, `GET/PATCH …/:id` (+`?pickup=1`), `POST …/:id/pickup` | Corporate blocks + pickup to booking |
@@ -69,7 +69,7 @@ Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → roster �
 | Delete empty stay | `DELETE /api/reservations/:id` `{ reason }` | OPTION/CONFIRMED + empty folio; `RESERVATIONS_CANCEL` |
 | Guest overlap warn | `GET /api/reservations/:id/guest-overlaps` · `GET /api/reservations/guest-overlaps?guestId&checkIn&checkOut` | Same guest on two stays is allowed; warning only |
 | Desk quick profile | `POST /api/fo/quick-profile` | Incomplete agency (name+phone) or company (name+VÖEN) from the reservation card. No commission, settlement, or contract |
-| `/admin/contract-pricing` | 410 redirect | Legacy — use `/admin/contracts` |
+| `/admin/contract-pricing`, `/admin/contracts` | redirect | Legacy → `/distribution/contracts` |
 | `/reports/agency-ledger`, `/reports/agency-profitability` | Finance city ledger reports | Agency AR boundary |
 
 ## hotel_agency_portal (HOT-AGP)
@@ -163,7 +163,7 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 | Route | Status |
 |-------|--------|
 | `/transfers` (`/transfers/airport` → `?hasFlight=1`) | SHIPPED — folio `TRANSFER` on complete, cancel/void, day-board print (HOT-XFER-01); stay autocomplete OPTION+CONFIRMED+IN_HOUSE; grid + modals |
-| `/tours`, `/tours/[id]`, `/tours/[id]/print`, `/fleet`, `/settings/policies#tours` | SHIPPED — group excursions + boarding roster + `TOUR` folio + fleet + `TourOpsPolicy` (HOT-TOUR-01). Spec: [`doc/TOURS-NAFTA-OPS.md`](../../doc/TOURS-NAFTA-OPS.md) · ADR `hotel-guest-tours`. |
+| `/tours` (roster/edit modals; legacy `/tours/[id]` → `?roster=`), bare `/tours/[id]/print`, `/fleet`, `/settings/policies#tours` | SHIPPED — group excursions + boarding roster + `TOUR` folio + fleet + `TourOpsPolicy` (HOT-TOUR-01). Spec: [`doc/TOURS-NAFTA-OPS.md`](../../doc/TOURS-NAFTA-OPS.md) · ADR `hotel-guest-tours`. |
 | `/banquets*` | SHIPPED — BEO + printable day sheet + preferred folio (HOT-BEO-01); not full Opera S&C |
 | Reservation card folio routing | `GET/PUT /api/reservations/[id]/folio-routing` | Stay overrides (HOT-CL-01) |
 | Reservation room payer / gross-net | `POST /api/reservations`, `POST /api/reservation-groups/book`, `PATCH /api/reservations/[id]/full` (`roomPayer`, `commissionBasis`, `commercialAmendMode`) | ADR hotel-room-payer-and-commission-basis |
@@ -183,7 +183,7 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 | Finance AR terms/aging/match | HOT-CL-05 | H-BL-48 |
 | Early unused-nights refund | HOT-CO-04 | H-BL-49 |
 
-**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, `moveGuestDebtToPayer`, `transferToGuestDebt` + note, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `GET|POST /api/reservations/[id]/missed-nights` (night auditor only; posts onto the open business date), `GET /api/reservations/[id]/journal` (same `SatelliteAuditLog`; event list + labeled expand; `section`/`source` filters; IP only with settings permission), `POST /api/folios/settle` (DEPOSIT/discount, FIFO allocation), `POST /api/folios/charges/[chargeId]/transfer`, `POST /api/folios/charges/[chargeId]/void` (reason required), `POST /api/folios/charges/[chargeId]/adjust` (counter-line, original charge stays), `POST /api/folios/payments/[id]/refund` (reason required), `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`, **`POST /api/internal/v1/city-ledger/payment-applied`** (Finance → hotel; Bearer event token; HOT-CL-07). UI: reservation card Folio tab modals (`/folio/[id]` redirects there); one check-out dialog `FolioCheckoutModal` from the folio tab, the room rack, and the card stay action (blocks only for folios in debt: guest = pay now or leave debt on guest with a note; agency/company = pay now on that folio with cash, card + terminal, or bank transfer, or City Ledger; nothing preselected). `transferToCityLedger` must be `true` explicitly; unresolved agency/company debt returns 409 `PAYER_DEBT_UNRESOLVED`; `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate` (+ bank match → hotel callback). Card tender requires an explicit bank terminal once BANK_POS rows exist. ADR: `docs/adr/hotel-folio-desk.md`, `docs/adr/satellite-peer-url-resolution.md`.
+**Routes:** `POST /api/reservations/[id]/check-out` (`transferToCityLedger`, `moveGuestDebtToPayer`, `transferToGuestDebt` + note, unused nights opts), `GET /api/reservations/[id]/early-checkout-preview`, `GET|POST /api/reservations/[id]/missed-nights` (night auditor only; posts onto the open business date), `GET /api/reservations/[id]/journal` (same `SatelliteAuditLog`; event list + labeled expand; `section`/`source` filters; IP only with settings permission), `POST /api/folios` (Accept payment: open-debt article preferred; `allowCredit` or 409 `PAYMENT_ARTICLE_NO_OPEN_DEBT`), `POST /api/folios/settle` (DEPOSIT/discount, FIFO allocation; no article pick), `POST /api/folios/charges/[chargeId]/transfer`, `POST /api/folios/charges/[chargeId]/void` (reason required), `POST /api/folios/charges/[chargeId]/adjust` (counter-line, original charge stays), `POST /api/folios/payments/[id]/refund` (reason required), `POST /api/folios/[id]/close`, `GET|POST /api/agencies/[id]/settlement`, **`POST /api/internal/v1/city-ledger/payment-applied`** (Finance → hotel; Bearer event token; HOT-CL-07). UI: reservation card Folio tab modals (`/folio/[id]` redirects there); one check-out dialog `FolioCheckoutModal` from the folio tab, the room rack, and the card stay action (blocks only for folios in debt: guest = pay now or leave debt on guest with a note; agency/company = pay now on that folio with cash, card + terminal, or bank transfer, or City Ledger; nothing preselected). `transferToCityLedger` must be `true` explicitly; unresolved agency/company debt returns 409 `PAYER_DEBT_UNRESOLVED`; `/reports/agency-ledger`, `/operations` polish. Finance: `/reporting/aging`, `/sales/invoices/allocate` (+ bank match → hotel callback). Card tender requires an explicit bank terminal once BANK_POS rows exist. ADR: `docs/adr/hotel-folio-desk.md`, `docs/adr/satellite-peer-url-resolution.md`.
 
 **UAT:** `doc/UAT-SMOKE.md` §27 P5 FO money. Unused-nights refund: §33.
 

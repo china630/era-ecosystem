@@ -87,23 +87,71 @@ export async function runProcedureDayClose(now = new Date()) {
 }
 
 /**
- * After the clinic day ends, today's seated extras that are still unpaid leave
- * the cheque list and free the cabin. Future days stay. This is not NO_SHOW:
- * no folio charge, no bonus, no package quota.
+ * After the clinic day ends, unpaid extras leave the cheque list and free any
+ * cabin. Passes (ADR clinic-extra-procedure-route):
+ * 1) today's seated rows
+ * 2) any row with scheduledAt before today (seated or not)
+ * 3) unseated rows created before today (schema requires scheduledAt; UI "—"
+ *    was no cabin — HOLD_UNTIL_PAY / failed seat leftovers)
+ * Future-dated seated rows stay. Checkout still closes the whole episode. Not NO_SHOW.
  */
-export async function sweepUnpaidMissed(now = new Date()): Promise<{ marked: number }> {
+export type UnpaidMissedPass = {
+  reason: "unpaid_missed" | "unpaid_missed_overdue" | "unpaid_missed_unseated";
+  where: {
+    resourceId?: { not: null } | null;
+    scheduledAt?: { gte: Date; lt: Date } | { lt: Date };
+    createdAt?: { lt: Date };
+  };
+};
+
+/** Pure scopes for day-end unpaid extras. Empty when before dayEndHour. */
+export function unpaidMissedSweepPasses(
+  now: Date,
+  dayStart: Date,
+  dayEnd: Date,
+  dayEndHourBoundary: Date,
+): UnpaidMissedPass[] {
+  if (now.getTime() < dayEndHourBoundary.getTime()) return [];
+  return [
+    {
+      reason: "unpaid_missed",
+      where: {
+        resourceId: { not: null },
+        scheduledAt: { gte: dayStart, lt: dayEnd },
+      },
+    },
+    {
+      reason: "unpaid_missed_overdue",
+      where: { scheduledAt: { lt: dayStart } },
+    },
+    {
+      reason: "unpaid_missed_unseated",
+      where: { resourceId: null, createdAt: { lt: dayStart } },
+    },
+  ];
+}
+
+export async function sweepUnpaidMissed(now = new Date()): Promise<{
+  marked: number;
+  byPass: Record<string, number>;
+}> {
   const hours = await getTenantWorkHours();
   const ymd = todayBakuYmd(now);
-  const dayEnd = parseBakuDateTime(ymd, `${String(hours.dayEndHour).padStart(2, "0")}:00`);
-  if (now.getTime() < dayEnd.getTime()) return { marked: 0 };
-  const { start, end } = bakuDayBounds(ymd);
-  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
-  const marked = await closeUnpaidExtras(
-    {
-      resourceId: { not: null },
-      scheduledAt: { gte: start, lt: end },
-    },
-    "unpaid_missed",
+  const dayEndHourBoundary = parseBakuDateTime(
+    ymd,
+    `${String(hours.dayEndHour).padStart(2, "0")}:00`,
   );
-  return { marked };
+  const { start, end } = bakuDayBounds(ymd);
+  const passes = unpaidMissedSweepPasses(now, start, end, dayEndHourBoundary);
+  if (passes.length === 0) return { marked: 0, byPass: {} };
+
+  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  const byPass: Record<string, number> = {};
+  let marked = 0;
+  for (const pass of passes) {
+    const n = await closeUnpaidExtras(pass.where, pass.reason);
+    byPass[pass.reason] = n;
+    marked += n;
+  }
+  return { marked, byPass };
 }

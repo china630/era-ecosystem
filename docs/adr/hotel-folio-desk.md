@@ -41,7 +41,7 @@ Allocation (implementation bug, not the law):
 - Allocate only onto charges of that article. Leftover stays credit for that article.
 - A later ROOM night consumes ROOM credit. Bar does not.
 
-Signs: charges and payments show unsigned amounts plus kind. Header and footer use guest owes / overpaid / settled. Stay total is not replaced by folio net. HELD deposit stays its own chip.
+Signs: ledger uses two ink families (rose = charge, sky = money movement); direction is the sign and the kind label (+ payment, − refund), not a third palette. Header and footer split guest / company / agency debt and overpaid. Stay total is not replaced by folio net. HELD deposit stays its own chip. Accept payment prefers open-debt articles; a credit on another article while debt remains needs an explicit confirm (`allowCredit`).
 
 Missed nights: pricing grid only (`postNight` per row; batch top-right when more than one yellow night). Lightning does not “charge all”. Today’s house nights are night audit.
 

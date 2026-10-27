@@ -326,12 +326,12 @@ export function ReservationCardPricingTab({
             </colgroup>
             <thead className="sticky top-0 bg-[#F8FAFC]">
               <tr>
-                <th className="px-2 py-1.5 text-right">{t('folioRowNo')}</th>
-                <th className="px-2 py-1.5 text-left">{t('stayDate')}</th>
-                <th className="px-2 py-1.5 text-right">{t('tariffPrice')}</th>
-                <th className="px-2 py-1.5 text-right">{t('actualPrice')}</th>
-                <th className="px-2 py-1.5 text-right">{t('nightDiscountPct')}</th>
-                <th className="px-2 py-1.5 text-center">{t('nightFixed')}</th>
+                <th className="px-2 py-1 text-right">{t('folioRowNo')}</th>
+                <th className="px-2 py-1 text-left">{t('stayDate')}</th>
+                <th className="px-2 py-1 text-right">{t('tariffPrice')}</th>
+                <th className="px-2 py-1 text-right">{t('actualPrice')}</th>
+                <th className="px-2 py-1 text-right">{t('nightDiscountPct')}</th>
+                <th className="px-2 py-1 text-center">{t('nightFixed')}</th>
               </tr>
             </thead>
             <tbody>
@@ -346,8 +346,8 @@ export function ReservationCardPricingTab({
                       : 'border-t border-[#D5DADF]';
                 return (
                   <tr key={row.stayDate} className={rowClass} data-night-kind={kind}>
-                    <td className="px-2 py-1.5 text-right text-[#95A5A6]">{index + 1}</td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-2 py-1 text-right text-[#95A5A6]">{index + 1}</td>
+                    <td className="px-2 py-1">
                       <span>{row.stayDate.slice(0, 10)}</span>
                       {onPostNight && kind !== 'posted' && !isCreate && (!businessDate || row.stayDate.slice(0, 10) <= businessDate) ? (
                         <button
@@ -360,12 +360,12 @@ export function ReservationCardPricingTab({
                         </button>
                       ) : null}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-[#7F8C8D]">{money(tariffOf(row))}</td>
-                    <td className="px-2 py-1.5 text-right">
+                    <td className="px-2 py-1 text-right text-[#7F8C8D]">{money(tariffOf(row))}</td>
+                    <td className="px-2 py-1 text-right">
                       <input
                         type="number"
                         step="0.01"
-                        className={`w-24 ${MODAL_INPUT_CLASS} text-right disabled:bg-transparent disabled:text-[#95A5A6]`}
+                        className={`h-7 w-24 ${MODAL_INPUT_CLASS} !py-0 text-[12px] text-right disabled:bg-transparent disabled:text-[#95A5A6]`}
                         value={row.amount}
                         disabled={locked}
                         onChange={(e) => {
@@ -382,15 +382,15 @@ export function ReservationCardPricingTab({
                         }}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-right">
+                    <td className="px-2 py-1 text-right">
                       {row.discountPct != null && Number(row.discountPct) > 0
                         ? `${Number(row.discountPct).toFixed(2)}%`
                         : '—'}
                     </td>
-                    <td className="px-2 py-1.5 text-center">
+                    <td className="px-2 py-1 text-center">
                       <input
                         type="checkbox"
-                        className={MODAL_CHECKBOX_CLASS}
+                        className={`${MODAL_CHECKBOX_CLASS} h-3.5 w-3.5`}
                         checked={Boolean(row.fixPrice)}
                         disabled={locked}
                         aria-label={t('nightFixed')}

@@ -7,7 +7,7 @@ A walk-in party is a clinic envelope for registering several day visitors at onc
 ## Rules
 
 - Entry is `/sanatorium/walk-in-parties`, linked from the sanatorium list next to Register walk-in. Hotel front office does not create the group.
-- **UI:** list + `ModalShell` CRUD only (create group, open group, add/edit guest, add service, confirm remove). No full-page create/edit forms. Matches [UI_PLAYBOOK_SATELLITES.md](../UI_PLAYBOOK_SATELLITES.md).
+- **UI:** list + `ModalShell` CRUD only (create group, open group, add/edit guest, add service, confirm remove). No full-page create/edit forms. No audit journal in the ops modal (journal stays on `GET ?journal=1`). Select fields (sex, service kind) start empty. Doctor sticks per guest while adding lines. Procedure add uses physio chips; line grid shows parameters; Eye opens patient card / line detail. Matches [UI_PLAYBOOK_SATELLITES.md](../UI_PLAYBOOK_SATELLITES.md).
 - Each guest row is a real walk-in: `PatientRef` plus an OPEN `ClinicalEpisode` with `patientOrigin = WALK_IN`. The stored placeholder name is `Guest N` until a real name is typed. Placeholder names are not sent to MDM.
 - Sex and country are required. Cabin sex still applies to naftalan procedures. This flow does not require package anamnesis or a care-team doctor.
 - A procedure is a `ProcedureOrder` (`PENDING_PAY`, `inPackage = false`, `bonusEligible = true`, prescribing doctor on the row). A lab is a `LabOrder`. A visit is a `Visit` with a paid service line. The visit is not a fake procedure, so it stays out of the doctor-bonus report.

@@ -276,6 +276,8 @@ export async function postPayment(input: {
   refundOfPaymentId?: string;
   refundReason?: string;
   revenueCodeId?: string;
+  /** Desk confirmed a credit / prepay while other articles still owe. */
+  allowCredit?: boolean;
   auditRequest?: Request;
   /** Finance City Ledger apply-back already passed hotel AR handoff — do not re-gate. */
   skipCityLedgerGate?: boolean;
@@ -303,6 +305,21 @@ export async function postPayment(input: {
     ).debt;
     if (articleDebt > 0.01 && input.amount > articleDebt + 0.01) {
       throw new Error(`PAYMENT_EXCEEDS_ARTICLE:${articleDebt.toFixed(2)}`);
+    }
+    if (articleDebt <= 0.01 && !input.allowCredit) {
+      const stayFolios = await prisma.folio.findMany({
+        where: { reservationId: folio.reservationId, status: 'OPEN' },
+        include: { charges: true, payments: true },
+      });
+      const { openDebtByArticle } = await import('@/lib/folio-open-debt');
+      const openDebt = openDebtByArticle(stayFolios);
+      if (openDebt.length > 0) {
+        throw Object.assign(new Error('PAYMENT_ARTICLE_NO_OPEN_DEBT'), {
+          status: 409,
+          code: 'PAYMENT_ARTICLE_NO_OPEN_DEBT',
+          openArticles: openDebt.map((row) => row.revenueCodeId),
+        });
+      }
     }
   }
   if (

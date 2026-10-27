@@ -12,7 +12,7 @@ import { requireHotelModule } from '@/lib/hotel-module-gate';
 const createSchema = z.object({
   code: z.string().min(1).max(32),
   name: z.string().min(1),
-  counterpartyType: z.enum(['AGENCY', 'CORPORATE']).optional(),
+  counterpartyType: z.enum(['AGENCY', 'CORPORATE']),
   agencyId: z.string().uuid().optional(),
   companyId: z.string().uuid().optional(),
   companyGuestId: z.string().uuid().optional(),
@@ -44,11 +44,13 @@ export async function GET(req: Request) {
       | 'CANCELLED'
       | null;
     const agencyId = url.searchParams.get('agencyId') ?? undefined;
+    const companyId = url.searchParams.get('companyId') ?? undefined;
     return jsonOk(
       serialize(
         await listSalesContracts({
           status: status ?? undefined,
           agencyId,
+          companyId,
         }),
       ),
     );
