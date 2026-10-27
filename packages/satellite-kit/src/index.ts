@@ -88,6 +88,15 @@ export {
   preferInClusterOrchestratorUrl,
 } from "./tenancy/resolve-orchestrator-url";
 export {
+  resolvePeerSatelliteBaseUrl,
+  peerSatelliteBaseUrl,
+  clearPeerSatelliteUrlCache,
+  PeerSatelliteUrlError,
+  PEER_SATELLITE_HOTEL,
+  type ResolvedPeerSatelliteUrl,
+  type PeerSatelliteUrlSource,
+} from "./tenancy/resolve-peer-satellite-url";
+export {
   runWithSatelliteTenant,
   enterSatelliteTenant,
   getSatelliteTenantContext,
@@ -565,6 +574,21 @@ export {
   type SatelliteAuditInput,
   type SatelliteAuditWriter,
 } from "./audit/satellite-audit";
+export {
+  HTTP_MUTATION_ENTITY_TYPE,
+  HTTP_MUTATION_METHODS,
+  DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES,
+  isHttpMutationMethod,
+  isMutationAuditExemptPath,
+  inferMutationEntityId,
+  inferActorKind,
+  buildHttpMutationChanges,
+  scheduleHttpMutationAuditFromHeaders,
+  withMutationAudit,
+  type ActorKind,
+  type ScheduleHttpMutationAuditDeps,
+  type MutationAuditHandler,
+} from "./audit/mutation-audit-belt";
 
 export {
   buildAgencySsoPayload,
@@ -643,3 +667,15 @@ export {
   type PaginatedList,
   type ListPagination,
 } from "./ui/paginated-list";
+
+export {
+  projectOrgPrintKeys,
+  resolvePrintContacts,
+  orgProfileFromRuntimeConfig,
+  type OutletContactOverlay,
+} from "./organization/org-profile";
+export {
+  getCachedOrgProfile,
+  setCachedOrgProfile,
+  clearOrgProfileCacheForTests,
+} from "./organization/org-profile-cache";
