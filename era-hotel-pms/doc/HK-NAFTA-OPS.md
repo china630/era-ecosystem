@@ -95,7 +95,7 @@ Today occupancy-p1 / analysis-p1 / annual / monthly-daily / daily-management sub
 | Pickup | **IN** (HK condition) |
 | OOO ≠ OOS | **IN** |
 | Skip / Sleep (FO vs physical) | **IN** — separate from SO |
-| Rush / Queue + push | **OUT**. Soft sort: departures, VIP, needed-by time |
+| Rush / Queue + push | **OUT**. Soft sort: departures → VIP → needed-by → DIRTY → duty → room# |
 | HK forecast (load) | **IN** (7–14 days). Consumption is a manual sku line; automatic stock norms stay later |
 | Turndown | **OUT** |
 | Guest laundry → folio | **IN** |
@@ -262,7 +262,7 @@ Skip / Sleep stay on a discrepancy board; they are not maid sheet codes.
 
 **Daily forecast (IN):** 7–14 days from the reservation book: departures, arrivals, stayovers, NSR, VIP, heads on duty — **by floor**. Manager reads it **before** overriding rotation.
 
-**Soft priority (IN):** sort the sheet; optional “needed by HH:MM”. FO sees arrival vs not Inspected. No push notification in this edition.
+**Soft priority (IN):** sort the sheet and PDF the same way — departures, then VIP, then needed-by HH:MM, then DIRTY, then duty rank, then numeric room#. Optional “needed by HH:MM”. FO sees arrival vs not Inspected. No push notification in this edition.
 
 **Finance inventory:** `/hk/consumption` posts a Finance sku and quantity for the open business day. Guest price is 0. Night audit puts the line on the day document. A closed-day line, including an earlier closed day, is reversed as a negative quantity on the open day. The same sku from several days nets into one open line. Receipts and opening stock are the Finance purchase and warehouse receipt. The linen schedule does not create the line. Automatic norms from VC / DEEP / Departure stay later.
 
@@ -307,22 +307,22 @@ Do not write return on the intake copy. In the system: `intakeDocument` and `ret
 
 **Posting event = first successful Delivered**, not intake, not the evening paper pack.
 
-1. HK accepts on `/hk/laundry` from the guest list (room, guest, intake time, wash/iron text). **+ Add laundry** opens the piece grid (wash and iron columns, +/-). Lines are stored on the ticket. Ticket **IN_PLANT**. **No folio line.** The same ticket, including the piece text, is on `/fo/laundry`.
-2. Plant processes. Checkout of that stay is **blocked** while any ticket is not posted or voided (guest may forget clothes). Modal: post now / wait / void per hotel rules — **no** “check out anyway”.
+1. HK accepts on `/hk/laundry` from the guest list (room, guest, intake time, wash/iron text). **+ Add laundry** opens the piece grid (qty, unit price, and line sum for wash and for iron; order total is a guest preview). Lines are stored on the ticket. Ticket **IN_PLANT**. **No folio line.** The same ticket, including the piece text, is on `/fo/laundry`.
+2. Plant processes. Checkout of that stay is **blocked** while any ticket is `IN_PLANT` (guest may forget clothes). Check-out stays open; toast + laundry dialog: **Delivered** + return form, **void** the open ticket (no folio), or wait — **no** “check out anyway”. After the last open ticket is cleared, check-out retries.
 3. HK returns clothes, attaches **return** form, presses **Delivered** → one `postCharge` `LAUNDRY`. Ticket **POSTED**. Button disappears for everyone.
-4. If HK has already left: FO on `/fo/laundry` may Delivered **that same ticket** only, with the return-form file required. FO **must not invent** a ticket that was never accepted in HK.
+4. If HK has already left: FO on `/fo/laundry` may Delivered **that same ticket** only, with the return-form file required. FO **must not invent** a ticket that was never accepted in HK. FO may also void an `IN_PLANT` ticket (same as HK).
 5. Second Delivered (other desk, stale tab) → refuse: already on folio. Audit: `userId`, role HK|FO, time, `ticketId`, `chargeId`, return-form attachment.
 
 End-of-shift paper bundle → reception is **control and archive**, not a third confirmation step.
 
-Void/correct after POSTED: void the folio charge (ticket VOIDED), same as other charges. Cancel before Delivered: VOIDED, no charge.
+Void/correct after POSTED: void the folio charge (ticket VOIDED), same as other charges. Cancel before Delivered (`IN_PLANT`): VOIDED via laundry API / grids / checkout dialog — no charge.
 
 ### 9.4 Screens
 
 | Route | Role |
 |-------|------|
-| `/hk/laundry` | Accept, process, Delivered + return file (primary post) |
-| `/fo/laundry` | Queue in plant vs already posted; fallback Delivered + return file |
+| `/hk/laundry` | Accept, process, Delivered + return file (primary post), void IN_PLANT |
+| `/fo/laundry` | Queue in plant vs already posted; amount column; fallback Delivered + void IN_PLANT |
 
 Laundry plant uses ticket volume only as a **load hint**, not room credits.
 
@@ -337,11 +337,13 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/hk` | Floor sheets, VIP strip, derived job type |
 | `/hk/mobile` | My floors today + outcome codes |
 | `/hk/forecast` | 7–14 day load |
-| `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY` |
-| `/fo/laundry` | Same tickets; fallback Delivered only (no invent) |
-| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS, can close a door, and return it to service. |
+| `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY`; void IN_PLANT |
+| `/fo/laundry` | Same tickets + amount; fallback Delivered or void IN_PLANT (no invent) |
+| `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio. Lost & found stores room number and a photo. Closed rooms list OOO≠OOS in separate lanes, can close a door, and return it to service. |
 
-`/hk/maids` links a control-plane workforce employment (`globalPersonId`). The hotel keeps department and ƏG. It is not the roster.
+Sidebar groups (URLs unchanged): floor work (`/hk`, `/hk/rooms`, Skip/Sleep, closed rooms) stay top-level with mobile and forecast; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not `/hk/consumption`); **Guest services** = laundry + lost & found. Empty secondary screens keep table chrome and a next-step empty state.
+
+`/hk/maids` links a control-plane workforce employment (`globalPersonId`). The picker shows structural unit filter and `Name (position)`. The hotel keeps HK department and ƏG. It is not the roster.
 
 ### 10.1 Shift and pair edits
 

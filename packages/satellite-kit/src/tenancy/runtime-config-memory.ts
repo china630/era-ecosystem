@@ -36,6 +36,11 @@ export type SatelliteRuntimeConfig = {
   pulledAt?: string;
   updatedAt?: string;
   updatedBy?: string;
+  /**
+   * Org legal/branding snapshot from control plane (CP-ORG-PROFILE-01).
+   * Cached for print/letterhead; mutations stay on orchestrator.
+   */
+  orgProfile?: import("@era/contracts").OrganizationProfileSnapshot;
 };
 
 let runtimeConfig: SatelliteRuntimeConfig = {};

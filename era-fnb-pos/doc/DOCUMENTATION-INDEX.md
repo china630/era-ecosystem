@@ -4,6 +4,7 @@
 - [TZ](../TZ.md)
 - [DELIVERY](./DELIVERY-FB.md)
 - [UAT-SMOKE](./UAT-SMOKE.md)
+- Buffet Planner ADR: [docs/adr/fnb-buffet-planner.md](../../docs/adr/fnb-buffet-planner.md)
 - [00-vision](./00-vision-and-boundaries.md)
 - [01-architecture](./01-architecture-and-integrations.md)
 - [02-domain-model](./02-domain-model.md)

@@ -92,6 +92,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
       prisma as never,
       {} as never,
       config,
+      { getSnapshot: jest.fn().mockResolvedValue({ organizationId: orgId, legalName: "T" }) } as never,
     );
     const body = await svc.buildRuntimeConfigPayload(orgId);
     expect(body.ssoSharedSecret).toBeUndefined();
@@ -134,6 +135,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
       prisma as never,
       {} as never,
       config,
+      { getSnapshot: jest.fn().mockResolvedValue({ organizationId: orgId, legalName: "T" }) } as never,
     );
     const body = await svc.buildRuntimeConfigPayload(orgId);
     expect(body.ssoSharedSecret).toBeUndefined();
@@ -174,6 +176,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
       prisma as never,
       {} as never,
       { get: () => undefined } as unknown as ConfigService,
+      { getSnapshot: jest.fn() } as never,
     );
     await expect(
       svc.getDesiredState({
@@ -226,6 +229,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
       prisma as never,
       {} as never,
       config,
+      { getSnapshot: jest.fn().mockResolvedValue({ organizationId: orgId, legalName: "T" }) } as never,
     );
     const res = await svc.getDesiredState({
       organizationId: orgId,

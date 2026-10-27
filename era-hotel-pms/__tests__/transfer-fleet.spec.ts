@@ -50,4 +50,17 @@ describe('transfer fleet overlap', () => {
     ).rejects.toBeInstanceOf(TourConflictError);
     expect(db.transferOrder.create).not.toHaveBeenCalled();
   });
+
+  it('refuses transfers without a live stay (no air booking)', async () => {
+    db.reservation.findUnique.mockResolvedValue({ id: 'r1', status: 'CHECKED_OUT' });
+    await expect(
+      createTransferOrder({
+        reservationId: 'r1',
+        direction: 'OUT',
+        pickupAt: new Date('2026-08-30T09:00:00Z'),
+        price: 40,
+      }),
+    ).rejects.toThrow('OPTION, CONFIRMED or IN_HOUSE');
+    expect(db.transferOrder.create).not.toHaveBeenCalled();
+  });
 });

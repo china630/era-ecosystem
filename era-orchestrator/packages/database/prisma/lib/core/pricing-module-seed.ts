@@ -644,6 +644,14 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     satelliteKey: "industry_fnb_pos",
   },
   {
+    key: "fnb_buffet_planner",
+    name: "F&B Buffet Planner",
+    pricePerMonth: 39,
+    sortOrder: 305,
+    satelliteKey: "industry_fnb_pos",
+    trialEligibleInTrial: true,
+  },
+  {
     key: "retail_promotions",
     name: "Retail promotions",
     pricePerMonth: 19,

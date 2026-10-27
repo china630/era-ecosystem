@@ -44,4 +44,5 @@ export * from "./mdm";
 export * from "./workforce";
 export * from "./tender";
 export * from "./access";
+export * from "./organization-profile";
 export * from "./lab-demo";

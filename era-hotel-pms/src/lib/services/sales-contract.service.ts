@@ -1,7 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { computeUtilizationPercent } from '@/lib/services/contract-allotment-core';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import type { SalesContractStatus, SalesContractCounterpartyType } from '@prisma/client';
+import type {
+  SalesContractStatus,
+  SalesContractCounterpartyType,
+  CommissionBasis,
+} from '@prisma/client';
 
 const contractInclude = {
   agency: true,
@@ -47,6 +51,7 @@ export async function createSalesContract(input: {
   cta?: boolean;
   ctd?: boolean;
   commissionPercent?: number;
+  commissionBasis?: CommissionBasis;
   depositRequired?: boolean;
   depositAmount?: number;
   notes?: string;
@@ -80,6 +85,7 @@ export async function createSalesContract(input: {
       ctd: input.ctd ?? false,
       commissionPercent:
         input.commissionPercent != null ? toDecimal(input.commissionPercent) : undefined,
+      commissionBasis: input.commissionBasis ?? 'GROSS',
       depositRequired: input.depositRequired ?? false,
       depositAmount: input.depositAmount != null ? toDecimal(input.depositAmount) : undefined,
       notes: input.notes?.trim() || null,
@@ -105,6 +111,7 @@ export async function updateSalesContract(
     cta: boolean;
     ctd: boolean;
     commissionPercent: number | null;
+    commissionBasis: CommissionBasis;
     depositRequired: boolean;
     depositAmount: number | null;
     notes: string | null;
@@ -159,6 +166,7 @@ export async function updateSalesContract(
           : input.commissionPercent === null
             ? null
             : undefined,
+      commissionBasis: input.commissionBasis,
       depositAmount:
         input.depositAmount != null
           ? toDecimal(input.depositAmount)
@@ -180,6 +188,7 @@ export async function findActiveSalesContract(
   companyId: string | null;
   counterpartyType: 'AGENCY' | 'CORPORATE';
   commissionPercent: number | null;
+  commissionBasis: CommissionBasis;
 } | null> {
   const day = new Date(checkInDate.toISOString().slice(0, 10));
   const contract = await prisma.salesContract.findFirst({
@@ -196,6 +205,7 @@ export async function findActiveSalesContract(
       companyId: true,
       counterpartyType: true,
       commissionPercent: true,
+      commissionBasis: true,
       minStay: true,
       cta: true,
       ctd: true,

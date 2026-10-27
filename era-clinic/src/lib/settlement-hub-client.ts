@@ -13,7 +13,6 @@ export async function postHotelSettlementPending(input: {
   revenueCode?: string;
   basketRef?: string;
 }) {
-  const base = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
   const secret = process.env.POS_BRIDGE_SECRET ?? process.env.CLINIC_BRIDGE_SECRET;
   if (!secret) throw new Error("POS_BRIDGE_SECRET not configured");
   const orgId = requestOrganizationId();
@@ -21,6 +20,15 @@ export async function postHotelSettlementPending(input: {
   if (!hotelOrganizationId) {
     throw new Error("hotelOrganizationId required for hotel pending charge");
   }
+  const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
+    "@era/satellite-kit"
+  );
+  const base = (
+    await resolvePeerSatelliteBaseUrl({
+      organizationId: hotelOrganizationId,
+      satelliteKey: PEER_SATELLITE_HOTEL,
+    })
+  ).baseUrl;
 
   const res = await fetch(`${base}/api/settlement/pending`, {
     method: "POST",

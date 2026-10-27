@@ -28,7 +28,13 @@ export async function GET(request: Request) {
       where: reservationId ? { reservationId } : undefined,
       take: 80,
       orderBy: { createdAt: 'desc' },
-      include: { lines: { include: { item: { select: { id: true, name: true, code: true } } } } },
+      include: {
+        lines: {
+          include: {
+            item: { select: { id: true, name: true, code: true, washPrice: true, ironPrice: true } },
+          },
+        },
+      },
     });
     const roomIds = [...new Set(tickets.map((tk) => tk.roomId))];
     const rooms = roomIds.length
@@ -60,6 +66,7 @@ export async function GET(request: Request) {
         tickets: ticketsWithRoom,
         stays,
         laundryExpressEnabled: policy.laundryExpressEnabled,
+        laundryExpressPercent: policy.laundryExpressPercent ?? null,
       }),
     );
   } catch (err) {
@@ -98,10 +105,20 @@ const deliverBody = z.object({
   actorRole: z.enum(['HK', 'FO']).optional(),
 });
 
+const voidBody = z.object({
+  voidTicketId: z.string().uuid(),
+});
+
 export async function POST(request: Request) {
   try {
     const session = await getSatelliteSession();
     const body = await request.json();
+    if (body.voidTicketId) {
+      assertAnyPermission(session, [...laundryReadWritePerms()]);
+      const data = voidBody.parse(body);
+      const { voidOpenLaundryTicket } = await import('@/lib/services/hk-nafta.service');
+      return jsonOk(serialize(await voidOpenLaundryTicket(data.voidTicketId)));
+    }
     if (body.deliverTicketId) {
       assertAnyPermission(session, [...laundryReadWritePerms()]);
       const data = deliverBody.parse(body);

@@ -8,6 +8,16 @@ import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requestOrganizationId } from '@/lib/request-organization';
 
+type PickerItem = {
+  id: string;
+  globalPersonId: string;
+  name: string;
+  orgUnitId?: string | null;
+  orgUnitName?: string | null;
+  positionId?: string | null;
+  positionName?: string | null;
+};
+
 export async function GET() {
   try {
     const session = await getSatelliteSession();
@@ -34,10 +44,17 @@ export async function GET() {
       return jsonOk({ items: [], unavailable: true });
     }
     if (!res.ok) return jsonOk({ items: [], unavailable: true });
-    const body = (await res.json()) as {
-      items?: Array<{ id: string; globalPersonId: string; name: string }>;
-    };
-    return jsonOk({ items: body.items ?? [], unavailable: false });
+    const body = (await res.json()) as { items?: PickerItem[] };
+    const items = (body.items ?? []).map((item) => ({
+      id: item.id,
+      globalPersonId: item.globalPersonId,
+      name: item.name,
+      orgUnitId: item.orgUnitId ?? null,
+      orgUnitName: item.orgUnitName ?? null,
+      positionId: item.positionId ?? null,
+      positionName: item.positionName ?? null,
+    }));
+    return jsonOk({ items, unavailable: false });
   } catch (err) {
     return handleRouteError(err);
   }

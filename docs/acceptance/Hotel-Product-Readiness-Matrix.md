@@ -33,16 +33,20 @@
 | Stay amendment (HOT-FO-04) | pricing tab + product-from-date wizard + room history. In-house move uses today through checkout. Saving a tariff, an Elektra upsert, and an OTA modify move the slice plan from the first open night. The charged type stays | SCREEN (out of FO SHOW until UAT-SMOKE §35). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Depart guest (HOT-FO-05) | Guests ⋮ DepartGuestModal. Opening the stay does not recreate a closed folio for a departed guest. Saving the stay keeps the departure | SCREEN (out of FO SHOW until UAT-SMOKE §43). Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Move guest (HOT-FO-06) | MoveGuestModal | SCREEN (out of FO SHOW until UAT-SMOKE §44). Dialog copy az/ru/en. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
-| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/reports/agency-ledger`, `/operations` | ✅ signed demo. The 2026-10-24 folio pair and the closed deposit intake are not a new Demo/TE walk and do not move Gate, Pilot, or edition |
+| Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/front-cash/agency-ledger`, `/front-cash/company-ledger`, `/operations` | ✅ signed demo. Room payer + gross/net on card (HOT-CL-01) + MOVE_PAYER_CL; corp contract→COMPANY default + contract sellable allotment preview; do not move Gate, Pilot, or edition without new Demo/TE (UAT §29 1a still open) |
+| Unsettled CL (HOT-CO-05) | `/front-cash/unsettled-departures` | SCREEN — out of Cash/CL SHOW rollup until Demo/TE; does not move Gate, Pilot, or edition |
+| Finance→Hotel CL pay (HOT-CL-07) | no new hotel screen (Finance allocate / bank match → `payment-applied`) | NONE / API — HEADLESS handoff; unsettled clears when SETTLED. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
-| Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet` | SCREEN — SHIPPED ops; out of SHOW rollup until Demo/TE |
-| B2B / MICE | `/admin/contracts`, allotment, `/banquets*` | ✅ |
+| Guest tours (HOT-TOUR-01) | `/tours`, `/tours/[id]`, `/fleet`, `/settings/policies#tours` | SCREEN — boarding-first `TOUR` (+ AUTO_CUTOFF / CARD terminal). Out of SHOW until Demo/TE. Closeout 2026-10-27 second-pass: Gate/UI/Demo/Pilot/Edition unchanged |
+| Transfers (HOT-XFER-01) | `/transfers` | SCREEN — stay autocomplete; `TRANSFER` on complete; Airport = `?hasFlight=1`. Out of SHOW; does not move Gate/Pilot/edition |
+| B2B / MICE | `/distribution/contracts`, allotment, `/banquets*` | ✅ — contract gross/net + i18n; card room payer sentence; FO create sellable uses contract allotment when `salesContractId` set (ADR hotel-room-payer-and-commission-basis). Gate/Pilot/edition unchanged |
 | Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
-| Nafta HK deepen | `/hk` `/hk/rooms` `/hk/mobile` `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` | SCREEN / 🟡 (not SHOW — UAT §34 open). Business date is editable; other dates are read-only. PDF is that date and floor. Shared cleanliness pill on the sheet, the board, reservations, the room plan, the rack, and the reservation card. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
+| Nafta HK deepen | `/hk` `/hk/rooms` `/hk/mobile` `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` (+ closed-rooms, maids, minibar, consumption, `/fo/laundry`) | SCREEN / 🟡 (not SHOW — UAT §34 open). Soft sort + room#; void IN_PLANT on laundry grids + checkout deliver/retry; FO amount incl. express; stay linen edit-only; maids edit/unlink; discrepancy create. Closeout 2026-10-27 (second-pass): Gate/UI/Demo/Pilot/Edition unchanged (rollup = Pilot open → mvp, not GA) |
 | Management reports catalog / nightly ZIP | `/reports` workspace (Start/End + radios) + nightly pack + cubes (HOT-RPT W1–W3); one layout for screen/PDF/Excel with hotel letterhead (`/settings/policies#letterhead`) | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
 | Revenue codes + day document (HOT-REV-01) | `/settings/integration?view=gl`; F&B `/admin/settings` warehouse | SCREEN / 🟡 (out of Hotel SHOW rollup — night audit not run; not SHIPPED) |
 | e-qaimə day close (FIN-EQAIME-DAY-01) | `/night-audit` gap list and check-day stop when the finance checkbox is on | SCREEN / 🟡 — API, not SHOW. Rule off by default. Does not move Hotel Gate, UI ✅, Demo ✅, or Sell |
+| Mutation audit (HOT-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (canonical filters; reports grant) + reservation stay journal | SCREEN / 🟡 — Layer A belt + path/API parity; UAT open — not SHOW / not SHIPPED. Does not move Gate, UI ✅, Demo ✅, Pilot, or Sell |
 
 Demo/TE ✅ via `reports/hotel-demo-te-signoff.md` (live walkthrough). Pilot lab still requires UAT-SMOKE §27 artifact.  
 HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW rollup only if Demo-TE not refreshed; does not claim GA.
@@ -65,5 +69,5 @@ HOT-CO-04 unused-nights refund is **SHIPPED** (OpsUI) — out of Hotel SHOW roll
 - Edition column copies `docs/editions/hotel.yaml`.
 - Sell text must not contradict the worst layer above (Pilot lab/field still open → not GA).
 - Forbidden: «ready» / «GA» while Pilot field open.
-- Allowed show language: «FO + City Ledger MVP showable (UI/Demo green; pilot open)» — not certified / not GA.
+- Allowed show language: «FO + City Ledger MVP showable — guest→payer MOVE_PAYER_CL + unsettled departures ops (UI/Demo green; pilot open)» — not certified / not GA. Unsettled screen is SCREEN until Demo/TE refresh.
 - Forbidden: «SHARED hotel SaaS pool» / «automated on-prem migrate» — not this edition ([deployment-topology.md](../adr/deployment-topology.md)). Nafta already runs SHARED; AC-HOT-TENANT stays 🟡 out of BE rollup until field two-org UAT.

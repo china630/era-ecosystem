@@ -4,7 +4,7 @@
 
 Accepted — 2026-07-22
 
-**Related:** [extensibility-forms-print-reports.md](./extensibility-forms-print-reports.md) (platform print: branding vs customer templates vs statutory lock)
+**Related:** [extensibility-forms-print-reports.md](./extensibility-forms-print-reports.md) (platform print: branding vs customer templates vs statutory lock) · [cp-organization-profile-and-branding.md](./cp-organization-profile-and-branding.md) (legal name / multi-contact / logo SoR on orch; clinic keeps footers + clinical signatures local; DEPARTMENT clinic may have its own phone)
 
 ## Context
 

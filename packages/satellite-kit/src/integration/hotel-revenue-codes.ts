@@ -1,3 +1,9 @@
+import {
+  PEER_SATELLITE_HOTEL,
+  resolvePeerSatelliteBaseUrl,
+} from "../tenancy/resolve-peer-satellite-url";
+import { resolveSatelliteEventServiceToken } from "../tenancy/resolve-orchestrator-url";
+
 export type HotelRevenueCodeRow = { code: string; name: string };
 
 export class HotelRevenueCatalogError extends Error {
@@ -13,12 +19,12 @@ export class HotelRevenueCatalogError extends Error {
   }
 }
 
-function hotelBase(): string {
-  return (
-    process.env.HOTEL_PMS_URL?.trim() ||
-    process.env.ERA_HOTEL_PMS_ORIGIN?.trim() ||
-    "http://127.0.0.1:3201"
-  ).replace(/\/$/, "");
+async function hotelBaseForOrg(organizationId: string): Promise<string> {
+  const peer = await resolvePeerSatelliteBaseUrl({
+    organizationId,
+    satelliteKey: PEER_SATELLITE_HOTEL,
+  });
+  return peer.baseUrl;
 }
 
 /** Active hotel revenue codes (`code` is the key, `name` is the label). */
@@ -30,7 +36,7 @@ export async function listHotelRevenueCodes(
     throw new HotelRevenueCatalogError("HOTEL_NOT_LINKED", "Hotel organization is not linked");
   }
   const token =
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+    resolveSatelliteEventServiceToken() ||
     process.env.POS_BRIDGE_SECRET?.trim() ||
     "";
   if (!token) {
@@ -39,7 +45,16 @@ export async function listHotelRevenueCodes(
       "Hotel service token is not configured",
     );
   }
-  const url = new URL(`${hotelBase()}/api/internal/v1/revenue-codes`);
+  let base: string;
+  try {
+    base = await hotelBaseForOrg(org);
+  } catch {
+    throw new HotelRevenueCatalogError(
+      "HOTEL_CATALOG_UNAVAILABLE",
+      "Hotel peer URL is unavailable",
+    );
+  }
+  const url = new URL(`${base}/api/internal/v1/revenue-codes`);
   url.searchParams.set("organizationId", org);
   const res = await fetch(url, {
     headers: {

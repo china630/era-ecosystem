@@ -3,7 +3,6 @@ import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
-import { resolveCreditLimitAzn } from '@/lib/services/guest-dedup.service';
 import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
 
 export type CityLedgerCounterparty = {
@@ -30,27 +29,44 @@ export async function counterpartyOpenArExposure(input: {
     return folios.reduce((s, f) => s + folioBalance(f.charges, f.payments), 0);
   }
   if (!input.agencyId) return 0;
+  // Agency exposure: AGENCY folios for this agency, plus COMPANY folios on stays that carry this agencyId.
   const folios = await prisma.folio.findMany({
     where: {
       status: { in: ['PENDING_AR', 'TRANSFERRED_AR'] },
-      type: { in: ['AGENCY', 'COMPANY'] },
       reservation: { agencyId: input.agencyId },
+      OR: [{ type: 'AGENCY' }, { type: 'COMPANY' }],
     },
     include: { charges: true, payments: true },
   });
   return folios.reduce((s, f) => s + folioBalance(f.charges, f.payments), 0);
 }
 
-export async function resolveEffectiveCreditLimit(reservationId: string): Promise<number | null> {
-  const stayLimit = await resolveCreditLimitAzn(reservationId);
-  if (stayLimit != null) return stayLimit;
-
-  const res = await prisma.reservation.findUnique({
+/**
+ * Effective credit limit: stay → agency/company card → hotel default.
+ * Prefer party when known; otherwise agency (legacy callers).
+ */
+export async function resolveEffectiveCreditLimit(
+  reservationId: string,
+  party: 'AGENCY' | 'COMPANY' = 'AGENCY',
+): Promise<number | null> {
+  const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    select: { agencyId: true, agency: { select: { creditLimitAzn: true } } },
+    include: {
+      agency: { select: { creditLimitAzn: true } },
+      company: { select: { creditLimitAzn: true } },
+    },
   });
-  if (res?.agency?.creditLimitAzn != null) {
-    return decimalToNumber(res.agency.creditLimitAzn);
+  if (!reservation) return null;
+  if (reservation.creditLimitAzn != null) return decimalToNumber(reservation.creditLimitAzn);
+  const card =
+    party === 'COMPANY' ? reservation.company?.creditLimitAzn : reservation.agency?.creditLimitAzn;
+  if (card != null) return decimalToNumber(card);
+  const profile = await prisma.hotelProfile.findFirst({
+    orderBy: { createdAt: 'asc' },
+    select: { defaultCreditLimitAzn: true },
+  });
+  if (profile?.defaultCreditLimitAzn != null) {
+    return decimalToNumber(profile.defaultCreditLimitAzn);
   }
   return null;
 }
@@ -135,10 +151,10 @@ type LedgerPartyReservation = {
   company: { voen: string | null; financeCounterpartyId: string | null; creditLimitAzn: MoneyLimit } | null;
 };
 
-/** Same gate for checkout transfer and a CL_* tender. Nothing is posted until this returns. */
+/** Same gate for checkout transfer, CL_* tender, and COMPANY_ACCOUNT. Nothing is posted until this returns. */
 export async function assertCanPostCityLedgerTender(
   reservationId: string,
-  method: 'CL_AGENCY' | 'CL_COMPANY',
+  method: 'CL_AGENCY' | 'CL_COMPANY' | 'COMPANY_ACCOUNT',
   amount: number,
 ): Promise<void> {
   const reservation = await prisma.reservation.findUnique({
@@ -146,7 +162,14 @@ export async function assertCanPostCityLedgerTender(
     include: { agency: true, company: true, salesContract: true },
   });
   if (!reservation) throw new Error('Reservation not found');
-  const party: 'AGENCY' | 'COMPANY' = method === 'CL_COMPANY' ? 'COMPANY' : 'AGENCY';
+  const party: 'AGENCY' | 'COMPANY' =
+    method === 'CL_AGENCY'
+      ? 'AGENCY'
+      : method === 'CL_COMPANY'
+        ? 'COMPANY'
+        : reservation.companyId
+          ? 'COMPANY'
+          : 'AGENCY';
   if (party === 'AGENCY' && !reservation.agencyId) throw new Error('Agency is not set on this stay');
   if (party === 'COMPANY' && !reservation.companyId) throw new Error('Company is not set on this stay');
   await assertStayHasCityLedgerContract(reservation);
@@ -200,15 +223,7 @@ async function partyCreditLimit(
   reservation: LedgerPartyReservation,
   party: 'AGENCY' | 'COMPANY',
 ): Promise<number | null> {
-  if (reservation.creditLimitAzn != null) return decimalToNumber(reservation.creditLimitAzn);
-  const card = party === 'COMPANY' ? reservation.company?.creditLimitAzn : reservation.agency?.creditLimitAzn;
-  if (card != null) return decimalToNumber(card);
-  const profile = await prisma.hotelProfile.findFirst({
-    orderBy: { createdAt: 'asc' },
-    select: { defaultCreditLimitAzn: true },
-  });
-  if (profile?.defaultCreditLimitAzn != null) return decimalToNumber(profile.defaultCreditLimitAzn);
-  return null;
+  return resolveEffectiveCreditLimit(reservation.id, party);
 }
 
 async function assertCityLedgerParty(

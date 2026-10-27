@@ -73,7 +73,7 @@ Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/
   - [~] **Statistical forms (Goskomstat engine)** — configurable `StatReportDefinition` + standard placeholder set — `/reporting/statforms` — `[x]` SHIPPED UI+API (Wave 5 G3); official blank verification pending — `@RequiresModule(compliance_pro|tax_pro)` — [ADR](../../docs/adr/statform-engine.md)
 
 - [x] **M8 — Immutable Audit + Audit Hub add-on** (PRD §4.8, §4.8.1)
-  - [x] Hash-chain AuditLog, `AuditMutationInterceptor`, retention — `/(dashboard)/admin/audit-log`, `/settings/audit`
+  - [x] Hash-chain AuditLog, `AuditMutationInterceptor`, retention — `/admin/audit` (org mutation), `/admin/security-audit` (OWNER)
   - [x] Audit Hub add-on (`audit_hub` / `compliance_pro`): timeline, sampling, bulk export, engagements — `/audit-hub/*`
   - [x] External auditor guest session (invite + token) — `/audit-invitations`
 

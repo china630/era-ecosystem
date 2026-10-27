@@ -136,7 +136,7 @@ Cross-cutting quick wins from Nafta TZ mapping ([`.cursor/plans/nafta_tz_gap_bac
 
 | Wave | Scope | Status |
 |------|-------|--------|
-| W1 | Satellite mutation audit, agency profitability, FB daily menu, room-plan extend recalc | **Done** |
+| W1 | Satellite mutation audit, agency profitability, FB daily menu, room-plan extend recalc | **Done** (audit = first-wave storage/helpers; ecosystem Layer A belt = HOT-AUD-01 / [era-mutation-audit-standard](./adr/era-mutation-audit-standard.md), not this W1 checkbox) |
 | W2 | OTA pull/cancel/modify, NBC HTTP fiscal, glPosted callback, procurement RFQ, supplier scorecard, HR docs, door lock vendor | **Done** |
 | W3 | AccountingAdapter + fan-out, clinic EMR MVP, queue, LIS profiles, hotel clinic HTTP gate | **Done** |
 

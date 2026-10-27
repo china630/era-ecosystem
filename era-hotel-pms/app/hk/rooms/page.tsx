@@ -101,7 +101,20 @@ export default function HkRoomsPage() {
     return true;
   }
 
-  const visible = rooms.filter(matches);
+  const visible = useMemo(
+    () =>
+      rooms
+        .filter(matches)
+        .sort((a, b) =>
+          String(a.roomNumber).localeCompare(String(b.roomNumber), undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          }),
+        ),
+    // matches reads filter / floor / roomQuery / rooms
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional filter inputs below
+    [rooms, filter, floor, roomQuery],
+  );
 
   const counts = useMemo(() => {
     const base = { all: 0, dirtyVacant: 0, cleanVacant: 0, inspect: 0, ooo: 0, oos: 0 };
@@ -263,10 +276,13 @@ export default function HkRoomsPage() {
                     {closed ? <span className="text-[12px] text-[#7F8C8D]">{room.inventoryStatus || room.status}</span> : <HkStatusMark status={hk} />}
                   </td>
                   <td className={cell}>
-                    {closed || !canSet ? null : (
-                      <div className="w-40 [&_label]:sr-only">
+                    {closed || !canSet ? (
+                      '—'
+                    ) : (
+                      <div className="w-36">
                         <CatalogField
                           kind="CLOSED_SMALL"
+                          className="!space-y-0 [&_label]:sr-only [&_select]:h-7 [&_select]:min-h-0 [&_select]:py-0 [&_select]:text-[11px] [&_select]:leading-tight"
                           label={t('setHk')}
                           value={HK.includes(hk as (typeof HK)[number]) ? hk : 'CLEAN'}
                           onChange={(v) => {

@@ -2,14 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
   DatePicker,
   EraDataGrid,
+  EraListWorkspace,
   Field,
   FieldRow,
+  FORM_STACK_CLASS,
   LIST_PAGE_SHELL_CLASS,
+  ModalFooter,
+  ModalShell,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -79,18 +84,29 @@ type JournalRow = {
 
 type Option = { value: string; label: string };
 
+type GuestDraft = {
+  firstName: string;
+  lastName: string;
+  sex: string;
+  nationality: string;
+  patientRefId: string;
+};
+
+type LineDraft = {
+  kind: "procedure" | "lab" | "visit";
+  code: string;
+  practitionerId: string;
+};
+
+type ConfirmState =
+  | { type: "removeGuest"; guestId: string; label: string }
+  | { type: "removeLine"; guestId: string; lineId: string; kind: string; label: string }
+  | null;
+
 const SEX_OPTIONS = [
   { value: "MALE", labelKey: "walkInPartyMale" },
   { value: "FEMALE", labelKey: "walkInPartyFemale" },
 ] as const;
-
-async function readError(res: Response) {
-  try {
-    return await res.json();
-  } catch {
-    return { error: res.statusText };
-  }
-}
 
 const JOURNAL_ACTIONS = [
   "PARTY_CREATE",
@@ -103,6 +119,28 @@ const JOURNAL_ACTIONS = [
   "HOTEL_PAID",
 ] as const;
 
+const EMPTY_GUEST: GuestDraft = {
+  firstName: "",
+  lastName: "",
+  sex: "MALE",
+  nationality: "",
+  patientRefId: "",
+};
+
+const EMPTY_LINE: LineDraft = {
+  kind: "procedure",
+  code: "",
+  practitionerId: "",
+};
+
+async function readError(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    return { error: res.statusText };
+  }
+}
+
 function journalAction(t: ReturnType<typeof useTranslations<"sanatorium">>, action: string) {
   const known = JOURNAL_ACTIONS.find((item) => item === action);
   return known ? t(`walkInPartyAct_${known}`) : action;
@@ -113,7 +151,33 @@ function localizeGuest(t: ReturnType<typeof useTranslations<"sanatorium">>, summ
 }
 
 function paidLine(line: { status: string }) {
-  return line.status === "PAID" || line.status === "COMPLETED" || line.status === "SCHEDULED" || line.status === "CHECKED_IN" || line.status === "PROPOSED";
+  return (
+    line.status === "PAID" ||
+    line.status === "COMPLETED" ||
+    line.status === "SCHEDULED" ||
+    line.status === "CHECKED_IN" ||
+    line.status === "PROPOSED"
+  );
+}
+
+function guestTitle(t: ReturnType<typeof useTranslations<"sanatorium">>, guest: Guest) {
+  return guest.placeholder ? t("walkInPartyGuest", { n: guest.sortOrder }) : guest.fullName || guest.label;
+}
+
+function money(amount: number) {
+  return `${amount.toFixed(2)} AZN`;
+}
+
+function guestSexLabel(t: ReturnType<typeof useTranslations<"sanatorium">>, sex: Guest["sex"]) {
+  if (sex === "FEMALE") return t("walkInPartyFemale");
+  if (sex === "MALE") return t("walkInPartyMale");
+  return t("sexUnknown");
+}
+
+function hasSendableLines(party: Party) {
+  return party.guests.some((guest) =>
+    [...guest.procedures, ...guest.labs, ...guest.visits].some((line) => !line.sent),
+  );
 }
 
 export default function WalkInPartiesPage() {
@@ -124,14 +188,22 @@ export default function WalkInPartiesPage() {
   const [party, setParty] = useState<Party | null>(null);
   const [journal, setJournal] = useState<JournalRow[]>([]);
   const [openJournal, setOpenJournal] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [visitDate, setVisitDate] = useState(todayBakuYmd());
   const [busy, setBusy] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createDate, setCreateDate] = useState(todayBakuYmd());
+  const [guestModal, setGuestModal] = useState<{ mode: "add" } | { mode: "edit"; guest: Guest } | null>(null);
+  const [guestDraft, setGuestDraft] = useState<GuestDraft>(EMPTY_GUEST);
+  const [lineGuestId, setLineGuestId] = useState<string | null>(null);
+  const [lineDraft, setLineDraft] = useState<LineDraft>(EMPTY_LINE);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [procedures, setProcedures] = useState<Option[]>([]);
   const [labs, setLabs] = useState<Option[]>([]);
   const [visits, setVisits] = useState<Option[]>([]);
   const [doctors, setDoctors] = useState<Option[]>([]);
   const [patientHits, setPatientHits] = useState<Option[]>([]);
+
+  const editable = party?.status === "DRAFT";
 
   const loadList = useCallback(async () => {
     const res = await fetch("/api/sanatorium/walk-in-parties");
@@ -170,7 +242,9 @@ export default function WalkInPartiesPage() {
       ]);
       if (cancelled) return;
       if (typesRes.ok) {
-        const body = (await typesRes.json()) as { items?: Array<{ code: string; name: string }> } | Array<{ code: string; name: string }>;
+        const body = (await typesRes.json()) as
+          | { items?: Array<{ code: string; name: string }> }
+          | Array<{ code: string; name: string }>;
         const items = Array.isArray(body) ? body : body.items ?? [];
         setProcedures(items.map((item) => ({ value: item.code, label: item.name || item.code })));
       }
@@ -183,7 +257,11 @@ export default function WalkInPartiesPage() {
             title?: { en?: string; ru?: string; az?: string };
           }>;
         };
-        const labelOf = (item: { code: string; serviceCode?: string; title?: { en?: string; ru?: string; az?: string } }) => {
+        const labelOf = (item: {
+          code: string;
+          serviceCode?: string;
+          title?: { en?: string; ru?: string; az?: string };
+        }) => {
           const title = item.title;
           const localized = locale === "ru" ? title?.ru : locale === "az" ? title?.az : title?.en;
           return localized || item.code;
@@ -201,7 +279,9 @@ export default function WalkInPartiesPage() {
         );
       }
       if (doctorsRes.ok) {
-        const body = (await doctorsRes.json()) as { items?: Array<{ id: string; fullName?: string; code?: string }> } | Array<{ id: string; fullName?: string; code?: string }>;
+        const body = (await doctorsRes.json()) as
+          | { items?: Array<{ id: string; fullName?: string; code?: string }> }
+          | Array<{ id: string; fullName?: string; code?: string }>;
         const items = Array.isArray(body) ? body : body.items ?? [];
         setDoctors(items.map((item) => ({ value: item.id, label: item.fullName || item.code || item.id })));
       }
@@ -209,7 +289,7 @@ export default function WalkInPartiesPage() {
     return () => {
       cancelled = true;
     };
-  }, [party?.id]);
+  }, [party?.id, locale]);
 
   async function createParty() {
     setBusy(true);
@@ -217,16 +297,19 @@ export default function WalkInPartiesPage() {
       const res = await fetch("/api/sanatorium/walk-in-parties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, visitDate }),
+        body: JSON.stringify({ name: createName, visitDate: createDate }),
       });
       if (!res.ok) {
         showApiError(await readError(res));
         return;
       }
       const created = (await res.json()) as Party;
-      setName("");
+      setCreateOpen(false);
+      setCreateName("");
+      setCreateDate(todayBakuYmd());
       await loadList();
       await loadParty(created.id);
+      showSuccess(t("walkInPartyCreated"));
     } finally {
       setBusy(false);
     }
@@ -254,6 +337,90 @@ export default function WalkInPartiesPage() {
     }
   }
 
+  function openAddGuest() {
+    setGuestDraft(EMPTY_GUEST);
+    setPatientHits([]);
+    setGuestModal({ mode: "add" });
+  }
+
+  function openEditGuest(guest: Guest) {
+    setGuestDraft({
+      firstName: guest.firstName,
+      lastName: guest.lastName,
+      sex: guest.sex === "FEMALE" ? "FEMALE" : "MALE",
+      nationality: guest.nationality,
+      patientRefId: "",
+    });
+    setPatientHits([]);
+    setGuestModal({ mode: "edit", guest });
+  }
+
+  function openAddLine(guestId: string) {
+    setLineDraft(EMPTY_LINE);
+    setLineGuestId(guestId);
+  }
+
+  async function saveGuest() {
+    if (!guestDraft.nationality) return;
+    if (guestModal?.mode === "edit") {
+      const ok = await patch({
+        action: "updateGuest",
+        guestId: guestModal.guest.id,
+        sex: guestDraft.sex,
+        nationality: guestDraft.nationality,
+        firstName: guestDraft.firstName,
+        lastName: guestDraft.lastName,
+      });
+      if (ok) setGuestModal(null);
+      return;
+    }
+    const ok = await patch({
+      action: "addGuest",
+      sex: guestDraft.sex,
+      nationality: guestDraft.nationality,
+      firstName: guestDraft.firstName,
+      lastName: guestDraft.lastName,
+      patientRefId: guestDraft.patientRefId || null,
+    });
+    if (ok) setGuestModal(null);
+  }
+
+  async function saveLine() {
+    if (!lineGuestId || !lineDraft.code) return;
+    if ((lineDraft.kind === "procedure" || lineDraft.kind === "visit") && !lineDraft.practitionerId) return;
+    const ok = await patch({
+      action: "addLine",
+      guestId: lineGuestId,
+      kind: lineDraft.kind,
+      code: lineDraft.code,
+      practitionerId: lineDraft.practitionerId || null,
+    });
+    if (ok) setLineGuestId(null);
+  }
+
+  async function runConfirm() {
+    if (!confirm) return;
+    if (confirm.type === "removeGuest") {
+      const ok = await patch({ action: "removeGuest", guestId: confirm.guestId });
+      if (ok) setConfirm(null);
+      return;
+    }
+    const ok = await patch({
+      action: "removeLine",
+      guestId: confirm.guestId,
+      lineId: confirm.lineId,
+      kind: confirm.kind,
+    });
+    if (ok) setConfirm(null);
+  }
+
+  async function searchPatients(q: string) {
+    const res = await fetch(`/api/patients?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return;
+    const body = (await res.json()) as { items?: Array<{ id: string; fullName?: string; refCode?: string }> };
+    setPatientHits((body.items ?? []).map((item) => ({ value: item.id, label: item.fullName || item.refCode || item.id })));
+  }
+
   const columns = useMemo<EraDataGridColumn<PartyListRow>[]>(
     () => [
       { key: "name", header: t("walkInPartyName") },
@@ -270,363 +437,430 @@ export default function WalkInPartiesPage() {
   );
 
   const sexOptions = SEX_OPTIONS.map((item) => ({ value: item.value, label: t(item.labelKey) }));
+  const kindOptions = [
+    { value: "procedure", label: t("walkInPartyProcedure") },
+    { value: "lab", label: t("walkInPartyLab") },
+    { value: "visit", label: t("walkInPartyVisit") },
+  ];
+  const lineCodeOptions =
+    lineDraft.kind === "lab" ? labs : lineDraft.kind === "visit" ? visits : procedures;
+  const lineNeedsDoctor = lineDraft.kind === "procedure" || lineDraft.kind === "visit";
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
       <PageHeader
         title={t("walkInPartyTitle")}
         actions={
-          <Link href="/sanatorium" className={SECONDARY_BUTTON_CLASS}>
-            {t("walkInPartyBack")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/sanatorium" className={SECONDARY_BUTTON_CLASS}>
+              {t("walkInPartyBack")}
+            </Link>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => {
+                setCreateName("");
+                setCreateDate(todayBakuYmd());
+                setCreateOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              {t("walkInPartyCreate")}
+            </button>
+          </div>
         }
       />
 
-      {!party ? (
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border p-4">
-            <FieldRow cols={3}>
-              <Field
-                label={t("walkInPartyName")}
-                preset="shortText"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <DatePicker
-                label={t("walkInPartyDate")}
-                value={visitDate}
-                onChange={setVisitDate}
-                placeholder={tc("datePlaceholder")}
-                openCalendarLabel={tc("openCalendar")}
-              />
-              <div className="flex items-end">
-                <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy || !name.trim()} onClick={() => void createParty()}>
-                  {t("walkInPartyCreate")}
-                </button>
-              </div>
-            </FieldRow>
-          </div>
+      <EraListWorkspace
+        table={
           <EraDataGrid
             columns={columns as unknown as EraDataGridColumn<PartyListRow & Record<string, unknown>>[]}
             rows={rows as (PartyListRow & Record<string, unknown>)[]}
             rowKey={(row) => row.id}
             onRowClick={(row) => void loadParty(String(row.id))}
             emptyMessage={t("walkInPartyEmpty")}
+            embedded
+            pagination={false}
           />
-        </div>
-      ) : (
-        <PartyEditor
-          party={party}
-          journal={journal}
-          openJournal={openJournal}
-          setOpenJournal={setOpenJournal}
-          busy={busy}
-          locale={locale}
-          procedures={procedures}
-          labs={labs}
-          visits={visits}
-          doctors={doctors}
-          patientHits={patientHits}
-          sexOptions={sexOptions}
-          onSearchPatients={async (q) => {
-            const res = await fetch(`/api/patients?q=${encodeURIComponent(q)}`);
-            if (!res.ok) return;
-            const body = (await res.json()) as { items?: Array<{ id: string; fullName?: string; refCode?: string }> };
-            setPatientHits((body.items ?? []).map((item) => ({ value: item.id, label: item.fullName || item.refCode || item.id })));
-          }}
-          onAddGuest={(input) => patch({ action: "addGuest", ...input })}
-          onUpdateGuest={(guestId, input) => patch({ action: "updateGuest", guestId, ...input })}
-          onRemoveGuest={(guestId) => patch({ action: "removeGuest", guestId })}
-          onAddLine={(guestId, input) => patch({ action: "addLine", guestId, ...input })}
-          onRemoveLine={(guestId, lineId, kind) => patch({ action: "removeLine", guestId, lineId, kind })}
-          onSend={async () => {
-            const result = await patch({ action: "send" });
-            if (!result) return;
-            if (result.rejected?.length) {
-              showApiError({ error: result.rejected.map((row) => `${row.code}: ${row.reason}`).join("; ") });
-            } else {
-              showSuccess(t("walkInPartySent"));
-            }
-          }}
-          onBack={() => setParty(null)}
-          t={t}
-        />
-      )}
-    </div>
-  );
-}
+        }
+      />
 
-function PartyEditor({
-  party,
-  journal,
-  openJournal,
-  setOpenJournal,
-  busy,
-  locale,
-  procedures,
-  labs,
-  visits,
-  doctors,
-  patientHits,
-  sexOptions,
-  onSearchPatients,
-  onAddGuest,
-  onUpdateGuest,
-  onRemoveGuest,
-  onAddLine,
-  onRemoveLine,
-  onSend,
-  onBack,
-  t,
-}: {
-  party: Party;
-  journal: JournalRow[];
-  openJournal: string | null;
-  setOpenJournal: (id: string | null) => void;
-  busy: boolean;
-  locale: string;
-  procedures: Option[];
-  labs: Option[];
-  visits: Option[];
-  doctors: Option[];
-  patientHits: Option[];
-  sexOptions: Option[];
-  onSearchPatients: (q: string) => Promise<void>;
-  onAddGuest: (input: { sex: string; nationality: string; firstName?: string; lastName?: string; patientRefId?: string | null }) => Promise<unknown>;
-  onUpdateGuest: (guestId: string, input: { sex: string; nationality: string; firstName?: string; lastName?: string }) => Promise<unknown>;
-  onRemoveGuest: (guestId: string) => Promise<unknown>;
-  onAddLine: (guestId: string, input: { kind: string; code: string; qty?: number; practitionerId?: string | null }) => Promise<unknown>;
-  onRemoveLine: (guestId: string, lineId: string, kind: string) => Promise<unknown>;
-  onSend: () => Promise<void>;
-  onBack: () => void;
-  t: ReturnType<typeof useTranslations<"sanatorium">>;
-}) {
-  const [draft, setDraft] = useState({
-    firstName: "",
-    lastName: "",
-    sex: "MALE",
-    nationality: "",
-    patientRefId: "",
-  });
-  const money = (amount: number) => `${amount.toFixed(2)} AZN`;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{party.name}</h2>
-          <p className={TEXT_MUTED_CLASS}>
-            {party.visitDate} · {t(`walkInPartyStatus_${party.status}`)}
-            {party.receiptRef ? ` · ${party.receiptRef}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="font-semibold">{t("walkInPartyTotal")}: {money(party.total)}</span>
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={onBack}>{t("walkInPartyList")}</button>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void onSend()}>
-            {t("walkInPartySend")}
-          </button>
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-border p-4">
-        <h3 className="mb-3 font-medium">{t("walkInPartyAddGuest")}</h3>
-        <FieldRow cols={3}>
-          <Field label={t("walkInPartyFirst")} preset="shortText" value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} />
-          <Field label={t("walkInPartyLast")} preset="shortText" value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("walkInPartySex")}
-            value={draft.sex}
-            onChange={(value) => setDraft({ ...draft, sex: String(value) })}
-            options={sexOptions}
+      <ModalShell
+        open={createOpen}
+        title={t("walkInPartyCreate")}
+        onClose={() => setCreateOpen(false)}
+        closeLabel={tc("close")}
+        maxWidthClass="max-w-lg"
+        footer={
+          <ModalFooter
+            onCancel={() => setCreateOpen(false)}
+            onSubmit={() => void createParty()}
+            busy={busy}
+            submitDisabled={!createName.trim()}
+            submitLabel={t("walkInPartyCreate")}
+            cancelLabel={tc("cancel")}
           />
-          <CatalogField
-            kind="SEARCHABLE"
-            label={t("walkInPartyCountry")}
-            value={draft.nationality}
-            onChange={(value) => setDraft({ ...draft, nationality: String(value ?? "").toUpperCase() })}
-            options={countryOptions(locale, draft.nationality)}
-          />
-          <CatalogField
-            kind="SEARCHABLE"
-            label={t("walkInPartyPatient")}
-            value={draft.patientRefId}
-            onChange={(value) => setDraft({ ...draft, patientRefId: String(value ?? "") })}
-            options={patientHits}
-            serverSearch
-            onQueryChange={(q) => void onSearchPatients(q)}
-          />
-        </FieldRow>
-        <button
-          type="button"
-          className={`${PRIMARY_BUTTON_CLASS} mt-3`}
-          disabled={busy || !draft.nationality}
-          onClick={() =>
-            void onAddGuest({
-              sex: draft.sex,
-              nationality: draft.nationality,
-              firstName: draft.firstName,
-              lastName: draft.lastName,
-              patientRefId: draft.patientRefId || null,
-            }).then(() => setDraft({ firstName: "", lastName: "", sex: "MALE", nationality: "", patientRefId: "" }))
-          }
-        >
-          {t("walkInPartySaveGuest")}
-        </button>
-      </div>
-
-      {party.guests.map((guest) => (
-        <GuestCard
-          key={guest.id}
-          guest={guest}
-          busy={busy}
-          locale={locale}
-          procedures={procedures}
-          labs={labs}
-          visits={visits}
-          doctors={doctors}
-          sexOptions={sexOptions}
-          money={money}
-          onUpdate={(input) => onUpdateGuest(guest.id, input)}
-          onRemove={() => onRemoveGuest(guest.id)}
-          onAddLine={(input) => onAddLine(guest.id, input)}
-          onRemoveLine={(lineId, kind) => onRemoveLine(guest.id, lineId, kind)}
-          t={t}
-        />
-      ))}
-
-      <div className="rounded-lg border border-border p-4">
-        <h3 className="mb-3 font-medium">{t("walkInPartyJournal")}</h3>
-        {journal.length === 0 ? <p className={TEXT_MUTED_CLASS}>{t("walkInPartyEmpty")}</p> : null}
-        <ul className="space-y-2">
-          {journal.map((row) => (
-            <li key={row.id} className="rounded border border-border px-3 py-2 text-sm">
-              <button type="button" className="flex w-full items-center justify-between gap-3 text-left" onClick={() => setOpenJournal(openJournal === row.id ? null : row.id)}>
-                <span>{bakuDateTimeDisplay(row.createdAt)} · {journalAction(t, row.action)} · {localizeGuest(t, row.summary)}</span>
-                <span className={TEXT_MUTED_CLASS}>{row.actor ?? "—"}</span>
-              </button>
-              {openJournal === row.id && row.fields.length > 0 ? (
-                <ul className="mt-2 space-y-1 text-xs">
-                  {row.fields.map((field) => (
-                    <li key={field.key}>{field.key}: {field.from ?? "—"} → {field.to ?? "—"}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-function GuestCard({
-  guest,
-  busy,
-  locale,
-  procedures,
-  labs,
-  visits,
-  doctors,
-  sexOptions,
-  money,
-  onUpdate,
-  onRemove,
-  onAddLine,
-  onRemoveLine,
-  t,
-}: {
-  guest: Guest;
-  busy: boolean;
-  locale: string;
-  procedures: Option[];
-  labs: Option[];
-  visits: Option[];
-  doctors: Option[];
-  sexOptions: Option[];
-  money: (amount: number) => string;
-  onUpdate: (input: { sex: string; nationality: string; firstName?: string; lastName?: string }) => Promise<unknown>;
-  onRemove: () => Promise<unknown>;
-  onAddLine: (input: { kind: string; code: string; qty?: number; practitionerId?: string | null }) => Promise<unknown>;
-  onRemoveLine: (lineId: string, kind: string) => Promise<unknown>;
-  t: ReturnType<typeof useTranslations<"sanatorium">>;
-}) {
-  const [form, setForm] = useState({
-    firstName: guest.firstName,
-    lastName: guest.lastName,
-    sex: guest.sex === "FEMALE" ? "FEMALE" : "MALE",
-    nationality: guest.nationality,
-  });
-  const [procedureCode, setProcedureCode] = useState("");
-  const [labCode, setLabCode] = useState("");
-  const [visitCode, setVisitCode] = useState("");
-  const [doctorId, setDoctorId] = useState("");
-  const lines = [...guest.procedures, ...guest.labs, ...guest.visits];
-  const title = guest.placeholder ? t("walkInPartyGuest", { n: guest.sortOrder }) : guest.fullName || guest.label;
-
-  return (
-    <section className="rounded-lg border border-border p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="font-medium">{title}</h3>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={() => void onRemove()}>
-          {t("walkInPartyRemoveGuest")}
-        </button>
-      </div>
-      <FieldRow cols={4}>
-        <Field label={t("walkInPartyFirst")} preset="shortText" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-        <Field label={t("walkInPartyLast")} preset="shortText" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-        <CatalogField kind="CLOSED_SMALL" label={t("walkInPartySex")} value={form.sex} onChange={(value) => setForm({ ...form, sex: String(value) })} options={sexOptions} />
-        <CatalogField
-          kind="SEARCHABLE"
-          label={t("walkInPartyCountry")}
-          value={form.nationality}
-          onChange={(value) => setForm({ ...form, nationality: String(value ?? "").toUpperCase() })}
-          options={countryOptions(locale, form.nationality)}
-        />
-      </FieldRow>
-      <button
-        type="button"
-        className={`${SECONDARY_BUTTON_CLASS} mt-3`}
-        disabled={busy || !form.nationality}
-        onClick={() => void onUpdate(form)}
+        }
       >
-        {t("walkInPartySaveGuest")}
-      </button>
+        <div className={FORM_STACK_CLASS}>
+          <FieldRow cols={2}>
+            <Field
+              label={t("walkInPartyName")}
+              preset="shortText"
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              required
+            />
+            <DatePicker
+              label={t("walkInPartyDate")}
+              value={createDate}
+              onChange={setCreateDate}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+          </FieldRow>
+        </div>
+      </ModalShell>
 
-      <ul className="my-3 space-y-1 text-sm">
-        {lines.map((line) => (
-          <li key={line.id} className="flex items-center justify-between gap-3">
-            <span>
-              {line.name} · {money(line.amount)} · {paidLine(line) ? t("walkInPartyPaid") : line.sent ? t("walkInPartySent") : t("statusUnpaid")}
-              {line.doctorName ? ` · ${line.doctorName}` : ""}
-            </span>
-            {!line.sent ? (
-              <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={() => void onRemoveLine(line.id, line.kind)}>
-                {t("walkInPartyRemoveLine")}
-              </button>
+      <ModalShell
+        open={Boolean(party)}
+        title={party?.name ?? t("walkInPartyTitle")}
+        subtitle={
+          party
+            ? `${party.visitDate} · ${t(`walkInPartyStatus_${party.status}`)}${
+                party.receiptRef ? ` · ${party.receiptRef}` : ""
+              }`
+            : undefined
+        }
+        onClose={() => {
+          setParty(null);
+          setGuestModal(null);
+          setLineGuestId(null);
+          setConfirm(null);
+        }}
+        closeLabel={tc("close")}
+        maxWidthClass="max-w-4xl"
+        footer={
+          party ? (
+            <div className="flex w-full flex-wrap items-center justify-between gap-3">
+              <span className="font-semibold">
+                {t("walkInPartyTotal")}: {money(party.total)}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    setParty(null);
+                    setGuestModal(null);
+                    setLineGuestId(null);
+                    setConfirm(null);
+                  }}
+                >
+                  {tc("close")}
+                </button>
+                {editable ? (
+                  <button
+                    type="button"
+                    className={PRIMARY_BUTTON_CLASS}
+                    disabled={busy || !hasSendableLines(party)}
+                    onClick={() =>
+                      void (async () => {
+                        const result = await patch({ action: "send" });
+                        if (!result) return;
+                        if (result.rejected?.length) {
+                          showApiError({
+                            error: result.rejected.map((row) => `${row.code}: ${row.reason}`).join("; "),
+                          });
+                        } else {
+                          showSuccess(t("walkInPartySent"));
+                        }
+                      })()
+                    }
+                  >
+                    {t("walkInPartySend")}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null
+        }
+      >
+        {party ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-medium">{t("walkInPartyGuests")}</h3>
+              {editable ? (
+                <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={openAddGuest}>
+                  <Plus className="h-4 w-4" aria-hidden />
+                  {t("walkInPartyAddGuest")}
+                </button>
+              ) : null}
+            </div>
+
+            {party.guests.length === 0 ? <p className={TEXT_MUTED_CLASS}>{t("walkInPartyNoGuests")}</p> : null}
+
+            {party.guests.map((guest) => {
+              const lines = [...guest.procedures, ...guest.labs, ...guest.visits];
+              const title = guestTitle(t, guest);
+              return (
+                <section key={guest.id} className="rounded-lg border border-border p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-medium">{title}</p>
+                      <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+                        {guestSexLabel(t, guest.sex)}
+                        {guest.nationality ? ` · ${guest.nationality}` : ""}
+                      </p>
+                    </div>
+                    {editable ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={busy}
+                          onClick={() => openEditGuest(guest)}
+                        >
+                          {t("walkInPartyEditGuest")}
+                        </button>
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={busy}
+                          onClick={() => openAddLine(guest.id)}
+                        >
+                          {t("walkInPartyAddLine")}
+                        </button>
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={busy}
+                          onClick={() => setConfirm({ type: "removeGuest", guestId: guest.id, label: title })}
+                        >
+                          {t("walkInPartyRemoveGuest")}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {lines.length === 0 ? (
+                    <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("walkInPartyNoLines")}</p>
+                  ) : (
+                    <ul className="space-y-1 text-sm">
+                      {lines.map((line) => (
+                        <li key={line.id} className="flex flex-wrap items-center justify-between gap-2">
+                          <span>
+                            {line.name} · {money(line.amount)} ·{" "}
+                            {paidLine(line)
+                              ? t("walkInPartyPaid")
+                              : line.sent
+                                ? t("walkInPartySent")
+                                : t("statusUnpaid")}
+                            {line.doctorName ? ` · ${line.doctorName}` : ""}
+                          </span>
+                          {editable && !line.sent ? (
+                            <button
+                              type="button"
+                              className={SECONDARY_BUTTON_CLASS}
+                              disabled={busy}
+                              onClick={() =>
+                                setConfirm({
+                                  type: "removeLine",
+                                  guestId: guest.id,
+                                  lineId: line.id,
+                                  kind: line.kind,
+                                  label: line.name,
+                                })
+                              }
+                            >
+                              {t("walkInPartyRemoveLine")}
+                            </button>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              );
+            })}
+
+            <div className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 font-medium">{t("walkInPartyJournal")}</h3>
+              {journal.length === 0 ? <p className={TEXT_MUTED_CLASS}>{t("walkInPartyJournalEmpty")}</p> : null}
+              <ul className="space-y-2">
+                {journal.map((row) => (
+                  <li key={row.id} className="rounded border border-border px-3 py-2 text-sm">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      onClick={() => setOpenJournal(openJournal === row.id ? null : row.id)}
+                    >
+                      <span>
+                        {bakuDateTimeDisplay(row.createdAt)} · {journalAction(t, row.action)} ·{" "}
+                        {localizeGuest(t, row.summary)}
+                      </span>
+                      <span className={TEXT_MUTED_CLASS}>{row.actor ?? "—"}</span>
+                    </button>
+                    {openJournal === row.id && row.fields.length > 0 ? (
+                      <ul className="mt-2 space-y-1 text-xs">
+                        {row.fields.map((field) => (
+                          <li key={field.key}>
+                            {field.key}: {field.from ?? "—"} → {field.to ?? "—"}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : null}
+      </ModalShell>
+
+      <ModalShell
+        open={Boolean(guestModal)}
+        title={guestModal?.mode === "edit" ? t("walkInPartyEditGuest") : t("walkInPartyAddGuest")}
+        onClose={() => setGuestModal(null)}
+        closeLabel={tc("close")}
+        maxWidthClass="max-w-2xl"
+        footer={
+          <ModalFooter
+            onCancel={() => setGuestModal(null)}
+            onSubmit={() => void saveGuest()}
+            busy={busy}
+            submitDisabled={!guestDraft.nationality}
+            submitLabel={t("walkInPartySaveGuest")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          <FieldRow cols={2}>
+            <Field
+              label={t("walkInPartyFirst")}
+              preset="shortText"
+              value={guestDraft.firstName}
+              onChange={(e) => setGuestDraft({ ...guestDraft, firstName: e.target.value })}
+            />
+            <Field
+              label={t("walkInPartyLast")}
+              preset="shortText"
+              value={guestDraft.lastName}
+              onChange={(e) => setGuestDraft({ ...guestDraft, lastName: e.target.value })}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("walkInPartySex")}
+              value={guestDraft.sex}
+              onChange={(value) => setGuestDraft({ ...guestDraft, sex: String(value) })}
+              options={sexOptions}
+            />
+            <CatalogField
+              kind="SEARCHABLE"
+              label={t("walkInPartyCountry")}
+              value={guestDraft.nationality}
+              onChange={(value) => setGuestDraft({ ...guestDraft, nationality: String(value ?? "").toUpperCase() })}
+              options={countryOptions(locale, guestDraft.nationality)}
+            />
+            {guestModal?.mode === "add" ? (
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("walkInPartyPatient")}
+                value={guestDraft.patientRefId}
+                onChange={(value) => setGuestDraft({ ...guestDraft, patientRefId: String(value ?? "") })}
+                options={patientHits}
+                serverSearch
+                onQueryChange={(q) => void searchPatients(q)}
+              />
             ) : null}
-          </li>
-        ))}
-      </ul>
+          </FieldRow>
+        </div>
+      </ModalShell>
 
-      <FieldRow cols={3}>
-        <CatalogField kind="SEARCHABLE" label={t("walkInPartyProcedure")} value={procedureCode} onChange={(value) => setProcedureCode(String(value ?? ""))} options={procedures} />
-        <CatalogField kind="SEARCHABLE" label={t("walkInPartyLab")} value={labCode} onChange={(value) => setLabCode(String(value ?? ""))} options={labs} />
-        <CatalogField kind="SEARCHABLE" label={t("walkInPartyVisit")} value={visitCode} onChange={(value) => setVisitCode(String(value ?? ""))} options={visits} />
-        <CatalogField kind="SEARCHABLE" label={t("walkInPartyDoctor")} value={doctorId} onChange={(value) => setDoctorId(String(value ?? ""))} options={doctors} />
-      </FieldRow>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy || !procedureCode || !doctorId} onClick={() => void onAddLine({ kind: "procedure", code: procedureCode, practitionerId: doctorId })}>
-          {t("walkInPartyAdd")} · {t("walkInPartyProcedure")}
-        </button>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy || !labCode} onClick={() => void onAddLine({ kind: "lab", code: labCode })}>
-          {t("walkInPartyAdd")} · {t("walkInPartyLab")}
-        </button>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy || !visitCode || !doctorId} onClick={() => void onAddLine({ kind: "visit", code: visitCode, practitionerId: doctorId })}>
-          {t("walkInPartyAdd")} · {t("walkInPartyVisit")}
-        </button>
-      </div>
-    </section>
+      <ModalShell
+        open={Boolean(lineGuestId)}
+        title={t("walkInPartyAddLine")}
+        onClose={() => setLineGuestId(null)}
+        closeLabel={tc("close")}
+        maxWidthClass="max-w-lg"
+        footer={
+          <ModalFooter
+            onCancel={() => setLineGuestId(null)}
+            onSubmit={() => void saveLine()}
+            busy={busy}
+            submitDisabled={
+              !lineDraft.code || ((lineDraft.kind === "procedure" || lineDraft.kind === "visit") && !lineDraft.practitionerId)
+            }
+            submitLabel={t("walkInPartyAdd")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          <FieldRow cols={2}>
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("walkInPartyLineKind")}
+              value={lineDraft.kind}
+              onChange={(value) =>
+                setLineDraft({
+                  kind: String(value) as LineDraft["kind"],
+                  code: "",
+                  practitionerId: lineDraft.practitionerId,
+                })
+              }
+              options={kindOptions}
+            />
+            <CatalogField
+              kind="SEARCHABLE"
+              label={
+                lineDraft.kind === "lab"
+                  ? t("walkInPartyLab")
+                  : lineDraft.kind === "visit"
+                    ? t("walkInPartyVisit")
+                    : t("walkInPartyProcedure")
+              }
+              value={lineDraft.code}
+              onChange={(value) => setLineDraft({ ...lineDraft, code: String(value ?? "") })}
+              options={lineCodeOptions}
+            />
+            {lineNeedsDoctor ? (
+              <CatalogField
+                kind="SEARCHABLE"
+                label={t("walkInPartyDoctor")}
+                value={lineDraft.practitionerId}
+                onChange={(value) => setLineDraft({ ...lineDraft, practitionerId: String(value ?? "") })}
+                options={doctors}
+              />
+            ) : null}
+          </FieldRow>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={Boolean(confirm)}
+        title={confirm?.type === "removeGuest" ? t("walkInPartyRemoveGuest") : t("walkInPartyRemoveLine")}
+        onClose={() => setConfirm(null)}
+        closeLabel={tc("close")}
+        maxWidthClass="max-w-md"
+        footer={
+          <ModalFooter
+            onCancel={() => setConfirm(null)}
+            onSubmit={() => void runConfirm()}
+            busy={busy}
+            submitLabel={confirm?.type === "removeGuest" ? t("walkInPartyRemoveGuest") : t("walkInPartyRemoveLine")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+          {confirm?.type === "removeGuest"
+            ? t("walkInPartyConfirmRemoveGuest", { name: confirm.label })
+            : confirm
+              ? t("walkInPartyConfirmRemoveLine", { name: confirm.label })
+              : null}
+        </p>
+      </ModalShell>
+    </div>
   );
 }

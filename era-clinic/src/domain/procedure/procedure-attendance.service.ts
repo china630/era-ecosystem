@@ -22,14 +22,29 @@ import {
 } from "@/domain/procedure/extra-ticket";
 
 async function stampHotelFolioReceived(externalRef: string) {
-  const hotelBase = (process.env.HOTEL_PMS_URL ?? "http://127.0.0.1:3201").replace(/\/$/, "");
-  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
+  const {
+    PEER_SATELLITE_HOTEL,
+    resolvePeerSatelliteBaseUrl,
+    resolveSatelliteEventServiceToken,
+  } = await import("@era/satellite-kit");
+  const token = resolveSatelliteEventServiceToken();
   const { getClinicHotelOrganizationId } = await import("@/domain/physio/clinic-cutover.service");
   const hotelOrg =
     (await getClinicHotelOrganizationId()) ||
     process.env.ERA_HOTEL_ORGANIZATION_ID?.trim() ||
     "";
   if (!token || !hotelOrg) return;
+  let hotelBase: string;
+  try {
+    hotelBase = (
+      await resolvePeerSatelliteBaseUrl({
+        organizationId: hotelOrg,
+        satelliteKey: PEER_SATELLITE_HOTEL,
+      })
+    ).baseUrl;
+  } catch {
+    return;
+  }
   await fetch(`${hotelBase}/api/internal/v1/folio-charges/received`, {
     method: "POST",
     headers: {

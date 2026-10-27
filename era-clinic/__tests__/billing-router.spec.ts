@@ -54,6 +54,10 @@ jest.mock("@era/satellite-kit", () => ({
   resolveSatelliteTenantOrgId: jest.fn().mockReturnValue("org1"),
   satelliteOrganizationId: jest.fn().mockReturnValue("org1"),
   enterSatelliteTenant: jest.fn(),
+  PEER_SATELLITE_HOTEL: "hotel-pms",
+  resolvePeerSatelliteBaseUrl: jest
+    .fn()
+    .mockResolvedValue({ baseUrl: "http://hotel.test", source: "env" }),
 }));
 
 jest.mock("@/lib/request-organization", () => ({

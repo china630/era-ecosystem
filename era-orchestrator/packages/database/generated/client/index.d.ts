@@ -335,6 +335,21 @@ export type WorkforceVacationPlanRevision = $Result.DefaultSelection<Prisma.$Wor
  */
 export type Organization = $Result.DefaultSelection<Prisma.$OrganizationPayload>
 /**
+ * Model OrganizationProfile
+ * Legal/branding SoR for print, letterhead, receipts (CP-ORG-PROFILE-01).
+ */
+export type OrganizationProfile = $Result.DefaultSelection<Prisma.$OrganizationProfilePayload>
+/**
+ * Model OrganizationContactChannel
+ * 
+ */
+export type OrganizationContactChannel = $Result.DefaultSelection<Prisma.$OrganizationContactChannelPayload>
+/**
+ * Model OrganizationAddress
+ * 
+ */
+export type OrganizationAddress = $Result.DefaultSelection<Prisma.$OrganizationAddressPayload>
+/**
  * Model ElektrawebBridgePolicy
  * Per-hotel-org Elektraweb dual-run policy (SaaS SoR). Synced to hotel satellite keyed by organizationId.
  */
@@ -1119,6 +1134,41 @@ export const HoldingAccessRole: {
 export type HoldingAccessRole = (typeof HoldingAccessRole)[keyof typeof HoldingAccessRole]
 
 
+export const OrgContactKind: {
+  PHONE: 'PHONE',
+  MOBILE: 'MOBILE',
+  FAX: 'FAX',
+  EMAIL: 'EMAIL',
+  WEBSITE: 'WEBSITE',
+  WHATSAPP: 'WHATSAPP',
+  TELEGRAM: 'TELEGRAM'
+};
+
+export type OrgContactKind = (typeof OrgContactKind)[keyof typeof OrgContactKind]
+
+
+export const OrgContactPurpose: {
+  GENERAL: 'GENERAL',
+  LEGAL: 'LEGAL',
+  BILLING: 'BILLING',
+  BOOKING: 'BOOKING',
+  EMERGENCY: 'EMERGENCY',
+  PRINT: 'PRINT'
+};
+
+export type OrgContactPurpose = (typeof OrgContactPurpose)[keyof typeof OrgContactPurpose]
+
+
+export const OrgAddressKind: {
+  LEGAL: 'LEGAL',
+  POSTAL: 'POSTAL',
+  SITE: 'SITE',
+  BRANCH: 'BRANCH'
+};
+
+export type OrgAddressKind = (typeof OrgAddressKind)[keyof typeof OrgAddressKind]
+
+
 export const EarlyAccessModuleKey: {
   RETAIL_ECOM: 'RETAIL_ECOM',
   LOGISTICS_CUSTOMS: 'LOGISTICS_CUSTOMS',
@@ -1389,6 +1439,18 @@ export const OrgRouting: typeof $Enums.OrgRouting
 export type HoldingAccessRole = $Enums.HoldingAccessRole
 
 export const HoldingAccessRole: typeof $Enums.HoldingAccessRole
+
+export type OrgContactKind = $Enums.OrgContactKind
+
+export const OrgContactKind: typeof $Enums.OrgContactKind
+
+export type OrgContactPurpose = $Enums.OrgContactPurpose
+
+export const OrgContactPurpose: typeof $Enums.OrgContactPurpose
+
+export type OrgAddressKind = $Enums.OrgAddressKind
+
+export const OrgAddressKind: typeof $Enums.OrgAddressKind
 
 export type EarlyAccessModuleKey = $Enums.EarlyAccessModuleKey
 
@@ -2158,6 +2220,36 @@ export class PrismaClient<
     * ```
     */
   get organization(): Prisma.OrganizationDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.organizationProfile`: Exposes CRUD operations for the **OrganizationProfile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrganizationProfiles
+    * const organizationProfiles = await prisma.organizationProfile.findMany()
+    * ```
+    */
+  get organizationProfile(): Prisma.OrganizationProfileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.organizationContactChannel`: Exposes CRUD operations for the **OrganizationContactChannel** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrganizationContactChannels
+    * const organizationContactChannels = await prisma.organizationContactChannel.findMany()
+    * ```
+    */
+  get organizationContactChannel(): Prisma.OrganizationContactChannelDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.organizationAddress`: Exposes CRUD operations for the **OrganizationAddress** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrganizationAddresses
+    * const organizationAddresses = await prisma.organizationAddress.findMany()
+    * ```
+    */
+  get organizationAddress(): Prisma.OrganizationAddressDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.elektrawebBridgePolicy`: Exposes CRUD operations for the **ElektrawebBridgePolicy** model.
@@ -3026,6 +3118,9 @@ export namespace Prisma {
     WorkforceApprovalDecision: 'WorkforceApprovalDecision',
     WorkforceVacationPlanRevision: 'WorkforceVacationPlanRevision',
     Organization: 'Organization',
+    OrganizationProfile: 'OrganizationProfile',
+    OrganizationContactChannel: 'OrganizationContactChannel',
+    OrganizationAddress: 'OrganizationAddress',
     ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
     ClinicCutoverPolicy: 'ClinicCutoverPolicy',
     FiscalHardwareDevice: 'FiscalHardwareDevice',
@@ -3078,7 +3173,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationProfile" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -7818,6 +7913,228 @@ export namespace Prisma {
           }
         }
       }
+      OrganizationProfile: {
+        payload: Prisma.$OrganizationProfilePayload<ExtArgs>
+        fields: Prisma.OrganizationProfileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationProfileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationProfileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationProfileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationProfileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationProfileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationProfileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationProfileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationProfileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationProfileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>
+          }
+          update: {
+            args: Prisma.OrganizationProfileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationProfileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationProfileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrganizationProfileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>[]
+          }
+          upsert: {
+            args: Prisma.OrganizationProfileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationProfilePayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationProfileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganizationProfile>
+          }
+          groupBy: {
+            args: Prisma.OrganizationProfileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationProfileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationProfileCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationProfileCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrganizationContactChannel: {
+        payload: Prisma.$OrganizationContactChannelPayload<ExtArgs>
+        fields: Prisma.OrganizationContactChannelFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationContactChannelFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationContactChannelFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationContactChannelFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationContactChannelFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationContactChannelFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationContactChannelCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationContactChannelCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationContactChannelCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationContactChannelDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>
+          }
+          update: {
+            args: Prisma.OrganizationContactChannelUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationContactChannelDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationContactChannelUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrganizationContactChannelUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>[]
+          }
+          upsert: {
+            args: Prisma.OrganizationContactChannelUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationContactChannelPayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationContactChannelAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganizationContactChannel>
+          }
+          groupBy: {
+            args: Prisma.OrganizationContactChannelGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationContactChannelGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationContactChannelCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationContactChannelCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrganizationAddress: {
+        payload: Prisma.$OrganizationAddressPayload<ExtArgs>
+        fields: Prisma.OrganizationAddressFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationAddressFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationAddressFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationAddressFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationAddressFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationAddressFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationAddressCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationAddressCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationAddressCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationAddressDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>
+          }
+          update: {
+            args: Prisma.OrganizationAddressUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationAddressDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationAddressUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrganizationAddressUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>[]
+          }
+          upsert: {
+            args: Prisma.OrganizationAddressUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationAddressPayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationAddressAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganizationAddress>
+          }
+          groupBy: {
+            args: Prisma.OrganizationAddressGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationAddressGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationAddressCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationAddressCountAggregateOutputType> | number
+          }
+        }
+      }
       ElektrawebBridgePolicy: {
         payload: Prisma.$ElektrawebBridgePolicyPayload<ExtArgs>
         fields: Prisma.ElektrawebBridgePolicyFieldRefs
@@ -10728,6 +11045,9 @@ export namespace Prisma {
     workforceApprovalDecision?: WorkforceApprovalDecisionOmit
     workforceVacationPlanRevision?: WorkforceVacationPlanRevisionOmit
     organization?: OrganizationOmit
+    organizationProfile?: OrganizationProfileOmit
+    organizationContactChannel?: OrganizationContactChannelOmit
+    organizationAddress?: OrganizationAddressOmit
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOmit
     clinicCutoverPolicy?: ClinicCutoverPolicyOmit
     fiscalHardwareDevice?: FiscalHardwareDeviceOmit
@@ -12329,6 +12649,46 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountBuyerOrgGrantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BuyerOrgGrantWhereInput
+  }
+
+
+  /**
+   * Count Type OrganizationProfileCountOutputType
+   */
+
+  export type OrganizationProfileCountOutputType = {
+    contacts: number
+    addresses: number
+  }
+
+  export type OrganizationProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    contacts?: boolean | OrganizationProfileCountOutputTypeCountContactsArgs
+    addresses?: boolean | OrganizationProfileCountOutputTypeCountAddressesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * OrganizationProfileCountOutputType without action
+   */
+  export type OrganizationProfileCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfileCountOutputType
+     */
+    select?: OrganizationProfileCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationProfileCountOutputType without action
+   */
+  export type OrganizationProfileCountOutputTypeCountContactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationContactChannelWhereInput
+  }
+
+  /**
+   * OrganizationProfileCountOutputType without action
+   */
+  export type OrganizationProfileCountOutputTypeCountAddressesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationAddressWhereInput
   }
 
 
@@ -87414,6 +87774,7 @@ export namespace Prisma {
     holding?: boolean | Organization$holdingArgs<ExtArgs>
     agencyPropertyGrants?: boolean | Organization$agencyPropertyGrantsArgs<ExtArgs>
     buyerOrgGrants?: boolean | Organization$buyerOrgGrantsArgs<ExtArgs>
+    profile?: boolean | Organization$profileArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -87573,6 +87934,7 @@ export namespace Prisma {
     holding?: boolean | Organization$holdingArgs<ExtArgs>
     agencyPropertyGrants?: boolean | Organization$agencyPropertyGrantsArgs<ExtArgs>
     buyerOrgGrants?: boolean | Organization$buyerOrgGrantsArgs<ExtArgs>
+    profile?: boolean | Organization$profileArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -87647,6 +88009,7 @@ export namespace Prisma {
       holding: Prisma.$HoldingPayload<ExtArgs> | null
       agencyPropertyGrants: Prisma.$AgencyPropertyGrantPayload<ExtArgs>[]
       buyerOrgGrants: Prisma.$BuyerOrgGrantPayload<ExtArgs>[]
+      profile: Prisma.$OrganizationProfilePayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -88137,6 +88500,7 @@ export namespace Prisma {
     holding<T extends Organization$holdingArgs<ExtArgs> = {}>(args?: Subset<T, Organization$holdingArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     agencyPropertyGrants<T extends Organization$agencyPropertyGrantsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$agencyPropertyGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     buyerOrgGrants<T extends Organization$buyerOrgGrantsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$buyerOrgGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BuyerOrgGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    profile<T extends Organization$profileArgs<ExtArgs> = {}>(args?: Subset<T, Organization$profileArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -89951,6 +90315,25 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.profile
+   */
+  export type Organization$profileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    where?: OrganizationProfileWhereInput
+  }
+
+  /**
    * Organization without action
    */
   export type OrganizationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -89966,6 +90349,3633 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: OrganizationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrganizationProfile
+   */
+
+  export type AggregateOrganizationProfile = {
+    _count: OrganizationProfileCountAggregateOutputType | null
+    _min: OrganizationProfileMinAggregateOutputType | null
+    _max: OrganizationProfileMaxAggregateOutputType | null
+  }
+
+  export type OrganizationProfileMinAggregateOutputType = {
+    organizationId: string | null
+    tradeName: string | null
+    nameAz: string | null
+    nameRu: string | null
+    nameEn: string | null
+    directorName: string | null
+    directorTitle: string | null
+    logoUrl: string | null
+    stampUrl: string | null
+    signatureDirectorUrl: string | null
+    bankLine: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationProfileMaxAggregateOutputType = {
+    organizationId: string | null
+    tradeName: string | null
+    nameAz: string | null
+    nameRu: string | null
+    nameEn: string | null
+    directorName: string | null
+    directorTitle: string | null
+    logoUrl: string | null
+    stampUrl: string | null
+    signatureDirectorUrl: string | null
+    bankLine: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationProfileCountAggregateOutputType = {
+    organizationId: number
+    tradeName: number
+    nameAz: number
+    nameRu: number
+    nameEn: number
+    directorName: number
+    directorTitle: number
+    logoUrl: number
+    stampUrl: number
+    signatureDirectorUrl: number
+    bankLine: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrganizationProfileMinAggregateInputType = {
+    organizationId?: true
+    tradeName?: true
+    nameAz?: true
+    nameRu?: true
+    nameEn?: true
+    directorName?: true
+    directorTitle?: true
+    logoUrl?: true
+    stampUrl?: true
+    signatureDirectorUrl?: true
+    bankLine?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationProfileMaxAggregateInputType = {
+    organizationId?: true
+    tradeName?: true
+    nameAz?: true
+    nameRu?: true
+    nameEn?: true
+    directorName?: true
+    directorTitle?: true
+    logoUrl?: true
+    stampUrl?: true
+    signatureDirectorUrl?: true
+    bankLine?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationProfileCountAggregateInputType = {
+    organizationId?: true
+    tradeName?: true
+    nameAz?: true
+    nameRu?: true
+    nameEn?: true
+    directorName?: true
+    directorTitle?: true
+    logoUrl?: true
+    stampUrl?: true
+    signatureDirectorUrl?: true
+    bankLine?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrganizationProfileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationProfile to aggregate.
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationProfiles to fetch.
+     */
+    orderBy?: OrganizationProfileOrderByWithRelationInput | OrganizationProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrganizationProfiles
+    **/
+    _count?: true | OrganizationProfileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationProfileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationProfileMaxAggregateInputType
+  }
+
+  export type GetOrganizationProfileAggregateType<T extends OrganizationProfileAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganizationProfile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganizationProfile[P]>
+      : GetScalarType<T[P], AggregateOrganizationProfile[P]>
+  }
+
+
+
+
+  export type OrganizationProfileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationProfileWhereInput
+    orderBy?: OrganizationProfileOrderByWithAggregationInput | OrganizationProfileOrderByWithAggregationInput[]
+    by: OrganizationProfileScalarFieldEnum[] | OrganizationProfileScalarFieldEnum
+    having?: OrganizationProfileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationProfileCountAggregateInputType | true
+    _min?: OrganizationProfileMinAggregateInputType
+    _max?: OrganizationProfileMaxAggregateInputType
+  }
+
+  export type OrganizationProfileGroupByOutputType = {
+    organizationId: string
+    tradeName: string | null
+    nameAz: string | null
+    nameRu: string | null
+    nameEn: string | null
+    directorName: string | null
+    directorTitle: string | null
+    logoUrl: string | null
+    stampUrl: string | null
+    signatureDirectorUrl: string | null
+    bankLine: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: OrganizationProfileCountAggregateOutputType | null
+    _min: OrganizationProfileMinAggregateOutputType | null
+    _max: OrganizationProfileMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationProfileGroupByPayload<T extends OrganizationProfileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationProfileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationProfileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationProfileGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationProfileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationProfileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    tradeName?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    directorName?: boolean
+    directorTitle?: boolean
+    logoUrl?: boolean
+    stampUrl?: boolean
+    signatureDirectorUrl?: boolean
+    bankLine?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    contacts?: boolean | OrganizationProfile$contactsArgs<ExtArgs>
+    addresses?: boolean | OrganizationProfile$addressesArgs<ExtArgs>
+    _count?: boolean | OrganizationProfileCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationProfile"]>
+
+  export type OrganizationProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    tradeName?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    directorName?: boolean
+    directorTitle?: boolean
+    logoUrl?: boolean
+    stampUrl?: boolean
+    signatureDirectorUrl?: boolean
+    bankLine?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationProfile"]>
+
+  export type OrganizationProfileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    tradeName?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    directorName?: boolean
+    directorTitle?: boolean
+    logoUrl?: boolean
+    stampUrl?: boolean
+    signatureDirectorUrl?: boolean
+    bankLine?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationProfile"]>
+
+  export type OrganizationProfileSelectScalar = {
+    organizationId?: boolean
+    tradeName?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    directorName?: boolean
+    directorTitle?: boolean
+    logoUrl?: boolean
+    stampUrl?: boolean
+    signatureDirectorUrl?: boolean
+    bankLine?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrganizationProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "tradeName" | "nameAz" | "nameRu" | "nameEn" | "directorName" | "directorTitle" | "logoUrl" | "stampUrl" | "signatureDirectorUrl" | "bankLine" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationProfile"]>
+  export type OrganizationProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    contacts?: boolean | OrganizationProfile$contactsArgs<ExtArgs>
+    addresses?: boolean | OrganizationProfile$addressesArgs<ExtArgs>
+    _count?: boolean | OrganizationProfileCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type OrganizationProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type OrganizationProfileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $OrganizationProfilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrganizationProfile"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      contacts: Prisma.$OrganizationContactChannelPayload<ExtArgs>[]
+      addresses: Prisma.$OrganizationAddressPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      tradeName: string | null
+      nameAz: string | null
+      nameRu: string | null
+      nameEn: string | null
+      directorName: string | null
+      directorTitle: string | null
+      logoUrl: string | null
+      stampUrl: string | null
+      signatureDirectorUrl: string | null
+      bankLine: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["organizationProfile"]>
+    composites: {}
+  }
+
+  type OrganizationProfileGetPayload<S extends boolean | null | undefined | OrganizationProfileDefaultArgs> = $Result.GetResult<Prisma.$OrganizationProfilePayload, S>
+
+  type OrganizationProfileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrganizationProfileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrganizationProfileCountAggregateInputType | true
+    }
+
+  export interface OrganizationProfileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrganizationProfile'], meta: { name: 'OrganizationProfile' } }
+    /**
+     * Find zero or one OrganizationProfile that matches the filter.
+     * @param {OrganizationProfileFindUniqueArgs} args - Arguments to find a OrganizationProfile
+     * @example
+     * // Get one OrganizationProfile
+     * const organizationProfile = await prisma.organizationProfile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationProfileFindUniqueArgs>(args: SelectSubset<T, OrganizationProfileFindUniqueArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrganizationProfile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrganizationProfileFindUniqueOrThrowArgs} args - Arguments to find a OrganizationProfile
+     * @example
+     * // Get one OrganizationProfile
+     * const organizationProfile = await prisma.organizationProfile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationProfileFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationProfileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationProfile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileFindFirstArgs} args - Arguments to find a OrganizationProfile
+     * @example
+     * // Get one OrganizationProfile
+     * const organizationProfile = await prisma.organizationProfile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationProfileFindFirstArgs>(args?: SelectSubset<T, OrganizationProfileFindFirstArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationProfile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileFindFirstOrThrowArgs} args - Arguments to find a OrganizationProfile
+     * @example
+     * // Get one OrganizationProfile
+     * const organizationProfile = await prisma.organizationProfile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationProfileFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationProfileFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrganizationProfiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrganizationProfiles
+     * const organizationProfiles = await prisma.organizationProfile.findMany()
+     * 
+     * // Get first 10 OrganizationProfiles
+     * const organizationProfiles = await prisma.organizationProfile.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const organizationProfileWithOrganizationIdOnly = await prisma.organizationProfile.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends OrganizationProfileFindManyArgs>(args?: SelectSubset<T, OrganizationProfileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrganizationProfile.
+     * @param {OrganizationProfileCreateArgs} args - Arguments to create a OrganizationProfile.
+     * @example
+     * // Create one OrganizationProfile
+     * const OrganizationProfile = await prisma.organizationProfile.create({
+     *   data: {
+     *     // ... data to create a OrganizationProfile
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationProfileCreateArgs>(args: SelectSubset<T, OrganizationProfileCreateArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrganizationProfiles.
+     * @param {OrganizationProfileCreateManyArgs} args - Arguments to create many OrganizationProfiles.
+     * @example
+     * // Create many OrganizationProfiles
+     * const organizationProfile = await prisma.organizationProfile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationProfileCreateManyArgs>(args?: SelectSubset<T, OrganizationProfileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrganizationProfiles and returns the data saved in the database.
+     * @param {OrganizationProfileCreateManyAndReturnArgs} args - Arguments to create many OrganizationProfiles.
+     * @example
+     * // Create many OrganizationProfiles
+     * const organizationProfile = await prisma.organizationProfile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrganizationProfiles and only return the `organizationId`
+     * const organizationProfileWithOrganizationIdOnly = await prisma.organizationProfile.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationProfileCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationProfileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrganizationProfile.
+     * @param {OrganizationProfileDeleteArgs} args - Arguments to delete one OrganizationProfile.
+     * @example
+     * // Delete one OrganizationProfile
+     * const OrganizationProfile = await prisma.organizationProfile.delete({
+     *   where: {
+     *     // ... filter to delete one OrganizationProfile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationProfileDeleteArgs>(args: SelectSubset<T, OrganizationProfileDeleteArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrganizationProfile.
+     * @param {OrganizationProfileUpdateArgs} args - Arguments to update one OrganizationProfile.
+     * @example
+     * // Update one OrganizationProfile
+     * const organizationProfile = await prisma.organizationProfile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationProfileUpdateArgs>(args: SelectSubset<T, OrganizationProfileUpdateArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrganizationProfiles.
+     * @param {OrganizationProfileDeleteManyArgs} args - Arguments to filter OrganizationProfiles to delete.
+     * @example
+     * // Delete a few OrganizationProfiles
+     * const { count } = await prisma.organizationProfile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationProfileDeleteManyArgs>(args?: SelectSubset<T, OrganizationProfileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrganizationProfiles
+     * const organizationProfile = await prisma.organizationProfile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationProfileUpdateManyArgs>(args: SelectSubset<T, OrganizationProfileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationProfiles and returns the data updated in the database.
+     * @param {OrganizationProfileUpdateManyAndReturnArgs} args - Arguments to update many OrganizationProfiles.
+     * @example
+     * // Update many OrganizationProfiles
+     * const organizationProfile = await prisma.organizationProfile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrganizationProfiles and only return the `organizationId`
+     * const organizationProfileWithOrganizationIdOnly = await prisma.organizationProfile.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrganizationProfileUpdateManyAndReturnArgs>(args: SelectSubset<T, OrganizationProfileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrganizationProfile.
+     * @param {OrganizationProfileUpsertArgs} args - Arguments to update or create a OrganizationProfile.
+     * @example
+     * // Update or create a OrganizationProfile
+     * const organizationProfile = await prisma.organizationProfile.upsert({
+     *   create: {
+     *     // ... data to create a OrganizationProfile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrganizationProfile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationProfileUpsertArgs>(args: SelectSubset<T, OrganizationProfileUpsertArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrganizationProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileCountArgs} args - Arguments to filter OrganizationProfiles to count.
+     * @example
+     * // Count the number of OrganizationProfiles
+     * const count = await prisma.organizationProfile.count({
+     *   where: {
+     *     // ... the filter for the OrganizationProfiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationProfileCountArgs>(
+      args?: Subset<T, OrganizationProfileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationProfileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrganizationProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationProfileAggregateArgs>(args: Subset<T, OrganizationProfileAggregateArgs>): Prisma.PrismaPromise<GetOrganizationProfileAggregateType<T>>
+
+    /**
+     * Group by OrganizationProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationProfileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationProfileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationProfileGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationProfileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationProfileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationProfileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrganizationProfile model
+   */
+  readonly fields: OrganizationProfileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrganizationProfile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    contacts<T extends OrganizationProfile$contactsArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationProfile$contactsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    addresses<T extends OrganizationProfile$addressesArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationProfile$addressesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrganizationProfile model
+   */
+  interface OrganizationProfileFieldRefs {
+    readonly organizationId: FieldRef<"OrganizationProfile", 'String'>
+    readonly tradeName: FieldRef<"OrganizationProfile", 'String'>
+    readonly nameAz: FieldRef<"OrganizationProfile", 'String'>
+    readonly nameRu: FieldRef<"OrganizationProfile", 'String'>
+    readonly nameEn: FieldRef<"OrganizationProfile", 'String'>
+    readonly directorName: FieldRef<"OrganizationProfile", 'String'>
+    readonly directorTitle: FieldRef<"OrganizationProfile", 'String'>
+    readonly logoUrl: FieldRef<"OrganizationProfile", 'String'>
+    readonly stampUrl: FieldRef<"OrganizationProfile", 'String'>
+    readonly signatureDirectorUrl: FieldRef<"OrganizationProfile", 'String'>
+    readonly bankLine: FieldRef<"OrganizationProfile", 'String'>
+    readonly createdAt: FieldRef<"OrganizationProfile", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrganizationProfile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrganizationProfile findUnique
+   */
+  export type OrganizationProfileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationProfile to fetch.
+     */
+    where: OrganizationProfileWhereUniqueInput
+  }
+
+  /**
+   * OrganizationProfile findUniqueOrThrow
+   */
+  export type OrganizationProfileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationProfile to fetch.
+     */
+    where: OrganizationProfileWhereUniqueInput
+  }
+
+  /**
+   * OrganizationProfile findFirst
+   */
+  export type OrganizationProfileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationProfile to fetch.
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationProfiles to fetch.
+     */
+    orderBy?: OrganizationProfileOrderByWithRelationInput | OrganizationProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationProfiles.
+     */
+    cursor?: OrganizationProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationProfiles.
+     */
+    distinct?: OrganizationProfileScalarFieldEnum | OrganizationProfileScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationProfile findFirstOrThrow
+   */
+  export type OrganizationProfileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationProfile to fetch.
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationProfiles to fetch.
+     */
+    orderBy?: OrganizationProfileOrderByWithRelationInput | OrganizationProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationProfiles.
+     */
+    cursor?: OrganizationProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationProfiles.
+     */
+    distinct?: OrganizationProfileScalarFieldEnum | OrganizationProfileScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationProfile findMany
+   */
+  export type OrganizationProfileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationProfiles to fetch.
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationProfiles to fetch.
+     */
+    orderBy?: OrganizationProfileOrderByWithRelationInput | OrganizationProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrganizationProfiles.
+     */
+    cursor?: OrganizationProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationProfiles.
+     */
+    distinct?: OrganizationProfileScalarFieldEnum | OrganizationProfileScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationProfile create
+   */
+  export type OrganizationProfileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrganizationProfile.
+     */
+    data: XOR<OrganizationProfileCreateInput, OrganizationProfileUncheckedCreateInput>
+  }
+
+  /**
+   * OrganizationProfile createMany
+   */
+  export type OrganizationProfileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrganizationProfiles.
+     */
+    data: OrganizationProfileCreateManyInput | OrganizationProfileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationProfile createManyAndReturn
+   */
+  export type OrganizationProfileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrganizationProfiles.
+     */
+    data: OrganizationProfileCreateManyInput | OrganizationProfileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationProfile update
+   */
+  export type OrganizationProfileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrganizationProfile.
+     */
+    data: XOR<OrganizationProfileUpdateInput, OrganizationProfileUncheckedUpdateInput>
+    /**
+     * Choose, which OrganizationProfile to update.
+     */
+    where: OrganizationProfileWhereUniqueInput
+  }
+
+  /**
+   * OrganizationProfile updateMany
+   */
+  export type OrganizationProfileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrganizationProfiles.
+     */
+    data: XOR<OrganizationProfileUpdateManyMutationInput, OrganizationProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationProfiles to update
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * Limit how many OrganizationProfiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationProfile updateManyAndReturn
+   */
+  export type OrganizationProfileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * The data used to update OrganizationProfiles.
+     */
+    data: XOR<OrganizationProfileUpdateManyMutationInput, OrganizationProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationProfiles to update
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * Limit how many OrganizationProfiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationProfile upsert
+   */
+  export type OrganizationProfileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrganizationProfile to update in case it exists.
+     */
+    where: OrganizationProfileWhereUniqueInput
+    /**
+     * In case the OrganizationProfile found by the `where` argument doesn't exist, create a new OrganizationProfile with this data.
+     */
+    create: XOR<OrganizationProfileCreateInput, OrganizationProfileUncheckedCreateInput>
+    /**
+     * In case the OrganizationProfile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationProfileUpdateInput, OrganizationProfileUncheckedUpdateInput>
+  }
+
+  /**
+   * OrganizationProfile delete
+   */
+  export type OrganizationProfileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+    /**
+     * Filter which OrganizationProfile to delete.
+     */
+    where: OrganizationProfileWhereUniqueInput
+  }
+
+  /**
+   * OrganizationProfile deleteMany
+   */
+  export type OrganizationProfileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationProfiles to delete
+     */
+    where?: OrganizationProfileWhereInput
+    /**
+     * Limit how many OrganizationProfiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationProfile.contacts
+   */
+  export type OrganizationProfile$contactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    where?: OrganizationContactChannelWhereInput
+    orderBy?: OrganizationContactChannelOrderByWithRelationInput | OrganizationContactChannelOrderByWithRelationInput[]
+    cursor?: OrganizationContactChannelWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationContactChannelScalarFieldEnum | OrganizationContactChannelScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationProfile.addresses
+   */
+  export type OrganizationProfile$addressesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    where?: OrganizationAddressWhereInput
+    orderBy?: OrganizationAddressOrderByWithRelationInput | OrganizationAddressOrderByWithRelationInput[]
+    cursor?: OrganizationAddressWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationAddressScalarFieldEnum | OrganizationAddressScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationProfile without action
+   */
+  export type OrganizationProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationProfile
+     */
+    select?: OrganizationProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationProfile
+     */
+    omit?: OrganizationProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationProfileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrganizationContactChannel
+   */
+
+  export type AggregateOrganizationContactChannel = {
+    _count: OrganizationContactChannelCountAggregateOutputType | null
+    _avg: OrganizationContactChannelAvgAggregateOutputType | null
+    _sum: OrganizationContactChannelSumAggregateOutputType | null
+    _min: OrganizationContactChannelMinAggregateOutputType | null
+    _max: OrganizationContactChannelMaxAggregateOutputType | null
+  }
+
+  export type OrganizationContactChannelAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type OrganizationContactChannelSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type OrganizationContactChannelMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: $Enums.OrgContactKind | null
+    value: string | null
+    label: string | null
+    purpose: $Enums.OrgContactPurpose | null
+    isPrimary: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationContactChannelMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: $Enums.OrgContactKind | null
+    value: string | null
+    label: string | null
+    purpose: $Enums.OrgContactPurpose | null
+    isPrimary: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationContactChannelCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    kind: number
+    value: number
+    label: number
+    purpose: number
+    isPrimary: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrganizationContactChannelAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type OrganizationContactChannelSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type OrganizationContactChannelMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    value?: true
+    label?: true
+    purpose?: true
+    isPrimary?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationContactChannelMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    value?: true
+    label?: true
+    purpose?: true
+    isPrimary?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationContactChannelCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    value?: true
+    label?: true
+    purpose?: true
+    isPrimary?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrganizationContactChannelAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationContactChannel to aggregate.
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationContactChannels to fetch.
+     */
+    orderBy?: OrganizationContactChannelOrderByWithRelationInput | OrganizationContactChannelOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationContactChannelWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationContactChannels from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationContactChannels.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrganizationContactChannels
+    **/
+    _count?: true | OrganizationContactChannelCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrganizationContactChannelAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrganizationContactChannelSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationContactChannelMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationContactChannelMaxAggregateInputType
+  }
+
+  export type GetOrganizationContactChannelAggregateType<T extends OrganizationContactChannelAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganizationContactChannel]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganizationContactChannel[P]>
+      : GetScalarType<T[P], AggregateOrganizationContactChannel[P]>
+  }
+
+
+
+
+  export type OrganizationContactChannelGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationContactChannelWhereInput
+    orderBy?: OrganizationContactChannelOrderByWithAggregationInput | OrganizationContactChannelOrderByWithAggregationInput[]
+    by: OrganizationContactChannelScalarFieldEnum[] | OrganizationContactChannelScalarFieldEnum
+    having?: OrganizationContactChannelScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationContactChannelCountAggregateInputType | true
+    _avg?: OrganizationContactChannelAvgAggregateInputType
+    _sum?: OrganizationContactChannelSumAggregateInputType
+    _min?: OrganizationContactChannelMinAggregateInputType
+    _max?: OrganizationContactChannelMaxAggregateInputType
+  }
+
+  export type OrganizationContactChannelGroupByOutputType = {
+    id: string
+    organizationId: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label: string | null
+    purpose: $Enums.OrgContactPurpose
+    isPrimary: boolean
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: OrganizationContactChannelCountAggregateOutputType | null
+    _avg: OrganizationContactChannelAvgAggregateOutputType | null
+    _sum: OrganizationContactChannelSumAggregateOutputType | null
+    _min: OrganizationContactChannelMinAggregateOutputType | null
+    _max: OrganizationContactChannelMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationContactChannelGroupByPayload<T extends OrganizationContactChannelGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationContactChannelGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationContactChannelGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationContactChannelGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationContactChannelGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationContactChannelSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    value?: boolean
+    label?: boolean
+    purpose?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationContactChannel"]>
+
+  export type OrganizationContactChannelSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    value?: boolean
+    label?: boolean
+    purpose?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationContactChannel"]>
+
+  export type OrganizationContactChannelSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    value?: boolean
+    label?: boolean
+    purpose?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationContactChannel"]>
+
+  export type OrganizationContactChannelSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    value?: boolean
+    label?: boolean
+    purpose?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrganizationContactChannelOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "kind" | "value" | "label" | "purpose" | "isPrimary" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationContactChannel"]>
+  export type OrganizationContactChannelInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }
+  export type OrganizationContactChannelIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }
+  export type OrganizationContactChannelIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $OrganizationContactChannelPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrganizationContactChannel"
+    objects: {
+      profile: Prisma.$OrganizationProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      kind: $Enums.OrgContactKind
+      value: string
+      label: string | null
+      purpose: $Enums.OrgContactPurpose
+      isPrimary: boolean
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["organizationContactChannel"]>
+    composites: {}
+  }
+
+  type OrganizationContactChannelGetPayload<S extends boolean | null | undefined | OrganizationContactChannelDefaultArgs> = $Result.GetResult<Prisma.$OrganizationContactChannelPayload, S>
+
+  type OrganizationContactChannelCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrganizationContactChannelFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrganizationContactChannelCountAggregateInputType | true
+    }
+
+  export interface OrganizationContactChannelDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrganizationContactChannel'], meta: { name: 'OrganizationContactChannel' } }
+    /**
+     * Find zero or one OrganizationContactChannel that matches the filter.
+     * @param {OrganizationContactChannelFindUniqueArgs} args - Arguments to find a OrganizationContactChannel
+     * @example
+     * // Get one OrganizationContactChannel
+     * const organizationContactChannel = await prisma.organizationContactChannel.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationContactChannelFindUniqueArgs>(args: SelectSubset<T, OrganizationContactChannelFindUniqueArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrganizationContactChannel that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrganizationContactChannelFindUniqueOrThrowArgs} args - Arguments to find a OrganizationContactChannel
+     * @example
+     * // Get one OrganizationContactChannel
+     * const organizationContactChannel = await prisma.organizationContactChannel.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationContactChannelFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationContactChannelFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationContactChannel that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelFindFirstArgs} args - Arguments to find a OrganizationContactChannel
+     * @example
+     * // Get one OrganizationContactChannel
+     * const organizationContactChannel = await prisma.organizationContactChannel.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationContactChannelFindFirstArgs>(args?: SelectSubset<T, OrganizationContactChannelFindFirstArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationContactChannel that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelFindFirstOrThrowArgs} args - Arguments to find a OrganizationContactChannel
+     * @example
+     * // Get one OrganizationContactChannel
+     * const organizationContactChannel = await prisma.organizationContactChannel.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationContactChannelFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationContactChannelFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrganizationContactChannels that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrganizationContactChannels
+     * const organizationContactChannels = await prisma.organizationContactChannel.findMany()
+     * 
+     * // Get first 10 OrganizationContactChannels
+     * const organizationContactChannels = await prisma.organizationContactChannel.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const organizationContactChannelWithIdOnly = await prisma.organizationContactChannel.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrganizationContactChannelFindManyArgs>(args?: SelectSubset<T, OrganizationContactChannelFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrganizationContactChannel.
+     * @param {OrganizationContactChannelCreateArgs} args - Arguments to create a OrganizationContactChannel.
+     * @example
+     * // Create one OrganizationContactChannel
+     * const OrganizationContactChannel = await prisma.organizationContactChannel.create({
+     *   data: {
+     *     // ... data to create a OrganizationContactChannel
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationContactChannelCreateArgs>(args: SelectSubset<T, OrganizationContactChannelCreateArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrganizationContactChannels.
+     * @param {OrganizationContactChannelCreateManyArgs} args - Arguments to create many OrganizationContactChannels.
+     * @example
+     * // Create many OrganizationContactChannels
+     * const organizationContactChannel = await prisma.organizationContactChannel.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationContactChannelCreateManyArgs>(args?: SelectSubset<T, OrganizationContactChannelCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrganizationContactChannels and returns the data saved in the database.
+     * @param {OrganizationContactChannelCreateManyAndReturnArgs} args - Arguments to create many OrganizationContactChannels.
+     * @example
+     * // Create many OrganizationContactChannels
+     * const organizationContactChannel = await prisma.organizationContactChannel.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrganizationContactChannels and only return the `id`
+     * const organizationContactChannelWithIdOnly = await prisma.organizationContactChannel.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationContactChannelCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationContactChannelCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrganizationContactChannel.
+     * @param {OrganizationContactChannelDeleteArgs} args - Arguments to delete one OrganizationContactChannel.
+     * @example
+     * // Delete one OrganizationContactChannel
+     * const OrganizationContactChannel = await prisma.organizationContactChannel.delete({
+     *   where: {
+     *     // ... filter to delete one OrganizationContactChannel
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationContactChannelDeleteArgs>(args: SelectSubset<T, OrganizationContactChannelDeleteArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrganizationContactChannel.
+     * @param {OrganizationContactChannelUpdateArgs} args - Arguments to update one OrganizationContactChannel.
+     * @example
+     * // Update one OrganizationContactChannel
+     * const organizationContactChannel = await prisma.organizationContactChannel.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationContactChannelUpdateArgs>(args: SelectSubset<T, OrganizationContactChannelUpdateArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrganizationContactChannels.
+     * @param {OrganizationContactChannelDeleteManyArgs} args - Arguments to filter OrganizationContactChannels to delete.
+     * @example
+     * // Delete a few OrganizationContactChannels
+     * const { count } = await prisma.organizationContactChannel.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationContactChannelDeleteManyArgs>(args?: SelectSubset<T, OrganizationContactChannelDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationContactChannels.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrganizationContactChannels
+     * const organizationContactChannel = await prisma.organizationContactChannel.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationContactChannelUpdateManyArgs>(args: SelectSubset<T, OrganizationContactChannelUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationContactChannels and returns the data updated in the database.
+     * @param {OrganizationContactChannelUpdateManyAndReturnArgs} args - Arguments to update many OrganizationContactChannels.
+     * @example
+     * // Update many OrganizationContactChannels
+     * const organizationContactChannel = await prisma.organizationContactChannel.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrganizationContactChannels and only return the `id`
+     * const organizationContactChannelWithIdOnly = await prisma.organizationContactChannel.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrganizationContactChannelUpdateManyAndReturnArgs>(args: SelectSubset<T, OrganizationContactChannelUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrganizationContactChannel.
+     * @param {OrganizationContactChannelUpsertArgs} args - Arguments to update or create a OrganizationContactChannel.
+     * @example
+     * // Update or create a OrganizationContactChannel
+     * const organizationContactChannel = await prisma.organizationContactChannel.upsert({
+     *   create: {
+     *     // ... data to create a OrganizationContactChannel
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrganizationContactChannel we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationContactChannelUpsertArgs>(args: SelectSubset<T, OrganizationContactChannelUpsertArgs<ExtArgs>>): Prisma__OrganizationContactChannelClient<$Result.GetResult<Prisma.$OrganizationContactChannelPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrganizationContactChannels.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelCountArgs} args - Arguments to filter OrganizationContactChannels to count.
+     * @example
+     * // Count the number of OrganizationContactChannels
+     * const count = await prisma.organizationContactChannel.count({
+     *   where: {
+     *     // ... the filter for the OrganizationContactChannels we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationContactChannelCountArgs>(
+      args?: Subset<T, OrganizationContactChannelCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationContactChannelCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrganizationContactChannel.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationContactChannelAggregateArgs>(args: Subset<T, OrganizationContactChannelAggregateArgs>): Prisma.PrismaPromise<GetOrganizationContactChannelAggregateType<T>>
+
+    /**
+     * Group by OrganizationContactChannel.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationContactChannelGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationContactChannelGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationContactChannelGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationContactChannelGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationContactChannelGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationContactChannelGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrganizationContactChannel model
+   */
+  readonly fields: OrganizationContactChannelFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrganizationContactChannel.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationContactChannelClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    profile<T extends OrganizationProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationProfileDefaultArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrganizationContactChannel model
+   */
+  interface OrganizationContactChannelFieldRefs {
+    readonly id: FieldRef<"OrganizationContactChannel", 'String'>
+    readonly organizationId: FieldRef<"OrganizationContactChannel", 'String'>
+    readonly kind: FieldRef<"OrganizationContactChannel", 'OrgContactKind'>
+    readonly value: FieldRef<"OrganizationContactChannel", 'String'>
+    readonly label: FieldRef<"OrganizationContactChannel", 'String'>
+    readonly purpose: FieldRef<"OrganizationContactChannel", 'OrgContactPurpose'>
+    readonly isPrimary: FieldRef<"OrganizationContactChannel", 'Boolean'>
+    readonly sortOrder: FieldRef<"OrganizationContactChannel", 'Int'>
+    readonly createdAt: FieldRef<"OrganizationContactChannel", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrganizationContactChannel", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrganizationContactChannel findUnique
+   */
+  export type OrganizationContactChannelFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationContactChannel to fetch.
+     */
+    where: OrganizationContactChannelWhereUniqueInput
+  }
+
+  /**
+   * OrganizationContactChannel findUniqueOrThrow
+   */
+  export type OrganizationContactChannelFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationContactChannel to fetch.
+     */
+    where: OrganizationContactChannelWhereUniqueInput
+  }
+
+  /**
+   * OrganizationContactChannel findFirst
+   */
+  export type OrganizationContactChannelFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationContactChannel to fetch.
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationContactChannels to fetch.
+     */
+    orderBy?: OrganizationContactChannelOrderByWithRelationInput | OrganizationContactChannelOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationContactChannels.
+     */
+    cursor?: OrganizationContactChannelWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationContactChannels from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationContactChannels.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationContactChannels.
+     */
+    distinct?: OrganizationContactChannelScalarFieldEnum | OrganizationContactChannelScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationContactChannel findFirstOrThrow
+   */
+  export type OrganizationContactChannelFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationContactChannel to fetch.
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationContactChannels to fetch.
+     */
+    orderBy?: OrganizationContactChannelOrderByWithRelationInput | OrganizationContactChannelOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationContactChannels.
+     */
+    cursor?: OrganizationContactChannelWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationContactChannels from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationContactChannels.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationContactChannels.
+     */
+    distinct?: OrganizationContactChannelScalarFieldEnum | OrganizationContactChannelScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationContactChannel findMany
+   */
+  export type OrganizationContactChannelFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationContactChannels to fetch.
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationContactChannels to fetch.
+     */
+    orderBy?: OrganizationContactChannelOrderByWithRelationInput | OrganizationContactChannelOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrganizationContactChannels.
+     */
+    cursor?: OrganizationContactChannelWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationContactChannels from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationContactChannels.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationContactChannels.
+     */
+    distinct?: OrganizationContactChannelScalarFieldEnum | OrganizationContactChannelScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationContactChannel create
+   */
+  export type OrganizationContactChannelCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrganizationContactChannel.
+     */
+    data: XOR<OrganizationContactChannelCreateInput, OrganizationContactChannelUncheckedCreateInput>
+  }
+
+  /**
+   * OrganizationContactChannel createMany
+   */
+  export type OrganizationContactChannelCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrganizationContactChannels.
+     */
+    data: OrganizationContactChannelCreateManyInput | OrganizationContactChannelCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationContactChannel createManyAndReturn
+   */
+  export type OrganizationContactChannelCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrganizationContactChannels.
+     */
+    data: OrganizationContactChannelCreateManyInput | OrganizationContactChannelCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationContactChannel update
+   */
+  export type OrganizationContactChannelUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrganizationContactChannel.
+     */
+    data: XOR<OrganizationContactChannelUpdateInput, OrganizationContactChannelUncheckedUpdateInput>
+    /**
+     * Choose, which OrganizationContactChannel to update.
+     */
+    where: OrganizationContactChannelWhereUniqueInput
+  }
+
+  /**
+   * OrganizationContactChannel updateMany
+   */
+  export type OrganizationContactChannelUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrganizationContactChannels.
+     */
+    data: XOR<OrganizationContactChannelUpdateManyMutationInput, OrganizationContactChannelUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationContactChannels to update
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * Limit how many OrganizationContactChannels to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationContactChannel updateManyAndReturn
+   */
+  export type OrganizationContactChannelUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * The data used to update OrganizationContactChannels.
+     */
+    data: XOR<OrganizationContactChannelUpdateManyMutationInput, OrganizationContactChannelUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationContactChannels to update
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * Limit how many OrganizationContactChannels to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationContactChannel upsert
+   */
+  export type OrganizationContactChannelUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrganizationContactChannel to update in case it exists.
+     */
+    where: OrganizationContactChannelWhereUniqueInput
+    /**
+     * In case the OrganizationContactChannel found by the `where` argument doesn't exist, create a new OrganizationContactChannel with this data.
+     */
+    create: XOR<OrganizationContactChannelCreateInput, OrganizationContactChannelUncheckedCreateInput>
+    /**
+     * In case the OrganizationContactChannel was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationContactChannelUpdateInput, OrganizationContactChannelUncheckedUpdateInput>
+  }
+
+  /**
+   * OrganizationContactChannel delete
+   */
+  export type OrganizationContactChannelDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+    /**
+     * Filter which OrganizationContactChannel to delete.
+     */
+    where: OrganizationContactChannelWhereUniqueInput
+  }
+
+  /**
+   * OrganizationContactChannel deleteMany
+   */
+  export type OrganizationContactChannelDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationContactChannels to delete
+     */
+    where?: OrganizationContactChannelWhereInput
+    /**
+     * Limit how many OrganizationContactChannels to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationContactChannel without action
+   */
+  export type OrganizationContactChannelDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationContactChannel
+     */
+    select?: OrganizationContactChannelSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationContactChannel
+     */
+    omit?: OrganizationContactChannelOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationContactChannelInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrganizationAddress
+   */
+
+  export type AggregateOrganizationAddress = {
+    _count: OrganizationAddressCountAggregateOutputType | null
+    _avg: OrganizationAddressAvgAggregateOutputType | null
+    _sum: OrganizationAddressSumAggregateOutputType | null
+    _min: OrganizationAddressMinAggregateOutputType | null
+    _max: OrganizationAddressMaxAggregateOutputType | null
+  }
+
+  export type OrganizationAddressAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type OrganizationAddressSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type OrganizationAddressMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: $Enums.OrgAddressKind | null
+    line1: string | null
+    line2: string | null
+    city: string | null
+    region: string | null
+    postalCode: string | null
+    country: string | null
+    lineAz: string | null
+    lineRu: string | null
+    lineEn: string | null
+    isPrimary: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationAddressMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    kind: $Enums.OrgAddressKind | null
+    line1: string | null
+    line2: string | null
+    city: string | null
+    region: string | null
+    postalCode: string | null
+    country: string | null
+    lineAz: string | null
+    lineRu: string | null
+    lineEn: string | null
+    isPrimary: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationAddressCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    kind: number
+    line1: number
+    line2: number
+    city: number
+    region: number
+    postalCode: number
+    country: number
+    lineAz: number
+    lineRu: number
+    lineEn: number
+    isPrimary: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrganizationAddressAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type OrganizationAddressSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type OrganizationAddressMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    line1?: true
+    line2?: true
+    city?: true
+    region?: true
+    postalCode?: true
+    country?: true
+    lineAz?: true
+    lineRu?: true
+    lineEn?: true
+    isPrimary?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationAddressMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    line1?: true
+    line2?: true
+    city?: true
+    region?: true
+    postalCode?: true
+    country?: true
+    lineAz?: true
+    lineRu?: true
+    lineEn?: true
+    isPrimary?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationAddressCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    kind?: true
+    line1?: true
+    line2?: true
+    city?: true
+    region?: true
+    postalCode?: true
+    country?: true
+    lineAz?: true
+    lineRu?: true
+    lineEn?: true
+    isPrimary?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrganizationAddressAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationAddress to aggregate.
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationAddresses to fetch.
+     */
+    orderBy?: OrganizationAddressOrderByWithRelationInput | OrganizationAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrganizationAddresses
+    **/
+    _count?: true | OrganizationAddressCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrganizationAddressAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrganizationAddressSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationAddressMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationAddressMaxAggregateInputType
+  }
+
+  export type GetOrganizationAddressAggregateType<T extends OrganizationAddressAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganizationAddress]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganizationAddress[P]>
+      : GetScalarType<T[P], AggregateOrganizationAddress[P]>
+  }
+
+
+
+
+  export type OrganizationAddressGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationAddressWhereInput
+    orderBy?: OrganizationAddressOrderByWithAggregationInput | OrganizationAddressOrderByWithAggregationInput[]
+    by: OrganizationAddressScalarFieldEnum[] | OrganizationAddressScalarFieldEnum
+    having?: OrganizationAddressScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationAddressCountAggregateInputType | true
+    _avg?: OrganizationAddressAvgAggregateInputType
+    _sum?: OrganizationAddressSumAggregateInputType
+    _min?: OrganizationAddressMinAggregateInputType
+    _max?: OrganizationAddressMaxAggregateInputType
+  }
+
+  export type OrganizationAddressGroupByOutputType = {
+    id: string
+    organizationId: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2: string | null
+    city: string | null
+    region: string | null
+    postalCode: string | null
+    country: string | null
+    lineAz: string | null
+    lineRu: string | null
+    lineEn: string | null
+    isPrimary: boolean
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: OrganizationAddressCountAggregateOutputType | null
+    _avg: OrganizationAddressAvgAggregateOutputType | null
+    _sum: OrganizationAddressSumAggregateOutputType | null
+    _min: OrganizationAddressMinAggregateOutputType | null
+    _max: OrganizationAddressMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationAddressGroupByPayload<T extends OrganizationAddressGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationAddressGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationAddressGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationAddressGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationAddressGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationAddressSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    line1?: boolean
+    line2?: boolean
+    city?: boolean
+    region?: boolean
+    postalCode?: boolean
+    country?: boolean
+    lineAz?: boolean
+    lineRu?: boolean
+    lineEn?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationAddress"]>
+
+  export type OrganizationAddressSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    line1?: boolean
+    line2?: boolean
+    city?: boolean
+    region?: boolean
+    postalCode?: boolean
+    country?: boolean
+    lineAz?: boolean
+    lineRu?: boolean
+    lineEn?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationAddress"]>
+
+  export type OrganizationAddressSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    line1?: boolean
+    line2?: boolean
+    city?: boolean
+    region?: boolean
+    postalCode?: boolean
+    country?: boolean
+    lineAz?: boolean
+    lineRu?: boolean
+    lineEn?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationAddress"]>
+
+  export type OrganizationAddressSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    kind?: boolean
+    line1?: boolean
+    line2?: boolean
+    city?: boolean
+    region?: boolean
+    postalCode?: boolean
+    country?: boolean
+    lineAz?: boolean
+    lineRu?: boolean
+    lineEn?: boolean
+    isPrimary?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrganizationAddressOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "kind" | "line1" | "line2" | "city" | "region" | "postalCode" | "country" | "lineAz" | "lineRu" | "lineEn" | "isPrimary" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationAddress"]>
+  export type OrganizationAddressInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }
+  export type OrganizationAddressIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }
+  export type OrganizationAddressIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    profile?: boolean | OrganizationProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $OrganizationAddressPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrganizationAddress"
+    objects: {
+      profile: Prisma.$OrganizationProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      kind: $Enums.OrgAddressKind
+      line1: string
+      line2: string | null
+      city: string | null
+      region: string | null
+      postalCode: string | null
+      country: string | null
+      lineAz: string | null
+      lineRu: string | null
+      lineEn: string | null
+      isPrimary: boolean
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["organizationAddress"]>
+    composites: {}
+  }
+
+  type OrganizationAddressGetPayload<S extends boolean | null | undefined | OrganizationAddressDefaultArgs> = $Result.GetResult<Prisma.$OrganizationAddressPayload, S>
+
+  type OrganizationAddressCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrganizationAddressFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrganizationAddressCountAggregateInputType | true
+    }
+
+  export interface OrganizationAddressDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrganizationAddress'], meta: { name: 'OrganizationAddress' } }
+    /**
+     * Find zero or one OrganizationAddress that matches the filter.
+     * @param {OrganizationAddressFindUniqueArgs} args - Arguments to find a OrganizationAddress
+     * @example
+     * // Get one OrganizationAddress
+     * const organizationAddress = await prisma.organizationAddress.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationAddressFindUniqueArgs>(args: SelectSubset<T, OrganizationAddressFindUniqueArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrganizationAddress that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrganizationAddressFindUniqueOrThrowArgs} args - Arguments to find a OrganizationAddress
+     * @example
+     * // Get one OrganizationAddress
+     * const organizationAddress = await prisma.organizationAddress.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationAddressFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationAddressFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationAddress that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressFindFirstArgs} args - Arguments to find a OrganizationAddress
+     * @example
+     * // Get one OrganizationAddress
+     * const organizationAddress = await prisma.organizationAddress.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationAddressFindFirstArgs>(args?: SelectSubset<T, OrganizationAddressFindFirstArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationAddress that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressFindFirstOrThrowArgs} args - Arguments to find a OrganizationAddress
+     * @example
+     * // Get one OrganizationAddress
+     * const organizationAddress = await prisma.organizationAddress.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationAddressFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationAddressFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrganizationAddresses that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrganizationAddresses
+     * const organizationAddresses = await prisma.organizationAddress.findMany()
+     * 
+     * // Get first 10 OrganizationAddresses
+     * const organizationAddresses = await prisma.organizationAddress.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const organizationAddressWithIdOnly = await prisma.organizationAddress.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrganizationAddressFindManyArgs>(args?: SelectSubset<T, OrganizationAddressFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrganizationAddress.
+     * @param {OrganizationAddressCreateArgs} args - Arguments to create a OrganizationAddress.
+     * @example
+     * // Create one OrganizationAddress
+     * const OrganizationAddress = await prisma.organizationAddress.create({
+     *   data: {
+     *     // ... data to create a OrganizationAddress
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationAddressCreateArgs>(args: SelectSubset<T, OrganizationAddressCreateArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrganizationAddresses.
+     * @param {OrganizationAddressCreateManyArgs} args - Arguments to create many OrganizationAddresses.
+     * @example
+     * // Create many OrganizationAddresses
+     * const organizationAddress = await prisma.organizationAddress.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationAddressCreateManyArgs>(args?: SelectSubset<T, OrganizationAddressCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrganizationAddresses and returns the data saved in the database.
+     * @param {OrganizationAddressCreateManyAndReturnArgs} args - Arguments to create many OrganizationAddresses.
+     * @example
+     * // Create many OrganizationAddresses
+     * const organizationAddress = await prisma.organizationAddress.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrganizationAddresses and only return the `id`
+     * const organizationAddressWithIdOnly = await prisma.organizationAddress.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationAddressCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationAddressCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrganizationAddress.
+     * @param {OrganizationAddressDeleteArgs} args - Arguments to delete one OrganizationAddress.
+     * @example
+     * // Delete one OrganizationAddress
+     * const OrganizationAddress = await prisma.organizationAddress.delete({
+     *   where: {
+     *     // ... filter to delete one OrganizationAddress
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationAddressDeleteArgs>(args: SelectSubset<T, OrganizationAddressDeleteArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrganizationAddress.
+     * @param {OrganizationAddressUpdateArgs} args - Arguments to update one OrganizationAddress.
+     * @example
+     * // Update one OrganizationAddress
+     * const organizationAddress = await prisma.organizationAddress.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationAddressUpdateArgs>(args: SelectSubset<T, OrganizationAddressUpdateArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrganizationAddresses.
+     * @param {OrganizationAddressDeleteManyArgs} args - Arguments to filter OrganizationAddresses to delete.
+     * @example
+     * // Delete a few OrganizationAddresses
+     * const { count } = await prisma.organizationAddress.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationAddressDeleteManyArgs>(args?: SelectSubset<T, OrganizationAddressDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationAddresses.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrganizationAddresses
+     * const organizationAddress = await prisma.organizationAddress.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationAddressUpdateManyArgs>(args: SelectSubset<T, OrganizationAddressUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationAddresses and returns the data updated in the database.
+     * @param {OrganizationAddressUpdateManyAndReturnArgs} args - Arguments to update many OrganizationAddresses.
+     * @example
+     * // Update many OrganizationAddresses
+     * const organizationAddress = await prisma.organizationAddress.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrganizationAddresses and only return the `id`
+     * const organizationAddressWithIdOnly = await prisma.organizationAddress.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrganizationAddressUpdateManyAndReturnArgs>(args: SelectSubset<T, OrganizationAddressUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrganizationAddress.
+     * @param {OrganizationAddressUpsertArgs} args - Arguments to update or create a OrganizationAddress.
+     * @example
+     * // Update or create a OrganizationAddress
+     * const organizationAddress = await prisma.organizationAddress.upsert({
+     *   create: {
+     *     // ... data to create a OrganizationAddress
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrganizationAddress we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationAddressUpsertArgs>(args: SelectSubset<T, OrganizationAddressUpsertArgs<ExtArgs>>): Prisma__OrganizationAddressClient<$Result.GetResult<Prisma.$OrganizationAddressPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrganizationAddresses.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressCountArgs} args - Arguments to filter OrganizationAddresses to count.
+     * @example
+     * // Count the number of OrganizationAddresses
+     * const count = await prisma.organizationAddress.count({
+     *   where: {
+     *     // ... the filter for the OrganizationAddresses we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationAddressCountArgs>(
+      args?: Subset<T, OrganizationAddressCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationAddressCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrganizationAddress.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationAddressAggregateArgs>(args: Subset<T, OrganizationAddressAggregateArgs>): Prisma.PrismaPromise<GetOrganizationAddressAggregateType<T>>
+
+    /**
+     * Group by OrganizationAddress.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAddressGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationAddressGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationAddressGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationAddressGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationAddressGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationAddressGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrganizationAddress model
+   */
+  readonly fields: OrganizationAddressFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrganizationAddress.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationAddressClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    profile<T extends OrganizationProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationProfileDefaultArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrganizationAddress model
+   */
+  interface OrganizationAddressFieldRefs {
+    readonly id: FieldRef<"OrganizationAddress", 'String'>
+    readonly organizationId: FieldRef<"OrganizationAddress", 'String'>
+    readonly kind: FieldRef<"OrganizationAddress", 'OrgAddressKind'>
+    readonly line1: FieldRef<"OrganizationAddress", 'String'>
+    readonly line2: FieldRef<"OrganizationAddress", 'String'>
+    readonly city: FieldRef<"OrganizationAddress", 'String'>
+    readonly region: FieldRef<"OrganizationAddress", 'String'>
+    readonly postalCode: FieldRef<"OrganizationAddress", 'String'>
+    readonly country: FieldRef<"OrganizationAddress", 'String'>
+    readonly lineAz: FieldRef<"OrganizationAddress", 'String'>
+    readonly lineRu: FieldRef<"OrganizationAddress", 'String'>
+    readonly lineEn: FieldRef<"OrganizationAddress", 'String'>
+    readonly isPrimary: FieldRef<"OrganizationAddress", 'Boolean'>
+    readonly sortOrder: FieldRef<"OrganizationAddress", 'Int'>
+    readonly createdAt: FieldRef<"OrganizationAddress", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrganizationAddress", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrganizationAddress findUnique
+   */
+  export type OrganizationAddressFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationAddress to fetch.
+     */
+    where: OrganizationAddressWhereUniqueInput
+  }
+
+  /**
+   * OrganizationAddress findUniqueOrThrow
+   */
+  export type OrganizationAddressFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationAddress to fetch.
+     */
+    where: OrganizationAddressWhereUniqueInput
+  }
+
+  /**
+   * OrganizationAddress findFirst
+   */
+  export type OrganizationAddressFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationAddress to fetch.
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationAddresses to fetch.
+     */
+    orderBy?: OrganizationAddressOrderByWithRelationInput | OrganizationAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationAddresses.
+     */
+    cursor?: OrganizationAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationAddresses.
+     */
+    distinct?: OrganizationAddressScalarFieldEnum | OrganizationAddressScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationAddress findFirstOrThrow
+   */
+  export type OrganizationAddressFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationAddress to fetch.
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationAddresses to fetch.
+     */
+    orderBy?: OrganizationAddressOrderByWithRelationInput | OrganizationAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationAddresses.
+     */
+    cursor?: OrganizationAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationAddresses.
+     */
+    distinct?: OrganizationAddressScalarFieldEnum | OrganizationAddressScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationAddress findMany
+   */
+  export type OrganizationAddressFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationAddresses to fetch.
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationAddresses to fetch.
+     */
+    orderBy?: OrganizationAddressOrderByWithRelationInput | OrganizationAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrganizationAddresses.
+     */
+    cursor?: OrganizationAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationAddresses.
+     */
+    distinct?: OrganizationAddressScalarFieldEnum | OrganizationAddressScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationAddress create
+   */
+  export type OrganizationAddressCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrganizationAddress.
+     */
+    data: XOR<OrganizationAddressCreateInput, OrganizationAddressUncheckedCreateInput>
+  }
+
+  /**
+   * OrganizationAddress createMany
+   */
+  export type OrganizationAddressCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrganizationAddresses.
+     */
+    data: OrganizationAddressCreateManyInput | OrganizationAddressCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationAddress createManyAndReturn
+   */
+  export type OrganizationAddressCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrganizationAddresses.
+     */
+    data: OrganizationAddressCreateManyInput | OrganizationAddressCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationAddress update
+   */
+  export type OrganizationAddressUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrganizationAddress.
+     */
+    data: XOR<OrganizationAddressUpdateInput, OrganizationAddressUncheckedUpdateInput>
+    /**
+     * Choose, which OrganizationAddress to update.
+     */
+    where: OrganizationAddressWhereUniqueInput
+  }
+
+  /**
+   * OrganizationAddress updateMany
+   */
+  export type OrganizationAddressUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrganizationAddresses.
+     */
+    data: XOR<OrganizationAddressUpdateManyMutationInput, OrganizationAddressUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationAddresses to update
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * Limit how many OrganizationAddresses to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationAddress updateManyAndReturn
+   */
+  export type OrganizationAddressUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * The data used to update OrganizationAddresses.
+     */
+    data: XOR<OrganizationAddressUpdateManyMutationInput, OrganizationAddressUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationAddresses to update
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * Limit how many OrganizationAddresses to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationAddress upsert
+   */
+  export type OrganizationAddressUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrganizationAddress to update in case it exists.
+     */
+    where: OrganizationAddressWhereUniqueInput
+    /**
+     * In case the OrganizationAddress found by the `where` argument doesn't exist, create a new OrganizationAddress with this data.
+     */
+    create: XOR<OrganizationAddressCreateInput, OrganizationAddressUncheckedCreateInput>
+    /**
+     * In case the OrganizationAddress was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationAddressUpdateInput, OrganizationAddressUncheckedUpdateInput>
+  }
+
+  /**
+   * OrganizationAddress delete
+   */
+  export type OrganizationAddressDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
+    /**
+     * Filter which OrganizationAddress to delete.
+     */
+    where: OrganizationAddressWhereUniqueInput
+  }
+
+  /**
+   * OrganizationAddress deleteMany
+   */
+  export type OrganizationAddressDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationAddresses to delete
+     */
+    where?: OrganizationAddressWhereInput
+    /**
+     * Limit how many OrganizationAddresses to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationAddress without action
+   */
+  export type OrganizationAddressDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationAddress
+     */
+    select?: OrganizationAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationAddress
+     */
+    omit?: OrganizationAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationAddressInclude<ExtArgs> | null
   }
 
 
@@ -133204,6 +137214,63 @@ export namespace Prisma {
   export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
 
 
+  export const OrganizationProfileScalarFieldEnum: {
+    organizationId: 'organizationId',
+    tradeName: 'tradeName',
+    nameAz: 'nameAz',
+    nameRu: 'nameRu',
+    nameEn: 'nameEn',
+    directorName: 'directorName',
+    directorTitle: 'directorTitle',
+    logoUrl: 'logoUrl',
+    stampUrl: 'stampUrl',
+    signatureDirectorUrl: 'signatureDirectorUrl',
+    bankLine: 'bankLine',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrganizationProfileScalarFieldEnum = (typeof OrganizationProfileScalarFieldEnum)[keyof typeof OrganizationProfileScalarFieldEnum]
+
+
+  export const OrganizationContactChannelScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    kind: 'kind',
+    value: 'value',
+    label: 'label',
+    purpose: 'purpose',
+    isPrimary: 'isPrimary',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrganizationContactChannelScalarFieldEnum = (typeof OrganizationContactChannelScalarFieldEnum)[keyof typeof OrganizationContactChannelScalarFieldEnum]
+
+
+  export const OrganizationAddressScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    kind: 'kind',
+    line1: 'line1',
+    line2: 'line2',
+    city: 'city',
+    region: 'region',
+    postalCode: 'postalCode',
+    country: 'country',
+    lineAz: 'lineAz',
+    lineRu: 'lineRu',
+    lineEn: 'lineEn',
+    isPrimary: 'isPrimary',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrganizationAddressScalarFieldEnum = (typeof OrganizationAddressScalarFieldEnum)[keyof typeof OrganizationAddressScalarFieldEnum]
+
+
   export const ElektrawebBridgePolicyScalarFieldEnum: {
     organizationId: 'organizationId',
     inboundEnabled: 'inboundEnabled',
@@ -134495,6 +138562,48 @@ export namespace Prisma {
    * Reference to a field of type 'BigInt[]'
    */
   export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgContactKind'
+   */
+  export type EnumOrgContactKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgContactKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgContactKind[]'
+   */
+  export type ListEnumOrgContactKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgContactKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgContactPurpose'
+   */
+  export type EnumOrgContactPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgContactPurpose'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgContactPurpose[]'
+   */
+  export type ListEnumOrgContactPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgContactPurpose[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgAddressKind'
+   */
+  export type EnumOrgAddressKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgAddressKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgAddressKind[]'
+   */
+  export type ListEnumOrgAddressKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgAddressKind[]'>
     
 
 
@@ -140325,6 +144434,7 @@ export namespace Prisma {
     holding?: XOR<HoldingNullableScalarRelationFilter, HoldingWhereInput> | null
     agencyPropertyGrants?: AgencyPropertyGrantListRelationFilter
     buyerOrgGrants?: BuyerOrgGrantListRelationFilter
+    profile?: XOR<OrganizationProfileNullableScalarRelationFilter, OrganizationProfileWhereInput> | null
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -140413,6 +144523,7 @@ export namespace Prisma {
     holding?: HoldingOrderByWithRelationInput
     agencyPropertyGrants?: AgencyPropertyGrantOrderByRelationAggregateInput
     buyerOrgGrants?: BuyerOrgGrantOrderByRelationAggregateInput
+    profile?: OrganizationProfileOrderByWithRelationInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -140504,6 +144615,7 @@ export namespace Prisma {
     holding?: XOR<HoldingNullableScalarRelationFilter, HoldingWhereInput> | null
     agencyPropertyGrants?: AgencyPropertyGrantListRelationFilter
     buyerOrgGrants?: BuyerOrgGrantListRelationFilter
+    profile?: XOR<OrganizationProfileNullableScalarRelationFilter, OrganizationProfileWhereInput> | null
   }, "id" | "publicOrgNumber" | "taxIdBlindIndex" | "drakarisClientId">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -140572,6 +144684,301 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Organization"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
+  }
+
+  export type OrganizationProfileWhereInput = {
+    AND?: OrganizationProfileWhereInput | OrganizationProfileWhereInput[]
+    OR?: OrganizationProfileWhereInput[]
+    NOT?: OrganizationProfileWhereInput | OrganizationProfileWhereInput[]
+    organizationId?: UuidFilter<"OrganizationProfile"> | string
+    tradeName?: StringNullableFilter<"OrganizationProfile"> | string | null
+    nameAz?: StringNullableFilter<"OrganizationProfile"> | string | null
+    nameRu?: StringNullableFilter<"OrganizationProfile"> | string | null
+    nameEn?: StringNullableFilter<"OrganizationProfile"> | string | null
+    directorName?: StringNullableFilter<"OrganizationProfile"> | string | null
+    directorTitle?: StringNullableFilter<"OrganizationProfile"> | string | null
+    logoUrl?: StringNullableFilter<"OrganizationProfile"> | string | null
+    stampUrl?: StringNullableFilter<"OrganizationProfile"> | string | null
+    signatureDirectorUrl?: StringNullableFilter<"OrganizationProfile"> | string | null
+    bankLine?: StringNullableFilter<"OrganizationProfile"> | string | null
+    createdAt?: DateTimeFilter<"OrganizationProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationProfile"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    contacts?: OrganizationContactChannelListRelationFilter
+    addresses?: OrganizationAddressListRelationFilter
+  }
+
+  export type OrganizationProfileOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    tradeName?: SortOrderInput | SortOrder
+    nameAz?: SortOrderInput | SortOrder
+    nameRu?: SortOrderInput | SortOrder
+    nameEn?: SortOrderInput | SortOrder
+    directorName?: SortOrderInput | SortOrder
+    directorTitle?: SortOrderInput | SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    stampUrl?: SortOrderInput | SortOrder
+    signatureDirectorUrl?: SortOrderInput | SortOrder
+    bankLine?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    contacts?: OrganizationContactChannelOrderByRelationAggregateInput
+    addresses?: OrganizationAddressOrderByRelationAggregateInput
+  }
+
+  export type OrganizationProfileWhereUniqueInput = Prisma.AtLeast<{
+    organizationId?: string
+    AND?: OrganizationProfileWhereInput | OrganizationProfileWhereInput[]
+    OR?: OrganizationProfileWhereInput[]
+    NOT?: OrganizationProfileWhereInput | OrganizationProfileWhereInput[]
+    tradeName?: StringNullableFilter<"OrganizationProfile"> | string | null
+    nameAz?: StringNullableFilter<"OrganizationProfile"> | string | null
+    nameRu?: StringNullableFilter<"OrganizationProfile"> | string | null
+    nameEn?: StringNullableFilter<"OrganizationProfile"> | string | null
+    directorName?: StringNullableFilter<"OrganizationProfile"> | string | null
+    directorTitle?: StringNullableFilter<"OrganizationProfile"> | string | null
+    logoUrl?: StringNullableFilter<"OrganizationProfile"> | string | null
+    stampUrl?: StringNullableFilter<"OrganizationProfile"> | string | null
+    signatureDirectorUrl?: StringNullableFilter<"OrganizationProfile"> | string | null
+    bankLine?: StringNullableFilter<"OrganizationProfile"> | string | null
+    createdAt?: DateTimeFilter<"OrganizationProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationProfile"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    contacts?: OrganizationContactChannelListRelationFilter
+    addresses?: OrganizationAddressListRelationFilter
+  }, "organizationId">
+
+  export type OrganizationProfileOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    tradeName?: SortOrderInput | SortOrder
+    nameAz?: SortOrderInput | SortOrder
+    nameRu?: SortOrderInput | SortOrder
+    nameEn?: SortOrderInput | SortOrder
+    directorName?: SortOrderInput | SortOrder
+    directorTitle?: SortOrderInput | SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    stampUrl?: SortOrderInput | SortOrder
+    signatureDirectorUrl?: SortOrderInput | SortOrder
+    bankLine?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrganizationProfileCountOrderByAggregateInput
+    _max?: OrganizationProfileMaxOrderByAggregateInput
+    _min?: OrganizationProfileMinOrderByAggregateInput
+  }
+
+  export type OrganizationProfileScalarWhereWithAggregatesInput = {
+    AND?: OrganizationProfileScalarWhereWithAggregatesInput | OrganizationProfileScalarWhereWithAggregatesInput[]
+    OR?: OrganizationProfileScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationProfileScalarWhereWithAggregatesInput | OrganizationProfileScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"OrganizationProfile"> | string
+    tradeName?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    nameAz?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    nameRu?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    nameEn?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    directorName?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    directorTitle?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    logoUrl?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    stampUrl?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    signatureDirectorUrl?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    bankLine?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"OrganizationProfile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrganizationProfile"> | Date | string
+  }
+
+  export type OrganizationContactChannelWhereInput = {
+    AND?: OrganizationContactChannelWhereInput | OrganizationContactChannelWhereInput[]
+    OR?: OrganizationContactChannelWhereInput[]
+    NOT?: OrganizationContactChannelWhereInput | OrganizationContactChannelWhereInput[]
+    id?: UuidFilter<"OrganizationContactChannel"> | string
+    organizationId?: UuidFilter<"OrganizationContactChannel"> | string
+    kind?: EnumOrgContactKindFilter<"OrganizationContactChannel"> | $Enums.OrgContactKind
+    value?: StringFilter<"OrganizationContactChannel"> | string
+    label?: StringNullableFilter<"OrganizationContactChannel"> | string | null
+    purpose?: EnumOrgContactPurposeFilter<"OrganizationContactChannel"> | $Enums.OrgContactPurpose
+    isPrimary?: BoolFilter<"OrganizationContactChannel"> | boolean
+    sortOrder?: IntFilter<"OrganizationContactChannel"> | number
+    createdAt?: DateTimeFilter<"OrganizationContactChannel"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationContactChannel"> | Date | string
+    profile?: XOR<OrganizationProfileScalarRelationFilter, OrganizationProfileWhereInput>
+  }
+
+  export type OrganizationContactChannelOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    value?: SortOrder
+    label?: SortOrderInput | SortOrder
+    purpose?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    profile?: OrganizationProfileOrderByWithRelationInput
+  }
+
+  export type OrganizationContactChannelWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OrganizationContactChannelWhereInput | OrganizationContactChannelWhereInput[]
+    OR?: OrganizationContactChannelWhereInput[]
+    NOT?: OrganizationContactChannelWhereInput | OrganizationContactChannelWhereInput[]
+    organizationId?: UuidFilter<"OrganizationContactChannel"> | string
+    kind?: EnumOrgContactKindFilter<"OrganizationContactChannel"> | $Enums.OrgContactKind
+    value?: StringFilter<"OrganizationContactChannel"> | string
+    label?: StringNullableFilter<"OrganizationContactChannel"> | string | null
+    purpose?: EnumOrgContactPurposeFilter<"OrganizationContactChannel"> | $Enums.OrgContactPurpose
+    isPrimary?: BoolFilter<"OrganizationContactChannel"> | boolean
+    sortOrder?: IntFilter<"OrganizationContactChannel"> | number
+    createdAt?: DateTimeFilter<"OrganizationContactChannel"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationContactChannel"> | Date | string
+    profile?: XOR<OrganizationProfileScalarRelationFilter, OrganizationProfileWhereInput>
+  }, "id">
+
+  export type OrganizationContactChannelOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    value?: SortOrder
+    label?: SortOrderInput | SortOrder
+    purpose?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrganizationContactChannelCountOrderByAggregateInput
+    _avg?: OrganizationContactChannelAvgOrderByAggregateInput
+    _max?: OrganizationContactChannelMaxOrderByAggregateInput
+    _min?: OrganizationContactChannelMinOrderByAggregateInput
+    _sum?: OrganizationContactChannelSumOrderByAggregateInput
+  }
+
+  export type OrganizationContactChannelScalarWhereWithAggregatesInput = {
+    AND?: OrganizationContactChannelScalarWhereWithAggregatesInput | OrganizationContactChannelScalarWhereWithAggregatesInput[]
+    OR?: OrganizationContactChannelScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationContactChannelScalarWhereWithAggregatesInput | OrganizationContactChannelScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"OrganizationContactChannel"> | string
+    organizationId?: UuidWithAggregatesFilter<"OrganizationContactChannel"> | string
+    kind?: EnumOrgContactKindWithAggregatesFilter<"OrganizationContactChannel"> | $Enums.OrgContactKind
+    value?: StringWithAggregatesFilter<"OrganizationContactChannel"> | string
+    label?: StringNullableWithAggregatesFilter<"OrganizationContactChannel"> | string | null
+    purpose?: EnumOrgContactPurposeWithAggregatesFilter<"OrganizationContactChannel"> | $Enums.OrgContactPurpose
+    isPrimary?: BoolWithAggregatesFilter<"OrganizationContactChannel"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"OrganizationContactChannel"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"OrganizationContactChannel"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrganizationContactChannel"> | Date | string
+  }
+
+  export type OrganizationAddressWhereInput = {
+    AND?: OrganizationAddressWhereInput | OrganizationAddressWhereInput[]
+    OR?: OrganizationAddressWhereInput[]
+    NOT?: OrganizationAddressWhereInput | OrganizationAddressWhereInput[]
+    id?: UuidFilter<"OrganizationAddress"> | string
+    organizationId?: UuidFilter<"OrganizationAddress"> | string
+    kind?: EnumOrgAddressKindFilter<"OrganizationAddress"> | $Enums.OrgAddressKind
+    line1?: StringFilter<"OrganizationAddress"> | string
+    line2?: StringNullableFilter<"OrganizationAddress"> | string | null
+    city?: StringNullableFilter<"OrganizationAddress"> | string | null
+    region?: StringNullableFilter<"OrganizationAddress"> | string | null
+    postalCode?: StringNullableFilter<"OrganizationAddress"> | string | null
+    country?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineAz?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineRu?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineEn?: StringNullableFilter<"OrganizationAddress"> | string | null
+    isPrimary?: BoolFilter<"OrganizationAddress"> | boolean
+    sortOrder?: IntFilter<"OrganizationAddress"> | number
+    createdAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+    profile?: XOR<OrganizationProfileScalarRelationFilter, OrganizationProfileWhereInput>
+  }
+
+  export type OrganizationAddressOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    line1?: SortOrder
+    line2?: SortOrderInput | SortOrder
+    city?: SortOrderInput | SortOrder
+    region?: SortOrderInput | SortOrder
+    postalCode?: SortOrderInput | SortOrder
+    country?: SortOrderInput | SortOrder
+    lineAz?: SortOrderInput | SortOrder
+    lineRu?: SortOrderInput | SortOrder
+    lineEn?: SortOrderInput | SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    profile?: OrganizationProfileOrderByWithRelationInput
+  }
+
+  export type OrganizationAddressWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OrganizationAddressWhereInput | OrganizationAddressWhereInput[]
+    OR?: OrganizationAddressWhereInput[]
+    NOT?: OrganizationAddressWhereInput | OrganizationAddressWhereInput[]
+    organizationId?: UuidFilter<"OrganizationAddress"> | string
+    kind?: EnumOrgAddressKindFilter<"OrganizationAddress"> | $Enums.OrgAddressKind
+    line1?: StringFilter<"OrganizationAddress"> | string
+    line2?: StringNullableFilter<"OrganizationAddress"> | string | null
+    city?: StringNullableFilter<"OrganizationAddress"> | string | null
+    region?: StringNullableFilter<"OrganizationAddress"> | string | null
+    postalCode?: StringNullableFilter<"OrganizationAddress"> | string | null
+    country?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineAz?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineRu?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineEn?: StringNullableFilter<"OrganizationAddress"> | string | null
+    isPrimary?: BoolFilter<"OrganizationAddress"> | boolean
+    sortOrder?: IntFilter<"OrganizationAddress"> | number
+    createdAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+    profile?: XOR<OrganizationProfileScalarRelationFilter, OrganizationProfileWhereInput>
+  }, "id">
+
+  export type OrganizationAddressOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    line1?: SortOrder
+    line2?: SortOrderInput | SortOrder
+    city?: SortOrderInput | SortOrder
+    region?: SortOrderInput | SortOrder
+    postalCode?: SortOrderInput | SortOrder
+    country?: SortOrderInput | SortOrder
+    lineAz?: SortOrderInput | SortOrder
+    lineRu?: SortOrderInput | SortOrder
+    lineEn?: SortOrderInput | SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrganizationAddressCountOrderByAggregateInput
+    _avg?: OrganizationAddressAvgOrderByAggregateInput
+    _max?: OrganizationAddressMaxOrderByAggregateInput
+    _min?: OrganizationAddressMinOrderByAggregateInput
+    _sum?: OrganizationAddressSumOrderByAggregateInput
+  }
+
+  export type OrganizationAddressScalarWhereWithAggregatesInput = {
+    AND?: OrganizationAddressScalarWhereWithAggregatesInput | OrganizationAddressScalarWhereWithAggregatesInput[]
+    OR?: OrganizationAddressScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationAddressScalarWhereWithAggregatesInput | OrganizationAddressScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"OrganizationAddress"> | string
+    organizationId?: UuidWithAggregatesFilter<"OrganizationAddress"> | string
+    kind?: EnumOrgAddressKindWithAggregatesFilter<"OrganizationAddress"> | $Enums.OrgAddressKind
+    line1?: StringWithAggregatesFilter<"OrganizationAddress"> | string
+    line2?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    city?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    region?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    postalCode?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    country?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    lineAz?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    lineRu?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    lineEn?: StringNullableWithAggregatesFilter<"OrganizationAddress"> | string | null
+    isPrimary?: BoolWithAggregatesFilter<"OrganizationAddress"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"OrganizationAddress"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"OrganizationAddress"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrganizationAddress"> | Date | string
   }
 
   export type ElektrawebBridgePolicyWhereInput = {
@@ -149529,6 +153936,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -149614,6 +154022,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -149699,6 +154108,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -149784,6 +154194,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -149869,6 +154280,347 @@ export namespace Prisma {
     settings?: JsonNullValueInput | InputJsonValue
     drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationProfileCreateInput = {
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutProfileInput
+    contacts?: OrganizationContactChannelCreateNestedManyWithoutProfileInput
+    addresses?: OrganizationAddressCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileUncheckedCreateInput = {
+    organizationId: string
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contacts?: OrganizationContactChannelUncheckedCreateNestedManyWithoutProfileInput
+    addresses?: OrganizationAddressUncheckedCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileUpdateInput = {
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutProfileNestedInput
+    contacts?: OrganizationContactChannelUpdateManyWithoutProfileNestedInput
+    addresses?: OrganizationAddressUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationProfileUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contacts?: OrganizationContactChannelUncheckedUpdateManyWithoutProfileNestedInput
+    addresses?: OrganizationAddressUncheckedUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationProfileCreateManyInput = {
+    organizationId: string
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationProfileUpdateManyMutationInput = {
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationProfileUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationContactChannelCreateInput = {
+    id?: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label?: string | null
+    purpose?: $Enums.OrgContactPurpose
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    profile: OrganizationProfileCreateNestedOneWithoutContactsInput
+  }
+
+  export type OrganizationContactChannelUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label?: string | null
+    purpose?: $Enums.OrgContactPurpose
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationContactChannelUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    profile?: OrganizationProfileUpdateOneRequiredWithoutContactsNestedInput
+  }
+
+  export type OrganizationContactChannelUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationContactChannelCreateManyInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label?: string | null
+    purpose?: $Enums.OrgContactPurpose
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationContactChannelUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationContactChannelUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationAddressCreateInput = {
+    id?: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2?: string | null
+    city?: string | null
+    region?: string | null
+    postalCode?: string | null
+    country?: string | null
+    lineAz?: string | null
+    lineRu?: string | null
+    lineEn?: string | null
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    profile: OrganizationProfileCreateNestedOneWithoutAddressesInput
+  }
+
+  export type OrganizationAddressUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2?: string | null
+    city?: string | null
+    region?: string | null
+    postalCode?: string | null
+    country?: string | null
+    lineAz?: string | null
+    lineRu?: string | null
+    lineEn?: string | null
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationAddressUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    profile?: OrganizationProfileUpdateOneRequiredWithoutAddressesNestedInput
+  }
+
+  export type OrganizationAddressUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationAddressCreateManyInput = {
+    id?: string
+    organizationId: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2?: string | null
+    city?: string | null
+    region?: string | null
+    postalCode?: string | null
+    country?: string | null
+    lineAz?: string | null
+    lineRu?: string | null
+    lineEn?: string | null
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationAddressUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationAddressUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -157888,6 +162640,11 @@ export namespace Prisma {
     none?: BuyerOrgGrantWhereInput
   }
 
+  export type OrganizationProfileNullableScalarRelationFilter = {
+    is?: OrganizationProfileWhereInput | null
+    isNot?: OrganizationProfileWhereInput | null
+  }
+
   export type UsageMeterEventOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -158164,6 +162921,242 @@ export namespace Prisma {
     _sum?: NestedBigIntFilter<$PrismaModel>
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type OrganizationContactChannelListRelationFilter = {
+    every?: OrganizationContactChannelWhereInput
+    some?: OrganizationContactChannelWhereInput
+    none?: OrganizationContactChannelWhereInput
+  }
+
+  export type OrganizationAddressListRelationFilter = {
+    every?: OrganizationAddressWhereInput
+    some?: OrganizationAddressWhereInput
+    none?: OrganizationAddressWhereInput
+  }
+
+  export type OrganizationContactChannelOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrganizationAddressOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrganizationProfileCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    tradeName?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    directorName?: SortOrder
+    directorTitle?: SortOrder
+    logoUrl?: SortOrder
+    stampUrl?: SortOrder
+    signatureDirectorUrl?: SortOrder
+    bankLine?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationProfileMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    tradeName?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    directorName?: SortOrder
+    directorTitle?: SortOrder
+    logoUrl?: SortOrder
+    stampUrl?: SortOrder
+    signatureDirectorUrl?: SortOrder
+    bankLine?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationProfileMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    tradeName?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    directorName?: SortOrder
+    directorTitle?: SortOrder
+    logoUrl?: SortOrder
+    stampUrl?: SortOrder
+    signatureDirectorUrl?: SortOrder
+    bankLine?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumOrgContactKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactKind | EnumOrgContactKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactKindFilter<$PrismaModel> | $Enums.OrgContactKind
+  }
+
+  export type EnumOrgContactPurposeFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactPurpose | EnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactPurposeFilter<$PrismaModel> | $Enums.OrgContactPurpose
+  }
+
+  export type OrganizationProfileScalarRelationFilter = {
+    is?: OrganizationProfileWhereInput
+    isNot?: OrganizationProfileWhereInput
+  }
+
+  export type OrganizationContactChannelCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    value?: SortOrder
+    label?: SortOrder
+    purpose?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationContactChannelAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type OrganizationContactChannelMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    value?: SortOrder
+    label?: SortOrder
+    purpose?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationContactChannelMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    value?: SortOrder
+    label?: SortOrder
+    purpose?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationContactChannelSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumOrgContactKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactKind | EnumOrgContactKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactKindWithAggregatesFilter<$PrismaModel> | $Enums.OrgContactKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgContactKindFilter<$PrismaModel>
+    _max?: NestedEnumOrgContactKindFilter<$PrismaModel>
+  }
+
+  export type EnumOrgContactPurposeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactPurpose | EnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactPurposeWithAggregatesFilter<$PrismaModel> | $Enums.OrgContactPurpose
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgContactPurposeFilter<$PrismaModel>
+    _max?: NestedEnumOrgContactPurposeFilter<$PrismaModel>
+  }
+
+  export type EnumOrgAddressKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgAddressKind | EnumOrgAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgAddressKindFilter<$PrismaModel> | $Enums.OrgAddressKind
+  }
+
+  export type OrganizationAddressCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    line1?: SortOrder
+    line2?: SortOrder
+    city?: SortOrder
+    region?: SortOrder
+    postalCode?: SortOrder
+    country?: SortOrder
+    lineAz?: SortOrder
+    lineRu?: SortOrder
+    lineEn?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationAddressAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type OrganizationAddressMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    line1?: SortOrder
+    line2?: SortOrder
+    city?: SortOrder
+    region?: SortOrder
+    postalCode?: SortOrder
+    country?: SortOrder
+    lineAz?: SortOrder
+    lineRu?: SortOrder
+    lineEn?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationAddressMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    kind?: SortOrder
+    line1?: SortOrder
+    line2?: SortOrder
+    city?: SortOrder
+    region?: SortOrder
+    postalCode?: SortOrder
+    country?: SortOrder
+    lineAz?: SortOrder
+    lineRu?: SortOrder
+    lineEn?: SortOrder
+    isPrimary?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationAddressSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumOrgAddressKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgAddressKind | EnumOrgAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgAddressKindWithAggregatesFilter<$PrismaModel> | $Enums.OrgAddressKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgAddressKindFilter<$PrismaModel>
+    _max?: NestedEnumOrgAddressKindFilter<$PrismaModel>
   }
 
   export type ElektrawebBridgePolicyCountOrderByAggregateInput = {
@@ -164679,6 +169672,12 @@ export namespace Prisma {
     connect?: BuyerOrgGrantWhereUniqueInput | BuyerOrgGrantWhereUniqueInput[]
   }
 
+  export type OrganizationProfileCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutOrganizationInput
+    connect?: OrganizationProfileWhereUniqueInput
+  }
+
   export type UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
@@ -165058,6 +170057,12 @@ export namespace Prisma {
     connectOrCreate?: BuyerOrgGrantCreateOrConnectWithoutOrganizationInput | BuyerOrgGrantCreateOrConnectWithoutOrganizationInput[]
     createMany?: BuyerOrgGrantCreateManyOrganizationInputEnvelope
     connect?: BuyerOrgGrantWhereUniqueInput | BuyerOrgGrantWhereUniqueInput[]
+  }
+
+  export type OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutOrganizationInput
+    connect?: OrganizationProfileWhereUniqueInput
   }
 
   export type EnumOrgOperatingModeFieldUpdateOperationsInput = {
@@ -165865,6 +170870,16 @@ export namespace Prisma {
     deleteMany?: BuyerOrgGrantScalarWhereInput | BuyerOrgGrantScalarWhereInput[]
   }
 
+  export type OrganizationProfileUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutOrganizationInput
+    upsert?: OrganizationProfileUpsertWithoutOrganizationInput
+    disconnect?: OrganizationProfileWhereInput | boolean
+    delete?: OrganizationProfileWhereInput | boolean
+    connect?: OrganizationProfileWhereUniqueInput
+    update?: XOR<XOR<OrganizationProfileUpdateToOneWithWhereWithoutOrganizationInput, OrganizationProfileUpdateWithoutOrganizationInput>, OrganizationProfileUncheckedUpdateWithoutOrganizationInput>
+  }
+
   export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
@@ -166617,6 +171632,154 @@ export namespace Prisma {
     update?: BuyerOrgGrantUpdateWithWhereUniqueWithoutOrganizationInput | BuyerOrgGrantUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: BuyerOrgGrantUpdateManyWithWhereWithoutOrganizationInput | BuyerOrgGrantUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: BuyerOrgGrantScalarWhereInput | BuyerOrgGrantScalarWhereInput[]
+  }
+
+  export type OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutOrganizationInput
+    upsert?: OrganizationProfileUpsertWithoutOrganizationInput
+    disconnect?: OrganizationProfileWhereInput | boolean
+    delete?: OrganizationProfileWhereInput | boolean
+    connect?: OrganizationProfileWhereUniqueInput
+    update?: XOR<XOR<OrganizationProfileUpdateToOneWithWhereWithoutOrganizationInput, OrganizationProfileUpdateWithoutOrganizationInput>, OrganizationProfileUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutProfileInput = {
+    create?: XOR<OrganizationCreateWithoutProfileInput, OrganizationUncheckedCreateWithoutProfileInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutProfileInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationContactChannelCreateNestedManyWithoutProfileInput = {
+    create?: XOR<OrganizationContactChannelCreateWithoutProfileInput, OrganizationContactChannelUncheckedCreateWithoutProfileInput> | OrganizationContactChannelCreateWithoutProfileInput[] | OrganizationContactChannelUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationContactChannelCreateOrConnectWithoutProfileInput | OrganizationContactChannelCreateOrConnectWithoutProfileInput[]
+    createMany?: OrganizationContactChannelCreateManyProfileInputEnvelope
+    connect?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+  }
+
+  export type OrganizationAddressCreateNestedManyWithoutProfileInput = {
+    create?: XOR<OrganizationAddressCreateWithoutProfileInput, OrganizationAddressUncheckedCreateWithoutProfileInput> | OrganizationAddressCreateWithoutProfileInput[] | OrganizationAddressUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationAddressCreateOrConnectWithoutProfileInput | OrganizationAddressCreateOrConnectWithoutProfileInput[]
+    createMany?: OrganizationAddressCreateManyProfileInputEnvelope
+    connect?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+  }
+
+  export type OrganizationContactChannelUncheckedCreateNestedManyWithoutProfileInput = {
+    create?: XOR<OrganizationContactChannelCreateWithoutProfileInput, OrganizationContactChannelUncheckedCreateWithoutProfileInput> | OrganizationContactChannelCreateWithoutProfileInput[] | OrganizationContactChannelUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationContactChannelCreateOrConnectWithoutProfileInput | OrganizationContactChannelCreateOrConnectWithoutProfileInput[]
+    createMany?: OrganizationContactChannelCreateManyProfileInputEnvelope
+    connect?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+  }
+
+  export type OrganizationAddressUncheckedCreateNestedManyWithoutProfileInput = {
+    create?: XOR<OrganizationAddressCreateWithoutProfileInput, OrganizationAddressUncheckedCreateWithoutProfileInput> | OrganizationAddressCreateWithoutProfileInput[] | OrganizationAddressUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationAddressCreateOrConnectWithoutProfileInput | OrganizationAddressCreateOrConnectWithoutProfileInput[]
+    createMany?: OrganizationAddressCreateManyProfileInputEnvelope
+    connect?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutProfileNestedInput = {
+    create?: XOR<OrganizationCreateWithoutProfileInput, OrganizationUncheckedCreateWithoutProfileInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutProfileInput
+    upsert?: OrganizationUpsertWithoutProfileInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutProfileInput, OrganizationUpdateWithoutProfileInput>, OrganizationUncheckedUpdateWithoutProfileInput>
+  }
+
+  export type OrganizationContactChannelUpdateManyWithoutProfileNestedInput = {
+    create?: XOR<OrganizationContactChannelCreateWithoutProfileInput, OrganizationContactChannelUncheckedCreateWithoutProfileInput> | OrganizationContactChannelCreateWithoutProfileInput[] | OrganizationContactChannelUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationContactChannelCreateOrConnectWithoutProfileInput | OrganizationContactChannelCreateOrConnectWithoutProfileInput[]
+    upsert?: OrganizationContactChannelUpsertWithWhereUniqueWithoutProfileInput | OrganizationContactChannelUpsertWithWhereUniqueWithoutProfileInput[]
+    createMany?: OrganizationContactChannelCreateManyProfileInputEnvelope
+    set?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    disconnect?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    delete?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    connect?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    update?: OrganizationContactChannelUpdateWithWhereUniqueWithoutProfileInput | OrganizationContactChannelUpdateWithWhereUniqueWithoutProfileInput[]
+    updateMany?: OrganizationContactChannelUpdateManyWithWhereWithoutProfileInput | OrganizationContactChannelUpdateManyWithWhereWithoutProfileInput[]
+    deleteMany?: OrganizationContactChannelScalarWhereInput | OrganizationContactChannelScalarWhereInput[]
+  }
+
+  export type OrganizationAddressUpdateManyWithoutProfileNestedInput = {
+    create?: XOR<OrganizationAddressCreateWithoutProfileInput, OrganizationAddressUncheckedCreateWithoutProfileInput> | OrganizationAddressCreateWithoutProfileInput[] | OrganizationAddressUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationAddressCreateOrConnectWithoutProfileInput | OrganizationAddressCreateOrConnectWithoutProfileInput[]
+    upsert?: OrganizationAddressUpsertWithWhereUniqueWithoutProfileInput | OrganizationAddressUpsertWithWhereUniqueWithoutProfileInput[]
+    createMany?: OrganizationAddressCreateManyProfileInputEnvelope
+    set?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    disconnect?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    delete?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    connect?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    update?: OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput | OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput[]
+    updateMany?: OrganizationAddressUpdateManyWithWhereWithoutProfileInput | OrganizationAddressUpdateManyWithWhereWithoutProfileInput[]
+    deleteMany?: OrganizationAddressScalarWhereInput | OrganizationAddressScalarWhereInput[]
+  }
+
+  export type OrganizationContactChannelUncheckedUpdateManyWithoutProfileNestedInput = {
+    create?: XOR<OrganizationContactChannelCreateWithoutProfileInput, OrganizationContactChannelUncheckedCreateWithoutProfileInput> | OrganizationContactChannelCreateWithoutProfileInput[] | OrganizationContactChannelUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationContactChannelCreateOrConnectWithoutProfileInput | OrganizationContactChannelCreateOrConnectWithoutProfileInput[]
+    upsert?: OrganizationContactChannelUpsertWithWhereUniqueWithoutProfileInput | OrganizationContactChannelUpsertWithWhereUniqueWithoutProfileInput[]
+    createMany?: OrganizationContactChannelCreateManyProfileInputEnvelope
+    set?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    disconnect?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    delete?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    connect?: OrganizationContactChannelWhereUniqueInput | OrganizationContactChannelWhereUniqueInput[]
+    update?: OrganizationContactChannelUpdateWithWhereUniqueWithoutProfileInput | OrganizationContactChannelUpdateWithWhereUniqueWithoutProfileInput[]
+    updateMany?: OrganizationContactChannelUpdateManyWithWhereWithoutProfileInput | OrganizationContactChannelUpdateManyWithWhereWithoutProfileInput[]
+    deleteMany?: OrganizationContactChannelScalarWhereInput | OrganizationContactChannelScalarWhereInput[]
+  }
+
+  export type OrganizationAddressUncheckedUpdateManyWithoutProfileNestedInput = {
+    create?: XOR<OrganizationAddressCreateWithoutProfileInput, OrganizationAddressUncheckedCreateWithoutProfileInput> | OrganizationAddressCreateWithoutProfileInput[] | OrganizationAddressUncheckedCreateWithoutProfileInput[]
+    connectOrCreate?: OrganizationAddressCreateOrConnectWithoutProfileInput | OrganizationAddressCreateOrConnectWithoutProfileInput[]
+    upsert?: OrganizationAddressUpsertWithWhereUniqueWithoutProfileInput | OrganizationAddressUpsertWithWhereUniqueWithoutProfileInput[]
+    createMany?: OrganizationAddressCreateManyProfileInputEnvelope
+    set?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    disconnect?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    delete?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    connect?: OrganizationAddressWhereUniqueInput | OrganizationAddressWhereUniqueInput[]
+    update?: OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput | OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput[]
+    updateMany?: OrganizationAddressUpdateManyWithWhereWithoutProfileInput | OrganizationAddressUpdateManyWithWhereWithoutProfileInput[]
+    deleteMany?: OrganizationAddressScalarWhereInput | OrganizationAddressScalarWhereInput[]
+  }
+
+  export type OrganizationProfileCreateNestedOneWithoutContactsInput = {
+    create?: XOR<OrganizationProfileCreateWithoutContactsInput, OrganizationProfileUncheckedCreateWithoutContactsInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutContactsInput
+    connect?: OrganizationProfileWhereUniqueInput
+  }
+
+  export type EnumOrgContactKindFieldUpdateOperationsInput = {
+    set?: $Enums.OrgContactKind
+  }
+
+  export type EnumOrgContactPurposeFieldUpdateOperationsInput = {
+    set?: $Enums.OrgContactPurpose
+  }
+
+  export type OrganizationProfileUpdateOneRequiredWithoutContactsNestedInput = {
+    create?: XOR<OrganizationProfileCreateWithoutContactsInput, OrganizationProfileUncheckedCreateWithoutContactsInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutContactsInput
+    upsert?: OrganizationProfileUpsertWithoutContactsInput
+    connect?: OrganizationProfileWhereUniqueInput
+    update?: XOR<XOR<OrganizationProfileUpdateToOneWithWhereWithoutContactsInput, OrganizationProfileUpdateWithoutContactsInput>, OrganizationProfileUncheckedUpdateWithoutContactsInput>
+  }
+
+  export type OrganizationProfileCreateNestedOneWithoutAddressesInput = {
+    create?: XOR<OrganizationProfileCreateWithoutAddressesInput, OrganizationProfileUncheckedCreateWithoutAddressesInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutAddressesInput
+    connect?: OrganizationProfileWhereUniqueInput
+  }
+
+  export type EnumOrgAddressKindFieldUpdateOperationsInput = {
+    set?: $Enums.OrgAddressKind
+  }
+
+  export type OrganizationProfileUpdateOneRequiredWithoutAddressesNestedInput = {
+    create?: XOR<OrganizationProfileCreateWithoutAddressesInput, OrganizationProfileUncheckedCreateWithoutAddressesInput>
+    connectOrCreate?: OrganizationProfileCreateOrConnectWithoutAddressesInput
+    upsert?: OrganizationProfileUpsertWithoutAddressesInput
+    connect?: OrganizationProfileWhereUniqueInput
+    update?: XOR<XOR<OrganizationProfileUpdateToOneWithWhereWithoutAddressesInput, OrganizationProfileUpdateWithoutAddressesInput>, OrganizationProfileUncheckedUpdateWithoutAddressesInput>
   }
 
   export type OrganizationCreateNestedOneWithoutElektrawebBridgePolicyInput = {
@@ -169276,6 +174439,57 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
+  export type NestedEnumOrgContactKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactKind | EnumOrgContactKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactKindFilter<$PrismaModel> | $Enums.OrgContactKind
+  }
+
+  export type NestedEnumOrgContactPurposeFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactPurpose | EnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactPurposeFilter<$PrismaModel> | $Enums.OrgContactPurpose
+  }
+
+  export type NestedEnumOrgContactKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactKind | EnumOrgContactKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactKind[] | ListEnumOrgContactKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactKindWithAggregatesFilter<$PrismaModel> | $Enums.OrgContactKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgContactKindFilter<$PrismaModel>
+    _max?: NestedEnumOrgContactKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOrgContactPurposeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgContactPurpose | EnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgContactPurpose[] | ListEnumOrgContactPurposeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgContactPurposeWithAggregatesFilter<$PrismaModel> | $Enums.OrgContactPurpose
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgContactPurposeFilter<$PrismaModel>
+    _max?: NestedEnumOrgContactPurposeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOrgAddressKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgAddressKind | EnumOrgAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgAddressKindFilter<$PrismaModel> | $Enums.OrgAddressKind
+  }
+
+  export type NestedEnumOrgAddressKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgAddressKind | EnumOrgAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgAddressKind[] | ListEnumOrgAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgAddressKindWithAggregatesFilter<$PrismaModel> | $Enums.OrgAddressKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgAddressKindFilter<$PrismaModel>
+    _max?: NestedEnumOrgAddressKindFilter<$PrismaModel>
+  }
+
   export type NestedEnumHoldingAccessRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.HoldingAccessRole | EnumHoldingAccessRoleFieldRefInput<$PrismaModel>
     in?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
@@ -169715,6 +174929,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSubscriptionInput = {
@@ -169799,6 +175014,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSubscriptionInput = {
@@ -169899,6 +175115,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSubscriptionInput = {
@@ -169983,6 +175200,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {
@@ -170305,6 +175523,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput = {
@@ -170389,6 +175608,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput = {
@@ -170532,6 +175752,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput = {
@@ -170616,6 +175837,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutUsageMeterEventsInput = {
@@ -170700,6 +175922,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutUsageMeterEventsInput = {
@@ -170784,6 +176007,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutUsageMeterEventsInput = {
@@ -170884,6 +176108,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutUsageMeterEventsInput = {
@@ -170968,6 +176193,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type PricingBundleCreateWithoutOrganizationBundlesInput = {
@@ -171367,6 +176593,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput = {
@@ -171451,6 +176678,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSatelliteEntitlementsInput = {
@@ -171578,6 +176806,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput = {
@@ -171662,6 +176891,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SatelliteUpsertWithoutEntitlementsInput = {
@@ -171779,6 +177009,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEndpointsInput = {
@@ -171863,6 +177094,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSatelliteEndpointsInput = {
@@ -171990,6 +177222,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput = {
@@ -172074,6 +177307,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SatelliteUpsertWithoutEndpointsInput = {
@@ -172191,6 +177425,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlacementJobsInput = {
@@ -172275,6 +177510,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlacementJobsInput = {
@@ -172375,6 +177611,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlacementJobsInput = {
@@ -172459,6 +177696,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutWorkforceAssignmentsInput = {
@@ -172543,6 +177781,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
@@ -172627,6 +177866,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput = {
@@ -172727,6 +177967,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
@@ -172811,6 +178052,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrgUnitCreateWithoutWorkforceScopeInput = {
@@ -174303,6 +179545,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOrgUnitCommercialLinksInput = {
@@ -174387,6 +179630,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOrgUnitCommercialLinksInput = {
@@ -174565,6 +179809,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOrgUnitCommercialLinksInput = {
@@ -174649,6 +179894,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeUpsertWithoutCommercialLinksInput = {
@@ -175898,6 +181144,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceEmploymentsInput = {
@@ -175982,6 +181229,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceEmploymentsInput = {
@@ -176894,6 +182142,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceEmploymentsInput = {
@@ -176978,6 +182227,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeUpsertWithoutEmploymentsInput = {
@@ -177887,6 +183137,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput = {
@@ -177971,6 +183222,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceTimesheetsInput = {
@@ -178129,6 +183381,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceTimesheetsInput = {
@@ -178213,6 +183466,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput = {
@@ -178529,6 +183783,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforcePlacesInput = {
@@ -178613,6 +183868,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforcePlacesInput = {
@@ -178918,6 +184174,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforcePlacesInput = {
@@ -179002,6 +184259,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrgUnitUpsertWithoutResponsiblePlacesInput = {
@@ -179218,6 +184476,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendanceDevicesInput = {
@@ -179302,6 +184561,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendanceDevicesInput = {
@@ -179499,6 +184759,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendanceDevicesInput = {
@@ -179583,6 +184844,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforcePlaceUpsertWithoutAttendanceDevicesInput = {
@@ -179732,6 +184994,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendanceIdentitiesInput = {
@@ -179816,6 +185079,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendanceIdentitiesInput = {
@@ -179993,6 +185257,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendanceIdentitiesInput = {
@@ -180077,6 +185342,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutAttendanceIdentitiesInput = {
@@ -180244,6 +185510,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendancePunchesInput = {
@@ -180328,6 +185595,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendancePunchesInput = {
@@ -180613,6 +185881,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendancePunchesInput = {
@@ -180697,6 +185966,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceAttendanceDeviceUpsertWithoutPunchesInput = {
@@ -180983,6 +186253,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendancePunchJournalsInput = {
@@ -181067,6 +186338,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendancePunchJournalsInput = {
@@ -181216,6 +186488,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendancePunchJournalsInput = {
@@ -181300,6 +186573,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceAttendancePunchUpsertWithoutJournalInput = {
@@ -181439,6 +186713,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceHourlyLeaveRequestsInput = {
@@ -181523,6 +186798,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceHourlyLeaveRequestsInput = {
@@ -181700,6 +186976,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceHourlyLeaveRequestsInput = {
@@ -181784,6 +187061,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutHourlyLeaveRequestsInput = {
@@ -181951,6 +187229,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAdvanceRequestsInput = {
@@ -182035,6 +187314,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAdvanceRequestsInput = {
@@ -182212,6 +187492,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAdvanceRequestsInput = {
@@ -182296,6 +187577,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutAdvanceRequestsInput = {
@@ -182463,6 +187745,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAnnouncementsInput = {
@@ -182547,6 +187830,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAnnouncementsInput = {
@@ -182671,6 +187955,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAnnouncementsInput = {
@@ -182755,6 +188040,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceAnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput = {
@@ -183067,6 +188353,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceFitnessRecordsInput = {
@@ -183151,6 +188438,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceFitnessRecordsInput = {
@@ -183328,6 +188616,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceFitnessRecordsInput = {
@@ -183412,6 +188701,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutFitnessRecordsInput = {
@@ -183579,6 +188869,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceShiftTypesInput = {
@@ -183663,6 +188954,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceShiftTypesInput = {
@@ -183821,6 +189113,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceShiftTypesInput = {
@@ -183905,6 +189198,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceShiftCycleSlotUpsertWithWhereUniqueWithoutShiftTypeInput = {
@@ -184032,6 +189326,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceShiftCyclesInput = {
@@ -184116,6 +189411,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceShiftCyclesInput = {
@@ -184274,6 +189570,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceShiftCyclesInput = {
@@ -184358,6 +189655,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceShiftCycleSlotUpsertWithWhereUniqueWithoutCycleInput = {
@@ -184610,6 +189908,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceBrigadesInput = {
@@ -184694,6 +189993,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceBrigadesInput = {
@@ -184888,6 +190188,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceBrigadesInput = {
@@ -184972,6 +190273,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutBrigadeInput = {
@@ -185384,6 +190686,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceShiftAssignmentsInput = {
@@ -185468,6 +190771,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceShiftAssignmentsInput = {
@@ -185742,6 +191046,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceShiftAssignmentsInput = {
@@ -185826,6 +191131,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforcePlaceUpsertWithoutAssignmentsInput = {
@@ -186108,6 +191414,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceDayOverridesInput = {
@@ -186192,6 +191499,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceDayOverridesInput = {
@@ -186447,6 +191755,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceDayOverridesInput = {
@@ -186531,6 +191840,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutDayOverridesInput = {
@@ -187545,6 +192855,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput = {
@@ -187629,6 +192940,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceMigrationStepsInput = {
@@ -187729,6 +193041,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceMigrationStepsInput = {
@@ -187813,6 +193126,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeCreateWithoutStaffScheduleRevisionsInput = {
@@ -188026,6 +193340,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPaymentOrdersInput = {
@@ -188110,6 +193425,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPaymentOrdersInput = {
@@ -188291,6 +193607,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPaymentOrdersInput = {
@@ -188375,6 +193692,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SubscriptionInvoiceUpsertWithoutPaymentOrderInput = {
@@ -188736,6 +194054,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput = {
@@ -188820,6 +194139,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceOrgSettingsInput = {
@@ -188920,6 +194240,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceOrgSettingsInput = {
@@ -189004,6 +194325,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutWorkforceApprovalRoutesInput = {
@@ -189088,6 +194410,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput = {
@@ -189172,6 +194495,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceApprovalRoutesInput = {
@@ -189302,6 +194626,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceApprovalRoutesInput = {
@@ -189386,6 +194711,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput = {
@@ -189714,6 +195040,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput = {
@@ -189798,6 +195125,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceApprovalDecisionsInput = {
@@ -189898,6 +195226,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceApprovalDecisionsInput = {
@@ -189982,6 +195311,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceVacationPlanCreateWithoutRevisionsInput = {
@@ -192051,6 +197381,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutDepartmentsInput = {
@@ -192135,6 +197466,7 @@ export namespace Prisma {
     fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDepartmentsInput = {
@@ -192224,6 +197556,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutParentOrgInput = {
@@ -192308,6 +197641,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutParentOrgInput = {
@@ -192409,6 +197743,45 @@ export namespace Prisma {
   export type BuyerOrgGrantCreateManyOrganizationInputEnvelope = {
     data: BuyerOrgGrantCreateManyOrganizationInput | BuyerOrgGrantCreateManyOrganizationInput[]
     skipDuplicates?: boolean
+  }
+
+  export type OrganizationProfileCreateWithoutOrganizationInput = {
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contacts?: OrganizationContactChannelCreateNestedManyWithoutProfileInput
+    addresses?: OrganizationAddressCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileUncheckedCreateWithoutOrganizationInput = {
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contacts?: OrganizationContactChannelUncheckedCreateNestedManyWithoutProfileInput
+    addresses?: OrganizationAddressUncheckedCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileCreateOrConnectWithoutOrganizationInput = {
+    where: OrganizationProfileWhereUniqueInput
+    create: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
   }
 
   export type UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -193956,6 +199329,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDepartmentsInput = {
@@ -194040,6 +199414,7 @@ export namespace Prisma {
     fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithWhereUniqueWithoutParentOrgInput = {
@@ -194187,6 +199562,725 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"BuyerOrgGrant"> | Date | string
   }
 
+  export type OrganizationProfileUpsertWithoutOrganizationInput = {
+    update: XOR<OrganizationProfileUpdateWithoutOrganizationInput, OrganizationProfileUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
+    where?: OrganizationProfileWhereInput
+  }
+
+  export type OrganizationProfileUpdateToOneWithWhereWithoutOrganizationInput = {
+    where?: OrganizationProfileWhereInput
+    data: XOR<OrganizationProfileUpdateWithoutOrganizationInput, OrganizationProfileUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrganizationProfileUpdateWithoutOrganizationInput = {
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contacts?: OrganizationContactChannelUpdateManyWithoutProfileNestedInput
+    addresses?: OrganizationAddressUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationProfileUncheckedUpdateWithoutOrganizationInput = {
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contacts?: OrganizationContactChannelUncheckedUpdateManyWithoutProfileNestedInput
+    addresses?: OrganizationAddressUncheckedUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationCreateWithoutProfileInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutProfileInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutProfileInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutProfileInput, OrganizationUncheckedCreateWithoutProfileInput>
+  }
+
+  export type OrganizationContactChannelCreateWithoutProfileInput = {
+    id?: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label?: string | null
+    purpose?: $Enums.OrgContactPurpose
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationContactChannelUncheckedCreateWithoutProfileInput = {
+    id?: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label?: string | null
+    purpose?: $Enums.OrgContactPurpose
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationContactChannelCreateOrConnectWithoutProfileInput = {
+    where: OrganizationContactChannelWhereUniqueInput
+    create: XOR<OrganizationContactChannelCreateWithoutProfileInput, OrganizationContactChannelUncheckedCreateWithoutProfileInput>
+  }
+
+  export type OrganizationContactChannelCreateManyProfileInputEnvelope = {
+    data: OrganizationContactChannelCreateManyProfileInput | OrganizationContactChannelCreateManyProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationAddressCreateWithoutProfileInput = {
+    id?: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2?: string | null
+    city?: string | null
+    region?: string | null
+    postalCode?: string | null
+    country?: string | null
+    lineAz?: string | null
+    lineRu?: string | null
+    lineEn?: string | null
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationAddressUncheckedCreateWithoutProfileInput = {
+    id?: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2?: string | null
+    city?: string | null
+    region?: string | null
+    postalCode?: string | null
+    country?: string | null
+    lineAz?: string | null
+    lineRu?: string | null
+    lineEn?: string | null
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationAddressCreateOrConnectWithoutProfileInput = {
+    where: OrganizationAddressWhereUniqueInput
+    create: XOR<OrganizationAddressCreateWithoutProfileInput, OrganizationAddressUncheckedCreateWithoutProfileInput>
+  }
+
+  export type OrganizationAddressCreateManyProfileInputEnvelope = {
+    data: OrganizationAddressCreateManyProfileInput | OrganizationAddressCreateManyProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutProfileInput = {
+    update: XOR<OrganizationUpdateWithoutProfileInput, OrganizationUncheckedUpdateWithoutProfileInput>
+    create: XOR<OrganizationCreateWithoutProfileInput, OrganizationUncheckedCreateWithoutProfileInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutProfileInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutProfileInput, OrganizationUncheckedUpdateWithoutProfileInput>
+  }
+
+  export type OrganizationUpdateWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationContactChannelUpsertWithWhereUniqueWithoutProfileInput = {
+    where: OrganizationContactChannelWhereUniqueInput
+    update: XOR<OrganizationContactChannelUpdateWithoutProfileInput, OrganizationContactChannelUncheckedUpdateWithoutProfileInput>
+    create: XOR<OrganizationContactChannelCreateWithoutProfileInput, OrganizationContactChannelUncheckedCreateWithoutProfileInput>
+  }
+
+  export type OrganizationContactChannelUpdateWithWhereUniqueWithoutProfileInput = {
+    where: OrganizationContactChannelWhereUniqueInput
+    data: XOR<OrganizationContactChannelUpdateWithoutProfileInput, OrganizationContactChannelUncheckedUpdateWithoutProfileInput>
+  }
+
+  export type OrganizationContactChannelUpdateManyWithWhereWithoutProfileInput = {
+    where: OrganizationContactChannelScalarWhereInput
+    data: XOR<OrganizationContactChannelUpdateManyMutationInput, OrganizationContactChannelUncheckedUpdateManyWithoutProfileInput>
+  }
+
+  export type OrganizationContactChannelScalarWhereInput = {
+    AND?: OrganizationContactChannelScalarWhereInput | OrganizationContactChannelScalarWhereInput[]
+    OR?: OrganizationContactChannelScalarWhereInput[]
+    NOT?: OrganizationContactChannelScalarWhereInput | OrganizationContactChannelScalarWhereInput[]
+    id?: UuidFilter<"OrganizationContactChannel"> | string
+    organizationId?: UuidFilter<"OrganizationContactChannel"> | string
+    kind?: EnumOrgContactKindFilter<"OrganizationContactChannel"> | $Enums.OrgContactKind
+    value?: StringFilter<"OrganizationContactChannel"> | string
+    label?: StringNullableFilter<"OrganizationContactChannel"> | string | null
+    purpose?: EnumOrgContactPurposeFilter<"OrganizationContactChannel"> | $Enums.OrgContactPurpose
+    isPrimary?: BoolFilter<"OrganizationContactChannel"> | boolean
+    sortOrder?: IntFilter<"OrganizationContactChannel"> | number
+    createdAt?: DateTimeFilter<"OrganizationContactChannel"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationContactChannel"> | Date | string
+  }
+
+  export type OrganizationAddressUpsertWithWhereUniqueWithoutProfileInput = {
+    where: OrganizationAddressWhereUniqueInput
+    update: XOR<OrganizationAddressUpdateWithoutProfileInput, OrganizationAddressUncheckedUpdateWithoutProfileInput>
+    create: XOR<OrganizationAddressCreateWithoutProfileInput, OrganizationAddressUncheckedCreateWithoutProfileInput>
+  }
+
+  export type OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput = {
+    where: OrganizationAddressWhereUniqueInput
+    data: XOR<OrganizationAddressUpdateWithoutProfileInput, OrganizationAddressUncheckedUpdateWithoutProfileInput>
+  }
+
+  export type OrganizationAddressUpdateManyWithWhereWithoutProfileInput = {
+    where: OrganizationAddressScalarWhereInput
+    data: XOR<OrganizationAddressUpdateManyMutationInput, OrganizationAddressUncheckedUpdateManyWithoutProfileInput>
+  }
+
+  export type OrganizationAddressScalarWhereInput = {
+    AND?: OrganizationAddressScalarWhereInput | OrganizationAddressScalarWhereInput[]
+    OR?: OrganizationAddressScalarWhereInput[]
+    NOT?: OrganizationAddressScalarWhereInput | OrganizationAddressScalarWhereInput[]
+    id?: UuidFilter<"OrganizationAddress"> | string
+    organizationId?: UuidFilter<"OrganizationAddress"> | string
+    kind?: EnumOrgAddressKindFilter<"OrganizationAddress"> | $Enums.OrgAddressKind
+    line1?: StringFilter<"OrganizationAddress"> | string
+    line2?: StringNullableFilter<"OrganizationAddress"> | string | null
+    city?: StringNullableFilter<"OrganizationAddress"> | string | null
+    region?: StringNullableFilter<"OrganizationAddress"> | string | null
+    postalCode?: StringNullableFilter<"OrganizationAddress"> | string | null
+    country?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineAz?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineRu?: StringNullableFilter<"OrganizationAddress"> | string | null
+    lineEn?: StringNullableFilter<"OrganizationAddress"> | string | null
+    isPrimary?: BoolFilter<"OrganizationAddress"> | boolean
+    sortOrder?: IntFilter<"OrganizationAddress"> | number
+    createdAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+  }
+
+  export type OrganizationProfileCreateWithoutContactsInput = {
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutProfileInput
+    addresses?: OrganizationAddressCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileUncheckedCreateWithoutContactsInput = {
+    organizationId: string
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    addresses?: OrganizationAddressUncheckedCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileCreateOrConnectWithoutContactsInput = {
+    where: OrganizationProfileWhereUniqueInput
+    create: XOR<OrganizationProfileCreateWithoutContactsInput, OrganizationProfileUncheckedCreateWithoutContactsInput>
+  }
+
+  export type OrganizationProfileUpsertWithoutContactsInput = {
+    update: XOR<OrganizationProfileUpdateWithoutContactsInput, OrganizationProfileUncheckedUpdateWithoutContactsInput>
+    create: XOR<OrganizationProfileCreateWithoutContactsInput, OrganizationProfileUncheckedCreateWithoutContactsInput>
+    where?: OrganizationProfileWhereInput
+  }
+
+  export type OrganizationProfileUpdateToOneWithWhereWithoutContactsInput = {
+    where?: OrganizationProfileWhereInput
+    data: XOR<OrganizationProfileUpdateWithoutContactsInput, OrganizationProfileUncheckedUpdateWithoutContactsInput>
+  }
+
+  export type OrganizationProfileUpdateWithoutContactsInput = {
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutProfileNestedInput
+    addresses?: OrganizationAddressUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationProfileUncheckedUpdateWithoutContactsInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    addresses?: OrganizationAddressUncheckedUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationProfileCreateWithoutAddressesInput = {
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutProfileInput
+    contacts?: OrganizationContactChannelCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileUncheckedCreateWithoutAddressesInput = {
+    organizationId: string
+    tradeName?: string | null
+    nameAz?: string | null
+    nameRu?: string | null
+    nameEn?: string | null
+    directorName?: string | null
+    directorTitle?: string | null
+    logoUrl?: string | null
+    stampUrl?: string | null
+    signatureDirectorUrl?: string | null
+    bankLine?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contacts?: OrganizationContactChannelUncheckedCreateNestedManyWithoutProfileInput
+  }
+
+  export type OrganizationProfileCreateOrConnectWithoutAddressesInput = {
+    where: OrganizationProfileWhereUniqueInput
+    create: XOR<OrganizationProfileCreateWithoutAddressesInput, OrganizationProfileUncheckedCreateWithoutAddressesInput>
+  }
+
+  export type OrganizationProfileUpsertWithoutAddressesInput = {
+    update: XOR<OrganizationProfileUpdateWithoutAddressesInput, OrganizationProfileUncheckedUpdateWithoutAddressesInput>
+    create: XOR<OrganizationProfileCreateWithoutAddressesInput, OrganizationProfileUncheckedCreateWithoutAddressesInput>
+    where?: OrganizationProfileWhereInput
+  }
+
+  export type OrganizationProfileUpdateToOneWithWhereWithoutAddressesInput = {
+    where?: OrganizationProfileWhereInput
+    data: XOR<OrganizationProfileUpdateWithoutAddressesInput, OrganizationProfileUncheckedUpdateWithoutAddressesInput>
+  }
+
+  export type OrganizationProfileUpdateWithoutAddressesInput = {
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutProfileNestedInput
+    contacts?: OrganizationContactChannelUpdateManyWithoutProfileNestedInput
+  }
+
+  export type OrganizationProfileUncheckedUpdateWithoutAddressesInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    tradeName?: NullableStringFieldUpdateOperationsInput | string | null
+    nameAz?: NullableStringFieldUpdateOperationsInput | string | null
+    nameRu?: NullableStringFieldUpdateOperationsInput | string | null
+    nameEn?: NullableStringFieldUpdateOperationsInput | string | null
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contacts?: OrganizationContactChannelUncheckedUpdateManyWithoutProfileNestedInput
+  }
+
   export type OrganizationCreateWithoutElektrawebBridgePolicyInput = {
     id?: string
     name: string
@@ -194269,6 +200363,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput = {
@@ -194353,6 +200448,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutElektrawebBridgePolicyInput = {
@@ -194453,6 +200549,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutElektrawebBridgePolicyInput = {
@@ -194537,6 +200634,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutClinicCutoverPolicyInput = {
@@ -194621,6 +200719,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput = {
@@ -194705,6 +200804,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutClinicCutoverPolicyInput = {
@@ -194794,6 +200894,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput = {
@@ -194878,6 +200979,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutClinicCutoverAsHotelInput = {
@@ -194978,6 +201080,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutClinicCutoverPolicyInput = {
@@ -195062,6 +201165,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithoutClinicCutoverAsHotelInput = {
@@ -195157,6 +201261,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput = {
@@ -195241,6 +201346,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutFiscalHardwareDevicesInput = {
@@ -195325,6 +201431,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput = {
@@ -195409,6 +201516,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutFiscalHardwareDevicesInput = {
@@ -195509,6 +201617,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutFiscalHardwareDevicesInput = {
@@ -195593,6 +201702,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationMembershipCreateWithoutUserInput = {
@@ -195819,6 +201929,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOwnerInput = {
@@ -195903,6 +202014,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOwnerInput = {
@@ -196250,6 +202362,7 @@ export namespace Prisma {
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutHoldingInput = {
@@ -196334,6 +202447,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutHoldingInput = {
@@ -196653,6 +202767,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOrganizationRolesInput = {
@@ -196737,6 +202852,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOrganizationRolesInput = {
@@ -196867,6 +202983,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOrganizationRolesInput = {
@@ -196951,6 +203068,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationRoleInput = {
@@ -197090,6 +203208,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -197174,6 +203293,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -197350,6 +203470,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -197434,6 +203555,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationRoleUpsertWithoutMembershipsInput = {
@@ -197868,6 +203990,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -197952,6 +204075,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -198091,6 +204215,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -198175,6 +204300,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessEventsInput = {
@@ -198304,6 +204430,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -198388,6 +204515,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -198527,6 +204655,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -198611,6 +204740,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessSignupsInput = {
@@ -198740,6 +204870,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
@@ -198824,6 +204955,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
@@ -198963,6 +205095,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
@@ -199047,6 +205180,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutAuditLogsInput = {
@@ -199176,6 +205310,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationTemplatesInput = {
@@ -199260,6 +205395,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationTemplatesInput = {
@@ -199406,6 +205542,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationTemplatesInput = {
@@ -199490,6 +205627,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput = {
@@ -199590,6 +205728,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput = {
@@ -199674,6 +205813,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput = {
@@ -199835,6 +205975,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput = {
@@ -199919,6 +206060,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type NotificationTemplateUpsertWithoutOutboxEntriesInput = {
@@ -200097,6 +206239,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput = {
@@ -200181,6 +206324,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput = {
@@ -200328,6 +206472,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput = {
@@ -200412,6 +206557,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformPaymentLinksInput = {
@@ -200496,6 +206642,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput = {
@@ -200580,6 +206727,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput = {
@@ -200719,6 +206867,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput = {
@@ -200803,6 +206952,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type PaymentOrderUpsertWithoutPlatformPaymentLinksInput = {
@@ -200932,6 +207082,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPortalLinksInput = {
@@ -201016,6 +207167,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPortalLinksInput = {
@@ -201116,6 +207268,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput = {
@@ -201200,6 +207353,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutBookableResourcesInput = {
@@ -201284,6 +207438,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookableResourcesInput = {
@@ -201368,6 +207523,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookableResourcesInput = {
@@ -201536,6 +207692,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookableResourcesInput = {
@@ -201620,6 +207777,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BookingSlotUpsertWithWhereUniqueWithoutResourceInput = {
@@ -201736,6 +207894,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingSlotsInput = {
@@ -201820,6 +207979,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingSlotsInput = {
@@ -201981,6 +208141,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingSlotsInput = {
@@ -202065,6 +208226,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BookableResourceUpsertWithoutSlotsInput = {
@@ -202196,6 +208358,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingAppointmentsInput = {
@@ -202280,6 +208443,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingAppointmentsInput = {
@@ -202432,6 +208596,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingAppointmentsInput = {
@@ -202516,6 +208681,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BookableResourceUpsertWithoutAppointmentsInput = {
@@ -202664,6 +208830,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPromotionsInput = {
@@ -202748,6 +208915,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPromotionsInput = {
@@ -202848,6 +209016,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPromotionsInput = {
@@ -202932,6 +209101,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformCustomDomainsInput = {
@@ -203016,6 +209186,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput = {
@@ -203100,6 +209271,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput = {
@@ -203200,6 +209372,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput = {
@@ -203284,6 +209457,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformShipmentsInput = {
@@ -203368,6 +209542,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformShipmentsInput = {
@@ -203452,6 +209627,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformShipmentsInput = {
@@ -203552,6 +209728,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformShipmentsInput = {
@@ -203636,6 +209813,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformAuditLogsInput = {
@@ -203720,6 +209898,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformAuditLogsInput = {
@@ -203804,6 +209983,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformAuditLogsInput = {
@@ -203904,6 +210084,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformAuditLogsInput = {
@@ -203988,6 +210169,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -204072,6 +210254,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -204156,6 +210339,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformIdempotencyRecordsInput = {
@@ -204256,6 +210440,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformIdempotencyRecordsInput = {
@@ -204340,6 +210525,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -204424,6 +210610,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -204508,6 +210695,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformLoyaltyLedgerInput = {
@@ -204608,6 +210796,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformLoyaltyLedgerInput = {
@@ -204692,6 +210881,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type AgencyPropertyGrantCreateWithoutAccountInput = {
@@ -204849,6 +211039,7 @@ export namespace Prisma {
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput = {
@@ -204933,6 +211124,7 @@ export namespace Prisma {
     fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAgencyPropertyGrantsInput = {
@@ -205064,6 +211256,7 @@ export namespace Prisma {
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAgencyPropertyGrantsInput = {
@@ -205148,6 +211341,7 @@ export namespace Prisma {
     fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BuyerOrgGrantCreateWithoutAccountInput = {
@@ -205303,6 +211497,7 @@ export namespace Prisma {
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBuyerOrgGrantsInput = {
@@ -205387,6 +211582,7 @@ export namespace Prisma {
     fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBuyerOrgGrantsInput = {
@@ -205518,6 +211714,7 @@ export namespace Prisma {
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBuyerOrgGrantsInput = {
@@ -205602,6 +211799,7 @@ export namespace Prisma {
     fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateManySubscriptionInvoiceInput = {
@@ -211566,6 +217764,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutParentOrgInput = {
@@ -211650,6 +217849,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutParentOrgInput = {
@@ -211740,6 +217940,126 @@ export namespace Prisma {
     voen?: StringFieldUpdateOperationsInput | string
     financeCounterpartyId?: StringFieldUpdateOperationsInput | string
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationContactChannelCreateManyProfileInput = {
+    id?: string
+    kind: $Enums.OrgContactKind
+    value: string
+    label?: string | null
+    purpose?: $Enums.OrgContactPurpose
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationAddressCreateManyProfileInput = {
+    id?: string
+    kind: $Enums.OrgAddressKind
+    line1: string
+    line2?: string | null
+    city?: string | null
+    region?: string | null
+    postalCode?: string | null
+    country?: string | null
+    lineAz?: string | null
+    lineRu?: string | null
+    lineEn?: string | null
+    isPrimary?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationContactChannelUpdateWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationContactChannelUncheckedUpdateWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationContactChannelUncheckedUpdateManyWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgContactKindFieldUpdateOperationsInput | $Enums.OrgContactKind
+    value?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    purpose?: EnumOrgContactPurposeFieldUpdateOperationsInput | $Enums.OrgContactPurpose
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationAddressUpdateWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationAddressUncheckedUpdateWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationAddressUncheckedUpdateManyWithoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumOrgAddressKindFieldUpdateOperationsInput | $Enums.OrgAddressKind
+    line1?: StringFieldUpdateOperationsInput | string
+    line2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    lineAz?: NullableStringFieldUpdateOperationsInput | string | null
+    lineRu?: NullableStringFieldUpdateOperationsInput | string | null
+    lineEn?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -212075,6 +218395,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOwnerInput = {
@@ -212159,6 +218480,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
@@ -212377,6 +218699,7 @@ export namespace Prisma {
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutHoldingInput = {
@@ -212461,6 +218784,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutHoldingInput = {

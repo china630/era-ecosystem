@@ -124,11 +124,16 @@ export class AdminController {
     return this.admin.syncTranslationsCache();
   }
 
-  @Get("audit-logs")
-  @ApiOperation({ summary: "Глобальный журнал AuditLog" })
-  auditLogs(
+  @Get("platform-audit-logs")
+  @ApiOperation({
+    summary:
+      "SuperAdmin cross-org AuditLog (platform). Not the OWNER org security journal (/api/admin/security-audit).",
+  })
+  platformAuditLogs(
     @Query("organizationId") organizationId?: string,
     @Query("userId") userId?: string,
+    @Query("dateFrom") dateFrom?: string,
+    @Query("dateTo") dateTo?: string,
     @Query("from") from?: string,
     @Query("to") to?: string,
     @Query("skip") skipRaw?: string,
@@ -142,8 +147,8 @@ export class AdminController {
     return this.admin.globalAuditLogs({
       organizationId,
       userId,
-      from,
-      to,
+      from: dateFrom ?? from,
+      to: dateTo ?? to,
       skip,
       take,
     });

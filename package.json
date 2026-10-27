@@ -52,6 +52,7 @@
     "check:satellite-raw-sql": "node scripts/check-satellite-raw-sql.mjs",
     "check:bridge-tenant-bind": "node scripts/check-bridge-tenant-bind.mjs",
     "check:satellite-session": "node scripts/check-satellite-session-standard.mjs",
+    "check:mutation-audit-belt": "node scripts/check-mutation-audit-belt.mjs",
     "run:quality-gates": "node scripts/run-quality-gates.mjs",
     "run:quality-gates:strict": "node scripts/run-quality-gates.mjs --strict",
     "lint:token-layers": "node scripts/lint-token-layers.mjs",

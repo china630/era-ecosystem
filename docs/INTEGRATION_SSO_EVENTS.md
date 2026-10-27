@@ -11,6 +11,7 @@ Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_
 ### Satellite launch HMAC (industry apps)
 
 - **Launch base URL (Wave 8):** owner Open resolves `baseUrl` from orchestrator `SatelliteEndpoint` via `GET /v1/satellites/launch-url?satelliteKey=…` (JWT + org context). Registry row wins; if missing/disabled, API falls back to `NEXT_PUBLIC_SATELLITE_*` / `ERA_*_ORIGIN` (local-dev). Client `satelliteUrlForItem()` remains a last-resort webpack-inlined fallback only — not production SoR. Super-admin still CRUD endpoints at `v1/admin/orgs/:orgId/satellite-endpoints`.
+- **S2S peer base URL:** `GET /v1/internal/satellites/peer-endpoint?satelliteKey=` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN` family + `X-Organization-Id`) → `{ baseUrl, source }`. Kit `resolvePeerSatelliteBaseUrl`. Used by Finance→Hotel CL `payment-applied`, Clinic/F&B/Retail→Hotel bridges. ADR [satellite-peer-url-resolution.md](adr/satellite-peer-url-resolution.md).
 - **Mint:** `POST /auth/satellite-sso-ticket` (JWT required) — only for an **active membership** of the caller; `financeRole` comes from membership (not client default `OWNER`); includes one-time `jti`.
 - **Payload v3 (preferred):** `email|organizationId|expiresAt|financeRole|jti` signed with `ERA_SSO_SHARED_SECRET`.
 - **Payload v2:** `email|organizationId|expiresAt|financeRole` (still accepted).

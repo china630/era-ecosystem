@@ -31,8 +31,10 @@
 | Admin | `/admin` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (FNB-RBAC-01; not SHOW) |
 | Edition + halls | `/admin/settings` (Halls modal) · orch `/settings/subscription` F&B edition card | 🟡 SCREEN (FNB-09 / FNB-10 API; browser run and UAT step open) |
+| Buffet planner | `/admin/buffet` (module `fnb_buffet_planner`) | 🟡 SCREEN (FNB-BUFFET-01 API; UAT FB-5 open — not SHOW) |
+| Mutation audit (FNB-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (canonical filters) | SCREEN / 🟡 — Layer A belt + viewer + path/API parity; UAT open — not SHOW. Does not move Gate, Demo, Pilot, or Sell |
 
-Admin modal CRUD is now in place for menu, tables, settings, and daily-menu board; RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
+Admin modal CRUD is now in place for menu, tables, settings, daily-menu board, and buffet planner; RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off.
 
@@ -55,3 +57,5 @@ Admin modal CRUD is now in place for menu, tables, settings, and daily-menu boar
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
 - Forbidden: claiming ERA Kafe **GA** while Pilot field is open. Street café SKUs (`industry_fnb_pos`, Zal, KDS, QR) are **mvp** on the existing F&B SHARED pool; Foundation is waived until NAS.
 - Edition, hall preset, and hotel mode are separate fields (ADR era-kafe-edition §1a). Upgrade ERA Kafe → full F&B adds no price line and keeps the Foundation waiver. Banquet is a stored preset without screens — do not sell banquet halls.
+- Buffet Planner (`fnb_buffet_planner`, FNB-BUFFET-01) is SCREEN/API only — do not sell as Pilot-ready or GA until UAT FB-5 + Finance warehouse scope (`FIN-INV-SCOPE-01`) close.
+- Mutation audit (FNB-AUD-01) is SCREEN/API — do not sell “full mutation audit” until UAT and SHOW.

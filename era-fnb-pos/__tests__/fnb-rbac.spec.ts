@@ -208,6 +208,37 @@ describe("fnb rbac catalog", () => {
     });
     await ensureSystemFnbRoles(db as never, "org-1", "fnb");
     expect(store.get("org-1:FB_WAITER")!.permissionsJson).toBe("[]");
+
+    // catalog v5: kitchen / manager pick up buffet grants without wiping custom sets
+    store.set("org-1:FB_KITCHEN", {
+      ...store.get("org-1:FB_KITCHEN")!,
+      permissionCatalogVersion: 4,
+      permissionsJson: serializePermissions([
+        PERMISSIONS.SCREEN_HOME,
+        PERMISSIONS.SCREEN_KDS,
+        PERMISSIONS.KDS_BUMP,
+      ]),
+    });
+    store.set("org-1:FB_MANAGER", {
+      ...store.get("org-1:FB_MANAGER")!,
+      permissionCatalogVersion: 4,
+      permissionsJson: serializePermissions([
+        PERMISSIONS.SCREEN_HOME,
+        PERMISSIONS.SCREEN_ADMIN_MENU,
+      ]),
+    });
+    await ensureSystemFnbRoles(db as never, "org-1", "fnb");
+    const kitchen = parsePermissions(store.get("org-1:FB_KITCHEN")!.permissionsJson);
+    expect(kitchen).toEqual(
+      expect.arrayContaining([PERMISSIONS.SCREEN_ADMIN_BUFFET, PERMISSIONS.ADMIN_BUFFET]),
+    );
+    const manager = parsePermissions(store.get("org-1:FB_MANAGER")!.permissionsJson);
+    expect(manager).toEqual(
+      expect.arrayContaining([PERMISSIONS.SCREEN_ADMIN_BUFFET, PERMISSIONS.ADMIN_BUFFET]),
+    );
+    expect(store.get("org-1:FB_KITCHEN")!.permissionCatalogVersion).toBe(
+      FNB_PERMISSION_CATALOG_VERSION,
+    );
   });
 
   it("template reset for system role", () => {

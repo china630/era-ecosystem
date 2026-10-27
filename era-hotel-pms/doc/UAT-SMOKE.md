@@ -139,26 +139,26 @@ Room plan UI (Wave C+ / EW palette):
 2. **Finish** included MASSAGE � audit note only, no extra MEDICAL charge.
 3. Book **MUD** (not in package), finish � MEDICAL charge on folio.
 
-## 14. TRANSFER (Stage 20 / HN-7)
+## 14. TRANSFER (HOT-XFER-01)
 
-1. `/transfers` � seed shows CONFIRMED IN transfer for **Ali Mammadov** (flight J2-812, VAN-01).
-2. Book OUT transfer for in-house guest � status BOOKED.
-3. Assign vehicle � status CONFIRMED.
-4. **Complete** � `TRANSFER` charge on guest folio; order status DONE.
+1. `/transfers` — seed shows CONFIRMED IN transfer for **Ali Mammadov** (flight J2-812, VAN-01). Filter «with flight» shows the same board (`/transfers/airport` redirects here).
+2. Book OUT transfer for stay-linked guest (autocomplete OPTION/CONFIRMED/IN_HOUSE) — status BOOKED.
+3. Assign vehicle → Complete → `TRANSFER` charge on guest folio; order status DONE.
+4. Cancel DONE+charged → void when possible. Print driver sheet for the pickup date.
 
-## 14b. TOURS (HOT-TOUR-01)
+## 14b. TOURS (HOT-TOUR-01) — boarding-first default
 
-Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`.
+Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`. Policy: `/settings/policies#tours` default `CHARGE_ON_BOARDING`.
 
-1. `/fleet` — create a bus (code, plate, max seats, driver). Retire is not hard-delete.
-2. `/tours/new` — Sunday departure (agenda, pickup/return, meeting point, capacity, price). Assign the bus.
-3. `/tours/[id]` — add IN_HOUSE guest → `TOUR` charge on guest folio immediately; roster **CHARGED**.
-4. Reception **Pay** on roster (CASH/CARD) — roster **PAID**; payment allocated to that charge.
-5. Alternate: **Pay** on the TOUR line on `/folio/[reservationId]` (GUEST folio only) — same PAID.
-6. Alternate: settle GUEST folio to zero with guest tender — TOUR PAID. City-ledger / COMPANY_ACCOUNT → **ON_CITY_LEDGER**, not Paid.
-7. Attempt to assign the same vehicle over an airport transfer window — API 409, UI error (not a toast-only warning).
-8. `/tours/[id]/print` — driver can read room, name, phone, paid status. Re-print does not change data.
-9. Confirm **no** extra row on `/front-cash/pending` for the tour (front-cash is not the tour pay path).
+1. `/tours` — grid; **New departure** modal (DatePicker, optional template, vehicle).
+2. `/tours/[id]` — add stay via autocomplete → roster **RESERVED** (no folio yet).
+3. Check «boarded» / **Board** / **Close boarding** → `TOUR` charge on guest folio; status **CHARGED**. Unchecked RESERVED dropped when close boarding (default policy).
+4. **Pay** modal CASH/CARD/BANK → **PAID**. Alternate: pay TOUR line on folio; or settle GUEST folio with guest tender. City-ledger-only → **ON_CITY_LEDGER**.
+5. Cancel after CHARGED/PAID → void/refund (money returned).
+6. Vehicle conflict with airport transfer window — API 409, UI `showApiError`.
+7. `/tours/[id]/print` — room, name, phone, money status. Re-print does not change data.
+8. Confirm **no** extra row on `/front-cash/pending` for the tour.
+9. Optional: switch policy to `CHARGE_ON_ADD` → add posts `TOUR` immediately (legacy).
 
 ## 15. BANQUET BEO / MICE (Stage 21 / HN-8 / H-BL-31)
 
@@ -363,7 +363,8 @@ UI paths (no curl) for [NAFTA_DOC_API_UI_AUDIT](../../docs/NAFTA_DOC_API_UI_AUDI
 1. **Migration:** `/migration` → Prefill + Submit to registry on a registration row.
 2. **Folio card:** open reservation → Folio tab → Place card hold / Release; Billing → credit limit; early/late preview under check-in/out times.
 3. **Channel:** `/channel` → **Push OTA** / **Pull OTA**; confirm last sync message.
-4. **Admin:** `/settings/yield-rules` CRUD; `/settings/audit` filter by entity type + date range.
+4. **Admin:** `/settings/yield-rules` CRUD; `/admin/audit` filter by entity type + date range (+ entityId / action / userId).
+5. **Mutation audit Layer A (HOT-AUD-01 — open):** as staff with `api:reports.read` (without needing admin screen), run any successful POST/PATCH → open `/admin/audit` → entity type **HTTP mutations (Layer A)** → row shows method + path; login/logout must not appear. Domain types still filter separately. Not SHIPPED until this step passes.
 
 ## 30. Reports W1 — Management reports catalog + nightly ZIP (HOT-RPT-01/02)
 
@@ -426,14 +427,15 @@ Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-cor
 
 UI paths (OpsUI) — no curl-only for SHIPPED claims:
 
-1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR`; guest folio still requires zero balance.
+1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR` only after invoice succeeds; guest folio still requires zero balance. Settlement status → PENDING then INVOICED.
 1a. **One check-out dialog (HOT-FOLIO-DESK):** open check-out from the reservation card Folio tab, from the room rack, and from the card stay action → the same dialog opens each time. The top of the dialog shows charges, money in, and net (pay or refund). Stay with no net → only "Confirm check-out", no choice blocks. Guest folio in debt → a Guest block with the debt, nothing selected, confirm disabled; pick "Leave debt on guest" without a note → error inside the dialog. Agency folio owing the room while the guest owes extras → two blocks; the agency block shows the agency name and amount; choose "Pay now" → card without a terminal is refused in the dialog; cash for the full amount → agency folio closes; or choose "Transfer to City Ledger" → folio goes to `TRANSFERRED_AR`. No "do not transfer" option exists. Held cash is already in "money in"; the pay amount is the net. User without folio payment right (Night auditor) → "Pay now" is not offered, a hint explains why.
-2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error.
+1b. **Move guest → payer + City Ledger:** stay with company/agency; room (or other) charges still on GUEST folio → check-out → guest block choice "Move … to {payer} and City Ledger" → guest lines move to COMPANY (else AGENCY) → payer goes PENDING_AR → invoice → TRANSFERRED_AR; toast success or warning if invoice/snapshot fails; `/front-cash/unsettled-departures` lists the stay until Finance settles.
+2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error (toast `showApiError`).
 3. **Deposit on settle:** HELD deposit → `/folio/[id]` settle wizard → Apply deposits / method DEPOSIT → balance reduces; deposit APPLIED.
 4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
 5. **Discount:** settle or check-out with discount amount → negative DISCOUNT charge.
 6. **Per-guest close:** EQUAL party → Close on one personal folio when balance 0.
-7. **Agency settle handoff:** `/front-cash/agency-ledger` → TRANSFERRED_AR list (AGENCY folios only) → bank match in Finance (hotel POST settle returns 409).
+7. **Agency settle handoff:** `/front-cash/agency-ledger` → TRANSFERRED_AR list (AGENCY folios only) → bank match **or** allocate payment in Finance (hotel POST settle returns 409). Expect hotel folio → CLOSED and stay `checkoutSettlementStatus=SETTLED` (callback / outbox). If hotel was down during pay, after hotel up wait ≤15m cron or re-allocate — unsettled clears.
 8. **NA polish:** `/night-audit` → night audit status shows missed arrivals and due outs. The run does not mark no-show and does not check anyone out. While either list is non-empty the day stays open. Missed arrivals link to `/fo/reservations?queue=bookings&overdue=1`.
 9. **Finance matching:** Finance `/reporting/aging` buckets; counterparty payment terms; `/sales/invoices/allocate` allocate tranche.
 10. **Agency statement lines (HOT-CL-03):** `/front-cash/agency-ledger` → pick agency + period → metrics opening/charges/payments → **Statement lines** grid (date, kind, stay, amount, running). Prior-stay opening must appear when period starts after checkout.
@@ -454,6 +456,8 @@ UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / 
 ## 29. Thin MVP deepen — routing / bank / transfer / BEO / CL / OTA (2026-08-11)
 
 1. **Stay folio routing (HOT-CL-01):** reservation card → Folio routing → set ROOM→COMPANY, extras→GUEST → save; post charge respects stay override over property rule.
+1a. **Room payer + gross/net (HOT-CL-01):** agency only, guest pays, gross, no contract → save OK; night audit ROOM on primary guest; agency pocket stays hidden. Agency + “agency pays” without contract → save blocked with toast + rose hint (link to B2B contracts when none exist). Corporate contract pick → room payer defaults to company; agency contract pick keeps guest until desk chooses agency. One ACTIVE contract → auto-picked when payer is agency/company; sentence shows who pays. Create card sellable with contract uses allotment (not BAR-only). Mid-stay gross→net → dialog “next nights only” → BILLING folio note; agency analysis treats net nights as zero commission.
+1b. **B2B contracts screen:** `/distribution/contracts` — no raw `salesContracts.*` keys; create form drafts code/name from party+rate; gross/net field saves; row menu holds allotments/utilization/block.
 2. **BANK tender (HOT-CASH-01):** `/folio/[id]` settle → method BANK_TRANSFER + bank reference → payment line stores `bankReference`; journal totals include BANK_TRANSFER.
 3. **Transfers (HOT-XFER-01):** `/transfers` → filter pickup date → **Print driver sheet**; complete posts via folio routing; **Cancel** voids charge when DONE+charged.
 4. **BEO day sheet (HOT-BEO-01):** `/banquets/[id]` → preferred folio on confirm → **Print day sheet** (HTML lines/resources/staff/master folio).
@@ -506,14 +510,14 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED
 1. `/hk/roster` — propose week, change cell via closed select (not free text), drag row order, move department, ƏG balance visible.
 2. `/hk/rotation` — rotate pairs; drag to swap pairs; floors 2–11 disjoint.
 3. `/hk` floor sheet — one floor; date defaults to the business date (any other date is read-only); chips All / To clean / Dirty / For inspection; maid in the title (not a column); reason and shift task are different words; arrival and departure time under the date; outcome V/VC/OK/İstəmədi/DND/SO can be cleared back to empty; no NSR button; a dirty door without a task is marked on the row; fullscreen. PDF is the selected date and floor, working columns in the UI language, maid names in the title.
-4. `/hk/laundry` — pick in-house room; wash/iron steppers; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void charge → ticket VOIDED. FO `/fo/laundry` **grid** (empty headers + guest/room/status/date filters) + fallback Delivered on the **same** ticket only.
-5. Check-out with IN_PLANT laundry — **blocked**; modal post / wait / void — no skip.
+4. `/hk/laundry` — pick in-house room; wash/iron qty + unit price + line sum + order total preview; **accept does not post**; Delivered + return-form file → folio `LAUNDRY`; void IN_PLANT on the grid (or void posted charge) → ticket VOIDED. FO `/fo/laundry` **grid** with amount (incl. express %) + void IN_PLANT + fallback Delivered on the **same** ticket only.
+5. Check-out with IN_PLANT laundry — **blocked** (`LAUNDRY_OPEN` toast); check-out dialog stays open; laundry dialog: room + guest list, Delivered + return form, **void**, or wait; after last clear, check-out retries — no skip.
 6. `/hk/closed-rooms` — OOO and OOS in separate lists with closure dates. Return to service puts the door back to IN_SERVICE (DIRTY).
-7. `/hk/discrepancy` — record Skip and Sleep (Sleep not labelled SO); FO banner for DND×2 / SO×3.
-8. `/hk/forecast` — 7 and 14 day load by floor.
-9. `/hk/mobile` — filter my floors; same outcome codes (OK, not dərin).
-10. `/settings/policies#hk` — set linen/deep N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
-11. `/hk` needed-by time — sort after VIP; FO DND/SO creates GuestTask.
+7. `/hk/discrepancy` — record Skip and Sleep from the board (Sleep not labelled SO); FO banner for DND×2 / SO×3.
+8. `/hk/forecast` — 7 and 14 day load by floor; empty floors show empty chrome.
+9. `/hk/mobile` — auto-select self when the session name matches rotation (or sole assignment); same outcome codes (OK, not dərin).
+10. `/settings/policies#hk` — set linen/deep N; reservation card Additional can override stay N; `/hk` stayover Duty shows LINEN/DEEP/STAY (not all STAYOVER).
+11. `/hk` soft sort — departures → VIP → needed-by → DIRTY → duty → room# (sheet + PDF); FO DND/SO creates GuestTask.
 12. `/hk/consumption` — pick a Finance sku and a quantity for the open business day. The line is not a folio charge. An empty day still closes. Changing linen/deep N on `/settings/policies#hk` does not add a line. Minibar on `/hk/minibar` still posts to the guest folio.
 13. `/hk/rooms` — whole hotel. Chips: Dirty vacant, Clean vacant, For inspection, OOO, OOS. Set Dirty, Pickup, Clean, Inspected. Inspected is disabled on an occupied door. Occupied number is pink, vacant number is green. The same pill is on `/fo/reservations`, the room plan, the rack, and the reservation card.
 

@@ -570,6 +570,12 @@ export function FolioTransferModal({
           ]}
           emptyLabel={null}
         />
+        {scope === 'WITHIN' && !hasAgency && !hasCompany ? (
+          <p className="m-0 text-[12px] text-[#7F8C8D]">{t('transferNoPayerOnStay')}</p>
+        ) : null}
+        {scope === 'WITHIN' && (hasAgency || hasCompany) ? (
+          <p className="m-0 text-[12px] text-[#7F8C8D]">{t('transferPayerHint')}</p>
+        ) : null}
         {scope === 'OTHER' ? (
           <CatalogField
             kind="SEARCHABLE"

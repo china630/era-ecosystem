@@ -32,9 +32,23 @@ async function defaultOutlet(tx: ImportTx) {
       organizationId: orgId,
       code: "RESTAURANT",
       name: "Nafta Restaurant",
-      revenueCenterCode: "FOOD",
+      revenueCenterCode: "4101",
     },
   });
+}
+
+async function resolveRevenueCode(token: string | null | undefined): Promise<string | null> {
+  const key = token?.trim();
+  if (!key) return null;
+  const { listHotelRevenueCodes, resolveHotelRevenueKey, resolveCatalogOrganizationId } =
+    await import("@era/satellite-kit");
+  const hubOrg = await resolveCatalogOrganizationId(requestOrganizationId());
+  const rows = await listHotelRevenueCodes(hubOrg);
+  const resolved = resolveHotelRevenueKey(rows, key);
+  if (!resolved) {
+    throw new Error(`Revenue code ${key} was not found in the hotel catalog`);
+  }
+  return resolved;
 }
 
 const groupSchema = z.object({
@@ -42,52 +56,63 @@ const groupSchema = z.object({
   name: z.string().min(1),
   sortOrder: z.number(),
   active: z.boolean(),
+  revenueCode: z.string().nullable().optional(),
 });
 
 export const productGroupsAdapter: ImportAdapter<z.infer<typeof groupSchema>> = {
   entity: "product-groups",
   label: "Product groups",
   order: 30,
-  templateHint: "30-Product-Group-List.xlsx — EW Product Group List",
+  templateHint: "30-Product-Groups.xlsx — Group Code, Product Group Name, Revenue Code, Display Order, Active",
   headerAliases: {
     "Group Code": "code",
     "Product Group Name": "name",
+    "Revenue Code": "revenueCode",
     "Display Order": "sortOrder",
-    Disabled: "disabled",
-    "Pos Active": "posActive",
+    Active: "active",
   },
   rowSchema: groupSchema,
   mapRow: (raw) => {
     const name = cellString(raw.name);
     if (!name) return null;
+    const activeRaw = raw.active;
     return {
       code: cellString(raw.code) ?? slugCode(name),
       name,
       sortOrder: cellNumber(raw.sortOrder) ?? 0,
-      active: !(cellBool(raw.disabled) || cellString(raw.posActive)?.toLowerCase() === "false"),
+      active: activeRaw === undefined || activeRaw === "" ? true : cellBool(activeRaw),
+      revenueCode: cellString(raw.revenueCode),
     };
   },
   upsert: async (tx, row, dryRun) => {
     const outlet = await defaultOutlet(tx);
+    const revenueCode = row.revenueCode
+      ? await resolveRevenueCode(row.revenueCode)
+      : null;
     const existing = await tx.menuCategory.findFirst({
-      where: { outletId: outlet.id, name: row.name },
+      where: { outletId: outlet.id, OR: [{ name: row.name }, { code: row.code }] },
     });
     if (dryRun) return existing ? "updated" : "created";
+    const data = {
+      name: row.name,
+      code: row.code,
+      sortOrder: row.sortOrder,
+      ...(revenueCode ? { revenueCode } : {}),
+    };
     if (!existing) {
       await tx.menuCategory.create({
         data: {
           organizationId: requestOrganizationId(),
           outletId: outlet.id,
-          name: row.name,
-          code: categoryCodeFromName(row.name, `C${row.sortOrder}`),
-          sortOrder: row.sortOrder,
+          ...data,
+          code: row.code || categoryCodeFromName(row.name, `C${row.sortOrder}`),
         },
       });
       return "created";
     }
     await tx.menuCategory.update({
       where: { id: existing.id },
-      data: { sortOrder: row.sortOrder },
+      data,
     });
     return "updated";
   },
@@ -97,38 +122,46 @@ const cardSchema = z.object({
   plu: z.string().min(1),
   name: z.string().min(1),
   groupName: z.string().nullable().optional(),
-  revenueName: z.string().nullable().optional(),
+  revenueCode: z.string().nullable().optional(),
   price: z.number(),
   active: z.boolean(),
+  financeSku: z.string().nullable().optional(),
+  recipeSku: z.string().nullable().optional(),
 });
 
 export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
   entity: "product-cards",
   label: "Product cards (menu)",
   order: 31,
-  templateHint: "31-Product-Cards.xlsx — EW Ürün Kartları",
+  templateHint:
+    "31-Product-Cards.xlsx — Product Code, Product Name, Product Group Name, Price, Active, Finance SKU, Recipe SKU, Revenue Code",
   headerAliases: {
     Id: "ewId",
-    "Ürün Kodu": "code",
-    "Ürün Adı": "name",
-    "Ürün Grubu Adı": "groupName",
-    "Revenue Group": "revenueName",
-    "Gelir Grubu": "revenueName",
-    Fiyat: "price",
-    "İndirim Aktif": "active",
+    "Product Code": "code",
+    "Product Name": "name",
+    "Product Group Name": "groupName",
+    "Revenue Code": "revenueCode",
+    Price: "price",
+    Active: "active",
+    "Finance SKU": "financeSku",
+    "Recipe SKU": "recipeSku",
   },
   rowSchema: cardSchema,
   mapRow: (raw) => {
     const name = cellString(raw.name);
     if (!name) return null;
     const ewId = cellString(raw.ewId) ?? (raw.ewId != null ? String(raw.ewId) : null);
+    const plu = cellString(raw.code) ?? (ewId ? `ERA-FNB-${ewId}` : slugCode(name));
+    const activeRaw = raw.active;
     return {
-      plu: cellString(raw.code) ?? (ewId ? `ERA-FNB-${ewId}` : slugCode(name)),
+      plu,
       name,
       groupName: cellString(raw.groupName),
-      revenueName: cellString(raw.revenueName),
+      revenueCode: cellString(raw.revenueCode),
       price: cellNumber(raw.price) ?? 0,
-      active: raw.active === undefined ? true : cellBool(raw.active),
+      active: activeRaw === undefined || activeRaw === "" ? true : cellBool(activeRaw),
+      financeSku: cellString(raw.financeSku) ?? plu,
+      recipeSku: cellString(raw.recipeSku),
     };
   },
   upsert: async (tx, row, dryRun) => {
@@ -150,20 +183,8 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
     }
     if (dryRun) return "created";
     if (!category) throw new Error("Category missing");
-    let revenueCode: string | null = null;
-    const revenueName = row.revenueName?.trim();
-    if (revenueName) {
-      const { listHotelRevenueCodes, resolveHotelRevenueKey, resolveCatalogOrganizationId } =
-        await import("@era/satellite-kit");
-      const hubOrg = await resolveCatalogOrganizationId(requestOrganizationId());
-      const rows = await listHotelRevenueCodes(hubOrg);
-      const resolved = resolveHotelRevenueKey(rows, revenueName);
-      if (!resolved) {
-        throw new Error(`Revenue code name ${revenueName} was not found`);
-      }
-      revenueCode = resolved;
-    }
-    if (revenueCode && category && !category.revenueCode && !dryRun) {
+    const revenueCode = row.revenueCode ? await resolveRevenueCode(row.revenueCode) : null;
+    if (revenueCode && (!category.revenueCode || category.revenueCode !== revenueCode)) {
       category = await tx.menuCategory.update({
         where: { id: category.id },
         data: { revenueCode },
@@ -176,6 +197,8 @@ export const productCardsAdapter: ImportAdapter<z.infer<typeof cardSchema>> = {
       name: row.name,
       priceAzn: toDecimal(row.price),
       active: row.active,
+      financeSku: row.financeSku ?? row.plu,
+      recipeSku: row.recipeSku ?? null,
       revenueCode: null,
     };
     if (!existing) {
@@ -206,7 +229,7 @@ export const fnbTransactionsAdapter: ImportAdapter<z.infer<typeof txSchema>> = {
   entity: "fnb-transactions",
   label: "FnB cheques (archive)",
   order: 32,
-  templateHint: "32-FnB-Transactions.xlsx — EW 999 FB / Xudmani CASH (not hotel folio)",
+  templateHint: "32-FnB-Transactions.xlsx — Id, Income, Local Amount, Guest Name, Date, Notes",
   headerAliases: {
     Id: "ewId",
     "POS Id": "posId",

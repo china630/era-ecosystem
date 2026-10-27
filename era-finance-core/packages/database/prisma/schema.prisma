@@ -126,6 +126,7 @@ model Organization {
   counterparties                  Counterparty[]
   counterpartyCardRequests        CounterpartyCardRequest[]
   agencyCityLedgerSnapshots       AgencyCityLedgerSnapshot[]
+  hotelPaymentCallbackOutbox      HotelPaymentCallbackOutbox[]
   tradeCreditFacilities           TradeCreditFacility[]
   tradeCreditGrants               TradeCreditGrant[]
   tradeCreditBuyerMeterSnapshots  TradeCreditBuyerMeterSnapshot[]
@@ -3490,6 +3491,35 @@ model AgencyCityLedgerSnapshot {
   @@index([organizationId, hotelAgencyId, asOfDate], map: "agency_cl_snapshots_org_agency_date_idx")
   @@index([organizationId, counterpartyId], map: "agency_cl_snapshots_org_cp_idx")
   @@map("agency_city_ledger_snapshots")
+}
+
+/// Durable Finance → Hotel city-ledger payment-applied callbacks (ADR satellite-peer-url-resolution).
+enum HotelPaymentCallbackStatus {
+  PENDING
+  DONE
+  DEAD
+}
+
+model HotelPaymentCallbackOutbox {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  folioId        String                     @map("folio_id") @db.Uuid
+  invoiceId      String                     @map("invoice_id") @db.Uuid
+  paymentId      String                     @map("payment_id")
+  amountAzn      Decimal                    @map("amount_azn") @db.Decimal(19, 4)
+  fullyPaid      Boolean                    @map("fully_paid")
+  status         HotelPaymentCallbackStatus @default(PENDING)
+  attempts       Int                        @default(0)
+  nextAttemptAt  DateTime                   @default(now()) @map("next_attempt_at")
+  lastError      String?                    @map("last_error")
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, folioId, paymentId], map: "hotel_pay_cb_org_folio_payment_uidx")
+  @@index([status, nextAttemptAt], map: "hotel_pay_cb_status_next_idx")
+  @@index([organizationId, invoiceId], map: "hotel_pay_cb_org_invoice_idx")
+  @@map("hotel_payment_callback_outbox")
 }
 
 model CounterpartyBankAccount {

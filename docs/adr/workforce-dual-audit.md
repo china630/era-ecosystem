@@ -21,3 +21,4 @@ CP `WorkforceAuditLog` and satellite mutation audit serve different forensics ne
 
 - [cp-workforce-role-templates-and-security-admin.md](./cp-workforce-role-templates-and-security-admin.md)
 - [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md)
+- [era-mutation-audit-standard.md](./era-mutation-audit-standard.md) — ecosystem Layer A/B; satellite ops audit stays Layer B relative to CP `WorkforceAuditLog`

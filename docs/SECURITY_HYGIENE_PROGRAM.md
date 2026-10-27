@@ -137,6 +137,7 @@ Fill **Control** / **Gap** during Phase 2; open Appendix A rows when Gap ≠ non
 - [adr/cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md)
 - [adr/control-plane-jwt-keys.md](./adr/control-plane-jwt-keys.md)
 - [adr/satellite-mutation-audit.md](./adr/satellite-mutation-audit.md)
+- [adr/era-mutation-audit-standard.md](./adr/era-mutation-audit-standard.md) — ecosystem Layer A/B mutation coverage
 - [INTEGRATION_AUDIT_CI.md](./INTEGRATION_AUDIT_CI.md) / [MDM_IDENTITY_AUDIT.md](./MDM_IDENTITY_AUDIT.md)
 
 ---
@@ -421,7 +422,8 @@ Policy: no permanent suppressions without rationale and expiry. Prefer fixing co
 | [adr/org-operating-mode.md](./adr/org-operating-mode.md) | Tenancy / operating mode |
 | [adr/cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md) | Workforce AuthZ |
 | [adr/control-plane-jwt-keys.md](./adr/control-plane-jwt-keys.md) | JWT key handling |
-| [adr/satellite-mutation-audit.md](./adr/satellite-mutation-audit.md) | Mutation audit expectations |
+| [adr/satellite-mutation-audit.md](./adr/satellite-mutation-audit.md) | Satellite audit storage / first wave |
+| [adr/era-mutation-audit-standard.md](./adr/era-mutation-audit-standard.md) | Ecosystem Layer A/B mutation coverage |
 | [../.cursor/skills/quality-gates/SKILL.md](../.cursor/skills/quality-gates/SKILL.md) | Local quality gate commands |
 | [../.cursor/rules/era-no-emergency-reset.mdc](../.cursor/rules/era-no-emergency-reset.mdc) | Ban reset-to-remote for CI |
 | [../.cursor/rules/quality-tooling.mdc](../.cursor/rules/quality-tooling.mdc) | Agent tooling bans / gates |

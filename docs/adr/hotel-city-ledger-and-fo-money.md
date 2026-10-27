@@ -25,7 +25,7 @@ Architecture already splits planes ([HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITA
 | Company city ledger | SHIPPED (ops) | Same door as agency: checkout `transferToCityLedger` and tenders `CL_AGENCY` / `CL_COMPANY` both call the gate before any folio write. Company limit is stay, else `Company.creditLimitAzn`, else the hotel default. Open AR is COMPANY folios of that `companyId`. VÖEN and `Company.financeCounterpartyId` follow the agency BLOCK/DEFER/AUTO_CREATE policy. Snapshot event may carry `companyId` or `agencyId`, plus `financeCounterpartyId` when the company card already has one. Finance stores that row on the existing snapshot table (`hotelAgencyId` is the company id when there is no agency). |
 | Settle multi-method | SHIPPED | CASH/CARD/COMPANY/LOYALTY/**DEPOSIT**; hub `/front-cash/pending` |
 | Deposit lifecycle | SHIPPED | HELD→APPLIED@check-in/settle/checkout; REFUNDED leftover HELD |
-| Checkout folio close | SHIPPED | Guest zero; COMPANY/AGENCY → PENDING_AR→TRANSFERRED_AR; per-folio close |
+| Checkout folio close | SHIPPED | Guest zero or MOVE_PAYER_CL; COMPANY/AGENCY → PENDING_AR→TRANSFERRED_AR only after invoice OK; settlement status PENDING/INVOICED/SETTLED; unsettled departures list |
 | Night Audit | SHIPPED (+ polish) | Core EOD + exceptions / auto no-show / trial preview on `/operations` |
 | Agency CL snapshot | SHIPPED (ops) | Ledger + settlement against TRANSFERRED_AR; Finance owns AR match |
 | Payment terms / aging / invoice matching | SHIPPED (Finance) | Counterparty `paymentTermsDays`; `/reporting/aging`; `/sales/invoices/allocate` |
@@ -46,7 +46,8 @@ Add **operational** folio AR phase in hotel (not GL):
 
 ```
 OPEN → (checkout) → PENDING_AR | CLOSED
-PENDING_AR → TRANSFERRED_AR (invoice/handoff event) → (Finance Paid) reflected via inbound/reconcile
+PENDING_AR → TRANSFERRED_AR (invoice/handoff event) → (Finance Paid) → Hotel `payment-applied`
+(allocate **and** bank match; durable outbox + hourly reconcile — ADR [satellite-peer-url-resolution.md](./satellite-peer-url-resolution.md); peer hotel URL from SatelliteEndpoint, not env SoR)
 ```
 
 - **CLOSED** when guest ledger settled to zero (cash/card/deposit/loyalty).

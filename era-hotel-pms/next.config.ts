@@ -43,7 +43,6 @@ const nextConfig: NextConfig = {
       { source: '/admin/bar-calendar', destination: '/settings/bar-calendar', permanent: false },
       { source: '/admin/users', destination: '/settings/users', permanent: false },
       { source: '/admin/integration', destination: '/settings/integration', permanent: false },
-      { source: '/admin/audit', destination: '/settings/audit', permanent: false },
       { source: '/admin/stock', destination: '/settings/stock', permanent: false },
       { source: '/admin/import', destination: '/settings/import', permanent: false },
     ];

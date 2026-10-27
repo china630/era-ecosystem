@@ -34,7 +34,7 @@ Source of truth: [`src/lib/import/phases.ts`](../src/lib/import/phases.ts), [`ad
 | File | Status | Use |
 |------|--------|-----|
 | `fnb/32-FnB-Transactions.xlsx` | [x] | **8 559** walk-in POS (`merge-fnb-2026.cjs`: `START/fnb/_source/ew-2026-999-fb` Jan–3 Jul + `ew-2026-xudmani` CASH FOLIO Jul–Aug). Named Xudmani in-house extras go to hotel `#13`. **Apply on F&B** `/admin/import` entity `fnb-transactions` — **not** hotel guest folio |
-| `fnb/30-Product-Group-List.xlsx` + `31-Product-Cards.xlsx` | [x] | EW 31.08 groups + 200 cards. Empty `Ürün Kodu` stamped `ERA-FNB-{Id}` until 1C. **Apply on F&B** `/admin/import` (`product-groups` → `product-cards`). **Not** on hotel `/settings/import`. |
+| `fnb/30-Product-Groups.xlsx` + `31-Product-Cards.xlsx` | [x] | EN headers (`Group Code`, `Product Code`, `Revenue Code`, `Finance SKU`, `Recipe SKU`). Nafta cleaned/split under `era-fnb-pos/scripts/ops/data/` (55 groups / 336 cards). Empty `Product Code` → `ERA-FNB-{Id}`. **Apply on F&B** `/admin/import` (`product-groups` → `product-cards`). **Not** on hotel `/settings/import`. |
 | `retail/33-Stock-Cards.xlsx` | [x] | Retail (naftalan shop), not pharmacy 1C. **Apply on Retail** `/admin/import` entity `stock-cards`. Empty code → `ERA-STK-{Id}`. **Not** on hotel `/settings/import`. |
 | `hotel/15-Agency-Statement.xlsx` | [x] | EW Agency Statement **2026-08-31** (518 Res Id / 256 Remaining > 0). **Hotel wizard** `agency-statement` — FO AGENCY folio city ledger. **Not** 1C AR/AP (`#39` still ASK). |
 | `hotel/_not-ready/` | [x] | BAR, ProFolio, Contract, EW CoA — not Apply |

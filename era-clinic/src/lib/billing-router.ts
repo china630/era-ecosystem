@@ -303,11 +303,6 @@ export async function postHotelRoomCharge(input: {
   /** Hotel org in SHARED pool (required). */
   hotelOrganizationId?: string;
 }) {
-  const base = (
-    process.env.HOTEL_PMS_URL?.trim() ||
-    process.env.ERA_HOTEL_PMS_ORIGIN?.trim() ||
-    "http://127.0.0.1:3201"
-  ).replace(/\/$/, "");
   const secret = process.env.POS_BRIDGE_SECRET ?? process.env.CLINIC_BRIDGE_SECRET;
   if (!secret) throw new Error("POS_BRIDGE_SECRET not configured");
   const hotelOrganizationId =
@@ -317,6 +312,15 @@ export async function postHotelRoomCharge(input: {
   if (!hotelOrganizationId) {
     throw new Error("hotelOrganizationId required for hotel room charge");
   }
+  const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
+    "@era/satellite-kit"
+  );
+  const base = (
+    await resolvePeerSatelliteBaseUrl({
+      organizationId: hotelOrganizationId,
+      satelliteKey: PEER_SATELLITE_HOTEL,
+    })
+  ).baseUrl;
   const revenueCode = await resolveHotelFolioRevenueCode(input.revenueCode);
   const ticket = input.externalTicketId.trim();
   const ticketIsUuid =

@@ -323,7 +323,15 @@ export type ReservationCardLeftPanelProps = {
   /** Room number list on create, before the stay is saved. */
   showRoomSelect?: boolean;
   /** Create-only sellable preview (same gate as POST /api/reservations). */
-  sellable?: { available: number; booked: number; quota: number; stopSell: boolean } | null;
+  sellable?: {
+    available: number;
+    booked: number;
+    quota: number;
+    stopSell: boolean;
+    contractScoped?: boolean;
+    contractAllotment?: number | null;
+    reason?: string | null;
+  } | null;
   checkIn: string;
   checkOut: string;
   checkInTime: string;
@@ -375,6 +383,9 @@ export type ReservationCardLeftPanelProps = {
   breakShareBusy?: boolean;
   optionDate: string;
   optionState: string;
+  /** Empty = hotel policy default for linen/deep stayover cycle. */
+  linenEveryNights: string;
+  deepEveryNights: string;
   salesProject: string;
   specialStates: string;
   resGroup: string;
@@ -398,8 +409,9 @@ export type ReservationCardLeftPanelProps = {
   onClassSettlement?: (
     action: 'HOTEL' | 'GUEST_PAY' | 'HOTEL_REFUND' | 'GUEST_CHEAPER',
   ) => void;
-  contractRef: string;
   salesContractId: string;
+  roomPayer: 'GUEST' | 'AGENCY' | 'COMPANY';
+  commissionBasis: 'GROSS' | 'NET';
   creditLimitAzn: string;
   folioBalance: number;
   unusedAmount?: number;
@@ -428,6 +440,10 @@ export type ReservationCardLeftPanelProps = {
     counterpartyType?: string | null;
     ratePlanId: string;
     code: string;
+    commissionPercent?: number | string | null;
+    commissionBasis?: string | null;
+    validFrom?: string | null;
+    validTo?: string | null;
   }>;
   roomTypes: SelectOption[];
   mealPlans: SelectOption[];
@@ -447,6 +463,7 @@ export type ReservationCardLeftPanelProps = {
 
 export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const t = useTranslations('reservationCard');
+  const th = useTranslations('housekeeping');
   const tb = useTranslations('booking');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -564,7 +581,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
         agencyId={props.agencyId}
         companyId={props.companyId}
         salesContractId={props.salesContractId}
-        contractRef={props.contractRef}
+        roomPayer={props.roomPayer}
+        commissionBasis={props.commissionBasis}
         checkIn={props.checkIn}
         sources={sources}
         agencies={agencies}
@@ -575,7 +593,8 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
         onAgency={(id) => onChange({ agencyId: id })}
         onCompany={(id) => onChange({ companyId: id })}
         onContract={(id) => onChange({ salesContractId: id })}
-        onContractRef={(value) => onChange({ contractRef: value })}
+        onRoomPayer={(value) => onChange({ roomPayer: value })}
+        onCommissionBasis={(value) => onChange({ commissionBasis: value })}
         onAgencyCreated={(row) => props.onAgencyCreated?.(row)}
         onCompanyCreated={(row) => props.onCompanyCreated?.(row)}
         walkInProfiles={props.walkInProfiles}
@@ -730,20 +749,38 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               }`}
             >
               <div className="font-medium">
-                {t('sellableLabel')}: {sellable.available}
+                {sellable.contractScoped ? t('contractSellableLabel') : t('sellableLabel')}:{' '}
+                {sellable.available}
                 {sellable.stopSell ? ` (${t('stopSell')})` : ''}
               </div>
               <div className={TEXT_MUTED_CLASS}>
-                {t('sellableDetail', {
-                  booked: sellable.booked,
-                  quota: sellable.quota,
-                })}
+                {sellable.contractScoped
+                  ? t('contractSellableDetail', {
+                      booked: sellable.booked,
+                      allotment: sellable.contractAllotment ?? 0,
+                      quota: sellable.quota,
+                    })
+                  : t('sellableDetail', {
+                      booked: sellable.booked,
+                      quota: sellable.quota,
+                    })}
               </div>
+              {sellable.reason === 'NO_ALLOTMENT' ? (
+                <div className="mt-1 text-rose-900">{t('noContractAllotmentHint')}</div>
+              ) : null}
               <div className="mt-1">
-                {sellable.available < 1 ? <span>{t('noSellableHint')} </span> : null}
-                <Link href="/fo/availability" className="underline">
-                  {t('openRoomTypeAvailability')}
-                </Link>
+                {sellable.available < 1 && sellable.reason !== 'NO_ALLOTMENT' ? (
+                  <span>{t('noSellableHint')} </span>
+                ) : null}
+                {sellable.contractScoped ? (
+                  <Link href="/distribution/contracts" className="underline">
+                    {t('openB2bContracts')}
+                  </Link>
+                ) : (
+                  <Link href="/fo/availability" className="underline">
+                    {t('openRoomTypeAvailability')}
+                  </Link>
+                )}
               </div>
             </div>
           ) : null}
@@ -1197,6 +1234,32 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             </FieldSelect>
           </FieldRow>
           <Field label={t('shareNo')} preset="code" value={props.shareNo} onChange={set('shareNo')} />
+          {!isCreate ? (
+            <FieldRow cols={2}>
+              <Field
+                label={th('linenStayOverride')}
+                preset="amount"
+                type="number"
+                min={1}
+                max={30}
+                value={props.linenEveryNights}
+                onChange={set('linenEveryNights')}
+                hint={th('stayLinenHint')}
+                disabled={disabled}
+              />
+              <Field
+                label={th('deepStayOverride')}
+                preset="amount"
+                type="number"
+                min={1}
+                max={30}
+                value={props.deepEveryNights}
+                onChange={set('deepEveryNights')}
+                hint={th('stayLinenHint')}
+                disabled={disabled}
+              />
+            </FieldRow>
+          ) : null}
           <FieldRow cols={2}>
             <CatalogField
               kind="SEARCHABLE"

@@ -74,19 +74,27 @@ export default function HkForecastPage() {
             </tr>
           </thead>
           <tbody>
-            {floors.map((f) => (
-              <tr key={f.floor} className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-2 font-medium">{f.floor}</td>
-                <td className="px-3 py-2">{f.departures}</td>
-                <td className="px-3 py-2">{f.arrivals}</td>
-                <td className="px-3 py-2">{f.stayovers}</td>
-                <td className="px-3 py-2">{f.linen}</td>
-                <td className="px-3 py-2">{f.deep}</td>
-                <td className="px-3 py-2">{f.nsr}</td>
-                <td className="px-3 py-2">{f.vip}</td>
-                <td className="px-3 py-2">{f.headsOnDuty}</td>
+            {floors.length === 0 ? (
+              <tr className="border-b border-[#ECF0F1]">
+                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={headers.length}>
+                  {t('forecastEmpty')}
+                </td>
               </tr>
-            ))}
+            ) : (
+              floors.map((f) => (
+                <tr key={f.floor} className="border-b border-[#ECF0F1]">
+                  <td className="px-3 py-2 font-medium">{f.floor}</td>
+                  <td className="px-3 py-2">{f.departures}</td>
+                  <td className="px-3 py-2">{f.arrivals}</td>
+                  <td className="px-3 py-2">{f.stayovers}</td>
+                  <td className="px-3 py-2">{f.linen}</td>
+                  <td className="px-3 py-2">{f.deep}</td>
+                  <td className="px-3 py-2">{f.nsr}</td>
+                  <td className="px-3 py-2">{f.vip}</td>
+                  <td className="px-3 py-2">{f.headsOnDuty}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

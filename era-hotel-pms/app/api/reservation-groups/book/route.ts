@@ -35,6 +35,8 @@ const schema = z.object({
   paymentMethod: reservationPaymentMethodSchema,
   sourceId: z.string().uuid().optional(),
   salesContractId: z.string().uuid().optional(),
+  roomPayer: z.enum(['GUEST', 'AGENCY', 'COMPANY']).optional(),
+  commissionBasis: z.enum(['GROSS', 'NET']).optional(),
   booker: z.string().optional(),
   guestRep: z.string().optional(),
   paidBy: z.string().optional(),

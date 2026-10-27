@@ -115,6 +115,7 @@ export interface CityLedgerSnapshotPayload {
   agencyCode?: string;
   companyId?: string;
   companyCode?: string;
+  partyKind?: 'AGENCY' | 'COMPANY';
   financeCounterpartyId?: string;
   asOfDate: string;
   balance: number;

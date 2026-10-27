@@ -95,6 +95,43 @@ export function fksFromSalesContract(contract: SalesContractPick): {
   return { agencyId: contract.agencyId ?? undefined, companyId: undefined };
 }
 
+export type RoomPayerKind = 'GUEST' | 'AGENCY' | 'COMPANY';
+
+/**
+ * Default room payer when a sales contract drives create/save without an explicit payer
+ * (ADR room-payer). Corporate → COMPANY. Agency → GUEST (desk must opt into AGENCY).
+ */
+export function defaultRoomPayerFromContract(contract: SalesContractPick): RoomPayerKind {
+  return contractCounterpartyType(contract) === 'CORPORATE' ? 'COMPANY' : 'GUEST';
+}
+
+/**
+ * Defaults when the FO picks a sales contract.
+ * Corporate always sets COMPANY. Agency contract does not override roomPayer
+ * (keeps GUEST or a desk-chosen AGENCY); only FKs + basis are applied.
+ */
+export function defaultsFromSalesContract(
+  contract: SalesContractPick & { commissionBasis?: 'GROSS' | 'NET' | string | null },
+): {
+  agencyId?: string | null;
+  companyId?: string | null;
+  roomPayer?: RoomPayerKind;
+  commissionBasis?: 'GROSS' | 'NET';
+} {
+  const fks = fksFromSalesContract(contract);
+  const basis =
+    contract.commissionBasis === 'NET' || contract.commissionBasis === 'GROSS'
+      ? contract.commissionBasis
+      : undefined;
+  return {
+    ...fks,
+    ...(contractCounterpartyType(contract) === 'CORPORATE'
+      ? { roomPayer: 'COMPANY' as const }
+      : {}),
+    ...(basis ? { commissionBasis: basis } : {}),
+  };
+}
+
 /**
  * Walk-in and website do not persist a travel-agent FK.
  * The walk-in profile is a hotel lookup stored on the stay.

@@ -116,9 +116,24 @@ describe("WorkforceEmploymentsService.list include", () => {
 
   it("picker returns active employments with a display name and skips blanks", async () => {
     prisma.workforceEmployment.findMany.mockResolvedValue([
-      { id: "e1", globalPersonId: "p1" },
-      { id: "e2", globalPersonId: "p1" },
-      { id: "e3", globalPersonId: "p-blank" },
+      {
+        id: "e1",
+        globalPersonId: "p1",
+        orgUnit: { id: "ou1", name: "Housekeeping" },
+        position: { id: "pos1", name: "Room attendant" },
+      },
+      {
+        id: "e2",
+        globalPersonId: "p1",
+        orgUnit: { id: "ou1", name: "Housekeeping" },
+        position: { id: "pos1", name: "Room attendant" },
+      },
+      {
+        id: "e3",
+        globalPersonId: "p-blank",
+        orgUnit: { id: "ou2", name: "Front office" },
+        position: { id: "pos2", name: "Reception" },
+      },
     ]);
     mdm.batchGetPersonOpsProfile.mockResolvedValue({
       p1: {
@@ -153,7 +168,15 @@ describe("WorkforceEmploymentsService.list include", () => {
       }),
     );
     expect(out.items).toEqual([
-      { id: "e1", globalPersonId: "p1", name: "Leyla Mammadova" },
+      {
+        id: "e1",
+        globalPersonId: "p1",
+        name: "Leyla Mammadova",
+        orgUnitId: "ou1",
+        orgUnitName: "Housekeeping",
+        positionId: "pos1",
+        positionName: "Room attendant",
+      },
     ]);
   });
 });

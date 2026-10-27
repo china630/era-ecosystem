@@ -678,6 +678,10 @@ export async function dispatchCityLedgerSnapshot(
     payload: {
       agencyId,
       agencyCode: agency.code,
+      partyKind: 'AGENCY',
+      ...(agency.financeCounterpartyId
+        ? { financeCounterpartyId: agency.financeCounterpartyId }
+        : {}),
       asOfDate,
       balance: ledger.closing,
       periodCharges: ledger.newCharges,
@@ -704,6 +708,7 @@ export async function dispatchCompanyCityLedgerSnapshot(
     payload: {
       companyId,
       companyCode: company.code,
+      partyKind: 'COMPANY',
       ...(company.financeCounterpartyId
         ? { financeCounterpartyId: company.financeCounterpartyId }
         : {}),

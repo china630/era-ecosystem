@@ -336,6 +336,10 @@ export class WorkforceProvisionService {
       where: { employmentId, status: RoleBindingStatus.ACTIVE },
       data: { status: RoleBindingStatus.REVOKED },
     });
+    await this.prisma.workforceManualGrant.updateMany({
+      where: { employmentId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
 
     const staffCode = staffCodeFromEmployment(employmentId);
     for (const b of bindings) {
@@ -420,8 +424,21 @@ export class WorkforceProvisionService {
       );
     }
 
+    await this.healOrphanManualGrantBindings(employmentId);
+
     const bindings = await this.prisma.workforceRoleBinding.findMany({
       where: { employmentId, status: RoleBindingStatus.ACTIVE },
+    });
+    // Enum declaration order is TEMPLATE → MANUAL_GRANT → HIRE_DEFAULT.
+    // Fan-out must end on MANUAL_GRANT so a grant role is not overwritten by hire-default.
+    bindings.sort((a, b) => {
+      const rank = (source: string) =>
+        source === RoleBindingSource.MANUAL_GRANT ? 1 : 0;
+      const bySource = rank(a.source) - rank(b.source);
+      if (bySource !== 0) return bySource;
+      const aAt = a.updatedAt?.getTime() ?? 0;
+      const bAt = b.updatedAt?.getTime() ?? 0;
+      return aAt - bAt;
     });
 
     const loginOverride = normalizeSatelliteStaffLogin(opts?.login);
@@ -536,10 +553,7 @@ export class WorkforceProvisionService {
       );
     }
     for (const binding of bindings) {
-      await this.prisma.workforceRoleBinding.update({
-        where: { id: binding.id },
-        data: { status: RoleBindingStatus.REVOKED },
-      });
+      await this.revokeBindingAndLinkedGrant(binding);
       await this.emitDeactivated({
         organizationId: anchorOrganizationId,
         globalPersonId: binding.employment.globalPersonId,
@@ -548,6 +562,14 @@ export class WorkforceProvisionService {
         binding,
       });
     }
+    await this.prisma.workforceManualGrant.updateMany({
+      where: {
+        satelliteKey: key,
+        revokedAt: null,
+        employment: { organizationId },
+      },
+      data: { revokedAt: new Date() },
+    });
     await this.audit.log({
       organizationId,
       actorUserId,
@@ -603,11 +625,18 @@ export class WorkforceProvisionService {
     for (const [satelliteKey, rows] of bySatellite) {
       if (desiredSet.has(satelliteKey)) continue;
       for (const binding of rows) {
-        await this.prisma.workforceRoleBinding.update({
-          where: { id: binding.id },
-          data: { status: RoleBindingStatus.REVOKED },
-        });
+        await this.revokeBindingAndLinkedGrant(binding);
       }
+      // Orphan grants (Active list, REVOKED/missing binding) have no manualGrantId
+      // on the hire-default row — clear them by satellite too.
+      await this.prisma.workforceManualGrant.updateMany({
+        where: {
+          employmentId: employment.id,
+          satelliteKey,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
       const primary = rows[0];
       if (primary) {
         await this.emitDeactivated({
@@ -704,6 +733,61 @@ export class WorkforceProvisionService {
           employment.id,
         );
       }
+    }
+  }
+
+  /**
+   * Unchecking a satellite or disconnecting it must not leave a Manual Grants
+   * row with revokedAt null while its binding is REVOKED — the Active list
+   * would still show the grant and clinic would keep the hire-default role.
+   */
+  private async revokeBindingAndLinkedGrant(binding: {
+    id: string;
+    manualGrantId?: string | null;
+  }): Promise<void> {
+    await this.prisma.workforceRoleBinding.update({
+      where: { id: binding.id },
+      data: { status: RoleBindingStatus.REVOKED },
+    });
+    if (!binding.manualGrantId) return;
+    await this.prisma.workforceManualGrant.updateMany({
+      where: { id: binding.manualGrantId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  /**
+   * Active grant (revokedAt null) with a REVOKED binding: put the binding back
+   * so the next fan-out matches what Security Admin shows.
+   */
+  private async healOrphanManualGrantBindings(employmentId: string): Promise<void> {
+    const grants = await this.prisma.workforceManualGrant.findMany({
+      where: { employmentId, revokedAt: null },
+    });
+    for (const grant of grants) {
+      await this.prisma.workforceRoleBinding.upsert({
+        where: {
+          employmentId_satelliteKey_satelliteRole: {
+            employmentId,
+            satelliteKey: grant.satelliteKey,
+            satelliteRole: grant.satelliteRole,
+          },
+        },
+        create: {
+          employmentId,
+          satelliteKey: grant.satelliteKey,
+          satelliteRole: grant.satelliteRole,
+          source: RoleBindingSource.MANUAL_GRANT,
+          manualGrantId: grant.id,
+          status: RoleBindingStatus.ACTIVE,
+        },
+        update: {
+          status: RoleBindingStatus.ACTIVE,
+          source: RoleBindingSource.MANUAL_GRANT,
+          manualGrantId: grant.id,
+          lastProvisionError: null,
+        },
+      });
     }
   }
 

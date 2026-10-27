@@ -495,15 +495,28 @@ export class WorkforceEmploymentsService {
 
   /**
    * S2S picker for satellite ops (hotel housekeeping). Active CP employments
-   * with an MDM display name. Not the finance payroll mirror.
+   * with an MDM display name, org unit, and position. Not the finance payroll mirror.
    */
   async listPicker(organizationId: string): Promise<{
-    items: Array<{ id: string; globalPersonId: string; name: string }>;
+    items: Array<{
+      id: string;
+      globalPersonId: string;
+      name: string;
+      orgUnitId: string | null;
+      orgUnitName: string | null;
+      positionId: string | null;
+      positionName: string | null;
+    }>;
   }> {
     await this.entitlement.assertWorkforceHub(organizationId);
     const rows = await this.prisma.workforceEmployment.findMany({
       where: { organizationId, status: WorkforceEmploymentStatus.ACTIVE },
-      select: { id: true, globalPersonId: true },
+      select: {
+        id: true,
+        globalPersonId: true,
+        orgUnit: { select: { id: true, name: true } },
+        position: { select: { id: true, name: true } },
+      },
       orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
       take: 500,
     });
@@ -512,7 +525,15 @@ export class WorkforceEmploymentsService {
       rows.map((row) => row.globalPersonId),
     );
     const seen = new Set<string>();
-    const items: Array<{ id: string; globalPersonId: string; name: string }> = [];
+    const items: Array<{
+      id: string;
+      globalPersonId: string;
+      name: string;
+      orgUnitId: string | null;
+      orgUnitName: string | null;
+      positionId: string | null;
+      positionName: string | null;
+    }> = [];
     for (const row of rows) {
       if (seen.has(row.globalPersonId)) continue;
       const profile = persons[row.globalPersonId];
@@ -524,7 +545,15 @@ export class WorkforceEmploymentsService {
           .trim();
       if (!name) continue;
       seen.add(row.globalPersonId);
-      items.push({ id: row.id, globalPersonId: row.globalPersonId, name });
+      items.push({
+        id: row.id,
+        globalPersonId: row.globalPersonId,
+        name,
+        orgUnitId: row.orgUnit?.id ?? null,
+        orgUnitName: row.orgUnit?.name?.trim() || null,
+        positionId: row.position?.id ?? null,
+        positionName: row.position?.name?.trim() || null,
+      });
     }
     items.sort((a, b) => a.name.localeCompare(b.name));
     return { items };

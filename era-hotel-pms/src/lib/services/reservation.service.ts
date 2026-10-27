@@ -28,7 +28,10 @@ import {
   validateShareCandidate,
 } from '@/lib/services/share-assignment.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
-import { contractCounterpartyType } from '@/lib/booking-source-kind';
+import {
+  contractCounterpartyType,
+  defaultRoomPayerFromContract,
+} from '@/lib/booking-source-kind';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
@@ -124,6 +127,8 @@ export async function createReservation(input: {
   walkInProfileCode?: string | null;
   companyId?: string;
   salesContractId?: string;
+  roomPayer?: 'GUEST' | 'AGENCY' | 'COMPANY';
+  commissionBasis?: 'GROSS' | 'NET';
   /** Booking envelope (ReservationGroup) — multi-stay under one group. */
   groupId?: string;
   checkInDate: Date;
@@ -193,16 +198,22 @@ export async function createReservation(input: {
   let agencyId = input.agencyId;
   let companyId = input.companyId;
   let salesContractId = input.salesContractId;
+  let commissionBasis = input.commissionBasis;
   const partyBillingMode = input.partyBillingMode ?? 'PRIMARY';
 
+  let contractForDefaults: Awaited<ReturnType<typeof findActiveSalesContract>> | null = null;
   if (salesContractId) {
     const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
     if (!contract) throw new Error('Sales contract is not active for check-in date');
+    contractForDefaults = contract;
     ratePlanId = contract.ratePlanId;
     if (contractCounterpartyType(contract) === 'CORPORATE') {
       companyId = contract.companyId ?? companyId;
     } else if (contract.agencyId) {
       agencyId = contract.agencyId;
+    }
+    if (commissionBasis == null && contract.commissionBasis) {
+      commissionBasis = contract.commissionBasis;
     }
     await assertContractAllotmentAvailable(
       salesContractId,
@@ -210,6 +221,23 @@ export async function createReservation(input: {
       input.checkInDate,
       input.checkOutDate,
     );
+  }
+
+  const roomPayer =
+    input.roomPayer ??
+    (contractForDefaults
+      ? defaultRoomPayerFromContract(contractForDefaults)
+      : companyId
+        ? 'COMPANY'
+        : 'GUEST');
+  if (roomPayer === 'AGENCY' && !agencyId) {
+    throw new Error('AGENCY_REQUIRED_FOR_PAYER');
+  }
+  if (roomPayer === 'COMPANY' && !companyId) {
+    throw new Error('COMPANY_REQUIRED_FOR_PAYER');
+  }
+  if ((roomPayer === 'AGENCY' || roomPayer === 'COMPANY') && !salesContractId) {
+    throw new Error('CONTRACT_REQUIRED_FOR_PAYER');
   }
 
   const availability = salesContractId
@@ -483,6 +511,8 @@ export async function createReservation(input: {
         walkInProfileCode: input.walkInProfileCode ?? null,
         companyId,
         salesContractId,
+        roomPayer,
+        commissionBasis: commissionBasis ?? 'GROSS',
         groupId: input.groupId,
         checkInDate: input.checkInDate,
         checkOutDate: input.checkOutDate,

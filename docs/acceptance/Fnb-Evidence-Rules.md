@@ -13,6 +13,7 @@
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (see era-coverage-definition) |
+| AC-FNB-AUD Scaffold ✅ | Layer A belt + deny-list/`audit-exempt` negatives + UAT on `/admin/audit` with canonical filters (`entityType`/`entityId`/`action`/`dateFrom`/`dateTo`/`userId`) via `GET /api/admin/audit`. ADR era-mutation-audit-standard. Until then max 🟡 |
 
 ## Negative-path suites (Green Scaffold BE)
 

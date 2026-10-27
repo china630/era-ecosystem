@@ -14,7 +14,7 @@ import {
 } from "@/lib/auth/permissions";
 import { normalizeFnbEdition } from "@/lib/fnb-edition";
 
-export const FNB_PERMISSION_CATALOG_VERSION = 4;
+export const FNB_PERMISSION_CATALOG_VERSION = 5;
 
 type RoleRow = {
   id: string;
@@ -148,11 +148,25 @@ async function upsertSystemRole(
         }
       }
     }
+    if (existing.code === ROLE_CODES.KITCHEN) {
+      const current = parsePermissions(existing.permissionsJson);
+      if (current.length > 0) {
+        const extra = [PERMISSIONS.SCREEN_ADMIN_BUFFET, PERMISSIONS.ADMIN_BUFFET].filter(
+          (p) => !current.includes(p),
+        );
+        if (extra.length > 0) {
+          patch.permissionsJson = serializePermissions([...current, ...extra]);
+        }
+      }
+    }
     if (existing.code === ROLE_CODES.MANAGER) {
       const current = parsePermissions(existing.permissionsJson);
-      const extra = [PERMISSIONS.SCREEN_SALES, PERMISSIONS.HOTEL_REVENUE_CODES].filter(
-        (permission) => current.length > 0 && !current.includes(permission),
-      );
+      const extra = [
+        PERMISSIONS.SCREEN_SALES,
+        PERMISSIONS.HOTEL_REVENUE_CODES,
+        PERMISSIONS.SCREEN_ADMIN_BUFFET,
+        PERMISSIONS.ADMIN_BUFFET,
+      ].filter((permission) => current.length > 0 && !current.includes(permission));
       if (extra.length > 0) {
         patch.permissionsJson = serializePermissions([...current, ...extra]);
       }
