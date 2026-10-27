@@ -4,6 +4,12 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    folio: {
+      findFirst: jest.fn(),
+    },
+    folioCharge: {
+      count: jest.fn().mockResolvedValue(0),
+    },
   },
 }));
 
@@ -39,8 +45,14 @@ describe('patchReservationFull audit omit', () => {
       billingMode: 'NORMAL',
       partyBillingMode: 'EQUAL',
       useManualRate: false,
+      roomPayer: 'GUEST',
+      commissionBasis: 'NET',
+      agencyId: null,
+      companyId: null,
+      salesContractId: null,
     };
     (prisma.reservation.findUnique as jest.Mock).mockResolvedValue(existing);
+    (prisma.folioCharge.count as jest.Mock).mockResolvedValue(0);
     (prisma.reservation.update as jest.Mock).mockImplementation(() => {
       throw new Error('stop-after-update');
     });

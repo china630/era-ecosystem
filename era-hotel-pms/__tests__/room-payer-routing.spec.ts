@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 /**
  * Pure policy mirror of resolveRoutedFolioType room/tax branch
  * (booking-folio.service) — keeps the desk law testable without Prisma.
