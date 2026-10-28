@@ -227,6 +227,7 @@ export async function publishToOrchestratorGateway(
     | SatelliteHotelNightAuditClosedEvent
     | SatelliteHotelInvoiceIssuedEvent
     | SatelliteHotelCityLedgerSnapshotEvent
+    | SatelliteHotelAgencyCommissionPayableEvent
     | SatelliteHotelGuestCheckedInEvent
     | SatelliteHotelGuestCheckedOutEvent
     | SatelliteHotelRoomChangedEvent,
