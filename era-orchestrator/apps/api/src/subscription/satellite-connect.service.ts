@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { Prisma } from "@era365/database";
 import { SatelliteOrgBindSyncService } from "../admin/satellite-org-bind-sync.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -20,7 +21,7 @@ export class SatelliteConnectService {
     private readonly prisma: PrismaService,
     private readonly catalog: TrialCatalogService,
     private readonly resolver: TrialEntitlementResolver,
-    private readonly bindSync: SatelliteOrgBindSyncService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async connectSatellite(
@@ -132,7 +133,10 @@ export class SatelliteConnectService {
 
     let synced = true;
     try {
-      await this.bindSync.syncForOrg(organizationId);
+      const bindSync = this.moduleRef.get(SatelliteOrgBindSyncService, {
+        strict: false,
+      });
+      await bindSync.syncForOrg(organizationId);
     } catch (err) {
       synced = false;
       this.log.warn(
