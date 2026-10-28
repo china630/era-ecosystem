@@ -376,6 +376,7 @@ export async function payAndScheduleExtras(
         idempotencyKey: ticketId,
         sku,
         qty: order.quantity,
+        revenueCode: await revenueCodeForServiceLine(order.procedureCode),
       });
       rejected.push({
         id: order.id,

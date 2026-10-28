@@ -180,9 +180,22 @@ async function collectDayDocument(date: Date) {
       purposeForCharge(charge.folio.reservation.billingMode, amount),
     );
   }
+  const pendingWithoutCode = pending.filter(
+    (row) => decimalToNumber(row.amount) !== 0 && !row.revenueCode?.trim(),
+  );
+  if (pendingWithoutCode.length > 0) {
+    const sample = pendingWithoutCode
+      .slice(0, 5)
+      .map((row) => `${row.sourceSystem}:${row.sourceRef}`)
+      .join(', ');
+    throw new Error(
+      `Paid settlement pending is missing revenueCode (${pendingWithoutCode.length}): ${sample}`,
+    );
+  }
   for (const row of pending) {
     const amount = money2(decimalToNumber(row.amount));
-    const code = row.revenueCode?.trim() || 'UNKNOWN';
+    const code = row.revenueCode?.trim();
+    if (!code) continue;
     addMoney(code, amount, 0);
     addQty(row.sku, row.qty, '', 'sale');
   }

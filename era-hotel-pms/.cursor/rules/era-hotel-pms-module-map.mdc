@@ -155,7 +155,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Last day only on closed 31 Dec; first day only on 1 Jan. Hotel calendar seal, not finance GL close |
 | `/night-audit/logs` | `GET /api/night-audit/runs` | End of day logs |
 | `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
-| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic / retail pending with sku, qty, revenue code (`POS_BRIDGE_SECRET`) |
+| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic / retail pending with sku, qty, revenue code (required when amount ≠ 0; `POS_BRIDGE_SECRET`) |
 
 Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/adr/unified-settlement-hub.md`.
 

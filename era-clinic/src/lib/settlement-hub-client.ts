@@ -10,11 +10,16 @@ export async function postHotelSettlementPending(input: {
   idempotencyKey: string;
   sku?: string;
   qty?: number;
-  revenueCode?: string;
+  /** Hotel BOCC / NAS revenue code — required for non-zero amount (hub refuses blank). */
+  revenueCode: string;
   basketRef?: string;
 }) {
   const secret = process.env.POS_BRIDGE_SECRET ?? process.env.CLINIC_BRIDGE_SECRET;
   if (!secret) throw new Error("POS_BRIDGE_SECRET not configured");
+  const revenueCode = input.revenueCode.trim();
+  if (input.amount !== 0 && !revenueCode) {
+    throw new Error("revenueCode is required for a pending charge with amount");
+  }
   const orgId = requestOrganizationId();
   const hotelOrganizationId = (await getClinicHotelOrganizationId()) ?? undefined;
   if (!hotelOrganizationId) {
@@ -50,7 +55,7 @@ export async function postHotelSettlementPending(input: {
       globalPersonId: input.globalPersonId,
       ...(input.sku?.trim() ? { sku: input.sku.trim() } : {}),
       ...(input.qty != null ? { qty: input.qty } : {}),
-      ...(input.revenueCode ? { revenueCode: input.revenueCode } : {}),
+      revenueCode,
       ...(input.basketRef ? { basketRef: input.basketRef } : {}),
     }),
     signal: AbortSignal.timeout(15000),

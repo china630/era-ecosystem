@@ -44,7 +44,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-22 | Card right-pane Guests density | [~] | HOT-BOOK-06 API |
 | S-23 | Card Rate Grid + Folio chrome | [~] | HOT-BOOK-07/08 API |
 | S-24 | Card Notes feed + alert | [~] | HOT-BOOK-09 API |
-| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; night audit not run — not SHIPPED; out of BE and SHOW rollup |
+| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; hub refuses blank pending `revenueCode`; NA early fail on blank PAID; night audit not run — not SHIPPED; out of BE and SHOW rollup |
 | S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
 | S-27 | Transfers/Tours boarding-first + Airport fold | [x] | HOT-XFER-01 / HOT-TOUR-01 SHIPPED SCREEN; AC-HOT-XFER/TOUR Scaffold ✅ out of BE rollup; UX closeout (list+modals, icon toolbar, bare print+letterhead); UAT §14/§14b; edition `mvp` unchanged |
 | S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit` + `GET /api/admin/audit` (reports grant); canonical filters; CI `check:mutation-audit-belt`; HOT-AUD-01 / AC-HOT-AUD 🟡; UAT open — not SHIPPED; Gate/Pilot/edition unchanged |

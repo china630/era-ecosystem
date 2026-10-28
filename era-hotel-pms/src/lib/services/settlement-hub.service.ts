@@ -72,8 +72,24 @@ export async function findPendingByIdempotencyKey(idempotencyKey: string) {
 }
 
 export async function createPendingCharge(input: CreatePendingInput) {
+  const revenueCode = input.revenueCode?.trim() || '';
+  if (input.amount !== 0 && !revenueCode) {
+    throw new Error('revenueCode is required for a pending charge with amount');
+  }
+
   const existing = await findPendingByIdempotencyKey(input.idempotencyKey);
   if (existing) {
+    const existingCode = existing.revenueCode?.trim() || '';
+    if (decimalToNumber(existing.amount) !== 0 && !existingCode) {
+      if (!revenueCode) {
+        throw new Error('revenueCode is required for a pending charge with amount');
+      }
+      const healed = await prisma.settlementPendingCharge.update({
+        where: { id: existing.id },
+        data: { revenueCode },
+      });
+      return { charge: healed, idempotent: true as const };
+    }
     return { charge: existing, idempotent: true as const };
   }
 
@@ -91,7 +107,7 @@ export async function createPendingCharge(input: CreatePendingInput) {
         input.qty != null && Number.isFinite(input.qty) && input.qty !== 0
           ? Math.trunc(input.qty)
           : 1,
-      revenueCode: input.revenueCode?.trim() || null,
+      revenueCode: revenueCode || null,
       currency: input.currency ?? 'AZN',
       description: input.description,
       payerLabel: input.payerLabel,

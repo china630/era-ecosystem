@@ -29,7 +29,7 @@ At clinic day end (`POST /api/cron/procedure-no-show-sweep`, after the no-show p
 
 Future-dated seated rows stay. Checkout / guest departed / walk-in episode close still closes **every** remaining unpaid extra on that episode (`unpaid_checkout`), including unseated — no `resourceId` filter. This is not `NO_SHOW`. Ops one-shot: `era-clinic/scripts/ops/purge-stale-pending-extras.mjs` (dry-run default; `--apply`).
 
-Package lines and `XFER-` leftovers are not this setting. A paid extra that belongs to a package block shares that block's daily cap and does not burn quota. Money routing is unchanged: in-house with a reservation posts to the hotel folio; walk-in stays `PENDING_PAY` until the hotel accepts payment. A rejected charge does not seat an unseated row.
+Package lines and `XFER-` leftovers are not this setting. A paid extra that belongs to a package block shares that block's daily cap and does not burn quota. Money routing is unchanged: in-house with a reservation posts to the hotel folio; walk-in stays `PENDING_PAY` until the hotel accepts payment (`SettlementPendingCharge` with `revenueCode` from `revenueCodeForServiceLine`). A rejected charge does not seat an unseated row.
 
 The print-language dialog uses three radio chips (Azerbaijani, Russian, English). The selected language still opens the print URL with `lang` and `autoprint=1`.
 
