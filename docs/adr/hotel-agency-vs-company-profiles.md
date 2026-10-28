@@ -20,7 +20,7 @@ ERA previously had a single `Agency` master and `reservation.agencyId`. COMPANY 
 1. Keep `Agency` as the travel-agent profile (`commissionPercent` + mandatory `settlementMode` PREPAID|POSTPAID).
 2. Add `Company` as the corporate profile (credit terms + `settlementMode`, **no commission**).
 3. `Reservation.agencyId` and `Reservation.companyId` are independent FKs (Opera shape).
-4. Open an AGENCY folio when `agencyId` is set; open a COMPANY folio when `companyId` is set (or guest VÖEN still present).
+4. Open an AGENCY or COMPANY folio when a charge/payment is **routed** there (`roomPayer`, stay override, property rule) — empty B2B pockets stay closed (HOT-CL-01). Party FK alone does not create folio lines.
 5. Front Cash has **two menu screens** (Opera IA): `/front-cash/agency-ledger` (AGENCY folios + commission) and `/front-cash/company-ledger` (COMPANY folios, no commission). Shared summary API still accepts `kind=AGENCY|COMPANY|ALL`.
 6. Master screens: `/distribution/travel-agencies` (commission + settlement) and `/distribution/companies` (settlement, no commission).
 
@@ -28,4 +28,4 @@ ERA previously had a single `Agency` master and `reservation.agencyId`. COMPANY 
 
 - Prepaid vs postpaid is a profile flag for B2B AR timing; commission posting still follows existing contract/agency percent.
 - Guest folio remains the in-house guest bill; CL is B2B after (or instead of) guest settle per existing checkout/CL rules.
-- Company CL snapshot/Finance re-push is **not** cloned from agency snapshot in this wave (agency HOT-CL-04 unchanged).
+- Company CL snapshot/Finance re-push **is** available (HOT-CL-04); agency UI still has richer last-snapshot meta + Finance deep link. Ops statement scope = party folio lines only (HOT-CL-03/06).

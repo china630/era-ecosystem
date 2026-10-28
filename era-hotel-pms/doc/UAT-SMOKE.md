@@ -444,7 +444,7 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 8. **NA polish:** `/night-audit` → night audit status shows missed arrivals and due outs. The run does not mark no-show and does not check anyone out. While either list is non-empty the day stays open. Missed arrivals link to `/fo/reservations?queue=bookings&overdue=1`. Preview checklist loads on open: a **Folio balances** (or price/due/arrival) **stop** lists stay label + short id and **Open reservation** opens the card; a failed run error includes the reservation id.
 9. **Finance matching:** Finance `/reporting/aging` buckets; counterparty payment terms; `/sales/invoices/allocate` allocate tranche.
 10. **Agency statement lines (HOT-CL-03):** `/front-cash/agency-ledger` → pick agency + period → metrics opening/charges/payments → **Statement lines** grid (date, kind, stay, amount, running). Prior-stay opening must appear when period starts after checkout.
-11. **Company statement lines (HOT-CL-06):** `/front-cash/company-ledger` → pick company → same statement grid for COMPANY folios; TRANSFERRED_AR list; no commission / no Push snapshot.
+11. **Company statement lines (HOT-CL-06):** `/front-cash/company-ledger` → pick company → same statement grid for COMPANY folios; TRANSFERRED_AR list; no commission column; **Push CL snapshot** allowed (HOT-CL-04; last-snapshot meta chrome may be thinner than agency).
 12. **Agency portal CL (HOT-AGP-04):** `/agency/ledger` (agency session) → period filters → own statement only; no Push / settle controls.
 
 ## 28. MENU-IA deepen — cash journal / EOD grids / updates (2026-08-07 → thin MVP 2026-08-11)

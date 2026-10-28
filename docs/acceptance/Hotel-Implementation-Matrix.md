@@ -11,6 +11,8 @@
 
 **CL closeout (2026-10-27):** `transfer-guest-to-payer.spec.ts` covers `NO_PAYER_ON_STAY` / company-prefer / agency fallback. Second-pass: shell Front Cash CL nav, unsettled Folio card, undo keeps settlement when AR remains. AC-HOT-CASH Scaffold ✅ unchanged (negatives present). Pilot-ready still `[ ]`.
 
+**CL ledger audit (2026-10-28):** Code review of `/front-cash/agency-ledger` + `/front-cash/company-ledger` — statement/opening from AGENCY/COMPANY folios (full history); guest-pocket stays excluded until routing/MOVE_PAYER; settle POST 409 Finance-only. HOT-CL-06 back on COVERAGE. **No new negatives required** — existing `front-cash-b2b-folios` + p5/transfer suites cover split + CL gate. AC-HOT-CASH Scaffold ✅ / Pilot-ready `[ ]` unchanged.
+
 **CashShift ensure (2026-10-28):** Folio CASH/CARD, deposit payout, and settlement pending/basket share `ensureOpenCashShift` (unit `__tests__/cash-shift-ensure.spec.ts`). Second-pass: NA status + front-cash journal read via `findOpenCashShift`; module-map basket/pay + `/api/cash/shifts`. Does not reopen AC-HOT-CASH Scaffold ✅; Pilot-ready still `[ ]`.
 
 **NA stop refs (2026-10-28):** Preview `refs` + `/night-audit` Open reservation on folio/price/due/arrival stops; run errors include reservation id. **No new AC row** — HOT-NA-01/02 COVERAGE SHIPPED deepen. Does **not** reopen AC-HOT-CASH Scaffold ✅; Pilot-ready still `[ ]`.

@@ -162,7 +162,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | HOT-TOUR-01 | Hotel | Nafta weekend tours | Y | `/tours` (modals) bare `/tours/[id]/print` `/fleet` `/settings/policies#tours` | **SCREEN** | Boarding-first; grids+modals; out of SHOW | ADR hotel-guest-tours |
 | HOT-XFER-01 | Hotel | Stay-linked transfers | Y | `/transfers` | **SCREEN** | Airport menu removed (`?hasFlight=1`); SHIPPED ops | HOT-XFER-01 |
 | HOT-CASH-07/08 | Hotel | folio balances + folio journal | Y | `/front-cash/folio-balances` `/front-cash/folio-journal` | **SCREEN** | Balances are uncovered debt plus unused payments, not one net. UAT §42 open; Status=API | out of Hotel SHOW rollup |
-| HOT-CL-06 | Hotel | Company profile + company CL statement | Y Company + ledger+lines | `/distribution/companies` + `/front-cash/company-ledger` | **SHOW** | UAT §27.11 / §42; Status=SHIPPED | Opera split; ADR hotel-agency-vs-company-profiles |
+| HOT-CL-06 | Hotel | Company profile + company CL statement | Y Company + ledger+lines | `/distribution/companies` + `/front-cash/company-ledger` | **SHOW** | UAT §27.11 / §42; Status=SHIPPED (COVERAGE row 2026-10-28) | Opera split; folio-only statement; Push via HOT-CL-04 |
 | HOT-CL-01 | Hotel | Folio routing + room payer / gross-net | Y `roomPayer` + stay overrides | reservation card strip + Folio routing modal | **SHOW** | Status=SHIPPED; UAT §29 1a deepen open for signed artifact | ADR hotel-room-payer-and-commission-basis; Hotel SHOW rollup unchanged |
 | HOT-AG-01 | Hotel | B2B sales contracts + commission % | Y `commissionBasis`; Cancel/Expire; list `companyId`; terminal allotment 400 | `/distribution/contracts` | **SHOW** | Status=SHIPPED; UAT §18 + §29 1b; icon actions; no silent party default; terminal read-only allotments | SatAdmin; Open debts SC-REST/DEP/REL |
 | HOT-CO-05 | Hotel | Unsettled CL departures | Y list + retry invoice | `/front-cash/unsettled-departures` | **SCREEN** | UAT §27 1b; shell Front Cash + debts link; open stay → Folio card; Demo/TE not refreshed → out of Hotel SHOW rollup | ADR deferred corporate; does not move Gate/Pilot/edition |
@@ -253,6 +253,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-09-18 | P1 operator gaps: FIN-EMAS-01 / CP-WF-ATT-01 / CP-WF-SEC audit stay **SCREEN** (not SHIPPED); queue/attendance/audit label polish; group→Finance handoff. Demo/Pilot unchanged. |
 | 2026-09-17 | Platform CP-WF-ATT-01 attendance FaceID **SCREEN** (`/workspace/workforce/attendance`); COVERAGE Status=API until field tablet UAT. |
 | 2026-09-07 | Platform public IA: guest `/` hub + `/satellites/[slug]` + `/pricing` catalog/meters (SCREEN marketing, not SHOW). |
+| 2026-10-28 | HOT-CL-06 restored on COVERAGE_MATRIX (folio-only honesty); UI class SHOW unchanged; no Gate/Pilot/edition move. |
 | 2026-09-07 | HOT-CL-06 + HOT-AGP-04 statement SHOW; company CL SHIPPED with line statement. |
 | 2026-09-07 | HOT-CL-06 company CL moved to own `/front-cash/company-ledger` (Opera IA split from agency-ledger tabs). |
 | 2026-08-30 | Clinic Nafta card wave SCREEN: intake checklist (`PKG-NAFTA-INTAKE`), physio empty-catalog/Solyuks, Baku `#23` clock — UAT open; not SHOW / not GA. |
