@@ -37,7 +37,9 @@ import { ReferralsModule } from "../referrals/referrals.module";
     ReferralsModule,
     SystemConfigModule,
     AccessControlModule,
-    AdminModule,
+    // Admin + SatelliteEvents both sit on the SubscriptionTrial boot cycle —
+    // eager AdminModule made SubscriptionTrialModule undefined in Admin imports.
+    forwardRef(() => AdminModule),
     AuditModule,
     forwardRef(() => SatelliteEventsModule),
     forwardRef(() => DrakarisModule),
