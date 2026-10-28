@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { CP_PERMISSION } from "../auth/cp-permissions";
@@ -31,7 +32,7 @@ export class SubscriptionController {
     private readonly prisma: PrismaService,
     private readonly connect: SatelliteConnectService,
     private readonly trialResolver: TrialEntitlementResolver,
-    private readonly satelliteNotify: BillingSatelliteNotifyService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   @Get("me")
@@ -216,7 +217,14 @@ export class SubscriptionController {
   ) {
     await this.accessControl.assertOwnerForBilling(user.sub, organizationId);
     await this.access.updateModuleAddons(organizationId, dto);
-    await this.satelliteNotify.afterModuleChange(organizationId);
+    try {
+      const notify = this.moduleRef.get(BillingSatelliteNotifyService, {
+        strict: false,
+      });
+      await notify.afterModuleChange(organizationId);
+    } catch {
+      /* best-effort; billing row already saved */
+    }
     return this.getMe(organizationId);
   }
 }
