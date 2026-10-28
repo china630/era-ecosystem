@@ -25,13 +25,13 @@ import { AdminReferenceController } from "./admin-reference.controller";
 import { DataHubAdminClient } from "./data-hub-admin.client";
 
 @Module({
-  // CJS cycles: SubscriptionTrial → SatelliteEvents → Subscription → Quota →
-  // Billing → Admin, and SatelliteEvents → Admin. Eager imports stay undefined
-  // when this decorator runs; Nest then never listens on /health.
+  // SatelliteEventsModule imports SubscriptionModule, which imports AdminModule.
+  // A direct import is still undefined when this decorator runs (CJS cycle) and
+  // Nest exits before /health can listen.
   imports: [
     PrismaModule,
     SystemConfigModule,
-    forwardRef(() => SubscriptionTrialModule),
+    SubscriptionTrialModule,
     forwardRef(() => SatelliteEventsModule),
   ],
   controllers: [
