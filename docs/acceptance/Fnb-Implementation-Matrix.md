@@ -37,7 +37,7 @@ AC-FNB-AUD is 🟡 (belt + `/admin/audit` SCREEN landed; UAT open) and stays **o
 | (no TENANT AC) | SHARED F&B pool | Out of BE rollup | Wave 3 request tenant code; topology note only — not an AC this edition |
 | AC-FNB-RBAC | Field UAT / SHOW | Out of BE rollup | SCREEN until signoff |
 | (no AC) | Edition / hall preset / hotel mode split + owner upgrade (FNB-09 / FNB-10) | Out of BE rollup | API: unit tests `fnb-rbac.spec.ts` (edition resolve, preset clamp, metered kitchen; `hotelMode=false` on `fnb` stays `fnb`), orch `fnb-edition.service.spec.ts` + `kafe-foundation.spec.ts`; UAT step open |
-| (no AC) | Buffet Planner module (FNB-BUFFET-01) | Out of BE rollup | API/SCREEN only — **no Scaffold ✅** (no PRD AC row; UAT FB-5 open; FIN-INV-SCOPE-01 open). Proof: route map + waste math + submodule deny in `__tests__/fnb-buffet-planner.spec.ts`; ADR fnb-buffet-planner |
+| (no AC) | Buffet Planner module (FNB-BUFFET-01) | Out of BE rollup | API/SCREEN only — **no Scaffold ✅** (no PRD AC row; UAT FB-5 open; FIN-INV-SCOPE-01 open). Proof: route map + waste math + list aggregates + submodule deny in `__tests__/fnb-buffet-planner.spec.ts`; copy/composition UX; ADR fnb-buffet-planner |
 | AC-FNB-AUD | UAT for `/admin/audit` + richer Layer B | Out of BE rollup | Belt + SCREEN landed; FNB-AUD-01 API until UAT |
 
 ### Negative-path proof index

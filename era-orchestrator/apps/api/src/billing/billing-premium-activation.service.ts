@@ -9,6 +9,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { PricingService } from "../admin/pricing.service";
 import { catalogModuleKeyToPatch } from "./billing-module-toggle.helpers";
 import { OrganizationModuleService } from "./organization-module.service";
+import { BillingSatelliteNotifyService } from "./billing-satellite-notify.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 
 @Injectable()
@@ -18,6 +19,7 @@ export class BillingPremiumActivationService {
     private readonly pricing: PricingService,
     private readonly subscriptionAccess: SubscriptionAccessService,
     private readonly orgModules: OrganizationModuleService,
+    private readonly satelliteNotify: BillingSatelliteNotifyService,
   ) {}
 
   async activatePremium(
@@ -76,6 +78,7 @@ export class BillingPremiumActivationService {
       }
     });
 
+    await this.satelliteNotify.afterModuleChange(organizationId);
     return { ok: true, activatedPremiumModules: merged };
   }
 

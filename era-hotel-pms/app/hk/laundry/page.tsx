@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -202,11 +208,11 @@ export default function HkLaundryPage() {
   function qtyCell(id: string, key: 'wash' | 'iron') {
     return (
       <span className="inline-flex items-center gap-1">
-        <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(id, key, -1)}>
+        <button type="button" className="h-6 w-6 rounded-lg border border-[#D5DADF]" onClick={() => bump(id, key, -1)}>
           −
         </button>
         <span className="w-6 text-center">{qty[id]?.[key] ?? 0}</span>
-        <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => bump(id, key, 1)}>
+        <button type="button" className="h-6 w-6 rounded-lg border border-[#D5DADF]" onClick={() => bump(id, key, 1)}>
           +
         </button>
       </span>
@@ -313,50 +319,52 @@ export default function HkLaundryPage() {
             />
           ) : null}
           <p className="text-sm text-[#7F8C8D]">{t('agreedQty')}</p>
-          <div className="overflow-x-auto rounded border border-[#D5DADF]">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-                  <th className="px-2 py-2">{t('laundryPieces')}</th>
-                  <th className="px-2 py-2">{t('laundryWash')}</th>
-                  <th className="px-2 py-2">{t('laundryWashPrice')}</th>
-                  <th className="px-2 py-2">{t('laundryWashSum')}</th>
-                  <th className="px-2 py-2">{t('laundryIron')}</th>
-                  <th className="px-2 py-2">{t('laundryIronPrice')}</th>
-                  <th className="px-2 py-2">{t('laundryIronSum')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.length === 0 ? (
-                  <tr>
-                    <td className="px-2 py-3 text-[#7F8C8D]" colSpan={7}>
-                      {t('laundryCatalogEmpty')}
-                    </td>
+          <div className={DATA_TABLE_SHELL_CLASS}>
+            <div className="overflow-x-auto">
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryPieces')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryWash')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryWashPrice')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryWashSum')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryIron')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryIronPrice')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('laundryIronSum')}</th>
                   </tr>
-                ) : (
-                  items.map((i) => (
-                    <tr key={i.id} className="border-b border-[#ECF0F1]">
-                      <td className="px-2 py-2 font-medium">{i.name}</td>
-                      <td className="px-2 py-2">{qtyCell(i.id, 'wash')}</td>
-                      <td className="px-2 py-2 text-[#7F8C8D]">{money(i.washPrice)}</td>
-                      <td className="px-2 py-2">{money(lineSum(i, 'wash'))}</td>
-                      <td className="px-2 py-2">{qtyCell(i.id, 'iron')}</td>
-                      <td className="px-2 py-2 text-[#7F8C8D]">{money(i.ironPrice)}</td>
-                      <td className="px-2 py-2">{money(lineSum(i, 'iron'))}</td>
+                </thead>
+                <tbody>
+                  {items.length === 0 ? (
+                    <tr className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS} colSpan={7}>
+                        {t('laundryCatalogEmpty')}
+                      </td>
                     </tr>
-                  ))
-                )}
-                <tr className="border-t border-[#D5DADF] bg-[#F8FAFB] font-medium">
-                  <td className="px-2 py-2">{t('laundryTotalRow')}</td>
-                  <td className="px-2 py-2">{totals.washQty}</td>
-                  <td className="px-2 py-2">—</td>
-                  <td className="px-2 py-2">{money(totals.washSum)}</td>
-                  <td className="px-2 py-2">{totals.ironQty}</td>
-                  <td className="px-2 py-2">—</td>
-                  <td className="px-2 py-2">{money(totals.ironSum)}</td>
-                </tr>
-              </tbody>
-            </table>
+                  ) : (
+                    items.map((i) => (
+                      <tr key={i.id} className={DATA_TABLE_TR_CLASS}>
+                        <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{i.name}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{qtyCell(i.id, 'wash')}</td>
+                        <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{money(i.washPrice)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{money(lineSum(i, 'wash'))}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{qtyCell(i.id, 'iron')}</td>
+                        <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{money(i.ironPrice)}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{money(lineSum(i, 'iron'))}</td>
+                      </tr>
+                    ))
+                  )}
+                  <tr className={`${DATA_TABLE_TR_CLASS} bg-[#F8FAFB] font-medium`}>
+                    <td className={DATA_TABLE_TD_CLASS}>{t('laundryTotalRow')}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{totals.washQty}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>—</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{money(totals.washSum)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{totals.ironQty}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>—</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{money(totals.ironSum)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
           <p className="text-sm font-semibold text-[#34495E]">
             {t('laundryGrandTotal')}: {money(totals.grand)}

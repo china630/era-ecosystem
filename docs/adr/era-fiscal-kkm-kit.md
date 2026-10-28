@@ -132,7 +132,7 @@ Same split as Elektraweb policy ([saas-request-tenant-and-vendor-bridges.md](./s
 
 | Call `sale` (and bank ops when card) | Do not fiscalize |
 |--------------------------------------|------------------|
-| Hotel Front Cash / folio guest cash-card | Room charge; fiscal at checkout / hub |
+| Hotel Front Cash / folio guest cash-card (and settlement pending/basket) via shared `ensureOpenCashShift` — first CASH/CARD money move opens primary `CashShift` when none is OPEN | Room charge; fiscal at checkout / hub |
 | F&B ticket pay when `shouldFiscalizeAtPos` | Room charge / deferred hub |
 | Retail own-fiscal pay | Folio when revenue routed to parent |
 | Clinic walk-in when fiscal OWN | IN_HOUSE folio charge |

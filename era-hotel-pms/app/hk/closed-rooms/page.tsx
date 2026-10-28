@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   EraListFilterBar,
   Field,
   PageHeader,
@@ -151,53 +157,55 @@ export default function ClosedRoomsPage() {
           onChange={(e) => setRoomQuery(e.target.value)}
         />
       </EraListFilterBar>
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              <th className="px-3 py-2">{t('colRoom')}</th>
-              <th className="px-3 py-2">{t('kindFilter')}</th>
-              <th className="px-3 py-2">{t('closedFrom')}</th>
-              <th className="px-3 py-2">{t('closedTo')}</th>
-              <th className="px-3 py-2">{t('closedReason')}</th>
-              {canClose ? <th className="px-3 py-2" /> : null}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={canClose ? 6 : 5}>
-                  {t('closedEmpty')}
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colRoom')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('kindFilter')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('closedFrom')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('closedTo')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('closedReason')}</th>
+                {canClose ? <th className={DATA_TABLE_TH_LEFT_CLASS} /> : null}
               </tr>
-            ) : (
-              visible.map((r) => {
-                const c = r.closures?.[0];
-                return (
-                  <tr key={r.id} className="border-b border-[#ECF0F1]">
-                    <td className="px-3 py-2 font-medium">{r.roomNumber}</td>
-                    <td className="px-3 py-2">{kindLabel(r.inventoryStatus)}</td>
-                    <td className="px-3 py-2">{ymd(c?.startDate)}</td>
-                    <td className="px-3 py-2">{ymd(c?.endDate)}</td>
-                    <td className="px-3 py-2">{r.inventoryReason ?? c?.reason ?? '—'}</td>
-                    {canClose ? (
-                      <td className="px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          className={SECONDARY_BUTTON_CLASS}
-                          disabled={returnId === r.id}
-                          onClick={() => void returnToService(r.id)}
-                        >
-                          {t('returnToService')}
-                        </button>
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {visible.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={canClose ? 6 : 5}>
+                    {t('closedEmpty')}
+                  </td>
+                </tr>
+              ) : (
+                visible.map((r) => {
+                  const c = r.closures?.[0];
+                  return (
+                    <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{r.roomNumber}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{kindLabel(r.inventoryStatus)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{ymd(c?.startDate)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{ymd(c?.endDate)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{r.inventoryReason ?? c?.reason ?? '—'}</td>
+                      {canClose ? (
+                        <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON_CLASS}
+                            disabled={returnId === r.id}
+                            onClick={() => void returnToService(r.id)}
+                          >
+                            {t('returnToService')}
+                          </button>
+                        </td>
+                      ) : null}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <EraModal
         open={open}

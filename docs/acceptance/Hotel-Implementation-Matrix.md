@@ -11,6 +11,14 @@
 
 **CL closeout (2026-10-27):** `transfer-guest-to-payer.spec.ts` covers `NO_PAYER_ON_STAY` / company-prefer / agency fallback. Second-pass: shell Front Cash CL nav, unsettled Folio card, undo keeps settlement when AR remains. AC-HOT-CASH Scaffold ✅ unchanged (negatives present). Pilot-ready still `[ ]`.
 
+**CL ledger audit (2026-10-28):** Code review of `/front-cash/agency-ledger` + `/front-cash/company-ledger` — statement/opening from AGENCY/COMPANY folios (full history); guest-pocket stays excluded until routing/MOVE_PAYER; settle POST 409 Finance-only. HOT-CL-06 back on COVERAGE. **No new negatives required** — existing `front-cash-b2b-folios` + p5/transfer suites cover split + CL gate. AC-HOT-CASH Scaffold ✅ / Pilot-ready `[ ]` unchanged.
+
+**CashShift ensure (2026-10-28):** Folio CASH/CARD, deposit payout, and settlement pending/basket share `ensureOpenCashShift` (unit `__tests__/cash-shift-ensure.spec.ts`). Second-pass: NA status + front-cash journal read via `findOpenCashShift`; module-map basket/pay + `/api/cash/shifts`. Does not reopen AC-HOT-CASH Scaffold ✅; Pilot-ready still `[ ]`.
+
+**NA stop refs (2026-10-28):** Preview `refs` + `/night-audit` Open reservation on folio/price/due/arrival stops; run errors include reservation id. **No new AC row** — HOT-NA-01/02 COVERAGE SHIPPED deepen. Does **not** reopen AC-HOT-CASH Scaffold ✅; Pilot-ready still `[ ]`.
+
+**Pending revenueCode (2026-10-28):** Hub `createPendingCharge` + Zod refuse non-zero amount without `revenueCode`; idempotent retry may heal a blank row; clinic walk-in/extras + F&B defer resolve codes; NA fails early with `sourceSystem:sourceRef` (no invented `UNKNOWN`). HOT-CASH-02 / HOT-NA-01 SHIPPED deepen; AC-HOT-REV stays 🟡 out of rollup. Does **not** reopen AC-HOT-CASH Scaffold ✅; Pilot-ready still `[ ]`.
+
 **Finance→Hotel payment apply (2026-10-27):** HOT-CL-07 API — allocate + bank match → hotel `payment-applied` via outbox/reconcile; peer URL from SatelliteEndpoint (ADR satellite-peer-url-resolution). Does not reopen AC-HOT-CASH Scaffold; Pilot unchanged.
 
 **Room payer / commission basis (2026-10-27):** `Reservation.roomPayer` + `commissionBasis`, contract `commissionBasis`, card strip, mid-stay `COMMERCIAL_AMEND_REQUIRED`. ADR hotel-room-payer-and-commission-basis. Does not reopen AC-HOT-CASH Scaffold or Pilot.
@@ -23,6 +31,8 @@
 
 **HK playbook/i18n (2026-10-27):** OpsUI filter+one grid+modal + one PRIMARY across discrepancy/closed/forecast/roster/rotation/minibar/consumption/stock; laundry money coerce (HK+FO); en/az/ru keys (`discrepancyHint`, closed-rooms nav without OOO). Nafta HK deepen stays **🟡** (out of AC-HOT-HK ✅). Does **not** reopen AC-HOT-HK Scaffold or Pilot. UAT §34 still open — not SHIPPED.
 
+**HK table shell tokens (2026-10-28):** Secondary HK lists use kit `DATA_TABLE_SHELL` / `CARD_CONTAINER` (`rounded-2xl`), not hand `rounded` boxes. UI polish only — Nafta deepen stays **🟡**; AC-HOT-HK Scaffold / Pilot unchanged.
+
 **Seed hygiene (2026-09-22):** Boot `db:seed` is reference insert-if-missing only ([ADR satellite-seed-hygiene](../adr/satellite-seed-hygiene.md)); wipe/demo is `db:seed:demo`. Not implied as droplet boot. No Scaffold/ga change.
 
 ---
@@ -33,7 +43,7 @@
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-HOT-FO | Front office screen chain (arrive/stay/depart) | ✅ | [ ] | `__tests__/fo-gates-negative.spec.ts` + `__tests__/stay-slice-align.spec.ts` + HOT-FO/BOOK | Negative: Avl=0, DIRTY assign, names-incomplete, overlapping named guest. Assigned door counts as its physical type; a slice past checkout does not keep the door |
 | AC-HOT-FO-SHARE | Shared twin assignment (union gender pool) | ✅ | [ ] | `__tests__/shared-twin-negative.spec.ts` + HOT-FO-03 | T2; M/F only; N beds; vacated-bed reuse (`nextFreeShareBedIndex`); OTA exclusive; last-out DIRTY; break/cancel. In-house suggestions use the same today-through-checkout window as a room move. HOT-FO-03 Status=API until UAT §30. Does not add a Scaffold row |
-| AC-HOT-CASH | FO money / City Ledger MVP | ✅ | [ ] | `__tests__/p5-fo-money-negative.spec.ts` + `__tests__/transfer-guest-to-payer.spec.ts` + `__tests__/room-payer-routing.spec.ts` + `__tests__/folio-open-debt.spec.ts` + HOT-CASH/CO/CL; UAT §27 1c / §29 1a–1b | Negative: CL gate, guest balance, DEPOSIT settle refused, TRANSFERRED_AR refund, discount, NO_PAYER_ON_STAY / MOVE_PAYER_FAILED; room-payer policy; open-debt article vs ROOM credit (1005). Ledger/payment deepen does not reopen Scaffold |
+| AC-HOT-CASH | FO money / City Ledger MVP | ✅ | [ ] | `__tests__/p5-fo-money-negative.spec.ts` + `__tests__/transfer-guest-to-payer.spec.ts` + `__tests__/room-payer-routing.spec.ts` + `__tests__/folio-open-debt.spec.ts` + `__tests__/cash-shift-ensure.spec.ts` + HOT-CASH/CO/CL; UAT §27 1c / §29 1a–1b / §6b | Negative: CL gate, guest balance, DEPOSIT settle refused, TRANSFERRED_AR refund, discount, NO_PAYER_ON_STAY / MOVE_PAYER_FAILED; room-payer policy; open-debt article vs ROOM credit (1005). CashShift ensure (folio/pending same gate) does not reopen Scaffold |
 | AC-HOT-HK | Housekeeping + maintenance | ✅ | [ ] | `__tests__/hk-status-negative.spec.ts` + `occupied-hk-lock.spec.ts` | DIRTY not assignable; CLEAN/INSPECTED; FO rack and RoomInfo cannot flip cleanliness on IN_HOUSE. The `/hk/rooms` exception (Dirty/Pickup/Clean on an occupied door) is Nafta deepen, not this ✅ — no negative suite. **Not** full Nafta deepen |
 | AC-HOT-RATE | Dynamic rate plans (scoped) | ✅ | [ ] | ADR hotel-dynamic-rate-plans + pricing-engine tests | **Scope-cut:** BAR Excel HOT-02 = separate BLOCKED contour (not this AC) |
 | AC-HOT-MDM | Guest MDM link + masked ops profile | ✅ | [ ] | `__tests__/mdm-negative.spec.ts` + guest-identity | Strict deny; masked ops-profile; invalid FIN merge schema |
@@ -52,7 +62,7 @@
 | AC-HOT-PAX-MOVE | Move guest / Swap rooms within booking | 🟡 | [ ] | `__tests__/depart-guest-negative.spec.ts` (move group/empty/departed) + `__tests__/swap-rooms-negative.spec.ts` + HOT-FO-06/07 | **Out of Scaffold BE rollup** — UAT §44 open; dialog copy az/ru/en; orch fans out `GUEST_MOVED`. Stays 🟡 |
 | AC-HOT-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `hotel-rbac` + staff-provision unknown role; ADR hotel-domain-permissions-and-rbac; `/settings/access` | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 | AC-HOT-CARD-PANE | Reservation card right-pane density (Guests / Rate Grid / Folio / Notes) | 🟡 | [ ] | HOT-BOOK-06…09; UAT §45–§48; Sprint S-22…S-24; `e2e/reservation-card.spec.ts` | **Out of Scaffold BE rollup** — UI density only; not SHIPPED until UAT; no Opera windows |
-| AC-HOT-REV | Category revenue code + day document v2 (money vs quantity) | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01; kit `hotel-revenue-route.test.ts` | **Out of Scaffold BE rollup.** No night-audit negative suite. Blank category refuses the charge; group GL `601.04` is refused at post. Night audit with the new document not run — not SHIPPED. Does not darken BE ✅ and does not reopen AC-HOT-CASH. |
+| AC-HOT-REV | Category revenue code + day document v2 (money vs quantity) | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01; kit `hotel-revenue-route.test.ts` | **Out of Scaffold BE rollup.** No night-audit negative suite. Blank category refuses the charge; group GL `601.04` is refused at post; hub Zod/create refuse non-zero pending without `revenueCode`; NA lists blank PAID pending refs. Night audit with the new document not run — not SHIPPED. Does not darken BE ✅ and does not reopen AC-HOT-CASH. |
 | AC-HOT-AUD | Mutation audit Layer A (HTTP belt) + Layer B enrich catalog | 🟡 | [ ] | ADR era-mutation-audit-standard; HOT-AUD-01; `__tests__/mutation-audit-belt.spec.ts`; `hotel-page-route-inventory` `/admin/audit` reports-not-admin; kit belt | **Out of Scaffold BE rollup.** Belt + UI/API parity (`/admin/audit` + `GET /api/admin/audit`) landed; UAT + fuller negatives (exempt skip / audit-fail soft) open — max 🟡. Does not darken BE ✅. |
 
 **Edition / wave rollup (BE, in-scope)** = worst(FO, CASH, HK, RATE, MDM) → **✅**.  
@@ -78,10 +88,10 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 | AC-HOT-RATE / HOT-02 | Nafta BAR Excel import | BLOCKED external | Scoped out of AC-HOT-RATE |
 | AC-HOT-INT | Live KKM / locks / notify | External ⏸ | Keep STUB; max Scaffold 🟡 |
 | HOT-RPT-01/02 | EW Management Reports catalog + nightly ZIP | W1–W3 code delivered (out of BE rollup) | Screens + PDF + ZIP + cubes + 3-year + email ZIP link; negative path `__tests__/hotel-reports-negative.spec.ts` (unknown slug / lang / empty pack); layout families + letterhead + date bar + zero-capacity ratios in `report-layout-families` / `report-letterhead` / `report-date-bar` / `report-workspace-export` specs — Scaffold 🟡 not ✅; no AC-HOT-RPT ✅ |
-| Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy/policy + `/hk/rooms` + secondary HK empty chrome / sidebar groups / maids picker / laundry preview / void IN_PLANT on grids+checkout / stay linen override + playbook filter/grid/modal polish | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts` + `__tests__/hk-soft-sort.spec.ts` (soft sort + laundry amount + express %). Soft sort departures→VIP→needed-by→DIRTY→duty→room#. Void IN_PLANT on `/hk/laundry`, `/fo/laundry`, and checkout; auto-retry. Maids dept/unlink; discrepancy create modal; forecast 1/7/14/30; one PRIMARY per screen. Stays 🟡, not Scaffold ✅. UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
+| Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy/policy + `/hk/rooms` + secondary HK empty chrome / sidebar groups / maids picker / laundry preview / void IN_PLANT on grids+checkout / stay linen override + playbook filter/grid/modal + kit table shell tokens | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts` + `__tests__/hk-soft-sort.spec.ts` (soft sort + laundry amount + express %). Soft sort departures→VIP→needed-by→DIRTY→duty→room#. Void IN_PLANT; maids dept/unlink; discrepancy create modal; forecast 1/7/14/30; one PRIMARY; `DATA_TABLE_SHELL` / `CARD_CONTAINER` on secondary HK. Stays 🟡, not Scaffold ✅. UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | HOT-CO-04 | Early checkout unused-nights refund (net VAT, default CASH) | Out of BE rollup | ADR Accepted; AC-HOT-CO-EARLY 🟡 until fuller negatives; SHIPPED OpsUI |
-| AC-HOT-REV | Night audit of day document v2 | Out of BE rollup | HOT-REV-01 API; no negative suite; not SHIPPED |
+| AC-HOT-REV | Night audit of day document v2 | Out of BE rollup | HOT-REV-01 API; hub blank-`revenueCode` refuse + NA early fail; no NA negative suite; not SHIPPED |
 | AC-HOT-AUD | UAT + soft-fail / exempt negatives; `jsonOk`-bypass routes | Out of BE rollup | Belt + path/API parity landed; HOT-AUD-01 API until UAT |
 
 ### Negative-path proof index
@@ -91,6 +101,7 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 | `era-hotel-pms/__tests__/p5-fo-money-negative.spec.ts` | AC-HOT-CASH |
 | `era-hotel-pms/__tests__/folio-open-debt.spec.ts` | AC-HOT-CASH (open-debt article gate) |
 | `era-hotel-pms/__tests__/transfer-guest-to-payer.spec.ts` | AC-HOT-CASH (MOVE_PAYER_CL) |
+| `era-hotel-pms/__tests__/cash-shift-ensure.spec.ts` | AC-HOT-CASH (ensureOpenCashShift / folio+pending gate) |
 | `era-hotel-pms/__tests__/fo-gates-negative.spec.ts` | AC-HOT-FO |
 | `era-hotel-pms/__tests__/shared-twin-negative.spec.ts` | AC-HOT-FO-SHARE |
 | `era-hotel-pms/__tests__/mdm-negative.spec.ts` | AC-HOT-MDM |

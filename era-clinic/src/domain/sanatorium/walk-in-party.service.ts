@@ -5,7 +5,7 @@ import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 import { allocateClinicReceiptNo } from "@/domain/cashier/receipt-seq.service";
 import { extraTicketIdForOrder } from "@/domain/procedure/extra-ticket";
-import { tryResolveSellableSku } from "@/lib/billing-router";
+import { revenueCodeForServiceLine, tryResolveSellableSku } from "@/lib/billing-router";
 import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
 import { recordClinicAudit, listAuditLogs } from "@/lib/satellite-audit";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
@@ -790,6 +790,7 @@ export async function sendWalkInPartyToCashier(partyId: string, actor: Actor) {
         idempotencyKey: line.idempotencyKey,
         sku,
         qty: line.qty,
+        revenueCode: await revenueCodeForServiceLine(line.code),
         basketRef: receipt,
       });
       await line.mark();

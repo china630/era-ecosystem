@@ -854,6 +854,7 @@
       "quantityApply": "Apply",
       "disableBillingNotice": "Module stays billable for the current month; access ends at month end.",
       "enabled": "Module enabled",
+      "syncFailed": "Module saved, but satellite Sync failed — open Super-admin Sync or retry.",
       "connectFailed": "Could not connect satellite — try again or contact support.",
       "billingFootnote": "Disabled modules remain on the current month's invoice (post-paid billing)."
     },

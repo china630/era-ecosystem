@@ -22,8 +22,9 @@ Sanatorium and canteen operations need a production plan per meal (covers → st
 ## Consequences
 
 - Nav `/admin/buffet` and APIs require `fnb_buffet_planner` in `activeModules` when modules are metered (same rule as KDS).
-- UI: list tables + ModalShell CRUD; outlet and menu item pickers from DB (`CatalogField`).
-- Product-Readiness / edition `ga` stay closed until Pilot UAT; COVERAGE starts API/SCREEN.
+- UI: **master Plans table** (full width) + ModalShell for plan header, composition (lines + lifecycle + materials + publish), and line CRUD. Icons: edit · composition (`ClipboardList`) · copy. Default date filter = today…today+6 (Asia/Baku). Status filter on list. Copy = `POST …/plans/:id/copy` (DRAFT, default today) then open header modal; unique `(outlet, date, meal)` → 409 `PLAN_SLOT_TAKEN`. Empty composition can pull lines from the last same-meal plan (`…/copy-lines-from-last`).
+- Second café = new `Outlet` via `/admin/settings` (`POST /api/outlets`, optional `copyFromOutletId` copies menu + halls + tables) — not from Buffet screen. Duplicate outlet code → 409.
+- Product-Readiness / edition `ga` stay closed until Pilot UAT; COVERAGE stays API/SCREEN until FB-5 sign-off.
 
 ## Out of scope (v1)
 
@@ -31,3 +32,4 @@ Sanatorium and canteen operations need a production plan per meal (covers → st
 - Hard-require hotel  
 - Auto-PO without approval  
 - Merging SKU into daily-menu  
+- Week bulk-copy of plans  

@@ -2,9 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { Prisma } from "@era365/database";
+import { SatelliteOrgBindSyncService } from "../admin/satellite-org-bind-sync.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { TrialCatalogService } from "./trial-catalog.service";
 import { TrialEntitlementResolver } from "./trial-entitlement.resolver";
@@ -12,10 +14,13 @@ import { isKnownSatelliteKey } from "./satellite-keys.constants";
 
 @Injectable()
 export class SatelliteConnectService {
+  private readonly log = new Logger(SatelliteConnectService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly catalog: TrialCatalogService,
     private readonly resolver: TrialEntitlementResolver,
+    private readonly bindSync: SatelliteOrgBindSyncService,
   ) {}
 
   async connectSatellite(
@@ -25,6 +30,7 @@ export class SatelliteConnectService {
     satelliteKey: string;
     activeModules: string[];
     trialExpiresAt: string | null;
+    synced: boolean;
   }> {
     const key = satelliteKey.trim();
     if (!isKnownSatelliteKey(key)) {
@@ -56,6 +62,7 @@ export class SatelliteConnectService {
         satelliteKey: key,
         activeModules: sub.activeModules,
         trialExpiresAt: existing.trialExpiresAt?.toISOString() ?? orgTrial?.toISOString() ?? null,
+        synced: true,
       };
     }
 
@@ -123,10 +130,21 @@ export class SatelliteConnectService {
       return merged;
     });
 
+    let synced = true;
+    try {
+      await this.bindSync.syncForOrg(organizationId);
+    } catch (err) {
+      synced = false;
+      this.log.warn(
+        `Connect satellite Sync failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
     return {
       satelliteKey: key,
       activeModules: result,
       trialExpiresAt: trialUntil?.toISOString() ?? null,
+      synced,
     };
   }
 }

@@ -11,6 +11,7 @@ import { AccessControlService } from "../access/access-control.service";
 import { OrganizationId } from "../common/org-id.decorator";
 import { QuotaService } from "../quota/quota.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { BillingSatelliteNotifyService } from "../billing/billing-satellite-notify.service";
 import { SatelliteConnectService } from "./satellite-connect.service";
 import { SubscriptionAccessService } from "./subscription-access.service";
 import { TrialEntitlementResolver } from "./trial-entitlement.resolver";
@@ -30,6 +31,7 @@ export class SubscriptionController {
     private readonly prisma: PrismaService,
     private readonly connect: SatelliteConnectService,
     private readonly trialResolver: TrialEntitlementResolver,
+    private readonly satelliteNotify: BillingSatelliteNotifyService,
   ) {}
 
   @Get("me")
@@ -214,6 +216,7 @@ export class SubscriptionController {
   ) {
     await this.accessControl.assertOwnerForBilling(user.sub, organizationId);
     await this.access.updateModuleAddons(organizationId, dto);
+    await this.satelliteNotify.afterModuleChange(organizationId);
     return this.getMe(organizationId);
   }
 }

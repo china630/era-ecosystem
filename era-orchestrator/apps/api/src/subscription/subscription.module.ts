@@ -1,6 +1,7 @@
-import { Global, Module } from "@nestjs/common";
+import { Global, Module, forwardRef } from "@nestjs/common";
 import { AccessControlModule } from "../access/access-control.module";
 import { AdminModule } from "../admin/admin.module";
+import { BillingModule } from "../billing/billing.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { QuotaModule } from "../quota/quota.module";
 import { SubscriptionAccessService } from "./subscription-access.service";
@@ -17,6 +18,7 @@ import { SubscriptionTrialModule } from "./subscription-trial.module";
     AccessControlModule,
     AdminModule,
     SubscriptionTrialModule,
+    forwardRef(() => BillingModule),
   ],
   controllers: [SubscriptionController, InternalSubscriptionController],
   providers: [SubscriptionAccessService, SubscriptionGuard],

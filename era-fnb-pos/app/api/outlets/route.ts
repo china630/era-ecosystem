@@ -1,5 +1,6 @@
 import { handleRouteError, jsonError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSelectedOutletId } from "@/lib/outlet-session";
@@ -40,17 +41,39 @@ export async function POST(request: Request) {
     if (denied) return denied;
     const body = copySchema.parse(await request.json());
     const organizationId = requestOrganizationId();
+    const code = body.code.trim().toUpperCase();
+
+    let source: {
+      id: string;
+      revenueCenterCode: string;
+      financeWarehouseCode: string | null;
+    } | null = null;
+    if (body.copyFromOutletId) {
+      source = await prisma.outlet.findFirst({
+        where: { id: body.copyFromOutletId, organizationId, active: true },
+        select: { id: true, revenueCenterCode: true, financeWarehouseCode: true },
+      });
+      if (!source) return jsonError("Source outlet not found", 404);
+    }
+
     const created = await prisma.outlet.create({
       data: {
         organizationId,
-        code: body.code,
-        name: body.name,
+        code,
+        name: body.name.trim(),
         publicSlug: body.publicSlug ?? null,
+        ...(source
+          ? {
+              revenueCenterCode: source.revenueCenterCode,
+              financeWarehouseCode: source.financeWarehouseCode,
+            }
+          : {}),
       },
     });
-    if (body.copyFromOutletId) {
+
+    if (source) {
       const cats = await prisma.menuCategory.findMany({
-        where: { outletId: body.copyFromOutletId },
+        where: { outletId: source.id },
         include: { items: true },
       });
       for (const cat of cats) {
@@ -84,9 +107,50 @@ export async function POST(request: Request) {
           });
         }
       }
+
+      const halls = await prisma.posHall.findMany({
+        where: { outletId: source.id },
+        orderBy: { sortOrder: "asc" },
+      });
+      const hallIdMap = new Map<string, string>();
+      for (const hall of halls) {
+        const nh = await prisma.posHall.create({
+          data: {
+            organizationId,
+            outletId: created.id,
+            name: hall.name,
+            sortOrder: hall.sortOrder,
+          },
+        });
+        hallIdMap.set(hall.id, nh.id);
+      }
+
+      const tables = await prisma.posTable.findMany({
+        where: { outletId: source.id },
+        orderBy: { code: "asc" },
+      });
+      for (const table of tables) {
+        await prisma.posTable.create({
+          data: {
+            organizationId,
+            outletId: created.id,
+            hallId: table.hallId ? hallIdMap.get(table.hallId) ?? null : null,
+            code: table.code,
+            name: table.name,
+            seats: table.seats,
+            zone: table.zone,
+            status: "FREE",
+            currentTicketId: null,
+          },
+        });
+      }
     }
+
     return NextResponse.json(created, { status: 201 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return jsonError("Outlet code already exists", 409);
+    }
     return handleRouteError(err);
   }
 }

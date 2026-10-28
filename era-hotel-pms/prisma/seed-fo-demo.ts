@@ -139,12 +139,13 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     });
   }
 
-  if (!(await prisma.cashShift.findFirst({ where: { closedAt: null } }))) {
+  if (!(await prisma.cashShift.findFirst({ where: { status: 'OPEN' } }))) {
     await prisma.cashShift.create({
       data: {
         cashier: 'reception',
         registerId: 'FO-01',
         status: 'OPEN',
+        isPrimary: true,
         openedAt: at(-1),
       },
     });

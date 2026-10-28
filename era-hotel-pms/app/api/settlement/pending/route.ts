@@ -6,22 +6,32 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { createPendingCharge } from '@/lib/services/settlement-hub.service';
 import { enterSatelliteTenant, satelliteRuntimeConfig } from '@era/satellite-kit';
 
-const schema = z.object({
-  sourceSystem: z.enum(['FNB_POS', 'CLINIC', 'RETAIL']),
-  sourceOrgId: z.string().min(1),
-  hotelOrganizationId: z.string().uuid().optional(),
-  sourceRef: z.string().min(1),
-  amount: z.number().finite(),
-  sku: z.string().min(1).optional(),
-  qty: z.number().int().refine((qty) => qty !== 0).optional(),
-  revenueCode: z.string().min(1).max(32).optional(),
-  currency: z.string().default('AZN'),
-  description: z.string().min(1),
-  payerLabel: z.string().optional(),
-  globalPersonId: z.string().optional(),
-  reservationId: z.string().uuid().optional(),
-  basketRef: z.string().min(1).max(64).optional(),
-});
+const schema = z
+  .object({
+    sourceSystem: z.enum(['FNB_POS', 'CLINIC', 'RETAIL']),
+    sourceOrgId: z.string().min(1),
+    hotelOrganizationId: z.string().uuid().optional(),
+    sourceRef: z.string().min(1),
+    amount: z.number().finite(),
+    sku: z.string().min(1).optional(),
+    qty: z.number().int().refine((qty) => qty !== 0).optional(),
+    revenueCode: z.string().min(1).max(32).optional(),
+    currency: z.string().default('AZN'),
+    description: z.string().min(1),
+    payerLabel: z.string().optional(),
+    globalPersonId: z.string().optional(),
+    reservationId: z.string().uuid().optional(),
+    basketRef: z.string().min(1).max(64).optional(),
+  })
+  .superRefine((body, ctx) => {
+    if (body.amount !== 0 && !body.revenueCode?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['revenueCode'],
+        message: 'revenueCode is required when amount is not zero',
+      });
+    }
+  });
 
 export async function POST(request: Request) {
   try {

@@ -108,7 +108,14 @@ export default function OperationsPage() {
   const [openReservationId, setOpenReservationId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [previewSteps, setPreviewSteps] = useState<{ id: string; state: string; detail: string }[] | null>(null);
+  const [previewSteps, setPreviewSteps] = useState<
+    {
+      id: string;
+      state: string;
+      detail: string;
+      refs?: { reservationId: string; label: string; balance?: number }[];
+    }[] | null
+  >(null);
   const [canClose, setCanClose] = useState(false);
   const runGuard = useRef(false);
   const [tourismFailed, setTourismFailed] = useState<
@@ -130,11 +137,20 @@ export default function OperationsPage() {
     if (res.ok) setTourismFailed(await res.json());
   }, []);
 
+  const loadPreview = useCallback(async () => {
+    const res = await fetch('/api/night-audit/preview');
+    if (!res.ok) return;
+    const data = await res.json();
+    setPreviewSteps(Array.isArray(data.steps) ? data.steps : []);
+    setCanClose(Boolean(data.canClose));
+  }, []);
+
   useEffect(() => {
     loadStatus();
     loadRuns();
     loadTourism();
-  }, [loadStatus, loadRuns, loadTourism]);
+    void loadPreview();
+  }, [loadStatus, loadRuns, loadTourism, loadPreview]);
 
   useEffect(() => {
     if (!busy) return;
@@ -172,6 +188,12 @@ export default function OperationsPage() {
     }
     setPreviewSteps(Array.isArray(data.steps) ? data.steps : []);
     setCanClose(Boolean(data.canClose));
+  }
+
+  async function refreshAfterCardClose() {
+    setOpenReservationId(null);
+    await loadStatus();
+    await loadPreview();
   }
 
   async function runNightAudit() {
@@ -393,12 +415,33 @@ export default function OperationsPage() {
           </button>
         </div>
         {previewSteps && previewSteps.length > 0 ? (
-          <ul className="mt-4 space-y-1 text-[13px] text-[#34495E]">
+          <ul className="mt-4 space-y-2 text-[13px] text-[#34495E]">
             {previewSteps.map((step) => (
               <li key={step.id}>
-                {step.state === 'stop' ? '●' : step.state === 'done' ? '○' : '·'}{' '}
-                {t(NIGHT_STEP_LABEL[step.id as keyof typeof NIGHT_STEP_LABEL] ?? 'naCash')}
-                {step.detail ? ` — ${step.detail}` : ''}
+                <div>
+                  {step.state === 'stop' ? '●' : step.state === 'done' ? '○' : '·'}{' '}
+                  {t(NIGHT_STEP_LABEL[step.id as keyof typeof NIGHT_STEP_LABEL] ?? 'naCash')}
+                  {step.detail ? ` — ${step.detail}` : ''}
+                </div>
+                {step.state === 'stop' && step.refs && step.refs.length > 0 ? (
+                  <ul className="mt-1 space-y-1 pl-5 text-[12px] text-[#7F8C8D]">
+                    {step.refs.map((ref) => (
+                      <li key={ref.reservationId} className="flex flex-wrap items-center gap-2">
+                        <span>{ref.label}</span>
+                        <span className="font-mono text-[11px] text-[#95A5A6]">
+                          {ref.reservationId.slice(0, 8)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setOpenReservationId(ref.reservationId)}
+                          className={SECONDARY_BUTTON_CLASS}
+                        >
+                          {t('openReservation')}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -448,8 +491,7 @@ export default function OperationsPage() {
         open={Boolean(openReservationId)}
         reservationId={openReservationId}
         onClose={() => {
-          setOpenReservationId(null);
-          void loadStatus();
+          void refreshAfterCardClose();
         }}
       />
 

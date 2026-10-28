@@ -119,7 +119,9 @@ export async function isWorkforceGate403(res: Response): Promise<boolean> {
 /** Enable the platform_workforce module for the current org. */
 export async function enableWorkforceModule(
   moduleKey = "platform_workforce",
-): Promise<{ ok: true } | { ok: false; errorBody: unknown }> {
+): Promise<
+  { ok: true; synced: boolean } | { ok: false; errorBody: unknown }
+> {
   const { orchFetch } = await import("./orch-api");
   const token = getOrchAccessToken();
   if (!token) return { ok: false, errorBody: null };
@@ -133,12 +135,13 @@ export async function enableWorkforceModule(
     const errorBody = res ? await res.json().catch(() => null) : null;
     return { ok: false, errorBody };
   }
+  const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
   await fetch("/api/platform/workforce/scope/bootstrap", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: "{}",
   }).catch(() => null);
-  return { ok: true };
+  return { ok: true, synced: body?.synced !== false };
 }
 
 /** CSV text or xlsx base64 for workforce import endpoints. */

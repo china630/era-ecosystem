@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
-import { getSatelliteSession } from "@/lib/session";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { requireFnbSubmodule } from "@/lib/fnb-module-gate";
@@ -8,11 +8,16 @@ import {
   BUFFET_STATUSES,
   getBuffetPlan,
   setBuffetPlanStatus,
-  upsertBuffetPlan,
+  updateBuffetPlan,
   BUFFET_MEALS,
 } from "@/lib/buffet-planner";
 
 const patchSchema = z.object({
+  serviceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  meal: z.enum(BUFFET_MEALS).optional(),
   coversAdult: z.number().int().min(0).max(5000).optional(),
   coversChild: z.number().int().min(0).max(5000).optional(),
   coversSource: z.enum(["MANUAL", "HOTEL", "MIXED"]).optional(),
@@ -51,20 +56,26 @@ export async function PATCH(request: Request, ctx: Ctx) {
       const plan = await setBuffetPlanStatus(id, body.status);
       return jsonOk(plan);
     }
-    const plan = await upsertBuffetPlan({
-      outletId: existing.outletId,
-      serviceDateYmd: existing.serviceDate,
-      meal: existing.meal as (typeof BUFFET_MEALS)[number],
-      coversAdult: body.coversAdult ?? existing.coversAdult,
-      coversChild: body.coversChild ?? existing.coversChild,
-      coversSource: body.coversSource ?? (existing.coversSource as "MANUAL" | "HOTEL" | "MIXED"),
-      notes: body.notes !== undefined ? body.notes : existing.notes,
+    const plan = await updateBuffetPlan(id, {
+      serviceDateYmd: body.serviceDate,
+      meal: body.meal,
+      coversAdult: body.coversAdult,
+      coversChild: body.coversChild,
+      coversSource: body.coversSource,
+      notes: body.notes,
     });
+    if (!plan) return jsonError("Plan not found", 404);
     return jsonOk(plan);
   } catch (err) {
     if (err && typeof err === "object" && "code" in err) {
       const code = (err as { code?: string }).code;
       if (code === "PLAN_CLOSED") return jsonError("Plan is closed", 409);
+      if (code === "PLAN_SLOT_TAKEN") {
+        return NextResponse.json(
+          { error: "A plan already exists for that outlet, date, and meal", code: "PLAN_SLOT_TAKEN" },
+          { status: 409 },
+        );
+      }
     }
     return handleRouteError(err);
   }

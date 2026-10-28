@@ -5,6 +5,12 @@ import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   DatePicker,
   EraListFilterBar,
   Field,
@@ -140,45 +146,50 @@ export default function HkDiscrepancyPage() {
       {escalations.length > 0 ? (
         <div className="mb-3 space-y-1 text-sm">
           {escalations.map((e) => (
-            <p key={`${e.roomNumber}-${e.kind}`} className="rounded border border-amber-300 bg-amber-50 px-2 py-1">
+            <p
+              key={`${e.roomNumber}-${e.kind}`}
+              className="rounded-lg border border-amber-300 bg-amber-50 px-2 py-1"
+            >
               {e.kind === 'SO' ? t('soEscalation') : t('dndEscalation')} · {e.roomNumber} · {e.days}
             </p>
           ))}
         </div>
       ) : null}
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              <th className="px-3 py-2">{t('colRoom')}</th>
-              <th className="px-3 py-2">{t('discrepancyKind')}</th>
-              <th className="px-3 py-2">{t('outcome')}</th>
-              <th className="px-3 py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={4}>
-                  {t('discrepancyEmpty')}
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colRoom')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('discrepancyKind')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('outcome')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
               </tr>
-            ) : (
-              rows.map((row) => (
-                <tr key={row.id} className="border-b border-[#ECF0F1]">
-                  <td className="px-3 py-2 font-medium">{row.roomNumber || row.roomId}</td>
-                  <td className="px-3 py-2">{row.kind === 'SKIP' ? t('skip') : t('sleep')}</td>
-                  <td className="px-3 py-2 text-[#7F8C8D]">{row.status}</td>
-                  <td className="px-3 py-2">
-                    <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void clear(row.roomId)}>
-                      {tc('remove')}
-                    </button>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={4}>
+                    {t('discrepancyEmpty')}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                rows.map((row) => (
+                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{row.roomNumber || row.roomId}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.kind === 'SKIP' ? t('skip') : t('sleep')}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{row.status}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void clear(row.roomId)}>
+                        {tc('remove')}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <EraModal
         open={open}

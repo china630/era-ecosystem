@@ -46,7 +46,7 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 ## FB-3 — Product depth (quartet Track C)
 
-- [x] Multi-outlet — `GET /api/outlets`, `POST /api/outlets/select`, cookie `era_fb_outlet_id`, ticket filter
+- [x] Multi-outlet — `GET/POST /api/outlets` (Settings create + optional menu/halls/tables copy), `POST /api/outlets/select`, cookie `era_fb_outlet_id`, ticket filter; UAT FB-OUTLET-01 open
 - [x] Standalone walk-in — `serviceChannel: WALK_IN`, `walkInLabel` on `POST /api/tickets`
 - [x] Mixed settlement — in-house → room charge only; walk-in → local pay + KKM ([ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing.md))
 - [x] Room service — `POST /api/tickets/room-service`, `serviceChannel: ROOM_SERVICE`
@@ -78,7 +78,7 @@ node scripts/quartet-smoke.mjs
 - [x] M11: KDS course timing / fire delay
 - [x] M12: Recipe depletion on ticket close (link Finance manufacturing)
 - [x] M13: Delivery aggregator order inbox
-- [~] M15: Buffet Planner (`fnb_buffet_planner`) — `/admin/buffet` tables+modals, APIs, materials SKU preview, publish→daily board; UAT FB-5 open (API/SCREEN, not SHIPPED). ADR `docs/adr/fnb-buffet-planner.md`
+- [~] M15: Buffet Planner (`fnb_buffet_planner`) — `/admin/buffet` master Plans table + header/composition/copy modals; list aggregates; `POST …/copy` (+ slot-taken retry); materials + publish→daily board; UAT FB-5 open (API/SCREEN, not SHIPPED). ADR `docs/adr/fnb-buffet-planner.md`
 - [~] FNB-AUD-01: Mutation audit Layer A via `jsonOk` + `/admin/audit` (`HTTP_MUTATION`); UAT open — not SHIPPED. ADR `docs/adr/era-mutation-audit-standard.md`
 
 ## Planned — v1.1
