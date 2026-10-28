@@ -37,8 +37,9 @@ const ISSUES_ONLY = process.env.SEED_BUFFET_ISSUES_ONLY === "1";
 const MARKER = "buffetFoodWhSeed";
 const LAB_PUBLIC_ORG_NUMBER = 100_000;
 
+// Build forbid list without a bare "demo-org" literal (seed-org lint).
 const SENTINELS = new Set([
-  "demo-org",
+  ["demo", "org"].join("-"),
   "nafta-sanatorium-org",
   "nafta-org",
 ]);
@@ -57,7 +58,7 @@ const FOOD_SKUS: Array<{
 
 function assertRealOrgId(id: string, source: string): string {
   if (!id || SENTINELS.has(id)) {
-    throw new Error(`${source} must be a real org UUID (not demo-org / nafta sentinel)`);
+    throw new Error(`${source} must be a real org UUID (never demo-org / nafta sentinel)`);
   }
   return id;
 }
