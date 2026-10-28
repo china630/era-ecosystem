@@ -1,7 +1,7 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "edge") return;
   const { prisma } = await import("@/lib/prisma");
-  const { upsertFnbOrgSnapshot } = await import("@/lib/fnb-org-profile");
+  const { upsertFnbOrgSnapshot } = await import("@/lib/fnb-org-snapshot");
   const { onSatelliteBoot } = await import(
     /* webpackIgnore: true */ "@era/satellite-kit/tenancy/boot"
   );
