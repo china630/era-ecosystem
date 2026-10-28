@@ -30,6 +30,8 @@ export async function sweepNoShowScheduled(now = new Date()): Promise<{
     where: {
       status: "SCHEDULED",
       scheduledAt: { gte: start, lt: end },
+      // OPEN day-buckets never auto-NO_SHOW (ADR clinic-open-attendance).
+      schedulingMode: "FIXED",
     },
     select: { id: true, scheduledAt: true, endsAt: true },
     take: 500,
@@ -40,8 +42,16 @@ export async function sweepNoShowScheduled(now = new Date()): Promise<{
   let failed = 0;
   const errors: Array<{ id: string; error: string }> = [];
 
+  const { resolveCheckInWindowSettings } = await import(
+    "@/domain/procedure/open-attendance"
+  );
+  const window = await resolveCheckInWindowSettings(now);
+
   for (const order of candidates) {
-    const due = isNoShowDue(order, now, autoAfter, hours.dayEndHour);
+    // SAME_DAY cutover: skip mid-day autoNoShowAfterMin; still allow EOD after dayEndHour.
+    const effectiveAuto =
+      window.sameDayActive && autoAfter != null ? null : autoAfter;
+    const due = isNoShowDue(order, now, effectiveAuto, hours.dayEndHour);
     if (!due) continue;
     try {
       await markProcedureNoShow(order.id, SYSTEM_ATTENDANCE_ACTOR);

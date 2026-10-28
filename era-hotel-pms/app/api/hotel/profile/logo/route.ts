@@ -5,6 +5,7 @@ import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { deleteHotelLogo, readHotelLogo, saveHotelLogo } from '@/lib/services/hotel-letterhead.service';
+import { resolveCpLetterheadLocks } from '@/lib/services/cp-letterhead-locks';
 
 export async function GET() {
   try {
@@ -28,6 +29,13 @@ export async function POST(request: Request) {
   try {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
+    const locks = await resolveCpLetterheadLocks();
+    if (locks.logo) {
+      return jsonError(
+        'Logo is managed on the Control Plane organization profile',
+        400,
+      );
+    }
     const form = await request.formData();
     const file = form.get('file');
     if (!(file instanceof File)) return jsonError('file required', 400);
@@ -45,6 +53,13 @@ export async function DELETE() {
   try {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
+    const locks = await resolveCpLetterheadLocks();
+    if (locks.logo) {
+      return jsonError(
+        'Logo is managed on the Control Plane organization profile',
+        400,
+      );
+    }
     return jsonOk(serialize(await deleteHotelLogo()));
   } catch (err) {
     return handleRouteError(err);

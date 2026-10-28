@@ -1132,6 +1132,7 @@ export async function assignPackageProcedures(
           assignBatchId: batchId,
           inPackage: true,
           packageQuotaCode: line.quotaCode,
+          schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
           patientOrigin: episode.patientOrigin,
           reservationId: episode.reservationId ?? undefined,
           amountNet: 0,
@@ -1167,8 +1168,33 @@ export async function assignPackageProcedures(
   const missingCabinNames: string[] = [];
   let genericCabinOnly = true;
   let genericTried = false;
+  const { pinOpenAttendanceOrders } = await import(
+    "@/domain/procedure/open-attendance"
+  );
   for (const chunk of chunkCreatedIdsByLine(createdIds, resolved)) {
     if (chunk.ids.length === 0) continue;
+    const chunkType = typeByCode.get(chunk.procedureCode);
+    if (chunkType?.openAttendance === true) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: chunk.ids } },
+        data: { schedulingMode: "OPEN" },
+      });
+      const openSeat = await pinOpenAttendanceOrders(chunk.ids, {
+        confirmedByUserId: opts?.confirmedByUserId,
+        scheduleBefore: instance.endsOn ?? undefined,
+        startAt: opts?.startAt ?? undefined,
+      });
+      misses.push(
+        ...openSeat.failures.map((row) => ({
+          ymd: row.ymd ?? "",
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          reason: row.reason,
+        })),
+      );
+      placedIds.push(...openSeat.placedIds);
+      continue;
+    }
     if (bathCodes.has(chunk.procedureCode)) {
       const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt: opts?.startAt });
       genericCabinOnly = false;

@@ -113,7 +113,7 @@ export class PurchasePaymentService {
       throw new BadRequestException("Invalid paymentDate (expected YYYY-MM-DD)");
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const supplierCode = await this.supplierPayableCode(organizationId, tx);
       const credit = await this.resolveCreditAccount(organizationId, dto, tx);
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
@@ -130,6 +130,64 @@ export class PurchasePaymentService {
       });
       return { transactionId, amount: amount.toString() };
     });
+
+    const batchId = dto.hotelCommissionBatchId?.trim();
+    if (batchId) {
+      void this.notifyHotelCommissionPaid({
+        organizationId,
+        batchId,
+        financePayableId: purchaseInvoiceId,
+        paymentId: result.transactionId,
+      }).catch((e) =>
+        console.warn(
+          "Hotel commission-paid notify failed",
+          e instanceof Error ? e.message : e,
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  /** Soft notify hotel PMS that a commission batch was paid (HOT-AG-COMM-03). */
+  private async notifyHotelCommissionPaid(input: {
+    organizationId: string;
+    batchId: string;
+    financePayableId: string;
+    paymentId: string;
+  }): Promise<void> {
+    const {
+      PEER_SATELLITE_HOTEL,
+      resolvePeerSatelliteBaseUrl,
+      resolveSatelliteEventServiceToken,
+    } = await import("@era/satellite-kit");
+    const token = resolveSatelliteEventServiceToken();
+    if (!token) return;
+    const peer = await resolvePeerSatelliteBaseUrl({
+      organizationId: input.organizationId,
+      satelliteKey: PEER_SATELLITE_HOTEL,
+    });
+    const res = await fetch(
+      `${peer.baseUrl}/api/internal/v1/agency-commission/commission-paid`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          batchId: input.batchId,
+          financePayableId: input.financePayableId,
+          paymentId: input.paymentId,
+          currency: "AZN",
+        }),
+        signal: AbortSignal.timeout(15000),
+      },
+    );
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} ${detail}`.slice(0, 400));
+    }
   }
 
   async listSupplierPayables(organizationId: string) {

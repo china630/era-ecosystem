@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { handleRouteError, jsonOk } from "@/lib/api-utils";
@@ -39,7 +38,7 @@ export async function POST(request: Request) {
         status: "OPEN",
       },
     });
-    return NextResponse.json(wo, { status: 201 });
+    return jsonOk(wo, 201);
   } catch (err) {
     return handleRouteError(err);
   }

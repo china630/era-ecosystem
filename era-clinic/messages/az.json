@@ -601,7 +601,9 @@
     "staffKindNurse": "Tibb bacısı",
     "staffKindBath": "Banyocu",
     "staffKindMassage": "Masajçı",
-    "staffKindDoctor": "Həkim"
+    "staffKindDoctor": "Həkim",
+    "openAttendance": "Sərbəst ziyarət",
+    "openAttendanceCabin": "Gəlişdə"
   },
   "sanatoriumResources": {
     "title": "Gün matrisi (resurslar)",
@@ -682,7 +684,8 @@
       "NO_SHOW": "Gəlmədi",
       "PROPOSED": "Təklif",
       "PENDING_PAY": "Ödəniş gözlənilir"
-    }
+    },
+    "openAttendanceForesight": "Sərbəst ziyarət: gözləyir {waiting}, kabinetdə {inCabin} (tutum {capacity})"
   },
   "queue": {
     "title": "Resepşn növbəsi",
@@ -1161,6 +1164,12 @@
     "defaultProcedureGapMinutes": "Yeni prosedur tipləri üçün kabinə boşluğu (dəqiqə)",
     "defaultAppointmentSlotMinutes": "Qəbul slotu müddəti (dəqiqə)",
     "procedureCheckInMode": "Prosedur çek-in rejimi",
+    "procedureCheckInWindow": "Prosedur check-in pəncərəsi",
+    "procedureCheckInWindowHint": "SAME_DAY — plan günü iş saatlarında istənilən vaxt check-in (keçid).",
+    "procedureCheckInWindowStrict": "STRICT (slot +/- grace)",
+    "procedureCheckInWindowSameDay": "SAME_DAY (canlı növbə / keçid)",
+    "procedureCheckInSameDayUntil": "SAME_DAY bu tarixədək",
+    "procedureCheckInSameDayUntilHint": "Bu tarixdən sonra yenidən STRICT. Boş — əl ilə söndürün.",
     "programSchedulingMode": "Proqram planlaşdırma rejimi",
     "programSchedulingModeAfterCheckup": "AFTER_CHECKUP (Nafta — müayinə mərhələsindən sonra; analizlər məcburi deyil)",
     "programSchedulingModeOnCheckin": "ON_CHECKIN (çek-ində yerləşdir)",
@@ -1170,6 +1179,9 @@
     "peakDayEndHour": "Pik günün bitmə saatı",
     "printBrandTitle": "Çap brendinqi",
     "printBrandSubtitle": "Loqo, klinika adları, əlaqə məlumatı",
+    "cpPrintBanner": "Başlıqd loqo/ünvan/telefon Sync olduqda Control Plane təşkilat profilindən gəlir. Footer və imzalar lokal qalır.",
+    "cpLogoLocked": "Loqo Control Plane təşkilat profilində idarə olunur.",
+    "cpContactsLocked": "Control Plane ünvan / telefon / email / sayt burada yalnız oxunur.",
     "noLogo": "Loqo yoxdur",
     "logo": "Loqo",
     "clearLogo": "Loqonu sil",
@@ -1465,6 +1477,8 @@
     "addBed": "Çarpayı",
     "bodyPart": "Bədən hissəsi",
     "needsSite": "Zona çipləri lazımdır",
+    "openAttendance": "Sərbəst ziyarət",
+    "openAttendanceHint": "Sərt saat yoxdur; tibb bacısı gəlişdə yerləşdirir. Paket kvotaları eynidir.",
     "needsExtraFields": "Əlavə sahələr lazımdır",
     "selectAllSkills": "Hamısını seç",
     "bodyPart_HEAD": "Baş",
@@ -1894,6 +1908,7 @@
     "openHistory": "Tarixçə",
     "planTitle": "Plan",
     "planEmpty": "Gələcək prosedur yoxdur.",
+    "openAttendance": "Sərbəst ziyarət",
     "openPlan": "Tam plan",
     "historyModalTitle": "Klinik tarixçə",
     "planModalTitle": "Prosedur planı",
@@ -2008,7 +2023,7 @@
     "packageAssignNoAnamnesis": "Paket qalıqları açılmazdan əvvəl anamnez lazımdır.",
     "packageAssignNoComplaint": "Paket qalıqları açılmazdan əvvəl ən azı bir şikayət lazımdır.",
     "packageAssignNoDiagnosis": "Paket qalıqları açılmazdan əvvəl ən azı bir MKB-10 diaqnozu lazımdır.",
-    "packageAssignNoCareTeam": "Paket qalıqları açılmazdan əvvəl komandaya həkim təyin edin.",
+    "packageAssignNoCareTeam": "Həkim komandası lazımdır",
     "packageAssignInstantiateFailed": "{code} proqramı açılmadı. Şablonun olduğunu yoxlayın.",
     "packageAssignQuotaRemaining": "Bu prosedurun paket kvotası hələ var, ona görə əlavə ödənişli ola bilməz.",
     "packageAssignExtraHint": "Qalığı olan sətir paketə yazılır. Qalığı sıfır olan və ya paketdə olmayan sətir ödənişli əlavədir.",
@@ -2054,7 +2069,6 @@
     "packageAssignPoolHint": "prosedur seçin",
     "packageAssignNotInProcedures": "Bu blok prosedur siyahısında yoxdur",
     "packageAssignNoService": "Bu blokun kataloq xidməti yoxdur",
-    "packageAssignNoCareTeam": "Həkim komandası lazımdır",
     "packageAssignLabOpen": "Bu analiz üçün açıq sifariş artıq var",
     "packageAssignLabOne": "Analiz eyni vaxtda bir açıq sifariş götürür",
     "packageAssignAliasHint": "vanna seçin",
@@ -2166,6 +2180,8 @@
     "entity_HTTP_MUTATION": "HTTP mutasiyalar (Layer A)",
     "entity_ProcedureOrder": "Prosedur sifarişi",
     "entity_Visit": "Vizıt",
+    "entity_ClinicReceipt": "Kassa qəbzi",
+    "entity_ClinicShift": "Kassa növbəsi",
     "entity_WalkInParty": "Walk-in qrup",
     "entity_Role": "Rol",
     "entity_ImportRun": "Import"

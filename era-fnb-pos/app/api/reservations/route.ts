@@ -1,6 +1,5 @@
 import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
-import { handleRouteError } from "@/lib/api-utils";
-import { NextResponse } from "next/server";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
@@ -23,7 +22,7 @@ export async function GET(request: Request) {
       include: { table: { select: { code: true } } },
       orderBy: { startAt: "asc" },
     });
-    return NextResponse.json(rows);
+    return jsonOk(rows);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -57,7 +56,7 @@ export async function POST(request: Request) {
       },
       include: { table: { select: { code: true } } },
     });
-    return NextResponse.json(row, { status: 201 });
+    return jsonOk(row, 201);
   } catch (err) {
     return handleRouteError(err);
   }

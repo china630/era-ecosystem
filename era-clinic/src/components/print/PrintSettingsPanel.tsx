@@ -18,6 +18,23 @@ import {
 } from "@era/satellite-kit/ui";
 import { DEFAULT_CHECKUP_SECTIONS, type CheckupSectionConfig } from "@/domain/print/print-types";
 
+type CpPrint = {
+  active: boolean;
+  logo: boolean;
+  address: boolean;
+  phone: boolean;
+  email: boolean;
+  website: boolean;
+  resolved: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    website: string;
+    logoUrl: string;
+  };
+};
+
 type PrintDraft = {
   printLogoDataUrl: string | null;
   printClinicNameEn: string;
@@ -35,6 +52,7 @@ type PrintDraft = {
   printSignatureLab: string;
   printSignatureDoctor: string;
   checkupSections: CheckupSectionConfig[];
+  controlPlanePrint?: CpPrint | null;
 };
 
 const EMPTY: PrintDraft = {
@@ -54,6 +72,7 @@ const EMPTY: PrintDraft = {
   printSignatureLab: "",
   printSignatureDoctor: "",
   checkupSections: DEFAULT_CHECKUP_SECTIONS,
+  controlPlanePrint: null,
 };
 
 export function PrintSettingsPanel() {
@@ -68,6 +87,7 @@ export function PrintSettingsPanel() {
       .then((r) => r.json())
       .then((d) => {
         const row = d.data ?? d;
+        const cp = (row.controlPlanePrint ?? null) as CpPrint | null;
         const next: PrintDraft = {
           printLogoDataUrl: row.printLogoDataUrl ?? null,
           printClinicNameEn: row.printClinicNameEn ?? "",
@@ -89,13 +109,17 @@ export function PrintSettingsPanel() {
             : row.checkupSectionsJson
               ? (JSON.parse(row.checkupSectionsJson) as CheckupSectionConfig[])
               : DEFAULT_CHECKUP_SECTIONS,
+          controlPlanePrint: cp,
         };
         setData(next);
         setDraft(next);
       });
   }, []);
 
+  const cp = draft.controlPlanePrint;
+
   function onLogo(file: File | null) {
+    if (cp?.logo) return;
     if (!file) {
       setDraft((p) => ({ ...p, printLogoDataUrl: null }));
       return;
@@ -112,27 +136,31 @@ export function PrintSettingsPanel() {
   }
 
   async function save() {
+    const body: Record<string, unknown> = {
+      printClinicNameEn: draft.printClinicNameEn || null,
+      printClinicNameRu: draft.printClinicNameRu || null,
+      printClinicNameAz: draft.printClinicNameAz || null,
+      printFooterEn: draft.printFooterEn || null,
+      printFooterRu: draft.printFooterRu || null,
+      printFooterAz: draft.printFooterAz || null,
+      printSignatureLab: draft.printSignatureLab || null,
+      printSignatureDoctor: draft.printSignatureDoctor || null,
+      checkupSectionsJson: JSON.stringify(draft.checkupSections),
+    };
+    if (!cp?.logo) body.printLogoDataUrl = draft.printLogoDataUrl;
+    if (!cp?.address) {
+      body.printAddressEn = draft.printAddressEn || null;
+      body.printAddressRu = draft.printAddressRu || null;
+      body.printAddressAz = draft.printAddressAz || null;
+    }
+    if (!cp?.phone) body.printPhone = draft.printPhone || null;
+    if (!cp?.email) body.printEmail = draft.printEmail || null;
+    if (!cp?.website) body.printWebsite = draft.printWebsite || null;
+
     const res = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        printLogoDataUrl: draft.printLogoDataUrl,
-        printClinicNameEn: draft.printClinicNameEn || null,
-        printClinicNameRu: draft.printClinicNameRu || null,
-        printClinicNameAz: draft.printClinicNameAz || null,
-        printAddressEn: draft.printAddressEn || null,
-        printAddressRu: draft.printAddressRu || null,
-        printAddressAz: draft.printAddressAz || null,
-        printPhone: draft.printPhone || null,
-        printEmail: draft.printEmail || null,
-        printWebsite: draft.printWebsite || null,
-        printFooterEn: draft.printFooterEn || null,
-        printFooterRu: draft.printFooterRu || null,
-        printFooterAz: draft.printFooterAz || null,
-        printSignatureLab: draft.printSignatureLab || null,
-        printSignatureDoctor: draft.printSignatureDoctor || null,
-        checkupSectionsJson: JSON.stringify(draft.checkupSections),
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       showApiError({ error: tc("saveFailed") });
@@ -143,6 +171,16 @@ export function PrintSettingsPanel() {
     showSuccess(tc("saved"));
   }
 
+  const previewLogo =
+    (cp?.logo && cp.resolved.logoUrl) || data.printLogoDataUrl || null;
+  const previewPhone =
+    (cp?.phone && cp.resolved.phone) || data.printPhone || "—";
+  const previewAddress =
+    (cp?.address && cp.resolved.address) ||
+    data.printAddressEn ||
+    data.printAddressAz ||
+    "—";
+
   return (
     <div className="mt-8">
       <div className="mb-3 flex items-center justify-between">
@@ -151,6 +189,14 @@ export function PrintSettingsPanel() {
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
             {t("printBrandSubtitle", { defaultValue: "Logo, clinic names, contacts for printed forms" })}
           </p>
+          {cp?.active ? (
+            <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+              {t("cpPrintBanner", {
+                defaultValue:
+                  "Header logo/address/phone come from the Control Plane organization profile when Sync is present. Footers and signatures stay local.",
+              })}
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -165,20 +211,23 @@ export function PrintSettingsPanel() {
       </div>
       <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
         <div className="flex items-center gap-3">
-          {data.printLogoDataUrl ? (
+          {previewLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={data.printLogoDataUrl} alt="" className="h-12 w-auto" />
+            <img src={previewLogo} alt="" className="h-12 w-auto" />
           ) : (
             <span className={TEXT_MUTED_CLASS}>{t("noLogo", { defaultValue: "No logo" })}</span>
           )}
           <div>
             <p className="m-0 font-medium">
-              {data.printClinicNameEn || data.printClinicNameAz || "—"}
+              {(cp?.active && cp.resolved.name) ||
+                data.printClinicNameEn ||
+                data.printClinicNameAz ||
+                "—"}
             </p>
-            <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{data.printPhone || "—"}</p>
+            <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{previewPhone}</p>
           </div>
         </div>
-        <p className={TEXT_MUTED_CLASS}>{data.printAddressEn || data.printAddressAz || "—"}</p>
+        <p className={TEXT_MUTED_CLASS}>{previewAddress}</p>
       </div>
 
       <ModalShell
@@ -188,38 +237,54 @@ export function PrintSettingsPanel() {
         maxWidthClass="max-w-2xl"
       >
         <div className={FORM_STACK_CLASS}>
-          <div>
-            <p className="mb-1 text-[12px] font-medium">{t("logo", { defaultValue: "Logo" })}</p>
-            <input type="file" accept="image/*" onChange={(e) => onLogo(e.target.files?.[0] ?? null)} />
-            {draft.printLogoDataUrl ? (
-              <button type="button" className={`mt-2 ${SECONDARY_BUTTON_CLASS}`} onClick={() => onLogo(null)}>
-                {t("clearLogo", { defaultValue: "Clear logo" })}
-              </button>
-            ) : null}
-          </div>
+          {!cp?.logo ? (
+            <div>
+              <p className="mb-1 text-[12px] font-medium">{t("logo", { defaultValue: "Logo" })}</p>
+              <input type="file" accept="image/*" onChange={(e) => onLogo(e.target.files?.[0] ?? null)} />
+              {draft.printLogoDataUrl ? (
+                <button type="button" className={`mt-2 ${SECONDARY_BUTTON_CLASS}`} onClick={() => onLogo(null)}>
+                  {t("clearLogo", { defaultValue: "Clear logo" })}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+              {t("cpLogoLocked", { defaultValue: "Logo is managed on the Control Plane organization profile." })}
+            </p>
+          )}
           {(
             [
-              ["printClinicNameEn", "Clinic name (EN)"],
-              ["printClinicNameRu", "Clinic name (RU)"],
-              ["printClinicNameAz", "Clinic name (AZ)"],
-              ["printAddressEn", "Address (EN)"],
-              ["printAddressRu", "Address (RU)"],
-              ["printAddressAz", "Address (AZ)"],
-              ["printPhone", "Phone"],
-              ["printEmail", "Email"],
-              ["printWebsite", "Website"],
-              ["printSignatureLab", "Default lab signature"],
-              ["printSignatureDoctor", "Default doctor signature"],
+              ["printClinicNameEn", "Clinic name (EN)", false],
+              ["printClinicNameRu", "Clinic name (RU)", false],
+              ["printClinicNameAz", "Clinic name (AZ)", false],
+              ["printAddressEn", "Address (EN)", Boolean(cp?.address)],
+              ["printAddressRu", "Address (RU)", Boolean(cp?.address)],
+              ["printAddressAz", "Address (AZ)", Boolean(cp?.address)],
+              ["printPhone", "Phone", Boolean(cp?.phone)],
+              ["printEmail", "Email", Boolean(cp?.email)],
+              ["printWebsite", "Website", Boolean(cp?.website)],
+              ["printSignatureLab", "Default lab signature", false],
+              ["printSignatureDoctor", "Default doctor signature", false],
             ] as const
-          ).map(([key, label]) => (
-            <Field
-              key={key}
-              label={label}
-              preset="shortText"
-              value={draft[key] as string}
-              onChange={(e) => setDraft((p) => ({ ...p, [key]: e.target.value }))}
-            />
-          ))}
+          )
+            .filter(([, , locked]) => !locked)
+            .map(([key, label]) => (
+              <Field
+                key={key}
+                label={label}
+                preset="shortText"
+                value={draft[key] as string}
+                onChange={(e) => setDraft((p) => ({ ...p, [key]: e.target.value }))}
+              />
+            ))}
+          {cp?.address || cp?.phone || cp?.email || cp?.website ? (
+            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+              {t("cpContactsLocked", {
+                defaultValue:
+                  "Address / phone / email / website from Control Plane are read-only here.",
+              })}
+            </p>
+          ) : null}
           <FieldTextarea
             label="Footer (EN)"
             value={draft.printFooterEn}

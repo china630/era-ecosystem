@@ -95,7 +95,7 @@ Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 - [x] `/admin/diagnostic-catalog` — single form SoT (incl. visit + field designer); `/admin/program-templates` — sanatorium packages; `ClinicalTemplate` table dropped
 - [x] Visit exam print — `/print/visit-exam/[cpoeEntryId]` from CPOE history (one entry); FHIR + whole-visit print = debt in CLINICAL_AND_PROGRAM_TEMPLATES.md
 - [x] `/admin/procedure-rules` — compatibility + FIFO sequence rules (modal)
-- [x] `/admin/audit` — satellite audit log viewer
+- [x] `/admin/audit` — satellite audit log viewer (CLI-19); Layer A via `jsonOk` + fail-closed CI; Wave B ClinicReceipt SETTLE/VOID + ClinicShift — HTTP_MUTATION UAT still open
 - [x] Docker `CLINIC_RUN_SEED=false` on droplet; `db:seed` = ICD + satellite templates; kitchen sink = `db:seed:demo` (never entrypoint fallback)
 - [s] HL7 LIS prod adapter — CSV only until vendor
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runCronForEachTenant } from '@era/satellite-kit';
-import { handleRouteError, jsonError } from '@/lib/api-utils';
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { getSatelliteSession } from '@/lib/auth/session';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
@@ -35,7 +35,7 @@ export async function GET() {
       orderBy: { nextDueAt: 'asc' },
       take: 100,
     });
-    return NextResponse.json(rows);
+    return jsonOk(rows);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         eventKey: body.eventKey,
       },
     });
-    return NextResponse.json(row, { status: 201 });
+    return jsonOk(row, 201);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -100,7 +100,7 @@ export async function PUT(req: Request) {
     if (gate.status === 503) {
       return NextResponse.json({ error: gate.reason }, { status: 503 });
     }
-    return NextResponse.json({
+    return jsonOk({
       generated: 0,
       skipped: true,
       reason: gate.reason,
@@ -108,5 +108,5 @@ export async function PUT(req: Request) {
     });
   }
 
-  return NextResponse.json({ byOrganization: gate.results });
+  return jsonOk({ byOrganization: gate.results });
 }

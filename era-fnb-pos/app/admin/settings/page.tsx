@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
+import BuffetCostSettingsPanel from "@/components/BuffetCostSettingsPanel";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { fnbCan } from "@/lib/auth/permission-check";
 import {
@@ -31,6 +32,10 @@ type OutletRow = {
   name: string;
   revenueCenterCode: string;
   financeWarehouseCode?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  website?: string | null;
   active?: boolean;
 };
 
@@ -56,6 +61,10 @@ export default function AdminSettingsPage() {
   const [revenueOpen, setRevenueOpen] = useState(false);
   const [revenueDraft, setRevenueDraft] = useState("");
   const [warehouseDraft, setWarehouseDraft] = useState("");
+  const [phoneDraft, setPhoneDraft] = useState("");
+  const [emailDraft, setEmailDraft] = useState("");
+  const [addressDraft, setAddressDraft] = useState("");
+  const [websiteDraft, setWebsiteDraft] = useState("");
   const [canManageOutlets, setCanManageOutlets] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createCode, setCreateCode] = useState("");
@@ -126,6 +135,14 @@ export default function AdminSettingsPage() {
       body: JSON.stringify({
         revenueCenterCode: revenueDraft.trim(),
         financeWarehouseCode: warehouseDraft.trim() || null,
+        ...(canManageOutlets
+          ? {
+              phone: phoneDraft.trim() || null,
+              email: emailDraft.trim() || null,
+              address: addressDraft.trim() || null,
+              website: websiteDraft.trim() || null,
+            }
+          : {}),
       }),
     });
     const data = await res.json().catch(() => null);
@@ -136,12 +153,31 @@ export default function AdminSettingsPage() {
     setOutlets((rows) =>
       rows.map((row) =>
         row.id === outletId
-          ? { ...row, revenueCenterCode: revenueDraft.trim(), financeWarehouseCode: warehouseDraft.trim() || null }
+          ? {
+              ...row,
+              revenueCenterCode: revenueDraft.trim(),
+              financeWarehouseCode: warehouseDraft.trim() || null,
+              phone: phoneDraft.trim() || null,
+              email: emailDraft.trim() || null,
+              address: addressDraft.trim() || null,
+              website: websiteDraft.trim() || null,
+            }
           : row,
       ),
     );
     setRevenueOpen(false);
     showSuccess(t("saved"));
+  }
+
+  function openOutletEditor(row: OutletRow) {
+    setOutletId(row.id);
+    setRevenueDraft(row.revenueCenterCode ?? "");
+    setWarehouseDraft(row.financeWarehouseCode ?? "");
+    setPhoneDraft(row.phone ?? "");
+    setEmailDraft(row.email ?? "");
+    setAddressDraft(row.address ?? "");
+    setWebsiteDraft(row.website ?? "");
+    setRevenueOpen(true);
   }
 
   async function createOutlet() {
@@ -268,12 +304,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     className={SECONDARY_BUTTON_CLASS}
-                    onClick={() => {
-                      setOutletId(row.id);
-                      setRevenueDraft(row.revenueCenterCode ?? "");
-                      setWarehouseDraft(row.financeWarehouseCode ?? "");
-                      setRevenueOpen(true);
-                    }}
+                    onClick={() => openOutletEditor(row)}
                   >
                     {t("edit")}
                   </button>
@@ -346,6 +377,8 @@ export default function AdminSettingsPage() {
         </tbody>
       </table>
 
+      <BuffetCostSettingsPanel outlets={outlets} />
+
       <ModalShell open={createOpen} title={t("newOutlet")} onClose={() => setCreateOpen(false)}>
         <CatalogField
           kind="FREE_TEXT"
@@ -388,9 +421,8 @@ export default function AdminSettingsPage() {
           onChange={(next) => {
             const id = String(next ?? "");
             const row = outlets.find((item) => item.id === id);
-            setOutletId(id);
-            setRevenueDraft(row?.revenueCenterCode ?? "");
-            setWarehouseDraft(row?.financeWarehouseCode ?? "");
+            if (row) openOutletEditor(row);
+            else setOutletId(id);
           }}
         />
         <CatalogField
@@ -411,6 +443,39 @@ export default function AdminSettingsPage() {
           value={warehouseDraft}
           onChange={(next) => setWarehouseDraft(String(next ?? ""))}
         />
+        {canManageOutlets ? (
+          <>
+            <p className="m-0 text-[12px] text-[#7F8C8D]">{t("outletContactsHint")}</p>
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("outletPhone")}
+              options={[]}
+              value={phoneDraft}
+              onChange={(next) => setPhoneDraft(String(next ?? ""))}
+            />
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("outletEmail")}
+              options={[]}
+              value={emailDraft}
+              onChange={(next) => setEmailDraft(String(next ?? ""))}
+            />
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("outletAddress")}
+              options={[]}
+              value={addressDraft}
+              onChange={(next) => setAddressDraft(String(next ?? ""))}
+            />
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("outletWebsite")}
+              options={[]}
+              value={websiteDraft}
+              onChange={(next) => setWebsiteDraft(String(next ?? ""))}
+            />
+          </>
+        ) : null}
         <ModalFooter
           onCancel={() => setRevenueOpen(false)}
           onSubmit={() => void saveOutletRevenue()}

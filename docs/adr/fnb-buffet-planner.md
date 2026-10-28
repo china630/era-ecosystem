@@ -18,6 +18,7 @@ Sanatorium and canteen operations need a production plan per meal (covers → st
 5. **Daily menu:** optional “publish plan lines to daily board” for that outlet/date — **merge** (upsert) dishes onto the board; never wipe other meals’ rows for the same date. Daily-menu is not the SKU packaging.
 6. **Materials:** explode Finance BOM via `MenuItem.recipeSku` / `financeSku`; balances and purchase drafts live in Finance. F&B does not store stock quantities.
 7. **Related debt:** `FIN-INV-SCOPE-01` — warehouse data-scope so a chef sees only kitchen/café warehouses.
+8. **Cost attribution (separate ADR):** buffet food cost, staff overlap, management covers, warehouse classes, and COGS posting modes — [fnb-buffet-cost-attribution.md](./fnb-buffet-cost-attribution.md). Planner remains production planning; residual/HYBRID cost runs live in Finance.
 
 ## Consequences
 

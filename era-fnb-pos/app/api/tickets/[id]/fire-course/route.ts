@@ -1,10 +1,9 @@
 import { z } from "zod";
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 const bodySchema = z.object({
   courseNumber: z.number().int().positive(),
@@ -42,7 +41,7 @@ export async function POST(
       where: { id },
       include: { lines: true },
     });
-    return NextResponse.json({ ticket, firedCount: result.count, fireAt });
+    return jsonOk({ ticket, firedCount: result.count, fireAt });
   } catch (err) {
     return handleRouteError(err);
   }

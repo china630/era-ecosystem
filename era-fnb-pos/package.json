@@ -13,6 +13,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:seed:buffet-demo": "tsx prisma/seed-buffet-demo.ts",
     "db:studio": "prisma studio",
     "test": "jest --ci"
   },

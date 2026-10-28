@@ -12,7 +12,7 @@ import {
   fifoConfirmBlockedReason,
   procedureConfirmHttpStatus,
 } from "@/lib/sanatorium-fifo-gates";
-import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import { placeOrPinOrders } from "@/domain/procedure/place-or-pin-orders";
 import {
   resolveClinicDataScope,
   episodeAssignedToPractitionerWhere,
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
         patientRefId: true,
         sequenceIndex: true,
         clinicalEpisodeId: true,
+        schedulingMode: true,
       },
     });
     if (selected.length === 0) {
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
       return jsonError(fifoBlock, procedureConfirmHttpStatus(fifoBlock));
     }
 
-    const placement = await placeConfirmedProcedures(body.orderIds, {
+    const placement = await placeOrPinOrders(body.orderIds, {
       confirmedByUserId: session.sub,
     });
     const misses = placement.failures.map((row) => ({

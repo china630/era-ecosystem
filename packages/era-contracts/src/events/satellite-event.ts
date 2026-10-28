@@ -13,6 +13,7 @@ import {
 } from "./crm-field.events";
 import {
   isSatelliteHotelCityLedgerSnapshot,
+  isSatelliteHotelAgencyCommissionPayable,
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
   isSatelliteHotelGuestDeparted,
@@ -69,6 +70,7 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteHotelNightAuditClosed(data) ||
     isSatelliteHotelInvoiceIssued(data) ||
     isSatelliteHotelCityLedgerSnapshot(data) ||
+    isSatelliteHotelAgencyCommissionPayable(data) ||
     isSatelliteHotelGuestCheckedIn(data) ||
     isSatelliteHotelGuestCheckedOut(data) ||
     isSatelliteHotelGuestDeparted(data) ||

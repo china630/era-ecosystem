@@ -167,7 +167,8 @@
     "unsettledDepartures": "Unsettled departures",
     "hkStaffGroup": "HK staff",
     "hkMinibarGroup": "Minibar",
-    "hkGuestServicesGroup": "Guest services"
+    "hkGuestServicesGroup": "Guest services",
+    "agencyCommission": "Agency commission"
   },
   "foStatus": {
     "title": "Hotel status",
@@ -777,7 +778,7 @@
     "ledgerPayment": "Payment",
     "actions": "Actions",
     "rowMenu": "…",
-    "nightAuditNote": "Night audit room charge {date}",
+    "nightAuditNote": "Night audit",
     "manualRoomNote": "Manual room charge {date}",
     "pickTerminal": "Choose a terminal",
     "partyGuest": "Guest folio",
@@ -879,7 +880,13 @@
     "agencyOwes": "Agency's debt",
     "payOpenDebtHint": "Open debt articles are listed first. Pay those before posting a credit.",
     "allowCreditWhileDebtHint": "Post as credit / prepay even though other articles still owe.",
-    "paymentArticleNoOpenDebtToast": "Choose an article that still owes, or confirm credit / prepay."
+    "paymentArticleNoOpenDebtToast": "Choose an article that still owes, or confirm credit / prepay.",
+    "colDebit": "Debit",
+    "colCredit": "Credit",
+    "chargeBadge": "Chg",
+    "voidBadge": "Void",
+    "manualChargeDenied": "This article cannot be posted as an Extra charge.",
+    "manualPaymentDenied": "This article cannot take a manual payment or credit."
   },
   "operations": {
     "title": "Operations",
@@ -2347,6 +2354,8 @@
     "entity_CityLedgerSnapshot": "City ledger snapshot",
     "entity_OpsWipe": "Operational wipe",
     "entity_Reservation": "Reservation",
+    "entity_CashShift": "Cash shift",
+    "entity_BusinessDay": "Business day (night audit)",
     "entity_PriceSeason": "Price season"
   },
   "closedRoomList": {
@@ -3355,7 +3364,9 @@
     "settlementStatus_NOT_APPLICABLE": "n/a",
     "financeOnlySettlementBanner": "Company City Ledger is settled in Finance only — hotel does not take CL money at the desk.",
     "financeOnlySettlementBannerAgency": "Agency City Ledger is settled in Finance only — hotel does not take CL money at the desk.",
-    "unsettledDeparturesLink": "Unsettled departures (retry invoice / push snapshot)"
+    "unsettledDeparturesLink": "Unsettled departures (retry invoice / push snapshot)",
+    "commissionPayableLink": "Agency commission payable",
+    "commissionPayableBanner": "Commission we owe agencies is not on this City Ledger. Open Distribution → Agency commission."
   },
   "masterData": {
     "code": "Code",
@@ -3465,7 +3476,9 @@
       "WALKIN_PROFILE": "Walk-in profile",
       "NATIONALITY": "Citizenship",
       "RESERVATION_QUEUE": "Reservation list queues"
-    }
+    },
+    "allowManualCharge": "Allow Extra charge",
+    "allowManualPayment": "Allow Extra payment"
   },
   "opsWipe": {
     "title": "Operational wipe",
@@ -3571,7 +3584,10 @@
       "logoRemove": "Remove logo",
       "logoNone": "No logo",
       "logoTooLarge": "The file is larger than 512 KB.",
-      "logoWrongType": "Use a PNG or JPEG file."
+      "logoWrongType": "Use a PNG or JPEG file.",
+      "cpBanner": "Address, phone, email, website, and logo come from the Control Plane organization profile when Sync has delivered them. printName and bed capacity stay hotel-local.",
+      "cpFieldLocked": "Managed on the organization profile (Control Plane).",
+      "cpLogoLocked": "Logo is managed on the Control Plane organization profile."
     }
   },
   "logins": {
@@ -3680,12 +3696,32 @@
       "MINIBAR": "Minibar",
       "LAUNDRY": "Laundry",
       "TRANSFER": "Transfer",
+      "TAXI": "Taxi",
       "TOUR": "Tour",
       "BANQUET": "Banquet",
-      "FOOD": "Concierge food",
-      "MEDICAL": "Procedures posted by the hotel",
+      "SPA": "SPA / wellness",
+      "PARKING": "Parking",
+      "CXL_NOSHOW": "Cancel / no-show",
+      "DAMAGE": "Damage / loss",
+      "OTHER": "Other service",
+      "FOOD": "Food",
+      "BEVERAGE": "Beverages",
+      "ALCOHOL": "Alcohol",
+      "TOBACCO": "Tobacco",
+      "HALL": "Hall rental",
+      "ENTERTAINMENT": "Entertainment",
+      "FB_DISCOUNT": "F&B discount",
+      "MEDICAL": "Procedures (legacy)",
+      "PROCEDURE": "Procedures",
+      "DOCTOR": "Doctor visit",
+      "DIAGNOSTIC": "Diagnostics",
+      "LAB": "Laboratory",
+      "PHARMA": "Pharmacy",
+      "CLINIC_DISCOUNT": "Clinic discount",
       "DISCOUNT": "Folio discount",
-      "CITY_TAX": "City tax"
+      "CITY_TAX": "City tax",
+      "TELECOM": "Telecom",
+      "RESORT_FEE": "Resort fee"
     },
     "noGlMappings": "No revenue codes yet. Add them in master data first.",
     "platformSubscriptionReadonlyBadge": "Read-only"
@@ -4735,5 +4771,56 @@
     "autoCutoffMinutes": "Minutes before pickup",
     "allowOverbook": "Allow overbook on reserved seats (hard cap on boarded)",
     "dropUnboardedOnClose": "Drop unboarded reserved seats when closing boarding"
+  },
+  "agencyCommission": {
+    "title": "Agency commission",
+    "subtitle": "Hotel owes travel agents — payable AP, not City Ledger AR",
+    "arBanner": "Agency City Ledger (they owe us) is separate:",
+    "openAgencyLedger": "Open agency ledger",
+    "financeOnlyPay": "Commission is paid in Finance only (AP). Hotel desk cannot take or pay commission cash.",
+    "tab_summary": "Summary",
+    "tab_lines": "Statement",
+    "tab_forecast": "Forecast",
+    "agency": "Agency",
+    "agencyAll": "All agencies",
+    "pickAgency": "Pick an agency first",
+    "rebuild": "Rebuild from checked-out stays",
+    "markReady": "Mark selected READY",
+    "submitToFinance": "Submit batch to Finance",
+    "markedReady": "Marked {count} line(s) READY",
+    "batchSubmitted": "Commission batch submitted to Finance",
+    "rebuilt": "Rebuilt {count}",
+    "hold": "Hold",
+    "dispute": "Dispute",
+    "release": "Release",
+    "holdReasonPrompt": "Hold reason",
+    "disputeReasonPrompt": "Dispute reason",
+    "held": "Line on hold",
+    "disputed": "Line disputed",
+    "released": "Hold/dispute released",
+    "colCode": "Code",
+    "colName": "Name",
+    "colPct": "%",
+    "colPayable": "Payable",
+    "colAccrued": "Accrued",
+    "colReady": "Ready",
+    "colPaid": "Paid",
+    "colLines": "Lines",
+    "colSelect": "",
+    "colStay": "Stay",
+    "colGuest": "Guest",
+    "colFrom": "From",
+    "colTo": "To",
+    "colBase": "Room base",
+    "colAmount": "Commission",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "colStays": "Stays",
+    "colNights": "Nights",
+    "colRevenue": "Revenue",
+    "colEstCommission": "Est. commission",
+    "emptySummary": "No commission accrued in this period",
+    "emptyLines": "No statement lines",
+    "emptyForecast": "No forecast nights in this period"
   }
 }

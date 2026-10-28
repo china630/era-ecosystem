@@ -1,4 +1,4 @@
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -32,7 +32,7 @@ export async function POST(
         include: { table: true, outlet: true, lines: true },
       });
       if (existing && ["OPEN", "HELD"].includes(existing.status)) {
-        return NextResponse.json(existing);
+        return jsonOk(existing);
       }
     }
 
@@ -55,7 +55,7 @@ export async function POST(
       data: { status: "OCCUPIED", currentTicketId: ticket.id },
     });
 
-    return NextResponse.json(ticket, { status: 201 });
+    return jsonOk(ticket, 201);
   } catch (err) {
     return handleRouteError(err);
   }

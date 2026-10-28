@@ -93,6 +93,7 @@ export async function openCashShiftExplicit(input: {
   isPrimary?: boolean;
   fiscalDeviceId?: string;
   bankTerminalId?: string;
+  audit?: { userId?: string | null; request?: Request };
 }) {
   const existing = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
   if (existing) throw new Error('A cash shift is already open');
@@ -119,7 +120,7 @@ export async function openCashShiftExplicit(input: {
     bankTerminalId: input.bankTerminalId,
   });
 
-  return prisma.cashShift.create({
+  const shift = await prisma.cashShift.create({
     data: {
       organizationId,
       cashier,
@@ -130,13 +131,29 @@ export async function openCashShiftExplicit(input: {
       bankTerminalId: input.bankTerminalId ?? defaults.bankTerminalId ?? null,
     },
   });
+  const { recordHotelAudit } = await import('@/lib/satellite-audit');
+  await recordHotelAudit(input.audit ?? {}, 'CashShift', shift.id, 'OPEN', {
+    cashier,
+    registerId,
+    isPrimary,
+  });
+  return shift;
 }
 
-export async function closeOpenCashShift() {
+export async function closeOpenCashShift(audit?: {
+  userId?: string | null;
+  request?: Request;
+}) {
   const open = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
   if (!open) throw new Error('No open cash shift');
-  return prisma.cashShift.update({
+  const closed = await prisma.cashShift.update({
     where: { id: open.id },
     data: { status: 'CLOSED', closedAt: new Date() },
   });
+  const { recordHotelAudit } = await import('@/lib/satellite-audit');
+  await recordHotelAudit(audit ?? {}, 'CashShift', closed.id, 'CLOSE', {
+    cashier: closed.cashier,
+    registerId: closed.registerId,
+  });
+  return closed;
 }

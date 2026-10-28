@@ -1,4 +1,4 @@
-import { jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
@@ -27,7 +27,7 @@ export async function GET(
     });
     if (!ticket) return jsonError("Ticket not found", 404);
     const [withDay] = await attachDayNos([ticket]);
-    return NextResponse.json(withDay ?? ticket);
+    return jsonOk(withDay ?? ticket);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -68,7 +68,7 @@ export async function PATCH(
       include: { lines: true, table: true, outlet: true },
     });
 
-    return NextResponse.json(updated);
+    return jsonOk(updated);
   } catch (err) {
     return handleRouteError(err);
   }

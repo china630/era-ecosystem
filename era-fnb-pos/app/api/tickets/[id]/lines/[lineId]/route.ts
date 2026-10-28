@@ -1,4 +1,4 @@
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -79,7 +79,7 @@ export async function PATCH(
       include: { lines: true, table: true },
     });
     const [withDay] = await attachDayNos([fresh ?? { ...updated, organizationId: ticket.organizationId }]);
-    return NextResponse.json({ ...(withDay ?? fresh ?? updated), released });
+    return jsonOk({ ...(withDay ?? fresh ?? updated), released });
   } catch (err) {
     return handleRouteError(err);
   }

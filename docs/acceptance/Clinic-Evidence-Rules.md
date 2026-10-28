@@ -13,7 +13,7 @@
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (see era-coverage-definition) |
-| CLI-19 Layer A honesty | Viewer SHIPPED at `/admin/audit` + `GET /api/admin/audit`; dedicated `HTTP_MUTATION` filter UAT still open — does not unship CLI-19; does not create a new Scaffold ✅ AC |
+| CLI-19 Layer A honesty | Viewer SHIPPED at `/admin/audit` + `GET /api/admin/audit`; fail-closed CI + Wave B cashier SETTLE/VOID + ClinicShift + Wave E compound `(organizationId, createdAt)` landed; dedicated `HTTP_MUTATION` filter UAT still open — does not unship CLI-19; Wave E index alone ≠ Scaffold ✅ AC |
 
 ## Negative-path suites (Green Scaffold BE wave 5)
 
@@ -33,6 +33,8 @@ AC-CLI-TENANT stays out of BE rollup (schema+filter only). HL7 CLI-23 + fiscal C
 AC-CLI-EPISODE (CLI-55) negatives: `__tests__/cli-episode-negative.spec.ts` + `__tests__/cli-episode-gates.spec.ts` (anamnesis / walk-in close / CLOSED read-only). Field UAT still open → AC stays 🟡.
 
 AC-CLI-WALKIN-PARTY (CLI-61): unit `__tests__/walk-in-party.spec.ts` (placeholders/status). UI path UAT-SMOKE §11a open → AC stays 🟡; not Scaffold ✅.
+
+AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers). UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
 
 ## Forbidden as sole proof
 

@@ -84,6 +84,13 @@ export default function OrdersPanel() {
     dayNo: number | null;
     amount: number;
     change: number | null;
+    chrome?: {
+      name?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      taxId?: string;
+    } | null;
   } | null>(null);
 
   const load = useCallback(async () => {
@@ -225,10 +232,28 @@ export default function OrdersPanel() {
       return;
     }
     const amount = Number(data.amount);
+    const chrome = data.printChrome as
+      | {
+          name?: string;
+          phone?: string;
+          email?: string;
+          address?: string;
+          taxId?: string;
+        }
+      | undefined;
     setLastPaid({
       dayNo: paidDay,
       amount,
       change: method === "CASH" ? Number(data.changeAzn ?? Math.round((got - amount) * 100) / 100) : null,
+      chrome: chrome
+        ? {
+            name: chrome.name,
+            phone: chrome.phone,
+            email: chrome.email,
+            address: chrome.address,
+            taxId: chrome.taxId,
+          }
+        : null,
     });
     window.dispatchEvent(new Event("era-fnb-shift-refresh"));
     setCashReceived("");
@@ -446,18 +471,38 @@ export default function OrdersPanel() {
       <div className={`${CARD_CLASS} flex flex-col p-4 lg:min-h-0 lg:overflow-hidden`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("ticketActions")}</h2>
         {!selected ? (
-          <p className="text-sm text-[#7F8C8D]">
-            {lastPaid
-              ? tf("paidBanner", {
+          lastPaid ? (
+            <div className="space-y-1 text-sm text-[#7F8C8D]">
+              <p className="m-0">
+                {tf("paidBanner", {
                   no: lastPaid.dayNo ?? "—",
                   amount: lastPaid.amount.toFixed(2),
                   change:
                     lastPaid.change == null
                       ? ""
                       : tf("changeDue", { amount: lastPaid.change.toFixed(2) }),
-                })
-              : t("selectTicket")}
-          </p>
+                })}
+              </p>
+              {lastPaid.chrome?.name ||
+              lastPaid.chrome?.phone ||
+              lastPaid.chrome?.email ||
+              lastPaid.chrome?.address ? (
+                <p className="m-0 text-[12px] text-[#34495E]">
+                  {[
+                    lastPaid.chrome.name,
+                    lastPaid.chrome.phone,
+                    lastPaid.chrome.email,
+                    lastPaid.chrome.address,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  {lastPaid.chrome.taxId ? ` · VÖEN ${lastPaid.chrome.taxId}` : ""}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-sm text-[#7F8C8D]">{t("selectTicket")}</p>
+          )
         ) : (
           <>
             <p className="mb-2 text-sm font-medium text-[#34495E]">

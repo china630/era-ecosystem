@@ -16,8 +16,13 @@ import {
 import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { requireOpenShift } from "@/lib/open-shift";
+import {
+  outletToPrintOverlay,
+  resolveFnbPrintContacts,
+} from "@/lib/org-print-contacts";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 const paySchema = z.object({
   method: z.enum(["CASH", "CARD", "TRANSFER"]),
@@ -230,7 +235,28 @@ export async function POST(
     payload: { method: body.method, amount, payUrl, receiptId: fiscal.receiptId },
   });
 
-  return NextResponse.json(
+  const printChrome = resolveFnbPrintContacts(
+    outletToPrintOverlay(ticket.outlet),
+  );
+
+  await recordFbAudit(
+    { userId: session?.sub, request },
+    "Ticket",
+    id,
+    "PAY",
+    {
+      method: body.method,
+      amount,
+      cashTendered,
+      changeAzn,
+      settlement,
+      shiftId: openShift.id,
+      fiscalReceiptId: fiscal.receiptId ?? null,
+      skippedFiscal: Boolean(fiscal.skipped),
+    },
+  );
+
+  return jsonOk(
     {
       ticketId: id,
       method: body.method,
@@ -243,8 +269,10 @@ export async function POST(
         qrPayload: fiscal.qrPayload,
         driver: fiscal.driver,
       },
+      /** Org profile + outlet overlay for guest check / KKM stub header. */
+      printChrome,
     },
-    { status: 201 },
+    201,
   );
   } catch (err) {
     return handleRouteError(err);

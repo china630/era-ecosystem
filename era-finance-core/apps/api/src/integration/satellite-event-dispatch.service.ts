@@ -17,6 +17,7 @@ import {
   isSatelliteHotelReservationCompleted,
   isSatelliteHotelInvoiceIssued,
   isSatelliteHotelCityLedgerSnapshot,
+  isSatelliteHotelAgencyCommissionPayable,
   isSatelliteLogisticsTripCompleted,
   isSatelliteRetailSaleCompleted,
   isSatelliteRetailShiftClosed,
@@ -52,6 +53,7 @@ import {
   satelliteHotelReservationCompletedSchema,
   satelliteHotelInvoiceIssuedSchema,
   satelliteHotelCityLedgerSnapshotSchema,
+  satelliteHotelAgencyCommissionPayableSchema,
   satelliteLogisticsTripCompletedSchema,
   satelliteRetailSaleCompletedSchema,
   satelliteRetailShiftClosedSchema,
@@ -202,6 +204,10 @@ export class SatelliteEventDispatchService {
     if (isSatelliteHotelCityLedgerSnapshot(data)) {
       const event = satelliteHotelCityLedgerSnapshotSchema.parse(data);
       return this.handleHotelCityLedgerSnapshot(organizationId, event);
+    }
+    if (isSatelliteHotelAgencyCommissionPayable(data)) {
+      const event = satelliteHotelAgencyCommissionPayableSchema.parse(data);
+      return this.handleHotelAgencyCommissionPayable(organizationId, event);
     }
     if (isSatelliteHotelReservationCompleted(data)) {
       const event = satelliteHotelReservationCompletedSchema.parse(data);
@@ -598,6 +604,73 @@ export class SatelliteEventDispatchService {
         counterpartyId,
         revenuePosted: false,
         reconciliationNote: `Hotel ${partyLabel} ${partyCode} balance ${event.payload.balance} AZN on ${event.payload.asOfDate}`,
+      },
+    };
+  }
+
+  private async handleHotelAgencyCommissionPayable(
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelAgencyCommissionPayableSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    let counterpartyId: string | null = null;
+    if (event.payload.financeCounterpartyId) {
+      const cp = await this.prisma.counterparty.findFirst({
+        where: {
+          id: event.payload.financeCounterpartyId,
+          organizationId,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      counterpartyId = cp?.id ?? null;
+    }
+    const existing = await this.prisma.agencyCommissionPayableSnapshot.findUnique({
+      where: {
+        organizationId_hotelBatchId: {
+          organizationId,
+          hotelBatchId: event.payload.batchId,
+        },
+      },
+    });
+    if (existing) {
+      return {
+        meta: {
+          snapshotId: existing.id,
+          batchId: event.payload.batchId,
+          deduped: true,
+          totalAmount: Number(existing.totalAmount),
+          revenuePosted: false,
+        },
+      };
+    }
+    const snapshot = await this.prisma.agencyCommissionPayableSnapshot.create({
+      data: {
+        organizationId,
+        hotelAgencyId: event.payload.agencyId,
+        agencyCode: event.payload.agencyCode,
+        hotelBatchId: event.payload.batchId,
+        asOfDate: event.payload.asOfDate,
+        totalAmount: event.payload.totalAmount,
+        lineCount: event.payload.lineCount,
+        currency: event.payload.currency,
+        correlationId: event.correlationId,
+        counterpartyId,
+      },
+    });
+    this.logger.log(
+      `Agency commission payable snapshot id=${snapshot.id} agency=${event.payload.agencyCode} amount=${event.payload.totalAmount} batch=${event.payload.batchId}`,
+    );
+    return {
+      meta: {
+        snapshotId: snapshot.id,
+        batchId: event.payload.batchId,
+        agencyId: event.payload.agencyId,
+        agencyCode: event.payload.agencyCode,
+        totalAmount: event.payload.totalAmount,
+        lineCount: event.payload.lineCount,
+        counterpartyId,
+        revenuePosted: false,
+        reconciliationNote: `Hotel agency ${event.payload.agencyCode} commission payable ${event.payload.totalAmount} AZN (batch ${event.payload.batchId})`,
       },
     };
   }

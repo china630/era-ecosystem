@@ -10,7 +10,8 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { isShiftStale } from "@/lib/business-day";
 import { cashDrawerForShift } from "@/lib/cash-drawer";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 const openSchema = z.object({
   outletCode: z.string().min(1).optional(),
@@ -75,7 +76,7 @@ export async function GET(request: Request) {
     till.openChecks = await prisma.ticket.count({
       where: { outletId: shift.outletId, status: { in: ["OPEN", "HELD"] } },
     });
-    return NextResponse.json({
+    return jsonOk({
       ...shift,
       stale: isShiftStale(shift.openedAt, new Date(), profile.businessDayStart),
       businessDayStart: profile.businessDayStart,
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
       include: { outlet: true },
     });
     if (existing) {
-      return NextResponse.json(existing);
+      return jsonOk(existing);
     }
 
     const shift = await prisma.posShift.create({
@@ -153,13 +154,27 @@ export async function POST(request: Request) {
       shiftId: shift.id,
     });
 
+    await recordFbAudit(
+      { userId: session?.sub, request },
+      "PosShift",
+      shift.id,
+      "OPEN",
+      {
+        outletId: outlet.id,
+        outletCode: outlet.code,
+        openingCash: body.openingCash,
+        fiscalDeviceId: fiscalDeviceId ?? null,
+        bankTerminalId: bankTerminalId ?? null,
+      },
+    );
+
     const { syncFnbChannelPrices } = await import("@/lib/channel-price-sync");
     void syncFnbChannelPrices(organizationId).catch(() => undefined);
 
     const { reportFnbPosStationCapacity } = await import("@/lib/report-pos-capacity");
     void reportFnbPosStationCapacity(prisma).catch(() => undefined);
 
-    return NextResponse.json(shift, { status: 201 });
+    return jsonOk(shift, 201);
   } catch (err) {
     return handleRouteError(err);
   }

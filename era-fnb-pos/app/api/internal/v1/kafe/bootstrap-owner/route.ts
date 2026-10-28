@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { assertEnvServiceToken } from "@era/satellite-kit";
 import { bootstrapKafeOwner } from "@/lib/kafe-org-bootstrap";
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
       cafeName,
       activeModules,
     });
-    return NextResponse.json({ ok: true, login: result.login });
+    return jsonOk({ ok: true, login: result.login });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Bootstrap failed";
     return NextResponse.json({ error: message }, { status: 400 });

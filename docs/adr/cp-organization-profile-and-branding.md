@@ -64,7 +64,7 @@ Additional product constraints:
 |---------|--------|-----|
 | Clinic print footers, lab/doctor signatures, `checkupSectionsJson` | Clinic tenant | Clinical blank chrome |
 | Hotel property `printName`, bed capacity, ops letterhead overrides beyond org | Hotel profile | Property brand ≠ legal entity |
-| Outlet name / address / phone | `Outlet` | Same VÖEN, many POS |
+| Outlet name / address / phone / email / website | Satellite `Outlet` columns (F&B + Retail landed 2026-10-28 Track C) | Same VÖEN, many POS; overlay org profile on outlet-scoped receipt chrome |
 | Fiscal / ASAN / HSM / KKM secrets | Finance / device | Compliance secrets |
 | Inventory valuation, period lock, tax regime | Finance settings | Accounting policy |
 | Modules, topology, usage meters | Orch billing / placement | Not branding |
@@ -134,12 +134,26 @@ Money/fiscal routing remains [org-operating-mode.md](./org-operating-mode.md); t
 
 | Current editor | After cutover |
 |----------------|---------------|
-| Finance legalAddress / phone / directorName / logoUrl | Mirror from CP profile (write path deprecated or proxies to orch) |
-| Finance bank accounts | Remain Finance SoR; primary feeds `org.bankLine` upstream or dual-write during transition |
-| Clinic print address/phone/logo | Prefer CP contacts + logo; keep footers/signatures local |
-| Hotel letterhead | Prefer CP; keep property-only fields local |
+| Finance legalAddress / phone / directorName / logoUrl | **Landed 2026-10-28:** Finance settings UI read-only + link to `/workspace/organization`; PATCH/logo upload reject `ORG_PROFILE_MOVED_TO_CONTROL_PLANE` |
+| Finance bank accounts | Remain Finance SoR; **primary → orch `bankLine`** via S2S `PATCH /internal/v1/organizations/:id/profile-bank-line` |
+| Clinic print address/phone/logo | Prefer CP; admin UI locks header fields when Sync cache present; footers/signatures local |
+| Hotel letterhead | Prefer CP; address/phone/email/website/logo RO + logo upload blocked when CP present; `printName` / beds local |
+| F&B / Retail receipt chrome | **Landed 2026-10-28 Track C:** pay responses include `printChrome` (Sync `orgProfile` + `Outlet` phone/email/address/website overlay); no org-legal editors on POS |
 
 Migration: one-time backfill orch profile from Finance (prefer) then hotel/clinic where Finance empty. Document in the implementation plan; no emergency wipe of satellite columns until readers switched.
+
+**Backfill tool (landed 2026-10-28):** from `era-orchestrator/`:
+
+```bash
+# dry-run (default)
+npm run platform:backfill-org-profile
+# write
+npm run platform:backfill-org-profile -- --apply
+# also fill remaining empties from hotel/clinic DBs
+npm run platform:backfill-org-profile -- --apply --with-satellites
+```
+
+Env: `DATABASE_URL` (orch), `FINANCE_DATABASE_URL` or `FINANCE_RO_DATABASE_URL`; optional `HOTEL_DATABASE_URL` / `CLINIC_DATABASE_URL` with `--with-satellites`. Field-level fill only (never overwrites). Skips `data:` logos (clinic data-URLs) and hotel filesystem `logoPath`. Finance same-origin `/files/...` logos are absolutized when `FINANCE_PUBLIC_URL` (or `ERA_FINANCE_WEB_URL` / `NEXT_PUBLIC_FINANCE_WEB_URL`) is set; otherwise logged as `skip_relative_logo`. Per-org writes run in a DB transaction. Helpers + unit tests: `scripts/lib/org-profile-backfill*.ts`.
 
 ### 7. Acceptance / honesty
 

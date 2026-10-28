@@ -25,7 +25,7 @@ Canon: `docs/products/ERA-Acceptance-Standard.md` § Tooling.
 npm run ship:prepush
 ```
 
-Runs `run:quality-gates` plus scoped `npm test` / `npm run build` for touched `era-*` (finance: NAS literals + integration tests). Skill: `era-git-ship`. Prisma / `docker compose` healthy does **not** replace this. On FAIL: fix, new commit, re-run; do not push. GitHub CI still required before merge to `dev`/`master`.
+Runs `run:quality-gates` plus scoped `npm test` / `npm run build` for touched `era-*` (finance: NAS literals + integration tests). Skill: `era-git-ship`. Prisma / `docker compose` healthy does **not** replace this. On FAIL: fix, new commit, re-run; do not push. GitHub CI still required before merge to `dev`/`master`. After merge, that skill waits **Deploy staging** by default (merge ≠ ship done).
 
 ## Shell bans (also in hooks)
 

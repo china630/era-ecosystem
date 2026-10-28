@@ -1,5 +1,5 @@
 /**
- * CP-ORG-PROFILE-01 — resolve receipt chrome from orch snapshot + outlet overlay.
+ * CP-ORG-PROFILE-01 Track C — receipt chrome from orch orgProfile + outlet overlay.
  */
 import {
   getCachedOrgProfile,
@@ -7,8 +7,17 @@ import {
   type OutletContactOverlay,
 } from "@era/satellite-kit";
 import { satelliteOrganizationId } from "@era/satellite-kit";
+import { outletToPrintOverlay } from "@/lib/org-print-overlay";
 
-export function resolveFnbPrintContacts(outlet?: OutletContactOverlay | null) {
+export { outletToPrintOverlay };
+
+export type FnbReceiptChrome = ReturnType<typeof resolvePrintContacts> & {
+  hasOrgProfile: boolean;
+};
+
+export function resolveFnbPrintContacts(
+  outlet?: OutletContactOverlay | null,
+): FnbReceiptChrome {
   const orgId = (() => {
     try {
       return satelliteOrganizationId();
@@ -17,5 +26,8 @@ export function resolveFnbPrintContacts(outlet?: OutletContactOverlay | null) {
     }
   })();
   const snap = orgId ? getCachedOrgProfile(orgId) : getCachedOrgProfile();
-  return resolvePrintContacts({ org: snap, outlet: outlet ?? null });
+  return {
+    ...resolvePrintContacts({ org: snap, outlet: outlet ?? null }),
+    hasOrgProfile: Boolean(snap),
+  };
 }

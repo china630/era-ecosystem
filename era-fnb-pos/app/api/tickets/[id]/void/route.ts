@@ -1,4 +1,4 @@
-import { handleRouteError } from "@/lib/api-utils";
+import { handleRouteError, jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
@@ -49,7 +49,7 @@ export async function POST(
       { reason: "till correction" },
     );
 
-    return NextResponse.json({ id, status: "VOID", released: true });
+    return jsonOk({ id, status: "VOID", released: true });
   } catch (err) {
     return handleRouteError(err);
   }

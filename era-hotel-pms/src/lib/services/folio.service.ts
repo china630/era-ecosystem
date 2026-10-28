@@ -116,6 +116,13 @@ export async function postCharge(input: {
   const revenueCode = await prisma.revenueCode.findUnique({ where: { id: input.revenueCodeId } });
   if (!revenueCode) throw new Error('Revenue code not found');
   assertActiveForNewUse(`Revenue code ${revenueCode.code}`, revenueCode.active);
+  const deskPost = !input.audit?.source || input.audit.source === 'user';
+  if (deskPost && revenueCode.allowManualCharge === false) {
+    throw Object.assign(new Error('REVENUE_CODE_MANUAL_CHARGE_DENIED'), {
+      status: 409,
+      code: 'REVENUE_CODE_MANUAL_CHARGE_DENIED',
+    });
+  }
 
   const { resolveChargeFolio } = await import('@/lib/services/booking-folio.service');
   const chargeReservationId = input.reservationId;
@@ -295,29 +302,39 @@ export async function postPayment(input: {
     input.paymentMethod !== 'CL_AGENCY' &&
     input.paymentMethod !== 'CL_COMPANY'
   ) {
-    const lines = await prisma.folio.findUnique({
-      where: { id: input.folioId },
+    // Stay-wide article debt (SSOT with Accept payment picker) — not single-folio only.
+    const stayFolios = await prisma.folio.findMany({
+      where: { reservationId: folio.reservationId, status: 'OPEN' },
       include: { charges: true, payments: true },
     });
-    const articleDebt = stayMoneyPair(
-      (lines?.charges ?? []).filter((row) => row.revenueCodeId === input.revenueCodeId),
-      (lines?.payments ?? []).filter((row) => row.revenueCodeId === input.revenueCodeId),
-    ).debt;
+    const { openDebtByArticle } = await import('@/lib/folio-open-debt');
+    const openDebt = openDebtByArticle(stayFolios);
+    const articleDebt =
+      openDebt.find((row) => row.revenueCodeId === input.revenueCodeId)?.debt ??
+      stayMoneyPair(
+        stayFolios.flatMap((f) => f.charges).filter((row) => row.revenueCodeId === input.revenueCodeId),
+        stayFolios
+          .flatMap((f) => f.payments ?? [])
+          .filter((row) => row.revenueCodeId === input.revenueCodeId),
+      ).debt;
     if (articleDebt > 0.01 && input.amount > articleDebt + 0.01) {
       throw new Error(`PAYMENT_EXCEEDS_ARTICLE:${articleDebt.toFixed(2)}`);
     }
     if (articleDebt <= 0.01 && !input.allowCredit) {
-      const stayFolios = await prisma.folio.findMany({
-        where: { reservationId: folio.reservationId, status: 'OPEN' },
-        include: { charges: true, payments: true },
-      });
-      const { openDebtByArticle } = await import('@/lib/folio-open-debt');
-      const openDebt = openDebtByArticle(stayFolios);
       if (openDebt.length > 0) {
         throw Object.assign(new Error('PAYMENT_ARTICLE_NO_OPEN_DEBT'), {
           status: 409,
           code: 'PAYMENT_ARTICLE_NO_OPEN_DEBT',
           openArticles: openDebt.map((row) => row.revenueCodeId),
+        });
+      }
+    }
+    if (articleDebt <= 0.01) {
+      const payCode = await prisma.revenueCode.findUnique({ where: { id: input.revenueCodeId } });
+      if (payCode && payCode.allowManualPayment === false) {
+        throw Object.assign(new Error('REVENUE_CODE_MANUAL_PAYMENT_DENIED'), {
+          status: 409,
+          code: 'REVENUE_CODE_MANUAL_PAYMENT_DENIED',
         });
       }
     }

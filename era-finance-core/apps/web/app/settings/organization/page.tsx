@@ -147,10 +147,7 @@ export default function OrganizationSettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: name.trim(),
-        legalAddress: legalAddress.trim() || null,
-        phone: phone.trim() || null,
-        directorName: directorName.trim() || null,
-        logoUrl: logoUrl || null,
+        // legalAddress / phone / directorName / logoUrl — SoR on orch (CP-ORG-PROFILE-01)
         valuationMethod,
         asanUserId: asanUserId.trim() || null,
         taxRegime,
@@ -170,23 +167,6 @@ export default function OrganizationSettingsPage() {
     await load();
   }
 
-  async function onLogoChange(file: File | null) {
-    if (!file || !token || !canEditGeneral) return;
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await apiFetch("/api/organization/settings/logo", {
-      method: "POST",
-      body: fd,
-    });
-    if (!res.ok) {
-      toast.error(t("orgSettings.logoErr"));
-      return;
-    }
-    const j = (await res.json()) as { logoUrl: string };
-    setLogoUrl(j.logoUrl);
-    toast.success(t("orgSettings.logoOk"));
-  }
-
   const tabBtn = (id: typeof tab, label: string) => (
     <button
       key={id}
@@ -203,6 +183,9 @@ export default function OrganizationSettingsPage() {
   );
 
   const title = useMemo(() => t("orgSettings.title"), [t]);
+  const orchOrgProfileUrl = `${(
+    process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000"
+  ).replace(/\/$/, "")}/workspace/organization`;
 
   async function onSavePeriodLock() {
     if (!token || !canEditPeriodLock) return;
@@ -336,6 +319,12 @@ export default function OrganizationSettingsPage() {
                 <h3 className="m-0 text-[13px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
                   {t("orgSettings.cardLegalTitle")}
                 </h3>
+                <p className="m-0 text-sm text-[#34495E]">
+                  {t("orgSettings.cpProfileBanner")}{" "}
+                  <Link href={orchOrgProfileUrl} className={LINK_ACCENT_CLASS}>
+                    {t("orgSettings.cpProfileLink")}
+                  </Link>
+                </p>
                 <label className="block text-[#34495E] text-sm">
                   {t("orgSettings.name")}
                   <input
@@ -350,10 +339,9 @@ export default function OrganizationSettingsPage() {
                   {t("orgSettings.legalAddress")}
                   <textarea
                     value={legalAddress}
-                    onChange={(e) => setLegalAddress(e.target.value)}
+                    readOnly
                     rows={3}
-                    className={`block mt-1 w-full max-w-2xl ${INPUT_BORDERED_CLASS}`}
-                    disabled={!canEditGeneral}
+                    className={`block mt-1 w-full max-w-2xl ${INPUT_BORDERED_CLASS} bg-slate-50`}
                   />
                 </label>
                 <label className="block text-[#34495E] text-sm">
@@ -374,18 +362,16 @@ export default function OrganizationSettingsPage() {
                   {t("orgSettings.director")}
                   <input
                     value={directorName}
-                    onChange={(e) => setDirectorName(e.target.value)}
-                    className={`block mt-1 w-full max-w-xl ${INPUT_BORDERED_CLASS}`}
-                    disabled={!canEditGeneral}
+                    readOnly
+                    className={`block mt-1 w-full max-w-xl ${INPUT_BORDERED_CLASS} bg-slate-50`}
                   />
                 </label>
                 <label className="block text-[#34495E] text-sm">
                   {t("orgSettings.phone")}
                   <input
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={`block mt-1 w-full max-w-md ${INPUT_BORDERED_CLASS}`}
-                    disabled={!canEditGeneral}
+                    readOnly
+                    className={`block mt-1 w-full max-w-md ${INPUT_BORDERED_CLASS} bg-slate-50`}
                   />
                 </label>
                 <label className="block text-[#34495E] text-sm">
@@ -507,11 +493,18 @@ export default function OrganizationSettingsPage() {
                 <h3 className="m-0 text-[13px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
                   {t("orgSettings.cardIdentityTitle")}
                 </h3>
+                <p className="m-0 text-sm text-[#7F8C8D]">
+                  {t("orgSettings.cpLogoHint")}{" "}
+                  <Link href={orchOrgProfileUrl} className={LINK_ACCENT_CLASS}>
+                    {t("orgSettings.cpProfileLink")}
+                  </Link>
+                </p>
                 <div>
                   <span className="text-xs font-bold text-[#7F8C8D] uppercase tracking-wide block mb-1">
                     {t("orgSettings.logo")}
                   </span>
                   {logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={
                         logoUrl.startsWith("http")
@@ -521,14 +514,9 @@ export default function OrganizationSettingsPage() {
                       alt=""
                       className="h-16 object-contain mb-2 border border-[#D5DADF] rounded p-1 bg-white"
                     />
-                  ) : null}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    disabled={saving || !canEditGeneral}
-                    onChange={(e) => void onLogoChange(e.target.files?.[0] ?? null)}
-                    className="text-sm"
-                  />
+                  ) : (
+                    <p className="m-0 text-sm text-[#7F8C8D]">—</p>
+                  )}
                 </div>
               </section>
             </div>

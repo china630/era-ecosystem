@@ -45,6 +45,7 @@ type TimelineEvent = {
   subtitle?: string;
   status: string;
   showClock?: boolean;
+  openAttendance?: boolean;
   href?: string;
   hasCritical?: boolean;
   resultSummary?: Array<{ code: string; value: string; flag?: string }>;
@@ -97,6 +98,7 @@ type CardSummary = {
       id: string;
       at: string;
       atLabel?: string;
+      openAttendance?: boolean;
       name: string;
       code: string;
       status: string;
@@ -871,15 +873,21 @@ export function PatientCardClinicalSections({
                     <div className="min-w-0">
                       <div className="font-medium">{eventTitle(ev, locale)}</div>
                       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {ev.showClock !== false && ev.at ? bakuDateTimeLabel(ev.at) : ""}
+                        {ev.openAttendance
+                          ? t("openAttendance", { defaultValue: "Open attendance" })
+                          : ev.showClock !== false && ev.at
+                            ? bakuDateTimeLabel(ev.at)
+                            : ""}
                         {ev.status
-                          ? `${ev.showClock !== false && ev.at ? " · " : ""}${planStatusLabel(ev.status)}`
+                          ? `${
+                              ev.openAttendance || (ev.showClock !== false && ev.at) ? " · " : ""
+                            }${planStatusLabel(ev.status)}`
                           : ""}
                       </p>
                     </div>
                     {actionable ? (
                       <div className="flex shrink-0 gap-1">
-                        {scheduled ? (
+                        {scheduled && !ev.openAttendance ? (
                           <>
                             <button
                               type="button"

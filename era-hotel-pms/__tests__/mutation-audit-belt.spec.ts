@@ -9,8 +9,9 @@ describe('hotel mutation audit belt', () => {
     expect(HTTP_MUTATION_ENTITY_TYPE).toBe('HTTP_MUTATION');
   });
 
-  it('exempts auth login and hotel refresh-permissions', () => {
+  it('exempts auth login, locale, and hotel refresh-permissions', () => {
     expect(isMutationAuditExemptPath('/api/auth/login')).toBe(true);
+    expect(isMutationAuditExemptPath('/api/locale')).toBe(true);
     expect(
       isMutationAuditExemptPath(
         '/api/auth/session/refresh-permissions',
@@ -19,6 +20,9 @@ describe('hotel mutation audit belt', () => {
     ).toBe(true);
     expect(
       isMutationAuditExemptPath('/api/reservations', HOTEL_MUTATION_AUDIT_EXEMPT_PREFIXES),
+    ).toBe(false);
+    expect(
+      isMutationAuditExemptPath('/api/outlets/select', HOTEL_MUTATION_AUDIT_EXEMPT_PREFIXES),
     ).toBe(false);
   });
 });

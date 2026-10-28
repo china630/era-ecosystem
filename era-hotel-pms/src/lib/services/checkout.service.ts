@@ -483,6 +483,12 @@ export async function checkoutReservation(
   }
 
   const dispatch = await dispatchReservationCompleted(completed);
+  if (completed.agencyId) {
+    const { accrueOnCheckout } = await import('@/lib/services/agency-commission.service');
+    void accrueOnCheckout(id).catch((e) =>
+      console.error('Agency commission accrual failed', e),
+    );
+  }
   const { dispatchGuestCheckedOut } = await import('@/lib/integration/guest-lifecycle-events');
   void dispatchGuestCheckedOut({
     reservationId: id,

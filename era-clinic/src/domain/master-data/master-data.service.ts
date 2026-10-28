@@ -235,6 +235,7 @@ export async function createProcedureType(data: {
   afterLunchAllowed?: boolean;
   extendedEndHour?: number | null;
   needsSite?: boolean;
+  openAttendance?: boolean;
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
   financeSku?: string | null;
@@ -317,6 +318,7 @@ export async function updateProcedureType(
     afterLunchAllowed?: boolean;
     extendedEndHour?: number | null;
     needsSite?: boolean;
+    openAttendance?: boolean;
     physioOrderFields?: string[];
     allowedSiteCodes?: string[];
     financeSku?: string | null;

@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { handleStaffProvisionEvent, SatelliteLoginTakenError, SatelliteTargetAmbiguousError } from "@/lib/staff-provision";
 import { enterRequestTenant } from "@/lib/request-organization";
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
     }
     enterRequestTenant(organizationId);
     const result = await handleStaffProvisionEvent(event);
-    return NextResponse.json(result);
+    return jsonOk(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Provision failed";
     const prismaCode =

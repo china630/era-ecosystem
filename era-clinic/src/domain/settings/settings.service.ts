@@ -87,6 +87,11 @@ export async function getClinicSettings() {
       tenant.procedureCheckInMode ??
       (tenant.checkInRequiresQr === false ? "MANUAL" : "QR"),
     autoNoShowAfterMin: tenant.autoNoShowAfterMin ?? null,
+    procedureCheckInWindow:
+      tenant.procedureCheckInWindow === "SAME_DAY" ? "SAME_DAY" : "STRICT",
+    procedureCheckInSameDayUntil: tenant.procedureCheckInSameDayUntil
+      ? tenant.procedureCheckInSameDayUntil.toISOString()
+      : null,
     patientCardResultsPreview:
       tenant.patientCardResultsPreview ?? CARD_DEFAULTS.patientCardResultsPreview,
     patientCardPlanPreview: tenant.patientCardPlanPreview ?? CARD_DEFAULTS.patientCardPlanPreview,
@@ -115,6 +120,12 @@ export async function getClinicSettings() {
     hotelFolioRevenueCode: tenant.hotelFolioRevenueCode?.trim() || null,
     noShowKeepsCharge: tenant.noShowKeepsCharge !== false,
     extraProcedureRoute: parseExtraProcedureRoute(tenant.extraProcedureRoute),
+    controlPlanePrint: await (async () => {
+      const { resolveCpPrintLocks } = await import(
+        "@/domain/print/cp-print-locks"
+      );
+      return resolveCpPrintLocks();
+    })(),
   };
 }
 
@@ -153,6 +164,8 @@ export async function updateClinicSettings(input: {
   peakModeEnabled?: boolean;
   peakDayEndHour?: number;
   checkInRequiresQr?: boolean;
+  procedureCheckInWindow?: "STRICT" | "SAME_DAY";
+  procedureCheckInSameDayUntil?: string | null;
   autoNoShowAfterMin?: number | null;
   patientCardResultsPreview?: number;
   patientCardPlanPreview?: number;
@@ -180,6 +193,23 @@ export async function updateClinicSettings(input: {
   noShowKeepsCharge?: boolean;
   extraProcedureRoute?: string | null;
 }) {
+  // CP-ORG-PROFILE-01 Track A: ignore header branding writes when orch snapshot is cached.
+  const cpLocks = await (async () => {
+    const { resolveCpPrintLocks } = await import("@/domain/print/cp-print-locks");
+    return resolveCpPrintLocks();
+  })();
+  if (cpLocks.active) {
+    if (cpLocks.logo) delete input.printLogoDataUrl;
+    if (cpLocks.address) {
+      delete input.printAddressEn;
+      delete input.printAddressRu;
+      delete input.printAddressAz;
+    }
+    if (cpLocks.phone) delete input.printPhone;
+    if (cpLocks.email) delete input.printEmail;
+    if (cpLocks.website) delete input.printWebsite;
+  }
+
   const presets = input.enabledPresets?.filter(isClinicPreset) ?? undefined;
   if (input.enabledPresets && presets && presets.length !== input.enabledPresets.length) {
     throw new Error("Invalid preset code");
@@ -312,6 +342,18 @@ export async function updateClinicSettings(input: {
               input.autoNoShowAfterMin == null
                 ? null
                 : Math.min(24 * 60, Math.max(1, Math.floor(input.autoNoShowAfterMin))),
+          }
+        : {}),
+      ...(input.procedureCheckInWindow != null
+        ? { procedureCheckInWindow: input.procedureCheckInWindow }
+        : {}),
+      ...(input.procedureCheckInSameDayUntil !== undefined
+        ? {
+            procedureCheckInSameDayUntil:
+              input.procedureCheckInSameDayUntil == null ||
+              input.procedureCheckInSameDayUntil === ""
+                ? null
+                : new Date(input.procedureCheckInSameDayUntil),
           }
         : {}),
       ...(resultsPreview != null ? { patientCardResultsPreview: resultsPreview } : {}),

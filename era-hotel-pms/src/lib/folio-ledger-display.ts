@@ -1,6 +1,6 @@
 /**
- * Folio ledger ink: rose = charge, sky = money movement.
- * Direction is the sign and kind label — not a third palette.
+ * Folio ledger: Debit | Credit columns (Opera-like).
+ * Soft rose on Debit, sky on Credit — not a third ink family.
  */
 
 export type LedgerMoneyKind = 'charge' | 'adjust' | 'payment' | 'refund' | 'void';
@@ -18,19 +18,46 @@ export function ledgerMoneyKind(row: {
   return row.adjustsChargeId ? 'adjust' : 'charge';
 }
 
+export function ledgerKindLabelKey(kind: LedgerMoneyKind): string {
+  if (kind === 'void') return 'voidBadge';
+  if (kind === 'adjust') return 'adjustBadge';
+  if (kind === 'refund') return 'refundBadge';
+  if (kind === 'payment') return 'paymentBadge';
+  return 'chargeBadge';
+}
+
+/** Debit column: charges, positive adjusts, refunds (cash out / guest owes more). */
+export function ledgerDebitAmount(amount: number, kind: LedgerMoneyKind): number | null {
+  if (kind === 'void') return null;
+  if (kind === 'charge') return Math.abs(amount);
+  if (kind === 'refund') return Math.abs(amount);
+  if (kind === 'adjust' && amount > 0.009) return amount;
+  return null;
+}
+
+/** Credit column: payments, negative adjusts. */
+export function ledgerCreditAmount(amount: number, kind: LedgerMoneyKind): number | null {
+  if (kind === 'void') return null;
+  if (kind === 'payment') return Math.abs(amount);
+  if (kind === 'adjust' && amount < -0.009) return Math.abs(amount);
+  return null;
+}
+
 export function ledgerAmountClass(kind: LedgerMoneyKind): string {
   if (kind === 'void') return 'text-[#95A5A6] line-through';
   if (kind === 'charge' || kind === 'adjust') return 'text-rose-700';
   return 'text-sky-700';
 }
 
-export function ledgerRowClass(kind: LedgerMoneyKind): string {
-  if (kind === 'void') return 'bg-[#F4F6F7] text-[#95A5A6]';
-  if (kind === 'charge' || kind === 'adjust') return 'bg-rose-50';
-  return 'bg-sky-50';
+export function ledgerDebitClass(): string {
+  return 'text-right font-mono text-rose-700';
 }
 
-/** Signed display: payment +, refund −, adjust keeps amount sign, charge unsigned. */
+export function ledgerCreditClass(): string {
+  return 'text-right font-mono text-sky-700';
+}
+
+/** @deprecated Prefer Debit|Credit columns. */
 export function formatLedgerAmount(amount: number, kind: LedgerMoneyKind): string {
   const abs = Math.abs(amount).toFixed(2);
   if (kind === 'payment') return `+${abs}`;

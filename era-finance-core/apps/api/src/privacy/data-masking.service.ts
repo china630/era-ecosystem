@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { isAuditPiiKey } from "@era/satellite-kit";
 
 export const MASKED = "***MASKED***";
 
@@ -7,45 +8,33 @@ export function normalizeSensitiveKey(key: string): string {
   return key.replace(/[_-]/g, "").toLowerCase();
 }
 
-const DEFAULT_SENSITIVE_KEYS: readonly string[] = [
-  "password",
-  "adminpassword",
-  "passwordhash",
-  "currentpassword",
-  "refreshtoken",
-  "refresh_token",
-  "token",
-  "accesstoken",
-  "access_token",
-  "idtoken",
-  "authorization",
-  "apikey",
-  "api_key",
-  "secret",
-  "clientsecret",
-  "client_secret",
-  "pin",
-  "fin",
-  "iban",
+/**
+ * Finance-only extras beyond kit `isAuditPiiKey` (AC-FIN-AUD kit align).
+ * Kit covers password/token/fin/email/iban/account/cvv/pin families.
+ */
+const FINANCE_EXTRA_SENSITIVE_KEYS: readonly string[] = [
   "balance",
   "balances",
-  "accountnumber",
-  "account_number",
   "creditcard",
-  "cardnumber",
-  "cvv",
+  "adminpassword",
+  "currentpassword",
+  "idtoken",
+  "clientsecret",
 ];
 
 @Injectable()
 export class DataMaskingService {
-  private readonly sensitive: ReadonlySet<string>;
+  private readonly financeExtra: ReadonlySet<string>;
 
   constructor() {
-    this.sensitive = new Set(DEFAULT_SENSITIVE_KEYS.map(normalizeSensitiveKey));
+    this.financeExtra = new Set(
+      FINANCE_EXTRA_SENSITIVE_KEYS.map(normalizeSensitiveKey),
+    );
   }
 
   isSensitiveKey(key: string): boolean {
-    return this.sensitive.has(normalizeSensitiveKey(key));
+    if (isAuditPiiKey(key)) return true;
+    return this.financeExtra.has(normalizeSensitiveKey(key));
   }
 
   /**

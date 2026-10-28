@@ -6,7 +6,7 @@ import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { recordFbAudit } from "@/lib/satellite-audit";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 const voidSchema = z.object({
   reason: z.string().min(1),
@@ -61,7 +61,7 @@ export async function POST(
     const updated = await recalculateTicketTotals(id);
     const lines = await prisma.ticketLine.findMany({ where: { ticketId: id } });
 
-    return NextResponse.json({ ticket: { ...updated, lines }, reason: body.reason });
+    return jsonOk({ ticket: { ...updated, lines }, reason: body.reason });
   } catch (err) {
     return handleRouteError(err);
   }

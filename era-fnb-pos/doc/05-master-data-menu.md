@@ -17,7 +17,7 @@ Revenue codes `FOOD`, `BAR` — те же коды, что в PMS master ([09-ma
 
 | Группа | Параметры |
 |--------|-----------|
-| Чек | Логотип, валюта USD/EUR на печати, подпись, строка налога |
+| Чек | Header name/phone/address/logo from Control Plane `orgProfile` + optional Outlet overlay (`printChrome` on pay); currency/signature/tax line local |
 | POS | Лимит брони, % комиссии эквайринга, контроль открытых столов при Z |
 | X-report | Автоперенос наличных, формат |
 | Printer | Маршруты: кухня, бар, пречек |
@@ -33,8 +33,9 @@ Revenue codes `FOOD`, `BAR` — те же коды, что в PMS master ([09-ma
 | Categories | Modal CRUD, sort order (`/admin/menu`) |
 | Items | Modal CRUD: price, recipeSku, imageUrl, active; price history journal |
 | Tables | Modal CRUD `/admin/tables` — static codes per outlet |
-| Buffet planner | Module `fnb_buffet_planner` — `/admin/buffet` master Plans table + modals (header / composition / copy); publish merges into daily board |
-| Outlets | `/admin/settings` create (`POST /api/outlets`); optional copy menu + halls + tables from another outlet |
+| Buffet planner | Module `fnb_buffet_planner` — `/admin/buffet` Plans + Week template + Management + Staff meals; covers-rollup (plan + management + staff) |
+| Buffet cost (Waves 1–6) | Settings + template/management/staff + COMP + Forecast pack (guest-nights × key SKU); Finance FOOD HYBRID + non-FOOD budget — [ADR](../../docs/adr/fnb-buffet-cost-attribution.md) |
+| Outlets | `/admin/settings` create (`POST /api/outlets`); optional copy menu + halls + tables + contact overlay fields; edit phone/email/address/website (POS overlay, not org legal SoR) |
 | Recipes / BOM | Finance Manufacturing — FnB stores `recipeSku` + deep-link only |
 | Modifiers | groups, min/max select (later) |
 | Combos | Фаза 2 |

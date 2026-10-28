@@ -46,6 +46,8 @@ type Proc = {
   checkInOpen?: boolean;
   checkInDeadline?: string;
   status: string;
+  schedulingMode?: string | null;
+  resourceId?: string | null;
   patientRef: { id: string; fullName: string; refCode?: string };
   resource?: { id: string; code: string; name: string } | null;
   instruction?: NurseInstruction | null;
@@ -288,12 +290,20 @@ export default function NursePage() {
   }
 
   function timeRange(order: Proc) {
+    const openUnseated =
+      order.schedulingMode === "OPEN" && !order.resourceId && !order.resource;
+    if (openUnseated) {
+      return t("openAttendance", { defaultValue: "Open attendance" });
+    }
     const start = bakuTimeLabel(order.scheduledAt);
     const endSrc = order.endsAt || order.effectiveEndsAt;
     return endSrc ? `${start}–${bakuTimeLabel(endSrc)}` : start;
   }
 
   function cabinOf(order: Proc) {
+    if (order.schedulingMode === "OPEN" && !order.resourceId && !order.resource) {
+      return t("openAttendanceCabin", { defaultValue: "On arrival" });
+    }
     return order.resource?.name || order.resource?.code || "—";
   }
 

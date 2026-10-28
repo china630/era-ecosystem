@@ -20,14 +20,20 @@ System roles `CLINIC_ADMIN`, `FB_MANAGER`, and `OUTLET_ADMIN` receive `api:hotel
 
 ## Code numbering and system roles
 
-Revenue codes are numeric `BOCC`: business line (1 hotel, 2 clinic, 3 retail, 4 F&B), outlet digit (F&B: 1 Naftani, 2 disco bar, 3 Xudmani; `0` elsewhere), two-digit category. `99` is the discount of that line or outlet; `1098` is city tax. Each code maps through `HotelRevenueGlMapping` to one finance NAS leaf: `601.BB.CCC` for revenue (`601.01` hotel, `601.02` clinic, `601.03` retail, `601.04` F&B) and `521.01` for city tax (no VAT). Several F&B codes can share one leaf (all outlets' food credit `601.04.001`).
+Revenue codes are numeric by business line (1 hotel, 2 clinic, 3 retail, 4 F&B). Discount suffixes use `99` / `1099` / `2099` / `3099` / `4007`; `1098` is city tax. Each code maps through `HotelRevenueGlMapping` to one finance NAS leaf: `601.BB.CCC` (`601.01` hotel, `601.02` clinic, `601.03` retail, `601.04` F&B) and `521.01` for city tax. F&B uses **one code per category** (4001–4007); outlet is analytics on the posting, not a separate revenue code. Several outlets share one leaf (all food credits `601.04.001`).
+
+**Property template:** the platform keeps a full `REVENUE_CODE_ROLES` list (including `BOARD`, `TELECOM`, `RESORT_FEE` for leisure hotels). A Nafta edition activates only the Nafta subset — no BOARD/TREATMENT in-rate splits on the guest folio, no clinic inpatient/sanatorium program codes.
+
+**Nafta lodging law:** medical / PKG-* nights post **PKG** only; BAR / leisure nights post **ROOM** only. Package component lines are not separate guest-folio articles. Manual Extra charge uses `allowManualCharge`; Accept payment uses `allowManualPayment` (ROOM/PKG/CITY_TAX are pay-yes / charge-no).
 
 The hotel looks codes up in two ways and never by name text:
 
-- **System role.** `RevenueCode.systemRole` (unique per org, list in `src/lib/revenue-code-match.ts`) is the code the hotel posts by itself: room night, board, package, treatment, rate adjustment, early/late, minibar, laundry, transfer, tour, banquet, concierge food, medical, discount, city tax. A missing role refuses the post (`REVENUE_ROLE_MISSING`); there is no silent fallback to the room code. The role is set per code in Settings → Integration → GL.
-- **Exact code.** A satellite (clinic, F&B, retail) sends the numeric code; `findRevenueCodeByCode` matches it strictly on active codes.
+- **System role.** `RevenueCode.systemRole` (unique per org, list in `src/lib/revenue-code-match.ts`). A missing role refuses the post (`REVENUE_ROLE_MISSING`). Clinic a-la-carte uses `PROCEDURE` (not `MEDICAL`). F&B category roles: `FOOD`, `BEVERAGE`, `ALCOHOL`, `TOBACCO`, `HALL`, `ENTERTAINMENT`, `FB_DISCOUNT`.
+- **Exact code.** A satellite sends the numeric code; `findRevenueCodeByCode` matches active codes.
 
-Elektraweb text codes and the name/token matchers are removed. The Elektraweb importer stays as a one-off migration tool. Nafta data: `era-hotel-pms/scripts/ops/nafta-revenue-codes-2026-10.sql`, `era-finance-core/packages/database/prisma/scripts/ops/nafta-revenue-subaccounts-2026-10.sql`, clinic and F&B `scripts/ops/nafta-revenue-codes-2026-10.sql`.
+**Cross-satellite remap SSOT:** [`scripts/ops/nafta-revenue-remap-matrix.json`](../../scripts/ops/nafta-revenue-remap-matrix.json) (`old_code → new_code → new_gl`). Apply hotel DB, then clinic/F&B string fields, then finance NAS + historical journal lines. Runbook: [`scripts/ops/nafta-revenue-remap-all.md`](../../scripts/ops/nafta-revenue-remap-all.md).
+
+Elektraweb text codes and name/token matchers stay import-only. Legacy `**/nafta-revenue-codes-2026-10.sql` seeds are superseded by the remap matrix + `nafta-revenue-remap-*.mjs` ops scripts.
 
 ## Consequences
 

@@ -1,6 +1,5 @@
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { z } from "zod";
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       take: 50,
     });
-    return NextResponse.json(orders);
+    return jsonOk(orders);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -41,7 +40,7 @@ export async function POST(request: Request) {
         payloadJson: body.payload ? JSON.stringify(body.payload) : null,
       },
     });
-    return NextResponse.json(order, { status: 201 });
+    return jsonOk(order, 201);
   } catch (err) {
     return handleRouteError(err);
   }

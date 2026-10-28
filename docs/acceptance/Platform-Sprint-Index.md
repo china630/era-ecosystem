@@ -31,6 +31,7 @@ Current rollup: Gate ✅ (scaffold only) · BE 🟡 (TOPO **in** rollup — Plac
 | S-BILL-T3 | TIER_3 à-la-carte module toggle (retire ENTERPRISE_ALL_MODULES) | [~] | Orch + Finance mirror; `billing-toggle-tier.spec.ts`; Nest toast siblings; UAT-SMOKE-PLATFORM E-C.7; CP-BILL-OWNER-01 API; gate/sell unchanged |
 | S-BILL-SYNC | Toggle/bundle/connect → `syncForOrg` + F&B submodule CP-first gate | [~] | ADR; notify + F&B buffet CP-first (incl. partial-snapshot fallback); kit `onSharedOrgSnapshot` pull test; `synced:false` on modal/workforce/connect; UAT E-C.7 / FB-5; API; gate/sell unchanged |
 | S-6 | TOPO in BE rollup + return playbook | [x] | [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md); TOPO 🟡 paints BE |
-| S-7 | Org legal/branding profile (CP-ORG-PROFILE-01) | [~] | API+SCREEN + Finance Nest/industry Sync `orgProfile`; hotel/clinic prefer CP; AC 🟡 out of BE rollup; UAT open; **not** a gate/sell change |
+| S-7 | Org legal/branding profile (CP-ORG-PROFILE-01) | [~] | API+SCREEN + Sync `orgProfile`; dual-edit cutover; F&B/Retail `printChrome` + Outlet contacts; backfill script; AC 🟡 out of BE rollup; UAT open; **not** a gate/sell change |
+| S-NEST-API | Industry satellite API Nest cutover (hotel first) | [ ] | **P0 platform debt** recorded 2026-10-28 — [ADR](../adr/industry-satellite-api-nest-migration.md). Not started. Out of Gate/BE rollup until scheduled; mutation-audit uses fail-closed Next ([mutation-audit-depth](../../.cursor/plans/mutation-audit-depth.plan.md)) |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

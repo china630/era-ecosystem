@@ -8,7 +8,16 @@ export async function GET() {
     if (!session) return jsonError("Unauthorized", 401);
     const outlets = await prisma.outlet.findMany({
       orderBy: { code: "asc" },
-      select: { id: true, code: true, name: true, revenueCode: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        revenueCode: true,
+        phone: true,
+        email: true,
+        address: true,
+        website: true,
+      },
     });
     return jsonOk({ outlets });
   } catch (err) {

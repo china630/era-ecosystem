@@ -1,9 +1,8 @@
 /**
  * Layer A mutation belt (ERA reference) — docs/adr/era-mutation-audit-standard.md / FIN-AUD-01.
- * Глобальная фиксация мутаций: POST / PATCH / PUT / DELETE (кроме auth login/register/refresh).
- * Записывает oldValues/newValues для Invoice, Employee, Product, JournalEntry (quick-expense),
- * иначе — HTTP_MUTATION с телом запроса в changes. Хеш SHA-256 для проверки целостности.
- * Deny-list below should stay aligned with kit DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES (AC-FIN-AUD).
+ * Global mutation capture: POST / PATCH / PUT / DELETE.
+ * Deny-list = kit DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES + FINANCE_MUTATION_AUDIT_EXEMPT_EXTRA (AC-FIN-AUD).
+ * Entity snapshots for Invoice/Employee/Product/JournalEntry; else HTTP_MUTATION + hash-chain.
  */
 import {
   CallHandler,
@@ -16,6 +15,7 @@ import { Observable, from, of } from "rxjs";
 import { mergeMap } from "rxjs/operators";
 import type { AuthUser } from "../auth/types/auth-user";
 import { AuditService } from "./audit.service";
+import { isFinanceMutationAuditExempt } from "./mutation-audit-exempt";
 
 const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
@@ -42,15 +42,7 @@ export class AuditMutationInterceptor implements NestInterceptor {
     }
 
     const pathRaw = req.path ?? req.url ?? "";
-    if (
-      pathRaw.includes("/auth/login") ||
-      pathRaw.includes("/auth/register-user") ||
-      pathRaw.includes("/auth/register") ||
-      pathRaw.includes("/auth/refresh") ||
-      pathRaw.includes("/billing/webhooks") ||
-      pathRaw.includes("/early-access/events") ||
-      pathRaw.includes("/integrations/drakaris/")
-    ) {
+    if (isFinanceMutationAuditExempt(pathRaw)) {
       return next.handle();
     }
 

@@ -1,6 +1,5 @@
-import { handleRouteError, jsonError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { z } from "zod";
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashStaffPin } from "@/lib/labor-pin";
 import { requestOrganizationId } from "@/lib/request-organization";
@@ -33,7 +32,7 @@ export async function GET(req: Request) {
         globalPersonId: true,
       },
     });
-    return NextResponse.json({ roster });
+    return jsonOk({ roster });
   } catch (err) {
     return handleRouteError(err);
   }
@@ -99,7 +98,7 @@ export async function POST(req: Request) {
         active: true,
       },
     });
-    return NextResponse.json(row, { status: 201 });
+    return jsonOk(row, 201);
   } catch (err) {
     return handleRouteError(err);
   }

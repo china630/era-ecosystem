@@ -471,7 +471,7 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 ## Nafta W1–W2 gap closure (2026-06-13)
 
 - [x] Satellite mutation audit — first-wave storage + helpers + `GET /api/admin/audit` ([ADR satellite-mutation-audit](../../docs/adr/satellite-mutation-audit.md))
-- [~] Ecosystem mutation audit Layer A HTTP belt — kit + `jsonOk` + `/admin/audit` HTTP_MUTATION ([ADR era-mutation-audit-standard](../../docs/adr/era-mutation-audit-standard.md)); HOT-AUD-01 API until UAT; CI `check:mutation-audit-belt`
+- [~] Ecosystem mutation audit Layer A HTTP belt — kit + `jsonOk` + fail-closed CI; Layer B stay/folio + CashShift + night-audit DAY_CLOSE + `/admin/audit` ([ADR era-mutation-audit-standard](../../docs/adr/era-mutation-audit-standard.md)); HOT-AUD-01 API until UAT; `npm run check:mutation-audit-belt`
 - [x] Agency profitability — `/reports/agency-profitability`
 - [x] OTA pull — `POST /api/channel/sync/pull` + cancel/modify ingest tests
 - [x] glPosted read-only — `FiscalDocument.glPostedAt` + `POST /api/integration/gl-status`
@@ -554,6 +554,7 @@ Wave A (Nafta ops slice) + Wave B (OTA safety / ARI / honest live STUB):
 - [x] HOT-NA-03 EOD no-shows / room-moves / VIP + CSV
 - [x] HOT-BEO-01 printable HTML day sheet + preferred folio on confirm
 - [x] HOT-CL-04 agency-ledger snapshot meta + Push + Finance deep link (OpsUI SHIPPED)
+- [x] HOT-AG-COMM-01…04 Agency commission payable AP hub `/distribution/agency-commission` (accrual/statement/forecast; Finance event + paid/offset callbacks; hold/dispute). Not City Ledger AR — ADR hotel-agency-commission-payable. UAT-SMOKE §27c open → AC-HOT-AG-COMM 🟡
 - [x] HOT-CH-01 local CM cancel-by-ref + error journal + health; HOT-CH-02 live vendor **STUB**
 - [x] UAT-SMOKE §28–§29 · COVERAGE_MATRIX · module-map · MENU-IA-CANON
 

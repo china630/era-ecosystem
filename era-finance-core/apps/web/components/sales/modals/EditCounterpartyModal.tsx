@@ -86,6 +86,18 @@ export function EditCounterpartyModal({
     }>
   >([]);
   const [agencySnapshotsBusy, setAgencySnapshotsBusy] = useState(false);
+  const [commissionSnapshots, setCommissionSnapshots] = useState<
+    Array<{
+      id: string;
+      agencyCode: string;
+      hotelBatchId: string;
+      asOfDate: string;
+      totalAmount: string | number;
+      lineCount: number;
+      currency: string;
+    }>
+  >([]);
+  const [commissionSnapshotsBusy, setCommissionSnapshotsBusy] = useState(false);
 
   const lastAutoLookup = useRef<string>("");
 
@@ -174,11 +186,42 @@ export function EditCounterpartyModal({
     }
   }, [counterpartyId]);
 
+  const loadCommissionSnapshots = useCallback(async () => {
+    if (!counterpartyId) return;
+    setCommissionSnapshotsBusy(true);
+    try {
+      const res = await apiFetch(
+        `/api/counterparties/${counterpartyId}/agency-commission-payable-snapshots`,
+      );
+      if (!res.ok) {
+        setCommissionSnapshots([]);
+        return;
+      }
+      const data = (await res.json()) as {
+        items: Array<{
+          id: string;
+          agencyCode: string;
+          hotelBatchId: string;
+          asOfDate: string;
+          totalAmount: string | number;
+          lineCount: number;
+          currency: string;
+        }>;
+      };
+      setCommissionSnapshots(data.items ?? []);
+    } catch {
+      setCommissionSnapshots([]);
+    } finally {
+      setCommissionSnapshotsBusy(false);
+    }
+  }, [counterpartyId]);
+
   useEffect(() => {
     if (!open || !counterpartyId) return;
     void load();
     void loadAgencySnapshots();
-  }, [open, counterpartyId, load, loadAgencySnapshots]);
+    void loadCommissionSnapshots();
+  }, [open, counterpartyId, load, loadAgencySnapshots, loadCommissionSnapshots]);
 
   async function checkVoen({ allowFallback }: { allowFallback: boolean }) {
     const d = digits;
@@ -537,6 +580,63 @@ export function EditCounterpartyModal({
                         </td>
                         <td className="px-2 py-1.5 text-right tabular-nums">{String(row.periodCharges)}</td>
                         <td className="px-2 py-1.5 text-right tabular-nums">{String(row.periodPayments)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : null}
+        {!loadBusy && counterpartyId ? (
+          <div className="border-t border-[#E5E7EB] pt-4">
+            <h4 className="mb-2 text-[13px] font-semibold text-[#34495E]">
+              {t("counterparties.agencyCommissionPayableTitle", {
+                defaultValue: "Agency commission payable (hotel)",
+              })}
+            </h4>
+            {commissionSnapshotsBusy ? (
+              <p className="mb-0 text-[13px] text-[#7F8C8D]">{t("common.loading")}</p>
+            ) : commissionSnapshots.length === 0 ? (
+              <p className="mb-0 text-[13px] text-[#7F8C8D]">
+                {t("counterparties.agencyCommissionPayableEmpty", {
+                  defaultValue: "No commission payable snapshots from hotel PMS.",
+                })}
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-[#D5DADF]">
+                <table className="w-full min-w-[28rem] text-left text-[12px]">
+                  <thead className="bg-[#F4F5F7] text-[#7F8C8D]">
+                    <tr>
+                      <th className="px-2 py-1.5 font-medium">
+                        {t("counterparties.agencyLedgerSnapshotsAsOf")}
+                      </th>
+                      <th className="px-2 py-1.5 font-medium">
+                        {t("counterparties.agencyCommissionPayableBatch", {
+                          defaultValue: "Hotel batch",
+                        })}
+                      </th>
+                      <th className="px-2 py-1.5 text-right font-medium">
+                        {t("counterparties.agencyCommissionPayableAmount", {
+                          defaultValue: "Amount",
+                        })}
+                      </th>
+                      <th className="px-2 py-1.5 text-right font-medium">
+                        {t("counterparties.agencyCommissionPayableLines", {
+                          defaultValue: "Lines",
+                        })}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {commissionSnapshots.map((row) => (
+                      <tr key={row.id} className="border-t border-[#E5E7EB]">
+                        <td className="px-2 py-1.5 tabular-nums">{row.asOfDate}</td>
+                        <td className="px-2 py-1.5 font-mono text-[11px]">{row.hotelBatchId}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">
+                          {String(row.totalAmount)} {row.currency}
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{row.lineCount}</td>
                       </tr>
                     ))}
                   </tbody>

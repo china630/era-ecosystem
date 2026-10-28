@@ -6,7 +6,7 @@ import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { requireOpenShift } from "@/lib/open-shift";
 
 const lineSchema = z.object({
@@ -76,7 +76,7 @@ export async function POST(
   const updated = await recalculateTicketTotals(id);
   const lines = await prisma.ticketLine.findMany({ where: { ticketId: id } });
 
-  return NextResponse.json({ ...updated, lines }, { status: 201 });
+  return jsonOk({ ...updated, lines }, 201);
   } catch (err) {
     return handleRouteError(err);
   }

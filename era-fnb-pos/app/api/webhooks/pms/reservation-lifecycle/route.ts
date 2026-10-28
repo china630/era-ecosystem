@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -18,5 +19,5 @@ export async function POST(request: Request) {
   }
 
   const body = payloadSchema.parse(await request.json());
-  return NextResponse.json({ received: true, ...body });
+  return jsonOk({ received: true, ...body });
 }

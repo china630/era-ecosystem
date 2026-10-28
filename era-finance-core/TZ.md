@@ -1075,7 +1075,7 @@ Multi-GAAP отчётность: UI NAS/IFRS toggle + `ledgerType` на backend 
 
 ### Поведение
 
-- **Глобальный перехватчик** NestJS (`AuditMutationInterceptor`): автоматически логирует **мутации** (`POST`, `PATCH`, `PUT`, `DELETE`) с привязкой к **`userId`** и **`organizationId`** (из JWT), за исключением публичных маршрутов auth (`/auth/login`, `/auth/register`, `/auth/refresh`). Запись в `audit_logs` выполняется **после** формирования HTTP-ответа **без ожидания** клиентом (fire-and-forget): снижает задержку ответа; при аварийном завершении процесса сразу после ответа теоретически возможна потеря последней audit-строки (см. PRD §10.0).
+- **Глобальный перехватчик** NestJS (`AuditMutationInterceptor`): автоматически логирует **мутации** (`POST`, `PATCH`, `PUT`, `DELETE`) с привязкой к **`userId`** и **`organizationId`** (из JWT). Deny-list = kit `DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES` + Finance extras in `mutation-audit-exempt.ts` (auth login/register/refresh/register-user, health/locale, early-access events, billing webhooks, Drakaris, `POST /api/admin/audit/*` integrity/verify). Запись в `audit_logs` выполняется **после** формирования HTTP-ответа **без ожидания** клиентом (fire-and-forget): снижает задержку ответа; при аварийном завершении процесса сразу после ответа теоретически возможна потеря последней audit-строки (см. PRD §10.0).
 - Для сущностей **Invoice**, **Employee**, **Product** и для операций с **проводками** (например `POST /accounting/quick-expense` → снимок транзакции и строк `JournalEntry`) сохраняются **`oldValues`** и **`newValues`** (JSON); для прочих мутаций — запись типа `HTTP_MUTATION` с телом запроса в поле `changes`.
 - В каждую запись записываются **`clientIp`**, **`userAgent`**, **`hash`** (SHA-256 от канонического JSON полей + секрет).
 - **Проверка целостности:** `POST /api/audit/integrity-check` (Owner/Admin) — сверка хешей по организации; строки без хеша (legacy) учитываются отдельно.
@@ -2196,7 +2196,7 @@ enum SubscriptionTier {
 - `PaymentOrder.provider` — это **строка** (default `"pasha_bank"`), миграция схемы не нужна; для нового провайдера используется значение `"drakaris"`.
 - `PaymentProviderService.createOrder` поддерживает выбор провайдера через `dto.provider` (`"pasha_bank" | "drakaris"`); для Drakaris — `paymentUrl: null` + инструкции UI.
 - Отдельного `billing-webhooks.controller.ts` нет. Drakaris завершает уже созданный `PaymentOrder` через `finalizePaidOrderPublic`, не через HMAC-вебхук PAŞA.
-- `apps/api/src/audit/audit-mutation.interceptor.ts` — `pathRaw.includes('/integrations/drakaris/')` добавлен в исключения (yığım не имеет нашего user/org контекста); аудит платежа продолжает идти через `auditService.logPlatformBillingPaymentApplied`.
+- Deny-list: `/api/integrations/drakaris` in `FINANCE_MUTATION_AUDIT_EXEMPT_EXTRA` (`mutation-audit-exempt.ts`; yığım не имеет нашего user/org контекста); аудит платежа продолжает идти через `auditService.logPlatformBillingPaymentApplied`.
 
 **Env (корневой `.env.example`):**
 

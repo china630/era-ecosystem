@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { isSatelliteEvent } from "@era/contracts";
@@ -49,5 +50,5 @@ export async function POST(req: Request) {
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error }, { status: 502 });
   }
-  return NextResponse.json({ ok: true, event });
+  return jsonOk({ ok: true, event });
 }

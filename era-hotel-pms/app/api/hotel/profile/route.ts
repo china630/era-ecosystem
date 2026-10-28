@@ -5,6 +5,7 @@ import { getHotelProfile, upsertHotelProfile } from '@/lib/services/hotel.servic
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { resolveCpLetterheadLocks } from '@/lib/services/cp-letterhead-locks';
 
 const optionalText = (max: number) =>
   z
@@ -38,7 +39,8 @@ export async function GET() {
       PERMISSIONS.REPORTS_READ,
     ]);
     const profile = await getHotelProfile();
-    return jsonOk(serialize(profile));
+    const controlPlane = await resolveCpLetterheadLocks();
+    return jsonOk(serialize({ ...(profile ?? {}), controlPlane }));
   } catch (err) {
     return handleRouteError(err);
   }
@@ -49,8 +51,16 @@ export async function PUT(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const body = schema.parse(await request.json());
-    const profile = await upsertHotelProfile(body);
-    return jsonOk(serialize(profile));
+    const locks = await resolveCpLetterheadLocks();
+    const next = { ...body };
+    // CP-ORG-PROFILE-01: strip legal chrome fields owned by orch when Sync cache present.
+    if (locks.address) next.address = undefined;
+    if (locks.phone) next.phone = undefined;
+    if (locks.email) next.email = undefined;
+    if (locks.website) next.website = undefined;
+    const profile = await upsertHotelProfile(next);
+    const controlPlane = locks;
+    return jsonOk(serialize({ ...(profile ?? {}), controlPlane }));
   } catch (err) {
     return handleRouteError(err);
   }

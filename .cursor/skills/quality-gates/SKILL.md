@@ -15,7 +15,7 @@ npm run check:acceptance
 npm run run:quality-gates   # includes lint:baku-clock
 ```
 
-**Before git push / «шип + пуш»** (quality-gates + scoped app tests — skill `era-git-ship`):
+**Before git push / «шип + пуш»** (quality-gates + scoped app tests — skill `era-git-ship`; that skill also awaits Deploy staging after merge by default):
 
 ```bash
 npm run ship:prepush

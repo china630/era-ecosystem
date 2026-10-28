@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { createBookingAppointment } from "@era/satellite-kit";
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
       include: { patientRef: true, practitioner: true },
     });
 
-    return NextResponse.json({ appointment }, { status: 201 });
+    return jsonOk({ appointment }, 201);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "booking failed";
     return NextResponse.json({ error: msg }, { status: 400 });

@@ -1,4 +1,4 @@
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +41,7 @@ export async function PATCH(
       include: { ticket: { include: { table: true, outlet: true } } },
     });
 
-    return NextResponse.json(updated);
+    return jsonOk(updated);
   } catch (err) {
     return handleRouteError(err);
   }

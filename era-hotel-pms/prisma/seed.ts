@@ -178,23 +178,43 @@ async function main() {
   });
 
   const revRoom = await prisma.revenueCode.create({
-    data: { code: 'ROOM', systemRole: 'ROOM', name: 'Room revenue', taxTag: '18%', departmentId: deptAcc.id },
+    data: {
+      code: 'ROOM',
+      systemRole: 'ROOM',
+      name: 'Room revenue',
+      taxTag: '18%',
+      departmentId: deptAcc.id,
+      allowManualCharge: false,
+      reportType: 'LODGING',
+    },
   });
   const revFood = await prisma.revenueCode.create({
     data: { code: 'FOOD', systemRole: 'FOOD', name: 'Food & beverage', taxTag: '18%', departmentId: deptRest.id },
   });
   const revMedical = await prisma.revenueCode.create({
-    data: { code: 'MEDICAL', systemRole: 'MEDICAL', name: 'Medical procedures', departmentId: deptMed.id },
+    data: {
+      code: 'PROCEDURE',
+      systemRole: 'PROCEDURE',
+      name: 'Medical procedures',
+      departmentId: deptMed.id,
+      reportType: 'MEDICAL',
+    },
   });
   const revPkg = await prisma.revenueCode.create({
-    data: { code: 'PKG', systemRole: 'PKG', name: 'Medical package bundle', departmentId: deptMed.id },
+    data: {
+      code: 'PKG',
+      systemRole: 'PKG',
+      name: 'Medical package bundle',
+      departmentId: deptMed.id,
+      allowManualCharge: false,
+      reportType: 'LODGING',
+    },
   });
-  const revTreatment = await prisma.revenueCode.create({
-    data: { code: 'TREATMENT', systemRole: 'TREATMENT', name: 'Included treatment', departmentId: deptMed.id },
-  });
-  const revBoard = await prisma.revenueCode.create({
+  // Framework-only BOARD (not Nafta folio catalog). TREATMENT retired → PKG posts only.
+  await prisma.revenueCode.create({
     data: { code: 'BOARD', systemRole: 'BOARD', name: 'Included board', departmentId: deptRest.id },
   });
+  void revMedical;
   // Same SKU hotel_transfers / ACC department; distinct P&L articles (airport vs excursion).
   const revTransfer = await prisma.revenueCode.create({
     data: { code: 'TRANSFER', systemRole: 'TRANSFER', name: 'Airport transfer', taxTag: '18%', departmentId: deptAcc.id },
@@ -283,9 +303,8 @@ async function main() {
     createdPkgs.push(rp);
     await prisma.ratePlanPackageLine.createMany({
       data: [
-        { ratePlanId: rp.id, revenueCodeId: revRoom.id, amount: 50, sortOrder: 1 },
-        { ratePlanId: rp.id, revenueCodeId: revTreatment.id, amount: 33, sortOrder: 2 },
-        { ratePlanId: rp.id, revenueCodeId: revBoard.id, amount: 17, sortOrder: 3 },
+        // Single PKG sell; night audit / san-package post PKG only (no BOARD/TREATMENT folio lines).
+        { ratePlanId: rp.id, revenueCodeId: revPkg.id, amount: 100, sortOrder: 1 },
       ],
     });
   }
