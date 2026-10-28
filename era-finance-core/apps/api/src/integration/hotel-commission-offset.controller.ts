@@ -1,11 +1,14 @@
-import { Body, Controller, Post } from "@nestjs/common";
-import { ApiOperation, ApiProperty, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from "@nestjs/swagger";
 import { ArrayMinSize, IsArray, IsString } from "class-validator";
+import { CP_PERMISSION } from "@era/contracts";
 import {
   PEER_SATELLITE_HOTEL,
   resolvePeerSatelliteBaseUrl,
   resolveSatelliteEventServiceToken,
 } from "@era/satellite-kit";
+import { Permissions } from "../common/decorators/permissions.decorator";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 
 class OffsetDto {
@@ -25,9 +28,12 @@ class OffsetDto {
  * Does not auto-net on hotel City Ledger; accountant posts GL separately.
  */
 @ApiTags("integration")
+@ApiBearerAuth("bearer")
 @Controller("integration/hotel-commission-offset")
+@UseGuards(PermissionsGuard)
 export class HotelCommissionOffsetController {
   @Post()
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
   @ApiOperation({ summary: "Notify hotel that commission lines were offset against AR" })
   async apply(@OrganizationId() organizationId: string, @Body() dto: OffsetDto) {
     const token = resolveSatelliteEventServiceToken();

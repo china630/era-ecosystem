@@ -61,8 +61,8 @@ export class InventoryController {
   constructor(
     private readonly inventory: InventoryService,
     private readonly statutoryForms: StatutoryFormsService,
-    private readonly buffetFoodCostRun: BuffetFoodCostRunService,
-    private readonly outletBudgetRun: OutletBudgetRunService,
+    private readonly buffetFoodCostRunService: BuffetFoodCostRunService,
+    private readonly outletBudgetRunService: OutletBudgetRunService,
   ) {}
 
   @Get("shipments/:id/forma-5")
@@ -150,6 +150,7 @@ export class InventoryController {
   }
 
   @Post("buffet-food-cost-run")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "HYBRID FOOD buffet cost run: usage, attributed, residual, theoretical, variance, soft warnings (Wave 5)",
@@ -158,7 +159,7 @@ export class InventoryController {
     @OrganizationId() organizationId: string,
     @Body() dto: BuffetFoodCostRunDto,
   ) {
-    return this.buffetFoodCostRun.run(organizationId, {
+    return this.buffetFoodCostRunService.run(organizationId, {
       fromYmd: dto.from,
       toYmd: dto.to,
       satelliteOutletCode: dto.satelliteOutletCode,
@@ -192,7 +193,7 @@ export class InventoryController {
       const n = Number(raw);
       return Number.isFinite(n) && n >= 0 ? n : undefined;
     };
-    return this.buffetFoodCostRun.run(organizationId, {
+    return this.buffetFoodCostRunService.run(organizationId, {
       fromYmd: from,
       toYmd: to,
       satelliteOutletCode,
@@ -204,6 +205,7 @@ export class InventoryController {
   }
 
   @Post("outlet-budget-run")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
   @ApiOperation({
     summary:
       "Non-FOOD budget plan/fact (CHEMICAL/CONSUMABLE/TABLEWARE/INVENTORY_GT) — Wave 6",
@@ -212,7 +214,7 @@ export class InventoryController {
     @OrganizationId() organizationId: string,
     @Body() dto: OutletBudgetRunDto,
   ) {
-    return this.outletBudgetRun.run(organizationId, {
+    return this.outletBudgetRunService.run(organizationId, {
       fromYmd: dto.from,
       toYmd: dto.to,
       satelliteOutletCode: dto.satelliteOutletCode,
@@ -229,7 +231,7 @@ export class InventoryController {
     @Query("to") to: string,
     @Query("satelliteOutletCode") satelliteOutletCode?: string,
   ) {
-    return this.outletBudgetRun.run(organizationId, {
+    return this.outletBudgetRunService.run(organizationId, {
       fromYmd: from,
       toYmd: to,
       satelliteOutletCode,
@@ -243,7 +245,7 @@ export class InventoryController {
     @OrganizationId() organizationId: string,
     @Body() dto: SaveOutletBudgetPlanDto,
   ) {
-    return this.outletBudgetRun.savePlan(organizationId, {
+    return this.outletBudgetRunService.savePlan(organizationId, {
       satelliteOutletCode: dto.satelliteOutletCode,
       planByClass: dto.planByClass ?? {},
       planPeriodDays: dto.planPeriodDays,
