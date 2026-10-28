@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Get,
   Headers,
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Patch,
 } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { assertMatchingServiceToken } from "../common/utils/internal-service-token.util";
@@ -58,5 +60,24 @@ export class InternalOrganizationsController {
   ) {
     assertMatchingServiceToken(auth, xToken);
     return this.profiles.getSnapshot(organizationId);
+  }
+
+  /**
+   * S2S: Finance publishes primary bank line into CP profile (CP-ORG-PROFILE-01 Track A).
+   * Body: `{ bankLine: string | null }`.
+   */
+  @Patch(":id/profile-bank-line")
+  async patchProfileBankLine(
+    @Param("id", ParseUUIDPipe) organizationId: string,
+    @Body() body: { bankLine?: string | null },
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    assertMatchingServiceToken(auth, xToken);
+    const bankLine =
+      body?.bankLine === undefined || body.bankLine === null
+        ? null
+        : String(body.bankLine);
+    return this.profiles.patchBankLineFromService(organizationId, bankLine);
   }
 }

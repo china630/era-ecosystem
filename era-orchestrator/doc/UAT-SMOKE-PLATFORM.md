@@ -217,7 +217,7 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 
 | Surface | Path | Check |
 |---------|------|-------|
-| Org profile (CP-ORG-PROFILE-01) | `/workspace/organization` | Edit trade name, logo URL, multi phone/email (primary per kind), legal address; Save; Reload. DEPARTMENT banner when operatingMode=DEPARTMENT. After Super-admin Sync, hotel/clinic/finance print prefer `orgProfile` cache. **Open** — not Demo sign-off. |
+| Org profile (CP-ORG-PROFILE-01) | `/workspace/organization` | Edit trade name, logo URL, multi phone/email (primary per kind), legal address; Save; Reload. DEPARTMENT banner when operatingMode=DEPARTMENT. After Super-admin Sync, hotel/clinic/finance print prefer `orgProfile` cache; Finance legal fields RO + reject dual-edit; hotel/clinic header branding locks when CP present; primary bank → orch `bankLine`; F&B/Retail pay returns `printChrome` (org + outlet overlay). **Open** — not Demo sign-off. |
 | Workforce employments | `/workspace/workforce/employments` | ⋯ Login & access: tick/untick Hotel/Clinic/F&B (incl. hire-default), Save; `emp-{staffCode}` + copy org ID + Open login. **Clock:** default hireDate / personnel-order effectiveDate = **Asia/Baku** (`todayBakuYmd`), not UTC slice. |
 | Workforce attendance | `/workspace/workforce/attendance` | Punch list **occurredAt** labels = Asia/Baku via `bakuDateTimeDisplay` (browser TZ ignored). |
 | Workforce bindings | `/workspace/workforce/security/bindings` | Person column; org-unit / position dropdowns list units (not “No matches”) |
