@@ -298,6 +298,7 @@ export default function WorkspacePage() {
   const { snapshot, loading, refresh } = useSubscription();
   const t = useTranslations("workspace");
   const tCommon = useTranslations("common");
+  const tMods = useTranslations("workspace.modulesModal");
   const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addingWorkforce, setAddingWorkforce] = useState(false);
@@ -343,6 +344,10 @@ export default function WorkspacePage() {
         toast.error(orchBillingErrorMessage(err, tCommon("failed")));
         return;
       }
+      const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+      if (body?.synced === false) {
+        toast.message(tMods("syncFailed"));
+      }
       await refresh();
     } finally {
       setAddingWorkforce(false);
@@ -364,7 +369,16 @@ export default function WorkspacePage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ satelliteKey: workspaceSatelliteKey(key) }),
         });
-        if (res.ok) await refresh();
+        if (!res.ok) {
+          const err = await res.json().catch(() => null);
+          toast.error(orchBillingErrorMessage(err, tCommon("failed")));
+          return;
+        }
+        const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+        if (body?.synced === false) {
+          toast.message(tMods("syncFailed"));
+        }
+        await refresh();
       } finally {
         setConnectingKey(null);
       }

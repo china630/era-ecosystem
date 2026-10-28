@@ -29,7 +29,13 @@ describe("AdminBillingService.setBillingCoverage", () => {
       },
       $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     };
-    const svc = new AdminBillingService(prisma as never, {} as never, {} as never);
+    const bindSync = { syncForOrg: jest.fn().mockResolvedValue({ results: [] }) };
+    const svc = new AdminBillingService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      bindSync as never,
+    );
     return { svc, tx };
   }
 

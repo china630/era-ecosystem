@@ -28,6 +28,7 @@ import {
   TOGGLE_MODULE_META_PURPOSE,
 } from "./billing-module-toggle.helpers";
 import { OrganizationModuleService } from "./organization-module.service";
+import { BillingSatelliteNotifyService } from "./billing-satellite-notify.service";
 import { BillingSettlementService } from "./billing-settlement.service";
 
 @Injectable()
@@ -40,6 +41,7 @@ export class PaymentProviderService {
     private readonly billingPlatform: BillingPlatformService,
     private readonly subscriptionAccess: SubscriptionAccessService,
     private readonly orgModules: OrganizationModuleService,
+    private readonly satelliteNotify: BillingSatelliteNotifyService,
     private readonly pasha: PashaBankPaymentProvider,
     private readonly drakaris: DrakarisPaymentProvider,
     private readonly config: ConfigService,
@@ -374,6 +376,7 @@ export class PaymentProviderService {
    * TZ §14.8 / v12.7: сначала проверяем владельца для платформенного счёта, затем PAID → продление → SubscriptionInvoice + BillingInvoiceItem.
    */
   private async finalizePaidOrder(orderId: string): Promise<void> {
+    let modulesTouchedOrgId: string | null = null;
     await this.prisma.$transaction(async (tx) => {
       const current = await tx.paymentOrder.findUnique({
         where: { id: orderId },
@@ -443,6 +446,7 @@ export class PaymentProviderService {
             pm.pricePerMonth,
           );
         }
+        modulesTouchedOrgId = current.organizationId;
       } else if (current.monthsApplied > 0) {
         await this.billing.extendSubscriptionByMonths(
           current.organizationId,
@@ -472,6 +476,9 @@ export class PaymentProviderService {
           : undefined,
       });
     });
+    if (modulesTouchedOrgId) {
+      await this.satelliteNotify.afterModuleChange(modulesTouchedOrgId);
+    }
   }
 
   /** Public callback URL registered with payment providers (orchestrator v1 webhooks). */

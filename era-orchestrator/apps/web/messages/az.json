@@ -853,6 +853,7 @@
       "quantityApply": "Tətbiq et",
       "disableBillingNotice": "Modul cari ayın hesab-fakturasında qalır; giriş ay sonunadək.",
       "enabled": "Modul aktiv edildi",
+      "syncFailed": "Modul yazıldı, amma Sync uğursuz oldu — Super-admin Sync və ya yenidən cəhd edin.",
       "connectFailed": "Satellit qoşulmadı — yenidən cəhd edin və ya dəstəyə yazın.",
       "billingFootnote": "Söndürülən modullar cari ayın post-paid hesabına daxil olur."
     },

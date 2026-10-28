@@ -3,6 +3,7 @@ import { Prisma } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { catalogModuleKeyToPatch } from "./billing-module-toggle.helpers";
+import { BillingSatelliteNotifyService } from "./billing-satellite-notify.service";
 import { bakuMonthBounds, billingPeriodKeyBaku } from "./baku-billing.util";
 
 /** Last instant of the Asia/Baku billing month (name kept for call-site stability). */
@@ -17,6 +18,7 @@ export class OrganizationModuleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly subscriptionAccess: SubscriptionAccessService,
+    private readonly satelliteNotify: BillingSatelliteNotifyService,
   ) {}
 
   async upsertActiveInTx(
@@ -88,6 +90,7 @@ export class OrganizationModuleService {
         accessUntil: { lt: now },
       },
     });
+    const touchedOrgs = new Set<string>();
     let n = 0;
     for (const row of expired) {
       await this.prisma.$transaction(async (tx) => {
@@ -105,7 +108,11 @@ export class OrganizationModuleService {
           },
         });
       });
+      touchedOrgs.add(row.organizationId);
       n++;
+    }
+    for (const orgId of touchedOrgs) {
+      await this.satelliteNotify.afterModuleChange(orgId);
     }
     if (n > 0) {
       this.logger.log(
@@ -122,6 +129,7 @@ export class OrganizationModuleService {
     const pending = await this.prisma.organizationModule.findMany({
       where: { pendingDeactivation: true },
     });
+    const touchedOrgs = new Set<string>();
     let n = 0;
     for (const row of pending) {
       await this.prisma.$transaction(async (tx) => {
@@ -139,7 +147,11 @@ export class OrganizationModuleService {
           },
         });
       });
+      touchedOrgs.add(row.organizationId);
       n++;
+    }
+    for (const orgId of touchedOrgs) {
+      await this.satelliteNotify.afterModuleChange(orgId);
     }
     if (n > 0) {
       this.logger.log(`Finalized ${n} pending module deactivation(s)`);

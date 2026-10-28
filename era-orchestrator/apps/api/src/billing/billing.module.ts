@@ -4,6 +4,7 @@ import { AdminModule } from "../admin/admin.module";
 import { AccessControlModule } from "../access/access-control.module";
 import { AuditModule } from "../audit/audit.module";
 import { PrismaModule } from "../prisma/prisma.module";
+import { SatelliteEventsModule } from "../satellite-events/satellite-events.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
 import { BillingPublicController } from "./billing-public.controller";
 import { BillingWebhooksController } from "./billing-webhooks.controller";
@@ -21,6 +22,7 @@ import { BillingSettlementService } from "./billing-settlement.service";
 import { BillingToggleService } from "./billing-toggle.service";
 import { BillingBundleToggleService } from "./billing-bundle-toggle.service";
 import { BillingEntitlementService } from "./billing-entitlement.service";
+import { BillingSatelliteNotifyService } from "./billing-satellite-notify.service";
 import { OrganizationModuleService } from "./organization-module.service";
 import { OrganizationBundleService } from "./organization-bundle.service";
 import { PaymentProviderService } from "./payment-provider.service";
@@ -37,6 +39,7 @@ import { ReferralsModule } from "../referrals/referrals.module";
     AccessControlModule,
     AdminModule,
     AuditModule,
+    forwardRef(() => SatelliteEventsModule),
     forwardRef(() => DrakarisModule),
     forwardRef(() => WorkforceHubModule),
   ],
@@ -52,6 +55,7 @@ import { ReferralsModule } from "../referrals/referrals.module";
     PaymentProviderService,
     PashaBankPaymentProvider,
     BillingToggleService,
+    BillingSatelliteNotifyService,
     BillingNotificationService,
     BillingMonthlyService,
     BillingMonthlyQueueService,
@@ -67,6 +71,7 @@ import { ReferralsModule } from "../referrals/referrals.module";
     BillingPremiumActivationService,
     BillingMeterService,
     BillingSettlementService,
+    BillingSatelliteNotifyService,
   ],
 })
 export class BillingModule {}

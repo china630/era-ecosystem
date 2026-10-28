@@ -213,6 +213,7 @@ export default function WorkforceEmploymentsPage() {
   const t = useTranslations("workforceEmployments");
   const tCommon = useTranslations("common");
   const tSys = useTranslations("workspace.systems");
+  const tMods = useTranslations("workspace.modulesModal");
   const tOrders = useTranslations("workforceOrders");
 
   const satelliteLabel = useCallback(
@@ -1660,6 +1661,10 @@ export default function WorkforceEmploymentsPage() {
       const err = res ? await res.json().catch(() => null) : null;
       toast.error(orchBillingErrorMessage(err, tCommon("failed")));
       return;
+    }
+    const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+    if (body?.synced === false) {
+      toast.message(tMods("syncFailed"));
     }
     setNotEntitled(false);
     await load();

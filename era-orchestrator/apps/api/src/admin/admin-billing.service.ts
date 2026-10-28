@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@era365/database";
 import { bakuEndOfDayUtc } from "@era/satellite-kit/time";
 import type { TierQuotas } from "../constants/quotas";
+import { SatelliteOrgBindSyncService } from "./satellite-org-bind-sync.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
 import type { AdminSubscriptionPatchDto } from "./dto/admin-subscription-patch.dto";
@@ -136,10 +138,13 @@ function serializePricingBundle(b: {
 
 @Injectable()
 export class AdminBillingService {
+  private readonly log = new Logger(AdminBillingService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly systemConfig: SystemConfigService,
     private readonly pricing: PricingService,
+    private readonly bindSync: SatelliteOrgBindSyncService,
   ) {}
 
   async patchSubscription(
@@ -189,20 +194,26 @@ export class AdminBillingService {
       data.isTrial = dto.isTrial;
     }
 
+    const modulesChanged = dto.activeModules !== undefined;
+
     if (existing.subscription) {
       if (Object.keys(data).length === 0) {
         throw new BadRequestException("Nothing to update");
       }
-      return this.prisma.organizationSubscription.update({
+      const updated = await this.prisma.organizationSubscription.update({
         where: { organizationId },
         data,
       });
+      if (modulesChanged) {
+        await this.syncModulesBestEffort(organizationId);
+      }
+      return updated;
     }
 
     if (Object.keys(data).length === 0) {
       throw new BadRequestException("Nothing to update");
     }
-    return this.prisma.organizationSubscription.create({
+    const created = await this.prisma.organizationSubscription.create({
       data: {
         organizationId,
         currentTier: dto.tier ?? TariffTier.TIER_1,
@@ -212,6 +223,20 @@ export class AdminBillingService {
         activeModules: dto.activeModules ?? [],
       },
     });
+    if (modulesChanged) {
+      await this.syncModulesBestEffort(organizationId);
+    }
+    return created;
+  }
+
+  private async syncModulesBestEffort(organizationId: string): Promise<void> {
+    try {
+      await this.bindSync.syncForOrg(organizationId);
+    } catch (err) {
+      this.log.warn(
+        `Admin subscription module Sync failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   /**
