@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -176,60 +182,62 @@ export default function MaidsPage() {
         }
       />
       {unavailable ? <p className="mb-3 text-sm text-amber-800">{t('personnelUnavailable')}</p> : null}
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              <th className="px-3 py-2">{t('name')}</th>
-              <th className="px-3 py-2">{t('department')}</th>
-              <th className="px-3 py-2">{th('accrueEg')}</th>
-              <th className="px-3 py-2">{t('tasks')}</th>
-              {canWrite ? <th className="px-3 py-2" /> : null}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={canWrite ? 5 : 4}>
-                  {t('empty')}
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('name')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('department')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{th('accrueEg')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('tasks')}</th>
+                {canWrite ? <th className={DATA_TABLE_TH_LEFT_CLASS} /> : null}
               </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.id} className="border-b border-[#ECF0F1]">
-                  <td className="px-3 py-2 font-medium">{r.name}</td>
-                  <td className="px-3 py-2">
-                    {canWrite ? (
-                      <CatalogField
-                        kind="CLOSED_SMALL"
-                        label={t('department')}
-                        value={r.department}
-                        onChange={(v) => void changeDept(r.id, String(v))}
-                        options={DEPTS.map((d) => ({ value: d, label: th(`dept.${d}`) }))}
-                        className="!space-y-0 min-w-[9rem]"
-                      />
-                    ) : (
-                      deptLabel(r.department)
-                    )}
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={canWrite ? 5 : 4}>
+                    {t('empty')}
                   </td>
-                  <td className="px-3 py-2">{r.egBalance ?? 0}</td>
-                  <td className="px-3 py-2">{r.tasks?.length ?? 0}</td>
-                  {canWrite ? (
-                    <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        className={SECONDARY_BUTTON_CLASS}
-                        onClick={() => void unlink(r.id)}
-                      >
-                        {t('unlink')}
-                      </button>
-                    </td>
-                  ) : null}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                rows.map((r) => (
+                  <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{r.name}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {canWrite ? (
+                        <CatalogField
+                          kind="CLOSED_SMALL"
+                          label={t('department')}
+                          value={r.department}
+                          onChange={(v) => void changeDept(r.id, String(v))}
+                          options={DEPTS.map((d) => ({ value: d, label: th(`dept.${d}`) }))}
+                          className="!space-y-0 min-w-[9rem]"
+                        />
+                      ) : (
+                        deptLabel(r.department)
+                      )}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{r.egBalance ?? 0}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{r.tasks?.length ?? 0}</td>
+                    {canWrite ? (
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          onClick={() => void unlink(r.id)}
+                        >
+                          {t('unlink')}
+                        </button>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <EraModal
         open={open}

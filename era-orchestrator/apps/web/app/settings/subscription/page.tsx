@@ -105,6 +105,7 @@ export default function SubscriptionPage() {
   const t = useTranslations("settings");
   const tSub = useTranslations("settings.subscription");
   const tSys = useTranslations("workspace.systems");
+  const tMods = useTranslations("workspace.modulesModal");
 
   const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
@@ -430,7 +431,14 @@ export default function SubscriptionPage() {
                               orchBillingErrorMessage(err, tSub("bundleFailed")),
                             );
                           }
-                          setBillingMsg(tSub("bundleOk"));
+                          const body = (await res.json().catch(() => null)) as {
+                            synced?: boolean;
+                          } | null;
+                          setBillingMsg(
+                            body?.synced === false
+                              ? tMods("syncFailed")
+                              : tSub("bundleOk"),
+                          );
                           const mRes = await orchFetch("/v1/billing/marketplace", {
                             token: token!,
                           });

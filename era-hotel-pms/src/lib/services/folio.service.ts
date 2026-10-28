@@ -359,21 +359,21 @@ export async function postPayment(input: {
   if (kind === 'PAYMENT' && ['CASH', 'CARD'].includes(input.paymentMethod)) {
     const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
     try {
-      const cashShift = await prisma.cashShift.findFirst({
-        where: { status: 'OPEN' },
-        orderBy: { openedAt: 'desc' },
+      const { ensureOpenCashShift } = await import('@/lib/services/cash-shift.service');
+      const cashShift = await ensureOpenCashShift({
+        registerId: input.registerRef?.trim() || undefined,
       });
       const receipt = await fiscalizeForSatellite(
         {
           documentRef: input.folioId,
           amount: input.amount,
           paymentMethod: input.paymentMethod,
-          registerRef: input.registerRef,
+          registerRef: input.registerRef ?? cashShift.registerId,
           organizationId: orgId,
-          fiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
-          bankTerminalId: input.bankTerminalId?.trim() || cashShift?.bankTerminalId || undefined,
-          shiftFiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
-          shiftBankTerminalId: cashShift?.bankTerminalId ?? undefined,
+          fiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+          bankTerminalId: input.bankTerminalId?.trim() || cashShift.bankTerminalId || undefined,
+          shiftFiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+          shiftBankTerminalId: cashShift.bankTerminalId ?? undefined,
           lines: [
             {
               name: `Folio ${input.folioId.slice(0, 8)}`,
@@ -401,17 +401,17 @@ export async function postPayment(input: {
         ? await prisma.folioPayment.findUnique({ where: { id: input.refundOfPaymentId } })
         : null;
       if (original?.fiscalReceiptId) {
-        const cashShift = await prisma.cashShift.findFirst({
-          where: { status: 'OPEN' },
-          orderBy: { openedAt: 'desc' },
+        const { ensureOpenCashShift } = await import('@/lib/services/cash-shift.service');
+        const cashShift = await ensureOpenCashShift({
+          registerId: input.registerRef?.trim() || undefined,
         });
         const refunded = await refundForSatelliteRouted({
           organizationId: orgId,
           documentRef: `refund:${input.folioId}:${original.id}`,
           originalReceiptId: original.fiscalReceiptId,
           amount: input.amount,
-          fiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
-          shiftFiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
+          fiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+          shiftFiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
           reason: input.refundReason,
         });
         if (!isFiscalSkipped(refunded)) {

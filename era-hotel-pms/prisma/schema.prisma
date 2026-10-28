@@ -2623,6 +2623,9 @@ model CardAuthorization {
   @@index([organizationId])
 }
 
+/// Operational Front Cash fiscal shift (register + KKM / bank terminal).
+/// First CASH/CARD money move (folio, deposit payout, settlement pending) ensure-opens a primary row.
+/// Distinct from CashDeskClose day reconciliation rows (FIN-05).
 model CashShift {
   id         String          @id @default(uuid())
   organizationId String

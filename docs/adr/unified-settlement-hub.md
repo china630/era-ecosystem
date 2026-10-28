@@ -26,8 +26,8 @@ Department orgs inherit hub mode from parent unless explicitly overridden to `SA
 ### Pending charge lifecycle
 
 1. Department satellite (fb-pos walk-in, clinic `WALK_IN`) calls `POST /api/settlement/pending` on hotel-pms (Bearer / `x-pos-bridge-secret`: `POS_BRIDGE_SECRET`).
-2. Row `SettlementPendingCharge` created with `status=PENDING`, unique `idempotencyKey`.
-3. Front Cash cashier pays via `POST /api/settlement/pending/[id]/pay` — amount read-only, fiscal via `@era/fiscal` on primary open `CashShift`.
+2. Row `SettlementPendingCharge` created with `status=PENDING`, unique `idempotencyKey`. Non-zero amount requires a hotel `revenueCode` (clinic/F&B resolve category→code before post); blank code is refused so night audit never invents `UNKNOWN`.
+3. Front Cash cashier pays via `POST /api/settlement/pending/[id]/pay` (or basket pay) — amount read-only, fiscal via `@era/fiscal` on the org’s operational `CashShift`. Folio CASH/CARD and pending settle share **`ensureOpenCashShift`**: reuse the OPEN primary (else any OPEN); if none, open a primary shift on that first money move (cashier from session, default register `FO-01`, default KKM/bank devices). Explicit `POST /api/cash/shifts` remains for manager open/close; a second OPEN is refused. Do not confuse with FIN-05 `CashDeskClose` day rows (no separate open; appear with first desk posting).
 4. Hotel calls `POST /api/integration/settlement-confirmed` on source satellite to close ticket/visit.
 5. Manager may void pending via `POST /api/settlement/pending/[id]/void`.
 
@@ -47,6 +47,8 @@ Before business-day close, count `SettlementPendingCharge` with `status=PENDING`
 
 - `pendingSettlementNaPolicy=BLOCK` (default): night audit **throws** (same as open cash/POS shifts).
 - `WARN`: step note in `stepsJson`; audit continues.
+
+PAID pending lines enter the day document by `revenueCode`. Create/API refuse blank code on non-zero amount; idempotent retry may heal an old blank row when the payload carries a code. Night audit fails early if a PAID row is still blank (lists `sourceSystem:sourceRef`) instead of inventing `UNKNOWN`.
 
 ### Bridge auth
 

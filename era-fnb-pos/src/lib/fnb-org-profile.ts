@@ -4,21 +4,15 @@ import { DEFAULT_BUSINESS_DAY_START, normalizeBusinessDayStart } from "@/lib/bus
 import {
   clampFnbPresets,
   defaultFnbPresets,
-  fnbSubmodulesMetered,
   normalizeFnbEdition,
-  type FnbEdition,
-  type FnbPreset,
 } from "@/lib/fnb-edition";
+import {
+  upsertFnbOrgSnapshot,
+  type FnbOrgProfileRow,
+} from "@/lib/fnb-org-snapshot";
 
-export type FnbOrgProfileRow = {
-  organizationId: string;
-  edition: FnbEdition;
-  hotelMode: boolean;
-  enabledPresets: FnbPreset[];
-  waiterPinPacks: number;
-  activeModules: string[];
-  businessDayStart: string;
-};
+export type { FnbOrgProfileRow };
+export { upsertFnbOrgSnapshot };
 
 const FNB_FALLBACK: Omit<FnbOrgProfileRow, "organizationId"> = {
   edition: "fnb",
@@ -29,7 +23,7 @@ const FNB_FALLBACK: Omit<FnbOrgProfileRow, "organizationId"> = {
   businessDayStart: DEFAULT_BUSINESS_DAY_START,
 };
 
-type ProfileDbRow = {
+function toRow(row: {
   organizationId: string;
   edition: string;
   hotelMode: boolean;
@@ -37,9 +31,7 @@ type ProfileDbRow = {
   waiterPinPacks: number;
   activeModules: string[];
   businessDayStart: string;
-};
-
-function toRow(row: ProfileDbRow): FnbOrgProfileRow {
+}): FnbOrgProfileRow {
   const edition = normalizeFnbEdition(row.edition);
   return {
     organizationId: row.organizationId,
@@ -50,54 +42,6 @@ function toRow(row: ProfileDbRow): FnbOrgProfileRow {
     activeModules: row.activeModules,
     businessDayStart: normalizeBusinessDayStart(row.businessDayStart),
   };
-}
-
-/**
- * Orchestrator snapshot carries edition and modules only.
- * Hotel mode is set on create and then kept; presets are kept and clamped to the edition.
- */
-export async function upsertFnbOrgSnapshot(
-  organizationId: string,
-  snap: {
-    edition?: string;
-    activeModules?: string[];
-  },
-): Promise<FnbOrgProfileRow> {
-  const existing = await prisma.fnbOrgProfile.findUnique({
-    where: { organizationId },
-  });
-  const edition = normalizeFnbEdition(snap.edition?.trim() || existing?.edition);
-  const kafe = edition === "kafe";
-  const activeModules =
-    snap.activeModules !== undefined
-      ? snap.activeModules
-      : (existing?.activeModules ?? []);
-  const waiterPinPacks = fnbSubmodulesMetered({ edition, activeModules })
-    ? activeModules.includes("fnb_waiter_pin")
-      ? 1
-      : 0
-    : (existing?.waiterPinPacks ?? 1);
-  const enabledPresets = clampFnbPresets(edition, existing?.enabledPresets);
-  const hotelMode = kafe ? false : (existing?.hotelMode ?? true);
-  const row = await prisma.fnbOrgProfile.upsert({
-    where: { organizationId },
-    create: {
-      organizationId,
-      edition,
-      hotelMode,
-      enabledPresets,
-      waiterPinPacks,
-      activeModules,
-    },
-    update: {
-      edition,
-      hotelMode,
-      enabledPresets,
-      waiterPinPacks,
-      activeModules,
-    },
-  });
-  return toRow(row);
 }
 
 export async function getFnbOrgProfile(

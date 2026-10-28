@@ -99,17 +99,24 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 
 ## FB-5 — Buffet planner (UI) — open
 
-Prerequisite: org has module `fnb_buffet_planner` in `activeModules` (and `industry_fnb_pos`).
+Prerequisite: org has module `fnb_buffet_planner` in orch `activeModules` (and `industry_fnb_pos`). Toggle from workspace auto-Syncs runtime-config; CP snapshot also opens the gate before local profile heals. Manual Super-admin Sync is fallback only.
 
-1. Nav: **Buffet planner** → `/admin/buffet` (hidden without module)
-2. Filter by café/outlet (DB list) and date range
-3. **New plan** modal: outlet + service date + meal + covers → save (table row appears)
-4. Select plan → **Add dish** modal: dish from that outlet’s menu (`CatalogField`), station, portions, waste %
-5. **Materials** modal shows effective portions + missing recipe SKU count (Finance BOM explode later)
-6. **Publish to daily board** → open `/admin/daily-menu` for that date/outlet and confirm dishes (merge — other meals’ board rows stay)
-7. Edit a DRAFT line (portions / waste) via pencil; Status: Lock → Mark served → Close (lines read-only after Lock)
+1. Nav: **Buffet planner** / **Bufet planı** → `/admin/buffet` (hidden without module)
+2. Filters: café/outlet, date range (default today…+6 Baku), status (all / draft / …)
+3. Master **Plans** table only (no split preview): guests adult/child, dish count·Σ portions, stations, BOM warning dot
+4. **New plan** modal → row appears; pencil opens header modal (date/meal/covers/notes)
+5. Composition icon (or double-click row) → composition modal: Add dish / edit lines / Lock→Served→Close / Materials / Publish
+6. **Copy** icon → duplicate DRAFT for today → header modal opens; occupied slot → 409 toast
+7. Empty composition: **Copy dishes from last same meal**
+8. Publish → `/admin/daily-menu` merge check for that date/outlet
 
-Evidence: not signed — FNB-BUFFET-01 stays API/SCREEN, not SHIPPED.
+## FB-OUTLET-01 — Second café (Settings) — open
+
+1. `/admin/settings` → **Cafés / outlets** table
+2. Manager with `api:outlets.manage`: **New outlet** → code + name + optional copy menu/halls/tables from existing (duplicate code → 409)
+3. Floor + Buffet outlet filters show the new café; `/admin/tables` shows copied halls/tables when copy was used
+
+Evidence: not signed — FNB-BUFFET-01 / multi-outlet stays API/SCREEN, not SHIPPED.
 
 ## Quartet (Track C)
 

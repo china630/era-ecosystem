@@ -1,7 +1,11 @@
+import {
+  fetchSubscriptionSnapshot,
+  resolveEntitlementActiveModules,
+} from "@era/satellite-kit";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/session";
 import { resolveFnbEdition } from "@/lib/auth/ensure-system-fnb-roles";
-import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
+import { getFnbOrgProfile, upsertFnbOrgSnapshot } from "@/lib/fnb-org-profile";
 import { fnbKitchenOn } from "@/lib/fnb-edition";
 import {
   ALL_PERMISSIONS,
@@ -11,6 +15,12 @@ import {
 import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
 import { prisma } from "@/lib/prisma";
 import { permissionsForRoleCode } from "@/lib/auth/fnb-permission.service";
+
+function sameModuleSet(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((k) => set.has(k));
+}
 
 export async function GET(request: Request) {
   try {
@@ -36,9 +46,24 @@ export async function GET(request: Request) {
       edition = resolveFnbEdition(profile.edition);
       enabledPresets = profile.enabledPresets;
       hotelMode = profile.hotelMode;
-      activeModules = fnbKitchenOn(profile)
-        ? [...new Set([...profile.activeModules, "fnb_kitchen_kds"])]
-        : profile.activeModules;
+      let modules = profile.activeModules;
+      try {
+        const snap = await fetchSubscriptionSnapshot(organizationId);
+        if (snap && Array.isArray(snap.activeModules)) {
+          const fromCp = resolveEntitlementActiveModules(snap) ?? [];
+          modules = fromCp;
+          if (!sameModuleSet(fromCp, profile.activeModules)) {
+            void upsertFnbOrgSnapshot(organizationId, {
+              activeModules: fromCp,
+            }).catch(() => undefined);
+          }
+        }
+      } catch {
+        /* keep local profile modules */
+      }
+      activeModules = fnbKitchenOn({ ...profile, activeModules: modules })
+        ? [...new Set([...modules, "fnb_kitchen_kds"])]
+        : modules;
       if (session.pin === true) {
         if (isSystemFnbRoleCode(session.role)) {
           const fresh = await permissionsForRoleCode(organizationId, session.role);

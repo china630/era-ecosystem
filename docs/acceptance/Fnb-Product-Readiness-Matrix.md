@@ -31,10 +31,11 @@
 | Admin | `/admin` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (FNB-RBAC-01; not SHOW) |
 | Edition + halls | `/admin/settings` (Halls modal) · orch `/settings/subscription` F&B edition card | 🟡 SCREEN (FNB-09 / FNB-10 API; browser run and UAT step open) |
-| Buffet planner | `/admin/buffet` (module `fnb_buffet_planner`) | 🟡 SCREEN (FNB-BUFFET-01 API; UAT FB-5 open — not SHOW) |
+| Buffet planner | `/admin/buffet` (module `fnb_buffet_planner`) | 🟡 SCREEN (master Plans + composition/copy modals; UAT FB-5 open — not SHOW) |
+| Outlets (multi-café) | `/admin/settings` create outlet | 🟡 SCREEN (FNB-09 / FB-OUTLET-01; UAT open — not SHOW) |
 | Mutation audit (FNB-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (canonical filters) | SCREEN / 🟡 — Layer A belt + viewer + path/API parity; UAT open — not SHOW. Does not move Gate, Demo, Pilot, or Sell |
 
-Admin modal CRUD is now in place for menu, tables, settings, daily-menu board, and buffet planner; RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
+Admin modal CRUD is in place for menu, tables, settings (incl. create outlet), daily-menu board, and buffet planner (master table + composition/copy); RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off.
 

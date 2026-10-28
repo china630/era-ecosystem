@@ -86,9 +86,10 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 ### 6b. Settlement hub (pending walk-in)
 
 1. With Nafta org policy (`settlementHub=HOTEL_FRONT_CASH`): fb-pos walk-in ticket → **Send to reception**.
-2. `/front-cash/pending` — receipt row; **Open receipt** → line items; pay CASH → mock fiscal; fb ticket CLOSED via callback.
-3. Clinic walk-in visit complete → pending row; pay at Front Cash → visit `settledAt` set.
-4. Leave a pending row open → night audit **blocks** (default `pendingSettlementNaPolicy=BLOCK`); after pay → NA succeeds.
+2. Ensure no OPEN `CashShift` (or close via `POST /api/cash/shifts?action=close`). `/front-cash/pending` — double-click receipt → receipt modal (qty / item / amount, no raw i18n keys); pay CASH → mock fiscal; **first pay ensure-opens** primary `CashShift`; fb ticket CLOSED via callback.
+3. Clinic walk-in party / visit → pending basket row; pay at Front Cash without a manual “open shift” → visit/`settledAt` (or party) confirmed; second pay reuses the same OPEN shift.
+4. Folio guest CASH/CARD with no OPEN shift also ensure-opens (same gate as pending).
+5. Leave a pending row open → night audit **blocks** (default `pendingSettlementNaPolicy=BLOCK`); after pay → NA succeeds.
 
 ## 7. Channel (CH-01, CH-02)
 
@@ -440,10 +441,10 @@ UI paths (OpsUI) — no curl-only for SHIPPED claims:
 5. **Discount:** settle or check-out with discount amount → negative DISCOUNT charge.
 6. **Per-guest close:** EQUAL party → Close on one personal folio when balance 0.
 7. **Agency settle handoff:** `/front-cash/agency-ledger` → TRANSFERRED_AR list (AGENCY folios only) → bank match **or** allocate payment in Finance (hotel POST settle returns 409). Expect hotel folio → CLOSED and stay `checkoutSettlementStatus=SETTLED` (callback / outbox). If hotel was down during pay, after hotel up wait ≤15m cron or re-allocate — unsettled clears.
-8. **NA polish:** `/night-audit` → night audit status shows missed arrivals and due outs. The run does not mark no-show and does not check anyone out. While either list is non-empty the day stays open. Missed arrivals link to `/fo/reservations?queue=bookings&overdue=1`.
+8. **NA polish:** `/night-audit` → night audit status shows missed arrivals and due outs. The run does not mark no-show and does not check anyone out. While either list is non-empty the day stays open. Missed arrivals link to `/fo/reservations?queue=bookings&overdue=1`. Preview checklist loads on open: a **Folio balances** (or price/due/arrival) **stop** lists stay label + short id and **Open reservation** opens the card; a failed run error includes the reservation id.
 9. **Finance matching:** Finance `/reporting/aging` buckets; counterparty payment terms; `/sales/invoices/allocate` allocate tranche.
 10. **Agency statement lines (HOT-CL-03):** `/front-cash/agency-ledger` → pick agency + period → metrics opening/charges/payments → **Statement lines** grid (date, kind, stay, amount, running). Prior-stay opening must appear when period starts after checkout.
-11. **Company statement lines (HOT-CL-06):** `/front-cash/company-ledger` → pick company → same statement grid for COMPANY folios; TRANSFERRED_AR list; no commission / no Push snapshot.
+11. **Company statement lines (HOT-CL-06):** `/front-cash/company-ledger` → pick company → same statement grid for COMPANY folios; TRANSFERRED_AR list; no commission column; **Push CL snapshot** allowed (HOT-CL-04; last-snapshot meta chrome may be thinner than agency).
 12. **Agency portal CL (HOT-AGP-04):** `/agency/ledger` (agency session) → period filters → own statement only; no Push / settle controls.
 
 ## 28. MENU-IA deepen — cash journal / EOD grids / updates (2026-08-07 → thin MVP 2026-08-11)
@@ -509,7 +510,7 @@ UI paths (OpsUI) — ADR: [hotel-early-checkout-unused-nights.md](../../docs/adr
 
 ## 34. Nafta housekeeping deepen (HOT-HK) — checklist only, not signed
 
-UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Do **not** mark SHIPPED until this section is signed.
+UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Secondary HK list tables/cards use kit `DATA_TABLE_SHELL` / `CARD_CONTAINER` (`rounded-2xl`), not sharp hand-rolled boxes. Do **not** mark SHIPPED until this section is signed.
 
 1. `/hk/roster` — week filter bar; **Propose week** PRIMARY; Accrue ƏG SECONDARY; change cell via closed select (not free text); ƏG balance visible.
 2. `/hk/rotation` — date filter; **Rotate pairs** PRIMARY; Swap pairs in modal (SECONDARY); floors 2–11 pairs on one grid.

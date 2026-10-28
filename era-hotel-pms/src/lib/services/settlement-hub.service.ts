@@ -72,8 +72,24 @@ export async function findPendingByIdempotencyKey(idempotencyKey: string) {
 }
 
 export async function createPendingCharge(input: CreatePendingInput) {
+  const revenueCode = input.revenueCode?.trim() || '';
+  if (input.amount !== 0 && !revenueCode) {
+    throw new Error('revenueCode is required for a pending charge with amount');
+  }
+
   const existing = await findPendingByIdempotencyKey(input.idempotencyKey);
   if (existing) {
+    const existingCode = existing.revenueCode?.trim() || '';
+    if (decimalToNumber(existing.amount) !== 0 && !existingCode) {
+      if (!revenueCode) {
+        throw new Error('revenueCode is required for a pending charge with amount');
+      }
+      const healed = await prisma.settlementPendingCharge.update({
+        where: { id: existing.id },
+        data: { revenueCode },
+      });
+      return { charge: healed, idempotent: true as const };
+    }
     return { charge: existing, idempotent: true as const };
   }
 
@@ -91,7 +107,7 @@ export async function createPendingCharge(input: CreatePendingInput) {
         input.qty != null && Number.isFinite(input.qty) && input.qty !== 0
           ? Math.trunc(input.qty)
           : 1,
-      revenueCode: input.revenueCode?.trim() || null,
+      revenueCode: revenueCode || null,
       currency: input.currency ?? 'AZN',
       description: input.description,
       payerLabel: input.payerLabel,
@@ -118,19 +134,6 @@ export async function getPendingSummary(businessDate?: Date) {
     where: { status: 'PENDING', businessDate: date },
   });
   return { pendingCount, businessDate: date };
-}
-
-async function requireOpenCashShift() {
-  let shift = await prisma.cashShift.findFirst({
-    where: { status: 'OPEN', isPrimary: true },
-  });
-  if (!shift) {
-    shift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
-  }
-  if (!shift) {
-    throw new Error('Open a cash shift before settling pending charges');
-  }
-  return shift;
 }
 
 async function notifySourceSettlementConfirmed(
@@ -194,7 +197,8 @@ export async function payPendingBasket(input: {
   const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
   const businessDate = await getCurrentBusinessDate();
   await assertYearBoundaryAllows(businessDate);
-  const shift = await requireOpenCashShift();
+  const { ensureOpenCashShift } = await import('@/lib/services/cash-shift.service');
+  const shift = await ensureOpenCashShift();
 
   const total = rows.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
   let fiscalReceiptId: string | null = null;
@@ -253,14 +257,23 @@ export async function payPendingBasket(input: {
     try {
       await notifySourceSettlementConfirmed(row, input.paymentMethod, fiscalReceiptId);
     } catch (err) {
-      console.error("settlement callback failed", row.id, err);
+      console.error('settlement callback failed', row.id, err);
       failed.push(row.sourceRef);
     }
   }
-  if (failed.length > 0) {
-    throw new Error(`Paid, but clinic did not confirm: ${failed.join(", ")}`);
-  }
-  return { basketRef, count: rows.length, total, fiscalReceiptId };
+  // Hotel money is already PAID — do not 500 the cashier. UI reloads the pending list.
+  return {
+    basketRef,
+    count: rows.length,
+    total,
+    fiscalReceiptId,
+    ...(failed.length > 0
+      ? {
+          warning: `Paid, but clinic did not confirm: ${failed.join(', ')}`,
+          callbackFailed: failed,
+        }
+      : {}),
+  };
 }
 
 export async function payPendingCharge(input: PayPendingInput) {
@@ -282,7 +295,8 @@ export async function payPendingCharge(input: PayPendingInput) {
   const businessDate = await getCurrentBusinessDate();
   await assertYearBoundaryAllows(businessDate);
 
-  const shift = await requireOpenCashShift();
+  const { ensureOpenCashShift } = await import('@/lib/services/cash-shift.service');
+  const shift = await ensureOpenCashShift();
 
   let fiscalReceiptId: string | null = null;
   let fiscalQrPayload: string | null = null;
@@ -336,8 +350,17 @@ export async function payPendingCharge(input: PayPendingInput) {
     },
   });
 
-  await notifySourceSettlementConfirmed(paid, input.paymentMethod, fiscalReceiptId);
-  return paid;
+  try {
+    await notifySourceSettlementConfirmed(paid, input.paymentMethod, fiscalReceiptId);
+    return paid;
+  } catch (err) {
+    console.error('settlement callback failed', paid.id, err);
+    return {
+      ...paid,
+      warning: `Paid, but clinic did not confirm: ${paid.sourceRef}`,
+      callbackFailed: [paid.sourceRef],
+    };
+  }
 }
 
 async function notifyClinicPaidVoid(pending: {

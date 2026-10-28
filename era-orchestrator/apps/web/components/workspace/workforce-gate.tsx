@@ -28,6 +28,7 @@ export function WorkforceGate({
 }) {
   const t = useTranslations("workforceGate");
   const tCommon = useTranslations("common");
+  const tMods = useTranslations("workspace.modulesModal");
   const pathname = usePathname() ?? "";
   const { snapshot, refresh } = useSubscription();
   const [enabling, setEnabling] = useState(false);
@@ -47,6 +48,9 @@ export function WorkforceGate({
     if (!result.ok) {
       toast.error(orchBillingErrorMessage(result.errorBody, tCommon("failed")));
       return;
+    }
+    if (!result.synced) {
+      toast.message(tMods("syncFailed"));
     }
     await refresh();
     await onEnabled?.();

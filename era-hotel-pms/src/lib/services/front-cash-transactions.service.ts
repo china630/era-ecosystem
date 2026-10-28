@@ -33,6 +33,7 @@ export async function listFrontCashJournal(opts: {
   };
   const postedWhere = shiftWindow ?? { businessDate: { gte: from, lt: toExclusive } };
 
+  const { findOpenCashShift } = await import('@/lib/services/cash-shift.service');
   const [payments, debtPayments, deposits, openShift, recentShifts, pendingSummary, pendingRows, paidRows, departments] =
     await Promise.all([
     prisma.folioPayment.findMany({
@@ -81,10 +82,7 @@ export async function listFrontCashJournal(opts: {
       orderBy: { heldAt: 'desc' },
       take: 300,
     }),
-    prisma.cashShift.findFirst({
-      where: { status: 'OPEN' },
-      orderBy: [{ isPrimary: 'desc' }, { openedAt: 'desc' }],
-    }),
+    findOpenCashShift(),
     prisma.cashShift.findMany({
       orderBy: { openedAt: 'desc' },
       take: 30,

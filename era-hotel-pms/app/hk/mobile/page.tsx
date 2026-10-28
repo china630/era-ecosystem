@@ -4,7 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
-import { CatalogField, PageHeader, showApiError } from '@era/satellite-kit/ui';
+import {
+  CARD_CONTAINER_CLASS,
+  CatalogField,
+  PageHeader,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+} from '@era/satellite-kit/ui';
 import { HkStatusMark } from '@/components/HkStatusMark';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -138,7 +144,7 @@ export default function HkMobilePage() {
       ) : null}
       <ul className="mt-4 space-y-2">
         {mine.map((row) => (
-          <li key={row.roomId} className="rounded border border-[#D5DADF] bg-white p-3">
+          <li key={row.roomId} className={`${CARD_CONTAINER_CLASS} p-3`}>
             <p className="text-sm font-medium text-[#34495E]">
               {row.roomNumber} · {t('floor')} {row.floor}
             </p>
@@ -162,10 +168,10 @@ export default function HkMobilePage() {
               />
               <p className="mt-2 text-[12px] text-[#7F8C8D]">{t('mobileMismatch')}</p>
               <div className="mt-1 flex gap-2">
-                <button type="button" className="rounded border border-[#D5DADF] px-2 py-1 text-xs" onClick={() => void flag(row.roomId, 'SKIP')}>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void flag(row.roomId, 'SKIP')}>
                   {t('sendSkip')}
                 </button>
-                <button type="button" className="rounded border border-[#D5DADF] px-2 py-1 text-xs" onClick={() => void flag(row.roomId, 'SLEEP')}>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void flag(row.roomId, 'SLEEP')}>
                   {t('sendSleep')}
                 </button>
               </div>

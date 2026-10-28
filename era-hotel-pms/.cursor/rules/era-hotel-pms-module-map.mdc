@@ -21,15 +21,15 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Date filter; Rotate PRIMARY; Swap in modal; pairs 2–11 on one grid |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Wash/iron qty + price/sum preview; Accept → IN_PLANT; Delivered → folio `LAUNDRY`; void IN_PLANT on grid |
 | `/fo/laundry` | same API + Delivered/void | FO fallback grid + amount (incl. express %); Delivered or void IN_PLANT; no invent |
-| `/hk/minibar` | `GET/POST /api/housekeeping/minibar`, `GET /api/housekeeping/finance-products` | Item card stores the Finance sellable sku. Guest folio sale, not the consumption line. Catalog/postings via view filter; add product + post modals |
-| `/hk/consumption` | `GET/POST /api/housekeeping/consumption`, `DELETE /api/housekeeping/consumption/:id`, `POST /api/housekeeping/consumption/:id/reverse`, `GET /api/housekeeping/finance-products` | Open/closed lane filter; add sku+qty in modal; guest price 0. Closed-day reverse onto open day. Night audit day-document line. Linen schedule does not create it |
+| `/hk/minibar` | `GET/POST /api/housekeeping/minibar`, `GET /api/housekeeping/finance-products` | Item card stores the Finance sellable sku. Guest folio sale, not the consumption line. Catalog/postings via view filter; add product + post modals; kit `DATA_TABLE_SHELL` |
+| `/hk/consumption` | `GET/POST /api/housekeeping/consumption`, `DELETE /api/housekeeping/consumption/:id`, `POST /api/housekeeping/consumption/:id/reverse`, `GET /api/housekeeping/finance-products` | Open/closed lane filter; add sku+qty in modal; kit `DATA_TABLE_SHELL`; guest price 0. Closed-day reverse onto open day. Night audit day-document line. Linen schedule does not create it |
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 1/7/14/30 days by floor; empty chrome |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Date filter + one grid; create Skip/Sleep in modal; escalations when present |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms`, `POST …/closed-rooms/:id/return` | One grid + kind filter (All/OOO/OOS); close in modal; return secondary |
 | `/settings/policies#hk` | `GET/PUT /api/housekeeping/policy`; `POST /api/housekeeping/stay-linen` | Linen/deep every N (hotel-wide). Stay override on reservation card Additional. `/settings/hk-policy` redirects here |
 | Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops. FO cannot PATCH cleanliness on `IN_HOUSE` (`OCCUPIED_HK_LOCKED`) |
 
-Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not consumption); **Guest services** = laundry + lost & found. Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md) · [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md).
+Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not consumption); **Guest services** = laundry + lost & found. Secondary HK list tables use kit `DATA_TABLE_SHELL_CLASS` + `DATA_TABLE_*` (not bare `rounded` borders). Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md) · [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md).
 
 ## Front office chain
 
@@ -135,7 +135,8 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 
 | Route | API | Role |
 |-------|-----|------|
-| `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | Receipt list; unpaid void stays local. Void of a paid clinic line before check-in calls clinic hotel-void |
+| `/front-cash/pending` | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/basket/pay`, `POST …/[id]/void` | Receipt modal (qty/item/amount); CASH/CARD pay runs `ensureOpenCashShift` (same as folio). Basket pay when shared `basketRef`. Unpaid void stays local; paid clinic void before check-in → clinic hotel-void |
+| (API) | `GET/POST /api/cash/shifts` (`?action=close`) | Explicit CashShift open/close; money paths prefer ensure-open primary |
 | `/front-cash/folio-balances` | `GET /api/front-cash/folio-balances?tab=` | Reservation with folio balances (HOT-CASH-07) |
 | `/front-cash/folio-journal` | `GET /api/front-cash/folio-journal?from&to` | Daily folio journal (HOT-CASH-08); mutations are modals on the reservation card Folio tab |
 | `/front-cash/desk` | `GET/POST /api/front-cash/desk` | Business-date rows by cash-point department. Empty tenders hidden. Lock closes a row. Double-click opens the employee journal |
@@ -154,7 +155,7 @@ Policy: hire master = orchestrator CP; hotel admin user create remains secondary
 | `/night-audit/year-end` | `GET|POST /api/night-audit/year-end` | Last day only on closed 31 Dec; first day only on 1 Jan. Hotel calendar seal, not finance GL close |
 | `/night-audit/logs` | `GET /api/night-audit/runs` | End of day logs |
 | `/night-audit/inhouse-daily` | in-house daily report (`?date=`) | NA report 01 |
-| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic / retail pending with sku, qty, revenue code (`POS_BRIDGE_SECRET`) |
+| Bridge in | `POST /api/settlement/pending` | fb-pos / clinic / retail pending with sku, qty, revenue code (required when amount ≠ 0; `POS_BRIDGE_SECRET`) |
 
 Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/adr/unified-settlement-hub.md`.
 

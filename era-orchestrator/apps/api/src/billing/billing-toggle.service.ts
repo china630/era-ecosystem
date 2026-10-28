@@ -13,12 +13,28 @@ import {
   isCatalogModuleActive,
 } from "./billing-module-toggle.helpers";
 import { BillingPremiumActivationService } from "./billing-premium-activation.service";
+import { BillingSatelliteNotifyService } from "./billing-satellite-notify.service";
 import {
   asStringArray,
   isBundleActiveNow,
 } from "./billing-entitlement.util";
 import type { ToggleModuleDto } from "./dto/toggle-module.dto";
 import { WorkforceProvisionService } from "../platform/workforce/workforce-provision.service";
+
+type ToggleModuleResult = {
+  organizationId: string;
+  moduleKey: string;
+  enabled: boolean;
+  activeModules: string[];
+  proRataAzn: string;
+  orderId: string | null;
+  paymentUrl: string | null;
+  providerMode: string | null;
+  skipped: boolean;
+  requiresPayment: boolean;
+  note?: string;
+  synced: boolean;
+};
 
 @Injectable()
 export class BillingToggleService {
@@ -30,25 +46,14 @@ export class BillingToggleService {
     private readonly orgModules: OrganizationModuleService,
     private readonly premiumActivation: BillingPremiumActivationService,
     private readonly provision: WorkforceProvisionService,
+    private readonly satelliteNotify: BillingSatelliteNotifyService,
   ) {}
 
   async toggle(
     userId: string,
     organizationId: string,
     dto: ToggleModuleDto,
-  ): Promise<{
-    organizationId: string;
-    moduleKey: string;
-    enabled: boolean;
-    activeModules: string[];
-    proRataAzn: string;
-    orderId: string | null;
-    paymentUrl: string | null;
-    providerMode: string | null;
-    skipped: boolean;
-    requiresPayment: boolean;
-    note?: string;
-  }> {
+  ): Promise<ToggleModuleResult> {
     await this.access.assertOwnerForBilling(userId, organizationId);
     await this.pricing.ensurePricingModulesFromDatabase();
 
@@ -130,32 +135,38 @@ export class BillingToggleService {
               organizationId,
               catalogModuleKeyToPatch(dto.moduleKey, true, dto.quantity),
             );
-          return {
+          return this.finishToggle(
+            {
+              organizationId,
+              moduleKey: dto.moduleKey,
+              enabled: true,
+              activeModules,
+              proRataAzn: "0.00",
+              orderId: null,
+              paymentUrl: null,
+              providerMode: null,
+              skipped: false,
+              requiresPayment: false,
+              note: "accounting_book_extra_quantity_updated",
+            },
+            true,
+          );
+        }
+        return this.finishToggle(
+          {
             organizationId,
             moduleKey: dto.moduleKey,
             enabled: true,
-            activeModules,
+            activeModules: snap.activeModules,
             proRataAzn: "0.00",
             orderId: null,
             paymentUrl: null,
             providerMode: null,
-            skipped: false,
+            skipped: true,
             requiresPayment: false,
-            note: "accounting_book_extra_quantity_updated",
-          };
-        }
-        return {
-          organizationId,
-          moduleKey: dto.moduleKey,
-          enabled: true,
-          activeModules: snap.activeModules,
-          proRataAzn: "0.00",
-          orderId: null,
-          paymentUrl: null,
-          providerMode: null,
-          skipped: true,
-          requiresPayment: false,
-        };
+          },
+          false,
+        );
       }
 
       if (scheduledCancel && om) {
@@ -177,19 +188,22 @@ export class BillingToggleService {
         const after = await this.subscriptionAccess.getOrganizationSnapshot(
           organizationId,
         );
-        return {
-          organizationId,
-          moduleKey: dto.moduleKey,
-          enabled: true,
-          activeModules: after.activeModules,
-          proRataAzn: "0.00",
-          orderId: null,
-          paymentUrl: null,
-          providerMode: null,
-          skipped: false,
-          requiresPayment: false,
-          note: "reactivated_before_period_end",
-        };
+        return this.finishToggle(
+          {
+            organizationId,
+            moduleKey: dto.moduleKey,
+            enabled: true,
+            activeModules: after.activeModules,
+            proRataAzn: "0.00",
+            orderId: null,
+            paymentUrl: null,
+            providerMode: null,
+            skipped: false,
+            requiresPayment: false,
+            note: "reactivated_before_period_end",
+          },
+          true,
+        );
       }
 
       // Post-paid pivot: module activation is zero-friction (no immediate charge/pro-rata).
@@ -207,47 +221,56 @@ export class BillingToggleService {
         );
         return u;
       });
-      return {
-        organizationId,
-        moduleKey: dto.moduleKey,
-        enabled: true,
-        activeModules,
-        proRataAzn: "0.00",
-        orderId: null,
-        paymentUrl: null,
-        providerMode: null,
-        skipped: false,
-        requiresPayment: false,
-        note: "postpaid_activation_without_immediate_payment",
-      };
+      return this.finishToggle(
+        {
+          organizationId,
+          moduleKey: dto.moduleKey,
+          enabled: true,
+          activeModules,
+          proRataAzn: "0.00",
+          orderId: null,
+          paymentUrl: null,
+          providerMode: null,
+          skipped: false,
+          requiresPayment: false,
+          note: "postpaid_activation_without_immediate_payment",
+        },
+        true,
+      );
     } else {
       if (!inCatalog && !scheduledCancel) {
-        return {
-          organizationId,
-          moduleKey: dto.moduleKey,
-          enabled: false,
-          activeModules: snap.activeModules,
-          proRataAzn: "0.00",
-          orderId: null,
-          paymentUrl: null,
-          providerMode: null,
-          skipped: true,
-          requiresPayment: false,
-        };
+        return this.finishToggle(
+          {
+            organizationId,
+            moduleKey: dto.moduleKey,
+            enabled: false,
+            activeModules: snap.activeModules,
+            proRataAzn: "0.00",
+            orderId: null,
+            paymentUrl: null,
+            providerMode: null,
+            skipped: true,
+            requiresPayment: false,
+          },
+          false,
+        );
       }
       if (scheduledCancel) {
-        return {
-          organizationId,
-          moduleKey: dto.moduleKey,
-          enabled: false,
-          activeModules: snap.activeModules,
-          proRataAzn: "0.00",
-          orderId: null,
-          paymentUrl: null,
-          providerMode: null,
-          skipped: true,
-          requiresPayment: false,
-        };
+        return this.finishToggle(
+          {
+            organizationId,
+            moduleKey: dto.moduleKey,
+            enabled: false,
+            activeModules: snap.activeModules,
+            proRataAzn: "0.00",
+            orderId: null,
+            paymentUrl: null,
+            providerMode: null,
+            skipped: true,
+            requiresPayment: false,
+          },
+          false,
+        );
       }
 
       await this.provision.revokeAllForSatellite(
@@ -266,20 +289,34 @@ export class BillingToggleService {
       const after = await this.subscriptionAccess.getOrganizationSnapshot(
         organizationId,
       );
-      return {
-        organizationId,
-        moduleKey: dto.moduleKey,
-        enabled: false,
-        activeModules: after.activeModules,
-        proRataAzn: "0.00",
-        orderId: null,
-        paymentUrl: null,
-        providerMode: null,
-        skipped: false,
-        requiresPayment: false,
-        note: "cancellation_scheduled_end_of_month",
-      };
+      // Cancel is end-of-month — entitlement still live; Sync when finalize removes slug.
+      return this.finishToggle(
+        {
+          organizationId,
+          moduleKey: dto.moduleKey,
+          enabled: false,
+          activeModules: after.activeModules,
+          proRataAzn: "0.00",
+          orderId: null,
+          paymentUrl: null,
+          providerMode: null,
+          skipped: false,
+          requiresPayment: false,
+          note: "cancellation_scheduled_end_of_month",
+        },
+        false,
+      );
     }
+  }
+
+  private async finishToggle(
+    result: Omit<ToggleModuleResult, "synced">,
+    pushSync: boolean,
+  ): Promise<ToggleModuleResult> {
+    const synced = pushSync
+      ? await this.satelliteNotify.afterModuleChange(result.organizationId)
+      : true;
+    return { ...result, synced };
   }
 
   private async isModuleCoveredByActiveBundle(

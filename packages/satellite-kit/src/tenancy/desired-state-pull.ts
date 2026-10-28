@@ -166,6 +166,12 @@ function shouldSkipPull(organizationId: string | null, token: string): string | 
   return null;
 }
 
+export type SharedOrgSnapshotFromPull = {
+  edition?: string;
+  activeModules?: string[];
+  hotelModules?: Record<string, boolean>;
+};
+
 export type PullDesiredStateOpts = {
   prisma?: OrgBindPrisma | null;
   satelliteKey?: string | null;
@@ -175,6 +181,14 @@ export type PullDesiredStateOpts = {
   timeoutMs?: number;
   /** When true, skip apply if hash matches last apply / memory. */
   skipIfUnchanged?: boolean;
+  /**
+   * SHARED / industry satellites: persist per-org modules from desired-state
+   * (e.g. F&B `fnbOrgProfile`) — same hook as Sync POST runtime-config.
+   */
+  onSharedOrgSnapshot?: (
+    organizationId: string,
+    snap: SharedOrgSnapshotFromPull,
+  ) => void | Promise<void>;
 };
 
 /**
@@ -286,6 +300,36 @@ export async function pullDesiredStateOnce(
     });
     if (shared) clearProcessOrganizationBind();
 
+    const snapOrg =
+      (typeof configRaw.organizationId === "string" &&
+        configRaw.organizationId.trim()) ||
+      organizationId;
+    if (snapOrg && opts.onSharedOrgSnapshot) {
+      const activeModules = Array.isArray(configRaw.activeModules)
+        ? configRaw.activeModules.filter((m): m is string => typeof m === "string")
+        : undefined;
+      const edition =
+        typeof configRaw.edition === "string" ? configRaw.edition : undefined;
+      const hotelModules =
+        configRaw.hotelModules &&
+        typeof configRaw.hotelModules === "object" &&
+        !Array.isArray(configRaw.hotelModules)
+          ? (configRaw.hotelModules as Record<string, boolean>)
+          : undefined;
+      try {
+        await opts.onSharedOrgSnapshot(snapOrg, {
+          edition,
+          activeModules,
+          hotelModules,
+        });
+      } catch (hookErr) {
+        console.warn(
+          "[desired-state] onSharedOrgSnapshot failed",
+          hookErr instanceof Error ? hookErr.message : hookErr,
+        );
+      }
+    }
+
     lastAppliedHash = hash;
     return { status: "applied", hash };
   } catch (err) {
@@ -314,6 +358,7 @@ export function startDesiredStateReconcileLoop(opts: {
   prisma?: OrgBindPrisma | null;
   satelliteKey?: string | null;
   fetchImpl?: typeof fetch;
+  onSharedOrgSnapshot?: PullDesiredStateOpts["onSharedOrgSnapshot"];
 }): void {
   if (reconcileTimer || reconcileStopped) return;
   const baseMs = defaultPollMs();
@@ -329,6 +374,7 @@ export function startDesiredStateReconcileLoop(opts: {
           satelliteKey: opts.satelliteKey,
           fetchImpl: opts.fetchImpl,
           skipIfUnchanged: true,
+          onSharedOrgSnapshot: opts.onSharedOrgSnapshot,
         });
 
         if (result.status === "error" && result.httpStatus === 401) {

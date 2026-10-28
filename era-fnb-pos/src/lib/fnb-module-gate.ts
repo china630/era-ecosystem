@@ -1,6 +1,8 @@
 import {
   requireSatelliteModule,
   IndustryModuleInactiveError,
+  fetchSubscriptionSnapshot,
+  resolveEntitlementActiveModules,
 } from "@era/satellite-kit";
 import { getFnbOrgProfile, isHotelModeOff } from "@/lib/fnb-org-profile";
 import { fnbSubmodulesMetered } from "@/lib/fnb-edition";
@@ -41,6 +43,10 @@ export async function requireFnbSatellite(organizationId: string): Promise<void>
   await requireSatelliteModule("industry_fnb_pos", { organizationId: org });
 }
 
+/**
+ * Submodule gate: live CP subscription snapshot first (same SoT as industry
+ * entitlements), then local `fnbOrgProfile` after Sync (air-gap).
+ */
 export async function requireFnbSubmodule(
   moduleKey: string,
   organizationId?: string,
@@ -48,6 +54,24 @@ export async function requireFnbSubmodule(
   const profile = await getFnbOrgProfile(organizationId);
   if (!fnbSubmodulesMetered(profile)) {
     return;
+  }
+  const org = (organizationId ?? profile.organizationId)?.trim();
+  if (org) {
+    try {
+      const snap = await fetchSubscriptionSnapshot(org);
+      // Only trust CP when the snapshot actually carries `activeModules`
+      // (partial bodies must not wipe a healthy local profile).
+      if (snap && Array.isArray(snap.activeModules)) {
+        const fromCp = resolveEntitlementActiveModules(snap) ?? [];
+        if (!fromCp.includes(moduleKey)) {
+          throw new FnbSubmoduleInactiveError(moduleKey);
+        }
+        return;
+      }
+    } catch (err) {
+      if (err instanceof FnbSubmoduleInactiveError) throw err;
+      /* CP unreachable — fall through to local profile */
+    }
   }
   if (!profile.activeModules.includes(moduleKey)) {
     throw new FnbSubmoduleInactiveError(moduleKey);

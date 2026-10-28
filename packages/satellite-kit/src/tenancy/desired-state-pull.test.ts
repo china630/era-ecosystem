@@ -135,6 +135,40 @@ describe("desired-state-pull", () => {
     assert.equal(cfg.vendorBridgesEnabled, true);
   });
 
+  it("invokes onSharedOrgSnapshot after apply", async () => {
+    const orgId = "00000000-0000-4000-8000-000000000077";
+    setRuntimeOrganizationId(orgId);
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN = "real-satellite-event-token-xyz";
+    process.env.ERA_SATELLITE_KEY = "industry_fnb_pos";
+    process.env.ORCHESTRATOR_URL = "http://orch.test:4000";
+
+    const hooked: { org: string; modules: string[] | undefined }[] = [];
+    const result = await pullDesiredStateOnce({
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            organizationId: orgId,
+            satelliteKey: "industry_fnb_pos",
+            generatedAt: new Date().toISOString(),
+            config: {
+              organizationId: orgId,
+              activeModules: ["industry_fnb_pos", "fnb_buffet_planner"],
+              edition: "fnb",
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      onSharedOrgSnapshot: async (organizationId, snap) => {
+        hooked.push({ org: organizationId, modules: snap.activeModules });
+      },
+    });
+
+    assert.equal(result.status, "applied");
+    assert.equal(hooked.length, 1);
+    assert.equal(hooked[0].org, orgId);
+    assert.deepEqual(hooked[0].modules, ["industry_fnb_pos", "fnb_buffet_planner"]);
+  });
+
   it("returns unchanged on second identical pull", async () => {
     const orgId = "00000000-0000-4000-8000-000000000088";
     setRuntimeOrganizationId(orgId);

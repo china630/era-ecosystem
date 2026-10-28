@@ -92,13 +92,25 @@ export default function FrontCashPendingPage() {
           ),
         },
       );
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // Money may already be PAID on the server (legacy 500 after callback fail) — refresh list.
+        const msg = typeof data?.error === 'string' ? data.error : '';
+        if (/paid,\s*but/i.test(msg)) {
+          setReceipt(null);
+          showApiError(data, t('payFailed'));
+          void load();
+          return;
+        }
         showApiError(data, t('payFailed'));
         return;
       }
       setReceipt(null);
-      showSuccess(t('paySuccess'));
+      if (typeof data?.warning === 'string' && data.warning.trim()) {
+        showApiError({ error: data.warning }, t('payFailed'));
+      } else {
+        showSuccess(t('paySuccess'));
+      }
       void load();
     } finally {
       setBusy(false);
@@ -142,7 +154,39 @@ export default function FrontCashPendingPage() {
     );
   }, [collapsed, debouncedQ]);
 
-  const lines = receipt ? parsePendingReceiptLines(receipt.description) : [];
+  const receiptLines = useMemo(() => {
+    if (!receipt) return [] as Array<{ qty: number; name: string; amount: number; currency: string }>;
+    if (receipt.basketRef?.trim()) {
+      return receipt.members.map((member) => ({
+        qty: member.qty ?? 1,
+        name: member.description,
+        amount: Number(member.amount),
+        currency: member.currency,
+      }));
+    }
+    const parsed = parsePendingReceiptLines(receipt.description);
+    const hasExplicitQty = /(?:^|: |\s)\d+(?:[.,]\d+)?\s*[x×]\s+/i.test(receipt.description);
+    if (parsed.length > 1 || (parsed.length === 1 && hasExplicitQty)) {
+      const qtySum = Math.max(1, parsed.reduce((sum, row) => sum + row.qty, 0));
+      return parsed.map((line) => ({
+        qty: line.qty,
+        name: line.name,
+        amount:
+          parsed.length === 1
+            ? Number(receipt.amount)
+            : Math.round((Number(receipt.amount) / qtySum) * line.qty * 100) / 100,
+        currency: receipt.currency,
+      }));
+    }
+    return [
+      {
+        qty: receipt.qty ?? 1,
+        name: receipt.description || receipt.sku || '—',
+        amount: Number(receipt.amount),
+        currency: receipt.currency,
+      },
+    ];
+  }, [receipt]);
 
   return (
     <>
@@ -225,46 +269,44 @@ export default function FrontCashPendingPage() {
         }
       >
         {receipt ? (
-          <div className="space-y-3 text-sm">
-            <p className="text-xs text-[#7F8C8D]">
-              {receipt.basketCount > 1
-                ? `${receipt.payerLabel ?? '—'} · ${t('basketLines', { count: receipt.basketCount })}`
-                : `${receipt.sourceSystem} · ${receipt.sourceRef} · ${receipt.payerLabel ?? '—'}`}
-            </p>
-            {receipt.basketCount > 1 ? (
-              <ul className="space-y-1 text-sm">
-                {receipt.members.map((member) => (
-                  <li key={member.id} className="flex justify-between gap-3">
-                    <span>{member.description}</span>
-                    <span>{Number(member.amount).toFixed(2)} {member.currency}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <p className="text-xs text-[#7F8C8D]">
-              {receipt.businessDate?.slice?.(0, 10) ?? receipt.businessDate} · {receipt.sku ?? '—'} ·{' '}
-              {t('lineQty')} {receipt.qty ?? 1}
-              {receipt.revenueCode ? ` · ${receipt.revenueCode}` : ''}
-            </p>
+          <div className="space-y-3 font-mono text-sm">
+            <div className="space-y-1 border-b border-dashed border-[#D5DADF] pb-3 text-center text-xs text-[#7F8C8D]">
+              <p className="text-[13px] font-semibold text-[#2C3E50]">
+                {receipt.payerLabel?.trim() || receipt.sourceSystem}
+              </p>
+              <p>
+                {receipt.basketCount > 1
+                  ? t('basketLines', { count: receipt.basketCount })
+                  : `${receipt.sourceSystem} · ${receipt.sourceRef.slice(0, 12)}`}
+              </p>
+              <p>{receipt.businessDate?.slice?.(0, 10) ?? receipt.businessDate}</p>
+            </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs uppercase text-[#7F8C8D]">
-                  <th className="py-1 pr-2">{t('lineQty')}</th>
-                  <th className="py-1">{t('lineName')}</th>
+                <tr className="border-b border-[#D5DADF] text-left text-xs text-[#7F8C8D]">
+                  <th className="py-1 pr-2 font-medium">{t('lineQty')}</th>
+                  <th className="py-1 font-medium">{t('lineName')}</th>
+                  <th className="py-1 pl-2 text-right font-medium">{t('lineAmount')}</th>
                 </tr>
               </thead>
               <tbody>
-                {lines.map((line, i) => (
-                  <tr key={`${line.name}-${i}`} className="border-b last:border-0">
-                    <td className="py-1 pr-2">{line.qty}</td>
-                    <td className="py-1">{line.name}</td>
+                {receiptLines.map((line, i) => (
+                  <tr key={`${line.name}-${i}`} className="border-b border-dashed border-[#EEF1F4] last:border-0">
+                    <td className="py-1.5 pr-2 align-top tabular-nums">{line.qty}</td>
+                    <td className="py-1.5 align-top">{line.name}</td>
+                    <td className="py-1.5 pl-2 text-right align-top tabular-nums whitespace-nowrap">
+                      {line.amount.toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="font-semibold">
-              {Number(receipt.amount).toFixed(2)} {receipt.currency}
-            </p>
+            <div className="flex items-baseline justify-between border-t border-dashed border-[#D5DADF] pt-3">
+              <span className="text-xs uppercase tracking-wide text-[#7F8C8D]">{t('total')}</span>
+              <span className="text-base font-semibold tabular-nums text-[#2C3E50]">
+                {Number(receipt.amount).toFixed(2)} {receipt.currency}
+              </span>
+            </div>
             <p className="text-xs text-[#7F8C8D]">{t('amountReadOnly')}</p>
           </div>
         ) : null}

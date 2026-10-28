@@ -17,8 +17,18 @@ import {
   isCatalogModuleActive,
 } from "./billing-module-toggle.helpers";
 import { OrganizationBundleService } from "./organization-bundle.service";
+import { BillingSatelliteNotifyService } from "./billing-satellite-notify.service";
 import type { ToggleBundleDto } from "./dto/toggle-bundle.dto";
 import { WorkforceProvisionService } from "../platform/workforce/workforce-provision.service";
+
+type ToggleBundleResult = {
+  organizationId: string;
+  bundleId: string;
+  enabled: boolean;
+  activeModules: string[];
+  note?: string;
+  synced: boolean;
+};
 
 @Injectable()
 export class BillingBundleToggleService {
@@ -29,19 +39,14 @@ export class BillingBundleToggleService {
     private readonly pricing: PricingService,
     private readonly orgBundles: OrganizationBundleService,
     private readonly provision: WorkforceProvisionService,
+    private readonly satelliteNotify: BillingSatelliteNotifyService,
   ) {}
 
   async toggle(
     userId: string,
     organizationId: string,
     dto: ToggleBundleDto,
-  ): Promise<{
-    organizationId: string;
-    bundleId: string;
-    enabled: boolean;
-    activeModules: string[];
-    note?: string;
-  }> {
+  ): Promise<ToggleBundleResult> {
     await this.access.assertOwnerForBilling(userId, organizationId);
     await this.pricing.ensurePricingModulesFromDatabase();
 
@@ -129,13 +134,16 @@ export class BillingBundleToggleService {
 
     if (dto.enabled) {
       if (fullyActive) {
-        return {
-          organizationId,
-          bundleId: dto.bundleId,
-          enabled: true,
-          activeModules: snap.activeModules,
-          note: "already_active",
-        };
+        return this.finishBundle(
+          {
+            organizationId,
+            bundleId: dto.bundleId,
+            enabled: true,
+            activeModules: snap.activeModules,
+            note: "already_active",
+          },
+          false,
+        );
       }
 
       if (scheduledCancel && ob) {
@@ -157,13 +165,16 @@ export class BillingBundleToggleService {
         const after = await this.subscriptionAccess.getOrganizationSnapshot(
           organizationId,
         );
-        return {
-          organizationId,
-          bundleId: dto.bundleId,
-          enabled: true,
-          activeModules: after.activeModules,
-          note: "reactivated_before_period_end",
-        };
+        return this.finishBundle(
+          {
+            organizationId,
+            bundleId: dto.bundleId,
+            enabled: true,
+            activeModules: after.activeModules,
+            note: "reactivated_before_period_end",
+          },
+          true,
+        );
       }
 
       await this.prisma.$transaction(async (tx) => {
@@ -190,23 +201,29 @@ export class BillingBundleToggleService {
       const after = await this.subscriptionAccess.getOrganizationSnapshot(
         organizationId,
       );
-      return {
-        organizationId,
-        bundleId: dto.bundleId,
-        enabled: true,
-        activeModules: after.activeModules,
-        note: "postpaid_bundle_activation_without_immediate_payment",
-      };
+      return this.finishBundle(
+        {
+          organizationId,
+          bundleId: dto.bundleId,
+          enabled: true,
+          activeModules: after.activeModules,
+          note: "postpaid_bundle_activation_without_immediate_payment",
+        },
+        true,
+      );
     }
 
     if (!ob || (!fullyActive && !scheduledCancel)) {
-      return {
-        organizationId,
-        bundleId: dto.bundleId,
-        enabled: false,
-        activeModules: snap.activeModules,
-        note: "already_inactive",
-      };
+      return this.finishBundle(
+        {
+          organizationId,
+          bundleId: dto.bundleId,
+          enabled: false,
+          activeModules: snap.activeModules,
+          note: "already_inactive",
+        },
+        false,
+      );
     }
 
     for (const key of moduleKeys) {
@@ -224,12 +241,25 @@ export class BillingBundleToggleService {
     const after = await this.subscriptionAccess.getOrganizationSnapshot(
       organizationId,
     );
-    return {
-      organizationId,
-      bundleId: dto.bundleId,
-      enabled: false,
-      activeModules: after.activeModules,
-      note: "bundle_cancellation_scheduled_end_of_month",
-    };
+    return this.finishBundle(
+      {
+        organizationId,
+        bundleId: dto.bundleId,
+        enabled: false,
+        activeModules: after.activeModules,
+        note: "bundle_cancellation_scheduled_end_of_month",
+      },
+      false,
+    );
+  }
+
+  private async finishBundle(
+    result: Omit<ToggleBundleResult, "synced">,
+    pushSync: boolean,
+  ): Promise<ToggleBundleResult> {
+    const synced = pushSync
+      ? await this.satelliteNotify.afterModuleChange(result.organizationId)
+      : true;
+    return { ...result, synced };
   }
 }

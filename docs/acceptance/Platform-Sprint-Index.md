@@ -29,6 +29,7 @@ Current rollup: Gate ✅ (scaffold only) · BE 🟡 (TOPO **in** rollup — Plac
 | S-4 | Deployment topology program | [~] | Waves 0–18: bind + runtime-config + PlacementJob API scaffold + host agent stub + SHARED-ready schema/filter + two-org UAT outline. **Open:** live SHARED pool ops / field isolation signoff / automated migrate product — not sellable as SaaS pool |
 | S-5 | BE deepen → Scaffold ✅ (excl. TOPO) | [x] | IM + `apps/api/src/**/cp-*-negative.spec.ts` (Wave 7) |
 | S-BILL-T3 | TIER_3 à-la-carte module toggle (retire ENTERPRISE_ALL_MODULES) | [~] | Orch + Finance mirror; `billing-toggle-tier.spec.ts`; Nest toast siblings; UAT-SMOKE-PLATFORM E-C.7; CP-BILL-OWNER-01 API; gate/sell unchanged |
+| S-BILL-SYNC | Toggle/bundle/connect → `syncForOrg` + F&B submodule CP-first gate | [~] | ADR; notify + F&B buffet CP-first (incl. partial-snapshot fallback); kit `onSharedOrgSnapshot` pull test; `synced:false` on modal/workforce/connect; UAT E-C.7 / FB-5; API; gate/sell unchanged |
 | S-6 | TOPO in BE rollup + return playbook | [x] | [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md); TOPO 🟡 paints BE |
 | S-7 | Org legal/branding profile (CP-ORG-PROFILE-01) | [~] | API+SCREEN + Finance Nest/industry Sync `orgProfile`; hotel/clinic prefer CP; AC 🟡 out of BE rollup; UAT open; **not** a gate/sell change |
 

@@ -341,7 +341,7 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/fo/laundry` | Same tickets + amount; fallback Delivered or void IN_PLANT (no invent) |
 | `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio (catalog/postings via filter + modals). Lost & found stores room number and a photo. Closed rooms: one grid with kind filter (OOO/OOS), close in modal, return secondary. |
 
-Sidebar groups (URLs unchanged): floor work (`/hk`, `/hk/rooms`, Skip/Sleep, closed rooms) stay top-level with mobile and forecast; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not `/hk/consumption`); **Guest services** = laundry + lost & found. Empty secondary screens keep table chrome and a next-step empty state.
+Sidebar groups (URLs unchanged): floor work (`/hk`, `/hk/rooms`, Skip/Sleep, closed rooms) stay top-level with mobile and forecast; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not `/hk/consumption`); **Guest services** = laundry + lost & found. Empty secondary screens keep table chrome and a next-step empty state. Secondary HK tables/cards use kit `DATA_TABLE_SHELL_CLASS` / `CARD_CONTAINER_CLASS` (`rounded-2xl`), not hand-rolled `rounded` boxes.
 
 `/hk/maids` links a control-plane workforce employment (`globalPersonId`). The picker shows structural unit filter and `Name (position)`. The hotel keeps HK department and ƏG. It is not the roster.
 

@@ -6,6 +6,12 @@ import { useTranslations } from 'next-intl';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   DatePicker,
   EraListFilterBar,
   PageHeader,
@@ -124,40 +130,42 @@ export default function HkRotationPage() {
         />
       </EraListFilterBar>
       {warn ? <p className="mb-2 text-sm text-amber-800">{t('pairsLeftover')}</p> : null}
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              <th className="px-3 py-2">{t('colMaid')}</th>
-              <th className="px-3 py-2">{t('floor')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={2}>
-                  {t('rotationEmpty')}{' '}
-                  <Link href="/hk/maids" className="text-[#2980B9] underline">
-                    {t('maidsLink')}
-                  </Link>
-                  {' · '}
-                  <Link href="/hk/roster" className="text-[#2980B9] underline">
-                    {t('rosterLink')}
-                  </Link>
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colMaid')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('floor')}</th>
               </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.id} className="border-b border-[#ECF0F1]">
-                  <td className="px-3 py-2 font-medium">{r.housekeeper.name}</td>
-                  <td className="px-3 py-2">
-                    {r.pair.floorLow}–{r.pair.floorHigh}
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={2}>
+                    {t('rotationEmpty')}{' '}
+                    <Link href="/hk/maids" className="text-[#2980B9] underline">
+                      {t('maidsLink')}
+                    </Link>
+                    {' · '}
+                    <Link href="/hk/roster" className="text-[#2980B9] underline">
+                      {t('rosterLink')}
+                    </Link>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                rows.map((r) => (
+                  <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{r.housekeeper.name}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {r.pair.floorLow}–{r.pair.floorHigh}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <EraModal
         open={swapOpen}

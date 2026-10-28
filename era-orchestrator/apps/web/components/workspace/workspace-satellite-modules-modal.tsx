@@ -170,10 +170,15 @@ export function WorkspaceSatelliteModulesModal({
         return;
       }
 
+      const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+
       if (!enabled) {
         toast.info(t("disableBillingNotice"));
       } else {
         toast.success(t("enabled"));
+      }
+      if (body?.synced === false) {
+        toast.message(t("syncFailed"));
       }
 
       await loadModuleStates();

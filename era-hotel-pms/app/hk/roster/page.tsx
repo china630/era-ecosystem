@@ -5,6 +5,12 @@ import { useTranslations } from 'next-intl';
 import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   DatePicker,
   EraListFilterBar,
   PageHeader,
@@ -151,54 +157,56 @@ export default function HkRosterPage() {
           preset="date"
         />
       </EraListFilterBar>
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full min-w-[880px] text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              <th className="px-2 py-2">{t('colMaid')}</th>
-              <th className="px-2 py-2">{t('floor')}</th>
-              {days.map((d) => (
-                <th key={d} className="px-2 py-2">
-                  {d.slice(5)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {people.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={2 + days.length}>
-                  {t('rosterEmpty')}
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={`${DATA_TABLE_CLASS} min-w-[880px]`}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colMaid')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('floor')}</th>
+                {days.map((d) => (
+                  <th key={d} className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {d.slice(5)}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              people.map((p) => (
-                <tr key={p.id} className="border-b border-[#ECF0F1] align-top">
-                  <td className="px-2 py-2 font-medium">{p.name}</td>
-                  <td className="px-2 py-2">{todayPair[p.id] ?? '—'}</td>
-                  {days.map((d) => {
-                    const cell = cellFor(p.id, d);
-                    return (
-                      <td key={d} className="px-1 py-1">
-                        {cell ? (
-                          <CatalogField
-                            kind="CLOSED_SMALL"
-                            label={d}
-                            value={cell.kind === 'CUSTOM' ? 'OFF' : cell.kind}
-                            onChange={(v) => void setKind(cell.id, String(v))}
-                            options={KINDS.map((k) => ({ value: k, label: k === 'EG' ? 'ƏG' : k }))}
-                          />
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                    );
-                  })}
+            </thead>
+            <tbody>
+              {people.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={2 + days.length}>
+                    {t('rosterEmpty')}
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                people.map((p) => (
+                  <tr key={p.id} className={`${DATA_TABLE_TR_CLASS} align-top`}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{p.name}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{todayPair[p.id] ?? '—'}</td>
+                    {days.map((d) => {
+                      const cell = cellFor(p.id, d);
+                      return (
+                        <td key={d} className={DATA_TABLE_TD_CLASS}>
+                          {cell ? (
+                            <CatalogField
+                              kind="CLOSED_SMALL"
+                              label={d}
+                              value={cell.kind === 'CUSTOM' ? 'OFF' : cell.kind}
+                              onChange={(v) => void setKind(cell.id, String(v))}
+                              options={KINDS.map((k) => ({ value: k, label: k === 'EG' ? 'ƏG' : k }))}
+                            />
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );
