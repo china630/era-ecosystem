@@ -47,6 +47,7 @@ export class HotelCommissionOffsetController {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          organizationId,
           lineIds: dto.hotelLineIds,
           financeOffsetId: dto.financeOffsetId,
         }),

@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { applyCommissionOffset } from '@/lib/services/agency-commission.service';
+import { enterRequestTenant } from '@/lib/request-organization';
 
 const bodySchema = z.object({
+  organizationId: z.string().uuid(),
   lineIds: z.array(z.string().min(1)).min(1),
   financeOffsetId: z.string().min(1),
 });
@@ -16,7 +18,13 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const body = bodySchema.parse(await request.json());
-    return jsonOk(await applyCommissionOffset(body));
+    enterRequestTenant(body.organizationId);
+    return jsonOk(
+      await applyCommissionOffset({
+        lineIds: body.lineIds,
+        financeOffsetId: body.financeOffsetId,
+      }),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

@@ -176,6 +176,7 @@ export class PurchasePaymentService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          organizationId: input.organizationId,
           batchId: input.batchId,
           financePayableId: input.financePayableId,
           paymentId: input.paymentId,

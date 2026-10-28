@@ -2,8 +2,10 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { applyCommissionPaid } from '@/lib/services/agency-commission.service';
 import { prisma } from '@/lib/prisma';
+import { enterRequestTenant } from '@/lib/request-organization';
 
 const bodySchema = z.object({
+  organizationId: z.string().uuid(),
   batchId: z.string().min(1).optional(),
   lineIds: z.array(z.string().min(1)).optional(),
   financePayableId: z.string().min(1),
@@ -24,6 +26,8 @@ export async function POST(request: Request) {
     }
 
     const body = bodySchema.parse(await request.json());
+    enterRequestTenant(body.organizationId);
+
     if (body.batchId) {
       const batch = await prisma.agencyCommissionBatch.findUnique({
         where: { id: body.batchId },
