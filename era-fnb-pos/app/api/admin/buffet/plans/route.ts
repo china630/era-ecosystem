@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { requireFnbSubmodule } from "@/lib/fnb-module-gate";
 import {
   BUFFET_MEALS,
+  BUFFET_STATUSES,
   listBuffetPlans,
   upsertBuffetPlan,
 } from "@/lib/buffet-planner";
@@ -28,10 +29,16 @@ export async function GET(request: Request) {
     if (denied) return denied;
     await requireFnbSubmodule("fnb_buffet_planner", session?.organizationId);
     const url = new URL(request.url);
+    const statusRaw = url.searchParams.get("status");
+    const status =
+      statusRaw && (BUFFET_STATUSES as readonly string[]).includes(statusRaw)
+        ? (statusRaw as (typeof BUFFET_STATUSES)[number])
+        : undefined;
     const plans = await listBuffetPlans({
       outletId: url.searchParams.get("outletId") ?? undefined,
       fromYmd: url.searchParams.get("from") ?? undefined,
       toYmd: url.searchParams.get("to") ?? undefined,
+      status,
     });
     return jsonOk({ plans });
   } catch (err) {

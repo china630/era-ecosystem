@@ -33,7 +33,8 @@ Revenue codes `FOOD`, `BAR` — те же коды, что в PMS master ([09-ma
 | Categories | Modal CRUD, sort order (`/admin/menu`) |
 | Items | Modal CRUD: price, recipeSku, imageUrl, active; price history journal |
 | Tables | Modal CRUD `/admin/tables` — static codes per outlet |
-| Buffet planner | Module `fnb_buffet_planner` — `/admin/buffet` per-outlet meal plans; publish merges into daily board |
+| Buffet planner | Module `fnb_buffet_planner` — `/admin/buffet` master Plans table + modals (header / composition / copy); publish merges into daily board |
+| Outlets | `/admin/settings` create (`POST /api/outlets`); optional copy menu + halls + tables from another outlet |
 | Recipes / BOM | Finance Manufacturing — FnB stores `recipeSku` + deep-link only |
 | Modifiers | groups, min/max select (later) |
 | Combos | Фаза 2 |

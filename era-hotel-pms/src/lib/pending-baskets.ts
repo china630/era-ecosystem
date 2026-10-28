@@ -5,6 +5,7 @@ export type BasketCharge = {
   description: string;
   payerLabel?: string | null;
   currency: string;
+  qty?: number | null;
 };
 
 export type BasketGridRow<T extends BasketCharge> = T & {

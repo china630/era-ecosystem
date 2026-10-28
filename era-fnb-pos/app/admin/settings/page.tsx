@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { fnbCan } from "@/lib/auth/permission-check";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -23,6 +25,15 @@ type PresetState = {
   selectablePresets: string[];
 };
 
+type OutletRow = {
+  id: string;
+  code: string;
+  name: string;
+  revenueCenterCode: string;
+  financeWarehouseCode?: string | null;
+  active?: boolean;
+};
+
 const PRESET_LABEL_KEY: Record<string, string> = {
   cafe: "presetCafe",
   restaurant: "presetRestaurant",
@@ -38,15 +49,29 @@ export default function AdminSettingsPage() {
   const [presets, setPresets] = useState<PresetState | null>(null);
   const [presetOpen, setPresetOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<string[]>([]);
-  const [outlets, setOutlets] = useState<
-    Array<{ id: string; code: string; name: string; revenueCenterCode: string; financeWarehouseCode?: string | null }>
-  >([]);
+  const [outlets, setOutlets] = useState<OutletRow[]>([]);
   const [outletId, setOutletId] = useState("");
   const [revenueOptions, setRevenueOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [revenueNotice, setRevenueNotice] = useState("");
   const [revenueOpen, setRevenueOpen] = useState(false);
   const [revenueDraft, setRevenueDraft] = useState("");
   const [warehouseDraft, setWarehouseDraft] = useState("");
+  const [canManageOutlets, setCanManageOutlets] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createCode, setCreateCode] = useState("");
+  const [createName, setCreateName] = useState("");
+  const [copyFromOutletId, setCopyFromOutletId] = useState("");
+
+  function refreshOutlets() {
+    return fetch("/api/outlets")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const rows = Array.isArray(d?.outlets) ? (d.outlets as OutletRow[]) : [];
+        setOutlets(rows);
+        setOutletId((prev) => prev || rows[0]?.id || "");
+      })
+      .catch(() => undefined);
+  }
 
   useEffect(() => {
     void fetch("/api/settings/business-day")
@@ -55,12 +80,11 @@ export default function AdminSettingsPage() {
         if (typeof d?.businessDayStart === "string") setDayStart(d.businessDayStart);
       })
       .catch(() => undefined);
-    void fetch("/api/outlets")
+    void refreshOutlets();
+    void fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const rows = Array.isArray(d?.outlets) ? d.outlets : [];
-        setOutlets(rows);
-        setOutletId((prev) => prev || rows[0]?.id || "");
+      .then((me) => {
+        setCanManageOutlets(fnbCan(me, PERMISSIONS.OUTLETS_MANAGE));
       })
       .catch(() => undefined);
     void fetch("/api/admin/hotel-revenue-codes")
@@ -120,6 +144,36 @@ export default function AdminSettingsPage() {
     showSuccess(t("saved"));
   }
 
+  async function createOutlet() {
+    const code = createCode.trim().toUpperCase();
+    const name = createName.trim();
+    if (!code || !name) {
+      showApiError({ error: t("outletCodeNameRequired") }, t("save"));
+      return;
+    }
+    const res = await fetch("/api/outlets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code,
+        name,
+        ...(copyFromOutletId ? { copyFromOutletId } : {}),
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("createOutletFailed"));
+      return;
+    }
+    setCreateOpen(false);
+    setCreateCode("");
+    setCreateName("");
+    setCopyFromOutletId("");
+    showSuccess(t("outletCreated"));
+    await refreshOutlets();
+    if (data?.id) setOutletId(data.id);
+  }
+
   async function saveDayStart() {
     const res = await fetch("/api/settings/business-day", {
       method: "PATCH",
@@ -168,7 +222,70 @@ export default function AdminSettingsPage() {
           </Link>
         }
       />
-      <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-[#2C3E50]">{t("outletsTitle")}</h2>
+        {canManageOutlets ? (
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => {
+              setCreateCode("");
+              setCreateName("");
+              setCopyFromOutletId(outletId || outlets[0]?.id || "");
+              setCreateOpen(true);
+            }}
+          >
+            {t("newOutlet")}
+          </button>
+        ) : null}
+      </div>
+      <table className={`${CARD_CONTAINER_CLASS} mt-2 w-full text-left text-sm`}>
+        <thead>
+          <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
+            <th className="p-3">{t("outletCode")}</th>
+            <th className="p-3">{t("outletName")}</th>
+            <th className="p-3">{t("outletRevenue")}</th>
+            <th className="p-3">{t("outletWarehouse")}</th>
+            <th className="p-3 text-right">{t("actions")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {outlets.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="p-3 text-center text-[#7F8C8D]">
+                {t("outletsEmpty")}
+              </td>
+            </tr>
+          ) : (
+            outlets.map((row) => (
+              <tr key={row.id} className="border-t border-[#ECF0F1]">
+                <td className="p-3 font-medium">{row.code}</td>
+                <td className="p-3">{row.name}</td>
+                <td className="p-3">{row.revenueCenterCode || "—"}</td>
+                <td className="p-3">{row.financeWarehouseCode || t("outletWarehouseDefault")}</td>
+                <td className="p-3 text-right">
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={() => {
+                      setOutletId(row.id);
+                      setRevenueDraft(row.revenueCenterCode ?? "");
+                      setWarehouseDraft(row.financeWarehouseCode ?? "");
+                      setRevenueOpen(true);
+                    }}
+                  >
+                    {t("edit")}
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+      {revenueNotice ? <p className="mt-1 text-sm text-[#B7950B]">{revenueNotice}</p> : null}
+
+      <table className={`${CARD_CONTAINER_CLASS} mt-6 w-full text-left text-sm`}>
         <thead>
           <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
             <th className="p-3">{t("field")}</th>
@@ -178,35 +295,8 @@ export default function AdminSettingsPage() {
         </thead>
         <tbody>
           <tr>
-            <td className="p-3 font-medium">{t("outletRevenue")}</td>
-            <td className="p-3">
-              {outlets.find((row) => row.id === outletId)?.revenueCenterCode || "—"}
-              {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
-              <p className="text-[12px] text-[#7F8C8D]">
-                {t("outletWarehouse")}: {outlets.find((row) => row.id === outletId)?.financeWarehouseCode || t("outletWarehouseDefault")}
-              </p>
-            </td>
-            <td className="p-3 text-right">
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={!outletId}
-                onClick={() => {
-                  const row = outlets.find((item) => item.id === outletId);
-                  setRevenueDraft(row?.revenueCenterCode ?? "");
-                  setWarehouseDraft(row?.financeWarehouseCode ?? "");
-                  setRevenueOpen(true);
-                }}
-              >
-                {t("edit")}
-              </button>
-            </td>
-          </tr>
-          <tr>
             <td className="p-3 font-medium">{t("businessDayStart")}</td>
-            <td className="p-3">
-              {dayStart}
-            </td>
+            <td className="p-3">{dayStart}</td>
             <td className="p-3 text-right">
               <button
                 type="button"
@@ -255,6 +345,40 @@ export default function AdminSettingsPage() {
           ) : null}
         </tbody>
       </table>
+
+      <ModalShell open={createOpen} title={t("newOutlet")} onClose={() => setCreateOpen(false)}>
+        <CatalogField
+          kind="FREE_TEXT"
+          label={t("outletCode")}
+          options={[]}
+          value={createCode}
+          onChange={(next) => setCreateCode(String(next ?? ""))}
+        />
+        <CatalogField
+          kind="FREE_TEXT"
+          label={t("outletName")}
+          options={[]}
+          value={createName}
+          onChange={(next) => setCreateName(String(next ?? ""))}
+        />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("copyMenuFrom")}
+          hint={t("copyMenuFromHint")}
+          options={[
+            { value: "", label: t("copyMenuNone") },
+            ...outlets.map((row) => ({ value: row.id, label: `${row.code} — ${row.name}` })),
+          ]}
+          value={copyFromOutletId}
+          onChange={(next) => setCopyFromOutletId(String(next ?? ""))}
+        />
+        <ModalFooter
+          onCancel={() => setCreateOpen(false)}
+          onSubmit={() => void createOutlet()}
+          submitLabel={t("save")}
+        />
+      </ModalShell>
+
       <ModalShell open={revenueOpen} title={t("outletRevenue")} onClose={() => setRevenueOpen(false)}>
         <CatalogField
           kind="CLOSED_SMALL"

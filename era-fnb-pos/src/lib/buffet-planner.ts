@@ -1,11 +1,12 @@
 import { Prisma } from "@prisma/client";
-import { bakuCivilUtcDate } from "@era/satellite-kit/time";
+import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   BUFFET_MEALS,
   BUFFET_STATUSES,
   effectiveBuffetPortions,
+  planListAggregates,
   type BuffetMealCode,
 } from "@/lib/buffet-planner-math";
 
@@ -13,6 +14,7 @@ export {
   BUFFET_MEALS,
   BUFFET_STATUSES,
   effectiveBuffetPortions,
+  planListAggregates,
   type BuffetMealCode,
 } from "@/lib/buffet-planner-math";
 
@@ -38,6 +40,20 @@ const planInclude = {
 export function serializePlan(
   plan: Prisma.BuffetPlanGetPayload<{ include: typeof planInclude }>,
 ) {
+  const lines = plan.lines.map((line) => ({
+    id: line.id,
+    menuItemId: line.menuItemId,
+    station: line.station,
+    plannedPortions: line.plannedPortions,
+    wastePct: Number(line.wastePct),
+    sortOrder: line.sortOrder,
+    plu: line.menuItem.plu,
+    name: line.menuItem.name,
+    recipeSku: line.menuItem.recipeSku,
+    financeSku: line.menuItem.financeSku,
+    categoryName: line.menuItem.category.name,
+  }));
+  const agg = planListAggregates(lines);
   return {
     id: plan.id,
     outletId: plan.outletId,
@@ -51,20 +67,11 @@ export function serializePlan(
     coversTotal: plan.coversAdult + plan.coversChild,
     coversSource: plan.coversSource,
     notes: plan.notes,
-    lineCount: plan.lines.length,
-    lines: plan.lines.map((line) => ({
-      id: line.id,
-      menuItemId: line.menuItemId,
-      station: line.station,
-      plannedPortions: line.plannedPortions,
-      wastePct: Number(line.wastePct),
-      sortOrder: line.sortOrder,
-      plu: line.menuItem.plu,
-      name: line.menuItem.name,
-      recipeSku: line.menuItem.recipeSku,
-      financeSku: line.menuItem.financeSku,
-      categoryName: line.menuItem.category.name,
-    })),
+    lineCount: lines.length,
+    portionsSum: agg.portionsSum,
+    stations: agg.stations,
+    missingBomCount: agg.missingBomCount,
+    lines,
   };
 }
 
@@ -72,10 +79,12 @@ export async function listBuffetPlans(args: {
   outletId?: string;
   fromYmd?: string;
   toYmd?: string;
+  status?: (typeof BUFFET_STATUSES)[number];
 }) {
   const organizationId = requestOrganizationId();
   const where: Prisma.BuffetPlanWhereInput = { organizationId };
   if (args.outletId) where.outletId = args.outletId;
+  if (args.status) where.status = args.status;
   if (args.fromYmd || args.toYmd) {
     where.serviceDate = {};
     if (args.fromYmd) where.serviceDate.gte = bakuCivilUtcDate(args.fromYmd);
@@ -155,6 +164,151 @@ export async function setBuffetPlanStatus(id: string, status: (typeof BUFFET_STA
     include: planInclude,
   });
   return serializePlan(plan);
+}
+
+export async function updateBuffetPlan(
+  id: string,
+  input: {
+    serviceDateYmd?: string;
+    meal?: BuffetMealCode;
+    coversAdult?: number;
+    coversChild?: number;
+    coversSource?: "MANUAL" | "HOTEL" | "MIXED";
+    notes?: string | null;
+  },
+) {
+  const organizationId = requestOrganizationId();
+  const existing = await prisma.buffetPlan.findFirst({ where: { id, organizationId } });
+  if (!existing) return null;
+  const serviceDateYmd = input.serviceDateYmd ?? existing.serviceDate.toISOString().slice(0, 10);
+  const meal = input.meal ?? (existing.meal as BuffetMealCode);
+  const serviceDate = bakuCivilUtcDate(serviceDateYmd);
+  const slotChanged =
+    serviceDate.getTime() !== existing.serviceDate.getTime() || meal !== existing.meal;
+  if (slotChanged) {
+    const clash = await prisma.buffetPlan.findFirst({
+      where: {
+        outletId: existing.outletId,
+        serviceDate,
+        meal,
+        NOT: { id },
+      },
+      select: { id: true },
+    });
+    if (clash) {
+      throw Object.assign(new Error("PLAN_SLOT_TAKEN"), { code: "PLAN_SLOT_TAKEN", status: 409 });
+    }
+  }
+  const plan = await prisma.buffetPlan.update({
+    where: { id },
+    data: {
+      serviceDate,
+      meal,
+      coversAdult: input.coversAdult ?? existing.coversAdult,
+      coversChild: input.coversChild ?? existing.coversChild,
+      coversSource: input.coversSource ?? existing.coversSource,
+      notes: input.notes !== undefined ? input.notes : existing.notes,
+    },
+    include: planInclude,
+  });
+  return serializePlan(plan);
+}
+
+export async function copyBuffetPlan(id: string, serviceDateYmd?: string) {
+  const organizationId = requestOrganizationId();
+  const source = await prisma.buffetPlan.findFirst({
+    where: { id, organizationId },
+    include: { lines: true },
+  });
+  if (!source) {
+    throw Object.assign(new Error("PLAN_NOT_FOUND"), { code: "PLAN_NOT_FOUND", status: 404 });
+  }
+  const targetYmd = serviceDateYmd?.trim() || todayBakuYmd();
+  const serviceDate = bakuCivilUtcDate(targetYmd);
+  const clash = await prisma.buffetPlan.findFirst({
+    where: {
+      outletId: source.outletId,
+      serviceDate,
+      meal: source.meal,
+    },
+    select: { id: true },
+  });
+  if (clash) {
+    throw Object.assign(new Error("PLAN_SLOT_TAKEN"), { code: "PLAN_SLOT_TAKEN", status: 409 });
+  }
+  const created = await prisma.$transaction(async (tx) => {
+    const plan = await tx.buffetPlan.create({
+      data: {
+        organizationId,
+        outletId: source.outletId,
+        serviceDate,
+        meal: source.meal,
+        status: "DRAFT",
+        coversAdult: source.coversAdult,
+        coversChild: source.coversChild,
+        coversSource: source.coversSource,
+        notes: source.notes,
+      },
+    });
+    if (source.lines.length > 0) {
+      await tx.buffetPlanLine.createMany({
+        data: source.lines.map((line) => ({
+          organizationId,
+          planId: plan.id,
+          menuItemId: line.menuItemId,
+          station: line.station,
+          plannedPortions: line.plannedPortions,
+          wastePct: line.wastePct,
+          sortOrder: line.sortOrder,
+        })),
+      });
+    }
+    return plan.id;
+  });
+  return getBuffetPlan(created);
+}
+
+/** Copy dish lines from the latest same-outlet/meal plan onto a DRAFT plan. */
+export async function copyLinesFromLastSameMeal(planId: string) {
+  const organizationId = requestOrganizationId();
+  const plan = await prisma.buffetPlan.findFirst({
+    where: { id: planId, organizationId },
+  });
+  if (!plan) {
+    throw Object.assign(new Error("PLAN_NOT_FOUND"), { code: "PLAN_NOT_FOUND", status: 404 });
+  }
+  if (plan.status !== "DRAFT") {
+    throw Object.assign(new Error("PLAN_NOT_DRAFT"), { code: "PLAN_NOT_DRAFT", status: 409 });
+  }
+  const source = await prisma.buffetPlan.findFirst({
+    where: {
+      organizationId,
+      outletId: plan.outletId,
+      meal: plan.meal,
+      id: { not: plan.id },
+      lines: { some: {} },
+    },
+    include: { lines: true },
+    orderBy: [{ serviceDate: "desc" }, { updatedAt: "desc" }],
+  });
+  if (!source || source.lines.length === 0) {
+    throw Object.assign(new Error("NO_SOURCE_PLAN"), { code: "NO_SOURCE_PLAN", status: 404 });
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.buffetPlanLine.deleteMany({ where: { planId: plan.id } });
+    await tx.buffetPlanLine.createMany({
+      data: source.lines.map((line) => ({
+        organizationId,
+        planId: plan.id,
+        menuItemId: line.menuItemId,
+        station: line.station,
+        plannedPortions: line.plannedPortions,
+        wastePct: line.wastePct,
+        sortOrder: line.sortOrder,
+      })),
+    });
+  });
+  return getBuffetPlan(plan.id);
 }
 
 export async function upsertBuffetLine(input: {

@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { CatalogField, EraListFilterBar, PageHeader, showApiError } from '@era/satellite-kit/ui';
+import {
+  CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  EraListFilterBar,
+  PageHeader,
+  showApiError,
+} from '@era/satellite-kit/ui';
 
 type Floor = {
   floor: number;
@@ -65,41 +76,43 @@ export default function HkForecastPage() {
           ]}
         />
       </EraListFilterBar>
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-              {headers.map((h) => (
-                <th key={h} className="px-3 py-2">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {floors.length === 0 ? (
-              <tr className="border-b border-[#ECF0F1]">
-                <td className="px-3 py-3 text-[#7F8C8D]" colSpan={headers.length}>
-                  {t('forecastEmpty')}
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                {headers.map((h) => (
+                  <th key={h} className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              floors.map((f) => (
-                <tr key={f.floor} className="border-b border-[#ECF0F1]">
-                  <td className="px-3 py-2 font-medium">{f.floor}</td>
-                  <td className="px-3 py-2">{f.departures}</td>
-                  <td className="px-3 py-2">{f.arrivals}</td>
-                  <td className="px-3 py-2">{f.stayovers}</td>
-                  <td className="px-3 py-2">{f.linen}</td>
-                  <td className="px-3 py-2">{f.deep}</td>
-                  <td className="px-3 py-2">{f.nsr}</td>
-                  <td className="px-3 py-2">{f.vip}</td>
-                  <td className="px-3 py-2">{f.headsOnDuty}</td>
+            </thead>
+            <tbody>
+              {floors.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={headers.length}>
+                    {t('forecastEmpty')}
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                floors.map((f) => (
+                  <tr key={f.floor} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{f.floor}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.departures}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.arrivals}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.stayovers}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.linen}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.deep}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.nsr}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.vip}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{f.headsOnDuty}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

@@ -6,10 +6,10 @@ import {
   CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
-  DATA_TABLE_VIEWPORT_CLASS,
   EraListFilterBar,
   Field,
   PageHeader,
@@ -152,61 +152,63 @@ export default function HkConsumptionPage() {
           ]}
         />
       </EraListFilterBar>
-      <div className={DATA_TABLE_VIEWPORT_CLASS}>
-        <table className={DATA_TABLE_CLASS}>
-          <thead>
-            <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-              {lane === 'closed' ? <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('date')}</th> : null}
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('sku')}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('qty')}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS} />
-            </tr>
-          </thead>
-          <tbody>
-            {tableRows.length === 0 ? (
-              <tr className={DATA_TABLE_TR_CLASS}>
-                <td className={DATA_TABLE_TD_CLASS} colSpan={lane === 'closed' ? 4 : 3}>
-                  {lane === 'open' ? t('empty') : t('closedEmpty')}
-                </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                {lane === 'closed' ? <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('date')}</th> : null}
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('sku')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('qty')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
               </tr>
-            ) : lane === 'open' ? (
-              lines.map((line) => (
-                <tr key={line.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{line.sku}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{line.qty}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      disabled={busy}
-                      onClick={() => void remove(line.id)}
-                    >
-                      {tc('delete')}
-                    </button>
+            </thead>
+            <tbody>
+              {tableRows.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={lane === 'closed' ? 4 : 3}>
+                    {lane === 'open' ? t('empty') : t('closedEmpty')}
                   </td>
                 </tr>
-              ))
-            ) : (
-              closedLines.map((line) => (
-                <tr key={line.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{line.businessDate}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{line.sku}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{line.qty}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      disabled={busy || line.reversed}
-                      onClick={() => void reverse(line.id)}
-                    >
-                      {line.reversed ? t('reversed') : t('reverse')}
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : lane === 'open' ? (
+                lines.map((line) => (
+                  <tr key={line.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>{line.sku}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{line.qty}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={busy}
+                        onClick={() => void remove(line.id)}
+                      >
+                        {tc('delete')}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                closedLines.map((line) => (
+                  <tr key={line.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>{line.businessDate}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{line.sku}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{line.qty}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={busy || line.reversed}
+                        onClick={() => void reverse(line.id)}
+                      >
+                        {line.reversed ? t('reversed') : t('reverse')}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <EraModal
         open={open}

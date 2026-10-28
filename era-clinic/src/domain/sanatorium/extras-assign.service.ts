@@ -491,11 +491,25 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       data: { status: "SCHEDULED", inPackage: false },
     });
   } else {
+    // Money is confirmed at hotel first. Placement may wait on anamnesis / care team —
+    // do not reject settlement-confirmed for those gates (hotel already PAID).
     await prisma.procedureOrder.update({
       where: { id: order.id },
       data: { status: "PROPOSED", inPackage: false },
     });
-    await placeConfirmedProcedures([order.id], {});
+    try {
+      await placeConfirmedProcedures([order.id], {});
+    } catch (err) {
+      const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
+      if (code === ANAMNESIS_REQUIRED || code === CARE_TEAM_REQUIRED) {
+        console.warn("Walk-in settlement: left PROPOSED until clinical gates pass", {
+          orderId: order.id,
+          code,
+        });
+      } else {
+        throw err;
+      }
+    }
   }
   await prisma.procedureOrder.update({
     where: { id: order.id },

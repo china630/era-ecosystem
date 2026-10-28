@@ -145,10 +145,8 @@ export async function payoutDepositRemainder(
   const { requestOrganizationId } = await import('@/lib/request-organization');
   const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
   const orgId = requestOrganizationId();
-  const cashShift = await prisma.cashShift.findFirst({
-    where: { status: 'OPEN' },
-    orderBy: { openedAt: 'desc' },
-  });
+  const { ensureOpenCashShift } = await import('@/lib/services/cash-shift.service');
+  const cashShift = await ensureOpenCashShift();
   if (paymentMethod === 'CARD') {
     const { ensureFiscalDevices } = await import('@/lib/fiscal-device-mirror');
     await ensureFiscalDevices(orgId);
@@ -163,10 +161,11 @@ export async function payoutDepositRemainder(
       amount,
       paymentMethod,
       organizationId: orgId,
-      fiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
-      bankTerminalId: terminal,
-      shiftFiscalDeviceId: cashShift?.fiscalDeviceId ?? undefined,
-      shiftBankTerminalId: cashShift?.bankTerminalId ?? undefined,
+      registerRef: cashShift.registerId,
+      fiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+      bankTerminalId: terminal || cashShift.bankTerminalId || undefined,
+      shiftFiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+      shiftBankTerminalId: cashShift.bankTerminalId ?? undefined,
       lines: [{ name: 'Deposit payout', qty: 1, unitPrice: amount }],
     },
     orgId,

@@ -35,7 +35,8 @@ import { packageSkipPostsRoom, postsStayAsPackage } from '@/lib/services/medical
 
 export async function getNightAuditStatus() {
   await ensureCurrentBusinessDayOpen();
-  const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
+  const { findOpenCashShift } = await import('@/lib/services/cash-shift.service');
+  const openShift = await findOpenCashShift();
   const posShiftStatus = await getPosShiftStatus();
   const currentBiz = await getCurrentBusinessDate();
   const businessDay = await prisma.businessDay.findFirst({
@@ -404,8 +405,14 @@ async function executeLockedNightAudit() {
       steps.push(`Step 2b: No-show marked — ${holds.missedCount}`);
     }
     if (naPolicy.stopIfGuestFolioBalance) {
-      const owing = await countDueGuestFoliosNotZero(date);
-      if (owing > 0) throw new Error('Departing guest folio is not zero');
+      const owing = await listDueGuestFoliosNotZero(date);
+      if (owing.length > 0) {
+        throw new Error(
+          `Departing guest folio is not zero: ${owing
+            .map((row) => `${row.label} [${row.reservationId}]`)
+            .join('; ')}`,
+        );
+      }
     }
     if (naPolicy.autoExtendUndeparted) {
       const { alignReservationStaySlices } = await import('@/lib/services/stay-slice.service');
@@ -435,19 +442,15 @@ async function executeLockedNightAudit() {
       steps.push(`Step 2b: Room-change plans cancelled — ${cancelled.count}`);
     }
 
-    const openFoliosWithBalance = await prisma.folio.findMany({
-      where: { status: 'OPEN' },
-      include: { charges: true, payments: true, reservation: { select: { id: true, status: true } } },
-    });
-    const { folioBalance: fb } = await import('@/lib/services/folio.service');
-    const exceptions = openFoliosWithBalance.filter((f) => {
-      const bal = fb(f.charges, f.payments);
-      return Math.abs(bal) > 0.01 && f.reservation.status === 'CHECKED_OUT';
-    });
+    const exceptions = await listCheckedOutOpenBalances();
     steps.push(`Step 2c: Folio exceptions (CHECKED_OUT with open balance): ${exceptions.length}`);
     const { getHotelPolicy: readPolicy } = await import('@/lib/services/hotel-policy.service');
     if ((await readPolicy()).checkCheckedOutFolios && exceptions.length > 0) {
-      throw new Error('Checked-out folios still have a balance');
+      throw new Error(
+        `Checked-out folios still have a balance: ${exceptions
+          .map((row) => `${row.label} [${row.reservationId}]`)
+          .join('; ')}`,
+      );
     }
 
     const dayCharges = await prisma.folioCharge.findMany({
@@ -524,7 +527,7 @@ async function executeLockedNightAudit() {
               continue;
             }
             if ((await readPolicy()).stopIfZeroNightPrice) {
-              throw new Error(`Night price is zero — ${who}`);
+              throw new Error(`Night price is zero — ${who} [${res.id}]`);
             }
             steps.push(
               `Step 3: Nightly price missing — reservation ${res.id} (${who}); package charge skipped`,
@@ -565,7 +568,7 @@ async function executeLockedNightAudit() {
               continue;
             }
             if ((await readPolicy()).stopIfZeroNightPrice) {
-              throw new Error(`Night price is zero — ${who}`);
+              throw new Error(`Night price is zero — ${who} [${res.id}]`);
             }
             steps.push(
               `Step 3: Nightly price missing — reservation ${res.id} (${who}); room charge skipped`,
@@ -662,36 +665,89 @@ async function executeLockedNightAudit() {
   }
 }
 
-async function countDueGuestFoliosNotZero(date: Date): Promise<number> {
+export type NightAuditReservationRef = {
+  reservationId: string;
+  label: string;
+  balance?: number;
+};
+
+function formatStayLabel(row: {
+  room?: { roomNumber: string } | null;
+  guest?: { fullName: string } | null;
+}): string {
+  const room = row.room?.roomNumber ? `#${row.room.roomNumber}` : '';
+  const guest = row.guest?.fullName?.trim() || '';
+  return [room, guest].filter(Boolean).join(' · ') || 'reservation';
+}
+
+/** Due-out IN_HOUSE stays whose GUEST folio balance is not zero. */
+async function listDueGuestFoliosNotZero(date: Date): Promise<NightAuditReservationRef[]> {
   const { end } = bakuDayBounds(hotelDateKey(date));
   const stays = await prisma.reservation.findMany({
     where: { status: 'IN_HOUSE', checkOutDate: { lt: end } },
-    select: { id: true },
+    select: {
+      id: true,
+      guest: { select: { fullName: true } },
+      room: { select: { roomNumber: true } },
+    },
   });
-  if (stays.length === 0) return 0;
+  if (stays.length === 0) return [];
   const folios = await prisma.folio.findMany({
     where: { reservationId: { in: stays.map((stay) => stay.id) }, type: 'GUEST' },
     include: { charges: true, payments: true },
   });
   const { folioBalance } = await import('@/lib/services/folio.service');
-  const owing = new Set<string>();
+  const byStay = new Map<string, number>();
   for (const folio of folios) {
-    if (Math.abs(folioBalance(folio.charges, folio.payments)) > 0.01) owing.add(folio.reservationId);
+    const bal = folioBalance(folio.charges, folio.payments);
+    if (Math.abs(bal) <= 0.01) continue;
+    byStay.set(folio.reservationId, money2((byStay.get(folio.reservationId) ?? 0) + bal));
   }
-  return owing.size;
+  const stayById = new Map(stays.map((stay) => [stay.id, stay]));
+  return [...byStay.entries()].map(([reservationId, balance]) => {
+    const stay = stayById.get(reservationId);
+    const base = stay ? formatStayLabel(stay) : reservationId.slice(0, 8);
+    return {
+      reservationId,
+      balance,
+      label: `${base} · ${balance.toFixed(2)} AZN`,
+    };
+  });
 }
 
-async function countCheckedOutOpenBalances(): Promise<number> {
+/** CHECKED_OUT reservations that still have an OPEN folio with non-zero balance. */
+async function listCheckedOutOpenBalances(): Promise<NightAuditReservationRef[]> {
   const folios = await prisma.folio.findMany({
     where: { status: 'OPEN', reservation: { status: 'CHECKED_OUT' } },
-    include: { charges: true, payments: true },
+    include: {
+      charges: true,
+      payments: true,
+      reservation: {
+        select: {
+          id: true,
+          guest: { select: { fullName: true } },
+          room: { select: { roomNumber: true } },
+        },
+      },
+    },
   });
   const { folioBalance } = await import('@/lib/services/folio.service');
-  let count = 0;
+  const byStay = new Map<string, { balance: number; label: string }>();
   for (const folio of folios) {
-    if (Math.abs(folioBalance(folio.charges, folio.payments)) > 0.01) count += 1;
+    const bal = folioBalance(folio.charges, folio.payments);
+    if (Math.abs(bal) <= 0.01) continue;
+    const prev = byStay.get(folio.reservation.id);
+    const nextBal = money2((prev?.balance ?? 0) + bal);
+    byStay.set(folio.reservation.id, {
+      balance: nextBal,
+      label: `${formatStayLabel(folio.reservation)} · ${nextBal.toFixed(2)} AZN`,
+    });
   }
-  return count;
+  return [...byStay.entries()].map(([reservationId, row]) => ({
+    reservationId,
+    balance: row.balance,
+    label: row.label,
+  }));
 }
 
 async function medicalNightAmount(reservationId: string, date: Date): Promise<number | null> {
@@ -731,32 +787,42 @@ async function medicalNightAmount(reservationId: string, date: Date): Promise<nu
 }
 
 /** Stays that would skip or stop the night because the price is missing or zero. Does not post. */
-async function countZeroNightPrices(date: Date): Promise<number> {
+async function listZeroNightPrices(date: Date): Promise<NightAuditReservationRef[]> {
   const inHouse = await prisma.reservation.findMany({
     where: { status: 'IN_HOUSE' },
-    include: { ratePlan: { select: { medicalFlag: true } }, dailyRates: true },
+    include: {
+      ratePlan: { select: { medicalFlag: true } },
+      dailyRates: true,
+      guest: { select: { fullName: true } },
+      room: { select: { roomNumber: true } },
+    },
   });
   const nightKey = hotelDateKey(date);
-  let missing = 0;
+  const missing: NightAuditReservationRef[] = [];
   for (const stay of inHouse) {
     if (hotelDateKey(stay.checkOutDate) <= nightKey) continue;
     if (stay.billingMode === 'COMP' || stay.billingMode === 'HOUSE') continue;
+    let bad = false;
     const daily = stay.dailyRates.find((row) => hotelDateKey(row.stayDate) === nightKey);
     if (daily) {
-      if (!(decimalToNumber(daily.amount) > 0)) missing += 1;
-      continue;
-    }
-    if (stay.ratePlan.medicalFlag) {
+      bad = !(decimalToNumber(daily.amount) > 0);
+    } else if (stay.ratePlan.medicalFlag) {
       const quoted = await medicalNightAmount(stay.id, date);
-      if (!(quoted != null && quoted > 0)) missing += 1;
-      continue;
+      bad = !(quoted != null && quoted > 0);
+    } else {
+      try {
+        const amount = await getNightlyRoomChargeForDate(stay.id, date);
+        bad = !(amount > 0);
+      } catch (err) {
+        if (err instanceof NightlyPriceMissingError) bad = true;
+        else throw err;
+      }
     }
-    try {
-      const amount = await getNightlyRoomChargeForDate(stay.id, date);
-      if (!(amount > 0)) missing += 1;
-    } catch (err) {
-      if (err instanceof NightlyPriceMissingError) missing += 1;
-      else throw err;
+    if (bad) {
+      missing.push({
+        reservationId: stay.id,
+        label: formatStayLabel(stay),
+      });
     }
   }
   return missing;
@@ -766,7 +832,16 @@ export type NightAuditStepView = {
   id: string;
   state: 'wait' | 'done' | 'stop';
   detail: string;
+  /** Reservations that block this step — UI opens the stay card. */
+  refs?: NightAuditReservationRef[];
 };
+
+function stepRefs(
+  state: 'wait' | 'done' | 'stop',
+  refs: NightAuditReservationRef[],
+): Pick<NightAuditStepView, 'refs'> {
+  return state === 'stop' && refs.length > 0 ? { refs } : {};
+}
 
 /** Read-only checklist. Does not post charges or roll the date. */
 export async function previewNightAudit(): Promise<{
@@ -790,10 +865,18 @@ export async function previewNightAudit(): Promise<{
   const { yearBoundaryFlags } = await import('@/lib/services/year-boundary.service');
   const year = await yearBoundaryFlags(key);
   const yearStops = key.endsWith('-01-01') && !year.yearOpened;
-  const zeroPrices = policy.stopIfZeroNightPrice ? await countZeroNightPrices(date) : 0;
-  const owingGuests = policy.stopIfGuestFolioBalance ? await countDueGuestFoliosNotZero(date) : 0;
-  const checkedOut = policy.checkCheckedOutFolios ? await countCheckedOutOpenBalances() : 0;
-  const folioStops = owingGuests + checkedOut;
+  const zeroPriceRefs = policy.stopIfZeroNightPrice ? await listZeroNightPrices(date) : [];
+  const owingGuests = policy.stopIfGuestFolioBalance ? await listDueGuestFoliosNotZero(date) : [];
+  const checkedOut = policy.checkCheckedOutFolios ? await listCheckedOutOpenBalances() : [];
+  const folioRefs = [...owingGuests, ...checkedOut];
+  const arrivalRefs: NightAuditReservationRef[] = holds.missedArrivals.map((row) => ({
+    reservationId: row.id,
+    label: formatStayLabel(row),
+  }));
+  const dueRefs: NightAuditReservationRef[] = holds.dueOuts.map((row) => ({
+    reservationId: row.id,
+    label: formatStayLabel(row),
+  }));
   let qaimeStops = false;
   let qaimeDetail = '';
   try {
@@ -810,22 +893,40 @@ export async function previewNightAudit(): Promise<{
       throw err;
     }
   }
+  const arrivalsState: NightAuditStepView['state'] =
+    !policy.autoNoShow && holds.missedCount > 0 ? 'stop' : 'done';
+  const dueState: NightAuditStepView['state'] =
+    !policy.autoExtendUndeparted && holds.dueCount > 0 ? 'stop' : 'done';
+  const priceState: NightAuditStepView['state'] = zeroPriceRefs.length > 0 ? 'stop' : 'done';
+  const foliosState: NightAuditStepView['state'] = folioRefs.length > 0 ? 'stop' : 'done';
   const steps: NightAuditStepView[] = [
     { id: 'cash', state: unclosed > 0 ? 'stop' : 'done', detail: String(unclosed) },
     { id: 'pos', state: pos.hasOpenShift ? 'stop' : 'done', detail: pos.hasOpenShift ? 'open' : '' },
     { id: 'pending', state: pendingStops ? 'stop' : 'done', detail: String(pending.pendingCount) },
     {
       id: 'arrivals',
-      state: !policy.autoNoShow && holds.missedCount > 0 ? 'stop' : 'done',
+      state: arrivalsState,
       detail: String(holds.missedCount),
+      ...stepRefs(arrivalsState, arrivalRefs),
     },
     {
       id: 'due',
-      state: !policy.autoExtendUndeparted && holds.dueCount > 0 ? 'stop' : 'done',
+      state: dueState,
       detail: String(holds.dueCount),
+      ...stepRefs(dueState, dueRefs),
     },
-    { id: 'price', state: zeroPrices > 0 ? 'stop' : 'done', detail: String(zeroPrices) },
-    { id: 'folios', state: folioStops > 0 ? 'stop' : 'done', detail: String(folioStops) },
+    {
+      id: 'price',
+      state: priceState,
+      detail: String(zeroPriceRefs.length),
+      ...stepRefs(priceState, zeroPriceRefs),
+    },
+    {
+      id: 'folios',
+      state: foliosState,
+      detail: String(folioRefs.length),
+      ...stepRefs(foliosState, folioRefs),
+    },
     { id: 'qaime', state: qaimeStops ? 'stop' : 'done', detail: qaimeDetail },
     { id: 'moves', state: 'done', detail: '' },
     { id: 'night', state: yearStops ? 'stop' : 'wait', detail: yearStops ? 'YEAR_NOT_OPEN' : '' },

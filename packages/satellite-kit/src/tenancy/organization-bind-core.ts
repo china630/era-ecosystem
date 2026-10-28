@@ -113,6 +113,15 @@ export async function onSatelliteBoot(opts: {
   /** Start jittered reconcile loop after pull (default: same as pullDesiredState). */
   reconcileDesiredState?: boolean;
   satelliteKey?: string | null;
+  /** Persist per-org modules from desired-state (F&B fnbOrgProfile, etc.). */
+  onSharedOrgSnapshot?: (
+    organizationId: string,
+    snap: {
+      edition?: string;
+      activeModules?: string[];
+      hotelModules?: Record<string, boolean>;
+    },
+  ) => void | Promise<void>;
 }): Promise<{ organizationId: string | null; source: OrganizationBindSource | "none" }> {
   await onSatelliteRuntimeBoot({ prisma: opts.prisma ?? null });
 
@@ -144,6 +153,7 @@ export async function onSatelliteBoot(opts: {
       const pull = await pullDesiredStateOnce({
         prisma: opts.prisma ?? null,
         satelliteKey: opts.satelliteKey,
+        onSharedOrgSnapshot: opts.onSharedOrgSnapshot,
       });
       pullStatus = pull.status;
       pullHttp = pull.status === "error" ? pull.httpStatus : undefined;
@@ -183,6 +193,7 @@ export async function onSatelliteBoot(opts: {
       startDesiredStateReconcileLoop({
         prisma: opts.prisma ?? null,
         satelliteKey: opts.satelliteKey,
+        onSharedOrgSnapshot: opts.onSharedOrgSnapshot,
       });
     }
   }

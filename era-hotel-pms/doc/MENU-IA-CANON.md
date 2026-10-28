@@ -108,7 +108,7 @@ Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
 | **Minibar** ▸ | | Folio sale + catalog (not HK consumption) |
 | Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
 | Minibar catalog | `/settings/stock` | Local hotel product catalog. Screen permission stays Settings |
-| HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. Separate from Minibar |
+| HK consumption | `/hk/consumption` | Finance sku and quantity for the open business day. Guest price 0. Not a folio line. Separate from Minibar. Kit table shell (`rounded-2xl`) |
 | **Guest services** ▸ | | Laundry + lost & found |
 | Guest laundry | `/hk/laundry` | Intake grid with price/sum preview; Accept → IN_PLANT; Delivered + return form → folio `LAUNDRY` |
 | Lost & found | `/hk/lost-and-found` | Lost & found |

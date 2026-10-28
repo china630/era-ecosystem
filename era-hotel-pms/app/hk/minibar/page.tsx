@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
   EraListFilterBar,
   Field,
   ModalFooter,
@@ -214,62 +220,64 @@ export default function MinibarPage() {
           ]}
         />
       </EraListFilterBar>
-      <div className="overflow-x-auto rounded border border-[#D5DADF] bg-white">
-        {view === 'catalog' ? (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-                <th className="px-3 py-2">{tc('code')}</th>
-                <th className="px-3 py-2">{tc('name')}</th>
-                <th className="px-3 py-2">{tc('amount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {catalogEmpty ? (
-                <tr>
-                  <td className="px-3 py-3 text-[#7F8C8D]" colSpan={3}>
-                    {t('emptyCatalog')}
-                  </td>
+      <div className={DATA_TABLE_SHELL_CLASS}>
+        <div className="overflow-x-auto">
+          {view === 'catalog' ? (
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('code')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('name')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('amount')}</th>
                 </tr>
-              ) : (
-                items.map((i) => (
-                  <tr key={i.id} className="border-b border-[#ECF0F1]">
-                    <td className="px-3 py-2 font-medium">{i.code}</td>
-                    <td className="px-3 py-2">{i.name}</td>
-                    <td className="px-3 py-2">{Number(i.price).toFixed(2)} AZN</td>
+              </thead>
+              <tbody>
+                {catalogEmpty ? (
+                  <tr className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS} colSpan={3}>
+                      {t('emptyCatalog')}
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-[12px] text-[#7F8C8D]">
-                <th className="px-3 py-2">{th('colRoom')}</th>
-                <th className="px-3 py-2">{t('item')}</th>
-                <th className="px-3 py-2">{t('qty')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPostings.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-3 text-[#7F8C8D]" colSpan={3}>
-                    {catalogEmpty ? t('postNeedsCatalog') : t('noPostings')}
-                  </td>
+                ) : (
+                  items.map((i) => (
+                    <tr key={i.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{i.code}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{i.name}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{Number(i.price).toFixed(2)} AZN</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{th('colRoom')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('item')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('qty')}</th>
                 </tr>
-              ) : (
-                filteredPostings.map((p) => (
-                  <tr key={p.id} className="border-b border-[#ECF0F1]">
-                    <td className="px-3 py-2">{p.room?.roomNumber ?? '—'}</td>
-                    <td className="px-3 py-2">{p.item?.name ?? '—'}</td>
-                    <td className="px-3 py-2">×{p.qty}</td>
+              </thead>
+              <tbody>
+                {filteredPostings.length === 0 ? (
+                  <tr className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS} colSpan={3}>
+                      {catalogEmpty ? t('postNeedsCatalog') : t('noPostings')}
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
+                ) : (
+                  filteredPostings.map((p) => (
+                    <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{p.room?.roomNumber ?? '—'}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{p.item?.name ?? '—'}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>×{p.qty}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
       <ModalShell
         open={productOpen}
@@ -371,11 +379,11 @@ export default function MinibarPage() {
           />
           <div className="flex items-center gap-2 text-sm">
             <span className="text-[#7F8C8D]">{t('qty')}</span>
-            <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Math.max(1, Number(qty) - 1)))}>
+            <button type="button" className="h-6 w-6 rounded-lg border border-[#D5DADF]" onClick={() => setQty(String(Math.max(1, Number(qty) - 1)))}>
               −
             </button>
             <span className="w-6 text-center">{qty}</span>
-            <button type="button" className="h-6 w-6 rounded border border-[#D5DADF]" onClick={() => setQty(String(Number(qty) + 1))}>
+            <button type="button" className="h-6 w-6 rounded-lg border border-[#D5DADF]" onClick={() => setQty(String(Number(qty) + 1))}>
               +
             </button>
           </div>
