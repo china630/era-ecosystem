@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
 import BuffetCostSettingsPanel from "@/components/BuffetCostSettingsPanel";
+import FnbIntegrationSettingsPanel from "@/components/FnbIntegrationSettingsPanel";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { fnbCan } from "@/lib/auth/permission-check";
 import {
@@ -460,6 +461,7 @@ export default function AdminSettingsPage() {
         </tbody>
       </table>
 
+      <FnbIntegrationSettingsPanel />
       <BuffetCostSettingsPanel outlets={outlets} />
 
       <ModalShell open={createOpen} title={t("newOutlet")} onClose={() => setCreateOpen(false)}>

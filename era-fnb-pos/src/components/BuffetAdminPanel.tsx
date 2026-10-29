@@ -688,9 +688,143 @@ export default function BuffetAdminPanel({
                 ? t("costRunHint")
                 : t("subtitle");
 
+  const headerActions = (void chromeTick,
+    viewTab === "plans" ? (
+      <>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          onClick={() => {
+            const spawnKind = kindFilter === "STAFF" ? "STAFF" : "GUEST";
+            if (spawnKind === "STAFF") setSpawnCoversSource("MANUAL");
+            setSpawnOpen(true);
+            void fetch(
+              `/api/admin/buffet/templates?outletId=${encodeURIComponent(outletId)}&kind=${spawnKind}`,
+            )
+              .then((r) => (r.ok ? r.json() : null))
+              .then((d) => {
+                const rows = Array.isArray(d?.templates) ? d.templates : [];
+                setTemplatesForSpawn(rows);
+                const active = rows.find((r: { active: boolean }) => r.active);
+                setSpawnTemplateId(active?.id || rows[0]?.id || "");
+              })
+              .catch(() => undefined);
+            void fetch("/api/settings/buffet-cost")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((d) => {
+                const org = d?.settings?.orgDefaults;
+                const pct =
+                  spawnKind === "STAFF"
+                    ? (org?.productionFactorPctStaff ?? 100)
+                    : (org?.productionFactorPctGuest ?? 80);
+                setSpawnFactor(String(pct));
+              })
+              .catch(() => undefined);
+          }}
+        >
+          {t("spawnWeek")}
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          onClick={() => openCreatePlan()}
+        >
+          <Plus className="mr-1 inline h-4 w-4" />
+          {t("newPlan")}
+        </button>
+      </>
+    ) : viewTab === "templates" ? (
+      <button
+        type="button"
+        className={PRIMARY_BUTTON_CLASS}
+        disabled={!outletId || !tmplChromeRef.current}
+        onClick={() => tmplChromeRef.current?.openCreate()}
+      >
+        <Plus className="mr-1 inline h-4 w-4" />
+        {t("newTemplate")}
+      </button>
+    ) : viewTab === "management" ? (
+      <>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={!outletId || !mgmtChromeRef.current}
+          onClick={() => mgmtChromeRef.current?.openRoster()}
+        >
+          {t("eatersRoster")}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={!outletId || !mgmtChromeRef.current}
+          onClick={() => mgmtChromeRef.current?.openSignToday()}
+        >
+          {t("signManagementToday")}
+        </button>
+      </>
+    ) : viewTab === "forecast" ? (
+      <button
+        type="button"
+        className={PRIMARY_BUTTON_CLASS}
+        disabled={
+          !forecastChromeRef.current ||
+          forecastChromeRef.current.loading ||
+          !fromDate ||
+          !toDate
+        }
+        onClick={() => forecastChromeRef.current?.syncHotel()}
+      >
+        {t("forecastSyncHotel")}
+      </button>
+    ) : viewTab === "norms" ? (
+      <button
+        type="button"
+        className={PRIMARY_BUTTON_CLASS}
+        disabled={!forecastChromeRef.current || forecastChromeRef.current.saving}
+        onClick={() => forecastChromeRef.current?.saveNorms()}
+      >
+        {forecastChromeRef.current?.saving ? "…" : t("forecastSaveNorms")}
+      </button>
+    ) : viewTab === "costRun" ? (
+      <>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={
+            !outletId ||
+            !costChromeRef.current ||
+            costChromeRef.current.loading
+          }
+          onClick={() => costChromeRef.current?.refresh()}
+        >
+          {costChromeRef.current?.loading ? "…" : t("costRunRefresh")}
+        </button>
+        {costChromeRef.current?.financeHref ? (
+          <a
+            href={costChromeRef.current.financeHref}
+            className={SECONDARY_BUTTON_CLASS}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("costRunOpenFinance")}
+          </a>
+        ) : null}
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={!costChromeRef.current}
+          onClick={() => costChromeRef.current?.toggleStaffOverride()}
+        >
+          {costChromeRef.current?.staffOverrideOpen
+            ? t("costRunStaffOverrideHide")
+            : t("costRunStaffOverrideShow")}
+        </button>
+      </>
+    ) : null);
+
   return (
     <div className="space-y-4">
-      <PageHeader title={sectionTitle} subtitle={sectionSubtitle} />
+      <PageHeader title={sectionTitle} subtitle={sectionSubtitle} actions={headerActions} />
 
       {buffetModuleActive === false ? (
         <div className={`${CARD_CLASS} border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950`}>
@@ -727,141 +861,6 @@ export default function BuffetAdminPanel({
         statusFilter={statusFilter}
         statusOptions={statusOptions}
         onStatusFilter={setStatusFilter}
-        actions={
-          (void chromeTick,
-          viewTab === "plans" ? (
-            <>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                onClick={() => {
-                  const spawnKind = kindFilter === "STAFF" ? "STAFF" : "GUEST";
-                  if (spawnKind === "STAFF") setSpawnCoversSource("MANUAL");
-                  setSpawnOpen(true);
-                  void fetch(
-                    `/api/admin/buffet/templates?outletId=${encodeURIComponent(outletId)}&kind=${spawnKind}`,
-                  )
-                    .then((r) => (r.ok ? r.json() : null))
-                    .then((d) => {
-                      const rows = Array.isArray(d?.templates) ? d.templates : [];
-                      setTemplatesForSpawn(rows);
-                      const active = rows.find((r: { active: boolean }) => r.active);
-                      setSpawnTemplateId(active?.id || rows[0]?.id || "");
-                    })
-                    .catch(() => undefined);
-                  void fetch("/api/settings/buffet-cost")
-                    .then((r) => (r.ok ? r.json() : null))
-                    .then((d) => {
-                      const org = d?.settings?.orgDefaults;
-                      const pct =
-                        spawnKind === "STAFF"
-                          ? (org?.productionFactorPctStaff ?? 100)
-                          : (org?.productionFactorPctGuest ?? 80);
-                      setSpawnFactor(String(pct));
-                    })
-                    .catch(() => undefined);
-                }}
-              >
-                {t("spawnWeek")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => openCreatePlan()}
-              >
-                <Plus className="mr-1 inline h-4 w-4" />
-                {t("newPlan")}
-              </button>
-            </>
-          ) : viewTab === "templates" ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={!outletId || !tmplChromeRef.current}
-              onClick={() => tmplChromeRef.current?.openCreate()}
-            >
-              <Plus className="mr-1 inline h-4 w-4" />
-              {t("newTemplate")}
-            </button>
-          ) : viewTab === "management" ? (
-            <>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={!outletId || !mgmtChromeRef.current}
-                onClick={() => mgmtChromeRef.current?.openRoster()}
-              >
-                {t("eatersRoster")}
-              </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={!outletId || !mgmtChromeRef.current}
-                onClick={() => mgmtChromeRef.current?.openSignToday()}
-              >
-                {t("signManagementToday")}
-              </button>
-            </>
-          ) : viewTab === "forecast" ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={
-                !forecastChromeRef.current ||
-                forecastChromeRef.current.loading ||
-                !fromDate ||
-                !toDate
-              }
-              onClick={() => forecastChromeRef.current?.syncHotel()}
-            >
-              {t("forecastSyncHotel")}
-            </button>
-          ) : viewTab === "norms" ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={!forecastChromeRef.current || forecastChromeRef.current.saving}
-              onClick={() => forecastChromeRef.current?.saveNorms()}
-            >
-              {forecastChromeRef.current?.saving ? "…" : t("forecastSaveNorms")}
-            </button>
-          ) : viewTab === "costRun" ? (
-            <>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={
-                  !outletId ||
-                  !costChromeRef.current ||
-                  costChromeRef.current.loading
-                }
-                onClick={() => costChromeRef.current?.refresh()}
-              >
-                {costChromeRef.current?.loading ? "…" : t("costRunRefresh")}
-              </button>
-              {costChromeRef.current?.financeHref ? (
-                <a
-                  href={costChromeRef.current.financeHref}
-                  className={SECONDARY_BUTTON_CLASS}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t("costRunOpenFinance")}
-                </a>
-              ) : null}
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={!costChromeRef.current}
-                onClick={() => costChromeRef.current?.toggleStaffOverride()}
-              >
-                {costChromeRef.current?.staffOverrideOpen
-                  ? t("costRunStaffOverrideHide")
-                  : t("costRunStaffOverrideShow")}
-              </button>
-            </>
-          ) : null)
-        }
         banner={
           outletCostModel && outletCostModel !== "HYBRID" ? (
             <p className="m-0 text-xs text-[#E67E22]">

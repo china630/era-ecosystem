@@ -210,6 +210,7 @@ describe("buildHybridHandoffPack", () => {
     expect(params.get("theoreticalAzn")).toBe("500");
     expect(params.get("theoSku")).toBe("MEAT:500");
     expect(pack.chefWarnings.some((w) => w.code === "FINANCE_URL_MISSING")).toBe(false);
+    expect(pack.financeWebUrl).toBe("http://localhost:3001");
     expect(exportMock).toHaveBeenCalledWith(
       expect.objectContaining({ unitCogsBySku: { MEAT: 18 } }),
     );
@@ -252,5 +253,16 @@ describe("buildHybridHandoffPack", () => {
     expect(exportMock).toHaveBeenCalledWith(
       expect.objectContaining({ staffGrossAzn: 100 }),
     );
+  });
+
+  it("flags FINANCE_URL_MISSING when Settings finance URL empty", async () => {
+    const pack = await buildHybridHandoffPack({
+      outletId: "out-1",
+      fromYmd: "2026-10-27",
+      toYmd: "2026-11-02",
+      financeWebUrl: null,
+    });
+    expect(pack.financeWebUrl).toBeNull();
+    expect(pack.chefWarnings.some((w) => w.code === "FINANCE_URL_MISSING")).toBe(true);
   });
 });

@@ -263,7 +263,15 @@
       "shapeHint_buffet_kitchen": "Буфет-кухня",
       "shapeHint_disco": "Диско",
       "outletRevenueFallback": "Fallback дохода (SoR — категория)",
-      "outletRevenueFallbackHint": "Коды дохода категорий меню — источник истины. Код outlet — только fallback, если у категории нет кода."
+      "outletRevenueFallbackHint": "Коды дохода категорий меню — источник истины. Код outlet — только fallback, если у категории нет кода.",
+      "integrationsTitle": "Интеграции буфета",
+      "integrationsHint": "URL для Open Finance, синхрона отеля и HR. Хранятся в настройках — не в образе.",
+      "financeWebUrl": "URL Finance web",
+      "financeWebUrlHint": "Maya dəyəri → Open Finance",
+      "hotelPmsUrl": "URL Hotel PMS",
+      "hotelPmsUrlHint": "Прогноз → ночи из отеля",
+      "orchestratorBaseUrl": "URL Orchestrator API",
+      "orchestratorBaseUrlHint": "Руководство → HR sync"
     },
     "menu": {
       "title": "Админ меню",
@@ -491,7 +499,7 @@
         "MISSING_UNIT_COGS": "У части POS-строк нет unit COGS — COMP/sale могут занизить attributed.",
         "MISSING_RECIPE_SKU": "У части COMP/sale строк нет recipeSku — задайте Finance SKU на позициях меню.",
         "FINANCE_CATALOG_UNAVAILABLE": "Каталог Finance недоступен — COMP/sale COGS не оценены.",
-        "FINANCE_URL_MISSING": "NEXT_PUBLIC_FINANCE_WEB_URL не задан — CTA Finance недоступен.",
+        "FINANCE_URL_MISSING": "Нет URL Finance — укажите в Настройках",
         "OUTLET_CODE_MISMATCH": "Код F&B outlet не совпадает с satelliteOutletCode склада Finance."
       },
       "costRunLoading": "Загрузка…",
@@ -501,7 +509,7 @@
       "costRunModelLabel": "Модель buffet cost: {model}",
       "costRunOpenFinance": "Открыть Finance HYBRID",
       "costRunFinanceLink": "Открыть Finance HYBRID себестоимость",
-      "costRunFinanceLinkMissing": "Задайте NEXT_PUBLIC_FINANCE_WEB_URL, чтобы открыть Finance.",
+      "costRunFinanceLinkMissing": "Укажите URL Finance web в Настройках, чтобы открыть Finance.",
       "costRunDemoShow": "Про расход FOOD",
       "costRunDemoHide": "Скрыть пояснение",
       "costRunDemoHint": "Расход FOOD и residual считает Finance по складам FOOD — здесь не вводятся. Откройте Finance HYBRID для истинного residual.",
@@ -682,9 +690,9 @@
       "templateActiveCol": "Активен",
       "templateSlotsCol": "Слоты",
       "templateActiveYes": "активен",
-      "forecastHotelUnavailable": "Отель недоступен — введите ночи вручную.",
+      "forecastHotelUnavailable": "Отель недоступен — укажите Hotel PMS URL в Настройках или введите ночи вручную.",
       "normsHelp": "Когда сумма гостевых ночей попадает в диапазон, выбирается полоса (низ/сред/высок) → теория закупки / Себестоимость. Min/max = пороги ночей.",
-      "eatersSyncUnavailable": "HR недоступен — добавьте вручную.",
+      "eatersSyncUnavailable": "HR недоступен — укажите Orchestrator API URL в Настройках или добавьте вручную.",
       "eatersEmptyHonesty": "Список пуст. Если HR не тянется — добавьте имя вручную.",
       "kindInModal": "Тип"
     },

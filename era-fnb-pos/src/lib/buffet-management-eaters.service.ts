@@ -11,10 +11,23 @@ type LeadershipItem = {
 async function fetchLeadershipFromOrch(
   organizationId: string,
 ): Promise<LeadershipItem[]> {
-  const base =
-    process.env.ORCHESTRATOR_INTERNAL_URL?.replace(/\/$/, "") ||
-    process.env.ERA_ORCHESTRATOR_URL?.replace(/\/$/, "") ||
-    process.env.NEXT_PUBLIC_ORCHESTRATOR_URL?.replace(/\/$/, "");
+  const {
+    getFnbIntegrationSettings,
+    normalizePublicOrigin,
+  } = await import("@/lib/fnb-integration-settings");
+  const fromSettings = normalizePublicOrigin(
+    (await getFnbIntegrationSettings(organizationId)).orchestratorBaseUrl,
+  );
+  let base = fromSettings;
+  if (!base) {
+    try {
+      const { resolveOrchestratorBaseUrl } = await import("@era/satellite-kit");
+      const resolved = resolveOrchestratorBaseUrl({ fallback: "" }).trim();
+      base = resolved ? resolved.replace(/\/$/, "") : null;
+    } catch {
+      base = null;
+    }
+  }
   const token =
     process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
     process.env.INTERNAL_SERVICE_TOKEN?.trim() ||

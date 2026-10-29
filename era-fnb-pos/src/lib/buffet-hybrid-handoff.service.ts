@@ -172,7 +172,8 @@ export async function buildHybridHandoffPack(args: HybridHandoffArgs) {
   if (!financeUrl) {
     chefWarnings.push({
       code: "FINANCE_URL_MISSING",
-      message: "NEXT_PUBLIC_FINANCE_WEB_URL is not set — Open Finance CTA unavailable.",
+      message:
+        "Finance web URL is not set in Settings — Open Finance CTA unavailable.",
     });
   }
 
@@ -229,6 +230,7 @@ export async function buildHybridHandoffPack(args: HybridHandoffArgs) {
         : [],
     },
     financeHandoffQuery,
+    financeWebUrl: financeUrl || null,
     chefWarnings,
   };
 }

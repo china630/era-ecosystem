@@ -24,4 +24,4 @@ npm run dev   # http://localhost:3202
 
 Point `PMS_BRIDGE_URL` at running `era-hotel-pms` and match `POS_BRIDGE_SECRET`.
 
-Set `NEXT_PUBLIC_FINANCE_WEB_URL` for Cost run → Open Finance HYBRID. Full buffet lab runbook: [`docs/SETUP_AND_RUN.md`](../docs/SETUP_AND_RUN.md) §8 Buffet cost lab demo.
+Set **Finance web URL** in Admin → Settings → Buffet integrations for Cost run → Open Finance HYBRID (and menu → recipes link). Full buffet lab runbook: [`docs/SETUP_AND_RUN.md`](../docs/SETUP_AND_RUN.md) §8 Buffet cost lab demo.

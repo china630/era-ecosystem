@@ -491,6 +491,7 @@ export default function BuffetForecastPanel({
                       <CatalogField
                         kind={"SEARCHABLE" as CatalogFieldKind}
                         label={t("forecastSku")}
+                        hideLabel
                         value={row.sku}
                         options={
                           row.sku &&
@@ -543,6 +544,7 @@ export default function BuffetForecastPanel({
                     <td className="py-2 pr-2">
                       <Field
                         label={t("forecastName")}
+                        hideLabel
                         preset="shortText"
                         value={row.name}
                         onChange={(e) => {
@@ -556,6 +558,7 @@ export default function BuffetForecastPanel({
                       <CatalogField
                         kind={"CLOSED_SMALL" as CatalogFieldKind}
                         label={t("forecastUnit")}
+                        hideLabel
                         value={row.unit}
                         options={
                           row.unit &&
@@ -578,6 +581,7 @@ export default function BuffetForecastPanel({
                     <td className="py-2 pr-2">
                       <Field
                         label={t("forecastQtyPerNight")}
+                        hideLabel
                         preset="shortText"
                         type="number"
                         min={0}
@@ -596,6 +600,7 @@ export default function BuffetForecastPanel({
                     <td className="py-2 pr-2">
                       <Field
                         label={t("forecastAznPerNight")}
+                        hideLabel
                         preset="shortText"
                         type="number"
                         min={0}
@@ -671,6 +676,7 @@ export default function BuffetForecastPanel({
                     <CatalogField
                       kind={"CLOSED_SMALL" as CatalogFieldKind}
                       label={t("forecastBandCode")}
+                      hideLabel
                       value={row.code.trim().toUpperCase()}
                       options={bandCodeOptions}
                       onChange={(next) => {
@@ -688,6 +694,7 @@ export default function BuffetForecastPanel({
                   <td className="py-2 pr-2">
                     <Field
                       label={t("forecastBandMin")}
+                      hideLabel
                       preset="shortText"
                       type="number"
                       min={0}
@@ -705,6 +712,7 @@ export default function BuffetForecastPanel({
                   <td className="py-2 pr-2">
                     <Field
                       label={t("forecastBandMax")}
+                      hideLabel
                       preset="shortText"
                       type="number"
                       min={0}
