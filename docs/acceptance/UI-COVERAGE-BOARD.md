@@ -252,6 +252,8 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-10-27 | HOT-TOUR-01 boarding-first + policy settings **SCREEN**; HOT-XFER-01 Airport folded to `?hasFlight=1` **SCREEN**. Out of Hotel SHOW rollup. Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-CL-07 / CP-PEER-01 **HEADLESS** — Finance→Hotel payment-applied + peer URL SoR. No hotel screen; Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-CO-05 unsettled CL **SCREEN** — HotelOpsShell + debts link + Folio-tab card. Out of Hotel SHOW rollup. COVERAGE SHIPPED OpsUI. Gate/Pilot/edition unchanged. |
+| 2026-10-29 | CLI-26 deepen closeout: `/sanatorium/resources` modal Check-in + nurse unpaid→Late; still under SHIPPED day-ops (not a new SHOW claim). Gate/Pilot/edition unchanged. |
+| 2026-10-29 | CLI-62 closeout second-pass: still **SCREEN** (DnD/plan/SAME_DAY cabin refuses documented); UAT §11b open → not SHOW; Gate/Pilot/edition unchanged. |
 | 2026-10-28 | CLI-62 open attendance + SAME_DAY + foresight **SCREEN**; UAT §11b open → not SHOW; AC-CLI-OPEN-ATTEND 🟡. Gate/Pilot/edition unchanged. |
 | 2026-10-28 | CLI-61 / HOT-CASH-02 / HOT-NA-01: pending `revenueCode` Zod+heal; NA blank-pending fail (no `UNKNOWN`). CLI-61 **SCREEN**; HOT-CASH-02/NA SHIPPED deepen. Gate/Pilot/edition unchanged. |
 | 2026-10-28 | CLI-61 / HOT-CASH-02: clinic walk-in+extras pending stamp `revenueCode`; hub refuses blank. CLI-61 stays **SCREEN**; HOT-CASH-02 SHIPPED deepen. Gate/Pilot/edition unchanged. |

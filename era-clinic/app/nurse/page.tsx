@@ -74,7 +74,18 @@ function placeOrder(
     if (isToday && now >= dayEnd) return null;
     return "late";
   }
-  if (order.status === "PENDING_PAY") return "queue";
+  if (order.status === "PENDING_PAY") {
+    // Same clock as SCHEDULED: after deadline → Late (keep red unpaid block there).
+    const start = new Date(order.scheduledAt).getTime();
+    const endSrc = order.endsAt || order.effectiveEndsAt;
+    const deadline = order.checkInDeadline
+      ? new Date(order.checkInDeadline).getTime()
+      : endSrc
+        ? new Date(endSrc).getTime()
+        : start;
+    if (now < deadline) return "queue";
+    return "late";
+  }
   if (order.status !== "SCHEDULED") return null;
   if (order.checkInOpen) return "queue";
   const start = new Date(order.scheduledAt).getTime();

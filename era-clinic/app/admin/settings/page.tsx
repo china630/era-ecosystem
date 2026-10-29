@@ -25,6 +25,7 @@ import {
   PageHeader,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
@@ -68,6 +69,7 @@ type SchedulingDefaults = {
   procedureCheckInMode: "QR" | "CODE" | "MANUAL";
   procedureCheckInWindow: "STRICT" | "SAME_DAY";
   procedureCheckInSameDayUntil: string;
+  receptionProcedureCheckIn: boolean;
   peakModeEnabled: boolean;
   peakDayEndHour: number;
   programSchedulingMode: "AFTER_CHECKUP" | "ON_CHECKIN";
@@ -124,6 +126,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   procedureCheckInMode: "QR",
   procedureCheckInWindow: "STRICT",
   procedureCheckInSameDayUntil: "",
+  receptionProcedureCheckIn: true,
   peakModeEnabled: false,
   peakDayEndHour: 22,
   programSchedulingMode: "AFTER_CHECKUP",
@@ -214,6 +217,7 @@ export default function ClinicAdminSettingsPage() {
           procedureCheckInSameDayUntil: row.procedureCheckInSameDayUntil
             ? String(row.procedureCheckInSameDayUntil).slice(0, 10)
             : "",
+          receptionProcedureCheckIn: row.receptionProcedureCheckIn !== false,
           peakModeEnabled: Boolean(row.peakModeEnabled ?? SCHED_DEFAULTS.peakModeEnabled),
           peakDayEndHour: row.peakDayEndHour ?? SCHED_DEFAULTS.peakDayEndHour,
           programSchedulingMode:
@@ -314,6 +318,7 @@ export default function ClinicAdminSettingsPage() {
         procedureCheckInSameDayUntil: row.procedureCheckInSameDayUntil
           ? String(row.procedureCheckInSameDayUntil).slice(0, 10)
           : "",
+        receptionProcedureCheckIn: row.receptionProcedureCheckIn !== false,
         peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
         peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
         programSchedulingMode:
@@ -805,6 +810,24 @@ export default function ClinicAdminSettingsPage() {
               }
             />
           ) : null}
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draftSched.receptionProcedureCheckIn}
+              onChange={(e) =>
+                setDraftSched((prev) => ({
+                  ...prev,
+                  receptionProcedureCheckIn: e.target.checked,
+                }))
+              }
+            />
+            <span>
+              {t("receptionProcedureCheckIn")}
+              <span className={`ml-1 block text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {t("receptionProcedureCheckInHint")}
+              </span>
+            </span>
+          </label>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

@@ -23,7 +23,7 @@ We must not invent a new registration door. Package assign, extras/Pay, nurse ch
 | Quota | OPEN burns entitlement only on `CHECKED_IN` / `COMPLETED`. Day-bucket `SCHEDULED` does **not** burn. Auto `NO_SHOW` sweep **skips** OPEN. |
 | Plan / print | Sort OPEN to end of day; time label = open-attendance (not wall clock) until seated. |
 | Matrix | No bar until seated. Foresight rail on `/sanatorium/resources` calendar: waiting / in-cabin counts by day (nurse board does not duplicate the rail). |
-| Nurse | Check-in window = clinic working hours that Baku day. Check-in **seats** a free matching cabin (`endsAt = now + duration`), then normal `CHECKED_IN` → auto-complete. |
+| Nurse | Check-in window = clinic working hours that Baku day. Check-in **seats** a free matching cabin (`endsAt = now + duration`), then normal `CHECKED_IN` → auto-complete. Reception may use the same window from the resource matrix when `receptionProcedureCheckIn` is on. |
 | Canon seat door | Nurse check-in. Matrix may show the bar after seat; DnD of unseated OPEN is refused (or explicit “pin FIXED” later). |
 
 Not the same as `PatientOrigin.WALK_IN`, walk-in party (CLI-61), `PROPOSED`, or `HOLD_UNTIL_PAY` unseated extras.

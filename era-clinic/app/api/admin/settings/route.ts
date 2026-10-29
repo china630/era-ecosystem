@@ -52,6 +52,7 @@ const patchSchema = z.object({
   procedureCheckInMode: z.enum(["QR", "CODE", "MANUAL"]).optional(),
   procedureCheckInWindow: z.enum(["STRICT", "SAME_DAY"]).optional(),
   procedureCheckInSameDayUntil: z.string().datetime().nullable().optional(),
+  receptionProcedureCheckIn: z.boolean().optional(),
   autoNoShowAfterMin: z.number().int().min(1).max(1440).nullable().optional(),
   patientCardResultsPreview: z.number().int().min(1).max(50).optional(),
   patientCardPlanPreview: z.number().int().min(1).max(50).optional(),

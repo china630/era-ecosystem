@@ -43,6 +43,8 @@ model Tenant {
   procedureCheckInWindow         ProcedureCheckInWindowMode @default(STRICT) @map("procedure_check_in_window")
   /// Inclusive Asia/Baku calendar end date for SAME_DAY; after this day STRICT applies.
   procedureCheckInSameDayUntil   DateTime?                @map("procedure_check_in_same_day_until")
+  /// When true, reception may check in from the resource matrix modal (Nafta default ON).
+  receptionProcedureCheckIn      Boolean                  @default(true) @map("reception_procedure_check_in")
   /// Clinic day start hour (Asia/Baku wall clock), inclusive
   dayStartHour                   Int                      @default(9) @map("day_start_hour")
   /// Clinic day end hour (Asia/Baku), exclusive

@@ -1,22 +1,35 @@
 #!/usr/bin/env node
 /**
- * Cursor stop hook — nudge acceptance closeout once per agent turn.
- * ERA Ecosystem.
+ * Cursor stop hook — nudge acceptance closeout once when product files change.
  *
  * Cursor sends status "completed" on every stop, including plain questions.
- * A question does not change the tree, so the follow-up is sent only when
- * the workspace stamp differs from the previous stop. The stamp is HEAD,
- * the porcelain path list, and a content hash of each dirty path — a further
- * edit to a file that is already modified still changes the stamp.
- * The first stop only records a baseline (the repo may already be dirty).
- * loop_count > 0 refreshes the baseline and stays quiet, so closeout edits
- * do not schedule another checklist.
+ * Follow-up fires only when the *relevant* workspace digest differs from the
+ * last stop. Questions with no product-file edits stay quiet.
+ *
+ * Stamp lives under .git/ (local, not committed) so temp clears do not reset
+ * baseline and re-fire on the next question.
+ *
+ * loop_count > 0 refreshes the stamp and stays quiet (closeout edits).
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+
+/** Paths that can affect acceptance / product closeout. */
+function isRelevantPath(rel) {
+  const p = rel.replace(/\\/g, "/");
+  if (p.startsWith("era-")) return true;
+  if (p.startsWith("packages/")) return true;
+  if (p.startsWith("docs/acceptance/")) return true;
+  if (p.startsWith("docs/adr/")) return true;
+  if (p.startsWith("docs/editions/")) return true;
+  if (p === "docs/COVERAGE_MATRIX.md") return true;
+  if (p.startsWith("docs/COVERAGE_MATRIX")) return true;
+  if (p === "docs/READINESS_MATRIX.md") return true;
+  if (p.startsWith(".cursor/hooks/")) return false;
+  return false;
+}
 
 function readInput() {
   try {
@@ -41,7 +54,6 @@ function gitCapture(args) {
   }
 }
 
-/** Porcelain quotes paths that contain spaces or special characters. */
 function unquoteGitPath(path) {
   if (!(path.startsWith('"') && path.endsWith('"'))) return path;
   try {
@@ -51,7 +63,6 @@ function unquoteGitPath(path) {
   }
 }
 
-/** Working-tree digest. Missing and non-files stay stable tokens. */
 function fileDigest(relPath) {
   try {
     const abs = join(process.cwd(), relPath);
@@ -63,9 +74,8 @@ function fileDigest(relPath) {
 }
 
 /**
- * HEAD, porcelain, and the contents of every dirty path.
- * Empty string if git cannot be read. A second edit to an already dirty
- * file changes this stamp even though the path list does not.
+ * HEAD + porcelain + contents of relevant dirty paths only.
+ * Empty string if git cannot be read.
  */
 function workspaceStamp() {
   const head = gitCapture(["rev-parse", "HEAD"]).replace(/\r\n/g, "\n").trim();
@@ -78,14 +88,14 @@ function workspaceStamp() {
     if (line.length < 4) continue;
     const pathPart = line.slice(3);
     const arrow = pathPart.lastIndexOf(" -> ");
-    const rel = arrow === -1 ? pathPart : pathPart.slice(arrow + 4);
-    paths.push(unquoteGitPath(rel));
+    const rel = unquoteGitPath(arrow === -1 ? pathPart : pathPart.slice(arrow + 4));
+    if (isRelevantPath(rel)) paths.push(rel);
   }
   paths.sort();
   const hash = createHash("sha256");
   hash.update(head);
   hash.update("\0");
-  hash.update(porcelain);
+  hash.update(paths.join("\n"));
   for (const rel of paths) {
     hash.update("\0");
     hash.update(rel);
@@ -96,13 +106,16 @@ function workspaceStamp() {
 }
 
 function stampPath() {
-  const id = createHash("sha256").update(process.cwd()).digest("hex").slice(0, 16);
-  return join(tmpdir(), `era-stop-closeout-${id}.txt`);
+  const gitDir = join(process.cwd(), ".git");
+  if (existsSync(gitDir)) {
+    return join(gitDir, "era-stop-closeout.stamp");
+  }
+  return join(process.cwd(), ".era-stop-closeout.stamp");
 }
 
 function readStamp(path) {
   try {
-    return readFileSync(path, "utf8");
+    return readFileSync(path, "utf8").trim();
   } catch {
     return null;
   }
@@ -110,9 +123,13 @@ function readStamp(path) {
 
 function writeStamp(path, value) {
   try {
+    const dir = join(path, "..");
+    if (!existsSync(dir) && path.includes(".git")) {
+      // .git always exists when stampPath chose it
+    }
     writeFileSync(path, value, "utf8");
   } catch {
-    // A missing stamp must not turn into a follow-up loop.
+    // Missing stamp must not loop.
   }
 }
 
@@ -128,6 +145,13 @@ if (loopCount > 0) {
   process.exit(0);
 }
 
+// No git / empty stamp → baseline only.
+if (!current) {
+  process.stdout.write("{}");
+  process.exit(0);
+}
+
+// First stop, or tree unchanged (questions, Ask-mode, no product edits) → quiet.
 if (previous === null || previous === current) {
   writeStamp(path, current);
   process.stdout.write("{}");
@@ -149,6 +173,6 @@ const followup = [
 process.stdout.write(
   JSON.stringify({
     followup_message: followup,
-  })
+  }),
 );
 process.exit(0);

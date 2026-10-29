@@ -19,7 +19,7 @@
 
 | AC | Spec | UAT deny |
 |----|------|----------|
-| AC-CLI-OPS | `era-clinic/__tests__/cli-ops-negative.spec.ts` | UAT-SMOKE § Deny |
+| AC-CLI-OPS | `era-clinic/__tests__/cli-ops-negative.spec.ts` | UAT-SMOKE § Deny (CLI-26 matrix reception check-in deepen stays under existing suite + UAT §3–4; no Scaffold reopen) |
 | AC-CLI-PT | `era-clinic/__tests__/cli-pt-negative.spec.ts` | UAT-SMOKE § Deny |
 | AC-CLI-MD | `era-clinic/__tests__/cli-md-negative.spec.ts` | UAT-SMOKE § Deny |
 | AC-CLI-SAN | `era-clinic/__tests__/cli-san-negative.spec.ts` + `__tests__/icd10-catalog.spec.ts` | UAT-SMOKE § Deny / ICD |
@@ -34,7 +34,7 @@ AC-CLI-EPISODE (CLI-55) negatives: `__tests__/cli-episode-negative.spec.ts` + `_
 
 AC-CLI-WALKIN-PARTY (CLI-61): unit `__tests__/walk-in-party.spec.ts` (placeholders/status). UI path UAT-SMOKE §11a open → AC stays 🟡; not Scaffold ✅.
 
-AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers). UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
+AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers). Code also refuses matrix DnD of unseated OPEN, plan reschedule for OPEN, and SAME_DAY check-in without a cabin — still **no field negative path**. UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
 
 ## Forbidden as sole proof
 
