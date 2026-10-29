@@ -6,6 +6,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '../..');
 const matrixPath = path.join(root, '../scripts/ops/nafta-revenue-remap-matrix.json');
@@ -13,14 +17,11 @@ const matrix = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
 const dryRun = process.argv.includes('--dry-run');
 const orgId = process.env.ERA_NAFTA_ORG_ID || matrix.orgId;
 
-// Prefer database package client (same as other finance ops scripts).
-const { createPrismaClient, closePrismaPool } = await import(
-  path.join(root, 'packages/database/prisma-client.ts').replace(/\\/g, '/')
-).catch(() => import('@prisma/client').then((m) => ({
-  createPrismaClient: () => new m.PrismaClient(),
-  closePrismaPool: async (p) => p.$disconnect(),
-})));
-const prisma = typeof createPrismaClient === 'function' ? createPrismaClient() : createPrismaClient;
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is required');
+}
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const TARGET_ACCOUNTS = [
   { code: '601.01', nameAz: 'Otel gəliri', nameRu: 'Выручка отеля', nameEn: 'Hotel revenue', parent: '601' },
@@ -146,10 +147,12 @@ async function main() {
 
   console.log(JSON.stringify(report, null, 2));
   await prisma.$disconnect();
+  await pool.end();
 }
 
 main().catch(async (e) => {
   console.error(e);
-  await prisma.$disconnect();
+  await prisma.$disconnect().catch(() => undefined);
+  await pool.end().catch(() => undefined);
   process.exit(1);
 });
