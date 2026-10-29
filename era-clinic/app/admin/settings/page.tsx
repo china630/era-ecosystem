@@ -66,6 +66,8 @@ type SchedulingDefaults = {
   defaultProcedureGapMinutes: number;
   defaultAppointmentSlotMinutes: number;
   procedureCheckInMode: "QR" | "CODE" | "MANUAL";
+  procedureCheckInWindow: "STRICT" | "SAME_DAY";
+  procedureCheckInSameDayUntil: string;
   peakModeEnabled: boolean;
   peakDayEndHour: number;
   programSchedulingMode: "AFTER_CHECKUP" | "ON_CHECKIN";
@@ -120,6 +122,8 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   defaultProcedureGapMinutes: 5,
   defaultAppointmentSlotMinutes: 30,
   procedureCheckInMode: "QR",
+  procedureCheckInWindow: "STRICT",
+  procedureCheckInSameDayUntil: "",
   peakModeEnabled: false,
   peakDayEndHour: 22,
   programSchedulingMode: "AFTER_CHECKUP",
@@ -205,6 +209,11 @@ export default function ClinicAdminSettingsPage() {
           procedureCheckInMode:
             row.procedureCheckInMode ??
             (row.checkInRequiresQr === false ? "MANUAL" : "QR"),
+          procedureCheckInWindow:
+            row.procedureCheckInWindow === "SAME_DAY" ? "SAME_DAY" : "STRICT",
+          procedureCheckInSameDayUntil: row.procedureCheckInSameDayUntil
+            ? String(row.procedureCheckInSameDayUntil).slice(0, 10)
+            : "",
           peakModeEnabled: Boolean(row.peakModeEnabled ?? SCHED_DEFAULTS.peakModeEnabled),
           peakDayEndHour: row.peakDayEndHour ?? SCHED_DEFAULTS.peakDayEndHour,
           programSchedulingMode:
@@ -258,6 +267,9 @@ export default function ClinicAdminSettingsPage() {
         ...draftCard,
         ...draftWork,
         ...draftSched,
+        procedureCheckInSameDayUntil: draftSched.procedureCheckInSameDayUntil
+          ? `${draftSched.procedureCheckInSameDayUntil}T12:00:00.000Z`
+          : null,
       }),
     });
     if (res.ok) {
@@ -297,6 +309,11 @@ export default function ClinicAdminSettingsPage() {
           row.defaultAppointmentSlotMinutes ?? draftSched.defaultAppointmentSlotMinutes,
         procedureCheckInMode:
           row.procedureCheckInMode ?? draftSched.procedureCheckInMode,
+        procedureCheckInWindow:
+          row.procedureCheckInWindow === "SAME_DAY" ? "SAME_DAY" : "STRICT",
+        procedureCheckInSameDayUntil: row.procedureCheckInSameDayUntil
+          ? String(row.procedureCheckInSameDayUntil).slice(0, 10)
+          : "",
         peakModeEnabled: Boolean(row.peakModeEnabled ?? draftSched.peakModeEnabled),
         peakDayEndHour: row.peakDayEndHour ?? draftSched.peakDayEndHour,
         programSchedulingMode:
@@ -755,6 +772,39 @@ export default function ClinicAdminSettingsPage() {
               <option value="MANUAL">MANUAL</option>
             </select>
           </label>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("procedureCheckInWindow")}
+            hint={t("procedureCheckInWindowHint")}
+            value={draftSched.procedureCheckInWindow}
+            emptyLabel={null}
+            options={[
+              { value: "STRICT", label: t("procedureCheckInWindowStrict") },
+              { value: "SAME_DAY", label: t("procedureCheckInWindowSameDay") },
+            ]}
+            onChange={(next) => {
+              const value = Array.isArray(next) ? next[0] : next;
+              setDraftSched((prev) => ({
+                ...prev,
+                procedureCheckInWindow: value === "SAME_DAY" ? "SAME_DAY" : "STRICT",
+              }));
+            }}
+          />
+          {draftSched.procedureCheckInWindow === "SAME_DAY" ? (
+            <Field
+              label={t("procedureCheckInSameDayUntil")}
+              hint={t("procedureCheckInSameDayUntilHint")}
+              preset="shortText"
+              type="date"
+              value={draftSched.procedureCheckInSameDayUntil}
+              onChange={(e) =>
+                setDraftSched((prev) => ({
+                  ...prev,
+                  procedureCheckInSameDayUntil: e.target.value,
+                }))
+              }
+            />
+          ) : null}
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

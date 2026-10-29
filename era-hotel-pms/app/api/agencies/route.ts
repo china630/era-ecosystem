@@ -9,7 +9,11 @@ import { sessionHasHotelPermission } from '@/lib/auth/permission-check';
 export async function GET() {
   try {
     const session = await getSatelliteSession();
-    assertAnyPermission(session, [PERMISSIONS.REPORTS_READ, PERMISSIONS.BOOKING_AGENCY_PICK]);
+    assertAnyPermission(session, [
+      PERMISSIONS.REPORTS_READ,
+      PERMISSIONS.BOOKING_AGENCY_PICK,
+      PERMISSIONS.SCREEN_DISTRIBUTION,
+    ]);
     const rows = await listAgencies();
     const fullLedger = sessionHasHotelPermission(
       {

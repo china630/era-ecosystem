@@ -152,7 +152,12 @@ export async function getResourceDayMatrix(date: Date) {
   const dayYmd = bakuDateKey(date);
   const closed = await clinicDayIsClosed(dayYmd);
   if (closed) {
-    return { date: dayYmd, closed: true, resources: [] as Awaited<ReturnType<typeof getResourceCalendar>> };
+    return {
+      date: dayYmd,
+      closed: true,
+      resources: [] as Awaited<ReturnType<typeof getResourceCalendar>>,
+      openAttendance: { waiting: 0, inCabin: 0, capacity: 0, rows: [] as [] },
+    };
   }
   const calendar = await getResourceCalendar(date);
   const orderIds = calendar
@@ -168,15 +173,21 @@ export async function getResourceDayMatrix(date: Date) {
             patientRefId: true,
             procedureCode: true,
             manuallyAdjusted: true,
+            schedulingMode: true,
             clinicalEpisode: { select: { roomNumber: true } },
           },
         })
       : [];
   const byId = new Map(orders.map((o) => [o.id, o]));
+  const { loadOpenAttendanceForesight } = await import(
+    "@/domain/procedure/open-attendance"
+  );
+  const openAttendance = await loadOpenAttendanceForesight(date);
 
   return {
     date: bakuDateKey(date),
     closed: false,
+    openAttendance,
     resources: calendar.map((r) => ({
       ...r,
       slots: r.slots.map((s) => {
@@ -188,6 +199,7 @@ export async function getResourceDayMatrix(date: Date) {
           roomNumber: ord?.clinicalEpisode?.roomNumber ?? undefined,
           procedureCode: ord?.procedureCode,
           manuallyAdjusted: ord?.manuallyAdjusted,
+          schedulingMode: ord?.schedulingMode,
           blocked: s.occupied,
         };
       }),

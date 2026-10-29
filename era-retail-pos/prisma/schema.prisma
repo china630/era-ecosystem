@@ -45,6 +45,11 @@ model Outlet {
   preset         String?
   /// Default revenue key for products that do not set their own.
   revenueCode    String?    @map("revenue_code")
+  /// Operational POS contacts — overlay org profile for outlet-scoped receipt chrome (CP-ORG-PROFILE-01).
+  phone          String?
+  email          String?
+  address        String?
+  website        String?
   tenant         Tenant     @relation(fields: [tenantId], references: [id])
   createdAt      DateTime   @default(now())
   registers      Register[]

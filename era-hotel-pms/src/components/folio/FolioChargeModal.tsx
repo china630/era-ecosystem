@@ -1,20 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { CatalogField, Field, showApiError, showSuccess } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import type { PayerGuest } from '@/lib/folio-payer';
+import { LODGING_PAYMENT_ROLES, revenueRoleIn } from '@/lib/revenue-code-match';
+import { revenueLabel } from '@/lib/folio-article-summary';
 
 type RevenueCode = {
   id: string;
   code: string;
   name?: string | null;
+  nameAz?: string | null;
+  nameRu?: string | null;
+  nameEn?: string | null;
   active?: boolean;
   systemRole?: string | null;
+  allowManualCharge?: boolean | null;
 };
-
-const ROOM_ROLES = ['ROOM', 'PKG', 'RATE_ADJ', 'CITY_TAX'];
 
 export function FolioChargeModal({
   open,
@@ -33,6 +37,7 @@ export function FolioChargeModal({
 }) {
   const t = useTranslations('folio');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [codes, setCodes] = useState<RevenueCode[]>([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
   const [folioType, setFolioType] = useState<'' | 'GUEST' | 'AGENCY' | 'COMPANY'>('');
@@ -52,14 +57,19 @@ export function FolioChargeModal({
       .then((r) => r.json())
       .then((data) => {
         const rows = (data.data ?? data) as RevenueCode[];
-        const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
+        const list = Array.isArray(rows)
+          ? rows.filter((row) => row.active !== false && row.allowManualCharge !== false)
+          : [];
         setCodes(list);
       })
       .catch(() => setCodes([]));
   }, [open]);
 
   const selected = codes.find((row) => row.id === revenueCodeId) ?? null;
-  const roomArticle = ROOM_ROLES.includes(selected?.systemRole ?? '');
+  const roomArticle = revenueRoleIn(
+    { systemRole: selected?.systemRole ?? null },
+    LODGING_PAYMENT_ROLES,
+  );
   const namedGuests = (guests ?? []).filter((guest) => guest.name.trim());
   const selectedGuest =
     namedGuests.length === 1 ? namedGuests[0]! : namedGuests.find((guest) => guest.id === guestId) ?? null;
@@ -72,6 +82,15 @@ export function FolioChargeModal({
     !needsPocket &&
     amountN !== 0 &&
     description.trim().length > 0;
+
+  const codeOptions = useMemo(
+    () =>
+      codes.map((c) => ({
+        value: c.id,
+        label: `${c.code} — ${revenueLabel(c, locale)}`,
+      })),
+    [codes, locale],
+  );
 
   async function submit() {
     if (!canSubmit) return;
@@ -92,6 +111,11 @@ export function FolioChargeModal({
       });
       const data = await res.json();
       if (!res.ok) {
+        const code = String(data?.code ?? data?.error ?? '');
+        if (code === 'REVENUE_CODE_MANUAL_CHARGE_DENIED') {
+          showApiError({ error: t('manualChargeDenied') }, tc('error'));
+          return;
+        }
         showApiError(data, tc('error'));
         return;
       }
@@ -128,10 +152,7 @@ export function FolioChargeModal({
             setFolioType('');
             setGuestId('');
           }}
-          options={codes.map((c) => ({
-            value: c.id,
-            label: c.name ? `${c.code} — ${c.name}` : c.code,
-          }))}
+          options={codeOptions}
           emptyLabel={t('pickArticle')}
         />
         {!roomArticle && pocketOptions && pocketOptions.length > 0 && revenueCodeId ? (

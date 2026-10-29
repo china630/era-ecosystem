@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
 import { useAuth } from "../../../lib/auth-context";
 import { isRestrictedUserRole } from "../../../lib/role-utils";
@@ -24,7 +25,13 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 
-type Warehouse = { id: string; name: string; location: string };
+type Warehouse = {
+  id: string;
+  name: string;
+  location: string;
+  costClass?: string | null;
+  satelliteOutletCode?: string | null;
+};
 type WarehouseBin = {
   id: string;
   warehouseId: string;
@@ -33,6 +40,16 @@ type WarehouseBin = {
   warehouse?: { id: string; name: string };
 };
 
+const COST_CLASS_OPTIONS = [
+  "FOOD",
+  "CHEMICAL",
+  "CONSUMABLE",
+  "TABLEWARE",
+  "INVENTORY_GT",
+] as const;
+
+type WhScopeDraft = { costClass: string; satelliteOutletCode: string };
+
 export default function InventorySettingsPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
@@ -40,6 +57,8 @@ export default function InventorySettingsPage() {
   const hideSettings = isRestrictedUserRole(user?.role ?? undefined);
 
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [whScopeDraft, setWhScopeDraft] = useState<Record<string, WhScopeDraft>>({});
+  const [whScopeSavingId, setWhScopeSavingId] = useState<string | null>(null);
   const [bins, setBins] = useState<WarehouseBin[]>([]);
   const [settings, setSettings] = useState<{
     allowNegativeStock?: boolean;
@@ -57,6 +76,41 @@ export default function InventorySettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [newWhOpen, setNewWhOpen] = useState(false);
+  const [whFilter, setWhFilter] = useState<"ALL" | "FOOD" | "NON_FOOD">("ALL");
+
+  const costClassOptions = useMemo(
+    () => [
+      { value: "", label: t("common.none", "—") },
+      ...COST_CLASS_OPTIONS.map((c) => ({
+        value: c,
+        label: t(`inventory.costClass.${c}`, c),
+      })),
+    ],
+    [t],
+  );
+
+  const LAB_OUTLET_DEFAULTS = useMemo(() => ["NAFTANI", "RESTAURANT", "KAFE"], []);
+
+  const outletCodeOptions = useMemo(() => {
+    const codes = new Set<string>(LAB_OUTLET_DEFAULTS);
+    for (const wh of warehouses) {
+      const c = wh.satelliteOutletCode?.trim();
+      if (c) codes.add(c);
+    }
+    for (const draft of Object.values(whScopeDraft)) {
+      const c = draft.satelliteOutletCode?.trim();
+      if (c) codes.add(c);
+    }
+    return [...codes]
+      .sort((a, b) => a.localeCompare(b))
+      .map((c) => ({ value: c, label: c }));
+  }, [warehouses, whScopeDraft, LAB_OUTLET_DEFAULTS]);
+
+  const filteredWarehouses = useMemo(() => {
+    if (whFilter === "ALL") return warehouses;
+    if (whFilter === "FOOD") return warehouses.filter((w) => w.costClass === "FOOD");
+    return warehouses.filter((w) => w.costClass && w.costClass !== "FOOD");
+  }, [warehouses, whFilter]);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -72,7 +126,19 @@ export default function InventorySettingsPage() {
         apiFetch("/api/inventory/bins"),
       ]);
       if (!w.ok) throw new Error(`warehouses ${w.status}`);
-      setWarehouses(await w.json());
+      const whList = (await w.json()) as Warehouse[];
+      setWarehouses(whList);
+      setWhScopeDraft(
+        Object.fromEntries(
+          whList.map((wh) => [
+            wh.id,
+            {
+              costClass: wh.costClass ?? "",
+              satelliteOutletCode: wh.satelliteOutletCode ?? "",
+            },
+          ]),
+        ),
+      );
       if (b.ok) {
         setBins((await b.json()) as WarehouseBin[]);
       }
@@ -103,6 +169,14 @@ export default function InventorySettingsPage() {
     return subscribeListRefresh("inventory-hub", () => void load());
   }, [load, ready, token]);
 
+  useEffect(() => {
+    // Chef deep-link from buffet-food-cost ISSUES_ONLY / empty FOOD → focus FOOD WH rows.
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#warehouses") {
+      setWhFilter("FOOD");
+    }
+  }, []);
+
   async function saveSettings() {
     setSettingsSaving(true);
     try {
@@ -122,6 +196,32 @@ export default function InventorySettingsPage() {
       await load();
     } finally {
       setSettingsSaving(false);
+    }
+  }
+
+  async function saveWarehouseScope(warehouseId: string) {
+    const draft = whScopeDraft[warehouseId];
+    if (!draft) return;
+    setWhScopeSavingId(warehouseId);
+    try {
+      const res = await apiFetch(`/api/inventory/warehouses/${warehouseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          costClass: draft.costClass.trim() ? draft.costClass.trim() : null,
+          satelliteOutletCode: draft.satelliteOutletCode.trim()
+            ? draft.satelliteOutletCode.trim()
+            : null,
+        }),
+      });
+      if (!res.ok) {
+        toast.error(t("common.saveErr"), { description: await res.text() });
+        return;
+      }
+      toast.success(t("common.save"));
+      await load();
+    } finally {
+      setWhScopeSavingId(null);
     }
   }
 
@@ -236,6 +336,148 @@ export default function InventorySettingsPage() {
           )}
         </section>
       )}
+
+      <section id="warehouses" className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
+        <h2 className="text-lg font-semibold text-[#34495E]">
+          {t("inventory.whScopeTitle", "Warehouses · cost class")}
+        </h2>
+        <p className="text-sm text-slate-600 m-0">
+          {t(
+            "inventory.whScopeHint",
+            "Tag FOOD warehouses (and optional F&B outlet code) so buffet cost run attributes usage correctly.",
+          )}
+        </p>
+        <p className="text-xs text-slate-500 m-0">
+          {t(
+            "inventory.whBuffetFoodHint",
+            "Buffet FOOD cost run scopes warehouses with costClass=FOOD (+ outlet code).",
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["ALL", t("inventory.whFilterAll", "All")],
+              ["FOOD", t("inventory.whFilterFood", "FOOD")],
+              ["NON_FOOD", t("inventory.whFilterNonFood", "non-FOOD")],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={whFilter === id ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+              onClick={() => setWhFilter(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {warehouses.length === 0 ? (
+          <p className="text-sm text-slate-600 m-0">{t("inventory.warehousesEmpty", "No warehouses yet.")}</p>
+        ) : filteredWarehouses.length === 0 ? (
+          <p className="text-sm text-slate-600 m-0">
+            {t("inventory.whFilterEmpty", "No warehouses match this filter.")}
+          </p>
+        ) : (
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={`${DATA_TABLE_CLASS} min-w-full`}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.thWh")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {t("inventory.whCostClass", "Cost class")}
+                  </th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {t("inventory.whOutletCode", "Outlet code")}
+                  </th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("common.actions", "Actions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredWarehouses.map((wh) => {
+                  const draft = whScopeDraft[wh.id] ?? {
+                    costClass: wh.costClass ?? "",
+                    satelliteOutletCode: wh.satelliteOutletCode ?? "",
+                  };
+                  const dirty =
+                    (wh.costClass ?? "") !== draft.costClass ||
+                    (wh.satelliteOutletCode ?? "") !== draft.satelliteOutletCode;
+                  return (
+                    <tr key={wh.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="font-medium text-[#2C3E50]">{wh.name}</div>
+                        {wh.location ? (
+                          <div className="text-xs text-slate-500">{wh.location}</div>
+                        ) : null}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="max-w-[14rem]">
+                          <CatalogField
+                            kind="CLOSED_SMALL"
+                            label={t("inventory.whCostClass", "Cost class")}
+                            options={costClassOptions}
+                            value={draft.costClass}
+                            onChange={(next) =>
+                              setWhScopeDraft((prev) => ({
+                                ...prev,
+                                [wh.id]: {
+                                  ...draft,
+                                  costClass: String(next ?? ""),
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="max-w-[12rem]">
+                          <CatalogField
+                            kind="SEARCHABLE"
+                            label={t("inventory.whOutletCode", "F&B outlet code")}
+                            options={
+                              draft.satelliteOutletCode &&
+                              !outletCodeOptions.some(
+                                (o) => o.value === draft.satelliteOutletCode,
+                              )
+                                ? [
+                                    {
+                                      value: draft.satelliteOutletCode,
+                                      label: draft.satelliteOutletCode,
+                                    },
+                                    ...outletCodeOptions,
+                                  ]
+                                : outletCodeOptions
+                            }
+                            value={draft.satelliteOutletCode}
+                            onChange={(next) =>
+                              setWhScopeDraft((prev) => ({
+                                ...prev,
+                                [wh.id]: {
+                                  ...draft,
+                                  satelliteOutletCode: String(next ?? ""),
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <button
+                          type="button"
+                          disabled={!dirty || whScopeSavingId === wh.id}
+                          onClick={() => void saveWarehouseScope(wh.id)}
+                          className={`${SECONDARY_BUTTON_CLASS} disabled:pointer-events-none disabled:opacity-50`}
+                        >
+                          {whScopeSavingId === wh.id ? "…" : t("common.save")}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
         <h2 className="text-lg font-semibold text-[#34495E]">{t("inventory.topologyTitle")}</h2>

@@ -568,6 +568,7 @@ export {
   buildAuditChangesJson,
   recordSatelliteAudit,
   redactAuditChanges,
+  isAuditPiiKey,
   stampWorkforceAuditContext,
   type WorkforceAuditContext,
   type MutationAuditContext,

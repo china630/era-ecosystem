@@ -1,19 +1,12 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { Prisma } from "@erafinance/database";
-import { randomUUID } from "node:crypto";
 import { serializeForAudit } from "../audit/audit-serialize";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { QuotaService } from "../quota/quota.service";
-import {
-  STORAGE_SERVICE,
-  type StorageService,
-} from "../storage/storage.interface";
 import { mergeLockedPeriodUntil } from "../reporting/reporting-period.util";
 import type { PatchOrganizationSettingsDto } from "./dto/patch-organization-settings.dto";
 import { InventoryValuationMethod } from "@erafinance/database";
@@ -27,18 +20,14 @@ import {
 } from "../network/network-settings.util";
 import type { PatchNetworkDocumentsSettingsDto } from "../network/dto/patch-network-documents-settings.dto";
 
-const LOGO_MAX_BYTES = 2 * 1024 * 1024;
-
 @Injectable()
 export class OrganizationSettingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly directory: GlobalCompanyDirectoryService,
-    private readonly quota: QuotaService,
     private readonly posting: PostingAccountResolver,
     private readonly factQueue: FactQueueService,
     private readonly schemePeriod: SchemePeriodService,
-    @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
   ) {}
 
   private async getSettingsRaw(organizationId: string) {
@@ -65,6 +54,21 @@ export class OrganizationSettingsService {
     });
     if (!org) {
       throw new NotFoundException("Organization not found");
+    }
+
+    // CP-ORG-PROFILE-01 Track A: legal branding SoR moved to orchestrator OrgOwner card.
+    const moved: string[] = [];
+    if (dto.legalAddress !== undefined) moved.push("legalAddress");
+    if (dto.phone !== undefined) moved.push("phone");
+    if (dto.directorName !== undefined) moved.push("directorName");
+    if (dto.logoUrl !== undefined) moved.push("logoUrl");
+    if (moved.length) {
+      throw new BadRequestException({
+        code: "ORG_PROFILE_MOVED_TO_CONTROL_PLANE",
+        message:
+          "Legal address, phone, director, and logo are edited in ERA Workspace → Organization profile",
+        fields: moved,
+      });
     }
 
     if (dto.lockedPeriodUntil) {
@@ -173,14 +177,6 @@ export class OrganizationSettingsService {
         where: { id: organizationId },
         data: {
           ...(dto.name !== undefined && { name: dto.name.trim() }),
-          ...(dto.legalAddress !== undefined && {
-            legalAddress: dto.legalAddress?.trim() || null,
-          }),
-          ...(dto.phone !== undefined && { phone: dto.phone?.trim() || null }),
-          ...(dto.directorName !== undefined && {
-            directorName: dto.directorName?.trim() || null,
-          }),
-          ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl?.trim() || null }),
           ...(valuation !== undefined && {
             valuationMethod: valuation as InventoryValuationMethod,
           }),
@@ -324,49 +320,12 @@ export class OrganizationSettingsService {
     return serializeForAudit(fresh);
   }
 
-  async uploadLogo(organizationId: string, file: Express.Multer.File | undefined) {
-    if (!file?.buffer?.length) {
-      throw new BadRequestException("File is required");
-    }
-    if (file.size > LOGO_MAX_BYTES) {
-      throw new BadRequestException("Logo must be at most 2 MB");
-    }
-    const ext =
-      file.mimetype === "image/png"
-        ? "png"
-        : file.mimetype === "image/jpeg" || file.mimetype === "image/jpg"
-          ? "jpg"
-          : file.mimetype === "image/webp"
-            ? "webp"
-            : null;
-    if (!ext) {
-      throw new BadRequestException("Allowed types: PNG, JPEG, WebP");
-    }
-
-    await this.quota.assertStorageQuota(organizationId, file.size);
-
-    const key = `org-logos/${organizationId}/${randomUUID()}.${ext}`;
-    await this.storage.putObject(key, file.buffer, {
-      contentType: file.mimetype,
+  async uploadLogo(_organizationId: string, _file: Express.Multer.File | undefined) {
+    throw new BadRequestException({
+      code: "ORG_PROFILE_MOVED_TO_CONTROL_PLANE",
+      message:
+        "Organization logo is uploaded in ERA Workspace → Organization profile",
+      fields: ["logoUrl"],
     });
-    await this.quota.addStorageUsage(organizationId, file.size);
-    const publicUrl =
-      this.storage.getPublicUrl?.(key) ?? `/files/${key.replace(/\\/g, "/")}`;
-
-    await this.prisma.organization.update({
-      where: { id: organizationId },
-      data: { logoUrl: publicUrl },
-    });
-
-    const org = await this.getSettingsRaw(organizationId);
-    this.directory.scheduleUpsert({
-      taxId: decodeOrganizationTaxId(org),
-      name: org.name,
-      legalAddress: org.legalAddress,
-      phone: org.phone,
-      directorName: org.directorName,
-    });
-
-    return { logoUrl: publicUrl };
   }
 }

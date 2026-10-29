@@ -25,6 +25,8 @@ const ENTITY_TYPES = [
   "HTTP_MUTATION",
   "ProcedureOrder",
   "Visit",
+  "ClinicReceipt",
+  "ClinicShift",
   "WalkInParty",
   "Role",
   "ImportRun",

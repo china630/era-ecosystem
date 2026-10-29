@@ -14,6 +14,9 @@ const schema = z.object({
   taxTag: z.string().optional(),
   departmentId: z.string().uuid(),
   targetFolioType: z.enum(['GUEST', 'COMPANY', 'AGENCY']).optional(),
+  allowManualCharge: z.boolean().optional(),
+  allowManualPayment: z.boolean().optional(),
+  reportType: z.string().max(32).nullable().optional(),
 });
 
 export async function GET() {

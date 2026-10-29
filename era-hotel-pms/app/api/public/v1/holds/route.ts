@@ -9,6 +9,7 @@ import {
 } from '@/lib/channel/ibe.service';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { serialize } from '@/lib/serialize';
+import { scheduleHotelHttpMutationAudit } from '@/lib/mutation-audit-belt';
 
 const bodySchema = z.object({
   roomTypeId: z.string().uuid(),
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     await requireHotelModule('hotel_distribution', organizationId);
     const body = bodySchema.parse(await req.json());
     const hold = await createIbeHold(body);
+    scheduleHotelHttpMutationAudit(201);
     return NextResponse.json(serialize(hold), {
       status: 201,
       headers: ibeCorsHeaders(origins, req.headers.get('origin')),

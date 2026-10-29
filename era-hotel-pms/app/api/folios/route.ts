@@ -55,14 +55,22 @@ export async function POST(request: Request) {
       let folioId = data.folioId;
       if (!folioId && data.reservationId) {
         if (!data.revenueCodeId) throw new Error('Revenue code is required');
-        const { resolvePaymentFolio } = await import('@/lib/services/booking-folio.service');
-        const folio = await resolvePaymentFolio({
+        const { postStayArticlePayment } = await import('@/lib/services/booking-folio.service');
+        const payment = await postStayArticlePayment({
           reservationId: data.reservationId,
           revenueCodeId: data.revenueCodeId,
+          amount: data.amount,
+          paymentMethod: data.paymentMethod,
+          registerRef: data.registerRef,
+          bankReference: data.bankReference,
+          bankTerminalId: data.bankTerminalId,
           explicit: data.folioType,
           reservationGuestId: data.reservationGuestId,
+          allowCredit: data.allowCredit === true,
+          createdByUserId: session?.sub,
+          auditRequest: request,
         });
-        folioId = folio.id;
+        return jsonOk(serialize(payment), 201);
       }
       const payment = await postPayment({
         folioId: folioId!,

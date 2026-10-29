@@ -31,4 +31,11 @@ export class PayPurchaseDto {
   @IsOptional()
   @IsUUID()
   bankAccountId?: string;
+
+  /** When set, notify hotel PMS that this agency commission batch is paid (HOT-AG-COMM-03). */
+  @ApiPropertyOptional({ description: "Hotel AgencyCommissionBatch id" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  hotelCommissionBatchId?: string;
 }

@@ -22,6 +22,7 @@ describe("mutation-audit-belt", () => {
     assert.equal(isMutationAuditExemptPath("/api/auth/login"), true);
     assert.equal(isMutationAuditExemptPath("/api/auth/login/extra"), true);
     assert.equal(isMutationAuditExemptPath("/api/health"), true);
+    assert.equal(isMutationAuditExemptPath("/api/locale"), true);
     assert.equal(isMutationAuditExemptPath("/api/healthcare"), false);
     assert.equal(isMutationAuditExemptPath("/api/reservations"), false);
     assert.equal(

@@ -88,15 +88,17 @@ export async function getReportLetterhead(): Promise<ReportLetterhead> {
 
   if (!profile && !cp) return emptyLetterhead();
 
-  let logo = await readLogo(profile?.logoPath ?? null);
-  if (!logo && cp?.logoUrl) {
+  // Prefer CP logo when Sync delivered one; local file is offline / pre-cutover fallback.
+  let logo: Buffer | null = null;
+  if (cp?.logoUrl) {
     try {
       const res = await fetch(cp.logoUrl);
       if (res.ok) logo = Buffer.from(await res.arrayBuffer());
     } catch {
-      /* keep null */
+      /* fall through to local */
     }
   }
+  if (!logo) logo = await readLogo(profile?.logoPath ?? null);
 
   return {
     name:

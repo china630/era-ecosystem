@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CatalogField, Field } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
 import { notifyInventoryListsRefresh } from "../../../lib/list-refresh-bus";
-import { MODAL_FIELD_LABEL_CLASS, MODAL_INPUT_CLASS } from "../../../lib/design-system";
 import { InventoryModalFooter, InventoryModalShell } from "./modal-shell";
+
+const COST_CLASS_OPTIONS = [
+  "FOOD",
+  "CHEMICAL",
+  "CONSUMABLE",
+  "TABLEWARE",
+  "INVENTORY_GT",
+] as const;
 
 export function NewWarehouseModal({
   open,
@@ -19,12 +27,27 @@ export function NewWarehouseModal({
   const formId = "inventory-modal-new-warehouse";
   const [whName, setWhName] = useState("");
   const [whLoc, setWhLoc] = useState("");
+  const [costClass, setCostClass] = useState("");
+  const [outletCode, setOutletCode] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const costClassOptions = useMemo(
+    () => [
+      { value: "", label: t("common.none", "—") },
+      ...COST_CLASS_OPTIONS.map((c) => ({
+        value: c,
+        label: t(`inventory.costClass.${c}`, c),
+      })),
+    ],
+    [t],
+  );
 
   useEffect(() => {
     if (!open) return;
     setWhName("");
     setWhLoc("");
+    setCostClass("");
+    setOutletCode("");
     setBusy(false);
   }, [open]);
 
@@ -38,7 +61,12 @@ export function NewWarehouseModal({
     const res = await apiFetch("/api/inventory/warehouses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: whName.trim(), location: whLoc }),
+      body: JSON.stringify({
+        name: whName.trim(),
+        location: whLoc,
+        ...(costClass ? { costClass } : {}),
+        ...(outletCode.trim() ? { satelliteOutletCode: outletCode.trim() } : {}),
+      }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -61,24 +89,34 @@ export function NewWarehouseModal({
       }
     >
       <form id={formId} className="space-y-4" onSubmit={(e) => void onSubmit(e)}>
-        <label className={MODAL_FIELD_LABEL_CLASS}>
-          {t("inventory.whNamePh")}
-          <input
-            placeholder={t("inventory.whNamePlaceholder")}
-            value={whName}
-            onChange={(e) => setWhName(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-          />
-        </label>
-        <label className={MODAL_FIELD_LABEL_CLASS}>
-          {t("inventory.whLocPh")}
-          <input
-            placeholder={t("inventory.whLocPlaceholder")}
-            value={whLoc}
-            onChange={(e) => setWhLoc(e.target.value)}
-            className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-          />
-        </label>
+        <Field
+          label={t("inventory.whNamePh")}
+          preset="shortText"
+          placeholder={t("inventory.whNamePlaceholder")}
+          value={whName}
+          onChange={(e) => setWhName(e.target.value)}
+        />
+        <Field
+          label={t("inventory.whLocPh")}
+          preset="shortText"
+          placeholder={t("inventory.whLocPlaceholder")}
+          value={whLoc}
+          onChange={(e) => setWhLoc(e.target.value)}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("inventory.whCostClass", "Cost class (buffet)")}
+          options={costClassOptions}
+          value={costClass}
+          onChange={(next) => setCostClass(String(next ?? ""))}
+        />
+        <Field
+          label={t("inventory.whOutletCode", "Satellite outlet code")}
+          preset="code"
+          placeholder="NAFTANI"
+          value={outletCode}
+          onChange={(e) => setOutletCode(e.target.value)}
+        />
       </form>
     </InventoryModalShell>
   );

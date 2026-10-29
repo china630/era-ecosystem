@@ -183,6 +183,9 @@ export async function createRevenueCode(input: {
   taxTag?: string;
   departmentId: string;
   targetFolioType?: FolioType;
+  allowManualCharge?: boolean;
+  allowManualPayment?: boolean;
+  reportType?: string | null;
 } & LocalizedNames) {
   if (!input.departmentId) throw new Error('DEPARTMENT_REQUIRED');
   const { targetFolioType, ...codeData } = input;
@@ -208,6 +211,9 @@ export async function updateRevenueCode(
     departmentId?: string | null;
     targetFolioType?: FolioType | null;
     active?: boolean;
+    allowManualCharge?: boolean;
+    allowManualPayment?: boolean;
+    reportType?: string | null;
   } & LocalizedNames,
 ) {
   const { targetFolioType, ...codeData } = input;

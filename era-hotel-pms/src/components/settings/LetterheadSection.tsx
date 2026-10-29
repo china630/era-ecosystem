@@ -14,6 +14,22 @@ import {
 
 const LOGO_MAX_BYTES = 512 * 1024;
 
+type CpLocks = {
+  active: boolean;
+  address: boolean;
+  phone: boolean;
+  email: boolean;
+  website: boolean;
+  logo: boolean;
+  resolved: {
+    address: string;
+    phone: string;
+    email: string;
+    website: string;
+    logoUrl: string;
+  };
+};
+
 type Profile = {
   name: string;
   propertyCode?: string;
@@ -27,6 +43,7 @@ type Profile = {
   email: string | null;
   website: string | null;
   logoPath: string | null;
+  controlPlane?: CpLocks;
 };
 
 type TextKey = 'name' | 'printName' | 'address' | 'phone' | 'email' | 'website';
@@ -44,6 +61,17 @@ function blankProfile(): Profile {
   };
 }
 
+function displayValue(profile: Profile | null, key: TextKey): string {
+  const locks = profile?.controlPlane;
+  if (locks?.active) {
+    if (key === 'address' && locks.address) return locks.resolved.address;
+    if (key === 'phone' && locks.phone) return locks.resolved.phone;
+    if (key === 'email' && locks.email) return locks.resolved.email;
+    if (key === 'website' && locks.website) return locks.resolved.website;
+  }
+  return profile?.[key] ?? '';
+}
+
 export function LetterheadSection() {
   const t = useTranslations('policies.letterhead');
   const tc = useTranslations('common');
@@ -59,7 +87,7 @@ export function LetterheadSection() {
     if (!res.ok) return;
     const data = (await res.json()) as Profile | null;
     setProfile(data ?? blankProfile());
-    setSaved(Boolean(data));
+    setSaved(Boolean(data?.name));
   }, []);
 
   useEffect(() => {
@@ -69,6 +97,18 @@ export function LetterheadSection() {
   function setText(key: TextKey, value: string) {
     setProfile((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
+
+  function fieldLocked(key: TextKey): boolean {
+    const locks = profile?.controlPlane;
+    if (!locks?.active) return false;
+    if (key === 'address') return locks.address;
+    if (key === 'phone') return locks.phone;
+    if (key === 'email') return locks.email;
+    if (key === 'website') return locks.website;
+    return false;
+  }
+
+  const logoLocked = Boolean(profile?.controlPlane?.logo);
 
   async function save() {
     if (!profile) return;
@@ -81,10 +121,10 @@ export function LetterheadSection() {
           name: profile.name,
           bedCapacity: profile.bedCapacity,
           printName: profile.printName,
-          address: profile.address,
-          phone: profile.phone,
-          email: profile.email,
-          website: profile.website,
+          address: fieldLocked('address') ? undefined : profile.address,
+          phone: fieldLocked('phone') ? undefined : profile.phone,
+          email: fieldLocked('email') ? undefined : profile.email,
+          website: fieldLocked('website') ? undefined : profile.website,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -157,10 +197,20 @@ export function LetterheadSection() {
     <section id="letterhead" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
       <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('title')}</h2>
       <p className="m-0 text-[13px] text-[#7F8C8D]">{t('hint')}</p>
+      {profile?.controlPlane?.active ? (
+        <p className="m-0 text-[13px] text-[#34495E]">{t('cpBanner')}</p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex h-16 w-40 items-center justify-center rounded border border-dashed border-[#D5DADF] bg-[#F4F5F7]">
-          {profile?.logoPath && brokenLogo !== logoVersion ? (
+          {logoLocked && profile?.controlPlane?.resolved.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.controlPlane.resolved.logoUrl}
+              alt={t('logo')}
+              className="max-h-14 max-w-[9.5rem] object-contain"
+            />
+          ) : profile?.logoPath && brokenLogo !== logoVersion ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={`/api/hotel/profile/logo?v=${logoVersion}`}
@@ -173,28 +223,34 @@ export function LetterheadSection() {
           )}
         </div>
         <div className="flex flex-col gap-1">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={!profile || !saved || busy === 'logo'}
-              title={saved ? undefined : t('logoSaveFirst')}
-              onClick={() => fileRef.current?.click()}
-            >
-              {t('logoUpload')}
-            </button>
-            {profile?.logoPath ? (
+          {!logoLocked ? (
+            <div className="flex gap-2">
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
-                disabled={busy === 'logo'}
-                onClick={() => void removeLogo()}
+                disabled={!profile || !saved || busy === 'logo'}
+                title={saved ? undefined : t('logoSaveFirst')}
+                onClick={() => fileRef.current?.click()}
               >
-                {t('logoRemove')}
+                {t('logoUpload')}
               </button>
-            ) : null}
-          </div>
-          <span className="text-[12px] text-[#7F8C8D]">{saved ? t('logoHint') : t('logoSaveFirst')}</span>
+              {profile?.logoPath ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={busy === 'logo'}
+                  onClick={() => void removeLogo()}
+                >
+                  {t('logoRemove')}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <span className="text-[12px] text-[#7F8C8D]">{t('cpLogoLocked')}</span>
+          )}
+          <span className="text-[12px] text-[#7F8C8D]">
+            {logoLocked ? t('cpLogoLocked') : saved ? t('logoHint') : t('logoSaveFirst')}
+          </span>
           <input
             ref={fileRef}
             type="file"
@@ -216,11 +272,11 @@ export function LetterheadSection() {
             kind="FREE_TEXT"
             name={`letterhead-${f.key}`}
             label={f.label}
-            hint={f.hint}
+            hint={fieldLocked(f.key) ? t('cpFieldLocked') : f.hint}
             required={f.required}
-            value={profile?.[f.key] ?? ''}
+            value={displayValue(profile, f.key)}
             options={[]}
-            disabled={!profile}
+            disabled={!profile || fieldLocked(f.key)}
             onChange={(next) => setText(f.key, String(next))}
           />
         ))}

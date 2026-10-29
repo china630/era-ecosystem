@@ -317,8 +317,15 @@ export class InventoryService {
 
   listWarehouses(organizationId: string) {
     return this.prisma.warehouse.findMany({
-      where: { organizationId },
-      select: { id: true, name: true, inventoryAccountCode: true },
+      where: { organizationId, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        inventoryAccountCode: true,
+        costClass: true,
+        satelliteOutletCode: true,
+        location: true,
+      },
       orderBy: { name: "asc" },
     });
   }
@@ -329,6 +336,54 @@ export class InventoryService {
         organizationId,
         name: dto.name.trim(),
         location: (dto.location ?? "").trim(),
+        costClass: dto.costClass ?? null,
+        satelliteOutletCode: dto.satelliteOutletCode?.trim() || null,
+      },
+    });
+  }
+
+  async patchWarehouseScope(
+    organizationId: string,
+    warehouseId: string,
+    dto: { costClass?: string | null; satelliteOutletCode?: string | null },
+  ) {
+    const existing = await this.prisma.warehouse.findFirst({
+      where: { id: warehouseId, organizationId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException("Warehouse not found");
+    const allowed = [
+      "FOOD",
+      "CHEMICAL",
+      "CONSUMABLE",
+      "TABLEWARE",
+      "INVENTORY_GT",
+    ] as const;
+    let costClass: string | null | undefined = dto.costClass;
+    if (costClass === "") costClass = null;
+    if (
+      costClass != null &&
+      !(allowed as readonly string[]).includes(costClass)
+    ) {
+      throw new BadRequestException("Invalid costClass");
+    }
+    return this.prisma.warehouse.update({
+      where: { id: warehouseId },
+      data: {
+        ...(dto.costClass !== undefined ? { costClass: costClass ?? null } : {}),
+        ...(dto.satelliteOutletCode !== undefined
+          ? {
+              satelliteOutletCode: dto.satelliteOutletCode?.trim() || null,
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        costClass: true,
+        satelliteOutletCode: true,
+        location: true,
+        inventoryAccountCode: true,
       },
     });
   }

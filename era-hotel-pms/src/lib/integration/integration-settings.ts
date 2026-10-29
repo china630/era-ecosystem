@@ -132,6 +132,8 @@ export function shouldDispatchEvent(
       return settings.realtime.invoiceIssued;
     case 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT':
       return settings.cityLedgerSnapshot;
+    case 'SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE':
+      return settings.cityLedgerSnapshot;
     case 'SATELLITE_HOTEL_MASTER_DATA_SYNC':
       return settings.masterDataSync;
     case 'SATELLITE_HOTEL_PAYMENT_FISCALIZED':

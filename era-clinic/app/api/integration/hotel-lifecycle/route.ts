@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import {
   isSatelliteHotelGuestCheckedIn,
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
           ? (err as { code: string }).code
           : "";
       if (code === "P2002") {
-        return NextResponse.json({ ok: true, duplicate: true });
+        return jsonOk({ ok: true, duplicate: true });
       }
       throw err;
     }
@@ -64,31 +65,31 @@ export async function POST(request: Request) {
   try {
     if (isSatelliteHotelSanatoriumBookingCreated(body)) {
       const episode = await handleSanatoriumBookingCreated(body);
-      return NextResponse.json({ ok: true, episodeId: episode.id, planned: true });
+      return jsonOk({ ok: true, episodeId: episode.id, planned: true });
     }
     if (isSatelliteHotelGuestCheckedIn(body)) {
       const episode = await handleGuestCheckedIn(body);
-      return NextResponse.json({ ok: true, episodeId: episode.id });
+      return jsonOk({ ok: true, episodeId: episode.id });
     }
     if (isSatelliteHotelGuestCheckedOut(body)) {
       await handleGuestCheckedOut(body);
-      return NextResponse.json({ ok: true });
+      return jsonOk({ ok: true });
     }
     if (isSatelliteHotelGuestDeparted(body)) {
       await handleGuestDeparted(body);
-      return NextResponse.json({ ok: true });
+      return jsonOk({ ok: true });
     }
     if (isSatelliteHotelGuestMoved(body)) {
       await handleGuestMoved(body);
-      return NextResponse.json({ ok: true });
+      return jsonOk({ ok: true });
     }
     if (isSatelliteHotelRoomChanged(body)) {
       await handleRoomChanged(body);
-      return NextResponse.json({ ok: true });
+      return jsonOk({ ok: true });
     }
     if (isSatelliteHotelStayProductChanged(body)) {
       await handleStayProductChanged(body);
-      return NextResponse.json({ ok: true });
+      return jsonOk({ ok: true });
     }
     if (correlationId) {
       await prisma.processedEvent

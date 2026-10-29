@@ -101,6 +101,13 @@ export async function placeManualProcedureSlot(input: {
   if (order.status !== "SCHEDULED") {
     throw new Error("Only SCHEDULED procedures can be rescheduled");
   }
+  // OPEN day-bucket without a cabin: nurse check-in seats; matrix DnD is refused (CLI-62).
+  if (order.schedulingMode === "OPEN" && !order.resourceId) {
+    throw new SlotDecisionError(
+      "no_slot",
+      "Open attendance has no cabin clock — seat on nurse check-in",
+    );
+  }
   if (input.scheduledAt.getTime() < Date.now()) {
     throw new Error("Cannot reschedule into the past");
   }

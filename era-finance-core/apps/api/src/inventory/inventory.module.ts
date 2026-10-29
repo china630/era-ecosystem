@@ -13,6 +13,8 @@ import { InventoryReconciliationController } from "./inventory-reconciliation.co
 import { InventoryController } from "./inventory.controller";
 import { InventoryService } from "./inventory.service";
 import { StatutoryFormsService } from "./statutory-forms.service";
+import { BuffetFoodCostRunService } from "./buffet-food-cost-run.service";
+import { OutletBudgetRunService } from "./outlet-budget-run.service";
 import { WmsController } from "./wms.controller";
 import { WmsMobileService } from "./wms-mobile.service";
 
@@ -24,7 +26,21 @@ import { WmsMobileService } from "./wms-mobile.service";
     InventoryReconciliationController,
     WmsController,
   ],
-  providers: [InventoryService, InventoryAuditService, BinBalanceService, WmsMobileService, StatutoryFormsService],
-  exports: [InventoryService, BinBalanceService, WmsMobileService],
+  providers: [
+    InventoryService,
+    InventoryAuditService,
+    BinBalanceService,
+    WmsMobileService,
+    StatutoryFormsService,
+    BuffetFoodCostRunService,
+    OutletBudgetRunService,
+  ],
+  exports: [
+    InventoryService,
+    BinBalanceService,
+    WmsMobileService,
+    BuffetFoodCostRunService,
+    OutletBudgetRunService,
+  ],
 })
 export class InventoryModule {}

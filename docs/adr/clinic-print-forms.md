@@ -14,7 +14,7 @@ Nafta sanatorium needs printable clinical forms (lab CBC/UA/biochemistry, USM na
 
 1. HTML print routes under app/print/* with @media print and window.print() (no PDF dependency). Query ?lang=az|ru|en&autoprint=1. Extra-ticket combat copy: `/print/extra-ticket/[ticketId]` (3 copies: reception / nurse / guest). Dual-run EW `saveCheck` is not driven from ERA.
 2. PrintLanguageDialog on every print entry point (lab workflow modal, patient card results/plan).
-3. Tenant print branding fields (printLogoDataUrl, trilingual names/addresses/footers, signatures, checkupSectionsJson).
+3. Tenant print branding fields: footers, clinical signatures, checkupSectionsJson remain local. Header logo/address/phone prefer Control Plane org profile when Sync has cached it (CP-ORG-PROFILE-01 Track A — admin UI locks those fields).
 4. Qualitative lab values stored as option codes (AnalyteValueOption trilingual labels) so reprints resolve to any language.
 5. USM phrases (ImagingPhrase) stored as codes in LabResult (phrase.{organ} / meas.{key}) for trilingual narrative assembly.
 6. Print chrome skipped via ClinicOpsShell when path starts with /print.

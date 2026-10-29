@@ -3,13 +3,14 @@
 #   .\era-ship.ps1 -ListScopes
 #   .\era-ship.ps1 -Scope orchestrator -Subject "pricing seeds" [-Branch integration/my-wave]
 #   .\era-ship.ps1 -Wave full -Subject "ecosystem integration wave" [-Branch integration/ecosystem-wave]
-#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates] [-WaitStaging]
+#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates] [-SkipStaging]
 #   .\era-ship.ps1 -PublishImages -Services orchestrator [-Head dev]
 #   .\era-ship.ps1 -PublishDeploy -DeployScope orchestrator [-ImageTag dev] [-Head dev]
-#   .\era-ship.ps1 -PublishMaster -Head dev [-SkipGates]
+#   .\era-ship.ps1 -PublishMaster -Head dev [-SkipGates] [-SkipStaging]
 #
-# PublishDev always waits for PR checks then merges (does not stop at --auto).
-# -WaitStaging: after merge, wait for Build and push images + Deploy staging on that SHA.
+# PublishDev / PublishMaster always wait for PR checks then merge (do not stop at --auto).
+# After merge they wait Build and push images + Deploy staging on that SHA (default).
+# -SkipStaging: git-only publish (explicit user request only). -WaitStaging kept as no-op alias.
 
 param(
     [switch]$ListScopes,
@@ -30,6 +31,7 @@ param(
     [string]$DeployScope = "",
     [string]$ImageTag = "",
     [switch]$WaitStaging,
+    [switch]$SkipStaging,
     [switch]$DryRun,
     [switch]$SkipGates
 )
@@ -433,15 +435,64 @@ function Wait-WorkflowOnSha {
     throw ("Timeout waiting for '{0}' on sha {1}" -f $WorkflowName, $Sha)
 }
 
+function ConvertTo-UtcFromGhTime {
+    param([string]$Raw)
+    if (-not $Raw) { throw "Empty createdAt from gh" }
+    # Prefer invariant parse (ISO 8601 from gh --json, or locale-neutral MM/dd/yyyy).
+    # Culture-default [datetime]::Parse fails on some Windows locales (outage follow-up 2026-10-28).
+    try {
+        return [datetimeoffset]::Parse(
+            $Raw,
+            [System.Globalization.CultureInfo]::InvariantCulture,
+            [System.Globalization.DateTimeStyles]::RoundtripKind
+        ).UtcDateTime
+    }
+    catch {
+        return [datetimeoffset]::Parse($Raw).UtcDateTime
+    }
+}
+
+function Test-ShouldWaitStaging {
+    # Default ON for PublishDev/PublishMaster. Opt out only with -SkipStaging.
+    # -WaitStaging remains accepted (agents already pass it) but is not required.
+    if ($SkipStaging) { return $false }
+    return $true
+}
+
 function Wait-DeployStagingAfterBuild {
     param([string]$Sha, [int]$TimeoutSec = 2400)
     Write-Host "Waiting for Deploy staging after build of $Sha..."
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    $short = if ($Sha.Length -ge 7) { $Sha.Substring(0, 7) } else { $Sha }
+    $waitStartedUtc = (Get-Date).ToUniversalTime()
     while ((Get-Date) -lt $deadline) {
-        $json = gh run list --workflow "deploy-staging.yml" --limit 10 --json databaseId,status,conclusion,url,createdAt,displayTitle,event |
-            ConvertFrom-Json
-        # Prefer newest in_progress/queued, else newest success after now-5m
-        $active = $json | Where-Object { $_.status -in @("queued", "in_progress", "waiting", "pending") } | Select-Object -First 1
+        $json = @(gh run list --workflow "deploy-staging.yml" --limit 15 --json databaseId,status,conclusion,url,createdAt,displayTitle,event,headSha |
+            ConvertFrom-Json)
+        # workflow_run deploys often have headSha = default-branch tip -- also match displayTitle.
+        $forSha = @($json | Where-Object {
+            ($_.headSha -and ($_.headSha -eq $Sha -or $_.headSha.StartsWith($short))) -or
+            ($_.displayTitle -and $_.displayTitle -match [regex]::Escape($short))
+        })
+        # Never accept a SHA-unrelated recent success (false green from prior wave).
+        # While unmatched, only watch active runs that started after this wait began.
+        if ($forSha.Count -eq 0) {
+            $activeAny = @($json | Where-Object {
+                $_.status -in @("queued", "in_progress", "waiting", "pending") -and
+                (ConvertTo-UtcFromGhTime $_.createdAt) -gt $waitStartedUtc.AddMinutes(-2)
+            } | Select-Object -First 1)
+            if ($activeAny) {
+                Write-Host "Watching Deploy staging $($activeAny.databaseId) (SHA match pending)..."
+                gh run watch $activeAny.databaseId --exit-status
+                if ($LASTEXITCODE -ne 0) { throw "Deploy staging failed: $($activeAny.url)" }
+                # Re-list next loop so success is accepted only after SHA/title match.
+                Start-Sleep -Seconds 5
+                continue
+            }
+            Start-Sleep -Seconds 20
+            continue
+        }
+
+        $active = $forSha | Where-Object { $_.status -in @("queued", "in_progress", "waiting", "pending") } | Select-Object -First 1
         if ($active) {
             Write-Host "Watching Deploy staging $($active.databaseId)..."
             gh run watch $active.databaseId --exit-status
@@ -449,25 +500,25 @@ function Wait-DeployStagingAfterBuild {
             Write-Host ("OK Deploy staging: {0}" -f $active.url)
             return
         }
-        $done = $json | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "success" } | Select-Object -First 1
+        $done = $forSha | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "success" } | Select-Object -First 1
         if ($done) {
-            $created = [datetime]::Parse($done.createdAt).ToUniversalTime()
+            $created = ConvertTo-UtcFromGhTime $done.createdAt
             # Do not accept a previous wave's staging success (was 45m and SHA-unrelated).
             if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-12)) {
                 Write-Host ("OK Deploy staging (recent success): {0}" -f $done.url)
                 return
             }
         }
-        $failed = $json | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "failure" } | Select-Object -First 1
+        $failed = $forSha | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "failure" } | Select-Object -First 1
         if ($failed) {
-            $created = [datetime]::Parse($failed.createdAt).ToUniversalTime()
+            $created = ConvertTo-UtcFromGhTime $failed.createdAt
             if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-12)) {
                 throw "Deploy staging failed: $($failed.url)"
             }
         }
         Start-Sleep -Seconds 20
     }
-    throw "Timeout waiting for Deploy staging"
+    throw "Timeout waiting for Deploy staging (no run matched SHA $short)"
 }
 
 function Invoke-PublishDev {
@@ -480,11 +531,13 @@ function Invoke-PublishDev {
     Install-EraGitHook
     Invoke-ShipPrepush
 
+    $waitStg = Test-ShouldWaitStaging
     if ($DryRun) {
         Write-Host "[dry-run] git push -u origin $HeadBranch"
         Write-Host "[dry-run] gh pr create --base dev --head $HeadBranch ..."
         Write-Host "[dry-run] wait PR checks -> gh pr merge --merge"
-        if ($WaitStaging) { Write-Host "[dry-run] wait Build and push images + Deploy staging" }
+        if ($waitStg) { Write-Host "[dry-run] wait Build and push images + Deploy staging" }
+        else { Write-Host "[dry-run] SkipStaging -- not waiting for droplet deploy" }
         return
     }
     git push -u origin $HeadBranch
@@ -523,10 +576,13 @@ function Invoke-PublishDev {
         $mergedSha = Wait-PrChecksThenMerge -PrRef $prRef
     }
 
-    if ($WaitStaging) {
+    if ($waitStg) {
         Wait-WorkflowOnSha -WorkflowName "Build and push images" -Sha $mergedSha -Branch "dev"
         Wait-DeployStagingAfterBuild -Sha $mergedSha
         Write-Host "Staging deploy complete for $mergedSha"
+    }
+    else {
+        Write-Host "SkipStaging: merge done; droplet deploy not awaited."
     }
 }
 
@@ -574,9 +630,12 @@ function Invoke-PublishMaster {
     $title = "release: promote dev to master"
     Install-EraGitHook
     Invoke-ShipPrepush -QualityOnly
+    $waitStg = Test-ShouldWaitStaging
     if ($DryRun) {
         Write-Host "[dry-run] gh pr create --base master --head $HeadBranch --title '$title'"
         Write-Host "[dry-run] gh pr merge --merge (after CI green)"
+        if ($waitStg) { Write-Host "[dry-run] wait Build and push images + Deploy staging (master)" }
+        else { Write-Host "[dry-run] SkipStaging -- not waiting for droplet deploy" }
         return
     }
     $existing = gh pr list --base master --head $HeadBranch --state open --json number,url --jq ".[0]"
@@ -596,7 +655,15 @@ function Invoke-PublishMaster {
             throw "Could not parse PR number from: $prUrl"
         }
     }
-    Wait-PrChecksThenMerge -PrRef $prRef | Out-Null
+    $mergedSha = Wait-PrChecksThenMerge -PrRef $prRef
+    if ($waitStg) {
+        Wait-WorkflowOnSha -WorkflowName "Build and push images" -Sha $mergedSha -Branch "master"
+        Wait-DeployStagingAfterBuild -Sha $mergedSha
+        Write-Host "Staging deploy complete for master $mergedSha"
+    }
+    else {
+        Write-Host "SkipStaging: master merge done; droplet deploy not awaited."
+    }
 }
 
 $manifest = Get-Manifest

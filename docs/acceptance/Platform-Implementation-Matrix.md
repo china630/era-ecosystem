@@ -26,7 +26,7 @@
 | AC-CP-BIND | Satellite org UUID bind + sync endpoints | ✅ | [ ] | `cp-bind-negative.spec.ts`; ADR satellite-organization-bind | Negative: POST organization/bind bad/missing Bearer → 401 |
 | AC-CP-CFG | Desired-state runtime config push (SSO secret, PSA, event URL/token) | ✅ | [ ] | `cp-cfg-negative.spec.ts`; CP-CFG-01 | Negative: runtime-config without Bearer 401; short SSO (<16) 400; Sync omits short secret. CP-PEER-01 (`peer-endpoint`) API deepen 2026-10-27 — does not reopen Scaffold; Pilot open |
 | AC-CP-TOPO | SHARED/DEDICATED/ONPREM placement + org slice + hops | 🟡 | [ ] | ADR §4–§5; SuperAdmin `/super-admin/orgs/{id}/placement`; SHARED↔ONPREM reject; Wave 7 lab hop; Wave 11 hotel curated JSON slice | **In BE rollup.** Lab: [`reports/placement-lab-hop-signoff.md`](../../reports/placement-lab-hop-signoff.md). Not Scaffold ✅ (host apply + field UAT open). Not SaaS pool sellable. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
-| AC-CP-ORG-PROFILE | Org legal/branding profile (multi-contact, logo; Sync to satellites) | 🟡 | [ ] | ADR [cp-organization-profile-and-branding.md](../adr/cp-organization-profile-and-branding.md); `organization-profile.service.spec.ts`; kit `org-profile.test.ts`; CP-ORG-PROFILE-01 | **Out of BE rollup** until Pilot UAT. Negatives: duplicate primary PHONE 400; invalid +994 400; non-member 403; DEPARTMENT inherits parent phone when empty / own phone wins. Finance Nest Sync caches `orgProfile`; hotel letterhead prefers CP contacts. Dual local editors remain as fallback until field cutover. Not Scaffold ✅. |
+| AC-CP-ORG-PROFILE | Org legal/branding profile (multi-contact, logo; Sync to satellites) | 🟡 | [ ] | ADR [cp-organization-profile-and-branding.md](../adr/cp-organization-profile-and-branding.md); `organization-profile.service.spec.ts`; kit `org-profile.test.ts`; CP-ORG-PROFILE-01; backfill; F&B/Retail `org-print-contacts` + Outlet contact columns | **Out of BE rollup** until Pilot UAT. Negatives: duplicate primary PHONE 400; invalid +994 400; non-member 403; DEPARTMENT inherits parent phone when empty / own phone wins. Finance legal PATCH/logo → `ORG_PROFILE_MOVED_TO_CONTROL_PLANE`; primary bank → orch `bankLine`; hotel/clinic header locks when CP Sync present; F&B/Retail pay `printChrome` + outlet overlay. Not Scaffold ✅. |
 
 **Edition / wave rollup (BE only)** = worst(AUTH, BILL, MDM, WF, SA, INT, BIND, CFG, TOPO) → **🟡** (TOPO).  
 AC-CP-TOPO is **in Scaffold BE rollup** (owner 2026-08-18). Do **not** mark TOPO Scaffold ✅ from API scaffold alone. TOPO ✅ (later) still ≠ SaaS pool sellable.  
@@ -43,7 +43,7 @@ Do not call this table «product readiness».
 | AC-CP-BILL | Field / owner billing UAT signoff; UAT-SMOKE UI for satellite HARD_BLOCK banner + 402 and super-admin "covered until"; TIER_3 Buffet toggle **without** manual Sync (E-C.7 + FB-5) — `synced` + F&B CP-first gate | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-MDM | UAT MDM depth / companies UI | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-WF | UAT-SMOKE workforce screens | Code | Out of Scaffold ✅ (Pilot) |
-| AC-CP-ORG-PROFILE | UAT-SMOKE OrgOwner profile + satellite print prefer CP | Code | Out of BE rollup; API+SCREEN landed 2026-10-27 |
+| AC-CP-ORG-PROFILE | UAT-SMOKE OrgOwner profile + satellite print prefer CP; dual-edit cutover + F&B/Retail chrome | Code | Out of BE rollup; API+SCREEN 2026-10-27; Track A/C 2026-10-28; not Scaffold ✅ |
 | AC-CP-SA | UAT-SMOKE-PLATFORM lab signoff | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-SA | Reference settings screen UAT (`/super-admin/reference`) | Code | Same SuperAdmin guard; no separate negative spec; not SHIPPED |
 | AC-CP-INT | Integration audit residual shrink (ongoing) | Code | Gate G1 + negative suite |
@@ -71,6 +71,9 @@ Do not call this table «product readiness».
 | `era-orchestrator/apps/api/src/platform/workforce/workforce-provision.reprovision.spec.ts` | AC-CP-WF (satellite uncheck revokes linked + orphan grants; heal; MANUAL_GRANT emits last) |
 | `era-orchestrator/apps/api/src/organization/organization-profile.service.spec.ts` | AC-CP-ORG-PROFILE (duplicate primary; +994; DEPARTMENT inherit / own phone) |
 | `packages/satellite-kit/src/organization/org-profile.test.ts` | AC-CP-ORG-PROFILE (print keys + outlet overlay) |
+| `era-orchestrator/scripts/lib/org-profile-backfill.spec.ts` | AC-CP-ORG-PROFILE (Finance→orch fill helpers; skip data-URL logo; no overwrite) |
+| `era-finance-core/apps/api/src/control-plane/org-profile-bankline.publisher.spec.ts` | AC-CP-ORG-PROFILE (primary bank → orch `bankLine` format) |
+| `era-fnb-pos/__tests__/org-print-contacts.spec.ts`, `era-retail-pos/__tests__/org-print-contacts.spec.ts` | AC-CP-ORG-PROFILE (Outlet contact overlay mapper) |
 | `era-orchestrator/apps/api/src/admin/cp-sa-negative.spec.ts` | AC-CP-SA |
 | `era-orchestrator/apps/api/src/platform/catalog/cp-int-negative.spec.ts` | AC-CP-INT |
 | `era-orchestrator/apps/api/src/admin/cp-bind-negative.spec.ts` | AC-CP-BIND |

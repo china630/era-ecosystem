@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { validateProcedureCompatibility } from '@/lib/procedure-compatibility.service';
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       endAt: body.endAt,
       existing: body.existing,
     });
-    return NextResponse.json({ ok: violations.length === 0, violations });
+    return jsonOk({ ok: violations.length === 0, violations });
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Validation failed';
     return NextResponse.json({ error: message }, { status: 400 });

@@ -3,6 +3,7 @@ import {
   SATELLITE_HOTEL_RESERVATION_COMPLETED,
   SATELLITE_HOTEL_INVOICE_ISSUED,
   SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT,
+  SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE,
   SATELLITE_HOTEL_GUEST_CHECKED_IN,
   SATELLITE_HOTEL_GUEST_CHECKED_OUT,
   SATELLITE_HOTEL_ROOM_CHANGED,
@@ -10,6 +11,7 @@ import {
   type SatelliteHotelReservationCompletedEvent,
   type SatelliteHotelInvoiceIssuedEvent,
   type SatelliteHotelCityLedgerSnapshotEvent,
+  type SatelliteHotelAgencyCommissionPayableEvent,
   type SatelliteHotelGuestCheckedInEvent,
   type SatelliteHotelGuestCheckedOutEvent,
   type SatelliteHotelRoomChangedEvent,
@@ -144,6 +146,23 @@ export function envelopeToCityLedgerSnapshotEvent(
   };
 }
 
+export function envelopeToAgencyCommissionPayableEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelAgencyCommissionPayableEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE) {
+    return null;
+  }
+  const payload = envelope.payload as SatelliteHotelAgencyCommissionPayableEvent["payload"];
+  return {
+    type: SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    payload,
+  };
+}
+
 export function envelopeToGuestCheckedInEvent(
   envelope: IntegrationEnvelope,
   organizationId: string,
@@ -208,6 +227,7 @@ export async function publishToOrchestratorGateway(
     | SatelliteHotelNightAuditClosedEvent
     | SatelliteHotelInvoiceIssuedEvent
     | SatelliteHotelCityLedgerSnapshotEvent
+    | SatelliteHotelAgencyCommissionPayableEvent
     | SatelliteHotelGuestCheckedInEvent
     | SatelliteHotelGuestCheckedOutEvent
     | SatelliteHotelRoomChangedEvent,

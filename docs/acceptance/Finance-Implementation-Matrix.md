@@ -35,7 +35,7 @@
 | AC-FIN-RBAC | Finance consumes CP JWT grants (`api:*` / `admin:*` / `screen:*`) | 🟡 | [ ] | UAT-SMOKE § FIN-RBAC-01; ADR finance-domain-permissions-and-rbac; `rbac-bridge-sprint.spec.ts` (auditor belt) | **Out of BE rollup.** Door = `PermissionsGuard` keys (Post/Approve = `api:ledger.post`). No Finance matrix UI. SCREEN until field UAT — not SHOW/GA. Do **not** flip AC-FIN-GL. |
 | AC-FIN-REF | Org Excel copy of FX, banks, calendar, HS | 🟡 | [ ] | `reference-manual.controller.ts`; COVERAGE FC-REF-01 | **Out of W6 BE rollup.** Uploads require `admin:org.settings`. No negative spec for a bad workbook. Reads cover FX spot/range/convert and calendar day/range/business days. Does not write the hub. SCREEN until UAT. Do **not** flip AC-FIN-GL or the finance BE ✅ rollup. |
 | AC-FIN-DAY | Hotel day document v2: article VAT, leaf post, `601.*` rollup, uncosted qty | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01 | **Out of W6 BE rollup.** No negative spec (group account, zero average, house-use qty). Reports already on screen. Does **not** flip AC-FIN-GL, AC-FIN-EVT, or the finance BE ✅ rollup. |
-| AC-FIN-AUD | Mutation audit Layer A align to ecosystem standard (deny-list naming / shared redaction) | 🟡 | [ ] | Finance TZ §9 / §11.1; `AuditMutationInterceptor`; FIN-AUD-01; `/admin/audit` + OWNER `/admin/security-audit`; `admin-security-audit.controller.spec.ts` (OWNER door) | **Out of W6 BE rollup.** Live Finance belt already COVERAGE **SHIPPED** (FIN-AUD-01); UI/API parity + OWNER door unit 2026-10-27. This AC tracks kit/standard alignment only — OWNER door alone is not Scaffold ✅. Does not darken BE ✅ or reopen AC-FIN-GL. ADR era-mutation-audit-standard. |
+| AC-FIN-AUD | Mutation audit Layer A align to ecosystem standard (deny-list naming / shared redaction) | 🟡 | [ ] | Finance TZ §9 / §11.1; `AuditMutationInterceptor`; FIN-AUD-01; `/admin/audit` + OWNER `/admin/security-audit`; `mutation-audit-exempt.spec.ts` + `data-masking.service.spec.ts`; `admin-security-audit.controller.spec.ts` (OWNER door) | **Out of W6 BE rollup.** Live Finance belt COVERAGE **SHIPPED** (FIN-AUD-01). Wave C kit-align + Wave D journal UI on `/admin/audit` and OWNER `/admin/security-audit` (`CatalogField`/`EraListFilterBar`/kit `DatePicker`) 2026-10-29. Residual = fuller AuthZ negatives for Scaffold ✅ (Evidence bar). Does not darken BE ✅ or reopen AC-FIN-GL. ADR era-mutation-audit-standard. |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
 **AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, AC-FIN-PROVISIONAL-VAT, and AC-FIN-AUD are out of Scaffold BE rollup** (SCREEN / UAT open, API-only watcher, or alignment residual) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX.  
@@ -53,7 +53,7 @@ Do not call this table «product readiness».
 | AC-FIN-EQAIME-DAY | No UAT; does not enable S2S; clinic and F&B have no night-audit gate | Code | Out of BE rollup (🟡 API) |
 | AC-FIN-FACT-QUEUE | No UAT; does not block open-month posting; clinic and hotel night audit are not this gate | Code | Out of BE rollup (🟡 API) |
 | AC-FIN-PROVISIONAL-VAT | No UAT; no cash refund; no live amendment send; does not extend AC-FIN-TAX | Code | Out of BE rollup (🟡 API) |
-| AC-FIN-AUD | Kit deny-list / redaction naming vs era-mutation-audit-standard | Code | Out of BE rollup (🟡); OWNER door unit landed; FIN-AUD-01 COVERAGE stays SHIPPED; paths `/admin/audit` + OWNER `/admin/security-audit` |
+| AC-FIN-AUD | Fuller AuthZ negatives for Scaffold ✅ (ledger-read non-owner mutation OK / security-audit 403; non-superadmin OWNER) | Code | Out of BE rollup (🟡); Wave C kit-align + Wave D both-journal UI landed 2026-10-29; OWNER door unit landed; FIN-AUD-01 COVERAGE stays SHIPPED; paths `/admin/audit` + OWNER `/admin/security-audit` |
 
 ### Negative-path proof index
 
@@ -82,3 +82,6 @@ Do not call this table «product readiness».
 | `era-finance-core/apps/api/test/extra-fields/extra-fields.service.spec.ts` | AC-FIN-EXT |
 | `era-finance-core/apps/api/test/saved-list-views/saved-list-views.service.spec.ts` | AC-FIN-VIEW |
 | `era-finance-core/apps/api/test/invoices/invoice-print-snapshot.spec.ts` | AC-FIN-PRINT |
+| `era-finance-core/apps/api/src/audit/mutation-audit-exempt.spec.ts` | AC-FIN-AUD (kit deny-list; out of BE rollup) |
+| `era-finance-core/apps/api/test/privacy/data-masking.service.spec.ts` | AC-FIN-AUD (kit `isAuditPiiKey` + Finance extras; out of BE rollup) |
+| `era-finance-core/apps/api/src/admin/admin-security-audit.controller.spec.ts` | AC-FIN-AUD (OWNER door; out of BE rollup) |

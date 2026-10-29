@@ -39,6 +39,10 @@ model Tenant {
   procedureCheckInMode           ProcedureCheckInMode     @default(QR) @map("procedure_check_in_mode")
   /// Optional: auto-NO_SHOW a SCHEDULED order this many minutes past scheduledAt (null = end-of-day sweep only)
   autoNoShowAfterMin             Int?                     @map("auto_no_show_after_min")
+  /// Cutover: allow FIXED check-in any time during the clinic day (ADR clinic-open-attendance).
+  procedureCheckInWindow         ProcedureCheckInWindowMode @default(STRICT) @map("procedure_check_in_window")
+  /// Inclusive Asia/Baku calendar end date for SAME_DAY; after this day STRICT applies.
+  procedureCheckInSameDayUntil   DateTime?                @map("procedure_check_in_same_day_until")
   /// Clinic day start hour (Asia/Baku wall clock), inclusive
   dayStartHour                   Int                      @default(9) @map("day_start_hour")
   /// Clinic day end hour (Asia/Baku), exclusive
@@ -206,6 +210,18 @@ enum ProcedureCheckInMode {
   QR
   CODE
   MANUAL
+}
+
+/// STRICT = scheduledAt ± grace (day-ops). SAME_DAY = any time during clinic hours that Baku day (cutover).
+enum ProcedureCheckInWindowMode {
+  STRICT
+  SAME_DAY
+}
+
+/// FIXED = cabin×clock. OPEN = day bucket, seat on nurse check-in (CLI-62).
+enum ProcedureSchedulingMode {
+  FIXED
+  OPEN
 }
 
 enum ProgramSchedulingMode {
@@ -1333,6 +1349,8 @@ model ProcedureType {
   bodyPart           String?
   /// When false, doctor does not pick S (ozone, inhalation, IV). Seeded from SKU; SatAdmin can override.
   needsSite          Boolean                    @default(true) @map("needs_site")
+  /// Day-bucket attendance: no rigid cabin clock until nurse seat (CLI-62).
+  openAttendance     Boolean                    @default(false) @map("open_attendance")
   /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
   physioOrderFields  String[]                   @default([]) @map("physio_order_fields")
   /// PhysioSite.code allowlist for the doctor picker. Empty + needsSite = legacy all; seed fills concrete lists.
@@ -1964,6 +1982,8 @@ model ProcedureOrder {
   procedureName              String
   scheduledAt                DateTime
   endsAt                     DateTime?
+  /// FIXED timed cabin vs OPEN day-bucket (copied from ProcedureType.openAttendance).
+  schedulingMode             ProcedureSchedulingMode  @default(FIXED) @map("scheduling_mode")
   sequenceIndex              Int?
   /// ClinicLookup BODY_PART code — derived from sites[] (first unique coarse; FULL_BODY wins)
   bodyPart                   String?
@@ -2412,6 +2432,7 @@ model SatelliteAuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@index([organizationId])
+  @@index([organizationId, createdAt])
   @@map("satellite_audit_logs")
 }
 

@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   }
 
   if (ticket.status === "CLOSED") {
-    return NextResponse.json({ ok: true, alreadyClosed: true });
+    return jsonOk({ ok: true, alreadyClosed: true });
   }
 
   const storedPendingIds = ticket.settlementPendingId?.trim() ?? "";
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
         where: { id: ticket.id },
         data: { settlementPendingId: JSON.stringify(left) },
       });
-      return NextResponse.json({ ok: true, waiting: left.length });
+      return jsonOk({ ok: true, waiting: left.length });
     }
   }
 

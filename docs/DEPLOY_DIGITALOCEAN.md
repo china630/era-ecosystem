@@ -61,6 +61,8 @@ Configure environment **staging** secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_
 1. Merge to **`dev`** → **Build and push images** path-filters changed services  
 2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `git reset --hard $SHA` → `pull` → migrate → `up` with `IMAGE_TAG` from the build artifact (`dev-<sha>` for scoped app deploys; floating `dev`/`master` when `deployScope=all` without a full image rebuild)
 
+Local **шип + пуш** (`era-ship.ps1 -PublishDev` / `-PublishMaster`) waits for both workflows by default — merge CI green is not ship done (`-SkipStaging` only for explicit git-only). See [`CI_CD.md`](./CI_CD.md) § Staging auto-deploy.
+
 **Compose / install-contract only** (`docker-compose.yml`, `docker-compose.prod.yml`, `config/satellite-install-contract.yaml`, `docker/scripts/deploy-droplet.sh`, `docker/scripts/migrate-all.sh`): build matrix may be empty (`skipImages`), but artifact sets `DEPLOY_SCOPE=all`, `SKIP=false`, and `IMAGE_TAG_MODE=floating` so the droplet recreates all services against current floating tags (no 16-image rebuild, no GHCR 404). App + compose uses the same floating tag after rebuilding only the touched images (those also push `:dev` / `:master`). Docs-only commits stay `deployScope=skip`. See `scripts/ci-changed-ghcr-services.mjs`.
 
 This `deploy-staging.yml` listener is read from **`master`**. After changing it, promote `dev` → `master` before the next scoped (non-all) image build.

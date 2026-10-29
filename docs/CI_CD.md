@@ -75,6 +75,8 @@ node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 
 ## Staging auto-deploy
 
+**Ship done = merge + staging up.** Local `era-git-ship` / `era-ship.ps1 -PublishDev` / `-PublishMaster` wait for **Build and push images** then **Deploy staging** by default (`-SkipStaging` only for explicit git-only). Do not treat a green PR merge as droplet-healthy — Nest boot / compose can still leave login dead (2026-10-28).
+
 After each successful [`build-images.yml`](../.github/workflows/build-images.yml) run on **`dev` or `master`**, [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) SSHs to the droplet and:
 
 1. Checks out the build commit  

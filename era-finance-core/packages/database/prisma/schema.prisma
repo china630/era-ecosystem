@@ -126,6 +126,7 @@ model Organization {
   counterparties                  Counterparty[]
   counterpartyCardRequests        CounterpartyCardRequest[]
   agencyCityLedgerSnapshots       AgencyCityLedgerSnapshot[]
+  agencyCommissionPayableSnapshots AgencyCommissionPayableSnapshot[]
   hotelPaymentCallbackOutbox      HotelPaymentCallbackOutbox[]
   tradeCreditFacilities           TradeCreditFacility[]
   tradeCreditGrants               TradeCreditGrant[]
@@ -1156,6 +1157,10 @@ model Warehouse {
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
   inventoryAccountCode  String                 @default("201") @map("inventory_account_code")
+  /// Buffet/warehouse cost class (FIN-INV-SCOPE-01 / FNB-BUFFET-COST-01): FOOD|CHEMICAL|CONSUMABLE|TABLEWARE|INVENTORY_GT.
+  costClass             String?                @map("cost_class")
+  /// F&B `Outlet.code` (or peer satellite outlet code) for chef/cost-run scope. Null = org-wide.
+  satelliteOutletCode   String?                @map("satellite_outlet_code")
   inventory_adjustments InventoryAdjustment[]
   inventory_audits      InventoryAudit[]
   invoices              Invoice[]
@@ -1176,6 +1181,8 @@ model Warehouse {
 
   @@index([organizationId])
   @@index([organizationId, deletedAt], map: "warehouses_org_deleted_at_idx")
+  @@index([organizationId, costClass], map: "warehouses_org_cost_class_idx")
+  @@index([organizationId, satelliteOutletCode], map: "warehouses_org_outlet_code_idx")
   @@map("warehouses")
 }
 
@@ -3201,6 +3208,7 @@ model Counterparty {
   customsDeclarationsAsSender   CustomsDeclaration[]       @relation("CustomsDeclarationSender")
   customsDeclarationsAsReceiver CustomsDeclaration[]       @relation("CustomsDeclarationReceiver")
   agencyCityLedgerSnapshots     AgencyCityLedgerSnapshot[]
+  agencyCommissionPayableSnapshots AgencyCommissionPayableSnapshot[]
   tradeCreditFacilities         TradeCreditFacility[]
   tradeCreditGrants             TradeCreditGrant[]
   tradeCreditEnrichmentRuns     TradeCreditEnrichmentRun[]
@@ -3491,6 +3499,30 @@ model AgencyCityLedgerSnapshot {
   @@index([organizationId, hotelAgencyId, asOfDate], map: "agency_cl_snapshots_org_agency_date_idx")
   @@index([organizationId, counterpartyId], map: "agency_cl_snapshots_org_cp_idx")
   @@map("agency_city_ledger_snapshots")
+}
+
+/// Hotel agency commission payable (AP) snapshot — ADR hotel-agency-commission-payable.
+model AgencyCommissionPayableSnapshot {
+  id               String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String        @map("organization_id") @db.Uuid
+  hotelAgencyId    String        @map("hotel_agency_id")
+  agencyCode       String        @map("agency_code")
+  hotelBatchId     String        @map("hotel_batch_id")
+  asOfDate         String        @map("as_of_date")
+  totalAmount      Decimal       @map("total_amount") @db.Decimal(18, 2)
+  lineCount        Int           @map("line_count")
+  currency         String        @default("AZN")
+  correlationId    String        @map("correlation_id")
+  counterpartyId   String?       @map("counterparty_id") @db.Uuid
+  payableTxnId     String?       @map("payable_txn_id") @db.Uuid
+  createdAt        DateTime      @default(now()) @map("created_at")
+  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty     Counterparty? @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, hotelBatchId], map: "agency_comm_pay_snap_org_batch_uidx")
+  @@index([organizationId, hotelAgencyId, asOfDate], map: "agency_comm_pay_snap_org_agency_date_idx")
+  @@index([organizationId, counterpartyId], map: "agency_comm_pay_snap_org_cp_idx")
+  @@map("agency_commission_payable_snapshots")
 }
 
 /// Durable Finance → Hotel city-ledger payment-applied callbacks (ADR satellite-peer-url-resolution).

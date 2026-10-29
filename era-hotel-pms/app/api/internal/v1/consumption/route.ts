@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { z } from 'zod';
 import { enterRequestTenant } from '@/lib/request-organization';
 import { assertEnvServiceToken } from '@era/satellite-kit';
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     const body = bodySchema.parse(await request.json());
     enterRequestTenant(body.organizationId);
     const row = await recordInternalConsumption(body);
-    return Response.json({ id: row.id, sourceRef: row.sourceRef });
+    return jsonOk({ id: row.id, sourceRef: row.sourceRef });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Consumption failed';
     return Response.json({ error: message }, { status: 400 });

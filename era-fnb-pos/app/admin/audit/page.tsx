@@ -20,7 +20,13 @@ import {
 } from "@era/satellite-kit/ui";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
-const ENTITY_TYPES = ["HTTP_MUTATION", "TicketLine", "Ticket", "Role"] as const;
+const ENTITY_TYPES = [
+  "HTTP_MUTATION",
+  "TicketLine",
+  "Ticket",
+  "PosShift",
+  "Role",
+] as const;
 
 type AuditRow = {
   id: string;

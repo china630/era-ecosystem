@@ -341,3 +341,113 @@ export async function resolvePaymentFolio(input: {
   }
   return resolveChargeFolio(input);
 }
+
+/**
+ * Accept payment for an article across the stay: lodging debts are paid FIFO
+ * across open folios (one lodging bill). Extras stay on the resolved pocket.
+ */
+export async function postStayArticlePayment(input: {
+  reservationId: string;
+  revenueCodeId: string;
+  amount: number;
+  paymentMethod: Parameters<typeof import('@/lib/services/folio.service').postPayment>[0]['paymentMethod'];
+  registerRef?: string;
+  bankReference?: string;
+  bankTerminalId?: string;
+  explicit?: FolioType | null;
+  reservationGuestId?: string | null;
+  allowCredit?: boolean;
+  createdByUserId?: string;
+  auditRequest?: Request;
+}) {
+  const { postPayment } = await import('@/lib/services/folio.service');
+  const revenueCode = await prisma.revenueCode.findUnique({
+    where: { id: input.revenueCodeId },
+    include: { ratePlansRoom: { select: { id: true }, take: 1 } },
+  });
+  const lodging = revenueCode ? isRoomAndTaxRevenueCode(revenueCode) : false;
+
+  if (!lodging) {
+    const folio = await resolvePaymentFolio({
+      reservationId: input.reservationId,
+      revenueCodeId: input.revenueCodeId,
+      explicit: input.explicit,
+      reservationGuestId: input.reservationGuestId,
+    });
+    return postPayment({
+      folioId: folio.id,
+      amount: input.amount,
+      paymentMethod: input.paymentMethod,
+      registerRef: input.registerRef,
+      bankReference: input.bankReference,
+      bankTerminalId: input.bankTerminalId,
+      revenueCodeId: input.revenueCodeId,
+      allowCredit: input.allowCredit,
+      createdByUserId: input.createdByUserId,
+      auditRequest: input.auditRequest,
+    });
+  }
+
+  const folios = await prisma.folio.findMany({
+    where: { reservationId: input.reservationId, status: 'OPEN' },
+    include: { charges: true, payments: true },
+  });
+  const pocketRank = (type: string) =>
+    type === 'AGENCY' ? 0 : type === 'COMPANY' ? 1 : type === 'GUEST' ? 2 : 3;
+  const ranked = folios
+    .map((folio) => ({
+      folio,
+      debt: stayMoneyPair(
+        folio.charges.filter((row) => row.revenueCodeId === input.revenueCodeId),
+        folio.payments.filter((row) => row.revenueCodeId === input.revenueCodeId),
+      ).debt,
+    }))
+    .filter((row) => row.debt > 0.01)
+    .sort((a, b) => {
+      const pocket = pocketRank(a.folio.type) - pocketRank(b.folio.type);
+      if (pocket !== 0) return pocket;
+      return b.debt - a.debt;
+    });
+
+  let left = input.amount;
+  let last = null as Awaited<ReturnType<typeof postPayment>> | null;
+  for (const row of ranked) {
+    if (left <= 0.01) break;
+    const take = Math.min(left, row.debt);
+    last = await postPayment({
+      folioId: row.folio.id,
+      amount: take,
+      paymentMethod: input.paymentMethod,
+      registerRef: input.registerRef,
+      bankReference: input.bankReference,
+      bankTerminalId: input.bankTerminalId,
+      revenueCodeId: input.revenueCodeId,
+      allowCredit: false,
+      createdByUserId: input.createdByUserId,
+      auditRequest: input.auditRequest,
+    });
+    left -= take;
+  }
+  if (left > 0.01) {
+    const fallback =
+      ranked[0]?.folio ??
+      (await resolvePaymentFolio({
+        reservationId: input.reservationId,
+        revenueCodeId: input.revenueCodeId,
+      }));
+    last = await postPayment({
+      folioId: fallback.id,
+      amount: left,
+      paymentMethod: input.paymentMethod,
+      registerRef: input.registerRef,
+      bankReference: input.bankReference,
+      bankTerminalId: input.bankTerminalId,
+      revenueCodeId: input.revenueCodeId,
+      allowCredit: input.allowCredit === true,
+      createdByUserId: input.createdByUserId,
+      auditRequest: input.auditRequest,
+    });
+  }
+  if (!last) throw new Error('No open folio for payment');
+  return last;
+}

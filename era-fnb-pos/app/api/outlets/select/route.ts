@@ -5,7 +5,7 @@ import { OUTLET_COOKIE } from "@/lib/outlet-session";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { handleRouteError, jsonOk } from "@/lib/api-utils";
 
 const bodySchema = z.object({
   outletId: z.string().min(1),
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     if (!outlet?.active) {
       return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
     }
-    const res = NextResponse.json({ ok: true, outletId: outlet.id, code: outlet.code });
+    const res = jsonOk({ ok: true, outletId: outlet.id, code: outlet.code });
     res.cookies.set(OUTLET_COOKIE, outlet.id, {
       httpOnly: true,
       sameSite: "lax",

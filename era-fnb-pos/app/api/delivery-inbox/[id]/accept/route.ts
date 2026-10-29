@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { DELIVERY_ACCEPT } from "@/lib/auth/read-permission-sets";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 export async function POST(
   request: Request,
@@ -22,7 +22,7 @@ export async function POST(
       where: { id },
       data: { status: "ACCEPTED" },
     });
-    return NextResponse.json(updated);
+    return jsonOk(updated);
   } catch (err) {
     return handleRouteError(err);
   }

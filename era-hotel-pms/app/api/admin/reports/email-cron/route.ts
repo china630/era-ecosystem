@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { trySendPlatformNotification, runCronForEachTenant } from "@era/satellite-kit";
 import { todayBakuYmd } from "@era/satellite-kit/time";
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     if (gate.status === 503) {
       return NextResponse.json({ error: gate.reason }, { status: 503 });
     }
-    return NextResponse.json({
+    return jsonOk({
       ok: true,
       skipped: true,
       reason: gate.reason,
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({
+  return jsonOk({
     ok: true,
     sentAt: new Date().toISOString(),
     byOrganization: gate.results,

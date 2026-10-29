@@ -14,7 +14,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | Wave | Gate | AC rollup (from Matrix) | Pilot-ready | Notes / log |
 |------|------|-------------------------|-------------|-------------|
 | W0 baseline | gate[x] | 🟡 | [ ] | `reports/hotel-stage-W0-signoff.md` scaffold-gate-pass |
-| W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED for the signed cashier. 2026-10-27 MOVE_PAYER_CL + unsettled; room payer + gross/net; corp contract→COMPANY; HOT-CL-07 API; HOT-AG-01 contracts UI; folio signed ledger + open-debt payment gate (HOT-CASH-01 deepen; HOT-FOLIO-DESK still API). 2026-10-28 `ensureOpenCashShift` + pending receipt (HOT-CASH-02/06); NA stop-step reservation refs (HOT-NA-02); CL audit closeout HOT-CL-06 on COVERAGE (agency/company folio-only statement honesty); Gate/Pilot/edition unchanged. Pilot lab still needs UAT §27 / §29 1a–1b artifact |
+| W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED for the signed cashier. 2026-10-27 MOVE_PAYER_CL + unsettled; room payer + gross/net; corp contract→COMPANY; HOT-CL-07 API; HOT-AG-01 contracts UI; folio signed ledger + open-debt payment gate (HOT-CASH-01 deepen; HOT-FOLIO-DESK still API). 2026-10-28 `ensureOpenCashShift` + pending receipt (HOT-CASH-02/06); NA stop-step reservation refs (HOT-NA-02); CL audit HOT-CL-06. 2026-10-29 HOT-AG-COMM-01…04 agency commission payable; folio Debit\|Credit + stay-wide lodging pay + Nafta revenue v2 remap scripts (HOT-CASH-01 deepen; HOT-FOLIO-DESK/HOT-REV-01 API); AC-HOT-AG-COMM 🟡; Gate/Pilot/edition unchanged. Pilot lab still needs UAT §27 1c re-sign / §29 1a–1b / §27c artifact |
 | W2 BE scaffold green | gate[x] | ✅ (INT excl.) | [ ] | `reports/hotel-stage-W2-signoff.md` — negative-path suites |
 | W3 UI / Demo | gate[x] | ✅ | [ ] | `reports/hotel-demo-te-signoff.md` — UI/Demo ✅; lab open |
 
@@ -44,9 +44,9 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-22 | Card right-pane Guests density | [~] | HOT-BOOK-06 API |
 | S-23 | Card Rate Grid + Folio chrome | [~] | HOT-BOOK-07/08 API |
 | S-24 | Card Notes feed + alert | [~] | HOT-BOOK-09 API |
-| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; hub refuses blank pending `revenueCode`; NA early fail on blank PAID; night audit not run — not SHIPPED; out of BE and SHOW rollup |
+| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; Nafta v2 + SatAdmin manual flags + seed PROCEDURE; remap apply + NA day-doc open; not SHIPPED; out of BE and SHOW rollup |
 | S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
 | S-27 | Transfers/Tours boarding-first + Airport fold | [x] | HOT-XFER-01 / HOT-TOUR-01 SHIPPED SCREEN; AC-HOT-XFER/TOUR Scaffold ✅ out of BE rollup; UX closeout (list+modals, icon toolbar, bare print+letterhead); UAT §14/§14b; edition `mvp` unchanged |
-| S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit` + `GET /api/admin/audit` (reports grant); canonical filters; CI `check:mutation-audit-belt`; HOT-AUD-01 / AC-HOT-AUD 🟡; UAT open — not SHIPPED; Gate/Pilot/edition unchanged |
+| S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit`; CI fail-closed; Wave B DAY_CLOSE; Wave E compound `(organizationId, createdAt)` 2026-10-29; HOT-AUD-01 / AC-HOT-AUD 🟡; hash-chain deferred; next = UAT; Nest API cutover is **P0 platform debt** ([industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md)) |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

@@ -159,7 +159,8 @@ export async function isNextGapOccupied(
 
 /**
  * Unified check-in window for QR / MANUAL / OVERRIDE:
- * scheduledAt - beforeMin ... endsAt, plus gap grace only when next resource slot is free.
+ * - OPEN / SAME_DAY (active): clinic open hours on the scheduled Baku day
+ * - STRICT FIXED: scheduledAt - beforeMin ... endsAt, plus gap grace when next slot free
  */
 export async function assertCheckInWindow(
   order: {
@@ -168,10 +169,39 @@ export async function assertCheckInWindow(
     endsAt: Date | null;
     resourceId?: string | null;
     procedureTypeId?: string | null;
+    schedulingMode?: string | null;
   },
   _channel: ProcedureCheckInChannel,
   now = new Date(),
 ) {
+  const {
+    resolveCheckInWindowSettings,
+    isOpenSchedulingMode,
+    isWithinClinicDayHours,
+    orderIsTodayBaku,
+  } = await import("@/domain/procedure/open-attendance");
+  const window = await resolveCheckInWindowSettings(now);
+  const flexible =
+    isOpenSchedulingMode(order.schedulingMode) ||
+    (window.sameDayActive && orderIsTodayBaku(order.scheduledAt, now));
+  if (flexible) {
+    if (!orderIsTodayBaku(order.scheduledAt, now)) {
+      throw new ProcedureAttendanceError(
+        "Open / same-day check-in is only allowed on the scheduled clinic day",
+        "NOT_IN_CHECKIN_WINDOW",
+      );
+    }
+    if (
+      !isWithinClinicDayHours(now, window.dayStartHour, window.dayEndHour)
+    ) {
+      throw new ProcedureAttendanceError(
+        `Check-in only during clinic hours ${window.dayStartHour}:00–${window.dayEndHour}:00`,
+        "NOT_IN_CHECKIN_WINDOW",
+      );
+    }
+    return;
+  }
+
   const { beforeMin } = await getGrace();
   const gap = await resolveOrderResourceGap(order.procedureTypeId);
   const endsAt = await resolveOrderEndsAt(order);
@@ -207,13 +237,37 @@ export async function getCheckInOpenState(
     endsAt: Date | null;
     resourceId?: string | null;
     procedureTypeId?: string | null;
+    schedulingMode?: string | null;
     status: string;
   },
   now = new Date(),
 ): Promise<{ open: boolean; deadline: Date; endsAt: Date; resourceGapMinutes: number }> {
-  const { beforeMin } = await getGrace();
+  const {
+    resolveCheckInWindowSettings,
+    isOpenSchedulingMode,
+    isWithinClinicDayHours,
+    orderIsTodayBaku,
+  } = await import("@/domain/procedure/open-attendance");
+  const window = await resolveCheckInWindowSettings(now);
   const gap = await resolveOrderResourceGap(order.procedureTypeId);
   const endsAt = await resolveOrderEndsAt(order);
+  const flexible =
+    isOpenSchedulingMode(order.schedulingMode) ||
+    (window.sameDayActive && orderIsTodayBaku(order.scheduledAt, now));
+  if (flexible) {
+    const { bakuDateKey, parseBakuDateTime } = await import("@/lib/baku-day");
+    const deadline = parseBakuDateTime(
+      bakuDateKey(order.scheduledAt),
+      `${String(window.dayEndHour).padStart(2, "0")}:00`,
+    );
+    const open =
+      order.status === "SCHEDULED" &&
+      orderIsTodayBaku(order.scheduledAt, now) &&
+      isWithinClinicDayHours(now, window.dayStartHour, window.dayEndHour);
+    return { open, deadline, endsAt, resourceGapMinutes: gap };
+  }
+
+  const { beforeMin } = await getGrace();
   const nextOccupied = await isNextGapOccupied(
     order.resourceId,
     endsAt,
@@ -348,16 +402,50 @@ export async function checkInProcedureOrder(
   }
 
   await assertCheckInWindow(order, channel);
-  await assertResourceFreeForCheckIn(order);
 
-  const charge = await resolveProcedureCharge(order, { burnQuota: false });
+  const now = new Date();
+  const {
+    isOpenSchedulingMode,
+    resolveCheckInWindowSettings,
+    orderIsTodayBaku,
+    seatOpenAttendanceNow,
+    rebaseFixedOccupancyToNow,
+  } = await import("@/domain/procedure/open-attendance");
+  try {
+    if (isOpenSchedulingMode(order.schedulingMode)) {
+      await seatOpenAttendanceNow(orderId, now);
+    } else {
+      const window = await resolveCheckInWindowSettings(now);
+      if (window.sameDayActive && orderIsTodayBaku(order.scheduledAt, now)) {
+        if (!order.resourceId) {
+          throw new ProcedureAttendanceError(
+            "Same-day check-in requires a seated cabin — assign on the resource matrix first",
+            "RESOURCE_BUSY",
+          );
+        }
+        await rebaseFixedOccupancyToNow(orderId, order.resourceId, now);
+      }
+    }
+  } catch (err) {
+    throw new ProcedureAttendanceError(
+      err instanceof Error ? err.message : "Unable to seat procedure for check-in",
+      "RESOURCE_BUSY",
+    );
+  }
+
+  const seated = await prisma.procedureOrder.findUniqueOrThrow({
+    where: { id: orderId },
+  });
+  await assertResourceFreeForCheckIn(seated);
+
+  const charge = await resolveProcedureCharge(seated, { burnQuota: false });
   if (
     extraNeedsPaperTicket({
       amountNet: charge.amountNet,
-      inPackage: order.inPackage === true,
-      packageIncluded: order.inPackage === true,
+      inPackage: seated.inPackage === true,
+      packageIncluded: seated.inPackage === true,
     }) &&
-    !order.extraTicketIssuedAt
+    !seated.extraTicketIssuedAt
   ) {
     throw new ProcedureAttendanceError(
       "Extra procedure requires an issued ticket (3 copies) before check-in",
@@ -365,7 +453,6 @@ export async function checkInProcedureOrder(
     );
   }
 
-  const now = new Date();
   const updated = await prisma.procedureOrder.update({
     where: { id: orderId },
     data: {
@@ -378,8 +465,8 @@ export async function checkInProcedureOrder(
     include: { patientRef: true },
   });
 
-  if (order.reservationId && order.extraTicketId) {
-    await stampHotelFolioReceived(order.extraTicketId);
+  if (seated.reservationId && seated.extraTicketId) {
+    await stampHotelFolioReceived(seated.extraTicketId);
   }
 
   await recordClinicAudit(
@@ -393,6 +480,8 @@ export async function checkInProcedureOrder(
         status: "CHECKED_IN",
         checkInChannel: channel,
         checkInOverrideReason: overrideReason,
+        schedulingMode: seated.schedulingMode,
+        resourceId: seated.resourceId,
       },
     },
   );

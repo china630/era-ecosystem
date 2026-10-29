@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
@@ -27,5 +28,5 @@ export async function POST(request: Request) {
     where: { id: { in: body.reservationIds }, status: 'CHECKED_OUT' },
     select: { id: true },
   });
-  return NextResponse.json({ ids: rows.map((row) => row.id) });
+  return jsonOk({ ids: rows.map((row) => row.id) });
 }

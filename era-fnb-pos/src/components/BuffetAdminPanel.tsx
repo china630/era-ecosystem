@@ -19,6 +19,11 @@ import {
 } from "@era/satellite-kit/ui";
 import { ClipboardList, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
+import BuffetWeekTemplatePanel from "@/components/BuffetWeekTemplatePanel";
+import BuffetManagementMealsPanel from "@/components/BuffetManagementMealsPanel";
+import BuffetStaffMealsPanel from "@/components/BuffetStaffMealsPanel";
+import BuffetCostRunPanel from "@/components/BuffetCostRunPanel";
+import BuffetForecastPanel from "@/components/BuffetForecastPanel";
 
 type Outlet = { id: string; code: string; name: string };
 type PlanRow = {
@@ -110,6 +115,17 @@ export default function BuffetAdminPanel() {
   const [lineModal, setLineModal] = useState<"create" | "edit" | null>(null);
   const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm());
   const [menuOptions, setMenuOptions] = useState<MenuOption[]>([]);
+  const [viewTab, setViewTab] = useState<
+    "plans" | "template" | "management" | "staff" | "costRun" | "forecast"
+  >("plans");
+  const [coversRollup, setCoversRollup] = useState<{
+    forecastTotal: number;
+    management: { count: number };
+    staff: { coversStaff: number };
+    plan: { coversTotal: number } | null;
+    hotel: { guestNights: number; source: string } | null;
+  } | null>(null);
+  const [rollupNonce, setRollupNonce] = useState(0);
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [materials, setMaterials] = useState<{
     missingBomCount: number;
@@ -121,6 +137,8 @@ export default function BuffetAdminPanel() {
       warning: string | null;
     }>;
   } | null>(null);
+  const [buffetModuleActive, setBuffetModuleActive] = useState<boolean | null>(null);
+  const [outletCostModel, setOutletCostModel] = useState<string | null>(null);
 
   const selected = useMemo(
     () => plans.find((p) => p.id === selectedId) ?? null,
@@ -170,7 +188,14 @@ export default function BuffetAdminPanel() {
     }
     const list = Array.isArray(data?.outlets) ? (data.outlets as Outlet[]) : [];
     setOutlets(list);
-    if (!outletId && list[0]) setOutletId(list[0].id);
+    if (!outletId && list.length > 0) {
+      // Prefer buffet twin NAFTANI over lab KAFE/café so chef path does not land on café.
+      const preferred =
+        list.find((o) => o.code.trim().toUpperCase() === "NAFTANI") ??
+        list.find((o) => !/^(KAFE|CAFE)$/i.test(o.code.trim())) ??
+        list[0];
+      setOutletId(preferred.id);
+    }
   }, [outletId, t]);
 
   const loadPlans = useCallback(async () => {
@@ -215,12 +240,80 @@ export default function BuffetAdminPanel() {
   }, [loadOutlets]);
 
   useEffect(() => {
+    void fetch("/api/auth/me")
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        const body = (data?.data ?? data) as { activeModules?: string[] } | null;
+        const mods = Array.isArray(body?.activeModules) ? body!.activeModules! : [];
+        setBuffetModuleActive(mods.includes("fnb_buffet_planner"));
+      })
+      .catch(() => setBuffetModuleActive(null));
+  }, []);
+
+  useEffect(() => {
+    if (!outletId) {
+      setOutletCostModel(null);
+      return;
+    }
+    void fetch("/api/settings/buffet-cost")
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        const body = (data?.data ?? data) as {
+          orgDefaults?: { buffetCostModel?: string };
+          outletOverrides?: Record<string, { buffetCostModel?: string }>;
+        } | null;
+        if (!body) {
+          setOutletCostModel(null);
+          return;
+        }
+        const model =
+          body.outletOverrides?.[outletId]?.buffetCostModel ??
+          body.orgDefaults?.buffetCostModel ??
+          null;
+        setOutletCostModel(model);
+      })
+      .catch(() => setOutletCostModel(null));
+  }, [outletId]);
+
+  useEffect(() => {
     void loadPlans();
   }, [loadPlans]);
 
   useEffect(() => {
     if (selected && compositionOpen) void loadMenuItems(selected.outletId);
   }, [selected, compositionOpen, loadMenuItems]);
+
+  useEffect(() => {
+    if (!selected) {
+      setCoversRollup(null);
+      return;
+    }
+    // Refetch when composition reopens or management meals change (rollupNonce).
+    const q = new URLSearchParams({
+      outletId: selected.outletId,
+      date: selected.serviceDate,
+      meal: selected.meal,
+    });
+    void fetch(`/api/admin/buffet/covers-rollup?${q}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.forecastTotal === "number") {
+          setCoversRollup({
+            forecastTotal: d.forecastTotal,
+            management: { count: d.management?.count ?? 0 },
+            staff: { coversStaff: d.staff?.coversStaff ?? 0 },
+            plan: d.plan ?? null,
+            hotel:
+              d.hotel && typeof d.hotel.guestNights === "number"
+                ? { guestNights: d.hotel.guestNights, source: String(d.hotel.source ?? "MANUAL") }
+                : null,
+          });
+        } else {
+          setCoversRollup(null);
+        }
+      })
+      .catch(() => setCoversRollup(null));
+  }, [selected, compositionOpen, rollupNonce]);
 
   function openCreatePlan() {
     setPlanForm(emptyPlanForm(outletId));
@@ -507,9 +600,28 @@ export default function BuffetAdminPanel() {
     await loadPlans();
   }
 
+  const planCaptureOptions = useMemo(
+    () =>
+      plans.map((p) => ({
+        value: p.id,
+        label: `${p.serviceDate} · ${t(`meal.${p.meal}`)} · ${p.coversTotal}`,
+      })),
+    [plans, t],
+  );
+
   return (
     <div className="space-y-4">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
+
+      {buffetModuleActive === false ? (
+        <div className={`${CARD_CLASS} border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950`}>
+          <p className="m-0 font-medium">{t("moduleMissingTitle")}</p>
+          <p className="mt-1 m-0 text-amber-900">{t("moduleMissingBody")}</p>
+          <Link href="/admin/settings" className="mt-2 inline-block text-[#2980B9] underline">
+            {t("moduleMissingSyncLink")}
+          </Link>
+        </div>
+      ) : null}
 
       {outlets.length === 0 ? (
         <div className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>
@@ -520,8 +632,30 @@ export default function BuffetAdminPanel() {
         </div>
       ) : null}
 
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            ["plans", t("tabPlans")],
+            ["template", t("tabTemplate")],
+            ["management", t("tabManagement")],
+            ["staff", t("tabStaff")],
+            ["costRun", t("tabCostRun")],
+            ["forecast", t("tabForecast")],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={viewTab === key ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            onClick={() => setViewTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <FieldRow cols={4} className="items-end">
+        <FieldRow cols={viewTab === "plans" ? 4 : 3} className="items-end">
           <CatalogField
             kind={"ENTITY_REF" as CatalogFieldKind}
             label={t("outlet")}
@@ -543,22 +677,82 @@ export default function BuffetAdminPanel() {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
-          <CatalogField
-            kind={"CLOSED_SMALL" as CatalogFieldKind}
-            label={t("statusFilter")}
-            value={statusFilter}
-            options={statusOptions}
-            onChange={(next) => setStatusFilter(Array.isArray(next) ? next[0] ?? "" : next)}
-          />
+          {viewTab === "plans" ? (
+            <CatalogField
+              kind={"CLOSED_SMALL" as CatalogFieldKind}
+              label={t("statusFilter")}
+              value={statusFilter}
+              options={statusOptions}
+              onChange={(next) => setStatusFilter(Array.isArray(next) ? next[0] ?? "" : next)}
+            />
+          ) : null}
         </FieldRow>
-        <div className="flex justify-end">
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openCreatePlan()}>
-            <Plus className="mr-1 inline h-4 w-4" />
-            {t("newPlan")}
-          </button>
-        </div>
+        {outletCostModel ? (
+          <p
+            className={`m-0 text-xs ${
+              outletCostModel === "OFF" ? "text-[#E67E22]" : "text-[#7F8C8D]"
+            }`}
+          >
+            {outletCostModel === "OFF"
+              ? t("outletModelOffBanner")
+              : t("outletModelLabel", { model: outletCostModel })}
+          </p>
+        ) : null}
+        {viewTab === "plans" ? (
+          <div className="flex justify-end">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openCreatePlan()}>
+              <Plus className="mr-1 inline h-4 w-4" />
+              {t("newPlan")}
+            </button>
+          </div>
+        ) : null}
       </div>
 
+      {viewTab === "template" ? (
+        <BuffetWeekTemplatePanel
+          outletId={outletId}
+          planOptions={planCaptureOptions}
+          onSpawned={() => {
+            setViewTab("plans");
+            void loadPlans();
+          }}
+        />
+      ) : null}
+
+      {viewTab === "management" ? (
+        <BuffetManagementMealsPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          onChanged={() => setRollupNonce((n) => n + 1)}
+        />
+      ) : null}
+
+      {viewTab === "staff" ? (
+        <BuffetStaffMealsPanel
+          outletId={outletId}
+          onChanged={() => setRollupNonce((n) => n + 1)}
+        />
+      ) : null}
+
+      {viewTab === "costRun" ? (
+        <BuffetCostRunPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          onGoForecast={() => setViewTab("forecast")}
+        />
+      ) : null}
+
+      {viewTab === "forecast" ? (
+        <BuffetForecastPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+        />
+      ) : null}
+
+      {viewTab === "plans" ? (
       <div className={`${CARD_CLASS} overflow-hidden`}>
         <div className="border-b px-3 py-2 text-sm font-semibold text-[#2C3E50]">{t("plansTitle")}</div>
         <div className="max-h-[70vh] overflow-auto">
@@ -664,6 +858,7 @@ export default function BuffetAdminPanel() {
           </table>
         </div>
       </div>
+      ) : null}
 
       <ModalShell
         open={compositionOpen && selected != null}
@@ -683,6 +878,40 @@ export default function BuffetAdminPanel() {
               })}{" "}
               · {t(`status.${selected.status}`)}
             </p>
+            {coversRollup ? (
+              <div className={`${CARD_CLASS} space-y-2 p-3`}>
+                <div className="text-sm font-semibold text-[#2C3E50]">{t("rollupCardTitle")}</div>
+                <dl className="grid gap-1 text-sm sm:grid-cols-2">
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupPlanCovers")}</dt>
+                    <dd className="tabular-nums">
+                      {(selected.coversAdult ?? 0) + (selected.coversChild ?? 0)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupManagement")}</dt>
+                    <dd className="tabular-nums">{coversRollup.management.count}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupStaff")}</dt>
+                    <dd className="tabular-nums">{coversRollup.staff.coversStaff}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupForecastTotal")}</dt>
+                    <dd className="tabular-nums font-medium">{coversRollup.forecastTotal}</dd>
+                  </div>
+                  {coversRollup.hotel ? (
+                    <div className="flex justify-between gap-2 sm:col-span-2">
+                      <dt className="text-[#7F8C8D]">{t("rollupHotelNights")}</dt>
+                      <dd className="tabular-nums">
+                        {coversRollup.hotel.guestNights} ({coversRollup.hotel.source})
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+                <p className="m-0 text-xs text-[#95A5A6]">{t("rollupCaption")}</p>
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {selected.status === "DRAFT" ? (
                 <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void setStatus("LOCKED")}>

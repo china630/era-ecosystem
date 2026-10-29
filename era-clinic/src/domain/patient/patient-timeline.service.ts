@@ -25,6 +25,8 @@ export type PatientTimelineEvent = {
   status: string;
   /** False when an unpaid extra has no cabin yet. */
   showClock?: boolean;
+  /** OPEN day-bucket not yet seated (CLI-62). */
+  openAttendance?: boolean;
   href?: string;
   codes?: string[];
   amountNet?: string;

@@ -4,7 +4,7 @@ import { getSubscriptionMe } from "@/integration/control-plane-platform.client";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 export async function GET(request: Request) {
   try {
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       platformSubscription = null;
     }
 
-    return NextResponse.json({
+    return jsonOk({
       organizationId: organizationId || null,
       controlPlaneUrl: process.env.CONTROL_PLANE_URL ?? null,
       platformSubscription,
@@ -63,7 +63,7 @@ export async function PATCH(request: Request) {
     );
     const getRes = await GET(request);
     const data = await getRes.json();
-    return NextResponse.json({
+    return jsonOk({
       ...data,
       note: "Set STOCK_CONSUMPTION_ENABLED on server to enable E8 dispatch.",
     });

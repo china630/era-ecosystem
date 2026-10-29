@@ -88,10 +88,24 @@ export async function countEntitlementUsage(input: {
       where: {
         clinicalEpisodeId: episodeId,
         inPackage: true,
-        status: { in: [...PROCEDURE_ENTITLEMENT_STATUSES] },
         OR: [
           { packageQuotaCode: quotaCode },
           { packageQuotaCode: null, procedureCode: quotaCode },
+        ],
+        // FIXED: SCHEDULED|CHECKED_IN|COMPLETED|NO_SHOW. OPEN: only after attendance (CLI-62).
+        AND: [
+          {
+            OR: [
+              {
+                schedulingMode: "FIXED",
+                status: { in: [...PROCEDURE_ENTITLEMENT_STATUSES] },
+              },
+              {
+                schedulingMode: "OPEN",
+                status: { in: ["CHECKED_IN", "COMPLETED"] },
+              },
+            ],
+          },
         ],
       },
     }),

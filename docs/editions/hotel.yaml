@@ -1,4 +1,4 @@
 product: hotel
 status: mvp
 pilot_ready: false
-notes: "FO + City Ledger MVP showable (guest→payer MOVE_PAYER_CL + unsettled; corp contract→COMPANY + contract allotment sellable preview); Finance→Hotel CL pay handoff API (HOT-CL-07); Scaffold BE + UI/Demo green; Pilot lab/field open; KKM STUB; not ga"
+notes: "FO + City Ledger MVP showable (guest→payer MOVE_PAYER_CL + unsettled; corp contract→COMPANY + contract allotment sellable preview); Finance→Hotel CL pay handoff API (HOT-CL-07); folio Debit|Credit + stay-wide lodging pay + catalog Extra charge/pay flags (HOT-CASH-01); Nafta revenue v2 remap + SatAdmin manual flags API (HOT-REV-01); Scaffold BE + UI/Demo green; Pilot lab/field open; KKM STUB; not ga"

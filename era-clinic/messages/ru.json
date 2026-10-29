@@ -601,7 +601,9 @@
     "staffKindNurse": "Медсестра",
     "staffKindBath": "Банщик",
     "staffKindMassage": "Массажист",
-    "staffKindDoctor": "Врач"
+    "staffKindDoctor": "Врач",
+    "openAttendance": "Свободное посещение",
+    "openAttendanceCabin": "При приходе"
   },
   "sanatoriumResources": {
     "title": "Матрица дня (ресурсы)",
@@ -682,7 +684,8 @@
       "NO_SHOW": "Неявка",
       "PROPOSED": "Предложено",
       "PENDING_PAY": "Ждёт оплаты"
-    }
+    },
+    "openAttendanceForesight": "Свободное посещение: ждут {waiting}, в кабине {inCabin} (ёмкость {capacity})"
   },
   "queue": {
     "title": "Очередь регистратуры",
@@ -1161,6 +1164,12 @@
     "defaultProcedureGapMinutes": "Пауза кабинета по умолчанию для новых типов (мин)",
     "defaultAppointmentSlotMinutes": "Длительность слота приёма (мин)",
     "procedureCheckInMode": "Режим чек-ина процедур",
+    "procedureCheckInWindow": "Окно check-in процедур",
+    "procedureCheckInWindowHint": "SAME_DAY — check-in в любой момент рабочего дня по плану (переходный период).",
+    "procedureCheckInWindowStrict": "STRICT (слот +/- grace)",
+    "procedureCheckInWindowSameDay": "SAME_DAY (живая очередь / переход)",
+    "procedureCheckInSameDayUntil": "SAME_DAY действует до",
+    "procedureCheckInSameDayUntilHint": "После этой даты снова STRICT. Пусто — выключить вручную.",
     "programSchedulingMode": "Режим планирования программы",
     "programSchedulingModeAfterCheckup": "AFTER_CHECKUP (Nafta — после этапа врача; анализы не обязательны)",
     "programSchedulingModeOnCheckin": "ON_CHECKIN (размещение при заезде)",
@@ -1170,6 +1179,9 @@
     "peakDayEndHour": "Конец дня в пиковом режиме",
     "printBrandTitle": "Брендинг печати",
     "printBrandSubtitle": "Логотип, названия клиники, контакты для бланков",
+    "cpPrintBanner": "Логотип/адрес/телефон в шапке берутся из профиля организации Control Plane после Sync. Колонтитулы и подписи остаются локальными.",
+    "cpLogoLocked": "Логотип ведётся в профиле организации Control Plane.",
+    "cpContactsLocked": "Адрес / телефон / email / сайт из Control Plane здесь только для чтения.",
     "noLogo": "Нет логотипа",
     "logo": "Логотип",
     "clearLogo": "Убрать логотип",
@@ -1465,6 +1477,8 @@
     "addBed": "Койка",
     "bodyPart": "Часть тела",
     "needsSite": "Нужны чипы зон",
+    "openAttendance": "Свободное посещение",
+    "openAttendanceHint": "День без жёсткого слота; медсестра сажает при приходе. Квоты пакета те же.",
     "needsExtraFields": "Нужны дополнительные поля",
     "selectAllSkills": "Выбрать все",
     "bodyPart_HEAD": "Голова",
@@ -1894,6 +1908,7 @@
     "openHistory": "История",
     "planTitle": "План",
     "planEmpty": "Нет ближайших процедур.",
+    "openAttendance": "Свободное посещение",
     "openPlan": "Весь план",
     "historyModalTitle": "Клиническая история",
     "planModalTitle": "План процедур",
@@ -2008,7 +2023,7 @@
     "packageAssignNoAnamnesis": "Чтобы открыть остатки пакета, нужен анамнез.",
     "packageAssignNoComplaint": "Чтобы открыть остатки пакета, нужна хотя бы одна жалоба.",
     "packageAssignNoDiagnosis": "Чтобы открыть остатки пакета, нужен хотя бы один диагноз МКБ-10.",
-    "packageAssignNoCareTeam": "Чтобы открыть остатки пакета, назначьте врача в команду.",
+    "packageAssignNoCareTeam": "Нужен врач в команде",
     "packageAssignInstantiateFailed": "Программа {code} не открылась. Проверьте, что шаблон существует.",
     "packageAssignQuotaRemaining": "У этой процедуры ещё есть квота пакета, поэтому она не может быть платной дополнительной.",
     "packageAssignExtraHint": "Строка с остатком квоты пишется в пакет. Строка с нулём или которой нет в пакете — платная дополнительная.",
@@ -2054,7 +2069,6 @@
     "packageAssignPoolHint": "выберите процедуру",
     "packageAssignNotInProcedures": "Этого блока нет в списке процедур",
     "packageAssignNoService": "У блока нет услуги в каталоге",
-    "packageAssignNoCareTeam": "Нужен врач в команде",
     "packageAssignLabOpen": "По этому анализу уже есть открытый заказ",
     "packageAssignLabOne": "Анализ бронирует один открытый заказ за раз",
     "packageAssignAliasHint": "выберите ванну",
@@ -2166,6 +2180,8 @@
     "entity_HTTP_MUTATION": "HTTP-мутации (Layer A)",
     "entity_ProcedureOrder": "Процедура",
     "entity_Visit": "Визит",
+    "entity_ClinicReceipt": "Кассовый чек",
+    "entity_ClinicShift": "Кассовая смена",
     "entity_WalkInParty": "Walk-in группа",
     "entity_Role": "Роль",
     "entity_ImportRun": "Импорт"

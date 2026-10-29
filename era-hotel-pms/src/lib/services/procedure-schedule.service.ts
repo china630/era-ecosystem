@@ -147,7 +147,7 @@ export async function finishAppointment(id: string, auditNote?: string) {
   let folioChargeId: string | null = null;
 
   if (!included) {
-    const medicalCode = await requireRevenueCodeByRole('MEDICAL');
+    const medicalCode = await requireRevenueCodeByRole('PROCEDURE');
     const charge = await postCharge({
       reservationId: appt.reservationId,
       revenueCodeId: medicalCode.id,

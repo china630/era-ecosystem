@@ -15,6 +15,7 @@ import {
 import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
 import { prisma } from "@/lib/prisma";
 import { permissionsForRoleCode } from "@/lib/auth/fnb-permission.service";
+import { getEffectiveBuffetCostForOutlet } from "@/lib/buffet-cost-settings.service";
 
 function sameModuleSet(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) return false;
@@ -38,6 +39,8 @@ export async function GET(request: Request) {
     let enabledPresets: string[] = [];
     let activeModules: string[] = [];
     let hotelMode: boolean | null = null;
+    let buffetCost: Awaited<ReturnType<typeof getEffectiveBuffetCostForOutlet>> | null =
+      null;
 
     // A failed role reload must still return the signed-in person.
     // The shell hides the menu and the profile label when this route errors.
@@ -96,6 +99,14 @@ export async function GET(request: Request) {
           if (fresh.length > 0 || permissions.length === 0) permissions = fresh;
         }
       }
+      try {
+        buffetCost = await getEffectiveBuffetCostForOutlet(
+          session.outletId ?? null,
+          organizationId,
+        );
+      } catch {
+        buffetCost = null;
+      }
     } catch {
       /* JWT name and grants stay */
     }
@@ -116,6 +127,7 @@ export async function GET(request: Request) {
       enabledPresets,
       activeModules,
       hotelMode,
+      buffetCost,
     });
   } catch (err) {
     return handleRouteError(err);

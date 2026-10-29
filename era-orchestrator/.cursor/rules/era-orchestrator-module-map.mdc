@@ -100,6 +100,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `GET/PATCH /platform/v1/organizations/me/profile` | `organization-profile.controller.ts` — OrgOwner branding SoR (multi-contact/address); CP-ORG-PROFILE-01 |
 | `GET/PATCH /platform/v1/organizations/:id/profile` | same; membership or super-admin |
 | `GET /internal/v1/organizations/:id/profile-snapshot` | `internal-organizations.controller.ts` — S2S branding snapshot (service token) |
+| `PATCH /internal/v1/organizations/:id/profile-bank-line` | `internal-organizations.controller.ts` — Finance primary bank → denormalized `bankLine` (service token; CP-ORG-PROFILE-01) |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
 | `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint (env fallback) |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |

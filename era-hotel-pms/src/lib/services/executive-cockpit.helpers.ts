@@ -77,7 +77,7 @@ export function revenueFlashBucket(
   }
   if (revenueRoleIn(row, ['FOOD', 'BOARD', 'MINIBAR', 'BANQUET'])) return 'fb';
   if (revenueRoleIs(row, 'TREATMENT')) return 'spa';
-  if (revenueRoleIs(row, 'MEDICAL')) return 'medical';
+  if (revenueRoleIs(row, 'MEDICAL') || revenueRoleIs(row, 'PROCEDURE')) return 'medical';
   if (dept === 'ACC') return 'room';
   if (dept === 'REST') return 'fb';
   if (dept === 'SPA') return 'spa';

@@ -26,9 +26,12 @@ import {
 import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
   formatLedgerAmount,
-  ledgerAmountClass,
+  ledgerCreditAmount,
+  ledgerCreditClass,
+  ledgerDebitAmount,
+  ledgerDebitClass,
+  ledgerKindLabelKey,
   ledgerMoneyKind,
-  ledgerRowClass,
 } from '@/lib/folio-ledger-display';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
@@ -273,7 +276,7 @@ export function ReservationCardFolioTab({
       for (const charge of folio.charges) {
         const raw = charge.description ?? '—';
         const note = displayRoomChargeNote(raw, (kind, date) =>
-          kind === 'night-audit' ? tf('nightAuditNote', { date }) : tf('manualRoomNote', { date }),
+          kind === 'night-audit' ? tf('nightAuditNote') : tf('manualRoomNote', { date }),
         );
         const received = (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
           ? ` · ${tf('serviceReceived')}`
@@ -387,13 +390,25 @@ export function ReservationCardFolioTab({
 
   const filteredRows = useMemo(() => {
     const needle = folioQuery.trim().toLowerCase();
-    return visibleRows.filter((row) => {
-      if (articleFilter !== 'all' && row.code !== articleFilter) return false;
-      if (lineKind !== 'all' && row.kind !== lineKind) return false;
-      if (!needle) return true;
-      return `${row.description} ${row.code}`.toLowerCase().includes(needle);
-    });
+    return visibleRows
+      .filter((row) => {
+        if (articleFilter !== 'all' && row.code !== articleFilter) return false;
+        if (lineKind !== 'all' && row.kind !== lineKind) return false;
+        if (!needle) return true;
+        return `${row.description} ${row.code}`.toLowerCase().includes(needle);
+      })
+      .sort((a, b) => {
+        if (a.whenDate !== b.whenDate) return a.whenDate < b.whenDate ? -1 : 1;
+        if (a.whenTime !== b.whenTime) return a.whenTime < b.whenTime ? -1 : 1;
+        return a.id < b.id ? -1 : 1;
+      });
   }, [articleFilter, folioQuery, lineKind, visibleRows]);
+
+  const pocketTypesInView = useMemo(
+    () => new Set(filteredRows.map((row) => row.folioType)),
+    [filteredRows],
+  );
+  const showPocketCol = pocketTypesInView.size > 1;
 
   const lineCount = (rows: LedgerRow[]) => rows.length;
   const guestLineCount = (guestId: string) =>
@@ -463,7 +478,7 @@ export function ReservationCardFolioTab({
       {
         key: 'rowNo',
         header: t('folioRowNo'),
-        className: 'w-10 text-right font-mono',
+        className: 'w-8 text-right font-mono',
         render: (row) => String(row.rowNo ?? ''),
       },
       {
@@ -487,6 +502,7 @@ export function ReservationCardFolioTab({
             aria-label={t('folioSelectAll')}
           />
         ) as unknown as string,
+        className: 'w-8',
         render: (row) => (
           <input
             type="checkbox"
@@ -497,56 +513,75 @@ export function ReservationCardFolioTab({
           />
         ),
       },
-      { key: 'folioType', header: tf('pocket'), render: (row) => pocketName(t, row.folioType) },
-      { key: 'code', header: tf('xercMaddesi'), render: (row) => row.code },
+      ...(showPocketCol
+        ? [
+            {
+              key: 'folioType',
+              header: tf('pocket'),
+              className: 'w-16',
+              render: (row: LedgerRow) => pocketName(t, row.folioType),
+            } as EraDataGridColumn<LedgerRow>,
+          ]
+        : []),
+      {
+        key: 'code',
+        header: tf('xercMaddesi'),
+        className: 'max-w-[9rem] truncate',
+        render: (row) => row.code,
+      },
+      {
+        key: 'kind',
+        header: tf('lineKind'),
+        className: 'w-14',
+        render: (row) => {
+          const moneyKind = ledgerMoneyKind(row);
+          if (row.isCityLedger) return tf('cityLedgerBadge');
+          return tf(ledgerKindLabelKey(moneyKind));
+        },
+      },
       {
         key: 'description',
         header: t('folioDesc'),
-        render: (row) => {
-          const moneyKind = ledgerMoneyKind(row);
-          const badge =
-            moneyKind === 'refund'
-              ? tf('refundBadge')
-              : moneyKind === 'adjust'
-                ? tf('adjustBadge')
-                : row.isCityLedger
-                  ? tf('cityLedgerBadge')
-                  : moneyKind === 'payment'
-                    ? tf('paymentBadge')
-                    : null;
-          return (
-            <span>
-              {badge ? (
-                <span className="mr-1 inline-block rounded bg-white/80 px-1 text-[10px] font-semibold uppercase tracking-wide text-[#34495E]">
-                  {badge}
-                </span>
-              ) : null}
-              {row.description}
-            </span>
-          );
-        },
+        render: (row) => row.description,
       },
       {
         key: 'whenDate',
         header: t('folioDate'),
-        className: 'whitespace-nowrap font-mono',
+        className: 'w-20 whitespace-nowrap font-mono text-[11px]',
         render: (row) => row.whenDate,
       },
       {
         key: 'whenTime',
         header: t('folioTime'),
-        className: 'whitespace-nowrap font-mono',
+        className: 'w-14 whitespace-nowrap font-mono text-[11px]',
         render: (row) => row.whenTime,
       },
       {
-        key: 'amount',
-        header: t('amount'),
-        className: 'text-right font-mono',
+        key: 'debit',
+        header: tf('colDebit'),
+        className: 'w-24 text-right font-mono',
         render: (row) => {
           const moneyKind = ledgerMoneyKind(row);
+          const debit = ledgerDebitAmount(row.amount, moneyKind);
+          if (debit == null) return '';
           return (
-            <span className={ledgerAmountClass(moneyKind)}>
-              {formatLedgerAmount(row.amount, moneyKind)} {displayCurrency}
+            <span className={ledgerDebitClass()}>
+              {debit.toFixed(2)} {displayCurrency}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'credit',
+        header: tf('colCredit'),
+        className: 'w-24 text-right font-mono',
+        render: (row) => {
+          const moneyKind = ledgerMoneyKind(row);
+          const credit = ledgerCreditAmount(row.amount, moneyKind);
+          if (credit == null) return '';
+          return (
+            <span className={ledgerCreditClass()}>
+              {credit.toFixed(2)} {displayCurrency}
             </span>
           );
         },
@@ -554,6 +589,7 @@ export function ReservationCardFolioTab({
       {
         key: 'actions',
         header: tf('actions'),
+        className: 'w-12',
         render: (row) => (
           <FolioRowMenu
             label={tf('rowMenu')}
@@ -607,7 +643,8 @@ export function ReservationCardFolioTab({
       },
     ];
     if (displayCurrency !== 'AZN') {
-      cols.splice(4, 0, {
+      const debitIdx = cols.findIndex((c) => c.key === 'debit');
+      cols.splice(debitIdx >= 0 ? debitIdx : cols.length - 1, 0, {
         key: 'fxAzn',
         header: t('fxEquivalentAzn'),
         className: 'text-right',
@@ -617,7 +654,7 @@ export function ReservationCardFolioTab({
       });
     }
     return cols;
-  }, [allFilteredSelected, can, displayCurrency, filteredRows, selectedIds, t, tf]);
+  }, [allFilteredSelected, can, displayCurrency, filteredRows, selectedIds, showPocketCol, t, tf]);
 
   const selectedCharges = filteredRows.filter(
     (row) => row.kind === 'charge' && selectedIds.includes(row.id) && row.chargeId,
@@ -676,7 +713,6 @@ export function ReservationCardFolioTab({
         page={1}
         pageSize={Math.max(numbered.length, 1)}
         total={numbered.length}
-        rowClassName={(row) => ledgerRowClass(ledgerMoneyKind(row))}
       />
     );
   }

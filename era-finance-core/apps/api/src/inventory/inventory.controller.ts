@@ -39,6 +39,16 @@ import { TransferStockDto } from "./dto/transfer-stock.dto";
 import { WriteOffStockDocumentDto } from "./dto/write-off-stock-document.dto";
 import { InventoryService } from "./inventory.service";
 import { StatutoryFormsService } from "./statutory-forms.service";
+import { BuffetFoodCostRunService } from "./buffet-food-cost-run.service";
+import { OutletBudgetRunService } from "./outlet-budget-run.service";
+import {
+  BuffetFoodCostRunDto,
+  PatchWarehouseScopeDto,
+} from "./dto/buffet-food-cost-run.dto";
+import {
+  OutletBudgetRunDto,
+  SaveOutletBudgetPlanDto,
+} from "./dto/outlet-budget-run.dto";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 
@@ -51,6 +61,8 @@ export class InventoryController {
   constructor(
     private readonly inventory: InventoryService,
     private readonly statutoryForms: StatutoryFormsService,
+    private readonly buffetFoodCostRunService: BuffetFoodCostRunService,
+    private readonly outletBudgetRunService: OutletBudgetRunService,
   ) {}
 
   @Get("shipments/:id/forma-5")
@@ -121,6 +133,123 @@ export class InventoryController {
     @Body() dto: CreateWarehouseDto,
   ) {
     return this.inventory.createWarehouse(organizationId, dto);
+  }
+
+  @Patch("warehouses/:id")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
+  @ApiOperation({
+    summary:
+      "Patch warehouse cost class + satellite outlet scope (FIN-INV-SCOPE-01 / buffet cost run)",
+  })
+  patchWarehouse(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: PatchWarehouseScopeDto,
+  ) {
+    return this.inventory.patchWarehouseScope(organizationId, id, dto);
+  }
+
+  @Post("buffet-food-cost-run")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
+  @ApiOperation({
+    summary:
+      "HYBRID FOOD buffet cost run: usage, attributed, residual, theoretical, variance, soft warnings (Wave 5)",
+  })
+  buffetFoodCostRun(
+    @OrganizationId() organizationId: string,
+    @Body() dto: BuffetFoodCostRunDto,
+  ) {
+    return this.buffetFoodCostRunService.run(organizationId, {
+      fromYmd: dto.from,
+      toYmd: dto.to,
+      satelliteOutletCode: dto.satelliteOutletCode,
+      warehouseIds: dto.warehouseIds,
+      posSaleAzn: dto.posSaleAzn,
+      posCompAzn: dto.posCompAzn,
+      staffNetAzn: dto.staffNetAzn,
+      theoreticalAzn: dto.theoreticalAzn,
+      warningVarianceLowPct: dto.warningVarianceLowPct,
+      warningVarianceHighPct: dto.warningVarianceHighPct,
+      theoreticalBySku: dto.theoreticalBySku,
+    });
+  }
+
+  @Get("buffet-food-cost-run")
+  @ApiOperation({
+    summary: "HYBRID FOOD buffet cost run (query form; attributed inputs optional)",
+  })
+  buffetFoodCostRunGet(
+    @OrganizationId() organizationId: string,
+    @Query("from") from: string,
+    @Query("to") to: string,
+    @Query("satelliteOutletCode") satelliteOutletCode?: string,
+    @Query("posSaleAzn") posSaleAzn?: string,
+    @Query("posCompAzn") posCompAzn?: string,
+    @Query("staffNetAzn") staffNetAzn?: string,
+    @Query("theoreticalAzn") theoreticalAzn?: string,
+  ) {
+    const num = (raw?: string) => {
+      if (raw == null || raw === "") return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) && n >= 0 ? n : undefined;
+    };
+    return this.buffetFoodCostRunService.run(organizationId, {
+      fromYmd: from,
+      toYmd: to,
+      satelliteOutletCode,
+      posSaleAzn: num(posSaleAzn),
+      posCompAzn: num(posCompAzn),
+      staffNetAzn: num(staffNetAzn),
+      theoreticalAzn: num(theoreticalAzn),
+    });
+  }
+
+  @Post("outlet-budget-run")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
+  @ApiOperation({
+    summary:
+      "Non-FOOD budget plan/fact (CHEMICAL/CONSUMABLE/TABLEWARE/INVENTORY_GT) — Wave 6",
+  })
+  outletBudgetRun(
+    @OrganizationId() organizationId: string,
+    @Body() dto: OutletBudgetRunDto,
+  ) {
+    return this.outletBudgetRunService.run(organizationId, {
+      fromYmd: dto.from,
+      toYmd: dto.to,
+      satelliteOutletCode: dto.satelliteOutletCode,
+      planByClass: dto.planByClass,
+      planPeriodDays: dto.planPeriodDays,
+    });
+  }
+
+  @Get("outlet-budget-run")
+  @ApiOperation({ summary: "Non-FOOD budget plan/fact (query form)" })
+  outletBudgetRunGet(
+    @OrganizationId() organizationId: string,
+    @Query("from") from: string,
+    @Query("to") to: string,
+    @Query("satelliteOutletCode") satelliteOutletCode?: string,
+  ) {
+    return this.outletBudgetRunService.run(organizationId, {
+      fromYmd: from,
+      toYmd: to,
+      satelliteOutletCode,
+    });
+  }
+
+  @Patch("outlet-budget-plan")
+  @Permissions(CP_PERMISSION.API_INVENTORY_APPROVE)
+  @ApiOperation({ summary: "Persist non-FOOD weekly (or N-day) budget plan AZN" })
+  saveOutletBudgetPlan(
+    @OrganizationId() organizationId: string,
+    @Body() dto: SaveOutletBudgetPlanDto,
+  ) {
+    return this.outletBudgetRunService.savePlan(organizationId, {
+      satelliteOutletCode: dto.satelliteOutletCode,
+      planByClass: dto.planByClass ?? {},
+      planPeriodDays: dto.planPeriodDays,
+    });
   }
 
   @Get("bins")

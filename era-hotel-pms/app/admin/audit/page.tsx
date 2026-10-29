@@ -26,6 +26,8 @@ const AUDIT_ENTITY_TYPES = [
   'HTTP_MUTATION',
   'Reservation',
   'FolioCharge',
+  'CashShift',
+  'BusinessDay',
   'RoomType',
   'Role',
   'ImportRun',
@@ -118,7 +120,7 @@ export default function AuditPage() {
         }}
       >
         <CatalogField
-          kind="CLOSED_SMALL"
+          kind="CLOSED_MEDIUM"
           label={t('entityType')}
           id="audit-entity-type"
           value={entityType}

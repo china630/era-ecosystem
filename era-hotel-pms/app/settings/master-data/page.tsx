@@ -97,6 +97,8 @@ interface RevenueCode extends RetireRow {
   departmentId?: string | null;
   department?: { id: string; code: string; name: string } | null;
   routingRule?: { targetFolioType: string } | null;
+  allowManualCharge?: boolean | null;
+  allowManualPayment?: boolean | null;
 }
 
 function EditButton({ label, onClick }: { label: string; onClick: () => void }) {
@@ -1124,6 +1126,8 @@ export default function MasterDataPage() {
                   departmentId: revenueDepartmentId,
                   targetFolioType: folioType,
                   active: fd.get('active') === 'on',
+                  allowManualCharge: fd.get('allowManualCharge') === 'on',
+                  allowManualPayment: fd.get('allowManualPayment') === 'on',
                 }
               : {
                   code: fd.get('code'),
@@ -1132,6 +1136,8 @@ export default function MasterDataPage() {
                   taxTag: (fd.get('taxTag') as string) || undefined,
                   departmentId: revenueDepartmentId,
                   targetFolioType: folioType || undefined,
+                  allowManualCharge: fd.get('allowManualCharge') === 'on',
+                  allowManualPayment: fd.get('allowManualPayment') === 'on',
                 };
             const res = await fetch(
               editRevenueCode
@@ -1205,6 +1211,24 @@ export default function MasterDataPage() {
               <option value="AGENCY">AGENCY</option>
             </FieldSelect>
           </FieldRow>
+          <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+            <input
+              name="allowManualCharge"
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              defaultChecked={editRevenueCode ? editRevenueCode.allowManualCharge !== false : true}
+            />
+            {t('allowManualCharge')}
+          </label>
+          <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
+            <input
+              name="allowManualPayment"
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              defaultChecked={editRevenueCode ? editRevenueCode.allowManualPayment !== false : true}
+            />
+            {t('allowManualPayment')}
+          </label>
           {editRevenueCode && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input

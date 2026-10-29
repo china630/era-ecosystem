@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 
-const PII_KEYS = new Set([
+/** Substring fragments (lowercased) — ADR era-mutation-audit-standard redaction families. */
+const PII_KEY_FRAGMENTS = [
   "password",
   "passwordhash",
   "passpor",
@@ -13,11 +14,21 @@ const PII_KEYS = new Set([
   "secret",
   "authorization",
   "apikey",
-  "accessToken",
-  "refreshToken",
+  "accesstoken",
+  "refreshtoken",
   "cardpan",
+  "cardnumber",
   "cvv",
-]);
+  "iban",
+  "accountnumber",
+  "pin",
+] as const;
+
+/** True when a JSON key should be redacted in audit payloads (case-insensitive substring). */
+export function isAuditPiiKey(key: string): boolean {
+  const lower = key.toLowerCase().replace(/[_-]/g, "");
+  return PII_KEY_FRAGMENTS.some((p) => lower.includes(p));
+}
 
 export type SatelliteAuditInput = {
   userId?: string | null;
@@ -38,11 +49,6 @@ export type SatelliteAuditWriter = (row: {
   integrityHash: string;
 }) => Promise<void>;
 
-function isPiiKey(key: string): boolean {
-  const lower = key.toLowerCase();
-  return [...PII_KEYS].some((p) => lower.includes(p));
-}
-
 /** Redact sensitive fields before persisting audit payload. */
 export function redactAuditChanges(
   value: unknown,
@@ -56,7 +62,7 @@ export function redactAuditChanges(
   if (typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = isPiiKey(k) ? "[redacted]" : redactAuditChanges(v, depth + 1);
+      out[k] = isAuditPiiKey(k) ? "[redacted]" : redactAuditChanges(v, depth + 1);
     }
     return out;
   }

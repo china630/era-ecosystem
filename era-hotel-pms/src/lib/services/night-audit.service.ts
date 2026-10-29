@@ -314,7 +314,10 @@ export async function listNightAuditDeskHolds(businessDate: Date) {
   return { missedArrivals, dueOuts, missedCount, dueCount };
 }
 
-export async function runNightAudit() {
+export async function runNightAudit(audit?: {
+  userId?: string | null;
+  request?: Request;
+}) {
   const auditDate = await getCurrentBusinessDate();
   const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
   await assertYearBoundaryAllows(auditDate);
@@ -340,7 +343,22 @@ export async function runNightAudit() {
   await assertFinanceQaimeDayClose(businessDateForCash);
   await lockBusinessDateForAudit();
   try {
-    return await withNightAuditPosting(() => executeLockedNightAudit());
+    const result = await withNightAuditPosting(() => executeLockedNightAudit());
+    let errorCount = 0;
+    try {
+      const parsed = JSON.parse(result.run.errorsJson ?? '[]');
+      if (Array.isArray(parsed)) errorCount = parsed.length;
+    } catch {
+      errorCount = 0;
+    }
+    const { recordHotelAudit } = await import('@/lib/satellite-audit');
+    await recordHotelAudit(audit ?? {}, 'BusinessDay', result.run.businessDayId, 'DAY_CLOSE', {
+      nightAuditRunId: result.run.id,
+      businessDate: businessDateForCash,
+      status: result.run.status,
+      errorCount,
+    });
+    return result;
   } catch (e) {
     await unlockBusinessDateAfterAudit();
     throw e;

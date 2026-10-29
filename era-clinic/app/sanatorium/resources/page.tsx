@@ -95,6 +95,11 @@ export default function SanatoriumResourcesPage() {
   const [orderCard, setOrderCard] = useState<OrderCard | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [dayClosed, setDayClosed] = useState(false);
+  const [openForesight, setOpenForesight] = useState<{
+    waiting: number;
+    inCabin: number;
+    capacity: number;
+  } | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(
@@ -104,6 +109,16 @@ export default function SanatoriumResourcesPage() {
     const payload = data.data ?? data;
     setDayClosed(payload.closed === true);
     setResources(payload.resources ?? []);
+    const oa = payload.openAttendance;
+    setOpenForesight(
+      oa && (oa.waiting > 0 || oa.inCabin > 0)
+        ? {
+            waiting: Number(oa.waiting) || 0,
+            inCabin: Number(oa.inCabin) || 0,
+            capacity: Number(oa.capacity) || 0,
+          }
+        : null,
+    );
   }, [date, locale]);
 
   useEffect(() => {
@@ -282,7 +297,20 @@ export default function SanatoriumResourcesPage() {
     </EraListFilterBar>
   );
 
+  const foresightBanner =
+    openForesight != null ? (
+      <p className={`mb-2 text-[13px] ${TEXT_MUTED_CLASS}`}>
+        {t("openAttendanceForesight", {
+          waiting: openForesight.waiting,
+          inCabin: openForesight.inCabin,
+          capacity: openForesight.capacity,
+        })}
+      </p>
+    ) : null;
+
   const matrix = (
+    <>
+    {foresightBanner}
     <ResourceDayMatrix
       date={date}
       resources={resources}
@@ -326,6 +354,7 @@ export default function SanatoriumResourcesPage() {
         setDetailSlot(slot);
       }}
     />
+    </>
   );
 
   const placingBar = placing ? (

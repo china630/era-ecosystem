@@ -44,7 +44,7 @@ export async function postProcedureToFolio(
   reservationId: string,
   input: { code: string; name: string; amount: number },
 ) {
-  const medicalCode = await requireRevenueCodeByRole('MEDICAL');
+  const medicalCode = await requireRevenueCodeByRole('PROCEDURE');
 
   await prisma.medicalProcedure.create({
     data: { reservationId, code: input.code, name: input.name, amount: toDecimal(input.amount) },

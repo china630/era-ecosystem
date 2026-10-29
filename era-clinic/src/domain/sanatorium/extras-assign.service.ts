@@ -191,6 +191,7 @@ export async function prescribeExtras(
           amountNet: unitPrice,
           bonusEligible: true,
           inPackage: false,
+          schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
         },
       });
       if (line.siteIds?.length) {
@@ -208,7 +209,14 @@ export async function prescribeExtras(
     }
   }
   if (planFirst && ids.length > 0) {
-    await seatUnpaidExtras(ids);
+    const fixedIds = (
+      await prisma.procedureOrder.findMany({
+        where: { id: { in: ids }, schedulingMode: "FIXED" },
+        select: { id: true },
+      })
+    ).map((r) => r.id);
+    if (fixedIds.length > 0) await seatUnpaidExtras(fixedIds);
+    // OPEN extras stay unseated until Pay → day pin, then nurse seat on arrival.
   }
   return { orderIds: ids };
 }
@@ -439,10 +447,26 @@ export async function payAndScheduleExtras(
 
   let placed = seatedIds.length;
   if (looseIds.length > 0) {
+    const looseRows = await prisma.procedureOrder.findMany({
+      where: { id: { in: looseIds } },
+      select: { id: true, schedulingMode: true },
+    });
+    const openLoose = looseRows.filter((r) => r.schedulingMode === "OPEN").map((r) => r.id);
+    const fixedLoose = looseRows.filter((r) => r.schedulingMode !== "OPEN").map((r) => r.id);
     try {
-      placed += (
-        await placeConfirmedProcedures(looseIds, { confirmedByUserId: actorUserId })
-      ).placed;
+      if (openLoose.length > 0) {
+        const { pinOpenAttendanceOrders } = await import(
+          "@/domain/procedure/open-attendance"
+        );
+        placed += (
+          await pinOpenAttendanceOrders(openLoose, { confirmedByUserId: actorUserId })
+        ).placed;
+      }
+      if (fixedLoose.length > 0) {
+        placed += (
+          await placeConfirmedProcedures(fixedLoose, { confirmedByUserId: actorUserId })
+        ).placed;
+      }
     } catch (err) {
       const reason = err instanceof Error ? err.message : "schedule failed";
       for (const line of accepted) {
@@ -499,7 +523,14 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       data: { status: "PROPOSED", inPackage: false },
     });
     try {
-      await placeConfirmedProcedures([order.id], {});
+      if (order.schedulingMode === "OPEN") {
+        const { pinOpenAttendanceOrders } = await import(
+          "@/domain/procedure/open-attendance"
+        );
+        await pinOpenAttendanceOrders([order.id], {});
+      } else {
+        await placeConfirmedProcedures([order.id], {});
+      }
     } catch (err) {
       const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
       if (code === ANAMNESIS_REQUIRED || code === CARE_TEAM_REQUIRED) {

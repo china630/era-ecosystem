@@ -61,7 +61,8 @@ export async function getPrintBranding(lang: PrintLang): Promise<PrintBranding> 
   );
 
   return {
-    logoDataUrl: tenant.printLogoDataUrl ?? (cpLogoUrl || null),
+    // Prefer CP logo URL when Sync cache present; local data-URL is offline fallback.
+    logoDataUrl: cpLogoUrl || tenant.printLogoDataUrl || null,
     clinicName: cpName || localName,
     address: cpAddress || localAddress,
     phone: cpPhone || tenant.printPhone || null,

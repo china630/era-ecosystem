@@ -170,6 +170,25 @@ enum CommissionBasis {
   NET
 }
 
+/** Hotel → agency commission payable line (not City Ledger AR). */
+enum AgencyCommissionLineStatus {
+  ACCRUED
+  READY
+  IN_PAYMENT
+  PAID
+  ON_HOLD
+  DISPUTED
+  VOID
+  SKIPPED_NET
+}
+
+enum AgencyCommissionBatchStatus {
+  DRAFT
+  SUBMITTED
+  PAID
+  CANCELLED
+}
+
 enum FolioStatus {
   OPEN
   CLOSED
@@ -817,6 +836,12 @@ model RevenueCode {
   active       Boolean            @default(true)
   /// Stable key services post by (ROOM, PKG, …) — see `REVENUE_CODE_ROLES`.
   systemRole   String?
+  /// Extra charge picker (data-driven; ROOM/PKG nights stay Qiymətlər / NA).
+  allowManualCharge  Boolean @default(true)
+  /// Accept payment picker.
+  allowManualPayment Boolean @default(true)
+  /// LODGING | EXTRA | MEDICAL | SHOP | FB | TAX | DISCOUNT
+  reportType   String?
   departmentId String?
   department   Department?        @relation(fields: [departmentId], references: [id])
   charges      FolioCharge[]
@@ -886,6 +911,8 @@ model Agency {
   contractPricingRules ContractPricingRule[]
   salesContracts       SalesContract[]
   banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
+  commissionLines      AgencyCommissionLine[]
+  commissionBatches    AgencyCommissionBatch[]
   @@unique([organizationId, code])
   @@index([organizationId])
 }
@@ -1642,6 +1669,7 @@ model Reservation {
   tasks             ReservationTask[]
   folioRoutingOverrides ReservationFolioRoutingOverride[]
   commercialPeriods ReservationCommercialPeriod[]
+  commissionLines   AgencyCommissionLine[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -1797,9 +1825,69 @@ model ReservationCommercialPeriod {
   note               String?
   createdByUserId    String?
   createdAt          DateTime        @default(now())
+  commissionLines    AgencyCommissionLine[]
 
   @@index([reservationId, fromDate])
   @@index([organizationId])
+}
+
+/**
+ * Hotel → agency commission payable (Opera TA commission). Not City Ledger AR.
+ * ADR hotel-agency-commission-payable.
+ */
+model AgencyCommissionLine {
+  id                   String                      @id @default(uuid())
+  organizationId       String
+  agencyId             String
+  agency               Agency                      @relation(fields: [agencyId], references: [id])
+  reservationId        String
+  reservation          Reservation                 @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  commercialPeriodId   String?
+  commercialPeriod     ReservationCommercialPeriod? @relation(fields: [commercialPeriodId], references: [id], onDelete: SetNull)
+  /** Stable key for idempotent upsert: period id or "default". */
+  periodKey            String
+  fromDate             DateTime                    @db.Date
+  toDate               DateTime                    @db.Date
+  revenueBase          Decimal                     @db.Decimal(12, 2)
+  commissionPercent    Decimal                     @db.Decimal(5, 2)
+  commissionBasis      CommissionBasis
+  amount               Decimal                     @db.Decimal(12, 2)
+  currency             String                      @default("AZN")
+  status               AgencyCommissionLineStatus  @default(ACCRUED)
+  batchId              String?
+  batch                AgencyCommissionBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  financePayableId     String?
+  paidAt               DateTime?
+  holdReason           String?
+  disputedReason       String?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  @@unique([organizationId, reservationId, periodKey])
+  @@index([organizationId, agencyId, status])
+  @@index([organizationId, status])
+  @@index([batchId])
+}
+
+model AgencyCommissionBatch {
+  id             String                       @id @default(uuid())
+  organizationId String
+  agencyId       String
+  agency         Agency                       @relation(fields: [agencyId], references: [id])
+  periodFrom     DateTime                     @db.Date
+  periodTo       DateTime                     @db.Date
+  totalAmount    Decimal                      @db.Decimal(12, 2)
+  status         AgencyCommissionBatchStatus  @default(DRAFT)
+  correlationId  String?
+  financePayableId String?
+  submittedAt    DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+  lines          AgencyCommissionLine[]
+
+  @@index([organizationId, agencyId, status])
+  @@index([organizationId, status])
 }
 
 model ReservationDailyRate {
@@ -3455,8 +3543,9 @@ model SatelliteAuditLog {
 
   @@index([entityType, entityId])
   @@index([createdAt])
-  @@map("satellite_audit_logs")
   @@index([organizationId])
+  @@index([organizationId, createdAt])
+  @@map("satellite_audit_logs")
 }
 
 /// Versioned BAR / unit-economics building blocks (service fee, meals, COGS).

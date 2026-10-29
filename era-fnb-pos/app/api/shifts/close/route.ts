@@ -1,4 +1,4 @@
-import { jsonError, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dispatchFbShiftClosed } from "@/lib/fb-finance-events";
@@ -9,6 +9,7 @@ import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { saleReportForShift } from "@/lib/sales-report";
 import { cashDrawerForShift } from "@/lib/cash-drawer";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 const closeSchema = z.object({
   shiftId: z.string().optional(),
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
         shiftId: shift.id,
         closedAt: shift.closedAt?.toISOString(),
       });
-      return NextResponse.json(shift);
+      return jsonOk(shift);
     }
 
     const openTickets = await prisma.ticket.count({
@@ -105,7 +106,21 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ ...closed, report, drawer });
+    await recordFbAudit(
+      { userId: session?.sub, request },
+      "PosShift",
+      closed.id,
+      "CLOSE",
+      {
+        outletId: closed.outletId,
+        outletCode: closed.outlet.code,
+        countedCash: body.countedCash,
+        expectedCash: drawer.expected,
+        cashVariance: drawer.variance,
+      },
+    );
+
+    return jsonOk({ ...closed, report, drawer });
   } catch (err) {
     return handleRouteError(err);
   }

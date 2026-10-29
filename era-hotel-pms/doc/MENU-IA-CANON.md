@@ -129,6 +129,7 @@ Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 | Allotment blocks | `/distribution/allotment-blocks` | Multi-line holds, optional sales contract, pickup → booking |
 | Promotion codes | `/distribution/promotion-codes` | Promo master (CRUD). Apply-on-stay + certificates = debt H-BL-52/53 — [ADR vouchers split](../../docs/adr/hotel-vouchers-promotions-certificates.md). Agency voucher # stays on reservation `voucherNo` (H-BL-51). |
 | Travel agencies | `/distribution/travel-agencies` | Agency master (commission + prepaid/postpaid) |
+| Agency commission | `/distribution/agency-commission` | Hotel→agency payable (accrual/statement/forecast); **not** City Ledger AR — ADR hotel-agency-commission-payable |
 | Companies | `/distribution/companies` | Corporate master (direct bill, no commission) |
 
 Legacy: `/channel` → `/distribution/channel`, `/admin/contracts` → `/distribution/contracts`, etc.

@@ -15,7 +15,20 @@ export async function setRevenueCodeRole(revenueCodeId: string, role: RevenueCod
         data: { systemRole: null },
       });
     }
-    return tx.revenueCode.update({ where: { id: revenueCodeId }, data: { systemRole: role } });
+    const lodgingNoManualCharge =
+      role === 'ROOM' || role === 'PKG' || role === 'CITY_TAX';
+    return tx.revenueCode.update({
+      where: { id: revenueCodeId },
+      data: {
+        systemRole: role,
+        ...(lodgingNoManualCharge
+          ? {
+              allowManualCharge: false,
+              reportType: role === 'CITY_TAX' ? 'TAX' : 'LODGING',
+            }
+          : {}),
+      },
+    });
   });
 }
 

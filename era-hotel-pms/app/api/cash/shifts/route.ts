@@ -36,11 +36,17 @@ export async function POST(request: Request) {
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
     if (action === 'close') {
-      const closed = await closeOpenCashShift();
+      const closed = await closeOpenCashShift({
+        userId: session?.sub,
+        request,
+      });
       return jsonOk(serialize(closed));
     }
     const body = openSchema.parse(await request.json());
-    const shift = await openCashShiftExplicit(body);
+    const shift = await openCashShiftExplicit({
+      ...body,
+      audit: { userId: session?.sub, request },
+    });
     return jsonOk(serialize(shift), 201);
   } catch (err) {
     return handleRouteError(err);

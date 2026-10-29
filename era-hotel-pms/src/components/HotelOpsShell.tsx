@@ -588,6 +588,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               permission: PERMISSIONS.SCREEN_SETTINGS,
             },
             {
+              id: 'dist-agency-commission',
+              href: '/distribution/agency-commission',
+              labelKey: 'agencyCommission',
+              icon: Banknote,
+              permission: PERMISSIONS.REPORTS_READ,
+            },
+            {
               id: 'dist-companies',
               href: '/distribution/companies',
               labelKey: 'companies',

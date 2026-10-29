@@ -14,9 +14,10 @@ import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
 import { discountedLineAmounts } from "@/lib/ticket-line-amounts";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 const bodySchema = z
   .object({
@@ -181,6 +182,19 @@ export async function POST(
     });
     await releaseTableForTicket(id, ticket.tableId);
 
+    await recordFbAudit(
+      { userId: session?.sub, request },
+      "Ticket",
+      id,
+      "ROOM_CHARGE",
+      {
+        amount,
+        reservationId: reservationId ?? null,
+        roomNumber: roomNumber ?? null,
+        outletId: ticket.outletId,
+      },
+    );
+
     const organizationId = requestOrganizationId();
     if (organizationId) {
       void runPlatformCommerceHooks({
@@ -207,7 +221,7 @@ export async function POST(
       }).catch(() => undefined);
     }
 
-    return NextResponse.json(result.body);
+    return jsonOk(result.body);
   } catch (err) {
     return handleRouteError(err);
   }

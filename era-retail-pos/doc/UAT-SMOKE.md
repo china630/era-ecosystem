@@ -27,9 +27,10 @@
 
 - [x] Open shift: `POST /api/shifts/open` → shift id, status OPEN
 - [x] Create receipt: `POST /api/receipts` with shiftId + lines → receipt OPEN
-- [x] Pay receipt: `POST /api/receipts/{id}/pay` → status PAID + orchestrator receives `SATELLITE_RETAIL_SALE_COMPLETED`
+- [x] Pay receipt: `POST /api/receipts/{id}/pay` → status PAID + orchestrator receives `SATELLITE_RETAIL_SALE_COMPLETED` (+ `printChrome` org/outlet header)
 - [x] Close shift: `POST /api/shifts/close` with shiftId → status CLOSED
-- [x] `/pos` UI: open shift → add line → pay → success message
+- [x] `/pos` UI: open shift → add line → pay → success message (+ optional printChrome lines)
+- [ ] `/admin/catalog`: set outlet phone/email/address/website → pay shows overlay over Sync orgProfile (CP-ORG-PROFILE-01 Track C; open — not Demo)
 
 ## R2 — Presets
 

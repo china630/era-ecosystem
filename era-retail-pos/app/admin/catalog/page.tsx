@@ -12,7 +12,16 @@ import {
 } from "@era/satellite-kit/ui";
 
 type CodeOption = { value: string; label: string };
-type OutletRow = { id: string; code: string; name: string; revenueCode: string | null };
+type OutletRow = {
+  id: string;
+  code: string;
+  name: string;
+  revenueCode: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  website?: string | null;
+};
 type CategoryRow = { id: string; code: string; name: string; revenueCode: string | null };
 type ProductRow = {
   id: string;
@@ -36,6 +45,10 @@ export default function RetailCatalogPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [outletId, setOutletId] = useState("");
   const [outletCode, setOutletCode] = useState("");
+  const [outletPhone, setOutletPhone] = useState("");
+  const [outletEmail, setOutletEmail] = useState("");
+  const [outletAddress, setOutletAddress] = useState("");
+  const [outletWebsite, setOutletWebsite] = useState("");
   const [categoryCode, setCategoryCode] = useState("");
   const [categoryName, setCategoryName] = useState("");
   const [categoryRevenue, setCategoryRevenue] = useState("");
@@ -72,8 +85,18 @@ export default function RetailCatalogPage() {
     const outletBody = await outletRes.json().catch(() => null);
     const outletRows = (outletBody?.outlets ?? []) as OutletRow[];
     setOutlets(outletRows);
-    setOutletId((prev) => prev || outletRows[0]?.id || "");
-    setOutletCode((prev) => prev || outletRows[0]?.revenueCode || "");
+    setOutletId((prev) => {
+      const next = prev || outletRows[0]?.id || "";
+      const row = outletRows.find((item) => item.id === next) ?? outletRows[0];
+      if (row) {
+        setOutletCode(row.revenueCode ?? "");
+        setOutletPhone(row.phone ?? "");
+        setOutletEmail(row.email ?? "");
+        setOutletAddress(row.address ?? "");
+        setOutletWebsite(row.website ?? "");
+      }
+      return next;
+    });
     const categoryBody = await categoryRes.json().catch(() => null);
     setCategories((categoryBody?.categories ?? []) as CategoryRow[]);
     const productBody = await productRes.json().catch(() => null);
@@ -84,11 +107,27 @@ export default function RetailCatalogPage() {
     void load();
   }, [load]);
 
+  function selectOutlet(id: string, rows: OutletRow[] = outlets) {
+    const row = rows.find((item) => item.id === id);
+    setOutletId(id);
+    setOutletCode(row?.revenueCode ?? "");
+    setOutletPhone(row?.phone ?? "");
+    setOutletEmail(row?.email ?? "");
+    setOutletAddress(row?.address ?? "");
+    setOutletWebsite(row?.website ?? "");
+  }
+
   async function saveOutlet() {
     const res = await fetch(`/api/admin/outlets/${outletId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ revenueCode: outletCode.trim() || null }),
+      body: JSON.stringify({
+        revenueCode: outletCode.trim() || null,
+        phone: outletPhone.trim() || null,
+        email: outletEmail.trim() || null,
+        address: outletAddress.trim() || null,
+        website: outletWebsite.trim() || null,
+      }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
@@ -168,11 +207,7 @@ export default function RetailCatalogPage() {
           label={t("outlet")}
           options={outlets.map((row) => ({ value: row.id, label: `${row.code} — ${row.name}` }))}
           value={outletId}
-          onChange={(next) => {
-            const id = String(next ?? "");
-            setOutletId(id);
-            setOutletCode(outlets.find((row) => row.id === id)?.revenueCode ?? "");
-          }}
+          onChange={(next) => selectOutlet(String(next ?? ""))}
         />
         <CatalogField
           kind="SEARCHABLE"
@@ -181,6 +216,37 @@ export default function RetailCatalogPage() {
           value={outletCode}
           onChange={(next) => setOutletCode(String(next ?? ""))}
         />
+        <p className="m-0 text-[12px] text-[#7F8C8D]">{t("outletContactsHint")}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("outletPhone")}
+            options={[]}
+            value={outletPhone}
+            onChange={(next) => setOutletPhone(String(next ?? ""))}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("outletEmail")}
+            options={[]}
+            value={outletEmail}
+            onChange={(next) => setOutletEmail(String(next ?? ""))}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("outletAddress")}
+            options={[]}
+            value={outletAddress}
+            onChange={(next) => setOutletAddress(String(next ?? ""))}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("outletWebsite")}
+            options={[]}
+            value={outletWebsite}
+            onChange={(next) => setOutletWebsite(String(next ?? ""))}
+          />
+        </div>
         <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={!outletId} onClick={() => void saveOutlet()}>
           {t("save")}
         </button>

@@ -13,6 +13,9 @@ const schema = z.object({
   departmentId: z.string().uuid().optional(),
   targetFolioType: z.enum(['GUEST', 'COMPANY', 'AGENCY']).nullable().optional(),
   active: z.boolean().optional(),
+  allowManualCharge: z.boolean().optional(),
+  allowManualPayment: z.boolean().optional(),
+  reportType: z.string().max(32).nullable().optional(),
 });
 
 export async function PATCH(

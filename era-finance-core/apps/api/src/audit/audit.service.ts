@@ -17,6 +17,7 @@ import {
 } from "./audit-entity-snapshot";
 import { ActivityStreamEmitterService } from "../activity-stream/activity-stream-emitter.service";
 import { DataMaskingService } from "../privacy/data-masking.service";
+import { isFinanceMutationAuditExempt } from "./mutation-audit-exempt";
 
 const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
@@ -283,16 +284,7 @@ export class AuditService {
     const pathRaw = req.path ?? req.url ?? "";
     const path = this.normalizeApiPath(pathRaw);
 
-    if (
-      pathRaw.includes("/auth/login") ||
-      pathRaw.includes("/auth/register-user") ||
-      pathRaw.includes("/auth/register") ||
-      pathRaw.includes("/auth/refresh")
-    ) {
-      return;
-    }
-
-    if (pathRaw.includes("/audit/")) {
+    if (isFinanceMutationAuditExempt(pathRaw)) {
       return;
     }
 

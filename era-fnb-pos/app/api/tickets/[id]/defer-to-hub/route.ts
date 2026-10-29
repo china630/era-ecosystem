@@ -10,12 +10,13 @@ import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { resolveHotelRevenueCode } from "@era/satellite-kit/integration/hotel-revenue-route";
 import { discountedLineAmounts } from "@/lib/ticket-line-amounts";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -115,7 +116,21 @@ export async function POST(
     });
     await releaseTableForTicket(id, ticket.tableId);
 
-    return NextResponse.json({ ok: true, pendingId, settlement: "HOTEL_HUB" });
+    await recordFbAudit(
+      { userId: session?.sub, request },
+      "Ticket",
+      id,
+      "DEFER_HUB",
+      {
+        amount,
+        pendingId,
+        pendingCount: pendingIds.length,
+        settlement: "HOTEL_HUB",
+        outletId: ticket.outletId,
+      },
+    );
+
+    return jsonOk({ ok: true, pendingId, settlement: "HOTEL_HUB" });
   } catch (err) {
     return handleRouteError(err);
   }

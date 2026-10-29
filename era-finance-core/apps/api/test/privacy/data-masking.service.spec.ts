@@ -12,11 +12,13 @@ describe("DataMaskingService", () => {
       Password: "x",
       access_token: "t",
       API_KEY: "k",
+      email: "a@b.c",
       normal: "keep",
     }) as Record<string, unknown>;
     expect(out.Password).toBe(MASKED);
     expect(out.access_token).toBe(MASKED);
     expect(out.API_KEY).toBe(MASKED);
+    expect(out.email).toBe(MASKED);
     expect(out.normal).toBe("keep");
   });
 

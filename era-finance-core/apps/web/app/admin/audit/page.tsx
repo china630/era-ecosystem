@@ -3,13 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  CatalogField,
+  DatePicker,
+  EraListFilterBar,
+  Field,
+  useDebouncedValue,
+} from "@era/satellite-kit/ui";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { apiFetch } from "../../../lib/api-client";
 import {
   CARD_CONTAINER_CLASS,
   MODAL_CLOSE_BUTTON_CLASS,
   MODAL_DIALOG_CONTENT_CLASS,
   MODAL_FIELD_LABEL_CLASS,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -18,10 +25,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
 } from "../../../lib/design-system";
-import {
-  FORM_INPUT_CLASS,
-  TOOLBAR_MONTH_INPUT_CLASS,
-} from "../../../lib/form-styles";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { Button } from "../../../components/ui/button";
@@ -30,7 +33,18 @@ import {
   DEFAULT_LIST_PAGE_SIZE,
 } from "../../../components/list-pagination-footer";
 import { parsePaginatedList } from "../../../lib/paginated-list";
-import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
+
+/** Catalog for org mutation journal filters (Wave D parity with Hotel/Clinic). */
+const AUDIT_ENTITY_TYPES = [
+  "HTTP_MUTATION",
+  "Invoice",
+  "Employee",
+  "Product",
+  "JournalEntry",
+  "IntegrationSyncRun",
+  "CustomsDeclaration",
+  "Counterparty",
+] as const;
 
 type AuditRow = {
   id: string;
@@ -62,11 +76,15 @@ export default function AdminMutationAuditPage() {
   const [busy, setBusy] = useState(false);
 
   const [userId, setUserId] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [entityType, setEntityType] = useState("HTTP_MUTATION");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [entityType, setEntityType] = useState<string>("HTTP_MUTATION");
   const [entityId, setEntityId] = useState("");
   const [action, setAction] = useState("");
+
+  const debouncedEntityId = useDebouncedValue(entityId, 300);
+  const debouncedAction = useDebouncedValue(action, 300);
+  const debouncedUserId = useDebouncedValue(userId, 300);
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
@@ -80,7 +98,8 @@ export default function AdminMutationAuditPage() {
     invalidIds: string[];
   } | null>(null);
 
-  const initialLoaded = useRef(false);
+  const pageSizeRef = useRef(pageSize);
+  pageSizeRef.current = pageSize;
 
   const runFetch = useCallback(
     async (requestPage: number, requestPageSize: number) => {
@@ -91,12 +110,12 @@ export default function AdminMutationAuditPage() {
         const q = new URLSearchParams();
         q.set("page", String(requestPage));
         q.set("pageSize", String(requestPageSize));
-        if (userId.trim()) q.set("userId", userId.trim());
-        if (from.trim()) q.set("dateFrom", from.trim());
-        if (to.trim()) q.set("dateTo", to.trim());
+        if (debouncedUserId.trim()) q.set("userId", debouncedUserId.trim());
+        if (dateFrom.trim()) q.set("dateFrom", dateFrom.trim());
+        if (dateTo.trim()) q.set("dateTo", dateTo.trim());
         if (entityType.trim()) q.set("entityType", entityType.trim());
-        if (entityId.trim()) q.set("entityId", entityId.trim());
-        if (action.trim()) q.set("action", action.trim());
+        if (debouncedEntityId.trim()) q.set("entityId", debouncedEntityId.trim());
+        if (debouncedAction.trim()) q.set("action", debouncedAction.trim());
         const res = await apiFetch(`/api/admin/audit?${q.toString()}`);
         if (!res.ok) {
           setLoadErr(String(res.status));
@@ -111,18 +130,27 @@ export default function AdminMutationAuditPage() {
         setBusy(false);
       }
     },
-    [token, userId, from, to, entityType, entityId, action],
+    [
+      token,
+      debouncedUserId,
+      dateFrom,
+      dateTo,
+      entityType,
+      debouncedEntityId,
+      debouncedAction,
+    ],
   );
 
   useEffect(() => {
-    if (!ready || !token || initialLoaded.current) return;
-    initialLoaded.current = true;
-    void runFetch(1, pageSize);
-  }, [ready, token, runFetch, pageSize]);
+    if (!ready || !token) return;
+    void runFetch(1, pageSizeRef.current);
+  }, [ready, token, runFetch]);
 
   async function runIntegrity() {
     setIntegrity(null);
-    const res = await apiFetch("/api/admin/audit/integrity-check", { method: "POST" });
+    const res = await apiFetch("/api/admin/audit/integrity-check", {
+      method: "POST",
+    });
     if (!res.ok) {
       setLoadErr(String(res.status));
       return;
@@ -137,104 +165,106 @@ export default function AdminMutationAuditPage() {
     );
   }
 
-  function onApplyFilters() {
-    void runFetch(1, pageSize);
+  function resetFilters() {
+    setEntityType("HTTP_MUTATION");
+    setEntityId("");
+    setAction("");
+    setUserId("");
+    setDateFrom("");
+    setDateTo("");
   }
 
   if (!ready || !token) {
     return <div className="text-sm text-gray-500">{t("common.loading")}</div>;
   }
 
-  const filterToolbar = (
-    <div className="flex max-w-6xl flex-wrap items-end gap-2">
-      <label className="text-[12px] text-[#34495E]">
-        <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-          {t("auditPage.filterUser")}
-        </span>
-        <input
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          placeholder="UUID"
-          className={`h-8 w-44 ${TOOLBAR_MONTH_INPUT_CLASS} px-2`}
-        />
-      </label>
-      <label className="text-[12px] text-[#34495E]">
-        <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-          {t("auditPage.filterFrom")}
-        </span>
-        <input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className={`h-8 ${TOOLBAR_MONTH_INPUT_CLASS}`}
-        />
-      </label>
-      <label className="text-[12px] text-[#34495E]">
-        <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-          {t("auditPage.filterTo")}
-        </span>
-        <input
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className={`h-8 ${TOOLBAR_MONTH_INPUT_CLASS}`}
-        />
-      </label>
-      <label className="text-[12px] text-[#34495E]">
-        <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-          {t("auditPage.filterEntity")}
-        </span>
-        <input
-          value={entityType}
-          onChange={(e) => setEntityType(e.target.value)}
-          placeholder="HTTP_MUTATION"
-          className={`h-8 w-36 ${TOOLBAR_MONTH_INPUT_CLASS} px-2`}
-        />
-      </label>
-      <label className="text-[12px] text-[#34495E]">
-        <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-          {t("auditPage.filterEntityId")}
-        </span>
-        <input
-          className={`h-8 w-36 ${FORM_INPUT_CLASS} ${TOOLBAR_MONTH_INPUT_CLASS} px-2`}
-          value={entityId}
-          onChange={(e) => setEntityId(e.target.value)}
-          placeholder="id"
-        />
-      </label>
-      <label className="text-[12px] text-[#34495E]">
-        <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
-          {t("auditPage.filterAction")}
-        </span>
-        <input
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          placeholder="PATCH"
-          className={`h-8 w-24 ${TOOLBAR_MONTH_INPUT_CLASS} px-2`}
-        />
-      </label>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => onApplyFilters()}
-        className={`${PRIMARY_BUTTON_CLASS} h-8 px-3 text-[13px] disabled:opacity-50`}
-      >
-        {t("auditPage.apply")}
-      </button>
-    </div>
-  );
-
   return (
     <div className="max-w-6xl space-y-8">
       <PageHeader
         title={t("auditPage.title")}
         subtitle={t("auditPage.subtitle")}
-        actions={filterToolbar}
       />
 
+      <EraListFilterBar
+        resetLabel={t("common.filterReset", { defaultValue: "Reset filters" })}
+        onReset={resetFilters}
+      >
+        <CatalogField
+          kind="CLOSED_MEDIUM"
+          label={t("auditPage.filterEntity")}
+          id="finance-audit-entity-type"
+          value={entityType}
+          onChange={(v) =>
+            setEntityType(String(v ?? "HTTP_MUTATION"))
+          }
+          options={AUDIT_ENTITY_TYPES.map((code) => ({
+            value: code,
+            label: t(`auditEntity.${code}`, { defaultValue: code }),
+          }))}
+          emptyLabel={null}
+          widthPreset="selectWide"
+        />
+        <Field
+          label={t("auditPage.filterEntityId")}
+          preset="code"
+          id="finance-audit-entity-id"
+          value={entityId}
+          onChange={(e) => setEntityId(e.target.value)}
+          placeholder={t("auditPage.placeholderEntityId", {
+            defaultValue: "id",
+          })}
+        />
+        <Field
+          label={t("auditPage.filterAction")}
+          preset="shortText"
+          id="finance-audit-action"
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+          placeholder={t("auditPage.placeholderAction", {
+            defaultValue: "PATCH",
+          })}
+        />
+        <Field
+          label={t("auditPage.filterUser")}
+          preset="code"
+          id="finance-audit-user-id"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          placeholder={t("auditPage.placeholderUserId", {
+            defaultValue: "UUID",
+          })}
+        />
+        <DatePicker
+          label={t("auditPage.filterFrom")}
+          value={dateFrom}
+          onChange={setDateFrom}
+          placeholder={t("common.datePlaceholder", {
+            defaultValue: "dd.mm.yyyy",
+          })}
+          preset="date"
+          id="finance-audit-date-from"
+        />
+        <DatePicker
+          label={t("auditPage.filterTo")}
+          value={dateTo}
+          onChange={setDateTo}
+          placeholder={t("common.datePlaceholder", {
+            defaultValue: "dd.mm.yyyy",
+          })}
+          preset="date"
+          id="finance-audit-date-to"
+        />
+      </EraListFilterBar>
+
       <section className={`${CARD_CONTAINER_CLASS} p-4 space-y-3`}>
-        <h2 className="text-[13px] font-semibold text-[#34495E]">{t("auditPage.integrityCard")}</h2>
-        <button type="button" onClick={() => void runIntegrity()} className={SECONDARY_BUTTON_CLASS}>
+        <h2 className="text-[13px] font-semibold text-[#34495E]">
+          {t("auditPage.integrityCard")}
+        </h2>
+        <button
+          type="button"
+          onClick={() => void runIntegrity()}
+          className={SECONDARY_BUTTON_CLASS}
+        >
           {t("auditPage.integrity")}
         </button>
         {integrity && (
@@ -250,34 +280,58 @@ export default function AdminMutationAuditPage() {
 
       {loadErr && <p className="text-red-600 text-sm">{loadErr}</p>}
 
-      <div className={`${DATA_TABLE_VIEWPORT_CLASS} ${CARD_CONTAINER_CLASS} overflow-hidden`}>
+      <div
+        className={`${DATA_TABLE_VIEWPORT_CLASS} ${CARD_CONTAINER_CLASS} overflow-hidden`}
+      >
         <table className={`${DATA_TABLE_CLASS} min-w-full text-[13px]`}>
           <thead>
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("auditPage.colTime")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("auditPage.colUser")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("auditPage.colEntity")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("auditPage.colAction")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("auditPage.colHash")}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("auditPage.colDiff")}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                {t("auditPage.colTime")}
+              </th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                {t("auditPage.colUser")}
+              </th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                {t("auditPage.colEntity")}
+              </th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                {t("auditPage.colAction")}
+              </th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                {t("auditPage.colHash")}
+              </th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                {t("auditPage.colDiff")}
+              </th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-[#34495E]`}>
+                <td
+                  className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-[#34495E]`}
+                >
                   {bakuDateTimeDisplay(r.createdAt)}
                 </td>
-                <td className={`${DATA_TABLE_TD_CLASS} max-w-[180px] truncate`} title={r.user?.email ?? r.userId ?? ""}>
+                <td
+                  className={`${DATA_TABLE_TD_CLASS} max-w-[180px] truncate`}
+                  title={r.user?.email ?? r.userId ?? ""}
+                >
                   {r.user
-                    ? [r.user.firstName, r.user.lastName].filter(Boolean).join(" ").trim() ||
+                    ? [r.user.firstName, r.user.lastName]
+                        .filter(Boolean)
+                        .join(" ")
+                        .trim() ||
                       r.user.fullName?.trim() ||
                       r.user.email
                     : (r.userId ?? "—")}
                 </td>
                 <td className={DATA_TABLE_TD_CLASS}>
                   <span className="font-medium">{r.entityType}</span>
-                  <span className="ml-1 break-all text-[12px] text-[#7F8C8D]">{r.entityId}</span>
+                  <span className="ml-1 break-all text-[12px] text-[#7F8C8D]">
+                    {r.entityId}
+                  </span>
                 </td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.action}</td>
                 <td className={`${DATA_TABLE_TD_CLASS} font-mono text-[12px]`}>
@@ -294,6 +348,16 @@ export default function AdminMutationAuditPage() {
                 </td>
               </tr>
             ))}
+            {rows.length === 0 && !busy && (
+              <tr className={DATA_TABLE_TR_CLASS}>
+                <td
+                  colSpan={6}
+                  className={`${DATA_TABLE_TD_CLASS} text-center text-[#7F8C8D]`}
+                >
+                  {t("auditPage.empty")}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
         <div className="px-4 pb-4">
@@ -335,20 +399,27 @@ export default function AdminMutationAuditPage() {
             </header>
             <div className="mt-4 grid min-h-0 max-h-[60vh] flex-1 gap-4 overflow-y-auto text-[13px] md:grid-cols-2">
               <div className="flex min-h-0 flex-col gap-1.5">
-                <div className={MODAL_FIELD_LABEL_CLASS}>{t("auditPage.before")}</div>
+                <div className={MODAL_FIELD_LABEL_CLASS}>
+                  {t("auditPage.before")}
+                </div>
                 <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap rounded-2xl border border-[#D5DADF] bg-[#F4F5F7] p-3 font-mono text-[12px] text-[#34495E]">
                   {formatJson(selected.oldValues)}
                 </pre>
               </div>
               <div className="flex min-h-0 flex-col gap-1.5">
-                <div className={MODAL_FIELD_LABEL_CLASS}>{t("auditPage.after")}</div>
+                <div className={MODAL_FIELD_LABEL_CLASS}>
+                  {t("auditPage.after")}
+                </div>
                 <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap rounded-2xl border border-[#D5DADF] bg-[#F4F5F7] p-3 font-mono text-[12px] text-[#34495E]">
                   {formatJson(selected.newValues)}
                 </pre>
               </div>
             </div>
             <p className="m-0 mt-4 text-[13px] text-[#7F8C8D]">
-              IP: {selected.clientIp ?? "—"} · {selected.userAgent ?? "—"}
+              {t("auditPage.metaClient", {
+                ip: selected.clientIp ?? "—",
+                ua: selected.userAgent ?? "—",
+              })}
             </p>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
   envelopeToNightAuditClosedEvent,
   envelopeToInvoiceIssuedEvent,
   envelopeToCityLedgerSnapshotEvent,
+  envelopeToAgencyCommissionPayableEvent,
   publishToOrchestratorGateway,
 } from './orchestrator-gateway';
 import type {
@@ -49,7 +50,7 @@ function mapPaymentMethod(method: PaymentMethod): SatellitePaymentMethod {
 function mapRevenueToItemType(row: { systemRole: string | null }): BreakdownItemType {
   if (revenueRoleIn(row, STAY_NIGHT_ROLES)) return 'ACCOMMODATION';
   if (revenueRoleIs(row, 'FOOD')) return 'FOOD';
-  if (revenueRoleIs(row, 'MEDICAL')) return 'MEDICAL';
+  if (revenueRoleIs(row, 'MEDICAL') || revenueRoleIs(row, 'PROCEDURE')) return 'MEDICAL';
   if (revenueRoleIs(row, 'MINIBAR')) return 'MINIBAR';
   if (revenueRoleIs(row, 'LAUNDRY')) return 'LAUNDRY';
   return 'RESTAURANT';
@@ -398,7 +399,8 @@ export async function publishEvent(
     (envelope.eventType === 'SATELLITE_HOTEL_RESERVATION_COMPLETED' ||
       envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED' ||
       envelope.eventType === 'SATELLITE_HOTEL_INVOICE_ISSUED' ||
-      envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT') &&
+      envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT' ||
+      envelope.eventType === 'SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE') &&
     eventGatewayMode() === 'orchestrator'
   ) {
     const organizationId = requestOrganizationId();
@@ -437,7 +439,9 @@ export async function publishEvent(
           ? envelopeToInvoiceIssuedEvent(envelope, organizationId)
           : envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT'
             ? envelopeToCityLedgerSnapshotEvent(envelope, organizationId)
-            : envelopeToReservationCompletedEvent(envelope, organizationId);
+            : envelope.eventType === 'SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE'
+              ? envelopeToAgencyCommissionPayableEvent(envelope, organizationId)
+              : envelopeToReservationCompletedEvent(envelope, organizationId);
     if (!contractEvent) {
       const msg = 'Failed to map envelope to @era/contracts event';
       await logOutboundEvent(envelope, 'FAILED', 0, msg);
@@ -688,6 +692,39 @@ export async function dispatchCityLedgerSnapshot(
       periodPayments: ledger.payments,
       currency: 'AZN',
     } as CityLedgerSnapshotPayload,
+  };
+  return publishEvent(envelope);
+}
+
+export async function dispatchAgencyCommissionPayable(input: {
+  agencyId: string;
+  agencyCode: string;
+  batchId: string;
+  asOfDate: string;
+  totalAmount: number;
+  lineCount: number;
+  financeCounterpartyId?: string;
+  /** When set, stored on AgencyCommissionBatch and on the Finance snapshot event. */
+  correlationId?: string;
+}): Promise<DispatchResult> {
+  const hotelId = await getPropertyCode();
+  const envelope: IntegrationEnvelope = {
+    correlationId: input.correlationId ?? randomUUID(),
+    hotelId,
+    eventType: 'SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE',
+    timestamp: new Date().toISOString(),
+    payload: {
+      agencyId: input.agencyId,
+      agencyCode: input.agencyCode,
+      batchId: input.batchId,
+      asOfDate: input.asOfDate,
+      totalAmount: input.totalAmount,
+      lineCount: input.lineCount,
+      ...(input.financeCounterpartyId
+        ? { financeCounterpartyId: input.financeCounterpartyId }
+        : {}),
+      currency: 'AZN',
+    },
   };
   return publishEvent(envelope);
 }

@@ -28,7 +28,7 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| POS | `retail POS` | 🟡 |
+| POS | `retail POS` (+ pay `printChrome` / outlet contacts on `/admin/catalog`) | 🟡 — CP-ORG-PROFILE-01 Track C overlay; UAT open |
 | Stock / admin | `stock + admin` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (RET-RBAC-01; not SHOW) |
 | Hesablar | `/settings/users`, `/settings/logins` | 🟡 SCREEN (RET-ACCT-01; not SHOW) |

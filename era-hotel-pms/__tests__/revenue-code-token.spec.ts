@@ -26,9 +26,10 @@ describe('revenueRoleIn', () => {
     expect(revenueRoleIn({ systemRole: null }, STAY_NIGHT_ROLES)).toBe(false);
   });
 
-  it('counts treatment and board as lodging on early checkout', () => {
-    expect(revenueRoleIn({ systemRole: 'TREATMENT' }, LODGING_ROLES)).toBe(true);
+  it('counts PKG and BOARD as lodging on early checkout (TREATMENT remaps to PKG)', () => {
+    expect(revenueRoleIn({ systemRole: 'PKG' }, LODGING_ROLES)).toBe(true);
     expect(revenueRoleIn({ systemRole: 'BOARD' }, LODGING_ROLES)).toBe(true);
+    expect(revenueRoleIn({ systemRole: 'TREATMENT' }, LODGING_ROLES)).toBe(false);
     expect(revenueRoleIn({ systemRole: 'MINIBAR' }, LODGING_ROLES)).toBe(false);
   });
 });

@@ -51,11 +51,13 @@ export function PayPurchaseModal({
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [debitCode, setDebitCode] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
+  const [hotelCommissionBatchId, setHotelCommissionBatchId] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setAmount(defaultAmount ?? "");
+    setHotelCommissionBatchId("");
     void (async () => {
       const res = await apiFetch("/api/system/money-accounts?purpose=incoming");
       if (res.ok) {
@@ -83,6 +85,10 @@ export function PayPurchaseModal({
     };
     if (showBankPick && bankAccountId) {
       body.bankAccountId = bankAccountId;
+    }
+    const batchId = hotelCommissionBatchId.trim();
+    if (batchId) {
+      body.hotelCommissionBatchId = batchId;
     }
     const res = await apiFetch(payUrl, {
       method: "POST",
@@ -154,6 +160,26 @@ export function PayPurchaseModal({
             </Select>
           </div>
         ) : null}
+        <div>
+          <span className={lbl}>
+            {t("inventory.purchasePayHotelCommissionBatch", {
+              defaultValue: "Hotel commission batch (optional)",
+            })}
+          </span>
+          <input
+            className={MODAL_INPUT_CLASS}
+            value={hotelCommissionBatchId}
+            onChange={(e) => setHotelCommissionBatchId(e.target.value)}
+            placeholder="hotelBatchId"
+            autoComplete="off"
+          />
+          <p className="mt-1 mb-0 text-[11px] text-muted-foreground">
+            {t("inventory.purchasePayHotelCommissionBatchHint", {
+              defaultValue:
+                "From counterparty → Agency commission payable. Notifies hotel PMS after pay.",
+            })}
+          </p>
+        </div>
         {purchaseInvoiceId ? (
           <p className="text-[12px] text-muted-foreground m-0">ID: {purchaseInvoiceId}</p>
         ) : null}

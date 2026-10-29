@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { recordClinicAudit } from "@/lib/satellite-audit";
 
 export type ShiftReportTotals = {
   receiptCount: number;
@@ -87,7 +88,7 @@ export async function openShift(
   const defaults = resolveDefaultDevicesForSatellite({ organizationId });
   const { syncClinicChannelPrices } = await import("@/domain/catalog/channel-price-sync");
   void syncClinicChannelPrices(organizationId).catch(() => undefined);
-  return prisma.clinicShift.create({
+  const created = await prisma.clinicShift.create({
     data: {
       code: `SHIFT-${Date.now()}`,
       status: "OPEN",
@@ -96,6 +97,12 @@ export async function openShift(
       bankTerminalId: bind?.bankTerminalId ?? defaults.bankTerminalId ?? null,
     },
   });
+  await recordClinicAudit({ userId }, "ClinicShift", created.id, "OPEN", {
+    code: created.code,
+    fiscalDeviceId: created.fiscalDeviceId,
+    bankTerminalId: created.bankTerminalId,
+  });
+  return created;
 }
 
 export async function closeShift(shiftId: string, userId?: string | null) {
@@ -103,7 +110,7 @@ export async function closeShift(shiftId: string, userId?: string | null) {
   if (!shift) throw new Error("Shift not found");
   if (shift.status !== "OPEN") throw new Error("Shift already closed");
   const report = await computeShiftReport(shiftId);
-  return prisma.clinicShift.update({
+  const closed = await prisma.clinicShift.update({
     where: { id: shiftId },
     data: {
       status: "CLOSED",
@@ -112,4 +119,11 @@ export async function closeShift(shiftId: string, userId?: string | null) {
       zReportJson: JSON.stringify(report),
     },
   });
+  await recordClinicAudit({ userId }, "ClinicShift", closed.id, "CLOSE", {
+    code: closed.code,
+    receiptCount: report.receiptCount,
+    voidCount: report.voidCount,
+    amountNet: report.amountNet,
+  });
+  return closed;
 }

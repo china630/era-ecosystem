@@ -5,7 +5,8 @@ import { recalculateTicketTotals } from "@/lib/ticket-helpers";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 const discountSchema = z.object({
   discountPercent: z.number().min(0).max(100),
@@ -31,12 +32,23 @@ export async function POST(
       return NextResponse.json({ error: "Ticket is closed" }, { status: 400 });
     }
 
+    const before = Number(ticket.discountPercent ?? 0);
     await prisma.ticket.update({
       where: { id },
       data: { discountPercent: body.discountPercent },
     });
     const updated = await recalculateTicketTotals(id);
-    return NextResponse.json(updated);
+    await recordFbAudit(
+      { userId: session?.sub, request },
+      "Ticket",
+      id,
+      "DISCOUNT",
+      {
+        discountPercent: { from: before, to: body.discountPercent },
+        totalAzn: updated ? Number(updated.totalAzn) : undefined,
+      },
+    );
+    return jsonOk(updated);
   } catch (err) {
     return handleRouteError(err);
   }

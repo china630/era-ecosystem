@@ -7,7 +7,9 @@ Amended 2026-07-18 (check-in auto-completes short procedures) — **superseded**
 Amended 2026-07-19 (atomic check-in → `CHECKED_IN`; auto-complete by `endsAt`; NO_SHOW burns quota)  
 Amended 2026-08-21 — turnover vs patient rest: [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md)
 
-Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
+Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [clinic-open-attendance.md](./clinic-open-attendance.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
+
+Amended 2026-10-28 — OPEN day-buckets and SAME_DAY check-in window: see [clinic-open-attendance.md](./clinic-open-attendance.md) (CLI-62).
 
 ## Context
 

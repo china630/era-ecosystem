@@ -7,7 +7,7 @@ import { recalculateTicketTotals } from "@/lib/ticket-helpers";
 import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { requireCurrentShift } from "@/lib/open-shift";
 
 const splitSchema = z.object({
@@ -82,10 +82,7 @@ export async function POST(
       include: { lines: true, table: true, outlet: true },
     });
 
-    return NextResponse.json(
-      { source: updatedSource, split: updatedSplit },
-      { status: 201 },
-    );
+    return jsonOk({ source: updatedSource, split: updatedSplit }, 201);
   } catch (err) {
     return handleRouteError(err);
   }
