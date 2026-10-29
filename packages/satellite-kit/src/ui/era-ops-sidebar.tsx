@@ -29,8 +29,12 @@ function NavItemGroup({
 
   useEffect(() => {
     setFlyout(false);
-    if (childOnRoute && !userClosedRef.current) setOpen(true);
-    if (!childOnRoute) userClosedRef.current = false;
+    if (childOnRoute) {
+      if (!userClosedRef.current) setOpen(true);
+    } else {
+      setOpen(false);
+      userClosedRef.current = false;
+    }
   }, [pathname, childOnRoute]);
 
   useEffect(() => {
@@ -69,7 +73,7 @@ function NavItemGroup({
       </button>
       {flyout && collapsed ? (
         <RailFlyout open anchorRef={rootRef}>
-          <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+          <p className="px-3 py-1 text-[13px] font-semibold text-[#7F8C8D]">
             {item.label}
           </p>
           {links}
@@ -86,9 +90,9 @@ function NavItemGroup({
               return next;
             });
           }}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D] hover:bg-[#F8F9FA]"
+          className="flex w-full items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-left text-[13px] font-semibold text-[#7F8C8D] transition hover:border-[#D5DADF] hover:bg-[#F8F9FA]"
         >
-          {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
+          {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
           <span className="shrink-0 text-[#BDC3C7]" aria-hidden>
             {open ? "▾" : "▸"}

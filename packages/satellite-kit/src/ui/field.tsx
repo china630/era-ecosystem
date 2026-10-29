@@ -17,6 +17,8 @@ type FieldHintProps = {
   error?: string;
   htmlFor?: string;
   className?: string;
+  /** Table cells with column headers — keep aria-label, hide visible label. */
+  hideLabel?: boolean;
 };
 
 function FieldShell({
@@ -26,19 +28,26 @@ function FieldShell({
   error,
   htmlFor,
   className,
+  hideLabel,
   children,
 }: Omit<FieldHintProps, "preset"> & { children: ReactNode }) {
   return (
     <div className={`${FORM_FIELD_GROUP_CLASS} ${className ?? ""}`.trim()}>
-      <label className={MODAL_FIELD_LABEL_CLASS} htmlFor={htmlFor} title={hint || undefined}>
-        {label}
-        {required ? <span className="text-[#E74C3C]"> *</span> : null}
-        {hint ? (
-          <span className="ml-1 cursor-help text-[#95A5A6]" title={hint} aria-label={hint}>
-            ?
-          </span>
-        ) : null}
-      </label>
+      {hideLabel ? (
+        <span className="sr-only" id={htmlFor ? `${htmlFor}-label` : undefined}>
+          {label}
+        </span>
+      ) : (
+        <label className={MODAL_FIELD_LABEL_CLASS} htmlFor={htmlFor} title={hint || undefined}>
+          {label}
+          {required ? <span className="text-[#E74C3C]"> *</span> : null}
+          {hint ? (
+            <span className="ml-1 cursor-help text-[#95A5A6]" title={hint} aria-label={hint}>
+              ?
+            </span>
+          ) : null}
+        </label>
+      )}
       {children}
       {error ? <p className="text-xs text-[#E74C3C]">{error}</p> : null}
     </div>
@@ -59,6 +68,7 @@ export function Field({
   id,
   inputClassName,
   className,
+  hideLabel,
   ...inputProps
 }: FieldProps) {
   const inputId = id ?? (label ? undefined : inputProps.name);
@@ -70,9 +80,11 @@ export function Field({
       error={error}
       htmlFor={inputId}
       className={className}
+      hideLabel={hideLabel}
     >
       <input
         id={inputId}
+        aria-label={hideLabel ? label : undefined}
         className={`${MODAL_INPUT_CLASS} ${fieldWidthClass(preset)} ${inputClassName ?? ""}`.trim()}
         {...inputProps}
       />
@@ -95,6 +107,7 @@ export function FieldSelect({
   id,
   selectClassName,
   className,
+  hideLabel,
   children,
   ...selectProps
 }: FieldSelectProps) {
@@ -107,9 +120,11 @@ export function FieldSelect({
       error={error}
       htmlFor={selectId}
       className={className}
+      hideLabel={hideLabel}
     >
       <select
         id={selectId}
+        aria-label={hideLabel ? label : undefined}
         className={`${MODAL_INPUT_CLASS} min-w-0 ${fieldWidthClass(preset)} ${selectClassName ?? ""}`.trim()}
         {...selectProps}
       >
