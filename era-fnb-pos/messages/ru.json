@@ -33,7 +33,14 @@
     "sales": "Журнал продаж",
     "settings": "Настройки",
     "audit": "Журнал изменений",
-    "access": "Доступ"
+    "access": "Доступ",
+    "switchOutlet": "Сменить точку",
+    "buffetPlans": "Планы",
+    "buffetTemplates": "Templates",
+    "buffetManagement": "Management",
+    "buffetForecast": "Forecast",
+    "buffetNorms": "Norms",
+    "buffetCostRun": "Cost run"
   },
   "auditViewer": {
     "title": "Журнал изменений",
@@ -198,6 +205,8 @@
       "buffetCost": "Себестоимость буфета",
       "buffetCostHint": "Живой HYBRID: Cost run собирает POS sale + COMP + staff net + Forecast theoretical, затем Open Finance для FOOD residual. Override по outlet опционален.",
       "staffMealAznPerCover": "Staff meal AZN за cover",
+      "productionFactorPctGuest": "Фактор производства гостей %",
+      "productionFactorPctStaff": "Фактор производства staff %",
       "buffetCostModel": "Модель себестоимости буфета",
       "staffBuffetOverlap": "Перекрытие staff-буфета",
       "overlapPct": "Перекрытие %",
@@ -234,7 +243,27 @@
       "stocktake_MONTHLY": "Ежемесячно",
       "stocktake_QUARTERLY": "Ежеквартально",
       "stocktake_MANUAL": "Вручную",
-      "stocktakeCadenceHint": "По умолчанию: FOOD еженедельно · TABLEWARE каждые 15 дней · CHEMICAL/CONSUMABLE ежемесячно · INVENTORY_GT ежеквартально. Ниже — правка по классам."
+      "stocktakeCadenceHint": "По умолчанию: FOOD еженедельно · TABLEWARE каждые 15 дней · CHEMICAL/CONSUMABLE ежемесячно · INVENTORY_GT ежеквартально. Ниже — правка по классам.",
+      "outletRestaurantRetired": "Код RESTAURANT снят — используйте NAFTANI",
+      "outletDeleteFailed": "Не удалось удалить outlet",
+      "outletDeleted": "Outlet удалён",
+      "deleteOutlet": "Удалить outlet",
+      "outletShape": "Тип точки",
+      "outletCaps": "Возможности",
+      "capTill": "Касса / зал",
+      "capTables": "Столы",
+      "capBuffet": "Буфет-план",
+      "capTillShort": "Касса",
+      "capTablesShort": "Столы",
+      "capBuffetShort": "Буфет",
+      "capYes": "Вкл",
+      "capNo": "Выкл",
+      "shapeHint_cafe": "Кафе",
+      "shapeHint_restaurant": "Ресторан",
+      "shapeHint_buffet_kitchen": "Буфет-кухня",
+      "shapeHint_disco": "Диско",
+      "outletRevenueFallback": "Fallback дохода (SoR — категория)",
+      "outletRevenueFallbackHint": "Коды дохода категорий меню — источник истины. Код outlet — только fallback, если у категории нет кода."
     },
     "menu": {
       "title": "Админ меню",
@@ -431,6 +460,7 @@
       "costRunTheoBlockedTitle": "Theoretical не готов",
       "costRunTheoBlockedBody": "Перед доверием HYBRID theoretical заполните guest-nights и нормы SKU AZN на вкладке Forecast.",
       "costRunGoForecast": "Открыть Forecast",
+      "costRunGoNorms": "Открыть нормы",
       "moduleMissingTitle": "Модуль buffet planner неактивен",
       "moduleMissingBody": "Включите fnb_buffet_planner в entitlements Control Plane, затем Sync / обновите сессию на этом satellite.",
       "moduleMissingSyncLink": "Открыть settings / sync",
@@ -519,7 +549,7 @@
       "deleteSlot": "Удалить",
       "slotDeleted": "Слот удалён",
       "slotDeleteFailed": "Не удалось удалить слот",
-      "template": "Шаблон",
+      "template": "Template",
       "templateInactive": "неактивен",
       "templatesEmpty": "Недельного шаблона ещё нет — создайте для этого outlet.",
       "templateCreated": "Недельный шаблон создан",
@@ -539,7 +569,7 @@
       "capturePlanRequired": "Выберите план для захвата",
       "captureFailed": "Не удалось захватить из плана",
       "slotCaptured": "Слот захвачен из плана",
-      "weekStart": "Начало недели (понедельник)",
+      "weekStart": "Week start (Monday)",
       "spawnWeek": "Создать планы недели",
       "spawnHint": "Берётся понедельник выбранной недели. Существующие планы outlet/дата/приём пропускаются.",
       "spawned": "Создано {created} · пропущено {skipped}",
@@ -618,7 +648,34 @@
       "rollupStaff": "Staff covers",
       "rollupHotelNights": "Гостевые ночи отеля",
       "rollupForecastTotal": "Итого meal covers",
-      "rollupCaption": "Guest-nights идут в Forecast pack (theoretical). Meal forecastTotal = план + management + staff — не guest-nights."
+      "rollupCaption": "Guest-nights идут в Forecast pack (theoretical). Meal forecastTotal = план + management + staff — не guest-nights.",
+      "kindFilter": "Тип",
+      "coversSource": "Источник covers",
+      "coversSourceManual": "Вручную",
+      "coversSourceHotel": "Прогноз отеля",
+      "productionFactorPct": "Фактор производства %",
+      "spawnedWithEmpty": "Неделя создана — в {empty} слотах нет блюд",
+      "forecastSyncHotel": "Синхрон с отелем",
+      "forecastHotelSyncFailed": "Синхрон гостевых ночей отеля не удался",
+      "forecastHotelSynced": "Синхронизировано {count} дней отеля",
+      "normsHint": "Нормы ключевых SKU и полосы guest-nights для теоретического прогноза.",
+      "overlapMovedToSettings": "Перекрытие staff-буфета настраивается в Настройках.",
+      "eatersRoster": "Едоки буфета",
+      "eatersSyncHr": "Синхрон из HR (руководство)",
+      "eatersSyncFailed": "Синхрон HR не удался",
+      "eatersSynced": "Синхронизировано {count} ролей руководства",
+      "eatersPatchFailed": "Не удалось обновить едока",
+      "eatersCreateFailed": "Не удалось добавить едока",
+      "eatersCreated": "Едок добавлен",
+      "eatersManualLabel": "Имя вручную",
+      "eatersAddManual": "Добавить вручную",
+      "signManagementToday": "Подписать сегодня",
+      "dayLocked": "закрыто",
+      "kind": {
+        "GUEST": "Гости",
+        "STAFF": "Staff"
+      },
+      "slotDishes": "Блюда"
     },
     "integration": {
       "title": "Интеграция и billing",
@@ -975,6 +1032,19 @@
       "api_admin_buffet": "Управление планом буфета",
       "api_admin_integration": "Управление интеграцией",
       "api_import_cutover": "Импорт"
+    }
+  },
+  "selectOutlet": {
+    "title": "Выберите точку",
+    "hint": "Выберите кафе / точку, где работаете.",
+    "empty": "Нет активных outlet — создайте в Настройках.",
+    "loadFailed": "Не удалось загрузить outlets",
+    "selectFailed": "Не удалось выбрать outlet",
+    "shape": {
+      "cafe": "Кафе",
+      "restaurant": "Ресторан",
+      "buffet_kitchen": "Буфет-кухня",
+      "disco": "Диско"
     }
   }
 }

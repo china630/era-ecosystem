@@ -91,11 +91,12 @@ Land-and-expand: Gate includes the **table map on one device** so cashier pain s
 One VOEN → one org → **N `Outlet` rows**. Yasamal + Nərimanov = two outlets, **not** two orgs.
 
 - Billable POS count = outlets that run a till (open shift), **+19** each after the first included in Gate.
-- Zal / KDS / QR attach **per outlet** (or org-level entitlement with per-outlet enable — implementation may start org-level flags, but stop-list and shift are per outlet).
+- **Capabilities per outlet** (`capTill` / `capTables` / `capBuffetPlanner` + `shapeHint`) drive nav and route gates — see [fnb-outlet-capabilities-and-gate.md](./fnb-outlet-capabilities-and-gate.md). Org `enabledPresets` remain an edition ceiling only.
 - Creating a branch **copies** menu + default tables from outlet 1; prices may diverge later.
-- **Device bind:** cashier tablet stores `outletId` after owner confirms «bu Yasamal-dır?». Changing outlet = owner only.
-- **PIN:** `StaffRoster` must become **outlet-scoped** (or clock-in selects outlet). A Nərimanov PIN must not open Yasamal tables.
-- Owner login sees **all** outlets; cashiers never pick the other branch.
+- **Elektra gate:** after password/SSO the user picks an outlet (`/select-outlet`). PIN: pair tablet to an outlet, then names → PIN. Cookie `era_fb_outlet_id`.
+- **PIN:** `StaffRoster` is outlet-scoped. A Nərimanov PIN must not open Yasamal tables.
+- Owner/manager may switch outlet; cashiers stay on the bound point.
+- Hard-coded outlet code `RESTAURANT` is **retired** (use `NAFTANI` / `XUDMANI` / `KAFE`).
 
 Aligns with [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md): Outlet = POS axis, not DEPARTMENT/STANDALONE.
 

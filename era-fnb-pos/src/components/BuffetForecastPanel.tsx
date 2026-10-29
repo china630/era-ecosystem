@@ -62,6 +62,8 @@ type Props = {
   outletId: string;
   fromDate: string;
   toDate: string;
+  /** nights = Proqnoz calendar; norms = Normalar editor; both = legacy full panel */
+  mode?: "nights" | "norms" | "both";
 };
 
 function emptyNorm(): NormRow {
@@ -72,7 +74,14 @@ function emptyBand(): BandRow {
   return { code: "LOW", minGuestNights: 0, maxGuestNights: null };
 }
 
-export default function BuffetForecastPanel({ outletId, fromDate, toDate }: Props) {
+export default function BuffetForecastPanel({
+  outletId,
+  fromDate,
+  toDate,
+  mode = "both",
+}: Props) {
+  const showNights = mode === "nights" || mode === "both";
+  const showNorms = mode === "norms" || mode === "both";
   const t = useTranslations("admin.buffet");
   const [report, setReport] = useState<ForecastReport | null>(null);
   const [norms, setNorms] = useState<NormRow[]>([]);
@@ -255,16 +264,53 @@ export default function BuffetForecastPanel({ outletId, fromDate, toDate }: Prop
   const normsAllZero =
     norms.length === 0 || norms.every((n) => (Number(n.aznPerGuestNight) || 0) <= 0);
 
+  async function syncFromHotel() {
+    if (!fromDate || !toDate || fromDate > toDate) return;
+    const res = await fetch("/api/admin/buffet/guest-nights/sync-hotel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: fromDate,
+        to: toDate,
+        outletId: outletId || null,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("forecastHotelSyncFailed"));
+      return;
+    }
+    showSuccess(t("forecastHotelSynced", { count: data?.count ?? 0 }));
+    await load();
+  }
+
   return (
     <div className="space-y-4">
-      <p className="m-0 text-sm text-[#6B7280]">{t("forecastHint")}</p>
-      <p className="m-0 text-xs text-[#95A5A6]">{t("forecastManualHonesty")}</p>
+      {showNights ? (
+        <>
+          <p className="m-0 text-sm text-[#6B7280]">{t("forecastHint")}</p>
+          <p className="m-0 text-xs text-[#95A5A6]">{t("forecastManualHonesty")}</p>
+        </>
+      ) : (
+        <p className="m-0 text-sm text-[#6B7280]">{t("normsHint")}</p>
+      )}
       {dateError ? (
         <p className="m-0 text-sm text-red-600">{t("costRunDateOrder")}</p>
       ) : null}
 
+      {showNights ? (
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <h3 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("forecastGuestNights")}</h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("forecastGuestNights")}</h3>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={loading || !fromDate || !toDate}
+            onClick={() => void syncFromHotel()}
+          >
+            {t("forecastSyncHotel")}
+          </button>
+        </div>
         {entries.length === 0 ? (
           <p className="m-0 text-sm text-[#E67E22]">{t("forecastNoGuestNights")}</p>
         ) : null}
@@ -364,7 +410,10 @@ export default function BuffetForecastPanel({ outletId, fromDate, toDate }: Prop
           <p className="m-0 text-sm text-[#E67E22]">{t("forecastNormsAllZero")}</p>
         ) : null}
       </div>
+      ) : null}
 
+      {showNorms ? (
+      <>
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("forecastKeySku")}</h3>
@@ -662,6 +711,8 @@ export default function BuffetForecastPanel({ outletId, fromDate, toDate }: Prop
           {saving ? "…" : t("forecastSaveNorms")}
         </button>
       </div>
+      </>
+      ) : null}
 
       <ModalShell
         open={editOpen}

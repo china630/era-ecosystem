@@ -66,6 +66,10 @@ export type BuffetCostOrgDefaults = {
   warningVarianceHighPct: number;
   /** AZN per staff cover for chef-path auto staffGross (handoff). */
   staffMealAznPerCover: number;
+  /** Guest production factor % (plannedPortions = covers × pct/100). Default 80. */
+  productionFactorPctGuest: number;
+  /** Staff production factor %. Default 100. */
+  productionFactorPctStaff: number;
   stocktakePolicy: Record<WarehouseCostClass, StocktakePolicy>;
 };
 
@@ -76,6 +80,8 @@ export type BuffetCostOutletOverride = Partial<{
   cogsPostingMode: CogsPostingMode;
   warningVarianceLowPct: number;
   warningVarianceHighPct: number;
+  productionFactorPctGuest: number;
+  productionFactorPctStaff: number;
 }>;
 
 export type BuffetCostSettings = {
@@ -107,6 +113,8 @@ export function defaultBuffetCostOrgDefaults(hotelMode: boolean): BuffetCostOrgD
     warningVarianceLowPct: 70,
     warningVarianceHighPct: 110,
     staffMealAznPerCover: 4,
+    productionFactorPctGuest: 80,
+    productionFactorPctStaff: 100,
     stocktakePolicy: defaultStocktakePolicy(),
   };
 }
@@ -196,6 +204,14 @@ function normalizeOrgDefaults(
       src.staffMealAznPerCover,
       base.staffMealAznPerCover,
     ),
+    productionFactorPctGuest: asPct(
+      src.productionFactorPctGuest,
+      base.productionFactorPctGuest,
+    ),
+    productionFactorPctStaff: asPct(
+      src.productionFactorPctStaff,
+      base.productionFactorPctStaff,
+    ),
     stocktakePolicy: normalizeStocktakePolicy(src.stocktakePolicy, base.stocktakePolicy),
   };
 }
@@ -223,6 +239,12 @@ function normalizeOutletOverride(raw: unknown): BuffetCostOutletOverride | null 
   }
   if (src.warningVarianceHighPct !== undefined) {
     out.warningVarianceHighPct = asWarningBand(src.warningVarianceHighPct, 110);
+  }
+  if (src.productionFactorPctGuest !== undefined) {
+    out.productionFactorPctGuest = asPct(src.productionFactorPctGuest, 80);
+  }
+  if (src.productionFactorPctStaff !== undefined) {
+    out.productionFactorPctStaff = asPct(src.productionFactorPctStaff, 100);
   }
   return Object.keys(out).length > 0 ? out : null;
 }
@@ -275,6 +297,10 @@ export function resolveBuffetCostForOutlet(
     warningVarianceLowPct: low,
     warningVarianceHighPct: high,
     staffMealAznPerCover: base.staffMealAznPerCover,
+    productionFactorPctGuest:
+      o.productionFactorPctGuest ?? base.productionFactorPctGuest,
+    productionFactorPctStaff:
+      o.productionFactorPctStaff ?? base.productionFactorPctStaff,
     stocktakePolicy: { ...base.stocktakePolicy },
   };
 }

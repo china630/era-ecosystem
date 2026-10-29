@@ -12,6 +12,10 @@ type Ctx = { params: Promise<{ id: string }> };
 const bodySchema = z.object({
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   skipExisting: z.boolean().optional(),
+  coversSource: z.enum(["MANUAL", "HOTEL"]).optional(),
+  coversAdult: z.number().int().min(0).max(50000).optional(),
+  coversChild: z.number().int().min(0).max(50000).optional(),
+  productionFactorPct: z.number().min(0).max(100).optional(),
 });
 
 export async function POST(request: Request, ctx: Ctx) {
@@ -24,6 +28,10 @@ export async function POST(request: Request, ctx: Ctx) {
     const body = bodySchema.parse(await request.json());
     const result = await spawnWeekFromTemplate(id, body.weekStart, {
       skipExisting: body.skipExisting,
+      coversSource: body.coversSource,
+      coversAdult: body.coversAdult,
+      coversChild: body.coversChild,
+      productionFactorPct: body.productionFactorPct,
     });
     return jsonOk(result, 201);
   } catch (err) {

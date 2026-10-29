@@ -100,6 +100,16 @@ export async function POST(request: Request) {
     const body = openSchema.parse(await request.json());
 
     const outlet = await resolveOpsOutlet(body.outletCode);
+    const { outletAllowsTill } = await import("@/lib/outlet-capabilities");
+    if (!outletAllowsTill(outlet)) {
+      return NextResponse.json(
+        {
+          error: "Outlet has no till capability — cannot open POS shift",
+          code: "OUTLET_NO_TILL",
+        },
+        { status: 400 },
+      );
+    }
 
     const { resolveDefaultDevicesForSatellite } = await import("@era/satellite-kit");
     const { requestOrganizationId } = await import("@/lib/request-organization");

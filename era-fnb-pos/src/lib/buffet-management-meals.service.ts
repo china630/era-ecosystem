@@ -1,7 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { bakuCivilUtcDate } from "@era/satellite-kit/time";
+import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import type { BuffetMealCode } from "@/lib/buffet-planner-math";
+
+/** Past Baku days are locked unless allowPastEdit (café admin / chef). */
+export function assertManagementDayEditable(
+  serviceDateYmd: string,
+  allowPastEdit: boolean,
+) {
+  const today = todayBakuYmd();
+  if (serviceDateYmd < today && !allowPastEdit) {
+    throw Object.assign(new Error("DAY_LOCKED"), { code: "DAY_LOCKED" });
+  }
+}
 
 function serialize(row: {
   id: string;
@@ -68,12 +79,15 @@ export async function signManagementMeal(input: {
   actorUserId?: string | null;
   signedByUserId?: string | null;
   notes?: string | null;
+  eaterId?: string | null;
+  allowPastEdit?: boolean;
 }) {
   const organizationId = requestOrganizationId();
   const label = input.actorLabel.trim();
   if (!label) {
     throw Object.assign(new Error("ACTOR_REQUIRED"), { code: "ACTOR_REQUIRED" });
   }
+  assertManagementDayEditable(input.serviceDateYmd, input.allowPastEdit === true);
   const outlet = await prisma.outlet.findFirst({
     where: { id: input.outletId, organizationId },
     select: { id: true },
@@ -93,6 +107,7 @@ export async function signManagementMeal(input: {
         actorUserId: input.actorUserId ?? null,
         signedByUserId: input.signedByUserId ?? null,
         notes: input.notes?.trim() || null,
+        eaterId: input.eaterId ?? null,
       },
     });
     return serialize(row);
@@ -109,7 +124,10 @@ export async function signManagementMeal(input: {
   }
 }
 
-export async function deleteManagementMeal(id: string) {
+export async function deleteManagementMeal(
+  id: string,
+  opts?: { allowPastEdit?: boolean },
+) {
   const organizationId = requestOrganizationId();
   const existing = await prisma.buffetManagementMeal.findFirst({
     where: { id, organizationId },
@@ -117,6 +135,10 @@ export async function deleteManagementMeal(id: string) {
   if (!existing) {
     throw Object.assign(new Error("MEAL_NOT_FOUND"), { code: "MEAL_NOT_FOUND" });
   }
+  assertManagementDayEditable(
+    existing.serviceDate.toISOString().slice(0, 10),
+    opts?.allowPastEdit === true,
+  );
   await prisma.buffetManagementMeal.delete({ where: { id } });
   return { ok: true as const };
 }

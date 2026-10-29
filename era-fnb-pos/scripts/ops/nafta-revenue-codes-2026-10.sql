@@ -1,4 +1,6 @@
--- Nafta pilot: F&B outlet default hotel revenue code. 41xx = Naftani, 42xx = disco bar, 43xx = Xudmani;
+-- DO NOT RUN — superseded by nafta-revenue-remap-matrix + category revenue SoR.
+-- Archive only. Outlet RESTAURANT is retired (use NAFTANI).
+-- Nafta pilot (historical): F&B outlet default hotel revenue code. 41xx = Naftani, 42xx = disco bar, 43xx = Xudmani;
 -- CC = 01 food, 02 beverages, 03 alcohol, 04 tobacco, 05 hall rent, 06 entertainment, 99 discount.
 -- The outlet code is the fallback; menu categories and dishes carry their own code when set.
 -- ADR: docs/adr/hotel-revenue-code-resolution.md

@@ -24,14 +24,17 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-fnb-pos/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-RBAC | F&B RBAC Variant A + custom roles | [~] | AC-FNB-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
-| S-BUFFET | Buffet Planner module (`fnb_buffet_planner`) | [~] | FNB-BUFFET-01 API/SCREEN; master table + copy/composition modals; UAT FB-5 open; Gate/Pilot/edition unchanged (`mvp`) |
-| S-BUFFET-COST | Buffet cost attribution (HYBRID / residual) + staff overlap + management covers | [ ] | Waves 1–6 + Phase A–D + chef-ready WO + polish (API/SCREEN); punchlist blocked; C3 won't-do; C8 = future RBAC; UAT open/unsigned; not sellable |
-| S-OUTLET | Multi-outlet create in Settings | [~] | FNB-09 / FB-OUTLET-01; `POST /api/outlets` UI (+ optional menu/halls/tables copy); UAT open — not SHIPPED |
+| S-BUFFET | Buffet Planner module (`fnb_buffet_planner`) | [~] | FNB-BUFFET-01 API/SCREEN; submenu UX + template kind/spawn; UAT FB-5 open; Gate/Pilot/edition unchanged (`mvp`) |
+| S-BUFFET-COST | Buffet cost attribution (HYBRID / residual) + staff overlap + management covers | [ ] | Waves 1–6 + Phase A–D + chef-ready + UX wave (hotel pax, eaters roster) API/SCREEN; punchlist blocked; C3 won't-do; C8 = future RBAC; UAT open/unsigned; not sellable |
+| S-OUTLET | Multi-outlet create + caps + Elektra gate | [~] | FNB-09 / FB-OUTLET-01; capabilities + `/select-outlet` + DELETE; till guards; `RESTAURANT` retired; UAT open — not SHIPPED |
 | S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | FNB-AUD-01 / AC-FNB-AUD 🟡; Wave B PAY/DISCOUNT/ROOM_CHARGE/DEFER_HUB + PosShift; Wave E compound `(organizationId, createdAt)` 2026-10-29; hash-chain deferred; UAT open — not SHIPPED; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 
+**2026-10-29:** FNB-09 second-pass closeout — till API/UI guards + UAT FB-OUTLET-01 expanded; COVERAGE/IM/PRM status unchanged API/SCREEN; `S-OUTLET` [~]; `fnb.yaml` `mvp` untouched; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped.
+**2026-10-29:** Outlet capabilities + Elektra gate closeout (FNB-09) — COVERAGE actors Ops/SatAdmin SCREEN; IM no Scaffold ✅ (out of BE rollup); PRM UI 🟡 SCREEN / Gate·BE·Demo·Pilot·Edition·Sell unchanged; `S-OUTLET` [~]; `fnb.yaml` `mvp` untouched; UI board FNB-09 SCREEN. **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped (no consumer API level / M16 flip).
 **2026-10-29:** C3 won't-do (Finance twin settings) — removed from backlog open list → § D non-goals; not a product gap.
+**2026-10-29:** Buffet chef UX wave — submenu routes, template `kind`+spawn factor, hotel pax sync, management grid/eaters, Proqnoz/Normalar/Cost-run split. COVERAGE/IM/PRM SCREEN honesty; `S-BUFFET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` untouched; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped.
 **2026-10-29:** Chef-ready polish closeout (B3/B5/B6 + C1/C2/C7/C9–C12) — COVERAGE/IM/PRM SCREEN honesty; backlog A/B mostly `[x]`; C8 = future RBAC; A9 punchlist blocked; `S-BUFFET-COST` `[ ]`; `fnb.yaml` untouched; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped.
 **2026-10-29:** Chef-ready WO1–10 implementation closeout — COVERAGE/IM/PRM SCREEN honesty; backlog A1–A8/B1/B2/B4/C4–C6 `[x]`; A9 punchlist blocked; `S-BUFFET-COST` `[ ]`; `fnb.yaml` untouched; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped (catalog reuse ≠ M16).
 **2026-10-29:** Chef-ready backlog ADR closeout (docs only) — COVERAGE changelog + IM proof link; status unchanged API/SCREEN; PRM/Sprint/`fnb.yaml` untouched; `era-readiness-matrix` skipped. Gaps open in [fnb-buffet-chef-ready-backlog.md](../adr/fnb-buffet-chef-ready-backlog.md) — not Demo ✅ / SHOW.

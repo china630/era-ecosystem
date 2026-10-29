@@ -44,6 +44,12 @@ enum BuffetMeal {
   DINNER
 }
 
+/// Week template audience (extensible). ADR fnb-buffet-planner.
+enum BuffetTemplateKind {
+  GUEST
+  STAFF
+}
+
 enum BuffetPlanStatus {
   DRAFT
   LOCKED
@@ -71,6 +77,12 @@ model Outlet {
   email              String?
   address            String?
   website            String?
+  /// Till / floor / shifts (Elektra + nav). ADR fnb-outlet-capabilities-and-gate.
+  capTill            Boolean  @default(true) @map("cap_till")
+  capTables          Boolean  @default(true) @map("cap_tables")
+  capBuffetPlanner   Boolean  @default(false) @map("cap_buffet_planner")
+  /// cafe | restaurant | buffet_kitchen | disco
+  shapeHint          String?  @map("shape_hint")
   active             Boolean  @default(true)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
@@ -83,6 +95,7 @@ model Outlet {
   buffetPlans        BuffetPlan[]
   buffetWeekTemplates BuffetWeekTemplate[]
   buffetManagementMeals BuffetManagementMeal[]
+  buffetManagementEaters BuffetManagementEater[]
   buffetStaffMealPlans BuffetStaffMealPlan[]
   buffetGuestNightEntries BuffetGuestNightEntry[]
   soldOut            MenuItemSoldOut[]
@@ -304,17 +317,19 @@ model BuffetPlanLine {
 
 /// Repeating Mon–Sun × meal template (Wave 2). ADR fnb-buffet-cost-attribution.
 model BuffetWeekTemplate {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  outletId       String   @map("outlet_id")
+  id             String             @id @default(cuid())
+  organizationId String             @map("organization_id")
+  outletId       String             @map("outlet_id")
   name           String
-  active         Boolean  @default(true)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  outlet         Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  notes          String?
+  kind           BuffetTemplateKind @default(GUEST)
+  active         Boolean            @default(true)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  outlet         Outlet             @relation(fields: [outletId], references: [id], onDelete: Cascade)
   slots          BuffetWeekTemplateSlot[]
 
-  @@index([organizationId, outletId])
+  @@index([organizationId, outletId, kind])
   @@map("buffet_week_templates")
 }
 
@@ -365,15 +380,38 @@ model BuffetManagementMeal {
   meal             BuffetMeal
   actorLabel       String     @map("actor_label")
   actorUserId      String?    @map("actor_user_id")
+  /// Optional link to buffet eaters roster row.
+  eaterId          String?    @map("eater_id")
   signedAt         DateTime   @default(now()) @map("signed_at")
   signedByUserId   String?    @map("signed_by_user_id")
   notes            String?
   createdAt        DateTime   @default(now()) @map("created_at")
   outlet           Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  eater            BuffetManagementEater? @relation(fields: [eaterId], references: [id], onDelete: SetNull)
 
   @@unique([outletId, serviceDate, meal, actorLabel])
   @@index([organizationId, outletId, serviceDate])
   @@map("buffet_management_meals")
+}
+
+/// Buffet management eaters roster (HR leadership seed + include/exclude).
+model BuffetManagementEater {
+  id               String   @id @default(cuid())
+  organizationId   String   @map("organization_id")
+  outletId         String?  @map("outlet_id")
+  employmentId     String?  @map("employment_id")
+  globalPersonId   String?  @map("global_person_id")
+  displayLabel     String   @map("display_label")
+  included         Boolean  @default(true)
+  source           String   @default("HR") /// HR | MANUAL
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  outlet           Outlet?  @relation(fields: [outletId], references: [id], onDelete: SetNull)
+  meals            BuffetManagementMeal[]
+
+  @@unique([organizationId, employmentId])
+  @@index([organizationId, included])
+  @@map("buffet_management_eaters")
 }
 
 /// Manual / hotel guest-nights for forecast pack (Wave 6). Org-wide per date.

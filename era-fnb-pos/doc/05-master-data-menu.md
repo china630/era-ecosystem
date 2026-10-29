@@ -63,7 +63,7 @@ WA0282 в fb-pos — только если включён outlet SPA retail (н�
 
 | User | outlets[] |
 |------|-----------|
-| Waiter Anna | RESTAURANT |
+| Waiter Anna | NAFTANI |
 | Bar lead | BAR, POOL_BAR |
 | Manager | all |
 

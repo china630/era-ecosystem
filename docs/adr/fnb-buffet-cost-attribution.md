@@ -78,17 +78,17 @@ Nafta pilot default: `OVERLAP_PCT` or `LEFTOVER_FIRST` with pct=30.
 
 ### 5. Cover sources
 
-- Hotel guest-nights / in-house (optional feed)
-- Buffet plan covers
-- **Management meal log** (person × date × meal × signature) — eaters, not fake hotel guests
-- Staff plan covers
+- Hotel guest-nights: live PMS pull of daily **`pax`** (occupancy series) into `BuffetGuestNightEntry` with `source: HOTEL`; Manual/ESTIMATE remain
+- Buffet plan covers (Spawn: Hotel|Manual week adult/child × **`productionFactorPct`** → line portions; guest default 80, staff 100 — not `wastePct`, not `overlapPct`)
+- **Management meal log** (person × date × meal × signature) — eaters roster from orch leadership + include/exclude; same guest buffet dishes
+- Staff plan covers (manual headcount; templates `kind=STAFF`)
 
 Theoretical and variance use the sum of relevant cover sources. Management log is required for sanatorium forecast accuracy.
 
 ### 6. Weekly template
 
-- Repeating Mon–Sun × meal template; daily plans = instances (copy API already exists).
-- Seasonal versioning = **later** (v1: one active template + manual edits).
+- Repeating Mon–Sun × meal template with **`kind: GUEST | STAFF`** (extensible); daily plans = spawn instances.
+- Seasonal versioning = **later** (v1: active flag + kind filter + manual edits).
 
 ### 7. Warehouse / budget classes (Finance)
 
@@ -133,7 +133,7 @@ Cost run prefers a closed FOOD stocktake for the period; otherwise allow `issues
 
 - Extend `fnb_buffet_planner` (or sibling surfaces). **Wave 1 done:** settings JSON + `/api/settings/buffet-cost`. **Wave 2 done:** week template + management meals + covers-rollup. **Wave 3 done:** `BuffetStaffMealPlan*` + overlap netting/export + Staff meals tab. **Wave 4 done:** zero-price / COMP tender → named `pos.compAttributedAzn` on `/api/admin/buffet/cost-run-export` + Cost run tab. **Wave 5 done:** Finance HYBRID FOOD cost run (`/api/inventory/buffet-food-cost-run` + `/inventory/buffet-food-cost`) with reliability + soft warnings; F&B deep-link. **Wave 6 done:** forecast pack (guest-nights × key SKU bands) + Finance non-FOOD outlet budget plan/fact; TABLEWARE 15-day cadence in settings UI. **Phase A handoff:** F&B `GET …/hybrid-handoff` + Cost run **Open Finance HYBRID** (`theoSku` query); Finance autofill/auto-run; Advanced JSON collapsed (SCREEN — UAT open). **Phase B:** Forecast pack form + Staff covers honesty + covers rollup card + Cost run console (SCREEN — UAT open). **Phase C:** Finance kit form + HYBRID narrative + Non-FOOD Field grid + WH CatalogField (SCREEN — UAT open).
 - Finance: classed usage, FOOD cost run + non-FOOD budget; day-document path unchanged for department à-la-carte.
-- Hotel: guest-nights via F&B manual/`HOTEL` source rows now; live hotel API feed later; management covers stay in F&B.
+- Hotel: guest-nights via F&B manual/`HOTEL` rows; **live pull** = PMS bridge occupancy series `pax` → `BuffetGuestNightEntry`; management covers stay in F&B (roster + grid UI).
 - Product-Readiness / SHIPPED: new capability rows when waves land; no false GA until UAT.
 - `FIN-INV-SCOPE-01`: **progress** — `Warehouse.costClass` + `satelliteOutletCode` for cost-run scope; chef-only warehouse UI filter still later.
 - Chef-show product gaps (COMP COGS, CatalogField Forecast, staff auto, etc.): [fnb-buffet-chef-ready-backlog.md](./fnb-buffet-chef-ready-backlog.md) — SCREEN until closed + Evidence Rules.

@@ -12,7 +12,7 @@ import { jsonOk, handleRouteError } from "@/lib/api-utils";
 const schema = z.object({
   roomNumber: z.string().min(1),
   guestName: z.string().optional(),
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1),
   lines: z
     .array(
       z.object({

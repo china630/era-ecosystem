@@ -3,7 +3,7 @@
  * Revenue lands on the category. Dishes keep financeSku / recipeSku; dish revenueCode stays null.
  * Laundry, SPA, and souvenirs are skipped by the planner.
  *
- *   npx tsx scripts/ops/import-menu-cards.ts --org <orgId> --file <xlsx> [--outlet RESTAURANT]
+ *   npx tsx scripts/ops/import-menu-cards.ts --org <orgId> --file <xlsx> --outlet NAFTANI
  *
  * Prefer the cutover wizard with #30 then #31. This script is the single-file ops path.
  */
@@ -66,13 +66,19 @@ function sheetExtras(file: string): Map<string, { financeSku: string; recipeSku:
 async function main() {
   const organizationId = arg("--org");
   const file = arg("--file");
-  const outletCode = process.argv.includes("--outlet") ? arg("--outlet") : "RESTAURANT";
+  if (!process.argv.includes("--outlet")) {
+    throw new Error("--outlet <CODE> is required (e.g. NAFTANI, XUDMANI, KAFE)");
+  }
+  const outletCode = arg("--outlet");
+  if (outletCode.toUpperCase() === "RESTAURANT") {
+    throw new Error("Outlet RESTAURANT is retired — use NAFTANI");
+  }
   const plan = planMenuCards(readRows(file));
   const extras = sheetExtras(file);
   const prisma = new PrismaClient();
   try {
     const outlet = await prisma.outlet.findFirst({
-      where: { organizationId, code: outletCode },
+      where: { organizationId, code: outletCode, active: true },
     });
     if (!outlet) throw new Error(`Outlet ${outletCode} was not found`);
     const categoryId = new Map<string, string>();

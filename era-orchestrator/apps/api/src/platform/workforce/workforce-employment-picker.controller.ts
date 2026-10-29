@@ -27,4 +27,19 @@ export class WorkforceEmploymentPickerController {
     assertMatchingServiceToken(auth, xToken);
     return this.employments.listPicker(organizationId);
   }
+
+  @Get("organizations/:organizationId/leadership-employments")
+  @ApiOperation({
+    summary:
+      "S2S: active employments with position.leadership for buffet management eaters seed",
+  })
+  async leadership(
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    assertMatchingServiceToken(auth, xToken);
+    const all = await this.employments.listPicker(organizationId);
+    return { items: all.items.filter((i) => i.leadership) };
+  }
 }

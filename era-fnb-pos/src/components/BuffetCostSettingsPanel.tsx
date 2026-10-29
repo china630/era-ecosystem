@@ -45,6 +45,10 @@ function seedOverrideFromOrg(
     cogsPostingMode: partial?.cogsPostingMode ?? org.cogsPostingMode,
     warningVarianceLowPct: partial?.warningVarianceLowPct ?? org.warningVarianceLowPct,
     warningVarianceHighPct: partial?.warningVarianceHighPct ?? org.warningVarianceHighPct,
+    productionFactorPctGuest:
+      partial?.productionFactorPctGuest ?? org.productionFactorPctGuest,
+    productionFactorPctStaff:
+      partial?.productionFactorPctStaff ?? org.productionFactorPctStaff,
   };
 }
 
@@ -276,6 +280,34 @@ export default function BuffetCostSettingsPanel({ outlets }: Props) {
               }
             />
             <Field
+              label={t("productionFactorPctGuest")}
+              preset="shortText"
+              type="number"
+              min={0}
+              max={100}
+              value={String(draft.productionFactorPctGuest)}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  productionFactorPctGuest: Number(e.target.value) || 0,
+                })
+              }
+            />
+            <Field
+              label={t("productionFactorPctStaff")}
+              preset="shortText"
+              type="number"
+              min={0}
+              max={100}
+              value={String(draft.productionFactorPctStaff)}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  productionFactorPctStaff: Number(e.target.value) || 0,
+                })
+              }
+            />
+            <Field
               label={t("warningVarianceLowPct")}
               preset="shortText"
               type="number"
@@ -409,6 +441,40 @@ export default function BuffetCostSettingsPanel({ outlets }: Props) {
                           cogsPostingMode: String(next) as NonNullable<
                             BuffetCostOutletOverride["cogsPostingMode"]
                           >,
+                        })
+                      }
+                    />
+                    <Field
+                      label={t("productionFactorPctGuest")}
+                      preset="shortText"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={String(
+                        overrideDraft.productionFactorPctGuest ??
+                          draft.productionFactorPctGuest,
+                      )}
+                      onChange={(e) =>
+                        setOverrideDraft({
+                          ...overrideDraft,
+                          productionFactorPctGuest: Number(e.target.value) || 0,
+                        })
+                      }
+                    />
+                    <Field
+                      label={t("productionFactorPctStaff")}
+                      preset="shortText"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={String(
+                        overrideDraft.productionFactorPctStaff ??
+                          draft.productionFactorPctStaff,
+                      )}
+                      onChange={(e) =>
+                        setOverrideDraft({
+                          ...overrideDraft,
+                          productionFactorPctStaff: Number(e.target.value) || 0,
                         })
                       }
                     />

@@ -384,7 +384,7 @@ async function main() {
 
   await prisma.posResource.createMany({
     data: [
-      { code: 'T-01', name: 'Table 1', resourceType: 'TABLE', outletCode: 'RESTAURANT' },
+      { code: 'T-01', name: 'Table 1', resourceType: 'TABLE', outletCode: 'NAFTANI' },
       { code: 'SPA-1', name: 'Spa cabin 1', resourceType: 'SPA_CABIN', outletCode: 'SPA' },
       {
         code: 'NAFTANI-HALL',

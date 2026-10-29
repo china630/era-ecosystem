@@ -30,6 +30,9 @@ const orgDefaultsSchema = z
     inventoryGtThresholdAzn: z.number().min(0).optional(),
     warningVarianceLowPct: z.number().min(1).max(300).optional(),
     warningVarianceHighPct: z.number().min(1).max(300).optional(),
+    staffMealAznPerCover: z.number().min(0).optional(),
+    productionFactorPctGuest: z.number().min(0).max(100).optional(),
+    productionFactorPctStaff: z.number().min(0).max(100).optional(),
     stocktakePolicy: z
       .record(z.enum(WAREHOUSE_COST_CLASSES), stocktake)
       .optional(),
@@ -44,6 +47,8 @@ const outletOverrideSchema = z
     cogsPostingMode: cogsMode.optional(),
     warningVarianceLowPct: z.number().min(1).max(300).optional(),
     warningVarianceHighPct: z.number().min(1).max(300).optional(),
+    productionFactorPctGuest: z.number().min(0).max(100).optional(),
+    productionFactorPctStaff: z.number().min(0).max(100).optional(),
   })
   .strict();
 

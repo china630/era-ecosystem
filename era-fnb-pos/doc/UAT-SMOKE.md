@@ -110,15 +110,16 @@ Prerequisite: org has module `fnb_buffet_planner` in orch `activeModules` (and `
 7. Empty composition: **Copy dishes from last same meal**
 8. Publish → `/admin/daily-menu` merge check for that date/outlet
 
-## FB-OUTLET-01 — Second café (Settings) — open
+## FB-OUTLET-01 — Second café + outlet caps / Elektra — open
 
 1. `/admin/settings` → **Cafés / outlets** table
-2. Manager with `api:outlets.manage`: **New outlet** → code + name + optional copy menu/halls/tables from existing (duplicate code → 409)
-3. Edit outlet → optional phone/email/address/website (receipt overlay; org legal still Control Plane)
-4. Floor + Buffet outlet filters show the new café; `/admin/tables` shows copied halls/tables when copy was used
-5. Pay a ticket → response `printChrome` shows org/outlet header lines on the till after pay
+2. Manager with `api:outlets.manage`: **New outlet** → code + name + **shape** (seeds caps) + optional copy menu/halls/tables (duplicate code → 409; code `RESTAURANT` → 400)
+3. Edit outlet → rename code/name, caps (till/tables/buffet), contacts; DELETE blocked while OPEN shift
+4. Password login → `/select-outlet` tiles → cookie `era_fb_outlet_id`; buffet-only → home `/admin/buffet` (not floor). PIN: credentials → till outlets → names → PIN
+5. Floor dropdown lists till outlets only; Buffet admin prefers `capBuffetPlanner`; `/admin/tables` shows copied halls/tables when copy was used
+6. Pay a ticket → response `printChrome` shows org/outlet header lines on the till after pay
 
-Evidence: not signed — FNB-BUFFET-01 / multi-outlet / CP print chrome stay API/SCREEN, not SHIPPED.
+Evidence: not signed — FNB-09 / multi-outlet / caps / Elektra stay API/SCREEN, not SHIPPED.
 
 ## FNB-BUFFET-COST-01 — Buffet cost settings (Wave 1) — open
 
@@ -235,7 +236,7 @@ Evidence: not signed — SCREEN; still **not SHIPPED / not sellable**.
 Prerequisite: Phase A–C on branch; lab org ERA ID **100000**. Seed printout week Mon–Sun (Asia/Baku).
 
 1. Run seeds (see [`docs/SETUP_AND_RUN.md`](../../docs/SETUP_AND_RUN.md) § Buffet cost lab demo):
-   - `npm run db:seed:demo` then `npm run db:seed:buffet-demo` (F&B) — confirm `fnb_buffet_planner`, outlet `NAFTANI` (or `RESTAURANT`), MID nights (~180), HYBRID
+   - `npm run db:seed:demo` then `npm run db:seed:buffet-demo` (F&B) — confirm `fnb_buffet_planner`, outlet `NAFTANI` (never `RESTAURANT`), MID nights (~180), HYBRID
    - Finance `npm run db:seed:buffet-demo` with matching `SEED_BUFFET_OUTLET_CODE` — FOOD WH + usage; optional `SEED_BUFFET_ISSUES_ONLY=1`
 2. Login F&B owner → `/admin/buffet` → Settings HYBRID → **Forecast** / **Staff** / plan **covers rollup** (Phase B)
 3. **Cost run** → Refresh handoff → **Open Finance HYBRID** (Phase A) — no JSON paste

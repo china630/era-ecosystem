@@ -173,3 +173,41 @@ export async function deleteGuestNight(args: {
     },
   });
 }
+
+/** Pull hotel occupancy pax into BuffetGuestNightEntry (source HOTEL). */
+export async function syncGuestNightsFromHotel(args: {
+  fromYmd: string;
+  toYmd: string;
+  outletId?: string | null;
+  organizationId?: string;
+}) {
+  if (args.fromYmd > args.toYmd) {
+    throw Object.assign(new Error("from must be on or before to"), {
+      code: "DATE_ORDER",
+    });
+  }
+  const { fetchBuffetGuestNightPax } = await import("@/lib/pms-bridge-client");
+  const pack = await fetchBuffetGuestNightPax({
+    fromYmd: args.fromYmd,
+    toYmd: args.toYmd,
+    organizationId: args.organizationId,
+  });
+  if (!pack) {
+    throw Object.assign(new Error("Hotel guest-nights unavailable"), {
+      code: "HOTEL_UNAVAILABLE",
+    });
+  }
+  const upserted = [];
+  for (const day of pack.days) {
+    upserted.push(
+      await upsertGuestNight({
+        serviceDateYmd: day.date,
+        guestNights: day.pax,
+        source: "HOTEL",
+        outletId: args.outletId,
+        organizationId: args.organizationId,
+      }),
+    );
+  }
+  return { upserted, count: upserted.length };
+}

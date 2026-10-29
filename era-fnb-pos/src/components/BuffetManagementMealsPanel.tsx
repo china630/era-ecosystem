@@ -1,12 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
-  CatalogField,
   Field,
-  FieldRow,
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -14,7 +12,6 @@ import {
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
-import { Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
 import { BUFFET_MEALS } from "@/lib/buffet-planner-math";
 
@@ -24,7 +21,13 @@ type MealRow = {
   meal: string;
   actorLabel: string;
   signedAt: string;
-  notes: string | null;
+};
+
+type Eater = {
+  id: string;
+  displayLabel: string;
+  included: boolean;
+  source: string;
 };
 
 type Props = {
@@ -34,6 +37,19 @@ type Props = {
   onChanged?: () => void;
 };
 
+function eachYmd(from: string, to: string): string[] {
+  if (!from || !to || from > to) return [];
+  const out: string[] = [];
+  let cur = from;
+  while (cur <= to) {
+    out.push(cur);
+    const [y, m, d] = cur.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d + 1));
+    cur = dt.toISOString().slice(0, 10);
+  }
+  return out;
+}
+
 export default function BuffetManagementMealsPanel({
   outletId,
   fromDate,
@@ -41,14 +57,20 @@ export default function BuffetManagementMealsPanel({
   onChanged,
 }: Props) {
   const t = useTranslations("admin.buffet");
+  const tc = useTranslations("common");
+  const today = todayBakuYmd();
   const [rows, setRows] = useState<MealRow[]>([]);
-  const [open, setOpen] = useState(false);
-  const [serviceDate, setServiceDate] = useState(todayBakuYmd());
-  const [meal, setMeal] = useState("BREAKFAST");
-  const [actorLabel, setActorLabel] = useState("");
-  const [notes, setNotes] = useState("");
+  const [eaters, setEaters] = useState<Eater[]>([]);
+  const [detailDate, setDetailDate] = useState<string | null>(null);
+  const [detailMeal, setDetailMeal] = useState<string | null>(null);
+  const [signOpen, setSignOpen] = useState(false);
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [manualLabel, setManualLabel] = useState("");
 
-  const load = useCallback(() => {
+  const dates = useMemo(() => eachYmd(fromDate, toDate), [fromDate, toDate]);
+
+  const loadMeals = useCallback(() => {
     if (!outletId) {
       setRows([]);
       return;
@@ -66,37 +88,146 @@ export default function BuffetManagementMealsPanel({
       .catch(() => undefined);
   }, [outletId, fromDate, toDate]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const loadEaters = useCallback(() => {
+    const q = outletId ? `?outletId=${encodeURIComponent(outletId)}` : "";
+    return fetch(`/api/admin/buffet/management-eaters${q}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        setEaters(Array.isArray(d?.eaters) ? (d.eaters as Eater[]) : []);
+      })
+      .catch(() => undefined);
+  }, [outletId]);
 
-  async function signIn() {
-    const label = actorLabel.trim();
-    if (!label) {
-      showApiError({ error: t("actorRequired") }, t("saveFailed"));
+  useEffect(() => {
+    void loadMeals();
+    void loadEaters();
+  }, [loadMeals, loadEaters]);
+
+  const countFor = (date: string, meal: string) =>
+    rows.filter((r) => r.serviceDate.slice(0, 10) === date && r.meal === meal).length;
+
+  const detailRows = rows.filter(
+    (r) =>
+      detailDate &&
+      detailMeal &&
+      r.serviceDate.slice(0, 10) === detailDate &&
+      r.meal === detailMeal,
+  );
+
+  const dayLocked = (date: string) => date < today;
+
+  async function syncHr() {
+    const res = await fetch("/api/admin/buffet/management-eaters", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "sync", outletId: outletId || null }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("eatersSyncFailed"));
       return;
     }
-    const res = await fetch("/api/admin/buffet/management-meals", {
+    showSuccess(t("eatersSynced", { count: data?.total ?? 0 }));
+    await loadEaters();
+  }
+
+  async function toggleEater(id: string, included: boolean) {
+    const res = await fetch(`/api/admin/buffet/management-eaters/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ included }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("eatersPatchFailed"));
+      return;
+    }
+    setEaters(Array.isArray(data?.eaters) ? data.eaters : eaters);
+  }
+
+  async function addManual() {
+    const res = await fetch("/api/admin/buffet/management-eaters", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        outletId,
-        serviceDate,
-        meal,
-        actorLabel: label,
-        notes: notes.trim() || null,
+        action: "manual",
+        displayLabel: manualLabel,
+        outletId: outletId || null,
       }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      showApiError(data, t("signFailed"));
+      showApiError(data, t("eatersCreateFailed"));
       return;
     }
-    setOpen(false);
-    setActorLabel("");
-    setNotes("");
+    setManualLabel("");
+    setEaters(Array.isArray(data?.eaters) ? data.eaters : []);
+    showSuccess(t("eatersCreated"));
+  }
+
+  function openSignToday() {
+    const included = eaters.filter((e) => e.included);
+    const next: Record<string, boolean> = {};
+    for (const e of included) {
+      for (const meal of BUFFET_MEALS) {
+        const already = rows.some(
+          (r) =>
+            r.serviceDate.slice(0, 10) === today &&
+            r.meal === meal &&
+            r.actorLabel === e.displayLabel,
+        );
+        next[`${e.id}|${meal}`] = already;
+      }
+    }
+    setChecks(next);
+    setSignOpen(true);
+  }
+
+  async function saveSignToday() {
+    const included = eaters.filter((e) => e.included);
+    for (const e of included) {
+      for (const meal of BUFFET_MEALS) {
+        const key = `${e.id}|${meal}`;
+        const want = checks[key] === true;
+        const existing = rows.find(
+          (r) =>
+            r.serviceDate.slice(0, 10) === today &&
+            r.meal === meal &&
+            r.actorLabel === e.displayLabel,
+        );
+        if (want && !existing) {
+          const res = await fetch("/api/admin/buffet/management-meals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              outletId,
+              serviceDate: today,
+              meal,
+              actorLabel: e.displayLabel,
+              eaterId: e.id,
+            }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            showApiError(data, t("signFailed"));
+            return;
+          }
+        }
+        if (!want && existing) {
+          const res = await fetch(`/api/admin/buffet/management-meals/${existing.id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            showApiError(data, t("signDeleteFailed"));
+            return;
+          }
+        }
+      }
+    }
+    setSignOpen(false);
     showSuccess(t("signed"));
-    await load();
+    await loadMeals();
     onChanged?.();
   }
 
@@ -110,7 +241,7 @@ export default function BuffetManagementMealsPanel({
       return;
     }
     showSuccess(t("signDeleted"));
-    await load();
+    await loadMeals();
     onChanged?.();
   }
 
@@ -118,65 +249,71 @@ export default function BuffetManagementMealsPanel({
     <div className="space-y-4">
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
         <p className="text-sm text-[#7F8C8D]">{t("managementHint")}</p>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap gap-2 justify-end">
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={!outletId}
+            onClick={() => setRosterOpen(true)}
+          >
+            {t("eatersRoster")}
+          </button>
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             disabled={!outletId}
-            onClick={() => {
-              setServiceDate(fromDate || todayBakuYmd());
-              setMeal("BREAKFAST");
-              setActorLabel("");
-              setNotes("");
-              setOpen(true);
-            }}
+            onClick={() => openSignToday()}
           >
-            {t("signManagement")}
+            {t("signManagementToday")}
           </button>
         </div>
       </div>
 
-      <div className={`${CARD_CLASS} overflow-hidden`}>
-        <div className="border-b px-3 py-2 text-sm font-semibold text-[#2C3E50]">
-          {t("managementTitle")}
-        </div>
+      <div className={`${CARD_CLASS} overflow-auto`}>
         <table className="w-full text-left text-sm">
           <thead className="bg-[#F8FAFC] text-[#7F8C8D]">
             <tr>
               <th className="px-3 py-2 font-medium">{t("colDate")}</th>
-              <th className="px-3 py-2 font-medium">{t("colMeal")}</th>
-              <th className="px-3 py-2 font-medium">{t("colActor")}</th>
-              <th className="px-3 py-2 font-medium">{t("colSignedAt")}</th>
-              <th className="px-3 py-2" />
+              {BUFFET_MEALS.map((m) => (
+                <th key={m} className="px-3 py-2 font-medium">
+                  {t(`meal.${m}`)}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y">
-            {rows.length === 0 ? (
+            {dates.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-[#7F8C8D]">
+                <td colSpan={4} className="px-3 py-6 text-center text-[#7F8C8D]">
                   {t("managementEmpty")}
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
-                <tr key={row.id}>
-                  <td className="px-3 py-2">{row.serviceDate}</td>
-                  <td className="px-3 py-2">{t(`meal.${row.meal}`)}</td>
-                  <td className="px-3 py-2">{row.actorLabel}</td>
-                  <td className="px-3 py-2 text-xs text-[#7F8C8D]">
-                    {row.signedAt.replace("T", " ").slice(0, 16)}
+              dates.map((date) => (
+                <tr key={date} className={dayLocked(date) ? "bg-[#F8FAFC]" : undefined}>
+                  <td className="px-3 py-2 tabular-nums">
+                    {date}
+                    {dayLocked(date) ? (
+                      <span className="ml-2 text-xs text-[#95A5A6]">{t("dayLocked")}</span>
+                    ) : null}
                   </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      onClick={() => void remove(row.id)}
-                      aria-label={t("signDelete")}
-                      title={t("signDelete")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
+                  {BUFFET_MEALS.map((meal) => {
+                    const n = countFor(date, meal);
+                    return (
+                      <td key={meal} className="px-3 py-2">
+                        <button
+                          type="button"
+                          className="tabular-nums text-[#2980B9] underline"
+                          onClick={() => {
+                            setDetailDate(date);
+                            setDetailMeal(meal);
+                          }}
+                        >
+                          {n}
+                        </button>
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}
@@ -184,42 +321,127 @@ export default function BuffetManagementMealsPanel({
         </table>
       </div>
 
-      <ModalShell open={open} title={t("signManagement")} onClose={() => setOpen(false)}>
-        <FieldRow cols={2}>
-          <Field
-            label={t("serviceDate")}
-            preset="date"
-            type="date"
-            value={serviceDate}
-            onChange={(e) => setServiceDate(e.target.value)}
-          />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t("mealLabel")}
-            options={BUFFET_MEALS.map((m) => ({ value: m, label: t(`meal.${m}`) }))}
-            value={meal}
-            onChange={(next) => setMeal(String(next ?? "BREAKFAST"))}
-          />
-        </FieldRow>
-        <CatalogField
-          kind="FREE_TEXT"
-          label={t("actorLabel")}
-          options={[]}
-          value={actorLabel}
-          onChange={(next) => setActorLabel(String(next ?? ""))}
-        />
-        <CatalogField
-          kind="FREE_TEXT"
-          label={t("notes")}
-          options={[]}
-          value={notes}
-          onChange={(next) => setNotes(String(next ?? ""))}
-        />
+      <ModalShell
+        open={Boolean(detailDate && detailMeal)}
+        title={
+          detailDate && detailMeal
+            ? `${detailDate} · ${t(`meal.${detailMeal}`)}`
+            : t("managementTitle")
+        }
+        onClose={() => {
+          setDetailDate(null);
+          setDetailMeal(null);
+        }}
+      >
+        <ul className="space-y-2 text-sm">
+          {detailRows.length === 0 ? (
+            <li className="text-[#7F8C8D]">{t("managementEmpty")}</li>
+          ) : (
+            detailRows.map((row) => (
+              <li key={row.id} className="flex items-center justify-between gap-2">
+                <span>{row.actorLabel}</span>
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => void remove(row.id)}
+                >
+                  {t("signDelete")}
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      </ModalShell>
+
+      <ModalShell
+        open={signOpen}
+        title={t("signManagementToday")}
+        onClose={() => setSignOpen(false)}
+      >
+        <p className="m-0 mb-3 text-sm text-[#7F8C8D]">{today}</p>
+        <div className="overflow-auto max-h-[50vh]">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[#7F8C8D]">
+                <th className="py-1 text-left">{t("colActor")}</th>
+                {BUFFET_MEALS.map((m) => (
+                  <th key={m} className="py-1 text-center">
+                    {t(`meal.${m}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {eaters
+                .filter((e) => e.included)
+                .map((e) => (
+                  <tr key={e.id}>
+                    <td className="py-1 pr-2">{e.displayLabel}</td>
+                    {BUFFET_MEALS.map((meal) => {
+                      const key = `${e.id}|${meal}`;
+                      return (
+                        <td key={meal} className="py-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={checks[key] === true}
+                            onChange={(ev) =>
+                              setChecks((c) => ({ ...c, [key]: ev.target.checked }))
+                            }
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
         <ModalFooter
-          onCancel={() => setOpen(false)}
-          onSubmit={() => void signIn()}
-          submitLabel={t("signManagement")}
+          onCancel={() => setSignOpen(false)}
+          onSubmit={() => void saveSignToday()}
+          cancelLabel={tc("cancel")}
+          submitLabel={tc("save")}
         />
+      </ModalShell>
+
+      <ModalShell
+        open={rosterOpen}
+        title={t("eatersRoster")}
+        onClose={() => setRosterOpen(false)}
+      >
+        <div className="mb-3 flex flex-wrap gap-2">
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void syncHr()}>
+            {t("eatersSyncHr")}
+          </button>
+        </div>
+        <ul className="mb-4 max-h-[40vh] space-y-2 overflow-auto text-sm">
+          {eaters.map((e) => (
+            <li key={e.id} className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={e.included}
+                  onChange={(ev) => void toggleEater(e.id, ev.target.checked)}
+                />
+                <span>
+                  {e.displayLabel}{" "}
+                  <span className="text-xs text-[#95A5A6]">{e.source}</span>
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-wrap items-end gap-2">
+          <Field
+            label={t("eatersManualLabel")}
+            preset="shortText"
+            value={manualLabel}
+            onChange={(e) => setManualLabel(e.target.value)}
+          />
+          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void addManual()}>
+            {t("eatersAddManual")}
+          </button>
+        </div>
       </ModalShell>
     </div>
   );

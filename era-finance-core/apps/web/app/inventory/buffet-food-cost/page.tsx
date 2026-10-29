@@ -127,7 +127,7 @@ function localizeSoftWarning(
   return raw;
 }
 
-const LAB_OUTLET_DEFAULTS = ["NAFTANI", "RESTAURANT", "KAFE"] as const;
+const LAB_OUTLET_DEFAULTS = ["NAFTANI", "XUDMANI", "KAFE"] as const;
 
 export default function BuffetFoodCostRunPage() {
   const { t } = useTranslation();

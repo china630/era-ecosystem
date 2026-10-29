@@ -17,24 +17,24 @@ function toDecimal(n: number) {
 }
 
 async function defaultOutlet(tx: ImportTx) {
-  const orgId = requestOrganizationId();
   const kafe = await tx.outlet.findFirst({
     where: { code: "KAFE", active: true },
   });
   if (kafe) return kafe;
   const existing = await tx.outlet.findFirst({
-    where: { OR: [{ code: "RESTAURANT" }, { code: "XUDMANI" }], active: true },
+    where: {
+      OR: [{ code: "NAFTANI" }, { code: "XUDMANI" }],
+      active: true,
+    },
     orderBy: { createdAt: "asc" },
   });
   if (existing) return existing;
-  return tx.outlet.create({
-    data: {
-      organizationId: orgId,
-      code: "RESTAURANT",
-      name: "Nafta Restaurant",
-      revenueCenterCode: "4101",
-    },
+  const any = await tx.outlet.findFirst({
+    where: { active: true },
+    orderBy: { createdAt: "asc" },
   });
+  if (any) return any;
+  throw new Error("No active outlet — create NAFTANI/XUDMANI/KAFE in Settings before import");
 }
 
 async function resolveRevenueCode(token: string | null | undefined): Promise<string | null> {
