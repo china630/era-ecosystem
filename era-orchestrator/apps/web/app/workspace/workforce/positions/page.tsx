@@ -42,11 +42,15 @@ type PositionRow = {
   defaultWorkRegime?: string | null;
   weeklyHours?: string | number | null;
   status?: string;
+  jobId?: string | null;
+  parentPositionId?: string | null;
+  job?: { id: string; name: string } | null;
   orgUnit: { id: string; name: string };
   _count?: { employments: number };
 };
 
 type OrgUnit = { id: string; name: string; status?: string };
+type JobOpt = { id: string; name: string; status?: string };
 
 type EditState = { mode: "create" } | { mode: "edit"; row: PositionRow } | null;
 
@@ -58,6 +62,7 @@ export default function PositionsPage() {
 
   const [rows, setRows] = useState<PositionRow[]>([]);
   const [units, setUnits] = useState<OrgUnit[]>([]);
+  const [jobs, setJobs] = useState<JobOpt[]>([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notEntitled, setNotEntitled] = useState(false);
@@ -71,6 +76,8 @@ export default function PositionsPage() {
   const [formTariff, setFormTariff] = useState("");
   const [formRegime, setFormRegime] = useState("");
   const [formHours, setFormHours] = useState("");
+  const [formJobId, setFormJobId] = useState("");
+  const [formParentPositionId, setFormParentPositionId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [archiveRow, setArchiveRow] = useState<PositionRow | null>(null);
 
@@ -91,9 +98,10 @@ export default function PositionsPage() {
     if (filterOrgUnitId) qs.set("orgUnitId", filterOrgUnitId);
     if (filterStatus) qs.set("status", filterStatus);
     const q = qs.toString();
-    const [posRes, unitRes] = await Promise.all([
+    const [posRes, unitRes, jobsRes] = await Promise.all([
       wfFetch(`positions${q ? `?${q}` : ""}`),
       wfFetch("org-units"),
+      wfFetch("jobs?status=ACTIVE"),
     ]);
     if (await isWorkforceGate403(posRes)) {
       setNotEntitled(true);
@@ -105,6 +113,10 @@ export default function PositionsPage() {
     if (unitRes.ok) {
       const u = (await unitRes.json()) as { items: OrgUnit[] };
       setUnits((u.items ?? []).filter((x) => (x.status ?? "ACTIVE") === "ACTIVE"));
+    }
+    if (jobsRes.ok) {
+      const j = (await jobsRes.json()) as JobOpt[];
+      setJobs(Array.isArray(j) ? j : []);
     }
     if (posRes.ok) {
       setRows(await posRes.json());
@@ -129,6 +141,8 @@ export default function PositionsPage() {
     setFormTariff("");
     setFormRegime("");
     setFormHours("");
+    setFormJobId("");
+    setFormParentPositionId("");
     setFormError(null);
     setEditState({ mode: "create" });
   }
@@ -142,6 +156,8 @@ export default function PositionsPage() {
     setFormTariff(row.tariffAzn != null ? String(row.tariffAzn) : "");
     setFormRegime(row.defaultWorkRegime ?? "");
     setFormHours(row.weeklyHours != null ? String(row.weeklyHours) : "");
+    setFormJobId(row.jobId ?? row.job?.id ?? "");
+    setFormParentPositionId(row.parentPositionId ?? "");
     setFormError(null);
     setEditState({ mode: "edit", row });
   }
@@ -151,6 +167,10 @@ export default function PositionsPage() {
     if (!editState || !formName.trim()) return;
     setBusy(true);
     setFormError(null);
+    const jobPayload = {
+      jobId: formJobId.trim() || null,
+      parentPositionId: formParentPositionId.trim() || null,
+    };
     const res =
       editState.mode === "create"
         ? await wfFetch("positions", {
@@ -164,6 +184,7 @@ export default function PositionsPage() {
               tariffAzn: formTariff.trim() ? Number(formTariff) : null,
               defaultWorkRegime: formRegime || null,
               weeklyHours: formHours.trim() ? Number(formHours) : null,
+              ...jobPayload,
             }),
           })
         : await wfFetch(`positions/${editState.row.id}`, {
@@ -176,6 +197,7 @@ export default function PositionsPage() {
               tariffAzn: formTariff.trim() ? Number(formTariff) : null,
               defaultWorkRegime: formRegime || null,
               weeklyHours: formHours.trim() ? Number(formHours) : null,
+              ...jobPayload,
             }),
           });
     setBusy(false);
@@ -431,6 +453,31 @@ export default function PositionsPage() {
             value={formCode}
             onChange={(next) => setFormCode(String(next))}
             options={[]}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("fieldJob")}
+            value={formJobId}
+            onChange={(next) => setFormJobId(String(next))}
+            options={jobs.map((j) => ({ value: j.id, label: j.name }))}
+            emptyLabel={t("jobEmpty")}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("fieldParentPosition")}
+            value={formParentPositionId}
+            onChange={(next) => setFormParentPositionId(String(next))}
+            options={rows
+              .filter(
+                (r) =>
+                  (r.status ?? "ACTIVE") === "ACTIVE" &&
+                  (editState?.mode !== "edit" || r.id !== editState.row.id),
+              )
+              .map((r) => ({
+                value: r.id,
+                label: `${r.name} (${r.orgUnit?.name ?? "—"})`,
+              }))}
+            emptyLabel={t("parentPositionEmpty")}
           />
           <label className="block text-[13px] font-medium text-[#34495E]">
             {t("fieldSlots")}

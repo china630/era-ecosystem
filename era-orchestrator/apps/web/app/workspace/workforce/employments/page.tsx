@@ -82,6 +82,8 @@ type EmploymentRow = {
   position?: { name: string; id?: string } | null;
   orgUnitId?: string;
   positionId?: string;
+  managerEmploymentId?: string | null;
+  matrixManagerEmploymentId?: string | null;
   roleBindings?: Array<{
     satelliteKey: string;
     satelliteRole?: string;
@@ -362,6 +364,8 @@ export default function WorkforceEmploymentsPage() {
   const [hireAddress, setHireAddress] = useState("");
   const [hireGrantAccess, setHireGrantAccess] = useState(false);
   const [hireLoginDirty, setHireLoginDirty] = useState(false);
+  const [hireManagerId, setHireManagerId] = useState("");
+  const [hireMatrixManagerId, setHireMatrixManagerId] = useState("");
   const [mdmSearchBusy, setMdmSearchBusy] = useState(false);
   const [orderBridge, setOrderBridge] = useState<PersonnelOrderRef | null>(null);
   const [orderBridgeBusy, setOrderBridgeBusy] = useState(false);
@@ -426,6 +430,8 @@ export default function WorkforceEmploymentsPage() {
   const [docsLoaded, setDocsLoaded] = useState(false);
   const [cardOrgUnitId, setCardOrgUnitId] = useState("");
   const [cardPositionId, setCardPositionId] = useState("");
+  const [cardManagerId, setCardManagerId] = useState("");
+  const [cardMatrixManagerId, setCardMatrixManagerId] = useState("");
   const [cardKin, setCardKin] = useState<
     Array<{ kinship: string; name: string; phone: string }>
   >([]);
@@ -709,6 +715,8 @@ export default function WorkforceEmploymentsPage() {
     setHireAddress("");
     setHireGrantAccess(false);
     setHireLoginDirty(false);
+    setHireManagerId("");
+    setHireMatrixManagerId("");
     setModalError(null);
     setHireOpen(true);
   }
@@ -735,6 +743,8 @@ export default function WorkforceEmploymentsPage() {
     setHireAddress("");
     setHireGrantAccess(false);
     setHireLoginDirty(false);
+    setHireManagerId("");
+    setHireMatrixManagerId("");
     setModalError(null);
     setHireOpen(true);
     const opsRes = await mdmWorkforceFetch(`${personId}/ops-profile`);
@@ -1092,6 +1102,12 @@ export default function WorkforceEmploymentsPage() {
           ? { login: hireLogin.trim().toLowerCase() }
           : {}),
         ...(hireGrantAccess && hirePin.trim() ? { pin: hirePin.trim() } : {}),
+        ...(hireManagerId.trim()
+          ? { managerEmploymentId: hireManagerId.trim() }
+          : {}),
+        ...(hireMatrixManagerId.trim()
+          ? { matrixManagerEmploymentId: hireMatrixManagerId.trim() }
+          : {}),
       }),
     });
     if (!res.ok) {
@@ -1280,6 +1296,8 @@ export default function WorkforceEmploymentsPage() {
     });
     setCardOrgUnitId(emp.orgUnitId ?? emp.orgUnit?.id ?? "");
     setCardPositionId(emp.positionId ?? emp.position?.id ?? "");
+    setCardManagerId(emp.managerEmploymentId ?? "");
+    setCardMatrixManagerId(emp.matrixManagerEmploymentId ?? "");
     setCardKin([]);
     setCardFinance(Boolean(emp.platformUserId));
 
@@ -1573,6 +1591,22 @@ export default function WorkforceEmploymentsPage() {
     });
     if (!cadreRes.ok) {
       setModalError(await describeWorkforceError(cadreRes));
+      setBusy(false);
+      return;
+    }
+
+    const reportingRes = await workforceFetch(
+      `employments/${actionEmp.id}/reporting`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          managerEmploymentId: cardManagerId.trim() || null,
+          matrixManagerEmploymentId: cardMatrixManagerId.trim() || null,
+        }),
+      },
+    );
+    if (!reportingRes.ok) {
+      setModalError(await describeWorkforceError(reportingRes));
       setBusy(false);
       return;
     }
@@ -2244,6 +2278,42 @@ export default function WorkforceEmploymentsPage() {
                 fluid
               />
             </div>
+            <div className={ROW3_CLASS}>
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                label={t("fieldLineManager")}
+                value={hireManagerId}
+                onChange={(next) => setHireManagerId(String(next))}
+                options={rows
+                  .filter((r) => r.status === "ACTIVE")
+                  .map((r) => ({
+                    value: r.id,
+                    label:
+                      persons[r.globalPersonId]?.displayName ??
+                      r.position?.name ??
+                      r.id.slice(0, 8),
+                  }))}
+                emptyLabel={t("managerEmpty")}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                label={t("fieldMatrixManager")}
+                value={hireMatrixManagerId}
+                onChange={(next) => setHireMatrixManagerId(String(next))}
+                options={rows
+                  .filter((r) => r.status === "ACTIVE")
+                  .map((r) => ({
+                    value: r.id,
+                    label:
+                      persons[r.globalPersonId]?.displayName ??
+                      r.position?.name ??
+                      r.id.slice(0, 8),
+                  }))}
+                emptyLabel={t("managerEmpty")}
+              />
+            </div>
           </fieldset>
 
           <fieldset className={ZONE_CLASS}>
@@ -2867,6 +2937,44 @@ export default function WorkforceEmploymentsPage() {
               />
             </div>
             <p className="text-xs text-[#7F8C8D]">{t("regimeHint")}</p>
+            <div className={ROW3_CLASS}>
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                label={t("fieldLineManager")}
+                value={cardManagerId}
+                onChange={(next) => setCardManagerId(String(next))}
+                options={rows
+                  .filter((r) => r.id !== actionEmp?.id && r.status === "ACTIVE")
+                  .map((r) => ({
+                    value: r.id,
+                    label:
+                      persons[r.globalPersonId]?.displayName ??
+                      r.position?.name ??
+                      r.id.slice(0, 8),
+                  }))}
+                emptyLabel={t("managerEmpty")}
+                disabled={actionEmp?.status !== "ACTIVE"}
+              />
+              <CatalogField
+                kind="ENTITY_REF"
+                className="min-w-0"
+                label={t("fieldMatrixManager")}
+                value={cardMatrixManagerId}
+                onChange={(next) => setCardMatrixManagerId(String(next))}
+                options={rows
+                  .filter((r) => r.id !== actionEmp?.id && r.status === "ACTIVE")
+                  .map((r) => ({
+                    value: r.id,
+                    label:
+                      persons[r.globalPersonId]?.displayName ??
+                      r.position?.name ??
+                      r.id.slice(0, 8),
+                  }))}
+                emptyLabel={t("managerEmpty")}
+                disabled={actionEmp?.status !== "ACTIVE"}
+              />
+            </div>
             {actionEmp?.status === "ACTIVE" ? (
               <button
                 type="button"

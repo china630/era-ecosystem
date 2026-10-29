@@ -697,7 +697,9 @@
     "wfRequests": "Requests",
     "wfHrSettings": "HR settings",
     "wfMe": "My cabinet",
-    "orgProfile": "Organization profile"
+    "orgProfile": "Organization profile",
+    "wfJobArchitecture": "Job architecture",
+    "wfOrgChart": "Org chart"
   },
   "headerStrip": {
     "trialUntil": "Trial until {date}",
@@ -1365,7 +1367,10 @@
       "MISSING": "Missing",
       "PRESENT": "Present",
       "EXPIRED": "Expired"
-    }
+    },
+    "fieldLineManager": "Line manager",
+    "fieldMatrixManager": "Matrix manager",
+    "managerEmpty": "No manager"
   },
   "workforceSecurity": {
     "title": "Access & security — role matrix",
@@ -1548,7 +1553,16 @@
     "commercialLinkUnit": "Org unit",
     "commercialLinkRoot": "Whole scope (root)",
     "commercialLinkSave": "Save link",
-    "commercialLinkOk": "Commercial link saved."
+    "commercialLinkOk": "Commercial link saved.",
+    "fieldUnitKind": "Unit kind",
+    "fieldManager": "Unit manager",
+    "managerEmpty": "No manager",
+    "unitKind": {
+      "COMPANY": "Company",
+      "DIVISION": "Division",
+      "DEPARTMENT": "Department",
+      "TEAM": "Team"
+    }
   },
   "workforcePositions": {
     "title": "Positions",
@@ -1589,7 +1603,11 @@
     "filterAll": "All",
     "statusActive": "Active",
     "statusArchived": "Archived",
-    "goOrg": "Org structure"
+    "goOrg": "Org structure",
+    "fieldJob": "Job catalog",
+    "fieldParentPosition": "Parent position",
+    "jobEmpty": "No job",
+    "parentPositionEmpty": "No parent"
   },
   "workforceAbsences": {
     "title": "Absences",
@@ -2362,13 +2380,19 @@
     "step": {
       "REQUESTER_MANAGER": "Requester's manager",
       "ORG_UNIT_HEAD": "Head of org unit",
-      "POSITION_IN_UNIT": "Position in unit"
+      "POSITION_IN_UNIT": "Position in unit",
+      "MANAGER_CHAIN": "Manager chain",
+      "POSITION_HOLDER": "Position holder",
+      "MATRIX_MANAGER": "Matrix manager",
+      "GRADE_AT_LEAST": "Grade at least"
     },
     "audienceKind": {
       "ALWAYS": "Always",
       "LEADERSHIP": "Leadership positions only",
       "ORDINARY": "Ordinary positions only"
-    }
+    },
+    "chainOffset": "Manager chain offset (default 2)",
+    "minGradeLevel": "Minimum grade level"
   },
   "orgProfile": {
     "title": "Organization profile",
@@ -2399,5 +2423,53 @@
     "purpose": "Purpose",
     "contactValue": "Value",
     "addressKind": "Kind"
+  },
+  "workforceJobArchitecture": {
+    "title": "Job architecture",
+    "subtitle": "Grades and job catalog for positions and approval rank.",
+    "tab": "Catalog",
+    "tabGrades": "Grades",
+    "tabJobs": "Jobs",
+    "addGrade": "Add grade",
+    "addJob": "Add job",
+    "filterSearch": "Search",
+    "colCode": "Code",
+    "colName": "Name",
+    "colLevel": "Level",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "colFamily": "Family",
+    "colGrade": "Grade",
+    "statusActive": "Active",
+    "statusArchived": "Archived",
+    "statusAll": "All statuses",
+    "loading": "Loading…",
+    "empty": "Nothing here yet.",
+    "createGrade": "New grade",
+    "editGrade": "Edit grade",
+    "createJob": "New job",
+    "editJob": "Edit job",
+    "fieldCode": "Code",
+    "fieldName": "Name",
+    "fieldLevel": "Level",
+    "fieldFamily": "Job family",
+    "fieldGrade": "Grade",
+    "gradeEmpty": "No grade",
+    "archive": "Archive",
+    "archiveGradeTitle": "Archive grade",
+    "archiveGradeMsg": "Archive grade “{name}”? Jobs that still reference it must be reassigned first.",
+    "archiveJobTitle": "Archive job",
+    "archiveJobMsg": "Archive job “{name}”?"
+  },
+  "workforceOrgChart": {
+    "title": "Org chart",
+    "subtitle": "Read-only trees from units, positions, or people reporting lines.",
+    "mode": "Mode",
+    "modeUnits": "Org units",
+    "modePositions": "Positions",
+    "modePeople": "People",
+    "loading": "Loading…",
+    "empty": "No nodes for this mode.",
+    "orphans": "Nodes with missing parent"
   }
 }

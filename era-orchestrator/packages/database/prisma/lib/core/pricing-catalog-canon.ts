@@ -378,6 +378,8 @@ const WORKFORCE_NAV: { prefix: string; feature: WorkforceFeature }[] = [
   { prefix: "/workspace/workforce/employments", feature: "hire" },
   { prefix: "/workspace/workforce/org-structure", feature: "org" },
   { prefix: "/workspace/workforce/positions", feature: "org" },
+  { prefix: "/workspace/workforce/job-architecture", feature: "org" },
+  { prefix: "/workspace/workforce/org-chart", feature: "org" },
   { prefix: "/workspace/workforce/export", feature: "importExport" },
   { prefix: "/workspace/workforce/migration", feature: "importExport" },
   { prefix: "/workspace/workforce/import", feature: "importExport" },

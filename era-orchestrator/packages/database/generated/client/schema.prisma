@@ -508,6 +508,17 @@ enum WorkforceApprovalStepKind {
   REQUESTER_MANAGER
   ORG_UNIT_HEAD
   POSITION_IN_UNIT
+  MANAGER_CHAIN
+  POSITION_HOLDER
+  MATRIX_MANAGER
+  GRADE_AT_LEAST
+}
+
+enum OrgUnitKind {
+  COMPANY
+  DIVISION
+  DEPARTMENT
+  TEAM
 }
 
 /// Which requester positions a route step applies to. Existing steps stay ALWAYS.
@@ -660,8 +671,49 @@ model WorkforceScope {
   vacationPlans          WorkforceVacationPlan[]
   personnelOrders        WorkforcePersonnelOrder[]
   staffScheduleRevisions StaffScheduleRevision[]
+  grades                 WorkforceGrade[]
+  jobs                   WorkforceJob[]
 
   @@map("workforce_scopes")
+}
+
+model WorkforceGrade {
+  id               String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workforceScopeId String         @map("workforce_scope_id") @db.Uuid
+  code             String
+  name             String
+  level            Int
+  minSalary        Decimal?       @map("min_salary") @db.Decimal(19, 4)
+  maxSalary        Decimal?       @map("max_salary") @db.Decimal(19, 4)
+  status           OrgUnitStatus  @default(ACTIVE)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  workforceScope   WorkforceScope @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  jobs             WorkforceJob[]
+
+  @@unique([workforceScopeId, code])
+  @@index([workforceScopeId, status])
+  @@map("workforce_grades")
+}
+
+model WorkforceJob {
+  id               String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workforceScopeId String              @map("workforce_scope_id") @db.Uuid
+  name             String
+  code             String?
+  jobFamily        String?             @map("job_family")
+  gradeId          String?             @map("grade_id") @db.Uuid
+  status           OrgUnitStatus       @default(ACTIVE)
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  workforceScope   WorkforceScope      @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  grade            WorkforceGrade?     @relation(fields: [gradeId], references: [id], onDelete: Restrict)
+  positions        WorkforcePosition[]
+
+  @@unique([workforceScopeId, name])
+  @@index([workforceScopeId, status])
+  @@index([gradeId])
+  @@map("workforce_jobs")
 }
 
 model OrgUnit {
@@ -670,6 +722,7 @@ model OrgUnit {
   parentId            String?                 @map("parent_id") @db.Uuid
   name                String
   code                String?
+  unitKind            OrgUnitKind             @default(DEPARTMENT) @map("unit_kind")
   status              OrgUnitStatus           @default(ACTIVE)
   sortOrder           Int                     @default(0) @map("sort_order")
   managerEmploymentId String?                 @map("manager_employment_id") @db.Uuid
@@ -717,15 +770,22 @@ model WorkforcePosition {
   tariffAzn         Decimal?                @map("tariff_azn") @db.Decimal(19, 4)
   defaultWorkRegime WorkforceWorkRegime?    @map("default_work_regime")
   weeklyHours       Decimal?                @map("weekly_hours") @db.Decimal(6, 2)
+  jobId             String?                 @map("job_id") @db.Uuid
+  parentPositionId  String?                 @map("parent_position_id") @db.Uuid
   status            OrgUnitStatus           @default(ACTIVE)
   createdAt         DateTime                @default(now()) @map("created_at")
   updatedAt         DateTime                @updatedAt @map("updated_at")
   orgUnit           OrgUnit                 @relation(fields: [orgUnitId], references: [id], onDelete: Cascade)
+  job               WorkforceJob?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  parentPosition    WorkforcePosition?      @relation("PositionTree", fields: [parentPositionId], references: [id], onDelete: Restrict)
+  childPositions    WorkforcePosition[]     @relation("PositionTree")
   employments       WorkforceEmployment[]
   roleTemplates     SatelliteRoleTemplate[]
   approvalSteps     WorkforceApprovalStep[]
 
   @@unique([orgUnitId, name])
+  @@index([jobId])
+  @@index([parentPositionId])
   @@map("workforce_positions")
 }
 
@@ -818,52 +878,62 @@ model WorkforceSeatAllocation {
 
 /// CP workforce employment — no PII; person via MDM globalPersonId.
 model WorkforceEmployment {
-  id                       String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId           String                        @map("organization_id") @db.Uuid
-  workforceScopeId         String                        @map("workforce_scope_id") @db.Uuid
-  orgUnitId                String                        @map("org_unit_id") @db.Uuid
-  positionId               String                        @map("position_id") @db.Uuid
-  globalPersonId           String                        @map("global_person_id") @db.Uuid
-  status                   WorkforceEmploymentStatus     @default(ACTIVE)
-  hireDate                 DateTime                      @map("hire_date") @db.Date
+  id                        String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId            String                        @map("organization_id") @db.Uuid
+  workforceScopeId          String                        @map("workforce_scope_id") @db.Uuid
+  orgUnitId                 String                        @map("org_unit_id") @db.Uuid
+  positionId                String                        @map("position_id") @db.Uuid
+  globalPersonId            String                        @map("global_person_id") @db.Uuid
+  status                    WorkforceEmploymentStatus     @default(ACTIVE)
+  hireDate                  DateTime                      @map("hire_date") @db.Date
   /// Empty = open-ended contract.
-  contractEndDate          DateTime?                     @map("contract_end_date") @db.Date
-  workRegime               WorkforceWorkRegime?          @map("work_regime")
-  financeEmployeeId        String?                       @map("finance_employee_id") @db.Uuid
-  commercialOrganizationId String?                       @map("commercial_organization_id") @db.Uuid
-  platformUserId           String?                       @map("platform_user_id") @db.Uuid
+  contractEndDate           DateTime?                     @map("contract_end_date") @db.Date
+  workRegime                WorkforceWorkRegime?          @map("work_regime")
+  financeEmployeeId         String?                       @map("finance_employee_id") @db.Uuid
+  commercialOrganizationId  String?                       @map("commercial_organization_id") @db.Uuid
+  platformUserId            String?                       @map("platform_user_id") @db.Uuid
   /// Local satellite login override; default emp-{employmentId hex prefix} when null at provision.
-  satelliteStaffLogin      String?                       @map("satellite_staff_login") @db.VarChar(64)
+  satelliteStaffLogin       String?                       @map("satellite_staff_login") @db.VarChar(64)
   /// Default PIN pushed on provision / reprovision (pilot default 0000).
-  satelliteStaffPin        String?                       @map("satellite_staff_pin") @db.VarChar(32)
-  createdAt                DateTime                      @default(now()) @map("created_at")
-  updatedAt                DateTime                      @updatedAt @map("updated_at")
-  organization             Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workforceScope           WorkforceScope                @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
-  orgUnit                  OrgUnit                       @relation("EmploymentOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
-  position                 WorkforcePosition             @relation(fields: [positionId], references: [id], onDelete: Restrict)
-  absences                 WorkforceAbsence[]
-  managedOrgUnits          OrgUnit[]                     @relation("OrgUnitManager")
-  roleBindings             WorkforceRoleBinding[]
-  manualGrants             WorkforceManualGrant[]
-  seatAllocation           WorkforceSeatAllocation?
-  timesheetEntries         WorkforceTimesheetEntry[]
-  vacationPlanLines        WorkforceVacationPlanLine[]
-  personnelOrders          WorkforcePersonnelOrder[]
-  brigadeMemberships       WorkforceBrigadeMember[]
-  shiftAssignments         WorkforceShiftAssignment[]
-  dayOverrides             WorkforceDayOverride[]
-  attendanceIdentities     WorkforceAttendanceIdentity[]
-  attendancePunches        WorkforceAttendancePunch[]
-  hourlyLeaveRequests      WorkforceHourlyLeaveRequest[]
-  advanceRequests          WorkforceAdvanceRequest[]
-  announcementReads        WorkforceAnnouncementRead[]
-  fitnessRecords           WorkforceFitnessRecord[]
+  satelliteStaffPin         String?                       @map("satellite_staff_pin") @db.VarChar(32)
+  /// Solid-line manager override; empty → OrgUnit manager walk (job-architecture ADR).
+  managerEmploymentId       String?                       @map("manager_employment_id") @db.Uuid
+  /// Dotted-line / matrix manager.
+  matrixManagerEmploymentId String?                       @map("matrix_manager_employment_id") @db.Uuid
+  createdAt                 DateTime                      @default(now()) @map("created_at")
+  updatedAt                 DateTime                      @updatedAt @map("updated_at")
+  organization              Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workforceScope            WorkforceScope                @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  orgUnit                   OrgUnit                       @relation("EmploymentOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+  position                  WorkforcePosition             @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  managerEmployment         WorkforceEmployment?          @relation("EmploymentSolidManager", fields: [managerEmploymentId], references: [id], onDelete: SetNull)
+  directReports             WorkforceEmployment[]         @relation("EmploymentSolidManager")
+  matrixManagerEmployment   WorkforceEmployment?          @relation("EmploymentMatrixManager", fields: [matrixManagerEmploymentId], references: [id], onDelete: SetNull)
+  matrixReports             WorkforceEmployment[]         @relation("EmploymentMatrixManager")
+  absences                  WorkforceAbsence[]
+  managedOrgUnits           OrgUnit[]                     @relation("OrgUnitManager")
+  roleBindings              WorkforceRoleBinding[]
+  manualGrants              WorkforceManualGrant[]
+  seatAllocation            WorkforceSeatAllocation?
+  timesheetEntries          WorkforceTimesheetEntry[]
+  vacationPlanLines         WorkforceVacationPlanLine[]
+  personnelOrders           WorkforcePersonnelOrder[]
+  brigadeMemberships        WorkforceBrigadeMember[]
+  shiftAssignments          WorkforceShiftAssignment[]
+  dayOverrides              WorkforceDayOverride[]
+  attendanceIdentities      WorkforceAttendanceIdentity[]
+  attendancePunches         WorkforceAttendancePunch[]
+  hourlyLeaveRequests       WorkforceHourlyLeaveRequest[]
+  advanceRequests           WorkforceAdvanceRequest[]
+  announcementReads         WorkforceAnnouncementRead[]
+  fitnessRecords            WorkforceFitnessRecord[]
 
   @@index([organizationId, status])
   @@index([workforceScopeId, orgUnitId])
   @@index([globalPersonId])
   @@index([platformUserId])
+  @@index([managerEmploymentId])
+  @@index([matrixManagerEmploymentId])
   @@map("workforce_employments")
 }
 
@@ -1685,6 +1755,10 @@ model WorkforceApprovalStep {
   kind                WorkforceApprovalStepKind
   appliesTo           WorkforceApprovalStepAudience @default(ALWAYS) @map("applies_to")
   canExceedAdvanceCap Boolean                       @default(false) @map("can_exceed_advance_cap")
+  /// For MANAGER_CHAIN: how many lineManager hops (null → 2).
+  chainOffset         Int?                          @map("chain_offset")
+  /// For GRADE_AT_LEAST: minimum WorkforceGrade.level.
+  minGradeLevel       Int?                          @map("min_grade_level")
   orgUnitId           String?                       @map("org_unit_id") @db.Uuid
   positionId          String?                       @map("position_id") @db.Uuid
   route               WorkforceApprovalRoute        @relation(fields: [routeId], references: [id], onDelete: Cascade)

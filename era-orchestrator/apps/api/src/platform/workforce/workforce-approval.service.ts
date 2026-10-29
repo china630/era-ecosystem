@@ -12,11 +12,15 @@ import {
 } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import {
-  resolveRequesterManager,
+  resolveLineManager,
+  resolveManagerChain,
+  resolveMatrixManager,
+  resolveUnitManagerWalk,
   stepApplies,
+  type EmploymentNode,
   type OrgUnitNode,
   type ResolvedAssignee,
-} from "./workforce-approval.resolve";
+} from "./workforce-reporting.resolve";
 
 export type ApprovalEntityType = "ABSENCE" | "HOURLY" | "ADVANCE" | "VACATION_PLAN";
 
@@ -119,13 +123,13 @@ export class WorkforceApprovalService {
     const index = Math.max(0, input.stepOrder);
     const step = steps.find((s) => s.stepOrder >= index);
     if (!step) return null;
-    const assignees = await this.assignees(
-      input.organizationId,
-      input.employmentId,
-      step.kind,
-      step.orgUnitId,
-      step.positionId,
-    );
+    const assignees = await this.assignees(input.organizationId, input.employmentId, {
+      kind: step.kind,
+      orgUnitId: step.orgUnitId,
+      positionId: step.positionId,
+      chainOffset: step.chainOffset,
+      minGradeLevel: step.minGradeLevel,
+    });
     if (assignees.length === 0) {
       throw new BadRequestException({
         code: "APPROVAL_STEP_UNASSIGNED",
@@ -237,13 +241,13 @@ export class WorkforceApprovalService {
         orgUnitName: null,
       };
     }
-    const assignees = await this.assignees(
-      organizationId,
-      employmentId,
-      step.kind,
-      step.orgUnitId,
-      step.positionId,
-    );
+    const assignees = await this.assignees(organizationId, employmentId, {
+      kind: step.kind,
+      orgUnitId: step.orgUnitId,
+      positionId: step.positionId,
+      chainOffset: step.chainOffset,
+      minGradeLevel: step.minGradeLevel,
+    });
     return {
       configured: true,
       stepOrder: step.stepOrder,
@@ -302,54 +306,147 @@ export class WorkforceApprovalService {
   private async assignees(
     organizationId: string,
     employmentId: string,
-    kind: WorkforceApprovalStepKind,
-    orgUnitId: string | null,
-    positionId: string | null,
+    step: {
+      kind: WorkforceApprovalStepKind;
+      orgUnitId: string | null;
+      positionId: string | null;
+      chainOffset: number | null;
+      minGradeLevel: number | null;
+    },
   ): Promise<ResolvedAssignee[]> {
     const employment = await this.prisma.workforceEmployment.findFirst({
       where: { id: employmentId, organizationId },
-      select: { id: true, orgUnitId: true, workforceScopeId: true },
+      select: {
+        id: true,
+        orgUnitId: true,
+        workforceScopeId: true,
+        status: true,
+        managerEmploymentId: true,
+        matrixManagerEmploymentId: true,
+        platformUserId: true,
+      },
     });
     if (!employment) return [];
     const units = await this.units(employment.workforceScopeId);
-    if (kind === WorkforceApprovalStepKind.REQUESTER_MANAGER) {
-      const hit = resolveRequesterManager({
-        startOrgUnitId: employment.orgUnitId,
+    const scopeEmps = await this.prisma.workforceEmployment.findMany({
+      where: { workforceScopeId: employment.workforceScopeId },
+      select: {
+        id: true,
+        orgUnitId: true,
+        status: true,
+        managerEmploymentId: true,
+        matrixManagerEmploymentId: true,
+        platformUserId: true,
+      },
+    });
+    const employmentsById = new Map<string, EmploymentNode>(
+      scopeEmps.map((e) => [e.id, e]),
+    );
+    const empNode: EmploymentNode = employment;
+
+    if (step.kind === WorkforceApprovalStepKind.REQUESTER_MANAGER) {
+      const hit = resolveLineManager({
+        employment: empNode,
+        units,
+        employmentsById,
+      });
+      return hit ? [hit] : [];
+    }
+    if (step.kind === WorkforceApprovalStepKind.MANAGER_CHAIN) {
+      const hit = resolveManagerChain({
+        employment: empNode,
+        units,
+        employmentsById,
+        chainOffset: step.chainOffset ?? 2,
+      });
+      return hit ? [hit] : [];
+    }
+    if (step.kind === WorkforceApprovalStepKind.MATRIX_MANAGER) {
+      const hit = resolveMatrixManager({
+        employment: empNode,
+        units,
+        employmentsById,
+      });
+      return hit ? [hit] : [];
+    }
+    if (step.kind === WorkforceApprovalStepKind.ORG_UNIT_HEAD) {
+      const unitId = step.orgUnitId ?? employment.orgUnitId;
+      const hit = resolveUnitManagerWalk({
+        startOrgUnitId: unitId,
         requesterEmploymentId: employment.id,
         units,
       });
       return hit ? [hit] : [];
     }
-    const unit = units.find((u) => u.id === orgUnitId);
-    if (!unit) return [];
-    if (kind === WorkforceApprovalStepKind.ORG_UNIT_HEAD) {
-      if (!unit.managerEmploymentId && !unit.managerUserId) return [];
-      return [
-        {
-          employmentId: unit.managerEmploymentId,
-          userId: unit.managerUserId,
-          orgUnitId: unit.id,
-          orgUnitName: unit.name,
+    if (step.kind === WorkforceApprovalStepKind.POSITION_HOLDER) {
+      if (!step.positionId) return [];
+      const seats = await this.prisma.workforceEmployment.findMany({
+        where: {
+          organizationId,
+          positionId: step.positionId,
+          status: WorkforceEmploymentStatus.ACTIVE,
+          NOT: { id: employment.id },
         },
-      ];
+        select: {
+          id: true,
+          platformUserId: true,
+          orgUnitId: true,
+          orgUnit: { select: { name: true } },
+        },
+      });
+      return seats.map((seat) => ({
+        employmentId: seat.id,
+        userId: seat.platformUserId,
+        orgUnitId: seat.orgUnitId,
+        orgUnitName: seat.orgUnit.name,
+      }));
     }
-    if (!positionId) return [];
-    const seats = await this.prisma.workforceEmployment.findMany({
-      where: {
-        organizationId,
+    if (step.kind === WorkforceApprovalStepKind.GRADE_AT_LEAST) {
+      if (step.minGradeLevel == null) return [];
+      const seats = await this.prisma.workforceEmployment.findMany({
+        where: {
+          organizationId,
+          status: WorkforceEmploymentStatus.ACTIVE,
+          NOT: { id: employment.id },
+          position: {
+            job: { grade: { level: { gte: step.minGradeLevel } } },
+          },
+        },
+        select: {
+          id: true,
+          platformUserId: true,
+          orgUnitId: true,
+          orgUnit: { select: { name: true } },
+        },
+      });
+      return seats.map((seat) => ({
+        employmentId: seat.id,
+        userId: seat.platformUserId,
+        orgUnitId: seat.orgUnitId,
+        orgUnitName: seat.orgUnit.name,
+      }));
+    }
+    if (step.kind === WorkforceApprovalStepKind.POSITION_IN_UNIT) {
+      const unit = units.find((u) => u.id === step.orgUnitId);
+      if (!unit || !step.positionId) return [];
+      const seats = await this.prisma.workforceEmployment.findMany({
+        where: {
+          organizationId,
+          orgUnitId: unit.id,
+          positionId: step.positionId,
+          status: WorkforceEmploymentStatus.ACTIVE,
+          NOT: { id: employment.id },
+        },
+        select: { id: true, platformUserId: true },
+      });
+      return seats.map((seat) => ({
+        employmentId: seat.id,
+        userId: seat.platformUserId,
         orgUnitId: unit.id,
-        positionId,
-        status: WorkforceEmploymentStatus.ACTIVE,
-        NOT: { id: employment.id },
-      },
-      select: { id: true, platformUserId: true },
-    });
-    return seats.map((seat) => ({
-      employmentId: seat.id,
-      userId: seat.platformUserId,
-      orgUnitId: unit.id,
-      orgUnitName: unit.name,
-    }));
+        orgUnitName: unit.name,
+      }));
+    }
+    return [];
   }
 
   private async units(workforceScopeId: string): Promise<OrgUnitNode[]> {

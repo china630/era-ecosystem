@@ -10,7 +10,11 @@ import {
   Min,
   ValidateIf,
 } from "class-validator";
-import { OrgCommercialLinkMode, WorkforceWorkRegime } from "@era365/database";
+import {
+  OrgCommercialLinkMode,
+  OrgUnitKind,
+  WorkforceWorkRegime,
+} from "@era365/database";
 
 export class BootstrapWorkforceScopeDto {
   @IsOptional()
@@ -37,6 +41,10 @@ export class CreateOrgUnitDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsEnum(OrgUnitKind)
+  unitKind?: OrgUnitKind;
 }
 
 export class UpdateOrgUnitDto {
@@ -55,10 +63,12 @@ export class UpdateOrgUnitDto {
   parentId?: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => value != null)
   @IsUUID()
   managerEmploymentId?: string | null;
 
   @IsOptional()
+  @ValidateIf((_, value) => value != null)
   @IsUUID()
   managerUserId?: string | null;
 
@@ -66,6 +76,10 @@ export class UpdateOrgUnitDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsEnum(OrgUnitKind)
+  unitKind?: OrgUnitKind;
 }
 
 export class CreateWorkforcePositionDto {
@@ -104,6 +118,16 @@ export class CreateWorkforcePositionDto {
   @ValidateIf((_, value) => value != null)
   @IsNumber()
   weeklyHours?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  jobId?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  parentPositionId?: string | null;
 }
 
 export class UpdateWorkforcePositionDto {
@@ -140,6 +164,28 @@ export class UpdateWorkforcePositionDto {
   @ValidateIf((_, value) => value != null)
   @IsNumber()
   weeklyHours?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  jobId?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  parentPositionId?: string | null;
+}
+
+export class UpdateEmploymentReportingDto {
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  managerEmploymentId?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  matrixManagerEmploymentId?: string | null;
 }
 
 export class UpsertCommercialLinkDto {

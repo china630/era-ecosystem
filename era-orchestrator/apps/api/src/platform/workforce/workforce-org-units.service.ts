@@ -54,6 +54,7 @@ export class WorkforceOrgUnitsService {
         name: dto.name.trim(),
         code: dto.code?.trim() || null,
         sortOrder: dto.sortOrder ?? 0,
+        ...(dto.unitKind ? { unitKind: dto.unitKind } : {}),
       },
     });
     await this.audit.log({
@@ -84,6 +85,19 @@ export class WorkforceOrgUnitsService {
         await this.assertNoCycle(dto.parentId, id);
       }
     }
+    if (dto.managerEmploymentId) {
+      const mgr = await this.prisma.workforceEmployment.findFirst({
+        where: {
+          id: dto.managerEmploymentId,
+          workforceScopeId: link.workforceScopeId,
+          status: "ACTIVE",
+        },
+        select: { id: true },
+      });
+      if (!mgr) {
+        throw new BadRequestException("Manager employment not found in scope");
+      }
+    }
     const row = await this.prisma.orgUnit.update({
       where: { id },
       data: {
@@ -97,6 +111,7 @@ export class WorkforceOrgUnitsService {
           ? { managerUserId: dto.managerUserId }
           : {}),
         ...(dto.sortOrder != null ? { sortOrder: dto.sortOrder } : {}),
+        ...(dto.unitKind !== undefined ? { unitKind: dto.unitKind } : {}),
       },
     });
     await this.audit.log({

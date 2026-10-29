@@ -19,7 +19,9 @@ import {
   FolderInput,
   GitCompare,
   Gauge,
+  GitBranch,
   Inbox,
+  Layers,
   LayoutGrid,
   MapPin,
   Network,
@@ -243,6 +245,22 @@ export function OrchSidebar({
             label={t("wfPositions")}
             isActive={pathname.startsWith("/workspace/workforce/positions")}
             icon={Tags}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href={wf("/workspace/workforce/job-architecture")}
+            label={t("wfJobArchitecture")}
+            isActive={pathname.startsWith("/workspace/workforce/job-architecture")}
+            icon={Layers}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href={wf("/workspace/workforce/org-chart")}
+            label={t("wfOrgChart")}
+            isActive={pathname.startsWith("/workspace/workforce/org-chart")}
+            icon={GitBranch}
             nested
             onNavClick={onNavClick}
           />

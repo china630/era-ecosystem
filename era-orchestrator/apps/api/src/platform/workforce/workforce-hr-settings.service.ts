@@ -35,6 +35,8 @@ export type RouteStepInput = {
   positionId?: string | null;
   appliesTo?: string | null;
   canExceedAdvanceCap?: boolean;
+  chainOffset?: number | null;
+  minGradeLevel?: number | null;
 };
 
 function dec(value: number | null | undefined): Prisma.Decimal | null {
@@ -83,6 +85,8 @@ export class WorkforceHrSettingsService {
           positionId: step.positionId,
           appliesTo: step.appliesTo,
           canExceedAdvanceCap: step.canExceedAdvanceCap,
+          chainOffset: step.chainOffset,
+          minGradeLevel: step.minGradeLevel,
         })),
       })),
     };
@@ -132,20 +136,34 @@ export class WorkforceHrSettingsService {
       select: { id: true },
     });
     const unitIds = new Set(units.map((unit) => unit.id));
+    const needsUnit = new Set<string>([
+      WorkforceApprovalStepKind.ORG_UNIT_HEAD,
+      WorkforceApprovalStepKind.POSITION_IN_UNIT,
+    ]);
+    const needsPosition = new Set<string>([
+      WorkforceApprovalStepKind.POSITION_IN_UNIT,
+      WorkforceApprovalStepKind.POSITION_HOLDER,
+    ]);
     const cleaned = steps.map((step, index) => {
       if (!STEP_KINDS.has(step.kind)) {
         throw new BadRequestException(`Unknown step kind at ${index}`);
       }
       const orgUnitId = step.orgUnitId?.trim() || null;
       const positionId = step.positionId?.trim() || null;
-      if (step.kind !== WorkforceApprovalStepKind.REQUESTER_MANAGER && !orgUnitId) {
+      if (needsUnit.has(step.kind) && !orgUnitId) {
         throw new BadRequestException("Org unit is required for this step");
       }
       if (orgUnitId && !unitIds.has(orgUnitId)) {
         throw new BadRequestException("Org unit is outside this organization");
       }
-      if (step.kind === WorkforceApprovalStepKind.POSITION_IN_UNIT && !positionId) {
+      if (needsPosition.has(step.kind) && !positionId) {
         throw new BadRequestException("Position is required for this step");
+      }
+      if (
+        step.kind === WorkforceApprovalStepKind.GRADE_AT_LEAST &&
+        (step.minGradeLevel == null || !Number.isFinite(step.minGradeLevel))
+      ) {
+        throw new BadRequestException("minGradeLevel is required for GRADE_AT_LEAST");
       }
       const appliesTo = AUDIENCES.has(step.appliesTo ?? "")
         ? (step.appliesTo as "ALWAYS" | "LEADERSHIP" | "ORDINARY")
@@ -155,10 +173,18 @@ export class WorkforceHrSettingsService {
         kind: step.kind as WorkforceApprovalStepKind,
         appliesTo: appliesTo as WorkforceApprovalStepAudience,
         canExceedAdvanceCap: step.canExceedAdvanceCap === true,
-        orgUnitId:
-          step.kind === WorkforceApprovalStepKind.REQUESTER_MANAGER ? null : orgUnitId,
-        positionId:
-          step.kind === WorkforceApprovalStepKind.POSITION_IN_UNIT ? positionId : null,
+        chainOffset:
+          step.kind === WorkforceApprovalStepKind.MANAGER_CHAIN
+            ? step.chainOffset != null && step.chainOffset > 0
+              ? Math.floor(step.chainOffset)
+              : 2
+            : null,
+        minGradeLevel:
+          step.kind === WorkforceApprovalStepKind.GRADE_AT_LEAST
+            ? Math.floor(Number(step.minGradeLevel))
+            : null,
+        orgUnitId: needsUnit.has(step.kind) ? orgUnitId : orgUnitId,
+        positionId: needsPosition.has(step.kind) ? positionId : null,
       };
     });
     await this.prisma.$transaction(async (tx) => {
