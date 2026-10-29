@@ -3,9 +3,9 @@
 | Field | Value |
 |-------|-------|
 | Capability | `FNB-BUFFET-COST-01` |
-| Work order | Chef-ready A1–A9 / C4–C6 (2026-10-29) |
-| Lab path | Forecast → Staff → Cost run → Open Finance → buckets → Non-FOOD → Print |
-| Result | **blocked / not executed live** |
+| Work order | Chef-ready A1–A9 + WP0–WP8 chrome/i18n/templates (2026-10-29) |
+| Lab path | AZ: Bufet accordion → Planlar week CTA → Şablonlar list+modal → Rəhbərlik → Proqnoz → Normalar Saxla → Maya → Finance |
+| Result | **open / not executed live on staging** (code landed; eye signoff pending) |
 | Signed by | — |
 | Date | 2026-10-29 |
 
@@ -23,14 +23,14 @@
 | Finance `http://localhost:3001/api/health` | Timeout — host Next not running |
 | Lab seed (`db:seed:buffet-demo`) | Not re-run in this session |
 
-## Intended chef path (when lab is up)
+## Intended chef path (when lab / staging is up)
 
-1. Seed F&B + Finance buffet demo (ERA ID 100000).
-2. F&B `/admin/buffet` → Forecast: guest-nights + CatalogField SKU/UoM/bands.
-3. Staff tab: covers plan visible; honesty line for composition.
-4. Cost run: auto staff gross (override empty); COMP AZN from Finance catalog; outlet code shown; Open Finance HYBRID.
-5. Finance `/inventory/buffet-food-cost`: buckets, SKU variance highlight, ISSUES_ONLY → settings#warehouses + `/inventory/audits`, Non-FOOD tab, Print report.
-6. Confirm outlet CatalogField on WH settings; mismatch banner if codes diverge.
+1. Seed F&B + Finance buffet demo; kill `RESTAURANT` if present; locale **AZ**.
+2. Bufet accordion collapse; no café till nav on buffet routes; Nöqtə chrome.
+3. Planlar: Həftəni yarat primary; Şablonlar list + Yeni şablon modal.
+4. Proqnoz Oteldən götür (or manual honesty); Normalar Saxla in chrome.
+5. Maya: Hesabı yenilə; Əvvəl doldur if empty; Finance secondary.
+6. Finance `/inventory/buffet-food-cost`: buckets, SKU variance, Non-FOOD, Print (unchanged).
 
 ## Bugs / residuals found in code review (pre-browser)
 

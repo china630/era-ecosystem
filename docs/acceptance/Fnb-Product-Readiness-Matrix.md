@@ -31,9 +31,9 @@
 | Admin | `/admin` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (FNB-RBAC-01; not SHOW) |
 | Edition + halls | `/admin/settings` (Halls modal) · orch `/settings/subscription` F&B edition card | 🟡 SCREEN (FNB-09 / FNB-10 API; browser run and UAT step open) |
-| Buffet planner | `/admin/buffet/*` submenu (module `fnb_buffet_planner`) | 🟡 SCREEN (Plans/Templates/Management/Proqnoz/Normalar/Cost-run; spawn+kind; UAT FB-5 open — not SHOW) |
-| Buffet cost attribution | `/admin/settings` + `/admin/buffet/*` · Finance `/inventory/buffet-food-cost` | 🟡 SCREEN (FNB-BUFFET-COST-01 Waves 1–6 + Phase A–D + chef-ready + UX wave; punchlist blocked/unsigned — not SHOW; Demo stays lab-only until human signs) |
-| Outlets (multi-café) | `/select-outlet` + `/admin/settings` caps/shape/DELETE; Floor till-only; Buffet cap filter; pay `printChrome` | 🟡 SCREEN (FNB-09 capabilities + Elektra gate; `RESTAURANT` retired; UAT FB-OUTLET-01 open — not SHOW) |
+| Buffet planner | `/admin/buffet/*` submenu (module `fnb_buffet_planner`) | 🟡 SCREEN (WP0–WP8 + second-pass + tail: modal kind, Spawn-free AZ; UAT FB-5 unsigned — not SHOW; droplet UI awaits image deploy) |
+| Buffet cost attribution | `/admin/settings` + `/admin/buffet/*` · Finance `/inventory/buffet-food-cost` | 🟡 SCREEN (FNB-BUFFET-COST-01 + WP0–WP8 + tail; punchlist open/unsigned — not SHOW; Demo stays lab-only until human signs) |
+| Outlets (multi-café) | `/select-outlet` + `/admin/settings` caps/shape/DELETE; Floor till-only; Buffet cap filter; pay `printChrome` | 🟡 SCREEN (FNB-09; staging RESTAURANT→NAFTANI 2026-10-29; UAT FB-OUTLET-01 open — not SHOW) |
 | Mutation audit (FNB-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (CatalogField incl. PosShift) | SCREEN / 🟡 — Layer A + Wave B PAY/DEFER_HUB/PosShift + Wave E compound index (2026-10-29); UAT open — not SHOW; hash-chain deferred. Does not move Gate, Demo, Pilot, or Sell |
 
 Admin modal CRUD is in place for menu, tables, settings (incl. create outlet), daily-menu board, and buffet planner (submenu + composition/copy/spawn); RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
@@ -59,6 +59,6 @@ Admin modal CRUD is in place for menu, tables, settings (incl. create outlet), d
 - Forbidden: «ready» / «GA» while Pilot field open or Demo ❌.
 - Forbidden: claiming ERA Kafe **GA** while Pilot field is open. Street café SKUs (`industry_fnb_pos`, Zal, KDS, QR) are **mvp** on the existing F&B SHARED pool; Foundation is waived until NAS.
 - Edition, hall preset, and hotel mode are separate fields (ADR era-kafe-edition §1a). Upgrade ERA Kafe → full F&B adds no price line and keeps the Foundation waiver. Banquet is a stored preset without screens — do not sell banquet halls.
-- Buffet Planner (`fnb_buffet_planner`, FNB-BUFFET-01) is SCREEN/API only — do not sell as Pilot-ready or GA until UAT FB-5 + Finance warehouse scope (`FIN-INV-SCOPE-01`) close.
-- Buffet cost attribution (FNB-BUFFET-COST-01): Waves 1–6 + Phase A–D + chef-ready + UX wave **SCREEN** (backlog A/B/C product items closed except C8 future RBAC; C3 won't-do; A9 punchlist blocked). Unsigned `reports/fnb-buffet-cost-lab-signoff.md` + `reports/fnb-buffet-chef-ready-punchlist.md` — do not sell residual/HYBRID; Demo ✅ only after human sign (still not Pilot/`ga`). Line rollup remains 🟡 (UI/Demo/Pilot worst layers).
+- Buffet Planner (`fnb_buffet_planner`, FNB-BUFFET-01) is SCREEN/API only — do not sell as Pilot-ready or GA until UAT FB-5 **signed** + Finance warehouse scope (`FIN-INV-SCOPE-01`) close. WP0–WP8 code ≠ SHOW.
+- Buffet cost attribution (FNB-BUFFET-COST-01): Waves 1–6 + Phase A–D + chef-ready + WP0–WP8 **SCREEN** (C8 = future RBAC; C3 won't-do; A9 punchlist open/unsigned). Unsigned `reports/fnb-buffet-cost-lab-signoff.md` + `reports/fnb-buffet-chef-ready-punchlist.md` — do not sell residual/HYBRID; Demo ✅ only after human sign (still not Pilot/`ga`). Line rollup remains 🟡 (UI/Demo/Pilot worst layers). Gate/BE/Edition/`mvp`/Sell unchanged.
 - Mutation audit (FNB-AUD-01) is SCREEN/API — do not sell “full mutation audit” until UAT and SHOW.
