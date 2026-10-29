@@ -396,14 +396,12 @@ export default function BuffetManagementMealsPanel({
             </tbody>
           </table>
         </div>
-        <ModalFooter>
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setSignOpen(false)}>
-            {tc("cancel")}
-          </button>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void saveSignToday()}>
-            {tc("save")}
-          </button>
-        </ModalFooter>
+        <ModalFooter
+          onCancel={() => setSignOpen(false)}
+          onSubmit={() => void saveSignToday()}
+          cancelLabel={tc("cancel")}
+          submitLabel={tc("save")}
+        />
       </ModalShell>
 
       <ModalShell
