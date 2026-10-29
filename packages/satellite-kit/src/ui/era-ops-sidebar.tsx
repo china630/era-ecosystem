@@ -22,11 +22,16 @@ function NavItemGroup({
   const Icon = item.icon;
   const pathname = usePathname();
   const [flyout, setFlyout] = useState(false);
+  const childOnRoute = kids.some((child) => linkActive(child));
+  const [open, setOpen] = useState(childOnRoute);
   const rootRef = useRef<HTMLDivElement>(null);
+  const userClosedRef = useRef(false);
 
   useEffect(() => {
     setFlyout(false);
-  }, [pathname]);
+    if (childOnRoute && !userClosedRef.current) setOpen(true);
+    if (!childOnRoute) userClosedRef.current = false;
+  }, [pathname, childOnRoute]);
 
   useEffect(() => {
     if (!flyout) return;
@@ -58,7 +63,7 @@ function NavItemGroup({
         title={item.label}
         aria-label={item.label}
         aria-expanded={flyout}
-        onClick={() => setFlyout((open) => !open)}
+        onClick={() => setFlyout((v) => !v)}
       >
         {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden /> : null}
       </button>
@@ -71,24 +76,44 @@ function NavItemGroup({
         </RailFlyout>
       ) : null}
       <div className={collapsed ? "lg:hidden" : ""}>
-        <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => {
+            setOpen((v) => {
+              const next = !v;
+              userClosedRef.current = !next && childOnRoute;
+              return next;
+            });
+          }}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D] hover:bg-[#F8F9FA]"
+        >
           {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
-          <span className="truncate">{item.label}</span>
-        </div>
-        {kids.map((child) => {
-          const ChildIcon = child.icon;
-          const childClass = linkActive(child) ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
-          return (
-            <Link
-              key={child.id ?? child.href}
-              href={child.href!}
-              className={`${childClass} pl-8`}
-            >
-              {ChildIcon ? <ChildIcon className="h-4 w-4 shrink-0" aria-hidden /> : null}
-              <span className="truncate">{child.label}</span>
-            </Link>
-          );
-        })}
+          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          <span className="shrink-0 text-[#BDC3C7]" aria-hidden>
+            {open ? "▾" : "▸"}
+          </span>
+        </button>
+        {open
+          ? kids.map((child) => {
+              const ChildIcon = child.icon;
+              const childClass = linkActive(child)
+                ? SIDEBAR_LINK_ACTIVE_CLASS
+                : SIDEBAR_LINK_CLASS;
+              return (
+                <Link
+                  key={child.id ?? child.href}
+                  href={child.href!}
+                  className={`${childClass} pl-8`}
+                >
+                  {ChildIcon ? (
+                    <ChildIcon className="h-4 w-4 shrink-0" aria-hidden />
+                  ) : null}
+                  <span className="truncate">{child.label}</span>
+                </Link>
+              );
+            })
+          : null}
       </div>
     </div>
   );
