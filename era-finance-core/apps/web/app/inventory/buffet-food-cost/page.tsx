@@ -97,43 +97,32 @@ function mapToJson(bySku: Record<string, number>): string {
   return JSON.stringify(bySku, null, 0);
 }
 
-function handoffFieldLabel(
-  base: string,
-  hasHandoff: boolean,
-  t: (key: string, fallback?: string) => string,
-): string {
+function handoffFieldLabel(base: string, hasHandoff: boolean, fromHandoff: string): string {
   if (!hasHandoff) return base;
-  return `${base} (${t("inventory.buffetCostFromHandoff", "from F&B handoff")})`;
+  return `${base} (${fromHandoff})`;
 }
 
 function localizeSoftWarning(
   raw: string,
-  t: (key: string, fallback?: string) => string,
+  labels: {
+    issuesOnly: string;
+    noFoodWh: string;
+    theoZero: string;
+    outletMismatch: string;
+  },
 ): string {
   const lower = raw.toLowerCase();
   if (lower.includes("issues_only") || lower.includes("stocktake missing")) {
-    return t(
-      "inventory.buffetCostWarnIssuesOnly",
-      "FOOD stocktake missing or incomplete for period — reliability ISSUES_ONLY",
-    );
+    return labels.issuesOnly;
   }
   if (lower.includes("no food warehouses")) {
-    return t(
-      "inventory.buffetCostWarnNoFoodWh",
-      "No FOOD warehouses in scope — set costClass=FOOD (+ outlet code) in Inventory settings",
-    );
+    return labels.noFoodWh;
   }
   if (lower.includes("theoretical is 0")) {
-    return t(
-      "inventory.buffetCostWarnTheoZero",
-      "Theoretical is 0 — variance band not applied at total level",
-    );
+    return labels.theoZero;
   }
   if (lower.includes("outlet_code_mismatch")) {
-    return t(
-      "inventory.buffetCostWarnOutletMismatch",
-      "Outlet code mismatch — F&B outlet code does not match FOOD warehouse satelliteOutletCode",
-    );
+    return labels.outletMismatch;
   }
   return raw;
 }
@@ -144,6 +133,25 @@ export default function BuffetFoodCostRunPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const search = useSearchParams();
+  const fromHandoffLabel = t("inventory.buffetCostFromHandoff", "from F&B handoff");
+  const softWarningLabels = {
+    issuesOnly: t(
+      "inventory.buffetCostWarnIssuesOnly",
+      "FOOD stocktake missing or incomplete for period — reliability ISSUES_ONLY",
+    ),
+    noFoodWh: t(
+      "inventory.buffetCostWarnNoFoodWh",
+      "No FOOD warehouses in scope — set costClass=FOOD (+ outlet code) in Inventory settings",
+    ),
+    theoZero: t(
+      "inventory.buffetCostWarnTheoZero",
+      "Theoretical is 0 — variance band not applied at total level",
+    ),
+    outletMismatch: t(
+      "inventory.buffetCostWarnOutletMismatch",
+      "Outlet code mismatch — F&B outlet code does not match FOOD warehouse satelliteOutletCode",
+    ),
+  };
 
   const defaults = useMemo(() => {
     const to = search.get("to") || todayBakuYmd();
@@ -528,7 +536,7 @@ export default function BuffetFoodCostRunPage() {
               label={handoffFieldLabel(
                 t("inventory.buffetCostPosSale", "POS sale"),
                 defaults.hasHandoff,
-                t,
+                fromHandoffLabel,
               )}
               preset="amount"
               type="number"
@@ -540,7 +548,7 @@ export default function BuffetFoodCostRunPage() {
               label={handoffFieldLabel(
                 t("inventory.buffetCostPosComp", "COMP"),
                 defaults.hasHandoff,
-                t,
+                fromHandoffLabel,
               )}
               preset="amount"
               type="number"
@@ -552,7 +560,7 @@ export default function BuffetFoodCostRunPage() {
               label={handoffFieldLabel(
                 t("inventory.buffetCostStaffNet", "Staff net"),
                 defaults.hasHandoff,
-                t,
+                fromHandoffLabel,
               )}
               preset="amount"
               type="number"
@@ -816,7 +824,7 @@ export default function BuffetFoodCostRunPage() {
           {foodWarningsFiltered.length > 0 ? (
             <ul className="list-inside list-disc text-sm text-amber-800">
               {foodWarningsFiltered.map((w) => (
-                <li key={w}>{localizeSoftWarning(w, t)}</li>
+                <li key={w}>{localizeSoftWarning(w, softWarningLabels)}</li>
               ))}
             </ul>
           ) : report.reliability === "COMPLETE" ? (
@@ -1021,7 +1029,7 @@ export default function BuffetFoodCostRunPage() {
               {budgetReport.warnings.length > 0 ? (
                 <ul className="list-inside list-disc text-sm text-amber-800">
                   {budgetReport.warnings.map((w) => (
-                    <li key={w}>{localizeSoftWarning(w, t)}</li>
+                    <li key={w}>{localizeSoftWarning(w, softWarningLabels)}</li>
                   ))}
                 </ul>
               ) : null}
