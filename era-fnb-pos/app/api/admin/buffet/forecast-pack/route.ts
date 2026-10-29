@@ -74,7 +74,12 @@ export async function GET(request: Request) {
       ((err as { code?: string }).code === "BAD_DATE" ||
         (err as { code?: string }).code === "DATE_ORDER")
     ) {
-      return jsonError((err as Error).message, 400);
+      return jsonError(
+        typeof (err as { message?: unknown }).message === "string"
+          ? (err as { message: string }).message
+          : "Invalid date range",
+        400,
+      );
     }
     return handleRouteError(err);
   }
