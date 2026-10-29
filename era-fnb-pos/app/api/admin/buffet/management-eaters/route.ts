@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/session";
@@ -56,7 +57,10 @@ export async function POST(request: Request) {
     if (err && typeof err === "object" && "code" in err) {
       const code = (err as { code?: string }).code;
       if (code === "ORCH_UNAVAILABLE") {
-        return jsonError("Workforce leadership sync unavailable", 503);
+        return NextResponse.json(
+          { error: "Workforce leadership sync unavailable", code: "ORCH_UNAVAILABLE" },
+          { status: 503 },
+        );
       }
       if (code === "LABEL_REQUIRED") return jsonError("Label required", 400);
     }

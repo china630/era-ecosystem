@@ -300,7 +300,12 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
     };
   }
   const caps = capsFromProfile(profile);
-  const catalog = buildShellLinks(caps).map(mapShellLink);
+  const onBuffetRoutes = pathname.startsWith("/admin/buffet");
+  // Chef chrome on buffet routes: hide till/floor ops even if outlet also has till.
+  const shellCaps: CapFlags = onBuffetRoutes
+    ? { till: false, tables: false, buffetPlanner: caps.buffetPlanner }
+    : caps;
+  const catalog = buildShellLinks(shellCaps).map(mapShellLink);
   const navItems: EraOpsNavItem[] = visibleOpsNavItems(catalog, navStatus, profile, allowLink);
 
   const personName =

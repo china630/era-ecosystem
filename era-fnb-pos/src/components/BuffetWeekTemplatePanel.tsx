@@ -12,6 +12,7 @@ import {
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
+import { Plus } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
 import { BUFFET_MEALS } from "@/lib/buffet-planner-math";
 import { ISO_WEEKDAYS } from "@/lib/buffet-week-calendar";
@@ -35,19 +36,29 @@ type Template = {
 type Props = {
   outletId: string;
   kindFilter?: "GUEST" | "STAFF";
+  /** When create modal picks a different kind, sync chrome filter so the new row is visible. */
+  onKindFilterChange?: (kind: "GUEST" | "STAFF") => void;
   planOptions: Array<{ value: string; label: string }>;
+  onChromeReady?: (api: { openCreate: () => void }) => void;
+  hideInlineChrome?: boolean;
 };
 
 export default function BuffetWeekTemplatePanel({
   outletId,
   kindFilter = "GUEST",
+  onKindFilterChange,
   planOptions,
+  onChromeReady,
+  hideInlineChrome = false,
 }: Props) {
   const t = useTranslations("admin.buffet");
+  const tc = useTranslations("common");
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateId, setTemplateId] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
+  const [kindDraft, setKindDraft] = useState<"GUEST" | "STAFF">(kindFilter);
   const [slotOpen, setSlotOpen] = useState(false);
   const [slotWeekday, setSlotWeekday] = useState("1");
   const [slotMeal, setSlotMeal] = useState("BREAKFAST");
@@ -89,6 +100,21 @@ export default function BuffetWeekTemplatePanel({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    setKindDraft(kindFilter);
+  }, [kindFilter]);
+
+  useEffect(() => {
+    onChromeReady?.({
+      openCreate: () => {
+        setNameDraft("");
+        setNotesDraft("");
+        setKindDraft(kindFilter);
+        setCreateOpen(true);
+      },
+    });
+  }, [onChromeReady, kindFilter]);
+
   async function createTemplate() {
     if (!outletId) return;
     const res = await fetch("/api/admin/buffet/templates", {
@@ -98,7 +124,7 @@ export default function BuffetWeekTemplatePanel({
         outletId,
         name: nameDraft.trim() || t("defaultTemplateName"),
         notes: notesDraft.trim() || null,
-        kind: kindFilter,
+        kind: kindDraft,
         seedSlots: true,
       }),
     });
@@ -108,9 +134,15 @@ export default function BuffetWeekTemplatePanel({
       return;
     }
     showSuccess(t("templateCreated"));
+    setCreateOpen(false);
+    setNameDraft("");
     setNotesDraft("");
-    await load();
     if (data?.id) setTemplateId(data.id);
+    if (kindDraft !== kindFilter) {
+      onKindFilterChange?.(kindDraft);
+    } else {
+      await load();
+    }
   }
 
   useEffect(() => {
@@ -118,7 +150,22 @@ export default function BuffetWeekTemplatePanel({
     void fetch(`/api/admin/buffet/menu-items?outletId=${encodeURIComponent(outletId)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        setMenuItems(Array.isArray(d?.items) ? d.items : []);
+        const items = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
+        setMenuItems(
+          items.map(
+            (row: {
+              id: string;
+              name?: string;
+              plu?: string;
+              categoryName?: string;
+              label?: string;
+            }) => ({
+              id: row.id,
+              label: row.label || `${row.name ?? ""} (${row.plu ?? ""})`.trim(),
+              categoryName: row.categoryName,
+            }),
+          ),
+        );
       })
       .catch(() => undefined);
   }, [outletId, slotOpen]);
@@ -126,29 +173,23 @@ export default function BuffetWeekTemplatePanel({
   async function saveSlot() {
     if (!templateId) return;
     const res = await fetch(`/api/admin/buffet/templates/${templateId}/slots`, {
-      method: "PUT",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         weekday: Number(slotWeekday),
         meal: slotMeal,
         coversAdult: Number(slotAdult) || 0,
         coversChild: Number(slotChild) || 0,
-        lines: slotDishIds.map((menuItemId, idx) => ({
-          menuItemId,
-          station: "MAIN",
-          plannedPortions: 1,
-          wastePct: 0,
-          sortOrder: idx,
-        })),
+        menuItemIds: slotDishIds,
       }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      showApiError(data, t("saveFailed"));
+      showApiError(data, t("slotSaveFailed"));
       return;
     }
-    setSlotOpen(false);
     showSuccess(t("slotSaved"));
+    setSlotOpen(false);
     setTemplates((rows) =>
       rows.map((row) => (row.id === templateId ? (data as Template) : row)),
     );
@@ -156,7 +197,7 @@ export default function BuffetWeekTemplatePanel({
 
   async function captureFromPlan() {
     if (!templateId || !capturePlanId) {
-      showApiError({ error: t("capturePlanRequired") }, t("saveFailed"));
+      showApiError({ error: t("capturePlanRequired") }, t("captureFromPlan"));
       return;
     }
     const res = await fetch(`/api/admin/buffet/templates/${templateId}/capture-from-plan`, {
@@ -165,6 +206,7 @@ export default function BuffetWeekTemplatePanel({
       body: JSON.stringify({
         planId: capturePlanId,
         weekday: Number(slotWeekday),
+        meal: slotMeal,
       }),
     });
     const data = await res.json().catch(() => null);
@@ -172,19 +214,15 @@ export default function BuffetWeekTemplatePanel({
       showApiError(data, t("captureFailed"));
       return;
     }
-    setSlotOpen(false);
-    showSuccess(t("slotCaptured"));
+    showSuccess(t("captured"));
     setTemplates((rows) =>
       rows.map((row) => (row.id === templateId ? (data as Template) : row)),
     );
   }
 
-  async function deleteSlot(weekday: number, meal: string) {
+  async function deleteSlot(slotId: string) {
     if (!templateId) return;
-    const q = new URLSearchParams({
-      weekday: String(weekday),
-      meal,
-    });
+    const q = new URLSearchParams({ slotId });
     const res = await fetch(`/api/admin/buffet/templates/${templateId}/slots?${q}`, {
       method: "DELETE",
     });
@@ -226,65 +264,96 @@ export default function BuffetWeekTemplatePanel({
 
   return (
     <div className="space-y-4">
-      <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <p className="text-sm text-[#7F8C8D]">{t("templateHint")}</p>
-        <div className="flex flex-wrap items-end gap-3">
-          <Field
-            label={t("templateName")}
-            preset="shortText"
-            value={nameDraft}
-            placeholder={t("defaultTemplateName")}
-            onChange={(e) => setNameDraft(e.target.value)}
-          />
-          <Field
-            label={t("notes")}
-            preset="shortText"
-            value={notesDraft}
-            onChange={(e) => setNotesDraft(e.target.value)}
-          />
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={!outletId}
-            onClick={() => void createTemplate()}
-          >
-            {t("newTemplate")}
-          </button>
-        </div>
-        {templates.length > 0 ? (
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[16rem] flex-1">
-              <CatalogField
-                kind="ENTITY_REF"
-                label={t("template")}
-                options={templates.map((row) => ({
-                  value: row.id,
-                  label: `${row.name}${row.active ? "" : ` (${t("templateInactive")})`}`,
-                }))}
-                value={templateId}
-                onChange={(next) => setTemplateId(String(next ?? ""))}
-              />
-            </div>
-            {selected && !selected.active ? (
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => void makeTemplateActive()}
-              >
-                {t("makeActive")}
-              </button>
-            ) : null}
+      <div className={`${CARD_CLASS} overflow-hidden`}>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+          <div>
+            <p className="m-0 text-sm font-semibold text-[#2C3E50]">{t("templatesListTitle")}</p>
+            <p className="m-0 text-xs text-[#7F8C8D]">{t("templateHint")}</p>
           </div>
-        ) : (
-          <p className="text-sm text-[#7F8C8D]">{t("templatesEmpty")}</p>
-        )}
+          {!hideInlineChrome ? (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!outletId}
+              onClick={() => {
+                setNameDraft("");
+                setNotesDraft("");
+                setKindDraft(kindFilter);
+                setCreateOpen(true);
+              }}
+            >
+              <Plus className="mr-1 inline h-4 w-4" />
+              {t("newTemplate")}
+            </button>
+          ) : null}
+        </div>
+        <table className="w-full text-left text-sm">
+          <thead className="bg-[#F8FAFC] text-[#7F8C8D]">
+            <tr>
+              <th className="px-3 py-2 font-medium">{t("templateName")}</th>
+              <th className="px-3 py-2 font-medium">{t("kindFilter")}</th>
+              <th className="px-3 py-2 font-medium">{t("templateActiveCol")}</th>
+              <th className="px-3 py-2 font-medium">{t("templateSlotsCol")}</th>
+              <th className="px-3 py-2" />
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {templates.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-6 text-center text-[#7F8C8D]">
+                  {t("templatesEmpty")}
+                </td>
+              </tr>
+            ) : (
+              templates.map((row) => (
+                <tr
+                  key={row.id}
+                  className={`cursor-pointer hover:bg-[#F8FAFC] ${
+                    row.id === templateId ? "bg-[#EBF5FB]" : ""
+                  }`}
+                  onClick={() => setTemplateId(row.id)}
+                >
+                  <td className="px-3 py-2 font-medium text-[#2C3E50]">{row.name}</td>
+                  <td className="px-3 py-2">
+                    {t(`kind.${row.kind === "STAFF" ? "STAFF" : "GUEST"}`)}
+                  </td>
+                  <td className="px-3 py-2">
+                    {row.active ? (
+                      <span className="text-[#27AE60]">{t("templateActiveYes")}</span>
+                    ) : (
+                      <span className="text-[#95A5A6]">{t("templateInactive")}</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">{row.slots.length}</td>
+                  <td className="px-3 py-2 text-right">
+                    {!row.active ? (
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTemplateId(row.id);
+                          void makeTemplateActive();
+                        }}
+                      >
+                        {t("makeActive")}
+                      </button>
+                    ) : null}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {selected ? (
         <>
           <div className={`${CARD_CLASS} overflow-hidden`}>
             <div className="flex items-center justify-between border-b px-3 py-2">
-              <div className="text-sm font-semibold text-[#2C3E50]">{t("slotsTitle")}</div>
+              <div className="text-sm font-semibold text-[#2C3E50]">
+                {t("slotsTitle")} — {selected.name}
+              </div>
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -340,22 +409,16 @@ export default function BuffetWeekTemplatePanel({
                       <td className="px-3 py-2">{t(`weekday.${slot.weekday}`)}</td>
                       <td className="px-3 py-2">{t(`meal.${slot.meal}`)}</td>
                       <td className="px-3 py-2 tabular-nums">
-                        {slot.coversAdult + slot.coversChild}{" "}
-                        <span className="text-xs text-[#7F8C8D]">
-                          ({slot.coversAdult}/{slot.coversChild})
-                        </span>
+                        {slot.coversAdult + slot.coversChild}
                       </td>
                       <td className="px-3 py-2">{slot.lines.length}</td>
                       <td className="px-3 py-2 text-right">
                         <button
                           type="button"
                           className={SECONDARY_BUTTON_CLASS}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void deleteSlot(slot.weekday, slot.meal);
-                          }}
+                          onClick={() => void deleteSlot(slot.id)}
                         >
-                          {t("deleteSlot")}
+                          {tc("delete")}
                         </button>
                       </td>
                     </tr>
@@ -364,24 +427,63 @@ export default function BuffetWeekTemplatePanel({
               </tbody>
             </table>
           </div>
-
-          <p className="text-xs text-[#7F8C8D]">{t("spawnHint")}</p>
+          <p className="m-0 text-xs text-[#95A5A6]">{t("spawnHint")}</p>
         </>
       ) : null}
+
+      <ModalShell
+        open={createOpen}
+        title={t("newTemplate")}
+        onClose={() => setCreateOpen(false)}
+      >
+        <Field
+          label={t("templateName")}
+          preset="shortText"
+          value={nameDraft}
+          placeholder={t("defaultTemplateName")}
+          onChange={(e) => setNameDraft(e.target.value)}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("kindInModal")}
+          value={kindDraft}
+          options={[
+            { value: "GUEST", label: t("kind.GUEST") },
+            { value: "STAFF", label: t("kind.STAFF") },
+          ]}
+          onChange={(next) =>
+            setKindDraft(
+              (Array.isArray(next) ? next[0] : next) === "STAFF" ? "STAFF" : "GUEST",
+            )
+          }
+        />
+        <Field
+          label={t("notes")}
+          preset="shortText"
+          value={notesDraft}
+          onChange={(e) => setNotesDraft(e.target.value)}
+        />
+        <ModalFooter
+          onCancel={() => setCreateOpen(false)}
+          onSubmit={() => void createTemplate()}
+          cancelLabel={tc("cancel")}
+          submitLabel={tc("save")}
+        />
+      </ModalShell>
 
       <ModalShell open={slotOpen} title={t("editSlot")} onClose={() => setSlotOpen(false)}>
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("colWeekday")}
-          options={weekdayOptions}
           value={slotWeekday}
+          options={weekdayOptions}
           onChange={(next) => setSlotWeekday(String(next ?? "1"))}
         />
         <CatalogField
           kind="CLOSED_SMALL"
-          label={t("mealLabel")}
-          options={mealOptions}
+          label={t("colMeal")}
           value={slotMeal}
+          options={mealOptions}
           onChange={(next) => setSlotMeal(String(next ?? "BREAKFAST"))}
         />
         <Field
@@ -403,30 +505,36 @@ export default function BuffetWeekTemplatePanel({
         <CatalogField
           kind="MULTI"
           label={t("slotDishes")}
-          options={menuItems.map((m) => ({
-            value: m.id,
-            label: m.label,
-          }))}
           value={slotDishIds}
+          options={menuItems.map((m) => ({ value: m.id, label: m.label }))}
           onChange={(next) =>
             setSlotDishIds(Array.isArray(next) ? next.map(String) : next ? [String(next)] : [])
           }
         />
-        <CatalogField
-          kind="ENTITY_REF"
-          label={t("captureFromPlan")}
-          hint={t("captureFromPlanHint")}
-          options={[
-            { value: "", label: t("captureNone") },
-            ...planOptions,
-          ]}
-          value={capturePlanId}
-          onChange={(next) => setCapturePlanId(String(next ?? ""))}
-        />
+        {planOptions.length > 0 ? (
+          <>
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("captureFromPlan")}
+              hint={t("captureFromPlanHint")}
+              value={capturePlanId}
+              options={[{ value: "", label: "—" }, ...planOptions]}
+              onChange={(next) => setCapturePlanId(String(next ?? ""))}
+            />
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => void captureFromPlan()}
+            >
+              {t("captureFromPlan")}
+            </button>
+          </>
+        ) : null}
         <ModalFooter
           onCancel={() => setSlotOpen(false)}
-          onSubmit={() => void (capturePlanId ? captureFromPlan() : saveSlot())}
-          submitLabel={capturePlanId ? t("captureSlot") : t("saveSlot")}
+          onSubmit={() => void saveSlot()}
+          cancelLabel={tc("cancel")}
+          submitLabel={tc("save")}
         />
       </ModalShell>
     </div>

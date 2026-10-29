@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/session";
@@ -30,7 +31,13 @@ export async function POST(request: Request) {
       const code = (err as { code?: string }).code;
       if (code === "DATE_ORDER") return jsonError("from must be on or before to", 400);
       if (code === "HOTEL_UNAVAILABLE") {
-        return jsonError("Hotel guest-nights pull failed — use Manual", 503);
+        return NextResponse.json(
+          {
+            error: "Hotel guest-nights pull failed — use Manual",
+            code: "HOTEL_UNAVAILABLE",
+          },
+          { status: 503 },
+        );
       }
     }
     return handleRouteError(err);

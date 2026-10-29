@@ -17,6 +17,10 @@ async function main() {
   const restaurant = await prisma.outlet.findFirst({
     where: { organizationId, code: "RESTAURANT" },
   });
+  const existingNaftani = await prisma.outlet.findFirst({
+    where: { organizationId, code: "NAFTANI" },
+  });
+
   if (restaurant) {
     const openShifts = await prisma.posShift.count({
       where: { outletId: restaurant.id, status: "OPEN" },
@@ -24,8 +28,25 @@ async function main() {
     if (openShifts > 0) {
       throw new Error(`RESTAURANT has ${openShifts} OPEN shift(s) — close first`);
     }
-    await prisma.outlet.delete({ where: { id: restaurant.id } });
-    console.log("deleted outlet RESTAURANT", restaurant.id);
+    // Prefer rename when NAFTANI is missing so buffet/menu rows stay attached.
+    if (!existingNaftani) {
+      const renamed = await prisma.outlet.update({
+        where: { id: restaurant.id },
+        data: {
+          code: "NAFTANI",
+          name: "Naftani",
+          active: true,
+          shapeHint: "restaurant",
+          capTill: true,
+          capTables: true,
+          capBuffetPlanner: true,
+        },
+      });
+      console.log("renamed RESTAURANT → NAFTANI", renamed.id);
+    } else {
+      await prisma.outlet.delete({ where: { id: restaurant.id } });
+      console.log("deleted outlet RESTAURANT", restaurant.id);
+    }
   } else {
     console.log("no RESTAURANT outlet");
   }

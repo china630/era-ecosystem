@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { todayBakuYmd } from "@era/satellite-kit/time";
@@ -24,6 +24,7 @@ import BuffetManagementMealsPanel from "@/components/BuffetManagementMealsPanel"
 import BuffetStaffMealsPanel from "@/components/BuffetStaffMealsPanel";
 import BuffetCostRunPanel from "@/components/BuffetCostRunPanel";
 import BuffetForecastPanel from "@/components/BuffetForecastPanel";
+import BuffetPageChrome from "@/components/BuffetPageChrome";
 
 type Outlet = {
   id: string;
@@ -116,6 +117,7 @@ export default function BuffetAdminPanel({
 }) {
   const t = useTranslations("admin.buffet");
   const tc = useTranslations("common");
+  const tn = useTranslations("nav");
 
   const today = todayBakuYmd();
   const [outlets, setOutlets] = useState<Outlet[]>([]);
@@ -153,6 +155,26 @@ export default function BuffetAdminPanel({
   } | null>(null);
   const [rollupNonce, setRollupNonce] = useState(0);
   const [materialsOpen, setMaterialsOpen] = useState(false);
+  const tmplChromeRef = useRef<{ openCreate: () => void } | null>(null);
+  const mgmtChromeRef = useRef<{
+    openRoster: () => void;
+    openSignToday: () => void;
+  } | null>(null);
+  const forecastChromeRef = useRef<{
+    syncHotel: () => void;
+    saveNorms: () => void;
+    saving: boolean;
+    loading: boolean;
+  } | null>(null);
+  const costChromeRef = useRef<{
+    refresh: () => void;
+    financeHref: string | null;
+    loading: boolean;
+    toggleStaffOverride: () => void;
+    staffOverrideOpen: boolean;
+  } | null>(null);
+  const [chromeTick, setChromeTick] = useState(0);
+  const bumpChrome = useCallback(() => setChromeTick((n) => n + 1), []);
   const [materials, setMaterials] = useState<{
     missingBomCount: number;
     rows: Array<{
@@ -639,9 +661,36 @@ export default function BuffetAdminPanel({
     [plans, t],
   );
 
+  const sectionTitle =
+    viewTab === "templates"
+      ? tn("buffetTemplates")
+      : viewTab === "management"
+        ? tn("buffetManagement")
+        : viewTab === "forecast"
+          ? tn("buffetForecast")
+          : viewTab === "norms"
+            ? tn("buffetNorms")
+            : viewTab === "costRun"
+              ? tn("buffetCostRun")
+              : tn("buffetPlans");
+  const sectionSubtitle =
+    viewTab === "plans"
+      ? t("plansHierarchyHint")
+      : viewTab === "templates"
+        ? t("templatesChromeHint")
+        : viewTab === "management"
+          ? t("managementHint")
+          : viewTab === "forecast"
+            ? t("forecastHint")
+            : viewTab === "norms"
+              ? t("normsHint")
+              : viewTab === "costRun"
+                ? t("costRunHint")
+                : t("subtitle");
+
   return (
     <div className="space-y-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={sectionTitle} subtitle={sectionSubtitle} />
 
       {buffetModuleActive === false ? (
         <div className={`${CARD_CLASS} border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950`}>
@@ -662,73 +711,29 @@ export default function BuffetAdminPanel({
         </div>
       ) : null}
 
-      <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[12rem] flex-1">
-            <CatalogField
-              kind={"ENTITY_REF" as CatalogFieldKind}
-              label={t("outlet")}
-              value={outletId}
-              options={outletOptions}
-              onChange={(next) => setOutletId(Array.isArray(next) ? next[0] ?? "" : next)}
-            />
-          </div>
-          {viewTab !== "templates" ? (
+      <BuffetPageChrome
+        outlets={outlets}
+        outletId={outletId}
+        onOutletChange={setOutletId}
+        showDates={viewTab !== "templates"}
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromDate={setFromDate}
+        onToDate={setToDate}
+        showKind={viewTab === "plans" || viewTab === "templates"}
+        kindFilter={kindFilter === "STAFF" ? "STAFF" : "GUEST"}
+        onKindFilter={(k) => setKindFilter(k)}
+        showStatus={viewTab === "plans"}
+        statusFilter={statusFilter}
+        statusOptions={statusOptions}
+        onStatusFilter={setStatusFilter}
+        actions={
+          (void chromeTick,
+          viewTab === "plans" ? (
             <>
-              <div className="w-[9.5rem]">
-                <Field
-                  label={t("fromDate")}
-                  preset="date"
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </div>
-              <div className="w-[9.5rem]">
-                <Field
-                  label={t("toDate")}
-                  preset="date"
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </div>
-            </>
-          ) : null}
-          {viewTab === "plans" || viewTab === "templates" ? (
-            <div className="w-[9rem]">
-              <CatalogField
-                kind={"CLOSED_SMALL" as CatalogFieldKind}
-                label={t("kindFilter")}
-                value={kindFilter}
-                options={[
-                  { value: "GUEST", label: t("kind.GUEST") },
-                  { value: "STAFF", label: t("kind.STAFF") },
-                ]}
-                onChange={(next) =>
-                  setKindFilter(
-                    (Array.isArray(next) ? next[0] : next) === "STAFF" ? "STAFF" : "GUEST",
-                  )
-                }
-              />
-            </div>
-          ) : null}
-          {viewTab === "plans" ? (
-            <div className="w-[9rem]">
-              <CatalogField
-                kind={"CLOSED_SMALL" as CatalogFieldKind}
-                label={t("statusFilter")}
-                value={statusFilter}
-                options={statusOptions}
-                onChange={(next) => setStatusFilter(Array.isArray(next) ? next[0] ?? "" : next)}
-              />
-            </div>
-          ) : null}
-          {viewTab === "plans" ? (
-            <div className="ml-auto flex flex-wrap gap-2">
               <button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                className={PRIMARY_BUTTON_CLASS}
                 onClick={() => {
                   const spawnKind = kindFilter === "STAFF" ? "STAFF" : "GUEST";
                   if (spawnKind === "STAFF") setSpawnCoversSource("MANUAL");
@@ -759,27 +764,127 @@ export default function BuffetAdminPanel({
               >
                 {t("spawnWeek")}
               </button>
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openCreatePlan()}>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => openCreatePlan()}
+              >
                 <Plus className="mr-1 inline h-4 w-4" />
                 {t("newPlan")}
               </button>
-            </div>
-          ) : null}
-        </div>
-        {outletCostModel && outletCostModel !== "HYBRID" ? (
-          <p className="m-0 text-xs text-[#E67E22]">
-            {outletCostModel === "OFF"
-              ? t("outletModelOffBanner")
-              : t("outletModelLabel", { model: outletCostModel })}
-          </p>
-        ) : null}
-      </div>
+            </>
+          ) : viewTab === "templates" ? (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!outletId || !tmplChromeRef.current}
+              onClick={() => tmplChromeRef.current?.openCreate()}
+            >
+              <Plus className="mr-1 inline h-4 w-4" />
+              {t("newTemplate")}
+            </button>
+          ) : viewTab === "management" ? (
+            <>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={!outletId || !mgmtChromeRef.current}
+                onClick={() => mgmtChromeRef.current?.openRoster()}
+              >
+                {t("eatersRoster")}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={!outletId || !mgmtChromeRef.current}
+                onClick={() => mgmtChromeRef.current?.openSignToday()}
+              >
+                {t("signManagementToday")}
+              </button>
+            </>
+          ) : viewTab === "forecast" ? (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={
+                !forecastChromeRef.current ||
+                forecastChromeRef.current.loading ||
+                !fromDate ||
+                !toDate
+              }
+              onClick={() => forecastChromeRef.current?.syncHotel()}
+            >
+              {t("forecastSyncHotel")}
+            </button>
+          ) : viewTab === "norms" ? (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!forecastChromeRef.current || forecastChromeRef.current.saving}
+              onClick={() => forecastChromeRef.current?.saveNorms()}
+            >
+              {forecastChromeRef.current?.saving ? "…" : t("forecastSaveNorms")}
+            </button>
+          ) : viewTab === "costRun" ? (
+            <>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={
+                  !outletId ||
+                  !costChromeRef.current ||
+                  costChromeRef.current.loading
+                }
+                onClick={() => costChromeRef.current?.refresh()}
+              >
+                {costChromeRef.current?.loading ? "…" : t("costRunRefresh")}
+              </button>
+              {costChromeRef.current?.financeHref ? (
+                <a
+                  href={costChromeRef.current.financeHref}
+                  className={SECONDARY_BUTTON_CLASS}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t("costRunOpenFinance")}
+                </a>
+              ) : null}
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={!costChromeRef.current}
+                onClick={() => costChromeRef.current?.toggleStaffOverride()}
+              >
+                {costChromeRef.current?.staffOverrideOpen
+                  ? t("costRunStaffOverrideHide")
+                  : t("costRunStaffOverrideShow")}
+              </button>
+            </>
+          ) : null)
+        }
+        banner={
+          outletCostModel && outletCostModel !== "HYBRID" ? (
+            <p className="m-0 text-xs text-[#E67E22]">
+              {outletCostModel === "OFF"
+                ? t("outletModelOffBanner")
+                : t("outletModelLabel", { model: outletCostModel })}
+            </p>
+          ) : null
+        }
+      />
 
       {viewTab === "templates" ? (
         <BuffetWeekTemplatePanel
           outletId={outletId}
           kindFilter={kindFilter === "STAFF" ? "STAFF" : "GUEST"}
+          onKindFilterChange={(k) => setKindFilter(k)}
           planOptions={planCaptureOptions}
+          onChromeReady={(api) => {
+            const first = !tmplChromeRef.current;
+            tmplChromeRef.current = api;
+            if (first) bumpChrome();
+          }}
+          hideInlineChrome
         />
       ) : null}
 
@@ -789,6 +894,12 @@ export default function BuffetAdminPanel({
           fromDate={fromDate}
           toDate={toDate}
           onChanged={() => setRollupNonce((n) => n + 1)}
+          onChromeReady={(api) => {
+            const first = !mgmtChromeRef.current;
+            mgmtChromeRef.current = api;
+            if (first) bumpChrome();
+          }}
+          hideInlineChrome
         />
       ) : null}
 
@@ -810,6 +921,19 @@ export default function BuffetAdminPanel({
           onGoGuestNights={() => {
             window.location.href = "/admin/buffet/forecast";
           }}
+          onChromeReady={(api) => {
+            const prev = costChromeRef.current;
+            costChromeRef.current = api;
+            if (
+              !prev ||
+              prev.loading !== api.loading ||
+              prev.financeHref !== api.financeHref ||
+              prev.staffOverrideOpen !== api.staffOverrideOpen
+            ) {
+              bumpChrome();
+            }
+          }}
+          hideInlineChrome
         />
       ) : null}
 
@@ -819,6 +943,14 @@ export default function BuffetAdminPanel({
           fromDate={fromDate}
           toDate={toDate}
           mode="nights"
+          onChromeReady={(api) => {
+            const prev = forecastChromeRef.current;
+            forecastChromeRef.current = api;
+            if (!prev || prev.loading !== api.loading || prev.saving !== api.saving) {
+              bumpChrome();
+            }
+          }}
+          hideInlineChrome
         />
       ) : null}
 
@@ -828,6 +960,14 @@ export default function BuffetAdminPanel({
           fromDate={fromDate}
           toDate={toDate}
           mode="norms"
+          onChromeReady={(api) => {
+            const prev = forecastChromeRef.current;
+            forecastChromeRef.current = api;
+            if (!prev || prev.loading !== api.loading || prev.saving !== api.saving) {
+              bumpChrome();
+            }
+          }}
+          hideInlineChrome
         />
       ) : null}
 
