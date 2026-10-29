@@ -263,6 +263,8 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-10-27 | HOT-FO-04 stays **SCREEN**. Card save, Elektra, and an OTA modify move the slice plan from the first open night. No new screen. AC-HOT-AMEND stays 🟡. Hotel SHOW rollup unchanged. |
 | 2026-10-27 | HOT-AG-01 second-pass terminal allotments read-only — stays **SHOW** / SHIPPED. Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-AG-01 contracts UI honesty (icon actions, explicit party type, Cancel/Expire) — stays **SHOW** / SHIPPED. Open debts SC-REST/DEP/REL. Hotel SHOW rollup / Gate / Pilot / edition unchanged. |
+| 2026-10-29 | HOT-CASH-01 folio polish second-pass (Bu sətri ödə GUEST-only; PKG Təsvir i18n) — Cash/CL stays **SHOW**; HOT-FOLIO-DESK API/SCREEN until UAT. Gate / Pilot / edition unchanged. |
+| 2026-10-29 | HOT-CASH-01 folio UI polish (drop Sətir; Debit\|Credit wash; Bu sətri ödə; EraMenu portal; short labels) — Cash/CL stays **SHOW**; HOT-FOLIO-DESK API/SCREEN until UAT. Gate / Pilot / edition unchanged. |
 | 2026-10-29 | HOT-REV-01 SatAdmin master-data `allowManualCharge`/`allowManualPayment` toggles (second-pass); HOT-CASH-01 Extra charge/pay flag gates — Cash/CL **SHOW**; HOT-FOLIO-DESK / HOT-REV-01 API/SCREEN. Gate / Pilot / edition unchanged. |
 | 2026-10-29 | HOT-CASH-01 Debit\|Credit ledger + stay-wide lodging Accept payment; HOT-REV-01 Nafta v2 catalog/remap scripts — Cash/CL stays **SHOW**; HOT-FOLIO-DESK / HOT-REV-01 remain API/SCREEN until UAT. Gate / Pilot / edition unchanged. |
 | 2026-10-27 | HOT-CASH-01/04 ledger signs + open-debt payment gate (card folio) — Cash/CL stays **SHOW**; HOT-FOLIO-DESK remains API/SCREEN until UAT. Gate / Pilot / edition unchanged. |
