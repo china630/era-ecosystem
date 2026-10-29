@@ -2165,6 +2165,14 @@ export const resources = {
         buffetCostWarnIssuesOnly: "FOOD stocktake за период отсутствует или неполный — reliability ISSUES_ONLY",
         buffetCostWarnNoFoodWh: "Нет складов FOOD в scope — задайте costClass=FOOD (+ outlet) в настройках склада",
         buffetCostWarnTheoZero: "Theoretical = 0 — полоса variance на итоге не применяется",
+        buffetCostWarnOutletMismatch:
+          "Несовпадение кода outlet — код F&B не совпадает с satelliteOutletCode склада FOOD",
+        buffetCostPrint: "Печать отчёта",
+        buffetCostOutletMismatchTitle: "Несовпадение кода outlet",
+        buffetCostOutletMismatchBody:
+          "Код outlet в запросе не совпадает с satelliteOutletCode склада FOOD — исправьте теги в настройках Inventory, прежде чем доверять usage.",
+        buffetCostSkuVarianceHint:
+          "{{sku}}: usage {{usage}} против theoretical {{theo}} AZN",
         buffetCostTabFood: "FOOD HYBRID",
         buffetCostTabBudget: "Non-FOOD budget",
         buffetCostOutlet: "Код F&B outlet",
@@ -2181,7 +2189,15 @@ export const resources = {
         buffetCostTheoSkuInvalid: "Некорректный theoreticalBySku JSON",
         buffetCostLoadFailed: "Не удалось выполнить buffet food cost run",
         buffetCostTheoSku: "theoreticalBySku JSON (напр. {\"MEAT\":1000})",
+        outletBudgetGtHidden:
+          "План INVENTORY_GT скрыт — пометьте склад costClass=INVENTORY_GT в настройках Inventory.",
         outletBudgetHint: "План/факт по складам CHEMICAL, CONSUMABLE, TABLEWARE, INVENTORY_GT. Недельный план масштабируется на период.",
+        whScopeTitle: "Склады · класс затрат",
+        whScopeHint:
+          "Пометьте склады FOOD (и при необходимости код F&B outlet), чтобы buffet cost run корректно атрибутировал расход.",
+        warehousesEmpty: "Складов пока нет.",
+        whCostClass: "Класс затрат",
+        whOutletCode: "Код outlet",
         outletBudgetPlanCHEMICAL: "План CHEMICAL (нед. AZN)",
         outletBudgetPlanCONSUMABLE: "План CONSUMABLE (нед. AZN)",
         outletBudgetPlanTABLEWARE: "План TABLEWARE (нед. AZN)",
@@ -4886,6 +4902,9 @@ export const resources = {
         paginationPageOf: "Стр. {{page}} из {{pages}} (всего {{total}})",
         filterReset: "Сбросить фильтр",
         datePlaceholder: "дд.мм.гггг",
+        from: "С",
+        to: "По",
+        none: "—",
       },
       trade: {
         export: {
@@ -7115,6 +7134,14 @@ export const resources = {
         buffetCostWarnIssuesOnly: "Dövr üçün FOOD stocktake yoxdur və ya natamamdır — reliability ISSUES_ONLY",
         buffetCostWarnNoFoodWh: "Scope-da FOOD anbar yoxdur — costClass=FOOD (+ outlet) təyin edin",
         buffetCostWarnTheoZero: "Theoretical = 0 — variance zolağı cəmi səviyyəsində tətbiq olunmur",
+        buffetCostWarnOutletMismatch:
+          "Outlet kodu uyğunsuzluğu — F&B outlet kodu FOOD anbarının satelliteOutletCode ilə üst-üstə düşmür",
+        buffetCostPrint: "Hesabatı çap et",
+        buffetCostOutletMismatchTitle: "Outlet kodu uyğunsuzluğu",
+        buffetCostOutletMismatchBody:
+          "Sorğudakı outlet kodu FOOD anbarının satelliteOutletCode ilə uyğun gəlmir — usage-ə etibar etməzdən əvvəl Inventory settings-də teqləri düzəldin.",
+        buffetCostSkuVarianceHint:
+          "{{sku}}: usage {{usage}} vs theoretical {{theo}} AZN",
         buffetCostTabFood: "FOOD HYBRID",
         buffetCostTabBudget: "Non-FOOD budget",
         buffetCostOutlet: "F&B outlet kodu",
@@ -7131,7 +7158,15 @@ export const resources = {
         buffetCostTheoSkuInvalid: "Yanlış theoreticalBySku JSON",
         buffetCostLoadFailed: "Buffet food cost hesabatı alınmadı",
         buffetCostTheoSku: "theoreticalBySku JSON (məs. {\"MEAT\":1000})",
+        outletBudgetGtHidden:
+          "INVENTORY_GT planı gizlidir — Inventory settings-də costClass=INVENTORY_GT anbarı işarələyin.",
         outletBudgetHint: "CHEMICAL, CONSUMABLE, TABLEWARE, INVENTORY_GT anbarları üçün plan/fakt. Həftəlik plan dövrə miqyaslanır.",
+        whScopeTitle: "Anbarlar · xərc sinifi",
+        whScopeHint:
+          "FOOD anbarlarını (və istəyə görə F&B outlet kodunu) işarələyin ki, buffet cost run istifadini düzgün attribute etsin.",
+        warehousesEmpty: "Hələ anbar yoxdur.",
+        whCostClass: "Xərc sinifi",
+        whOutletCode: "Outlet kodu",
         outletBudgetPlanCHEMICAL: "Plan CHEMICAL (həftə AZN)",
         outletBudgetPlanCONSUMABLE: "Plan CONSUMABLE (həftə AZN)",
         outletBudgetPlanTABLEWARE: "Plan TABLEWARE (həftə AZN)",
@@ -9849,6 +9884,9 @@ export const resources = {
         paginationPageOf: "Səh. {{page}} / {{pages}} (cəmi {{total}})",
         filterReset: "Filtri sıfırla",
         datePlaceholder: "gg.aa.iiii",
+        from: "Başlanğıc",
+        to: "Son",
+        none: "—",
       },
       trade: {
         export: {
@@ -9971,6 +10009,9 @@ export const resources = {
         all: "All",
         filterReset: "Reset filters",
         datePlaceholder: "dd.mm.yyyy",
+        from: "From",
+        to: "To",
+        none: "—",
         securityBlockTitle: "Platform block",
         securityBlock: {
           HARD_BLOCK_PLATFORM:
@@ -10084,7 +10125,23 @@ export const resources = {
         buffetCostWarnIssuesOnly: "FOOD stocktake missing or incomplete for period — reliability ISSUES_ONLY",
         buffetCostWarnNoFoodWh: "No FOOD warehouses in scope — set costClass=FOOD (+ outlet code) in Inventory settings",
         buffetCostWarnTheoZero: "Theoretical is 0 — variance band not applied at total level",
+        buffetCostWarnOutletMismatch:
+          "Outlet code mismatch — F&B outlet code does not match FOOD warehouse satelliteOutletCode",
+        buffetCostPrint: "Print report",
+        buffetCostOutletMismatchTitle: "Outlet code mismatch",
+        buffetCostOutletMismatchBody:
+          "Query outlet code does not match FOOD warehouse satelliteOutletCode — fix tags in Inventory settings before trusting usage.",
+        buffetCostSkuVarianceHint:
+          "{{sku}}: usage {{usage}} vs theoretical {{theo}} AZN",
+        outletBudgetGtHidden:
+          "INVENTORY_GT plan hidden — tag a warehouse with costClass=INVENTORY_GT in Inventory settings to enable.",
         outletBudgetHint: "Plan/fact for CHEMICAL, CONSUMABLE, TABLEWARE, INVENTORY_GT warehouses. Weekly plan scales to the selected period. TABLEWARE stocktake cadence defaults to every 15 days in F&B settings.",
+        whScopeTitle: "Warehouses · cost class",
+        whScopeHint:
+          "Tag FOOD warehouses (and optional F&B outlet code) so buffet cost run attributes usage correctly.",
+        warehousesEmpty: "No warehouses yet.",
+        whCostClass: "Cost class",
+        whOutletCode: "Outlet code",
         outletBudgetPlanCHEMICAL: "Plan CHEMICAL (week AZN)",
         outletBudgetPlanCONSUMABLE: "Plan CONSUMABLE (week AZN)",
         outletBudgetPlanTABLEWARE: "Plan TABLEWARE (week AZN)",
