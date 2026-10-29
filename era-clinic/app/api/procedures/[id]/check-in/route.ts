@@ -4,6 +4,7 @@ import {
   jsonError,
   handleRouteError,
   getSatelliteSession,
+  requireClinicPermission,
   sessionHasClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
@@ -33,34 +34,38 @@ export async function POST(
 
     const { id } = await params;
     const body = schema.parse(await req.json().catch(() => ({})));
-    const hasNurseCheckIn = sessionHasClinicPermission(
-      session,
-      CLINIC_PERMISSION.API_PROCEDURES_CHECK_IN,
-    );
-    const hasReception = sessionHasClinicPermission(
-      session,
-      CLINIC_PERMISSION.API_PROCEDURES_RECEPTION,
-    );
     const settings = await getClinicSettings();
-    const receptionMatrixOk =
-      body.source === "matrix" &&
-      hasReception &&
-      settings.receptionProcedureCheckIn === true;
+    const matrixPath = body.source === "matrix";
 
-    if (!hasNurseCheckIn && !receptionMatrixOk) {
-      return jsonError("Forbidden", 403, { code: "FORBIDDEN" });
+    let canOverride = false;
+    let overrideReason = body.overrideReason?.trim() || undefined;
+
+    if (matrixPath) {
+      const denied = await requireClinicPermission(
+        session,
+        CLINIC_PERMISSION.API_PROCEDURES_RECEPTION,
+      );
+      if (denied) return denied;
+      if (settings.receptionProcedureCheckIn !== true) {
+        return jsonError("Forbidden", 403, { code: "FORBIDDEN" });
+      }
+      canOverride = true;
+      if (!overrideReason && !body.qrToken) {
+        overrideReason = "Reception matrix check-in";
+      }
+    } else {
+      const denied = await requireClinicPermission(
+        session,
+        CLINIC_PERMISSION.API_PROCEDURES_CHECK_IN,
+      );
+      if (denied) return denied;
+      canOverride =
+        sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_DOCTOR) ||
+        sessionHasClinicPermission(
+          session,
+          CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+        );
     }
-
-    const canOverride =
-      sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_DOCTOR) ||
-      sessionHasClinicPermission(session, CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS) ||
-      receptionMatrixOk;
-
-    const overrideReason =
-      body.overrideReason?.trim() ||
-      (receptionMatrixOk && !body.qrToken
-        ? "Reception matrix check-in"
-        : undefined);
 
     const updated = await checkInProcedureOrder(
       id,
