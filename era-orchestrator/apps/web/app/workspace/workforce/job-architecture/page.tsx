@@ -133,9 +133,10 @@ export default function JobArchitecturePage() {
     );
   }, [jobs, filterQ]);
 
-  const list = tab === "grades" ? filteredGrades : filteredJobs;
+  const list: Array<GradeRow | JobRow> =
+    tab === "grades" ? filteredGrades : filteredJobs;
   const { page, pageSize, setPage, setPageSize, paged, total } =
-    useListPagination(list);
+    useListPagination<GradeRow | JobRow>(list);
 
   function openCreateGrade() {
     setFormCode("");
