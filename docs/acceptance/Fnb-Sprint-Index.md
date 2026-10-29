@@ -24,13 +24,16 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-fnb-pos/doc/UAT-SMOKE.md` |
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-RBAC | F&B RBAC Variant A + custom roles | [~] | AC-FNB-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
-| S-BUFFET | Buffet Planner module (`fnb_buffet_planner`) | [~] | FNB-BUFFET-01 API/SCREEN; submenu UX + template kind/spawn; UAT FB-5 open; Gate/Pilot/edition unchanged (`mvp`) |
-| S-BUFFET-COST | Buffet cost attribution (HYBRID / residual) + staff overlap + management covers | [ ] | Waves 1–6 + Phase A–D + chef-ready + UX wave (hotel pax, eaters roster) API/SCREEN; punchlist blocked; C3 won't-do; C8 = future RBAC; UAT open/unsigned; not sellable |
-| S-OUTLET | Multi-outlet create + caps + Elektra gate | [~] | FNB-09 / FB-OUTLET-01; capabilities + `/select-outlet` + DELETE; till guards; `RESTAURANT` retired; UAT open — not SHIPPED |
+| S-BUFFET | Buffet Planner module (`fnb_buffet_planner`) | [~] | FNB-BUFFET-01 API/SCREEN; WP0–WP8 + second-pass + tail (modal kind, Spawn-free); staging NAFTANI rename; UAT FB-5 unsigned; `mvp` |
+| S-BUFFET-COST | Buffet cost attribution (HYBRID / residual) + staff overlap + management covers | [ ] | Waves 1–6 + Phase A–D + chef-ready + WP0–WP8 + second-pass + tail API/SCREEN; punchlist open/unsigned; C3 won't-do; C8 = future RBAC; not sellable |
+| S-OUTLET | Multi-outlet create + caps + Elektra gate | [~] | FNB-09 / FB-OUTLET-01; staging RESTAURANT→NAFTANI (rename, data kept); kill-script rename path; UAT open — not SHIPPED |
 | S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | FNB-AUD-01 / AC-FNB-AUD 🟡; Wave B PAY/DISCOUNT/ROOM_CHARGE/DEFER_HUB + PosShift; Wave E compound `(organizationId, createdAt)` 2026-10-29; hash-chain deferred; UAT open — not SHIPPED; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 
+**2026-10-29:** WP0–WP8 tail closeout — Spawn-free AZ/RU; template modal kind; select-outlet Nöqtə; kill rename-if-no-NAFTANI; staging RESTAURANT→NAFTANI. COVERAGE/IM/PRM status unchanged API/SCREEN; `S-BUFFET`/`S-OUTLET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` `mvp` untouched; **no** Demo ✅ / SHOW / SHIPPED / Scaffold ✅. Droplet UI still needs image deploy. `era-readiness-matrix` skipped.
+**2026-10-29:** WP0–WP8 second-pass closeout — locale sync toasts (not EN API body); section PageHeader; AZ/RU chef leftovers; Maya blocked honesty. COVERAGE/IM/PRM status unchanged API/SCREEN (UI 🟡 SCREEN); `S-BUFFET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` `mvp` untouched; **no** Demo ✅ / SHOW / SHIPPED / Scaffold ✅. `era-readiness-matrix` skipped.
+**2026-10-29:** WP0–WP8 chef product closeout — BuffetPageChrome/CTAs, AZ chef i18n, templates list+modal, week-primary, accordion+hide till, sync honesty, ADR/UAT honesty. COVERAGE/IM/PRM status unchanged API/SCREEN (UI 🟡 SCREEN); `S-BUFFET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` `mvp` untouched; **no** Demo ✅ / SHOW / SHIPPED / Scaffold ✅. `era-readiness-matrix` skipped (no consumer API level / M16 flip).
 **2026-10-29:** FNB-09 second-pass closeout — till API/UI guards + UAT FB-OUTLET-01 expanded; COVERAGE/IM/PRM status unchanged API/SCREEN; `S-OUTLET` [~]; `fnb.yaml` `mvp` untouched; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped.
 **2026-10-29:** Outlet capabilities + Elektra gate closeout (FNB-09) — COVERAGE actors Ops/SatAdmin SCREEN; IM no Scaffold ✅ (out of BE rollup); PRM UI 🟡 SCREEN / Gate·BE·Demo·Pilot·Edition·Sell unchanged; `S-OUTLET` [~]; `fnb.yaml` `mvp` untouched; UI board FNB-09 SCREEN. **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped (no consumer API level / M16 flip).
 **2026-10-29:** C3 won't-do (Finance twin settings) — removed from backlog open list → § D non-goals; not a product gap.

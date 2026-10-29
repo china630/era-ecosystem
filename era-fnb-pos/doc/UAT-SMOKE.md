@@ -97,18 +97,23 @@ See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing
 6. Daily menu board: pick `Date`, bulk-select menu items (checkboxes), then `Save board` (PUT)
 7. Optional: `Copy from yesterday` (POST) and re-open `/admin/daily-menu` to verify selection persists
 
-## FB-5 — Buffet planner (UI) — open
+## FB-5 — Buffet planner (UI) — open (WP0–WP8 chef chrome)
 
-Prerequisite: org has module `fnb_buffet_planner` in orch `activeModules` (and `industry_fnb_pos`). Toggle from workspace auto-Syncs runtime-config; CP snapshot also opens the gate before local profile heals. Manual Super-admin Sync is fallback only.
+Prerequisite: org has module `fnb_buffet_planner` in orch `activeModules` (and `industry_fnb_pos`). Toggle from workspace auto-Syncs runtime-config; CP snapshot also opens the gate before local profile heals. Manual Super-admin Sync is fallback only. Staging: no outlet `RESTAURANT` (`scripts/ops/kill-restaurant-outlet.ts`).
 
-1. Nav: **Buffet planner** / **Bufet planı** → `/admin/buffet` (hidden without module)
-2. Filters: café/outlet, date range (default today…+6 Baku), status (all / draft / …)
-3. Master **Plans** table only (no split preview): guests adult/child, dish count·Σ portions, stations, BOM warning dot
-4. **New plan** modal → row appears; pencil opens header modal (date/meal/covers/notes)
-5. Composition icon (or double-click row) → composition modal: Add dish / edit lines / Lock→Served→Close / Materials / Publish
-6. **Copy** icon → duplicate DRAFT for today → header modal opens; occupied slot → 409 toast
-7. Empty composition: **Copy dishes from last same meal**
-8. Publish → `/admin/daily-menu` merge check for that date/outlet
+**Locale for signoff:** AZ (chef dictionary). Do not sign off on EN-only chrome.
+
+1. Nav: **Bufet planı** accordion — collapse/expand works; on buffet routes no Zal/Sifarişlər/Masalar; labels **Şablonlar / Rəhbərlik / Proqnoz / Normalar / Maya dəyəri**
+2. Chrome: **Nöqtə** ≤~16rem; dates equal; primary CTAs **right**
+3. **Planlar:** primary **Həftəni yarat**; secondary **Bir plan**; master table; composition / copy as before
+4. **Şablonlar:** list table (ad / növ / aktiv / slot) + **Yeni şablon** modal — not select-only
+5. **Rəhbərlik:** Bufet yeyənlər + Bu gün imzala in chrome; HR fail → honest empty / əl ilə
+6. **Proqnoz:** **Oteldən götür**; hotel fail → əl ilə; no EN toast-only
+7. **Normalar:** **Saxla** in chrome (not only bottom); zolaq help visible
+8. **Maya dəyəri:** **Hesabı yenilə** primary; Finance secondary; if empty → one «Əvvəl doldur» block before zero cards
+9. Publish → `/admin/daily-menu` merge check for that date/outlet
+
+Evidence: **not signed** until live AZ staging walkthrough + punchlist. API/SCREEN only — not SHIPPED / Demo / SHOW.
 
 ## FB-OUTLET-01 — Second café + outlet caps / Elektra — open
 

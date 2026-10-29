@@ -54,6 +54,14 @@ type Props = {
   onGoForecast?: () => void;
   /** Navigate to Proqnoz when guest-nights are missing. */
   onGoGuestNights?: () => void;
+  onChromeReady?: (api: {
+    refresh: () => void;
+    financeHref: string | null;
+    loading: boolean;
+    toggleStaffOverride: () => void;
+    staffOverrideOpen: boolean;
+  }) => void;
+  hideInlineChrome?: boolean;
 };
 
 function financeBuffetCostHref(financeHandoffQuery: string): string | null {
@@ -68,6 +76,8 @@ export default function BuffetCostRunPanel({
   toDate,
   onGoForecast,
   onGoGuestNights,
+  onChromeReady,
+  hideInlineChrome = false,
 }: Props) {
   const t = useTranslations("admin.buffet");
   /** Empty = use server-computed staff gross from plan × rate. */
@@ -127,63 +137,120 @@ export default function BuffetCostRunPanel({
     : null;
   const financeUrlMissing =
     payload?.chefWarnings.some((w) => w.code === "FINANCE_URL_MISSING") ?? false;
+  const theoBlocked =
+    !!payload &&
+    (payload.chefWarnings.some(
+      (w) => w.code === "NO_GUEST_NIGHTS" || w.code === "NORMS_ALL_ZERO",
+    ) ||
+      payload.theoretical.theoreticalAzn <= 0);
+
+  useEffect(() => {
+    onChromeReady?.({
+      refresh: () => void loadHandoff({ staffGrossOverride }),
+      financeHref,
+      loading,
+      toggleStaffOverride: () => setStaffOverrideOpen((v) => !v),
+      staffOverrideOpen,
+    });
+  }, [
+    onChromeReady,
+    financeHref,
+    loading,
+    staffOverrideOpen,
+    staffGrossOverride,
+    loadHandoff,
+  ]);
 
   return (
     <div className="space-y-4">
-      <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <p className="text-sm text-[#7F8C8D]">{t("costRunHint")}</p>
-        {payload?.outlet?.code ? (
-          <p className="m-0 text-xs text-[#7F8C8D]">
-            {t("costRunOutletCode", { code: payload.outlet.code })}
-          </p>
-        ) : null}
-        {payload?.staff.staffGrossComputed != null ? (
-          <p className="m-0 text-xs text-[#7F8C8D]">
-            {t("costRunStaffGrossComputed", {
-              azn: payload.staff.staffGrossComputed.toFixed(2),
-              covers: payload.staff.staffCoversTotal ?? 0,
-              rate: payload.staff.staffMealAznPerCover ?? 0,
-            })}
-          </p>
-        ) : null}
-        <div className="flex flex-wrap items-end gap-3">
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={!outletId || loading}
-            onClick={() => void loadHandoff({ staffGrossOverride })}
-          >
-            {t("costRunRefresh")}
-          </button>
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => setStaffOverrideOpen((v) => !v)}
-          >
-            {staffOverrideOpen
-              ? t("costRunStaffOverrideHide")
-              : t("costRunStaffOverrideShow")}
-          </button>
+      {!hideInlineChrome ? (
+        <div className={`${CARD_CLASS} space-y-3 p-4`}>
+          <p className="text-sm text-[#7F8C8D]">{t("costRunHint")}</p>
+          {payload?.outlet?.code ? (
+            <p className="m-0 text-xs text-[#7F8C8D]">
+              {t("costRunOutletCode", { code: payload.outlet.code })}
+            </p>
+          ) : null}
+          {payload?.staff.staffGrossComputed != null ? (
+            <p className="m-0 text-xs text-[#7F8C8D]">
+              {t("costRunStaffGrossComputed", {
+                azn: payload.staff.staffGrossComputed.toFixed(2),
+                covers: payload.staff.staffCoversTotal ?? 0,
+                rate: payload.staff.staffMealAznPerCover ?? 0,
+              })}
+            </p>
+          ) : null}
+          <div className="ml-auto flex flex-wrap items-end justify-end gap-2">
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!outletId || loading}
+              onClick={() => void loadHandoff({ staffGrossOverride })}
+            >
+              {loading ? "…" : t("costRunRefresh")}
+            </button>
+            {financeHref ? (
+              <a
+                href={financeHref}
+                className={SECONDARY_BUTTON_CLASS}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("costRunOpenFinance")}
+              </a>
+            ) : null}
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setStaffOverrideOpen((v) => !v)}
+            >
+              {staffOverrideOpen
+                ? t("costRunStaffOverrideHide")
+                : t("costRunStaffOverrideShow")}
+            </button>
+          </div>
+          {staffOverrideOpen ? (
+            <Field
+              label={t("costRunStaffGrossOverride")}
+              preset="shortText"
+              type="number"
+              min={0}
+              value={staffGrossOverride}
+              onChange={(e) => setStaffGrossOverride(e.target.value)}
+              placeholder={
+                payload?.staff.staffGrossComputed != null
+                  ? String(payload.staff.staffGrossComputed)
+                  : t("costRunStaffGrossAutoPh")
+              }
+            />
+          ) : null}
+          {dateError ? (
+            <p className="text-sm text-[#E74C3C]">{t("costRunDateOrder")}</p>
+          ) : null}
         </div>
-        {staffOverrideOpen ? (
-          <Field
-            label={t("costRunStaffGrossOverride")}
-            preset="shortText"
-            type="number"
-            min={0}
-            value={staffGrossOverride}
-            onChange={(e) => setStaffGrossOverride(e.target.value)}
-            placeholder={
-              payload?.staff.staffGrossComputed != null
-                ? String(payload.staff.staffGrossComputed)
-                : t("costRunStaffGrossAutoPh")
-            }
-          />
-        ) : null}
-        {dateError ? (
-          <p className="text-sm text-[#E74C3C]">{t("costRunDateOrder")}</p>
-        ) : null}
-      </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="m-0 text-sm text-[#7F8C8D]">{t("costRunHint")}</p>
+          {staffOverrideOpen ? (
+            <Field
+              label={t("costRunStaffGrossOverride")}
+              preset="shortText"
+              type="number"
+              min={0}
+              value={staffGrossOverride}
+              onChange={(e) => setStaffGrossOverride(e.target.value)}
+              placeholder={
+                payload?.staff.staffGrossComputed != null
+                  ? String(payload.staff.staffGrossComputed)
+                  : t("costRunStaffGrossAutoPh")
+              }
+            />
+          ) : null}
+          {dateError ? (
+            <p className="text-sm text-[#E74C3C]">{t("costRunDateOrder")}</p>
+          ) : null}
+        </div>
+      )}
 
       {payload ? (
         <div className={`${CARD_CLASS} space-y-3 p-4`}>
@@ -194,41 +261,8 @@ export default function BuffetCostRunPanel({
                 : t("costRunModelLabel", { model: payload.buffetCostModel })}
             </p>
           ) : null}
-          <div className="text-sm font-semibold text-[#2C3E50]">{t("costRunBuckets")}</div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <BucketCard
-              label={t("costRunSale")}
-              value={`${payload.pos.saleAttributedAzn.toFixed(2)} AZN`}
-              hint={`${payload.pos.saleLineCount} ${t("costRunLines")}`}
-            />
-            <BucketCard
-              label={t("costRunComp")}
-              value={`${payload.pos.compAttributedAzn.toFixed(2)} AZN`}
-              hint={`${payload.pos.compLineCount} ${t("costRunLines")}`}
-              emphasis
-            />
-            <BucketCard
-              label={t("costRunStaffNet")}
-              value={`${payload.staff.staffNet.toFixed(2)} AZN`}
-            />
-            <BucketCard
-              label={t("costRunTheoretical")}
-              value={`${payload.theoretical.theoreticalAzn.toFixed(2)} AZN`}
-              hint={payload.theoretical.bandCode ?? undefined}
-            />
-            <BucketCard
-              label={t("costRunGuestNights")}
-              value={String(payload.theoretical.guestNights)}
-            />
-            <BucketCard
-              label={t("costRunPosTotal")}
-              value={`${payload.pos.posAttributedAzn.toFixed(2)} AZN`}
-            />
-          </div>
 
-          {payload.chefWarnings.some(
-            (w) => w.code === "NO_GUEST_NIGHTS" || w.code === "NORMS_ALL_ZERO",
-          ) || payload.theoretical.theoreticalAzn <= 0 ? (
+          {theoBlocked ? (
             <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
               <p className="m-0 font-medium">{t("costRunTheoBlockedTitle")}</p>
               <p className="mt-1 m-0 text-amber-900">{t("costRunTheoBlockedBody")}</p>
@@ -266,7 +300,41 @@ export default function BuffetCostRunPanel({
                 ) : null}
               </div>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <div className="text-sm font-semibold text-[#2C3E50]">{t("costRunBuckets")}</div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <BucketCard
+                  label={t("costRunSale")}
+                  value={`${payload.pos.saleAttributedAzn.toFixed(2)} AZN`}
+                  hint={`${payload.pos.saleLineCount} ${t("costRunLines")}`}
+                />
+                <BucketCard
+                  label={t("costRunComp")}
+                  value={`${payload.pos.compAttributedAzn.toFixed(2)} AZN`}
+                  hint={`${payload.pos.compLineCount} ${t("costRunLines")}`}
+                  emphasis
+                />
+                <BucketCard
+                  label={t("costRunStaffNet")}
+                  value={`${payload.staff.staffNet.toFixed(2)} AZN`}
+                />
+                <BucketCard
+                  label={t("costRunTheoretical")}
+                  value={`${payload.theoretical.theoreticalAzn.toFixed(2)} AZN`}
+                  hint={payload.theoretical.bandCode ?? undefined}
+                />
+                <BucketCard
+                  label={t("costRunGuestNights")}
+                  value={String(payload.theoretical.guestNights)}
+                />
+                <BucketCard
+                  label={t("costRunPosTotal")}
+                  value={`${payload.pos.posAttributedAzn.toFixed(2)} AZN`}
+                />
+              </div>
+            </>
+          )}
 
           {payload.chefWarnings.length > 0 ? (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
@@ -284,11 +352,11 @@ export default function BuffetCostRunPanel({
                 })}
               </ul>
             </div>
-          ) : (
+          ) : theoBlocked ? null : (
             <p className="text-xs text-[#27AE60]">{t("costRunNoChefWarnings")}</p>
           )}
 
-          {financeHref && !financeUrlMissing ? (
+          {!hideInlineChrome && financeHref && !financeUrlMissing ? (
             <a
               href={financeHref}
               target="_blank"
@@ -297,11 +365,12 @@ export default function BuffetCostRunPanel({
             >
               {t("costRunOpenFinance")}
             </a>
-          ) : (
+          ) : null}
+          {!financeHref || financeUrlMissing ? (
             <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900">
               {t("costRunFinanceLinkMissing")}
             </p>
-          )}
+          ) : null}
 
           <div className="border-t border-[#ECF0F1] pt-3">
             <button

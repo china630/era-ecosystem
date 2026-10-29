@@ -35,6 +35,12 @@ type Props = {
   fromDate: string;
   toDate: string;
   onChanged?: () => void;
+  /** Lift primary CTAs into BuffetPageChrome (WP6). */
+  onChromeReady?: (api: {
+    openRoster: () => void;
+    openSignToday: () => void;
+  }) => void;
+  hideInlineChrome?: boolean;
 };
 
 function eachYmd(from: string, to: string): string[] {
@@ -55,6 +61,8 @@ export default function BuffetManagementMealsPanel({
   fromDate,
   toDate,
   onChanged,
+  onChromeReady,
+  hideInlineChrome = false,
 }: Props) {
   const t = useTranslations("admin.buffet");
   const tc = useTranslations("common");
@@ -124,7 +132,13 @@ export default function BuffetManagementMealsPanel({
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      showApiError(data, t("eatersSyncFailed"));
+      // Prefer locale toast — API `error` is English and would win in showApiError.
+      showApiError(
+        data?.code === "ORCH_UNAVAILABLE" ? null : data,
+        data?.code === "ORCH_UNAVAILABLE"
+          ? t("eatersSyncUnavailable")
+          : t("eatersSyncFailed"),
+      );
       return;
     }
     showSuccess(t("eatersSynced", { count: data?.total ?? 0 }));
@@ -182,6 +196,13 @@ export default function BuffetManagementMealsPanel({
     setChecks(next);
     setSignOpen(true);
   }
+
+  useEffect(() => {
+    onChromeReady?.({
+      openRoster: () => setRosterOpen(true),
+      openSignToday,
+    });
+  }, [onChromeReady, eaters, rows, today]);
 
   async function saveSignToday() {
     const included = eaters.filter((e) => e.included);
@@ -247,27 +268,31 @@ export default function BuffetManagementMealsPanel({
 
   return (
     <div className="space-y-4">
-      <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <p className="text-sm text-[#7F8C8D]">{t("managementHint")}</p>
-        <div className="flex flex-wrap gap-2 justify-end">
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            disabled={!outletId}
-            onClick={() => setRosterOpen(true)}
-          >
-            {t("eatersRoster")}
-          </button>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={!outletId}
-            onClick={() => openSignToday()}
-          >
-            {t("signManagementToday")}
-          </button>
+      {!hideInlineChrome ? (
+        <div className={`${CARD_CLASS} space-y-3 p-4`}>
+          <p className="text-sm text-[#7F8C8D]">{t("managementHint")}</p>
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={!outletId}
+              onClick={() => setRosterOpen(true)}
+            >
+              {t("eatersRoster")}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={!outletId}
+              onClick={() => openSignToday()}
+            >
+              {t("signManagementToday")}
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <p className="m-0 text-sm text-[#7F8C8D]">{t("managementHint")}</p>
+      )}
 
       <div className={`${CARD_CLASS} overflow-auto`}>
         <table className="w-full text-left text-sm">
@@ -414,6 +439,9 @@ export default function BuffetManagementMealsPanel({
             {t("eatersSyncHr")}
           </button>
         </div>
+        {eaters.length === 0 ? (
+          <p className="mb-4 text-sm text-[#E67E22]">{t("eatersEmptyHonesty")}</p>
+        ) : null}
         <ul className="mb-4 max-h-[40vh] space-y-2 overflow-auto text-sm">
           {eaters.map((e) => (
             <li key={e.id} className="flex items-center justify-between gap-2">

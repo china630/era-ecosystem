@@ -1,6 +1,6 @@
 # F&B buffet — chef-ready product backlog (SSOT)
 
-**Status:** Partial — WO1–10 + polish B3/B5/B6 + C1/C2/C7/C9–C12 landed; A9 punchlist **blocked**; C8 roles = future RBAC (not this UI wave). Still **API/SCREEN** — not Demo/SHOW.  
+**Status:** Partial — engineering contour + **WP0–WP8 chef UX wave landed in code** (2026-10-29); A9 / lab punchlist still **unsigned / open** until live AZ staging walkthrough. Still **API/SCREEN** — not Demo/SHOW / not SHIPPED.  
 **Date:** 2026-10-29  
 **Capability:** `FNB-BUFFET-COST-01`  
 **Related:** [fnb-buffet-cost-attribution.md](./fnb-buffet-cost-attribution.md) · [fnb-buffet-cost-attribution-waves.md](./fnb-buffet-cost-attribution-waves.md) · [fnb-buffet-planner.md](./fnb-buffet-planner.md) · managed lists [managed-lists-vs-enums.md](./managed-lists-vs-enums.md)  
@@ -74,8 +74,8 @@ Mark `[x]` only when fixed in code + smokeable on lab.
 - [x] **B1 — Forecast bands** — band `code` via `CatalogField` CLOSED_SMALL `LOW|MID|HIGH` (+ existing codes).
 - [x] **B2 — Finance buffet page outlet filter** — `CatalogField` SEARCHABLE; Advanced JSON stays debug-only.
 - [x] **B3 — Sibling Buffet* Field audit** — Week/Staff/Cost settings/Admin/Forecast: enums = `CatalogField`; names/notes/amounts/dates stay Field FREE_TEXT.
-- [x] **B4 — i18n trio** — en/az/ru for chef-path strings touched in this wave (hint, staff auto, module/theo CTAs, chef warnings).
-- [x] **B5 — CTA hierarchy** — Cost run: Refresh + staff override demoted (secondary / collapsed); sole primary = **Open Finance HYBRID**. Finance Advanced JSON stays debug.
+- [x] **B4 — i18n trio** — en/az/ru chef dictionary pass (WP2): nav `Şablonlar` / `Rəhbərlik` / `Maya dəyəri` / `İdxal`; chrome `Nöqtə`; Cost/Forecast/Norms/Management CTAs without EN/TR in AZ buttons. **Still needs live AZ eye on staging before Demo.**
+- [x] **B5 — CTA hierarchy** — `BuffetPageChrome` actions right (WP1/WP6): Plans primary = **Həftəni yarat**, secondary one plan; Cost primary = **Hesabı yenilə**, Finance secondary; Norms primary = **Saxla** in chrome; Forecast primary = **Oteldən götür**.
 - [x] **B6 — A11y** — Forecast qty/AZN Fields + WH/outlet CatalogField have visible labels (not empty `label=""`).
 
 ---
@@ -122,6 +122,24 @@ From [fnb-buffet-cost-attribution.md](./fnb-buffet-cost-attribution.md) § Non-g
 8. **C4** Print/export (if takeaway required for show)  
 9. **A9** Browser UAT chef path → punchlist  
 10. **B3 + B5 + B6 + remaining C** polish (C3 = won't-do / § D; C8 = future RBAC, not this step); then human signoff → Demo/SHOW only with Evidence Rules  
+
+---
+
+## Chef UX wave WP0–WP8 (2026-10-29)
+
+| WP | Status | Note |
+|----|--------|------|
+| WP0 | Code + ops script | `kill-restaurant-outlet.ts`; seeds never invent `RESTAURANT`; NAFTANI caps. **Staging:** run kill script if phantom remains. |
+| WP1 | Done | `BuffetPageChrome` on all buffet sections; outlet ≤16rem; CTAs `ml-auto`. |
+| WP2 | Done in messages | Chef AZ/RU/EN dictionary; verify on staging locale switch. |
+| WP3 | Done | Templates **list table** + `ModalShell` create (not select-only). |
+| WP4 | Done | Plans: week primary / one-plan secondary + hierarchy hint. |
+| WP5 | Done | Kit `NavItemGroup` collapsible; on `/admin/buffet/*` shell hides till/floor/tables. |
+| WP6 | Done | Management / Forecast / Norms / Cost chrome CTAs + norms help + Cost «fill first» before zero cards. |
+| WP7 | Done | `ORCH_UNAVAILABLE` / `HOTEL_UNAVAILABLE` → localized honesty; empty eaters copy. |
+| WP8 | Docs honesty | This backlog + planner ADR + UAT note; **punchlist remains open** until signed lab. |
+
+**Forbidden:** marking Demo ✅ / SHOW / SHIPPED from WP0–WP8 alone.
 
 ---
 

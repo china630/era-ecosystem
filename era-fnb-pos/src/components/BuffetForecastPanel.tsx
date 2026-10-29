@@ -64,6 +64,13 @@ type Props = {
   toDate: string;
   /** nights = Proqnoz calendar; norms = Normalar editor; both = legacy full panel */
   mode?: "nights" | "norms" | "both";
+  onChromeReady?: (api: {
+    syncHotel: () => void;
+    saveNorms: () => void;
+    saving: boolean;
+    loading: boolean;
+  }) => void;
+  hideInlineChrome?: boolean;
 };
 
 function emptyNorm(): NormRow {
@@ -79,6 +86,8 @@ export default function BuffetForecastPanel({
   fromDate,
   toDate,
   mode = "both",
+  onChromeReady,
+  hideInlineChrome = false,
 }: Props) {
   const showNights = mode === "nights" || mode === "both";
   const showNorms = mode === "norms" || mode === "both";
@@ -277,12 +286,27 @@ export default function BuffetForecastPanel({
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      showApiError(data, t("forecastHotelSyncFailed"));
+      // Prefer locale toast — API `error` is English and would win in showApiError.
+      showApiError(
+        data?.code === "HOTEL_UNAVAILABLE" ? null : data,
+        data?.code === "HOTEL_UNAVAILABLE"
+          ? t("forecastHotelUnavailable")
+          : t("forecastHotelSyncFailed"),
+      );
       return;
     }
     showSuccess(t("forecastHotelSynced", { count: data?.count ?? 0 }));
     await load();
   }
+
+  useEffect(() => {
+    onChromeReady?.({
+      syncHotel: () => void syncFromHotel(),
+      saveNorms: () => void savePack(norms, bands),
+      saving,
+      loading,
+    });
+  }, [onChromeReady, norms, bands, saving, loading, fromDate, toDate, outletId]);
 
   return (
     <div className="space-y-4">
@@ -292,7 +316,10 @@ export default function BuffetForecastPanel({
           <p className="m-0 text-xs text-[#95A5A6]">{t("forecastManualHonesty")}</p>
         </>
       ) : (
-        <p className="m-0 text-sm text-[#6B7280]">{t("normsHint")}</p>
+        <>
+          <p className="m-0 text-sm text-[#6B7280]">{t("normsHint")}</p>
+          <p className="m-0 text-xs text-[#95A5A6]">{t("normsHelp")}</p>
+        </>
       )}
       {dateError ? (
         <p className="m-0 text-sm text-red-600">{t("costRunDateOrder")}</p>
@@ -302,14 +329,16 @@ export default function BuffetForecastPanel({
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("forecastGuestNights")}</h3>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={loading || !fromDate || !toDate}
-            onClick={() => void syncFromHotel()}
-          >
-            {t("forecastSyncHotel")}
-          </button>
+          {!hideInlineChrome ? (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={loading || !fromDate || !toDate}
+              onClick={() => void syncFromHotel()}
+            >
+              {t("forecastSyncHotel")}
+            </button>
+          ) : null}
         </div>
         {entries.length === 0 ? (
           <p className="m-0 text-sm text-[#E67E22]">{t("forecastNoGuestNights")}</p>
@@ -417,13 +446,25 @@ export default function BuffetForecastPanel({
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("forecastKeySku")}</h3>
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => setNorms((rows) => [...rows, emptyNorm()])}
-          >
-            {t("forecastAddSku")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setNorms((rows) => [...rows, emptyNorm()])}
+            >
+              {t("forecastAddSku")}
+            </button>
+            {!hideInlineChrome ? (
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={saving}
+                onClick={() => void savePack(norms, bands)}
+              >
+                {saving ? "…" : t("forecastSaveNorms")}
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -702,14 +743,6 @@ export default function BuffetForecastPanel({
             </tbody>
           </table>
         </div>
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={saving}
-          onClick={() => void savePack(norms, bands)}
-        >
-          {saving ? "…" : t("forecastSaveNorms")}
-        </button>
       </div>
       </>
       ) : null}
