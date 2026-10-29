@@ -70,16 +70,13 @@ async function main() {
   }
 
   const charges = await prisma.folioCharge.findMany({
-    where: {
-      organizationId: orgId,
-      description: { not: null },
-    },
+    where: { organizationId: orgId },
     select: { id: true, description: true },
   });
 
   for (const charge of charges) {
     const raw = (charge.description ?? '').trim();
-    if (!PACKAGE_NIGHT.test(raw)) continue;
+    if (!raw || !PACKAGE_NIGHT.test(raw)) continue;
     const next = raw.replace(/\s+(\d{4}-\d{2}-\d{2})$/, '').trim();
     if (!next || next === raw) continue;
     console.log(dryRun ? 'would desc' : 'desc', charge.id.slice(0, 8), `${raw} → ${next}`);
