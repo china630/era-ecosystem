@@ -5,6 +5,7 @@ import {
   IsString,
   IsUUID,
   MaxLength,
+  ValidateIf,
 } from "class-validator";
 
 export class HireWorkforceEmploymentDto {
@@ -38,4 +39,14 @@ export class HireWorkforceEmploymentDto {
   @IsOptional()
   @IsUUID()
   commercialOrganizationId?: string;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  managerEmploymentId?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  matrixManagerEmploymentId?: string | null;
 }

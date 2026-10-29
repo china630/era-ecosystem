@@ -107,8 +107,8 @@ Prerequisite: org has module `fnb_buffet_planner` in orch `activeModules` (and `
 2. Chrome: **Nöqtə** ≤~16rem; dates equal; primary CTAs **right**
 3. **Planlar:** primary **Həftəni yarat**; secondary **Bir plan**; master table; composition / copy as before
 4. **Şablonlar:** list table (ad / növ / aktiv / slot) + **Yeni şablon** modal — not select-only
-5. **Rəhbərlik:** Bufet yeyənlər + Bu gün imzala in chrome; HR fail → honest empty / əl ilə
-6. **Proqnoz:** **Oteldən götür**; hotel fail → əl ilə; no EN toast-only
+5. **Rəhbərlik:** Bufet yeyənlər + Bu gün imzala in chrome; HR fail → honest empty / əl ilə (no Orch URL in Settings required; sync uses hub/parent workforce + self)
+6. **Proqnoz:** **Oteldən götür** without Hotel PMS URL in Settings (peer S2S); hotel fail → əl ilə; toast must not say «set Hotel URL»; no EN toast-only
 7. **Normalar:** **Saxla** in chrome (not only bottom); zolaq help visible
 8. **Maya dəyəri:** **Hesabı yenilə** primary; Finance secondary; if empty → one «Əvvəl doldur» block before zero cards
 9. Publish → `/admin/daily-menu` merge check for that date/outlet

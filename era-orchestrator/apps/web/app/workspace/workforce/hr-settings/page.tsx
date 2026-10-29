@@ -17,7 +17,15 @@ import {
 import { WorkforceGate } from "../../../../components/workspace/workforce-gate";
 
 const ROUTE_KINDS = ["FULL_DAY", "HOURLY", "ADVANCE", "VACATION"] as const;
-const STEP_KINDS = ["REQUESTER_MANAGER", "ORG_UNIT_HEAD", "POSITION_IN_UNIT"] as const;
+const STEP_KINDS = [
+  "REQUESTER_MANAGER",
+  "ORG_UNIT_HEAD",
+  "POSITION_IN_UNIT",
+  "MANAGER_CHAIN",
+  "POSITION_HOLDER",
+  "MATRIX_MANAGER",
+  "GRADE_AT_LEAST",
+] as const;
 const AUDIENCES = ["ALWAYS", "LEADERSHIP", "ORDINARY"] as const;
 
 type Step = {
@@ -26,6 +34,8 @@ type Step = {
   positionId: string;
   appliesTo: string;
   canExceedAdvanceCap: boolean;
+  chainOffset: string;
+  minGradeLevel: string;
 };
 type Settings = {
   fiveDayWeeklyHours: number | null;
@@ -97,7 +107,18 @@ export default function WorkforceHrSettingsPage() {
     }
     const body = (await res.json()) as {
       settings: Settings;
-      routes: Array<{ kind: string; steps: Step[] }>;
+      routes: Array<{
+        kind: string;
+        steps: Array<{
+          kind: string;
+          orgUnitId?: string | null;
+          positionId?: string | null;
+          appliesTo?: string;
+          canExceedAdvanceCap?: boolean;
+          chainOffset?: number | null;
+          minGradeLevel?: number | null;
+        }>;
+      }>;
     };
     setSettings({ ...EMPTY_SETTINGS, ...body.settings });
     const next = { FULL_DAY: [], HOURLY: [], ADVANCE: [], VACATION: [] } as Record<
@@ -111,6 +132,9 @@ export default function WorkforceHrSettingsPage() {
         positionId: step.positionId ?? "",
         appliesTo: step.appliesTo || "ALWAYS",
         canExceedAdvanceCap: step.canExceedAdvanceCap === true,
+        chainOffset: step.chainOffset != null ? String(step.chainOffset) : "",
+        minGradeLevel:
+          step.minGradeLevel != null ? String(step.minGradeLevel) : "",
       }));
     }
     setRoutes(next);
@@ -159,7 +183,16 @@ export default function WorkforceHrSettingsPage() {
             orgUnitId: step.orgUnitId || undefined,
             positionId: step.positionId || undefined,
             appliesTo: step.appliesTo || "ALWAYS",
-            canExceedAdvanceCap: step.canExceedAdvanceCap === true,
+            canExceedAdvanceCap:
+              kind === "ADVANCE" ? step.canExceedAdvanceCap === true : false,
+            chainOffset:
+              step.kind === "MANAGER_CHAIN" && step.chainOffset.trim()
+                ? Number(step.chainOffset)
+                : undefined,
+            minGradeLevel:
+              step.kind === "GRADE_AT_LEAST" && step.minGradeLevel.trim()
+                ? Number(step.minGradeLevel)
+                : undefined,
           })),
         }),
       });
@@ -288,7 +321,8 @@ export default function WorkforceHrSettingsPage() {
                   label: t(`step.${value}` as "step.REQUESTER_MANAGER"),
                 }))}
               />
-              {step.kind !== "REQUESTER_MANAGER" ? (
+              {step.kind === "ORG_UNIT_HEAD" ||
+              step.kind === "POSITION_IN_UNIT" ? (
                 <CatalogField
                   kind="ENTITY_REF"
                   label={t("orgUnit")}
@@ -304,7 +338,8 @@ export default function WorkforceHrSettingsPage() {
                   emptyLabel={t("pick")}
                 />
               ) : null}
-              {step.kind === "POSITION_IN_UNIT" ? (
+              {step.kind === "POSITION_IN_UNIT" ||
+              step.kind === "POSITION_HOLDER" ? (
                 <CatalogField
                   kind="ENTITY_REF"
                   label={t("position")}
@@ -317,10 +352,50 @@ export default function WorkforceHrSettingsPage() {
                     })
                   }
                   options={positions
-                    .filter((p) => !step.orgUnitId || p.orgUnitId === step.orgUnitId)
+                    .filter(
+                      (p) =>
+                        step.kind === "POSITION_HOLDER" ||
+                        !step.orgUnitId ||
+                        p.orgUnitId === step.orgUnitId,
+                    )
                     .map((p) => ({ value: p.id, label: p.name }))}
                   emptyLabel={t("pick")}
                 />
+              ) : null}
+              {step.kind === "MANAGER_CHAIN" ? (
+                <label className="block text-[13px] font-medium text-[#34495E]">
+                  {t("chainOffset")}
+                  <input
+                    className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+                    inputMode="numeric"
+                    placeholder="2"
+                    value={step.chainOffset}
+                    onChange={(e) =>
+                      setRoutes((prev) => {
+                        const copy = [...(prev[kind] ?? [])];
+                        copy[index] = { ...copy[index], chainOffset: e.target.value };
+                        return { ...prev, [kind]: copy };
+                      })
+                    }
+                  />
+                </label>
+              ) : null}
+              {step.kind === "GRADE_AT_LEAST" ? (
+                <label className="block text-[13px] font-medium text-[#34495E]">
+                  {t("minGradeLevel")}
+                  <input
+                    className="mt-1 block w-full rounded-lg border border-[#D5DADF] px-2 py-1.5"
+                    inputMode="numeric"
+                    value={step.minGradeLevel}
+                    onChange={(e) =>
+                      setRoutes((prev) => {
+                        const copy = [...(prev[kind] ?? [])];
+                        copy[index] = { ...copy[index], minGradeLevel: e.target.value };
+                        return { ...prev, [kind]: copy };
+                      })
+                    }
+                  />
+                </label>
               ) : null}
               <CatalogField
                 kind="CLOSED_SMALL"
@@ -383,6 +458,8 @@ export default function WorkforceHrSettingsPage() {
                       positionId: "",
                       appliesTo: "ALWAYS",
                       canExceedAdvanceCap: false,
+                      chainOffset: "",
+                      minGradeLevel: "",
                     },
                   ],
                 }))

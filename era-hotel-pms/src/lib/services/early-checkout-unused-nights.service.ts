@@ -293,6 +293,7 @@ export async function applyEarlyCheckoutUnusedNights(
           description: noted
             ? roomChargeNote(noted.kind, noted.date)
             : `${plan.description} (early CO remaining)`,
+          audit: { source: 'system' },
         });
       }
     }

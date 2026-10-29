@@ -169,7 +169,13 @@ export async function pinOpenAttendanceOrders(
     ymd?: string;
   }> = [];
 
-  for (const order of orders) {
+  // Preserve caller order (modal / prescribe sequence), not DB findMany order.
+  const byId = new Map(orders.map((row) => [row.id, row]));
+  const ordered = orderIds
+    .map((id) => byId.get(id))
+    .filter((row): row is (typeof orders)[number] => Boolean(row));
+
+  for (const order of ordered) {
     const pinned = opts?.pinYmdByOrderId?.[order.id];
     let ymd = pinned ?? cursorYmd;
     if (pinned) {

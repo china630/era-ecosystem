@@ -39,7 +39,8 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-17 | Clinic RBAC Variant A + custom roles | [~] | AC-CLI-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
 | S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | CLI-19 SHIPPED viewer; Wave B ClinicReceipt SETTLE/VOID + ClinicShift; Wave E compound `(organizationId, createdAt)` 2026-10-29; hash-chain deferred; HTTP_MUTATION UAT open; Gate/Pilot/edition unchanged |
 | S-18 | Walk-in groups → hotel cashier basket (CLI-61) | [~] | SCREEN; AC-CLI-WALKIN-PARTY 🟡 out of BE; send stamps `revenueCode` (client required); UAT §11a open — not Pilot |
-| S-19 | Open attendance + SAME_DAY check-in (CLI-62) | [~] | SCREEN; AC-CLI-OPEN-ATTEND 🟡 out of BE; ADR clinic-open-attendance; UAT §11b open — not Pilot |
+| S-19 | Open attendance + SAME_DAY check-in (CLI-62) | [~] | SCREEN; AC-CLI-OPEN-ATTEND 🟡 out of BE; OPEN unpaid day-bucket + Pay keeps pin (2026-10-30); UAT §11b open — not Pilot |
 | S-20 | CLI-26 matrix reception check-in + nurse unpaid Late | [x] | SHIPPED deepen; `receptionProcedureCheckIn` Nafta default on; AC-CLI-OPS stays ✅; Gate/Pilot/edition unchanged |
+| S-21 | Package Saxla redispatch + home/reports polish | [~] | CLI-57 SCREEN deepen (same-block redispatch + modal №; Pay keeps OPEN pin); CLI-13/17/29/42 SHIPPED deepen (arrival sort; range i18n); AC-CLI-ASSIGN stays 🟡; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

@@ -265,13 +265,13 @@
       "outletRevenueFallback": "Gəlir ehtiyatı (kateqoriya SoR)",
       "outletRevenueFallbackHint": "Menyu kateqoriyası gəlir kodları əsasdır. Outlet kodu yalnız kateqoriyada kod yoxdursa ehtiyatdır.",
       "integrationsTitle": "Bufet inteqrasiyaları",
-      "integrationsHint": "Open Finance, otel sinxronu və HR rəhbərlik üçün URL-lər. Parametrlərdə saxlanılır — obrazda deyil.",
+      "integrationsHint": "Open Finance deep-link üçün Finance web URL. Otel və HR S2S — peer / orchestrator (bu sahələr deyil).",
       "financeWebUrl": "Finance veb URL",
       "financeWebUrlHint": "Maya dəyəri → Finance aç",
       "hotelPmsUrl": "Otel PMS URL",
-      "hotelPmsUrlHint": "Proqnoz → oteldən qonaq gecələri",
+      "hotelPmsUrlHint": "Köhnə — S2S SatelliteEndpoint peer istifadə edir",
       "orchestratorBaseUrl": "Orchestrator API URL",
-      "orchestratorBaseUrlHint": "Rəhbərlik → HR-dən götür"
+      "orchestratorBaseUrlHint": "Köhnə — runtime in-cluster orch"
     },
     "menu": {
       "title": "Menyu admin",
@@ -690,10 +690,10 @@
       "templateActiveCol": "Aktiv",
       "templateSlotsCol": "Slotlar",
       "templateActiveYes": "aktiv",
-      "forecastHotelUnavailable": "Otel bağlı deyil — Parametrlərdə Hotel PMS URL təyin edin və ya gecələri əl ilə daxil edin.",
+      "forecastHotelUnavailable": "Otel peer əlçatan deyil — qonaq gecələrini əl ilə daxil edin.",
       "normsHelp": "Cəmi qonaq gecəsi aralığa düşəndə zolaq (az/orta/yüksək yük) → nəzəri satınalma / Maya dəyəri. Min/max = gecə hədləri.",
-      "eatersSyncUnavailable": "HR bağlı deyil — Parametrlərdə Orchestrator API URL təyin edin və ya əl ilə əlavə edin.",
-      "eatersEmptyHonesty": "Siyahı boşdur. HR sinkronu işləmirsə — əl ilə ad əlavə edin.",
+      "eatersSyncUnavailable": "HR əlçatan deyil — rəhbərlik yeyənlərini əl ilə əlavə edin.",
+      "eatersEmptyHonesty": "Siyahı boşdur. Rəhbərlik rolu tapılmadı (və ya işarələnməyib) — əl ilə ad əlavə edin.",
       "kindInModal": "Növ"
     },
     "integration": {

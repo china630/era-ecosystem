@@ -5,9 +5,15 @@ import { requestOrganizationId } from "@/lib/request-organization";
 export type FnbIntegrationSettings = {
   /** Public Finance web origin for Open Finance deep-link (e.g. https://finance-core.era-365.online). */
   financeWebUrl: string;
-  /** Hotel PMS base URL override when SatelliteEndpoint peer resolve fails. */
+  /**
+   * Legacy last-resort Hotel PMS base when peer resolve fails (local only).
+   * S2S SoR = SatelliteEndpoint peer — not this field. UI no longer edits it.
+   */
   hotelPmsUrl: string;
-  /** Orchestrator API base for workforce / HR leadership sync. */
+  /**
+   * Legacy orch API override. Runtime uses resolveOrchestratorBaseUrl (+ hairpin).
+   * UI no longer edits it.
+   */
   orchestratorBaseUrl: string;
 };
 

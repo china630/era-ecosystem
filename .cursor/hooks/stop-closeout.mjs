@@ -1,33 +1,36 @@
 #!/usr/bin/env node
 /**
- * Cursor stop hook — nudge acceptance closeout once when product files change.
+ * Cursor stop hook — acceptance closeout nudge (turn-scoped).
  *
- * Cursor sends status "completed" on every stop, including plain questions.
- * Follow-up fires only when the *relevant* workspace digest differs from the
- * last stop. Questions with no product-file edits stay quiet.
+ * SoR: compare relevant-product digest at stop vs baseline captured at
+ * beforeSubmitPrompt. A question with an already-dirty tree stays quiet
+ * (baseline == end). Edits in this turn change the digest → follow-up once.
  *
- * Stamp lives under .git/ (local, not committed) so temp clears do not reset
- * baseline and re-fire on the next question.
+ * loop_count > 0: quiet (follow-up / closeout loop); refresh baseline so the
+ * next user prompt does not see leftover drift as a new change.
  *
- * loop_count > 0 refreshes the stamp and stays quiet (closeout edits).
+ * Usage:
+ *   node stop-closeout.mjs --baseline   # beforeSubmitPrompt
+ *   node stop-closeout.mjs              # stop
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
 /** Paths that can affect acceptance / product closeout. */
 function isRelevantPath(rel) {
-  const p = rel.replace(/\\/g, "/");
+  const p = String(rel || "").replace(/\\/g, "/");
+  if (!p || p.startsWith(".cursor/")) return false;
   if (p.startsWith("era-")) return true;
   if (p.startsWith("packages/")) return true;
   if (p.startsWith("docs/acceptance/")) return true;
   if (p.startsWith("docs/adr/")) return true;
   if (p.startsWith("docs/editions/")) return true;
-  if (p === "docs/COVERAGE_MATRIX.md") return true;
-  if (p.startsWith("docs/COVERAGE_MATRIX")) return true;
+  if (p === "docs/COVERAGE_MATRIX.md" || p.startsWith("docs/COVERAGE_MATRIX")) {
+    return true;
+  }
   if (p === "docs/READINESS_MATRIX.md") return true;
-  if (p.startsWith(".cursor/hooks/")) return false;
   return false;
 }
 
@@ -74,7 +77,7 @@ function fileDigest(relPath) {
 }
 
 /**
- * HEAD + porcelain + contents of relevant dirty paths only.
+ * HEAD + porcelain paths that are relevant + content hashes of those paths.
  * Empty string if git cannot be read.
  */
 function workspaceStamp() {
@@ -89,7 +92,7 @@ function workspaceStamp() {
     const pathPart = line.slice(3);
     const arrow = pathPart.lastIndexOf(" -> ");
     const rel = unquoteGitPath(arrow === -1 ? pathPart : pathPart.slice(arrow + 4));
-    if (isRelevantPath(rel)) paths.push(rel);
+    if (isRelevantPath(rel)) paths.push(rel.replace(/\\/g, "/"));
   }
   paths.sort();
   const hash = createHash("sha256");
@@ -105,62 +108,42 @@ function workspaceStamp() {
   return hash.digest("hex");
 }
 
-function stampPath() {
+function stateDirFile(name) {
   const gitDir = join(process.cwd(), ".git");
-  if (existsSync(gitDir)) {
-    return join(gitDir, "era-stop-closeout.stamp");
-  }
-  return join(process.cwd(), ".era-stop-closeout.stamp");
+  if (existsSync(gitDir)) return join(gitDir, name);
+  return join(process.cwd(), name);
 }
 
-function readStamp(path) {
+function baselinePath() {
+  return stateDirFile("era-stop-closeout.baseline");
+}
+
+/** Legacy mark flag from the broken rewrite — remove if present. */
+function clearLegacyDirtyFlag() {
   try {
-    return readFileSync(path, "utf8").trim();
+    unlinkSync(stateDirFile("era-stop-closeout.dirty"));
+  } catch {
+    // absent
+  }
+}
+
+function readBaseline() {
+  try {
+    return readFileSync(baselinePath(), "utf8").trim();
   } catch {
     return null;
   }
 }
 
-function writeStamp(path, value) {
+function writeBaseline(value) {
   try {
-    const dir = join(path, "..");
-    if (!existsSync(dir) && path.includes(".git")) {
-      // .git always exists when stampPath chose it
-    }
-    writeFileSync(path, value, "utf8");
+    writeFileSync(baselinePath(), value, "utf8");
   } catch {
-    // Missing stamp must not loop.
+    // Missing baseline must not loop forever — stay quiet next time.
   }
 }
 
-const input = readInput();
-const loopCount = Number(input.loop_count || input.followup_count || 0);
-const path = stampPath();
-const current = workspaceStamp();
-const previous = readStamp(path);
-
-if (loopCount > 0) {
-  writeStamp(path, current);
-  process.stdout.write("{}");
-  process.exit(0);
-}
-
-// No git / empty stamp → baseline only.
-if (!current) {
-  process.stdout.write("{}");
-  process.exit(0);
-}
-
-// First stop, or tree unchanged (questions, Ask-mode, no product edits) → quiet.
-if (previous === null || previous === current) {
-  writeStamp(path, current);
-  process.stdout.write("{}");
-  process.exit(0);
-}
-
-writeStamp(path, current);
-
-const followup = [
+const FOLLOWUP = [
   "Closeout checklist (ERA Acceptance Standard):",
   "1) Update docs/COVERAGE_MATRIX.md actor rows for touched capabilities",
   "2) Implementation-Matrix: Scaffold ✅ only with PRD wording + negative path; else 🟡",
@@ -170,9 +153,47 @@ const followup = [
   "6) Engineering API/% only → skill era-readiness-matrix (not Product-Readiness)",
 ].join("\n");
 
-process.stdout.write(
-  JSON.stringify({
-    followup_message: followup,
-  }),
-);
+const mode = process.argv.includes("--baseline")
+  ? "baseline"
+  : process.argv.includes("--clear")
+    ? "baseline" // alias: old hooks.json used --clear; treat as capture baseline
+    : "stop";
+
+const input = readInput();
+clearLegacyDirtyFlag();
+
+if (mode === "baseline") {
+  const stamp = workspaceStamp();
+  if (stamp) writeBaseline(stamp);
+  process.stdout.write("{}");
+  process.exit(0);
+}
+
+// --- stop ---
+const loopCount = Number(input.loop_count || input.followup_count || 0);
+const current = workspaceStamp();
+
+if (!current) {
+  process.stdout.write("{}");
+  process.exit(0);
+}
+
+if (loopCount > 0) {
+  // Closeout / follow-up turn: do not nudge again; lock baseline to end state.
+  writeBaseline(current);
+  process.stdout.write("{}");
+  process.exit(0);
+}
+
+const baseline = readBaseline();
+if (!baseline || baseline === current) {
+  // No baseline (hook skipped) or no relevant change this turn → quiet.
+  // Refresh baseline so a later question with the same tree stays quiet.
+  writeBaseline(current);
+  process.stdout.write("{}");
+  process.exit(0);
+}
+
+writeBaseline(current);
+process.stdout.write(JSON.stringify({ followup_message: FOLLOWUP }));
 process.exit(0);

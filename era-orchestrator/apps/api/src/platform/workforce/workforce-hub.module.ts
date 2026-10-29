@@ -127,6 +127,8 @@ import { WorkforceFitnessService } from "./workforce-fitness.service";
 import { WorkforceApprovalService } from "./workforce-approval.service";
 import { WorkforceHrSettingsService } from "./workforce-hr-settings.service";
 import { WorkforceHrSettingsController } from "./workforce-hr-settings.controller";
+import { WorkforceJobsController } from "./workforce-jobs.controller";
+import { WorkforceJobsService } from "./workforce-jobs.service";
 
 @Module({
 
@@ -202,6 +204,7 @@ import { WorkforceHrSettingsController } from "./workforce-hr-settings.controlle
 
     WorkforceFitnessController,
     WorkforceHrSettingsController,
+    WorkforceJobsController,
 
   ],
 
@@ -270,6 +273,7 @@ import { WorkforceHrSettingsController } from "./workforce-hr-settings.controlle
     WorkforceFitnessService,
     WorkforceApprovalService,
     WorkforceHrSettingsService,
+    WorkforceJobsService,
 
   ],
 

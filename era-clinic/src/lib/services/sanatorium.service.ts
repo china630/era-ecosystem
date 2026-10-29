@@ -585,7 +585,7 @@ export async function listOpenEpisodes(input?: {
   course?: "ready" | "attention" | "blocked";
   includeHotelRooms?: boolean;
   includeProgramCodes?: boolean;
-  sort?: "patient" | "room" | "origin" | "program" | "status";
+  sort?: "patient" | "room" | "origin" | "program" | "status" | "arrival";
   sortDir?: "asc" | "desc";
   /** Layer-2 data scope (omit / ALL = no row filter). */
   dataScope?: { mode: "ALL" | "ASSIGNED"; practitionerId: string | null };
@@ -674,6 +674,7 @@ export async function listOpenEpisodes(input?: {
   );
 
   const sortDir = input?.sortDir === "desc" ? "desc" : "asc";
+  const sortArrival = input?.sort === "arrival";
   const orderBy: Prisma.ClinicalEpisodeOrderByWithRelationInput =
     input?.sort === "patient"
       ? { patientRef: { fullName: sortDir } }
@@ -685,47 +686,53 @@ export async function listOpenEpisodes(input?: {
             ? { programCode: sortDir }
             : input?.sort === "status"
               ? { status: sortDir }
-              : { openedAt: "desc" };
+              : sortArrival
+                ? { programInstance: { startsOn: sortDir } }
+                : { openedAt: "desc" };
 
-  const [total, episodes, hotelRooms, programCodes] = await Promise.all([
-    prisma.clinicalEpisode.count({ where }),
-    prisma.clinicalEpisode.findMany({
-      where,
+  const episodeInclude = {
+    patientRef: true,
+    careDoctors: { select: { id: true }, take: 1 },
+    complaints: { orderBy: { recordedAt: "desc" as const }, take: 3 },
+    diagnoses: {
+      orderBy: { recordedAt: "desc" as const },
+      take: 3,
+      include: { icdCode: true },
+    },
+    labOrders: {
+      orderBy: { createdAt: "desc" as const },
+      take: 5,
       include: {
-        patientRef: true,
-        careDoctors: { select: { id: true }, take: 1 },
-        complaints: { orderBy: { recordedAt: 'desc' }, take: 3 },
-        diagnoses: {
-          orderBy: { recordedAt: 'desc' },
-          take: 3,
-          include: { icdCode: true },
-        },
-        labOrders: {
-          orderBy: { createdAt: 'desc' },
-          take: 5,
+        items: {
           include: {
-            items: {
-              include: {
-                diagnosticService: {
-                  select: {
-                    code: true,
-                    serviceCode: true,
-                    titleEn: true,
-                    titleRu: true,
-                    titleAz: true,
-                  },
-                },
+            diagnosticService: {
+              select: {
+                code: true,
+                serviceCode: true,
+                titleEn: true,
+                titleRu: true,
+                titleAz: true,
               },
             },
           },
         },
-        programInstance: {
-          include: { procedureLines: { orderBy: { procedureCode: 'asc' } } },
-        },
       },
+    },
+    programInstance: {
+      include: { procedureLines: { orderBy: { procedureCode: "asc" as const } } },
+    },
+  };
+
+  const [total, episodesRaw, hotelRooms, programCodes] = await Promise.all([
+    prisma.clinicalEpisode.count({ where }),
+    prisma.clinicalEpisode.findMany({
+      where,
+      include: episodeInclude,
       orderBy,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      // Arrival uses hotel check-in after fetch — load the matching set then page in memory.
+      ...(sortArrival
+        ? {}
+        : { skip: (page - 1) * pageSize, take: pageSize }),
     }),
     input?.includeHotelRooms
       ? listHotelRoomNumbers('OPEN')
@@ -734,6 +741,7 @@ export async function listOpenEpisodes(input?: {
       ? listProgramCodes('OPEN')
       : Promise.resolve(undefined),
   ]);
+  let episodes = episodesRaw;
 
   const {
     LIVE_PROCEDURE_STATUSES,
@@ -801,14 +809,58 @@ export async function listOpenEpisodes(input?: {
     };
   }
 
+  const { lookupHotelStayWindow } = await import("@/lib/hotel-stay-person");
+  const { bakuDateKey } = await import("@/lib/baku-day");
+  const arrivalByEpisodeId = new Map<string, string>();
+  await Promise.all(
+    episodes.map(async (e) => {
+      if (e.reservationId) {
+        const window = await lookupHotelStayWindow(e.reservationId);
+        if (window?.checkInDate) {
+          const ymd = bakuDateKey(window.checkInDate);
+          if (ymd) {
+            arrivalByEpisodeId.set(e.id, ymd);
+            return;
+          }
+        }
+      }
+      const progStart = (e.programInstance as { startsOn?: Date | string } | null)?.startsOn;
+      if (progStart) {
+        const ymd = bakuDateKey(progStart);
+        if (ymd) {
+          arrivalByEpisodeId.set(e.id, ymd);
+          return;
+        }
+      }
+      arrivalByEpisodeId.set(e.id, bakuDateKey(e.openedAt));
+    }),
+  );
+
+  const withArrival = <T extends { id: string }>(row: T) => ({
+    ...row,
+    arrivalOn: arrivalByEpisodeId.get(row.id) ?? null,
+  });
+
+  if (sortArrival) {
+    episodes = [...episodes].sort((a, b) => {
+      const av = arrivalByEpisodeId.get(a.id) ?? "";
+      const bv = arrivalByEpisodeId.get(b.id) ?? "";
+      const cmp = av.localeCompare(bv);
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+    episodes = episodes.slice((page - 1) * pageSize, page * pageSize);
+  }
+
   const walkInIds = episodes
     .filter((e) => e.patientOrigin === "WALK_IN")
     .map((e) => e.id);
   if (walkInIds.length === 0) {
-    const data = episodes.map((e) => ({
-      ...withPackageSignal(e),
-      canCloseWalkIn: false as boolean,
-    }));
+    const data = episodes.map((e) =>
+      withArrival({
+        ...withPackageSignal(e),
+        canCloseWalkIn: false as boolean,
+      }),
+    );
     return {
       data,
       total,
@@ -851,13 +903,13 @@ export async function listOpenEpisodes(input?: {
   const data = episodes.map((e) => {
     const base = withPackageSignal(e);
     if (e.patientOrigin !== "WALK_IN") {
-      return { ...base, canCloseWalkIn: false };
+      return withArrival({ ...base, canCloseWalkIn: false });
     }
     const denied = walkInCloseDenied({
       liveProcedureCount: liveByEp.get(e.id) ?? 0,
       openLabCount: labsByEp.get(e.id) ?? 0,
     });
-    return { ...base, canCloseWalkIn: !denied };
+    return withArrival({ ...base, canCloseWalkIn: !denied });
   });
   return {
     data,

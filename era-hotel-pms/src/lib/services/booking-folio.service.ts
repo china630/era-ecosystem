@@ -103,7 +103,58 @@ export async function ensurePartyGuestFolios(reservationId: string) {
       }),
     );
   }
+  await foldLooseGuestFolioOntoPrimary(reservationId);
   return created;
+}
+
+/**
+ * A guest folio opened before the party exists has no guest id.
+ * Once a primary guest has an open folio, that early folio is the same pocket:
+ * move its lines there and drop it. Named guest, company, and agency folios stay put.
+ * With no primary folio yet, the loose folio remains the stay account.
+ */
+export async function foldLooseGuestFolioOntoPrimary(reservationId: string) {
+  const primary = await prisma.reservationGuest.findFirst({
+    where: {
+      reservationId,
+      isPrimary: true,
+      departedAt: null,
+      NOT: { guestState: 'DEPARTED' },
+    },
+    select: { id: true },
+  });
+  if (!primary) return;
+  const target = await prisma.folio.findFirst({
+    where: {
+      reservationId,
+      type: 'GUEST',
+      reservationGuestId: primary.id,
+      status: 'OPEN',
+    },
+    select: { id: true },
+  });
+  if (!target) return;
+  const loose = await prisma.folio.findMany({
+    where: {
+      reservationId,
+      type: 'GUEST',
+      reservationGuestId: null,
+      status: 'OPEN',
+      NOT: { id: target.id },
+    },
+    select: { id: true },
+  });
+  for (const folio of loose) {
+    await prisma.$transaction(async (tx) => {
+      await tx.folioCharge.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
+      await tx.folioPayment.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
+      await tx.folioDeposit.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
+      await tx.folioSettlement.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
+      await tx.fiscalDocument.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
+      await tx.cardAuthorization.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
+      await tx.folio.delete({ where: { id: folio.id } });
+    });
+  }
 }
 
 function partyNameKey(row: { firstName: string | null; lastName: string | null }): string {
@@ -155,33 +206,7 @@ export async function reconcilePartyFolios(input: {
     });
   }
 
-  const personal = await prisma.folio.count({
-    where: {
-      reservationId: input.reservationId,
-      type: 'GUEST',
-      reservationGuestId: { not: null },
-      status: 'OPEN',
-    },
-  });
-  if (personal < 2) return;
-  const loose = await prisma.folio.findMany({
-    where: {
-      reservationId: input.reservationId,
-      type: 'GUEST',
-      reservationGuestId: null,
-      status: 'OPEN',
-    },
-    include: {
-      charges: { select: { id: true } },
-      payments: { select: { id: true } },
-      deposits: { select: { id: true } },
-    },
-  });
-  for (const folio of loose) {
-    if (folio.charges.length === 0 && folio.payments.length === 0 && folio.deposits.length === 0) {
-      await prisma.folio.delete({ where: { id: folio.id } });
-    }
-  }
+  await foldLooseGuestFolioOntoPrimary(input.reservationId);
 }
 
 function partyPresent(

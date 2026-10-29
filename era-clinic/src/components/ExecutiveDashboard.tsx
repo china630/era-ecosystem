@@ -28,23 +28,31 @@ type Summary = {
 };
 
 export function ExecutiveDashboard({
+  from,
+  to,
   date,
   refreshKey = 0,
-  practitionerId = "",
 }: {
-  date: string;
+  from?: string;
+  to?: string;
+  /** @deprecated prefer from/to */
+  date?: string;
   refreshKey?: number;
-  practitionerId?: string;
 }) {
   const t = useTranslations("executive");
   const tc = useTranslations("common");
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const rangeFrom = from ?? date ?? "";
+  const rangeTo = to ?? date ?? from ?? "";
+
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ date });
-    if (practitionerId) params.set("practitionerId", practitionerId);
+    const params = new URLSearchParams();
+    if (rangeFrom) params.set("from", rangeFrom);
+    if (rangeTo) params.set("to", rangeTo);
+    if (!rangeFrom && date) params.set("date", date);
     const res = await fetch(`/api/executive/summary?${params}`);
     const data = await res.json();
     if (!res.ok) {
@@ -54,7 +62,7 @@ export function ExecutiveDashboard({
       setSummary((data.data ?? data) as Summary);
     }
     setLoading(false);
-  }, [date, practitionerId, t]);
+  }, [rangeFrom, rangeTo, date, t]);
 
   useEffect(() => {
     void load();

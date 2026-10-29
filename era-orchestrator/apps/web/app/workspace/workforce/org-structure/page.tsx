@@ -41,9 +41,28 @@ type OrgUnit = {
   name: string;
   code: string | null;
   parentId: string | null;
+  unitKind?: string;
+  managerEmploymentId?: string | null;
   status: string;
   _count?: { employments: number; positions: number };
 };
+
+type EmpOpt = { id: string; label: string };
+
+const UNIT_KINDS = ["COMPANY", "DIVISION", "DEPARTMENT", "TEAM"] as const;
+
+function unitIndent(
+  unitId: string,
+  byId: Map<string, OrgUnit>,
+): number {
+  let depth = 0;
+  let cur = byId.get(unitId)?.parentId ?? null;
+  for (let i = 0; i < 24 && cur; i += 1) {
+    depth += 1;
+    cur = byId.get(cur)?.parentId ?? null;
+  }
+  return depth;
+}
 
 type EditState = { mode: "create" } | { mode: "edit"; unit: OrgUnit } | null;
 
@@ -88,6 +107,9 @@ export default function OrgStructurePage() {
   const [formName, setFormName] = useState("");
   const [formCode, setFormCode] = useState("");
   const [formParentId, setFormParentId] = useState("");
+  const [formUnitKind, setFormUnitKind] = useState<string>("DEPARTMENT");
+  const [formManagerId, setFormManagerId] = useState("");
+  const [empOptions, setEmpOptions] = useState<EmpOpt[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importCsv, setImportCsv] = useState("");
@@ -159,20 +181,53 @@ export default function OrgStructurePage() {
     void load();
   }, [ready, user?.organizationId, load]);
 
+  async function loadEmpOptions() {
+    const res = await wfFetch("employments?status=ACTIVE&pageSize=100");
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      items?: Array<{
+        id: string;
+        globalPersonId?: string;
+        position?: { name?: string };
+        orgUnit?: { name?: string };
+      }>;
+      persons?: Record<string, { displayName?: string | null }>;
+    };
+    const persons = data.persons ?? {};
+    setEmpOptions(
+      (data.items ?? []).map((e) => {
+        const personName = e.globalPersonId
+          ? persons[e.globalPersonId]?.displayName?.trim()
+          : null;
+        const role = `${e.position?.name ?? "—"} · ${e.orgUnit?.name ?? ""}`.trim();
+        return {
+          id: e.id,
+          label: personName ? `${personName} (${role})` : role,
+        };
+      }),
+    );
+  }
+
   function openCreate() {
     setFormName("");
     setFormCode("");
     setFormParentId("");
+    setFormUnitKind("DEPARTMENT");
+    setFormManagerId("");
     setFormError(null);
     setEditState({ mode: "create" });
+    void loadEmpOptions();
   }
 
   function openEdit(unit: OrgUnit) {
     setFormName(unit.name);
     setFormCode(unit.code ?? "");
     setFormParentId(unit.parentId ?? "");
+    setFormUnitKind(unit.unitKind || "DEPARTMENT");
+    setFormManagerId(unit.managerEmploymentId ?? "");
     setFormError(null);
     setEditState({ mode: "edit", unit });
+    void loadEmpOptions();
   }
 
   async function saveUnit(e?: React.FormEvent) {
@@ -184,6 +239,8 @@ export default function OrgStructurePage() {
       name: formName.trim(),
       code: formCode.trim() || null,
       parentId: formParentId || null,
+      unitKind: formUnitKind || "DEPARTMENT",
+      managerEmploymentId: formManagerId || null,
     });
     const submit = () =>
       editState.mode === "create"
@@ -293,6 +350,11 @@ export default function OrgStructurePage() {
       );
     });
   }, [items, filterQ, filterStatus]);
+
+  const unitById = useMemo(
+    () => new Map(items.map((u) => [u.id, u])),
+    [items],
+  );
 
   const { page, pageSize, setPage, setPageSize, paged, total } =
     useListPagination(filtered);
@@ -423,9 +485,15 @@ export default function OrgStructurePage() {
                     <Link
                       href={`/workspace/workforce/positions?orgUnitId=${encodeURIComponent(u.id)}`}
                       className="text-[#2980B9] hover:underline"
+                      style={{ paddingLeft: `${unitIndent(u.id, unitById) * 12}px` }}
                     >
                       {u.name}
                     </Link>
+                    {u.unitKind ? (
+                      <span className="ml-2 text-xs text-[#7F8C8D]">
+                        {t(`unitKind.${u.unitKind}` as "unitKind.DEPARTMENT")}
+                      </span>
+                    ) : null}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{u.code ?? "—"}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
@@ -533,6 +601,24 @@ export default function OrgStructurePage() {
             onChange={(next) => setFormParentId(String(next))}
             options={parentOptions.map((u) => ({ value: u.id, label: u.name }))}
             emptyLabel={t("rootParent")}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("fieldUnitKind")}
+            value={formUnitKind}
+            onChange={(next) => setFormUnitKind(String(next) || "DEPARTMENT")}
+            options={UNIT_KINDS.map((k) => ({
+              value: k,
+              label: t(`unitKind.${k}` as "unitKind.DEPARTMENT"),
+            }))}
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("fieldManager")}
+            value={formManagerId}
+            onChange={(next) => setFormManagerId(String(next))}
+            options={empOptions.map((e) => ({ value: e.id, label: e.label }))}
+            emptyLabel={t("managerEmpty")}
           />
           {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
         </form>

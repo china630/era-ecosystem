@@ -77,7 +77,11 @@ function loadAz() {
   const j = JSON.parse(fs.readFileSync(path.join(SRC, "az-xbt10", "xbt10-az-2012.json"), "utf8"));
   const chapters = {};
   for (const [num, t] of Object.entries(j.chapters)) {
-    chapters[num] = t.replace(/^[IVXL]+\s+SİNİF\s+/u, "").trim();
+    let title = String(t || "").trim();
+    // OCR/extract sometimes glued the volume TOC before the chapter heading.
+    const sinif = title.match(/([IVXLCDM]+\s+SİNİF\s+.+)$/iu);
+    if (sinif && title.length > 120) title = sinif[1].trim();
+    chapters[num] = title.replace(/^[IVXLCDM]+\s+SİNİF\s+/iu, "").trim();
   }
   return { codes: j.codes, blocks: j.blocks, chapters };
 }

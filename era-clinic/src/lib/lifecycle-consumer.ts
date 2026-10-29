@@ -288,6 +288,17 @@ export async function handleStayProductChanged(
   enterRequestTenant(event.organizationId);
   const p = event.payload;
   const effective = p.effectiveDate ? new Date(p.effectiveDate) : new Date();
+  const roomNumber = p.roomNumber?.trim();
+  if (roomNumber) {
+    await prisma.clinicalEpisode.updateMany({
+      where: { reservationId: p.reservationId, status: "OPEN" },
+      data: { roomNumber },
+    });
+    await prisma.visit.updateMany({
+      where: { reservationId: p.reservationId, status: "IN_PROGRESS" },
+      data: { roomNumber },
+    });
+  }
   const gpid = p.globalPersonId ?? event.globalPersonId;
   const personScoped = Boolean(p.paxKey || gpid);
   const hotelStayId = resolveHotelStayId({

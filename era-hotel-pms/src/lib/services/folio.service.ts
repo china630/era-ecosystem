@@ -1064,6 +1064,10 @@ export async function voidCharge(
 }
 
 export async function listFolios(reservationId?: string) {
+  if (reservationId) {
+    const { foldLooseGuestFolioOntoPrimary } = await import('@/lib/services/booking-folio.service');
+    await foldLooseGuestFolioOntoPrimary(reservationId);
+  }
   return prisma.folio.findMany({
     where: reservationId ? { reservationId } : undefined,
     include: {

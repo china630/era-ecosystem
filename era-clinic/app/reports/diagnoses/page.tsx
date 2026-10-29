@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -11,7 +12,6 @@ import {
   DatePicker,
   EraListFilterBar,
   EraListWorkspace,
-  FieldSelect,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
   PageHeader,
@@ -119,30 +119,37 @@ export default function DiagnosisReportPage() {
               value={to}
               onChange={setTo}
             />
-            <FieldSelect
+            <CatalogField
+              kind="CLOSED_SMALL"
               label={t("source")}
-              preset="select"
               value={source}
-              onChange={(e) => setSource(e.target.value)}
-            >
-              <option value="all">{tc("all")}</option>
-              <option value="episode">{t("sourceEpisode")}</option>
-              <option value="visit">{t("sourceVisit")}</option>
-              <option value="admission">{t("sourceAdmission")}</option>
-            </FieldSelect>
-            <FieldSelect
+              onChange={(value) => setSource(String(value))}
+              emptyLabel={null}
+              options={[
+                { value: "all", label: tc("all") },
+                { value: "episode", label: t("sourceEpisode") },
+                { value: "visit", label: t("sourceVisit") },
+                { value: "admission", label: t("sourceAdmission") },
+              ]}
+            />
+            <CatalogField
+              kind="SEARCHABLE"
               label={t("chapter")}
-              preset="select"
               value={chapter}
-              onChange={(e) => setChapter(e.target.value)}
-            >
-              <option value="">{t("allChapters")}</option>
-              {chapters.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.title}
-                </option>
-              ))}
-            </FieldSelect>
+              onChange={(value) => setChapter(String(value ?? ""))}
+              emptyLabel={t("allChapters")}
+              widthPreset="select"
+              options={[
+                { value: "", label: t("allChapters") },
+                ...chapters.map((c) => ({
+                  value: c.code,
+                  label:
+                    c.title.length > 48
+                      ? `${c.code} — ${c.title.slice(c.title.indexOf("—") + 1).trim().slice(0, 40)}…`
+                      : c.title,
+                })),
+              ]}
+            />
           </EraListFilterBar>
         }
         table={

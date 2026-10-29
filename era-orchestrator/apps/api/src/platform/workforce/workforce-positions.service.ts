@@ -38,6 +38,7 @@ export class WorkforcePositionsService {
       },
       include: {
         orgUnit: true,
+        job: { select: { id: true, name: true, code: true } },
         _count: {
           select: {
             employments: {
@@ -100,6 +101,16 @@ export class WorkforcePositionsService {
     if (!unit || unit.status !== OrgUnitStatus.ACTIVE) {
       throw new NotFoundException("OrgUnit not found");
     }
+    if (dto.jobId) {
+      await this.assertJobInScope(dto.jobId, link.workforceScopeId);
+    }
+    if (dto.parentPositionId) {
+      await this.assertParentInScope(
+        dto.parentPositionId,
+        link.workforceScopeId,
+        null,
+      );
+    }
     const row = await this.prisma.workforcePosition.create({
       data: {
         orgUnitId: dto.orgUnitId,
@@ -110,6 +121,8 @@ export class WorkforcePositionsService {
         tariffAzn: money(dto.tariffAzn),
         defaultWorkRegime: dto.defaultWorkRegime ?? null,
         weeklyHours: money(dto.weeklyHours),
+        jobId: dto.jobId ?? null,
+        parentPositionId: dto.parentPositionId ?? null,
       },
     });
     await this.audit.log({
@@ -148,6 +161,16 @@ export class WorkforcePositionsService {
         throw new BadRequestException("totalSlots below active employments");
       }
     }
+    if (dto.jobId) {
+      await this.assertJobInScope(dto.jobId, link.workforceScopeId);
+    }
+    if (dto.parentPositionId !== undefined && dto.parentPositionId) {
+      await this.assertParentInScope(
+        dto.parentPositionId,
+        link.workforceScopeId,
+        id,
+      );
+    }
     const row = await this.prisma.workforcePosition.update({
       where: { id },
       data: {
@@ -160,6 +183,10 @@ export class WorkforcePositionsService {
           ? { defaultWorkRegime: dto.defaultWorkRegime ?? null }
           : {}),
         ...(dto.weeklyHours !== undefined ? { weeklyHours: money(dto.weeklyHours) } : {}),
+        ...(dto.jobId !== undefined ? { jobId: dto.jobId } : {}),
+        ...(dto.parentPositionId !== undefined
+          ? { parentPositionId: dto.parentPositionId }
+          : {}),
       },
     });
     await this.audit.log({
@@ -194,9 +221,55 @@ export class WorkforcePositionsService {
     }
   }
 
+  private async assertJobInScope(jobId: string, workforceScopeId: string) {
+    const job = await this.prisma.workforceJob.findFirst({
+      where: { id: jobId, workforceScopeId, status: OrgUnitStatus.ACTIVE },
+    });
+    if (!job) throw new BadRequestException("Job not found in scope");
+  }
+
+  private async assertParentInScope(
+    parentId: string,
+    workforceScopeId: string,
+    selfId: string | null,
+  ) {
+    if (selfId && parentId === selfId) {
+      throw new BadRequestException("Position cannot be its own parent");
+    }
+    const parent = await this.prisma.workforcePosition.findFirst({
+      where: {
+        id: parentId,
+        orgUnit: { workforceScopeId },
+        status: OrgUnitStatus.ACTIVE,
+      },
+      select: { id: true, parentPositionId: true },
+    });
+    if (!parent) throw new BadRequestException("Parent position not found");
+    if (!selfId) return;
+    let cur: string | null = parent.parentPositionId;
+    for (let i = 0; i < 64 && cur; i += 1) {
+      if (cur === selfId) {
+        throw new BadRequestException("Position parent cycle");
+      }
+      const next = await this.prisma.workforcePosition.findUnique({
+        where: { id: cur },
+        select: { parentPositionId: true },
+      });
+      cur = next?.parentPositionId ?? null;
+    }
+  }
+
   private async emitUpsert(
     anchorOrganizationId: string,
-    row: { id: string; orgUnitId: string; name: string; code: string | null; totalSlots: number },
+    row: {
+      id: string;
+      orgUnitId: string;
+      name: string;
+      code: string | null;
+      totalSlots: number;
+      jobId?: string | null;
+      parentPositionId?: string | null;
+    },
   ) {
     await this.satelliteEvents.enqueue({
       type: WORKFORCE_POSITION_UPSERTED,
@@ -210,6 +283,8 @@ export class WorkforcePositionsService {
         name: row.name,
         code: row.code ?? undefined,
         totalSlots: row.totalSlots,
+        jobId: row.jobId ?? undefined,
+        parentPositionId: row.parentPositionId ?? undefined,
       },
     });
   }

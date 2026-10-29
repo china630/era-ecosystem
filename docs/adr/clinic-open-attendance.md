@@ -19,7 +19,7 @@ We must not invent a new registration door. Package assign, extras/Pay, nurse ch
 | Layer | Rule |
 |-------|------|
 | Catalog | `ProcedureType.openAttendance` (SatAdmin checkbox). Copy onto `ProcedureOrder.schedulingMode` (`FIXED` \| `OPEN`) at create. |
-| Assign | Saxla / adjust create day-bucket `SCHEDULED` rows: calendar day pinned, `resourceId = null`, **no** `ResourceBooking` / cabin scan. Baths and HARD-staff types should keep the flag off in pilot. |
+| Assign | Saxla / adjust create day-bucket `SCHEDULED` rows: calendar day pinned, `resourceId = null`, **no** `ResourceBooking` / cabin scan. `prescribeExtras` under `PLAN_BEFORE_PAY` pins OPEN unpaid the same way (stay `endsOn`, then status back to `PENDING_PAY`); Pay **keeps** that day pin (does not re-walk from today). Baths and HARD-staff types should keep the flag off in pilot. |
 | Quota | OPEN burns entitlement only on `CHECKED_IN` / `COMPLETED`. Day-bucket `SCHEDULED` does **not** burn. Auto `NO_SHOW` sweep **skips** OPEN. |
 | Plan / print | Sort OPEN to end of day; time label = open-attendance (not wall clock) until seated. |
 | Matrix | No bar until seated. Foresight rail on `/sanatorium/resources` calendar: waiting / in-cabin counts by day (nurse board does not duplicate the rail). |

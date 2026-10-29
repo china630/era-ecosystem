@@ -8,35 +8,67 @@ type LeadershipItem = {
   leadership: boolean;
 };
 
-async function fetchLeadershipFromOrch(
+/**
+ * Workforce employments live on hub/parent (Sanatorium) when F&B is a commercial
+ * DEPARTMENT. Query both self and hub/parent; prefer hub first.
+ */
+export async function resolveWorkforceOrganizationIds(
+  commercialOrganizationId?: string,
+): Promise<string[]> {
+  const { resolveOperatingMode, resolveSettlementPolicy } = await import(
+    "@era/satellite-kit"
+  );
+  const self =
+    commercialOrganizationId?.trim() || requestOrganizationId();
+  const [mode, policy] = await Promise.all([
+    resolveOperatingMode(self),
+    resolveSettlementPolicy(self),
+  ]);
+  const hub = policy.hubOrganizationId?.trim() || "";
+  const parent = mode.parentOrgId?.trim() || "";
+  const ordered: string[] = [];
+  for (const id of [hub, parent, self]) {
+    if (id && !ordered.includes(id)) ordered.push(id);
+  }
+  return ordered.length ? ordered : [self];
+}
+
+async function resolveOrchBaseUrl(fnbOrganizationId: string): Promise<string | null> {
+  try {
+    const {
+      resolveOrchestratorBaseUrl,
+      preferInClusterOrchestratorUrl,
+      isRunningInsideDocker,
+      isPublicOrchestratorUrl,
+    } = await import("@era/satellite-kit");
+    const fromKit = resolveOrchestratorBaseUrl({ fallback: "" }).trim().replace(
+      /\/$/,
+      "",
+    );
+    if (fromKit) return fromKit;
+
+    const {
+      getFnbIntegrationSettings,
+      normalizePublicOrigin,
+    } = await import("@/lib/fnb-integration-settings");
+    const fromSettings = normalizePublicOrigin(
+      (await getFnbIntegrationSettings(fnbOrganizationId)).orchestratorBaseUrl,
+    );
+    if (!fromSettings) return null;
+    if (isRunningInsideDocker() && isPublicOrchestratorUrl(fromSettings)) {
+      return preferInClusterOrchestratorUrl(fromSettings);
+    }
+    return preferInClusterOrchestratorUrl(fromSettings);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchLeadershipForOrg(
+  base: string,
+  token: string,
   organizationId: string,
 ): Promise<LeadershipItem[]> {
-  const {
-    getFnbIntegrationSettings,
-    normalizePublicOrigin,
-  } = await import("@/lib/fnb-integration-settings");
-  const fromSettings = normalizePublicOrigin(
-    (await getFnbIntegrationSettings(organizationId)).orchestratorBaseUrl,
-  );
-  let base = fromSettings;
-  if (!base) {
-    try {
-      const { resolveOrchestratorBaseUrl } = await import("@era/satellite-kit");
-      const resolved = resolveOrchestratorBaseUrl({ fallback: "" }).trim();
-      base = resolved ? resolved.replace(/\/$/, "") : null;
-    } catch {
-      base = null;
-    }
-  }
-  const token =
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
-    process.env.INTERNAL_SERVICE_TOKEN?.trim() ||
-    "";
-  if (!base || !token) {
-    throw Object.assign(new Error("Orchestrator workforce unavailable"), {
-      code: "ORCH_UNAVAILABLE",
-    });
-  }
   const res = await fetch(
     `${base}/internal/v1/workforce/organizations/${encodeURIComponent(organizationId)}/leadership-employments`,
     {
@@ -56,6 +88,48 @@ async function fetchLeadershipFromOrch(
     items?: LeadershipItem[];
   } | null;
   return Array.isArray(body?.items) ? body!.items! : [];
+}
+
+async function fetchLeadershipFromOrch(
+  fnbOrganizationId: string,
+): Promise<LeadershipItem[]> {
+  const base = await resolveOrchBaseUrl(fnbOrganizationId);
+  let token = "";
+  try {
+    const { resolveSatelliteEventServiceToken } = await import("@era/satellite-kit");
+    token = resolveSatelliteEventServiceToken().trim();
+  } catch {
+    token = "";
+  }
+  if (!token) {
+    token =
+      process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+      process.env.INTERNAL_SERVICE_TOKEN?.trim() ||
+      "";
+  }
+  if (!base || !token) {
+    throw Object.assign(new Error("Orchestrator workforce unavailable"), {
+      code: "ORCH_UNAVAILABLE",
+    });
+  }
+
+  const orgIds = await resolveWorkforceOrganizationIds(fnbOrganizationId);
+  const byId = new Map<string, LeadershipItem>();
+  let lastUnavailable: Error | null = null;
+  let anyOk = false;
+  for (const orgId of orgIds) {
+    try {
+      const items = await fetchLeadershipForOrg(base, token, orgId);
+      anyOk = true;
+      for (const item of items) {
+        if (!byId.has(item.id)) byId.set(item.id, item);
+      }
+    } catch (err) {
+      lastUnavailable = err as Error;
+    }
+  }
+  if (!anyOk && lastUnavailable) throw lastUnavailable;
+  return [...byId.values()];
 }
 
 export async function listManagementEaters(outletId?: string | null) {

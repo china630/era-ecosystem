@@ -265,13 +265,13 @@
       "outletRevenueFallback": "Fallback дохода (SoR — категория)",
       "outletRevenueFallbackHint": "Коды дохода категорий меню — источник истины. Код outlet — только fallback, если у категории нет кода.",
       "integrationsTitle": "Интеграции буфета",
-      "integrationsHint": "URL для Open Finance, синхрона отеля и HR. Хранятся в настройках — не в образе.",
+      "integrationsHint": "URL Finance web для Open Finance. Hotel и HR S2S — peer / orchestrator (не эти поля).",
       "financeWebUrl": "URL Finance web",
       "financeWebUrlHint": "Maya dəyəri → Open Finance",
       "hotelPmsUrl": "URL Hotel PMS",
-      "hotelPmsUrlHint": "Прогноз → ночи из отеля",
+      "hotelPmsUrlHint": "Устарело — S2S через SatelliteEndpoint peer",
       "orchestratorBaseUrl": "URL Orchestrator API",
-      "orchestratorBaseUrlHint": "Руководство → HR sync"
+      "orchestratorBaseUrlHint": "Устарело — runtime in-cluster orch"
     },
     "menu": {
       "title": "Админ меню",
@@ -690,10 +690,10 @@
       "templateActiveCol": "Активен",
       "templateSlotsCol": "Слоты",
       "templateActiveYes": "активен",
-      "forecastHotelUnavailable": "Отель недоступен — укажите Hotel PMS URL в Настройках или введите ночи вручную.",
+      "forecastHotelUnavailable": "Peer отеля недоступен — введите ночи вручную.",
       "normsHelp": "Когда сумма гостевых ночей попадает в диапазон, выбирается полоса (низ/сред/высок) → теория закупки / Себестоимость. Min/max = пороги ночей.",
-      "eatersSyncUnavailable": "HR недоступен — укажите Orchestrator API URL в Настройках или добавьте вручную.",
-      "eatersEmptyHonesty": "Список пуст. Если HR не тянется — добавьте имя вручную.",
+      "eatersSyncUnavailable": "HR недоступен — добавьте руководство вручную.",
+      "eatersEmptyHonesty": "Список пуст. Ролей руководства нет (или не отмечены) — добавьте имя вручную.",
       "kindInModal": "Тип"
     },
     "integration": {
