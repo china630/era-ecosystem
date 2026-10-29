@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleRouteError } from '@/lib/api-utils';
+import { PERMISSIONS } from '@/lib/auth/permissions';
 import { assertPosBridgeOrPermission } from '@/lib/pos-bridge-auth';
 import { queryOccupancySeries } from '@/lib/services/reports/monthly-daily-analysis.report';
 
@@ -9,8 +10,7 @@ import { queryOccupancySeries } from '@/lib/services/reports/monthly-daily-analy
  */
 export async function GET(request: NextRequest) {
   try {
-    const denied = await assertPosBridgeOrPermission(request);
-    if (denied) return denied;
+    await assertPosBridgeOrPermission(request, PERMISSIONS.REPORTS_READ);
 
     const url = request.nextUrl;
     const from = url.searchParams.get('from')?.trim() ?? '';
