@@ -89,7 +89,7 @@ export default function InventorySettingsPage() {
     [t],
   );
 
-  const LAB_OUTLET_DEFAULTS = useMemo(() => ["NAFTANI", "RESTAURANT", "KAFE"], []);
+  const LAB_OUTLET_DEFAULTS = useMemo(() => ["NAFTANI", "XUDMANI", "KAFE"], []);
 
   const outletCodeOptions = useMemo(() => {
     const codes = new Set<string>(LAB_OUTLET_DEFAULTS);

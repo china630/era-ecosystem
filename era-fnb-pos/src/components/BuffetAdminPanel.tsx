@@ -25,7 +25,12 @@ import BuffetStaffMealsPanel from "@/components/BuffetStaffMealsPanel";
 import BuffetCostRunPanel from "@/components/BuffetCostRunPanel";
 import BuffetForecastPanel from "@/components/BuffetForecastPanel";
 
-type Outlet = { id: string; code: string; name: string };
+type Outlet = {
+  id: string;
+  code: string;
+  name: string;
+  capBuffetPlanner?: boolean;
+};
 type PlanRow = {
   id: string;
   outletId: string;
@@ -96,7 +101,19 @@ const emptyLineForm = (): LineForm => ({
   wastePct: "0",
 });
 
-export default function BuffetAdminPanel() {
+export type BuffetSection =
+  | "plans"
+  | "templates"
+  | "management"
+  | "costRun"
+  | "forecast"
+  | "norms";
+
+export default function BuffetAdminPanel({
+  section = "plans",
+}: {
+  section?: BuffetSection;
+}) {
   const t = useTranslations("admin.buffet");
   const tc = useTranslations("common");
 
@@ -106,18 +123,27 @@ export default function BuffetAdminPanel() {
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(() => addCivilDays(today, 6));
   const [statusFilter, setStatusFilter] = useState("");
+  const [kindFilter, setKindFilter] = useState<"GUEST" | "STAFF" | "">("GUEST");
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [compositionOpen, setCompositionOpen] = useState(false);
   const [planModal, setPlanModal] = useState<"create" | "edit" | "copy" | null>(null);
+  const [spawnOpen, setSpawnOpen] = useState(false);
+  const [spawnTemplateId, setSpawnTemplateId] = useState("");
+  const [spawnWeekStart, setSpawnWeekStart] = useState(() => today);
+  const [spawnCoversSource, setSpawnCoversSource] = useState<"MANUAL" | "HOTEL">("MANUAL");
+  const [spawnAdult, setSpawnAdult] = useState("0");
+  const [spawnChild, setSpawnChild] = useState("0");
+  const [spawnFactor, setSpawnFactor] = useState("80");
+  const [templatesForSpawn, setTemplatesForSpawn] = useState<
+    Array<{ id: string; name: string; active: boolean }>
+  >([]);
   const [copySourceId, setCopySourceId] = useState<string | null>(null);
   const [planForm, setPlanForm] = useState<PlanForm>(emptyPlanForm(""));
   const [lineModal, setLineModal] = useState<"create" | "edit" | null>(null);
   const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm());
   const [menuOptions, setMenuOptions] = useState<MenuOption[]>([]);
-  const [viewTab, setViewTab] = useState<
-    "plans" | "template" | "management" | "staff" | "costRun" | "forecast"
-  >("plans");
+  const viewTab = section;
   const [coversRollup, setCoversRollup] = useState<{
     forecastTotal: number;
     management: { count: number };
@@ -186,7 +212,11 @@ export default function BuffetAdminPanel() {
       showApiError(data, t("loadFailed"));
       return;
     }
-    const list = Array.isArray(data?.outlets) ? (data.outlets as Outlet[]) : [];
+    const raw = Array.isArray(data?.outlets) ? (data.outlets as Outlet[]) : [];
+    const list =
+      raw.some((o) => o.capBuffetPlanner === true)
+        ? raw.filter((o) => o.capBuffetPlanner === true)
+        : raw;
     setOutlets(list);
     if (!outletId && list.length > 0) {
       // Prefer buffet twin NAFTANI over lab KAFE/café so chef path does not land on café.
@@ -632,90 +662,124 @@ export default function BuffetAdminPanel() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ["plans", t("tabPlans")],
-            ["template", t("tabTemplate")],
-            ["management", t("tabManagement")],
-            ["staff", t("tabStaff")],
-            ["costRun", t("tabCostRun")],
-            ["forecast", t("tabForecast")],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            className={viewTab === key ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-            onClick={() => setViewTab(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <FieldRow cols={viewTab === "plans" ? 4 : 3} className="items-end">
-          <CatalogField
-            kind={"ENTITY_REF" as CatalogFieldKind}
-            label={t("outlet")}
-            value={outletId}
-            options={outletOptions}
-            onChange={(next) => setOutletId(Array.isArray(next) ? next[0] ?? "" : next)}
-          />
-          <Field
-            label={t("fromDate")}
-            preset="date"
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-          <Field
-            label={t("toDate")}
-            preset="date"
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-          {viewTab === "plans" ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[12rem] flex-1">
             <CatalogField
-              kind={"CLOSED_SMALL" as CatalogFieldKind}
-              label={t("statusFilter")}
-              value={statusFilter}
-              options={statusOptions}
-              onChange={(next) => setStatusFilter(Array.isArray(next) ? next[0] ?? "" : next)}
+              kind={"ENTITY_REF" as CatalogFieldKind}
+              label={t("outlet")}
+              value={outletId}
+              options={outletOptions}
+              onChange={(next) => setOutletId(Array.isArray(next) ? next[0] ?? "" : next)}
             />
+          </div>
+          {viewTab !== "templates" ? (
+            <>
+              <div className="w-[9.5rem]">
+                <Field
+                  label={t("fromDate")}
+                  preset="date"
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+              <div className="w-[9.5rem]">
+                <Field
+                  label={t("toDate")}
+                  preset="date"
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+            </>
           ) : null}
-        </FieldRow>
-        {outletCostModel ? (
-          <p
-            className={`m-0 text-xs ${
-              outletCostModel === "OFF" ? "text-[#E67E22]" : "text-[#7F8C8D]"
-            }`}
-          >
+          {viewTab === "plans" || viewTab === "templates" ? (
+            <div className="w-[9rem]">
+              <CatalogField
+                kind={"CLOSED_SMALL" as CatalogFieldKind}
+                label={t("kindFilter")}
+                value={kindFilter}
+                options={[
+                  { value: "GUEST", label: t("kind.GUEST") },
+                  { value: "STAFF", label: t("kind.STAFF") },
+                ]}
+                onChange={(next) =>
+                  setKindFilter(
+                    (Array.isArray(next) ? next[0] : next) === "STAFF" ? "STAFF" : "GUEST",
+                  )
+                }
+              />
+            </div>
+          ) : null}
+          {viewTab === "plans" ? (
+            <div className="w-[9rem]">
+              <CatalogField
+                kind={"CLOSED_SMALL" as CatalogFieldKind}
+                label={t("statusFilter")}
+                value={statusFilter}
+                options={statusOptions}
+                onChange={(next) => setStatusFilter(Array.isArray(next) ? next[0] ?? "" : next)}
+              />
+            </div>
+          ) : null}
+          {viewTab === "plans" ? (
+            <div className="ml-auto flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => {
+                  const spawnKind = kindFilter === "STAFF" ? "STAFF" : "GUEST";
+                  if (spawnKind === "STAFF") setSpawnCoversSource("MANUAL");
+                  setSpawnOpen(true);
+                  void fetch(
+                    `/api/admin/buffet/templates?outletId=${encodeURIComponent(outletId)}&kind=${spawnKind}`,
+                  )
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((d) => {
+                      const rows = Array.isArray(d?.templates) ? d.templates : [];
+                      setTemplatesForSpawn(rows);
+                      const active = rows.find((r: { active: boolean }) => r.active);
+                      setSpawnTemplateId(active?.id || rows[0]?.id || "");
+                    })
+                    .catch(() => undefined);
+                  void fetch("/api/settings/buffet-cost")
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((d) => {
+                      const org = d?.settings?.orgDefaults;
+                      const pct =
+                        spawnKind === "STAFF"
+                          ? (org?.productionFactorPctStaff ?? 100)
+                          : (org?.productionFactorPctGuest ?? 80);
+                      setSpawnFactor(String(pct));
+                    })
+                    .catch(() => undefined);
+                }}
+              >
+                {t("spawnWeek")}
+              </button>
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openCreatePlan()}>
+                <Plus className="mr-1 inline h-4 w-4" />
+                {t("newPlan")}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {outletCostModel && outletCostModel !== "HYBRID" ? (
+          <p className="m-0 text-xs text-[#E67E22]">
             {outletCostModel === "OFF"
               ? t("outletModelOffBanner")
               : t("outletModelLabel", { model: outletCostModel })}
           </p>
         ) : null}
-        {viewTab === "plans" ? (
-          <div className="flex justify-end">
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openCreatePlan()}>
-              <Plus className="mr-1 inline h-4 w-4" />
-              {t("newPlan")}
-            </button>
-          </div>
-        ) : null}
       </div>
 
-      {viewTab === "template" ? (
+      {viewTab === "templates" ? (
         <BuffetWeekTemplatePanel
           outletId={outletId}
+          kindFilter={kindFilter === "STAFF" ? "STAFF" : "GUEST"}
           planOptions={planCaptureOptions}
-          onSpawned={() => {
-            setViewTab("plans");
-            void loadPlans();
-          }}
         />
       ) : null}
 
@@ -728,7 +792,7 @@ export default function BuffetAdminPanel() {
         />
       ) : null}
 
-      {viewTab === "staff" ? (
+      {viewTab === "plans" && kindFilter === "STAFF" ? (
         <BuffetStaffMealsPanel
           outletId={outletId}
           onChanged={() => setRollupNonce((n) => n + 1)}
@@ -740,7 +804,12 @@ export default function BuffetAdminPanel() {
           outletId={outletId}
           fromDate={fromDate}
           toDate={toDate}
-          onGoForecast={() => setViewTab("forecast")}
+          onGoForecast={() => {
+            window.location.href = "/admin/buffet/norms";
+          }}
+          onGoGuestNights={() => {
+            window.location.href = "/admin/buffet/forecast";
+          }}
         />
       ) : null}
 
@@ -749,10 +818,20 @@ export default function BuffetAdminPanel() {
           outletId={outletId}
           fromDate={fromDate}
           toDate={toDate}
+          mode="nights"
         />
       ) : null}
 
-      {viewTab === "plans" ? (
+      {viewTab === "norms" ? (
+        <BuffetForecastPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          mode="norms"
+        />
+      ) : null}
+
+      {viewTab === "plans" && kindFilter !== "STAFF" ? (
       <div className={`${CARD_CLASS} overflow-hidden`}>
         <div className="border-b px-3 py-2 text-sm font-semibold text-[#2C3E50]">{t("plansTitle")}</div>
         <div className="max-h-[70vh] overflow-auto">
@@ -1030,6 +1109,127 @@ export default function BuffetAdminPanel() {
           onSubmit={() => setCompositionOpen(false)}
           cancelLabel={tc("cancel")}
           submitLabel={tc("close")}
+        />
+      </ModalShell>
+
+      <ModalShell
+        open={spawnOpen}
+        onClose={() => setSpawnOpen(false)}
+        title={t("spawnWeek")}
+      >
+        <div className="space-y-3">
+          <CatalogField
+            kind={"ENTITY_REF" as CatalogFieldKind}
+            label={t("template")}
+            value={spawnTemplateId}
+            options={templatesForSpawn.map((r) => ({
+              value: r.id,
+              label: `${r.name}${r.active ? "" : ` (${t("templateInactive")})`}`,
+            }))}
+            onChange={(next) =>
+              setSpawnTemplateId(Array.isArray(next) ? next[0] ?? "" : next)
+            }
+          />
+          <Field
+            label={t("weekStart")}
+            preset="date"
+            type="date"
+            value={spawnWeekStart}
+            onChange={(e) => setSpawnWeekStart(e.target.value)}
+          />
+          {kindFilter !== "STAFF" ? (
+            <CatalogField
+              kind={"CLOSED_SMALL" as CatalogFieldKind}
+              label={t("coversSource")}
+              value={spawnCoversSource}
+              options={[
+                { value: "MANUAL", label: t("coversSourceManual") },
+                { value: "HOTEL", label: t("coversSourceHotel") },
+              ]}
+              onChange={(next) =>
+                setSpawnCoversSource(
+                  (Array.isArray(next) ? next[0] : next) === "HOTEL" ? "HOTEL" : "MANUAL",
+                )
+              }
+            />
+          ) : null}
+          {spawnCoversSource === "MANUAL" || kindFilter === "STAFF" ? (
+            <FieldRow cols={2}>
+              <Field
+                label={t("coversAdult")}
+                preset="shortText"
+                inputMode="numeric"
+                value={spawnAdult}
+                onChange={(e) => setSpawnAdult(e.target.value)}
+              />
+              <Field
+                label={t("coversChild")}
+                preset="shortText"
+                inputMode="numeric"
+                value={spawnChild}
+                onChange={(e) => setSpawnChild(e.target.value)}
+              />
+            </FieldRow>
+          ) : null}
+          <Field
+            label={t("productionFactorPct")}
+            preset="shortText"
+            inputMode="numeric"
+            value={spawnFactor}
+            onChange={(e) => setSpawnFactor(e.target.value)}
+          />
+        </div>
+        <ModalFooter
+          onCancel={() => setSpawnOpen(false)}
+          onSubmit={() => {
+            void (async () => {
+              if (!spawnTemplateId) return;
+              const effectiveSource =
+                kindFilter === "STAFF" ? "MANUAL" : spawnCoversSource;
+              if (effectiveSource === "HOTEL") {
+                await fetch("/api/admin/buffet/guest-nights/sync-hotel", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    from: spawnWeekStart,
+                    to: addCivilDays(spawnWeekStart, 6),
+                    outletId: outletId || null,
+                  }),
+                }).catch(() => undefined);
+              }
+              const factorDefault = kindFilter === "STAFF" ? 100 : 80;
+              const res = await fetch(
+                `/api/admin/buffet/templates/${spawnTemplateId}/spawn`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    weekStart: spawnWeekStart,
+                    coversSource: effectiveSource,
+                    coversAdult:
+                      effectiveSource === "MANUAL" ? Number(spawnAdult) || 0 : undefined,
+                    coversChild:
+                      effectiveSource === "MANUAL" ? Number(spawnChild) || 0 : undefined,
+                    productionFactorPct: Number(spawnFactor) || factorDefault,
+                  }),
+                },
+              );
+              const data = await res.json().catch(() => null);
+              if (!res.ok) {
+                showApiError(data, t("spawnFailed"));
+                return;
+              }
+              if (data?.emptySlots > 0) {
+                showSuccess(t("spawnedWithEmpty", { empty: data.emptySlots }));
+              } else {
+                showSuccess(t("spawned", { created: data?.created?.length ?? 0, skipped: data?.skipped?.length ?? 0 }));
+              }
+              setSpawnOpen(false);
+              await loadPlans();
+            })();
+          }}
+          submitLabel={t("spawnWeek")}
+          cancelLabel={tc("cancel")}
         />
       </ModalShell>
 

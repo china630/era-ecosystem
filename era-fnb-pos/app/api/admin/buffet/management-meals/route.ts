@@ -9,6 +9,22 @@ import {
   listManagementMeals,
   signManagementMeal,
 } from "@/lib/buffet-management-meals.service";
+import { ROLE_CODES } from "@/lib/auth/permissions";
+
+function canEditPastManagement(
+  session: { role?: string | null; isOwner?: boolean } | null,
+): boolean {
+  if (!session) return false;
+  if (session.isOwner === true) return true;
+  const role = session.role ?? "";
+  return (
+    role === ROLE_CODES.MANAGER ||
+    role === "FB_MANAGER" ||
+    role === ROLE_CODES.KITCHEN ||
+    role === "FB_KITCHEN" ||
+    role === "CHEF"
+  );
+}
 
 export async function GET(request: Request) {
   try {
@@ -50,6 +66,7 @@ const postSchema = z.object({
   meal: z.enum(BUFFET_MEALS),
   actorLabel: z.string().min(1).max(120),
   actorUserId: z.string().min(1).nullable().optional(),
+  eaterId: z.string().min(1).nullable().optional(),
   notes: z.string().max(500).nullable().optional(),
 });
 
@@ -68,6 +85,8 @@ export async function POST(request: Request) {
       actorUserId: body.actorUserId,
       signedByUserId: session?.sub ?? null,
       notes: body.notes,
+      eaterId: body.eaterId,
+      allowPastEdit: canEditPastManagement(session),
     });
     return jsonOk(meal, 201);
   } catch (err) {
@@ -75,6 +94,9 @@ export async function POST(request: Request) {
       const code = (err as { code?: string }).code;
       if (code === "OUTLET_NOT_FOUND") return jsonError("Outlet not found", 404);
       if (code === "ACTOR_REQUIRED") return jsonError("Actor name required", 400);
+      if (code === "DAY_LOCKED") {
+        return jsonError("Past buffet days are locked", 403);
+      }
       if (code === "ALREADY_SIGNED") {
         return jsonError("This person already signed for that meal", 409);
       }

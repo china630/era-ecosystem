@@ -134,6 +134,44 @@ export async function fetchGuestEntitlements(input: {
   return res.json() as Promise<GuestEntitlements>;
 }
 
+export type BuffetGuestNightDay = { date: string; pax: number };
+
+/** Daily pax from hotel occupancy series for buffet guest-nights sync. */
+export async function fetchBuffetGuestNightPax(args: {
+  fromYmd: string;
+  toYmd: string;
+  organizationId?: string;
+}): Promise<{ days: BuffetGuestNightDay[] } | null> {
+  if (isPmsStubMode()) {
+    return {
+      days: [
+        { date: args.fromYmd, pax: 40 },
+        { date: args.toYmd, pax: 42 },
+      ].filter((d, i, a) => a.findIndex((x) => x.date === d.date) === i),
+    };
+  }
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const orgId = args.organizationId ?? requestOrganizationId();
+  const base = await pmsBaseUrl(orgId);
+  if (!base) return null;
+  const q = new URLSearchParams({ from: args.fromYmd, to: args.toYmd });
+  const res = await fetch(`${base}/api/pms/buffet-guest-nights?${q}`, {
+    headers: bridgeHeaders(orgId),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const body = (await res.json().catch(() => null)) as {
+    days?: BuffetGuestNightDay[];
+  } | null;
+  if (!body || !Array.isArray(body.days)) return null;
+  return {
+    days: body.days.map((d) => ({
+      date: String(d.date).slice(0, 10),
+      pax: Math.max(0, Math.floor(Number(d.pax) || 0)),
+    })),
+  };
+}
+
 export async function listInHouseGuests(query?: string): Promise<InHouseGuest[]> {
   if (isPmsStubMode()) {
     if (!query) return [];

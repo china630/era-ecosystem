@@ -16,16 +16,6 @@ import {
 import { CARD_CLASS } from "@/lib/design-system";
 import { BUFFET_MEALS } from "@/lib/buffet-planner-math";
 import { ISO_WEEKDAYS } from "@/lib/buffet-week-calendar";
-import {
-  STAFF_BUFFET_OVERLAPS,
-  type StaffBuffetOverlap,
-} from "@/lib/buffet-cost-settings";
-import { buildCostRunAttributionSlices } from "@/lib/staff-buffet-overlap";
-
-/** Sample AZN figures for live overlap preview (same as UAT fixture). */
-const PREVIEW_USAGE = 1000;
-const PREVIEW_POS = 200;
-const PREVIEW_STAFF = 100;
 
 type StaffPlan = {
   id: string;
@@ -49,17 +39,10 @@ export default function BuffetStaffMealsPanel({ outletId, onChanged }: Props) {
   const [plans, setPlans] = useState<StaffPlan[]>([]);
   const [planId, setPlanId] = useState("");
   const [nameDraft, setNameDraft] = useState("");
-  const [overlapMode, setOverlapMode] = useState<StaffBuffetOverlap>("OVERLAP_PCT");
-  const [overlapPct, setOverlapPct] = useState("30");
   const [slotOpen, setSlotOpen] = useState(false);
   const [slotWeekday, setSlotWeekday] = useState("1");
   const [slotMeal, setSlotMeal] = useState("BREAKFAST");
   const [slotCovers, setSlotCovers] = useState("0");
-  const [preview, setPreview] = useState<{
-    staffNet: number;
-    buffetCoveredFromStaff: number;
-    residualBuffet: number;
-  } | null>(null);
 
   const selected = plans.find((row) => row.id === planId) ?? null;
 
@@ -83,26 +66,9 @@ export default function BuffetStaffMealsPanel({ outletId, onChanged }: Props) {
       .catch(() => undefined);
   }, [outletId]);
 
-  const loadOverlap = useCallback(() => {
-    return fetch("/api/settings/buffet-cost")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const org = d?.settings?.orgDefaults;
-        const override = outletId ? d?.settings?.outletOverrides?.[outletId] : null;
-        const mode = (override?.staffBuffetOverlap ??
-          org?.staffBuffetOverlap ??
-          "OVERLAP_PCT") as StaffBuffetOverlap;
-        const pct = override?.overlapPct ?? org?.overlapPct ?? 30;
-        setOverlapMode(mode);
-        setOverlapPct(String(pct));
-      })
-      .catch(() => undefined);
-  }, [outletId]);
-
   useEffect(() => {
     void loadPlans();
-    void loadOverlap();
-  }, [loadPlans, loadOverlap]);
+  }, [loadPlans]);
 
   async function createPlan() {
     if (!outletId) return;
@@ -125,37 +91,6 @@ export default function BuffetStaffMealsPanel({ outletId, onChanged }: Props) {
     onChanged?.();
   }
 
-  async function saveOverlap() {
-    const res = await fetch("/api/settings/buffet-cost", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        outletId
-          ? {
-              outletOverrides: {
-                [outletId]: {
-                  staffBuffetOverlap: overlapMode,
-                  overlapPct: Number(overlapPct) || 0,
-                },
-              },
-            }
-          : {
-              orgDefaults: {
-                staffBuffetOverlap: overlapMode,
-                overlapPct: Number(overlapPct) || 0,
-              },
-            },
-      ),
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      showApiError(data, t("overlapSaveFailed"));
-      return;
-    }
-    showSuccess(t("overlapSaved"));
-    await loadOverlap();
-  }
-
   async function makePlanActive() {
     if (!planId || selected?.active) return;
     const res = await fetch(`/api/admin/buffet/staff-plans/${planId}`, {
@@ -172,21 +107,6 @@ export default function BuffetStaffMealsPanel({ outletId, onChanged }: Props) {
     await loadPlans();
     onChanged?.();
   }
-
-  useEffect(() => {
-    const slices = buildCostRunAttributionSlices({
-      foodUsage: PREVIEW_USAGE,
-      posAttributed: PREVIEW_POS,
-      staffGross: PREVIEW_STAFF,
-      mode: overlapMode,
-      overlapPct: Number(overlapPct) || 0,
-    });
-    setPreview({
-      staffNet: slices.staffNet,
-      buffetCoveredFromStaff: slices.buffetCoveredFromStaff,
-      residualBuffet: slices.residualBuffet,
-    });
-  }, [overlapMode, overlapPct]);
 
   async function saveSlot() {
     if (!planId) return;
@@ -233,10 +153,6 @@ export default function BuffetStaffMealsPanel({ outletId, onChanged }: Props) {
   const mealOptions = BUFFET_MEALS.map((m) => ({
     value: m,
     label: t(`meal.${m}`),
-  }));
-  const overlapOptions = STAFF_BUFFET_OVERLAPS.map((m) => ({
-    value: m,
-    label: t(`overlapMode.${m}`),
   }));
 
   return (
@@ -294,43 +210,12 @@ export default function BuffetStaffMealsPanel({ outletId, onChanged }: Props) {
       </div>
 
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <div className="text-sm font-semibold text-[#2C3E50]">{t("overlapTitle")}</div>
-        <p className="text-xs text-[#7F8C8D]">{t("overlapHint")}</p>
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("staffBuffetOverlap")}
-          options={overlapOptions}
-          value={overlapMode}
-          onChange={(next) =>
-            setOverlapMode(String(next ?? "OVERLAP_PCT") as StaffBuffetOverlap)
-          }
-        />
-        <Field
-          label={t("overlapPct")}
-          preset="shortText"
-          type="number"
-          min={0}
-          max={100}
-          value={overlapPct}
-          onChange={(e) => setOverlapPct(e.target.value)}
-        />
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void saveOverlap()}>
-            {t("saveOverlap")}
-          </button>
-          <Link href="/admin/settings" className="text-sm text-[#2980B9] underline">
+        <p className="m-0 text-sm text-[#7F8C8D]">
+          {t("overlapMovedToSettings")}{" "}
+          <Link href="/admin/settings" className="text-[#2980B9] underline">
             {t("overlapSettingsLink")}
           </Link>
-        </div>
-        {preview ? (
-          <p className="text-sm text-[#2C3E50]">
-            {t("overlapPreview", {
-              staffNet: preview.staffNet,
-              buffet: preview.buffetCoveredFromStaff,
-              residual: preview.residualBuffet,
-            })}
-          </p>
-        ) : null}
+        </p>
       </div>
 
       {selected ? (

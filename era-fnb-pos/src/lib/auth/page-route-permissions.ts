@@ -67,6 +67,9 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname === "/executive" || pathname.startsWith("/executive/")) {
     return [PERMISSIONS.SCREEN_EXECUTIVE];
   }
+  if (pathname === "/select-outlet" || pathname.startsWith("/select-outlet/")) {
+    return [PERMISSIONS.SCREEN_HOME, PERMISSIONS.OUTLET_BIND, PERMISSIONS.SCREEN_FLOOR];
+  }
   if (pathname === "/" || pathname === "") {
     return [PERMISSIONS.SCREEN_HOME];
   }

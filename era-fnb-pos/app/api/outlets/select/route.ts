@@ -6,6 +6,7 @@ import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { handleRouteError, jsonOk } from "@/lib/api-utils";
+import { capabilitiesFromOutletRow } from "@/lib/outlet-capabilities";
 
 const bodySchema = z.object({
   outletId: z.string().min(1),
@@ -27,7 +28,13 @@ export async function POST(request: Request) {
     if (!outlet?.active) {
       return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
     }
-    const res = jsonOk({ ok: true, outletId: outlet.id, code: outlet.code });
+    const capabilities = capabilitiesFromOutletRow(outlet);
+    const res = jsonOk({
+      ok: true,
+      outletId: outlet.id,
+      code: outlet.code,
+      capabilities,
+    });
     res.cookies.set(OUTLET_COOKIE, outlet.id, {
       httpOnly: true,
       sameSite: "lax",

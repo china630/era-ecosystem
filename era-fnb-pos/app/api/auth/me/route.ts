@@ -16,6 +16,8 @@ import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
 import { prisma } from "@/lib/prisma";
 import { permissionsForRoleCode } from "@/lib/auth/fnb-permission.service";
 import { getEffectiveBuffetCostForOutlet } from "@/lib/buffet-cost-settings.service";
+import { getSelectedOutletId } from "@/lib/outlet-session";
+import { capabilitiesFromOutletRow } from "@/lib/outlet-capabilities";
 
 function sameModuleSet(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) return false;
@@ -111,6 +113,37 @@ export async function GET(request: Request) {
       /* JWT name and grants stay */
     }
 
+    const cookieOutletId = await getSelectedOutletId();
+    const outletId = cookieOutletId || session.outletId || null;
+    let selectedOutlet: {
+      id: string;
+      code: string;
+      name: string;
+      capabilities: ReturnType<typeof capabilitiesFromOutletRow>;
+    } | null = null;
+    if (outletId) {
+      const row = await prisma.outlet.findFirst({
+        where: { id: outletId, organizationId, active: true },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          capTill: true,
+          capTables: true,
+          capBuffetPlanner: true,
+          shapeHint: true,
+        },
+      });
+      if (row) {
+        selectedOutlet = {
+          id: row.id,
+          code: row.code,
+          name: row.name,
+          capabilities: capabilitiesFromOutletRow(row),
+        };
+      }
+    }
+
     return jsonOk({
       id: session.sub,
       login,
@@ -121,7 +154,8 @@ export async function GET(request: Request) {
       organizationName: null,
       permissions,
       pin: session.pin === true,
-      outletId: session.outletId ?? null,
+      outletId: selectedOutlet?.id ?? outletId,
+      selectedOutlet,
       isOwner: session.isOwner === true || role === "BUSINESS_OWNER",
       edition,
       enabledPresets,

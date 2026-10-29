@@ -2,8 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuCivilUtcDate } from "@era/satellite-kit/time";
 import { BUFFET_MEALS, type BuffetMealCode } from "@/lib/buffet-planner-math";
-import { ymdForWeekday, mondayOfWeekYmd } from "@/lib/buffet-week-calendar";
+import {
+  ymdForWeekday,
+  mondayOfWeekYmd,
+  ISO_WEEKDAYS,
+} from "@/lib/buffet-week-calendar";
 import { getBuffetPlan } from "@/lib/buffet-planner";
+import { portionsFromCovers } from "@/lib/buffet-production-factor";
+import { getGuestNightsForDate } from "@/lib/buffet-guest-nights.service";
+
+export type BuffetTemplateKindCode = "GUEST" | "STAFF";
 
 const slotInclude = {
   lines: {
@@ -44,17 +52,23 @@ function serializeTemplate(row: any) {
     outletCode: row.outlet.code as string,
     outletName: row.outlet.name as string,
     name: row.name as string,
+    notes: (row.notes as string | null) ?? null,
+    kind: (row.kind as string) ?? "GUEST",
     active: row.active as boolean,
     slots: (row.slots as unknown[]).map(serializeSlot),
   };
 }
 
-export async function listWeekTemplates(outletId?: string) {
+export async function listWeekTemplates(
+  outletId?: string,
+  kind?: BuffetTemplateKindCode,
+) {
   const organizationId = requestOrganizationId();
   const rows = await prisma.buffetWeekTemplate.findMany({
     where: {
       organizationId,
       ...(outletId ? { outletId } : {}),
+      ...(kind ? { kind } : {}),
     },
     include: {
       outlet: { select: { id: true, code: true, name: true } },
@@ -83,7 +97,11 @@ export async function getWeekTemplate(id: string) {
 export async function createWeekTemplate(input: {
   outletId: string;
   name: string;
+  notes?: string | null;
+  kind?: BuffetTemplateKindCode;
   active?: boolean;
+  /** When true (default), seed 7×3 empty slots. */
+  seedSlots?: boolean;
 }) {
   const organizationId = requestOrganizationId();
   const outlet = await prisma.outlet.findFirst({
@@ -94,30 +112,59 @@ export async function createWeekTemplate(input: {
     throw Object.assign(new Error("OUTLET_NOT_FOUND"), { code: "OUTLET_NOT_FOUND" });
   }
   const name = input.name.trim() || "Weekly buffet";
+  const kind: BuffetTemplateKindCode = input.kind === "STAFF" ? "STAFF" : "GUEST";
   if (input.active !== false) {
     await prisma.buffetWeekTemplate.updateMany({
-      where: { organizationId, outletId: input.outletId, active: true },
+      where: { organizationId, outletId: input.outletId, kind, active: true },
       data: { active: false },
     });
   }
-  const row = await prisma.buffetWeekTemplate.create({
-    data: {
-      organizationId,
-      outletId: input.outletId,
-      name,
-      active: input.active !== false,
-    },
-    include: {
-      outlet: { select: { id: true, code: true, name: true } },
-      slots: { include: slotInclude },
-    },
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.buffetWeekTemplate.create({
+      data: {
+        organizationId,
+        outletId: input.outletId,
+        name,
+        notes: input.notes?.trim() || null,
+        kind,
+        active: input.active !== false,
+      },
+    });
+    if (input.seedSlots !== false) {
+      const slotData = [];
+      for (const weekday of ISO_WEEKDAYS) {
+        for (const meal of BUFFET_MEALS) {
+          slotData.push({
+            organizationId,
+            templateId: created.id,
+            weekday,
+            meal,
+            coversAdult: 0,
+            coversChild: 0,
+          });
+        }
+      }
+      await tx.buffetWeekTemplateSlot.createMany({ data: slotData });
+    }
+    return tx.buffetWeekTemplate.findFirstOrThrow({
+      where: { id: created.id },
+      include: {
+        outlet: { select: { id: true, code: true, name: true } },
+        slots: { include: slotInclude, orderBy: [{ weekday: "asc" }, { meal: "asc" }] },
+      },
+    });
   });
   return serializeTemplate(row);
 }
 
 export async function patchWeekTemplate(
   id: string,
-  input: { name?: string; active?: boolean },
+  input: {
+    name?: string;
+    notes?: string | null;
+    kind?: BuffetTemplateKindCode;
+    active?: boolean;
+  },
 ) {
   const organizationId = requestOrganizationId();
   const existing = await prisma.buffetWeekTemplate.findFirst({
@@ -126,11 +173,16 @@ export async function patchWeekTemplate(
   if (!existing) {
     throw Object.assign(new Error("TEMPLATE_NOT_FOUND"), { code: "TEMPLATE_NOT_FOUND" });
   }
+  const nextKind =
+    input.kind === "STAFF" || input.kind === "GUEST"
+      ? input.kind
+      : (existing.kind as BuffetTemplateKindCode);
   if (input.active === true) {
     await prisma.buffetWeekTemplate.updateMany({
       where: {
         organizationId,
         outletId: existing.outletId,
+        kind: nextKind,
         active: true,
         id: { not: id },
       },
@@ -141,6 +193,8 @@ export async function patchWeekTemplate(
     where: { id },
     data: {
       ...(input.name !== undefined ? { name: input.name.trim() || existing.name } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes?.trim() || null } : {}),
+      ...(input.kind !== undefined ? { kind: nextKind } : {}),
       ...(input.active !== undefined ? { active: input.active } : {}),
     },
   });
@@ -301,11 +355,18 @@ export async function deleteWeekTemplateSlot(
 export async function spawnWeekFromTemplate(
   templateId: string,
   weekStartYmd: string,
-  opts?: { skipExisting?: boolean },
+  opts?: {
+    skipExisting?: boolean;
+    coversSource?: "MANUAL" | "HOTEL";
+    coversAdult?: number;
+    coversChild?: number;
+    productionFactorPct?: number;
+  },
 ) {
   const organizationId = requestOrganizationId();
   const skipExisting = opts?.skipExisting !== false;
   const weekMonday = mondayOfWeekYmd(weekStartYmd);
+  const coversSource = opts?.coversSource === "HOTEL" ? "HOTEL" : "MANUAL";
   const template = await prisma.buffetWeekTemplate.findFirst({
     where: { id: templateId, organizationId },
     include: { slots: { include: { lines: true } } },
@@ -317,12 +378,48 @@ export async function spawnWeekFromTemplate(
     throw Object.assign(new Error("TEMPLATE_EMPTY"), { code: "TEMPLATE_EMPTY" });
   }
 
+  const factorPct =
+    opts?.productionFactorPct != null
+      ? Math.min(100, Math.max(0, Number(opts.productionFactorPct)))
+      : template.kind === "STAFF"
+        ? 100
+        : 80;
+
+  let weekAdult =
+    opts?.coversAdult != null ? Math.max(0, Math.floor(opts.coversAdult)) : null;
+  let weekChild =
+    opts?.coversChild != null ? Math.max(0, Math.floor(opts.coversChild)) : null;
+
+  if (coversSource === "HOTEL" && (weekAdult == null || weekChild == null)) {
+    let sum = 0;
+    let days = 0;
+    for (const weekday of ISO_WEEKDAYS) {
+      const ymd = ymdForWeekday(weekMonday, weekday);
+      const gn = await getGuestNightsForDate({ serviceDateYmd: ymd });
+      if (gn && gn.guestNights > 0) {
+        sum += gn.guestNights;
+        days += 1;
+      }
+    }
+    const avg = days > 0 ? Math.round(sum / days) : 0;
+    weekAdult = weekAdult ?? avg;
+    weekChild = weekChild ?? 0;
+  }
+
   const createdIds: string[] = [];
   const skipped: Array<{ weekday: number; meal: string; serviceDate: string }> = [];
+  let emptySlots = 0;
 
   for (const slot of template.slots) {
+    if (!slot.lines.length) emptySlots += 1;
     const serviceDateYmd = ymdForWeekday(weekMonday, slot.weekday);
     const serviceDate = bakuCivilUtcDate(serviceDateYmd);
+    const coversAdult =
+      weekAdult != null ? weekAdult : slot.coversAdult;
+    const coversChild =
+      weekChild != null ? weekChild : slot.coversChild;
+    const portions = portionsFromCovers(coversAdult, coversChild, factorPct);
+
     const clash = await prisma.buffetPlan.findFirst({
       where: {
         outletId: template.outletId,
@@ -354,9 +451,9 @@ export async function spawnWeekFromTemplate(
           serviceDate,
           meal: slot.meal,
           status: "DRAFT",
-          coversAdult: slot.coversAdult,
-          coversChild: slot.coversChild,
-          coversSource: "MANUAL",
+          coversAdult,
+          coversChild,
+          coversSource,
           notes: slot.notes,
         },
       });
@@ -366,8 +463,8 @@ export async function spawnWeekFromTemplate(
             organizationId,
             planId: plan.id,
             menuItemId: line.menuItemId,
-            station: line.station,
-            plannedPortions: line.plannedPortions,
+            station: line.station || "MAIN",
+            plannedPortions: portions,
             wastePct: line.wastePct,
             sortOrder: line.sortOrder,
           })),
@@ -386,5 +483,10 @@ export async function spawnWeekFromTemplate(
     weekMonday,
     created: plans,
     skipped,
+    emptySlots,
+    productionFactorPct: factorPct,
+    coversSource,
+    coversAdult: weekAdult ?? 0,
+    coversChild: weekChild ?? 0,
   };
 }

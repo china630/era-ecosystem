@@ -139,7 +139,7 @@ async function runA5() {
         Cookie: fbCookie,
       },
       body: JSON.stringify({
-        outletCode: "RESTAURANT",
+        outletCode: "NAFTANI",
         serviceChannel: "WALK_IN",
         walkInLabel: "Smoke walk-in",
         lines: [{ description: "Smoke item", qty: 1, unitPriceAzn: 5.5 }],

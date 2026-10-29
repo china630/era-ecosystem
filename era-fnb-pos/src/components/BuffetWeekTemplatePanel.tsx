@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CatalogField,
   Field,
@@ -15,11 +14,13 @@ import {
 } from "@era/satellite-kit/ui";
 import { CARD_CLASS } from "@/lib/design-system";
 import { BUFFET_MEALS } from "@/lib/buffet-planner-math";
-import { ISO_WEEKDAYS, mondayOfWeekYmd } from "@/lib/buffet-week-calendar";
+import { ISO_WEEKDAYS } from "@/lib/buffet-week-calendar";
 
 type Template = {
   id: string;
   name: string;
+  notes: string | null;
+  kind: string;
   active: boolean;
   slots: Array<{
     id: string;
@@ -27,31 +28,35 @@ type Template = {
     meal: string;
     coversAdult: number;
     coversChild: number;
-    lines: Array<{ id: string; name: string; plannedPortions: number }>;
+    lines: Array<{ id: string; menuItemId?: string; name: string; plannedPortions: number }>;
   }>;
 };
 
 type Props = {
   outletId: string;
+  kindFilter?: "GUEST" | "STAFF";
   planOptions: Array<{ value: string; label: string }>;
-  onSpawned: () => void;
 };
 
 export default function BuffetWeekTemplatePanel({
   outletId,
+  kindFilter = "GUEST",
   planOptions,
-  onSpawned,
 }: Props) {
   const t = useTranslations("admin.buffet");
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateId, setTemplateId] = useState("");
   const [nameDraft, setNameDraft] = useState("");
-  const [weekStart, setWeekStart] = useState(() => mondayOfWeekYmd(todayBakuYmd()));
+  const [notesDraft, setNotesDraft] = useState("");
   const [slotOpen, setSlotOpen] = useState(false);
   const [slotWeekday, setSlotWeekday] = useState("1");
   const [slotMeal, setSlotMeal] = useState("BREAKFAST");
   const [slotAdult, setSlotAdult] = useState("0");
   const [slotChild, setSlotChild] = useState("0");
+  const [slotDishIds, setSlotDishIds] = useState<string[]>([]);
+  const [menuItems, setMenuItems] = useState<
+    Array<{ id: string; label: string; categoryName?: string }>
+  >([]);
   const [capturePlanId, setCapturePlanId] = useState("");
 
   const selected = templates.find((row) => row.id === templateId) ?? null;
@@ -62,7 +67,11 @@ export default function BuffetWeekTemplatePanel({
       setTemplateId("");
       return;
     }
-    return fetch(`/api/admin/buffet/templates?outletId=${encodeURIComponent(outletId)}`)
+    const q = new URLSearchParams({
+      outletId,
+      kind: kindFilter,
+    });
+    return fetch(`/api/admin/buffet/templates?${q}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const rows = Array.isArray(d?.templates) ? (d.templates as Template[]) : [];
@@ -74,7 +83,7 @@ export default function BuffetWeekTemplatePanel({
         );
       })
       .catch(() => undefined);
-  }, [outletId]);
+  }, [outletId, kindFilter]);
 
   useEffect(() => {
     void load();
@@ -88,6 +97,9 @@ export default function BuffetWeekTemplatePanel({
       body: JSON.stringify({
         outletId,
         name: nameDraft.trim() || t("defaultTemplateName"),
+        notes: notesDraft.trim() || null,
+        kind: kindFilter,
+        seedSlots: true,
       }),
     });
     const data = await res.json().catch(() => null);
@@ -96,9 +108,20 @@ export default function BuffetWeekTemplatePanel({
       return;
     }
     showSuccess(t("templateCreated"));
+    setNotesDraft("");
     await load();
     if (data?.id) setTemplateId(data.id);
   }
+
+  useEffect(() => {
+    if (!outletId || !slotOpen) return;
+    void fetch(`/api/admin/buffet/menu-items?outletId=${encodeURIComponent(outletId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        setMenuItems(Array.isArray(d?.items) ? d.items : []);
+      })
+      .catch(() => undefined);
+  }, [outletId, slotOpen]);
 
   async function saveSlot() {
     if (!templateId) return;
@@ -110,6 +133,13 @@ export default function BuffetWeekTemplatePanel({
         meal: slotMeal,
         coversAdult: Number(slotAdult) || 0,
         coversChild: Number(slotChild) || 0,
+        lines: slotDishIds.map((menuItemId, idx) => ({
+          menuItemId,
+          station: "MAIN",
+          plannedPortions: 1,
+          wastePct: 0,
+          sortOrder: idx,
+        })),
       }),
     });
     const data = await res.json().catch(() => null);
@@ -169,24 +199,6 @@ export default function BuffetWeekTemplatePanel({
     );
   }
 
-  async function spawnWeek() {
-    if (!templateId) return;
-    const res = await fetch(`/api/admin/buffet/templates/${templateId}/spawn`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weekStart, skipExisting: true }),
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      showApiError(data, t("spawnFailed"));
-      return;
-    }
-    const created = Array.isArray(data?.created) ? data.created.length : 0;
-    const skipped = Array.isArray(data?.skipped) ? data.skipped.length : 0;
-    showSuccess(t("spawned", { created, skipped }));
-    onSpawned();
-  }
-
   async function makeTemplateActive() {
     if (!templateId || selected?.active) return;
     const res = await fetch(`/api/admin/buffet/templates/${templateId}`, {
@@ -223,6 +235,12 @@ export default function BuffetWeekTemplatePanel({
             value={nameDraft}
             placeholder={t("defaultTemplateName")}
             onChange={(e) => setNameDraft(e.target.value)}
+          />
+          <Field
+            label={t("notes")}
+            preset="shortText"
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value)}
           />
           <button
             type="button"
@@ -275,6 +293,7 @@ export default function BuffetWeekTemplatePanel({
                   setSlotMeal("BREAKFAST");
                   setSlotAdult("0");
                   setSlotChild("0");
+                  setSlotDishIds([]);
                   setCapturePlanId("");
                   setSlotOpen(true);
                 }}
@@ -309,6 +328,11 @@ export default function BuffetWeekTemplatePanel({
                         setSlotMeal(slot.meal);
                         setSlotAdult(String(slot.coversAdult));
                         setSlotChild(String(slot.coversChild));
+                        setSlotDishIds(
+                          slot.lines
+                            .map((l) => l.menuItemId)
+                            .filter((id): id is string => Boolean(id)),
+                        );
                         setCapturePlanId("");
                         setSlotOpen(true);
                       }}
@@ -341,19 +365,7 @@ export default function BuffetWeekTemplatePanel({
             </table>
           </div>
 
-          <div className={`${CARD_CLASS} flex flex-wrap items-end gap-3 p-4`}>
-            <Field
-              label={t("weekStart")}
-              preset="date"
-              type="date"
-              value={weekStart}
-              onChange={(e) => setWeekStart(mondayOfWeekYmd(e.target.value || todayBakuYmd()))}
-            />
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void spawnWeek()}>
-              {t("spawnWeek")}
-            </button>
-            <p className="w-full text-xs text-[#7F8C8D]">{t("spawnHint")}</p>
-          </div>
+          <p className="text-xs text-[#7F8C8D]">{t("spawnHint")}</p>
         </>
       ) : null}
 
@@ -387,6 +399,18 @@ export default function BuffetWeekTemplatePanel({
           min={0}
           value={slotChild}
           onChange={(e) => setSlotChild(e.target.value)}
+        />
+        <CatalogField
+          kind="MULTI"
+          label={t("slotDishes")}
+          options={menuItems.map((m) => ({
+            value: m.id,
+            label: m.label,
+          }))}
+          value={slotDishIds}
+          onChange={(next) =>
+            setSlotDishIds(Array.isArray(next) ? next.map(String) : next ? [String(next)] : [])
+          }
         />
         <CatalogField
           kind="ENTITY_REF"

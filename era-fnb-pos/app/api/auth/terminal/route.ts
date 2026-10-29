@@ -14,7 +14,6 @@ import {
 import { getFnbOrgProfile } from "@/lib/fnb-org-profile";
 import { ROLE_CODES } from "@/lib/auth/permissions";
 import { hasFnbPermissionBypass } from "@/lib/auth/permission-check";
-import { resolveOpsOutlet } from "@/lib/outlet-helpers";
 import {
   readTerminalCookie,
   signTerminalCookie,
@@ -63,8 +62,19 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const raw = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!raw || typeof raw !== "object") {
+      return jsonError("Invalid JSON", 400);
+    }
+    const outletId =
+      typeof raw.outletId === "string" ? raw.outletId.trim() : "";
+    const authReq = new Request(request.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(raw),
+    });
     const auth = await authenticateIndustryStaffLogin({
-      request,
+      request: authReq,
       prisma,
       isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
     });
@@ -91,9 +101,21 @@ export async function POST(request: Request) {
     if (!bypass && !manager) {
       return jsonError("TERMINAL_BIND_DENIED", 403);
     }
-    const outlet = await resolveOpsOutlet(
-      profile.enabledPresets.includes("cafe") ? "KAFE" : null,
-    );
+    if (!outletId) {
+      const outlets = await prisma.outlet.findMany({
+        where: { organizationId, active: true, capTill: true },
+        orderBy: { code: "asc" },
+        select: { id: true, code: true, name: true, shapeHint: true },
+      });
+      return jsonOk({ needOutlet: true, outlets });
+    }
+    const outlet = await prisma.outlet.findFirst({
+      where: { id: outletId, organizationId, active: true },
+    });
+    if (!outlet) return jsonError("Outlet not found", 404);
+    if (outlet.capTill === false) {
+      return jsonError("Outlet has no till — pick a floor/café point", 400);
+    }
     const boundAt = Date.now();
     const token = signTerminalCookie({
       organizationId,

@@ -8,7 +8,7 @@ import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/requir
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { TILL_READ_TICKETS } from "@/lib/auth/read-permission-sets";
 import { assertTicketCreateQuota } from "@/lib/fnb-quota";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
 import { attachDayNos } from "@/lib/ticket-helpers";
@@ -80,6 +80,10 @@ export async function POST(request: Request) {
       await assertHotelFnbFeature("hotel-ticket");
     }
     const outlet = await resolveOpsOutlet(body.outletCode);
+    const { outletAllowsTill } = await import("@/lib/outlet-capabilities");
+    if (!outletAllowsTill(outlet)) {
+      return jsonError("Outlet has no till capability — cannot open ticket", 400);
+    }
     await requireCurrentShift(outlet.id);
 
     const lines = body.lines ?? [];

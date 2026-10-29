@@ -293,7 +293,7 @@ curl -b /tmp/fb-cookies.txt http://localhost:3200/api/menu
 # Shift + ticket flow
 curl -b /tmp/fb-cookies.txt -X POST http://localhost:3200/api/shifts/open \
   -H "Content-Type: application/json" \
-  -d '{"outletCode":"RESTAURANT","openingCash":100}'
+  -d '{"outletCode":"NAFTANI","openingCash":100}'
 
 curl http://localhost:3200/api/tables
 

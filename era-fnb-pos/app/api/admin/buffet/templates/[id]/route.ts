@@ -34,6 +34,8 @@ export async function GET(_request: Request, ctx: Ctx) {
 
 const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  kind: z.enum(["GUEST", "STAFF"]).optional(),
   active: z.boolean().optional(),
 });
 

@@ -9,12 +9,22 @@ import {
 } from "@/lib/auth/page-route-permissions";
 import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 import { LOGIN_CHOICE_COOKIE, LOGIN_CHOICE_PASSWORD } from "@/lib/auth/login-choice";
+import { OUTLET_COOKIE } from "@/lib/outlet-session";
 
 const TERMINAL_COOKIE = "era_fnb_terminal";
 
 function openPinPad(request: NextRequest): boolean {
   if (!request.cookies.get(TERMINAL_COOKIE)?.value) return false;
   return request.cookies.get(LOGIN_CHOICE_COOKIE)?.value !== LOGIN_CHOICE_PASSWORD;
+}
+
+function needsOutletGate(request: NextRequest, pathname: string): boolean {
+  if (isPublicStaffPage(pathname)) return false;
+  if (pathname === "/select-outlet" || pathname.startsWith("/select-outlet/")) return false;
+  if (pathname.startsWith("/api/")) return false;
+  if (request.cookies.get(OUTLET_COOKIE)?.value?.trim()) return false;
+  // PIN sessions bind outlet on /api/auth/pin; terminal cookie is not the ops cookie.
+  return true;
 }
 
 const staffGate = createSatelliteStaffMiddleware<NextRequest>({
@@ -33,6 +43,12 @@ const staffGate = createSatelliteStaffMiddleware<NextRequest>({
   loginPaths: ["/login", "/pin"],
   loginRedirectPath: (request) => (openPinPad(request) ? "/pin" : "/login"),
   authorizePage: ({ request, pathname, session }) => {
+    if (session && needsOutletGate(request, pathname) && session.pin !== true) {
+      const pick = request.nextUrl.clone();
+      pick.pathname = "/select-outlet";
+      pick.search = "";
+      return redirectNoStore(pick);
+    }
     const required = routePermissions(pathname);
     const sessionView = {
       login: session.login,

@@ -19,6 +19,11 @@ import {
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
+import {
+  defaultCapabilitiesForShape,
+  OUTLET_SHAPE_HINTS,
+  type OutletShapeHint,
+} from "@/lib/outlet-capabilities";
 
 type PresetState = {
   edition: string;
@@ -37,6 +42,10 @@ type OutletRow = {
   address?: string | null;
   website?: string | null;
   active?: boolean;
+  capTill?: boolean;
+  capTables?: boolean;
+  capBuffetPlanner?: boolean;
+  shapeHint?: string | null;
 };
 
 const PRESET_LABEL_KEY: Record<string, string> = {
@@ -69,7 +78,14 @@ export default function AdminSettingsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createCode, setCreateCode] = useState("");
   const [createName, setCreateName] = useState("");
+  const [createShape, setCreateShape] = useState("restaurant");
   const [copyFromOutletId, setCopyFromOutletId] = useState("");
+  const [nameDraft, setNameDraft] = useState("");
+  const [codeDraft, setCodeDraft] = useState("");
+  const [capTillDraft, setCapTillDraft] = useState(true);
+  const [capTablesDraft, setCapTablesDraft] = useState(true);
+  const [capBuffetDraft, setCapBuffetDraft] = useState(false);
+  const [shapeDraft, setShapeDraft] = useState("restaurant");
 
   function refreshOutlets() {
     return fetch("/api/outlets")
@@ -133,16 +149,28 @@ export default function AdminSettingsPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        revenueCenterCode: revenueDraft.trim(),
         financeWarehouseCode: warehouseDraft.trim() || null,
         ...(canManageOutlets
           ? {
+              name: nameDraft.trim(),
+              code: codeDraft.trim().toUpperCase(),
+              shapeHint: shapeDraft,
+              capTill: capTillDraft,
+              capTables: capTablesDraft,
+              capBuffetPlanner: capBuffetDraft,
               phone: phoneDraft.trim() || null,
               email: emailDraft.trim() || null,
               address: addressDraft.trim() || null,
               website: websiteDraft.trim() || null,
+              ...(revenueDraft.trim()
+                ? { revenueCenterCode: revenueDraft.trim() }
+                : {}),
             }
-          : {}),
+          : {
+              ...(revenueDraft.trim()
+                ? { revenueCenterCode: revenueDraft.trim() }
+                : {}),
+            }),
       }),
     });
     const data = await res.json().catch(() => null);
@@ -155,12 +183,18 @@ export default function AdminSettingsPage() {
         row.id === outletId
           ? {
               ...row,
-              revenueCenterCode: revenueDraft.trim(),
+              name: nameDraft.trim() || row.name,
+              code: codeDraft.trim().toUpperCase() || row.code,
+              revenueCenterCode: revenueDraft.trim() || row.revenueCenterCode,
               financeWarehouseCode: warehouseDraft.trim() || null,
               phone: phoneDraft.trim() || null,
               email: emailDraft.trim() || null,
               address: addressDraft.trim() || null,
               website: websiteDraft.trim() || null,
+              capTill: capTillDraft,
+              capTables: capTablesDraft,
+              capBuffetPlanner: capBuffetDraft,
+              shapeHint: shapeDraft,
             }
           : row,
       ),
@@ -169,14 +203,31 @@ export default function AdminSettingsPage() {
     showSuccess(t("saved"));
   }
 
+  function applyShapeDefaults(shape: string) {
+    const hint = (OUTLET_SHAPE_HINTS as readonly string[]).includes(shape)
+      ? (shape as OutletShapeHint)
+      : "restaurant";
+    const caps = defaultCapabilitiesForShape(hint);
+    setShapeDraft(hint);
+    setCapTillDraft(caps.till);
+    setCapTablesDraft(caps.tables);
+    setCapBuffetDraft(caps.buffetPlanner);
+  }
+
   function openOutletEditor(row: OutletRow) {
     setOutletId(row.id);
+    setNameDraft(row.name);
+    setCodeDraft(row.code);
     setRevenueDraft(row.revenueCenterCode ?? "");
     setWarehouseDraft(row.financeWarehouseCode ?? "");
     setPhoneDraft(row.phone ?? "");
     setEmailDraft(row.email ?? "");
     setAddressDraft(row.address ?? "");
     setWebsiteDraft(row.website ?? "");
+    setCapTillDraft(row.capTill !== false);
+    setCapTablesDraft(row.capTables !== false);
+    setCapBuffetDraft(row.capBuffetPlanner === true);
+    setShapeDraft(row.shapeHint || "restaurant");
     setRevenueOpen(true);
   }
 
@@ -187,12 +238,17 @@ export default function AdminSettingsPage() {
       showApiError({ error: t("outletCodeNameRequired") }, t("save"));
       return;
     }
+    if (code === "RESTAURANT") {
+      showApiError({ error: t("outletRestaurantRetired") }, t("save"));
+      return;
+    }
     const res = await fetch("/api/outlets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         code,
         name,
+        shapeHint: createShape,
         ...(copyFromOutletId ? { copyFromOutletId } : {}),
       }),
     });
@@ -204,10 +260,24 @@ export default function AdminSettingsPage() {
     setCreateOpen(false);
     setCreateCode("");
     setCreateName("");
+    setCreateShape("restaurant");
     setCopyFromOutletId("");
     showSuccess(t("outletCreated"));
     await refreshOutlets();
     if (data?.id) setOutletId(data.id);
+  }
+
+  async function deleteOutlet(id: string) {
+    if (!canManageOutlets) return;
+    const res = await fetch(`/api/outlets/${id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      showApiError(data, t("outletDeleteFailed"));
+      return;
+    }
+    showSuccess(t("outletDeleted"));
+    setRevenueOpen(false);
+    await refreshOutlets();
   }
 
   async function saveDayStart() {
@@ -281,7 +351,8 @@ export default function AdminSettingsPage() {
           <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
             <th className="p-3">{t("outletCode")}</th>
             <th className="p-3">{t("outletName")}</th>
-            <th className="p-3">{t("outletRevenue")}</th>
+            <th className="p-3">{t("outletShape")}</th>
+            <th className="p-3">{t("outletCaps")}</th>
             <th className="p-3">{t("outletWarehouse")}</th>
             <th className="p-3 text-right">{t("actions")}</th>
           </tr>
@@ -289,7 +360,7 @@ export default function AdminSettingsPage() {
         <tbody>
           {outlets.length === 0 ? (
             <tr>
-              <td colSpan={5} className="p-3 text-center text-[#7F8C8D]">
+              <td colSpan={6} className="p-3 text-center text-[#7F8C8D]">
                 {t("outletsEmpty")}
               </td>
             </tr>
@@ -298,7 +369,18 @@ export default function AdminSettingsPage() {
               <tr key={row.id} className="border-t border-[#ECF0F1]">
                 <td className="p-3 font-medium">{row.code}</td>
                 <td className="p-3">{row.name}</td>
-                <td className="p-3">{row.revenueCenterCode || "—"}</td>
+                <td className="p-3">
+                  {row.shapeHint ? t(`shapeHint_${row.shapeHint}`) : "—"}
+                </td>
+                <td className="p-3 text-xs text-[#7F8C8D]">
+                  {[
+                    row.capTill !== false ? t("capTillShort") : null,
+                    row.capTables !== false ? t("capTablesShort") : null,
+                    row.capBuffetPlanner ? t("capBuffetShort") : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </td>
                 <td className="p-3">{row.financeWarehouseCode || t("outletWarehouseDefault")}</td>
                 <td className="p-3 text-right">
                   <button
@@ -314,6 +396,7 @@ export default function AdminSettingsPage() {
           )}
         </tbody>
       </table>
+      <p className="mt-1 text-xs text-[#95A5A6]">{t("outletRevenueFallbackHint")}</p>
       {revenueNotice ? <p className="mt-1 text-sm text-[#B7950B]">{revenueNotice}</p> : null}
 
       <table className={`${CARD_CONTAINER_CLASS} mt-6 w-full text-left text-sm`}>
@@ -395,6 +478,18 @@ export default function AdminSettingsPage() {
           onChange={(next) => setCreateName(String(next ?? ""))}
         />
         <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("outletShape")}
+          options={[
+            { value: "restaurant", label: t("shapeHint_restaurant") },
+            { value: "cafe", label: t("shapeHint_cafe") },
+            { value: "buffet_kitchen", label: t("shapeHint_buffet_kitchen") },
+            { value: "disco", label: t("shapeHint_disco") },
+          ]}
+          value={createShape}
+          onChange={(next) => setCreateShape(String(next ?? "restaurant"))}
+        />
+        <CatalogField
           kind="ENTITY_REF"
           label={t("copyMenuFrom")}
           hint={t("copyMenuFromHint")}
@@ -412,22 +507,71 @@ export default function AdminSettingsPage() {
         />
       </ModalShell>
 
-      <ModalShell open={revenueOpen} title={t("outletRevenue")} onClose={() => setRevenueOpen(false)}>
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("outletName")}
-          options={outlets.map((row) => ({ value: row.id, label: `${row.code} — ${row.name}` }))}
-          value={outletId}
-          onChange={(next) => {
-            const id = String(next ?? "");
-            const row = outlets.find((item) => item.id === id);
-            if (row) openOutletEditor(row);
-            else setOutletId(id);
-          }}
-        />
+      <ModalShell open={revenueOpen} title={t("editOutlet")} onClose={() => setRevenueOpen(false)}>
+        {canManageOutlets ? (
+          <>
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("outletCode")}
+              options={[]}
+              value={codeDraft}
+              onChange={(next) => setCodeDraft(String(next ?? ""))}
+            />
+            <CatalogField
+              kind="FREE_TEXT"
+              label={t("outletName")}
+              options={[]}
+              value={nameDraft}
+              onChange={(next) => setNameDraft(String(next ?? ""))}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("outletShape")}
+              options={[
+                { value: "restaurant", label: t("shapeHint_restaurant") },
+                { value: "cafe", label: t("shapeHint_cafe") },
+                { value: "buffet_kitchen", label: t("shapeHint_buffet_kitchen") },
+                { value: "disco", label: t("shapeHint_disco") },
+              ]}
+              value={shapeDraft}
+              onChange={(next) => applyShapeDefaults(String(next ?? "restaurant"))}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("capTill")}
+              options={[
+                { value: "1", label: t("capYes") },
+                { value: "0", label: t("capNo") },
+              ]}
+              value={capTillDraft ? "1" : "0"}
+              onChange={(next) => setCapTillDraft(String(next) === "1")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("capTables")}
+              options={[
+                { value: "1", label: t("capYes") },
+                { value: "0", label: t("capNo") },
+              ]}
+              value={capTablesDraft ? "1" : "0"}
+              onChange={(next) => setCapTablesDraft(String(next) === "1")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("capBuffet")}
+              options={[
+                { value: "1", label: t("capYes") },
+                { value: "0", label: t("capNo") },
+              ]}
+              value={capBuffetDraft ? "1" : "0"}
+              onChange={(next) => setCapBuffetDraft(String(next) === "1")}
+            />
+          </>
+        ) : null}
         <CatalogField
           kind="SEARCHABLE"
-          label={t("outletRevenue")}
+          label={t("outletRevenueFallback")}
+          hint={t("outletRevenueFallbackHint")}
           options={
             revenueDraft && !revenueOptions.some((option) => option.value === revenueDraft)
               ? [{ value: revenueDraft, label: revenueDraft }, ...revenueOptions]
@@ -474,6 +618,13 @@ export default function AdminSettingsPage() {
               value={websiteDraft}
               onChange={(next) => setWebsiteDraft(String(next ?? ""))}
             />
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} mt-2 text-[#C0392B]`}
+              onClick={() => void deleteOutlet(outletId)}
+            >
+              {t("deleteOutlet")}
+            </button>
           </>
         ) : null}
         <ModalFooter

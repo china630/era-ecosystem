@@ -131,7 +131,8 @@ export async function POST(request: Request) {
       path: "/",
       maxAge: 60 * 60 * 12,
     });
-    res.cookies.set(OUTLET_COOKIE, staff.outletId ?? "", {
+    const boundOutletId = staff.outletId || outlet.id;
+    res.cookies.set(OUTLET_COOKIE, boundOutletId, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",

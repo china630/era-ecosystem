@@ -33,7 +33,14 @@
     "sales": "Satış jurnalı",
     "settings": "Parametrlər",
     "audit": "Dəyişiklik jurnalı",
-    "access": "Giriş"
+    "access": "Giriş",
+    "switchOutlet": "Nöqtəni dəyiş",
+    "buffetPlans": "Planlar",
+    "buffetTemplates": "Sablonlar",
+    "buffetManagement": "Rehberlik",
+    "buffetForecast": "Proqnoz",
+    "buffetNorms": "Normalar",
+    "buffetCostRun": "Cost run"
   },
   "auditViewer": {
     "title": "Dəyişiklik jurnalı",
@@ -198,6 +205,8 @@
       "buffetCost": "Bufet maya dəyəri",
       "buffetCostHint": "Canlı HYBRID: Cost run POS sale + COMP + personal net + Forecast theoretical yığır, sonra Open Finance ilə FOOD residual. Outlet override istəyə bağlıdır.",
       "staffMealAznPerCover": "Personal yeməyi AZN / cover",
+      "productionFactorPctGuest": "Qonaq istehsal faktoru %",
+      "productionFactorPctStaff": "Personal istehsal faktoru %",
       "buffetCostModel": "Bufet maya modeli",
       "staffBuffetOverlap": "Personal bufeti üst-üstə düşmə",
       "overlapPct": "Üst-üstə %",
@@ -234,7 +243,27 @@
       "stocktake_MONTHLY": "Aylıq",
       "stocktake_QUARTERLY": "Rüblük",
       "stocktake_MANUAL": "Əl ilə",
-      "stocktakeCadenceHint": "Defolt: FOOD həftəlik · TABLEWARE hər 15 gün · CHEMICAL/CONSUMABLE aylıq · INVENTORY_GT rüblük. Aşağıda sinif üzrə."
+      "stocktakeCadenceHint": "Defolt: FOOD həftəlik · TABLEWARE hər 15 gün · CHEMICAL/CONSUMABLE aylıq · INVENTORY_GT rüblük. Aşağıda sinif üzrə.",
+      "outletRestaurantRetired": "RESTAURANT kodu ləğv edilib — NAFTANI istifadə edin",
+      "outletDeleteFailed": "Outlet silmək mümkün olmadı",
+      "outletDeleted": "Outlet silindi",
+      "deleteOutlet": "Outlet sil",
+      "outletShape": "Nöqtə tipi",
+      "outletCaps": "İmkanlar",
+      "capTill": "Kassa / zal",
+      "capTables": "Masalar",
+      "capBuffet": "Bufet planı",
+      "capTillShort": "Kassa",
+      "capTablesShort": "Masalar",
+      "capBuffetShort": "Bufet",
+      "capYes": "Aktiv",
+      "capNo": "Sönülü",
+      "shapeHint_cafe": "Kafe",
+      "shapeHint_restaurant": "Restoran",
+      "shapeHint_buffet_kitchen": "Bufet mətbəxi",
+      "shapeHint_disco": "Disko",
+      "outletRevenueFallback": "Gəlir ehtiyatı (kateqoriya SoR)",
+      "outletRevenueFallbackHint": "Menyu kateqoriyası gəlir kodları əsasdır. Outlet kodu yalnız kateqoriyada kod yoxdursa ehtiyatdır."
     },
     "menu": {
       "title": "Menyu admin",
@@ -431,6 +460,7 @@
       "costRunTheoBlockedTitle": "Theoretical hazır deyil",
       "costRunTheoBlockedBody": "HYBRID theoretical-ə etibar etməzdən əvvəl Forecast tabında guest-nights və SKU AZN normalarını doldurun.",
       "costRunGoForecast": "Forecast aç",
+      "costRunGoNorms": "Normaları aç",
       "moduleMissingTitle": "Buffet planner modulu aktiv deyil",
       "moduleMissingBody": "Control Plane-də fnb_buffet_planner aktivləşdirin, sonra bu satellite-də Sync / sessiyanı yeniləyin.",
       "moduleMissingSyncLink": "Settings / sync aç",
@@ -519,7 +549,7 @@
       "deleteSlot": "Sil",
       "slotDeleted": "Slot silindi",
       "slotDeleteFailed": "Slot silinmədi",
-      "template": "Şablon",
+      "template": "Template",
       "templateInactive": "qeyri-aktiv",
       "templatesEmpty": "Həftə şablonu yoxdur — bu outlet üçün yaradın.",
       "templateCreated": "Həftə şablonu yaradıldı",
@@ -539,7 +569,7 @@
       "capturePlanRequired": "Köçürmək üçün plan seçin",
       "captureFailed": "Plandan köçürmə alınmadı",
       "slotCaptured": "Slot plandan köçürüldü",
-      "weekStart": "Həftə başlanğıcı (Bazar ertəsi)",
+      "weekStart": "Week start (Monday)",
       "spawnWeek": "Həftə planlarını yarat",
       "spawnHint": "Seçilmiş həftənin Bazar ertəsindən. Mövcud outlet/tarix/yemək planları buraxılır.",
       "spawned": "{created} plan yaradıldı · {skipped} buraxıldı",
@@ -618,7 +648,34 @@
       "rollupStaff": "Personal covers",
       "rollupHotelNights": "Otel qonaq gecələri",
       "rollupForecastTotal": "Meal forecast cəmi",
-      "rollupCaption": "Guest-nights Forecast pack-ə (theoretical) gedir. Meal forecastTotal = plan + management + staff — guest-nights deyil."
+      "rollupCaption": "Guest-nights Forecast pack-ə (theoretical) gedir. Meal forecastTotal = plan + management + staff — guest-nights deyil.",
+      "kindFilter": "Növ",
+      "coversSource": "Cover mənbəyi",
+      "coversSourceManual": "Manual",
+      "coversSourceHotel": "Otel proqnozu",
+      "productionFactorPct": "İstehsal faktoru %",
+      "spawnedWithEmpty": "Həftə yaradıldı — {empty} slotda yemək yoxdur",
+      "forecastSyncHotel": "Otelden sinkron",
+      "forecastHotelSyncFailed": "Otel qonaq gecələri sinkronu uğursuz oldu",
+      "forecastHotelSynced": "{count} otel günü sinkronlandı",
+      "normsHint": "Nəzəri proqnoz üçün əsas SKU normaları və qonaq gecə zolaqları.",
+      "overlapMovedToSettings": "Personal bufet overlap Parametrlərdə qurulur.",
+      "eatersRoster": "Bufet yeyənlər",
+      "eatersSyncHr": "HR-dən sinkron (rəhbərlik)",
+      "eatersSyncFailed": "HR sinkronu uğursuz oldu",
+      "eatersSynced": "{count} rəhbərlik rolu sinkronlandı",
+      "eatersPatchFailed": "Yeyəni yeniləmək mümkün olmadı",
+      "eatersCreateFailed": "Yeyən əlavə etmək mümkün olmadı",
+      "eatersCreated": "Yeyən əlavə olundu",
+      "eatersManualLabel": "Manual ad",
+      "eatersAddManual": "Manual əlavə et",
+      "signManagementToday": "Bu gün imzala",
+      "dayLocked": "bağlı",
+      "kind": {
+        "GUEST": "Qonaq",
+        "STAFF": "Personal"
+      },
+      "slotDishes": "Yeməklər"
     },
     "integration": {
       "title": "İnteqrasiya və billing",
@@ -975,6 +1032,19 @@
       "api_admin_buffet": "Bufet planı idarəsi",
       "api_admin_integration": "İnteqrasiya idarəsi",
       "api_import_cutover": "İdxal"
+    }
+  },
+  "selectOutlet": {
+    "title": "Nöqtəni seç",
+    "hint": "İşlədiyiniz kafe / nöqtəni seçin.",
+    "empty": "Aktiv outlet yoxdur — Parametrlərdə yaradın.",
+    "loadFailed": "Outletləri yükləmək mümkün olmadı",
+    "selectFailed": "Outlet seçmək mümkün olmadı",
+    "shape": {
+      "cafe": "Kafe",
+      "restaurant": "Restoran",
+      "buffet_kitchen": "Bufet mətbəxi",
+      "disco": "Disko"
     }
   }
 }

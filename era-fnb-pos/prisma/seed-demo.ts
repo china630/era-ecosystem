@@ -124,23 +124,37 @@ async function main() {
 
   const outlet = await prisma.outlet.upsert({
     where: { organizationId_code: { organizationId, code: "KAFE" } },
-    update: { name: ERA_LAB_DEMO.cafeName, publicSlug: "era-lab-kafe", active: true },
+    update: {
+      name: ERA_LAB_DEMO.cafeName,
+      publicSlug: "era-lab-kafe",
+      active: true,
+      shapeHint: "cafe",
+      capTill: true,
+      capTables: true,
+      capBuffetPlanner: false,
+    },
     create: {
+      organizationId,
       code: "KAFE",
       name: ERA_LAB_DEMO.cafeName,
-      revenueCenterCode: "FOOD",
       publicSlug: "era-lab-kafe",
+      shapeHint: "cafe",
+      capTill: true,
+      capTables: true,
+      capBuffetPlanner: false,
     },
   });
 
   const phantom = await prisma.outlet.findFirst({
-    where: { code: "RESTAURANT" },
+    where: { organizationId, code: "RESTAURANT" },
   });
   if (phantom) {
-    const tickets = await prisma.ticket.count({ where: { outletId: phantom.id } });
-    if (tickets === 0) {
-      await prisma.menuCategory.deleteMany({ where: { outletId: phantom.id } });
-      await prisma.posTable.deleteMany({ where: { outletId: phantom.id } });
+    const openShifts = await prisma.posShift.count({
+      where: { outletId: phantom.id, status: "OPEN" },
+    });
+    if (openShifts === 0) {
+      await prisma.outlet.delete({ where: { id: phantom.id } });
+    } else {
       await prisma.outlet.update({
         where: { id: phantom.id },
         data: { active: false },

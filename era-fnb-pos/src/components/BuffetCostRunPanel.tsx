@@ -50,7 +50,10 @@ type Props = {
   outletId: string;
   fromDate: string;
   toDate: string;
+  /** Navigate to Normalar when norms block theoretical. */
   onGoForecast?: () => void;
+  /** Navigate to Proqnoz when guest-nights are missing. */
+  onGoGuestNights?: () => void;
 };
 
 function financeBuffetCostHref(financeHandoffQuery: string): string | null {
@@ -64,6 +67,7 @@ export default function BuffetCostRunPanel({
   fromDate,
   toDate,
   onGoForecast,
+  onGoGuestNights,
 }: Props) {
   const t = useTranslations("admin.buffet");
   /** Empty = use server-computed staff gross from plan × rate. */
@@ -183,11 +187,11 @@ export default function BuffetCostRunPanel({
 
       {payload ? (
         <div className={`${CARD_CLASS} space-y-3 p-4`}>
-          {payload.buffetCostModel === "OFF" ? (
-            <p className="text-sm text-[#E67E22]">{t("costRunModelOff")}</p>
-          ) : payload.buffetCostModel ? (
-            <p className="text-sm text-[#7F8C8D]">
-              {t("costRunModelLabel", { model: payload.buffetCostModel })}
+          {payload.buffetCostModel && payload.buffetCostModel !== "HYBRID" ? (
+            <p className="text-sm text-[#E67E22]">
+              {payload.buffetCostModel === "OFF"
+                ? t("costRunModelOff")
+                : t("costRunModelLabel", { model: payload.buffetCostModel })}
             </p>
           ) : null}
           <div className="text-sm font-semibold text-[#2C3E50]">{t("costRunBuckets")}</div>
@@ -228,15 +232,39 @@ export default function BuffetCostRunPanel({
             <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
               <p className="m-0 font-medium">{t("costRunTheoBlockedTitle")}</p>
               <p className="mt-1 m-0 text-amber-900">{t("costRunTheoBlockedBody")}</p>
-              {onGoForecast ? (
-                <button
-                  type="button"
-                  className={`${SECONDARY_BUTTON_CLASS} mt-2`}
-                  onClick={onGoForecast}
-                >
-                  {t("costRunGoForecast")}
-                </button>
-              ) : null}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {payload.chefWarnings.some((w) => w.code === "NORMS_ALL_ZERO") &&
+                onGoForecast ? (
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={onGoForecast}
+                  >
+                    {t("costRunGoNorms")}
+                  </button>
+                ) : null}
+                {payload.chefWarnings.some((w) => w.code === "NO_GUEST_NIGHTS") &&
+                onGoGuestNights ? (
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={onGoGuestNights}
+                  >
+                    {t("costRunGoForecast")}
+                  </button>
+                ) : null}
+                {!payload.chefWarnings.some(
+                  (w) => w.code === "NORMS_ALL_ZERO" || w.code === "NO_GUEST_NIGHTS",
+                ) && onGoForecast ? (
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    onClick={onGoForecast}
+                  >
+                    {t("costRunGoNorms")}
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : null}
 

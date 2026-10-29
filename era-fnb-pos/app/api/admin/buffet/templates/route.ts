@@ -15,8 +15,12 @@ export async function GET(request: Request) {
     const denied = denyUnlessPermission(session, PERMISSIONS.ADMIN_BUFFET);
     if (denied) return denied;
     await requireFnbSubmodule("fnb_buffet_planner", session?.organizationId);
-    const outletId = new URL(request.url).searchParams.get("outletId") ?? undefined;
-    const templates = await listWeekTemplates(outletId || undefined);
+    const url = new URL(request.url);
+    const outletId = url.searchParams.get("outletId") ?? undefined;
+    const kindRaw = url.searchParams.get("kind");
+    const kind =
+      kindRaw === "GUEST" || kindRaw === "STAFF" ? kindRaw : undefined;
+    const templates = await listWeekTemplates(outletId || undefined, kind);
     return jsonOk({ templates });
   } catch (err) {
     return handleRouteError(err);
@@ -26,7 +30,10 @@ export async function GET(request: Request) {
 const createSchema = z.object({
   outletId: z.string().min(1),
   name: z.string().min(1).max(120),
+  notes: z.string().max(2000).nullable().optional(),
+  kind: z.enum(["GUEST", "STAFF"]).optional(),
   active: z.boolean().optional(),
+  seedSlots: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {

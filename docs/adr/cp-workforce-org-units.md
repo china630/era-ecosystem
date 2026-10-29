@@ -58,3 +58,4 @@ One HR tree under parent scope (Sanatorium → Med / Admin / F&B). Clinic and F&
 - Payroll departmental GL unchanged — uses mirrored `departmentId`.
 - Plan C: full hire/provisioning in CP; Finance `Employee` is payroll extension only (`cpEmploymentId` link). See [cp-workforce-role-templates-and-security-admin.md](./cp-workforce-role-templates-and-security-admin.md).
 - **Multi-VÖEN group (Evrostar):** still **one `WorkforceScope` per STANDALONE anchor**. Do not merge OrgUnit trees or model the second VÖEN as `DEPARTMENT`. Holding composition stays on CP holdings. Optional **holding-federated HR view** (read-union of two scopes; person card via MDM `globalPersonId`) — writes always stamped with `employment.organizationId`. See [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md).
+- **Job architecture (grades / L1–Ln):** separate from OrgUnit nesting — [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md) (deferred).

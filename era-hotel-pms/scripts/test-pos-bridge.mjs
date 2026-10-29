@@ -33,7 +33,7 @@ async function main() {
     revenueCode: 'FOOD',
     amount: 1.5,
     description: 'Bridge test',
-    outletCode: 'RESTAURANT',
+    outletCode: 'NAFTANI',
     externalTicketId: key,
   };
   const r1 = await req('POST', '/api/pos/room-charge', body, {
@@ -47,7 +47,7 @@ async function main() {
 
   console.log('PUT pos-shift OPEN');
   await req('PUT', '/api/pms/pos-shift-status', {
-    outletCode: 'RESTAURANT',
+    outletCode: 'NAFTANI',
     shiftId: 'test-shift-1',
     status: 'OPEN',
   });
@@ -55,7 +55,7 @@ async function main() {
   console.log('shift status', st.data);
 
   await req('PUT', '/api/pms/pos-shift-status', {
-    outletCode: 'RESTAURANT',
+    outletCode: 'NAFTANI',
     shiftId: 'test-shift-1',
     status: 'CLOSED',
     closedAt: new Date().toISOString(),

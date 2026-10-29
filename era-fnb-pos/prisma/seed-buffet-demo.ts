@@ -5,7 +5,7 @@
  *   npm run db:seed:buffet-demo
  *
  * Org (first wins): ERA_BUFFET_DEMO_ORGANIZATION_ID → ERA_FB_ORGANIZATION_ID → lab resolve.
- * Outlet: RESTAURANT if present on Nafta-bound org; else NAFTANI.
+ * Outlet: NAFTANI (never invents RESTAURANT).
  * Force refresh week: SEED_BUFFET_FORCE=1
  */
 import { Prisma, PrismaClient } from "@prisma/client";
@@ -123,27 +123,28 @@ async function main() {
     data: { activeModules: [...modules] },
   });
 
-  const preferRestaurant = Boolean(process.env.ERA_FB_ORGANIZATION_ID?.trim());
-  let outlet =
-    preferRestaurant
-      ? await prisma.outlet.findFirst({
-          where: { organizationId, code: "RESTAURANT", active: true },
-        })
-      : null;
-  if (!outlet) {
-    outlet = await prisma.outlet.upsert({
-      where: { organizationId_code: { organizationId, code: "NAFTANI" } },
-      update: { name: "Naftani buffet (lab)", active: true, revenueCenterCode: "FOOD" },
-      create: {
-        organizationId,
-        code: "NAFTANI",
-        name: "Naftani buffet (lab)",
-        revenueCenterCode: "FOOD",
-        publicSlug: "naftani-buffet-lab",
-        active: true,
-      },
-    });
-  }
+  const outlet = await prisma.outlet.upsert({
+    where: { organizationId_code: { organizationId, code: "NAFTANI" } },
+    update: {
+      name: "Naftani buffet (lab)",
+      active: true,
+      capTill: true,
+      capTables: true,
+      capBuffetPlanner: true,
+      shapeHint: "restaurant",
+    },
+    create: {
+      organizationId,
+      code: "NAFTANI",
+      name: "Naftani buffet (lab)",
+      publicSlug: "naftani-buffet-lab",
+      active: true,
+      capTill: true,
+      capTables: true,
+      capBuffetPlanner: true,
+      shapeHint: "restaurant",
+    },
+  });
 
   const settings = parseBuffetCostSettings(
     profile.buffetCostSettingsJson,

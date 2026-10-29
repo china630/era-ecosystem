@@ -37,8 +37,9 @@ AC-FNB-AUD is 🟡 (belt + `/admin/audit` SCREEN + Wave B money/shift Layer B + 
 | (no TENANT AC) | SHARED F&B pool | Out of BE rollup | Wave 3 request tenant code; topology note only — not an AC this edition |
 | AC-FNB-RBAC | Field UAT / SHOW | Out of BE rollup | SCREEN until signoff |
 | (no AC) | Edition / hall preset / hotel mode split + owner upgrade (FNB-09 / FNB-10) | Out of BE rollup | API: unit tests `fnb-rbac.spec.ts` (edition resolve, preset clamp, metered kitchen; `hotelMode=false` on `fnb` stays `fnb`), orch `fnb-edition.service.spec.ts` + `kafe-foundation.spec.ts`; UAT step open |
-| (no AC) | Buffet Planner module (FNB-BUFFET-01) | Out of BE rollup | API/SCREEN only — **no Scaffold ✅** (no PRD AC row; UAT FB-5 open; FIN-INV-SCOPE-01 open). Proof: route map + waste math + list aggregates + submodule deny in `__tests__/fnb-buffet-planner.spec.ts`; copy/composition UX; ADR fnb-buffet-planner |
-| (no AC) | Buffet cost attribution (FNB-BUFFET-COST-01) | Out of BE rollup | Waves 1–6 + Phase A–D + chef-ready WO + polish — **no Scaffold ✅** (no PRD AC; UAT open — not Pilot). Proof: hybrid-handoff + finance-unit-cogs + forecast-pack + Finance math specs + lab seeds · UAT/punchlist unsigned · SSOT [fnb-buffet-chef-ready-backlog.md](../adr/fnb-buffet-chef-ready-backlog.md) (C3 won't-do / non-goal; C8 = future RBAC). Do not sell |
+| (no AC) | Outlet capabilities + Elektra gate (FNB-09 deepen) | Out of BE rollup | Caps/shape on Outlet; `/select-outlet`; kill invent `RESTAURANT`; Settings DELETE; nav `when` caps; negative: `OUTLET_RETIRED` / `OUTLET_NO_TILL` (shift/ticket/terminal). **No Scaffold ✅** — UAT FB-OUTLET-01 open. ADR fnb-outlet-capabilities-and-gate |
+| (no AC) | Buffet Planner module (FNB-BUFFET-01) | Out of BE rollup | API/SCREEN only — **no Scaffold ✅** (no PRD AC row; UAT FB-5 open; FIN-INV-SCOPE-01 open). Proof: route map + waste math + list aggregates + submodule deny in `__tests__/fnb-buffet-planner.spec.ts`; chef UX submenu + spawn factor `__tests__/fnb-buffet-production-factor.spec.ts`; ADR fnb-buffet-planner |
+| (no AC) | Buffet cost attribution (FNB-BUFFET-COST-01) | Out of BE rollup | Waves 1–6 + Phase A–D + chef-ready WO + polish + chef UX wave (hotel pax sync, management eaters) — **no Scaffold ✅** (no PRD AC; UAT open — not Pilot). Proof: hybrid-handoff + finance-unit-cogs + forecast-pack + Finance math specs + lab seeds · UAT/punchlist unsigned · SSOT [fnb-buffet-chef-ready-backlog.md](../adr/fnb-buffet-chef-ready-backlog.md) (C3 won't-do / non-goal; C8 = future RBAC). Do not sell |
 | AC-FNB-AUD | UAT for `/admin/audit` | Out of BE rollup | Wave B PAY/PosShift Layer B + Wave E compound index landed 2026-10-29; hash-chain deferred; FNB-AUD-01 API until UAT |
 
 ### Negative-path proof index
@@ -53,6 +54,7 @@ AC-FNB-AUD is 🟡 (belt + `/admin/audit` SCREEN + Wave B money/shift Layer B + 
 | `era-fnb-pos/__tests__/fnb-rbac-role-name-grep.spec.ts` | AC-FNB-RBAC |
 | `era-fnb-pos/__tests__/staff-provision.spec.ts` | AC-FNB-RBAC (unknown role) |
 | `era-fnb-pos/__tests__/fnb-buffet-planner.spec.ts` | FNB-BUFFET-01 (capability; out of AC rollup) |
+| `era-fnb-pos/__tests__/fnb-buffet-production-factor.spec.ts` | FNB-BUFFET-01 spawn factor math (out of AC rollup) |
 | `era-fnb-pos/__tests__/fnb-buffet-hybrid-handoff.spec.ts` | FNB-BUFFET-COST-01 Phase A handoff + chef-ready staff/COGS (out of AC rollup) |
 | `era-fnb-pos/__tests__/fnb-buffet-finance-unit-cogs.spec.ts` | FNB-BUFFET-COST-01 chef-ready A1 Finance unit COGS map (out of AC rollup) |
 | `era-fnb-pos/__tests__/fnb-buffet-forecast-pack.spec.ts` | FNB-BUFFET-COST-01 Wave 6 + Phase B band/SKU guards (out of AC rollup) |
