@@ -16,6 +16,7 @@ import {
   ModalShell,
   PageHeader,
   ViewportOverlay,
+  DANGER_BUTTON_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
@@ -24,6 +25,7 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   ResourceDayMatrix,
   cabinLabel,
@@ -33,7 +35,6 @@ import {
 } from "@/components/sanatorium/ResourceDayMatrix";
 import { bakuDateTimeDisplay, bakuTimeLabel } from "@/lib/baku-day";
 import { localizeSlotDecision } from "@/lib/slot-decision-ui";
-import Link from "next/link";
 
 function bakuYmd(d = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -63,6 +64,9 @@ type OrderCard = {
   amountNet: number;
   quotaIndex: number | null;
   quotaTotal: number | null;
+  checkInOpen?: boolean;
+  checkInDeadline?: string;
+  receptionProcedureCheckIn?: boolean;
 };
 
 function slotMoveError(
@@ -100,6 +104,7 @@ export default function SanatoriumResourcesPage() {
     inCabin: number;
     capacity: number;
   } | null>(null);
+  const [checkInBusy, setCheckInBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(
@@ -213,6 +218,28 @@ export default function SanatoriumResourcesPage() {
     await load();
   }
 
+  async function checkInFromMatrix() {
+    if (!detailSlot?.procedureOrderId || checkInBusy) return;
+    setCheckInBusy(true);
+    try {
+      const res = await fetch(`/api/procedures/${detailSlot.procedureOrderId}/check-in`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "matrix" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, t("checkInFailed"));
+        return;
+      }
+      showSuccess(t("checkInOk"));
+      setDetailSlot(null);
+      await load();
+    } finally {
+      setCheckInBusy(false);
+    }
+  }
+
   async function confirmCancel() {
     if (!cancelId) return;
     const res = await fetch(`/api/procedures/${cancelId}/cancel`, {
@@ -321,8 +348,6 @@ export default function SanatoriumResourcesPage() {
       labels={{
         free: t("free"),
         empty: t("empty"),
-        move: t("move"),
-        cancel: t("cancel"),
         staff: t("staff"),
         now: t("now"),
         dragHint: t("dragHint"),
@@ -331,6 +356,7 @@ export default function SanatoriumResourcesPage() {
         legendCompleted: t("legendCompleted"),
         legendBlocked: t("legendBlocked"),
         legendLunch: t("legendLunch"),
+        statusLabel: (status) => procedureStatusLabel(t, status),
       }}
       onDragStart={setDragOrderId}
       onDropFree={(resourceId, slotTimeIso) => {
@@ -347,8 +373,6 @@ export default function SanatoriumResourcesPage() {
             }
           : undefined
       }
-      onMove={(slot) => beginPlace(slot)}
-      onCancel={(orderId) => setCancelId(orderId)}
       onSelect={(slot) => {
         if (placing) return;
         setDetailSlot(slot);
@@ -461,30 +485,71 @@ export default function SanatoriumResourcesPage() {
         closeLabel={tc("close")}
         footer={
           detailSlot ? (
-            <div className="flex flex-wrap justify-end gap-2">
-              {orderCard ? (
-                <Link href={`/patients/${orderCard.patientRefId}`} className={SECONDARY_BUTTON_CLASS}>
-                  {t("openPatient")}
-                </Link>
-              ) : null}
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => beginPlace(detailSlot)}
-              >
-                {t("move")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => {
-                  if (!detailSlot.procedureOrderId) return;
-                  setCancelId(detailSlot.procedureOrderId);
-                  setDetailSlot(null);
-                }}
-              >
-                {t("cancel")}
-              </button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {(() => {
+                const status = orderCard?.status ?? detailSlot.status;
+                const canMoveOrCancel =
+                  status === "SCHEDULED" || status === "PENDING_PAY";
+                const hasNurseCheckIn =
+                  auth?.isPlatformSuperAdmin === true ||
+                  (auth?.permissions ?? []).includes(
+                    CLINIC_PERMISSION.API_PROCEDURES_CHECK_IN,
+                  );
+                // Setting gates reception; nurse/doctor check-in perm still sees the button.
+                const canOfferCheckIn =
+                  hasNurseCheckIn || orderCard?.receptionProcedureCheckIn !== false;
+                return (
+                  <>
+                    {canMoveOrCancel ? (
+                      <>
+                        <button
+                          type="button"
+                          className={`${DANGER_BUTTON_CLASS} !bg-white !text-[#E74C3C] !shadow-none border border-[#E74C3C] hover:!bg-[#E74C3C]/10`}
+                          onClick={() => {
+                            if (!detailSlot.procedureOrderId) return;
+                            setCancelId(detailSlot.procedureOrderId);
+                            setDetailSlot(null);
+                          }}
+                        >
+                          {t("cancel")}
+                        </button>
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          onClick={() => beginPlace(detailSlot)}
+                        >
+                          {t("move")}
+                        </button>
+                      </>
+                    ) : null}
+                    {status === "PENDING_PAY" && canOfferCheckIn ? (
+                      <button
+                        type="button"
+                        className={DANGER_BUTTON_CLASS}
+                        disabled
+                        title={t("unpaidBlock")}
+                      >
+                        {t("unpaidBlock")}
+                      </button>
+                    ) : null}
+                    {status === "SCHEDULED" && canOfferCheckIn ? (
+                      <button
+                        type="button"
+                        className={PRIMARY_BUTTON_CLASS}
+                        disabled={orderCard?.checkInOpen !== true || checkInBusy}
+                        title={
+                          orderCard?.checkInOpen === true
+                            ? undefined
+                            : t("checkInClosed")
+                        }
+                        onClick={() => void checkInFromMatrix()}
+                      >
+                        {t("checkIn")}
+                      </button>
+                    ) : null}
+                  </>
+                );
+              })()}
             </div>
           ) : null
         }

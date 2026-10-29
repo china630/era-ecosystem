@@ -92,6 +92,7 @@ export async function getClinicSettings() {
     procedureCheckInSameDayUntil: tenant.procedureCheckInSameDayUntil
       ? tenant.procedureCheckInSameDayUntil.toISOString()
       : null,
+    receptionProcedureCheckIn: tenant.receptionProcedureCheckIn !== false,
     patientCardResultsPreview:
       tenant.patientCardResultsPreview ?? CARD_DEFAULTS.patientCardResultsPreview,
     patientCardPlanPreview: tenant.patientCardPlanPreview ?? CARD_DEFAULTS.patientCardPlanPreview,
@@ -166,6 +167,7 @@ export async function updateClinicSettings(input: {
   checkInRequiresQr?: boolean;
   procedureCheckInWindow?: "STRICT" | "SAME_DAY";
   procedureCheckInSameDayUntil?: string | null;
+  receptionProcedureCheckIn?: boolean;
   autoNoShowAfterMin?: number | null;
   patientCardResultsPreview?: number;
   patientCardPlanPreview?: number;
@@ -355,6 +357,9 @@ export async function updateClinicSettings(input: {
                 ? null
                 : new Date(input.procedureCheckInSameDayUntil),
           }
+        : {}),
+      ...(input.receptionProcedureCheckIn != null
+        ? { receptionProcedureCheckIn: input.receptionProcedureCheckIn }
         : {}),
       ...(resultsPreview != null ? { patientCardResultsPreview: resultsPreview } : {}),
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),

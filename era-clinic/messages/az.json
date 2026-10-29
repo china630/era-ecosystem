@@ -685,7 +685,12 @@
       "PROPOSED": "Təklif",
       "PENDING_PAY": "Ödəniş gözlənilir"
     },
-    "openAttendanceForesight": "Sərbəst ziyarət: gözləyir {waiting}, kabinetdə {inCabin} (tutum {capacity})"
+    "openAttendanceForesight": "Sərbəst ziyarət: gözləyir {waiting}, kabinetdə {inCabin} (tutum {capacity})",
+    "checkIn": "Check-in",
+    "checkInOk": "Qeydiyyat olundu",
+    "checkInFailed": "Check-in alınmadı",
+    "checkInClosed": "Check-in pəncərəsi hələ açıq deyil",
+    "unpaidBlock": "Ödəniş edilməyib"
   },
   "queue": {
     "title": "Resepşn növbəsi",
@@ -1186,7 +1191,9 @@
     "logo": "Loqo",
     "clearLogo": "Loqonu sil",
     "logoTooLarge": "Loqo 400KB-dan kiçik olmalıdır",
-    "checkupSections": "Check-up bölmələri"
+    "checkupSections": "Check-up bölmələri",
+    "receptionProcedureCheckIn": "Resepşn: matrisada check-in",
+    "receptionProcedureCheckInHint": "Açıqdırsa, resepşn günlük matris modalından gəlişi qeyd edə bilər (Nafta üçün default açıq)."
   },
   "physioSites": {
     "title": "Fizio zonalar",

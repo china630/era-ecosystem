@@ -710,7 +710,12 @@
       "PROPOSED": "Proposed",
       "PENDING_PAY": "Awaiting payment"
     },
-    "openAttendanceForesight": "Open attendance: {waiting} waiting, {inCabin} in cabin (capacity {capacity})"
+    "openAttendanceForesight": "Open attendance: {waiting} waiting, {inCabin} in cabin (capacity {capacity})",
+    "checkIn": "Check-in",
+    "checkInOk": "Checked in",
+    "checkInFailed": "Check-in failed",
+    "checkInClosed": "Check-in window is not open yet",
+    "unpaidBlock": "Not paid"
   },
   "queue": {
     "title": "Reception queue",
@@ -1211,7 +1216,9 @@
     "logo": "Logo",
     "clearLogo": "Clear logo",
     "logoTooLarge": "Logo must be under 400KB",
-    "checkupSections": "Check-up sections"
+    "checkupSections": "Check-up sections",
+    "receptionProcedureCheckIn": "Reception check-in on resource matrix",
+    "receptionProcedureCheckInHint": "When on, reception can mark attendance from the day matrix modal (Nafta default on)."
   },
   "physioSites": {
     "title": "Physio sites",

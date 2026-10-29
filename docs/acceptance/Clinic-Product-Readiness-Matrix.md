@@ -26,7 +26,8 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 |
+| Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 (CLI-26 deepen: seated unpaid ages to Late after deadline — does not lift Demo/Pilot) |
+| Resource day matrix | `/sanatorium/resources` | 🟡 SCREEN (CLI-26: modal Check-in when `receptionProcedureCheckIn`; no bar Köçür/Ləğv et; UAT §4 punched path deepen — not Demo lift) |
 | Patient registry (P-codes, Ad/Soyad/Ata; Open-course badge; room/package on `/sanatorium`) | `/patients` | 🟡 SCREEN (wave UX landed; field UAT open) |
 | Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | ✅ SCREEN (CLI-38 + CLI-38b: dual view + day override) |
 | МКБ санаторий | `/sanatorium` | 🟡 |

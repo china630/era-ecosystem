@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { getCheckInOpenState } from "@/domain/procedure/procedure-attendance.service";
+import { getClinicSettings } from "@/domain/settings/settings.service";
 
 export type ProcedureOrderCard = {
   id: string;
@@ -20,6 +22,10 @@ export type ProcedureOrderCard = {
   /** 1-based place among this episode's same procedure, and the count. */
   quotaIndex: number | null;
   quotaTotal: number | null;
+  checkInOpen: boolean;
+  checkInDeadline: string;
+  /** Tenant allows reception check-in from the resource matrix. */
+  receptionProcedureCheckIn: boolean;
 };
 
 export async function getProcedureOrderCard(
@@ -63,6 +69,10 @@ export async function getProcedureOrderCard(
   }
 
   const staffName = order.allocations[0]?.practitioner?.fullName?.trim() || null;
+  const [checkIn, settings] = await Promise.all([
+    getCheckInOpenState(order),
+    getClinicSettings(),
+  ]);
 
   return {
     id: order.id,
@@ -83,5 +93,8 @@ export async function getProcedureOrderCard(
     amountNet: Number(order.amountNet),
     quotaIndex,
     quotaTotal,
+    checkInOpen: checkIn.open,
+    checkInDeadline: checkIn.deadline.toISOString(),
+    receptionProcedureCheckIn: settings.receptionProcedureCheckIn !== false,
   };
 }

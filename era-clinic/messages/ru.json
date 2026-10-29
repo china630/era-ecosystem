@@ -685,7 +685,12 @@
       "PROPOSED": "Предложено",
       "PENDING_PAY": "Ждёт оплаты"
     },
-    "openAttendanceForesight": "Свободное посещение: ждут {waiting}, в кабине {inCabin} (ёмкость {capacity})"
+    "openAttendanceForesight": "Свободное посещение: ждут {waiting}, в кабине {inCabin} (ёмкость {capacity})",
+    "checkIn": "Check-in",
+    "checkInOk": "Отмечен приход",
+    "checkInFailed": "Check-in не удался",
+    "checkInClosed": "Окно check-in ещё не открыто",
+    "unpaidBlock": "Не оплачено"
   },
   "queue": {
     "title": "Очередь регистратуры",
@@ -1186,7 +1191,9 @@
     "logo": "Логотип",
     "clearLogo": "Убрать логотип",
     "logoTooLarge": "Логотип должен быть меньше 400KB",
-    "checkupSections": "Секции чек-апа"
+    "checkupSections": "Секции чек-апа",
+    "receptionProcedureCheckIn": "Check-in ресепшеном с матрицы",
+    "receptionProcedureCheckInHint": "Если включено, ресепшен может отметить приход из модалки дневной матрицы (для Нафты по умолчанию вкл.)."
   },
   "physioSites": {
     "title": "Зоны физио",

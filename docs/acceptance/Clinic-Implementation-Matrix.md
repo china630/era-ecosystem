@@ -17,7 +17,7 @@
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-CLI-MD | Master data (practitioners, rooms, resources, procedure types) | ✅ | [ ] | `__tests__/cli-md-negative.spec.ts` + CLI-01..04,30,36,38 | Negative: module gate; inactive practitioner / catalog |
-| AC-CLI-OPS | Appointments + day-ops + reception queue | ✅ | [ ] | `__tests__/cli-ops-negative.spec.ts` + CLI-05,14,26,29 | Negative: module gate 403; cancel COMPLETED; reschedule deny |
+| AC-CLI-OPS | Appointments + day-ops + reception queue | ✅ | [ ] | `__tests__/cli-ops-negative.spec.ts` + CLI-05,14,26,29 | Negative: module gate 403; cancel COMPLETED; reschedule deny. 2026-10-29 matrix `receptionProcedureCheckIn` + nurse unpaid Late = SHIPPED deepen — does not reopen Scaffold |
 | AC-CLI-PT | Patients / clinical card / demographics | ✅ | [ ] | `__tests__/cli-pt-negative.spec.ts` + CLI-06,25,28,40 | Negative: module gate; MDM identifier (FIN or passport+country, not phone); name parts to MDM; visit diagnoses CLI-40; card ICD without open episode. Anamnesis gate moved to episode (CLI-55) — demographics PATCH no longer requires it |
 | AC-CLI-LAB | Lab orders ops + diagnostic catalog | ✅ | [ ] | `__tests__/cli-lab-negative.spec.ts` + CLI-11,12,32 | **Ops only** — illegal publish / collect / complete; not live HL7. Catalog templates + Connect copy-if-empty (ADR clinic-catalog-template-overlay) — wizard UAT for overlay still open; do not claim Pilot |
 | AC-CLI-SAN | Sanatorium chart + doctor-confirm FIFO | ✅ | [ ] | `__tests__/cli-san-negative.spec.ts` + CLI-13,31,38,39 | Negative: FIFO skip → 409; module gate; ICD empty/chapter reject (`__tests__/icd10-catalog.spec.ts`) |
@@ -66,7 +66,7 @@ Do not call this table «product readiness».
 | CLI-56 | Episode care team (multi-doctor) | Out of BE plan | ADR `clinic-episode-care-team`; SCREEN; assigned-only scope + card gate; appointments link deferred |
 | CLI-57 | Package/extras assign + plan-before-pay | Out of BE plan | ADR `clinic-extra-procedure-route` + assign-modal leftover `*_POOL` off Save, replace, and plus; day-end cron (today seated + overdue + unseated before today); extra-tickets full date; SCREEN; UAT open; unit passes for sweep scopes; no field negative path; not Scaffold ✅ |
 | CLI-61 / AC-CLI-WALKIN-PARTY | Walk-in groups list + ModalShell | Out of BE plan | ADR `clinic-walk-in-party`; SCREEN; send stamps `revenueCode`; UAT §11a open; unit placeholders only; not Scaffold ✅ |
-| CLI-62 / AC-CLI-OPEN-ATTEND | Open attendance + SAME_DAY window | Out of BE plan | ADR `clinic-open-attendance`; SCREEN; helper unit tests; UAT §11b open; not Scaffold ✅ |
+| CLI-62 / AC-CLI-OPEN-ATTEND | Open attendance + SAME_DAY window | Out of BE plan | ADR `clinic-open-attendance`; SCREEN; helper unit tests + code refuses OPEN DnD / SAME_DAY without cabin; UAT §11b open; not Scaffold ✅ |
 
 ### Negative-path proof index
 
