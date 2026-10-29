@@ -506,6 +506,7 @@ export class WorkforceEmploymentsService {
       orgUnitName: string | null;
       positionId: string | null;
       positionName: string | null;
+      leadership: boolean;
     }>;
   }> {
     await this.entitlement.assertWorkforceHub(organizationId);
@@ -515,7 +516,7 @@ export class WorkforceEmploymentsService {
         id: true,
         globalPersonId: true,
         orgUnit: { select: { id: true, name: true } },
-        position: { select: { id: true, name: true } },
+        position: { select: { id: true, name: true, leadership: true } },
       },
       orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
       take: 500,
@@ -533,6 +534,7 @@ export class WorkforceEmploymentsService {
       orgUnitName: string | null;
       positionId: string | null;
       positionName: string | null;
+      leadership: boolean;
     }> = [];
     for (const row of rows) {
       if (seen.has(row.globalPersonId)) continue;
@@ -553,6 +555,7 @@ export class WorkforceEmploymentsService {
         orgUnitName: row.orgUnit?.name?.trim() || null,
         positionId: row.position?.id ?? null,
         positionName: row.position?.name?.trim() || null,
+        leadership: row.position?.leadership === true,
       });
     }
     items.sort((a, b) => a.name.localeCompare(b.name));
