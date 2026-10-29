@@ -31,11 +31,16 @@ async function main() {
   const report = { upserted: 0, fkRemapped: 0, deactivated: 0, renamed: 0 };
   console.log(dryRun ? 'DRY-RUN' : 'APPLY', 'org', orgId);
 
-  await prisma.$executeRawUnsafe(`
-    ALTER TABLE "RevenueCode" ADD COLUMN IF NOT EXISTS "allowManualCharge" BOOLEAN NOT NULL DEFAULT true;
-    ALTER TABLE "RevenueCode" ADD COLUMN IF NOT EXISTS "allowManualPayment" BOOLEAN NOT NULL DEFAULT true;
-    ALTER TABLE "RevenueCode" ADD COLUMN IF NOT EXISTS "reportType" TEXT;
-  `);
+  // Prisma $executeRawUnsafe allows one statement per call.
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "RevenueCode" ADD COLUMN IF NOT EXISTS "allowManualCharge" BOOLEAN NOT NULL DEFAULT true`,
+  );
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "RevenueCode" ADD COLUMN IF NOT EXISTS "allowManualPayment" BOOLEAN NOT NULL DEFAULT true`,
+  );
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "RevenueCode" ADD COLUMN IF NOT EXISTS "reportType" TEXT`,
+  );
 
   if (!dryRun) {
     await prisma.revenueCode.updateMany({
