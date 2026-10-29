@@ -81,10 +81,8 @@ export function handleRouteError(err: unknown) {
     if (err.message.startsWith("Forbidden")) {
       return jsonError(err.message, 403);
     }
-    const code =
-      typeof (err as { code?: unknown }).code === "string"
-        ? (err as { code: string }).code
-        : "";
+    const codeRaw = (err as unknown as { code?: unknown }).code;
+    const code = typeof codeRaw === "string" ? codeRaw : "";
     if (code === "OUTLET_RETIRED" || code === "OUTLET_REQUIRED" || code === "OUTLET_NO_TILL") {
       return NextResponse.json({ error: err.message, code }, { status: 400 });
     }
