@@ -225,6 +225,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-10-27 | Closeout sync: FNB-AUD-01 **NONE**; FIN-AUD-01 **SHIPPED**; HOT-AUD-01 **SCREEN**. Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-AUD-01 / FNB-AUD-01 audit tracking; FIN-AUD-01 Finance belt **SHIPPED** as Layer A reference. Hotel `/settings/audit` stays **SCREEN** until belt + UAT. |
 | 2026-10-27 | HOT-AUD-01 mutation audit **SCREEN** (`/settings/audit` + stay journal). Ecosystem ADR Accepted; Layer A belt not landed — not SHOW / not SHIPPED. |
+| 2026-10-29 | FNB-BUFFET-01 / COST-01 UI playbook pass — stays **SCREEN** (PageHeader.actions, nav collapse, composition modal, Settings integration URLs); UAT/punchlist unsigned; not SHOW. Gate/sell unchanged. |
 | 2026-10-29 | FNB-BUFFET-01 / COST-01 / FNB-09 WP0–WP8 tail — UI stays **SCREEN** (modal kind, Spawn-free, Nöqtə); staging NAFTANI rename (data); not SHOW. Gate/sell unchanged. Droplet image deploy still open. |
 | 2026-10-29 | FNB-BUFFET-01 / COST-01 WP0–WP8 second-pass — UI stays **SCREEN** (locale sync toasts, section titles, chef copy); UAT/punchlist unsigned; not SHOW. Gate/sell unchanged. |
 | 2026-10-29 | FNB-BUFFET-01 / COST-01 WP0–WP8 chef product — UI stays **SCREEN** (chrome/i18n/templates/accordion/sync honesty); UAT/punchlist unsigned; not SHOW. Gate/sell unchanged. |

@@ -56,6 +56,7 @@ export default function BuffetWeekTemplatePanel({
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateId, setTemplateId] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [compositionOpen, setCompositionOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const [kindDraft, setKindDraft] = useState<"GUEST" | "STAFF">(kindFilter);
@@ -137,7 +138,10 @@ export default function BuffetWeekTemplatePanel({
     setCreateOpen(false);
     setNameDraft("");
     setNotesDraft("");
-    if (data?.id) setTemplateId(data.id);
+    if (data?.id) {
+      setTemplateId(data.id);
+      setCompositionOpen(true);
+    }
     if (kindDraft !== kindFilter) {
       onKindFilterChange?.(kindDraft);
     } else {
@@ -309,9 +313,12 @@ export default function BuffetWeekTemplatePanel({
                 <tr
                   key={row.id}
                   className={`cursor-pointer hover:bg-[#F8FAFC] ${
-                    row.id === templateId ? "bg-[#EBF5FB]" : ""
+                    row.id === templateId && compositionOpen ? "bg-[#EBF5FB]" : ""
                   }`}
-                  onClick={() => setTemplateId(row.id)}
+                  onClick={() => {
+                    setTemplateId(row.id);
+                    setCompositionOpen(true);
+                  }}
                 >
                   <td className="px-3 py-2 font-medium text-[#2C3E50]">{row.name}</td>
                   <td className="px-3 py-2">
@@ -347,13 +354,15 @@ export default function BuffetWeekTemplatePanel({
         </table>
       </div>
 
-      {selected ? (
-        <>
-          <div className={`${CARD_CLASS} overflow-hidden`}>
-            <div className="flex items-center justify-between border-b px-3 py-2">
-              <div className="text-sm font-semibold text-[#2C3E50]">
-                {t("slotsTitle")} — {selected.name}
-              </div>
+      <ModalShell
+        open={compositionOpen && !!selected}
+        title={selected ? `${t("slotsTitle")} — ${selected.name}` : t("slotsTitle")}
+        onClose={() => setCompositionOpen(false)}
+        maxWidthClass="max-w-3xl"
+      >
+        {selected ? (
+          <div className="space-y-3">
+            <div className="flex justify-end">
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -426,10 +435,10 @@ export default function BuffetWeekTemplatePanel({
                 )}
               </tbody>
             </table>
+            <p className="m-0 text-xs text-[#95A5A6]">{t("spawnHint")}</p>
           </div>
-          <p className="m-0 text-xs text-[#95A5A6]">{t("spawnHint")}</p>
-        </>
-      ) : null}
+        ) : null}
+      </ModalShell>
 
       <ModalShell
         open={createOpen}
@@ -471,7 +480,12 @@ export default function BuffetWeekTemplatePanel({
         />
       </ModalShell>
 
-      <ModalShell open={slotOpen} title={t("editSlot")} onClose={() => setSlotOpen(false)}>
+      <ModalShell
+        open={slotOpen}
+        title={t("editSlot")}
+        onClose={() => setSlotOpen(false)}
+        overlayZClass="z-[220]"
+      >
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("colWeekday")}

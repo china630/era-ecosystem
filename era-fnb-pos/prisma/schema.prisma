@@ -599,6 +599,8 @@ model FnbOrgProfile {
   businessDayStart String   @default("05:00") @map("business_day_start")
   /// Buffet cost attribution defaults + per-outlet overrides (ADR fnb-buffet-cost-attribution).
   buffetCostSettingsJson Json? @map("buffet_cost_settings_json")
+  /// Peer URLs for buffet integrations (Finance web, Hotel PMS, Orchestrator) — Settings UI, not env bake.
+  integrationSettingsJson Json? @map("integration_settings_json")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("fnb_org_profiles")

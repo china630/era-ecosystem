@@ -83,12 +83,6 @@ const emptyItemForm = (categoryId = ""): ItemForm => ({
   priceReason: "",
 });
 
-function financeRecipesUrl(): string | null {
-  const base = process.env.NEXT_PUBLIC_FINANCE_WEB_URL?.trim();
-  if (!base) return null;
-  return `${base.replace(/\/$/, "")}/manufacturing/recipes`;
-}
-
 export default function MenuAdminPanel() {
   const t = useTranslations("admin.menu");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -114,8 +108,11 @@ export default function MenuAdminPanel() {
   const [query, setQuery] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [financeWebUrl, setFinanceWebUrl] = useState("");
 
-  const recipesHref = financeRecipesUrl();
+  const recipesHref = financeWebUrl.trim()
+    ? `${financeWebUrl.trim().replace(/\/$/, "")}/manufacturing/recipes`
+    : null;
 
   const load = useCallback(async () => {
     const res = await fetch("/api/menu?includeInactive=true");
@@ -131,6 +128,16 @@ export default function MenuAdminPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void fetch("/api/settings/integrations")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const url = d?.settings?.financeWebUrl;
+        if (typeof url === "string") setFinanceWebUrl(url.trim());
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (itemModal == null && catModal == null) return;

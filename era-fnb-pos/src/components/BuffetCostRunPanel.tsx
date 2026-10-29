@@ -43,6 +43,7 @@ type HybridHandoffPayload = {
     theoreticalBySku: Record<string, number>;
   };
   financeHandoffQuery: string;
+  financeWebUrl?: string | null;
   chefWarnings: ChefWarning[];
 };
 
@@ -64,8 +65,11 @@ type Props = {
   hideInlineChrome?: boolean;
 };
 
-function financeBuffetCostHref(financeHandoffQuery: string): string | null {
-  const base = process.env.NEXT_PUBLIC_FINANCE_WEB_URL?.trim();
+function financeBuffetCostHref(
+  financeHandoffQuery: string,
+  financeWebUrl?: string | null,
+): string | null {
+  const base = financeWebUrl?.trim();
   if (!base) return null;
   return `${base.replace(/\/$/, "")}/inventory/buffet-food-cost?${financeHandoffQuery}`;
 }
@@ -133,7 +137,7 @@ export default function BuffetCostRunPanel({
   }, [outletId, fromDate, toDate]);
 
   const financeHref = payload
-    ? financeBuffetCostHref(payload.financeHandoffQuery)
+    ? financeBuffetCostHref(payload.financeHandoffQuery, payload.financeWebUrl)
     : null;
   const financeUrlMissing =
     payload?.chefWarnings.some((w) => w.code === "FINANCE_URL_MISSING") ?? false;
@@ -300,41 +304,39 @@ export default function BuffetCostRunPanel({
                 ) : null}
               </div>
             </div>
-          ) : (
-            <>
-              <div className="text-sm font-semibold text-[#2C3E50]">{t("costRunBuckets")}</div>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <BucketCard
-                  label={t("costRunSale")}
-                  value={`${payload.pos.saleAttributedAzn.toFixed(2)} AZN`}
-                  hint={`${payload.pos.saleLineCount} ${t("costRunLines")}`}
-                />
-                <BucketCard
-                  label={t("costRunComp")}
-                  value={`${payload.pos.compAttributedAzn.toFixed(2)} AZN`}
-                  hint={`${payload.pos.compLineCount} ${t("costRunLines")}`}
-                  emphasis
-                />
-                <BucketCard
-                  label={t("costRunStaffNet")}
-                  value={`${payload.staff.staffNet.toFixed(2)} AZN`}
-                />
-                <BucketCard
-                  label={t("costRunTheoretical")}
-                  value={`${payload.theoretical.theoreticalAzn.toFixed(2)} AZN`}
-                  hint={payload.theoretical.bandCode ?? undefined}
-                />
-                <BucketCard
-                  label={t("costRunGuestNights")}
-                  value={String(payload.theoretical.guestNights)}
-                />
-                <BucketCard
-                  label={t("costRunPosTotal")}
-                  value={`${payload.pos.posAttributedAzn.toFixed(2)} AZN`}
-                />
-              </div>
-            </>
-          )}
+          ) : null}
+
+          <div className="text-sm font-semibold text-[#2C3E50]">{t("costRunBuckets")}</div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <BucketCard
+              label={t("costRunSale")}
+              value={`${payload.pos.saleAttributedAzn.toFixed(2)} AZN`}
+              hint={`${payload.pos.saleLineCount} ${t("costRunLines")}`}
+            />
+            <BucketCard
+              label={t("costRunComp")}
+              value={`${payload.pos.compAttributedAzn.toFixed(2)} AZN`}
+              hint={`${payload.pos.compLineCount} ${t("costRunLines")}`}
+              emphasis
+            />
+            <BucketCard
+              label={t("costRunStaffNet")}
+              value={`${payload.staff.staffNet.toFixed(2)} AZN`}
+            />
+            <BucketCard
+              label={t("costRunTheoretical")}
+              value={`${payload.theoretical.theoreticalAzn.toFixed(2)} AZN`}
+              hint={payload.theoretical.bandCode ?? undefined}
+            />
+            <BucketCard
+              label={t("costRunGuestNights")}
+              value={String(payload.theoretical.guestNights)}
+            />
+            <BucketCard
+              label={t("costRunPosTotal")}
+              value={`${payload.pos.posAttributedAzn.toFixed(2)} AZN`}
+            />
+          </div>
 
           {payload.chefWarnings.length > 0 ? (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
@@ -368,7 +370,10 @@ export default function BuffetCostRunPanel({
           ) : null}
           {!financeHref || financeUrlMissing ? (
             <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900">
-              {t("costRunFinanceLinkMissing")}
+              {t("costRunFinanceLinkMissing")}{" "}
+              <a href="/admin/settings" className="font-medium text-[#2980B9] underline">
+                {t("moduleMissingSyncLink")}
+              </a>
             </p>
           ) : null}
 

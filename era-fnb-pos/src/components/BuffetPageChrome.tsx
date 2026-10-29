@@ -27,13 +27,12 @@ type Props = {
   statusOptions?: Array<{ value: string; label: string }>;
   onStatusFilter?: (status: string) => void;
   showStatus?: boolean;
-  actions?: ReactNode;
   banner?: ReactNode;
   hint?: string;
 };
 
 /**
- * Shared buffet toolbar: fixed outlet width, equal date/filter cols, CTAs right.
+ * Buffet filter panel only — CTAs belong in PageHeader.actions (UI playbook).
  */
 export default function BuffetPageChrome({
   outlets,
@@ -51,7 +50,6 @@ export default function BuffetPageChrome({
   statusOptions,
   onStatusFilter,
   showStatus = false,
-  actions,
   banner,
   hint,
 }: Props) {
@@ -64,8 +62,8 @@ export default function BuffetPageChrome({
   return (
     <div className={`${CARD_CLASS} space-y-3 p-4`}>
       {hint ? <p className="m-0 text-sm text-[#7F8C8D]">{hint}</p> : null}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="w-full max-w-[16rem] shrink-0 sm:w-[16rem]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="min-w-0">
           <CatalogField
             kind={"ENTITY_REF" as CatalogFieldKind}
             label={t("outlet")}
@@ -78,7 +76,7 @@ export default function BuffetPageChrome({
         </div>
         {showDates && onFromDate && onToDate ? (
           <>
-            <div className="w-[9.5rem] shrink-0">
+            <div className="min-w-0">
               <Field
                 label={t("fromDate")}
                 preset="date"
@@ -87,7 +85,7 @@ export default function BuffetPageChrome({
                 onChange={(e) => onFromDate(e.target.value)}
               />
             </div>
-            <div className="w-[9.5rem] shrink-0">
+            <div className="min-w-0">
               <Field
                 label={t("toDate")}
                 preset="date"
@@ -99,7 +97,7 @@ export default function BuffetPageChrome({
           </>
         ) : null}
         {showKind && kindFilter && onKindFilter ? (
-          <div className="w-[9rem] shrink-0">
+          <div className="min-w-0">
             <CatalogField
               kind={"CLOSED_SMALL" as CatalogFieldKind}
               label={t("kindFilter")}
@@ -117,7 +115,7 @@ export default function BuffetPageChrome({
           </div>
         ) : null}
         {showStatus && statusOptions && onStatusFilter ? (
-          <div className="w-[9rem] shrink-0">
+          <div className="min-w-0">
             <CatalogField
               kind={"CLOSED_SMALL" as CatalogFieldKind}
               label={t("statusFilter")}
@@ -128,9 +126,6 @@ export default function BuffetPageChrome({
               }
             />
           </div>
-        ) : null}
-        {actions ? (
-          <div className="ml-auto flex flex-wrap items-end justify-end gap-2">{actions}</div>
         ) : null}
       </div>
       {banner}

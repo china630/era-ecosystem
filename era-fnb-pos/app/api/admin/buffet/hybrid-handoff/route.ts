@@ -51,7 +51,14 @@ export async function GET(request: Request) {
       toYmd: parsed.to,
       staffGrossAzn: parsed.staffGrossAzn,
       staffGrossOverride: staffOverride,
-      financeWebUrl: process.env.NEXT_PUBLIC_FINANCE_WEB_URL ?? null,
+      financeWebUrl: await (async () => {
+        const {
+          getFnbIntegrationSettings,
+          normalizePublicOrigin,
+        } = await import("@/lib/fnb-integration-settings");
+        const s = await getFnbIntegrationSettings();
+        return normalizePublicOrigin(s.financeWebUrl);
+      })(),
     });
     return jsonOk(pack);
   } catch (err) {

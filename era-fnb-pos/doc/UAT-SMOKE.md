@@ -201,7 +201,7 @@ Evidence: not signed — API/SCREEN full waves 1–6; UAT open; **not SHIPPED / 
 
 ## FNB-BUFFET-COST-01 — Chef path HYBRID handoff (Phase A) — open
 
-Prerequisite: Waves 5–6 data (FOOD WH + Forecast norms + guest-nights); `NEXT_PUBLIC_FINANCE_WEB_URL` set; module `fnb_buffet_planner`.
+Prerequisite: Waves 5–6 data (FOOD WH + Forecast norms + guest-nights); Finance web URL set in **Settings → Buffet integrations**; module `fnb_buffet_planner`.
 
 1. F&B `/admin/buffet` → **Cost run / comps** → outlet + week → Refresh handoff (optional staff gross AZN)
 2. Buckets show sale / COMP / staff net / theoretical + band; amber `chefWarnings` if MODEL_OFF / NO_GUEST_NIGHTS / NORMS_ALL_ZERO / etc.

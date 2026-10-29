@@ -35,7 +35,7 @@ type Props = {
   fromDate: string;
   toDate: string;
   onChanged?: () => void;
-  /** Lift primary CTAs into BuffetPageChrome (WP6). */
+  /** Lift primary CTAs into PageHeader.actions via onChromeReady. */
   onChromeReady?: (api: {
     openRoster: () => void;
     openSignToday: () => void;

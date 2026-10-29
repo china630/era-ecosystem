@@ -540,6 +540,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-10-29 | FNB-BUFFET-01 / COST-01 **UI playbook pass**: NavItemGroup sentence-case + collapse off-route; PageHeader.actions (not filter CTAs); filter grid gutters; template composition ModalShell; norms hideLabel; Maya KPI planks always; Finance/Hotel/Orch URLs in Settings (`integrationSettingsJson`) — not env/image bake. Status unchanged API/SCREEN — **not** Demo ✅ / SHOW / SHIPPED. |
 | 2026-10-29 | FNB-BUFFET-01 / COST-01 / FNB-09 **WP0–WP8 tail closeout**: Spawn-free AZ/RU hints; template modal kind CatalogField; select-outlet Nöqtə; kill-script rename-if-no-NAFTANI; **staging** RESTAURANT→NAFTANI (plans/templates kept). Status unchanged API/SCREEN — **not** Demo ✅ / SHOW / SHIPPED. Gate/Pilot/edition unchanged. Image deploy still needed for UI on droplet. |
 | 2026-10-29 | FNB-BUFFET-01 / COST-01 **WP0–WP8 second-pass closeout**: locale sync toasts (not EN API `error`); section PageHeader; chef AZ/RU leftovers; Maya no false-green when blocked. Status unchanged API/SCREEN — **not** Demo ✅ / SHOW / SHIPPED. Gate/Pilot/edition unchanged. |
 | 2026-10-29 | FNB-BUFFET-01 / COST-01 **WP0–WP8 chef product closeout**: BuffetPageChrome + CTA right; AZ/RU chef i18n; templates list+modal; plans week-primary; accordion + hide till on buffet routes; sync honesty; ADR/UAT honesty. Status unchanged API/SCREEN — **not** Demo ✅ / SHOW / SHIPPED. Gate/Pilot/edition unchanged. |

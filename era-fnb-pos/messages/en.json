@@ -255,7 +255,15 @@
       "stocktake_MONTHLY": "Monthly",
       "stocktake_QUARTERLY": "Quarterly",
       "stocktake_MANUAL": "Manual",
-      "stocktakeCadenceHint": "Defaults: FOOD weekly · TABLEWARE every 15 days · CHEMICAL/CONSUMABLE monthly · INVENTORY_GT quarterly. Edit per class below."
+      "stocktakeCadenceHint": "Defaults: FOOD weekly · TABLEWARE every 15 days · CHEMICAL/CONSUMABLE monthly · INVENTORY_GT quarterly. Edit per class below.",
+      "integrationsTitle": "Buffet integrations",
+      "integrationsHint": "Peer URLs for Open Finance, hotel guest-nights sync, and HR leadership sync. Stored in Settings — not baked into the image.",
+      "financeWebUrl": "Finance web URL",
+      "financeWebUrlHint": "Used by Maya dəyəri → Open Finance",
+      "hotelPmsUrl": "Hotel PMS URL",
+      "hotelPmsUrlHint": "Used by Forecast → sync guest nights from hotel",
+      "orchestratorBaseUrl": "Orchestrator API URL",
+      "orchestratorBaseUrlHint": "Used by Management → HR leadership sync"
     },
     "menu": {
       "title": "Menu admin",
@@ -483,7 +491,7 @@
         "MISSING_UNIT_COGS": "Some POS lines lack unit COGS — COMP/sale may understate attributed.",
         "MISSING_RECIPE_SKU": "Some COMP/sale lines have no recipeSku — set Finance SKU on menu items.",
         "FINANCE_CATALOG_UNAVAILABLE": "Finance product catalog unavailable — COMP/sale COGS not priced.",
-        "FINANCE_URL_MISSING": "NEXT_PUBLIC_FINANCE_WEB_URL is not set — Open Finance CTA unavailable.",
+        "FINANCE_URL_MISSING": "Finance web URL missing — set it in Settings",
         "OUTLET_CODE_MISMATCH": "F&B outlet code does not match Finance warehouse satelliteOutletCode."
       },
       "costRunLoading": "Loading…",
@@ -493,7 +501,7 @@
       "costRunModelLabel": "Buffet cost model: {model}",
       "costRunOpenFinance": "Open Finance HYBRID",
       "costRunFinanceLink": "Open Finance HYBRID food-cost report",
-      "costRunFinanceLinkMissing": "Set NEXT_PUBLIC_FINANCE_WEB_URL to open Finance buffet cost run.",
+      "costRunFinanceLinkMissing": "Set Finance web URL in Settings to open Finance buffet cost run.",
       "costRunDemoShow": "About FOOD usage",
       "costRunDemoHide": "Hide note",
       "costRunDemoHint": "FOOD usage and residual are computed in Finance from FOOD warehouses — not entered here. Open Finance HYBRID for the true residual.",
@@ -674,9 +682,9 @@
       "templateActiveCol": "Active",
       "templateSlotsCol": "Slots",
       "templateActiveYes": "active",
-      "forecastHotelUnavailable": "Hotel unavailable — enter nights manually.",
+      "forecastHotelUnavailable": "Hotel unavailable — set Hotel PMS URL in Settings, or enter nights manually.",
       "normsHelp": "When total guest-nights fall in a band (low/mid/high), theoretical purchase / food cost uses that band. Min/max = night thresholds.",
-      "eatersSyncUnavailable": "HR unavailable — add manually.",
+      "eatersSyncUnavailable": "HR unavailable — set Orchestrator API URL in Settings, or add manually.",
       "eatersEmptyHonesty": "List is empty. If HR sync fails — add a name manually.",
       "kindInModal": "Kind"
     },

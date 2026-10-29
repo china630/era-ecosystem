@@ -41,6 +41,18 @@ async function pmsBaseUrl(organizationId?: string): Promise<string | null> {
   const org = organizationId?.trim();
   if (org) {
     try {
+      const {
+        getFnbIntegrationSettings,
+        normalizePublicOrigin,
+      } = await import("@/lib/fnb-integration-settings");
+      const fromSettings = normalizePublicOrigin(
+        (await getFnbIntegrationSettings(org)).hotelPmsUrl,
+      );
+      if (fromSettings) return fromSettings;
+    } catch {
+      /* peer resolve below */
+    }
+    try {
       const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
         "@era/satellite-kit"
       );
@@ -50,12 +62,10 @@ async function pmsBaseUrl(organizationId?: string): Promise<string | null> {
       });
       return peer.baseUrl;
     } catch {
-      /* env bootstrap below */
+      /* no hotel peer */
     }
   }
-  const url = process.env.HOTEL_PMS_URL ?? process.env.PMS_BRIDGE_URL;
-  if (!url?.trim()) return null;
-  return url.replace(/\/$/, "");
+  return null;
 }
 
 export function isPmsStubMode(): boolean {

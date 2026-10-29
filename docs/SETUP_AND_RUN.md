@@ -571,7 +571,7 @@ cd ../era-finance-core/packages/database
 npm run db:seed:buffet-demo
 
 # 4) UI handoff
-# era-fnb-pos .env: NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100   # or your Finance web URL
+# F&B Admin → Settings → Buffet integrations → Finance web URL (e.g. http://127.0.0.1:3100)
 # Login F&B → /admin/buffet → Cost run → Open Finance HYBRID
 ```
 
