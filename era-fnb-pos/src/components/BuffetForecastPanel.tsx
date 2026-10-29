@@ -413,6 +413,7 @@ export default function BuffetForecastPanel({
       ) : null}
 
       {showNorms ? (
+      <>
       <div className={`${CARD_CLASS} space-y-3 p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("forecastKeySku")}</h3>
@@ -710,6 +711,7 @@ export default function BuffetForecastPanel({
           {saving ? "…" : t("forecastSaveNorms")}
         </button>
       </div>
+      </>
       ) : null}
 
       <ModalShell
