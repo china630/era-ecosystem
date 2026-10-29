@@ -57,6 +57,15 @@ export function ledgerCreditClass(): string {
   return 'text-right font-mono text-sky-700';
 }
 
+/** Soft column wash for Debit | Credit (Opera-like). */
+export function ledgerDebitColumnClass(): string {
+  return 'w-24 bg-rose-50/70 text-right font-mono';
+}
+
+export function ledgerCreditColumnClass(): string {
+  return 'w-24 bg-sky-50/70 text-right font-mono';
+}
+
 /** @deprecated Prefer Debit|Credit columns. */
 export function formatLedgerAmount(amount: number, kind: LedgerMoneyKind): string {
   const abs = Math.abs(amount).toFixed(2);

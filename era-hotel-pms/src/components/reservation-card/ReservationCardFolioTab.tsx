@@ -28,9 +28,10 @@ import {
   formatLedgerAmount,
   ledgerCreditAmount,
   ledgerCreditClass,
+  ledgerCreditColumnClass,
   ledgerDebitAmount,
   ledgerDebitClass,
-  ledgerKindLabelKey,
+  ledgerDebitColumnClass,
   ledgerMoneyKind,
 } from '@/lib/folio-ledger-display';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
@@ -39,12 +40,13 @@ import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { FolioChargeModal } from '@/components/folio/FolioChargeModal';
 import {
   FolioDeletePaymentModal,
+  FolioPayLineModal,
   FolioRefundModal,
   FolioTransferModal,
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
-import { displayRoomChargeNote } from '@/lib/folio-charge-note';
+import { displayFolioChargeDescription } from '@/lib/folio-charge-note';
 import { escapePrintHtml, openPrintDocument } from '@/lib/print-window';
 import { revenueLabel } from '@/lib/folio-article-summary';
 import { useAuth } from '@/hooks/useAuth';
@@ -221,6 +223,7 @@ export function ReservationCardFolioTab({
   const locale = useLocale();
   const { can } = useAuth();
   const [payOpen, setPayOpen] = useState(false);
+  const [payLineId, setPayLineId] = useState<string | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [voidId, setVoidId] = useState<string | null>(null);
   const [refund, setRefund] = useState<{
@@ -275,9 +278,11 @@ export function ReservationCardFolioTab({
       }
       for (const charge of folio.charges) {
         const raw = charge.description ?? '—';
-        const note = displayRoomChargeNote(raw, (kind, date) =>
-          kind === 'night-audit' ? tf('nightAuditNote') : tf('manualRoomNote', { date }),
-        );
+        const note = displayFolioChargeDescription(raw, {
+          room: (kind) =>
+            kind === 'night-audit' ? tf('nightAuditNote') : tf('manualRoomNote'),
+          packageNight: () => tf('packageNightNote'),
+        });
         const received = (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
           ? ` · ${tf('serviceReceived')}`
           : '';
@@ -530,16 +535,6 @@ export function ReservationCardFolioTab({
         render: (row) => row.code,
       },
       {
-        key: 'kind',
-        header: tf('lineKind'),
-        className: 'w-14',
-        render: (row) => {
-          const moneyKind = ledgerMoneyKind(row);
-          if (row.isCityLedger) return tf('cityLedgerBadge');
-          return tf(ledgerKindLabelKey(moneyKind));
-        },
-      },
-      {
         key: 'description',
         header: t('folioDesc'),
         render: (row) => row.description,
@@ -559,7 +554,7 @@ export function ReservationCardFolioTab({
       {
         key: 'debit',
         header: tf('colDebit'),
-        className: 'w-24 text-right font-mono',
+        className: ledgerDebitColumnClass(),
         render: (row) => {
           const moneyKind = ledgerMoneyKind(row);
           const debit = ledgerDebitAmount(row.amount, moneyKind);
@@ -574,7 +569,7 @@ export function ReservationCardFolioTab({
       {
         key: 'credit',
         header: tf('colCredit'),
-        className: 'w-24 text-right font-mono',
+        className: ledgerCreditColumnClass(),
         render: (row) => {
           const moneyKind = ledgerMoneyKind(row);
           const credit = ledgerCreditAmount(row.amount, moneyKind);
@@ -588,12 +583,28 @@ export function ReservationCardFolioTab({
       },
       {
         key: 'actions',
-        header: tf('actions'),
+        header: tf('rowMenu'),
         className: 'w-12',
         render: (row) => (
           <FolioRowMenu
             label={tf('rowMenu')}
             items={[
+              ...(row.kind === 'charge' &&
+              can(PERMISSIONS.FOLIO_PAYMENT) &&
+              row.folioStatus === 'OPEN' &&
+              row.folioType === 'GUEST' &&
+              !row.adjustsChargeId &&
+              !row.isCityLedger &&
+              row.chargeId &&
+              row.amount > 0.009
+                ? [
+                    {
+                      id: 'payLine',
+                      label: tf('payLineTitle'),
+                      run: () => setPayLineId(row.chargeId ?? null),
+                    },
+                  ]
+                : []),
               ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_CHARGE) && row.folioStatus === 'OPEN'
                 ? [
                     {
@@ -728,6 +739,12 @@ export function ReservationCardFolioTab({
         guests={payers}
         hasCompany={hasCompany || accounts.some((folio) => folio.type === 'COMPANY')}
         hasAgency={hasAgency || accounts.some((folio) => folio.type === 'AGENCY')}
+      />
+      <FolioPayLineModal
+        open={Boolean(payLineId)}
+        chargeId={payLineId}
+        onClose={() => setPayLineId(null)}
+        onDone={onChanged}
       />
       <FolioChargeModal
         open={chargeOpen}
@@ -868,7 +885,13 @@ export function ReservationCardFolioTab({
     const guest = namedPax[0]?.label ?? '';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapePrintHtml(t('folioPrint'))}</title>
 <style>body{font-family:"Segoe UI",sans-serif;margin:24px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f4f5f7}</style>
-</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioDate'))}</th><th>${escapePrintHtml(t('folioTime'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(debtWords)}</strong></p></body></html>`;
+</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter === 'all' ? t('folioTab.all') : articleFilter)} · ${escapePrintHtml(
+      lineKind === 'charge'
+        ? t('folioLinesCharges')
+        : lineKind === 'payment'
+          ? t('folioLinesPayments')
+          : t('folioTab.all'),
+    )}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioDate'))}</th><th>${escapePrintHtml(t('folioTime'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(debtWords)}</strong></p></body></html>`;
     if (!openPrintDocument(html)) showApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 

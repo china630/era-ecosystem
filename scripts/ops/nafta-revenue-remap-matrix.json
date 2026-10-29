@@ -3,8 +3,8 @@
   "orgId": "6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b",
   "notes": "Shared old_code → new_code → new_gl for hotel, clinic, F&B, finance. Nafta template v2.",
   "targetCodes": [
-    { "code": "1001", "nameEn": "Room (BAR / leisure)", "nameRu": "Номер (BAR / leisure)", "nameAz": "Otaq (BAR / leisure)", "role": "ROOM", "tax": "18.00", "gl": "601.01.001", "allowManualCharge": false, "allowManualPayment": true, "reportType": "LODGING" },
-    { "code": "1002", "nameEn": "Medical package (night)", "nameRu": "Медпакет (ночь)", "nameAz": "Tibbi paket (gecə)", "role": "PKG", "tax": "18.00", "gl": "601.01.002", "allowManualCharge": false, "allowManualPayment": true, "reportType": "LODGING" },
+    { "code": "1001", "nameEn": "Room", "nameRu": "Номер", "nameAz": "Otaq", "role": "ROOM", "tax": "18.00", "gl": "601.01.001", "allowManualCharge": false, "allowManualPayment": true, "reportType": "LODGING" },
+    { "code": "1002", "nameEn": "Medical package", "nameRu": "Медпакет", "nameAz": "Tibbi paket", "role": "PKG", "tax": "18.00", "gl": "601.01.002", "allowManualCharge": false, "allowManualPayment": true, "reportType": "LODGING" },
     { "code": "1003", "nameEn": "Rate adjustment", "nameRu": "Корректировка цены", "nameAz": "Qiymət düzəlişi", "role": "RATE_ADJ", "tax": "18.00", "gl": "601.01.003", "allowManualCharge": true, "allowManualPayment": true, "reportType": "LODGING" },
     { "code": "1004", "nameEn": "Early check-in", "nameRu": "Ранний заезд", "nameAz": "Erkən giriş", "role": "EARLY_CI", "tax": "18.00", "gl": "601.01.004", "allowManualCharge": true, "allowManualPayment": true, "reportType": "EXTRA" },
     { "code": "1005", "nameEn": "Late check-out", "nameRu": "Поздний выезд", "nameAz": "Gec çıxış", "role": "LATE_CO", "tax": "18.00", "gl": "601.01.005", "allowManualCharge": true, "allowManualPayment": true, "reportType": "EXTRA" },

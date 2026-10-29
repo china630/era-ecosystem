@@ -30,10 +30,11 @@ Law (do not reinvent):
 Desk UI:
 
 - Pocket chips on ribbon 1 (`Hamısı` only when two or more pockets). Deleted chip only when voids exist. Printer icon on that ribbon prints the **current filter** plus stay header and the words guest owes / overpaid / settled.
-- Ribbon 2: `CatalogField` article + line kind (`Hamısı`, not “Bütün”) + search. Not three `Hamısı` chips.
+- Ribbon 2: `CatalogField` article + line kind (`Hamısı`, not “Bütün”) + search. Not three `Hamısı` chips. Line-kind filter stays; the **Sətir** grid column is gone (Debit|Credit already shows the money side).
 - Cash bar: Extra charge / Extra payment only (payment is the red button). Titles match buttons. Invoice, folio checkout, missed nights, folio print, and close-folio are not on this bar. Empty pockets are hidden. Check-out stays the card footer. Agency/company invoices live on city ledger. Guest fiscal receipt is at payment time.
-- Checkboxes stay. **Transfer** is enabled when at least one charge is selected. Row kebab: adjust / void / transfer / refund — not pay-one-night.
+- Checkboxes stay. **Transfer** is enabled when at least one charge is selected. Row menu header is `…`. Row kebab: **Bu sətri ödə** (`FolioPayLineModal` → `POST …/charges/:id/pay`) first on **GUEST** open positive charges (not adjust / city-ledger / agency-company), then adjust / void / transfer / refund. Menu panel is kit `EraMenu` portaled fixed so folio `overflow-auto` cannot clip it.
 - Charge modal: pocket + article + amount. Payment modal: pocket + article + amount + tender (+ terminal). Keep the article on payment.
+- Təsvir: room keys stay `night-audit:ymd` / `manual-room:ymd` in DB; UI shows night-audit / manual room **without** the date. New PKG nights store `Medical package` (no date); ops backfill strips trailing dates (`nafta-folio-label-cleanup.mjs`). Lodging labels short: **Otaq** / **Tibbi paket** (codes 1001/1002).
 
 Allocation (implementation bug, not the law):
 

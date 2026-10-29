@@ -83,15 +83,13 @@ export async function postNightlyPackageCharges(
   }
 
   // One PKG night line (sell amount). Component splits stay off the guest folio.
+  // Description stays date-free; posted night is keyed by businessDate + PKG code.
   const pkgCode = await requireRevenueCodeByRole('PKG');
-  const ymd = businessDate.toISOString().slice(0, 10);
-  const description = `Medical package ${ymd}`;
+  const description = 'Medical package';
   const alreadyPosted = reservation.folios.some((f) =>
     f.charges.some(
       (c) =>
-        c.revenueCodeId === pkgCode.id &&
-        sameCalendarDay(c.businessDate, businessDate) &&
-        (c.description.includes(ymd) || c.description.includes('Medical package')),
+        c.revenueCodeId === pkgCode.id && sameCalendarDay(c.businessDate, businessDate),
     ),
   );
   if (alreadyPosted) {
