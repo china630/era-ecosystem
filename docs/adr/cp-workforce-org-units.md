@@ -2,9 +2,10 @@
 
 **Status:** Accepted (2026-06)  
 **Amended:** 2026-09-17 — dual-VÖEN = two scopes + holding view, not merged tree ([evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md))  
+**Amended:** 2026-10-30 — `unitKind`; manager assignment required in UI; job architecture axes — [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md)  
 **Context:** ERA v3 Workforce — three meanings of "department" were conflated. Empty DB clean cut.
 
-**Related:** [org-operating-mode.md](./org-operating-mode.md), [cp-workforce-absence-split.md](./cp-workforce-absence-split.md), [workforce-identity-and-hr-provisioning.md](./workforce-identity-and-hr-provisioning.md)
+**Related:** [org-operating-mode.md](./org-operating-mode.md), [cp-workforce-absence-split.md](./cp-workforce-absence-split.md), [workforce-identity-and-hr-provisioning.md](./workforce-identity-and-hr-provisioning.md), [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md)
 
 ## Three layers (terminology)
 
@@ -22,13 +23,15 @@
 4. **WorkforcePosition** links to **SatelliteRoleTemplate** (Plan C): position × entitled satellite → default operational role code.
 5. **Salary bands** (`minSalary`/`maxSalary`) stay on Finance `JobPosition` mirror; CP positions carry slots only.
 6. **DEPARTMENT_HEAD scope** uses stable ids: `OrgUnit.managerEmploymentId` + subtree, not Finance name cipher match.
+7. **`unitKind`** (`COMPANY` / `DIVISION` / `DEPARTMENT` / `TEAM`) is display/report metadata only — not rank.
+8. **Manager UI** on `/workspace/workforce/org-structure` must set `managerEmploymentId` (API already supported). Line-manager override and matrix manager live on employment — see job-architecture ADR.
 
 ## CP schema (summary)
 
 - `WorkforceScope` — anchor on parent `STANDALONE` commercial org
-- `OrgUnit` — tree with `managerEmploymentId`, `managerUserId` (interim)
-- `WorkforcePosition` — slots per org unit
-- `WorkforceEmployment` — requires `orgUnitId` + `positionId` for ACTIVE hire
+- `OrgUnit` — tree with `parentId`, `unitKind`, `managerEmploymentId`, `managerUserId` (interim)
+- `WorkforcePosition` — slots per org unit; optional `jobId`, `parentPositionId` (job-architecture ADR)
+- `WorkforceEmployment` — requires `orgUnitId` + `positionId` for ACTIVE hire; optional solid/matrix managers
 
 Bootstrap: `POST /platform/v1/workforce/scope/bootstrap` → scope + root "Headquarters" (renameable).
 
@@ -46,7 +49,7 @@ Payloads: `@era/contracts` `workforceOrgUnitPayloadSchema`, `workforcePositionPa
 ## API / UI
 
 - CP: `/platform/v1/workforce/{scope,org-units,positions,commercial-links}`, employment `transfer`
-- CP UI: `/workspace/workforce/org-structure`, `/positions`, employments hire requires org unit + position
+- CP UI: `/workspace/workforce/org-structure` (parent + manager + unitKind), `/positions`, `/job-architecture`, `/org-chart`, employments hire requires org unit + position
 - Finance: `GET /hr/departments`, `GET /hr/job-positions`; banners → Workspace
 
 ## Nafta example
@@ -58,4 +61,4 @@ One HR tree under parent scope (Sanatorium → Med / Admin / F&B). Clinic and F&
 - Payroll departmental GL unchanged — uses mirrored `departmentId`.
 - Plan C: full hire/provisioning in CP; Finance `Employee` is payroll extension only (`cpEmploymentId` link). See [cp-workforce-role-templates-and-security-admin.md](./cp-workforce-role-templates-and-security-admin.md).
 - **Multi-VÖEN group (Evrostar):** still **one `WorkforceScope` per STANDALONE anchor**. Do not merge OrgUnit trees or model the second VÖEN as `DEPARTMENT`. Holding composition stays on CP holdings. Optional **holding-federated HR view** (read-union of two scopes; person card via MDM `globalPersonId`) — writes always stamped with `employment.organizationId`. See [evrostar-workforce-pilot.md](./evrostar-workforce-pilot.md).
-- **Job architecture (grades / L1–Ln):** separate from OrgUnit nesting — [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md) (deferred).
+- **Job architecture (grades / jobs / position parent / employment managers):** separate from OrgUnit nesting — [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md) (implementing; Coverage `CP-WF-JOB-01` API).

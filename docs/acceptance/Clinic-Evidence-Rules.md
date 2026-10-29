@@ -34,7 +34,9 @@ AC-CLI-EPISODE (CLI-55) negatives: `__tests__/cli-episode-negative.spec.ts` + `_
 
 AC-CLI-WALKIN-PARTY (CLI-61): unit `__tests__/walk-in-party.spec.ts` (placeholders/status). UI path UAT-SMOKE §11a open → AC stays 🟡; not Scaffold ✅.
 
-AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers). Code also refuses matrix DnD of unseated OPEN, plan reschedule for OPEN, and SAME_DAY check-in without a cabin — still **no field negative path**. UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
+AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers). Code also refuses matrix DnD of unseated OPEN, plan reschedule for OPEN, and SAME_DAY check-in without a cabin; 2026-10-30 OPEN unpaid extras day-bucket pin + Pay/settlement keeps pin — still **no field negative path**. UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
+
+AC-CLI-ASSIGN (CLI-57): unit `__tests__/cli57-package-assign.spec.ts` + `__tests__/package-assign-redispatch.spec.ts` (line-order attach). 2026-10-30 Saxla same-block redispatch + modal № + Pay keeps OPEN pin — still **no field negative path**. UAT open → AC stays 🟡; not Scaffold ✅.
 
 ## Forbidden as sole proof
 

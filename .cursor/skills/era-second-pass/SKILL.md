@@ -27,8 +27,17 @@ If both a report-only phrase and «почини» / «закрой» appear, **F
 ## Scope
 
 1. Take the work from this conversation: files edited, behavior changed, APIs and screens touched.
-2. Read the current diff for those files (`git diff` and untracked files that are part of the task). Ignore unrelated dirty files.
+2. **Change SoR (mandatory first):** run `git status --short` and `git diff` (plus untracked files that belong to the task). That list is what you hunt. Ignore unrelated dirty files.
 3. From each changed symbol, search callers, siblings, and the other language files. Stop at one hop unless a hit shows the same bug again.
+
+### Do not let stop-closeout hide or replace the diff
+
+The `stop` hook (`.cursor/hooks/stop-closeout.mjs`) writes `.git/era-stop-closeout.baseline` and may inject an acceptance **Closeout checklist** follow-up. That does **not** change git history and is **not** the list of files to audit.
+
+- Never use the baseline file, hook digest, or closeout follow-up text as the source of “what changed.”
+- Always open `git status` / `git diff` (and conversation-touched paths) even if a closeout nudge just ran in this chat.
+- If closeout already edited acceptance docs in a follow-up turn, still audit the **product wave** (code/API/UI/i18n) from git + chat; treat closeout doc edits as in-scope only when they are false or incomplete relative to that wave.
+- Do not run `acceptance-closeout` / `era-readiness-matrix` / the closeout checklist unless a gap you found is exactly their job (or the user asked). Second-pass stays gap-hunt, not a substitute for the hook.
 
 ## What to hunt
 

@@ -7,6 +7,11 @@
         "failClosed": true
       }
     ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "node .cursor/hooks/stop-closeout.mjs --baseline"
+      }
+    ],
     "stop": [
       {
         "command": "node .cursor/hooks/stop-closeout.mjs",

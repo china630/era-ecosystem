@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
-import { bakuCivilUtcDate, todayBakuYmd } from "@/lib/baku-day";
+import { bakuCivilUtcDate, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
 import {
   CatalogField,
   DatePicker,
@@ -125,6 +125,8 @@ type Episode = {
   }[];
   programInstance?: ProgramInstance | null;
   hotelStay?: { startsOn: string; endsOn: string } | null;
+  /** YYYY-MM-DD — hotel check-in, else program start, else episode opened day. */
+  arrivalOn?: string | null;
 };
 
 type WalkInForm = {
@@ -455,6 +457,15 @@ export default function SanatoriumPage() {
         header: tp("nationality"),
         render: (e) =>
           e.patientRef?.nationality ? countryLabel(e.patientRef.nationality, locale) : "—",
+      },
+      {
+        key: "arrival",
+        header: t("colArrival"),
+        sortable: true,
+        render: (e) => {
+          const ymd = e.arrivalOn ?? e.programInstance?.startsOn ?? civilYmd(e.openedAt);
+          return ymd ? bakuDateDisplay(ymd) : "—";
+        },
       },
       {
         key: "room",

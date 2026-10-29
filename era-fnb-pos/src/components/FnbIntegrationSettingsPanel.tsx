@@ -12,16 +12,12 @@ import { CARD_CLASS } from "@/lib/design-system";
 
 type IntegrationDraft = {
   financeWebUrl: string;
-  hotelPmsUrl: string;
-  orchestratorBaseUrl: string;
 };
 
 export default function FnbIntegrationSettingsPanel() {
   const t = useTranslations("admin.settings");
   const [draft, setDraft] = useState<IntegrationDraft>({
     financeWebUrl: "",
-    hotelPmsUrl: "",
-    orchestratorBaseUrl: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -33,9 +29,6 @@ export default function FnbIntegrationSettingsPanel() {
         if (!s) return;
         setDraft({
           financeWebUrl: typeof s.financeWebUrl === "string" ? s.financeWebUrl : "",
-          hotelPmsUrl: typeof s.hotelPmsUrl === "string" ? s.hotelPmsUrl : "",
-          orchestratorBaseUrl:
-            typeof s.orchestratorBaseUrl === "string" ? s.orchestratorBaseUrl : "",
         });
       })
       .catch(() => undefined);
@@ -47,7 +40,7 @@ export default function FnbIntegrationSettingsPanel() {
       const res = await fetch("/api/settings/integrations", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify({ financeWebUrl: draft.financeWebUrl }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
@@ -58,8 +51,6 @@ export default function FnbIntegrationSettingsPanel() {
       if (s) {
         setDraft({
           financeWebUrl: s.financeWebUrl ?? "",
-          hotelPmsUrl: s.hotelPmsUrl ?? "",
-          orchestratorBaseUrl: s.orchestratorBaseUrl ?? "",
         });
       }
       showSuccess(t("saved"));
@@ -74,7 +65,7 @@ export default function FnbIntegrationSettingsPanel() {
         <h2 className="m-0 text-sm font-semibold text-[#2C3E50]">{t("integrationsTitle")}</h2>
         <p className="m-0 mt-1 text-xs text-[#7F8C8D]">{t("integrationsHint")}</p>
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Field
           label={t("financeWebUrl")}
           preset="longText"
@@ -82,24 +73,6 @@ export default function FnbIntegrationSettingsPanel() {
           onChange={(e) => setDraft((d) => ({ ...d, financeWebUrl: e.target.value }))}
           placeholder="https://finance-core.era-365.online"
           hint={t("financeWebUrlHint")}
-        />
-        <Field
-          label={t("hotelPmsUrl")}
-          preset="longText"
-          value={draft.hotelPmsUrl}
-          onChange={(e) => setDraft((d) => ({ ...d, hotelPmsUrl: e.target.value }))}
-          placeholder="https://hotel-pms.era-365.online"
-          hint={t("hotelPmsUrlHint")}
-        />
-        <Field
-          label={t("orchestratorBaseUrl")}
-          preset="longText"
-          value={draft.orchestratorBaseUrl}
-          onChange={(e) =>
-            setDraft((d) => ({ ...d, orchestratorBaseUrl: e.target.value }))
-          }
-          placeholder="https://api.era-365.online"
-          hint={t("orchestratorBaseUrlHint")}
         />
       </div>
       <div className="flex justify-end">

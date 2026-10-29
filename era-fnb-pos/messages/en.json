@@ -257,13 +257,13 @@
       "stocktake_MANUAL": "Manual",
       "stocktakeCadenceHint": "Defaults: FOOD weekly · TABLEWARE every 15 days · CHEMICAL/CONSUMABLE monthly · INVENTORY_GT quarterly. Edit per class below.",
       "integrationsTitle": "Buffet integrations",
-      "integrationsHint": "Peer URLs for Open Finance, hotel guest-nights sync, and HR leadership sync. Stored in Settings — not baked into the image.",
+      "integrationsHint": "Finance web origin for Open Finance deep-link. Hotel and HR S2S use peer / orchestrator resolve (not these fields).",
       "financeWebUrl": "Finance web URL",
       "financeWebUrlHint": "Used by Maya dəyəri → Open Finance",
       "hotelPmsUrl": "Hotel PMS URL",
-      "hotelPmsUrlHint": "Used by Forecast → sync guest nights from hotel",
+      "hotelPmsUrlHint": "Legacy — S2S uses SatelliteEndpoint peer",
       "orchestratorBaseUrl": "Orchestrator API URL",
-      "orchestratorBaseUrlHint": "Used by Management → HR leadership sync"
+      "orchestratorBaseUrlHint": "Legacy — runtime uses in-cluster orch resolve"
     },
     "menu": {
       "title": "Menu admin",
@@ -682,10 +682,10 @@
       "templateActiveCol": "Active",
       "templateSlotsCol": "Slots",
       "templateActiveYes": "active",
-      "forecastHotelUnavailable": "Hotel unavailable — set Hotel PMS URL in Settings, or enter nights manually.",
+      "forecastHotelUnavailable": "Hotel peer unavailable — enter guest nights manually.",
       "normsHelp": "When total guest-nights fall in a band (low/mid/high), theoretical purchase / food cost uses that band. Min/max = night thresholds.",
-      "eatersSyncUnavailable": "HR unavailable — set Orchestrator API URL in Settings, or add manually.",
-      "eatersEmptyHonesty": "List is empty. If HR sync fails — add a name manually.",
+      "eatersSyncUnavailable": "HR unavailable — add leadership eaters manually.",
+      "eatersEmptyHonesty": "List is empty. No leadership roles found (or not flagged) — add a name manually.",
       "kindInModal": "Kind"
     },
     "integration": {

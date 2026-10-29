@@ -538,7 +538,7 @@ export async function chargeAllRoomNights(reservationId: string) {
   if (postsStayAsPackage(res.ratePlan)) {
     const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
     const biz = await getCurrentBusinessDate();
-    const result = await postNightlyPackageCharges(reservationId, biz);
+    const result = await postNightlyPackageCharges(reservationId, biz, { source: 'system' });
     const key = hotelDateKey(biz);
     if (!(result.skipped && packageSkipPostsRoom(res.ratePlan))) {
       return result.skipped
@@ -594,6 +594,7 @@ export async function chargeAllRoomNights(reservationId: string) {
       qty: 1,
       description: roomChargeNote('manual-room', hotelDateKey(biz)),
       businessDate: biz,
+      audit: { source: 'system' },
     });
     postedNights.push(hotelDateKey(biz));
   }
@@ -623,7 +624,9 @@ export async function postRoomNight(reservationId: string, ymd: string) {
 
   if (postsStayAsPackage(res.ratePlan)) {
     const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
-    const result = await postNightlyPackageCharges(reservationId, bakuCivilUtcDate(ymd));
+    const result = await postNightlyPackageCharges(reservationId, bakuCivilUtcDate(ymd), {
+      source: 'system',
+    });
     if (!(result.skipped && packageSkipPostsRoom(res.ratePlan))) {
       return result.skipped
         ? { posted: [] as string[], skipped: [ymd] }
@@ -644,6 +647,7 @@ export async function postRoomNight(reservationId: string, ymd: string) {
     qty: 1,
     description: roomChargeNote('manual-room', ymd),
     businessDate: bakuCivilUtcDate(ymd),
+    audit: { source: 'system' },
   });
   return { posted: [ymd], skipped: [] as string[] };
 }

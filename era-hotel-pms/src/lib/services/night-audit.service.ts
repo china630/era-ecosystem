@@ -533,7 +533,7 @@ async function executeLockedNightAudit() {
       if (postsStayAsPackage(res.ratePlan)) {
         const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
         try {
-          const pkgResult = await postNightlyPackageCharges(res.id, date);
+          const pkgResult = await postNightlyPackageCharges(res.id, date, { source: 'night_audit' });
           if (pkgResult.posted > 0) {
             steps.push(`Step 3: Package charges posted (${pkgResult.posted} lines) — reservation ${res.id}`);
             continue;
@@ -723,6 +723,8 @@ async function listDueGuestFoliosNotZero(date: Date): Promise<NightAuditReservat
     },
   });
   if (stays.length === 0) return [];
+  const { foldLooseGuestFolioOntoPrimary } = await import('@/lib/services/booking-folio.service');
+  for (const stay of stays) await foldLooseGuestFolioOntoPrimary(stay.id);
   const folios = await prisma.folio.findMany({
     where: { reservationId: { in: stays.map((stay) => stay.id) }, type: 'GUEST' },
     include: { charges: true, payments: true },

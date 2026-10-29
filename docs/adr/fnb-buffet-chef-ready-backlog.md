@@ -83,7 +83,7 @@ Mark `[x]` only when fixed in code + smokeable on lab.
 ## C — Product depth (chef mental model)
 
 - [x] **C1 — Staff dish lines** — covers-only + on-screen `staffCompositionLater` honesty (composition later).
-- [x] **C2 — Hotel guest-nights** — `forecastManualHonesty`: manual / override for Nafta demo; live PMS later.
+- [x] **C2 — Hotel guest-nights** — live PMS via peer (`resolvePeerSatelliteBaseUrl` + hotel hub/parent org); public Settings Hotel URL must not override peer (hairpin). Manual fallback when `HOTEL_UNAVAILABLE`.
 - [x] **C4 — Print / PDF / week report export** — Finance buffet-food-cost **Print report** + `@media print` (hide forms/nav; keep buckets/SKU/Non-FOOD).
 - [x] **C5 — SKU variance narrative** — SKU table highlight + title when out-of-band vs theoretical.
 - [x] **C6 — Stocktake workflow CTA** — ISSUES_ONLY → settings `#warehouses` + `/inventory/audits`.
@@ -136,7 +136,7 @@ From [fnb-buffet-cost-attribution.md](./fnb-buffet-cost-attribution.md) § Non-g
 | WP4 | Done | Plans: week primary / one-plan secondary + hierarchy hint. |
 | WP5 | Done | Kit `NavItemGroup` collapsible; on `/admin/buffet/*` shell hides till/floor/tables. |
 | WP6 | Done | Management / Forecast / Norms / Cost chrome CTAs + norms help + Cost «fill first» before zero cards. |
-| WP7 | Done | `ORCH_UNAVAILABLE` / `HOTEL_UNAVAILABLE` → localized honesty; empty eaters copy. |
+| WP7 | Done | `ORCH_UNAVAILABLE` / `HOTEL_UNAVAILABLE` → localized honesty (no «set URL in Settings»); empty eaters = no leadership / manual; peer-first hotel S2S. |
 | WP8 | Docs honesty | This backlog + planner ADR + UAT note; **punchlist remains open** until signed lab. |
 
 **Forbidden:** marking Demo ✅ / SHOW / SHIPPED from WP0–WP8 alone.

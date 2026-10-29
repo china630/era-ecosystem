@@ -21,6 +21,7 @@ export async function getRatePlanPackageLines(ratePlanId: string) {
 export async function postNightlyPackageCharges(
   reservationId: string,
   businessDate: Date,
+  audit?: { userId?: string | null; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' },
 ): Promise<{ posted: number; skipped: boolean }> {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
@@ -103,6 +104,7 @@ export async function postNightlyPackageCharges(
     qty: 1,
     description,
     businessDate,
+    audit,
   });
 
   return { posted: 1, skipped: false };

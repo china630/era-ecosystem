@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted, 2026-10-22. Amended 2026-10-25: plan-before-pay seats a real cabin. Amended 2026-10-27: day-end also closes overdue and unseated-before-today unpaid extras; extra-tickets show full `DD.MM.YYYY HH:mm`.
+Accepted, 2026-10-22. Amended 2026-10-25: plan-before-pay seats a real cabin. Amended 2026-10-27: day-end also closes overdue and unseated-before-today unpaid extras; extra-tickets show full `DD.MM.YYYY HH:mm`. Amended 2026-10-30: OPEN (`schedulingMode`) under `PLAN_BEFORE_PAY` pins day-buckets across the stay (no cabin); Pay keeps those pins — see [clinic-open-attendance.md](./clinic-open-attendance.md).
 
 ## Context
 
@@ -16,7 +16,7 @@ One org setting on `Tenant.extraProcedureRoute`:
 
 | Value | Plan and guest print | Cabin | Nurse |
 |---|---|---|---|
-| `PLAN_BEFORE_PAY` (default) | Real date, time, and room, unpaid mark first. `SHOW_ON_PLAN` is this value under the old name. | Held until pay, cancel, day end, or checkout | Visible. Check-in and QR stay closed. Red block **Ödəniş edilməyib** |
+| `PLAN_BEFORE_PAY` (default) | Real date, time, and room, unpaid mark first. OPEN types: day pin only (no cabin) until nurse seat. `SHOW_ON_PLAN` is this value under the old name. | FIXED: cabin held until pay/cancel/day end/checkout. OPEN: day-bucket held (no cabin) until pay then nurse seat | Visible when seated (FIXED) or day-pinned OPEN after pay. Check-in and QR stay closed while `PENDING_PAY`. Red block **Ödəniş edilməyib** when a cabin is held |
 | `HOLD_UNTIL_PAY` | Hidden | Not held. Planner runs after pay or folio | Hidden until the ticket |
 
 Payment of a seated row does not search for a new slot. A batch pays the ticked rows; the cheque list is ordered by time so the nearest rows are first. Cancelling one unpaid row cancels that procedure only. Cancelling one line of a printed multi-line cheque reverses only that amount and prints a three-copy storno. The other lines stay paid.
