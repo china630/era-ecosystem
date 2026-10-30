@@ -436,19 +436,24 @@ function Wait-WorkflowOnSha {
 }
 
 function ConvertTo-UtcFromGhTime {
-    param([string]$Raw)
-    if (-not $Raw) { throw "Empty createdAt from gh" }
+    param($Raw)
+    if ($null -eq $Raw -or $Raw -eq "") { throw "Empty createdAt from gh" }
+    # ConvertFrom-Json on Windows PS 5.1 often yields [datetime] already; stringifying
+    # that uses the UI locale (e.g. 30.10.2026) and breaks InvariantCulture parse.
+    if ($Raw -is [datetimeoffset]) { return $Raw.UtcDateTime }
+    if ($Raw -is [datetime]) { return $Raw.ToUniversalTime() }
+    $text = [string]$Raw
     # Prefer invariant parse (ISO 8601 from gh --json, or locale-neutral MM/dd/yyyy).
     # Culture-default [datetime]::Parse fails on some Windows locales (outage follow-up 2026-10-28).
     try {
         return [datetimeoffset]::Parse(
-            $Raw,
+            $text,
             [System.Globalization.CultureInfo]::InvariantCulture,
             [System.Globalization.DateTimeStyles]::RoundtripKind
         ).UtcDateTime
     }
     catch {
-        return [datetimeoffset]::Parse($Raw).UtcDateTime
+        return [datetimeoffset]::Parse($text).UtcDateTime
     }
 }
 
