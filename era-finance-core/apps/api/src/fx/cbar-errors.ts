@@ -1,4 +1,4 @@
-/** Thrown when live CBAR HTTP is disabled (TAX_LOOKUP_MOCK=1) or finance no longer fetches CBAR. */
+/** Thrown when CBAR HTTP is disabled by the hub FX ingest policy. */
 export class CbarExternalFetchDisabledError extends Error {
   readonly code = "CBAR_EXTERNAL_FETCH_DISABLED" as const;
   constructor(message = "CBAR external fetch disabled") {

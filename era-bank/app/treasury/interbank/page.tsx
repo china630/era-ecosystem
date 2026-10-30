@@ -8,7 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
+import { addBakuDays, bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsDataTable, OpsModalShell, useOpsModal } from "@/components/ops";
 import { OpsError, OpsResult, StatusBadge, formatAznMinor } from "@/components/ops-ui";
 
@@ -178,7 +178,7 @@ function InterbankPageInner() {
             {
               key: "maturityDate",
               label: "Maturity",
-              render: (row) => row.maturityDate?.slice(0, 10) ?? "—",
+              render: (row) => (row.maturityDate ? bakuDateDisplay(row.maturityDate.slice(0, 10)) : "—"),
             },
           ]}
         />

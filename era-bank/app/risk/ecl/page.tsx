@@ -8,6 +8,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { formatAznMajor } from "@/lib/bank-lookups";
 import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -165,7 +166,7 @@ export default function RiskEclPage() {
         <div className="rounded-lg border border-border bg-card p-4 text-sm">
           <p className="font-medium">{t("lastEclRun")}</p>
           <p className="mt-1 text-muted-foreground">
-            {String(lastRun.asOfDate ?? "").slice(0, 10)} · {lastRun.status} ·{" "}
+            {lastRun.asOfDate ? bakuDateDisplay(String(lastRun.asOfDate).slice(0, 10)) : "—"} · {lastRun.status} ·{" "}
             {lastRun.methodology} · {t("eclTotal")}:{" "}
             {formatAznMajor(String(lastRun.totalEclMinor ?? 0))} ·{" "}
             {t("provisionDelta")}:{" "}

@@ -27,20 +27,10 @@ function asRestSettings(v: unknown): BankingDirectRestSettings {
 
 type ProviderKey = BankAdapterKey;
 
-const PROVIDERS: Array<{
-  key: ProviderKey;
-  displayName: string;
-  envUrl: string;
-  envToken: string;
-}> = [
-  { key: "pasha", displayName: "Pasha Bank", envUrl: "BANK_SYNC_PASHA_URL", envToken: "BANK_SYNC_PASHA_TOKEN" },
-  { key: "abb", displayName: "ABB", envUrl: "BANK_SYNC_ABB_URL", envToken: "BANK_SYNC_ABB_TOKEN" },
-  {
-    key: "kapital",
-    displayName: "Kapital Bank",
-    envUrl: "BANK_SYNC_KAPITAL_URL",
-    envToken: "BANK_SYNC_KAPITAL_TOKEN",
-  },
+const PROVIDERS: Array<{ key: ProviderKey; displayName: string }> = [
+  { key: "pasha", displayName: "Pasha Bank" },
+  { key: "abb", displayName: "ABB" },
+  { key: "kapital", displayName: "Kapital Bank" },
 ];
 
 @Injectable()
@@ -69,26 +59,19 @@ export class BankRestSyncService {
 
     for (const p of PROVIDERS) {
       const bankCfg = direct[p.key] as BankingDirectRestBankConfig | undefined;
-      if (bankCfg?.enabled === false) {
+      if (bankCfg?.enabled !== true) {
         continue;
       }
 
-      const urlFromSettings = bankCfg?.url?.trim() ?? "";
-      const urlFromEnv =
-        this.config.get<string>(p.envUrl, "")?.trim() ?? "";
-      const url = urlFromSettings || urlFromEnv;
-
-      const envTok = this.config.get<string>(p.envToken, "")?.trim() ?? "";
+      const url = bankCfg.url?.trim() ?? "";
       const storedRaw =
-        typeof bankCfg?.token === "string" ? bankCfg.token.trim() : "";
-      const tokenFromDb = this.credentials.decryptFromStorage(
-        storedRaw || undefined,
-      );
-      const token = tokenFromDb || envTok;
+        typeof bankCfg.token === "string" ? bankCfg.token.trim() : "";
+      const token =
+        this.credentials.decryptFromStorage(storedRaw || undefined) ?? "";
 
       if (!url || !token) {
         configWarnings.push(
-          `${p.displayName}: не заданы URL или токен (настройки организации или .env: ${p.envUrl} / ${p.envToken})`,
+          `${p.displayName}: включён в настройках, но нет URL или токена`,
         );
         continue;
       }

@@ -128,17 +128,30 @@ export class DataHubClientService {
     return bakuDateKey(d);
   }
 
-  async getFxRates(date?: string, symbols = "USD,EUR"): Promise<DataHubFxRate[] | null> {
+  async getFxRates(
+    date?: string,
+    symbols = "USD,EUR",
+    opts?: { previousFinal?: boolean },
+  ): Promise<DataHubFxRate[] | null> {
     if (this.manual.usesExcel()) {
       const wanted = new Set(
         symbols.split(",").map((code) => code.trim().toUpperCase()).filter(Boolean),
       );
       const bundle = await this.manual.bundle();
-      const rows = bundle.fx.filter((row) => {
+      const day = date?.slice(0, 10);
+      let rows = bundle.fx.filter((row) => {
         if (wanted.size && !wanted.has(row.currencyCode)) return false;
-        if (date && row.rateDate !== date.slice(0, 10)) return false;
+        if (day && row.rateDate !== day) return false;
         return true;
       });
+      if (opts?.previousFinal && day && rows.length === 0) {
+        const prior = bundle.fx.filter((row) => {
+          if (wanted.size && !wanted.has(row.currencyCode)) return false;
+          return row.rateDate <= day;
+        });
+        const latest = prior.reduce((max, row) => (row.rateDate > max ? row.rateDate : max), "");
+        rows = latest ? prior.filter((row) => row.rateDate === latest) : [];
+      }
       return rows.map((row) => ({
         currencyCode: row.currencyCode,
         rate: row.rate,
@@ -147,6 +160,7 @@ export class DataHubClientService {
     }
     const q = new URLSearchParams({ symbols });
     if (date) q.set("date", date);
+    if (opts?.previousFinal) q.set("fallback", "previous");
     const body = await this.getJson<{ rates: DataHubFxRate[] }>(`/fx/rates?${q}`);
     return body?.rates ?? null;
   }
@@ -431,7 +445,7 @@ export class DataHubClientService {
     return this.getJson(`/fx/convert?${q}`);
   }
 
-  /** Operational rate: hub first, allows PRELIMINARY; falls back to local DB read-through. */
+  /** Display helper. Exact date only; a missing day is null. Dashboard uses getFxRates(..., { previousFinal: true }). */
   async getOperationalAznPerUnit(
     currencyCode: string,
     date: Date,

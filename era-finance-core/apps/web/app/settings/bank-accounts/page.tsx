@@ -34,7 +34,7 @@ type Row = {
 
 type DirectSnapshot = {
   syncActive: boolean;
-  syncMode: "mock" | "rest";
+  syncMode: "off" | "mock" | "rest";
 };
 
 export default function BankAccountsSettingsPage() {
@@ -76,7 +76,8 @@ export default function BankAccountsSettingsPage() {
     const data = (await res.json()) as DirectSnapshot;
     setDirectInfo({
       syncActive: Boolean(data.syncActive),
-      syncMode: data.syncMode === "rest" ? "rest" : "mock",
+      syncMode:
+        data.syncMode === "rest" || data.syncMode === "mock" ? data.syncMode : "off",
     });
   }, [bankingPro]);
 
@@ -93,7 +94,7 @@ export default function BankAccountsSettingsPage() {
   function directSyncHint(r: Row): string {
     if (!bankingPro) return "—";
     if (!directInfo) return "…";
-    if (directInfo.syncMode === "mock" || !directInfo.syncActive) {
+    if (directInfo.syncMode !== "rest" || !directInfo.syncActive) {
       return t("bankAccountsRegistry.directSyncInactive");
     }
     if (r.isPrimary) {

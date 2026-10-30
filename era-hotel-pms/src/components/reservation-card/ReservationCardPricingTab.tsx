@@ -11,6 +11,7 @@ import {
   SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { splitStayAmounts } from '@/lib/services/door-type.policy';
 import type { DailyRateRow } from './types';
 
@@ -348,7 +349,7 @@ export function ReservationCardPricingTab({
                   <tr key={row.stayDate} className={rowClass} data-night-kind={kind}>
                     <td className="px-2 py-1 text-right text-[#95A5A6]">{index + 1}</td>
                     <td className="px-2 py-1">
-                      <span>{row.stayDate.slice(0, 10)}</span>
+                      <span>{bakuDateDisplay(row.stayDate.slice(0, 10))}</span>
                       {onPostNight && kind !== 'posted' && !isCreate && (!businessDate || row.stayDate.slice(0, 10) <= businessDate) ? (
                         <button
                           type="button"

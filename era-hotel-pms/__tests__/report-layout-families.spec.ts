@@ -83,8 +83,8 @@ describe('flash layout (daily management)', () => {
     expect(metric(layout, 'Room revenue')?.cells[2]).toBeNull();
 
     const revenue = layout.sections.find((s) => s.id === 'revenue');
-    expect(revenue?.columns.slice(1, 4).map((c) => c.label)).toEqual(['Today · Net', 'Today · VAT', 'Today · Total']);
-    expect(revenue?.rows[0]?.cells.slice(1, 4)).toEqual([100, 18, 118]);
+    expect(revenue?.columns.slice(1, 4).map((c) => c.label)).toEqual(['Today · Total amount', 'Today · Net amount', 'Today · VAT amount']);
+    expect(revenue?.rows[0]?.cells.slice(1, 4)).toEqual([118, 100, 18]);
 
     const pay = layout.sections.find((s) => s.id === 'payments');
     expect(pay?.rows[0]?.cells.slice(0, 2)).toEqual(['Cash', 80]);
@@ -147,10 +147,12 @@ describe('trial balance layout', () => {
 
   it('starts with balance brought forward and prints payments negative', () => {
     const rows = buildTrialBalanceLayout('trial-balance-period', data, ctx()).sections[0].rows;
-    expect(rows[0]).toMatchObject({ kind: 'subtotal', cells: ['', 'Balance brought forward', '', '', 500] });
-    expect(rows.find((r) => r.cells[1] === 'Cash')?.cells[4]).toBe(-80);
-    expect(rows.find((r) => r.cells[1] === 'Payments total')?.cells[4]).toBe(-80);
-    expect(rows[rows.length - 1]).toMatchObject({ kind: 'total', cells: ['', 'Closing balance', '', '', 538] });
+    expect(rows[0]).toMatchObject({ kind: 'subtotal', cells: ['', 'Balance brought forward', 500, '', ''] });
+    expect(rows.find((r) => r.kind === 'group')?.cells).toEqual(['ROOM', 'Rooms', 118, 100, 18]);
+    expect(rows.find((r) => r.cells[0] === 'RM')).toMatchObject({ kind: 'data', cells: ['RM', 'Room', 118, 100, 18] });
+    expect(rows.find((r) => r.cells[1] === 'Cash')?.cells[2]).toBe(-80);
+    expect(rows.find((r) => r.cells[1] === 'Payments total')?.cells[2]).toBe(-80);
+    expect(rows[rows.length - 1]).toMatchObject({ kind: 'total', cells: ['', 'Closing balance', 538, '', ''] });
   });
 });
 

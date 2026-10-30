@@ -11,7 +11,7 @@ import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { CreateReceiptModal } from "../../../components/inventory/create-receipt-modal";
-import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
+import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -48,7 +48,7 @@ function fmtQty(v: unknown): string {
 
 function rowDate(m: Movement): string {
   if (m.documentDate) {
-    return String(m.documentDate).slice(0, 10);
+    return bakuDateDisplay(String(m.documentDate).slice(0, 10));
   }
   return bakuDateTimeDisplay(m.createdAt);
 }

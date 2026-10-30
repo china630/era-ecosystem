@@ -558,6 +558,10 @@ export async function getPackageAssignSnapshot(
   templateId: string | null;
   /** SKUs whose cabins are all the other sex. */
   sexBlockedCodes: string[];
+  /** procedureCode → masseurs skilled for it. Empty means the line is not massage. */
+  masseurOptions: Record<string, Array<{ id: string; fullName: string }>>;
+  /** Unstarted sessions of this code, when they all name the same person. */
+  masseurByCode: Record<string, string | null>;
 }> {
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
@@ -577,6 +581,8 @@ export async function getPackageAssignSnapshot(
         packageVersion: null,
         templateId: null,
         sexBlockedCodes: [],
+        masseurOptions: {},
+        masseurByCode: {},
       };
     }
     const { tryOpenProgramAfterTherapistStage } = await import(
@@ -609,6 +615,8 @@ export async function getPackageAssignSnapshot(
         packageVersion: null,
         templateId: null,
         sexBlockedCodes: [],
+        masseurOptions: {},
+        masseurByCode: {},
       };
     }
   }
@@ -882,7 +890,74 @@ export async function getPackageAssignSnapshot(
       null,
     templateId: instance.templateId,
     sexBlockedCodes: [...sexBlocked],
+    masseurOptions: await loadMasseurOptions(),
+    masseurByCode: await loadMasseurByCode(episodeId),
   };
+}
+
+async function loadMasseurOptions(): Promise<Record<string, Array<{ id: string; fullName: string }>>> {
+  const skills = await prisma.practitionerSkill.findMany({
+    where: { active: true, practitioner: { active: true, staffKind: "MASSAGE" } },
+    select: {
+      procedureType: { select: { code: true } },
+      practitioner: { select: { id: true, fullName: true } },
+    },
+    orderBy: { practitioner: { fullName: "asc" } },
+  });
+  const out: Record<string, Array<{ id: string; fullName: string }>> = {};
+  for (const skill of skills) {
+    const code = skill.procedureType.code;
+    const list = out[code] ?? [];
+    if (!list.some((row) => row.id === skill.practitioner.id)) list.push(skill.practitioner);
+    out[code] = list;
+  }
+  return out;
+}
+
+async function loadMasseurByCode(episodeId: string): Promise<Record<string, string | null>> {
+  const rows = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      status: { in: ["PROPOSED", "SCHEDULED", "PENDING_PAY"] },
+    },
+    select: { procedureCode: true, preferredPractitionerId: true },
+  });
+  const grouped = new Map<string, Set<string | null>>();
+  for (const row of rows) {
+    const set = grouped.get(row.procedureCode) ?? new Set();
+    set.add(row.preferredPractitionerId ?? null);
+    grouped.set(row.procedureCode, set);
+  }
+  const out: Record<string, string | null> = {};
+  for (const [code, set] of grouped) {
+    out[code] = set.size === 1 ? ([...set][0] ?? null) : null;
+  }
+  return out;
+}
+
+export async function resolveMasseurId(
+  procedureTypeId: string,
+  practitionerId: string | null | undefined,
+): Promise<string | null> {
+  const id = practitionerId?.trim() || null;
+  if (!id) return null;
+  const skill = await prisma.practitionerSkill.findFirst({
+    where: {
+      procedureTypeId,
+      practitionerId: id,
+      active: true,
+      practitioner: { active: true, staffKind: "MASSAGE" },
+    },
+    select: { id: true },
+  });
+  if (!skill) {
+    throw new PackageAssignError(
+      "Masseur is not skilled for this procedure",
+      "MASSEUR_NOT_SKILLED",
+      400,
+    );
+  }
+  return id;
 }
 
 export type AssignLineInput = {
@@ -898,6 +973,8 @@ export type AssignLineInput = {
   siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
   /** When set, burn this package balance line (PHYSIO_POOL / PARAFFIN_POOL). */
   burnPoolCode?: string | null;
+  /** Masseur for this procedure. Null or omitted keeps whoever is already stored. */
+  preferredPractitionerId?: string | null;
 };
 
 /** Drop new rows that did not seat. Already seated siblings in this save stay. */
@@ -1007,7 +1084,13 @@ export async function assignPackageProcedures(
   placed: number;
   softWarn: string | null;
   orderIds: string[];
-  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+  misses?: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    staffName?: string;
+  }>;
 }> {
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
@@ -1180,6 +1263,10 @@ export async function assignPackageProcedures(
       );
     }
     nameByCode.set(line.procedureCode, pt.name);
+    const preferredPractitionerId =
+      line.preferredPractitionerId === undefined
+        ? null
+        : await resolveMasseurId(pt.id, line.preferredPractitionerId);
     const batchId = newBatchId();
     const duration = pt.durationMin ?? 30;
     for (let i = 0; i < line.qty; i++) {
@@ -1208,6 +1295,7 @@ export async function assignPackageProcedures(
           assignBatchId: batchId,
           inPackage: true,
           packageQuotaCode: line.quotaCode,
+          preferredPractitionerId,
           schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
           patientOrigin: episode.patientOrigin,
           reservationId: episode.reservationId ?? undefined,
@@ -1247,6 +1335,7 @@ export async function assignPackageProcedures(
     procedureCode: string;
     procedureName: string;
     reason: string;
+    staffName?: string;
   }> = [];
   const placedIds: string[] = [];
   const missingCabinNames: string[] = [];
@@ -1324,6 +1413,7 @@ export async function assignPackageProcedures(
         procedureCode: row.procedureCode,
         procedureName: row.procedureName,
         reason: row.reason,
+        staffName: row.staffName,
       })),
     );
     placedIds.push(...placement.placedIds);
@@ -1623,9 +1713,11 @@ export async function replacePackageProcedures(
 
   // Out of package → PENDING_PAY extras (antifraud: never free)
   const { prescribeExtras } = await import("@/domain/sanatorium/extras-assign.service");
-  const prescribed = await prescribeExtras(episodeId, [
-    { procedureCode: input.toCode, qty: input.qty, note: input.note },
-  ]);
+  const prescribed = await prescribeExtras(
+    episodeId,
+    [{ procedureCode: input.toCode, qty: input.qty, note: input.note }],
+    opts?.confirmedByUserId,
+  );
   return {
     cancelled: active.length,
     mode: "extra_pending_pay",
@@ -1962,9 +2054,139 @@ export async function cancelFutureScheduledPastEnd(
 }
 
 /**
+ * Seat package rows that stayed PROPOSED because the stay days were full.
+ * Only the checkout calendar day, and only until 12:00.
+ */
+export async function placeProposedOnCheckoutMorning(
+  episodeId: string,
+  confirmedByUserId?: string,
+): Promise<{
+  placed: number;
+  misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+}> {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { endsOn: true } } },
+  });
+  const endsOn = episode?.programInstance?.endsOn ?? null;
+  if (!endsOn) return { placed: 0, misses: [] };
+  const orders = await prisma.procedureOrder.findMany({
+    where: { clinicalEpisodeId: episodeId, status: "PROPOSED", inPackage: true },
+    select: { id: true, procedureType: { select: { openAttendance: true } } },
+  });
+  const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
+  if (cabinIds.length === 0) return { placed: 0, misses: [] };
+  const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+  const placement = await placeConfirmedProcedures(cabinIds, { confirmedByUserId, scheduleBefore: endsOn, checkoutMorning: true },
+  );
+  return {
+    placed: placement.placed,
+    misses: placement.failures.map((row) => ({
+      ymd: row.ymd ?? "",
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      reason: row.reason,
+    })),
+  };
+}
+
+/**
  * Menu Save. Procedure blocks keep the cabin planner. Lab and visit blocks
  * create the document their fulfillment already names.
  */
+const LIVE_MASSEUR_STATUS = ["PROPOSED", "SCHEDULED", "PENDING_PAY"] as const;
+
+/** Point every not-yet-started session of these procedures at the masseur, then seat them again. */
+export async function applyPreferredMasseurs(
+  episodeId: string,
+  prefs: Array<{ procedureCode: string; practitionerId: string | null }>,
+  opts?: { confirmedByUserId?: string; startAt?: Date | null },
+): Promise<{
+  misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    staffName?: string;
+  }>;
+}> {
+  await loadEpisodeForAssign(episodeId);
+  const misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    staffName?: string;
+  }> = [];
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { endsOn: true } } },
+  });
+  const endsOn = episode?.programInstance?.endsOn ?? undefined;
+  for (const pref of prefs) {
+    const code = pref.procedureCode.trim();
+    if (!code) continue;
+    const pt = await prisma.procedureType.findFirst({ where: { code } });
+    if (!pt) {
+      throw new PackageAssignError(`Unknown procedure type ${code}`, "UNKNOWN_TYPE", 400);
+    }
+    const wanted = await resolveMasseurId(pt.id, pref.practitionerId);
+    await prisma.procedureOrder.updateMany({
+      where: {
+        clinicalEpisodeId: episodeId,
+        procedureCode: code,
+        status: { in: [...LIVE_MASSEUR_STATUS] },
+        schedulingMode: "OPEN",
+        ...(wanted
+          ? { OR: [{ preferredPractitionerId: null }, { preferredPractitionerId: { not: wanted } }] }
+          : { preferredPractitionerId: { not: null } }),
+      },
+      data: { preferredPractitionerId: wanted },
+    });
+    const orders = await prisma.procedureOrder.findMany({
+      where: {
+        clinicalEpisodeId: episodeId,
+        procedureCode: code,
+        status: { in: [...LIVE_MASSEUR_STATUS] },
+        schedulingMode: { not: "OPEN" },
+      },
+      select: { id: true, preferredPractitionerId: true, inPackage: true, status: true },
+    });
+    const changed = orders.filter((row) => (row.preferredPractitionerId ?? null) !== wanted);
+    if (changed.length === 0) continue;
+    const ids = changed.map((row) => row.id);
+    await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
+    await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: ids } },
+      data: { preferredPractitionerId: wanted, resourceId: null, status: "PROPOSED" },
+    });
+    const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+    const placement = await placeConfirmedProcedures(ids, {
+      confirmedByUserId: opts?.confirmedByUserId,
+      scheduleBefore: endsOn,
+      startAt: opts?.startAt,
+    });
+    misses.push(
+      ...placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+        staffName: row.staffName,
+      })),
+    );
+    const extraIds = changed.filter((row) => row.status === "PENDING_PAY" && !row.inPackage).map((row) => row.id);
+    if (extraIds.length > 0) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: extraIds }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+        data: { status: "PENDING_PAY" },
+      });
+    }
+  }
+  return { misses };
+}
+
 export async function assignPackageMenuLines(
   episodeId: string,
   lines: AssignLineInput[],
@@ -1973,7 +2195,13 @@ export async function assignPackageMenuLines(
   placed: number;
   softWarn: string | null;
   orderIds: string[];
-  misses?: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+  misses?: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    staffName?: string;
+  }>;
 }> {
   const snap = await getPackageAssignSnapshot(episodeId);
   const byCode = new Map(snap.balances.map((row) => [row.procedureCode, row]));
@@ -2000,7 +2228,13 @@ export async function assignPackageMenuLines(
   let placed = 0;
   let softWarn: string | null = null;
   const orderIds: string[] = [];
-  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> =
+  const misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    staffName?: string;
+  }> =
     [];
   if (procedures.length > 0) {
     const result = await assignPackageProcedures(episodeId, procedures, opts);

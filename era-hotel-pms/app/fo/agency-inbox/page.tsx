@@ -14,6 +14,7 @@ import {
   showSuccess,
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { useAuth } from '@/hooks/useAuth';
@@ -197,14 +198,14 @@ export default function AgencyInboxPage() {
             header: t('checkIn'),
             sortable: true,
             sortValue: (r) => String(r.checkInDate),
-            render: (r) => String(r.checkInDate).slice(0, 10),
+            render: (r) => bakuDateDisplay(String(r.checkInDate).slice(0, 10)),
           },
           {
             key: 'checkOutDate',
             header: t('checkOut'),
             sortable: true,
             sortValue: (r) => String(r.checkOutDate),
-            render: (r) => String(r.checkOutDate).slice(0, 10),
+            render: (r) => bakuDateDisplay(String(r.checkOutDate).slice(0, 10)),
           },
           {
             key: 'contract',

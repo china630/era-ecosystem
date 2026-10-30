@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { PageHeader } from "../../../../components/layout/page-header";
@@ -74,9 +75,9 @@ export default function DataHubTaxSchemesPage() {
             {rows.map((r) => (
               <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={DATA_TABLE_TD_CLASS}>{r.code}</td>
-                <td className={DATA_TABLE_TD_CLASS}>{String(r.effectiveFrom).slice(0, 10)}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.effectiveFrom).slice(0, 10))}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
-                  {r.effectiveTo ? String(r.effectiveTo).slice(0, 10) : "—"}
+                  {r.effectiveTo ? bakuDateDisplay(String(r.effectiveTo).slice(0, 10)) : "—"}
                 </td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.parameters?.defaultSimplifiedPercent}%</td>
                 <td className={DATA_TABLE_TD_CLASS}>

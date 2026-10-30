@@ -8,6 +8,7 @@ import {
   Prisma,
   RiskSeverity,
 } from "@erafinance/database";
+import { AuditService } from "../audit/audit.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
 import { NotificationService } from "../notifications/notification.service";
@@ -50,6 +51,7 @@ export class ComplianceService {
     private readonly fraudScanner: FraudPatternsScanner,
     private readonly notifications: NotificationService,
     private readonly councilTriggers: CouncilTriggerService,
+    private readonly audit: AuditService,
   ) {}
 
   /** Compliance Pro scanners (VÖEN + fraud). VAT threshold runs via `runTaxLimitScanForOrganization` (all ACTIVE orgs). */
@@ -124,19 +126,16 @@ export class ComplianceService {
       link: "/compliance",
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        organizationId,
-        userId: null,
-        entityType: "compliance.tax_limit_monitor",
-        entityId: `${organizationId}:${row.dedupeKey}`,
-        action: "THRESHOLD_HIT",
-        newValues: {
-          dedupeKey: row.dedupeKey,
-          severity: row.severity,
-          description: row.description,
-          notifiedAt: new Date().toISOString(),
-        },
+    await this.audit.logOrganizationSystemEvent({
+      organizationId,
+      entityType: "compliance.tax_limit_monitor",
+      entityId: `${organizationId}:${row.dedupeKey}`,
+      action: "THRESHOLD_HIT",
+      payload: {
+        dedupeKey: row.dedupeKey,
+        severity: row.severity,
+        description: row.description,
+        notifiedAt: new Date().toISOString(),
       },
     });
   }

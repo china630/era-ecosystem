@@ -23,6 +23,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -475,8 +476,8 @@ export default function AllotmentBlocksPage() {
                   <td className={DATA_TABLE_TD_CLASS}>{b.agency?.code ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{b.salesContract?.code ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {String(b.validFrom).slice(0, 10)} → {String(b.validTo).slice(0, 10)}
-                    {b.cutoffDate ? ` · cutoff ${String(b.cutoffDate).slice(0, 10)}` : ''}
+                    {bakuDateDisplay(String(b.validFrom).slice(0, 10))} → {bakuDateDisplay(String(b.validTo).slice(0, 10))}
+                    {b.cutoffDate ? ` · cutoff ${bakuDateDisplay(String(b.cutoffDate).slice(0, 10))}` : ''}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     {b.lines

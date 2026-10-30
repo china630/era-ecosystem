@@ -95,6 +95,21 @@ function splitGross(gross: number, vatRate: number): { net: number; vat: number 
   return { net: money(gross - vat), vat };
 }
 
+function hotelDayDocumentLines(payload: unknown) {
+  const parsed = satelliteHotelNightAuditClosedSchema.safeParse(payload);
+  const body = parsed.success ? parsed.data.payload : null;
+  return {
+    moneyLines: body?.moneyLines ?? [],
+    qtyLines: body?.qtyLines ?? [],
+    saleLines: body?.saleLines ?? [],
+    revenueLines: body?.revenueLines ?? [],
+    paymentLines: body?.paymentLines ?? [],
+    depositReceiptLines: body?.depositReceiptLines ?? [],
+    depositCarryLines: body?.depositCarryLines ?? [],
+    depositPayoutLines: body?.depositPayoutLines ?? [],
+  };
+}
+
 function dayDocumentTender(method: string): string {
   const key = method.trim().toUpperCase();
   if (key === "CARD") return "card";
@@ -692,7 +707,7 @@ export class SatelliteEventDispatchService {
   }
 
   async listRejectedHotelDayDocuments(organizationId: string) {
-    return this.prisma.hotelDayDocument.findMany({
+    const rows = await this.prisma.hotelDayDocument.findMany({
       where: { organizationId, status: HotelDayDocumentStatus.REJECTED },
       orderBy: { businessDate: "desc" },
       select: {
@@ -701,8 +716,17 @@ export class SatelliteEventDispatchService {
         reference: true,
         errorMessage: true,
         updatedAt: true,
+        payloadJson: true,
       },
     });
+    return rows.map((row) => ({
+      id: row.id,
+      businessDate: row.businessDate,
+      reference: row.reference,
+      errorMessage: row.errorMessage,
+      updatedAt: row.updatedAt,
+      lines: hotelDayDocumentLines(row.payloadJson),
+    }));
   }
 
   postHotelNightAuditEvent(

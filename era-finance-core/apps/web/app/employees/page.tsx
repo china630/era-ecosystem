@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { Pencil, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -601,7 +602,7 @@ export default function EmployeesPage() {
                         : "—"}
                     </td>
                     <td className={`hidden lg:table-cell ${DATA_TABLE_TD_RIGHT_CLASS}`}>
-                      {String(r.startDate).slice(0, 10)}
+                      {bakuDateDisplay(String(r.startDate).slice(0, 10))}
                     </td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                       <div className="flex flex-col items-end gap-1">

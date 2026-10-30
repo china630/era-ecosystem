@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../../lib/api-client";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { formatMoneyAzn } from "../../../../lib/format-money";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { todayBakuYmd } from "@era/satellite-kit/time";
@@ -223,7 +224,7 @@ export default function InvoiceAllocatePage() {
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.number}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.status}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{String(r.dueDate).slice(0, 10)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.dueDate).slice(0, 10))}</td>
                   <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                     {formatMoneyAzn(Number(r.remaining ?? 0))}
                   </td>

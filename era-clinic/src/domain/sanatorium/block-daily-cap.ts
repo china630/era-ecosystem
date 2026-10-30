@@ -60,26 +60,18 @@ export async function loadEpisodeDailyCaps(episodeId: string): Promise<EpisodeDa
 }
 
 /**
- * Package lines spend their quota line. A paid extra spends the block that lists its SKU,
- * so it shares that block's daily distinct cap with the package.
+ * Package lines spend their block's daily cap. A paid extra does not, even when its SKU
+ * is also listed on the package block. The same procedure code still cannot repeat that day.
  */
 export function quotaForGuestDay(
   loaded: EpisodeDailyCaps | null,
   input: { inPackage: boolean; packageQuotaCode?: string | null; procedureCode: string },
 ): { quotaKey: string; dailyCap: number | null; shareGuestDayCap: boolean } {
-  if (!loaded) {
+  if (!loaded || !input.inPackage) {
     return { quotaKey: input.procedureCode, dailyCap: null, shareGuestDayCap: false };
   }
-  if (input.inPackage) {
-    const cap = dailyCapForQuota(loaded, input.packageQuotaCode, input.procedureCode);
-    return { quotaKey: cap.quotaKey, dailyCap: cap.dailyCap, shareGuestDayCap: false };
-  }
-  const block = loaded.blockByProcedure.get(input.procedureCode);
-  if (block && loaded.caps.has(block)) {
-    const dailyCap = loaded.caps.get(block) ?? null;
-    return { quotaKey: block, dailyCap, shareGuestDayCap: dailyCap != null };
-  }
-  return { quotaKey: input.procedureCode, dailyCap: null, shareGuestDayCap: false };
+  const cap = dailyCapForQuota(loaded, input.packageQuotaCode, input.procedureCode);
+  return { quotaKey: cap.quotaKey, dailyCap: cap.dailyCap, shareGuestDayCap: false };
 }
 
 export function dailyCapForQuota(

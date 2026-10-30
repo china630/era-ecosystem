@@ -42,7 +42,7 @@ A radio writes both `from` and `to` (This Month = 1st → last day of the month)
 - Each slug has a builder in `src/lib/reports/layouts/*` (registry `REPORT_LAYOUT_BUILDERS`). It returns a `ReportLayout`: ordered sections, each with columns (`text` / `int` / `money` / `pct` / `date` / `datetime`) and rows (`data` / `group` / `subtotal` / `total`).
 - `GET /api/reports/{slug}/layout` returns `{ layout }` for the screen (`ReportLayoutView`). The PDF (`renderLayoutSections`) and Excel (`layoutToXlsxBuffer`) render the same sections in the same order, so the three outputs carry the same columns and totals.
 - Family shapes follow the Elektra samples:
-  - Daily flash (B-01…B-07) has a KPI block with Today / Tomorrow / Month to date / Year to date columns, then revenue (Net / VAT / Total per period) and payments.
+  - Daily flash (B-01…B-07) has a KPI block with Today / Tomorrow / Month to date / Year to date columns, then revenue (Total / Net / VAT per period) and payments.
   - Trial balance (C-01, C-08) shows Balance brought forward, then charges, then payments as negative amounts, then the closing balance.
   - Day series (A-11, A-07) has one row per date and a period total.
   - Cubes and pivots show one matrix section per measure.
@@ -300,7 +300,7 @@ Flash for GM. Room analysis (occupied, available, capacity, comp, house use, day
 
 ### 8.2 Trial Balance Date Period (C-08)
 
-Sections: Balance brought forward · Revenue by department (Total / Net / VAT) · VAT bucket · Payments by tender · Balance · Balance for tomorrow. Currency AZN in sample. Same identity as daily TB when `from=to=business_date`.
+Sections: Balance brought forward · Revenue by department (Total / Net / VAT), department row bold with its revenue codes underneath · Payments by tender · Balance. Currency AZN. Same identity as daily TB when `from=to=business_date`. Revenue-code names use master-data `nameAz` / `nameRu` / `nameEn` for the report language (`name` if that translation is empty). Department rows use `Department.name` — that catalog has no per-language columns.
 
 ### 8.3 Cash Report (C-11)
 

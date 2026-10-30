@@ -18,10 +18,6 @@ export class BankDirectSyncQueueService implements OnModuleInit, OnModuleDestroy
   }
 
   async onModuleInit(): Promise<void> {
-    if (process.env.BANK_DIRECT_SYNC_DISABLED === "1") {
-      this.logger.warn("BANK_DIRECT_SYNC_DISABLED=1 — часовой опрос банков выключен");
-      return;
-    }
     await this.queue.add(
       "hourly_tick",
       {},

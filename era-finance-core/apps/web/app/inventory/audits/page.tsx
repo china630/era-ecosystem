@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -170,7 +171,7 @@ export default function InventoryAuditsHistoryPage() {
                   rows.map((r) => (
                     <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                        {typeof r.date === "string" ? r.date.slice(0, 10) : "—"}
+                        {typeof r.date === "string" ? bakuDateDisplay(r.date.slice(0, 10)) : "—"}
                       </td>
                       <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap`}>
                         {r.warehouse?.name ?? "—"}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, Pencil, Plus, Printer } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -303,7 +304,7 @@ function AdvanceReportsPageContent() {
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{String(r.reportDate).slice(0, 10)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.reportDate).slice(0, 10))}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{employeeLabel(r.employee)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{r.purpose || "—"}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>

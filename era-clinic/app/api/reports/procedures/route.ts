@@ -1,3 +1,4 @@
+import { ProcedureOrderStatus } from "@prisma/client";
 import { z } from "zod";
 import {
   getSatelliteSession,
@@ -23,6 +24,7 @@ function formatBakuYmd(d: Date): string {
 }
 
 const viewSchema = z.enum([
+  "fulfillment",
   "doctor-lines",
   "doctor-bonus",
   "by-procedure",
@@ -37,7 +39,7 @@ export async function GET(req: Request) {
     if (!session) return jsonError("Unauthorized", 401);
 
     const url = new URL(req.url);
-    const viewRaw = (url.searchParams.get("view") ?? "doctor-lines").trim();
+    const viewRaw = (url.searchParams.get("view") ?? "fulfillment").trim();
     const view = viewSchema.parse(viewRaw);
 
     const from = (url.searchParams.get("from") ?? todayBakuYmd()).trim();
@@ -68,6 +70,113 @@ export async function GET(req: Request) {
       if (selfDoctorId) return selfDoctorId;
       return doctorIdParam ?? null;
     };
+
+    if (view === "fulfillment") {
+      const doctorId = resolveDoctorPractitionerId();
+      const assignedStatuses: ProcedureOrderStatus[] = [
+        "PENDING_PAY",
+        "PROPOSED",
+        "SCHEDULED",
+        "CHECKED_IN",
+        "COMPLETED",
+        "NO_SHOW",
+        "UNPAID_MISSED",
+      ];
+      const orders = await prisma.procedureOrder.findMany({
+        where: {
+          ...(doctorId ? { prescribedByPractitionerId: doctorId } : {}),
+          ...(procedureQ ? { procedureCode: procedureQ } : {}),
+          OR: [
+            {
+              scheduledAt: { gte: start, lt: end },
+              status: { in: assignedStatuses },
+            },
+            {
+              status: "COMPLETED",
+              completedAt: { gte: start, lt: end },
+            },
+          ],
+        },
+        select: {
+          procedureCode: true,
+          procedureName: true,
+          status: true,
+          inPackage: true,
+          amountNet: true,
+          quantity: true,
+          scheduledAt: true,
+          completedAt: true,
+        },
+      });
+
+      const byCode = new Map<
+        string,
+        {
+          code: string;
+          name: string;
+          packageAssigned: number;
+          packageCompleted: number;
+          extraAssigned: number;
+          extraCompleted: number;
+          extraAmount: number;
+        }
+      >();
+
+      for (const order of orders) {
+        const row = byCode.get(order.procedureCode) ?? {
+          code: order.procedureCode,
+          name: order.procedureName,
+          packageAssigned: 0,
+          packageCompleted: 0,
+          extraAssigned: 0,
+          extraCompleted: 0,
+          extraAmount: 0,
+        };
+        byCode.set(order.procedureCode, row);
+        const qty = order.quantity || 1;
+        const assignedHere =
+          order.scheduledAt >= start &&
+          order.scheduledAt < end &&
+          assignedStatuses.includes(order.status);
+        const completedHere =
+          order.status === "COMPLETED" &&
+          order.completedAt != null &&
+          order.completedAt >= start &&
+          order.completedAt < end;
+        if (order.inPackage) {
+          if (assignedHere) row.packageAssigned += qty;
+          if (completedHere) row.packageCompleted += qty;
+        } else {
+          if (assignedHere) row.extraAssigned += qty;
+          if (completedHere) {
+            row.extraCompleted += qty;
+            const amount = order.amountNet.toNumber();
+            if (amount > 0) row.extraAmount = Math.round((row.extraAmount + amount) * 100) / 100;
+          }
+        }
+      }
+
+      const items = [...byCode.values()]
+        .filter(
+          (row) =>
+            row.packageAssigned +
+              row.packageCompleted +
+              row.extraAssigned +
+              row.extraCompleted >
+            0,
+        )
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((row) => ({
+          procedure: { code: row.code, name: row.name },
+          packageAssigned: row.packageAssigned,
+          packageCompleted: row.packageCompleted,
+          extraAssigned: row.extraAssigned,
+          extraCompleted: row.extraCompleted,
+          extraAmount: row.extraAmount,
+        }));
+      const extraAmount = items.reduce((sum, row) => sum + row.extraAmount, 0);
+      return jsonOk({ view, items, grandTotal: Math.round(extraAmount * 100) / 100 });
+    }
 
     if (view === "doctor-lines") {
       const doctorId = resolveDoctorPractitionerId();

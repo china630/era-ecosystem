@@ -1,5 +1,6 @@
 'use client';
 
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -132,7 +133,7 @@ export function ChannelInventoryTab({
             <tbody>
               {stopSells.map((s) => (
                 <tr key={s.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{s.date.slice(0, 10)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(s.date.slice(0, 10))}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{s.roomType?.code ?? tc('all')}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <button

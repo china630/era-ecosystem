@@ -35,6 +35,7 @@ import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 import { plansExtraBeforePay } from "@/domain/sanatorium/extra-procedure-route";
 import { getClinicSettings } from "@/domain/settings/settings.service";
+import { resolveExtraPrescriber } from "@/lib/extra-prescriber";
 
 export type ExtraPrescribeLine = {
   procedureCode: string;
@@ -45,6 +46,7 @@ export type ExtraPrescribeLine = {
   siteIds?: string[];
   siteApplyMode?: "TURN" | "TOGETHER" | null;
   siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+  preferredPractitionerId?: string | null;
 };
 
 async function loadEpisode(episodeId: string) {
@@ -123,6 +125,29 @@ export async function remainingPackageQuotaCode(
   return null;
 }
 
+/** Acting doctor, otherwise the earliest care doctor on the episode. */
+async function resolvePrescriberForExtra(
+  episodeId: string,
+  actorUserId?: string | null,
+): Promise<string | null> {
+  const actor = actorUserId
+    ? await prisma.practitioner.findFirst({
+        where: { userId: actorUserId, active: true },
+        select: { id: true, staffKind: true },
+      })
+    : null;
+  const care = await prisma.episodeCareDoctor.findMany({
+    where: { episodeId },
+    orderBy: { assignedAt: "asc" },
+    select: { practitionerId: true },
+  });
+  return resolveExtraPrescriber({
+    actorPractitionerId: actor?.id ?? null,
+    actorIsDoctor: actor?.staffKind === "DOCTOR",
+    careDoctorIdsInAssignedOrder: care.map((row) => row.practitionerId),
+  });
+}
+
 /**
  * Doctor prescribe. PLAN_BEFORE_PAY seats each row on its own day and cabin and
  * leaves it PENDING_PAY. HOLD_UNTIL_PAY keeps a placeholder clock and no cabin.
@@ -130,6 +155,7 @@ export async function remainingPackageQuotaCode(
 export async function prescribeExtras(
   episodeId: string,
   lines: ExtraPrescribeLine[],
+  actorUserId?: string | null,
 ): Promise<{ orderIds: string[] }> {
   const episode = await loadEpisode(episodeId);
   const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
@@ -138,6 +164,7 @@ export async function prescribeExtras(
   const orgId = requestOrganizationId();
   const ids: string[] = [];
   const now = new Date();
+  const prescribedByPractitionerId = await resolvePrescriberForExtra(episodeId, actorUserId);
   let seq = 0;
 
   for (const line of lines) {
@@ -166,6 +193,8 @@ export async function prescribeExtras(
         409,
       );
     }
+    const { resolveMasseurId } = await import("@/domain/sanatorium/package-assign.service");
+    const preferredPractitionerId = await resolveMasseurId(pt.id, line.preferredPractitionerId);
     const unitPrice = await listPriceForCode(line.procedureCode);
     const duration = pt.durationMin ?? 30;
     for (let i = 0; i < line.qty; i++) {
@@ -191,6 +220,8 @@ export async function prescribeExtras(
           amountNet: unitPrice,
           bonusEligible: true,
           inPackage: false,
+          preferredPractitionerId,
+          prescribedByPractitionerId,
           schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
         },
       });

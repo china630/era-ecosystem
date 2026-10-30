@@ -733,7 +733,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 | Feature ID | Справочник | Сейчас в ядре | Целевой источник (Data Hub) | Статус потребления в ядре |
 |------------|-----------|----------------|------------------------------|----------------------------|
-| **FEAT-FC-DH-001** | Курсы валют ЦБА | `CbarOfficialRate` + cron (legacy) | `GET /fx/rates`, `/fx/convert` | [x] hub read-through: converter, dashboard, customs auto-rate on `bgdDate`. Finance does not fetch CBAR. Excel org uses `/settings/reference-data`. |
+| **FEAT-FC-DH-001** | Курсы валют ЦБА | hub `cbar_official_rates` + ingest с 09:30 Баку | `GET /fx/rates`, `/fx/convert` | [x] hub read-through: converter and customs stay date-strict; dashboard uses `fallback=previous`. Finance does not fetch CBAR. Excel org uses `/settings/reference-data`. |
 | **FEAT-FC-DH-002** | Коды ВЭД (HS) + тарифы | `CustomsTariffRate` | `GET /hs/:code/tariff` | [x] подключено (`CustomsTaxCalculator`) |
 | **FEAT-FC-DH-003** | Произв. календарь АР | хардкод (удалён) | `GET /calendar/az/*` | [x] hub: `HrCalendarService`, timesheet/payroll norm; fallback Sat/Sun only |
 | **FEAT-FC-DH-004** | Банки и филиалы | `BankGlossary` / `BankBranch` | `GET /banks`, `/banks/branches/:code` | [x] `BankDirectoryService` hub-first |
@@ -972,7 +972,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 ### 6.2. Цифровое доверие (ASAN İmza / SİMA)
 
 - Подписание инвойсов и актов сверки (PDF); аудит: факт подписи и хеш.
-- **Gov-payload signing (Wave 4 G7):** `GovSignatureAdapter` + `SignatureService.signGovPayload` для пакетов e-taxes (ƏDV, mənfəət), **e-Qaimə S2S** и актов сверки; live за **`ERA_ASAN_SIMA_LIVE=1`** / `SIGNATURE_GATEWAY_MOCK=0`; env `ASAN_IMZA_API_URL`, `SIMA_QR_PAYLOAD_URL` — **[docs/adr/asan-sima-gov-signature.md](../docs/adr/asan-sima-gov-signature.md)**.
+- **Gov-payload signing (Wave 4 G7):** `GovSignatureAdapter` + `SignatureService.signGovPayload` для пакетов e-taxes (ƏDV, mənfəət), **e-Qaimə S2S** и актов сверки. Заглушка подписи — `Organization.settings.tax.signatureGatewayMock` (по умолчанию выключена). Живой шлюз: `ASAN_IMZA_API_URL`, `SIMA_QR_PAYLOAD_URL`. — **[docs/adr/asan-sima-gov-signature.md](../docs/adr/asan-sima-gov-signature.md)**.
 - ЭДО: канал в кабинет контрагента или e-mail с пояснением подписи.
 
 ### 6.3. Direct Banking
@@ -1561,7 +1561,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 | Тема | Решение |
 |------|---------|
 | **Тенант** | 1 tenant = 1 юрлицо (VÖEN). Несколько компаний у пользователя = несколько организаций. |
-| **Курсы валют** | Источник: XML/API ЦБА (cbar.az); обновление ежедневно в 00:01; переоценка валютных счетов — регламент в конце месяца. |
+| **Курсы валют** | Источник: XML ЦБА в era-data-hub; забор с 09:30 по Баку каждые 30 минут до появления даты в XML; переоценка валютных счетов — регламент в конце месяца. |
 | **Закрытие периода** | Только **Owner** или **Admin**. |
 | **Архивация (Soft Delete)** | **Полное удаление (Hard Delete)** организаций, контрагентов и **транзакций/проводок**, по которым есть связанные движения (склад, оплаты, аудит), **запрещено**. Вместо этого — **архивация**: флаги `isDeleted` / `deletedAt` и скрытие из списков по умолчанию (см. [TZ.md](./TZ.md) §16). |
 | **Интеграции MVP** | Импорт CSV/Excel; API банков — после sandbox/доступов. |

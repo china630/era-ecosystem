@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   CheckCircle2,
   Eye,
@@ -833,7 +834,7 @@ export default function InvoicesPage() {
                       <div className="font-semibold text-[#34495E]">{r.number}</div>
                       <div className="text-[#34495E]">{r.counterparty.name}</div>
                       <div>
-                        {formatInvoiceStatus(t, r.status)} · {String(r.dueDate).slice(0, 10)}
+                        {formatInvoiceStatus(t, r.status)} · {bakuDateDisplay(String(r.dueDate).slice(0, 10))}
                       </div>
                       <div className="text-right font-mono tabular-nums">
                         {formatMoneyAzn(r.totalAmount)}
@@ -953,7 +954,7 @@ export default function InvoicesPage() {
                             ) : null}
                             {colVisible("dueDate") ? (
                               <td className={`hidden lg:table-cell ${DATA_TABLE_TD_RIGHT_CLASS}`}>
-                                {String(r.dueDate).slice(0, 10)}
+                                {bakuDateDisplay(String(r.dueDate).slice(0, 10))}
                               </td>
                             ) : null}
                             {colVisible("totalAmount") ? (

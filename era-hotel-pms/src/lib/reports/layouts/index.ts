@@ -60,7 +60,7 @@ type Builder = (slug: string, data: never, ctx: LayoutCtx) => ReportLayout;
 
 /** One builder per catalog slug, grouped by Elektra table family. */
 export const REPORT_LAYOUT_BUILDERS: Record<string, Builder> = {
-  // Flash: KPI per period, revenue Net/VAT/Total, payments
+  // Flash: KPI per period, revenue Total/Net/VAT, payments
   'daily-management': buildFlashLayout,
   'daily-management-summary': buildFlashLayout,
   'date-range-management': buildFlashLayout,

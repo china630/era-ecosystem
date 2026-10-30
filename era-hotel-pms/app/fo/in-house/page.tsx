@@ -11,6 +11,7 @@ import {
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 import GuestCardModal from '@/components/GuestCardModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
@@ -163,14 +164,14 @@ export default function InHousePage() {
             header: t('arrival'),
             sortable: true,
             sortValue: (r) => r.checkInDate,
-            render: (r) => r.checkInDate || '—',
+            render: (r) => (r.checkInDate ? bakuDateDisplay(r.checkInDate) : '—'),
           },
           {
             key: 'departure',
             header: t('departure'),
             sortable: true,
             sortValue: (r) => r.checkOutDate,
-            render: (r) => r.checkOutDate || '—',
+            render: (r) => (r.checkOutDate ? bakuDateDisplay(r.checkOutDate) : '—'),
           },
           {
             key: 'folio',

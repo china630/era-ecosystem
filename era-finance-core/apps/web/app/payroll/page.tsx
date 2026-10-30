@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "../../lib/auth-context";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { isRestrictedUserRole } from "../../lib/role-utils";
 import { PageHeader } from "../../components/layout/page-header";
 import {
@@ -1183,7 +1184,7 @@ function PayrollPageInner() {
                       {a.absenceType?.nameAz ?? t("payroll.absenceTypeUnknown")}
                     </td>
                     <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                      {String(a.startDate).slice(0, 10)} — {String(a.endDate).slice(0, 10)}
+                      {bakuDateDisplay(String(a.startDate).slice(0, 10))} — {bakuDateDisplay(String(a.endDate).slice(0, 10))}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>{a.note || "—"}</td>
                   </tr>

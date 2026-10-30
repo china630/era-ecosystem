@@ -13,7 +13,7 @@ import {
 } from "../../lib/design-system";
 
 type DirectView = {
-  syncMode: "mock" | "rest";
+  syncMode: "off" | "mock" | "rest";
   pasha: { enabled: boolean; url: string; hasToken: boolean };
   abb: { enabled: boolean; url: string; hasToken: boolean };
   kapital: { enabled: boolean; url: string; hasToken: boolean };
@@ -39,7 +39,7 @@ type BankForm = {
 };
 
 const emptyBankForm = (): BankForm => ({
-  enabled: true,
+  enabled: false,
   url: "",
   token: "",
   clear: false,
@@ -58,7 +58,7 @@ export function DirectBankingPanel({
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const [syncMode, setSyncMode] = useState<"mock" | "rest">("mock");
+  const [syncMode, setSyncMode] = useState<"off" | "mock" | "rest">("off");
   const [banks, setBanks] = useState<Record<BankKey, BankForm>>({
     pasha: emptyBankForm(),
     abb: emptyBankForm(),
@@ -210,6 +210,18 @@ export function DirectBankingPanel({
             <legend className="mb-2 text-[13px] font-semibold text-[#34495E]">
               {t("subscriptionSettings.directBanking.modeLabel")}
             </legend>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="radio"
+                name="bankingSyncMode"
+                checked={syncMode === "off"}
+                onChange={() => setSyncMode("off")}
+                className="rounded-lg border-[#D5DADF] text-[#2980B9]"
+              />
+              <span className="text-[13px] text-[#34495E]">
+                {t("subscriptionSettings.directBanking.modeOff")}
+              </span>
+            </label>
             <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"

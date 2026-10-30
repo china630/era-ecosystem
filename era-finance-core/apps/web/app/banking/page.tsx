@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, Clock, GitMerge, Landmark, Loader2, Plus, Search, Wallet, X } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { BankStatementImportModal } from "./banking-modals";
 import { InternalTransferModal } from "./internal-transfer-modal";
 import { filterNasBankLedgerAccounts, NasBankAccountSelect, type NasBankAccountOption } from "./nas-bank-account-select";
@@ -749,7 +750,7 @@ function BankingUnifiedRegistry({
                   return (
                     <tr key={r.id} className={`${DATA_TABLE_TR_CLASS} align-top`}>
                       <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                        {r.valueDate ? String(r.valueDate).slice(0, 10) : "вЂ”"}
+                        {r.valueDate ? bakuDateDisplay(String(r.valueDate).slice(0, 10)) : "вЂ”"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <span className="inline-flex rounded-lg bg-[#EBEDF0] px-2 py-0.5 text-xs font-medium text-[#34495E]">

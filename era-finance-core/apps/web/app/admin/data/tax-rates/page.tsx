@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { PageHeader } from "../../../../components/layout/page-header";
@@ -82,7 +83,7 @@ export default function DataHubTaxRatesPage() {
                 <td className={DATA_TABLE_TD_CLASS}>{r.code}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.kind}</td>
                 <td className={`${DATA_TABLE_TD_CLASS} text-right`}>{String(r.percent)}</td>
-                <td className={DATA_TABLE_TD_CLASS}>{String(r.effectiveFrom).slice(0, 10)}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.effectiveFrom).slice(0, 10))}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.nameAz}</td>
                 <td className={`${DATA_TABLE_TD_CLASS} text-right`}>{r.usageTotal ?? 0}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.isActive ? "yes" : "no"}</td>

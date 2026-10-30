@@ -33,6 +33,7 @@ const prescribeSchema = z.object({
         siteLaterality: z
           .record(z.enum(["LEFT", "RIGHT", "BOTH"]).nullable())
           .optional(),
+        preferredPractitionerId: z.string().min(1).nullable().optional(),
       }),
     )
     .min(1),
@@ -104,7 +105,7 @@ export async function POST(
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
     const body = prescribeSchema.parse(await req.json());
-    const result = await prescribeExtras(id, body.lines);
+    const result = await prescribeExtras(id, body.lines, session.sub);
     return jsonOk(result);
   } catch (err) {
     if (err instanceof PackageAssignError) {

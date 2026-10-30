@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CatalogField,
   type CatalogFieldKind,
@@ -656,7 +656,7 @@ export default function BuffetAdminPanel({
     () =>
       plans.map((p) => ({
         value: p.id,
-        label: `${p.serviceDate} · ${t(`meal.${p.meal}`)} · ${p.coversTotal}`,
+        label: `${bakuDateDisplay(String(p.serviceDate).slice(0, 10))} · ${t(`meal.${p.meal}`)} · ${p.coversTotal}`,
       })),
     [plans, t],
   );
@@ -1001,7 +1001,7 @@ export default function BuffetAdminPanel({
                     className={`cursor-pointer hover:bg-[#F8FAFC] ${selectedId === row.id && compositionOpen ? "bg-[#EBF5FB]" : ""}`}
                     onDoubleClick={() => openComposition(row)}
                   >
-                    <td className="px-3 py-2">{row.serviceDate}</td>
+                    <td className="px-3 py-2">{bakuDateDisplay(String(row.serviceDate).slice(0, 10))}</td>
                     <td className="px-3 py-2">{t(`meal.${row.meal}`)}</td>
                     <td className="px-3 py-2 tabular-nums" title={t("coversLabel", { adult: row.coversAdult, child: row.coversChild })}>
                       {row.coversTotal}{" "}
@@ -1083,7 +1083,7 @@ export default function BuffetAdminPanel({
         onClose={() => setCompositionOpen(false)}
         title={
           selected
-            ? `${selected.outletName} · ${t(`meal.${selected.meal}`)} · ${selected.serviceDate}`
+            ? `${selected.outletName} · ${t(`meal.${selected.meal}`)} · ${bakuDateDisplay(String(selected.serviceDate).slice(0, 10))}`
             : t("openComposition")
         }
       >

@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
@@ -147,7 +148,7 @@ function ManufacturingReleasesContent() {
             ) : (
               rows.map((row) => (
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.documentDate.slice(0, 10)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.documentDate.slice(0, 10))}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <div>{row.recipeName}</div>
                     <div className="text-xs text-[#7F8C8D]">{row.finishedProductName}</div>

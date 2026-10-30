@@ -10,6 +10,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { BankDataGrid } from "@/components/BankDataGrid";
 import { useOpsModal } from "@/components/ops";
 import {
@@ -158,9 +159,7 @@ function DepositsPageContent() {
               key: "maturityDate",
               header: t("colMaturity"),
               render: (row) =>
-                row.maturityDate
-                  ? String(row.maturityDate).slice(0, 10)
-                  : "—",
+                row.maturityDate ? bakuDateDisplay(String(row.maturityDate).slice(0, 10)) : "—",
             },
           ]}
           rows={gridRows}

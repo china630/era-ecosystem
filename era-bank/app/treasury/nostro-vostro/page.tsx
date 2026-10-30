@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   PageHeader,
@@ -188,7 +189,7 @@ function NostroVostroPageInner() {
                   <tbody>
                     {statement.map((line, idx) => (
                       <tr key={line.id ?? idx} className="border-t">
-                        <td className="px-2 py-1">{line.valueDate?.slice(0, 10) ?? "—"}</td>
+                        <td className="px-2 py-1">{line.valueDate ? bakuDateDisplay(line.valueDate.slice(0, 10)) : "—"}</td>
                         <td className="px-2 py-1">{line.narrative ?? "—"}</td>
                         <td className="px-2 py-1 text-right">{formatAznMinor(line.amountMinor)}</td>
                       </tr>

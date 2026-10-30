@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   CARD_CONTAINER_CLASS,
@@ -135,7 +136,7 @@ function GovSecuritiesPageInner() {
             {
               key: "maturityDate",
               label: "Maturity",
-              render: (row) => row.maturityDate?.slice(0, 10) ?? "—",
+              render: (row) => (row.maturityDate ? bakuDateDisplay(row.maturityDate.slice(0, 10)) : "—"),
             },
           ]}
         />

@@ -16,7 +16,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   VoenLookupField,
 } from "@era/satellite-kit/ui";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 
 type ImportOrder = {
   id: string;
@@ -140,7 +140,7 @@ export default function ImportOrdersAdminPage() {
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3">
                 <span>
                   {o.externalRef} — {Number(o.amountForeign).toFixed(2)} {o.currencyCode}
-                  {o.dueDate ? ` · ${t("dueDate")} ${String(o.dueDate).slice(0, 10)}` : ""}
+                  {o.dueDate ? ` · ${t("dueDate")} ${bakuDateDisplay(String(o.dueDate).slice(0, 10))}` : ""}
                   {" · "}{o.status}
                 </span>
                 {o.status === "DRAFT" ? (
@@ -218,7 +218,7 @@ export default function ImportOrdersAdminPage() {
                 onChange={(e) => setPaymentTermDays(e.target.value)}
                 inputMode="numeric"
               />
-              {duePreview ? <p className="mt-1 text-xs text-[#7F8C8D]">{t("dueDate")}: {duePreview}</p> : null}
+              {duePreview ? <p className="mt-1 text-xs text-[#7F8C8D]">{t("dueDate")}: {bakuDateDisplay(String(duePreview).slice(0, 10))}</p> : null}
             </div>
             <Field
               label="SKU"

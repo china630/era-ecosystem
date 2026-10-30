@@ -6,7 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ (scaffold only) · BE 🟡 (AC-DH-POL) · UI n/a · Sell: do not claim GA — API product; pilot/field open  
-**BE honesty (2026-10-23):** Scaffold BE 🟡. AC-DH-POL is in the rollup without a negative path. AC-DH-VOEN stays **excluded** (e-taxes BLOCKED / External ⏸). REG/FX/BANK/HS remain Scaffold ✅.
+**BE honesty (2026-10-31):** CBAR `Date` → FINAL and dashboard previous-day read do not change the rollup. Scaffold BE 🟡. AC-DH-POL is in the rollup without a negative path. AC-DH-VOEN stays **excluded** (e-taxes BLOCKED / External ⏸). REG/FX/BANK/HS remain Scaffold ✅.
 
 ---
 

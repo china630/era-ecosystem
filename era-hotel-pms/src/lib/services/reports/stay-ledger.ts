@@ -1,3 +1,4 @@
+import { catalogLabel } from '@/lib/catalog-label';
 import { prisma } from '@/lib/prisma';
 import { civilDay, civilWindow, eachCivilDay, vatRateFromTag } from '@/lib/reports/civil-days';
 import { revenueRoleIs } from '@/lib/revenue-code-match';
@@ -25,10 +26,19 @@ export interface RevenueCodeInfo {
   id: string;
   code: string;
   name: string;
+  nameAz?: string | null;
+  nameRu?: string | null;
+  nameEn?: string | null;
   departmentCode: string;
   departmentName: string;
   vatRate: number;
   isRoom: boolean;
+}
+
+/** Revenue-code display name for the report locale. Departments have a single `name` (no az/ru/en columns). */
+export function revenueCodeLabel(code: Pick<RevenueCodeInfo, 'code' | 'name' | 'nameAz' | 'nameRu' | 'nameEn'> | undefined, locale: string, fallback: string): string {
+  if (!code) return fallback;
+  return catalogLabel(code, locale) || fallback;
 }
 
 export interface ChargeDayRow {
@@ -182,6 +192,9 @@ export async function loadRevenueCodes(): Promise<Map<string, RevenueCodeInfo>> 
       id: true,
       code: true,
       name: true,
+      nameAz: true,
+      nameRu: true,
+      nameEn: true,
       systemRole: true,
       taxTag: true,
       department: { select: { code: true, name: true } },
@@ -197,6 +210,9 @@ export async function loadRevenueCodes(): Promise<Map<string, RevenueCodeInfo>> 
           id: c.id,
           code: c.code,
           name: c.name,
+          nameAz: c.nameAz,
+          nameRu: c.nameRu,
+          nameEn: c.nameEn,
           departmentCode,
           departmentName: c.department?.name ?? 'Other',
           vatRate: vatRateFromTag(c.taxTag),
