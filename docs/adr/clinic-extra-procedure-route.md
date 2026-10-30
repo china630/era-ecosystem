@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted, 2026-10-22. Amended 2026-10-25: plan-before-pay seats a real cabin. Amended 2026-10-27: day-end also closes overdue and unseated-before-today unpaid extras; extra-tickets show full `DD.MM.YYYY HH:mm`. Amended 2026-10-30: OPEN (`schedulingMode`) under `PLAN_BEFORE_PAY` pins day-buckets across the stay (no cabin); Pay keeps those pins — see [clinic-open-attendance.md](./clinic-open-attendance.md).
+Accepted, 2026-10-22. Amended 2026-10-25: plan-before-pay seats a real cabin. Amended 2026-10-27: day-end also closes overdue and unseated-before-today unpaid extras; extra-tickets show full `DD.MM.YYYY HH:mm`. Amended 2026-10-30: OPEN (`schedulingMode`) under `PLAN_BEFORE_PAY` pins day-buckets across the stay (no cabin); Pay keeps those pins — see [clinic-open-attendance.md](./clinic-open-attendance.md). Amended 2026-10-30: `/reception/extra-tickets` asks for a room or a name and does not cut the clinic to the earliest 200; a procedure dated before today (Asia/Baku) stays off that screen.
 
 ## Context
 
@@ -19,7 +19,7 @@ One org setting on `Tenant.extraProcedureRoute`:
 | `PLAN_BEFORE_PAY` (default) | Real date, time, and room, unpaid mark first. OPEN types: day pin only (no cabin) until nurse seat. `SHOW_ON_PLAN` is this value under the old name. | FIXED: cabin held until pay/cancel/day end/checkout. OPEN: day-bucket held (no cabin) until pay then nurse seat | Visible when seated (FIXED) or day-pinned OPEN after pay. Check-in and QR stay closed while `PENDING_PAY`. Red block **Ödəniş edilməyib** when a cabin is held |
 | `HOLD_UNTIL_PAY` | Hidden | Not held. Planner runs after pay or folio | Hidden until the ticket |
 
-Payment of a seated row does not search for a new slot. A batch pays the ticked rows; the cheque list is ordered by time so the nearest rows are first. Cancelling one unpaid row cancels that procedure only. Cancelling one line of a printed multi-line cheque reverses only that amount and prints a three-copy storno. The other lines stay paid.
+Payment of a seated row does not search for a new slot. A batch pays the ticked rows. The cheque screen loads only after a room or a name, includes every matching unpaid extra from today forward, and does not show a procedure whose time is already before today. Cancelling one unpaid row cancels that procedure only. Cancelling one line of a printed multi-line cheque reverses only that amount and prints a three-copy storno. The other lines stay paid.
 
 At clinic day end (`POST /api/cron/procedure-no-show-sweep`, after the no-show pass and only after tenant `dayEndHour` on the Baku calendar day), unpaid extras become `UNPAID_MISSED` in three passes (cabin freed when held; no folio charge, no bonus, no package quota):
 
