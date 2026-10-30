@@ -197,8 +197,13 @@ function runSatellite(dir) {
     console.warn(`skip ${dir}: no package.json`);
     return;
   }
+  if (!fs.existsSync(path.join(cwd, "node_modules"))) {
+    run(`${dir} npm ci`, "npm", ["ci"], cwd);
+  }
   if (fs.existsSync(path.join(cwd, "prisma", "schema.prisma"))) {
-    run(`${dir} prisma generate`, "npx", ["prisma", "generate"], cwd);
+    // Prefer local package.json prisma (npm exec). Bare `npx prisma` can fetch a
+    // mismatched latest CLI when node_modules is missing and break generate.
+    run(`${dir} prisma generate`, "npm", ["exec", "--", "prisma", "generate"], cwd);
   }
   const pkg = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf8"));
   if (pkg.scripts?.test) run(`${dir} test`, "npm", ["test"], cwd);
