@@ -1,17 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { CbarRateStatus, Prisma } from "@era/data-hub-database";
+
+const Decimal = Prisma.Decimal;
 import { PrismaHubService } from "../prisma/prisma-hub.service";
 import { CbarFxService, type ParsedCbarDoc } from "./cbar-fx.service";
-import { ReferencePolicyService } from "./reference-policy.service";
-
-type Decimal = Prisma.Decimal;
-const Decimal = Prisma.Decimal;
-
-function eqValue4(a: Prisma.Decimal | number, b: Prisma.Decimal | number): boolean {
-  const da = a instanceof Decimal ? a : new Decimal(a);
-  const db = b instanceof Decimal ? b : new Decimal(b);
-  return da.toDecimalPlaces(4).equals(db.toDecimalPlaces(4));
-}
 
 /** DD.MM.YYYY из XML → дата для @db.Date (UTC полдень). */
 export function bakuDdMmYyyyToRateDate(ddMmYyyy: string): Date {
@@ -25,24 +17,31 @@ export function bakuDdMmYyyyToRateDate(ddMmYyyy: string): Date {
   return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
 }
 
-function previousUtcDate(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - 1, 12, 0, 0, 0),
-  );
-}
-
 /**
  * CBAR ingest into era_data_hub (hub SoR only).
+ * The XML `Date` attribute is the rate day. An unchanged value versus yesterday is still FINAL.
  */
 @Injectable()
-export class CbarRateSyncService {
+export class CbarRateSyncService implements OnModuleInit {
   private readonly logger = new Logger(CbarRateSyncService.name);
 
   constructor(
     private readonly hub: PrismaHubService,
     private readonly cbar: CbarFxService,
-    private readonly fxConfig: ReferencePolicyService,
   ) {}
+
+  /** Rows stored as PRELIMINARY only because USD/EUR matched the previous day. */
+  async onModuleInit(): Promise<void> {
+    const promoted = await this.hub.cbarOfficialRate.updateMany({
+      where: { status: CbarRateStatus.PRELIMINARY },
+      data: { status: CbarRateStatus.FINAL },
+    });
+    if (promoted.count > 0) {
+      this.logger.log(
+        `CBAR promoted ${promoted.count} PRELIMINARY rows to FINAL (unchanged rate is official)`,
+      );
+    }
+  }
 
   async syncTodayFromCbar(): Promise<void> {
     if (!this.cbar.isExternalCbarFetchEnabled()) {
@@ -94,7 +93,7 @@ export class CbarRateSyncService {
     const pub = doc.publishedDateBaku;
     if (!pub) return;
     const rateDate = bakuDdMmYyyyToRateDate(pub);
-    const status = await this.resolveStatusForDay(rateDate, doc);
+    const status = CbarRateStatus.FINAL;
 
     for (const r of doc.rates) {
       const code = r.code.trim().toUpperCase();
@@ -125,74 +124,5 @@ export class CbarRateSyncService {
     this.logger.log(
       `CBAR rates upserted date=${pub} rows=${doc.rates.length} status=${status}`,
     );
-  }
-
-  private async resolveStatusForDay(
-    rateDate: Date,
-    doc: ParsedCbarDoc,
-  ): Promise<CbarRateStatus> {
-    const existing = await this.hub.cbarOfficialRate.findFirst({
-      where: { rateDate },
-    });
-    if (existing?.status === CbarRateStatus.FINAL) {
-      return CbarRateStatus.FINAL;
-    }
-
-    if (existing?.status === CbarRateStatus.PRELIMINARY) {
-      if (await this.storedMainChangedVsDoc(doc, rateDate)) {
-        return CbarRateStatus.FINAL;
-      }
-    }
-
-    const prevDate = previousUtcDate(rateDate);
-    const prevUsd = await this.hub.cbarOfficialRate.findUnique({
-      where: {
-        rateDate_currencyCode: {
-          rateDate: prevDate,
-          currencyCode: "USD",
-        },
-      },
-    });
-    const prevEur = await this.hub.cbarOfficialRate.findUnique({
-      where: {
-        rateDate_currencyCode: {
-          rateDate: prevDate,
-          currencyCode: "EUR",
-        },
-      },
-    });
-
-    const newUsd = doc.rates.find((x) => x.code.toUpperCase() === "USD");
-    const newEur = doc.rates.find((x) => x.code.toUpperCase() === "EUR");
-
-    if (!prevUsd || !prevEur || !newUsd || !newEur) {
-      return CbarRateStatus.FINAL;
-    }
-
-    const usdMatch = eqValue4(prevUsd.value, newUsd.value);
-    const eurMatch = eqValue4(prevEur.value, newEur.value);
-    if (usdMatch && eurMatch) {
-      return CbarRateStatus.PRELIMINARY;
-    }
-    return CbarRateStatus.FINAL;
-  }
-
-  private async storedMainChangedVsDoc(
-    doc: ParsedCbarDoc,
-    rateDate: Date,
-  ): Promise<boolean> {
-    const checkCodes = await this.fxConfig.getFxCbarCheckCurrencyCodes();
-    for (const code of checkCodes) {
-      const row = await this.hub.cbarOfficialRate.findUnique({
-        where: {
-          rateDate_currencyCode: { rateDate, currencyCode: code },
-        },
-      });
-      const fresh = doc.rates.find((x) => x.code.toUpperCase() === code);
-      if (row && fresh && !eqValue4(row.value, fresh.value)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

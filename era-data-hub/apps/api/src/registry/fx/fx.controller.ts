@@ -18,9 +18,16 @@ export class FxController {
   }
 
   @Get("rates")
-  @ApiOperation({ summary: "Official CBAR rates on date" })
-  rates(@Query("date") date?: string, @Query("symbols") symbols?: string) {
-    return this.fx.getRates(date, symbols);
+  @ApiOperation({
+    summary:
+      "Official CBAR FINAL rates on date. fallback=previous returns the latest earlier FINAL when that date has none (dashboard only).",
+  })
+  rates(
+    @Query("date") date?: string,
+    @Query("symbols") symbols?: string,
+    @Query("fallback") fallback?: string,
+  ) {
+    return this.fx.getRates(date, symbols, fallback);
   }
 
   @Get("rates/range")
