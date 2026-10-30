@@ -476,18 +476,33 @@ function Wait-DeployStagingAfterBuild {
         # Never accept a SHA-unrelated recent success (false green from prior wave).
         # While unmatched, only watch active runs that started after this wait began.
         if ($forSha.Count -eq 0) {
-            $activeAny = @($json | Where-Object {
-                $_.status -in @("queued", "in_progress", "waiting", "pending") -and
+            # workflow_run headSha is often the default-branch tip, not the merge SHA,
+            # and displayTitle may be plain "Deploy staging". Accept only runs that
+            # started around this wait (not a prior wave's 12m-old success).
+            $fresh = @($json | Where-Object {
                 (ConvertTo-UtcFromGhTime $_.createdAt) -gt $waitStartedUtc.AddMinutes(-2)
+            })
+            $activeAny = @($fresh | Where-Object {
+                $_.status -in @("queued", "in_progress", "waiting", "pending")
             } | Select-Object -First 1)
             if ($activeAny) {
-                Write-Host "Watching Deploy staging $($activeAny.databaseId) (SHA match pending)..."
+                Write-Host "Watching Deploy staging $($activeAny.databaseId) (post-build, SHA unmatched)..."
                 gh run watch $activeAny.databaseId --exit-status
                 if ($LASTEXITCODE -ne 0) { throw "Deploy staging failed: $($activeAny.url)" }
-                # Re-list next loop so success is accepted only after SHA/title match.
-                Start-Sleep -Seconds 5
-                continue
+                Write-Host ("OK Deploy staging: {0}" -f $activeAny.url)
+                return
             }
+            $doneFresh = @($fresh | Where-Object {
+                $_.status -eq "completed" -and $_.conclusion -eq "success"
+            } | Select-Object -First 1)
+            if ($doneFresh) {
+                Write-Host ("OK Deploy staging (fresh post-build): {0}" -f $doneFresh.url)
+                return
+            }
+            $failedFresh = @($fresh | Where-Object {
+                $_.status -eq "completed" -and $_.conclusion -eq "failure"
+            } | Select-Object -First 1)
+            if ($failedFresh) { throw "Deploy staging failed: $($failedFresh.url)" }
             Start-Sleep -Seconds 20
             continue
         }
