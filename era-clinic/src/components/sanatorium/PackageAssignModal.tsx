@@ -306,6 +306,7 @@ export function PackageAssignModal({
   const [replaceBatchId, setReplaceBatchId] = useState<string | null>(null);
   const [replaceReason, setReplaceReason] = useState("");
   const [packagePin, setPackagePin] = useState<string | null>(null);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const [pendingCancel, setPendingCancel] = useState<Set<string>>(new Set());
   const [pendingCut, setPendingCut] = useState<Record<string, number>>({});
 
@@ -543,6 +544,20 @@ export function PackageAssignModal({
     !blockReason && (draft.length > 0 || hasPendingAdjust || (formLane === "package" && Boolean(formCode)));
   const canSaveExtras = !clinicalLock && (extraDraft.length > 0 || formLane === "extra");
   const canSave = !busy && (canSavePackage || canSaveExtras);
+  const unsaved =
+    canSavePackage ||
+    canSaveExtras ||
+    replaceFrom !== "" ||
+    replaceTo !== "" ||
+    replaceReason.trim() !== "";
+  function requestClose() {
+    if (busy) return;
+    if (unsaved) {
+      setDiscardOpen(true);
+      return;
+    }
+    onClose();
+  }
 
   const leftoverDraft = useMemo(() => {
     const used = new Set<string>();
@@ -1360,9 +1375,7 @@ export function PackageAssignModal({
     <ModalShell
       open={open}
       title={labels.title}
-      onClose={() => {
-        if (!busy) onClose();
-      }}
+      onClose={requestClose}
       maxWidthClass={EPISODE_MODAL_CLASS}
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
@@ -1371,7 +1384,7 @@ export function PackageAssignModal({
             type="button"
             className={SECONDARY_BUTTON_CLASS}
             disabled={busy}
-            onClick={onClose}
+            onClick={requestClose}
           >
             {cancelLabel}
           </button>
@@ -2058,6 +2071,44 @@ export function PackageAssignModal({
       </div>
     </ModalShell>
   );
-  if (typeof document === "undefined") return shell;
-  return createPortal(shell, document.body);
+  const discard = (
+    <ModalShell
+      open={discardOpen}
+      title={tPhysio("packageAssignDiscardTitle")}
+      onClose={() => setDiscardOpen(false)}
+      overlayZClass="z-[400]"
+      maxWidthClass="max-w-md"
+      footer={
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => setDiscardOpen(false)}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => {
+              setDiscardOpen(false);
+              onClose();
+            }}
+          >
+            {tPhysio("packageAssignDiscardConfirm")}
+          </button>
+        </div>
+      }
+    >
+      <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignDiscardBody")}</p>
+    </ModalShell>
+  );
+  const tree = (
+    <>
+      {shell}
+      {discard}
+    </>
+  );
+  if (typeof document === "undefined") return tree;
+  return createPortal(tree, document.body);
 }
