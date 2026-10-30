@@ -37,7 +37,7 @@ import {
   parseTransferQuota,
 } from "@/domain/sanatorium/package-assign-quota";
 import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
-import { addBakuDays, bakuDateKey, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDateDisplay, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
 export type PackageBalanceRow = {
   procedureCode: string;
@@ -1034,6 +1034,10 @@ export function PackageAssignModal({
     const hasAdjust =
       cancelKeys.size > 0 || Object.values(cuts).some((n) => n > 0);
     if (lines.length === 0 && !hasAdjust && extras.length === 0) {
+      if (replaceFrom !== "" || replaceTo !== "" || replaceReason.trim() !== "") {
+        await submitReplace();
+        return;
+      }
       onClose();
       return;
     }
@@ -1466,7 +1470,7 @@ export function PackageAssignModal({
                             <ul className={`mt-1 space-y-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
                               {b.transfers!.map((row, index) => (
                                 <li key={`${row.createdAt}-${index}`}>
-                                  {bakuDateKey(new Date(row.createdAt))} · {row.qty} · {row.reason}
+                                  {bakuDateDisplay(row.createdAt)} · {row.qty} · {row.reason}
                                 </li>
                               ))}
                             </ul>
@@ -2090,12 +2094,13 @@ export function PackageAssignModal({
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
+            disabled={busy}
             onClick={() => {
               setDiscardOpen(false);
-              onClose();
+              void save(startOpen ? { date: startDate, hour: startHour } : undefined);
             }}
           >
-            {tPhysio("packageAssignDiscardConfirm")}
+            {labels.save}
           </button>
         </div>
       }

@@ -7,7 +7,9 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
-**BE deepen (2026-08-17):** Green Scaffold BE wave 5 — negative-path suites `__tests__/cli-*-negative.spec.ts`.  
+**BE deepen (2026-08-17):** Green Scaffold BE wave 5 — negative-path suites `__tests__/cli-*-negative.spec.ts`.
+
+**Civil date labels (2026-10-30):** Print sheets, episode labels, the patient stay date, and package-transfer dates render `дд.мм.гггг` via `bakuDateDisplay`. Pickers stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.  
 **Scope-cut:** AC-CLI-LAB = lab orders ops (not live HL7). AC-CLI-CASH = cashier settle/ops (not live KKM). HL7 CLI-23 + fiscal CLI-24 = External residual (like Hotel HOT-02).
 
 **In-house room on the course (2026-10-30):** `handleRoomChanged` and `handleStayProductChanged` write `roomNumber` on every OPEN episode of the reservation and on in-progress visits. The card move already publishes `ROOM_CHANGED` through relocate; an in-house schedule room change publishes the same event. Does **not** lift AC-CLI-EPISODE off 🟡. CLI-55 stays SCREEN.
@@ -68,7 +70,7 @@ Do not call this table «product readiness».
 | Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 | CLI-55 / AC-CLI-EPISODE | Episode as care course | Out of BE plan | ADR `clinic-episode-as-clinical-course`; SCREEN W1–W5; AC stays 🟡 until field UAT; do not reopen AC-CLI-PT demographics anamnesis |
 | CLI-56 | Episode care team (multi-doctor) | Out of BE plan | ADR `clinic-episode-care-team`; SCREEN; assigned-only scope + card gate; appointments link deferred |
-| CLI-57 | Package/extras assign + plan-before-pay | Out of BE plan | ADR `clinic-extra-procedure-route` + assign-modal leftover `*_POOL` off Save, replace, and plus; Saxla same-block redispatch + modal № (2026-10-30); close or cancel asks before dropping an unsaved list; day-end cron (today seated + overdue + unseated before today); extra-tickets ask for room or name and omit days before today (2026-10-30); SCREEN; UAT open; unit passes for sweep/redispatch attach; no field negative path; not Scaffold ✅ |
+| CLI-57 | Package/extras assign + plan-before-pay | Out of BE plan | ADR `clinic-extra-procedure-route` + assign-modal leftover `*_POOL` off Save, replace, and plus; Saxla same-block redispatch + modal № (2026-10-30); close or cancel asks to save; blue saves, gray returns; day-end cron (today seated + overdue + unseated before today); extra-tickets ask for room or name and omit days before today (2026-10-30); SCREEN; UAT open; unit passes for sweep/redispatch attach; no field negative path; not Scaffold ✅ |
 | CLI-61 / AC-CLI-WALKIN-PARTY | Walk-in groups list + ModalShell | Out of BE plan | ADR `clinic-walk-in-party`; SCREEN; send stamps `revenueCode`; UAT §11a open; unit placeholders only; not Scaffold ✅ |
 | CLI-62 / AC-CLI-OPEN-ATTEND | Open attendance + SAME_DAY window | Out of BE plan | ADR `clinic-open-attendance`; SCREEN; OPEN unpaid extras day-bucket pin + Pay keeps pin (2026-10-30); helper unit tests + code refuses OPEN DnD / SAME_DAY without cabin; UAT §11b open; not Scaffold ✅ |
 
