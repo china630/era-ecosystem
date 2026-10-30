@@ -258,7 +258,8 @@ describe("AC-CLI-SAN-PKG unknown program code", () => {
         {
           instanceId: "inst-1",
           procedureCode: "PHYSIO_POOL",
-          quotaTotal: 24,
+          // Stay-night / guest-day cap (quotaFor) may shrink template 24 → 9.
+          quotaTotal: 9,
           quotaUsed: 0,
         },
       ],

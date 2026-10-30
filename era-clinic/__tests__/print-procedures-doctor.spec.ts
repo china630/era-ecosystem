@@ -41,11 +41,11 @@ describe("procedure print doctor column", () => {
     const groups = appendCheckoutMarker(
       [
         {
-          date: "27/10/2026",
+          date: "27.10.2026",
           rows: [
             {
               no: 1,
-              date: "27/10/2026",
+              date: "27.10.2026",
               name: "Darsonval",
               zones: "",
               settings: "",
@@ -61,7 +61,7 @@ describe("procedure print doctor column", () => {
       "2026-10-31",
       "Çıxış",
     );
-    expect(groups.map((group) => group.date)).toEqual(["27/10/2026", "31/10/2026"]);
+    expect(groups.map((group) => group.date)).toEqual(["27.10.2026", "31.10.2026"]);
     const last = groups[1]?.rows[0];
     expect(last?.checkout).toBe(true);
     expect(last?.time).toBe("12:00");

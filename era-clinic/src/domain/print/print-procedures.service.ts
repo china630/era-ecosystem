@@ -85,9 +85,15 @@ export function appendCheckoutMarker(
   else next.push({ date, rows: [marker] });
   next.sort((a, b) => {
     const key = (value: string) => {
-      const [day, month, year] = value.split(".");
+      const parts = value.includes(".")
+        ? value.split(".")
+        : value.includes("/")
+          ? value.split("/")
+          : null;
+      if (!parts || parts.length !== 3) return value;
+      const [day, month, year] = parts;
       if (!day || !month || !year) return value;
-      return `${year}-${month}-${day}`;
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     };
     return key(a.date).localeCompare(key(b.date));
   });
