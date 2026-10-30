@@ -10,6 +10,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   parseApiError,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { fileToWorkforceImportBody, workforceFetch } from "../../../../lib/workforce-fetch";
 
@@ -60,13 +61,11 @@ type StepFile = { body: { csv?: string; xlsxBase64?: string }; name: string };
 function bakuDate(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
+  if (Number.isNaN(d.getTime())) {
+    const ymd = iso.slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? bakuDateDisplay(ymd) : ymd;
+  }
+  return bakuDateDisplay(iso);
 }
 
 export default function WorkforceMigrationPage() {

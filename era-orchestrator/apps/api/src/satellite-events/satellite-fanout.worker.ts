@@ -15,6 +15,7 @@ import {
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 import { WorkforceRegistryService } from "../workforce/workforce-registry.service";
+import { bullJobId } from "./bull-job-id";
 import { forwardToClinic } from "./clinic-bridge.client";
 import { forwardToSatellite } from "./satellite-bridge.client";
 import {
@@ -94,7 +95,7 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
     const correlationId =
       typeof event.correlationId === "string" ? event.correlationId : undefined;
     const jobId = correlationId
-      ? `staff-${satelliteKey}-${correlationId}`
+      ? bullJobId(`staff-${satelliteKey}-${correlationId}`)
       : `staff-${satelliteKey}-${Date.now()}`;
 
     await this.getQueue().add(
@@ -122,7 +123,7 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
     const correlationId =
       typeof event.correlationId === "string" ? event.correlationId : undefined;
     const jobId = correlationId
-      ? `clinic-${correlationId}`
+      ? bullJobId(`clinic-${correlationId}`)
       : `clinic-${Date.now()}`;
 
     await this.getQueue().add(
