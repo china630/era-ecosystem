@@ -303,10 +303,19 @@ function Get-ScopeName {
 function Stage-ScopeFiles {
     param([string]$ScopeName, [string[]]$Files)
     $entry = Resolve-ScopeEntry $ScopeName
+    $satDir = ""
+    if ($manifest.satellites.ContainsKey($ScopeName)) {
+        $satDir = $manifest.satellites[$ScopeName].dir
+    }
     $toStage = @()
     foreach ($f in $Files) {
-        # rest has empty paths; longest-prefix returns "rest" for leftovers.
-        if ((Get-BestWaveScope $f) -eq $ScopeName) {
+        $norm = ($f -replace '\\', '/').TrimStart('./')
+        # Wave buckets use longest-prefix (clinic files fall in "rest").
+        # Named satellite/core -Scope must match that scope's paths/dir.
+        if ($ScopeName -eq "rest") {
+            if ((Get-BestWaveScope $norm) -eq "rest") { $toStage += $f }
+        }
+        elseif ((Get-BestWaveScope $norm) -eq $ScopeName -or (Test-PathMatch $norm $entry $satDir)) {
             $toStage += $f
         }
     }
