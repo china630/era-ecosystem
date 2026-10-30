@@ -18,6 +18,7 @@ import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import { reconciliationDocumentUuid } from "./reconciliation-document-id";
 import type { GovSignaturePurpose } from "./gov-signature.adapter";
+import { GovSignatureAdapterFactory } from "./gov-signature.adapters";
 import { readIntegrationStubs } from "../organizations/integration-stubs";
 
 const MOCK_DELAY_MS = 2000;

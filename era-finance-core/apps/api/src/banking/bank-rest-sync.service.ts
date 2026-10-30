@@ -79,7 +79,7 @@ export class BankRestSyncService {
       if (
         storedRaw &&
         this.credentials.looksEncrypted(storedRaw) &&
-        !tokenFromDb
+        !token
       ) {
         const msg = `${p.displayName}: не удалось расшифровать токен — проверьте BANKING_CREDENTIALS_ENCRYPTION_KEY`;
         this.logger.warn(`${msg} (org ${organizationId})`);
