@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { todayBakuYmd } from "@era/satellite-kit/time";
@@ -19,8 +19,19 @@ import {
 } from "@era/satellite-kit/ui";
 import { ClipboardList, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { CARD_CLASS } from "@/lib/design-system";
+import BuffetWeekTemplatePanel from "@/components/BuffetWeekTemplatePanel";
+import BuffetManagementMealsPanel from "@/components/BuffetManagementMealsPanel";
+import BuffetStaffMealsPanel from "@/components/BuffetStaffMealsPanel";
+import BuffetCostRunPanel from "@/components/BuffetCostRunPanel";
+import BuffetForecastPanel from "@/components/BuffetForecastPanel";
+import BuffetPageChrome from "@/components/BuffetPageChrome";
 
-type Outlet = { id: string; code: string; name: string };
+type Outlet = {
+  id: string;
+  code: string;
+  name: string;
+  capBuffetPlanner?: boolean;
+};
 type PlanRow = {
   id: string;
   outletId: string;
@@ -91,9 +102,22 @@ const emptyLineForm = (): LineForm => ({
   wastePct: "0",
 });
 
-export default function BuffetAdminPanel() {
+export type BuffetSection =
+  | "plans"
+  | "templates"
+  | "management"
+  | "costRun"
+  | "forecast"
+  | "norms";
+
+export default function BuffetAdminPanel({
+  section = "plans",
+}: {
+  section?: BuffetSection;
+}) {
   const t = useTranslations("admin.buffet");
   const tc = useTranslations("common");
+  const tn = useTranslations("nav");
 
   const today = todayBakuYmd();
   const [outlets, setOutlets] = useState<Outlet[]>([]);
@@ -101,16 +125,56 @@ export default function BuffetAdminPanel() {
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(() => addCivilDays(today, 6));
   const [statusFilter, setStatusFilter] = useState("");
+  const [kindFilter, setKindFilter] = useState<"GUEST" | "STAFF" | "">("GUEST");
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [compositionOpen, setCompositionOpen] = useState(false);
   const [planModal, setPlanModal] = useState<"create" | "edit" | "copy" | null>(null);
+  const [spawnOpen, setSpawnOpen] = useState(false);
+  const [spawnTemplateId, setSpawnTemplateId] = useState("");
+  const [spawnWeekStart, setSpawnWeekStart] = useState(() => today);
+  const [spawnCoversSource, setSpawnCoversSource] = useState<"MANUAL" | "HOTEL">("MANUAL");
+  const [spawnAdult, setSpawnAdult] = useState("0");
+  const [spawnChild, setSpawnChild] = useState("0");
+  const [spawnFactor, setSpawnFactor] = useState("80");
+  const [templatesForSpawn, setTemplatesForSpawn] = useState<
+    Array<{ id: string; name: string; active: boolean }>
+  >([]);
   const [copySourceId, setCopySourceId] = useState<string | null>(null);
   const [planForm, setPlanForm] = useState<PlanForm>(emptyPlanForm(""));
   const [lineModal, setLineModal] = useState<"create" | "edit" | null>(null);
   const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm());
   const [menuOptions, setMenuOptions] = useState<MenuOption[]>([]);
+  const viewTab = section;
+  const [coversRollup, setCoversRollup] = useState<{
+    forecastTotal: number;
+    management: { count: number };
+    staff: { coversStaff: number };
+    plan: { coversTotal: number } | null;
+    hotel: { guestNights: number; source: string } | null;
+  } | null>(null);
+  const [rollupNonce, setRollupNonce] = useState(0);
   const [materialsOpen, setMaterialsOpen] = useState(false);
+  const tmplChromeRef = useRef<{ openCreate: () => void } | null>(null);
+  const mgmtChromeRef = useRef<{
+    openRoster: () => void;
+    openSignToday: () => void;
+  } | null>(null);
+  const forecastChromeRef = useRef<{
+    syncHotel: () => void;
+    saveNorms: () => void;
+    saving: boolean;
+    loading: boolean;
+  } | null>(null);
+  const costChromeRef = useRef<{
+    refresh: () => void;
+    financeHref: string | null;
+    loading: boolean;
+    toggleStaffOverride: () => void;
+    staffOverrideOpen: boolean;
+  } | null>(null);
+  const [chromeTick, setChromeTick] = useState(0);
+  const bumpChrome = useCallback(() => setChromeTick((n) => n + 1), []);
   const [materials, setMaterials] = useState<{
     missingBomCount: number;
     rows: Array<{
@@ -121,6 +185,8 @@ export default function BuffetAdminPanel() {
       warning: string | null;
     }>;
   } | null>(null);
+  const [buffetModuleActive, setBuffetModuleActive] = useState<boolean | null>(null);
+  const [outletCostModel, setOutletCostModel] = useState<string | null>(null);
 
   const selected = useMemo(
     () => plans.find((p) => p.id === selectedId) ?? null,
@@ -168,9 +234,20 @@ export default function BuffetAdminPanel() {
       showApiError(data, t("loadFailed"));
       return;
     }
-    const list = Array.isArray(data?.outlets) ? (data.outlets as Outlet[]) : [];
+    const raw = Array.isArray(data?.outlets) ? (data.outlets as Outlet[]) : [];
+    const list =
+      raw.some((o) => o.capBuffetPlanner === true)
+        ? raw.filter((o) => o.capBuffetPlanner === true)
+        : raw;
     setOutlets(list);
-    if (!outletId && list[0]) setOutletId(list[0].id);
+    if (!outletId && list.length > 0) {
+      // Prefer buffet twin NAFTANI over lab KAFE/café so chef path does not land on café.
+      const preferred =
+        list.find((o) => o.code.trim().toUpperCase() === "NAFTANI") ??
+        list.find((o) => !/^(KAFE|CAFE)$/i.test(o.code.trim())) ??
+        list[0];
+      setOutletId(preferred.id);
+    }
   }, [outletId, t]);
 
   const loadPlans = useCallback(async () => {
@@ -215,12 +292,80 @@ export default function BuffetAdminPanel() {
   }, [loadOutlets]);
 
   useEffect(() => {
+    void fetch("/api/auth/me")
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        const body = (data?.data ?? data) as { activeModules?: string[] } | null;
+        const mods = Array.isArray(body?.activeModules) ? body!.activeModules! : [];
+        setBuffetModuleActive(mods.includes("fnb_buffet_planner"));
+      })
+      .catch(() => setBuffetModuleActive(null));
+  }, []);
+
+  useEffect(() => {
+    if (!outletId) {
+      setOutletCostModel(null);
+      return;
+    }
+    void fetch("/api/settings/buffet-cost")
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        const body = (data?.data ?? data) as {
+          orgDefaults?: { buffetCostModel?: string };
+          outletOverrides?: Record<string, { buffetCostModel?: string }>;
+        } | null;
+        if (!body) {
+          setOutletCostModel(null);
+          return;
+        }
+        const model =
+          body.outletOverrides?.[outletId]?.buffetCostModel ??
+          body.orgDefaults?.buffetCostModel ??
+          null;
+        setOutletCostModel(model);
+      })
+      .catch(() => setOutletCostModel(null));
+  }, [outletId]);
+
+  useEffect(() => {
     void loadPlans();
   }, [loadPlans]);
 
   useEffect(() => {
     if (selected && compositionOpen) void loadMenuItems(selected.outletId);
   }, [selected, compositionOpen, loadMenuItems]);
+
+  useEffect(() => {
+    if (!selected) {
+      setCoversRollup(null);
+      return;
+    }
+    // Refetch when composition reopens or management meals change (rollupNonce).
+    const q = new URLSearchParams({
+      outletId: selected.outletId,
+      date: selected.serviceDate,
+      meal: selected.meal,
+    });
+    void fetch(`/api/admin/buffet/covers-rollup?${q}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.forecastTotal === "number") {
+          setCoversRollup({
+            forecastTotal: d.forecastTotal,
+            management: { count: d.management?.count ?? 0 },
+            staff: { coversStaff: d.staff?.coversStaff ?? 0 },
+            plan: d.plan ?? null,
+            hotel:
+              d.hotel && typeof d.hotel.guestNights === "number"
+                ? { guestNights: d.hotel.guestNights, source: String(d.hotel.source ?? "MANUAL") }
+                : null,
+          });
+        } else {
+          setCoversRollup(null);
+        }
+      })
+      .catch(() => setCoversRollup(null));
+  }, [selected, compositionOpen, rollupNonce]);
 
   function openCreatePlan() {
     setPlanForm(emptyPlanForm(outletId));
@@ -507,9 +652,189 @@ export default function BuffetAdminPanel() {
     await loadPlans();
   }
 
+  const planCaptureOptions = useMemo(
+    () =>
+      plans.map((p) => ({
+        value: p.id,
+        label: `${p.serviceDate} · ${t(`meal.${p.meal}`)} · ${p.coversTotal}`,
+      })),
+    [plans, t],
+  );
+
+  const sectionTitle =
+    viewTab === "templates"
+      ? tn("buffetTemplates")
+      : viewTab === "management"
+        ? tn("buffetManagement")
+        : viewTab === "forecast"
+          ? tn("buffetForecast")
+          : viewTab === "norms"
+            ? tn("buffetNorms")
+            : viewTab === "costRun"
+              ? tn("buffetCostRun")
+              : tn("buffetPlans");
+  const sectionSubtitle =
+    viewTab === "plans"
+      ? t("plansHierarchyHint")
+      : viewTab === "templates"
+        ? t("templatesChromeHint")
+        : viewTab === "management"
+          ? t("managementHint")
+          : viewTab === "forecast"
+            ? t("forecastHint")
+            : viewTab === "norms"
+              ? t("normsHint")
+              : viewTab === "costRun"
+                ? t("costRunHint")
+                : t("subtitle");
+
+  const headerActions = (void chromeTick,
+    viewTab === "plans" ? (
+      <>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          onClick={() => {
+            const spawnKind = kindFilter === "STAFF" ? "STAFF" : "GUEST";
+            if (spawnKind === "STAFF") setSpawnCoversSource("MANUAL");
+            setSpawnOpen(true);
+            void fetch(
+              `/api/admin/buffet/templates?outletId=${encodeURIComponent(outletId)}&kind=${spawnKind}`,
+            )
+              .then((r) => (r.ok ? r.json() : null))
+              .then((d) => {
+                const rows = Array.isArray(d?.templates) ? d.templates : [];
+                setTemplatesForSpawn(rows);
+                const active = rows.find((r: { active: boolean }) => r.active);
+                setSpawnTemplateId(active?.id || rows[0]?.id || "");
+              })
+              .catch(() => undefined);
+            void fetch("/api/settings/buffet-cost")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((d) => {
+                const org = d?.settings?.orgDefaults;
+                const pct =
+                  spawnKind === "STAFF"
+                    ? (org?.productionFactorPctStaff ?? 100)
+                    : (org?.productionFactorPctGuest ?? 80);
+                setSpawnFactor(String(pct));
+              })
+              .catch(() => undefined);
+          }}
+        >
+          {t("spawnWeek")}
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          onClick={() => openCreatePlan()}
+        >
+          <Plus className="mr-1 inline h-4 w-4" />
+          {t("newPlan")}
+        </button>
+      </>
+    ) : viewTab === "templates" ? (
+      <button
+        type="button"
+        className={PRIMARY_BUTTON_CLASS}
+        disabled={!outletId || !tmplChromeRef.current}
+        onClick={() => tmplChromeRef.current?.openCreate()}
+      >
+        <Plus className="mr-1 inline h-4 w-4" />
+        {t("newTemplate")}
+      </button>
+    ) : viewTab === "management" ? (
+      <>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={!outletId || !mgmtChromeRef.current}
+          onClick={() => mgmtChromeRef.current?.openRoster()}
+        >
+          {t("eatersRoster")}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={!outletId || !mgmtChromeRef.current}
+          onClick={() => mgmtChromeRef.current?.openSignToday()}
+        >
+          {t("signManagementToday")}
+        </button>
+      </>
+    ) : viewTab === "forecast" ? (
+      <button
+        type="button"
+        className={PRIMARY_BUTTON_CLASS}
+        disabled={
+          !forecastChromeRef.current ||
+          forecastChromeRef.current.loading ||
+          !fromDate ||
+          !toDate
+        }
+        onClick={() => forecastChromeRef.current?.syncHotel()}
+      >
+        {t("forecastSyncHotel")}
+      </button>
+    ) : viewTab === "norms" ? (
+      <button
+        type="button"
+        className={PRIMARY_BUTTON_CLASS}
+        disabled={!forecastChromeRef.current || forecastChromeRef.current.saving}
+        onClick={() => forecastChromeRef.current?.saveNorms()}
+      >
+        {forecastChromeRef.current?.saving ? "…" : t("forecastSaveNorms")}
+      </button>
+    ) : viewTab === "costRun" ? (
+      <>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={
+            !outletId ||
+            !costChromeRef.current ||
+            costChromeRef.current.loading
+          }
+          onClick={() => costChromeRef.current?.refresh()}
+        >
+          {costChromeRef.current?.loading ? "…" : t("costRunRefresh")}
+        </button>
+        {costChromeRef.current?.financeHref ? (
+          <a
+            href={costChromeRef.current.financeHref}
+            className={SECONDARY_BUTTON_CLASS}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("costRunOpenFinance")}
+          </a>
+        ) : null}
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={!costChromeRef.current}
+          onClick={() => costChromeRef.current?.toggleStaffOverride()}
+        >
+          {costChromeRef.current?.staffOverrideOpen
+            ? t("costRunStaffOverrideHide")
+            : t("costRunStaffOverrideShow")}
+        </button>
+      </>
+    ) : null);
+
   return (
     <div className="space-y-4">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={sectionTitle} subtitle={sectionSubtitle} actions={headerActions} />
+
+      {buffetModuleActive === false ? (
+        <div className={`${CARD_CLASS} border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950`}>
+          <p className="m-0 font-medium">{t("moduleMissingTitle")}</p>
+          <p className="mt-1 m-0 text-amber-900">{t("moduleMissingBody")}</p>
+          <Link href="/admin/settings" className="mt-2 inline-block text-[#2980B9] underline">
+            {t("moduleMissingSyncLink")}
+          </Link>
+        </div>
+      ) : null}
 
       {outlets.length === 0 ? (
         <div className={`${CARD_CLASS} p-4 text-sm text-[#7F8C8D]`}>
@@ -520,45 +845,132 @@ export default function BuffetAdminPanel() {
         </div>
       ) : null}
 
-      <div className={`${CARD_CLASS} space-y-3 p-4`}>
-        <FieldRow cols={4} className="items-end">
-          <CatalogField
-            kind={"ENTITY_REF" as CatalogFieldKind}
-            label={t("outlet")}
-            value={outletId}
-            options={outletOptions}
-            onChange={(next) => setOutletId(Array.isArray(next) ? next[0] ?? "" : next)}
-          />
-          <Field
-            label={t("fromDate")}
-            preset="date"
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-          <Field
-            label={t("toDate")}
-            preset="date"
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-          <CatalogField
-            kind={"CLOSED_SMALL" as CatalogFieldKind}
-            label={t("statusFilter")}
-            value={statusFilter}
-            options={statusOptions}
-            onChange={(next) => setStatusFilter(Array.isArray(next) ? next[0] ?? "" : next)}
-          />
-        </FieldRow>
-        <div className="flex justify-end">
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => openCreatePlan()}>
-            <Plus className="mr-1 inline h-4 w-4" />
-            {t("newPlan")}
-          </button>
-        </div>
-      </div>
+      <BuffetPageChrome
+        outlets={outlets}
+        outletId={outletId}
+        onOutletChange={setOutletId}
+        showDates={viewTab !== "templates"}
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromDate={setFromDate}
+        onToDate={setToDate}
+        showKind={viewTab === "plans" || viewTab === "templates"}
+        kindFilter={kindFilter === "STAFF" ? "STAFF" : "GUEST"}
+        onKindFilter={(k) => setKindFilter(k)}
+        showStatus={viewTab === "plans"}
+        statusFilter={statusFilter}
+        statusOptions={statusOptions}
+        onStatusFilter={setStatusFilter}
+        banner={
+          outletCostModel && outletCostModel !== "HYBRID" ? (
+            <p className="m-0 text-xs text-[#E67E22]">
+              {outletCostModel === "OFF"
+                ? t("outletModelOffBanner")
+                : t("outletModelLabel", { model: outletCostModel })}
+            </p>
+          ) : null
+        }
+      />
 
+      {viewTab === "templates" ? (
+        <BuffetWeekTemplatePanel
+          outletId={outletId}
+          kindFilter={kindFilter === "STAFF" ? "STAFF" : "GUEST"}
+          onKindFilterChange={(k) => setKindFilter(k)}
+          planOptions={planCaptureOptions}
+          onChromeReady={(api) => {
+            const first = !tmplChromeRef.current;
+            tmplChromeRef.current = api;
+            if (first) bumpChrome();
+          }}
+          hideInlineChrome
+        />
+      ) : null}
+
+      {viewTab === "management" ? (
+        <BuffetManagementMealsPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          onChanged={() => setRollupNonce((n) => n + 1)}
+          onChromeReady={(api) => {
+            const first = !mgmtChromeRef.current;
+            mgmtChromeRef.current = api;
+            if (first) bumpChrome();
+          }}
+          hideInlineChrome
+        />
+      ) : null}
+
+      {viewTab === "plans" && kindFilter === "STAFF" ? (
+        <BuffetStaffMealsPanel
+          outletId={outletId}
+          onChanged={() => setRollupNonce((n) => n + 1)}
+        />
+      ) : null}
+
+      {viewTab === "costRun" ? (
+        <BuffetCostRunPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          onGoForecast={() => {
+            window.location.href = "/admin/buffet/norms";
+          }}
+          onGoGuestNights={() => {
+            window.location.href = "/admin/buffet/forecast";
+          }}
+          onChromeReady={(api) => {
+            const prev = costChromeRef.current;
+            costChromeRef.current = api;
+            if (
+              !prev ||
+              prev.loading !== api.loading ||
+              prev.financeHref !== api.financeHref ||
+              prev.staffOverrideOpen !== api.staffOverrideOpen
+            ) {
+              bumpChrome();
+            }
+          }}
+          hideInlineChrome
+        />
+      ) : null}
+
+      {viewTab === "forecast" ? (
+        <BuffetForecastPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          mode="nights"
+          onChromeReady={(api) => {
+            const prev = forecastChromeRef.current;
+            forecastChromeRef.current = api;
+            if (!prev || prev.loading !== api.loading || prev.saving !== api.saving) {
+              bumpChrome();
+            }
+          }}
+          hideInlineChrome
+        />
+      ) : null}
+
+      {viewTab === "norms" ? (
+        <BuffetForecastPanel
+          outletId={outletId}
+          fromDate={fromDate}
+          toDate={toDate}
+          mode="norms"
+          onChromeReady={(api) => {
+            const prev = forecastChromeRef.current;
+            forecastChromeRef.current = api;
+            if (!prev || prev.loading !== api.loading || prev.saving !== api.saving) {
+              bumpChrome();
+            }
+          }}
+          hideInlineChrome
+        />
+      ) : null}
+
+      {viewTab === "plans" && kindFilter !== "STAFF" ? (
       <div className={`${CARD_CLASS} overflow-hidden`}>
         <div className="border-b px-3 py-2 text-sm font-semibold text-[#2C3E50]">{t("plansTitle")}</div>
         <div className="max-h-[70vh] overflow-auto">
@@ -664,6 +1076,7 @@ export default function BuffetAdminPanel() {
           </table>
         </div>
       </div>
+      ) : null}
 
       <ModalShell
         open={compositionOpen && selected != null}
@@ -683,6 +1096,40 @@ export default function BuffetAdminPanel() {
               })}{" "}
               · {t(`status.${selected.status}`)}
             </p>
+            {coversRollup ? (
+              <div className={`${CARD_CLASS} space-y-2 p-3`}>
+                <div className="text-sm font-semibold text-[#2C3E50]">{t("rollupCardTitle")}</div>
+                <dl className="grid gap-1 text-sm sm:grid-cols-2">
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupPlanCovers")}</dt>
+                    <dd className="tabular-nums">
+                      {(selected.coversAdult ?? 0) + (selected.coversChild ?? 0)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupManagement")}</dt>
+                    <dd className="tabular-nums">{coversRollup.management.count}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupStaff")}</dt>
+                    <dd className="tabular-nums">{coversRollup.staff.coversStaff}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-[#7F8C8D]">{t("rollupForecastTotal")}</dt>
+                    <dd className="tabular-nums font-medium">{coversRollup.forecastTotal}</dd>
+                  </div>
+                  {coversRollup.hotel ? (
+                    <div className="flex justify-between gap-2 sm:col-span-2">
+                      <dt className="text-[#7F8C8D]">{t("rollupHotelNights")}</dt>
+                      <dd className="tabular-nums">
+                        {coversRollup.hotel.guestNights} ({coversRollup.hotel.source})
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+                <p className="m-0 text-xs text-[#95A5A6]">{t("rollupCaption")}</p>
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {selected.status === "DRAFT" ? (
                 <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void setStatus("LOCKED")}>
@@ -801,6 +1248,127 @@ export default function BuffetAdminPanel() {
           onSubmit={() => setCompositionOpen(false)}
           cancelLabel={tc("cancel")}
           submitLabel={tc("close")}
+        />
+      </ModalShell>
+
+      <ModalShell
+        open={spawnOpen}
+        onClose={() => setSpawnOpen(false)}
+        title={t("spawnWeek")}
+      >
+        <div className="space-y-3">
+          <CatalogField
+            kind={"ENTITY_REF" as CatalogFieldKind}
+            label={t("template")}
+            value={spawnTemplateId}
+            options={templatesForSpawn.map((r) => ({
+              value: r.id,
+              label: `${r.name}${r.active ? "" : ` (${t("templateInactive")})`}`,
+            }))}
+            onChange={(next) =>
+              setSpawnTemplateId(Array.isArray(next) ? next[0] ?? "" : next)
+            }
+          />
+          <Field
+            label={t("weekStart")}
+            preset="date"
+            type="date"
+            value={spawnWeekStart}
+            onChange={(e) => setSpawnWeekStart(e.target.value)}
+          />
+          {kindFilter !== "STAFF" ? (
+            <CatalogField
+              kind={"CLOSED_SMALL" as CatalogFieldKind}
+              label={t("coversSource")}
+              value={spawnCoversSource}
+              options={[
+                { value: "MANUAL", label: t("coversSourceManual") },
+                { value: "HOTEL", label: t("coversSourceHotel") },
+              ]}
+              onChange={(next) =>
+                setSpawnCoversSource(
+                  (Array.isArray(next) ? next[0] : next) === "HOTEL" ? "HOTEL" : "MANUAL",
+                )
+              }
+            />
+          ) : null}
+          {spawnCoversSource === "MANUAL" || kindFilter === "STAFF" ? (
+            <FieldRow cols={2}>
+              <Field
+                label={t("coversAdult")}
+                preset="shortText"
+                inputMode="numeric"
+                value={spawnAdult}
+                onChange={(e) => setSpawnAdult(e.target.value)}
+              />
+              <Field
+                label={t("coversChild")}
+                preset="shortText"
+                inputMode="numeric"
+                value={spawnChild}
+                onChange={(e) => setSpawnChild(e.target.value)}
+              />
+            </FieldRow>
+          ) : null}
+          <Field
+            label={t("productionFactorPct")}
+            preset="shortText"
+            inputMode="numeric"
+            value={spawnFactor}
+            onChange={(e) => setSpawnFactor(e.target.value)}
+          />
+        </div>
+        <ModalFooter
+          onCancel={() => setSpawnOpen(false)}
+          onSubmit={() => {
+            void (async () => {
+              if (!spawnTemplateId) return;
+              const effectiveSource =
+                kindFilter === "STAFF" ? "MANUAL" : spawnCoversSource;
+              if (effectiveSource === "HOTEL") {
+                await fetch("/api/admin/buffet/guest-nights/sync-hotel", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    from: spawnWeekStart,
+                    to: addCivilDays(spawnWeekStart, 6),
+                    outletId: outletId || null,
+                  }),
+                }).catch(() => undefined);
+              }
+              const factorDefault = kindFilter === "STAFF" ? 100 : 80;
+              const res = await fetch(
+                `/api/admin/buffet/templates/${spawnTemplateId}/spawn`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    weekStart: spawnWeekStart,
+                    coversSource: effectiveSource,
+                    coversAdult:
+                      effectiveSource === "MANUAL" ? Number(spawnAdult) || 0 : undefined,
+                    coversChild:
+                      effectiveSource === "MANUAL" ? Number(spawnChild) || 0 : undefined,
+                    productionFactorPct: Number(spawnFactor) || factorDefault,
+                  }),
+                },
+              );
+              const data = await res.json().catch(() => null);
+              if (!res.ok) {
+                showApiError(data, t("spawnFailed"));
+                return;
+              }
+              if (data?.emptySlots > 0) {
+                showSuccess(t("spawnedWithEmpty", { empty: data.emptySlots }));
+              } else {
+                showSuccess(t("spawned", { created: data?.created?.length ?? 0, skipped: data?.skipped?.length ?? 0 }));
+              }
+              setSpawnOpen(false);
+              await loadPlans();
+            })();
+          }}
+          submitLabel={t("spawnWeek")}
+          cancelLabel={tc("cancel")}
         />
       </ModalShell>
 

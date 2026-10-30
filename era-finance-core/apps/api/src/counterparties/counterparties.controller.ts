@@ -263,6 +263,37 @@ export class CounterpartiesController {
     return { items: rows };
   }
 
+  @Get(":id/agency-commission-payable-snapshots")
+  @ApiOperation({
+    summary: "Hotel agency commission payable (AP) snapshots — batch id for purchase pay",
+  })
+  async listAgencyCommissionPayableSnapshots(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+  ) {
+    await this.svc.assertLocal(orgId, id);
+    const rows = await this.prisma.agencyCommissionPayableSnapshot.findMany({
+      where: {
+        organizationId: orgId,
+        OR: [{ counterpartyId: id }, { hotelAgencyId: id }],
+      },
+      orderBy: [{ asOfDate: "desc" }, { createdAt: "desc" }],
+      take: 20,
+      select: {
+        id: true,
+        agencyCode: true,
+        hotelBatchId: true,
+        asOfDate: true,
+        totalAmount: true,
+        lineCount: true,
+        currency: true,
+        correlationId: true,
+        createdAt: true,
+      },
+    });
+    return { items: rows };
+  }
+
   @Get("card-requests")
   @ApiOperation({ summary: "Companies and agencies waiting for a Finance card" })
   async cardRequests(@OrganizationId() orgId: string) {

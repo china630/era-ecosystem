@@ -9,6 +9,7 @@ describe("WorkforcePositionsService", () => {
       count: jest.fn(),
       update: jest.fn(),
     },
+    workforceJob: { findFirst: jest.fn() },
     orgUnit: { findFirst: jest.fn() },
     workforceEmployment: { count: jest.fn() },
   };
@@ -97,5 +98,36 @@ describe("WorkforcePositionsService", () => {
       expect.objectContaining({ action: "POSITION_ARCHIVED" }),
     );
     expect(satelliteEvents.enqueue).toHaveBeenCalled();
+  });
+
+  it("rejects parentPositionId that creates a cycle", async () => {
+    prisma.workforcePosition.findFirst
+      .mockResolvedValueOnce({
+        id: "p1",
+        totalSlots: 2,
+        orgUnit: { workforceScopeId: "scope1" },
+      })
+      .mockResolvedValueOnce({
+        id: "p2",
+        parentPositionId: "p1",
+      });
+    prisma.workforceEmployment.count.mockResolvedValue(0);
+
+    await expect(
+      svc.update("org1", "p1", "u1", { parentPositionId: "p2" }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("rejects self as parentPositionId", async () => {
+    prisma.workforcePosition.findFirst.mockResolvedValue({
+      id: "p1",
+      totalSlots: 2,
+      orgUnit: { workforceScopeId: "scope1" },
+    });
+    prisma.workforceEmployment.count.mockResolvedValue(0);
+
+    await expect(
+      svc.update("org1", "p1", "u1", { parentPositionId: "p1" }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

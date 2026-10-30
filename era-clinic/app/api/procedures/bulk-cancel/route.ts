@@ -11,7 +11,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { cancelProcedureOrder } from "@/domain/procedure/procedure-attendance.service";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
-import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import { placeOrPinOrders } from "@/domain/procedure/place-or-pin-orders";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const bodySchema = z.object({
@@ -132,6 +132,7 @@ export async function POST(req: Request) {
             sequenceIndex: src.sequenceIndex ?? i,
             bodyPart: src.bodyPart ?? pt.bodyPart ?? undefined,
             reservationId: reservationId ?? undefined,
+            schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
             status: "PROPOSED",
           },
         });
@@ -139,7 +140,7 @@ export async function POST(req: Request) {
         replaced++;
       }
       placed = (
-        await placeConfirmedProcedures(newIds, {
+        await placeOrPinOrders(newIds, {
           confirmedByUserId: session.sub,
         })
       ).placed;

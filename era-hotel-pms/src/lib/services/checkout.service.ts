@@ -128,6 +128,8 @@ export async function checkoutReservation(
   if (existing.status !== 'IN_HOUSE') {
     throw new Error('Check-out is only allowed for IN_HOUSE reservations');
   }
+  const { foldLooseGuestFolioOntoPrimary } = await import('@/lib/services/booking-folio.service');
+  await foldLooseGuestFolioOntoPrimary(id);
 
   if (opts?.moveGuestDebtToPayer && opts?.transferToGuestDebt) {
     throw Object.assign(new Error('Cannot move guest debt to payer and leave guest debt together'), {
@@ -483,6 +485,12 @@ export async function checkoutReservation(
   }
 
   const dispatch = await dispatchReservationCompleted(completed);
+  if (completed.agencyId) {
+    const { accrueOnCheckout } = await import('@/lib/services/agency-commission.service');
+    void accrueOnCheckout(id).catch((e) =>
+      console.error('Agency commission accrual failed', e),
+    );
+  }
   const { dispatchGuestCheckedOut } = await import('@/lib/integration/guest-lifecycle-events');
   void dispatchGuestCheckedOut({
     reservationId: id,

@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { runCronForEachTenant } from "@era/satellite-kit";
 import { fetchClinicPoolOrganizationIds } from "@/lib/cron-organization-ids";
@@ -31,11 +32,11 @@ export async function POST(req: Request) {
     if (gate.status === 503) {
       return NextResponse.json({ error: gate.reason }, { status: 503 });
     }
-    return NextResponse.json({
+    return jsonOk({
       skipped: true,
       reason: gate.reason,
       moduleKey: gate.moduleKey,
     });
   }
-  return NextResponse.json({ byOrganization: gate.results });
+  return jsonOk({ byOrganization: gate.results });
 }

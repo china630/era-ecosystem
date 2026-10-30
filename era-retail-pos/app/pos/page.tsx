@@ -98,6 +98,13 @@ export default function PosCheckoutPage() {
     totalSales: number;
   } | null>(null);
   const [message, setMessage] = useState("");
+  const [printChrome, setPrintChrome] = useState<{
+    name?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    taxId?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [fiscalDeviceId, setFiscalDeviceId] = useState("");
   const [bankTerminalId, setBankTerminalId] = useState("");
@@ -390,6 +397,26 @@ export default function PosCheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Payment failed");
       setReceipt(data);
+      const chrome = data.printChrome as
+        | {
+            name?: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            taxId?: string;
+          }
+        | undefined;
+      setPrintChrome(
+        chrome
+          ? {
+              name: chrome.name,
+              phone: chrome.phone,
+              email: chrome.email,
+              address: chrome.address,
+              taxId: chrome.taxId,
+            }
+          : null,
+      );
       const hotelCashier =
         data.status === "PENDING_HUB" ||
         data.settlementChannel === "HOTEL_FOLIO" ||
@@ -840,6 +867,17 @@ export default function PosCheckoutPage() {
           </p>
         )}
         {message && <p className="text-[13px]">{message}</p>}
+        {printChrome?.name ||
+        printChrome?.phone ||
+        printChrome?.email ||
+        printChrome?.address ? (
+          <p className="text-[12px] text-[#34495E]">
+            {[printChrome.name, printChrome.phone, printChrome.email, printChrome.address]
+              .filter(Boolean)
+              .join(" · ")}
+            {printChrome.taxId ? ` · VÖEN ${printChrome.taxId}` : ""}
+          </p>
+        ) : null}
       </div>
     </>
   );

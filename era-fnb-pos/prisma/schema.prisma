@@ -44,6 +44,12 @@ enum BuffetMeal {
   DINNER
 }
 
+/// Week template audience (extensible). ADR fnb-buffet-planner.
+enum BuffetTemplateKind {
+  GUEST
+  STAFF
+}
+
 enum BuffetPlanStatus {
   DRAFT
   LOCKED
@@ -66,6 +72,17 @@ model Outlet {
   /// Finance warehouse name or id. Empty uses the finance default warehouse.
   financeWarehouseCode String? @map("finance_warehouse_code")
   propertyCode       String?  @map("property_code")
+  /// Operational POS contacts — overlay org profile for outlet-scoped receipt chrome (CP-ORG-PROFILE-01).
+  phone              String?
+  email              String?
+  address            String?
+  website            String?
+  /// Till / floor / shifts (Elektra + nav). ADR fnb-outlet-capabilities-and-gate.
+  capTill            Boolean  @default(true) @map("cap_till")
+  capTables          Boolean  @default(true) @map("cap_tables")
+  capBuffetPlanner   Boolean  @default(false) @map("cap_buffet_planner")
+  /// cafe | restaurant | buffet_kitchen | disco
+  shapeHint          String?  @map("shape_hint")
   active             Boolean  @default(true)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
@@ -76,6 +93,11 @@ model Outlet {
   menuCategories     MenuCategory[]
   dailyMenuEntries   DailyMenuEntry[]
   buffetPlans        BuffetPlan[]
+  buffetWeekTemplates BuffetWeekTemplate[]
+  buffetManagementMeals BuffetManagementMeal[]
+  buffetManagementEaters BuffetManagementEater[]
+  buffetStaffMealPlans BuffetStaffMealPlan[]
+  buffetGuestNightEntries BuffetGuestNightEntry[]
   soldOut            MenuItemSoldOut[]
   staff              StaffRoster[]
   publicSlug         String?  @unique @map("public_slug")
@@ -192,6 +214,8 @@ model MenuItem {
   lines      TicketLine[]
   dailyEntries DailyMenuEntry[]
   buffetLines  BuffetPlanLine[]
+  buffetWeekTemplateLines BuffetWeekTemplateLine[]
+  buffetStaffMealPlanLines BuffetStaffMealPlanLine[]
   priceHistory MenuItemPrice[]
   soldOut      MenuItemSoldOut[]
 
@@ -289,6 +313,179 @@ model BuffetPlanLine {
   @@unique([planId, menuItemId, station])
   @@index([organizationId])
   @@map("buffet_plan_lines")
+}
+
+/// Repeating Mon–Sun × meal template (Wave 2). ADR fnb-buffet-cost-attribution.
+model BuffetWeekTemplate {
+  id             String             @id @default(cuid())
+  organizationId String             @map("organization_id")
+  outletId       String             @map("outlet_id")
+  name           String
+  notes          String?
+  kind           BuffetTemplateKind @default(GUEST)
+  active         Boolean            @default(true)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  outlet         Outlet             @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  slots          BuffetWeekTemplateSlot[]
+
+  @@index([organizationId, outletId, kind])
+  @@map("buffet_week_templates")
+}
+
+model BuffetWeekTemplateSlot {
+  id             String        @id @default(cuid())
+  organizationId String        @map("organization_id")
+  templateId     String        @map("template_id")
+  /// ISO weekday: 1=Monday … 7=Sunday
+  weekday        Int
+  meal           BuffetMeal
+  coversAdult    Int           @default(0) @map("covers_adult")
+  coversChild    Int           @default(0) @map("covers_child")
+  notes          String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  template       BuffetWeekTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  lines          BuffetWeekTemplateLine[]
+
+  @@unique([templateId, weekday, meal])
+  @@index([organizationId])
+  @@map("buffet_week_template_slots")
+}
+
+model BuffetWeekTemplateLine {
+  id              String  @id @default(cuid())
+  organizationId  String  @map("organization_id")
+  slotId          String  @map("slot_id")
+  menuItemId      String  @map("menu_item_id")
+  station         String  @default("MAIN")
+  plannedPortions Int     @map("planned_portions")
+  wastePct        Decimal @default(0) @map("waste_pct") @db.Decimal(5, 2)
+  sortOrder       Int     @default(0) @map("sort_order")
+  slot            BuffetWeekTemplateSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([slotId, menuItemId, station])
+  @@index([organizationId])
+  @@map("buffet_week_template_lines")
+}
+
+/// Management meal sign-in (covers for forecast, not hotel guests). Wave 2.
+model BuffetManagementMeal {
+  id               String     @id @default(cuid())
+  organizationId   String     @map("organization_id")
+  outletId         String     @map("outlet_id")
+  serviceDate      DateTime   @map("service_date") @db.Date
+  meal             BuffetMeal
+  actorLabel       String     @map("actor_label")
+  actorUserId      String?    @map("actor_user_id")
+  /// Optional link to buffet eaters roster row.
+  eaterId          String?    @map("eater_id")
+  signedAt         DateTime   @default(now()) @map("signed_at")
+  signedByUserId   String?    @map("signed_by_user_id")
+  notes            String?
+  createdAt        DateTime   @default(now()) @map("created_at")
+  outlet           Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  eater            BuffetManagementEater? @relation(fields: [eaterId], references: [id], onDelete: SetNull)
+
+  @@unique([outletId, serviceDate, meal, actorLabel])
+  @@index([organizationId, outletId, serviceDate])
+  @@map("buffet_management_meals")
+}
+
+/// Buffet management eaters roster (HR leadership seed + include/exclude).
+model BuffetManagementEater {
+  id               String   @id @default(cuid())
+  organizationId   String   @map("organization_id")
+  outletId         String?  @map("outlet_id")
+  employmentId     String?  @map("employment_id")
+  globalPersonId   String?  @map("global_person_id")
+  displayLabel     String   @map("display_label")
+  included         Boolean  @default(true)
+  source           String   @default("HR") /// HR | MANUAL
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  outlet           Outlet?  @relation(fields: [outletId], references: [id], onDelete: SetNull)
+  meals            BuffetManagementMeal[]
+
+  @@unique([organizationId, employmentId])
+  @@index([organizationId, included])
+  @@map("buffet_management_eaters")
+}
+
+/// Manual / hotel guest-nights for forecast pack (Wave 6). Org-wide per date.
+model BuffetGuestNightEntry {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  /// Optional buffet outlet hint; guest-nights are org/hotel fact.
+  outletId       String?  @map("outlet_id")
+  serviceDate    DateTime @map("service_date") @db.Date
+  guestNights    Int      @map("guest_nights")
+  /// MANUAL | HOTEL | ESTIMATE
+  source         String   @default("MANUAL")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  outlet         Outlet?  @relation(fields: [outletId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, serviceDate])
+  @@index([organizationId, serviceDate])
+  @@map("buffet_guest_night_entries")
+}
+
+/// Staff meal plan (weekly slots). Wave 3 — ADR fnb-buffet-cost-attribution.
+model BuffetStaffMealPlan {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  outletId       String   @map("outlet_id")
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  outlet         Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  slots          BuffetStaffMealPlanSlot[]
+
+  @@index([organizationId, outletId])
+  @@map("buffet_staff_meal_plans")
+}
+
+model BuffetStaffMealPlanSlot {
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  planId         String     @map("plan_id")
+  /// ISO weekday: 1=Monday … 7=Sunday
+  weekday        Int
+  meal           BuffetMeal
+  /// Planned staff covers (headcount), not hotel guests.
+  coversStaff    Int        @default(0) @map("covers_staff")
+  notes          String?
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  plan           BuffetStaffMealPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  lines          BuffetStaffMealPlanLine[]
+
+  @@unique([planId, weekday, meal])
+  @@index([organizationId])
+  @@map("buffet_staff_meal_plan_slots")
+}
+
+model BuffetStaffMealPlanLine {
+  id              String  @id @default(cuid())
+  organizationId  String  @map("organization_id")
+  slotId          String  @map("slot_id")
+  menuItemId      String  @map("menu_item_id")
+  station         String  @default("MAIN")
+  plannedPortions Int     @map("planned_portions")
+  wastePct        Decimal @default(0) @map("waste_pct") @db.Decimal(5, 2)
+  sortOrder       Int     @default(0) @map("sort_order")
+  slot            BuffetStaffMealPlanSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([slotId, menuItemId, station])
+  @@index([organizationId])
+  @@map("buffet_staff_meal_plan_lines")
 }
 
 model Ticket {
@@ -400,6 +597,10 @@ model FnbOrgProfile {
   waiterPinPacks Int      @default(1) @map("waiter_pin_packs")
   activeModules    String[] @default([]) @map("active_modules")
   businessDayStart String   @default("05:00") @map("business_day_start")
+  /// Buffet cost attribution defaults + per-outlet overrides (ADR fnb-buffet-cost-attribution).
+  buffetCostSettingsJson Json? @map("buffet_cost_settings_json")
+  /// Peer URLs for buffet integrations (Finance web, Hotel PMS, Orchestrator) — Settings UI, not env bake.
+  integrationSettingsJson Json? @map("integration_settings_json")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("fnb_org_profiles")
@@ -493,6 +694,7 @@ model SatelliteAuditLog {
 
   @@index([entityType, entityId])
   @@index([createdAt])
-  @@map("satellite_audit_logs")
   @@index([organizationId])
+  @@index([organizationId, createdAt])
+  @@map("satellite_audit_logs")
 }

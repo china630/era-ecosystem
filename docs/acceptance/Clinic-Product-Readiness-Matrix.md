@@ -26,17 +26,18 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 |
+| Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 (CLI-26 Late + 2026-10-30 `from`/`to` range, no Həkim, range-neutral KPI copy — does not lift Demo/Pilot) |
+| Resource day matrix | `/sanatorium/resources` | 🟡 SCREEN (CLI-26: modal Check-in when `receptionProcedureCheckIn`; no bar Köçür/Ləğv et; UAT §4 punched path deepen — not Demo lift) |
 | Patient registry (P-codes, Ad/Soyad/Ata; Open-course badge; room/package on `/sanatorium`) | `/patients` | 🟡 SCREEN (wave UX landed; field UAT open) |
 | Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | ✅ SCREEN (CLI-38 + CLI-38b: dual view + day override) |
-| МКБ санаторий | `/sanatorium` | 🟡 |
+| МКБ санаторий | `/sanatorium` | 🟡 (2026-10-30 arrival column + sort before room — list deepen only) |
 | Lab orders (q filter, Name (CODE), cancel ORDERED, repeat confirm) | `/lab-orders` | 🟡 SCREEN |
 | МКБ карточка пациента | `/patients/[id]` (after contraindications) | 🟡 |
 | Nafta intake checklist (CLI-25/32/34) | `/patients/[id]` İlkin diaqnostik prosedurlar; `/print/checkup/[patientId]` 4 sections | 🟡 SCREEN (not WO `#33`; UAT open) |
 | Nafta slots clock (CLI-25/48) | Card now/next + compact PLAN — Baku labels, `scheduledAt >= now` | 🟡 SCREEN (re-Apply `#23` required on droplet) |
 | МКБ визит/стационар | `/visits/[id]`, `/inpatient` | 🟡 |
 | Visit exam CPOE + print (CLI-10) | `/visits/[id]` CPOE; `/patients/[id]` exam notes; `/print/visit-exam/[id]` | ✅ SHOW (UAT-SMOKE punched; FHIR/whole-visit debt) |
-| МКБ отчёт | `/reports/diagnoses` (меню Hesabatlar) | 🟡 |
+| МКБ отчёт | `/reports/diagnoses` (меню Hesabatlar) | 🟡 (Fəsil `CatalogField`; chapter I/XIV `titleAz` short in catalog — droplet re-sync) |
 | Пациенты по странам | `/reports/patients-by-country` | 🟡 SCREEN (CLI-56; UAT open) |
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
@@ -49,13 +50,14 @@
 | Doctor first-day confirm (CLI-52 / Wave C) | `/sanatorium` + card proposed; `/admin/settings` scheduling mode | 🟡 SCREEN (no Confirm all; FIFO kept; UAT open; not SHIPPED) |
 | Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` doctor-bonus + settings % | 🟡 SCREEN (extras-only buckets; UAT open; not SHIPPED) |
 | One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (same surname stays two rows; UAT open; not SHIPPED) |
-| Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; UAT open — not SHOW / not Pilot) |
+| Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; in-house room change and stay-product room write the door on open episodes; UAT open — not SHOW / not Pilot) |
 | Role access matrix (CLI-RBAC-01) | `/admin/access` | 🟡 SCREEN (Phase A + custom roles/seed; UAT listed; not SHOW / not Pilot) |
-| Package/extras assign (CLI-57) | `/sanatorium` patient card Package tab + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay seats the cabin; nurse red block only if seated; day-end cron writes `UNPAID_MISSED` for today seated + overdue + unseated before today; extra-tickets date `DD.MM.YYYY HH:mm`; a leftover `*_POOL` off the procedure list is not a burn target on Save, replace, or plus; UAT open — not SHOW) |
+| Package/extras assign (CLI-57) | `/sanatorium` patient card Package tab + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay; Saxla same-block unfinished redispatch + modal №; OPEN unpaid day-bucket; Pay/settlement keeps OPEN pin; nurse red block only if seated; day-end `UNPAID_MISSED`; leftover `*_POOL` not burn on Save/replace/plus; UAT open — not SHOW) |
 | Walk-in groups (CLI-61) | `/sanatorium/walk-in-parties` list + ModalShell CRUD | 🟡 SCREEN (empty selects; sticky doctor; physio on procedure; line grid + Eye; no journal in ops modal; hotel pending basket with `revenueCode`; UAT §11a open — not SHOW) |
-| Mutation audit (CLI-19) | `/admin/audit` + `GET /api/admin/audit` (canonical filters; nav Mutation audit en/az/ru) | 🟡 SCREEN/SHIPPED viewer — Layer A via `jsonOk` + path/API parity (ADR era-mutation-audit-standard); HTTP_MUTATION UAT open. Does not move Gate, Demo, Pilot, or Sell |
+| Open attendance (CLI-62) | Admin type checkbox; plan/print label; `/nurse` seat-on-arrival; `/sanatorium/resources` foresight; settings SAME_DAY | 🟡 SCREEN (day-bucket + SAME_DAY; `prescribeExtras` OPEN pins stay days; Pay keeps pin; UAT §11b open — not SHOW / not Pilot) |
+| Mutation audit (CLI-19) | `/admin/audit` + `GET /api/admin/audit` (CatalogField incl. ClinicReceipt/ClinicShift; nav Mutation audit en/az/ru) | 🟡 SCREEN/SHIPPED viewer — Layer A + Wave B cashier SETTLE/VOID + shift + Wave E compound index (2026-10-29); HTTP_MUTATION UAT open; hash-chain deferred. Does not move Gate, Demo, Pilot, or Sell |
 
-**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA). CLI-55 episode-course card is **SCREEN** (built; UAT open) — not SHOW / not Pilot. CLI-57 plan-before-pay is **SCREEN** on the same row: it does not lift UI, Demo, or Pilot. CLI-61 walk-in groups are **SCREEN** on the same rule. Line rollup stays 🟡.
+**Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. TTK is documented only — does not change sell (still do not claim GA). CLI-55 episode-course card is **SCREEN** (built; UAT open) — not SHOW / not Pilot. CLI-57 plan-before-pay is **SCREEN** on the same row: it does not lift UI, Demo, or Pilot. CLI-61 walk-in groups are **SCREEN** on the same rule. CLI-62 open attendance is **SCREEN** on the same rule. Line rollup stays 🟡.
 
 ---
 

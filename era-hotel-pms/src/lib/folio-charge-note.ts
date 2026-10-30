@@ -8,7 +8,9 @@ export function roomChargeNote(kind: RoomChargeNoteKind, ymd: string): string {
   return `${kind}:${ymd}`;
 }
 
-const PACKAGE_NIGHT = /^(?:Package .+|Medical package) (\d{4}-\d{2}-\d{2})$/;
+const PACKAGE_NIGHT = /^(?:Package .+|Medical package) (\d{4}-\d{2}-\d{2})$/i;
+/** Trailing civil date on package (or similar) free-text lines. */
+const TRAILING_YMD = /\s+(\d{4}-\d{2}-\d{2})$/;
 
 /** Date stamped on a medical package line (`Package … YYYY-MM-DD`). */
 export function parsePackageNight(description: string): string | null {
@@ -36,4 +38,33 @@ export function displayRoomChargeNote(
   const parsed = parseRoomChargeNote(description);
   if (!parsed) return description;
   return translate(parsed.kind, parsed.date);
+}
+
+/**
+ * Folio Təsvir: room notes via i18n (no date); package lines via i18n (no trailing date).
+ * Machine-keyed `night-audit:ymd` stays in DB for posted-night detection.
+ */
+export function displayFolioChargeDescription(
+  description: string,
+  translate: {
+    room: (kind: RoomChargeNoteKind, date: string) => string;
+    packageNight: () => string;
+  },
+): string {
+  const room = displayRoomChargeNote(description, translate.room);
+  if (room !== description) return room;
+  const trimmed = description.trim();
+  if (parsePackageNight(trimmed) || /^Medical package$/i.test(trimmed)) {
+    return translate.packageNight();
+  }
+  return description;
+}
+
+/** Strip trailing civil date from package-style charge descriptions (ops backfill). */
+export function stripPackageDescriptionDate(description: string): string | null {
+  const trimmed = description.trim();
+  if (!PACKAGE_NIGHT.test(trimmed)) return null;
+  const next = trimmed.replace(TRAILING_YMD, '').trim();
+  if (!next || next === trimmed) return null;
+  return next;
 }

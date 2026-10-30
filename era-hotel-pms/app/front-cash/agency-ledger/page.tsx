@@ -251,6 +251,12 @@ export default function AgencyLedgerPage() {
 
       <FinanceBoundaryBanner target="counterparties" />
       <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('financeOnlySettlementBannerAgency')}</p>
+      <p className="mb-3 text-[13px] text-[#7F8C8D]">
+        {t('commissionPayableBanner')}{' '}
+        <a className="text-[#2980B9] hover:underline" href="/distribution/agency-commission">
+          {t('commissionPayableLink')}
+        </a>
+      </p>
       <p className="mb-3 text-[13px]">
         <a className="text-[#2980B9] hover:underline" href="/front-cash/unsettled-departures">
           {t('unsettledDeparturesLink')}

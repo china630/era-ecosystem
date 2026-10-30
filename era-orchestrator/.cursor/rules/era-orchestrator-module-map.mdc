@@ -100,6 +100,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `GET/PATCH /platform/v1/organizations/me/profile` | `organization-profile.controller.ts` — OrgOwner branding SoR (multi-contact/address); CP-ORG-PROFILE-01 |
 | `GET/PATCH /platform/v1/organizations/:id/profile` | same; membership or super-admin |
 | `GET /internal/v1/organizations/:id/profile-snapshot` | `internal-organizations.controller.ts` — S2S branding snapshot (service token) |
+| `PATCH /internal/v1/organizations/:id/profile-bank-line` | `internal-organizations.controller.ts` — Finance primary bank → denormalized `bankLine` (service token; CP-ORG-PROFILE-01) |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
 | `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint (env fallback) |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |
@@ -183,8 +184,10 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | Web `/workspace/workforce/security/grants` | manual grants; server page + `satelliteKey`/`revoked`/`search`; client org/position/role on page; status default Active (`revoked=false` = `revokedAt` null). One active grant per employment + satellite + role; a second POST is `409 GRANT_ALREADY_ACTIVE` |
 | Web `/workspace/workforce/security/bindings` | server-paginated bindings (not overview); person column; filters parse org-unit `{ items }` + provisionState |
 | Web `/workspace/workforce/security/audit` | audit log |
-| Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import |
-| Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`) |
+| Web `/workspace/workforce/org-structure` | drill-down to positions (`?orgUnitId=`) + xlsx/csv import; manager + `unitKind` — CP-WF-ORG-01 |
+| Web `/workspace/workforce/positions` | filters + archive; drill-down to employments (`?positionId=`); optional `jobId` + `parentPositionId` |
+| Web `/workspace/workforce/job-architecture` | grades + jobs CRUD — CP-WF-JOB-01 (API until UAT) |
+| Web `/workspace/workforce/org-chart` | read-only tree `mode=units\|positions\|people` — CP-WF-JOB-01 |
 | Web `/workspace/workforce/group` (+ `/persons/:id`) | Federated HR directory + person card; mutate via org switch — CP-WF-GROUP-01 |
 | Web `/workspace/workforce/employments` | hire; employee card; Login & access per-person satellite checkboxes (any non-terminated employment); provisionState Sync failed badge + eventual-sync hint; server page/filters (status/org/position/satellite); SSOT `@/lib/workforce-satellites` |
 | Web `/workspace/workforce/absences` (+ `/[id]`) | Period presets (month-to-today, this month, ±30 days, custom); overlap filter |
@@ -215,7 +218,11 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | BFF `/api/platform/mdm/workforce/*` | `apps/web/app/api/platform/mdm/workforce/[[...path]]/route.ts` — JWT + `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN`); injects `organizationId` query |
 | `PATCH /internal/v1/workforce/employments/:id/finance-link` | `workforce-registry.controller.ts` — Finance hire-mirror write-back (`financeEmployeeId` on `WorkforceEmployment` + assignments); Bearer `CONTROL_PLANE_SERVICE_TOKEN` / internal token |
 | `GET /platform/v1/workforce/timesheets?year=&month=&page=&pageSize=` | Month grid; employment pagination; `employmentOptions` for batch (full ACTIVE roster); `calendar` from data-hub AZ days; `norms` fact vs weekly-hours regime (null hours → no invented norm) |
-| `GET/PUT /platform/v1/workforce/hr-settings` + `PUT …/hr-settings/routes` | Org weekly hours, advance caps, pay day, employee/manager/HR submit flags; approval routes with audience and over-limit step — [ADR cp-workforce-hr-routes](../../../docs/adr/cp-workforce-hr-routes.md); UI `/workspace/workforce/hr-settings` |
+| `GET/PUT /platform/v1/workforce/hr-settings` + `PUT …/hr-settings/routes` | Org weekly hours, advance caps, pay day, employee/manager/HR submit flags; approval routes with audience, over-limit, MANAGER_CHAIN / POSITION_HOLDER / MATRIX_MANAGER / GRADE_AT_LEAST — [ADR cp-workforce-hr-routes](../../../docs/adr/cp-workforce-hr-routes.md) + [job-architecture](../../../docs/adr/cp-workforce-job-architecture.md); UI `/workspace/workforce/hr-settings` |
+| `GET/POST/PATCH/POST archive /platform/v1/workforce/grades` | Grade catalog — CP-WF-JOB-01 |
+| `GET/POST/PATCH/POST archive /platform/v1/workforce/jobs` | Job catalog — CP-WF-JOB-01 |
+| `PATCH /platform/v1/workforce/employments/:id/reporting` | Solid + matrix manager — CP-WF-JOB-01 |
+| `GET /platform/v1/workforce/org-chart?mode=` | Org chart nodes — CP-WF-JOB-01 |
 | `GET /platform/v1/workforce/employments/:id/pay-snapshot` | Contract gross and last posted net from Finance (not stored on employment) |
 | `GET /platform/v1/workforce/export/cadre` | One-way cadre xlsx; FIN and ID series/number are access-logged |
 | `POST /platform/v1/workforce/requests/on-behalf` | Unit manager files a request when `allowManagerSubmit` is on |

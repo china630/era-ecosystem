@@ -298,6 +298,50 @@ export function isSatelliteHotelCityLedgerSnapshot(
   return satelliteHotelCityLedgerSnapshotSchema.safeParse(data).success;
 }
 
+/** Hotel → agency commission payable batch (AP). Not City Ledger AR. */
+export const SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE =
+  "SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE" as const;
+
+export interface SatelliteHotelAgencyCommissionPayableEvent {
+  type: typeof SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE;
+  organizationId: string;
+  correlationId: string;
+  occurredAt: string;
+  payload: {
+    agencyId: string;
+    agencyCode: string;
+    batchId: string;
+    asOfDate: string;
+    totalAmount: number;
+    lineCount: number;
+    financeCounterpartyId?: string;
+    currency: "AZN";
+  };
+}
+
+export const satelliteHotelAgencyCommissionPayableSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  payload: z.object({
+    agencyId: z.string().min(1),
+    agencyCode: z.string().min(1),
+    batchId: z.string().min(1),
+    asOfDate: z.string().min(1),
+    totalAmount: z.number(),
+    lineCount: z.number().int().nonnegative(),
+    financeCounterpartyId: z.string().min(1).optional(),
+    currency: z.literal("AZN"),
+  }),
+});
+
+export function isSatelliteHotelAgencyCommissionPayable(
+  data: unknown,
+): data is SatelliteHotelAgencyCommissionPayableEvent {
+  return satelliteHotelAgencyCommissionPayableSchema.safeParse(data).success;
+}
+
 const guestLifecycleBasePayload = z.object({
   reservationId: z.string().min(1),
   roomNumber: z.string().optional(),

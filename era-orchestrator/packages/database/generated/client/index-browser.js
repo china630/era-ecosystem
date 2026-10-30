@@ -300,12 +300,38 @@ exports.Prisma.WorkforceScopeScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkforceGradeScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  code: 'code',
+  name: 'name',
+  level: 'level',
+  minSalary: 'minSalary',
+  maxSalary: 'maxSalary',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceJobScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  name: 'name',
+  code: 'code',
+  jobFamily: 'jobFamily',
+  gradeId: 'gradeId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrgUnitScalarFieldEnum = {
   id: 'id',
   workforceScopeId: 'workforceScopeId',
   parentId: 'parentId',
   name: 'name',
   code: 'code',
+  unitKind: 'unitKind',
   status: 'status',
   sortOrder: 'sortOrder',
   managerEmploymentId: 'managerEmploymentId',
@@ -334,6 +360,8 @@ exports.Prisma.WorkforcePositionScalarFieldEnum = {
   tariffAzn: 'tariffAzn',
   defaultWorkRegime: 'defaultWorkRegime',
   weeklyHours: 'weeklyHours',
+  jobId: 'jobId',
+  parentPositionId: 'parentPositionId',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -414,6 +442,8 @@ exports.Prisma.WorkforceEmploymentScalarFieldEnum = {
   platformUserId: 'platformUserId',
   satelliteStaffLogin: 'satelliteStaffLogin',
   satelliteStaffPin: 'satelliteStaffPin',
+  managerEmploymentId: 'managerEmploymentId',
+  matrixManagerEmploymentId: 'matrixManagerEmploymentId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -920,6 +950,8 @@ exports.Prisma.WorkforceApprovalStepScalarFieldEnum = {
   kind: 'kind',
   appliesTo: 'appliesTo',
   canExceedAdvanceCap: 'canExceedAdvanceCap',
+  chainOffset: 'chainOffset',
+  minGradeLevel: 'minGradeLevel',
   orgUnitId: 'orgUnitId',
   positionId: 'positionId'
 };
@@ -1567,6 +1599,13 @@ exports.OrgUnitStatus = exports.$Enums.OrgUnitStatus = {
   ARCHIVED: 'ARCHIVED'
 };
 
+exports.OrgUnitKind = exports.$Enums.OrgUnitKind = {
+  COMPANY: 'COMPANY',
+  DIVISION: 'DIVISION',
+  DEPARTMENT: 'DEPARTMENT',
+  TEAM: 'TEAM'
+};
+
 exports.OrgCommercialLinkMode = exports.$Enums.OrgCommercialLinkMode = {
   SCOPE_ROOT: 'SCOPE_ROOT',
   SUBTREE: 'SUBTREE'
@@ -1768,7 +1807,11 @@ exports.WorkforceApprovalRequestKind = exports.$Enums.WorkforceApprovalRequestKi
 exports.WorkforceApprovalStepKind = exports.$Enums.WorkforceApprovalStepKind = {
   REQUESTER_MANAGER: 'REQUESTER_MANAGER',
   ORG_UNIT_HEAD: 'ORG_UNIT_HEAD',
-  POSITION_IN_UNIT: 'POSITION_IN_UNIT'
+  POSITION_IN_UNIT: 'POSITION_IN_UNIT',
+  MANAGER_CHAIN: 'MANAGER_CHAIN',
+  POSITION_HOLDER: 'POSITION_HOLDER',
+  MATRIX_MANAGER: 'MATRIX_MANAGER',
+  GRADE_AT_LEAST: 'GRADE_AT_LEAST'
 };
 
 exports.WorkforceApprovalStepAudience = exports.$Enums.WorkforceApprovalStepAudience = {
@@ -1973,6 +2016,8 @@ exports.Prisma.ModelName = {
   PlacementJob: 'PlacementJob',
   WorkforceAssignment: 'WorkforceAssignment',
   WorkforceScope: 'WorkforceScope',
+  WorkforceGrade: 'WorkforceGrade',
+  WorkforceJob: 'WorkforceJob',
   OrgUnit: 'OrgUnit',
   OrgUnitCommercialLink: 'OrgUnitCommercialLink',
   WorkforcePosition: 'WorkforcePosition',

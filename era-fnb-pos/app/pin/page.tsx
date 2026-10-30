@@ -21,15 +21,19 @@ import {
 } from "@era/satellite-kit/ui";
 
 type StaffChip = { id: string; fullName: string };
+type OutletChip = { id: string; code: string; name: string; shapeHint?: string | null };
 
 function PinForm() {
   const search = useSearchParams();
   const tAuth = useTranslations("auth");
   const tLogin = useTranslations("login");
   const t = useTranslations("pin");
+  const tOut = useTranslations("selectOutlet");
   const locale = useLocale() as Locale;
-  const [phase, setPhase] = useState<"loading" | "pair" | "names">("loading");
+  const [phase, setPhase] = useState<"loading" | "pair" | "outlets" | "names">("loading");
   const [staff, setStaff] = useState<StaffChip[]>([]);
+  const [outlets, setOutlets] = useState<OutletChip[]>([]);
+  const [outletId, setOutletId] = useState("");
   const [staffId, setStaffId] = useState("");
   const [pin, setPin] = useState("");
   const [loginId, setLoginId] = useState("");
@@ -59,33 +63,53 @@ function PinForm() {
     return t("invalid");
   }
 
+  async function bindTerminal(nextOutletId?: string) {
+    const org = orgNo.trim();
+    const res = await fetch("/api/auth/terminal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        login: loginId,
+        password,
+        orgNo: org || undefined,
+        ...(nextOutletId ? { outletId: nextOutletId } : {}),
+      }),
+    });
+    const body = (await res.json().catch(() => null)) as {
+      error?: string;
+      bound?: boolean;
+      needOutlet?: boolean;
+      outlets?: OutletChip[];
+      staff?: StaffChip[];
+    } | null;
+    if (!res.ok) {
+      showApiError(body, pinError(body, res.status));
+      return;
+    }
+    if (body?.needOutlet && Array.isArray(body.outlets)) {
+      setOutlets(body.outlets);
+      if (body.outlets.length === 1) {
+        await bindTerminal(body.outlets[0]!.id);
+        return;
+      }
+      setPhase("outlets");
+      return;
+    }
+    if (!body?.bound) {
+      showApiError(body, pinError(body, res.status));
+      return;
+    }
+    if (org) persistLoginOrgNo(org);
+    setStaff(Array.isArray(body.staff) ? body.staff : []);
+    setPassword("");
+    setPhase("names");
+  }
+
   async function pair(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const org = orgNo.trim();
-      const res = await fetch("/api/auth/terminal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          login: loginId,
-          password,
-          orgNo: org || undefined,
-        }),
-      });
-      const body = (await res.json().catch(() => null)) as {
-        error?: string;
-        bound?: boolean;
-        staff?: StaffChip[];
-      } | null;
-      if (!res.ok || !body?.bound) {
-        showApiError(body, pinError(body, res.status));
-        return;
-      }
-      if (org) persistLoginOrgNo(org);
-      setStaff(Array.isArray(body.staff) ? body.staff : []);
-      setPassword("");
-      setPhase("names");
+      await bindTerminal(outletId || undefined);
     } finally {
       setBusy(false);
     }
@@ -147,7 +171,8 @@ function PinForm() {
         </>
       }
     >
-      {phase === "loading" ? null : phase === "pair" ? (
+      {phase === "loading" ? null : null}
+      {phase === "pair" ? (
         <form onSubmit={(e) => void pair(e)} className={AUTH_FORM_STACK_CLASS}>
           <p className="text-sm text-[#7F8C8D]">{t("pairHint")}</p>
           <label className={AUTH_FIELD_GROUP_CLASS}>
@@ -182,7 +207,31 @@ function PinForm() {
             {busy ? t("submitBusy") : t("pairSubmit")}
           </button>
         </form>
-      ) : (
+      ) : null}
+      {phase === "outlets" ? (
+        <div className={AUTH_FORM_STACK_CLASS}>
+          <p className="text-sm text-[#7F8C8D]">{tOut("hint")}</p>
+          <div className="grid gap-2">
+            {outlets.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                disabled={busy}
+                className={`${MODAL_FOOTER_PRIMARY_CLASS} w-full justify-start px-4 py-3 text-left`}
+                onClick={() => {
+                  setOutletId(o.id);
+                  setBusy(true);
+                  void bindTerminal(o.id).finally(() => setBusy(false));
+                }}
+              >
+                <span className="block font-semibold">{o.name}</span>
+                <span className="block text-xs opacity-80">{o.code}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {phase === "names" ? (
         <form onSubmit={(e) => void enter(e)} className={AUTH_FORM_STACK_CLASS}>
           <p className="text-sm text-[#7F8C8D]">{t("namesHint")}</p>
           {staff.length === 0 ? (
@@ -220,7 +269,7 @@ function PinForm() {
             {busy ? t("submitBusy") : t("submit")}
           </button>
         </form>
-      )}
+      ) : null}
     </AuthPublicShell>
   );
 }

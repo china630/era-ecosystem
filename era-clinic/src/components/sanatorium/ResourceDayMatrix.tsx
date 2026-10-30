@@ -47,8 +47,6 @@ export type TimeHorizon = "full" | "rest" | "+1h" | "+3h";
 export type ResourceDayMatrixLabels = {
   free: string;
   empty: string;
-  move: string;
-  cancel: string;
   staff: string;
   now: string;
   dragHint: string;
@@ -57,6 +55,8 @@ export type ResourceDayMatrixLabels = {
   legendCompleted: string;
   legendBlocked: string;
   legendLunch: string;
+  /** Localized status chip on the bar (PENDING_PAY → unpaid, etc.). */
+  statusLabel: (status: string) => string;
 };
 
 type Segment =
@@ -75,8 +75,6 @@ type Props = {
   resources: MatrixResourceRow[];
   labels: ResourceDayMatrixLabels;
   onDropFree: (resourceId: string, slotTimeIso: string) => void;
-  onMove: (slot: MatrixSlot) => void;
-  onCancel: (orderId: string) => void;
   onSelect?: (slot: MatrixSlot) => void;
   /** Click empty cell (e.g. create appointment). */
   onFreeClick?: (resourceId: string, slotTimeIso: string) => void;
@@ -120,6 +118,8 @@ function barClass(status?: string) {
       return "border-amber-400 bg-amber-50 text-amber-900";
     case "CANCELLED":
       return `border-2 border-[#E74C3C]/40 bg-[#E74C3C]/10 ${TEXT_DANGER_CLASS}`;
+    case "PENDING_PAY":
+      return "border-amber-500/50 bg-amber-50 text-amber-950";
     case "CHECKED_IN":
       return `border-[#27AE60]/40 bg-[#27AE60]/10 ${TEXT_SUCCESS_CLASS}`;
     case "SCHEDULED":
@@ -267,8 +267,6 @@ export function ResourceDayMatrix({
   resources,
   labels,
   onDropFree,
-  onMove,
-  onCancel,
   onSelect,
   onFreeClick,
   onDragStart,
@@ -416,7 +414,9 @@ export function ResourceDayMatrix({
                           }}
                           className={`min-h-[3.25rem] cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
                           style={{ gridColumn: `span ${span}` }}
-                          title={`${slot.patientName ?? ""} ${slot.procedureCode ?? ""} ${slot.status ?? ""}`}
+                          title={`${slot.patientName ?? ""} ${slot.procedureCode ?? ""}${
+                            slot.status ? ` · ${labels.statusLabel(slot.status)}` : ""
+                          }`}
                           onClick={() =>
                             onSelect?.({
                               ...slot,
@@ -431,35 +431,13 @@ export function ResourceDayMatrix({
                           </div>
                           <div className={`truncate ${TEXT_MUTED_CLASS}`}>
                             {slot.procedureName ?? slot.procedureCode ?? ""}
-                            {slot.status ? ` · ${slot.status}` : ""}
+                            {slot.status
+                              ? ` · ${labels.statusLabel(slot.status)}`
+                              : ""}
                           </div>
                           {slot.staffName ? (
                             <div className="truncate" title={`${labels.staff}: ${slot.staffName}`}>
                               {initials || slot.staffName}
-                            </div>
-                          ) : null}
-                          {scheduled ? (
-                            <div className="mt-0.5 flex flex-wrap gap-1">
-                              <button
-                                type="button"
-                                className="underline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onMove(slot);
-                                }}
-                              >
-                                {labels.move}
-                              </button>
-                              <button
-                                type="button"
-                                className={`underline ${TEXT_DANGER_CLASS}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (slot.procedureOrderId) onCancel(slot.procedureOrderId);
-                                }}
-                              >
-                                {labels.cancel}
-                              </button>
                             </div>
                           ) : null}
                         </div>

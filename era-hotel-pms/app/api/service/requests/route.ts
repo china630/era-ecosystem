@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { handleRouteError, jsonError } from '@/lib/api-utils';
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { getSatelliteSession } from '@/lib/auth/session';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import {
@@ -27,7 +26,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const status = url.searchParams.get('status') ?? undefined;
     const rows = await listServiceRequests(status);
-    return NextResponse.json(rows);
+    return jsonOk(rows);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
     await requireHotelModule('hotel_service', session.organizationId);
     const body = createSchema.parse(await req.json());
     const row = await createServiceRequest(body);
-    return NextResponse.json(row, { status: 201 });
+    return jsonOk(row, 201);
   } catch (err) {
     return handleRouteError(err);
   }

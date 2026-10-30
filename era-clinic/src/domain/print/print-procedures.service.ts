@@ -151,7 +151,17 @@ export async function buildProceduresPrint(
       resource: { include: { room: true } },
       sites: { orderBy: { sortOrder: "asc" }, include: { site: true } },
     },
-    orderBy: { scheduledAt: "asc" },
+    orderBy: [{ scheduledAt: "asc" }, { createdAt: "asc" }],
+  });
+  // OPEN unseated rows sort to the end of each calendar day.
+  orders.sort((a, b) => {
+    const da = bakuDate(a.scheduledAt);
+    const db = bakuDate(b.scheduledAt);
+    if (da !== db) return da.localeCompare(db);
+    const aOpen = a.schedulingMode === "OPEN" && !a.resourceId ? 1 : 0;
+    const bOpen = b.schedulingMode === "OPEN" && !b.resourceId ? 1 : 0;
+    if (aOpen !== bOpen) return aOpen - bOpen;
+    return a.scheduledAt.getTime() - b.scheduledAt.getTime();
   });
 
   const listIds = [
@@ -179,8 +189,9 @@ export async function buildProceduresPrint(
   let no = 1;
   const map = new Map<string, PrintProcedureRow[]>();
   for (const o of orders) {
-    const seated = printsProcedureClock(o.status, o.resourceId);
-    const date = seated ? bakuDate(o.scheduledAt) : printDateFromYmd(todayBakuYmd());
+    const openUnseated = o.schedulingMode === "OPEN" && !o.resourceId;
+    const seated = !openUnseated && printsProcedureClock(o.status, o.resourceId);
+    const date = bakuDate(o.scheduledAt);
     const room = seated
       ? (o.resource?.room?.name ?? o.resource?.name ?? o.resource?.code ?? "—")
       : "";
@@ -235,11 +246,16 @@ export async function buildProceduresPrint(
       zones,
       settings,
       quantity: o.quantity ?? 1,
-      time: seated ? `${bakuTime(o.scheduledAt)}${ends}` : "",
+      time: openUnseated
+        ? printLabel(lang, "openAttendance")
+        : seated
+          ? `${bakuTime(o.scheduledAt)}${ends}`
+          : "",
       room,
       price: `${Number(o.amountNet).toFixed(2)} AZN`,
       note: [
         o.status === "PENDING_PAY" ? printLabel(lang, "unpaidExtra") : "",
+        openUnseated ? printLabel(lang, "openAttendance") : "",
         (o.note ?? "").trim(),
       ]
         .filter(Boolean)

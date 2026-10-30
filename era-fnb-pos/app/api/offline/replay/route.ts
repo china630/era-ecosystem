@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
       results.push({ id: action.id, ok: res.ok, status: res.status });
     }
 
-    return NextResponse.json({ replayed: results.length, results });
+    return jsonOk({ replayed: results.length, results });
   } catch (err) {
     return handleRouteError(err);
   }

@@ -13,13 +13,13 @@
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (see era-coverage-definition) |
-| CLI-19 Layer A honesty | Viewer SHIPPED at `/admin/audit` + `GET /api/admin/audit`; dedicated `HTTP_MUTATION` filter UAT still open — does not unship CLI-19; does not create a new Scaffold ✅ AC |
+| CLI-19 Layer A honesty | Viewer SHIPPED at `/admin/audit` + `GET /api/admin/audit`; fail-closed CI + Wave B cashier SETTLE/VOID + ClinicShift + Wave E compound `(organizationId, createdAt)` landed; dedicated `HTTP_MUTATION` filter UAT still open — does not unship CLI-19; Wave E index alone ≠ Scaffold ✅ AC |
 
 ## Negative-path suites (Green Scaffold BE wave 5)
 
 | AC | Spec | UAT deny |
 |----|------|----------|
-| AC-CLI-OPS | `era-clinic/__tests__/cli-ops-negative.spec.ts` | UAT-SMOKE § Deny |
+| AC-CLI-OPS | `era-clinic/__tests__/cli-ops-negative.spec.ts` | UAT-SMOKE § Deny (CLI-26 matrix reception check-in deepen stays under existing suite + UAT §3–4; no Scaffold reopen) |
 | AC-CLI-PT | `era-clinic/__tests__/cli-pt-negative.spec.ts` | UAT-SMOKE § Deny |
 | AC-CLI-MD | `era-clinic/__tests__/cli-md-negative.spec.ts` | UAT-SMOKE § Deny |
 | AC-CLI-SAN | `era-clinic/__tests__/cli-san-negative.spec.ts` + `__tests__/icd10-catalog.spec.ts` | UAT-SMOKE § Deny / ICD |
@@ -33,6 +33,10 @@ AC-CLI-TENANT stays out of BE rollup (schema+filter only). HL7 CLI-23 + fiscal C
 AC-CLI-EPISODE (CLI-55) negatives: `__tests__/cli-episode-negative.spec.ts` + `__tests__/cli-episode-gates.spec.ts` (anamnesis / walk-in close / CLOSED read-only). Field UAT still open → AC stays 🟡.
 
 AC-CLI-WALKIN-PARTY (CLI-61): unit `__tests__/walk-in-party.spec.ts` (placeholders/status). UI path UAT-SMOKE §11a open → AC stays 🟡; not Scaffold ✅.
+
+AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers). Code also refuses matrix DnD of unseated OPEN, plan reschedule for OPEN, and SAME_DAY check-in without a cabin; 2026-10-30 OPEN unpaid extras day-bucket pin + Pay/settlement keeps pin — still **no field negative path**. UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
+
+AC-CLI-ASSIGN (CLI-57): unit `__tests__/cli57-package-assign.spec.ts` + `__tests__/package-assign-redispatch.spec.ts` (line-order attach). 2026-10-30 Saxla same-block redispatch + modal № + Pay keeps OPEN pin — still **no field negative path**. UAT open → AC stays 🟡; not Scaffold ✅.
 
 ## Forbidden as sole proof
 

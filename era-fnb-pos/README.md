@@ -17,8 +17,11 @@ cp .env.example .env
 npm install
 npx prisma db push
 npm run db:seed              # no-op (org-scoped)
-# Lab waiter/outlet: ERA_SATELLITE_ORGANIZATION_ID=<uuid> npm run db:seed:demo
+# Lab waiter/outlet: npm run db:seed:demo
+# Buffet HYBRID demo week (after db:seed:demo): npm run db:seed:buffet-demo
 npm run dev   # http://localhost:3202
 ```
 
 Point `PMS_BRIDGE_URL` at running `era-hotel-pms` and match `POS_BRIDGE_SECRET`.
+
+Set **Finance web URL** in Admin → Settings → Buffet integrations for Cost run → Open Finance HYBRID (and menu → recipes link). Full buffet lab runbook: [`docs/SETUP_AND_RUN.md`](../docs/SETUP_AND_RUN.md) §8 Buffet cost lab demo.

@@ -16,6 +16,10 @@ import { postHotelSettlementPending, postRoomCharge } from "@/lib/pms-bridge-cli
 import { revenueCodeForSaleLine } from "@/lib/revenue-code";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { prisma } from "@/lib/prisma";
+import {
+  outletToPrintOverlay,
+  resolveRetailPrintContacts,
+} from "@/lib/org-print-contacts";
 
 const bodySchema = z.object({
   paymentMethod: z.string().default("cash"),
@@ -48,7 +52,12 @@ export async function POST(
       },
     });
     if (!receipt) return jsonError("Receipt not found", 404);
-    if (receipt.status === "PAID" || receipt.status === "PENDING_HUB") return jsonOk(receipt);
+    if (receipt.status === "PAID" || receipt.status === "PENDING_HUB") {
+      const printChrome = resolveRetailPrintContacts(
+        outletToPrintOverlay(receipt.outlet),
+      );
+      return jsonOk({ ...receipt, printChrome });
+    }
 
     const {
       isFiscalPaymentMethod,
@@ -149,7 +158,10 @@ export async function POST(
         },
         include: { lines: true },
       });
-      return jsonOk(deferred);
+      const printChrome = resolveRetailPrintContacts(
+        outletToPrintOverlay(receipt.outlet),
+      );
+      return jsonOk({ ...deferred, printChrome });
     } else if (isFiscalPaymentMethod(body.paymentMethod) && !shouldFiscalizeOnParent(mode)) {
       const { saleForSatelliteRouted } = await import("@era/satellite-kit");
       const outcome = await saleForSatelliteRouted({
@@ -311,7 +323,10 @@ export async function POST(
       payload: { amountNet, preset, payUrl },
     });
 
-    return jsonOk(paid);
+    const printChrome = resolveRetailPrintContacts(
+      outletToPrintOverlay(receipt.outlet),
+    );
+    return jsonOk({ ...paid, printChrome });
   } catch (err) {
     return handleRouteError(err);
   }

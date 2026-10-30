@@ -95,6 +95,7 @@ const EN: Dict = {
   procStatus_COMPLETED: "Completed",
   procStatus_NO_SHOW: "No-show",
   unpaidExtra: "Not paid",
+  openAttendance: "Open attendance",
 };
 
 const RU: Dict = {
@@ -190,6 +191,7 @@ const RU: Dict = {
   procStatus_COMPLETED: "Выполнена",
   procStatus_NO_SHOW: "Неявка",
   unpaidExtra: "Не оплачено",
+  openAttendance: "Свободное посещение",
 };
 
 const AZ: Dict = {
@@ -285,6 +287,7 @@ const AZ: Dict = {
   procStatus_COMPLETED: "Keçib",
   procStatus_NO_SHOW: "Gəlməyib",
   unpaidExtra: "Ödənilməyib",
+  openAttendance: "Sərbəst ziyarət",
 };
 
 const BY_LANG: Record<PrintLang, Dict> = { en: EN, ru: RU, az: AZ };

@@ -201,15 +201,23 @@ export async function buildEpisodeSummaryPrint(
   });
 
   const procedures = procedureOrders.map((order) => {
-    const seated = printsProcedureClock(order.status, order.resourceId);
+    const openUnseated = order.schedulingMode === "OPEN" && !order.resourceId;
+    const seated = !openUnseated && printsProcedureClock(order.status, order.resourceId);
     const room = seated
       ? (order.resource?.room?.name ?? order.resource?.name ?? order.resource?.code ?? "")
       : "";
     return {
-      when: seated ? bakuStamp(order.scheduledAt) : "",
+      when: openUnseated
+        ? printLabel(lang, "openAttendance")
+        : seated
+          ? bakuStamp(order.scheduledAt)
+          : "",
       title: resolveOrderDisplayName(order, catalogNames),
       detail: [
-        order.status === "PENDING_PAY" ? printLabel(lang, "unpaidExtra") : printLabel(lang, `procStatus_${order.status}`),
+        order.status === "PENDING_PAY"
+          ? printLabel(lang, "unpaidExtra")
+          : printLabel(lang, `procStatus_${order.status}`),
+        openUnseated ? printLabel(lang, "openAttendance") : "",
         seated ? room : "",
       ]
         .filter(Boolean)

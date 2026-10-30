@@ -43,6 +43,7 @@
     "db:audit-i18n-overrides": "tsx prisma/scripts/ops/i18n/audit-translation-overrides.ts",
     "db:audit-i18n-overrides:fix": "tsx prisma/scripts/ops/i18n/audit-translation-overrides.ts --fix",
     "db:seed:tivi": "tsx prisma/scripts/ops/demo/seed-tivi.ts",
+    "db:seed:buffet-demo": "tsx prisma/scripts/ops/demo/seed-buffet-food-wh.ts",
     "db:ensure-tax-pro-pricing": "tsx scripts/ensure-tax-pro-pricing.ts",
     "db:ensure-trade-pro-pricing": "tsx scripts/ensure-trade-pro-pricing.ts",
     "db:prod-init": "tsx prisma/scripts/ops/platform/prod-init.ts",

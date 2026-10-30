@@ -212,10 +212,15 @@ function QuickLink({
 }
 
 export function OpsHomeDashboard({
+  from,
+  to,
   date,
   refreshKey = 0,
 }: {
-  date: string;
+  from?: string;
+  to?: string;
+  /** @deprecated prefer from/to; kept for one-day callers */
+  date?: string;
   refreshKey?: number;
 }) {
   const t = useTranslations("home");
@@ -255,9 +260,15 @@ export function OpsHomeDashboard({
     [t],
   );
 
+  const rangeFrom = from ?? date ?? "";
+  const rangeTo = to ?? date ?? from ?? "";
+
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ date, locale });
+    const params = new URLSearchParams({ locale });
+    if (rangeFrom) params.set("from", rangeFrom);
+    if (rangeTo) params.set("to", rangeTo);
+    if (!rangeFrom && !rangeTo && date) params.set("date", date);
     const res = await fetch(`/api/ops/day-summary?${params}`);
     const data = await res.json();
     if (!res.ok) {
@@ -267,7 +278,7 @@ export function OpsHomeDashboard({
       setSummary((data.data ?? data) as OpsDaySummary);
     }
     setLoading(false);
-  }, [date, locale, t]);
+  }, [rangeFrom, rangeTo, date, locale, t]);
 
   useEffect(() => {
     void load();

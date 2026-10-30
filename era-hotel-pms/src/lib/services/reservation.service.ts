@@ -1717,6 +1717,7 @@ export async function updateReservationSchedule(
       await recalcReservationDailyRates(id).catch(() => undefined);
     }
     await alignScheduleSlices(id, reservation, newCheckIn, newCheckOut, newRoomId);
+    publishInHouseRoomChange(reservation, updated.room?.roomNumber);
     return updated;
   }
 
@@ -1758,7 +1759,25 @@ export async function updateReservationSchedule(
   }
 
   await alignScheduleSlices(id, reservation, newCheckIn, newCheckOut, newRoomId);
+  publishInHouseRoomChange(reservation, updated.room?.roomNumber);
   return updated;
+}
+
+function publishInHouseRoomChange(
+  reservation: { id: string; status: string; room?: { roomNumber: string } | null },
+  newRoomNumber?: string,
+) {
+  if (reservation.status !== 'IN_HOUSE') return;
+  if (!newRoomNumber || newRoomNumber === reservation.room?.roomNumber) return;
+  void import('@/lib/integration/guest-lifecycle-events')
+    .then(({ dispatchRoomChanged }) =>
+      dispatchRoomChanged({
+        reservationId: reservation.id,
+        previousRoomNumber: reservation.room?.roomNumber ?? undefined,
+        newRoomNumber,
+      }),
+    )
+    .catch((e) => console.error('Guest lifecycle room change failed', e));
 }
 
 async function alignScheduleSlices(

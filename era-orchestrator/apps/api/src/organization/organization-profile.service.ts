@@ -115,6 +115,39 @@ export class OrganizationProfileService {
     return this.buildSnapshot(org);
   }
 
+  /**
+   * S2S: Finance primary bank account → denormalized `bankLine` on CP profile.
+   * Does not replace OrgOwner contact/address editing.
+   */
+  async patchBankLineFromService(
+    organizationId: string,
+    bankLine: string | null,
+  ): Promise<OrganizationProfileSnapshot> {
+    const trimmed = bankLine?.trim() || null;
+    await this.prisma.organization.findFirstOrThrow({
+      where: { id: organizationId, deletedAt: null },
+      select: { id: true },
+    });
+    await this.prisma.organizationProfile.upsert({
+      where: { organizationId },
+      create: { organizationId, bankLine: trimmed },
+      update: { bankLine: trimmed },
+    });
+    await this.prisma.auditLog
+      .create({
+        data: {
+          organizationId,
+          userId: null,
+          action: "ORG_PROFILE_BANKLINE_SYNC",
+          entityType: "ORGANIZATION_PROFILE",
+          entityId: organizationId,
+          newValues: { bankLine: trimmed, source: "finance" },
+        },
+      })
+      .catch(() => undefined);
+    return this.getSnapshot(organizationId);
+  }
+
   async patchProfile(
     organizationId: string,
     actorUserId: string,

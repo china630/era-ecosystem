@@ -18,6 +18,8 @@ import {
 } from "@/domain/physio/physio-order-sites.service";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
 import { bakuDateTimeLabel, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import { printLabel } from "@/domain/print/print-labels";
+import type { PrintLang } from "@/domain/print/print-types";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -104,6 +106,7 @@ function mapLabEvent(
 }
 
 function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
+  if (ev.openAttendance) return ev;
   if (ev.showClock === false) return ev;
   return {
     ...ev,
@@ -117,6 +120,7 @@ function mapProcedureEvent(p: {
   id: string;
   scheduledAt: Date;
   resourceId?: string | null;
+  schedulingMode?: string | null;
   procedureName: string;
   procedureCode: string;
   status: string;
@@ -135,11 +139,14 @@ function mapProcedureEvent(p: {
   sites: Array<{ siteId: string; laterality?: "LEFT" | "RIGHT" | "BOTH" | null }>;
 }): PatientTimelineEvent {
   const siteCodes = p.sites.length ? `${p.sites.length} S` : null;
+  const openUnseated = p.schedulingMode === "OPEN" && !p.resourceId;
   return {
     id: `procedure:${p.id}`,
     type: "procedure",
     at: p.scheduledAt.toISOString(),
-    showClock: p.status !== "PENDING_PAY" || Boolean(p.resourceId),
+    showClock:
+      !openUnseated && (p.status !== "PENDING_PAY" || Boolean(p.resourceId)),
+    openAttendance: openUnseated,
     title: `Procedure · ${p.procedureName}`,
     subtitle: [p.procedureCode ? `type ${p.procedureCode}` : null, siteCodes, p.bodyPart]
       .filter(Boolean)
@@ -347,7 +354,17 @@ export async function getPatientCardSummary(
         ? {
             id: nextProcedure.id,
             at: nextProcedure.scheduledAt.toISOString(),
-            atLabel: bakuDateTimeLabel(nextProcedure.scheduledAt),
+            atLabel:
+              nextProcedure.schedulingMode === "OPEN" && !nextProcedure.resourceId
+                ? printLabel(
+                    (opts?.locale === "en" || opts?.locale === "ru" || opts?.locale === "az"
+                      ? opts.locale
+                      : "az") as PrintLang,
+                    "openAttendance",
+                  )
+                : bakuDateTimeLabel(nextProcedure.scheduledAt),
+            openAttendance:
+              nextProcedure.schedulingMode === "OPEN" && !nextProcedure.resourceId,
             name: displayProcedureName(
               nextProcedure.procedureCode,
               nextProcedure.procedureName,

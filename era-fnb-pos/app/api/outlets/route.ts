@@ -1,5 +1,4 @@
-import { handleRouteError, jsonError } from "@/lib/api-utils";
-import { NextResponse } from "next/server";
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -10,12 +9,21 @@ import { denyUnlessPermission, denyUnlessAnyPermission } from "@/lib/auth/requir
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { OUTLET_LIST_READ } from "@/lib/auth/read-permission-sets";
 import { recordMenuItemPrice } from "@/lib/menu-price-history";
+import {
+  defaultCapabilitiesForShape,
+  OUTLET_SHAPE_HINTS,
+  type OutletShapeHint,
+} from "@/lib/outlet-capabilities";
 
 const copySchema = z.object({
   code: z.string().min(1).max(32),
   name: z.string().min(1).max(120),
   copyFromOutletId: z.string().optional(),
   publicSlug: z.string().min(2).max(64).optional(),
+  shapeHint: z.enum(OUTLET_SHAPE_HINTS).optional(),
+  capTill: z.boolean().optional(),
+  capTables: z.boolean().optional(),
+  capBuffetPlanner: z.boolean().optional(),
 });
 
 export async function GET(request: Request) {
@@ -28,7 +36,7 @@ export async function GET(request: Request) {
       orderBy: { code: "asc" },
     });
     const selectedOutletId = await getSelectedOutletId();
-    return NextResponse.json({ outlets, selectedOutletId });
+    return jsonOk({ outlets, selectedOutletId });
   } catch (err) {
     return handleRouteError(err);
   }
@@ -42,16 +50,37 @@ export async function POST(request: Request) {
     const body = copySchema.parse(await request.json());
     const organizationId = requestOrganizationId();
     const code = body.code.trim().toUpperCase();
+    if (code === "RESTAURANT") {
+      return jsonError("Outlet code RESTAURANT is retired — use NAFTANI", 400);
+    }
+
+    const shape: OutletShapeHint = body.shapeHint ?? "restaurant";
+    const caps = defaultCapabilitiesForShape(shape);
+    if (body.capTill !== undefined) caps.till = body.capTill;
+    if (body.capTables !== undefined) caps.tables = body.capTables;
+    if (body.capBuffetPlanner !== undefined) caps.buffetPlanner = body.capBuffetPlanner;
 
     let source: {
       id: string;
       revenueCenterCode: string;
       financeWarehouseCode: string | null;
+      phone: string | null;
+      email: string | null;
+      address: string | null;
+      website: string | null;
     } | null = null;
     if (body.copyFromOutletId) {
       source = await prisma.outlet.findFirst({
         where: { id: body.copyFromOutletId, organizationId, active: true },
-        select: { id: true, revenueCenterCode: true, financeWarehouseCode: true },
+        select: {
+          id: true,
+          revenueCenterCode: true,
+          financeWarehouseCode: true,
+          phone: true,
+          email: true,
+          address: true,
+          website: true,
+        },
       });
       if (!source) return jsonError("Source outlet not found", 404);
     }
@@ -62,10 +91,18 @@ export async function POST(request: Request) {
         code,
         name: body.name.trim(),
         publicSlug: body.publicSlug ?? null,
+        capTill: caps.till,
+        capTables: caps.tables,
+        capBuffetPlanner: caps.buffetPlanner,
+        shapeHint: caps.shapeHint,
         ...(source
           ? {
               revenueCenterCode: source.revenueCenterCode,
               financeWarehouseCode: source.financeWarehouseCode,
+              phone: source.phone,
+              email: source.email,
+              address: source.address,
+              website: source.website,
             }
           : {}),
       },
@@ -146,7 +183,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(created, { status: 201 });
+    return jsonOk(created, 201);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return jsonError("Outlet code already exists", 409);

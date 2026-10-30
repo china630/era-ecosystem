@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
-import { scaleLinesToSell } from '@/lib/services/door-type.policy';
 import { resolveStaySliceForDate } from '@/lib/services/stay-slice.service';
 import { NightlyPriceMissingError } from '@/lib/pricing/own-nightly-price';
 import { paxCodesForCompose } from '@/lib/services/nafta-package-compose.service';
@@ -22,6 +21,7 @@ export async function getRatePlanPackageLines(ratePlanId: string) {
 export async function postNightlyPackageCharges(
   reservationId: string,
   businessDate: Date,
+  audit?: { userId?: string | null; source?: 'user' | 'elektraweb' | 'night_audit' | 'system' },
 ): Promise<{ posted: number; skipped: boolean }> {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
@@ -47,9 +47,7 @@ export async function postNightlyPackageCharges(
     }
   }
 
-  const lines = ratePlan.packageLines;
   let sellAmount: number;
-  let mainSkuCode: string | null = null;
   const pax = await prisma.reservationGuest.findMany({
     where: { reservationId },
     select: {
@@ -83,81 +81,33 @@ export async function postNightlyPackageCharges(
       throw new NightlyPriceMissingError(reservation.id, ratePlan.code);
     }
     sellAmount = breakdown.total;
-    mainSkuCode = breakdown.lines.find((l) => l.role === 'main')?.code ?? null;
-  }
-  if (sellRow && packageCodes.length > 0 && roomTypeId) {
-    const { ownerPackageNightlyBreakdown } = await import(
-      '@/lib/services/nafta-package-compose-apply.service'
-    );
-    const breakdown = await ownerPackageNightlyBreakdown(businessDate, packageCodes, {
-      roomTypeId,
-      mealPlanId: reservation.mealPlanId,
-    });
-    mainSkuCode = breakdown?.lines.find((l) => l.role === 'main')?.code ?? ratePlan.code;
   }
 
-  let packageLines = lines;
-  if (mainSkuCode) {
-    const mainPlan = await prisma.ratePlan.findFirst({
-      where: { code: mainSkuCode },
-      include: { packageLines: { include: { revenueCode: true } } },
-    });
-    if (mainPlan?.packageLines?.length) {
-      packageLines = mainPlan.packageLines;
-    }
+  // One PKG night line (sell amount). Component splits stay off the guest folio.
+  // Description stays date-free; posted night is keyed by businessDate + PKG code.
+  const pkgCode = await requireRevenueCodeByRole('PKG');
+  const description = 'Medical package';
+  const alreadyPosted = reservation.folios.some((f) =>
+    f.charges.some(
+      (c) =>
+        c.revenueCodeId === pkgCode.id && sameCalendarDay(c.businessDate, businessDate),
+    ),
+  );
+  if (alreadyPosted) {
+    return { posted: 0, skipped: false };
   }
 
-  const rawLines =
-    packageLines.length > 0
-      ? packageLines.map((l) => ({
-          revenueCodeId: l.revenueCodeId,
-          code: l.revenueCode.code,
-          amount: decimalToNumber(l.amount),
-          description: `Package ${l.revenueCode.name} ${businessDate.toISOString().slice(0, 10)}`,
-        }))
-      : await (async () => {
-          const pkgCode = await requireRevenueCodeByRole('PKG');
-          return [
-            {
-              revenueCodeId: pkgCode.id,
-              code: pkgCode.code,
-              amount: decimalToNumber(ratePlan.pricePerNight),
-              description: `Medical package ${businessDate.toISOString().slice(0, 10)}`,
-            },
-          ];
-        })();
+  await postCharge({
+    reservationId,
+    revenueCodeId: pkgCode.id,
+    amount: sellAmount,
+    qty: 1,
+    description,
+    businessDate,
+    audit,
+  });
 
-  const scaled = scaleLinesToSell(rawLines, sellAmount);
-  const chargeLines = rawLines.map((line, i) => ({ ...line, amount: scaled[i] ?? line.amount }));
-
-  if (chargeLines.length === 0) {
-    return { posted: 0, skipped: true };
-  }
-
-  let posted = 0;
-  for (const line of chargeLines) {
-    const alreadyPosted = reservation.folios.some((f) =>
-      f.charges.some(
-        (c) =>
-          c.revenueCodeId === line.revenueCodeId &&
-          sameCalendarDay(c.businessDate, businessDate) &&
-          c.description.includes(businessDate.toISOString().slice(0, 10)),
-      ),
-    );
-    if (alreadyPosted) continue;
-
-    await postCharge({
-      reservationId,
-      revenueCodeId: line.revenueCodeId,
-      amount: line.amount,
-      qty: 1,
-      description: line.description,
-      businessDate,
-    });
-    posted += 1;
-  }
-
-  return { posted, skipped: false };
+  return { posted: 1, skipped: false };
 }
 
 export async function isProcedureIncludedInPackage(

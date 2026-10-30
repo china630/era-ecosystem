@@ -89,6 +89,16 @@ export type WorkforceAssignment = $Result.DefaultSelection<Prisma.$WorkforceAssi
  */
 export type WorkforceScope = $Result.DefaultSelection<Prisma.$WorkforceScopePayload>
 /**
+ * Model WorkforceGrade
+ * 
+ */
+export type WorkforceGrade = $Result.DefaultSelection<Prisma.$WorkforceGradePayload>
+/**
+ * Model WorkforceJob
+ * 
+ */
+export type WorkforceJob = $Result.DefaultSelection<Prisma.$WorkforceJobPayload>
+/**
  * Model OrgUnit
  * 
  */
@@ -874,10 +884,24 @@ export type WorkforceApprovalRequestKind = (typeof WorkforceApprovalRequestKind)
 export const WorkforceApprovalStepKind: {
   REQUESTER_MANAGER: 'REQUESTER_MANAGER',
   ORG_UNIT_HEAD: 'ORG_UNIT_HEAD',
-  POSITION_IN_UNIT: 'POSITION_IN_UNIT'
+  POSITION_IN_UNIT: 'POSITION_IN_UNIT',
+  MANAGER_CHAIN: 'MANAGER_CHAIN',
+  POSITION_HOLDER: 'POSITION_HOLDER',
+  MATRIX_MANAGER: 'MATRIX_MANAGER',
+  GRADE_AT_LEAST: 'GRADE_AT_LEAST'
 };
 
 export type WorkforceApprovalStepKind = (typeof WorkforceApprovalStepKind)[keyof typeof WorkforceApprovalStepKind]
+
+
+export const OrgUnitKind: {
+  COMPANY: 'COMPANY',
+  DIVISION: 'DIVISION',
+  DEPARTMENT: 'DEPARTMENT',
+  TEAM: 'TEAM'
+};
+
+export type OrgUnitKind = (typeof OrgUnitKind)[keyof typeof OrgUnitKind]
 
 
 export const WorkforceApprovalStepAudience: {
@@ -1328,6 +1352,10 @@ export type WorkforceApprovalStepKind = $Enums.WorkforceApprovalStepKind
 
 export const WorkforceApprovalStepKind: typeof $Enums.WorkforceApprovalStepKind
 
+export type OrgUnitKind = $Enums.OrgUnitKind
+
+export const OrgUnitKind: typeof $Enums.OrgUnitKind
+
 export type WorkforceApprovalStepAudience = $Enums.WorkforceApprovalStepAudience
 
 export const WorkforceApprovalStepAudience: typeof $Enums.WorkforceApprovalStepAudience
@@ -1730,6 +1758,26 @@ export class PrismaClient<
     * ```
     */
   get workforceScope(): Prisma.WorkforceScopeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceGrade`: Exposes CRUD operations for the **WorkforceGrade** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceGrades
+    * const workforceGrades = await prisma.workforceGrade.findMany()
+    * ```
+    */
+  get workforceGrade(): Prisma.WorkforceGradeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceJob`: Exposes CRUD operations for the **WorkforceJob** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceJobs
+    * const workforceJobs = await prisma.workforceJob.findMany()
+    * ```
+    */
+  get workforceJob(): Prisma.WorkforceJobDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.orgUnit`: Exposes CRUD operations for the **OrgUnit** model.
@@ -3069,6 +3117,8 @@ export namespace Prisma {
     PlacementJob: 'PlacementJob',
     WorkforceAssignment: 'WorkforceAssignment',
     WorkforceScope: 'WorkforceScope',
+    WorkforceGrade: 'WorkforceGrade',
+    WorkforceJob: 'WorkforceJob',
     OrgUnit: 'OrgUnit',
     OrgUnitCommercialLink: 'OrgUnitCommercialLink',
     WorkforcePosition: 'WorkforcePosition',
@@ -3173,7 +3223,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationProfile" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationProfile" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4284,6 +4334,154 @@ export namespace Prisma {
           count: {
             args: Prisma.WorkforceScopeCountArgs<ExtArgs>
             result: $Utils.Optional<WorkforceScopeCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceGrade: {
+        payload: Prisma.$WorkforceGradePayload<ExtArgs>
+        fields: Prisma.WorkforceGradeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceGradeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceGradeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceGradeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceGradeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceGradeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceGradeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceGradeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceGradeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceGradeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>
+          }
+          update: {
+            args: Prisma.WorkforceGradeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceGradeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceGradeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceGradeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceGradeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceGradePayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceGradeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceGrade>
+          }
+          groupBy: {
+            args: Prisma.WorkforceGradeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceGradeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceGradeCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceGradeCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceJob: {
+        payload: Prisma.$WorkforceJobPayload<ExtArgs>
+        fields: Prisma.WorkforceJobFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceJobFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceJobFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceJobFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceJobFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceJobFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceJobCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceJobCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceJobCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceJobDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>
+          }
+          update: {
+            args: Prisma.WorkforceJobUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceJobDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceJobUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceJobUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceJobUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceJobPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceJobAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceJob>
+          }
+          groupBy: {
+            args: Prisma.WorkforceJobGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceJobGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceJobCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceJobCountAggregateOutputType> | number
           }
         }
       }
@@ -10996,6 +11194,8 @@ export namespace Prisma {
     placementJob?: PlacementJobOmit
     workforceAssignment?: WorkforceAssignmentOmit
     workforceScope?: WorkforceScopeOmit
+    workforceGrade?: WorkforceGradeOmit
+    workforceJob?: WorkforceJobOmit
     orgUnit?: OrgUnitOmit
     orgUnitCommercialLink?: OrgUnitCommercialLinkOmit
     workforcePosition?: WorkforcePositionOmit
@@ -11261,6 +11461,8 @@ export namespace Prisma {
     vacationPlans: number
     personnelOrders: number
     staffScheduleRevisions: number
+    grades: number
+    jobs: number
   }
 
   export type WorkforceScopeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11271,6 +11473,8 @@ export namespace Prisma {
     vacationPlans?: boolean | WorkforceScopeCountOutputTypeCountVacationPlansArgs
     personnelOrders?: boolean | WorkforceScopeCountOutputTypeCountPersonnelOrdersArgs
     staffScheduleRevisions?: boolean | WorkforceScopeCountOutputTypeCountStaffScheduleRevisionsArgs
+    grades?: boolean | WorkforceScopeCountOutputTypeCountGradesArgs
+    jobs?: boolean | WorkforceScopeCountOutputTypeCountJobsArgs
   }
 
   // Custom InputTypes
@@ -11331,6 +11535,82 @@ export namespace Prisma {
    */
   export type WorkforceScopeCountOutputTypeCountStaffScheduleRevisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: StaffScheduleRevisionWhereInput
+  }
+
+  /**
+   * WorkforceScopeCountOutputType without action
+   */
+  export type WorkforceScopeCountOutputTypeCountGradesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceGradeWhereInput
+  }
+
+  /**
+   * WorkforceScopeCountOutputType without action
+   */
+  export type WorkforceScopeCountOutputTypeCountJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceJobWhereInput
+  }
+
+
+  /**
+   * Count Type WorkforceGradeCountOutputType
+   */
+
+  export type WorkforceGradeCountOutputType = {
+    jobs: number
+  }
+
+  export type WorkforceGradeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobs?: boolean | WorkforceGradeCountOutputTypeCountJobsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WorkforceGradeCountOutputType without action
+   */
+  export type WorkforceGradeCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGradeCountOutputType
+     */
+    select?: WorkforceGradeCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceGradeCountOutputType without action
+   */
+  export type WorkforceGradeCountOutputTypeCountJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceJobWhereInput
+  }
+
+
+  /**
+   * Count Type WorkforceJobCountOutputType
+   */
+
+  export type WorkforceJobCountOutputType = {
+    positions: number
+  }
+
+  export type WorkforceJobCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    positions?: boolean | WorkforceJobCountOutputTypeCountPositionsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WorkforceJobCountOutputType without action
+   */
+  export type WorkforceJobCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJobCountOutputType
+     */
+    select?: WorkforceJobCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceJobCountOutputType without action
+   */
+  export type WorkforceJobCountOutputTypeCountPositionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforcePositionWhereInput
   }
 
 
@@ -11424,12 +11704,14 @@ export namespace Prisma {
    */
 
   export type WorkforcePositionCountOutputType = {
+    childPositions: number
     employments: number
     roleTemplates: number
     approvalSteps: number
   }
 
   export type WorkforcePositionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    childPositions?: boolean | WorkforcePositionCountOutputTypeCountChildPositionsArgs
     employments?: boolean | WorkforcePositionCountOutputTypeCountEmploymentsArgs
     roleTemplates?: boolean | WorkforcePositionCountOutputTypeCountRoleTemplatesArgs
     approvalSteps?: boolean | WorkforcePositionCountOutputTypeCountApprovalStepsArgs
@@ -11444,6 +11726,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the WorkforcePositionCountOutputType
      */
     select?: WorkforcePositionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforcePositionCountOutputType without action
+   */
+  export type WorkforcePositionCountOutputTypeCountChildPositionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforcePositionWhereInput
   }
 
   /**
@@ -11504,6 +11793,8 @@ export namespace Prisma {
    */
 
   export type WorkforceEmploymentCountOutputType = {
+    directReports: number
+    matrixReports: number
     absences: number
     managedOrgUnits: number
     roleBindings: number
@@ -11523,6 +11814,8 @@ export namespace Prisma {
   }
 
   export type WorkforceEmploymentCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    directReports?: boolean | WorkforceEmploymentCountOutputTypeCountDirectReportsArgs
+    matrixReports?: boolean | WorkforceEmploymentCountOutputTypeCountMatrixReportsArgs
     absences?: boolean | WorkforceEmploymentCountOutputTypeCountAbsencesArgs
     managedOrgUnits?: boolean | WorkforceEmploymentCountOutputTypeCountManagedOrgUnitsArgs
     roleBindings?: boolean | WorkforceEmploymentCountOutputTypeCountRoleBindingsArgs
@@ -11550,6 +11843,20 @@ export namespace Prisma {
      * Select specific fields to fetch from the WorkforceEmploymentCountOutputType
      */
     select?: WorkforceEmploymentCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceEmploymentCountOutputType without action
+   */
+  export type WorkforceEmploymentCountOutputTypeCountDirectReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  /**
+   * WorkforceEmploymentCountOutputType without action
+   */
+  export type WorkforceEmploymentCountOutputTypeCountMatrixReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceEmploymentWhereInput
   }
 
   /**
@@ -29284,6 +29591,8 @@ export namespace Prisma {
     vacationPlans?: boolean | WorkforceScope$vacationPlansArgs<ExtArgs>
     personnelOrders?: boolean | WorkforceScope$personnelOrdersArgs<ExtArgs>
     staffScheduleRevisions?: boolean | WorkforceScope$staffScheduleRevisionsArgs<ExtArgs>
+    grades?: boolean | WorkforceScope$gradesArgs<ExtArgs>
+    jobs?: boolean | WorkforceScope$jobsArgs<ExtArgs>
     _count?: boolean | WorkforceScopeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceScope"]>
 
@@ -29320,6 +29629,8 @@ export namespace Prisma {
     vacationPlans?: boolean | WorkforceScope$vacationPlansArgs<ExtArgs>
     personnelOrders?: boolean | WorkforceScope$personnelOrdersArgs<ExtArgs>
     staffScheduleRevisions?: boolean | WorkforceScope$staffScheduleRevisionsArgs<ExtArgs>
+    grades?: boolean | WorkforceScope$gradesArgs<ExtArgs>
+    jobs?: boolean | WorkforceScope$jobsArgs<ExtArgs>
     _count?: boolean | WorkforceScopeCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkforceScopeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -29335,6 +29646,8 @@ export namespace Prisma {
       vacationPlans: Prisma.$WorkforceVacationPlanPayload<ExtArgs>[]
       personnelOrders: Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>[]
       staffScheduleRevisions: Prisma.$StaffScheduleRevisionPayload<ExtArgs>[]
+      grades: Prisma.$WorkforceGradePayload<ExtArgs>[]
+      jobs: Prisma.$WorkforceJobPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -29743,6 +30056,8 @@ export namespace Prisma {
     vacationPlans<T extends WorkforceScope$vacationPlansArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$vacationPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     personnelOrders<T extends WorkforceScope$personnelOrdersArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$personnelOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     staffScheduleRevisions<T extends WorkforceScope$staffScheduleRevisionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$staffScheduleRevisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    grades<T extends WorkforceScope$gradesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$gradesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    jobs<T extends WorkforceScope$jobsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$jobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -30338,6 +30653,54 @@ export namespace Prisma {
   }
 
   /**
+   * WorkforceScope.grades
+   */
+  export type WorkforceScope$gradesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    where?: WorkforceGradeWhereInput
+    orderBy?: WorkforceGradeOrderByWithRelationInput | WorkforceGradeOrderByWithRelationInput[]
+    cursor?: WorkforceGradeWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceGradeScalarFieldEnum | WorkforceGradeScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceScope.jobs
+   */
+  export type WorkforceScope$jobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    where?: WorkforceJobWhereInput
+    orderBy?: WorkforceJobOrderByWithRelationInput | WorkforceJobOrderByWithRelationInput[]
+    cursor?: WorkforceJobWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceJobScalarFieldEnum | WorkforceJobScalarFieldEnum[]
+  }
+
+  /**
    * WorkforceScope without action
    */
   export type WorkforceScopeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -30353,6 +30716,2378 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: WorkforceScopeInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceGrade
+   */
+
+  export type AggregateWorkforceGrade = {
+    _count: WorkforceGradeCountAggregateOutputType | null
+    _avg: WorkforceGradeAvgAggregateOutputType | null
+    _sum: WorkforceGradeSumAggregateOutputType | null
+    _min: WorkforceGradeMinAggregateOutputType | null
+    _max: WorkforceGradeMaxAggregateOutputType | null
+  }
+
+  export type WorkforceGradeAvgAggregateOutputType = {
+    level: number | null
+    minSalary: Decimal | null
+    maxSalary: Decimal | null
+  }
+
+  export type WorkforceGradeSumAggregateOutputType = {
+    level: number | null
+    minSalary: Decimal | null
+    maxSalary: Decimal | null
+  }
+
+  export type WorkforceGradeMinAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    code: string | null
+    name: string | null
+    level: number | null
+    minSalary: Decimal | null
+    maxSalary: Decimal | null
+    status: $Enums.OrgUnitStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceGradeMaxAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    code: string | null
+    name: string | null
+    level: number | null
+    minSalary: Decimal | null
+    maxSalary: Decimal | null
+    status: $Enums.OrgUnitStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceGradeCountAggregateOutputType = {
+    id: number
+    workforceScopeId: number
+    code: number
+    name: number
+    level: number
+    minSalary: number
+    maxSalary: number
+    status: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceGradeAvgAggregateInputType = {
+    level?: true
+    minSalary?: true
+    maxSalary?: true
+  }
+
+  export type WorkforceGradeSumAggregateInputType = {
+    level?: true
+    minSalary?: true
+    maxSalary?: true
+  }
+
+  export type WorkforceGradeMinAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    code?: true
+    name?: true
+    level?: true
+    minSalary?: true
+    maxSalary?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceGradeMaxAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    code?: true
+    name?: true
+    level?: true
+    minSalary?: true
+    maxSalary?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceGradeCountAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    code?: true
+    name?: true
+    level?: true
+    minSalary?: true
+    maxSalary?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceGradeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceGrade to aggregate.
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceGrades to fetch.
+     */
+    orderBy?: WorkforceGradeOrderByWithRelationInput | WorkforceGradeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceGradeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceGrades from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceGrades.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceGrades
+    **/
+    _count?: true | WorkforceGradeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceGradeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceGradeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceGradeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceGradeMaxAggregateInputType
+  }
+
+  export type GetWorkforceGradeAggregateType<T extends WorkforceGradeAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceGrade]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceGrade[P]>
+      : GetScalarType<T[P], AggregateWorkforceGrade[P]>
+  }
+
+
+
+
+  export type WorkforceGradeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceGradeWhereInput
+    orderBy?: WorkforceGradeOrderByWithAggregationInput | WorkforceGradeOrderByWithAggregationInput[]
+    by: WorkforceGradeScalarFieldEnum[] | WorkforceGradeScalarFieldEnum
+    having?: WorkforceGradeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceGradeCountAggregateInputType | true
+    _avg?: WorkforceGradeAvgAggregateInputType
+    _sum?: WorkforceGradeSumAggregateInputType
+    _min?: WorkforceGradeMinAggregateInputType
+    _max?: WorkforceGradeMaxAggregateInputType
+  }
+
+  export type WorkforceGradeGroupByOutputType = {
+    id: string
+    workforceScopeId: string
+    code: string
+    name: string
+    level: number
+    minSalary: Decimal | null
+    maxSalary: Decimal | null
+    status: $Enums.OrgUnitStatus
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceGradeCountAggregateOutputType | null
+    _avg: WorkforceGradeAvgAggregateOutputType | null
+    _sum: WorkforceGradeSumAggregateOutputType | null
+    _min: WorkforceGradeMinAggregateOutputType | null
+    _max: WorkforceGradeMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceGradeGroupByPayload<T extends WorkforceGradeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceGradeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceGradeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceGradeGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceGradeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceGradeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    code?: boolean
+    name?: boolean
+    level?: boolean
+    minSalary?: boolean
+    maxSalary?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    jobs?: boolean | WorkforceGrade$jobsArgs<ExtArgs>
+    _count?: boolean | WorkforceGradeCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceGrade"]>
+
+  export type WorkforceGradeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    code?: boolean
+    name?: boolean
+    level?: boolean
+    minSalary?: boolean
+    maxSalary?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceGrade"]>
+
+  export type WorkforceGradeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    code?: boolean
+    name?: boolean
+    level?: boolean
+    minSalary?: boolean
+    maxSalary?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceGrade"]>
+
+  export type WorkforceGradeSelectScalar = {
+    id?: boolean
+    workforceScopeId?: boolean
+    code?: boolean
+    name?: boolean
+    level?: boolean
+    minSalary?: boolean
+    maxSalary?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceGradeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "code" | "name" | "level" | "minSalary" | "maxSalary" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceGrade"]>
+  export type WorkforceGradeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    jobs?: boolean | WorkforceGrade$jobsArgs<ExtArgs>
+    _count?: boolean | WorkforceGradeCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type WorkforceGradeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }
+  export type WorkforceGradeIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceGradePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceGrade"
+    objects: {
+      workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
+      jobs: Prisma.$WorkforceJobPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workforceScopeId: string
+      code: string
+      name: string
+      level: number
+      minSalary: Prisma.Decimal | null
+      maxSalary: Prisma.Decimal | null
+      status: $Enums.OrgUnitStatus
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceGrade"]>
+    composites: {}
+  }
+
+  type WorkforceGradeGetPayload<S extends boolean | null | undefined | WorkforceGradeDefaultArgs> = $Result.GetResult<Prisma.$WorkforceGradePayload, S>
+
+  type WorkforceGradeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceGradeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceGradeCountAggregateInputType | true
+    }
+
+  export interface WorkforceGradeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceGrade'], meta: { name: 'WorkforceGrade' } }
+    /**
+     * Find zero or one WorkforceGrade that matches the filter.
+     * @param {WorkforceGradeFindUniqueArgs} args - Arguments to find a WorkforceGrade
+     * @example
+     * // Get one WorkforceGrade
+     * const workforceGrade = await prisma.workforceGrade.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceGradeFindUniqueArgs>(args: SelectSubset<T, WorkforceGradeFindUniqueArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceGrade that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceGradeFindUniqueOrThrowArgs} args - Arguments to find a WorkforceGrade
+     * @example
+     * // Get one WorkforceGrade
+     * const workforceGrade = await prisma.workforceGrade.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceGradeFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceGradeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceGrade that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeFindFirstArgs} args - Arguments to find a WorkforceGrade
+     * @example
+     * // Get one WorkforceGrade
+     * const workforceGrade = await prisma.workforceGrade.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceGradeFindFirstArgs>(args?: SelectSubset<T, WorkforceGradeFindFirstArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceGrade that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeFindFirstOrThrowArgs} args - Arguments to find a WorkforceGrade
+     * @example
+     * // Get one WorkforceGrade
+     * const workforceGrade = await prisma.workforceGrade.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceGradeFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceGradeFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceGrades that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceGrades
+     * const workforceGrades = await prisma.workforceGrade.findMany()
+     * 
+     * // Get first 10 WorkforceGrades
+     * const workforceGrades = await prisma.workforceGrade.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceGradeWithIdOnly = await prisma.workforceGrade.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceGradeFindManyArgs>(args?: SelectSubset<T, WorkforceGradeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceGrade.
+     * @param {WorkforceGradeCreateArgs} args - Arguments to create a WorkforceGrade.
+     * @example
+     * // Create one WorkforceGrade
+     * const WorkforceGrade = await prisma.workforceGrade.create({
+     *   data: {
+     *     // ... data to create a WorkforceGrade
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceGradeCreateArgs>(args: SelectSubset<T, WorkforceGradeCreateArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceGrades.
+     * @param {WorkforceGradeCreateManyArgs} args - Arguments to create many WorkforceGrades.
+     * @example
+     * // Create many WorkforceGrades
+     * const workforceGrade = await prisma.workforceGrade.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceGradeCreateManyArgs>(args?: SelectSubset<T, WorkforceGradeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceGrades and returns the data saved in the database.
+     * @param {WorkforceGradeCreateManyAndReturnArgs} args - Arguments to create many WorkforceGrades.
+     * @example
+     * // Create many WorkforceGrades
+     * const workforceGrade = await prisma.workforceGrade.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceGrades and only return the `id`
+     * const workforceGradeWithIdOnly = await prisma.workforceGrade.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceGradeCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceGradeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceGrade.
+     * @param {WorkforceGradeDeleteArgs} args - Arguments to delete one WorkforceGrade.
+     * @example
+     * // Delete one WorkforceGrade
+     * const WorkforceGrade = await prisma.workforceGrade.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceGrade
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceGradeDeleteArgs>(args: SelectSubset<T, WorkforceGradeDeleteArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceGrade.
+     * @param {WorkforceGradeUpdateArgs} args - Arguments to update one WorkforceGrade.
+     * @example
+     * // Update one WorkforceGrade
+     * const workforceGrade = await prisma.workforceGrade.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceGradeUpdateArgs>(args: SelectSubset<T, WorkforceGradeUpdateArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceGrades.
+     * @param {WorkforceGradeDeleteManyArgs} args - Arguments to filter WorkforceGrades to delete.
+     * @example
+     * // Delete a few WorkforceGrades
+     * const { count } = await prisma.workforceGrade.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceGradeDeleteManyArgs>(args?: SelectSubset<T, WorkforceGradeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceGrades.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceGrades
+     * const workforceGrade = await prisma.workforceGrade.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceGradeUpdateManyArgs>(args: SelectSubset<T, WorkforceGradeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceGrades and returns the data updated in the database.
+     * @param {WorkforceGradeUpdateManyAndReturnArgs} args - Arguments to update many WorkforceGrades.
+     * @example
+     * // Update many WorkforceGrades
+     * const workforceGrade = await prisma.workforceGrade.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceGrades and only return the `id`
+     * const workforceGradeWithIdOnly = await prisma.workforceGrade.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceGradeUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceGradeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceGrade.
+     * @param {WorkforceGradeUpsertArgs} args - Arguments to update or create a WorkforceGrade.
+     * @example
+     * // Update or create a WorkforceGrade
+     * const workforceGrade = await prisma.workforceGrade.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceGrade
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceGrade we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceGradeUpsertArgs>(args: SelectSubset<T, WorkforceGradeUpsertArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceGrades.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeCountArgs} args - Arguments to filter WorkforceGrades to count.
+     * @example
+     * // Count the number of WorkforceGrades
+     * const count = await prisma.workforceGrade.count({
+     *   where: {
+     *     // ... the filter for the WorkforceGrades we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceGradeCountArgs>(
+      args?: Subset<T, WorkforceGradeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceGradeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceGrade.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceGradeAggregateArgs>(args: Subset<T, WorkforceGradeAggregateArgs>): Prisma.PrismaPromise<GetWorkforceGradeAggregateType<T>>
+
+    /**
+     * Group by WorkforceGrade.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceGradeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceGradeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceGradeGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceGradeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceGradeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceGradeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceGrade model
+   */
+  readonly fields: WorkforceGradeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceGrade.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceGradeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    jobs<T extends WorkforceGrade$jobsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceGrade$jobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceGrade model
+   */
+  interface WorkforceGradeFieldRefs {
+    readonly id: FieldRef<"WorkforceGrade", 'String'>
+    readonly workforceScopeId: FieldRef<"WorkforceGrade", 'String'>
+    readonly code: FieldRef<"WorkforceGrade", 'String'>
+    readonly name: FieldRef<"WorkforceGrade", 'String'>
+    readonly level: FieldRef<"WorkforceGrade", 'Int'>
+    readonly minSalary: FieldRef<"WorkforceGrade", 'Decimal'>
+    readonly maxSalary: FieldRef<"WorkforceGrade", 'Decimal'>
+    readonly status: FieldRef<"WorkforceGrade", 'OrgUnitStatus'>
+    readonly createdAt: FieldRef<"WorkforceGrade", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceGrade", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceGrade findUnique
+   */
+  export type WorkforceGradeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceGrade to fetch.
+     */
+    where: WorkforceGradeWhereUniqueInput
+  }
+
+  /**
+   * WorkforceGrade findUniqueOrThrow
+   */
+  export type WorkforceGradeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceGrade to fetch.
+     */
+    where: WorkforceGradeWhereUniqueInput
+  }
+
+  /**
+   * WorkforceGrade findFirst
+   */
+  export type WorkforceGradeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceGrade to fetch.
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceGrades to fetch.
+     */
+    orderBy?: WorkforceGradeOrderByWithRelationInput | WorkforceGradeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceGrades.
+     */
+    cursor?: WorkforceGradeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceGrades from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceGrades.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceGrades.
+     */
+    distinct?: WorkforceGradeScalarFieldEnum | WorkforceGradeScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceGrade findFirstOrThrow
+   */
+  export type WorkforceGradeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceGrade to fetch.
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceGrades to fetch.
+     */
+    orderBy?: WorkforceGradeOrderByWithRelationInput | WorkforceGradeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceGrades.
+     */
+    cursor?: WorkforceGradeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceGrades from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceGrades.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceGrades.
+     */
+    distinct?: WorkforceGradeScalarFieldEnum | WorkforceGradeScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceGrade findMany
+   */
+  export type WorkforceGradeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceGrades to fetch.
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceGrades to fetch.
+     */
+    orderBy?: WorkforceGradeOrderByWithRelationInput | WorkforceGradeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceGrades.
+     */
+    cursor?: WorkforceGradeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceGrades from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceGrades.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceGrades.
+     */
+    distinct?: WorkforceGradeScalarFieldEnum | WorkforceGradeScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceGrade create
+   */
+  export type WorkforceGradeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceGrade.
+     */
+    data: XOR<WorkforceGradeCreateInput, WorkforceGradeUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceGrade createMany
+   */
+  export type WorkforceGradeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceGrades.
+     */
+    data: WorkforceGradeCreateManyInput | WorkforceGradeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceGrade createManyAndReturn
+   */
+  export type WorkforceGradeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceGrades.
+     */
+    data: WorkforceGradeCreateManyInput | WorkforceGradeCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceGrade update
+   */
+  export type WorkforceGradeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceGrade.
+     */
+    data: XOR<WorkforceGradeUpdateInput, WorkforceGradeUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceGrade to update.
+     */
+    where: WorkforceGradeWhereUniqueInput
+  }
+
+  /**
+   * WorkforceGrade updateMany
+   */
+  export type WorkforceGradeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceGrades.
+     */
+    data: XOR<WorkforceGradeUpdateManyMutationInput, WorkforceGradeUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceGrades to update
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * Limit how many WorkforceGrades to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceGrade updateManyAndReturn
+   */
+  export type WorkforceGradeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceGrades.
+     */
+    data: XOR<WorkforceGradeUpdateManyMutationInput, WorkforceGradeUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceGrades to update
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * Limit how many WorkforceGrades to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceGrade upsert
+   */
+  export type WorkforceGradeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceGrade to update in case it exists.
+     */
+    where: WorkforceGradeWhereUniqueInput
+    /**
+     * In case the WorkforceGrade found by the `where` argument doesn't exist, create a new WorkforceGrade with this data.
+     */
+    create: XOR<WorkforceGradeCreateInput, WorkforceGradeUncheckedCreateInput>
+    /**
+     * In case the WorkforceGrade was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceGradeUpdateInput, WorkforceGradeUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceGrade delete
+   */
+  export type WorkforceGradeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceGrade to delete.
+     */
+    where: WorkforceGradeWhereUniqueInput
+  }
+
+  /**
+   * WorkforceGrade deleteMany
+   */
+  export type WorkforceGradeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceGrades to delete
+     */
+    where?: WorkforceGradeWhereInput
+    /**
+     * Limit how many WorkforceGrades to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceGrade.jobs
+   */
+  export type WorkforceGrade$jobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    where?: WorkforceJobWhereInput
+    orderBy?: WorkforceJobOrderByWithRelationInput | WorkforceJobOrderByWithRelationInput[]
+    cursor?: WorkforceJobWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceJobScalarFieldEnum | WorkforceJobScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceGrade without action
+   */
+  export type WorkforceGradeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceJob
+   */
+
+  export type AggregateWorkforceJob = {
+    _count: WorkforceJobCountAggregateOutputType | null
+    _min: WorkforceJobMinAggregateOutputType | null
+    _max: WorkforceJobMaxAggregateOutputType | null
+  }
+
+  export type WorkforceJobMinAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    name: string | null
+    code: string | null
+    jobFamily: string | null
+    gradeId: string | null
+    status: $Enums.OrgUnitStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceJobMaxAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    name: string | null
+    code: string | null
+    jobFamily: string | null
+    gradeId: string | null
+    status: $Enums.OrgUnitStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceJobCountAggregateOutputType = {
+    id: number
+    workforceScopeId: number
+    name: number
+    code: number
+    jobFamily: number
+    gradeId: number
+    status: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceJobMinAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    name?: true
+    code?: true
+    jobFamily?: true
+    gradeId?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceJobMaxAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    name?: true
+    code?: true
+    jobFamily?: true
+    gradeId?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceJobCountAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    name?: true
+    code?: true
+    jobFamily?: true
+    gradeId?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceJobAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceJob to aggregate.
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceJobs to fetch.
+     */
+    orderBy?: WorkforceJobOrderByWithRelationInput | WorkforceJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceJobs
+    **/
+    _count?: true | WorkforceJobCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceJobMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceJobMaxAggregateInputType
+  }
+
+  export type GetWorkforceJobAggregateType<T extends WorkforceJobAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceJob]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceJob[P]>
+      : GetScalarType<T[P], AggregateWorkforceJob[P]>
+  }
+
+
+
+
+  export type WorkforceJobGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceJobWhereInput
+    orderBy?: WorkforceJobOrderByWithAggregationInput | WorkforceJobOrderByWithAggregationInput[]
+    by: WorkforceJobScalarFieldEnum[] | WorkforceJobScalarFieldEnum
+    having?: WorkforceJobScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceJobCountAggregateInputType | true
+    _min?: WorkforceJobMinAggregateInputType
+    _max?: WorkforceJobMaxAggregateInputType
+  }
+
+  export type WorkforceJobGroupByOutputType = {
+    id: string
+    workforceScopeId: string
+    name: string
+    code: string | null
+    jobFamily: string | null
+    gradeId: string | null
+    status: $Enums.OrgUnitStatus
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceJobCountAggregateOutputType | null
+    _min: WorkforceJobMinAggregateOutputType | null
+    _max: WorkforceJobMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceJobGroupByPayload<T extends WorkforceJobGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceJobGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceJobGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceJobGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceJobGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceJobSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    name?: boolean
+    code?: boolean
+    jobFamily?: boolean
+    gradeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    grade?: boolean | WorkforceJob$gradeArgs<ExtArgs>
+    positions?: boolean | WorkforceJob$positionsArgs<ExtArgs>
+    _count?: boolean | WorkforceJobCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceJob"]>
+
+  export type WorkforceJobSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    name?: boolean
+    code?: boolean
+    jobFamily?: boolean
+    gradeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    grade?: boolean | WorkforceJob$gradeArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceJob"]>
+
+  export type WorkforceJobSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    name?: boolean
+    code?: boolean
+    jobFamily?: boolean
+    gradeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    grade?: boolean | WorkforceJob$gradeArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceJob"]>
+
+  export type WorkforceJobSelectScalar = {
+    id?: boolean
+    workforceScopeId?: boolean
+    name?: boolean
+    code?: boolean
+    jobFamily?: boolean
+    gradeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceJobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "name" | "code" | "jobFamily" | "gradeId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceJob"]>
+  export type WorkforceJobInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    grade?: boolean | WorkforceJob$gradeArgs<ExtArgs>
+    positions?: boolean | WorkforceJob$positionsArgs<ExtArgs>
+    _count?: boolean | WorkforceJobCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type WorkforceJobIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    grade?: boolean | WorkforceJob$gradeArgs<ExtArgs>
+  }
+  export type WorkforceJobIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    grade?: boolean | WorkforceJob$gradeArgs<ExtArgs>
+  }
+
+  export type $WorkforceJobPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceJob"
+    objects: {
+      workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
+      grade: Prisma.$WorkforceGradePayload<ExtArgs> | null
+      positions: Prisma.$WorkforcePositionPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workforceScopeId: string
+      name: string
+      code: string | null
+      jobFamily: string | null
+      gradeId: string | null
+      status: $Enums.OrgUnitStatus
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceJob"]>
+    composites: {}
+  }
+
+  type WorkforceJobGetPayload<S extends boolean | null | undefined | WorkforceJobDefaultArgs> = $Result.GetResult<Prisma.$WorkforceJobPayload, S>
+
+  type WorkforceJobCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceJobFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceJobCountAggregateInputType | true
+    }
+
+  export interface WorkforceJobDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceJob'], meta: { name: 'WorkforceJob' } }
+    /**
+     * Find zero or one WorkforceJob that matches the filter.
+     * @param {WorkforceJobFindUniqueArgs} args - Arguments to find a WorkforceJob
+     * @example
+     * // Get one WorkforceJob
+     * const workforceJob = await prisma.workforceJob.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceJobFindUniqueArgs>(args: SelectSubset<T, WorkforceJobFindUniqueArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceJob that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceJobFindUniqueOrThrowArgs} args - Arguments to find a WorkforceJob
+     * @example
+     * // Get one WorkforceJob
+     * const workforceJob = await prisma.workforceJob.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceJobFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceJobFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceJob that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobFindFirstArgs} args - Arguments to find a WorkforceJob
+     * @example
+     * // Get one WorkforceJob
+     * const workforceJob = await prisma.workforceJob.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceJobFindFirstArgs>(args?: SelectSubset<T, WorkforceJobFindFirstArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceJob that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobFindFirstOrThrowArgs} args - Arguments to find a WorkforceJob
+     * @example
+     * // Get one WorkforceJob
+     * const workforceJob = await prisma.workforceJob.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceJobFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceJobFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceJobs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceJobs
+     * const workforceJobs = await prisma.workforceJob.findMany()
+     * 
+     * // Get first 10 WorkforceJobs
+     * const workforceJobs = await prisma.workforceJob.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceJobWithIdOnly = await prisma.workforceJob.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceJobFindManyArgs>(args?: SelectSubset<T, WorkforceJobFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceJob.
+     * @param {WorkforceJobCreateArgs} args - Arguments to create a WorkforceJob.
+     * @example
+     * // Create one WorkforceJob
+     * const WorkforceJob = await prisma.workforceJob.create({
+     *   data: {
+     *     // ... data to create a WorkforceJob
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceJobCreateArgs>(args: SelectSubset<T, WorkforceJobCreateArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceJobs.
+     * @param {WorkforceJobCreateManyArgs} args - Arguments to create many WorkforceJobs.
+     * @example
+     * // Create many WorkforceJobs
+     * const workforceJob = await prisma.workforceJob.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceJobCreateManyArgs>(args?: SelectSubset<T, WorkforceJobCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceJobs and returns the data saved in the database.
+     * @param {WorkforceJobCreateManyAndReturnArgs} args - Arguments to create many WorkforceJobs.
+     * @example
+     * // Create many WorkforceJobs
+     * const workforceJob = await prisma.workforceJob.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceJobs and only return the `id`
+     * const workforceJobWithIdOnly = await prisma.workforceJob.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceJobCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceJobCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceJob.
+     * @param {WorkforceJobDeleteArgs} args - Arguments to delete one WorkforceJob.
+     * @example
+     * // Delete one WorkforceJob
+     * const WorkforceJob = await prisma.workforceJob.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceJob
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceJobDeleteArgs>(args: SelectSubset<T, WorkforceJobDeleteArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceJob.
+     * @param {WorkforceJobUpdateArgs} args - Arguments to update one WorkforceJob.
+     * @example
+     * // Update one WorkforceJob
+     * const workforceJob = await prisma.workforceJob.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceJobUpdateArgs>(args: SelectSubset<T, WorkforceJobUpdateArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceJobs.
+     * @param {WorkforceJobDeleteManyArgs} args - Arguments to filter WorkforceJobs to delete.
+     * @example
+     * // Delete a few WorkforceJobs
+     * const { count } = await prisma.workforceJob.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceJobDeleteManyArgs>(args?: SelectSubset<T, WorkforceJobDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceJobs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceJobs
+     * const workforceJob = await prisma.workforceJob.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceJobUpdateManyArgs>(args: SelectSubset<T, WorkforceJobUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceJobs and returns the data updated in the database.
+     * @param {WorkforceJobUpdateManyAndReturnArgs} args - Arguments to update many WorkforceJobs.
+     * @example
+     * // Update many WorkforceJobs
+     * const workforceJob = await prisma.workforceJob.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceJobs and only return the `id`
+     * const workforceJobWithIdOnly = await prisma.workforceJob.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceJobUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceJobUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceJob.
+     * @param {WorkforceJobUpsertArgs} args - Arguments to update or create a WorkforceJob.
+     * @example
+     * // Update or create a WorkforceJob
+     * const workforceJob = await prisma.workforceJob.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceJob
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceJob we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceJobUpsertArgs>(args: SelectSubset<T, WorkforceJobUpsertArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceJobs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobCountArgs} args - Arguments to filter WorkforceJobs to count.
+     * @example
+     * // Count the number of WorkforceJobs
+     * const count = await prisma.workforceJob.count({
+     *   where: {
+     *     // ... the filter for the WorkforceJobs we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceJobCountArgs>(
+      args?: Subset<T, WorkforceJobCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceJobCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceJob.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceJobAggregateArgs>(args: Subset<T, WorkforceJobAggregateArgs>): Prisma.PrismaPromise<GetWorkforceJobAggregateType<T>>
+
+    /**
+     * Group by WorkforceJob.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceJobGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceJobGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceJobGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceJobGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceJobGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceJobGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceJob model
+   */
+  readonly fields: WorkforceJobFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceJob.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceJobClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    grade<T extends WorkforceJob$gradeArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceJob$gradeArgs<ExtArgs>>): Prisma__WorkforceGradeClient<$Result.GetResult<Prisma.$WorkforceGradePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    positions<T extends WorkforceJob$positionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceJob$positionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePositionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceJob model
+   */
+  interface WorkforceJobFieldRefs {
+    readonly id: FieldRef<"WorkforceJob", 'String'>
+    readonly workforceScopeId: FieldRef<"WorkforceJob", 'String'>
+    readonly name: FieldRef<"WorkforceJob", 'String'>
+    readonly code: FieldRef<"WorkforceJob", 'String'>
+    readonly jobFamily: FieldRef<"WorkforceJob", 'String'>
+    readonly gradeId: FieldRef<"WorkforceJob", 'String'>
+    readonly status: FieldRef<"WorkforceJob", 'OrgUnitStatus'>
+    readonly createdAt: FieldRef<"WorkforceJob", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceJob", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceJob findUnique
+   */
+  export type WorkforceJobFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceJob to fetch.
+     */
+    where: WorkforceJobWhereUniqueInput
+  }
+
+  /**
+   * WorkforceJob findUniqueOrThrow
+   */
+  export type WorkforceJobFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceJob to fetch.
+     */
+    where: WorkforceJobWhereUniqueInput
+  }
+
+  /**
+   * WorkforceJob findFirst
+   */
+  export type WorkforceJobFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceJob to fetch.
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceJobs to fetch.
+     */
+    orderBy?: WorkforceJobOrderByWithRelationInput | WorkforceJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceJobs.
+     */
+    cursor?: WorkforceJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceJobs.
+     */
+    distinct?: WorkforceJobScalarFieldEnum | WorkforceJobScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceJob findFirstOrThrow
+   */
+  export type WorkforceJobFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceJob to fetch.
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceJobs to fetch.
+     */
+    orderBy?: WorkforceJobOrderByWithRelationInput | WorkforceJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceJobs.
+     */
+    cursor?: WorkforceJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceJobs.
+     */
+    distinct?: WorkforceJobScalarFieldEnum | WorkforceJobScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceJob findMany
+   */
+  export type WorkforceJobFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceJobs to fetch.
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceJobs to fetch.
+     */
+    orderBy?: WorkforceJobOrderByWithRelationInput | WorkforceJobOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceJobs.
+     */
+    cursor?: WorkforceJobWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceJobs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceJobs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceJobs.
+     */
+    distinct?: WorkforceJobScalarFieldEnum | WorkforceJobScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceJob create
+   */
+  export type WorkforceJobCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceJob.
+     */
+    data: XOR<WorkforceJobCreateInput, WorkforceJobUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceJob createMany
+   */
+  export type WorkforceJobCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceJobs.
+     */
+    data: WorkforceJobCreateManyInput | WorkforceJobCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceJob createManyAndReturn
+   */
+  export type WorkforceJobCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceJobs.
+     */
+    data: WorkforceJobCreateManyInput | WorkforceJobCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceJob update
+   */
+  export type WorkforceJobUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceJob.
+     */
+    data: XOR<WorkforceJobUpdateInput, WorkforceJobUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceJob to update.
+     */
+    where: WorkforceJobWhereUniqueInput
+  }
+
+  /**
+   * WorkforceJob updateMany
+   */
+  export type WorkforceJobUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceJobs.
+     */
+    data: XOR<WorkforceJobUpdateManyMutationInput, WorkforceJobUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceJobs to update
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * Limit how many WorkforceJobs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceJob updateManyAndReturn
+   */
+  export type WorkforceJobUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceJobs.
+     */
+    data: XOR<WorkforceJobUpdateManyMutationInput, WorkforceJobUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceJobs to update
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * Limit how many WorkforceJobs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceJob upsert
+   */
+  export type WorkforceJobUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceJob to update in case it exists.
+     */
+    where: WorkforceJobWhereUniqueInput
+    /**
+     * In case the WorkforceJob found by the `where` argument doesn't exist, create a new WorkforceJob with this data.
+     */
+    create: XOR<WorkforceJobCreateInput, WorkforceJobUncheckedCreateInput>
+    /**
+     * In case the WorkforceJob was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceJobUpdateInput, WorkforceJobUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceJob delete
+   */
+  export type WorkforceJobDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceJob to delete.
+     */
+    where: WorkforceJobWhereUniqueInput
+  }
+
+  /**
+   * WorkforceJob deleteMany
+   */
+  export type WorkforceJobDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceJobs to delete
+     */
+    where?: WorkforceJobWhereInput
+    /**
+     * Limit how many WorkforceJobs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceJob.grade
+   */
+  export type WorkforceJob$gradeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceGrade
+     */
+    select?: WorkforceGradeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceGrade
+     */
+    omit?: WorkforceGradeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceGradeInclude<ExtArgs> | null
+    where?: WorkforceGradeWhereInput
+  }
+
+  /**
+   * WorkforceJob.positions
+   */
+  export type WorkforceJob$positionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePosition
+     */
+    select?: WorkforcePositionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePosition
+     */
+    omit?: WorkforcePositionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePositionInclude<ExtArgs> | null
+    where?: WorkforcePositionWhereInput
+    orderBy?: WorkforcePositionOrderByWithRelationInput | WorkforcePositionOrderByWithRelationInput[]
+    cursor?: WorkforcePositionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforcePositionScalarFieldEnum | WorkforcePositionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceJob without action
+   */
+  export type WorkforceJobDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
   }
 
 
@@ -30382,6 +33117,7 @@ export namespace Prisma {
     parentId: string | null
     name: string | null
     code: string | null
+    unitKind: $Enums.OrgUnitKind | null
     status: $Enums.OrgUnitStatus | null
     sortOrder: number | null
     managerEmploymentId: string | null
@@ -30396,6 +33132,7 @@ export namespace Prisma {
     parentId: string | null
     name: string | null
     code: string | null
+    unitKind: $Enums.OrgUnitKind | null
     status: $Enums.OrgUnitStatus | null
     sortOrder: number | null
     managerEmploymentId: string | null
@@ -30410,6 +33147,7 @@ export namespace Prisma {
     parentId: number
     name: number
     code: number
+    unitKind: number
     status: number
     sortOrder: number
     managerEmploymentId: number
@@ -30434,6 +33172,7 @@ export namespace Prisma {
     parentId?: true
     name?: true
     code?: true
+    unitKind?: true
     status?: true
     sortOrder?: true
     managerEmploymentId?: true
@@ -30448,6 +33187,7 @@ export namespace Prisma {
     parentId?: true
     name?: true
     code?: true
+    unitKind?: true
     status?: true
     sortOrder?: true
     managerEmploymentId?: true
@@ -30462,6 +33202,7 @@ export namespace Prisma {
     parentId?: true
     name?: true
     code?: true
+    unitKind?: true
     status?: true
     sortOrder?: true
     managerEmploymentId?: true
@@ -30563,6 +33304,7 @@ export namespace Prisma {
     parentId: string | null
     name: string
     code: string | null
+    unitKind: $Enums.OrgUnitKind
     status: $Enums.OrgUnitStatus
     sortOrder: number
     managerEmploymentId: string | null
@@ -30596,6 +33338,7 @@ export namespace Prisma {
     parentId?: boolean
     name?: boolean
     code?: boolean
+    unitKind?: boolean
     status?: boolean
     sortOrder?: boolean
     managerEmploymentId?: boolean
@@ -30621,6 +33364,7 @@ export namespace Prisma {
     parentId?: boolean
     name?: boolean
     code?: boolean
+    unitKind?: boolean
     status?: boolean
     sortOrder?: boolean
     managerEmploymentId?: boolean
@@ -30638,6 +33382,7 @@ export namespace Prisma {
     parentId?: boolean
     name?: boolean
     code?: boolean
+    unitKind?: boolean
     status?: boolean
     sortOrder?: boolean
     managerEmploymentId?: boolean
@@ -30655,6 +33400,7 @@ export namespace Prisma {
     parentId?: boolean
     name?: boolean
     code?: boolean
+    unitKind?: boolean
     status?: boolean
     sortOrder?: boolean
     managerEmploymentId?: boolean
@@ -30663,7 +33409,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OrgUnitOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "parentId" | "name" | "code" | "status" | "sortOrder" | "managerEmploymentId" | "managerUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["orgUnit"]>
+  export type OrgUnitOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "parentId" | "name" | "code" | "unitKind" | "status" | "sortOrder" | "managerEmploymentId" | "managerUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["orgUnit"]>
   export type OrgUnitInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     parent?: boolean | OrgUnit$parentArgs<ExtArgs>
@@ -30708,6 +33454,7 @@ export namespace Prisma {
       parentId: string | null
       name: string
       code: string | null
+      unitKind: $Enums.OrgUnitKind
       status: $Enums.OrgUnitStatus
       sortOrder: number
       managerEmploymentId: string | null
@@ -31152,6 +33899,7 @@ export namespace Prisma {
     readonly parentId: FieldRef<"OrgUnit", 'String'>
     readonly name: FieldRef<"OrgUnit", 'String'>
     readonly code: FieldRef<"OrgUnit", 'String'>
+    readonly unitKind: FieldRef<"OrgUnit", 'OrgUnitKind'>
     readonly status: FieldRef<"OrgUnit", 'OrgUnitStatus'>
     readonly sortOrder: FieldRef<"OrgUnit", 'Int'>
     readonly managerEmploymentId: FieldRef<"OrgUnit", 'String'>
@@ -32941,6 +35689,8 @@ export namespace Prisma {
     tariffAzn: Decimal | null
     defaultWorkRegime: $Enums.WorkforceWorkRegime | null
     weeklyHours: Decimal | null
+    jobId: string | null
+    parentPositionId: string | null
     status: $Enums.OrgUnitStatus | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -32956,6 +35706,8 @@ export namespace Prisma {
     tariffAzn: Decimal | null
     defaultWorkRegime: $Enums.WorkforceWorkRegime | null
     weeklyHours: Decimal | null
+    jobId: string | null
+    parentPositionId: string | null
     status: $Enums.OrgUnitStatus | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -32971,6 +35723,8 @@ export namespace Prisma {
     tariffAzn: number
     defaultWorkRegime: number
     weeklyHours: number
+    jobId: number
+    parentPositionId: number
     status: number
     createdAt: number
     updatedAt: number
@@ -33000,6 +35754,8 @@ export namespace Prisma {
     tariffAzn?: true
     defaultWorkRegime?: true
     weeklyHours?: true
+    jobId?: true
+    parentPositionId?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -33015,6 +35771,8 @@ export namespace Prisma {
     tariffAzn?: true
     defaultWorkRegime?: true
     weeklyHours?: true
+    jobId?: true
+    parentPositionId?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -33030,6 +35788,8 @@ export namespace Prisma {
     tariffAzn?: true
     defaultWorkRegime?: true
     weeklyHours?: true
+    jobId?: true
+    parentPositionId?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -33132,6 +35892,8 @@ export namespace Prisma {
     tariffAzn: Decimal | null
     defaultWorkRegime: $Enums.WorkforceWorkRegime | null
     weeklyHours: Decimal | null
+    jobId: string | null
+    parentPositionId: string | null
     status: $Enums.OrgUnitStatus
     createdAt: Date
     updatedAt: Date
@@ -33166,10 +35928,15 @@ export namespace Prisma {
     tariffAzn?: boolean
     defaultWorkRegime?: boolean
     weeklyHours?: boolean
+    jobId?: boolean
+    parentPositionId?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
+    job?: boolean | WorkforcePosition$jobArgs<ExtArgs>
+    parentPosition?: boolean | WorkforcePosition$parentPositionArgs<ExtArgs>
+    childPositions?: boolean | WorkforcePosition$childPositionsArgs<ExtArgs>
     employments?: boolean | WorkforcePosition$employmentsArgs<ExtArgs>
     roleTemplates?: boolean | WorkforcePosition$roleTemplatesArgs<ExtArgs>
     approvalSteps?: boolean | WorkforcePosition$approvalStepsArgs<ExtArgs>
@@ -33186,10 +35953,14 @@ export namespace Prisma {
     tariffAzn?: boolean
     defaultWorkRegime?: boolean
     weeklyHours?: boolean
+    jobId?: boolean
+    parentPositionId?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
+    job?: boolean | WorkforcePosition$jobArgs<ExtArgs>
+    parentPosition?: boolean | WorkforcePosition$parentPositionArgs<ExtArgs>
   }, ExtArgs["result"]["workforcePosition"]>
 
   export type WorkforcePositionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -33202,10 +35973,14 @@ export namespace Prisma {
     tariffAzn?: boolean
     defaultWorkRegime?: boolean
     weeklyHours?: boolean
+    jobId?: boolean
+    parentPositionId?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
+    job?: boolean | WorkforcePosition$jobArgs<ExtArgs>
+    parentPosition?: boolean | WorkforcePosition$parentPositionArgs<ExtArgs>
   }, ExtArgs["result"]["workforcePosition"]>
 
   export type WorkforcePositionSelectScalar = {
@@ -33218,14 +35993,19 @@ export namespace Prisma {
     tariffAzn?: boolean
     defaultWorkRegime?: boolean
     weeklyHours?: boolean
+    jobId?: boolean
+    parentPositionId?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforcePositionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orgUnitId" | "name" | "code" | "totalSlots" | "leadership" | "tariffAzn" | "defaultWorkRegime" | "weeklyHours" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePosition"]>
+  export type WorkforcePositionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orgUnitId" | "name" | "code" | "totalSlots" | "leadership" | "tariffAzn" | "defaultWorkRegime" | "weeklyHours" | "jobId" | "parentPositionId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePosition"]>
   export type WorkforcePositionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
+    job?: boolean | WorkforcePosition$jobArgs<ExtArgs>
+    parentPosition?: boolean | WorkforcePosition$parentPositionArgs<ExtArgs>
+    childPositions?: boolean | WorkforcePosition$childPositionsArgs<ExtArgs>
     employments?: boolean | WorkforcePosition$employmentsArgs<ExtArgs>
     roleTemplates?: boolean | WorkforcePosition$roleTemplatesArgs<ExtArgs>
     approvalSteps?: boolean | WorkforcePosition$approvalStepsArgs<ExtArgs>
@@ -33233,15 +36013,22 @@ export namespace Prisma {
   }
   export type WorkforcePositionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
+    job?: boolean | WorkforcePosition$jobArgs<ExtArgs>
+    parentPosition?: boolean | WorkforcePosition$parentPositionArgs<ExtArgs>
   }
   export type WorkforcePositionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
+    job?: boolean | WorkforcePosition$jobArgs<ExtArgs>
+    parentPosition?: boolean | WorkforcePosition$parentPositionArgs<ExtArgs>
   }
 
   export type $WorkforcePositionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "WorkforcePosition"
     objects: {
       orgUnit: Prisma.$OrgUnitPayload<ExtArgs>
+      job: Prisma.$WorkforceJobPayload<ExtArgs> | null
+      parentPosition: Prisma.$WorkforcePositionPayload<ExtArgs> | null
+      childPositions: Prisma.$WorkforcePositionPayload<ExtArgs>[]
       employments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       roleTemplates: Prisma.$SatelliteRoleTemplatePayload<ExtArgs>[]
       approvalSteps: Prisma.$WorkforceApprovalStepPayload<ExtArgs>[]
@@ -33256,6 +36043,8 @@ export namespace Prisma {
       tariffAzn: Prisma.Decimal | null
       defaultWorkRegime: $Enums.WorkforceWorkRegime | null
       weeklyHours: Prisma.Decimal | null
+      jobId: string | null
+      parentPositionId: string | null
       status: $Enums.OrgUnitStatus
       createdAt: Date
       updatedAt: Date
@@ -33654,6 +36443,9 @@ export namespace Prisma {
   export interface Prisma__WorkforcePositionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     orgUnit<T extends OrgUnitDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnitDefaultArgs<ExtArgs>>): Prisma__OrgUnitClient<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    job<T extends WorkforcePosition$jobArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$jobArgs<ExtArgs>>): Prisma__WorkforceJobClient<$Result.GetResult<Prisma.$WorkforceJobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    parentPosition<T extends WorkforcePosition$parentPositionArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$parentPositionArgs<ExtArgs>>): Prisma__WorkforcePositionClient<$Result.GetResult<Prisma.$WorkforcePositionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    childPositions<T extends WorkforcePosition$childPositionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$childPositionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePositionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     employments<T extends WorkforcePosition$employmentsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$employmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     roleTemplates<T extends WorkforcePosition$roleTemplatesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$roleTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteRoleTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     approvalSteps<T extends WorkforcePosition$approvalStepsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePosition$approvalStepsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceApprovalStepPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -33695,6 +36487,8 @@ export namespace Prisma {
     readonly tariffAzn: FieldRef<"WorkforcePosition", 'Decimal'>
     readonly defaultWorkRegime: FieldRef<"WorkforcePosition", 'WorkforceWorkRegime'>
     readonly weeklyHours: FieldRef<"WorkforcePosition", 'Decimal'>
+    readonly jobId: FieldRef<"WorkforcePosition", 'String'>
+    readonly parentPositionId: FieldRef<"WorkforcePosition", 'String'>
     readonly status: FieldRef<"WorkforcePosition", 'OrgUnitStatus'>
     readonly createdAt: FieldRef<"WorkforcePosition", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforcePosition", 'DateTime'>
@@ -34096,6 +36890,68 @@ export namespace Prisma {
      * Limit how many WorkforcePositions to delete.
      */
     limit?: number
+  }
+
+  /**
+   * WorkforcePosition.job
+   */
+  export type WorkforcePosition$jobArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceJob
+     */
+    select?: WorkforceJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceJob
+     */
+    omit?: WorkforceJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceJobInclude<ExtArgs> | null
+    where?: WorkforceJobWhereInput
+  }
+
+  /**
+   * WorkforcePosition.parentPosition
+   */
+  export type WorkforcePosition$parentPositionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePosition
+     */
+    select?: WorkforcePositionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePosition
+     */
+    omit?: WorkforcePositionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePositionInclude<ExtArgs> | null
+    where?: WorkforcePositionWhereInput
+  }
+
+  /**
+   * WorkforcePosition.childPositions
+   */
+  export type WorkforcePosition$childPositionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePosition
+     */
+    select?: WorkforcePositionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePosition
+     */
+    omit?: WorkforcePositionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePositionInclude<ExtArgs> | null
+    where?: WorkforcePositionWhereInput
+    orderBy?: WorkforcePositionOrderByWithRelationInput | WorkforcePositionOrderByWithRelationInput[]
+    cursor?: WorkforcePositionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforcePositionScalarFieldEnum | WorkforcePositionScalarFieldEnum[]
   }
 
   /**
@@ -39779,6 +42635,8 @@ export namespace Prisma {
     platformUserId: string | null
     satelliteStaffLogin: string | null
     satelliteStaffPin: string | null
+    managerEmploymentId: string | null
+    matrixManagerEmploymentId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -39799,6 +42657,8 @@ export namespace Prisma {
     platformUserId: string | null
     satelliteStaffLogin: string | null
     satelliteStaffPin: string | null
+    managerEmploymentId: string | null
+    matrixManagerEmploymentId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -39819,6 +42679,8 @@ export namespace Prisma {
     platformUserId: number
     satelliteStaffLogin: number
     satelliteStaffPin: number
+    managerEmploymentId: number
+    matrixManagerEmploymentId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -39841,6 +42703,8 @@ export namespace Prisma {
     platformUserId?: true
     satelliteStaffLogin?: true
     satelliteStaffPin?: true
+    managerEmploymentId?: true
+    matrixManagerEmploymentId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -39861,6 +42725,8 @@ export namespace Prisma {
     platformUserId?: true
     satelliteStaffLogin?: true
     satelliteStaffPin?: true
+    managerEmploymentId?: true
+    matrixManagerEmploymentId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -39881,6 +42747,8 @@ export namespace Prisma {
     platformUserId?: true
     satelliteStaffLogin?: true
     satelliteStaffPin?: true
+    managerEmploymentId?: true
+    matrixManagerEmploymentId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -39974,6 +42842,8 @@ export namespace Prisma {
     platformUserId: string | null
     satelliteStaffLogin: string | null
     satelliteStaffPin: string | null
+    managerEmploymentId: string | null
+    matrixManagerEmploymentId: string | null
     createdAt: Date
     updatedAt: Date
     _count: WorkforceEmploymentCountAggregateOutputType | null
@@ -40011,12 +42881,18 @@ export namespace Prisma {
     platformUserId?: boolean
     satelliteStaffLogin?: boolean
     satelliteStaffPin?: boolean
+    managerEmploymentId?: boolean
+    matrixManagerEmploymentId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     position?: boolean | WorkforcePositionDefaultArgs<ExtArgs>
+    managerEmployment?: boolean | WorkforceEmployment$managerEmploymentArgs<ExtArgs>
+    directReports?: boolean | WorkforceEmployment$directReportsArgs<ExtArgs>
+    matrixManagerEmployment?: boolean | WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>
+    matrixReports?: boolean | WorkforceEmployment$matrixReportsArgs<ExtArgs>
     absences?: boolean | WorkforceEmployment$absencesArgs<ExtArgs>
     managedOrgUnits?: boolean | WorkforceEmployment$managedOrgUnitsArgs<ExtArgs>
     roleBindings?: boolean | WorkforceEmployment$roleBindingsArgs<ExtArgs>
@@ -40053,12 +42929,16 @@ export namespace Prisma {
     platformUserId?: boolean
     satelliteStaffLogin?: boolean
     satelliteStaffPin?: boolean
+    managerEmploymentId?: boolean
+    matrixManagerEmploymentId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     position?: boolean | WorkforcePositionDefaultArgs<ExtArgs>
+    managerEmployment?: boolean | WorkforceEmployment$managerEmploymentArgs<ExtArgs>
+    matrixManagerEmployment?: boolean | WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>
   }, ExtArgs["result"]["workforceEmployment"]>
 
   export type WorkforceEmploymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -40077,12 +42957,16 @@ export namespace Prisma {
     platformUserId?: boolean
     satelliteStaffLogin?: boolean
     satelliteStaffPin?: boolean
+    managerEmploymentId?: boolean
+    matrixManagerEmploymentId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     position?: boolean | WorkforcePositionDefaultArgs<ExtArgs>
+    managerEmployment?: boolean | WorkforceEmployment$managerEmploymentArgs<ExtArgs>
+    matrixManagerEmployment?: boolean | WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>
   }, ExtArgs["result"]["workforceEmployment"]>
 
   export type WorkforceEmploymentSelectScalar = {
@@ -40101,16 +42985,22 @@ export namespace Prisma {
     platformUserId?: boolean
     satelliteStaffLogin?: boolean
     satelliteStaffPin?: boolean
+    managerEmploymentId?: boolean
+    matrixManagerEmploymentId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkforceEmploymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "workforceScopeId" | "orgUnitId" | "positionId" | "globalPersonId" | "status" | "hireDate" | "contractEndDate" | "workRegime" | "financeEmployeeId" | "commercialOrganizationId" | "platformUserId" | "satelliteStaffLogin" | "satelliteStaffPin" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceEmployment"]>
+  export type WorkforceEmploymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "workforceScopeId" | "orgUnitId" | "positionId" | "globalPersonId" | "status" | "hireDate" | "contractEndDate" | "workRegime" | "financeEmployeeId" | "commercialOrganizationId" | "platformUserId" | "satelliteStaffLogin" | "satelliteStaffPin" | "managerEmploymentId" | "matrixManagerEmploymentId" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceEmployment"]>
   export type WorkforceEmploymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     position?: boolean | WorkforcePositionDefaultArgs<ExtArgs>
+    managerEmployment?: boolean | WorkforceEmployment$managerEmploymentArgs<ExtArgs>
+    directReports?: boolean | WorkforceEmployment$directReportsArgs<ExtArgs>
+    matrixManagerEmployment?: boolean | WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>
+    matrixReports?: boolean | WorkforceEmployment$matrixReportsArgs<ExtArgs>
     absences?: boolean | WorkforceEmployment$absencesArgs<ExtArgs>
     managedOrgUnits?: boolean | WorkforceEmployment$managedOrgUnitsArgs<ExtArgs>
     roleBindings?: boolean | WorkforceEmployment$roleBindingsArgs<ExtArgs>
@@ -40135,12 +43025,16 @@ export namespace Prisma {
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     position?: boolean | WorkforcePositionDefaultArgs<ExtArgs>
+    managerEmployment?: boolean | WorkforceEmployment$managerEmploymentArgs<ExtArgs>
+    matrixManagerEmployment?: boolean | WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>
   }
   export type WorkforceEmploymentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
     orgUnit?: boolean | OrgUnitDefaultArgs<ExtArgs>
     position?: boolean | WorkforcePositionDefaultArgs<ExtArgs>
+    managerEmployment?: boolean | WorkforceEmployment$managerEmploymentArgs<ExtArgs>
+    matrixManagerEmployment?: boolean | WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>
   }
 
   export type $WorkforceEmploymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -40150,6 +43044,10 @@ export namespace Prisma {
       workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
       orgUnit: Prisma.$OrgUnitPayload<ExtArgs>
       position: Prisma.$WorkforcePositionPayload<ExtArgs>
+      managerEmployment: Prisma.$WorkforceEmploymentPayload<ExtArgs> | null
+      directReports: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
+      matrixManagerEmployment: Prisma.$WorkforceEmploymentPayload<ExtArgs> | null
+      matrixReports: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       absences: Prisma.$WorkforceAbsencePayload<ExtArgs>[]
       managedOrgUnits: Prisma.$OrgUnitPayload<ExtArgs>[]
       roleBindings: Prisma.$WorkforceRoleBindingPayload<ExtArgs>[]
@@ -40193,6 +43091,14 @@ export namespace Prisma {
        * Default PIN pushed on provision / reprovision (pilot default 0000).
        */
       satelliteStaffPin: string | null
+      /**
+       * Solid-line manager override; empty → OrgUnit manager walk (job-architecture ADR).
+       */
+      managerEmploymentId: string | null
+      /**
+       * Dotted-line / matrix manager.
+       */
+      matrixManagerEmploymentId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workforceEmployment"]>
@@ -40593,6 +43499,10 @@ export namespace Prisma {
     workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     orgUnit<T extends OrgUnitDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnitDefaultArgs<ExtArgs>>): Prisma__OrgUnitClient<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     position<T extends WorkforcePositionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforcePositionDefaultArgs<ExtArgs>>): Prisma__WorkforcePositionClient<$Result.GetResult<Prisma.$WorkforcePositionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    managerEmployment<T extends WorkforceEmployment$managerEmploymentArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$managerEmploymentArgs<ExtArgs>>): Prisma__WorkforceEmploymentClient<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    directReports<T extends WorkforceEmployment$directReportsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$directReportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    matrixManagerEmployment<T extends WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs>>): Prisma__WorkforceEmploymentClient<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    matrixReports<T extends WorkforceEmployment$matrixReportsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$matrixReportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     absences<T extends WorkforceEmployment$absencesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$absencesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAbsencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     managedOrgUnits<T extends WorkforceEmployment$managedOrgUnitsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$managedOrgUnitsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     roleBindings<T extends WorkforceEmployment$roleBindingsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$roleBindingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceRoleBindingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -40654,6 +43564,8 @@ export namespace Prisma {
     readonly platformUserId: FieldRef<"WorkforceEmployment", 'String'>
     readonly satelliteStaffLogin: FieldRef<"WorkforceEmployment", 'String'>
     readonly satelliteStaffPin: FieldRef<"WorkforceEmployment", 'String'>
+    readonly managerEmploymentId: FieldRef<"WorkforceEmployment", 'String'>
+    readonly matrixManagerEmploymentId: FieldRef<"WorkforceEmployment", 'String'>
     readonly createdAt: FieldRef<"WorkforceEmployment", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkforceEmployment", 'DateTime'>
   }
@@ -41054,6 +43966,92 @@ export namespace Prisma {
      * Limit how many WorkforceEmployments to delete.
      */
     limit?: number
+  }
+
+  /**
+   * WorkforceEmployment.managerEmployment
+   */
+  export type WorkforceEmployment$managerEmploymentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceEmployment
+     */
+    select?: WorkforceEmploymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceEmployment
+     */
+    omit?: WorkforceEmploymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceEmploymentInclude<ExtArgs> | null
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  /**
+   * WorkforceEmployment.directReports
+   */
+  export type WorkforceEmployment$directReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceEmployment
+     */
+    select?: WorkforceEmploymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceEmployment
+     */
+    omit?: WorkforceEmploymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceEmploymentInclude<ExtArgs> | null
+    where?: WorkforceEmploymentWhereInput
+    orderBy?: WorkforceEmploymentOrderByWithRelationInput | WorkforceEmploymentOrderByWithRelationInput[]
+    cursor?: WorkforceEmploymentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceEmploymentScalarFieldEnum | WorkforceEmploymentScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceEmployment.matrixManagerEmployment
+   */
+  export type WorkforceEmployment$matrixManagerEmploymentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceEmployment
+     */
+    select?: WorkforceEmploymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceEmployment
+     */
+    omit?: WorkforceEmploymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceEmploymentInclude<ExtArgs> | null
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  /**
+   * WorkforceEmployment.matrixReports
+   */
+  export type WorkforceEmployment$matrixReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceEmployment
+     */
+    select?: WorkforceEmploymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceEmployment
+     */
+    omit?: WorkforceEmploymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceEmploymentInclude<ExtArgs> | null
+    where?: WorkforceEmploymentWhereInput
+    orderBy?: WorkforceEmploymentOrderByWithRelationInput | WorkforceEmploymentOrderByWithRelationInput[]
+    cursor?: WorkforceEmploymentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceEmploymentScalarFieldEnum | WorkforceEmploymentScalarFieldEnum[]
   }
 
   /**
@@ -83911,10 +86909,14 @@ export namespace Prisma {
 
   export type WorkforceApprovalStepAvgAggregateOutputType = {
     stepOrder: number | null
+    chainOffset: number | null
+    minGradeLevel: number | null
   }
 
   export type WorkforceApprovalStepSumAggregateOutputType = {
     stepOrder: number | null
+    chainOffset: number | null
+    minGradeLevel: number | null
   }
 
   export type WorkforceApprovalStepMinAggregateOutputType = {
@@ -83924,6 +86926,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind | null
     appliesTo: $Enums.WorkforceApprovalStepAudience | null
     canExceedAdvanceCap: boolean | null
+    chainOffset: number | null
+    minGradeLevel: number | null
     orgUnitId: string | null
     positionId: string | null
   }
@@ -83935,6 +86939,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind | null
     appliesTo: $Enums.WorkforceApprovalStepAudience | null
     canExceedAdvanceCap: boolean | null
+    chainOffset: number | null
+    minGradeLevel: number | null
     orgUnitId: string | null
     positionId: string | null
   }
@@ -83946,6 +86952,8 @@ export namespace Prisma {
     kind: number
     appliesTo: number
     canExceedAdvanceCap: number
+    chainOffset: number
+    minGradeLevel: number
     orgUnitId: number
     positionId: number
     _all: number
@@ -83954,10 +86962,14 @@ export namespace Prisma {
 
   export type WorkforceApprovalStepAvgAggregateInputType = {
     stepOrder?: true
+    chainOffset?: true
+    minGradeLevel?: true
   }
 
   export type WorkforceApprovalStepSumAggregateInputType = {
     stepOrder?: true
+    chainOffset?: true
+    minGradeLevel?: true
   }
 
   export type WorkforceApprovalStepMinAggregateInputType = {
@@ -83967,6 +86979,8 @@ export namespace Prisma {
     kind?: true
     appliesTo?: true
     canExceedAdvanceCap?: true
+    chainOffset?: true
+    minGradeLevel?: true
     orgUnitId?: true
     positionId?: true
   }
@@ -83978,6 +86992,8 @@ export namespace Prisma {
     kind?: true
     appliesTo?: true
     canExceedAdvanceCap?: true
+    chainOffset?: true
+    minGradeLevel?: true
     orgUnitId?: true
     positionId?: true
   }
@@ -83989,6 +87005,8 @@ export namespace Prisma {
     kind?: true
     appliesTo?: true
     canExceedAdvanceCap?: true
+    chainOffset?: true
+    minGradeLevel?: true
     orgUnitId?: true
     positionId?: true
     _all?: true
@@ -84087,6 +87105,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap: boolean
+    chainOffset: number | null
+    minGradeLevel: number | null
     orgUnitId: string | null
     positionId: string | null
     _count: WorkforceApprovalStepCountAggregateOutputType | null
@@ -84117,6 +87137,8 @@ export namespace Prisma {
     kind?: boolean
     appliesTo?: boolean
     canExceedAdvanceCap?: boolean
+    chainOffset?: boolean
+    minGradeLevel?: boolean
     orgUnitId?: boolean
     positionId?: boolean
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
@@ -84131,6 +87153,8 @@ export namespace Prisma {
     kind?: boolean
     appliesTo?: boolean
     canExceedAdvanceCap?: boolean
+    chainOffset?: boolean
+    minGradeLevel?: boolean
     orgUnitId?: boolean
     positionId?: boolean
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
@@ -84145,6 +87169,8 @@ export namespace Prisma {
     kind?: boolean
     appliesTo?: boolean
     canExceedAdvanceCap?: boolean
+    chainOffset?: boolean
+    minGradeLevel?: boolean
     orgUnitId?: boolean
     positionId?: boolean
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
@@ -84159,11 +87185,13 @@ export namespace Prisma {
     kind?: boolean
     appliesTo?: boolean
     canExceedAdvanceCap?: boolean
+    chainOffset?: boolean
+    minGradeLevel?: boolean
     orgUnitId?: boolean
     positionId?: boolean
   }
 
-  export type WorkforceApprovalStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "routeId" | "stepOrder" | "kind" | "appliesTo" | "canExceedAdvanceCap" | "orgUnitId" | "positionId", ExtArgs["result"]["workforceApprovalStep"]>
+  export type WorkforceApprovalStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "routeId" | "stepOrder" | "kind" | "appliesTo" | "canExceedAdvanceCap" | "chainOffset" | "minGradeLevel" | "orgUnitId" | "positionId", ExtArgs["result"]["workforceApprovalStep"]>
   export type WorkforceApprovalStepInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     route?: boolean | WorkforceApprovalRouteDefaultArgs<ExtArgs>
     orgUnit?: boolean | WorkforceApprovalStep$orgUnitArgs<ExtArgs>
@@ -84194,6 +87222,14 @@ export namespace Prisma {
       kind: $Enums.WorkforceApprovalStepKind
       appliesTo: $Enums.WorkforceApprovalStepAudience
       canExceedAdvanceCap: boolean
+      /**
+       * For MANAGER_CHAIN: how many lineManager hops (null → 2).
+       */
+      chainOffset: number | null
+      /**
+       * For GRADE_AT_LEAST: minimum WorkforceGrade.level.
+       */
+      minGradeLevel: number | null
       orgUnitId: string | null
       positionId: string | null
     }, ExtArgs["result"]["workforceApprovalStep"]>
@@ -84628,6 +87664,8 @@ export namespace Prisma {
     readonly kind: FieldRef<"WorkforceApprovalStep", 'WorkforceApprovalStepKind'>
     readonly appliesTo: FieldRef<"WorkforceApprovalStep", 'WorkforceApprovalStepAudience'>
     readonly canExceedAdvanceCap: FieldRef<"WorkforceApprovalStep", 'Boolean'>
+    readonly chainOffset: FieldRef<"WorkforceApprovalStep", 'Int'>
+    readonly minGradeLevel: FieldRef<"WorkforceApprovalStep", 'Int'>
     readonly orgUnitId: FieldRef<"WorkforceApprovalStep", 'String'>
     readonly positionId: FieldRef<"WorkforceApprovalStep", 'String'>
   }
@@ -136390,12 +139428,44 @@ export namespace Prisma {
   export type WorkforceScopeScalarFieldEnum = (typeof WorkforceScopeScalarFieldEnum)[keyof typeof WorkforceScopeScalarFieldEnum]
 
 
+  export const WorkforceGradeScalarFieldEnum: {
+    id: 'id',
+    workforceScopeId: 'workforceScopeId',
+    code: 'code',
+    name: 'name',
+    level: 'level',
+    minSalary: 'minSalary',
+    maxSalary: 'maxSalary',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceGradeScalarFieldEnum = (typeof WorkforceGradeScalarFieldEnum)[keyof typeof WorkforceGradeScalarFieldEnum]
+
+
+  export const WorkforceJobScalarFieldEnum: {
+    id: 'id',
+    workforceScopeId: 'workforceScopeId',
+    name: 'name',
+    code: 'code',
+    jobFamily: 'jobFamily',
+    gradeId: 'gradeId',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceJobScalarFieldEnum = (typeof WorkforceJobScalarFieldEnum)[keyof typeof WorkforceJobScalarFieldEnum]
+
+
   export const OrgUnitScalarFieldEnum: {
     id: 'id',
     workforceScopeId: 'workforceScopeId',
     parentId: 'parentId',
     name: 'name',
     code: 'code',
+    unitKind: 'unitKind',
     status: 'status',
     sortOrder: 'sortOrder',
     managerEmploymentId: 'managerEmploymentId',
@@ -136430,6 +139500,8 @@ export namespace Prisma {
     tariffAzn: 'tariffAzn',
     defaultWorkRegime: 'defaultWorkRegime',
     weeklyHours: 'weeklyHours',
+    jobId: 'jobId',
+    parentPositionId: 'parentPositionId',
     status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -136528,6 +139600,8 @@ export namespace Prisma {
     platformUserId: 'platformUserId',
     satelliteStaffLogin: 'satelliteStaffLogin',
     satelliteStaffPin: 'satelliteStaffPin',
+    managerEmploymentId: 'managerEmploymentId',
+    matrixManagerEmploymentId: 'matrixManagerEmploymentId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -137145,6 +140219,8 @@ export namespace Prisma {
     kind: 'kind',
     appliesTo: 'appliesTo',
     canExceedAdvanceCap: 'canExceedAdvanceCap',
+    chainOffset: 'chainOffset',
+    minGradeLevel: 'minGradeLevel',
     orgUnitId: 'orgUnitId',
     positionId: 'positionId'
   };
@@ -138086,6 +141162,20 @@ export namespace Prisma {
    * Reference to a field of type 'OrgUnitStatus[]'
    */
   export type ListEnumOrgUnitStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgUnitStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgUnitKind'
+   */
+  export type EnumOrgUnitKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgUnitKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgUnitKind[]'
+   */
+  export type ListEnumOrgUnitKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgUnitKind[]'>
     
 
 
@@ -140025,6 +143115,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanListRelationFilter
     personnelOrders?: WorkforcePersonnelOrderListRelationFilter
     staffScheduleRevisions?: StaffScheduleRevisionListRelationFilter
+    grades?: WorkforceGradeListRelationFilter
+    jobs?: WorkforceJobListRelationFilter
   }
 
   export type WorkforceScopeOrderByWithRelationInput = {
@@ -140040,6 +143132,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanOrderByRelationAggregateInput
     personnelOrders?: WorkforcePersonnelOrderOrderByRelationAggregateInput
     staffScheduleRevisions?: StaffScheduleRevisionOrderByRelationAggregateInput
+    grades?: WorkforceGradeOrderByRelationAggregateInput
+    jobs?: WorkforceJobOrderByRelationAggregateInput
   }
 
   export type WorkforceScopeWhereUniqueInput = Prisma.AtLeast<{
@@ -140058,6 +143152,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanListRelationFilter
     personnelOrders?: WorkforcePersonnelOrderListRelationFilter
     staffScheduleRevisions?: StaffScheduleRevisionListRelationFilter
+    grades?: WorkforceGradeListRelationFilter
+    jobs?: WorkforceJobListRelationFilter
   }, "id" | "anchorOrganizationId">
 
   export type WorkforceScopeOrderByWithAggregationInput = {
@@ -140082,6 +143178,174 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceScope"> | Date | string
   }
 
+  export type WorkforceGradeWhereInput = {
+    AND?: WorkforceGradeWhereInput | WorkforceGradeWhereInput[]
+    OR?: WorkforceGradeWhereInput[]
+    NOT?: WorkforceGradeWhereInput | WorkforceGradeWhereInput[]
+    id?: UuidFilter<"WorkforceGrade"> | string
+    workforceScopeId?: UuidFilter<"WorkforceGrade"> | string
+    code?: StringFilter<"WorkforceGrade"> | string
+    name?: StringFilter<"WorkforceGrade"> | string
+    level?: IntFilter<"WorkforceGrade"> | number
+    minSalary?: DecimalNullableFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: DecimalNullableFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforceGrade"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforceGrade"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceGrade"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    jobs?: WorkforceJobListRelationFilter
+  }
+
+  export type WorkforceGradeOrderByWithRelationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    level?: SortOrder
+    minSalary?: SortOrderInput | SortOrder
+    maxSalary?: SortOrderInput | SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workforceScope?: WorkforceScopeOrderByWithRelationInput
+    jobs?: WorkforceJobOrderByRelationAggregateInput
+  }
+
+  export type WorkforceGradeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workforceScopeId_code?: WorkforceGradeWorkforceScopeIdCodeCompoundUniqueInput
+    AND?: WorkforceGradeWhereInput | WorkforceGradeWhereInput[]
+    OR?: WorkforceGradeWhereInput[]
+    NOT?: WorkforceGradeWhereInput | WorkforceGradeWhereInput[]
+    workforceScopeId?: UuidFilter<"WorkforceGrade"> | string
+    code?: StringFilter<"WorkforceGrade"> | string
+    name?: StringFilter<"WorkforceGrade"> | string
+    level?: IntFilter<"WorkforceGrade"> | number
+    minSalary?: DecimalNullableFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: DecimalNullableFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforceGrade"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforceGrade"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceGrade"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    jobs?: WorkforceJobListRelationFilter
+  }, "id" | "workforceScopeId_code">
+
+  export type WorkforceGradeOrderByWithAggregationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    level?: SortOrder
+    minSalary?: SortOrderInput | SortOrder
+    maxSalary?: SortOrderInput | SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceGradeCountOrderByAggregateInput
+    _avg?: WorkforceGradeAvgOrderByAggregateInput
+    _max?: WorkforceGradeMaxOrderByAggregateInput
+    _min?: WorkforceGradeMinOrderByAggregateInput
+    _sum?: WorkforceGradeSumOrderByAggregateInput
+  }
+
+  export type WorkforceGradeScalarWhereWithAggregatesInput = {
+    AND?: WorkforceGradeScalarWhereWithAggregatesInput | WorkforceGradeScalarWhereWithAggregatesInput[]
+    OR?: WorkforceGradeScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceGradeScalarWhereWithAggregatesInput | WorkforceGradeScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceGrade"> | string
+    workforceScopeId?: UuidWithAggregatesFilter<"WorkforceGrade"> | string
+    code?: StringWithAggregatesFilter<"WorkforceGrade"> | string
+    name?: StringWithAggregatesFilter<"WorkforceGrade"> | string
+    level?: IntWithAggregatesFilter<"WorkforceGrade"> | number
+    minSalary?: DecimalNullableWithAggregatesFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: DecimalNullableWithAggregatesFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusWithAggregatesFilter<"WorkforceGrade"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceGrade"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceGrade"> | Date | string
+  }
+
+  export type WorkforceJobWhereInput = {
+    AND?: WorkforceJobWhereInput | WorkforceJobWhereInput[]
+    OR?: WorkforceJobWhereInput[]
+    NOT?: WorkforceJobWhereInput | WorkforceJobWhereInput[]
+    id?: UuidFilter<"WorkforceJob"> | string
+    workforceScopeId?: UuidFilter<"WorkforceJob"> | string
+    name?: StringFilter<"WorkforceJob"> | string
+    code?: StringNullableFilter<"WorkforceJob"> | string | null
+    jobFamily?: StringNullableFilter<"WorkforceJob"> | string | null
+    gradeId?: UuidNullableFilter<"WorkforceJob"> | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforceJob"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforceJob"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceJob"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    grade?: XOR<WorkforceGradeNullableScalarRelationFilter, WorkforceGradeWhereInput> | null
+    positions?: WorkforcePositionListRelationFilter
+  }
+
+  export type WorkforceJobOrderByWithRelationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    name?: SortOrder
+    code?: SortOrderInput | SortOrder
+    jobFamily?: SortOrderInput | SortOrder
+    gradeId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workforceScope?: WorkforceScopeOrderByWithRelationInput
+    grade?: WorkforceGradeOrderByWithRelationInput
+    positions?: WorkforcePositionOrderByRelationAggregateInput
+  }
+
+  export type WorkforceJobWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workforceScopeId_name?: WorkforceJobWorkforceScopeIdNameCompoundUniqueInput
+    AND?: WorkforceJobWhereInput | WorkforceJobWhereInput[]
+    OR?: WorkforceJobWhereInput[]
+    NOT?: WorkforceJobWhereInput | WorkforceJobWhereInput[]
+    workforceScopeId?: UuidFilter<"WorkforceJob"> | string
+    name?: StringFilter<"WorkforceJob"> | string
+    code?: StringNullableFilter<"WorkforceJob"> | string | null
+    jobFamily?: StringNullableFilter<"WorkforceJob"> | string | null
+    gradeId?: UuidNullableFilter<"WorkforceJob"> | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforceJob"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforceJob"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceJob"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    grade?: XOR<WorkforceGradeNullableScalarRelationFilter, WorkforceGradeWhereInput> | null
+    positions?: WorkforcePositionListRelationFilter
+  }, "id" | "workforceScopeId_name">
+
+  export type WorkforceJobOrderByWithAggregationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    name?: SortOrder
+    code?: SortOrderInput | SortOrder
+    jobFamily?: SortOrderInput | SortOrder
+    gradeId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceJobCountOrderByAggregateInput
+    _max?: WorkforceJobMaxOrderByAggregateInput
+    _min?: WorkforceJobMinOrderByAggregateInput
+  }
+
+  export type WorkforceJobScalarWhereWithAggregatesInput = {
+    AND?: WorkforceJobScalarWhereWithAggregatesInput | WorkforceJobScalarWhereWithAggregatesInput[]
+    OR?: WorkforceJobScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceJobScalarWhereWithAggregatesInput | WorkforceJobScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceJob"> | string
+    workforceScopeId?: UuidWithAggregatesFilter<"WorkforceJob"> | string
+    name?: StringWithAggregatesFilter<"WorkforceJob"> | string
+    code?: StringNullableWithAggregatesFilter<"WorkforceJob"> | string | null
+    jobFamily?: StringNullableWithAggregatesFilter<"WorkforceJob"> | string | null
+    gradeId?: UuidNullableWithAggregatesFilter<"WorkforceJob"> | string | null
+    status?: EnumOrgUnitStatusWithAggregatesFilter<"WorkforceJob"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceJob"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceJob"> | Date | string
+  }
+
   export type OrgUnitWhereInput = {
     AND?: OrgUnitWhereInput | OrgUnitWhereInput[]
     OR?: OrgUnitWhereInput[]
@@ -140091,6 +143355,7 @@ export namespace Prisma {
     parentId?: UuidNullableFilter<"OrgUnit"> | string | null
     name?: StringFilter<"OrgUnit"> | string
     code?: StringNullableFilter<"OrgUnit"> | string | null
+    unitKind?: EnumOrgUnitKindFilter<"OrgUnit"> | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFilter<"OrgUnit"> | $Enums.OrgUnitStatus
     sortOrder?: IntFilter<"OrgUnit"> | number
     managerEmploymentId?: UuidNullableFilter<"OrgUnit"> | string | null
@@ -140115,6 +143380,7 @@ export namespace Prisma {
     parentId?: SortOrderInput | SortOrder
     name?: SortOrder
     code?: SortOrderInput | SortOrder
+    unitKind?: SortOrder
     status?: SortOrder
     sortOrder?: SortOrder
     managerEmploymentId?: SortOrderInput | SortOrder
@@ -140143,6 +143409,7 @@ export namespace Prisma {
     parentId?: UuidNullableFilter<"OrgUnit"> | string | null
     name?: StringFilter<"OrgUnit"> | string
     code?: StringNullableFilter<"OrgUnit"> | string | null
+    unitKind?: EnumOrgUnitKindFilter<"OrgUnit"> | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFilter<"OrgUnit"> | $Enums.OrgUnitStatus
     sortOrder?: IntFilter<"OrgUnit"> | number
     managerEmploymentId?: UuidNullableFilter<"OrgUnit"> | string | null
@@ -140167,6 +143434,7 @@ export namespace Prisma {
     parentId?: SortOrderInput | SortOrder
     name?: SortOrder
     code?: SortOrderInput | SortOrder
+    unitKind?: SortOrder
     status?: SortOrder
     sortOrder?: SortOrder
     managerEmploymentId?: SortOrderInput | SortOrder
@@ -140189,6 +143457,7 @@ export namespace Prisma {
     parentId?: UuidNullableWithAggregatesFilter<"OrgUnit"> | string | null
     name?: StringWithAggregatesFilter<"OrgUnit"> | string
     code?: StringNullableWithAggregatesFilter<"OrgUnit"> | string | null
+    unitKind?: EnumOrgUnitKindWithAggregatesFilter<"OrgUnit"> | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusWithAggregatesFilter<"OrgUnit"> | $Enums.OrgUnitStatus
     sortOrder?: IntWithAggregatesFilter<"OrgUnit"> | number
     managerEmploymentId?: UuidNullableWithAggregatesFilter<"OrgUnit"> | string | null
@@ -140281,10 +143550,15 @@ export namespace Prisma {
     tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
     weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    jobId?: UuidNullableFilter<"WorkforcePosition"> | string | null
+    parentPositionId?: UuidNullableFilter<"WorkforcePosition"> | string | null
     status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     orgUnit?: XOR<OrgUnitScalarRelationFilter, OrgUnitWhereInput>
+    job?: XOR<WorkforceJobNullableScalarRelationFilter, WorkforceJobWhereInput> | null
+    parentPosition?: XOR<WorkforcePositionNullableScalarRelationFilter, WorkforcePositionWhereInput> | null
+    childPositions?: WorkforcePositionListRelationFilter
     employments?: WorkforceEmploymentListRelationFilter
     roleTemplates?: SatelliteRoleTemplateListRelationFilter
     approvalSteps?: WorkforceApprovalStepListRelationFilter
@@ -140300,10 +143574,15 @@ export namespace Prisma {
     tariffAzn?: SortOrderInput | SortOrder
     defaultWorkRegime?: SortOrderInput | SortOrder
     weeklyHours?: SortOrderInput | SortOrder
+    jobId?: SortOrderInput | SortOrder
+    parentPositionId?: SortOrderInput | SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     orgUnit?: OrgUnitOrderByWithRelationInput
+    job?: WorkforceJobOrderByWithRelationInput
+    parentPosition?: WorkforcePositionOrderByWithRelationInput
+    childPositions?: WorkforcePositionOrderByRelationAggregateInput
     employments?: WorkforceEmploymentOrderByRelationAggregateInput
     roleTemplates?: SatelliteRoleTemplateOrderByRelationAggregateInput
     approvalSteps?: WorkforceApprovalStepOrderByRelationAggregateInput
@@ -140323,10 +143602,15 @@ export namespace Prisma {
     tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
     weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    jobId?: UuidNullableFilter<"WorkforcePosition"> | string | null
+    parentPositionId?: UuidNullableFilter<"WorkforcePosition"> | string | null
     status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
     orgUnit?: XOR<OrgUnitScalarRelationFilter, OrgUnitWhereInput>
+    job?: XOR<WorkforceJobNullableScalarRelationFilter, WorkforceJobWhereInput> | null
+    parentPosition?: XOR<WorkforcePositionNullableScalarRelationFilter, WorkforcePositionWhereInput> | null
+    childPositions?: WorkforcePositionListRelationFilter
     employments?: WorkforceEmploymentListRelationFilter
     roleTemplates?: SatelliteRoleTemplateListRelationFilter
     approvalSteps?: WorkforceApprovalStepListRelationFilter
@@ -140342,6 +143626,8 @@ export namespace Prisma {
     tariffAzn?: SortOrderInput | SortOrder
     defaultWorkRegime?: SortOrderInput | SortOrder
     weeklyHours?: SortOrderInput | SortOrder
+    jobId?: SortOrderInput | SortOrder
+    parentPositionId?: SortOrderInput | SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -140365,6 +143651,8 @@ export namespace Prisma {
     tariffAzn?: DecimalNullableWithAggregatesFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: EnumWorkforceWorkRegimeNullableWithAggregatesFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
     weeklyHours?: DecimalNullableWithAggregatesFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    jobId?: UuidNullableWithAggregatesFilter<"WorkforcePosition"> | string | null
+    parentPositionId?: UuidNullableWithAggregatesFilter<"WorkforcePosition"> | string | null
     status?: EnumOrgUnitStatusWithAggregatesFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
     createdAt?: DateTimeWithAggregatesFilter<"WorkforcePosition"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforcePosition"> | Date | string
@@ -140769,12 +144057,18 @@ export namespace Prisma {
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     satelliteStaffLogin?: StringNullableFilter<"WorkforceEmployment"> | string | null
     satelliteStaffPin?: StringNullableFilter<"WorkforceEmployment"> | string | null
+    managerEmploymentId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
+    matrixManagerEmploymentId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
     orgUnit?: XOR<OrgUnitScalarRelationFilter, OrgUnitWhereInput>
     position?: XOR<WorkforcePositionScalarRelationFilter, WorkforcePositionWhereInput>
+    managerEmployment?: XOR<WorkforceEmploymentNullableScalarRelationFilter, WorkforceEmploymentWhereInput> | null
+    directReports?: WorkforceEmploymentListRelationFilter
+    matrixManagerEmployment?: XOR<WorkforceEmploymentNullableScalarRelationFilter, WorkforceEmploymentWhereInput> | null
+    matrixReports?: WorkforceEmploymentListRelationFilter
     absences?: WorkforceAbsenceListRelationFilter
     managedOrgUnits?: OrgUnitListRelationFilter
     roleBindings?: WorkforceRoleBindingListRelationFilter
@@ -140810,12 +144104,18 @@ export namespace Prisma {
     platformUserId?: SortOrderInput | SortOrder
     satelliteStaffLogin?: SortOrderInput | SortOrder
     satelliteStaffPin?: SortOrderInput | SortOrder
+    managerEmploymentId?: SortOrderInput | SortOrder
+    matrixManagerEmploymentId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
     workforceScope?: WorkforceScopeOrderByWithRelationInput
     orgUnit?: OrgUnitOrderByWithRelationInput
     position?: WorkforcePositionOrderByWithRelationInput
+    managerEmployment?: WorkforceEmploymentOrderByWithRelationInput
+    directReports?: WorkforceEmploymentOrderByRelationAggregateInput
+    matrixManagerEmployment?: WorkforceEmploymentOrderByWithRelationInput
+    matrixReports?: WorkforceEmploymentOrderByRelationAggregateInput
     absences?: WorkforceAbsenceOrderByRelationAggregateInput
     managedOrgUnits?: OrgUnitOrderByRelationAggregateInput
     roleBindings?: WorkforceRoleBindingOrderByRelationAggregateInput
@@ -140854,12 +144154,18 @@ export namespace Prisma {
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     satelliteStaffLogin?: StringNullableFilter<"WorkforceEmployment"> | string | null
     satelliteStaffPin?: StringNullableFilter<"WorkforceEmployment"> | string | null
+    managerEmploymentId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
+    matrixManagerEmploymentId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
     orgUnit?: XOR<OrgUnitScalarRelationFilter, OrgUnitWhereInput>
     position?: XOR<WorkforcePositionScalarRelationFilter, WorkforcePositionWhereInput>
+    managerEmployment?: XOR<WorkforceEmploymentNullableScalarRelationFilter, WorkforceEmploymentWhereInput> | null
+    directReports?: WorkforceEmploymentListRelationFilter
+    matrixManagerEmployment?: XOR<WorkforceEmploymentNullableScalarRelationFilter, WorkforceEmploymentWhereInput> | null
+    matrixReports?: WorkforceEmploymentListRelationFilter
     absences?: WorkforceAbsenceListRelationFilter
     managedOrgUnits?: OrgUnitListRelationFilter
     roleBindings?: WorkforceRoleBindingListRelationFilter
@@ -140895,6 +144201,8 @@ export namespace Prisma {
     platformUserId?: SortOrderInput | SortOrder
     satelliteStaffLogin?: SortOrderInput | SortOrder
     satelliteStaffPin?: SortOrderInput | SortOrder
+    managerEmploymentId?: SortOrderInput | SortOrder
+    matrixManagerEmploymentId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkforceEmploymentCountOrderByAggregateInput
@@ -140921,6 +144229,8 @@ export namespace Prisma {
     platformUserId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     satelliteStaffLogin?: StringNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     satelliteStaffPin?: StringNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
+    managerEmploymentId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
+    matrixManagerEmploymentId?: UuidNullableWithAggregatesFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceEmployment"> | Date | string
   }
@@ -144129,6 +147439,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFilter<"WorkforceApprovalStep"> | boolean
+    chainOffset?: IntNullableFilter<"WorkforceApprovalStep"> | number | null
+    minGradeLevel?: IntNullableFilter<"WorkforceApprovalStep"> | number | null
     orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     route?: XOR<WorkforceApprovalRouteScalarRelationFilter, WorkforceApprovalRouteWhereInput>
@@ -144143,6 +147455,8 @@ export namespace Prisma {
     kind?: SortOrder
     appliesTo?: SortOrder
     canExceedAdvanceCap?: SortOrder
+    chainOffset?: SortOrderInput | SortOrder
+    minGradeLevel?: SortOrderInput | SortOrder
     orgUnitId?: SortOrderInput | SortOrder
     positionId?: SortOrderInput | SortOrder
     route?: WorkforceApprovalRouteOrderByWithRelationInput
@@ -144161,6 +147475,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFilter<"WorkforceApprovalStep"> | boolean
+    chainOffset?: IntNullableFilter<"WorkforceApprovalStep"> | number | null
+    minGradeLevel?: IntNullableFilter<"WorkforceApprovalStep"> | number | null
     orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     route?: XOR<WorkforceApprovalRouteScalarRelationFilter, WorkforceApprovalRouteWhereInput>
@@ -144175,6 +147491,8 @@ export namespace Prisma {
     kind?: SortOrder
     appliesTo?: SortOrder
     canExceedAdvanceCap?: SortOrder
+    chainOffset?: SortOrderInput | SortOrder
+    minGradeLevel?: SortOrderInput | SortOrder
     orgUnitId?: SortOrderInput | SortOrder
     positionId?: SortOrderInput | SortOrder
     _count?: WorkforceApprovalStepCountOrderByAggregateInput
@@ -144194,6 +147512,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindWithAggregatesFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceWithAggregatesFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolWithAggregatesFilter<"WorkforceApprovalStep"> | boolean
+    chainOffset?: IntNullableWithAggregatesFilter<"WorkforceApprovalStep"> | number | null
+    minGradeLevel?: IntNullableWithAggregatesFilter<"WorkforceApprovalStep"> | number | null
     orgUnitId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableWithAggregatesFilter<"WorkforceApprovalStep"> | string | null
   }
@@ -149126,6 +152446,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateInput = {
@@ -149141,6 +152463,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUpdateInput = {
@@ -149156,6 +152480,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateInput = {
@@ -149171,6 +152497,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeCreateManyInput = {
@@ -149197,10 +152525,191 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceGradeCreateInput = {
+    id?: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutGradesInput
+    jobs?: WorkforceJobCreateNestedManyWithoutGradeInput
+  }
+
+  export type WorkforceGradeUncheckedCreateInput = {
+    id?: string
+    workforceScopeId: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutGradeInput
+  }
+
+  export type WorkforceGradeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutGradesNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutGradeNestedInput
+  }
+
+  export type WorkforceGradeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutGradeNestedInput
+  }
+
+  export type WorkforceGradeCreateManyInput = {
+    id?: string
+    workforceScopeId: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceGradeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceGradeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceJobCreateInput = {
+    id?: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutJobsInput
+    grade?: WorkforceGradeCreateNestedOneWithoutJobsInput
+    positions?: WorkforcePositionCreateNestedManyWithoutJobInput
+  }
+
+  export type WorkforceJobUncheckedCreateInput = {
+    id?: string
+    workforceScopeId: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    gradeId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    positions?: WorkforcePositionUncheckedCreateNestedManyWithoutJobInput
+  }
+
+  export type WorkforceJobUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutJobsNestedInput
+    grade?: WorkforceGradeUpdateOneWithoutJobsNestedInput
+    positions?: WorkforcePositionUpdateManyWithoutJobNestedInput
+  }
+
+  export type WorkforceJobUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    gradeId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    positions?: WorkforcePositionUncheckedUpdateManyWithoutJobNestedInput
+  }
+
+  export type WorkforceJobCreateManyInput = {
+    id?: string
+    workforceScopeId: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    gradeId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceJobUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceJobUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    gradeId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrgUnitCreateInput = {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -149224,6 +152733,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -149243,6 +152753,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149266,6 +152777,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149287,6 +152799,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -149299,6 +152812,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149312,6 +152826,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149400,6 +152915,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
@@ -149415,9 +152933,12 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
@@ -149436,6 +152957,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
@@ -149451,9 +152975,12 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
@@ -149469,6 +152996,8 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -149498,6 +153027,8 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -149932,6 +153463,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -149967,8 +153502,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -150006,6 +153545,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -150041,8 +153584,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -150078,6 +153625,8 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -150114,6 +153663,8 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -153626,6 +157177,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
     orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
     position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
@@ -153638,6 +157191,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -153648,6 +157203,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
     orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
     position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
@@ -153660,6 +157217,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -153671,6 +157230,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -153681,6 +157242,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type WorkforceApprovalStepUncheckedUpdateManyInput = {
@@ -153690,6 +157253,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -159029,6 +162594,18 @@ export namespace Prisma {
     none?: StaffScheduleRevisionWhereInput
   }
 
+  export type WorkforceGradeListRelationFilter = {
+    every?: WorkforceGradeWhereInput
+    some?: WorkforceGradeWhereInput
+    none?: WorkforceGradeWhereInput
+  }
+
+  export type WorkforceJobListRelationFilter = {
+    every?: WorkforceJobWhereInput
+    some?: WorkforceJobWhereInput
+    none?: WorkforceJobWhereInput
+  }
+
   export type OrgUnitOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -159057,6 +162634,14 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type WorkforceGradeOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceJobOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type WorkforceScopeCountOrderByAggregateInput = {
     id?: SortOrder
     anchorOrganizationId?: SortOrder
@@ -159081,6 +162666,17 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type EnumOrgUnitStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.OrgUnitStatus | EnumOrgUnitStatusFieldRefInput<$PrismaModel>
     in?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
@@ -159093,6 +162689,151 @@ export namespace Prisma {
     isNot?: WorkforceScopeWhereInput
   }
 
+  export type WorkforceGradeWorkforceScopeIdCodeCompoundUniqueInput = {
+    workforceScopeId: string
+    code: string
+  }
+
+  export type WorkforceGradeCountOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    level?: SortOrder
+    minSalary?: SortOrder
+    maxSalary?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceGradeAvgOrderByAggregateInput = {
+    level?: SortOrder
+    minSalary?: SortOrder
+    maxSalary?: SortOrder
+  }
+
+  export type WorkforceGradeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    level?: SortOrder
+    minSalary?: SortOrder
+    maxSalary?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceGradeMinOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    level?: SortOrder
+    minSalary?: SortOrder
+    maxSalary?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceGradeSumOrderByAggregateInput = {
+    level?: SortOrder
+    minSalary?: SortOrder
+    maxSalary?: SortOrder
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type EnumOrgUnitStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgUnitStatus | EnumOrgUnitStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgUnitStatusWithAggregatesFilter<$PrismaModel> | $Enums.OrgUnitStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgUnitStatusFilter<$PrismaModel>
+    _max?: NestedEnumOrgUnitStatusFilter<$PrismaModel>
+  }
+
+  export type WorkforceGradeNullableScalarRelationFilter = {
+    is?: WorkforceGradeWhereInput | null
+    isNot?: WorkforceGradeWhereInput | null
+  }
+
+  export type WorkforcePositionListRelationFilter = {
+    every?: WorkforcePositionWhereInput
+    some?: WorkforcePositionWhereInput
+    none?: WorkforcePositionWhereInput
+  }
+
+  export type WorkforcePositionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceJobWorkforceScopeIdNameCompoundUniqueInput = {
+    workforceScopeId: string
+    name: string
+  }
+
+  export type WorkforceJobCountOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    name?: SortOrder
+    code?: SortOrder
+    jobFamily?: SortOrder
+    gradeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceJobMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    name?: SortOrder
+    code?: SortOrder
+    jobFamily?: SortOrder
+    gradeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceJobMinOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    name?: SortOrder
+    code?: SortOrder
+    jobFamily?: SortOrder
+    gradeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumOrgUnitKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgUnitKind | EnumOrgUnitKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgUnitKindFilter<$PrismaModel> | $Enums.OrgUnitKind
+  }
+
   export type OrgUnitNullableScalarRelationFilter = {
     is?: OrgUnitWhereInput | null
     isNot?: OrgUnitWhereInput | null
@@ -159101,12 +162842,6 @@ export namespace Prisma {
   export type WorkforceEmploymentNullableScalarRelationFilter = {
     is?: WorkforceEmploymentWhereInput | null
     isNot?: WorkforceEmploymentWhereInput | null
-  }
-
-  export type WorkforcePositionListRelationFilter = {
-    every?: WorkforcePositionWhereInput
-    some?: WorkforcePositionWhereInput
-    none?: WorkforcePositionWhereInput
   }
 
   export type WorkforcePlaceListRelationFilter = {
@@ -159119,10 +162854,6 @@ export namespace Prisma {
     every?: WorkforceApprovalStepWhereInput
     some?: WorkforceApprovalStepWhereInput
     none?: WorkforceApprovalStepWhereInput
-  }
-
-  export type WorkforcePositionOrderByRelationAggregateInput = {
-    _count?: SortOrder
   }
 
   export type WorkforcePlaceOrderByRelationAggregateInput = {
@@ -159145,6 +162876,7 @@ export namespace Prisma {
     parentId?: SortOrder
     name?: SortOrder
     code?: SortOrder
+    unitKind?: SortOrder
     status?: SortOrder
     sortOrder?: SortOrder
     managerEmploymentId?: SortOrder
@@ -159163,6 +162895,7 @@ export namespace Prisma {
     parentId?: SortOrder
     name?: SortOrder
     code?: SortOrder
+    unitKind?: SortOrder
     status?: SortOrder
     sortOrder?: SortOrder
     managerEmploymentId?: SortOrder
@@ -159177,6 +162910,7 @@ export namespace Prisma {
     parentId?: SortOrder
     name?: SortOrder
     code?: SortOrder
+    unitKind?: SortOrder
     status?: SortOrder
     sortOrder?: SortOrder
     managerEmploymentId?: SortOrder
@@ -159189,14 +162923,14 @@ export namespace Prisma {
     sortOrder?: SortOrder
   }
 
-  export type EnumOrgUnitStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.OrgUnitStatus | EnumOrgUnitStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumOrgUnitStatusWithAggregatesFilter<$PrismaModel> | $Enums.OrgUnitStatus
+  export type EnumOrgUnitKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgUnitKind | EnumOrgUnitKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgUnitKindWithAggregatesFilter<$PrismaModel> | $Enums.OrgUnitKind
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumOrgUnitStatusFilter<$PrismaModel>
-    _max?: NestedEnumOrgUnitStatusFilter<$PrismaModel>
+    _min?: NestedEnumOrgUnitKindFilter<$PrismaModel>
+    _max?: NestedEnumOrgUnitKindFilter<$PrismaModel>
   }
 
   export type EnumOrgCommercialLinkModeFilter<$PrismaModel = never> = {
@@ -159246,17 +162980,6 @@ export namespace Prisma {
     _max?: NestedEnumOrgCommercialLinkModeFilter<$PrismaModel>
   }
 
-  export type DecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-  }
-
   export type EnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
     in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
@@ -159267,6 +162990,16 @@ export namespace Prisma {
   export type OrgUnitScalarRelationFilter = {
     is?: OrgUnitWhereInput
     isNot?: OrgUnitWhereInput
+  }
+
+  export type WorkforceJobNullableScalarRelationFilter = {
+    is?: WorkforceJobWhereInput | null
+    isNot?: WorkforceJobWhereInput | null
+  }
+
+  export type WorkforcePositionNullableScalarRelationFilter = {
+    is?: WorkforcePositionWhereInput | null
+    isNot?: WorkforcePositionWhereInput | null
   }
 
   export type SatelliteRoleTemplateListRelationFilter = {
@@ -159294,6 +163027,8 @@ export namespace Prisma {
     tariffAzn?: SortOrder
     defaultWorkRegime?: SortOrder
     weeklyHours?: SortOrder
+    jobId?: SortOrder
+    parentPositionId?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -159315,6 +163050,8 @@ export namespace Prisma {
     tariffAzn?: SortOrder
     defaultWorkRegime?: SortOrder
     weeklyHours?: SortOrder
+    jobId?: SortOrder
+    parentPositionId?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -159330,6 +163067,8 @@ export namespace Prisma {
     tariffAzn?: SortOrder
     defaultWorkRegime?: SortOrder
     weeklyHours?: SortOrder
+    jobId?: SortOrder
+    parentPositionId?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -159339,22 +163078,6 @@ export namespace Prisma {
     totalSlots?: SortOrder
     tariffAzn?: SortOrder
     weeklyHours?: SortOrder
-  }
-
-  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type EnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -159801,6 +163524,8 @@ export namespace Prisma {
     platformUserId?: SortOrder
     satelliteStaffLogin?: SortOrder
     satelliteStaffPin?: SortOrder
+    managerEmploymentId?: SortOrder
+    matrixManagerEmploymentId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -159821,6 +163546,8 @@ export namespace Prisma {
     platformUserId?: SortOrder
     satelliteStaffLogin?: SortOrder
     satelliteStaffPin?: SortOrder
+    managerEmploymentId?: SortOrder
+    matrixManagerEmploymentId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -159841,6 +163568,8 @@ export namespace Prisma {
     platformUserId?: SortOrder
     satelliteStaffLogin?: SortOrder
     satelliteStaffPin?: SortOrder
+    managerEmploymentId?: SortOrder
+    matrixManagerEmploymentId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -162190,11 +165919,6 @@ export namespace Prisma {
     isNot?: WorkforceApprovalRouteWhereInput
   }
 
-  export type WorkforcePositionNullableScalarRelationFilter = {
-    is?: WorkforcePositionWhereInput | null
-    isNot?: WorkforcePositionWhereInput | null
-  }
-
   export type WorkforceApprovalStepRouteIdStepOrderCompoundUniqueInput = {
     routeId: string
     stepOrder: number
@@ -162207,12 +165931,16 @@ export namespace Prisma {
     kind?: SortOrder
     appliesTo?: SortOrder
     canExceedAdvanceCap?: SortOrder
+    chainOffset?: SortOrder
+    minGradeLevel?: SortOrder
     orgUnitId?: SortOrder
     positionId?: SortOrder
   }
 
   export type WorkforceApprovalStepAvgOrderByAggregateInput = {
     stepOrder?: SortOrder
+    chainOffset?: SortOrder
+    minGradeLevel?: SortOrder
   }
 
   export type WorkforceApprovalStepMaxOrderByAggregateInput = {
@@ -162222,6 +165950,8 @@ export namespace Prisma {
     kind?: SortOrder
     appliesTo?: SortOrder
     canExceedAdvanceCap?: SortOrder
+    chainOffset?: SortOrder
+    minGradeLevel?: SortOrder
     orgUnitId?: SortOrder
     positionId?: SortOrder
   }
@@ -162233,12 +165963,16 @@ export namespace Prisma {
     kind?: SortOrder
     appliesTo?: SortOrder
     canExceedAdvanceCap?: SortOrder
+    chainOffset?: SortOrder
+    minGradeLevel?: SortOrder
     orgUnitId?: SortOrder
     positionId?: SortOrder
   }
 
   export type WorkforceApprovalStepSumOrderByAggregateInput = {
     stepOrder?: SortOrder
+    chainOffset?: SortOrder
+    minGradeLevel?: SortOrder
   }
 
   export type EnumWorkforceApprovalStepKindWithAggregatesFilter<$PrismaModel = never> = {
@@ -165645,6 +169379,20 @@ export namespace Prisma {
     connect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
   }
 
+  export type WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforceGradeCreateWithoutWorkforceScopeInput, WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput> | WorkforceGradeCreateWithoutWorkforceScopeInput[] | WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput | WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforceGradeCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+  }
+
+  export type WorkforceJobCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforceJobCreateWithoutWorkforceScopeInput, WorkforceJobUncheckedCreateWithoutWorkforceScopeInput> | WorkforceJobCreateWithoutWorkforceScopeInput[] | WorkforceJobUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutWorkforceScopeInput | WorkforceJobCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforceJobCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+  }
+
   export type OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
     create?: XOR<OrgUnitCreateWithoutWorkforceScopeInput, OrgUnitUncheckedCreateWithoutWorkforceScopeInput> | OrgUnitCreateWithoutWorkforceScopeInput[] | OrgUnitUncheckedCreateWithoutWorkforceScopeInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutWorkforceScopeInput | OrgUnitCreateOrConnectWithoutWorkforceScopeInput[]
@@ -165692,6 +169440,20 @@ export namespace Prisma {
     connectOrCreate?: StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput | StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput[]
     createMany?: StaffScheduleRevisionCreateManyWorkforceScopeInputEnvelope
     connect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+  }
+
+  export type WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforceGradeCreateWithoutWorkforceScopeInput, WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput> | WorkforceGradeCreateWithoutWorkforceScopeInput[] | WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput | WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforceGradeCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+  }
+
+  export type WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforceJobCreateWithoutWorkforceScopeInput, WorkforceJobUncheckedCreateWithoutWorkforceScopeInput> | WorkforceJobCreateWithoutWorkforceScopeInput[] | WorkforceJobUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutWorkforceScopeInput | WorkforceJobCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforceJobCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
   }
 
   export type OrgUnitUpdateManyWithoutWorkforceScopeNestedInput = {
@@ -165792,6 +169554,34 @@ export namespace Prisma {
     deleteMany?: StaffScheduleRevisionScalarWhereInput | StaffScheduleRevisionScalarWhereInput[]
   }
 
+  export type WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforceGradeCreateWithoutWorkforceScopeInput, WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput> | WorkforceGradeCreateWithoutWorkforceScopeInput[] | WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput | WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforceGradeUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforceGradeUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforceGradeCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    disconnect?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    delete?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    connect?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    update?: WorkforceGradeUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforceGradeUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforceGradeUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforceGradeUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforceGradeScalarWhereInput | WorkforceGradeScalarWhereInput[]
+  }
+
+  export type WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforceJobCreateWithoutWorkforceScopeInput, WorkforceJobUncheckedCreateWithoutWorkforceScopeInput> | WorkforceJobCreateWithoutWorkforceScopeInput[] | WorkforceJobUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutWorkforceScopeInput | WorkforceJobCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforceJobUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforceJobUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforceJobCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    disconnect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    delete?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    update?: WorkforceJobUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforceJobUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforceJobUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforceJobUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforceJobScalarWhereInput | WorkforceJobScalarWhereInput[]
+  }
+
   export type OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
     create?: XOR<OrgUnitCreateWithoutWorkforceScopeInput, OrgUnitUncheckedCreateWithoutWorkforceScopeInput> | OrgUnitCreateWithoutWorkforceScopeInput[] | OrgUnitUncheckedCreateWithoutWorkforceScopeInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutWorkforceScopeInput | OrgUnitCreateOrConnectWithoutWorkforceScopeInput[]
@@ -165888,6 +169678,174 @@ export namespace Prisma {
     update?: StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput | StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
     updateMany?: StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput | StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput[]
     deleteMany?: StaffScheduleRevisionScalarWhereInput | StaffScheduleRevisionScalarWhereInput[]
+  }
+
+  export type WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforceGradeCreateWithoutWorkforceScopeInput, WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput> | WorkforceGradeCreateWithoutWorkforceScopeInput[] | WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput | WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforceGradeUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforceGradeUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforceGradeCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    disconnect?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    delete?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    connect?: WorkforceGradeWhereUniqueInput | WorkforceGradeWhereUniqueInput[]
+    update?: WorkforceGradeUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforceGradeUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforceGradeUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforceGradeUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforceGradeScalarWhereInput | WorkforceGradeScalarWhereInput[]
+  }
+
+  export type WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforceJobCreateWithoutWorkforceScopeInput, WorkforceJobUncheckedCreateWithoutWorkforceScopeInput> | WorkforceJobCreateWithoutWorkforceScopeInput[] | WorkforceJobUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutWorkforceScopeInput | WorkforceJobCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforceJobUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforceJobUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforceJobCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    disconnect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    delete?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    update?: WorkforceJobUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforceJobUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforceJobUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforceJobUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforceJobScalarWhereInput | WorkforceJobScalarWhereInput[]
+  }
+
+  export type WorkforceScopeCreateNestedOneWithoutGradesInput = {
+    create?: XOR<WorkforceScopeCreateWithoutGradesInput, WorkforceScopeUncheckedCreateWithoutGradesInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutGradesInput
+    connect?: WorkforceScopeWhereUniqueInput
+  }
+
+  export type WorkforceJobCreateNestedManyWithoutGradeInput = {
+    create?: XOR<WorkforceJobCreateWithoutGradeInput, WorkforceJobUncheckedCreateWithoutGradeInput> | WorkforceJobCreateWithoutGradeInput[] | WorkforceJobUncheckedCreateWithoutGradeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutGradeInput | WorkforceJobCreateOrConnectWithoutGradeInput[]
+    createMany?: WorkforceJobCreateManyGradeInputEnvelope
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+  }
+
+  export type WorkforceJobUncheckedCreateNestedManyWithoutGradeInput = {
+    create?: XOR<WorkforceJobCreateWithoutGradeInput, WorkforceJobUncheckedCreateWithoutGradeInput> | WorkforceJobCreateWithoutGradeInput[] | WorkforceJobUncheckedCreateWithoutGradeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutGradeInput | WorkforceJobCreateOrConnectWithoutGradeInput[]
+    createMany?: WorkforceJobCreateManyGradeInputEnvelope
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type EnumOrgUnitStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OrgUnitStatus
+  }
+
+  export type WorkforceScopeUpdateOneRequiredWithoutGradesNestedInput = {
+    create?: XOR<WorkforceScopeCreateWithoutGradesInput, WorkforceScopeUncheckedCreateWithoutGradesInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutGradesInput
+    upsert?: WorkforceScopeUpsertWithoutGradesInput
+    connect?: WorkforceScopeWhereUniqueInput
+    update?: XOR<XOR<WorkforceScopeUpdateToOneWithWhereWithoutGradesInput, WorkforceScopeUpdateWithoutGradesInput>, WorkforceScopeUncheckedUpdateWithoutGradesInput>
+  }
+
+  export type WorkforceJobUpdateManyWithoutGradeNestedInput = {
+    create?: XOR<WorkforceJobCreateWithoutGradeInput, WorkforceJobUncheckedCreateWithoutGradeInput> | WorkforceJobCreateWithoutGradeInput[] | WorkforceJobUncheckedCreateWithoutGradeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutGradeInput | WorkforceJobCreateOrConnectWithoutGradeInput[]
+    upsert?: WorkforceJobUpsertWithWhereUniqueWithoutGradeInput | WorkforceJobUpsertWithWhereUniqueWithoutGradeInput[]
+    createMany?: WorkforceJobCreateManyGradeInputEnvelope
+    set?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    disconnect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    delete?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    update?: WorkforceJobUpdateWithWhereUniqueWithoutGradeInput | WorkforceJobUpdateWithWhereUniqueWithoutGradeInput[]
+    updateMany?: WorkforceJobUpdateManyWithWhereWithoutGradeInput | WorkforceJobUpdateManyWithWhereWithoutGradeInput[]
+    deleteMany?: WorkforceJobScalarWhereInput | WorkforceJobScalarWhereInput[]
+  }
+
+  export type WorkforceJobUncheckedUpdateManyWithoutGradeNestedInput = {
+    create?: XOR<WorkforceJobCreateWithoutGradeInput, WorkforceJobUncheckedCreateWithoutGradeInput> | WorkforceJobCreateWithoutGradeInput[] | WorkforceJobUncheckedCreateWithoutGradeInput[]
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutGradeInput | WorkforceJobCreateOrConnectWithoutGradeInput[]
+    upsert?: WorkforceJobUpsertWithWhereUniqueWithoutGradeInput | WorkforceJobUpsertWithWhereUniqueWithoutGradeInput[]
+    createMany?: WorkforceJobCreateManyGradeInputEnvelope
+    set?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    disconnect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    delete?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    connect?: WorkforceJobWhereUniqueInput | WorkforceJobWhereUniqueInput[]
+    update?: WorkforceJobUpdateWithWhereUniqueWithoutGradeInput | WorkforceJobUpdateWithWhereUniqueWithoutGradeInput[]
+    updateMany?: WorkforceJobUpdateManyWithWhereWithoutGradeInput | WorkforceJobUpdateManyWithWhereWithoutGradeInput[]
+    deleteMany?: WorkforceJobScalarWhereInput | WorkforceJobScalarWhereInput[]
+  }
+
+  export type WorkforceScopeCreateNestedOneWithoutJobsInput = {
+    create?: XOR<WorkforceScopeCreateWithoutJobsInput, WorkforceScopeUncheckedCreateWithoutJobsInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutJobsInput
+    connect?: WorkforceScopeWhereUniqueInput
+  }
+
+  export type WorkforceGradeCreateNestedOneWithoutJobsInput = {
+    create?: XOR<WorkforceGradeCreateWithoutJobsInput, WorkforceGradeUncheckedCreateWithoutJobsInput>
+    connectOrCreate?: WorkforceGradeCreateOrConnectWithoutJobsInput
+    connect?: WorkforceGradeWhereUniqueInput
+  }
+
+  export type WorkforcePositionCreateNestedManyWithoutJobInput = {
+    create?: XOR<WorkforcePositionCreateWithoutJobInput, WorkforcePositionUncheckedCreateWithoutJobInput> | WorkforcePositionCreateWithoutJobInput[] | WorkforcePositionUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutJobInput | WorkforcePositionCreateOrConnectWithoutJobInput[]
+    createMany?: WorkforcePositionCreateManyJobInputEnvelope
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+  }
+
+  export type WorkforcePositionUncheckedCreateNestedManyWithoutJobInput = {
+    create?: XOR<WorkforcePositionCreateWithoutJobInput, WorkforcePositionUncheckedCreateWithoutJobInput> | WorkforcePositionCreateWithoutJobInput[] | WorkforcePositionUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutJobInput | WorkforcePositionCreateOrConnectWithoutJobInput[]
+    createMany?: WorkforcePositionCreateManyJobInputEnvelope
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+  }
+
+  export type WorkforceScopeUpdateOneRequiredWithoutJobsNestedInput = {
+    create?: XOR<WorkforceScopeCreateWithoutJobsInput, WorkforceScopeUncheckedCreateWithoutJobsInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutJobsInput
+    upsert?: WorkforceScopeUpsertWithoutJobsInput
+    connect?: WorkforceScopeWhereUniqueInput
+    update?: XOR<XOR<WorkforceScopeUpdateToOneWithWhereWithoutJobsInput, WorkforceScopeUpdateWithoutJobsInput>, WorkforceScopeUncheckedUpdateWithoutJobsInput>
+  }
+
+  export type WorkforceGradeUpdateOneWithoutJobsNestedInput = {
+    create?: XOR<WorkforceGradeCreateWithoutJobsInput, WorkforceGradeUncheckedCreateWithoutJobsInput>
+    connectOrCreate?: WorkforceGradeCreateOrConnectWithoutJobsInput
+    upsert?: WorkforceGradeUpsertWithoutJobsInput
+    disconnect?: WorkforceGradeWhereInput | boolean
+    delete?: WorkforceGradeWhereInput | boolean
+    connect?: WorkforceGradeWhereUniqueInput
+    update?: XOR<XOR<WorkforceGradeUpdateToOneWithWhereWithoutJobsInput, WorkforceGradeUpdateWithoutJobsInput>, WorkforceGradeUncheckedUpdateWithoutJobsInput>
+  }
+
+  export type WorkforcePositionUpdateManyWithoutJobNestedInput = {
+    create?: XOR<WorkforcePositionCreateWithoutJobInput, WorkforcePositionUncheckedCreateWithoutJobInput> | WorkforcePositionCreateWithoutJobInput[] | WorkforcePositionUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutJobInput | WorkforcePositionCreateOrConnectWithoutJobInput[]
+    upsert?: WorkforcePositionUpsertWithWhereUniqueWithoutJobInput | WorkforcePositionUpsertWithWhereUniqueWithoutJobInput[]
+    createMany?: WorkforcePositionCreateManyJobInputEnvelope
+    set?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    disconnect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    delete?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    update?: WorkforcePositionUpdateWithWhereUniqueWithoutJobInput | WorkforcePositionUpdateWithWhereUniqueWithoutJobInput[]
+    updateMany?: WorkforcePositionUpdateManyWithWhereWithoutJobInput | WorkforcePositionUpdateManyWithWhereWithoutJobInput[]
+    deleteMany?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
+  }
+
+  export type WorkforcePositionUncheckedUpdateManyWithoutJobNestedInput = {
+    create?: XOR<WorkforcePositionCreateWithoutJobInput, WorkforcePositionUncheckedCreateWithoutJobInput> | WorkforcePositionCreateWithoutJobInput[] | WorkforcePositionUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutJobInput | WorkforcePositionCreateOrConnectWithoutJobInput[]
+    upsert?: WorkforcePositionUpsertWithWhereUniqueWithoutJobInput | WorkforcePositionUpsertWithWhereUniqueWithoutJobInput[]
+    createMany?: WorkforcePositionCreateManyJobInputEnvelope
+    set?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    disconnect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    delete?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    update?: WorkforcePositionUpdateWithWhereUniqueWithoutJobInput | WorkforcePositionUpdateWithWhereUniqueWithoutJobInput[]
+    updateMany?: WorkforcePositionUpdateManyWithWhereWithoutJobInput | WorkforcePositionUpdateManyWithWhereWithoutJobInput[]
+    deleteMany?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
   }
 
   export type WorkforceScopeCreateNestedOneWithoutOrgUnitsInput = {
@@ -166006,8 +169964,8 @@ export namespace Prisma {
     connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
   }
 
-  export type EnumOrgUnitStatusFieldUpdateOperationsInput = {
-    set?: $Enums.OrgUnitStatus
+  export type EnumOrgUnitKindFieldUpdateOperationsInput = {
+    set?: $Enums.OrgUnitKind
   }
 
   export type WorkforceScopeUpdateOneRequiredWithoutOrgUnitsNestedInput = {
@@ -166288,6 +170246,25 @@ export namespace Prisma {
     connect?: OrgUnitWhereUniqueInput
   }
 
+  export type WorkforceJobCreateNestedOneWithoutPositionsInput = {
+    create?: XOR<WorkforceJobCreateWithoutPositionsInput, WorkforceJobUncheckedCreateWithoutPositionsInput>
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutPositionsInput
+    connect?: WorkforceJobWhereUniqueInput
+  }
+
+  export type WorkforcePositionCreateNestedOneWithoutChildPositionsInput = {
+    create?: XOR<WorkforcePositionCreateWithoutChildPositionsInput, WorkforcePositionUncheckedCreateWithoutChildPositionsInput>
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutChildPositionsInput
+    connect?: WorkforcePositionWhereUniqueInput
+  }
+
+  export type WorkforcePositionCreateNestedManyWithoutParentPositionInput = {
+    create?: XOR<WorkforcePositionCreateWithoutParentPositionInput, WorkforcePositionUncheckedCreateWithoutParentPositionInput> | WorkforcePositionCreateWithoutParentPositionInput[] | WorkforcePositionUncheckedCreateWithoutParentPositionInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutParentPositionInput | WorkforcePositionCreateOrConnectWithoutParentPositionInput[]
+    createMany?: WorkforcePositionCreateManyParentPositionInputEnvelope
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+  }
+
   export type WorkforceEmploymentCreateNestedManyWithoutPositionInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutPositionInput, WorkforceEmploymentUncheckedCreateWithoutPositionInput> | WorkforceEmploymentCreateWithoutPositionInput[] | WorkforceEmploymentUncheckedCreateWithoutPositionInput[]
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutPositionInput | WorkforceEmploymentCreateOrConnectWithoutPositionInput[]
@@ -166307,6 +170284,13 @@ export namespace Prisma {
     connectOrCreate?: WorkforceApprovalStepCreateOrConnectWithoutPositionInput | WorkforceApprovalStepCreateOrConnectWithoutPositionInput[]
     createMany?: WorkforceApprovalStepCreateManyPositionInputEnvelope
     connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
+  }
+
+  export type WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput = {
+    create?: XOR<WorkforcePositionCreateWithoutParentPositionInput, WorkforcePositionUncheckedCreateWithoutParentPositionInput> | WorkforcePositionCreateWithoutParentPositionInput[] | WorkforcePositionUncheckedCreateWithoutParentPositionInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutParentPositionInput | WorkforcePositionCreateOrConnectWithoutParentPositionInput[]
+    createMany?: WorkforcePositionCreateManyParentPositionInputEnvelope
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
   }
 
   export type WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput = {
@@ -166330,14 +170314,6 @@ export namespace Prisma {
     connect?: WorkforceApprovalStepWhereUniqueInput | WorkforceApprovalStepWhereUniqueInput[]
   }
 
-  export type NullableDecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string | null
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
-  }
-
   export type NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput = {
     set?: $Enums.WorkforceWorkRegime | null
   }
@@ -166348,6 +170324,40 @@ export namespace Prisma {
     upsert?: OrgUnitUpsertWithoutPositionsInput
     connect?: OrgUnitWhereUniqueInput
     update?: XOR<XOR<OrgUnitUpdateToOneWithWhereWithoutPositionsInput, OrgUnitUpdateWithoutPositionsInput>, OrgUnitUncheckedUpdateWithoutPositionsInput>
+  }
+
+  export type WorkforceJobUpdateOneWithoutPositionsNestedInput = {
+    create?: XOR<WorkforceJobCreateWithoutPositionsInput, WorkforceJobUncheckedCreateWithoutPositionsInput>
+    connectOrCreate?: WorkforceJobCreateOrConnectWithoutPositionsInput
+    upsert?: WorkforceJobUpsertWithoutPositionsInput
+    disconnect?: WorkforceJobWhereInput | boolean
+    delete?: WorkforceJobWhereInput | boolean
+    connect?: WorkforceJobWhereUniqueInput
+    update?: XOR<XOR<WorkforceJobUpdateToOneWithWhereWithoutPositionsInput, WorkforceJobUpdateWithoutPositionsInput>, WorkforceJobUncheckedUpdateWithoutPositionsInput>
+  }
+
+  export type WorkforcePositionUpdateOneWithoutChildPositionsNestedInput = {
+    create?: XOR<WorkforcePositionCreateWithoutChildPositionsInput, WorkforcePositionUncheckedCreateWithoutChildPositionsInput>
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutChildPositionsInput
+    upsert?: WorkforcePositionUpsertWithoutChildPositionsInput
+    disconnect?: WorkforcePositionWhereInput | boolean
+    delete?: WorkforcePositionWhereInput | boolean
+    connect?: WorkforcePositionWhereUniqueInput
+    update?: XOR<XOR<WorkforcePositionUpdateToOneWithWhereWithoutChildPositionsInput, WorkforcePositionUpdateWithoutChildPositionsInput>, WorkforcePositionUncheckedUpdateWithoutChildPositionsInput>
+  }
+
+  export type WorkforcePositionUpdateManyWithoutParentPositionNestedInput = {
+    create?: XOR<WorkforcePositionCreateWithoutParentPositionInput, WorkforcePositionUncheckedCreateWithoutParentPositionInput> | WorkforcePositionCreateWithoutParentPositionInput[] | WorkforcePositionUncheckedCreateWithoutParentPositionInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutParentPositionInput | WorkforcePositionCreateOrConnectWithoutParentPositionInput[]
+    upsert?: WorkforcePositionUpsertWithWhereUniqueWithoutParentPositionInput | WorkforcePositionUpsertWithWhereUniqueWithoutParentPositionInput[]
+    createMany?: WorkforcePositionCreateManyParentPositionInputEnvelope
+    set?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    disconnect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    delete?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    update?: WorkforcePositionUpdateWithWhereUniqueWithoutParentPositionInput | WorkforcePositionUpdateWithWhereUniqueWithoutParentPositionInput[]
+    updateMany?: WorkforcePositionUpdateManyWithWhereWithoutParentPositionInput | WorkforcePositionUpdateManyWithWhereWithoutParentPositionInput[]
+    deleteMany?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
   }
 
   export type WorkforceEmploymentUpdateManyWithoutPositionNestedInput = {
@@ -166390,6 +170400,20 @@ export namespace Prisma {
     update?: WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput | WorkforceApprovalStepUpdateWithWhereUniqueWithoutPositionInput[]
     updateMany?: WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput | WorkforceApprovalStepUpdateManyWithWhereWithoutPositionInput[]
     deleteMany?: WorkforceApprovalStepScalarWhereInput | WorkforceApprovalStepScalarWhereInput[]
+  }
+
+  export type WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput = {
+    create?: XOR<WorkforcePositionCreateWithoutParentPositionInput, WorkforcePositionUncheckedCreateWithoutParentPositionInput> | WorkforcePositionCreateWithoutParentPositionInput[] | WorkforcePositionUncheckedCreateWithoutParentPositionInput[]
+    connectOrCreate?: WorkforcePositionCreateOrConnectWithoutParentPositionInput | WorkforcePositionCreateOrConnectWithoutParentPositionInput[]
+    upsert?: WorkforcePositionUpsertWithWhereUniqueWithoutParentPositionInput | WorkforcePositionUpsertWithWhereUniqueWithoutParentPositionInput[]
+    createMany?: WorkforcePositionCreateManyParentPositionInputEnvelope
+    set?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    disconnect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    delete?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    connect?: WorkforcePositionWhereUniqueInput | WorkforcePositionWhereUniqueInput[]
+    update?: WorkforcePositionUpdateWithWhereUniqueWithoutParentPositionInput | WorkforcePositionUpdateWithWhereUniqueWithoutParentPositionInput[]
+    updateMany?: WorkforcePositionUpdateManyWithWhereWithoutParentPositionInput | WorkforcePositionUpdateManyWithWhereWithoutParentPositionInput[]
+    deleteMany?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
   }
 
   export type WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput = {
@@ -166598,6 +170622,32 @@ export namespace Prisma {
     connect?: WorkforcePositionWhereUniqueInput
   }
 
+  export type WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutDirectReportsInput, WorkforceEmploymentUncheckedCreateWithoutDirectReportsInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutDirectReportsInput
+    connect?: WorkforceEmploymentWhereUniqueInput
+  }
+
+  export type WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput> | WorkforceEmploymentCreateWithoutManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyManagerEmploymentInputEnvelope
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+  }
+
+  export type WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutMatrixReportsInput, WorkforceEmploymentUncheckedCreateWithoutMatrixReportsInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutMatrixReportsInput
+    connect?: WorkforceEmploymentWhereUniqueInput
+  }
+
+  export type WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput> | WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyMatrixManagerEmploymentInputEnvelope
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+  }
+
   export type WorkforceAbsenceCreateNestedManyWithoutEmploymentInput = {
     create?: XOR<WorkforceAbsenceCreateWithoutEmploymentInput, WorkforceAbsenceUncheckedCreateWithoutEmploymentInput> | WorkforceAbsenceCreateWithoutEmploymentInput[] | WorkforceAbsenceUncheckedCreateWithoutEmploymentInput[]
     connectOrCreate?: WorkforceAbsenceCreateOrConnectWithoutEmploymentInput | WorkforceAbsenceCreateOrConnectWithoutEmploymentInput[]
@@ -166714,6 +170764,20 @@ export namespace Prisma {
     connectOrCreate?: WorkforceFitnessRecordCreateOrConnectWithoutEmploymentInput | WorkforceFitnessRecordCreateOrConnectWithoutEmploymentInput[]
     createMany?: WorkforceFitnessRecordCreateManyEmploymentInputEnvelope
     connect?: WorkforceFitnessRecordWhereUniqueInput | WorkforceFitnessRecordWhereUniqueInput[]
+  }
+
+  export type WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput> | WorkforceEmploymentCreateWithoutManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyManagerEmploymentInputEnvelope
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+  }
+
+  export type WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput> | WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyMatrixManagerEmploymentInputEnvelope
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
   }
 
   export type WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput = {
@@ -166868,6 +170932,54 @@ export namespace Prisma {
     upsert?: WorkforcePositionUpsertWithoutEmploymentsInput
     connect?: WorkforcePositionWhereUniqueInput
     update?: XOR<XOR<WorkforcePositionUpdateToOneWithWhereWithoutEmploymentsInput, WorkforcePositionUpdateWithoutEmploymentsInput>, WorkforcePositionUncheckedUpdateWithoutEmploymentsInput>
+  }
+
+  export type WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutDirectReportsInput, WorkforceEmploymentUncheckedCreateWithoutDirectReportsInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutDirectReportsInput
+    upsert?: WorkforceEmploymentUpsertWithoutDirectReportsInput
+    disconnect?: WorkforceEmploymentWhereInput | boolean
+    delete?: WorkforceEmploymentWhereInput | boolean
+    connect?: WorkforceEmploymentWhereUniqueInput
+    update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutDirectReportsInput, WorkforceEmploymentUpdateWithoutDirectReportsInput>, WorkforceEmploymentUncheckedUpdateWithoutDirectReportsInput>
+  }
+
+  export type WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput> | WorkforceEmploymentCreateWithoutManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput[]
+    upsert?: WorkforceEmploymentUpsertWithWhereUniqueWithoutManagerEmploymentInput | WorkforceEmploymentUpsertWithWhereUniqueWithoutManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyManagerEmploymentInputEnvelope
+    set?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    disconnect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    delete?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    update?: WorkforceEmploymentUpdateWithWhereUniqueWithoutManagerEmploymentInput | WorkforceEmploymentUpdateWithWhereUniqueWithoutManagerEmploymentInput[]
+    updateMany?: WorkforceEmploymentUpdateManyWithWhereWithoutManagerEmploymentInput | WorkforceEmploymentUpdateManyWithWhereWithoutManagerEmploymentInput[]
+    deleteMany?: WorkforceEmploymentScalarWhereInput | WorkforceEmploymentScalarWhereInput[]
+  }
+
+  export type WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutMatrixReportsInput, WorkforceEmploymentUncheckedCreateWithoutMatrixReportsInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutMatrixReportsInput
+    upsert?: WorkforceEmploymentUpsertWithoutMatrixReportsInput
+    disconnect?: WorkforceEmploymentWhereInput | boolean
+    delete?: WorkforceEmploymentWhereInput | boolean
+    connect?: WorkforceEmploymentWhereUniqueInput
+    update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutMatrixReportsInput, WorkforceEmploymentUpdateWithoutMatrixReportsInput>, WorkforceEmploymentUncheckedUpdateWithoutMatrixReportsInput>
+  }
+
+  export type WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput> | WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput[]
+    upsert?: WorkforceEmploymentUpsertWithWhereUniqueWithoutMatrixManagerEmploymentInput | WorkforceEmploymentUpsertWithWhereUniqueWithoutMatrixManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyMatrixManagerEmploymentInputEnvelope
+    set?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    disconnect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    delete?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    update?: WorkforceEmploymentUpdateWithWhereUniqueWithoutMatrixManagerEmploymentInput | WorkforceEmploymentUpdateWithWhereUniqueWithoutMatrixManagerEmploymentInput[]
+    updateMany?: WorkforceEmploymentUpdateManyWithWhereWithoutMatrixManagerEmploymentInput | WorkforceEmploymentUpdateManyWithWhereWithoutMatrixManagerEmploymentInput[]
+    deleteMany?: WorkforceEmploymentScalarWhereInput | WorkforceEmploymentScalarWhereInput[]
   }
 
   export type WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput = {
@@ -167102,6 +171214,34 @@ export namespace Prisma {
     update?: WorkforceFitnessRecordUpdateWithWhereUniqueWithoutEmploymentInput | WorkforceFitnessRecordUpdateWithWhereUniqueWithoutEmploymentInput[]
     updateMany?: WorkforceFitnessRecordUpdateManyWithWhereWithoutEmploymentInput | WorkforceFitnessRecordUpdateManyWithWhereWithoutEmploymentInput[]
     deleteMany?: WorkforceFitnessRecordScalarWhereInput | WorkforceFitnessRecordScalarWhereInput[]
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput> | WorkforceEmploymentCreateWithoutManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput[]
+    upsert?: WorkforceEmploymentUpsertWithWhereUniqueWithoutManagerEmploymentInput | WorkforceEmploymentUpsertWithWhereUniqueWithoutManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyManagerEmploymentInputEnvelope
+    set?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    disconnect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    delete?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    update?: WorkforceEmploymentUpdateWithWhereUniqueWithoutManagerEmploymentInput | WorkforceEmploymentUpdateWithWhereUniqueWithoutManagerEmploymentInput[]
+    updateMany?: WorkforceEmploymentUpdateManyWithWhereWithoutManagerEmploymentInput | WorkforceEmploymentUpdateManyWithWhereWithoutManagerEmploymentInput[]
+    deleteMany?: WorkforceEmploymentScalarWhereInput | WorkforceEmploymentScalarWhereInput[]
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput> | WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput[] | WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput[]
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput | WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput[]
+    upsert?: WorkforceEmploymentUpsertWithWhereUniqueWithoutMatrixManagerEmploymentInput | WorkforceEmploymentUpsertWithWhereUniqueWithoutMatrixManagerEmploymentInput[]
+    createMany?: WorkforceEmploymentCreateManyMatrixManagerEmploymentInputEnvelope
+    set?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    disconnect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    delete?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    connect?: WorkforceEmploymentWhereUniqueInput | WorkforceEmploymentWhereUniqueInput[]
+    update?: WorkforceEmploymentUpdateWithWhereUniqueWithoutMatrixManagerEmploymentInput | WorkforceEmploymentUpdateWithWhereUniqueWithoutMatrixManagerEmploymentInput[]
+    updateMany?: WorkforceEmploymentUpdateManyWithWhereWithoutMatrixManagerEmploymentInput | WorkforceEmploymentUpdateManyWithWhereWithoutMatrixManagerEmploymentInput[]
+    deleteMany?: WorkforceEmploymentScalarWhereInput | WorkforceEmploymentScalarWhereInput[]
   }
 
   export type WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput = {
@@ -173767,11 +177907,38 @@ export namespace Prisma {
     _max?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel>
   }
 
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type NestedEnumOrgUnitStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.OrgUnitStatus | EnumOrgUnitStatusFieldRefInput<$PrismaModel>
     in?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.OrgUnitStatus[] | ListEnumOrgUnitStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumOrgUnitStatusFilter<$PrismaModel> | $Enums.OrgUnitStatus
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumOrgUnitStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -173782,6 +177949,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumOrgUnitStatusFilter<$PrismaModel>
     _max?: NestedEnumOrgUnitStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOrgUnitKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgUnitKind | EnumOrgUnitKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgUnitKindFilter<$PrismaModel> | $Enums.OrgUnitKind
+  }
+
+  export type NestedEnumOrgUnitKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgUnitKind | EnumOrgUnitKindFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgUnitKind[] | ListEnumOrgUnitKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgUnitKindWithAggregatesFilter<$PrismaModel> | $Enums.OrgUnitKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgUnitKindFilter<$PrismaModel>
+    _max?: NestedEnumOrgUnitKindFilter<$PrismaModel>
   }
 
   export type NestedEnumOrgCommercialLinkModeFilter<$PrismaModel = never> = {
@@ -173801,38 +177985,11 @@ export namespace Prisma {
     _max?: NestedEnumOrgCommercialLinkModeFilter<$PrismaModel>
   }
 
-  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-  }
-
   export type NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.WorkforceWorkRegime | EnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
     in?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
     notIn?: $Enums.WorkforceWorkRegime[] | ListEnumWorkforceWorkRegimeFieldRefInput<$PrismaModel> | null
     not?: NestedEnumWorkforceWorkRegimeNullableFilter<$PrismaModel> | $Enums.WorkforceWorkRegime | null
-  }
-
-  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumWorkforceWorkRegimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -178059,6 +182216,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -178080,6 +182238,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -178122,6 +182281,10 @@ export namespace Prisma {
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -178156,8 +182319,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -178391,6 +182558,76 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkforceGradeCreateWithoutWorkforceScopeInput = {
+    id?: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: WorkforceJobCreateNestedManyWithoutGradeInput
+  }
+
+  export type WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput = {
+    id?: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutGradeInput
+  }
+
+  export type WorkforceGradeCreateOrConnectWithoutWorkforceScopeInput = {
+    where: WorkforceGradeWhereUniqueInput
+    create: XOR<WorkforceGradeCreateWithoutWorkforceScopeInput, WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceGradeCreateManyWorkforceScopeInputEnvelope = {
+    data: WorkforceGradeCreateManyWorkforceScopeInput | WorkforceGradeCreateManyWorkforceScopeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceJobCreateWithoutWorkforceScopeInput = {
+    id?: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    grade?: WorkforceGradeCreateNestedOneWithoutJobsInput
+    positions?: WorkforcePositionCreateNestedManyWithoutJobInput
+  }
+
+  export type WorkforceJobUncheckedCreateWithoutWorkforceScopeInput = {
+    id?: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    gradeId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    positions?: WorkforcePositionUncheckedCreateNestedManyWithoutJobInput
+  }
+
+  export type WorkforceJobCreateOrConnectWithoutWorkforceScopeInput = {
+    where: WorkforceJobWhereUniqueInput
+    create: XOR<WorkforceJobCreateWithoutWorkforceScopeInput, WorkforceJobUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceJobCreateManyWorkforceScopeInputEnvelope = {
+    data: WorkforceJobCreateManyWorkforceScopeInput | WorkforceJobCreateManyWorkforceScopeInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrgUnitUpsertWithWhereUniqueWithoutWorkforceScopeInput = {
     where: OrgUnitWhereUniqueInput
     update: XOR<OrgUnitUpdateWithoutWorkforceScopeInput, OrgUnitUncheckedUpdateWithoutWorkforceScopeInput>
@@ -178416,6 +182653,7 @@ export namespace Prisma {
     parentId?: UuidNullableFilter<"OrgUnit"> | string | null
     name?: StringFilter<"OrgUnit"> | string
     code?: StringNullableFilter<"OrgUnit"> | string | null
+    unitKind?: EnumOrgUnitKindFilter<"OrgUnit"> | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFilter<"OrgUnit"> | $Enums.OrgUnitStatus
     sortOrder?: IntFilter<"OrgUnit"> | number
     managerEmploymentId?: UuidNullableFilter<"OrgUnit"> | string | null
@@ -178459,6 +182697,8 @@ export namespace Prisma {
     platformUserId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     satelliteStaffLogin?: StringNullableFilter<"WorkforceEmployment"> | string | null
     satelliteStaffPin?: StringNullableFilter<"WorkforceEmployment"> | string | null
+    managerEmploymentId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
+    matrixManagerEmploymentId?: UuidNullableFilter<"WorkforceEmployment"> | string | null
     createdAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
     updatedAt?: DateTimeFilter<"WorkforceEmployment"> | Date | string
   }
@@ -178638,6 +182878,433 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
   }
 
+  export type WorkforceGradeUpsertWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforceGradeWhereUniqueInput
+    update: XOR<WorkforceGradeUpdateWithoutWorkforceScopeInput, WorkforceGradeUncheckedUpdateWithoutWorkforceScopeInput>
+    create: XOR<WorkforceGradeCreateWithoutWorkforceScopeInput, WorkforceGradeUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceGradeUpdateWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforceGradeWhereUniqueInput
+    data: XOR<WorkforceGradeUpdateWithoutWorkforceScopeInput, WorkforceGradeUncheckedUpdateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceGradeUpdateManyWithWhereWithoutWorkforceScopeInput = {
+    where: WorkforceGradeScalarWhereInput
+    data: XOR<WorkforceGradeUpdateManyMutationInput, WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceGradeScalarWhereInput = {
+    AND?: WorkforceGradeScalarWhereInput | WorkforceGradeScalarWhereInput[]
+    OR?: WorkforceGradeScalarWhereInput[]
+    NOT?: WorkforceGradeScalarWhereInput | WorkforceGradeScalarWhereInput[]
+    id?: UuidFilter<"WorkforceGrade"> | string
+    workforceScopeId?: UuidFilter<"WorkforceGrade"> | string
+    code?: StringFilter<"WorkforceGrade"> | string
+    name?: StringFilter<"WorkforceGrade"> | string
+    level?: IntFilter<"WorkforceGrade"> | number
+    minSalary?: DecimalNullableFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: DecimalNullableFilter<"WorkforceGrade"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforceGrade"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforceGrade"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceGrade"> | Date | string
+  }
+
+  export type WorkforceJobUpsertWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforceJobWhereUniqueInput
+    update: XOR<WorkforceJobUpdateWithoutWorkforceScopeInput, WorkforceJobUncheckedUpdateWithoutWorkforceScopeInput>
+    create: XOR<WorkforceJobCreateWithoutWorkforceScopeInput, WorkforceJobUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceJobUpdateWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforceJobWhereUniqueInput
+    data: XOR<WorkforceJobUpdateWithoutWorkforceScopeInput, WorkforceJobUncheckedUpdateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceJobUpdateManyWithWhereWithoutWorkforceScopeInput = {
+    where: WorkforceJobScalarWhereInput
+    data: XOR<WorkforceJobUpdateManyMutationInput, WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceJobScalarWhereInput = {
+    AND?: WorkforceJobScalarWhereInput | WorkforceJobScalarWhereInput[]
+    OR?: WorkforceJobScalarWhereInput[]
+    NOT?: WorkforceJobScalarWhereInput | WorkforceJobScalarWhereInput[]
+    id?: UuidFilter<"WorkforceJob"> | string
+    workforceScopeId?: UuidFilter<"WorkforceJob"> | string
+    name?: StringFilter<"WorkforceJob"> | string
+    code?: StringNullableFilter<"WorkforceJob"> | string | null
+    jobFamily?: StringNullableFilter<"WorkforceJob"> | string | null
+    gradeId?: UuidNullableFilter<"WorkforceJob"> | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforceJob"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforceJob"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceJob"> | Date | string
+  }
+
+  export type WorkforceScopeCreateWithoutGradesInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeUncheckedCreateWithoutGradesInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeCreateOrConnectWithoutGradesInput = {
+    where: WorkforceScopeWhereUniqueInput
+    create: XOR<WorkforceScopeCreateWithoutGradesInput, WorkforceScopeUncheckedCreateWithoutGradesInput>
+  }
+
+  export type WorkforceJobCreateWithoutGradeInput = {
+    id?: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutJobsInput
+    positions?: WorkforcePositionCreateNestedManyWithoutJobInput
+  }
+
+  export type WorkforceJobUncheckedCreateWithoutGradeInput = {
+    id?: string
+    workforceScopeId: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    positions?: WorkforcePositionUncheckedCreateNestedManyWithoutJobInput
+  }
+
+  export type WorkforceJobCreateOrConnectWithoutGradeInput = {
+    where: WorkforceJobWhereUniqueInput
+    create: XOR<WorkforceJobCreateWithoutGradeInput, WorkforceJobUncheckedCreateWithoutGradeInput>
+  }
+
+  export type WorkforceJobCreateManyGradeInputEnvelope = {
+    data: WorkforceJobCreateManyGradeInput | WorkforceJobCreateManyGradeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceScopeUpsertWithoutGradesInput = {
+    update: XOR<WorkforceScopeUpdateWithoutGradesInput, WorkforceScopeUncheckedUpdateWithoutGradesInput>
+    create: XOR<WorkforceScopeCreateWithoutGradesInput, WorkforceScopeUncheckedCreateWithoutGradesInput>
+    where?: WorkforceScopeWhereInput
+  }
+
+  export type WorkforceScopeUpdateToOneWithWhereWithoutGradesInput = {
+    where?: WorkforceScopeWhereInput
+    data: XOR<WorkforceScopeUpdateWithoutGradesInput, WorkforceScopeUncheckedUpdateWithoutGradesInput>
+  }
+
+  export type WorkforceScopeUpdateWithoutGradesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceScopeUncheckedUpdateWithoutGradesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceJobUpsertWithWhereUniqueWithoutGradeInput = {
+    where: WorkforceJobWhereUniqueInput
+    update: XOR<WorkforceJobUpdateWithoutGradeInput, WorkforceJobUncheckedUpdateWithoutGradeInput>
+    create: XOR<WorkforceJobCreateWithoutGradeInput, WorkforceJobUncheckedCreateWithoutGradeInput>
+  }
+
+  export type WorkforceJobUpdateWithWhereUniqueWithoutGradeInput = {
+    where: WorkforceJobWhereUniqueInput
+    data: XOR<WorkforceJobUpdateWithoutGradeInput, WorkforceJobUncheckedUpdateWithoutGradeInput>
+  }
+
+  export type WorkforceJobUpdateManyWithWhereWithoutGradeInput = {
+    where: WorkforceJobScalarWhereInput
+    data: XOR<WorkforceJobUpdateManyMutationInput, WorkforceJobUncheckedUpdateManyWithoutGradeInput>
+  }
+
+  export type WorkforceScopeCreateWithoutJobsInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeUncheckedCreateWithoutJobsInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeCreateOrConnectWithoutJobsInput = {
+    where: WorkforceScopeWhereUniqueInput
+    create: XOR<WorkforceScopeCreateWithoutJobsInput, WorkforceScopeUncheckedCreateWithoutJobsInput>
+  }
+
+  export type WorkforceGradeCreateWithoutJobsInput = {
+    id?: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutGradesInput
+  }
+
+  export type WorkforceGradeUncheckedCreateWithoutJobsInput = {
+    id?: string
+    workforceScopeId: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceGradeCreateOrConnectWithoutJobsInput = {
+    where: WorkforceGradeWhereUniqueInput
+    create: XOR<WorkforceGradeCreateWithoutJobsInput, WorkforceGradeUncheckedCreateWithoutJobsInput>
+  }
+
+  export type WorkforcePositionCreateWithoutJobInput = {
+    id?: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionUncheckedCreateWithoutJobInput = {
+    id?: string
+    orgUnitId: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    parentPositionId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionCreateOrConnectWithoutJobInput = {
+    where: WorkforcePositionWhereUniqueInput
+    create: XOR<WorkforcePositionCreateWithoutJobInput, WorkforcePositionUncheckedCreateWithoutJobInput>
+  }
+
+  export type WorkforcePositionCreateManyJobInputEnvelope = {
+    data: WorkforcePositionCreateManyJobInput | WorkforcePositionCreateManyJobInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceScopeUpsertWithoutJobsInput = {
+    update: XOR<WorkforceScopeUpdateWithoutJobsInput, WorkforceScopeUncheckedUpdateWithoutJobsInput>
+    create: XOR<WorkforceScopeCreateWithoutJobsInput, WorkforceScopeUncheckedCreateWithoutJobsInput>
+    where?: WorkforceScopeWhereInput
+  }
+
+  export type WorkforceScopeUpdateToOneWithWhereWithoutJobsInput = {
+    where?: WorkforceScopeWhereInput
+    data: XOR<WorkforceScopeUpdateWithoutJobsInput, WorkforceScopeUncheckedUpdateWithoutJobsInput>
+  }
+
+  export type WorkforceScopeUpdateWithoutJobsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceScopeUncheckedUpdateWithoutJobsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceGradeUpsertWithoutJobsInput = {
+    update: XOR<WorkforceGradeUpdateWithoutJobsInput, WorkforceGradeUncheckedUpdateWithoutJobsInput>
+    create: XOR<WorkforceGradeCreateWithoutJobsInput, WorkforceGradeUncheckedCreateWithoutJobsInput>
+    where?: WorkforceGradeWhereInput
+  }
+
+  export type WorkforceGradeUpdateToOneWithWhereWithoutJobsInput = {
+    where?: WorkforceGradeWhereInput
+    data: XOR<WorkforceGradeUpdateWithoutJobsInput, WorkforceGradeUncheckedUpdateWithoutJobsInput>
+  }
+
+  export type WorkforceGradeUpdateWithoutJobsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutGradesNestedInput
+  }
+
+  export type WorkforceGradeUncheckedUpdateWithoutJobsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePositionUpsertWithWhereUniqueWithoutJobInput = {
+    where: WorkforcePositionWhereUniqueInput
+    update: XOR<WorkforcePositionUpdateWithoutJobInput, WorkforcePositionUncheckedUpdateWithoutJobInput>
+    create: XOR<WorkforcePositionCreateWithoutJobInput, WorkforcePositionUncheckedCreateWithoutJobInput>
+  }
+
+  export type WorkforcePositionUpdateWithWhereUniqueWithoutJobInput = {
+    where: WorkforcePositionWhereUniqueInput
+    data: XOR<WorkforcePositionUpdateWithoutJobInput, WorkforcePositionUncheckedUpdateWithoutJobInput>
+  }
+
+  export type WorkforcePositionUpdateManyWithWhereWithoutJobInput = {
+    where: WorkforcePositionScalarWhereInput
+    data: XOR<WorkforcePositionUpdateManyMutationInput, WorkforcePositionUncheckedUpdateManyWithoutJobInput>
+  }
+
+  export type WorkforcePositionScalarWhereInput = {
+    AND?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
+    OR?: WorkforcePositionScalarWhereInput[]
+    NOT?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
+    id?: UuidFilter<"WorkforcePosition"> | string
+    orgUnitId?: UuidFilter<"WorkforcePosition"> | string
+    name?: StringFilter<"WorkforcePosition"> | string
+    code?: StringNullableFilter<"WorkforcePosition"> | string | null
+    totalSlots?: IntFilter<"WorkforcePosition"> | number
+    leadership?: BoolFilter<"WorkforcePosition"> | boolean
+    tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
+    jobId?: UuidNullableFilter<"WorkforcePosition"> | string | null
+    parentPositionId?: UuidNullableFilter<"WorkforcePosition"> | string | null
+    status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
+  }
+
   export type WorkforceScopeCreateWithoutOrgUnitsInput = {
     id?: string
     anchorOrganizationId: string
@@ -178650,6 +183317,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutOrgUnitsInput = {
@@ -178664,6 +183333,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutOrgUnitsInput = {
@@ -178675,6 +183346,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -178697,6 +183369,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -178720,6 +183393,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -178741,6 +183415,7 @@ export namespace Prisma {
     workforceScopeId: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -178784,6 +183459,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
@@ -178818,8 +183497,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
@@ -178855,6 +183538,9 @@ export namespace Prisma {
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
@@ -178869,9 +183555,12 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
@@ -178904,6 +183593,10 @@ export namespace Prisma {
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -178938,8 +183631,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -179103,6 +183800,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
     position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
   }
@@ -179114,6 +183813,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     positionId?: string | null
   }
 
@@ -179150,6 +183851,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutOrgUnitsInput = {
@@ -179164,6 +183867,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutChildrenInput = {
@@ -179181,6 +183886,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -179203,6 +183909,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -179262,6 +183969,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
@@ -179296,8 +184007,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -179330,24 +184045,6 @@ export namespace Prisma {
   export type WorkforcePositionUpdateManyWithWhereWithoutOrgUnitInput = {
     where: WorkforcePositionScalarWhereInput
     data: XOR<WorkforcePositionUpdateManyMutationInput, WorkforcePositionUncheckedUpdateManyWithoutOrgUnitInput>
-  }
-
-  export type WorkforcePositionScalarWhereInput = {
-    AND?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
-    OR?: WorkforcePositionScalarWhereInput[]
-    NOT?: WorkforcePositionScalarWhereInput | WorkforcePositionScalarWhereInput[]
-    id?: UuidFilter<"WorkforcePosition"> | string
-    orgUnitId?: UuidFilter<"WorkforcePosition"> | string
-    name?: StringFilter<"WorkforcePosition"> | string
-    code?: StringNullableFilter<"WorkforcePosition"> | string | null
-    totalSlots?: IntFilter<"WorkforcePosition"> | number
-    leadership?: BoolFilter<"WorkforcePosition"> | boolean
-    tariffAzn?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
-    defaultWorkRegime?: EnumWorkforceWorkRegimeNullableFilter<"WorkforcePosition"> | $Enums.WorkforceWorkRegime | null
-    weeklyHours?: DecimalNullableFilter<"WorkforcePosition"> | Decimal | DecimalJsLike | number | string | null
-    status?: EnumOrgUnitStatusFilter<"WorkforcePosition"> | $Enums.OrgUnitStatus
-    createdAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
-    updatedAt?: DateTimeFilter<"WorkforcePosition"> | Date | string
   }
 
   export type WorkforceEmploymentUpsertWithWhereUniqueWithoutOrgUnitInput = {
@@ -179459,6 +184156,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFilter<"WorkforceApprovalStep"> | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFilter<"WorkforceApprovalStep"> | boolean
+    chainOffset?: IntNullableFilter<"WorkforceApprovalStep"> | number | null
+    minGradeLevel?: IntNullableFilter<"WorkforceApprovalStep"> | number | null
     orgUnitId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
     positionId?: UuidNullableFilter<"WorkforceApprovalStep"> | string | null
   }
@@ -179650,6 +184349,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutCommercialLinksInput = {
@@ -179664,6 +184365,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutCommercialLinksInput = {
@@ -179675,6 +184378,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -179697,6 +184401,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -179920,6 +184625,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutCommercialLinksInput = {
@@ -179934,6 +184641,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutCommercialLinksInput = {
@@ -179951,6 +184660,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -179973,6 +184683,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -179991,6 +184702,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -180013,6 +184725,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -180032,6 +184745,130 @@ export namespace Prisma {
     create: XOR<OrgUnitCreateWithoutPositionsInput, OrgUnitUncheckedCreateWithoutPositionsInput>
   }
 
+  export type WorkforceJobCreateWithoutPositionsInput = {
+    id?: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutJobsInput
+    grade?: WorkforceGradeCreateNestedOneWithoutJobsInput
+  }
+
+  export type WorkforceJobUncheckedCreateWithoutPositionsInput = {
+    id?: string
+    workforceScopeId: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    gradeId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceJobCreateOrConnectWithoutPositionsInput = {
+    where: WorkforceJobWhereUniqueInput
+    create: XOR<WorkforceJobCreateWithoutPositionsInput, WorkforceJobUncheckedCreateWithoutPositionsInput>
+  }
+
+  export type WorkforcePositionCreateWithoutChildPositionsInput = {
+    id?: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionUncheckedCreateWithoutChildPositionsInput = {
+    id?: string
+    orgUnitId: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionCreateOrConnectWithoutChildPositionsInput = {
+    where: WorkforcePositionWhereUniqueInput
+    create: XOR<WorkforcePositionCreateWithoutChildPositionsInput, WorkforcePositionUncheckedCreateWithoutChildPositionsInput>
+  }
+
+  export type WorkforcePositionCreateWithoutParentPositionInput = {
+    id?: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionUncheckedCreateWithoutParentPositionInput = {
+    id?: string
+    orgUnitId: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
+    approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
+  }
+
+  export type WorkforcePositionCreateOrConnectWithoutParentPositionInput = {
+    where: WorkforcePositionWhereUniqueInput
+    create: XOR<WorkforcePositionCreateWithoutParentPositionInput, WorkforcePositionUncheckedCreateWithoutParentPositionInput>
+  }
+
+  export type WorkforcePositionCreateManyParentPositionInputEnvelope = {
+    data: WorkforcePositionCreateManyParentPositionInput | WorkforcePositionCreateManyParentPositionInput[]
+    skipDuplicates?: boolean
+  }
+
   export type WorkforceEmploymentCreateWithoutPositionInput = {
     id?: string
     globalPersonId: string
@@ -180049,6 +184886,10 @@ export namespace Prisma {
     organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -180083,8 +184924,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -180150,6 +184995,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     route: WorkforceApprovalRouteCreateNestedOneWithoutStepsInput
     orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
   }
@@ -180161,6 +185008,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnitId?: string | null
   }
 
@@ -180189,6 +185038,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -180211,6 +185061,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -180223,6 +185074,108 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
     responsiblePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutResponsibleOrgUnitNestedInput
     approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutOrgUnitNestedInput
+  }
+
+  export type WorkforceJobUpsertWithoutPositionsInput = {
+    update: XOR<WorkforceJobUpdateWithoutPositionsInput, WorkforceJobUncheckedUpdateWithoutPositionsInput>
+    create: XOR<WorkforceJobCreateWithoutPositionsInput, WorkforceJobUncheckedCreateWithoutPositionsInput>
+    where?: WorkforceJobWhereInput
+  }
+
+  export type WorkforceJobUpdateToOneWithWhereWithoutPositionsInput = {
+    where?: WorkforceJobWhereInput
+    data: XOR<WorkforceJobUpdateWithoutPositionsInput, WorkforceJobUncheckedUpdateWithoutPositionsInput>
+  }
+
+  export type WorkforceJobUpdateWithoutPositionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutJobsNestedInput
+    grade?: WorkforceGradeUpdateOneWithoutJobsNestedInput
+  }
+
+  export type WorkforceJobUncheckedUpdateWithoutPositionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    gradeId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePositionUpsertWithoutChildPositionsInput = {
+    update: XOR<WorkforcePositionUpdateWithoutChildPositionsInput, WorkforcePositionUncheckedUpdateWithoutChildPositionsInput>
+    create: XOR<WorkforcePositionCreateWithoutChildPositionsInput, WorkforcePositionUncheckedCreateWithoutChildPositionsInput>
+    where?: WorkforcePositionWhereInput
+  }
+
+  export type WorkforcePositionUpdateToOneWithWhereWithoutChildPositionsInput = {
+    where?: WorkforcePositionWhereInput
+    data: XOR<WorkforcePositionUpdateWithoutChildPositionsInput, WorkforcePositionUncheckedUpdateWithoutChildPositionsInput>
+  }
+
+  export type WorkforcePositionUpdateWithoutChildPositionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUncheckedUpdateWithoutChildPositionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUpsertWithWhereUniqueWithoutParentPositionInput = {
+    where: WorkforcePositionWhereUniqueInput
+    update: XOR<WorkforcePositionUpdateWithoutParentPositionInput, WorkforcePositionUncheckedUpdateWithoutParentPositionInput>
+    create: XOR<WorkforcePositionCreateWithoutParentPositionInput, WorkforcePositionUncheckedCreateWithoutParentPositionInput>
+  }
+
+  export type WorkforcePositionUpdateWithWhereUniqueWithoutParentPositionInput = {
+    where: WorkforcePositionWhereUniqueInput
+    data: XOR<WorkforcePositionUpdateWithoutParentPositionInput, WorkforcePositionUncheckedUpdateWithoutParentPositionInput>
+  }
+
+  export type WorkforcePositionUpdateManyWithWhereWithoutParentPositionInput = {
+    where: WorkforcePositionScalarWhereInput
+    data: XOR<WorkforcePositionUpdateManyMutationInput, WorkforcePositionUncheckedUpdateManyWithoutParentPositionInput>
   }
 
   export type WorkforceEmploymentUpsertWithWhereUniqueWithoutPositionInput = {
@@ -180300,6 +185253,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
   }
@@ -180314,9 +185270,12 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
   }
@@ -180350,6 +185309,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
   }
@@ -180364,9 +185326,12 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
   }
@@ -180389,6 +185354,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
@@ -180423,8 +185392,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
@@ -180506,6 +185479,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
@@ -180540,8 +185517,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -180613,6 +185594,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -180647,8 +185632,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -180741,6 +185730,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -180775,8 +185768,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -180842,6 +185839,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutSeatAllocationsInput = {
@@ -180856,6 +185855,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutSeatAllocationsInput = {
@@ -180881,6 +185882,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -180915,8 +185920,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -180963,6 +185972,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutSeatAllocationsInput = {
@@ -180977,6 +185988,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutSeatAllocationInput = {
@@ -181008,6 +186021,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -181042,8 +186059,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -181249,6 +186270,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutEmploymentsInput = {
@@ -181263,6 +186286,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutEmploymentsInput = {
@@ -181274,6 +186299,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -181296,6 +186322,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -181328,6 +186355,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepCreateNestedManyWithoutPositionInput
   }
@@ -181342,9 +186372,12 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
     approvalSteps?: WorkforceApprovalStepUncheckedCreateNestedManyWithoutPositionInput
   }
@@ -181352,6 +186385,356 @@ export namespace Prisma {
   export type WorkforcePositionCreateOrConnectWithoutEmploymentsInput = {
     where: WorkforcePositionWhereUniqueInput
     create: XOR<WorkforcePositionCreateWithoutEmploymentsInput, WorkforcePositionUncheckedCreateWithoutEmploymentsInput>
+  }
+
+  export type WorkforceEmploymentCreateWithoutDirectReportsInput = {
+    id?: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
+    workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
+    orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
+    absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentUncheckedCreateWithoutDirectReportsInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
+    absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentCreateOrConnectWithoutDirectReportsInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    create: XOR<WorkforceEmploymentCreateWithoutDirectReportsInput, WorkforceEmploymentUncheckedCreateWithoutDirectReportsInput>
+  }
+
+  export type WorkforceEmploymentCreateWithoutManagerEmploymentInput = {
+    id?: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
+    workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
+    orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
+    absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    matrixManagerEmploymentId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
+    absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentCreateOrConnectWithoutManagerEmploymentInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    create: XOR<WorkforceEmploymentCreateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentCreateManyManagerEmploymentInputEnvelope = {
+    data: WorkforceEmploymentCreateManyManagerEmploymentInput | WorkforceEmploymentCreateManyManagerEmploymentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceEmploymentCreateWithoutMatrixReportsInput = {
+    id?: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
+    workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
+    orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentUncheckedCreateWithoutMatrixReportsInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentCreateOrConnectWithoutMatrixReportsInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    create: XOR<WorkforceEmploymentCreateWithoutMatrixReportsInput, WorkforceEmploymentUncheckedCreateWithoutMatrixReportsInput>
+  }
+
+  export type WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput = {
+    id?: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
+    workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
+    orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
+    absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
+    absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedCreateNestedManyWithoutEmploymentInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutEmploymentInput
+    dayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutEmploymentInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutEmploymentInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutEmploymentInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutEmploymentInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedCreateNestedManyWithoutEmploymentInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentCreateOrConnectWithoutMatrixManagerEmploymentInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    create: XOR<WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentCreateManyMatrixManagerEmploymentInputEnvelope = {
+    data: WorkforceEmploymentCreateManyMatrixManagerEmploymentInput | WorkforceEmploymentCreateManyMatrixManagerEmploymentInput[]
+    skipDuplicates?: boolean
   }
 
   export type WorkforceAbsenceCreateWithoutEmploymentInput = {
@@ -181420,6 +186803,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -181442,6 +186826,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -182253,6 +187638,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutEmploymentsInput = {
@@ -182267,6 +187654,8 @@ export namespace Prisma {
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutEmploymentsInput = {
@@ -182284,6 +187673,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -182306,6 +187696,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -182344,6 +187735,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
   }
@@ -182358,11 +187752,228 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforceEmploymentUpsertWithoutDirectReportsInput = {
+    update: XOR<WorkforceEmploymentUpdateWithoutDirectReportsInput, WorkforceEmploymentUncheckedUpdateWithoutDirectReportsInput>
+    create: XOR<WorkforceEmploymentCreateWithoutDirectReportsInput, WorkforceEmploymentUncheckedCreateWithoutDirectReportsInput>
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  export type WorkforceEmploymentUpdateToOneWithWhereWithoutDirectReportsInput = {
+    where?: WorkforceEmploymentWhereInput
+    data: XOR<WorkforceEmploymentUpdateWithoutDirectReportsInput, WorkforceEmploymentUncheckedUpdateWithoutDirectReportsInput>
+  }
+
+  export type WorkforceEmploymentUpdateWithoutDirectReportsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateWithoutDirectReportsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUpsertWithWhereUniqueWithoutManagerEmploymentInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    update: XOR<WorkforceEmploymentUpdateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedUpdateWithoutManagerEmploymentInput>
+    create: XOR<WorkforceEmploymentCreateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentUpdateWithWhereUniqueWithoutManagerEmploymentInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    data: XOR<WorkforceEmploymentUpdateWithoutManagerEmploymentInput, WorkforceEmploymentUncheckedUpdateWithoutManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentUpdateManyWithWhereWithoutManagerEmploymentInput = {
+    where: WorkforceEmploymentScalarWhereInput
+    data: XOR<WorkforceEmploymentUpdateManyMutationInput, WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentUpsertWithoutMatrixReportsInput = {
+    update: XOR<WorkforceEmploymentUpdateWithoutMatrixReportsInput, WorkforceEmploymentUncheckedUpdateWithoutMatrixReportsInput>
+    create: XOR<WorkforceEmploymentCreateWithoutMatrixReportsInput, WorkforceEmploymentUncheckedCreateWithoutMatrixReportsInput>
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  export type WorkforceEmploymentUpdateToOneWithWhereWithoutMatrixReportsInput = {
+    where?: WorkforceEmploymentWhereInput
+    data: XOR<WorkforceEmploymentUpdateWithoutMatrixReportsInput, WorkforceEmploymentUncheckedUpdateWithoutMatrixReportsInput>
+  }
+
+  export type WorkforceEmploymentUpdateWithoutMatrixReportsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateWithoutMatrixReportsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUpsertWithWhereUniqueWithoutMatrixManagerEmploymentInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    update: XOR<WorkforceEmploymentUpdateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedUpdateWithoutMatrixManagerEmploymentInput>
+    create: XOR<WorkforceEmploymentCreateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedCreateWithoutMatrixManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentUpdateWithWhereUniqueWithoutMatrixManagerEmploymentInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    data: XOR<WorkforceEmploymentUpdateWithoutMatrixManagerEmploymentInput, WorkforceEmploymentUncheckedUpdateWithoutMatrixManagerEmploymentInput>
+  }
+
+  export type WorkforceEmploymentUpdateManyWithWhereWithoutMatrixManagerEmploymentInput = {
+    where: WorkforceEmploymentScalarWhereInput
+    data: XOR<WorkforceEmploymentUpdateManyMutationInput, WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentInput>
   }
 
   export type WorkforceAbsenceUpsertWithWhereUniqueWithoutEmploymentInput = {
@@ -182913,6 +188524,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
@@ -182947,8 +188562,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
@@ -183001,6 +188620,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
@@ -183035,8 +188658,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -183528,6 +189155,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -183562,8 +189193,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -183647,6 +189282,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -183681,8 +189320,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -183880,6 +189523,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -183902,6 +189546,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -184277,6 +189922,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -184299,6 +189945,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -185105,6 +190752,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -185139,8 +190790,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -185374,6 +191029,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -185408,8 +191067,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -185697,6 +191360,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -185731,8 +191398,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -186086,6 +191757,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -186120,8 +191795,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -186824,6 +192503,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -186858,8 +192541,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -187093,6 +192780,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -187127,8 +192818,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -187340,6 +193035,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -187374,8 +193073,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -187609,6 +193312,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -187643,8 +193350,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -188100,6 +193811,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -188134,8 +193849,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -188217,6 +193936,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -188251,8 +193974,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -188464,6 +194191,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -188498,8 +194229,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -188733,6 +194468,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -188767,8 +194506,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -190396,6 +196139,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -190430,8 +196177,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -190550,6 +196301,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -190584,8 +196339,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -190867,6 +196626,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -190901,8 +196664,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -191245,6 +197012,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -191279,8 +197050,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -191525,6 +197300,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -191559,8 +197338,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -191872,6 +197655,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -191906,8 +197693,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -192028,6 +197819,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutVacationPlansInput = {
@@ -192042,6 +197835,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutVacationPlansInput = {
@@ -192053,6 +197848,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -192075,6 +197871,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -192171,6 +197968,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutVacationPlansInput = {
@@ -192185,6 +197984,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutVacationPlansInput = {
@@ -192202,6 +198003,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192224,6 +198026,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192346,6 +198149,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -192380,8 +198187,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -192487,6 +198298,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -192521,8 +198336,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -192553,6 +198372,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutPersonnelOrdersInput = {
@@ -192567,6 +198388,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutPersonnelOrdersInput = {
@@ -192592,6 +198415,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -192626,8 +198453,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -192674,6 +198505,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutPersonnelOrdersInput = {
@@ -192688,6 +198521,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutPersonnelOrdersInput = {
@@ -192719,6 +198554,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -192753,8 +198592,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -193141,6 +198984,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
     vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutStaffScheduleRevisionsInput = {
@@ -193155,6 +199000,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
     vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    grades?: WorkforceGradeUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    jobs?: WorkforceJobUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutStaffScheduleRevisionsInput = {
@@ -193185,6 +199032,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
     vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutStaffScheduleRevisionsInput = {
@@ -193199,6 +199048,8 @@ export namespace Prisma {
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    grades?: WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrganizationBundleCreateWithoutBundleInput = {
@@ -194509,6 +200360,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnit?: OrgUnitCreateNestedOneWithoutApprovalStepsInput
     position?: WorkforcePositionCreateNestedOneWithoutApprovalStepsInput
   }
@@ -194519,6 +200372,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -194755,6 +200610,7 @@ export namespace Prisma {
     id?: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -194777,6 +200633,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -194809,6 +200666,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     orgUnit: OrgUnitCreateNestedOneWithoutPositionsInput
+    job?: WorkforceJobCreateNestedOneWithoutPositionsInput
+    parentPosition?: WorkforcePositionCreateNestedOneWithoutChildPositionsInput
+    childPositions?: WorkforcePositionCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateCreateNestedManyWithoutPositionInput
   }
@@ -194823,9 +200683,12 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    childPositions?: WorkforcePositionUncheckedCreateNestedManyWithoutParentPositionInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutPositionInput
     roleTemplates?: SatelliteRoleTemplateUncheckedCreateNestedManyWithoutPositionInput
   }
@@ -194877,6 +200740,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194899,6 +200763,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194937,6 +200802,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
   }
@@ -194951,9 +200819,12 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
   }
@@ -196354,6 +202225,10 @@ export namespace Prisma {
     workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
     orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
     position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutDirectReportsInput
+    directReports?: WorkforceEmploymentCreateNestedManyWithoutManagerEmploymentInput
+    matrixManagerEmployment?: WorkforceEmploymentCreateNestedOneWithoutMatrixReportsInput
+    matrixReports?: WorkforceEmploymentCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
@@ -196388,8 +202263,12 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    directReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    matrixReports?: WorkforceEmploymentUncheckedCreateNestedManyWithoutMatrixManagerEmploymentInput
     absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
     managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
@@ -212007,6 +217886,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -212030,6 +217910,8 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -212109,10 +217991,34 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceGradeCreateManyWorkforceScopeInput = {
+    id?: string
+    code: string
+    name: string
+    level: number
+    minSalary?: Decimal | DecimalJsLike | number | string | null
+    maxSalary?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceJobCreateManyWorkforceScopeInput = {
+    id?: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    gradeId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrgUnitUpdateWithoutWorkforceScopeInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -212134,6 +218040,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -212154,6 +218061,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -212179,6 +218087,10 @@ export namespace Prisma {
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -212213,8 +218125,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -212249,6 +218165,8 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -212482,11 +218400,203 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceGradeUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: WorkforceJobUpdateManyWithoutGradeNestedInput
+  }
+
+  export type WorkforceGradeUncheckedUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: WorkforceJobUncheckedUpdateManyWithoutGradeNestedInput
+  }
+
+  export type WorkforceGradeUncheckedUpdateManyWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    level?: IntFieldUpdateOperationsInput | number
+    minSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxSalary?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceJobUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    grade?: WorkforceGradeUpdateOneWithoutJobsNestedInput
+    positions?: WorkforcePositionUpdateManyWithoutJobNestedInput
+  }
+
+  export type WorkforceJobUncheckedUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    gradeId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    positions?: WorkforcePositionUncheckedUpdateManyWithoutJobNestedInput
+  }
+
+  export type WorkforceJobUncheckedUpdateManyWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    gradeId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceJobCreateManyGradeInput = {
+    id?: string
+    workforceScopeId: string
+    name: string
+    code?: string | null
+    jobFamily?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceJobUpdateWithoutGradeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutJobsNestedInput
+    positions?: WorkforcePositionUpdateManyWithoutJobNestedInput
+  }
+
+  export type WorkforceJobUncheckedUpdateWithoutGradeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    positions?: WorkforcePositionUncheckedUpdateManyWithoutJobNestedInput
+  }
+
+  export type WorkforceJobUncheckedUpdateManyWithoutGradeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePositionCreateManyJobInput = {
+    id?: string
+    orgUnitId: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    parentPositionId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePositionUpdateWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUncheckedUpdateWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUncheckedUpdateManyWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrgUnitCreateManyParentInput = {
     id?: string
     workforceScopeId: string
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerEmploymentId?: string | null
@@ -212504,6 +218614,8 @@ export namespace Prisma {
     tariffAzn?: Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
     weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    parentPositionId?: string | null
     status?: $Enums.OrgUnitStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -212524,6 +218636,8 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -212578,6 +218692,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     positionId?: string | null
   }
 
@@ -212585,6 +218701,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -212606,6 +218723,7 @@ export namespace Prisma {
     workforceScopeId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -212626,6 +218744,7 @@ export namespace Prisma {
     workforceScopeId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -212646,6 +218765,9 @@ export namespace Prisma {
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    parentPosition?: WorkforcePositionUpdateOneWithoutChildPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
@@ -212660,9 +218782,12 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
     roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
     approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
@@ -212677,6 +218802,8 @@ export namespace Prisma {
     tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
     weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentPositionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -212699,6 +218826,10 @@ export namespace Prisma {
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -212733,8 +218864,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -212769,6 +218904,8 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -212920,6 +219057,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
     position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
   }
@@ -212931,6 +219070,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -212941,7 +219082,25 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type WorkforcePositionCreateManyParentPositionInput = {
+    id?: string
+    orgUnitId: string
+    name: string
+    code?: string | null
+    totalSlots?: number
+    leadership?: boolean
+    tariffAzn?: Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: $Enums.WorkforceWorkRegime | null
+    weeklyHours?: Decimal | DecimalJsLike | number | string | null
+    jobId?: string | null
+    status?: $Enums.OrgUnitStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type WorkforceEmploymentCreateManyPositionInput = {
@@ -212959,6 +219118,8 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -212980,7 +219141,65 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnitId?: string | null
+  }
+
+  export type WorkforcePositionUpdateWithoutParentPositionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutPositionsNestedInput
+    job?: WorkforceJobUpdateOneWithoutPositionsNestedInput
+    childPositions?: WorkforcePositionUpdateManyWithoutParentPositionNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUncheckedUpdateWithoutParentPositionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    childPositions?: WorkforcePositionUncheckedUpdateManyWithoutParentPositionNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutPositionNestedInput
+    roleTemplates?: SatelliteRoleTemplateUncheckedUpdateManyWithoutPositionNestedInput
+    approvalSteps?: WorkforceApprovalStepUncheckedUpdateManyWithoutPositionNestedInput
+  }
+
+  export type WorkforcePositionUncheckedUpdateManyWithoutParentPositionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    totalSlots?: IntFieldUpdateOperationsInput | number
+    leadership?: BoolFieldUpdateOperationsInput | boolean
+    tariffAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    defaultWorkRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    weeklyHours?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WorkforceEmploymentUpdateWithoutPositionInput = {
@@ -213000,6 +219219,10 @@ export namespace Prisma {
     organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -213034,8 +219257,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -213070,6 +219297,8 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -213110,6 +219339,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     route?: WorkforceApprovalRouteUpdateOneRequiredWithoutStepsNestedInput
     orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
   }
@@ -213121,6 +219352,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -213131,6 +219364,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -213194,6 +219429,48 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceEmploymentCreateManyManagerEmploymentInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    matrixManagerEmploymentId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceEmploymentCreateManyMatrixManagerEmploymentInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    contractEndDate?: Date | string | null
+    workRegime?: $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    satelliteStaffLogin?: string | null
+    satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type WorkforceAbsenceCreateManyEmploymentInput = {
     id?: string
     organizationId: string
@@ -213226,6 +219503,7 @@ export namespace Prisma {
     parentId?: string | null
     name: string
     code?: string | null
+    unitKind?: $Enums.OrgUnitKind
     status?: $Enums.OrgUnitStatus
     sortOrder?: number
     managerUserId?: string | null
@@ -213442,6 +219720,208 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceEmploymentUpdateWithoutManagerEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateWithoutManagerEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceEmploymentUpdateWithoutMatrixManagerEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateWithoutMatrixManagerEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
+    absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
+    brigadeMemberships?: WorkforceBrigadeMemberUncheckedUpdateManyWithoutEmploymentNestedInput
+    shiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutEmploymentNestedInput
+    dayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutEmploymentNestedInput
+    attendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutEmploymentNestedInput
+    hourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    advanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutEmploymentNestedInput
+    announcementReads?: WorkforceAnnouncementReadUncheckedUpdateManyWithoutEmploymentNestedInput
+    fitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    contractEndDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    workRegime?: NullableEnumWorkforceWorkRegimeFieldUpdateOperationsInput | $Enums.WorkforceWorkRegime | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type WorkforceAbsenceUpdateWithoutEmploymentInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
@@ -213524,6 +220004,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -213546,6 +220027,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -213566,6 +220048,7 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
     code?: NullableStringFieldUpdateOperationsInput | string | null
+    unitKind?: EnumOrgUnitKindFieldUpdateOperationsInput | $Enums.OrgUnitKind
     status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
     sortOrder?: IntFieldUpdateOperationsInput | number
     managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -215192,6 +221675,8 @@ export namespace Prisma {
     kind: $Enums.WorkforceApprovalStepKind
     appliesTo?: $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: boolean
+    chainOffset?: number | null
+    minGradeLevel?: number | null
     orgUnitId?: string | null
     positionId?: string | null
   }
@@ -215202,6 +221687,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnit?: OrgUnitUpdateOneWithoutApprovalStepsNestedInput
     position?: WorkforcePositionUpdateOneWithoutApprovalStepsNestedInput
   }
@@ -215212,6 +221699,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -215222,6 +221711,8 @@ export namespace Prisma {
     kind?: EnumWorkforceApprovalStepKindFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepKind
     appliesTo?: EnumWorkforceApprovalStepAudienceFieldUpdateOperationsInput | $Enums.WorkforceApprovalStepAudience
     canExceedAdvanceCap?: BoolFieldUpdateOperationsInput | boolean
+    chainOffset?: NullableIntFieldUpdateOperationsInput | number | null
+    minGradeLevel?: NullableIntFieldUpdateOperationsInput | number | null
     orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
     positionId?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -215545,6 +222036,8 @@ export namespace Prisma {
     platformUserId?: string | null
     satelliteStaffLogin?: string | null
     satelliteStaffPin?: string | null
+    managerEmploymentId?: string | null
+    matrixManagerEmploymentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -216802,6 +223295,10 @@ export namespace Prisma {
     workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
     orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
     position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutDirectReportsNestedInput
+    directReports?: WorkforceEmploymentUpdateManyWithoutManagerEmploymentNestedInput
+    matrixManagerEmployment?: WorkforceEmploymentUpdateOneWithoutMatrixReportsNestedInput
+    matrixReports?: WorkforceEmploymentUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
@@ -216836,8 +223333,12 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    directReports?: WorkforceEmploymentUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    matrixReports?: WorkforceEmploymentUncheckedUpdateManyWithoutMatrixManagerEmploymentNestedInput
     absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
     managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
@@ -216872,6 +223373,8 @@ export namespace Prisma {
     platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffLogin?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteStaffPin?: NullableStringFieldUpdateOperationsInput | string | null
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    matrixManagerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

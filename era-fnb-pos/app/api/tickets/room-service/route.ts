@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureOutletByCode } from "@/lib/outlet-helpers";
 import { prisma } from "@/lib/prisma";
@@ -8,12 +7,12 @@ import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 const schema = z.object({
   roomNumber: z.string().min(1),
   guestName: z.string().optional(),
-  outletCode: z.string().default("RESTAURANT"),
+  outletCode: z.string().min(1),
   lines: z
     .array(
       z.object({
@@ -61,7 +60,7 @@ export async function POST(request: Request) {
       include: { lines: true },
     });
 
-    return NextResponse.json(ticket, { status: 201 });
+    return jsonOk(ticket, 201);
   } catch (err) {
     return handleRouteError(err);
   }

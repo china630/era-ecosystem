@@ -803,6 +803,13 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
+            href="/inventory/buffet-food-cost"
+            label={t("inventory.buffetCostNav", "Buffet FOOD cost")}
+            isActive={pathname.startsWith("/inventory/buffet-food-cost")}
+            icon={BarChart3}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/inventory/day-documents"
             label={t("inventory.dayDocumentNav")}
             isActive={pathname.startsWith("/inventory/day-documents")}

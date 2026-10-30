@@ -8,6 +8,10 @@ import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { fnbCan } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import {
+  capabilitiesFromOutletRow,
+  homePathForCapabilities,
+} from "@/lib/outlet-capabilities";
 import { CheckLines } from "@/components/CheckLines";
 import PosShiftPanel from "@/components/PosShiftPanel";
 
@@ -59,6 +63,10 @@ type Outlet = {
   id: string;
   code: string;
   name: string;
+  capTill?: boolean;
+  capTables?: boolean;
+  capBuffetPlanner?: boolean;
+  shapeHint?: string | null;
 };
 
 type BanquetEvent = {
@@ -269,15 +277,21 @@ export default function FloorPanel() {
         prev && cats.some((c) => c.id === prev) ? prev : (cats[0]?.id ?? ""),
       );
 
-      const outletList = Array.isArray(outletsData.outlets) ? outletsData.outlets : [];
+      const rawList = Array.isArray(outletsData.outlets)
+        ? (outletsData.outlets as Outlet[])
+        : [];
+      const outletList = rawList.filter((o) => capabilitiesFromOutletRow(o).till);
       setOutlets(outletList);
-      const sel =
-        outletsData.selectedOutletId ??
-        outletList.find((o: Outlet) => o.code === "KAFE")?.id ??
-        outletList.find((o: Outlet) => o.code === "RESTAURANT")?.id ??
+      const preferredId =
+        (typeof outletsData.selectedOutletId === "string" &&
+        outletList.some((o) => o.id === outletsData.selectedOutletId)
+          ? outletsData.selectedOutletId
+          : null) ??
+        outletList.find((o) => o.code === "KAFE")?.id ??
+        outletList.find((o) => o.code === "NAFTANI")?.id ??
         outletList[0]?.id ??
         "";
-      setSelectedOutletId(sel);
+      setSelectedOutletId(preferredId);
 
       setBanquets(Array.isArray(banquetsData) ? banquetsData : []);
       setSelectedBeoId((prev) => {
@@ -319,12 +333,24 @@ export default function FloorPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ outletId }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
         showApiError(data, tc("failed"));
         return;
       }
-      showSuccess(t("outletSelected", { code: data.code ?? outletCode }));
+      const row = outlets.find((o) => o.id === outletId);
+      const caps = data?.capabilities
+        ? (data.capabilities as ReturnType<typeof capabilitiesFromOutletRow>)
+        : row
+          ? capabilitiesFromOutletRow(row)
+          : null;
+      if (caps && !caps.till) {
+        window.location.href = homePathForCapabilities(caps);
+        return;
+      }
+      showSuccess(t("outletSelected", { code: data?.code ?? outletCode }));
+      autoOpenedRef.current = false;
+      await load();
     } finally {
       setOutletSaving(false);
     }

@@ -331,11 +331,16 @@ export async function POST(req: Request) {
       throw new SlotDecisionError("closed");
     }
 
+    const pt = await prisma.procedureType.findFirst({
+      where: { code: body.procedureCode },
+      select: { id: true, openAttendance: true, durationMin: true },
+    });
     const order = await prisma.procedureOrder.create({
       data: {
         organizationId: requestOrganizationId(),
         patientRefId: body.patientRefId,
         clinicalEpisodeId: clinicalEpisodeId ?? undefined,
+        procedureTypeId: pt?.id,
         procedureCode: body.procedureCode,
         procedureName: body.procedureName,
         scheduledAt: new Date(body.scheduledAt),
@@ -345,13 +350,14 @@ export async function POST(req: Request) {
         inPackage: false,
         bonusEligible: (amountNet ?? 0) > 0,
         manuallyAdjusted: true,
+        schedulingMode: pt?.openAttendance === true ? "OPEN" : "FIXED",
         status: "PROPOSED",
       },
       include: { patientRef: true },
     });
 
-    const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
-    const seated = await placeConfirmedProcedures([order.id], {
+    const { placeOrPinOrders } = await import("@/domain/procedure/place-or-pin-orders");
+    const seated = await placeOrPinOrders([order.id], {
       confirmedByUserId: session!.sub,
       pinYmdByOrderId: { [order.id]: ymd },
       pinStrict: true,
@@ -359,7 +365,11 @@ export async function POST(req: Request) {
     if (seated.placed === 0) {
       await prisma.procedureOrder.delete({ where: { id: order.id } });
       const reason = seated.failures[0]?.reason ?? "no_slot";
-      throw new SlotDecisionError(reason, SLOT_REASON_MESSAGE[reason]);
+      const known = reason in SLOT_REASON_MESSAGE ? reason : "no_slot";
+      throw new SlotDecisionError(
+        known as keyof typeof SLOT_REASON_MESSAGE,
+        SLOT_REASON_MESSAGE[known as keyof typeof SLOT_REASON_MESSAGE],
+      );
     }
 
     const seatedOrder = await prisma.procedureOrder.findUnique({

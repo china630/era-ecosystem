@@ -70,7 +70,7 @@ function PosBridgeTestModal({
           revenueCode,
           amount: parseFloat(amount),
           description: t('posBridgeDescription'),
-          outletCode: 'RESTAURANT',
+          outletCode: 'NAFTANI',
         }),
       });
       const data = await res.json();

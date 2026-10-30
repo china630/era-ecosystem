@@ -124,6 +124,17 @@ export interface CityLedgerSnapshotPayload {
   currency: 'AZN';
 }
 
+export interface AgencyCommissionPayablePayload {
+  agencyId: string;
+  agencyCode: string;
+  batchId: string;
+  asOfDate: string;
+  totalAmount: number;
+  lineCount: number;
+  financeCounterpartyId?: string;
+  currency: 'AZN';
+}
+
 export interface MasterDataSyncPayload {
   revenueCodes: Array<{ code: string; name: string }>;
   departments: Array<{ code: string; name: string }>;
@@ -147,6 +158,7 @@ export type IntegrationEventType =
   | 'SATELLITE_HOTEL_FOLIO_CHARGE_VOIDED'
   | 'SATELLITE_HOTEL_INVOICE_ISSUED'
   | 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT'
+  | 'SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE'
   | 'SATELLITE_HOTEL_MASTER_DATA_SYNC'
   | 'SATELLITE_HOTEL_PAYMENT_FISCALIZED'
   | 'SATELLITE_HOTEL_GUEST_CHECKED_IN'
@@ -162,6 +174,7 @@ export type IntegrationPayload =
   | FolioChargeVoidedPayload
   | InvoiceIssuedPayload
   | CityLedgerSnapshotPayload
+  | AgencyCommissionPayablePayload
   | MasterDataSyncPayload
   | PaymentFiscalizedPayload;
 

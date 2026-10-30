@@ -42,6 +42,8 @@ export type CatalogFieldProps = {
   serverSearch?: boolean;
   /** Override kind-default width (e.g. select instead of selectWide in compact modals). */
   widthPreset?: FieldWidthPreset;
+  /** Table cells with column headers — keep aria-label, hide visible label. */
+  hideLabel?: boolean;
 };
 
 function Shell({
@@ -51,6 +53,7 @@ function Shell({
   error,
   htmlFor,
   className,
+  hideLabel,
   children,
 }: {
   label: string;
@@ -59,19 +62,24 @@ function Shell({
   error?: string;
   htmlFor?: string;
   className?: string;
+  hideLabel?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className={`${FORM_FIELD_GROUP_CLASS} ${className ?? ""}`.trim()}>
-      <label className={MODAL_FIELD_LABEL_CLASS} htmlFor={htmlFor} title={hint || undefined}>
-        {label}
-        {required ? <span className="text-[#E74C3C]"> *</span> : null}
-        {hint ? (
-          <span className="ml-1 cursor-help text-[#95A5A6]" title={hint} aria-label={hint}>
-            ?
-          </span>
-        ) : null}
-      </label>
+      {hideLabel ? (
+        <span className="sr-only">{label}</span>
+      ) : (
+        <label className={MODAL_FIELD_LABEL_CLASS} htmlFor={htmlFor} title={hint || undefined}>
+          {label}
+          {required ? <span className="text-[#E74C3C]"> *</span> : null}
+          {hint ? (
+            <span className="ml-1 cursor-help text-[#95A5A6]" title={hint} aria-label={hint}>
+              ?
+            </span>
+          ) : null}
+        </label>
+      )}
       {children}
       {error ? <p className="text-xs text-[#E74C3C]">{error}</p> : null}
     </div>
@@ -100,6 +108,7 @@ export function CatalogField({
   onQueryChange,
   serverSearch,
   widthPreset: widthPresetOverride,
+  hideLabel,
 }: CatalogFieldProps) {
   const resolved = resolveCatalogControl(kind);
   const widthPreset = widthPresetOverride ?? resolved.widthPreset;
@@ -120,6 +129,7 @@ export function CatalogField({
         name={name}
         className={className}
         disabled={disabled}
+        hideLabel={hideLabel}
         value={str}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -136,6 +146,7 @@ export function CatalogField({
         error={error}
         htmlFor={inputId}
         className={className}
+        hideLabel={hideLabel}
       >
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
           {options.map((opt) => {
@@ -173,6 +184,7 @@ export function CatalogField({
         error={error}
         htmlFor={inputId}
         className={className}
+        hideLabel={hideLabel}
       >
         <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded border border-[#BDC3C7] p-2">
           {options.map((opt) => {
@@ -217,6 +229,7 @@ export function CatalogField({
         onQueryChange={onQueryChange}
         serverSearch={serverSearch ?? Boolean(onQueryChange)}
         emptyLabel={required ? null : emptyLabel}
+        hideLabel={hideLabel}
       />
     );
   }
@@ -236,6 +249,7 @@ export function CatalogField({
       name={name}
       className={className}
       disabled={disabled}
+      hideLabel={hideLabel}
       value={str}
       onChange={(e) => onChange(e.target.value)}
     >
@@ -265,6 +279,7 @@ function CatalogCombobox({
   onQueryChange,
   serverSearch,
   emptyLabel,
+  hideLabel,
 }: {
   label: string;
   required?: boolean;
@@ -281,6 +296,7 @@ function CatalogCombobox({
   onQueryChange?: (q: string) => void;
   serverSearch?: boolean;
   emptyLabel?: string | null;
+  hideLabel?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -424,6 +440,7 @@ function CatalogCombobox({
       error={error}
       htmlFor={id}
       className={className}
+      hideLabel={hideLabel}
     >
       <div className="relative min-w-0 max-w-full">
         <input
@@ -431,6 +448,7 @@ function CatalogCombobox({
           id={id}
           name={name}
           disabled={disabled}
+          aria-label={hideLabel ? label : undefined}
           className={`${MODAL_INPUT_CLASS} min-w-0 max-w-full pr-8 ${fieldWidthClass(widthPreset)}`.trim()}
           value={open ? query : selectedLabel}
           placeholder="…"

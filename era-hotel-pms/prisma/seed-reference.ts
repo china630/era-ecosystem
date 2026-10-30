@@ -30,10 +30,17 @@ function requireSeedOrgId(): string {
 }
 
 const REVENUE_CODES = [
-  { code: "ROOM", systemRole: "ROOM", name: "Room", taxTag: "18%" },
+  {
+    code: "ROOM",
+    systemRole: "ROOM",
+    name: "Room",
+    taxTag: "18%",
+    allowManualCharge: false,
+    reportType: "LODGING",
+  },
   { code: "FOOD", systemRole: "FOOD", name: "Food", taxTag: "18%" },
-  { code: "BEVERAGE", systemRole: null, name: "Beverage", taxTag: "18%" },
-  { code: "MEDICAL", systemRole: "MEDICAL", name: "Medical", taxTag: "18%" },
+  { code: "BEVERAGE", systemRole: "BEVERAGE", name: "Beverage", taxTag: "18%" },
+  { code: "PROCEDURE", systemRole: "PROCEDURE", name: "Procedures", taxTag: "18%" },
   { code: "LAUNDRY", systemRole: "LAUNDRY", name: "Laundry", taxTag: "18%" },
   { code: "TRANSFER", systemRole: "TRANSFER", name: "Airport transfer", taxTag: "18%" },
   { code: "TOUR", systemRole: "TOUR", name: "Guest tour", taxTag: "18%" },
@@ -70,6 +77,25 @@ async function main() {
       created += 1;
     }
   }
+
+  // Legacy MEDICAL role → PROCEDURE (code string kept; unique systemRole moves once).
+  const legacyMedical = await prisma.revenueCode.findFirst({
+    where: { organizationId, systemRole: "MEDICAL" },
+  });
+  const hasProcedureRole = await prisma.revenueCode.findFirst({
+    where: { organizationId, systemRole: "PROCEDURE" },
+  });
+  if (legacyMedical && !hasProcedureRole) {
+    await prisma.revenueCode.update({
+      where: { id: legacyMedical.id },
+      data: { systemRole: "PROCEDURE", reportType: legacyMedical.reportType ?? "MEDICAL" },
+    });
+  }
+  await prisma.revenueCode.updateMany({
+    where: { organizationId, systemRole: { in: ["ROOM", "PKG", "CITY_TAX"] } },
+    data: { allowManualCharge: false },
+  });
+
   await ensureRevenueGlSeedRows(prisma);
 
   for (const row of BED_TYPES) {

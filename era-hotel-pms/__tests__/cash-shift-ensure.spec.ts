@@ -27,6 +27,10 @@ jest.mock('@era/satellite-kit', () => ({
   assertLiveFiscalReady: (...args: unknown[]) => assertLiveFiscalReady(...args),
 }));
 
+jest.mock('@/lib/satellite-audit', () => ({
+  recordHotelAudit: jest.fn(async () => undefined),
+}));
+
 import { prisma } from '@/lib/prisma';
 import {
   closeOpenCashShift,

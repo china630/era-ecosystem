@@ -17,7 +17,7 @@ This ADR remains the **satellite storage and helper** contract. Ecosystem-wide c
 ## Decision
 
 1. Shared helper in `@era/satellite-kit`: `recordSatelliteAudit`, `redactAuditChanges`, `SatelliteAuditInput`.
-2. Identical Prisma model `SatelliteAuditLog` in each satellite DB. Tenant roots + audit carry `organizationId` (CP-TENANT-01 API). Kit filter is **fail-closed** (no `unbound` default). Live SHARED pool / field two-org UAT still open.
+2. Identical Prisma model `SatelliteAuditLog` in each satellite DB. Tenant roots + audit carry `organizationId` (CP-TENANT-01 API). Kit filter is **fail-closed** (no `unbound` default). Live SHARED pool / field two-org UAT still open. Indexes: `(entityType, entityId)`, `createdAt`, `organizationId`, and Wave E compound `(organizationId, createdAt)` for org journal lists (Hotel/Clinic/F&B). Per-row `integrityHash` only — org hash-chain deferred (Finance remains reference).
 3. Wire on first wave: folio charge void, ticket line void, visit discount, master-data DELETE/PATCH retire. **Follow-up:** HTTP mutation belt per [era-mutation-audit-standard.md](./era-mutation-audit-standard.md) (Hotel first).
 4. Read API (canon): UI `/admin/audit` → `GET /api/admin/audit?entityType=&entityId=&action=&dateFrom=&dateTo=&userId=` (authenticated; hotel = reports permission). See [era-mutation-audit-standard.md](./era-mutation-audit-standard.md) § Org audit UI. Legacy `/api/audit` and `/settings/audit` are removed (no redirect).
 

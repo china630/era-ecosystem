@@ -120,19 +120,19 @@ describe("WorkforceEmploymentsService.list include", () => {
         id: "e1",
         globalPersonId: "p1",
         orgUnit: { id: "ou1", name: "Housekeeping" },
-        position: { id: "pos1", name: "Room attendant" },
+        position: { id: "pos1", name: "Room attendant", leadership: false },
       },
       {
         id: "e2",
         globalPersonId: "p1",
         orgUnit: { id: "ou1", name: "Housekeeping" },
-        position: { id: "pos1", name: "Room attendant" },
+        position: { id: "pos1", name: "Room attendant", leadership: false },
       },
       {
         id: "e3",
         globalPersonId: "p-blank",
         orgUnit: { id: "ou2", name: "Front office" },
-        position: { id: "pos2", name: "Reception" },
+        position: { id: "pos2", name: "Reception", leadership: true },
       },
     ]);
     mdm.batchGetPersonOpsProfile.mockResolvedValue({
@@ -176,6 +176,7 @@ describe("WorkforceEmploymentsService.list include", () => {
         orgUnitName: "Housekeeping",
         positionId: "pos1",
         positionName: "Room attendant",
+        leadership: false,
       },
     ]);
   });

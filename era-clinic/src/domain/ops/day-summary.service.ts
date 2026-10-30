@@ -38,9 +38,13 @@ export type OpsDaySummary = {
 export async function getOpsDaySummary(
   dateYmd?: string,
   locale = "en",
+  range?: { from?: string; to?: string },
 ): Promise<OpsDaySummary> {
-  const date = dateYmd?.trim() || todayBakuYmd();
-  const { start, end } = bakuDayBounds(date);
+  const fromYmd = (range?.from ?? dateYmd)?.trim() || todayBakuYmd();
+  const toYmd = (range?.to ?? dateYmd)?.trim() || fromYmd;
+  const date = toYmd;
+  const { start } = bakuDayBounds(fromYmd <= toYmd ? fromYmd : toYmd);
+  const { end } = bakuDayBounds(fromYmd <= toYmd ? toYmd : fromYmd);
   const dayFilter = { gte: start, lt: end };
 
   const [

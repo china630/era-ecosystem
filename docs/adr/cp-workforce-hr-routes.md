@@ -20,7 +20,7 @@ Approval must not be stored as a person's surname. Weekly hour numbers are an or
 
 4. **Hour norm.** `WorkforceOrgSettings` stores weekly hours per regime. Empty means the timesheet shows fact hours and does not invent a norm. When hours are set, the month norm is working days for that regime times (weekly hours / days per week). Five-day, medical, and custom use five days; six-day counts Saturday unless the calendar says holiday, mourning, or transferred rest. Day types come from data-hub `CatalogGatewayService.getCalendarDaysRange("AZ", …)`. Saturday and Sunday are only the fallback when the hub has no row.
 
-5. **Routes.** Per request kind (`FULL_DAY`, `HOURLY`, `ADVANCE`, `VACATION`), steps are `REQUESTER_MANAGER` (walk up when the requester is the unit manager or the unit has no manager), `ORG_UNIT_HEAD`, or `POSITION_IN_UNIT`. No configured route keeps the previous behavior: any user with the existing permission may approve. A configured step with nobody to assign returns `APPROVAL_STEP_UNASSIGNED`. The wrong person gets `APPROVAL_STEP_FORBIDDEN`. Reject with a reason returns the request to the requester. History stays in `WorkforceApprovalDecision`.
+5. **Routes.** Per request kind (`FULL_DAY`, `HOURLY`, `ADVANCE`, `VACATION`), steps use org structure — never surnames. Kinds: `REQUESTER_MANAGER` (`lineManager`: employment solid manager → unit manager → parent walk, skip self), `ORG_UNIT_HEAD` (unit head only), `POSITION_IN_UNIT`, `MANAGER_CHAIN` (`chainOffset`, default 2), `POSITION_HOLDER`, `MATRIX_MANAGER`, `GRADE_AT_LEAST` (`minGradeLevel`; no job/grade → unassigned). See [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md). No configured route keeps the previous behavior: any user with the existing permission may approve. A configured step with nobody to assign returns `APPROVAL_STEP_UNASSIGNED`. The wrong person gets `APPROVAL_STEP_FORBIDDEN`. Reject with a reason returns the request to the requester. History stays in `WorkforceApprovalDecision`.
 
 6. **Advances.** Percent of salary, max amount, max open advances, and an HR-proxy flag are org settings with empty defaults (empty = no limit, proxy off). A percent cap uses the Finance employment mirror salary. If the percent is set and salary is unknown, the API throws `ADVANCE_SALARY_UNKNOWN`.
 
@@ -36,8 +36,15 @@ Approval must not be stored as a person's surname. Weekly hour numbers are an or
 
 4. **Hours and tariff.** A position stores `tariffAzn`, `defaultWorkRegime`, and `weeklyHours`, including vacant slots. Those fields are copied into `StaffScheduleRevision.snapshotJson`. An employment `workRegime` is set only when it differs from the position. Resolution is employment regime, else position regime. Weekly hours are the position hours, else the org hours for that regime. If the regime is unresolved, the hour norm stays null. The timesheet row shows fact, norm, and the difference. Under the day letter, a short shift code is shown only when the existing roster plan resolves a shift for that person and day.
 
+## Addendum (2026-10-30)
+
+1. **`REQUESTER_MANAGER`** uses employment `managerEmploymentId` when set (ACTIVE, not self); otherwise the previous unit-manager walk.
+2. **New step kinds** `MANAGER_CHAIN`, `POSITION_HOLDER`, `MATRIX_MANAGER`, `GRADE_AT_LEAST` — hr-settings CatalogField; `leadership` audience still applies alongside grade steps.
+3. Job/grade catalogs and org-chart are Coverage `CP-WF-JOB-01` (API), not this row’s SHIPPED gate.
+
 ## Consequences
 
 - Coverage `CP-WF-HR-01` is API until a UI UAT-SMOKE pass. Ştat and the month filter are unchanged.
 - Nafta opening numbers are not loaded in this wave. The cadre Excel is one-way.
 - Calendar-day count is the number shown on absences. Working-day leave math is a later choice.
+- Rank is never inferred from OrgUnit tree depth.

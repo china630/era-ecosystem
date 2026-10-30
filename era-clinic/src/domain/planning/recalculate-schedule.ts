@@ -293,19 +293,19 @@ export async function applyScheduleRecalc(episodeId?: string): Promise<ScheduleM
       bath: bathCodes.has(move.procedureCode),
     });
   }
-  const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+  const { placeOrPinOrders } = await import("@/domain/procedure/place-or-pin-orders");
   const pinOf = (rows: typeof toPlace) =>
     Object.fromEntries(rows.map((row) => [row.orderId, row.ymd]));
   const baths = toPlace.filter((row) => row.bath);
   const others = toPlace.filter((row) => !row.bath);
   if (baths.length > 0) {
-    await placeConfirmedProcedures(
+    await placeOrPinOrders(
       baths.map((row) => row.orderId),
       { pinYmdByOrderId: pinOf(baths) },
     );
   }
   if (others.length > 0) {
-    await placeConfirmedProcedures(
+    await placeOrPinOrders(
       others.map((row) => row.orderId),
       { pinYmdByOrderId: pinOf(others) },
     );

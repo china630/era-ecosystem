@@ -548,6 +548,35 @@ npm run dev
 
 Документация: [`era-fnb-pos/README.md`](../era-fnb-pos/README.md) · Seed law: [`docs/adr/satellite-seed-hygiene.md`](./adr/satellite-seed-hygiene.md).
 
+### Buffet cost lab demo (Phase D)
+
+Idempotent week seed for HYBRID chef path (lab ERA ID **100000**). Does **not** wipe `KAFE` or claim SHOW/SHIPPED.
+
+```bash
+# 1) Orch lab org + F&B base (KAFE)
+cd era-orchestrator && npm run seed:lab-demo
+cd ../era-fnb-pos && npm run db:seed:demo
+
+# 2) F&B buffet week (module fnb_buffet_planner, outlet NAFTANI or RESTAURANT)
+# Org: ERA_BUFFET_DEMO_ORGANIZATION_ID → ERA_FB_ORGANIZATION_ID → lab resolve
+# Week: Asia/Baku Mon–Sun containing today (or SEED_BUFFET_WEEK_START=YYYY-MM-DD)
+# Force: SEED_BUFFET_FORCE=1
+npm run db:seed:buffet-demo
+# Printout includes outletCode — copy for Finance
+
+# 3) Finance FOOD WH + usage + Non-FOOD fact + outletBudget (copy env line from F&B printout)
+cd ../era-finance-core/packages/database
+# SEED_BUFFET_OUTLET_CODE=<from F&B printout>  # default NAFTANI — must match
+# SEED_BUFFET_ISSUES_ONLY=1  # soft-deletes seed stocktake → Finance ISSUES_ONLY banner
+npm run db:seed:buffet-demo
+
+# 4) UI handoff
+# F&B Admin → Settings → Buffet integrations → Finance web URL (e.g. http://127.0.0.1:3100)
+# Login F&B → /admin/buffet → Cost run → Open Finance HYBRID
+```
+
+UAT: [`era-fnb-pos/doc/UAT-SMOKE.md`](../era-fnb-pos/doc/UAT-SMOKE.md) § **FNB-BUFFET-COST-01 — Chef demo path (lab seed)** · Finance twin [`era-finance-core/doc/UAT-SMOKE.md`](../era-finance-core/doc/UAT-SMOKE.md). Unsigned template: [`reports/fnb-buffet-cost-lab-signoff.md`](../reports/fnb-buffet-cost-lab-signoff.md).
+
 ---
 
 ## 9. packages/era-contracts
@@ -615,7 +644,7 @@ npm run ship:prepush
 node scripts/install-era-git-hooks.mjs   # once: .git/hooks/pre-push → same script
 ```
 
-Скрипт гоняет `run:quality-gates` и `npm test` / `npm run build` только в тронутых `era-*` (finance — NAS + integration). Фраза агенту: **«сделай шип + пуш на гит»**. Merge на `dev`/`master` — только после зелёного Actions.
+Скрипт гоняет `run:quality-gates` и `npm test` / `npm run build` только в тронутых `era-*` (finance — NAS + integration). Фраза агенту: **«сделай шип + пуш на гит»**. Merge на `dev`/`master` — только после зелёного Actions; агентский шип ещё ждёт **Build images + Deploy staging** на дроплет (merge ≠ ship done; `-SkipStaging` только если явно попросили git-only). См. [`CI_CD.md`](./CI_CD.md) § Staging auto-deploy и skill `era-git-ship`.
 
 Nightly **Design regression** (`bootstrap-local --demo --migrate-satellites`) seeds hotel with `ERA_HOTEL_ORGANIZATION_ID` (default `nafta-sanatorium-org`). Do not let `ERA_BANK_ORGANIZATION_ID` become the hotel tenant context — fail-closed Prisma will refuse the seed. **Nightly smoke** (`.env.ci.example`) leaves `ERA_BANK_ORGANIZATION_ID` empty — `demo-bank-org-001` is a sentinel and bank-core refuses boot.
 

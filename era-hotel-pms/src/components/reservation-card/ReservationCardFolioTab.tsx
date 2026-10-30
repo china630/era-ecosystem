@@ -26,9 +26,13 @@ import {
 import { stayMoneyPair } from '@/lib/folio-money-pair';
 import {
   formatLedgerAmount,
-  ledgerAmountClass,
+  ledgerCreditAmount,
+  ledgerCreditClass,
+  ledgerCreditColumnClass,
+  ledgerDebitAmount,
+  ledgerDebitClass,
+  ledgerDebitColumnClass,
   ledgerMoneyKind,
-  ledgerRowClass,
 } from '@/lib/folio-ledger-display';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
@@ -36,12 +40,13 @@ import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { FolioChargeModal } from '@/components/folio/FolioChargeModal';
 import {
   FolioDeletePaymentModal,
+  FolioPayLineModal,
   FolioRefundModal,
   FolioTransferModal,
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
-import { displayRoomChargeNote } from '@/lib/folio-charge-note';
+import { displayFolioChargeDescription } from '@/lib/folio-charge-note';
 import { escapePrintHtml, openPrintDocument } from '@/lib/print-window';
 import { revenueLabel } from '@/lib/folio-article-summary';
 import { useAuth } from '@/hooks/useAuth';
@@ -218,6 +223,7 @@ export function ReservationCardFolioTab({
   const locale = useLocale();
   const { can } = useAuth();
   const [payOpen, setPayOpen] = useState(false);
+  const [payLineId, setPayLineId] = useState<string | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [voidId, setVoidId] = useState<string | null>(null);
   const [refund, setRefund] = useState<{
@@ -272,9 +278,11 @@ export function ReservationCardFolioTab({
       }
       for (const charge of folio.charges) {
         const raw = charge.description ?? '—';
-        const note = displayRoomChargeNote(raw, (kind, date) =>
-          kind === 'night-audit' ? tf('nightAuditNote', { date }) : tf('manualRoomNote', { date }),
-        );
+        const note = displayFolioChargeDescription(raw, {
+          room: (kind) =>
+            kind === 'night-audit' ? tf('nightAuditNote') : tf('manualRoomNote'),
+          packageNight: () => tf('packageNightNote'),
+        });
         const received = (charge as { serviceReceivedAt?: string | null }).serviceReceivedAt
           ? ` · ${tf('serviceReceived')}`
           : '';
@@ -387,13 +395,25 @@ export function ReservationCardFolioTab({
 
   const filteredRows = useMemo(() => {
     const needle = folioQuery.trim().toLowerCase();
-    return visibleRows.filter((row) => {
-      if (articleFilter !== 'all' && row.code !== articleFilter) return false;
-      if (lineKind !== 'all' && row.kind !== lineKind) return false;
-      if (!needle) return true;
-      return `${row.description} ${row.code}`.toLowerCase().includes(needle);
-    });
+    return visibleRows
+      .filter((row) => {
+        if (articleFilter !== 'all' && row.code !== articleFilter) return false;
+        if (lineKind !== 'all' && row.kind !== lineKind) return false;
+        if (!needle) return true;
+        return `${row.description} ${row.code}`.toLowerCase().includes(needle);
+      })
+      .sort((a, b) => {
+        if (a.whenDate !== b.whenDate) return a.whenDate < b.whenDate ? -1 : 1;
+        if (a.whenTime !== b.whenTime) return a.whenTime < b.whenTime ? -1 : 1;
+        return a.id < b.id ? -1 : 1;
+      });
   }, [articleFilter, folioQuery, lineKind, visibleRows]);
+
+  const pocketTypesInView = useMemo(
+    () => new Set(filteredRows.map((row) => row.folioType)),
+    [filteredRows],
+  );
+  const showPocketCol = pocketTypesInView.size > 1;
 
   const lineCount = (rows: LedgerRow[]) => rows.length;
   const guestLineCount = (guestId: string) =>
@@ -463,7 +483,7 @@ export function ReservationCardFolioTab({
       {
         key: 'rowNo',
         header: t('folioRowNo'),
-        className: 'w-10 text-right font-mono',
+        className: 'w-8 text-right font-mono',
         render: (row) => String(row.rowNo ?? ''),
       },
       {
@@ -487,6 +507,7 @@ export function ReservationCardFolioTab({
             aria-label={t('folioSelectAll')}
           />
         ) as unknown as string,
+        className: 'w-8',
         render: (row) => (
           <input
             type="checkbox"
@@ -497,67 +518,93 @@ export function ReservationCardFolioTab({
           />
         ),
       },
-      { key: 'folioType', header: tf('pocket'), render: (row) => pocketName(t, row.folioType) },
-      { key: 'code', header: tf('xercMaddesi'), render: (row) => row.code },
+      ...(showPocketCol
+        ? [
+            {
+              key: 'folioType',
+              header: tf('pocket'),
+              className: 'w-16',
+              render: (row: LedgerRow) => pocketName(t, row.folioType),
+            } as EraDataGridColumn<LedgerRow>,
+          ]
+        : []),
+      {
+        key: 'code',
+        header: tf('xercMaddesi'),
+        className: 'max-w-[9rem] truncate',
+        render: (row) => row.code,
+      },
       {
         key: 'description',
         header: t('folioDesc'),
-        render: (row) => {
-          const moneyKind = ledgerMoneyKind(row);
-          const badge =
-            moneyKind === 'refund'
-              ? tf('refundBadge')
-              : moneyKind === 'adjust'
-                ? tf('adjustBadge')
-                : row.isCityLedger
-                  ? tf('cityLedgerBadge')
-                  : moneyKind === 'payment'
-                    ? tf('paymentBadge')
-                    : null;
-          return (
-            <span>
-              {badge ? (
-                <span className="mr-1 inline-block rounded bg-white/80 px-1 text-[10px] font-semibold uppercase tracking-wide text-[#34495E]">
-                  {badge}
-                </span>
-              ) : null}
-              {row.description}
-            </span>
-          );
-        },
+        render: (row) => row.description,
       },
       {
         key: 'whenDate',
         header: t('folioDate'),
-        className: 'whitespace-nowrap font-mono',
+        className: 'w-20 whitespace-nowrap font-mono text-[11px]',
         render: (row) => row.whenDate,
       },
       {
         key: 'whenTime',
         header: t('folioTime'),
-        className: 'whitespace-nowrap font-mono',
+        className: 'w-14 whitespace-nowrap font-mono text-[11px]',
         render: (row) => row.whenTime,
       },
       {
-        key: 'amount',
-        header: t('amount'),
-        className: 'text-right font-mono',
+        key: 'debit',
+        header: tf('colDebit'),
+        className: ledgerDebitColumnClass(),
         render: (row) => {
           const moneyKind = ledgerMoneyKind(row);
+          const debit = ledgerDebitAmount(row.amount, moneyKind);
+          if (debit == null) return '';
           return (
-            <span className={ledgerAmountClass(moneyKind)}>
-              {formatLedgerAmount(row.amount, moneyKind)} {displayCurrency}
+            <span className={ledgerDebitClass()}>
+              {debit.toFixed(2)} {displayCurrency}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'credit',
+        header: tf('colCredit'),
+        className: ledgerCreditColumnClass(),
+        render: (row) => {
+          const moneyKind = ledgerMoneyKind(row);
+          const credit = ledgerCreditAmount(row.amount, moneyKind);
+          if (credit == null) return '';
+          return (
+            <span className={ledgerCreditClass()}>
+              {credit.toFixed(2)} {displayCurrency}
             </span>
           );
         },
       },
       {
         key: 'actions',
-        header: tf('actions'),
+        header: tf('rowMenu'),
+        className: 'w-12',
         render: (row) => (
           <FolioRowMenu
             label={tf('rowMenu')}
             items={[
+              ...(row.kind === 'charge' &&
+              can(PERMISSIONS.FOLIO_PAYMENT) &&
+              row.folioStatus === 'OPEN' &&
+              row.folioType === 'GUEST' &&
+              !row.adjustsChargeId &&
+              !row.isCityLedger &&
+              row.chargeId &&
+              row.amount > 0.009
+                ? [
+                    {
+                      id: 'payLine',
+                      label: tf('payLineTitle'),
+                      run: () => setPayLineId(row.chargeId ?? null),
+                    },
+                  ]
+                : []),
               ...(row.kind === 'charge' && can(PERMISSIONS.FOLIO_CHARGE) && row.folioStatus === 'OPEN'
                 ? [
                     {
@@ -607,7 +654,8 @@ export function ReservationCardFolioTab({
       },
     ];
     if (displayCurrency !== 'AZN') {
-      cols.splice(4, 0, {
+      const debitIdx = cols.findIndex((c) => c.key === 'debit');
+      cols.splice(debitIdx >= 0 ? debitIdx : cols.length - 1, 0, {
         key: 'fxAzn',
         header: t('fxEquivalentAzn'),
         className: 'text-right',
@@ -617,7 +665,7 @@ export function ReservationCardFolioTab({
       });
     }
     return cols;
-  }, [allFilteredSelected, can, displayCurrency, filteredRows, selectedIds, t, tf]);
+  }, [allFilteredSelected, can, displayCurrency, filteredRows, selectedIds, showPocketCol, t, tf]);
 
   const selectedCharges = filteredRows.filter(
     (row) => row.kind === 'charge' && selectedIds.includes(row.id) && row.chargeId,
@@ -676,7 +724,6 @@ export function ReservationCardFolioTab({
         page={1}
         pageSize={Math.max(numbered.length, 1)}
         total={numbered.length}
-        rowClassName={(row) => ledgerRowClass(ledgerMoneyKind(row))}
       />
     );
   }
@@ -692,6 +739,12 @@ export function ReservationCardFolioTab({
         guests={payers}
         hasCompany={hasCompany || accounts.some((folio) => folio.type === 'COMPANY')}
         hasAgency={hasAgency || accounts.some((folio) => folio.type === 'AGENCY')}
+      />
+      <FolioPayLineModal
+        open={Boolean(payLineId)}
+        chargeId={payLineId}
+        onClose={() => setPayLineId(null)}
+        onDone={onChanged}
       />
       <FolioChargeModal
         open={chargeOpen}
@@ -832,7 +885,13 @@ export function ReservationCardFolioTab({
     const guest = namedPax[0]?.label ?? '';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapePrintHtml(t('folioPrint'))}</title>
 <style>body{font-family:"Segoe UI",sans-serif;margin:24px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f4f5f7}</style>
-</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter)} · ${escapePrintHtml(lineKind)}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioDate'))}</th><th>${escapePrintHtml(t('folioTime'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(debtWords)}</strong></p></body></html>`;
+</head><body><h1 style="font-size:16px">${escapePrintHtml(guest)} · ${escapePrintHtml(t('folioPrint'))}</h1><p>${escapePrintHtml(tf('xercMaddesi'))}: ${escapePrintHtml(articleFilter === 'all' ? t('folioTab.all') : articleFilter)} · ${escapePrintHtml(
+      lineKind === 'charge'
+        ? t('folioLinesCharges')
+        : lineKind === 'payment'
+          ? t('folioLinesPayments')
+          : t('folioTab.all'),
+    )}</p><table><thead><tr><th>#</th><th>${escapePrintHtml(t('folioDate'))}</th><th>${escapePrintHtml(t('folioTime'))}</th><th>${escapePrintHtml(tf('pocket'))}</th><th>${escapePrintHtml(tf('xercMaddesi'))}</th><th>${escapePrintHtml(t('folioDesc'))}</th><th>${escapePrintHtml(t('amount'))}</th></tr></thead><tbody>${body}</tbody></table><p>${escapePrintHtml(t('folioTotalCharges'))}: ${chargeTotal.toFixed(2)} ${displayCurrency}<br>${escapePrintHtml(t('folioTotalPayments'))}: ${paymentTotal.toFixed(2)} ${displayCurrency}<br><strong>${escapePrintHtml(debtWords)}</strong></p></body></html>`;
     if (!openPrintDocument(html)) showApiError({ error: t('printBlocked') }, t('printBlocked'));
   }
 

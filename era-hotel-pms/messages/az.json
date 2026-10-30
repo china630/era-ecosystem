@@ -167,7 +167,8 @@
     "unsettledDepartures": "Bağlanmamış çıxışlar (CL)",
     "hkStaffGroup": "HK personal",
     "hkMinibarGroup": "Minibar",
-    "hkGuestServicesGroup": "Qonaq xidmətləri"
+    "hkGuestServicesGroup": "Qonaq xidmətləri",
+    "agencyCommission": "Agentlik komissiyası"
   },
   "foStatus": {
     "title": "Otel statusu",
@@ -778,8 +779,9 @@
     "ledgerPayment": "Ödəniş",
     "actions": "Əməliyyatlar",
     "rowMenu": "…",
-    "nightAuditNote": "Gecə auditi — otaq haqqı {date}",
-    "manualRoomNote": "Əl ilə otaq haqqı {date}",
+    "nightAuditNote": "Gecə auditi",
+    "manualRoomNote": "Əl ilə otaq haqqı",
+    "packageNightNote": "Tibbi paket",
     "pickTerminal": "Terminal seçin",
     "partyGuest": "Qonaq hesabı",
     "transfer": "Köçür",
@@ -880,7 +882,13 @@
     "agencyOwes": "Agentlik borcu",
     "payOpenDebtHint": "Açıq borc maddələri əvvəl gəlir. Kreditdən əvvəl onları ödəyin.",
     "allowCreditWhileDebtHint": "Başqa maddələrdə borc olsa belə kredit / əvvəlcədən ödəniş kimi yaz.",
-    "paymentArticleNoOpenDebtToast": "Borcu olan maddəni seçin və ya krediti / əvvəlcədən ödənişi təsdiqləyin."
+    "paymentArticleNoOpenDebtToast": "Borcu olan maddəni seçin və ya krediti / əvvəlcədən ödənişi təsdiqləyin.",
+    "colDebit": "Debet",
+    "colCredit": "Kredit",
+    "chargeBadge": "Xərc",
+    "voidBadge": "Ləğv",
+    "manualChargeDenied": "Bu maddə Əlavə xərc kimi yazıla bilməz.",
+    "manualPaymentDenied": "Bu maddəyə əl ilə ödəniş və ya kredit yazıla bilməz."
   },
   "operations": {
     "title": "Əməliyyatlar",
@@ -2348,6 +2356,8 @@
     "entity_CityLedgerSnapshot": "City ledger",
     "entity_OpsWipe": "Əməliyyat silinməsi",
     "entity_Reservation": "Rezervasiya",
+    "entity_CashShift": "Kassa növbəsi",
+    "entity_BusinessDay": "İş günü (gecə audit)",
     "entity_PriceSeason": "Qiymət mövsümü"
   },
   "closedRoomList": {
@@ -3346,7 +3356,9 @@
     "settlementStatus_NOT_APPLICABLE": "yox",
     "financeOnlySettlementBanner": "Şirkət City Ledger yalnız Finance-də ödənilir — otel kassasında CL pulu qəbul olunmur.",
     "financeOnlySettlementBannerAgency": "Agentlik City Ledger yalnız Finance-də ödənilir — otel kassasında CL pulu qəbul olunmur.",
-    "unsettledDeparturesLink": "Bağlanmamış çıxışlar (hesabı təkrarla / snapshot)"
+    "unsettledDeparturesLink": "Bağlanmamış çıxışlar (hesabı təkrarla / snapshot)",
+    "commissionPayableLink": "Agentlik komissiyası (AP)",
+    "commissionPayableBanner": "Agentliklərə borcumuz olan komissiya bu City Ledger-də deyil. Distribution → Agency commission."
   },
   "masterData": {
     "code": "Kod",
@@ -3456,7 +3468,9 @@
       "WALKIN_PROFILE": "Walk-in profili",
       "NATIONALITY": "Vətəndaşlıq",
       "RESERVATION_QUEUE": "Rezervasiya siyahısı"
-    }
+    },
+    "allowManualCharge": "Əlavə xərcə icazə",
+    "allowManualPayment": "Əlavə ödənişə icazə"
   },
   "opsWipe": {
     "title": "Əməliyyat məlumatlarının silinməsi",
@@ -3562,7 +3576,10 @@
       "logoRemove": "Loqonu sil",
       "logoNone": "Loqo yoxdur",
       "logoTooLarge": "Fayl 512 KB-dan böyükdür.",
-      "logoWrongType": "PNG və ya JPEG faylı seçin."
+      "logoWrongType": "PNG və ya JPEG faylı seçin.",
+      "cpBanner": "Ünvan, telefon, email, sayt və loqo Sync-dən sonra Control Plane təşkilat profilindən gəlir. printName və çarpayı tutumu otel üçün lokal qalır.",
+      "cpFieldLocked": "Təşkilat profilində (Control Plane) idarə olunur.",
+      "cpLogoLocked": "Loqo Control Plane təşkilat profilində idarə olunur."
     }
   },
   "logins": {
@@ -3662,21 +3679,41 @@
     "systemRole": "Sistem rolu",
     "revenueRole": {
       "ROOM": "Otaq gecəsi",
-      "BOARD": "Paketdə qidalanma",
+      "BOARD": "Paket yeməyi",
       "PKG": "Paket gecəsi",
-      "TREATMENT": "Paketdə müalicə",
-      "RATE_ADJ": "Tarif düzəlişi",
+      "TREATMENT": "Paket müalicəsi",
+      "RATE_ADJ": "Qiymət düzəlişi",
       "EARLY_CI": "Erkən giriş",
       "LATE_CO": "Gec çıxış",
       "MINIBAR": "Minibar",
       "LAUNDRY": "Camaşırxana",
       "TRANSFER": "Transfer",
-      "TOUR": "Tur",
+      "TAXI": "Taksi",
+      "TOUR": "Ekskursiya",
       "BANQUET": "Banket",
-      "FOOD": "Konsyerj yeməyi",
-      "MEDICAL": "Otelin yazdığı prosedurlar",
-      "DISCOUNT": "Folio endirimi",
-      "CITY_TAX": "Turizm rüsumu"
+      "SPA": "SPA / wellness",
+      "PARKING": "Parking",
+      "CXL_NOSHOW": "Ləğv / no-show",
+      "DAMAGE": "Zərər / itki",
+      "OTHER": "Digər xidmət",
+      "FOOD": "Yemək",
+      "BEVERAGE": "İçkilər",
+      "ALCOHOL": "Spirtli içkilər",
+      "TOBACCO": "Tütün",
+      "HALL": "Zal icarəsi",
+      "ENTERTAINMENT": "Əyləncə",
+      "FB_DISCOUNT": "F&B endirimi",
+      "MEDICAL": "Prosedurlar (köhnə)",
+      "PROCEDURE": "Prosedurlar",
+      "DOCTOR": "Həkim qəbulu",
+      "DIAGNOSTIC": "Diaqnostika",
+      "LAB": "Laboratoriya",
+      "PHARMA": "Dərmanlar",
+      "CLINIC_DISCOUNT": "Klinika endirimi",
+      "DISCOUNT": "Otel endirimi",
+      "CITY_TAX": "Turist rüsumu",
+      "TELECOM": "Telecom",
+      "RESORT_FEE": "Resort haqqı"
     },
     "noGlMappings": "Gəlir kodu yoxdur. Əvvəlcə əsas məlumatda əlavə edin.",
     "platformSubscriptionReadonlyBadge": "Yalnız oxuma"
@@ -4721,5 +4758,56 @@
     "autoCutoffMinutes": "Yığıncaqdan əvvəl dəqiqə",
     "allowOverbook": "Rezervdə overbook icazə ver (mindirilənlərdə sərt limit)",
     "dropUnboardedOnClose": "Mindirmə bağlananda mindirilməyənləri sil"
+  },
+  "agencyCommission": {
+    "title": "Agentlik komissiyası",
+    "subtitle": "Otel agentə borcludur — AP, City Ledger AR deyil",
+    "arBanner": "Agentlik City Ledger (onlar bizə borcludur) ayrıdır:",
+    "openAgencyLedger": "Agentlik ledger",
+    "financeOnlyPay": "Komissiya yalnız Finance-də ödənilir (AP).",
+    "tab_summary": "Cəm",
+    "tab_lines": "Hesabat",
+    "tab_forecast": "Proqnoz",
+    "agency": "Agentlik",
+    "agencyAll": "Bütün agentliklər",
+    "pickAgency": "Əvvəlcə agentlik seçin",
+    "rebuild": "CHECKED_OUT-dan yenidən hesabla",
+    "markReady": "Seçilənləri READY et",
+    "submitToFinance": "Finance-ə batch göndər",
+    "markedReady": "Marked {count} line(s) READY",
+    "batchSubmitted": "Commission batch submitted to Finance",
+    "rebuilt": "Rebuilt {count}",
+    "hold": "Hold",
+    "dispute": "Mübahisə",
+    "release": "Azad et",
+    "holdReasonPrompt": "Hold səbəbi",
+    "disputeReasonPrompt": "Mübahisə səbəbi",
+    "held": "Sətir hold-dadır",
+    "disputed": "Sətir mübahisədədir",
+    "released": "Hold/mübahisə götürüldü",
+    "colCode": "Kod",
+    "colName": "Name",
+    "colPct": "%",
+    "colPayable": "Payable",
+    "colAccrued": "Accrued",
+    "colReady": "Ready",
+    "colPaid": "Paid",
+    "colLines": "Lines",
+    "colSelect": "",
+    "colStay": "Stay",
+    "colGuest": "Guest",
+    "colFrom": "From",
+    "colTo": "To",
+    "colBase": "Room base",
+    "colAmount": "Commission",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "colStays": "Stays",
+    "colNights": "Nights",
+    "colRevenue": "Revenue",
+    "colEstCommission": "Est. commission",
+    "emptySummary": "Bu dövrdə komissiya yoxdur",
+    "emptyLines": "Sətir yoxdur",
+    "emptyForecast": "Proqnoz gecəsi yoxdur"
   }
 }

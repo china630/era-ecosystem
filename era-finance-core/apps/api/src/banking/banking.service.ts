@@ -30,6 +30,10 @@ import type { CreateCashDepositDto } from "./dto/create-cash-deposit.dto";
 import type { CreateInternalTransferDto } from "./dto/create-internal-transfer.dto";
 import type { CreateOrganizationBankAccountDto } from "./dto/create-organization-bank-account.dto";
 import type { UpdateOrganizationBankAccountDto } from "./dto/update-organization-bank-account.dto";
+import {
+  formatOrgBankLine,
+  publishOrgProfileBankLine,
+} from "../control-plane/org-profile-bankline.publisher";
 
 function maskAccountCode(code: string): string {
   const digits = code.replace(/\D/g, "");
@@ -569,6 +573,30 @@ export class BankingService {
     });
   }
 
+  private async syncPrimaryBankLineToControlPlane(
+    organizationId: string,
+  ): Promise<void> {
+    const primary = await this.prisma.organizationBankAccount.findFirst({
+      where: {
+        organizationId,
+        isArchived: false,
+        deletedAt: null,
+      },
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+      select: {
+        bankName: true,
+        accountNumber: true,
+        currency: true,
+        iban: true,
+        swift: true,
+      },
+    });
+    await publishOrgProfileBankLine(
+      organizationId,
+      formatOrgBankLine(primary),
+    );
+  }
+
   async createOrganizationBankAccount(
     organizationId: string,
     dto: CreateOrganizationBankAccountDto,
@@ -587,7 +615,7 @@ export class BankingService {
     }
     const iban = dto.iban.trim().replace(/\s+/g, "").toUpperCase();
     const currency = (dto.currency ?? "AZN").toUpperCase();
-    return this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       // Resolve ledger code: either explicit or auto-generated from BankBranch.
       let code = explicitCode;
       if (!code && branchId) {
@@ -631,6 +659,8 @@ export class BankingService {
         },
       });
     });
+    void this.syncPrimaryBankLineToControlPlane(organizationId);
+    return created;
   }
 
   async updateOrganizationBankAccount(
@@ -729,6 +759,9 @@ export class BankingService {
         where: { id },
         data,
       });
+    }).then(async (row) => {
+      void this.syncPrimaryBankLineToControlPlane(organizationId);
+      return row;
     });
   }
 
@@ -747,9 +780,11 @@ export class BankingService {
         where: { id },
         data: { isArchived: true, isPrimary: false },
       });
+      void this.syncPrimaryBankLineToControlPlane(organizationId);
       return { archived: true };
     }
     await this.prisma.organizationBankAccount.delete({ where: { id } });
+    void this.syncPrimaryBankLineToControlPlane(organizationId);
     return { deleted: true };
   }
 

@@ -493,6 +493,56 @@ export class WorkforceEmploymentsService {
     return omitStaffPin(updated);
   }
 
+  async updateReporting(
+    organizationId: string,
+    id: string,
+    actorUserId: string,
+    dto: {
+      managerEmploymentId?: string | null;
+      matrixManagerEmploymentId?: string | null;
+    },
+  ) {
+    await this.getOne(organizationId, id);
+    if (dto.managerEmploymentId === id || dto.matrixManagerEmploymentId === id) {
+      throw new BadRequestException("Employment cannot manage itself");
+    }
+    for (const mid of [dto.managerEmploymentId, dto.matrixManagerEmploymentId]) {
+      if (!mid) continue;
+      const other = await this.prisma.workforceEmployment.findFirst({
+        where: {
+          id: mid,
+          organizationId,
+          status: "ACTIVE",
+        },
+        select: { id: true },
+      });
+      if (!other) {
+        throw new BadRequestException("Manager employment not found in organization");
+      }
+    }
+    const updated = await this.prisma.workforceEmployment.update({
+      where: { id },
+      data: {
+        ...(dto.managerEmploymentId !== undefined
+          ? { managerEmploymentId: dto.managerEmploymentId }
+          : {}),
+        ...(dto.matrixManagerEmploymentId !== undefined
+          ? { matrixManagerEmploymentId: dto.matrixManagerEmploymentId }
+          : {}),
+      },
+      include: EMPLOYMENT_INCLUDE,
+    });
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "EMPLOYMENT_REPORTING_UPDATED",
+      entityType: "EMPLOYMENT",
+      entityId: id,
+      payload: dto as Record<string, unknown>,
+    });
+    return omitStaffPin(updated);
+  }
+
   /**
    * S2S picker for satellite ops (hotel housekeeping). Active CP employments
    * with an MDM display name, org unit, and position. Not the finance payroll mirror.
@@ -506,6 +556,7 @@ export class WorkforceEmploymentsService {
       orgUnitName: string | null;
       positionId: string | null;
       positionName: string | null;
+      leadership: boolean;
     }>;
   }> {
     await this.entitlement.assertWorkforceHub(organizationId);
@@ -515,7 +566,7 @@ export class WorkforceEmploymentsService {
         id: true,
         globalPersonId: true,
         orgUnit: { select: { id: true, name: true } },
-        position: { select: { id: true, name: true } },
+        position: { select: { id: true, name: true, leadership: true } },
       },
       orderBy: [{ hireDate: "desc" }, { createdAt: "desc" }],
       take: 500,
@@ -533,6 +584,7 @@ export class WorkforceEmploymentsService {
       orgUnitName: string | null;
       positionId: string | null;
       positionName: string | null;
+      leadership: boolean;
     }> = [];
     for (const row of rows) {
       if (seen.has(row.globalPersonId)) continue;
@@ -553,6 +605,7 @@ export class WorkforceEmploymentsService {
         orgUnitName: row.orgUnit?.name?.trim() || null,
         positionId: row.position?.id ?? null,
         positionName: row.position?.name?.trim() || null,
+        leadership: row.position?.leadership === true,
       });
     }
     items.sort((a, b) => a.name.localeCompare(b.name));

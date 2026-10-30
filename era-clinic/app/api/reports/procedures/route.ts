@@ -277,7 +277,15 @@ export async function GET(req: Request) {
         if (r.status === "COMPLETED") existing.completedCount += 1;
       }
 
-      const items = [...byCode.values()].sort((a, b) => b.assignedCount - a.assignedCount);
+      const items = [...byCode.values()]
+        .sort((a, b) => b.assignedCount - a.assignedCount)
+        .map((g) => ({
+          procedure: { code: g.procedureCode, name: g.procedureName },
+          procedureCode: g.procedureCode,
+          procedureName: g.procedureName,
+          assignedCount: g.assignedCount,
+          completedCount: g.completedCount,
+        }));
       return jsonOk({ view, items });
     }
 

@@ -13,7 +13,7 @@
 | Pilot field `[x]` | Field / customer evidence (not synthetic alone) |
 | Edition `ga` | `pilot_ready: true` + Pilot field; yaml is SSOT |
 | COVERAGE SHIPPED | Doc + API + actor UI + UAT UI path (see era-coverage-definition) |
-| AC-HOT-AUD Scaffold ✅ | Layer A belt on hotel mutations + deny-list/`audit-exempt` + negative: exempt path skips row, money path still succeeds if audit insert fails; UAT shows `/admin/audit` `HTTP_MUTATION` **and** a Layer B money/lifecycle sample; reports-without-admin can open the page. ADR era-mutation-audit-standard. Until then max 🟡 |
+| AC-HOT-AUD Scaffold ✅ | Layer A belt on hotel mutations + deny-list/`audit-exempt` + CI fail-closed scan + negative: exempt path skips row, money path still succeeds if audit insert fails; UAT shows `/admin/audit` `HTTP_MUTATION` **and** a Layer B money/lifecycle sample (CashShift / DAY_CLOSE / folio VOID ok); reports-without-admin can open the page. ADR era-mutation-audit-standard. Wave B writers / Wave E compound index alone ≠ Scaffold ✅. Until then max 🟡 |
 
 ## Forbidden as sole proof
 

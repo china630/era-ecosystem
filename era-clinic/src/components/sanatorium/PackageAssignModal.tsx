@@ -557,6 +557,13 @@ export function PackageAssignModal({
     return draft.filter((d) => !used.has(d.key));
   }, [assigned, draft, pendingCancel, balances, poolEligible]);
 
+  /** Modal add order → Saxla seats №1 first within a daily-cap block. */
+  const saxlaOrderByDraftKey = useMemo(() => {
+    const map = new Map<string, number>();
+    draft.forEach((line, index) => map.set(line.key, index + 1));
+    return map;
+  }, [draft]);
+
   const bathFromOptions = useMemo(
     () =>
       balances
@@ -1604,6 +1611,11 @@ export function PackageAssignModal({
           <div className="mb-2 flex items-center justify-between gap-2">
             <h4 className="text-sm font-medium">{tPhysio("assignedReceiptTitle")}</h4>
           </div>
+          {draft.length > 0 ? (
+            <p className={`mb-2 text-[11px] leading-snug ${TEXT_MUTED_CLASS}`}>
+              {tPhysio("saxlaLineOrderHint")}
+            </p>
+          ) : null}
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
           {(() => {
             type Lane = {
@@ -1762,6 +1774,9 @@ export function PackageAssignModal({
                     ? lane.assigned.packageQuotaCode || lane.assigned.procedureCode
                     : lane.pkgDraft?.burnPoolCode || lane.code;
                   const rem = draftRemaining.get(quota) ?? 0;
+                  const saxlaNo = lane.pkgDraft
+                    ? saxlaOrderByDraftKey.get(lane.pkgDraft.key)
+                    : undefined;
                   return (
                     <li
                       key={lane.key}
@@ -1771,7 +1786,17 @@ export function PackageAssignModal({
                     >
                       <div className="mb-1 flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-medium">{lane.name}</div>
+                          <div className="font-medium">
+                            {saxlaNo != null ? (
+                              <span
+                                className={`mr-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-[#E8EEF4] px-1 text-[11px] font-semibold tabular-nums ${TEXT_MUTED_CLASS}`}
+                                title={tPhysio("saxlaLineOrderHint")}
+                              >
+                                {saxlaNo}
+                              </span>
+                            ) : null}
+                            {lane.name}
+                          </div>
                           {lane.params.map((line) => (
                             <p key={line} className={`text-[12px] leading-snug ${TEXT_MUTED_CLASS}`}>
                               {line}

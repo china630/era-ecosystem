@@ -23,7 +23,7 @@ const listQuerySchema = z.object({
   course: z.enum(["ready", "attention", "blocked"]).optional(),
   includeHotelRooms: z.boolean().optional(),
   includeProgramCodes: z.boolean().optional(),
-  sort: z.enum(["patient", "room", "origin", "program", "status"]).optional(),
+  sort: z.enum(["patient", "room", "origin", "program", "status", "arrival"]).optional(),
   sortDir: z.enum(["asc", "desc"]).optional(),
 });
 

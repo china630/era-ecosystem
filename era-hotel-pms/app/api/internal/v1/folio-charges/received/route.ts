@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parseFolioChargeRef } from '@era/satellite-kit/integration/folio-charge-ref';
@@ -44,5 +45,5 @@ export async function POST(request: Request) {
       data: { serviceReceivedAt: new Date() },
     });
   }
-  return NextResponse.json({ ok: true, chargeId: charge.id });
+  return jsonOk({ ok: true, chargeId: charge.id });
 }

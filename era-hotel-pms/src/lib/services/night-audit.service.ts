@@ -314,7 +314,10 @@ export async function listNightAuditDeskHolds(businessDate: Date) {
   return { missedArrivals, dueOuts, missedCount, dueCount };
 }
 
-export async function runNightAudit() {
+export async function runNightAudit(audit?: {
+  userId?: string | null;
+  request?: Request;
+}) {
   const auditDate = await getCurrentBusinessDate();
   const { assertYearBoundaryAllows } = await import('@/lib/services/year-boundary.service');
   await assertYearBoundaryAllows(auditDate);
@@ -340,7 +343,22 @@ export async function runNightAudit() {
   await assertFinanceQaimeDayClose(businessDateForCash);
   await lockBusinessDateForAudit();
   try {
-    return await withNightAuditPosting(() => executeLockedNightAudit());
+    const result = await withNightAuditPosting(() => executeLockedNightAudit());
+    let errorCount = 0;
+    try {
+      const parsed = JSON.parse(result.run.errorsJson ?? '[]');
+      if (Array.isArray(parsed)) errorCount = parsed.length;
+    } catch {
+      errorCount = 0;
+    }
+    const { recordHotelAudit } = await import('@/lib/satellite-audit');
+    await recordHotelAudit(audit ?? {}, 'BusinessDay', result.run.businessDayId, 'DAY_CLOSE', {
+      nightAuditRunId: result.run.id,
+      businessDate: businessDateForCash,
+      status: result.run.status,
+      errorCount,
+    });
+    return result;
   } catch (e) {
     await unlockBusinessDateAfterAudit();
     throw e;
@@ -515,7 +533,7 @@ async function executeLockedNightAudit() {
       if (postsStayAsPackage(res.ratePlan)) {
         const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
         try {
-          const pkgResult = await postNightlyPackageCharges(res.id, date);
+          const pkgResult = await postNightlyPackageCharges(res.id, date, { source: 'night_audit' });
           if (pkgResult.posted > 0) {
             steps.push(`Step 3: Package charges posted (${pkgResult.posted} lines) — reservation ${res.id}`);
             continue;
@@ -705,6 +723,8 @@ async function listDueGuestFoliosNotZero(date: Date): Promise<NightAuditReservat
     },
   });
   if (stays.length === 0) return [];
+  const { foldLooseGuestFolioOntoPrimary } = await import('@/lib/services/booking-folio.service');
+  for (const stay of stays) await foldLooseGuestFolioOntoPrimary(stay.id);
   const folios = await prisma.folio.findMany({
     where: { reservationId: { in: stays.map((stay) => stay.id) }, type: 'GUEST' },
     include: { charges: true, payments: true },

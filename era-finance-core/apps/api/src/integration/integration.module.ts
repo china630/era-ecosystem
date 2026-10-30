@@ -11,6 +11,7 @@ import { CounterpartiesModule } from "../counterparties/counterparties.module";
 import { InventoryModule } from "../inventory/inventory.module";
 import { HotelDayDocumentController } from "./hotel-day-document.controller";
 import { HotelDayDocumentInternalController } from "./hotel-day-document.internal.controller";
+import { HotelCommissionOffsetController } from "./hotel-commission-offset.controller";
 import { QaimeDayCloseInternalController } from "./qaime-day-close.internal.controller";
 import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
 import { SatelliteEventIdempotencyService } from "./satellite-event-idempotency.service";
@@ -26,6 +27,7 @@ import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
   controllers: [
     HotelDayDocumentController,
     HotelDayDocumentInternalController,
+    HotelCommissionOffsetController,
     QaimeDayCloseInternalController,
   ],
   imports: [

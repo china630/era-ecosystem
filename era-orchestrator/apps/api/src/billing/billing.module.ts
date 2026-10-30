@@ -4,7 +4,6 @@ import { AdminModule } from "../admin/admin.module";
 import { AccessControlModule } from "../access/access-control.module";
 import { AuditModule } from "../audit/audit.module";
 import { PrismaModule } from "../prisma/prisma.module";
-import { SatelliteEventsModule } from "../satellite-events/satellite-events.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
 import { BillingPublicController } from "./billing-public.controller";
 import { BillingWebhooksController } from "./billing-webhooks.controller";
@@ -39,7 +38,9 @@ import { ReferralsModule } from "../referrals/referrals.module";
     AccessControlModule,
     AdminModule,
     AuditModule,
-    forwardRef(() => SatelliteEventsModule),
+    // Do not import SatelliteEventsModule here — CJS cycle with Admin/
+    // SubscriptionTrial leaves Nest dead before /health (droplet outage 2026-10-28).
+    // BillingSatelliteNotifyService resolves SatelliteOrgBindSync via ModuleRef.
     forwardRef(() => DrakarisModule),
     forwardRef(() => WorkforceHubModule),
   ],

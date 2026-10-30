@@ -7,6 +7,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  // audit-exempt: cookie locale preference (kit DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES /api/locale)
   const body = schema.parse(await request.json());
   if (!isLocale(body.locale)) {
     return NextResponse.json({ error: "Unsupported locale" }, { status: 400 });

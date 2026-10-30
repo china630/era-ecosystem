@@ -5,16 +5,19 @@ jest.mock('@/lib/request-organization', () => ({
 }));
 
 const reservationGuestFindMany = jest.fn();
+const reservationGuestFindFirst = jest.fn();
 const reservationGuestUpdateMany = jest.fn();
 const reservationGuestUpdate = jest.fn();
 const reservationUpdate = jest.fn();
 const folioFindFirst = jest.fn();
+const folioFindMany = jest.fn();
 const folioCreate = jest.fn();
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     reservationGuest: {
       findMany: (...args: unknown[]) => reservationGuestFindMany(...args),
+      findFirst: (...args: unknown[]) => reservationGuestFindFirst(...args),
       updateMany: (...args: unknown[]) => reservationGuestUpdateMany(...args),
       update: (...args: unknown[]) => reservationGuestUpdate(...args),
     },
@@ -23,8 +26,10 @@ jest.mock('@/lib/prisma', () => ({
     },
     folio: {
       findFirst: (...args: unknown[]) => folioFindFirst(...args),
+      findMany: (...args: unknown[]) => folioFindMany(...args),
       create: (...args: unknown[]) => folioCreate(...args),
     },
+    $transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn({}),
   },
 }));
 
@@ -48,6 +53,8 @@ describe('ensurePrimaryAndGuestFolios', () => {
     reservationGuestUpdate.mockResolvedValue(live);
     reservationUpdate.mockResolvedValue({});
     folioCreate.mockResolvedValue({ id: 'folio-new', status: 'OPEN' });
+    reservationGuestFindFirst.mockResolvedValue({ id: live.id });
+    folioFindMany.mockResolvedValue([]);
     reservationGuestFindMany.mockImplementation(
       async (args: { where?: { departedAt?: null } }) => {
         if (args.where && 'departedAt' in args.where) return [{ id: live.id }];
@@ -102,9 +109,11 @@ describe('ensurePrimaryAndGuestFolios', () => {
 
     await ensurePrimaryAndGuestFolios('stay-1');
 
-    const lookedUp = folioFindFirst.mock.calls.map(
-      (call) => call[0].where.reservationGuestId,
-    );
-    expect(lookedUp).toEqual(['pax-live']);
+    const lookedUp = folioFindFirst.mock.calls
+      .map((call) => call[0].where.reservationGuestId)
+      .filter((id: unknown) => id != null);
+    // Party ensure + foldLooseGuestFolioOntoPrimary both resolve the live primary.
+    expect(lookedUp.every((id: string) => id === 'pax-live')).toBe(true);
+    expect(lookedUp).not.toContain('pax-departed');
   });
 });

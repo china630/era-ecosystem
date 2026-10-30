@@ -15,12 +15,16 @@ Last updated: 2026-10-27 (F&B DELIVERY §1 recount after Buffet Planner `[~]` M1
 > **Deployment topology (2026-08-17 waves 9–18):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + slice metadata stub (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md).
 
 > **Workforce v3 (orchestrator):** Absence (A), org structure (B), role templates + CP provisioning + Security Admin (C), PII tiers (D), clean cutover (E) — see [COVERAGE_MATRIX CP-WF-*](./COVERAGE_MATRIX.md), master ADR [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md), runbook [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md).
+>
+> **Workforce job architecture (2026-10-30):** `CP-WF-JOB-01` **API** (grades/jobs CRUD, position parent/job, employment reporting + hire managers, org-chart, extended approval step kinds, nav package `org`) + OrgOwner SCREEN. Sell/Pilot/`ga` unchanged — [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-WF-JOB 🟡 out of BE rollup). Full §1/§4 DELIVERY % refresh not required (no consumer DELIVERY checkbox wave).
 
 > **Bank CBS (`era-bank-core`, `era-bank`, `era-bank-dbo`):** Engine MVP P0–P7; **ops teller UX ops-mvp** with modal CRUD compliance (edition `docs/editions/bank.yaml` = mvp, not product ga). See [era-bank/doc/DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md), [BANK_DOC_API_UI_AUDIT.md](./BANK_DOC_API_UI_AUDIT.md), [era-bank-core/doc/DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md).
 
 > **Clinic (`era-clinic`):** Matrix gaps closure (Phases 0–7). See [CLINIC_DOC_API_UI_AUDIT.md](./CLINIC_DOC_API_UI_AUDIT.md), [COVERAGE_MATRIX CLI-*](./COVERAGE_MATRIX.md#era-clinic-cli), [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md).
 
 > **Hotel FO money / City Ledger (2026-10-27 closeout):** P5 COVERAGE SHIPPED (HOT-CO-02/05, HOT-CL-*) + BE Scaffold ✅ (INT STUB excl.) + UI/Demo ✅ (`reports/hotel-demo-te-signoff.md`). MOVE_PAYER_CL / unsettled deepen ops; sell still **mvp showable** — Pilot lab/field open — [Hotel-Product-Readiness-Matrix](./acceptance/Hotel-Product-Readiness-Matrix.md). Full §4 API/% refresh not required (no consumer DELIVERY % change).
+
+> **Hotel agency commission payable (2026-10-29):** HOT-AG-COMM-01…04 + event `SATELLITE_HOTEL_AGENCY_COMMISSION_PAYABLE` (Finance snapshot consumer) + hotel `commission-paid` / offset callbacks + Finance CP `agency-commission-payable-snapshots` + purchase pay batch id. AC-HOT-AG-COMM 🟡 out of Scaffold BE rollup; UI SCREEN (not SHOW). Sell/Pilot/edition unchanged — Product-Readiness. Full §4 % refresh not required.
 >
 > **Peer URL + CL payment sync (2026-10-27):** HOT-CL-07 / CP-PEER-01 **API** — Finance allocate+bank match → hotel `payment-applied` (outbox/reconcile); peer base from SatelliteEndpoint (kit). Env hotel URLs deprecated as SoR. No sell/Pilot change.
 

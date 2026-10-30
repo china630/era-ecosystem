@@ -9,6 +9,7 @@ import {
 } from '@/lib/channel/ibe.service';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { serialize } from '@/lib/serialize';
+import { scheduleHotelHttpMutationAudit } from '@/lib/mutation-audit-belt';
 
 const bodySchema = z.object({
   holdId: z.string().uuid().optional(),
@@ -40,10 +41,13 @@ export async function POST(req: Request) {
       req.headers.get('idempotency-key')?.trim() ||
       `auto-${body.roomTypeId}-${body.from}-${body.guestName}`.slice(0, 120);
     const result = await bookIbe({ ...body, idempotencyKey });
+    const status = result.idempotent ? 200 : 201;
+    // Layer A: CORS headers require NextResponse; schedule belt explicitly (same as jsonOk).
+    scheduleHotelHttpMutationAudit(status);
     return NextResponse.json(
       { ...serialize(result.reservation), idempotent: result.idempotent },
       {
-        status: result.idempotent ? 200 : 201,
+        status,
         headers: ibeCorsHeaders(origins, req.headers.get('origin')),
       },
     );

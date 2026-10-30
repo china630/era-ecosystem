@@ -28,8 +28,8 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| Workspace / org hub | `/workspace, /organizations`, `/workspace/organization` | 🟡 — OrgOwner org profile (multi-contact/logo, `CatalogField` kinds): [ADR](../adr/cp-organization-profile-and-branding.md); CP-ORG-PROFILE-01 API/SCREEN; Finance Sync + hotel/clinic prefer CP; UAT open; not sellable. Modules modal + workforce/connect (CP-BILL-OWNER-01): TIER_3; auto-Sync ([ADR](../adr/billing-module-change-satellite-sync.md)); `synced:false` toast; UAT E-C.7 open; not sellable |
-| Workforce | `/workspace/workforce/*` | 🟡 — month timesheet harden + vacation multi-line; not sell-ready (no UAT-SMOKE). 2026-10-26 grants: one active row per employment+satellite+role (409), Active filter is `revokedAt` null. 2026-10-27: satellite uncheck/disconnect revokes linked and orphan grants for that key; orphan grant bindings heal on reprovision; MANUAL_GRANT emits last; still no UAT-SMOKE. Evrostar: group HR (`CP-WF-GROUP-01` API), roster wave 2, orders/templates (`CP-WF-ORD-02` API); MGMT book wave 5; FaceID attendance (`CP-WF-ATT-01` API, not SHIPPED); live floor (`CP-WF-FLOOR-01` API); minute buckets (`CP-WF-MIN-01` API); Finance minute pricing (`FIN-HR-MIN-01` API); employee cabinet (`CP-WF-SELF-01` API); fitness files (`CP-WF-FIT-01` API) — [ADR](../adr/evrostar-workforce-pilot.md) / [floor ADR](../adr/cp-workforce-floor-attendance.md) |
+| Workspace / org hub | `/workspace, /organizations`, `/workspace/organization` | 🟡 — OrgOwner org profile (multi-contact/logo, `CatalogField` kinds): [ADR](../adr/cp-organization-profile-and-branding.md); CP-ORG-PROFILE-01 API/SCREEN; Finance Sync + hotel/clinic prefer CP; dual-edit closed; F&B/Retail pay `printChrome` + Outlet contact overlay; Finance→orch backfill ops script; UAT open; not sellable. Modules modal + workforce/connect (CP-BILL-OWNER-01): TIER_3; auto-Sync ([ADR](../adr/billing-module-change-satellite-sync.md)); `synced:false` toast; UAT E-C.7 open; not sellable |
+| Workforce | `/workspace/workforce/*` | 🟡 SCREEN — month timesheet harden + vacation multi-line; **not sell-ready** (no UAT-SMOKE). **BE:** hub AC-CP-WF ✅; job architecture **AC-CP-WF-JOB 🟡** out of BE rollup (`CP-WF-JOB-01` Status=API). **UI:** `/job-architecture`, `/org-chart` (package `org`), org-structure manager/`unitKind`, positions job/parent, employments reporting + hire managers, hr-settings new step kinds — SCREEN only ([ADR](../adr/cp-workforce-job-architecture.md)). **Demo/TE / Pilot / Edition / Sell:** unchanged 🟡 / [ ] / `mvp` / do not claim GA. 2026-10-26 grants: one active row per employment+satellite+role (409), Active filter is `revokedAt` null. 2026-10-27: satellite uncheck/disconnect revokes linked and orphan grants for that key; orphan grant bindings heal on reprovision; MANUAL_GRANT emits last. Evrostar: group HR (`CP-WF-GROUP-01` API), roster wave 2, orders/templates (`CP-WF-ORD-02` API); MGMT book wave 5; FaceID attendance (`CP-WF-ATT-01` API, not SHIPPED); live floor (`CP-WF-FLOOR-01` API); minute buckets (`CP-WF-MIN-01` API); Finance minute pricing (`FIN-HR-MIN-01` API); employee cabinet (`CP-WF-SELF-01` API); fitness files (`CP-WF-FIT-01` API) — [ADR](../adr/evrostar-workforce-pilot.md) / [floor ADR](../adr/cp-workforce-floor-attendance.md) |
 | Super-admin | `/super-admin/*` | 🟡 |
 | Reference settings | `/super-admin/reference` (immediately after MDM) | 🟡 SCREEN — hub fetch switches and per-org hub/Excel; UAT open; not SHOW |
 | Placement hop / freeze | `/super-admin/orgs/[orgId]/placement` | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
@@ -49,6 +49,12 @@ Routes added 2026-08-17 (still 🟡 / not sell-ready): org catalog, referrals, l
 | Partner / customer sign-off | [ ] | — |
 
 ---
+
+## Architecture residual (honesty)
+
+| Claim | Reality |
+|-------|---------|
+| One HTTP framework for all industry satellite APIs | **Not built** — Finance/Orch Nest; hotel/F&B/clinic Next `app/api`. **P0 debt** [industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md). Does **not** move Gate, BE rollup, Demo, Pilot, or Sell until Implemented. Audit Layer A stays fail-closed on Next. |
 
 ## Topology / tenancy (honesty)
 

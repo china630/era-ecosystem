@@ -4,10 +4,12 @@ import type { RevenueCodeRole } from '@/lib/revenue-code-match';
 export {
   REVENUE_CODE_ROLES,
   LODGING_ROLES,
+  LODGING_PAYMENT_ROLES,
   STAY_NIGHT_ROLES,
   isRevenueCodeRole,
   revenueRoleIn,
   revenueRoleIs,
+  normalizeRevenueRole,
   type RevenueCodeRole,
 } from '@/lib/revenue-code-match';
 
@@ -21,9 +23,15 @@ export class RevenueRoleMissingError extends Error {
   }
 }
 
-/** Active revenue code that carries this system role, or null. */
+/** Active revenue code that carries this system role, or null. MEDICAL falls back to PROCEDURE. */
 export async function findRevenueCodeByRole(role: RevenueCodeRole) {
-  return prisma.revenueCode.findFirst({ where: { systemRole: role, active: true } });
+  const primary = await prisma.revenueCode.findFirst({ where: { systemRole: role, active: true } });
+  if (primary) return primary;
+  if (role === 'MEDICAL' || role === 'PROCEDURE') {
+    const alt = role === 'MEDICAL' ? 'PROCEDURE' : 'MEDICAL';
+    return prisma.revenueCode.findFirst({ where: { systemRole: alt, active: true } });
+  }
+  return null;
 }
 
 /** Active revenue code for this role; throws when the role is unassigned. */

@@ -7,7 +7,10 @@ Amended 2026-07-18 (check-in auto-completes short procedures) — **superseded**
 Amended 2026-07-19 (atomic check-in → `CHECKED_IN`; auto-complete by `endsAt`; NO_SHOW burns quota)  
 Amended 2026-08-21 — turnover vs patient rest: [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md)
 
-Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
+Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [clinic-open-attendance.md](./clinic-open-attendance.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
+
+Amended 2026-10-28 — OPEN day-buckets and SAME_DAY check-in window: see [clinic-open-attendance.md](./clinic-open-attendance.md) (CLI-62).  
+Amended 2026-10-29 — optional reception check-in from resource matrix (`receptionProcedureCheckIn`, Nafta default on); matrix bars drop inline move/cancel (modal only); nurse board ages `PENDING_PAY` into Late after deadline like `SCHEDULED`.
 
 ## Context
 
@@ -24,11 +27,11 @@ The 2026-07-18 amendment treated short cabin procedures as “check-in = complet
 
 | Actor | Owns |
 |-------|------|
-| **RECEPTION** | Day inventory: resource×time matrix, reschedule, cancel, assign walk-in into free slots |
+| **RECEPTION** | Day inventory: resource×time matrix, reschedule, cancel, assign walk-in into free slots. Optional matrix check-in when `Tenant.receptionProcedureCheckIn` is on (Nafta default **on**) — same window rules as nurse (`STRICT` / `SAME_DAY` / OPEN). |
 | **NURSE** | Attendance: one click check-in when the window is open → `CHECKED_IN`. No-show is the day sweep, not a nurse button |
 | **DOCTOR / CLINIC_ADMIN** | Check-in **override** with reason (supervisor path); medical program composition unchanged |
 
-Nurse does **not** orchestrate the matrix. Reception does **not** mark check-in (except admin tools if ever needed).
+Nurse does **not** orchestrate the matrix. Reception marks check-in from the matrix modal only when the tenant setting allows it (help desk / cutover); nurse board remains the primary attendance surface.
 
 ### Status machine (`ProcedureOrderStatus`)
 
@@ -130,7 +133,7 @@ Four columns when the board itself is about 1000px wide, and always inside the f
 | Method | Path | Role |
 |--------|------|------|
 | POST | `/api/nurse/qr-scan` | NURSE (+ DOCTOR) — resolve guest + today's orders |
-| POST | `/api/procedures/[id]/check-in` | NURSE (+ override actors) — atomic → `CHECKED_IN` |
+| POST | `/api/procedures/[id]/check-in` | NURSE (+ override actors); reception with `source=matrix` when `receptionProcedureCheckIn` — atomic → `CHECKED_IN` |
 | POST | `/api/procedures/[id]/complete` | NURSE — stuck-row fallback only |
 | POST | `/api/procedures/[id]/no-show` | NURSE — burns quota + may charge |
 | PATCH | `/api/procedures/[id]/reschedule` | **RECEPTION** (+ admin) |

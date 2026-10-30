@@ -86,6 +86,8 @@ export {
   resolveControlPlaneBearerToken,
   rewriteComposeHostnameForHost,
   preferInClusterOrchestratorUrl,
+  isPublicOrchestratorUrl,
+  isRunningInsideDocker,
 } from "./tenancy/resolve-orchestrator-url";
 export {
   resolvePeerSatelliteBaseUrl,
@@ -568,6 +570,7 @@ export {
   buildAuditChangesJson,
   recordSatelliteAudit,
   redactAuditChanges,
+  isAuditPiiKey,
   stampWorkforceAuditContext,
   type WorkforceAuditContext,
   type MutationAuditContext,

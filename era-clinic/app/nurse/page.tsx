@@ -46,6 +46,8 @@ type Proc = {
   checkInOpen?: boolean;
   checkInDeadline?: string;
   status: string;
+  schedulingMode?: string | null;
+  resourceId?: string | null;
   patientRef: { id: string; fullName: string; refCode?: string };
   resource?: { id: string; code: string; name: string } | null;
   instruction?: NurseInstruction | null;
@@ -72,7 +74,18 @@ function placeOrder(
     if (isToday && now >= dayEnd) return null;
     return "late";
   }
-  if (order.status === "PENDING_PAY") return "queue";
+  if (order.status === "PENDING_PAY") {
+    // Same clock as SCHEDULED: after deadline → Late (keep red unpaid block there).
+    const start = new Date(order.scheduledAt).getTime();
+    const endSrc = order.endsAt || order.effectiveEndsAt;
+    const deadline = order.checkInDeadline
+      ? new Date(order.checkInDeadline).getTime()
+      : endSrc
+        ? new Date(endSrc).getTime()
+        : start;
+    if (now < deadline) return "queue";
+    return "late";
+  }
   if (order.status !== "SCHEDULED") return null;
   if (order.checkInOpen) return "queue";
   const start = new Date(order.scheduledAt).getTime();
@@ -288,12 +301,20 @@ export default function NursePage() {
   }
 
   function timeRange(order: Proc) {
+    const openUnseated =
+      order.schedulingMode === "OPEN" && !order.resourceId && !order.resource;
+    if (openUnseated) {
+      return t("openAttendance", { defaultValue: "Open attendance" });
+    }
     const start = bakuTimeLabel(order.scheduledAt);
     const endSrc = order.endsAt || order.effectiveEndsAt;
     return endSrc ? `${start}–${bakuTimeLabel(endSrc)}` : start;
   }
 
   function cabinOf(order: Proc) {
+    if (order.schedulingMode === "OPEN" && !order.resourceId && !order.resource) {
+      return t("openAttendanceCabin", { defaultValue: "On arrival" });
+    }
     return order.resource?.name || order.resource?.code || "—";
   }
 

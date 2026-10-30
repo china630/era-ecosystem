@@ -40,7 +40,9 @@ type DoctorBonusItem = {
 };
 
 type ByProcedureItem = {
-  procedure: { code: string; name: string };
+  procedure?: { code: string; name: string };
+  procedureCode?: string;
+  procedureName?: string;
   assignedCount: number;
   completedCount: number;
 };
@@ -531,10 +533,12 @@ export default function ProceduresReportPage() {
                   }
                   if (view === "by-procedure") {
                     const row = it as ByProcedureItem;
+                    const code = row.procedure?.code ?? row.procedureCode ?? "—";
+                    const name = row.procedure?.name ?? row.procedureName ?? "";
                     return (
                       <tr key={idx} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>
-                          {row.procedure.code} — {row.procedure.name}
+                          {name ? `${code} — ${name}` : code}
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.assignedCount}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.completedCount}</td>

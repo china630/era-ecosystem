@@ -235,14 +235,16 @@
   },
   "home": {
     "loading": "Loading…",
-    "title": "Today at a glance",
-    "subtitle": "Operational day summary (Asia/Baku)",
+    "title": "Ops at a glance",
+    "subtitle": "Operational summary for the selected dates (Asia/Baku)",
     "loadFailed": "Could not load day summary.",
     "filterDate": "Date",
+    "dateFrom": "From",
+    "dateTo": "To",
     "refresh": "Refresh",
-    "kpiAppointments": "Appointments today",
+    "kpiAppointments": "Appointments",
     "kpiAppointmentsHint": "Open schedule",
-    "kpiProcedures": "Procedures today",
+    "kpiProcedures": "Procedures",
     "kpiProceduresHint": "Nurse board",
     "kpiQueueWaiting": "Queue waiting",
     "kpiQueueHint": "{called} called",
@@ -253,9 +255,9 @@
     "appointmentsByStatus": "Appointments by status",
     "proceduresByStatus": "Procedures by status",
     "proceduresByType": "Procedures by type",
-    "emptyDay": "Nothing scheduled for this day.",
+    "emptyDay": "Nothing scheduled in this range.",
     "visitsInProgress": "In progress",
-    "visitsCompleted": "Completed today",
+    "visitsCompleted": "Completed",
     "labsOpenShort": "Open",
     "labsReadyShort": "Ready",
     "labsDoneShort": "Done",
@@ -626,7 +628,9 @@
     "staffKindNurse": "Nurse",
     "staffKindBath": "Bath attendant",
     "staffKindMassage": "Massage therapist",
-    "staffKindDoctor": "Doctor"
+    "staffKindDoctor": "Doctor",
+    "openAttendance": "Open attendance",
+    "openAttendanceCabin": "On arrival"
   },
   "sanatoriumResources": {
     "title": "Resource day matrix",
@@ -707,7 +711,13 @@
       "NO_SHOW": "No-show",
       "PROPOSED": "Proposed",
       "PENDING_PAY": "Awaiting payment"
-    }
+    },
+    "openAttendanceForesight": "Open attendance: {waiting} waiting, {inCabin} in cabin (capacity {capacity})",
+    "checkIn": "Check-in",
+    "checkInOk": "Checked in",
+    "checkInFailed": "Check-in failed",
+    "checkInClosed": "Check-in window is not open yet",
+    "unpaidBlock": "Not paid"
   },
   "queue": {
     "title": "Reception queue",
@@ -866,7 +876,7 @@
     "subtitle": "K-14 — daily clinic KPIs (no GL in satellite)",
     "accessDenied": "Access for BUSINESS_OWNER only (Finance OWNER/DIRECTOR via SSO).",
     "loadFailed": "Could not load summary.",
-    "visitsToday": "Visits today",
+    "visitsToday": "Visits in range",
     "labRevenueToday": "Lab revenue today",
     "openLabOrders": "Open lab orders",
     "filterDate": "Date",
@@ -1053,6 +1063,7 @@
     "filterProgramCodeAll": "All programs",
     "colPatient": "Patient",
     "colRef": "Code",
+    "colArrival": "Arrival",
     "colRoom": "Room",
     "colOrigin": "Origin",
     "colProgram": "Program",
@@ -1186,6 +1197,12 @@
     "defaultProcedureGapMinutes": "Default cabin idle for new procedure types (minutes)",
     "defaultAppointmentSlotMinutes": "Default doctor reception slot (minutes)",
     "procedureCheckInMode": "Procedure check-in mode",
+    "procedureCheckInWindow": "Procedure check-in window",
+    "procedureCheckInWindowHint": "SAME_DAY allows check-in any time during clinic hours for the planned day (cutover).",
+    "procedureCheckInWindowStrict": "STRICT (slot +/- grace)",
+    "procedureCheckInWindowSameDay": "SAME_DAY (live queue / cutover)",
+    "procedureCheckInSameDayUntil": "SAME_DAY active until",
+    "procedureCheckInSameDayUntilHint": "After this date STRICT applies again. Leave empty for manual switch-off.",
     "programSchedulingMode": "Program scheduling mode",
     "programSchedulingModeAfterCheckup": "AFTER_CHECKUP (Nafta — after doctor stage / anamnesis+complaint; labs not required)",
     "programSchedulingModeOnCheckin": "ON_CHECKIN (place on check-in)",
@@ -1195,11 +1212,16 @@
     "peakDayEndHour": "Peak day end hour",
     "printBrandTitle": "Print branding",
     "printBrandSubtitle": "Logo, clinic names, contacts for printed forms",
+    "cpPrintBanner": "Header logo/address/phone come from the Control Plane organization profile when Sync is present. Footers and signatures stay local.",
+    "cpLogoLocked": "Logo is managed on the Control Plane organization profile.",
+    "cpContactsLocked": "Address / phone / email / website from Control Plane are read-only here.",
     "noLogo": "No logo",
     "logo": "Logo",
     "clearLogo": "Clear logo",
     "logoTooLarge": "Logo must be under 400KB",
-    "checkupSections": "Check-up sections"
+    "checkupSections": "Check-up sections",
+    "receptionProcedureCheckIn": "Reception check-in on resource matrix",
+    "receptionProcedureCheckInHint": "When on, reception can mark attendance from the day matrix modal (Nafta default on)."
   },
   "physioSites": {
     "title": "Physio sites",
@@ -1369,13 +1391,14 @@
     "diagnoses": "Diagnoses"
   },
   "admin": {
-    "settings": {
-      "field": "Field",
-      "value": "Value",
-      "actions": "Actions",
-      "edit": "Edit",
-      "save": "Save"
-    }
+    "lookupsTitle": "Body parts",
+    "lookupsBodyPartHint": "Coarse body zones for contraindications and physio. An empty list is filled with the canonical codes.",
+    "code": "Code",
+    "name": "Name",
+    "active": "Active",
+    "yes": "yes",
+    "no": "no",
+    "sort": "Sort"
   },
   "opsWipe": {
     "title": "Ops wipe",
@@ -1477,6 +1500,8 @@
     "addBed": "Bed",
     "bodyPart": "Body part",
     "needsSite": "Needs site chips",
+    "openAttendance": "Open attendance",
+    "openAttendanceHint": "Day bucket: no rigid cabin clock; nurse seats on arrival. Same package quotas.",
     "needsExtraFields": "Extra fields required",
     "selectAllSkills": "Select all",
     "bodyPart_HEAD": "Head",
@@ -1906,6 +1931,7 @@
     "openHistory": "History",
     "planTitle": "Plan",
     "planEmpty": "No upcoming procedures.",
+    "openAttendance": "Open attendance",
     "openPlan": "Full plan",
     "historyModalTitle": "Clinical history",
     "planModalTitle": "Procedure plan",
@@ -2020,7 +2046,7 @@
     "packageAssignNoAnamnesis": "Anamnesis is required before package balances open.",
     "packageAssignNoComplaint": "At least one complaint is required before package balances open.",
     "packageAssignNoDiagnosis": "At least one ICD-10 diagnosis is required before package balances open.",
-    "packageAssignNoCareTeam": "Assign a care-team doctor before package balances open.",
+    "packageAssignNoCareTeam": "A care-team doctor is required",
     "packageAssignInstantiateFailed": "Program {code} could not be opened. Check that the template exists.",
     "packageAssignQuotaRemaining": "This procedure still has package quota, so it cannot be added as a paid extra.",
     "packageAssignExtraHint": "A line with remaining quota stays in the package. A line with none, or missing from the package, is a paid extra.",
@@ -2058,6 +2084,7 @@
     "packageBalanceTitle": "Package remaining",
     "extraProceduresTitle": "Additional procedures",
     "assignedReceiptTitle": "Assigned",
+    "saxlaLineOrderHint": "Saxla seats №1 first within the same daily-cap block; unfinished sessions of that block are rebuilt with new lines.",
     "fromPackage": "From package",
     "extraLine": "Extra",
     "paidLine": "Paid",
@@ -2066,7 +2093,6 @@
     "packageAssignPoolHint": "pick a procedure",
     "packageAssignNotInProcedures": "This block is not on the procedure list",
     "packageAssignNoService": "This block has no catalog service to book",
-    "packageAssignNoCareTeam": "A care-team doctor is required",
     "packageAssignLabOpen": "An open lab order already exists for this study",
     "packageAssignLabOne": "A lab books one open order at a time",
     "packageAssignAliasHint": "pick the bath",
@@ -2178,6 +2204,8 @@
     "entity_HTTP_MUTATION": "HTTP mutations (Layer A)",
     "entity_ProcedureOrder": "Procedure order",
     "entity_Visit": "Visit",
+    "entity_ClinicReceipt": "Cashier receipt",
+    "entity_ClinicShift": "Cashier shift",
     "entity_WalkInParty": "Walk-in party",
     "entity_Role": "Role",
     "entity_ImportRun": "Import run"
@@ -2473,15 +2501,5 @@
     "validationRequired": "Code, name and duration are required.",
     "confirmDeleteBody": "Delete this sanatorium package?",
     "confirmCloseBody": "{count} stay(s) already use this package, so it cannot be erased. It will be closed with valid-to {date} and stop appearing for new check-ins; open stays keep their entitlements."
-  },
-  "admin": {
-    "lookupsTitle": "Body parts",
-    "lookupsBodyPartHint": "Coarse body zones for contraindications and physio. An empty list is filled with the canonical codes.",
-    "code": "Code",
-    "name": "Name",
-    "active": "Active",
-    "yes": "yes",
-    "no": "no",
-    "sort": "Sort"
   }
 }

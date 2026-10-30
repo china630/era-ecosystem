@@ -1,6 +1,5 @@
-import { Global, Module, forwardRef } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
-import { SatelliteEventsModule } from "../satellite-events/satellite-events.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
 import { DepartmentProvisionService } from "./department-provision.service";
 import { SatelliteConnectService } from "./satellite-connect.service";
@@ -9,10 +8,13 @@ import { TrialEntitlementResolver } from "./trial-entitlement.resolver";
 import { TrialProvisionService } from "./trial-provision.service";
 import { TrialSyncService } from "./trial-sync.service";
 
-/** Trial hierarchy services — SatelliteEvents for Sync after connect (avoids AdminModule cycle). */
+/**
+ * Trial hierarchy services — no SatelliteEvents/Admin imports (CJS cycle kills Nest boot).
+ * SatelliteConnectService resolves SatelliteOrgBindSyncService via ModuleRef.
+ */
 @Global()
 @Module({
-  imports: [PrismaModule, SystemConfigModule, forwardRef(() => SatelliteEventsModule)],
+  imports: [PrismaModule, SystemConfigModule],
   providers: [
     TrialProvisionService,
     TrialCatalogService,

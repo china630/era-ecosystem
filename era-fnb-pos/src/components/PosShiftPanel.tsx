@@ -110,10 +110,14 @@ export default function PosShiftPanel() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const list = Array.isArray(d?.outlets) ? d.outlets : [];
+        const till = list.filter(
+          (o: { capTill?: boolean }) => o.capTill !== false,
+        );
+        const pool = till.length > 0 ? till : list;
         const pick =
-          list.find((o: { code: string }) => o.code === "KAFE") ??
-          list.find((o: { code: string }) => o.code === "RESTAURANT") ??
-          list[0];
+          pool.find((o: { code: string }) => o.code === "KAFE") ??
+          pool.find((o: { code: string }) => o.code === "NAFTANI") ??
+          pool[0];
         if (pick?.code) setOutletCode(pick.code);
       })
       .catch(() => undefined);

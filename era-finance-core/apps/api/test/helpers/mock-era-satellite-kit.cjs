@@ -9,6 +9,8 @@ const {
 const extra = require("../../../../../packages/satellite-kit/dist/extra-fields/extra-attributes.js");
 const savedViews = require("../../../../../packages/satellite-kit/dist/list-views/saved-list-view.js");
 const printSnap = require("../../../../../packages/satellite-kit/dist/print/print-snapshot.js");
+const satelliteAudit = require("../../../../../packages/satellite-kit/dist/audit/satellite-audit.js");
+const mutationBelt = require("../../../../../packages/satellite-kit/dist/audit/mutation-audit-belt.js");
 
 function composePersonFullName(firstName, middleName, lastName) {
   return [firstName, middleName, lastName]
@@ -39,6 +41,8 @@ module.exports = {
   ...extra,
   ...savedViews,
   ...printSnap,
+  ...satelliteAudit,
+  ...mutationBelt,
   assertEnvServiceToken,
   assertBridgeSecret,
   composePersonFullName,

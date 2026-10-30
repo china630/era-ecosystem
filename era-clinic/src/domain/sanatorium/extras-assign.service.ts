@@ -191,6 +191,7 @@ export async function prescribeExtras(
           amountNet: unitPrice,
           bonusEligible: true,
           inPackage: false,
+          schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
         },
       });
       if (line.siteIds?.length) {
@@ -208,7 +209,19 @@ export async function prescribeExtras(
     }
   }
   if (planFirst && ids.length > 0) {
-    await seatUnpaidExtras(ids);
+    const created = await prisma.procedureOrder.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, schedulingMode: true },
+    });
+    const fixedIds = created
+      .filter((row) => row.schedulingMode !== "OPEN")
+      .map((row) => row.id);
+    const openIds = created
+      .filter((row) => row.schedulingMode === "OPEN")
+      .map((row) => row.id);
+    if (fixedIds.length > 0) await seatUnpaidExtras(fixedIds);
+    // OPEN = day-bucket across stay (no cabin). Pay keeps the pin; nurse seats on arrival.
+    if (openIds.length > 0) await pinUnpaidOpenExtras(openIds, episodeId);
   }
   return { orderIds: ids };
 }
@@ -221,6 +234,32 @@ async function seatUnpaidExtras(ids: string[]): Promise<void> {
   });
   try {
     await placeConfirmedProcedures(ids, {});
+  } finally {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+      data: { status: "PENDING_PAY" },
+    });
+  }
+}
+
+/** Pin OPEN unpaid extras onto consecutive working days until stay endsOn; keep PENDING_PAY. */
+async function pinUnpaidOpenExtras(ids: string[], episodeId: string): Promise<void> {
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: ids }, status: "PENDING_PAY" },
+    data: { status: "PROPOSED" },
+  });
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { endsOn: true } } },
+  });
+  try {
+    const { pinOpenAttendanceOrders } = await import(
+      "@/domain/procedure/open-attendance"
+    );
+    await pinOpenAttendanceOrders(ids, {
+      scheduleBefore: episode?.programInstance?.endsOn ?? undefined,
+      startAt: new Date(),
+    });
   } finally {
     await prisma.procedureOrder.updateMany({
       where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
@@ -404,15 +443,35 @@ export async function payAndScheduleExtras(
   }
 
   const receiptRef = opts?.paymentReceiptRef?.trim() || receipt;
+  const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
   const seatedIds = chargedMeta
     .filter((c) => byId.get(c.orderId)?.resourceId)
     .map((c) => c.orderId);
   const looseIds = chargedMeta
     .filter((c) => !byId.get(c.orderId)?.resourceId)
     .map((c) => c.orderId);
-  if (seatedIds.length > 0) {
+  const looseRows =
+    looseIds.length > 0
+      ? await prisma.procedureOrder.findMany({
+          where: { id: { in: looseIds } },
+          select: { id: true, schedulingMode: true },
+        })
+      : [];
+  const openLoose = looseRows
+    .filter((r) => r.schedulingMode === "OPEN")
+    .map((r) => r.id);
+  const fixedLoose = looseRows
+    .filter((r) => r.schedulingMode !== "OPEN")
+    .map((r) => r.id);
+  // PLAN_BEFORE_PAY OPEN already has stay day-buckets — Pay must keep those clocks.
+  const openKeepPin = planFirst ? openLoose : [];
+  const openNeedPin = planFirst ? [] : openLoose;
+  const keepScheduledIds = [...seatedIds, ...openKeepPin];
+  const needPlaceIds = [...fixedLoose, ...openNeedPin];
+
+  if (keepScheduledIds.length > 0) {
     await prisma.procedureOrder.updateMany({
-      where: { id: { in: seatedIds } },
+      where: { id: { in: keepScheduledIds } },
       data: {
         status: "SCHEDULED",
         paymentReceiptRef: receiptRef,
@@ -420,9 +479,9 @@ export async function payAndScheduleExtras(
       },
     });
   }
-  if (looseIds.length > 0) {
+  if (needPlaceIds.length > 0) {
     await prisma.procedureOrder.updateMany({
-      where: { id: { in: looseIds } },
+      where: { id: { in: needPlaceIds } },
       data: {
         status: "PROPOSED",
         paymentReceiptRef: receiptRef,
@@ -437,16 +496,26 @@ export async function payAndScheduleExtras(
     });
   }
 
-  let placed = seatedIds.length;
-  if (looseIds.length > 0) {
+  let placed = keepScheduledIds.length;
+  if (needPlaceIds.length > 0) {
     try {
-      placed += (
-        await placeConfirmedProcedures(looseIds, { confirmedByUserId: actorUserId })
-      ).placed;
+      if (openNeedPin.length > 0) {
+        const { pinOpenAttendanceOrders } = await import(
+          "@/domain/procedure/open-attendance"
+        );
+        placed += (
+          await pinOpenAttendanceOrders(openNeedPin, { confirmedByUserId: actorUserId })
+        ).placed;
+      }
+      if (fixedLoose.length > 0) {
+        placed += (
+          await placeConfirmedProcedures(fixedLoose, { confirmedByUserId: actorUserId })
+        ).placed;
+      }
     } catch (err) {
       const reason = err instanceof Error ? err.message : "schedule failed";
       for (const line of accepted) {
-        if (looseIds.includes(line.id)) line.reason = reason;
+        if (needPlaceIds.includes(line.id)) line.reason = reason;
       }
     }
   }
@@ -491,6 +560,15 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       where: { id: order.id },
       data: { status: "SCHEDULED", inPackage: false },
     });
+  } else if (
+    order.schedulingMode === "OPEN" &&
+    plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute)
+  ) {
+    // PLAN_BEFORE_PAY already day-bucketed this OPEN row — keep the pin.
+    await prisma.procedureOrder.update({
+      where: { id: order.id },
+      data: { status: "SCHEDULED", inPackage: false },
+    });
   } else {
     // Money is confirmed at hotel first. Placement may wait on anamnesis / care team —
     // do not reject settlement-confirmed for those gates (hotel already PAID).
@@ -499,7 +577,14 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       data: { status: "PROPOSED", inPackage: false },
     });
     try {
-      await placeConfirmedProcedures([order.id], {});
+      if (order.schedulingMode === "OPEN") {
+        const { pinOpenAttendanceOrders } = await import(
+          "@/domain/procedure/open-attendance"
+        );
+        await pinOpenAttendanceOrders([order.id], {});
+      } else {
+        await placeConfirmedProcedures([order.id], {});
+      }
     } catch (err) {
       const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
       if (code === ANAMNESIS_REQUIRED || code === CARE_TEAM_REQUIRED) {

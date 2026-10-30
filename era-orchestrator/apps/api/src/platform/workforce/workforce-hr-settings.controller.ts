@@ -77,7 +77,15 @@ class HrSettingsBody {
 }
 
 class RouteStepBody {
-  @IsIn(["REQUESTER_MANAGER", "ORG_UNIT_HEAD", "POSITION_IN_UNIT"])
+  @IsIn([
+    "REQUESTER_MANAGER",
+    "ORG_UNIT_HEAD",
+    "POSITION_IN_UNIT",
+    "MANAGER_CHAIN",
+    "POSITION_HOLDER",
+    "MATRIX_MANAGER",
+    "GRADE_AT_LEAST",
+  ])
   kind!: string;
 
   @IsOptional()
@@ -95,6 +103,14 @@ class RouteStepBody {
   @IsOptional()
   @IsBoolean()
   canExceedAdvanceCap?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  chainOffset?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  minGradeLevel?: number | null;
 }
 
 class SaveRouteBody {

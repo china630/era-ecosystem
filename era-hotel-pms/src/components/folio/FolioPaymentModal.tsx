@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CatalogField,
   Field,
@@ -19,6 +19,8 @@ import {
   type PayerGuest,
 } from '@/lib/folio-payer';
 import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
+import { LODGING_PAYMENT_ROLES, revenueRoleIn } from '@/lib/revenue-code-match';
+import { revenueLabel } from '@/lib/folio-article-summary';
 
 const METHODS = DESK_PAYMENT_METHODS;
 
@@ -78,6 +80,7 @@ export function FolioPaymentModal({
   const t = useTranslations('folio');
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
+  const locale = useLocale();
   const [query, setQuery] = useState('');
   const [stays, setStays] = useState<StayTarget[]>([]);
   const [stayId, setStayId] = useState(reservationId ?? '');
@@ -89,7 +92,16 @@ export function FolioPaymentModal({
   const [bankTerminalId, setBankTerminalId] = useState('');
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [codes, setCodes] = useState<
-    Array<{ id: string; code: string; name?: string | null; systemRole?: string | null }>
+    Array<{
+      id: string;
+      code: string;
+      name?: string | null;
+      nameAz?: string | null;
+      nameRu?: string | null;
+      nameEn?: string | null;
+      systemRole?: string | null;
+      allowManualPayment?: boolean | null;
+    }>
   >([]);
   const [revenueCodeId, setRevenueCodeId] = useState('');
   const [pocket, setPocket] = useState<'' | FolioParty>('');
@@ -103,7 +115,10 @@ export function FolioPaymentModal({
     return stays.find((s) => s.reservationId === stayId)?.guests ?? [];
   }, [knownStay, guests, stays, stayId]);
   const selectedCode = codes.find((row) => row.id === revenueCodeId) ?? null;
-  const roomArticle = ['ROOM', 'PKG', 'RATE_ADJ', 'CITY_TAX'].includes(selectedCode?.systemRole ?? '');
+  const roomArticle = revenueRoleIn(
+    { systemRole: selectedCode?.systemRole ?? null },
+    LODGING_PAYMENT_ROLES,
+  );
   const namedGuests = partyGuests.filter((guest) => guest.name.trim());
   const payer =
     pocket === 'guest' && !roomArticle
@@ -128,7 +143,9 @@ export function FolioPaymentModal({
   const sortedCodes = useMemo(() => {
     const debtIds = new Set(debtArticles.map((row) => row.revenueCodeId));
     const withDebt = codes.filter((row) => debtIds.has(row.id));
-    const without = codes.filter((row) => !debtIds.has(row.id));
+    const without = codes.filter(
+      (row) => !debtIds.has(row.id) && row.allowManualPayment !== false,
+    );
     const debtOrder = new Map(debtArticles.map((row, index) => [row.revenueCodeId, index]));
     withDebt.sort((a, b) => (debtOrder.get(a.id) ?? 0) - (debtOrder.get(b.id) ?? 0));
     return [...withDebt, ...without];
@@ -157,8 +174,12 @@ export function FolioPaymentModal({
           id: string;
           code: string;
           name?: string | null;
+          nameAz?: string | null;
+          nameRu?: string | null;
+          nameEn?: string | null;
           active?: boolean;
           systemRole?: string | null;
+          allowManualPayment?: boolean | null;
         }>;
         const list = Array.isArray(rows) ? rows.filter((row) => row.active !== false) : [];
         setCodes(list);
@@ -224,11 +245,16 @@ export function FolioPaymentModal({
           ).debt > 0.01,
       ) ?? openFolios.find((row) => row.charges.some((charge) => charge.revenueCodeId === revenueCodeId))
     : undefined;
-  const debtFolios = roomArticle ? (roomFolio ? [roomFolio] : []) : folio ? [folio] : [];
-  const articleDebt = stayMoneyPair(
-    debtFolios.flatMap((row) => row.charges).filter((row) => row.revenueCodeId === revenueCodeId),
-    debtFolios.flatMap((row) => row.payments ?? []).filter((row) => row.revenueCodeId === revenueCodeId),
-  ).debt;
+  // SSOT with picker labels: lodging debt is stay-wide; extras use the chosen pocket.
+  const stayWideDebt =
+    debtArticles.find((row) => row.revenueCodeId === revenueCodeId)?.debt ?? 0;
+  const pocketDebt = folio
+    ? stayMoneyPair(
+        folio.charges.filter((row) => row.revenueCodeId === revenueCodeId),
+        (folio.payments ?? []).filter((row) => row.revenueCodeId === revenueCodeId),
+      ).debt
+    : 0;
+  const articleDebt = roomArticle ? stayWideDebt : pocketDebt;
   const methods = METHODS.filter((m) => m !== 'DEPOSIT');
   const needsGuest = !roomArticle && pocket === 'guest' && payer.kind === 'pick' && !selectedGuest;
   const needsPocket = !roomArticle && !pocket;
@@ -270,6 +296,10 @@ export function FolioPaymentModal({
         const code = String(data?.code ?? data?.error ?? '');
         if (code === 'PAYMENT_ARTICLE_NO_OPEN_DEBT') {
           showApiError({ error: t('paymentArticleNoOpenDebtToast') }, tc('error'));
+          return;
+        }
+        if (code === 'REVENUE_CODE_MANUAL_PAYMENT_DENIED') {
+          showApiError({ error: t('manualPaymentDenied') }, tc('error'));
           return;
         }
         showApiError(data, tc('error'));
@@ -343,7 +373,7 @@ export function FolioPaymentModal({
           }}
           options={sortedCodes.map((c) => {
             const debt = debtArticles.find((row) => row.revenueCodeId === c.id)?.debt;
-            const base = c.name ? `${c.code} — ${c.name}` : c.code;
+            const base = `${c.code} — ${revenueLabel(c, locale)}`;
             return {
               value: c.id,
               label: debt != null && debt > 0.01 ? `${base} (${debt.toFixed(2)})` : base,

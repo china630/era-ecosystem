@@ -25,7 +25,11 @@ import {
   isSeedProcedureCode,
   isWoProcedureCode,
 } from "@/lib/import/seed-catalog-match";
-import { parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateKey, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import {
+  dailyCapForQuota,
+  loadEpisodeDailyCaps,
+} from "@/domain/sanatorium/block-daily-cap";
 import {
   blockedProcedureCodesForGuest,
   procedureFitsGuestSex,
@@ -920,6 +924,78 @@ export function chunkCreatedIdsByLine(
   return out;
 }
 
+export type RedispatchedBlockTail = {
+  /** Cap-block key → unfinished order ids (sequence order), OPEN vs FIXED. */
+  byKey: Map<string, { openIds: string[]; fixedIds: string[] }>;
+};
+
+/**
+ * Unseat unfinished same-block SCHEDULED rows from today onward so Saxla can refill
+ * daily-cap holes with new modal lines. CHECKED_IN / COMPLETED stay. Baths excluded.
+ */
+export async function unseatUnfinishedBlockTail(
+  episodeId: string,
+  quotaCodes: string[],
+  opts?: { excludeIds?: Set<string>; bathCodes?: Set<string> },
+): Promise<RedispatchedBlockTail> {
+  const empty: RedispatchedBlockTail = { byKey: new Map() };
+  if (quotaCodes.length === 0) return empty;
+  const caps = await loadEpisodeDailyCaps(episodeId);
+  const touched = new Set<string>();
+  for (const code of quotaCodes) {
+    const { quotaKey, dailyCap } = dailyCapForQuota(caps, code, code);
+    if (dailyCap == null) continue;
+    touched.add(quotaKey);
+  }
+  if (touched.size === 0) return empty;
+
+  const today = todayBakuYmd();
+  const unfinished = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: true,
+      status: "SCHEDULED",
+      ...(opts?.excludeIds?.size
+        ? { id: { notIn: [...opts.excludeIds] } }
+        : {}),
+    },
+    orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
+    select: {
+      id: true,
+      procedureCode: true,
+      packageQuotaCode: true,
+      schedulingMode: true,
+      scheduledAt: true,
+    },
+  });
+
+  const byKey = new Map<string, { openIds: string[]; fixedIds: string[] }>();
+  const toUnseat: string[] = [];
+  for (const row of unfinished) {
+    if (opts?.bathCodes?.has(row.procedureCode)) continue;
+    if (bakuDateKey(row.scheduledAt) < today) continue;
+    const { quotaKey, dailyCap } = dailyCapForQuota(
+      caps,
+      row.packageQuotaCode,
+      row.procedureCode,
+    );
+    if (dailyCap == null || !touched.has(quotaKey)) continue;
+    const bucket = byKey.get(quotaKey) ?? { openIds: [], fixedIds: [] };
+    if (row.schedulingMode === "OPEN") bucket.openIds.push(row.id);
+    else bucket.fixedIds.push(row.id);
+    byKey.set(quotaKey, bucket);
+    toUnseat.push(row.id);
+  }
+  if (toUnseat.length === 0) return { byKey };
+
+  await releaseProcedureOccupancy(toUnseat);
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: toUnseat } },
+    data: { status: "PROPOSED", resourceId: null },
+  });
+  return { byKey };
+}
+
 /**
  * Create PROPOSED orders for delta qty, place onto resources, burn quotaUsed to match circulation.
  */
@@ -1132,6 +1208,7 @@ export async function assignPackageProcedures(
           assignBatchId: batchId,
           inPackage: true,
           packageQuotaCode: line.quotaCode,
+          schedulingMode: pt.openAttendance === true ? "OPEN" : "FIXED",
           patientOrigin: episode.patientOrigin,
           reservationId: episode.reservationId ?? undefined,
           amountNet: 0,
@@ -1157,6 +1234,14 @@ export async function assignPackageProcedures(
     "@/domain/planning/bath-calendar.service"
   );
   const bathCodes = await bathSeriesProcedureCodes();
+  const episodeCaps = await loadEpisodeDailyCaps(episodeId);
+  const redispatched = await unseatUnfinishedBlockTail(
+    episodeId,
+    resolved.map((line) => line.quotaCode),
+    { excludeIds: new Set(createdIds), bathCodes },
+  );
+  const redispatchedOpenUsed = new Set<string>();
+  const redispatchedFixedUsed = new Set<string>();
   const misses: Array<{
     ymd: string;
     procedureCode: string;
@@ -1167,8 +1252,46 @@ export async function assignPackageProcedures(
   const missingCabinNames: string[] = [];
   let genericCabinOnly = true;
   let genericTried = false;
-  for (const chunk of chunkCreatedIdsByLine(createdIds, resolved)) {
+  const { pinOpenAttendanceOrders } = await import(
+    "@/domain/procedure/open-attendance"
+  );
+  const chunks = chunkCreatedIdsByLine(createdIds, resolved);
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]!;
+    const line = resolved[i]!;
     if (chunk.ids.length === 0) continue;
+    const chunkType = typeByCode.get(chunk.procedureCode);
+    const { quotaKey } = dailyCapForQuota(
+      episodeCaps,
+      line.quotaCode,
+      line.procedureCode,
+    );
+    const tail = redispatched.byKey.get(quotaKey);
+    if (chunkType?.openAttendance === true) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: chunk.ids } },
+        data: { schedulingMode: "OPEN" },
+      });
+      const openTail =
+        tail && !redispatchedOpenUsed.has(quotaKey)
+          ? (redispatchedOpenUsed.add(quotaKey), tail.openIds)
+          : [];
+      const openSeat = await pinOpenAttendanceOrders([...openTail, ...chunk.ids], {
+        confirmedByUserId: opts?.confirmedByUserId,
+        scheduleBefore: instance.endsOn ?? undefined,
+        startAt: opts?.startAt ?? undefined,
+      });
+      misses.push(
+        ...openSeat.failures.map((row) => ({
+          ymd: row.ymd ?? "",
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          reason: row.reason,
+        })),
+      );
+      placedIds.push(...openSeat.placedIds);
+      continue;
+    }
     if (bathCodes.has(chunk.procedureCode)) {
       const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt: opts?.startAt });
       genericCabinOnly = false;
@@ -1184,7 +1307,11 @@ export async function assignPackageProcedures(
       continue;
     }
     genericTried = true;
-    const placement = await placeConfirmedProcedures(chunk.ids, {
+    const fixedTail =
+      tail && !redispatchedFixedUsed.has(quotaKey)
+        ? (redispatchedFixedUsed.add(quotaKey), tail.fixedIds)
+        : [];
+    const placement = await placeConfirmedProcedures([...fixedTail, ...chunk.ids], {
       confirmedByUserId: opts?.confirmedByUserId,
       scheduleBefore: instance.endsOn,
       startAt: opts?.startAt,
@@ -1200,6 +1327,48 @@ export async function assignPackageProcedures(
       })),
     );
     placedIds.push(...placement.placedIds);
+  }
+  // Re-seat unfinished tails that never joined a matching OPEN/FIXED chunk this save.
+  for (const [quotaKey, tail] of redispatched.byKey) {
+    if (!redispatchedOpenUsed.has(quotaKey) && tail.openIds.length > 0) {
+      redispatchedOpenUsed.add(quotaKey);
+      const openSeat = await pinOpenAttendanceOrders(tail.openIds, {
+        confirmedByUserId: opts?.confirmedByUserId,
+        scheduleBefore: instance.endsOn ?? undefined,
+        startAt: opts?.startAt ?? undefined,
+      });
+      placedIds.push(...openSeat.placedIds);
+      misses.push(
+        ...openSeat.failures.map((row) => ({
+          ymd: row.ymd ?? "",
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          reason: row.reason,
+        })),
+      );
+    }
+    if (!redispatchedFixedUsed.has(quotaKey) && tail.fixedIds.length > 0) {
+      redispatchedFixedUsed.add(quotaKey);
+      genericTried = true;
+      const placement = await placeConfirmedProcedures(tail.fixedIds, {
+        confirmedByUserId: opts?.confirmedByUserId,
+        scheduleBefore: instance.endsOn,
+        startAt: opts?.startAt,
+      });
+      missingCabinNames.push(...placement.missingCabinNames);
+      if (placement.failures.some((row) => row.reason !== "no_cabin")) {
+        genericCabinOnly = false;
+      }
+      placedIds.push(...placement.placedIds);
+      misses.push(
+        ...placement.failures.map((row) => ({
+          ymd: row.ymd ?? "",
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          reason: row.reason,
+        })),
+      );
+    }
   }
   const kept = new Set(placedIds);
   const leftover = createdIds.filter((id) => !kept.has(id));

@@ -10,8 +10,19 @@ import { getCurrentShift, openShift } from "@/domain/cashier/cashier-shift.servi
 import type { ClinicReceiptChannel } from "@prisma/client";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { bakuDayBounds } from "@/lib/baku-day";
+import { recordClinicAudit } from "@/lib/satellite-audit";
 
 export type PaymentSplit = { method: string; amount: number };
+
+async function auditMoney(
+  userId: string | null | undefined,
+  entityType: string,
+  entityId: string,
+  action: string,
+  changes?: Record<string, unknown>,
+) {
+  await recordClinicAudit({ userId }, entityType, entityId, action, changes);
+}
 
 export type SettleInput = {
   visitId: string;
@@ -114,6 +125,12 @@ export async function settleVisitBill(input: SettleInput) {
       where: { id: bill.visitId },
       data: { settledAt: new Date(), billingTarget: "HOTEL_FOLIO" },
     });
+    await auditMoney(input.userId, "ClinicReceipt", receipt.id, "SETTLE", {
+      visitId: bill.visitId,
+      channel,
+      amountNet,
+      shiftId: shift.id,
+    });
     return { receipt, channel, fiscal: null, settlementOnly: true };
   }
 
@@ -161,6 +178,13 @@ export async function settleVisitBill(input: SettleInput) {
         billingTarget: "SETTLEMENT_HUB",
         settlementPendingId: pendingId || null,
       },
+    });
+    await auditMoney(input.userId, "ClinicReceipt", receipt.id, "SETTLE", {
+      visitId: bill.visitId,
+      channel,
+      amountNet,
+      shiftId: shift.id,
+      pendingId: pendingId || null,
     });
     return { receipt, channel, fiscal: null, settlementOnly: true, pendingId };
   }
@@ -241,6 +265,14 @@ export async function settleVisitBill(input: SettleInput) {
     data: { settledAt: new Date(), billingTarget: "FINANCE" },
   });
 
+  await auditMoney(input.userId, "ClinicReceipt", paid.id, "SETTLE", {
+    visitId: bill.visitId,
+    channel: "LOCAL",
+    amountNet,
+    shiftId: shift.id,
+    methods: payments.map((p) => p.method),
+    fiscalReceiptId: fiscal.receiptId || null,
+  });
   return { receipt: paid, channel: "LOCAL" as const, fiscal, settlementOnly: true };
 }
 
@@ -297,6 +329,12 @@ export async function voidReceipt(input: {
       data: { settledAt: null },
     });
   }
+  await auditMoney(input.userId, "ClinicReceipt", updated.id, "VOID", {
+    visitId: receipt.visitId,
+    reason: input.reason,
+    amountNet: Number(receipt.amountNet),
+    channel: receipt.channel,
+  });
   return updated;
 }
 
@@ -449,5 +487,13 @@ export async function settleChargeLogLocally(input: {
     data: { settledLocally: true, receiptId: paid.id, channel: "LOCAL" },
   });
 
+  await auditMoney(input.userId, "ClinicReceipt", paid.id, "SETTLE", {
+    chargeLogId: log.id,
+    channel: "LOCAL",
+    amountNet,
+    shiftId: shift.id,
+    methods: payments.map((p) => p.method),
+    fiscalReceiptId: fiscal.receiptId || null,
+  });
   return { receipt: paid, fiscal };
 }

@@ -44,7 +44,7 @@
 | e-qaimə day close | org settings checkbox, `/sales/invoices` list and invoice card, hotel `/night-audit` gap list and check-day stop | 🟡 — SCREEN; FIN-EQAIME-DAY-01 API; AC-FIN-EQAIME-DAY 🟡 out of W6 BE rollup; does not enable S2S; not SHOW |
 | Fact queue | `/reporting/fact-queue` meaning list; `/reporting` and dashboard close count; period-lock date refuses the same month | 🟡 — SCREEN; FIN-FACT-QUEUE-01 API; AC-FIN-FACT-QUEUE 🟡 out of W6 BE rollup; does not extend AC-FIN-GL; not SHOW |
 | Provisional VAT | `/purchases` waiting-document status, document number on the purchase form, later credit link; `/sales/invoices` create lists the scheme VAT percent; `/reporting/tax-export` scheme-driven recalc or amendment draft; period-lock date refuses the same month | 🟡 — SCREEN; FIN-PROVISIONAL-VAT-01 API; AC-FIN-PROVISIONAL-VAT 🟡 out of W6 BE rollup; whole purchase stays in expense until the document; exempt line sent to the API is refused; no cash refund; does not extend AC-FIN-TAX; not SHOW |
-| Mutation audit (FIN-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (canonical filters incl. entityId); OWNER `/admin/security-audit` + `GET /api/admin/security-audit` | 🟡 — COVERAGE SHIPPED (Nest Layer A); path/API + EN i18n + OWNER door unit 2026-10-27; AC-FIN-AUD 🟡 kit-alignment residual out of W6. Does not move Gate, Demo ❌, Pilot, or Sell |
+| Mutation audit (FIN-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (CatalogField entityType + EraListFilterBar + kit DatePicker; canonical filters incl. entityId); OWNER `/admin/security-audit` + `GET /api/admin/security-audit` (same filter kit; CatalogField entityName + All) | 🟡 — COVERAGE SHIPPED (Nest Layer A); Wave C kit-align + Wave D journal UI parity (+ security-audit sibling) 2026-10-29; AC-FIN-AUD 🟡 AuthZ-negatives residual out of W6. Does not move Gate, Demo ❌, Pilot, or Sell |
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays ❌ until live sign-off.
 
@@ -72,6 +72,10 @@
 | Multi-GAAP eng. suite | ✅ | Jest FIN-GAAP suite (Phase 0 gate for Wave A) |
 
 ---
+
+## Cross-product (not Finance sell)
+
+- **F&B buffet food cost run** (HYBRID/residual, warehouse classes FOOD/CHEM/…): ADR [fnb-buffet-cost-attribution.md](../adr/fnb-buffet-cost-attribution.md) · [chef-ready backlog](../adr/fnb-buffet-chef-ready-backlog.md); Waves 5–6 + Phase A–D + chef-ready Finance SCREEN `/inventory/buffet-food-cost` — outlet CatalogField, mismatch banner, SKU variance, Print, INVENTORY_GT hide-until-WH, `#warehouses`→FOOD filter, ISSUES_ONLY → audits/settings; lab seed + unsigned punchlist. UAT open — **not SHOW / not sell**. Does not move Finance Gate/BE/Pilot/edition.
 
 ## Sell / show rules
 

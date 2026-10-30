@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  getSatelliteSession,
-  requireClinicPermission,
-  handleRouteError,
-} from "@/lib/api-utils";
+import { jsonOk, getSatelliteSession, requireClinicPermission, handleRouteError } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 import { issueGuestQrToken } from "@era/satellite-kit";
@@ -31,7 +27,7 @@ export async function POST(request: Request) {
     if (!issued) {
       return NextResponse.json({ error: "issue failed" }, { status: 502 });
     }
-    return NextResponse.json({
+    return jsonOk({
       globalPersonId: patient.globalPersonId,
       ...issued,
     });

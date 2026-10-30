@@ -696,7 +696,9 @@
     "wfRequests": "Sorğular",
     "wfHrSettings": "Kadr tənzimləri",
     "wfMe": "Kabinetim",
-    "orgProfile": "Təşkilat profili"
+    "orgProfile": "Təşkilat profili",
+    "wfJobArchitecture": "Vəzifə arxitekturası",
+    "wfOrgChart": "Təşkilat strukturu (sxem)"
   },
   "headerStrip": {
     "trialUntil": "Sınaq dövrü {date}-dək",
@@ -1364,7 +1366,10 @@
       "MISSING": "Yoxdur",
       "PRESENT": "Var",
       "EXPIRED": "Vaxtı keçib"
-    }
+    },
+    "fieldLineManager": "Birbaşa rəhbər",
+    "fieldMatrixManager": "Matris rəhbər",
+    "managerEmpty": "Rəhbər yoxdur"
   },
   "workforceSecurity": {
     "title": "Giriş və təhlükəsizlik — rol matrisi",
@@ -1547,7 +1552,16 @@
     "commercialLinkUnit": "Struktur vahidi",
     "commercialLinkRoot": "Bütün kontur (kök)",
     "commercialLinkSave": "Linki saxla",
-    "commercialLinkOk": "Bağlantı saxlanıldı."
+    "commercialLinkOk": "Bağlantı saxlanıldı.",
+    "fieldUnitKind": "Vahid növü",
+    "fieldManager": "Şöbə rəhbəri",
+    "managerEmpty": "Rəhbər yoxdur",
+    "unitKind": {
+      "COMPANY": "Şirkət",
+      "DIVISION": "Divizion",
+      "DEPARTMENT": "Şöbə",
+      "TEAM": "Komanda"
+    }
   },
   "workforcePositions": {
     "title": "Kadrlar — vəzifələr",
@@ -1589,7 +1603,11 @@
     "filterAll": "Hamısı",
     "statusActive": "Aktiv",
     "statusArchived": "Arxiv",
-    "goOrg": "Təşkilati struktur"
+    "goOrg": "Təşkilati struktur",
+    "fieldJob": "Vəzifə kataloqu",
+    "fieldParentPosition": "Yuxarı vəzifə",
+    "jobEmpty": "Kataloq yoxdur",
+    "parentPositionEmpty": "Valideyn yoxdur"
   },
   "workforceAbsences": {
     "title": "Buraxılışlar",
@@ -2358,15 +2376,21 @@
       "VACATION": "Məzuniyyət planı"
     },
     "step": {
-      "REQUESTER_MANAGER": "Rəhbər",
-      "ORG_UNIT_HEAD": "Vahidin rəhbəri",
-      "POSITION_IN_UNIT": "Vahiddə vəzifə"
+      "REQUESTER_MANAGER": "Sorğu göndərənin rəhbəri",
+      "ORG_UNIT_HEAD": "Şöbə rəhbəri",
+      "POSITION_IN_UNIT": "Şöbədə vəzifə",
+      "MANAGER_CHAIN": "Rəhbər zənciri",
+      "POSITION_HOLDER": "Vəzifə sahibi",
+      "MATRIX_MANAGER": "Matris rəhbər",
+      "GRADE_AT_LEAST": "Minimum dərəcə"
     },
     "audienceKind": {
       "ALWAYS": "Həmişə",
       "LEADERSHIP": "Yalnız rəhbər vəzifələr",
       "ORDINARY": "Yalnız adi vəzifələr"
-    }
+    },
+    "chainOffset": "Rəhbər zənciri (standart 2)",
+    "minGradeLevel": "Minimum dərəcə səviyyəsi"
   },
   "orgProfile": {
     "title": "Təşkilat profili",
@@ -2397,5 +2421,53 @@
     "purpose": "Məqsəd",
     "contactValue": "Dəyər",
     "addressKind": "Növ"
+  },
+  "workforceJobArchitecture": {
+    "title": "Vəzifə arxitekturası",
+    "subtitle": "Dərəcələr və vəzifə kataloqu — ştat və təsdiq üçün.",
+    "tab": "Kataloq",
+    "tabGrades": "Dərəcələr",
+    "tabJobs": "Vəzifələr",
+    "addGrade": "Dərəcə əlavə et",
+    "addJob": "Vəzifə əlavə et",
+    "filterSearch": "Axtarış",
+    "colCode": "Kod",
+    "colName": "Ad",
+    "colLevel": "Səviyyə",
+    "colStatus": "Status",
+    "colActions": "Əməliyyatlar",
+    "colFamily": "Ailə",
+    "colGrade": "Dərəcə",
+    "statusActive": "Aktiv",
+    "statusArchived": "Arxiv",
+    "statusAll": "Bütün statuslar",
+    "loading": "Yüklənir…",
+    "empty": "Hələ heç nə yoxdur.",
+    "createGrade": "Yeni dərəcə",
+    "editGrade": "Dərəcəni redaktə et",
+    "createJob": "Yeni vəzifə",
+    "editJob": "Vəzifəni redaktə et",
+    "fieldCode": "Kod",
+    "fieldName": "Ad",
+    "fieldLevel": "Səviyyə",
+    "fieldFamily": "Vəzifə ailəsi",
+    "fieldGrade": "Dərəcə",
+    "gradeEmpty": "Dərəcə yoxdur",
+    "archive": "Arxivlə",
+    "archiveGradeTitle": "Dərəcəni arxivlə",
+    "archiveGradeMsg": "“{name}” dərəcəsini arxivləmək? Ona bağlı vəzifələr əvvəlcə dəyişdirilməlidir.",
+    "archiveJobTitle": "Vəzifəni arxivlə",
+    "archiveJobMsg": "“{name}” vəzifəsini arxivləmək?"
+  },
+  "workforceOrgChart": {
+    "title": "Təşkilat sxemi",
+    "subtitle": "Vahidlər, vəzifələr və ya hesabat xətləri üzrə oxuma rejimində ağac.",
+    "mode": "Rejim",
+    "modeUnits": "Org vahidləri",
+    "modePositions": "Vəzifələr",
+    "modePeople": "İşçilər",
+    "loading": "Yüklənir…",
+    "empty": "Bu rejim üçün düyün yoxdur.",
+    "orphans": "Valideyni olmayan düyünlər"
   }
 }

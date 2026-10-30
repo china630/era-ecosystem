@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { handleRouteError } from "@/lib/api-utils";
+import { jsonOk, handleRouteError } from "@/lib/api-utils";
 
 export async function POST(
   request: Request,
@@ -36,7 +36,7 @@ export async function POST(
       include: { lines: true, table: true, outlet: true },
     });
 
-    return NextResponse.json({
+    return jsonOk({
       ticket: updated,
       firedCount: result.count,
     });

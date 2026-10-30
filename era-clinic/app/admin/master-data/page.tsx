@@ -98,6 +98,7 @@ type ProcedureType = {
   resourceCode?: string | null;
   bodyPart?: string | null;
   needsSite?: boolean;
+  openAttendance?: boolean;
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
   extendedEndHour?: number | null;
@@ -208,6 +209,7 @@ export default function MasterDataPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [needsSite, setNeedsSite] = useState(true);
+  const [openAttendance, setOpenAttendance] = useState(false);
   const [needsExtraFields, setNeedsExtraFields] = useState(false);
   const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
   const [allowedSiteCodes, setAllowedSiteCodes] = useState<string[]>([]);
@@ -522,6 +524,7 @@ export default function MasterDataPage() {
     setFinanceServiceQ("");
     setSkillCoverageMsg(null);
     setNeedsSite(true);
+    setOpenAttendance(false);
     setNeedsExtraFields(false);
     setPhysioOrderFields([]);
     setAllowedSiteCodes([]);
@@ -617,6 +620,7 @@ export default function MasterDataPage() {
       financeSku: row.financeSku?.trim() || row.code,
     });
     setNeedsSite(row.needsSite !== false);
+    setOpenAttendance(row.openAttendance === true);
     setPhysioOrderFields(row.physioOrderFields ?? []);
     setNeedsExtraFields((row.physioOrderFields ?? []).length > 0);
     setAllowedSiteCodes(row.allowedSiteCodes ?? []);
@@ -729,6 +733,7 @@ export default function MasterDataPage() {
           patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
           bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
           needsSite,
+          openAttendance,
           physioOrderFields,
           allowedSiteCodes,
           extendedEndHour: form.extendedEndHour?.trim()
@@ -770,6 +775,7 @@ export default function MasterDataPage() {
         patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
         needsSite,
+        openAttendance,
         physioOrderFields,
         allowedSiteCodes,
         extendedEndHour: form.extendedEndHour?.trim()
@@ -1522,6 +1528,18 @@ export default function MasterDataPage() {
                 />
                 {t("needsSite")}
               </label>
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={openAttendance}
+                  onChange={(e) => setOpenAttendance(e.target.checked)}
+                />
+                {t("openAttendance")}
+              </label>
+              {openAttendance ? (
+                <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("openAttendanceHint")}</p>
+              ) : null}
               {needsSite ? (
                 <CatalogMultiAdder
                   label={t("allowedSiteCodes")}

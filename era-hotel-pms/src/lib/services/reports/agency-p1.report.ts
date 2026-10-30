@@ -85,6 +85,29 @@ export async function queryAgencyAnalysis(from: Date, to: Date): Promise<AgencyA
     string,
     { code: string; name: string; nights: number; revenue: number; commission: number; commPct: number }
   >();
+  // Prefer durable AgencyCommissionLine amounts when present (HOT-AG-COMM SoR).
+  const accruedByRes = new Map<string, number>();
+  try {
+    const { prisma } = await import('@/lib/prisma');
+    const { decimalToNumber } = await import('@/lib/decimal');
+    const lines = await prisma.agencyCommissionLine.findMany({
+      where: {
+        reservationId: { in: reservations.map((r) => r.id) },
+        status: { notIn: ['VOID'] },
+      },
+      select: { reservationId: true, amount: true, status: true },
+    });
+    for (const line of lines) {
+      if (line.status === 'SKIPPED_NET') continue;
+      accruedByRes.set(
+        line.reservationId,
+        (accruedByRes.get(line.reservationId) ?? 0) + decimalToNumber(line.amount),
+      );
+    }
+  } catch {
+    // Reports still work before migrate / when table missing in test.
+  }
+
   for (const r of reservations) {
     if (!r.agency) continue;
     const code = r.agency.code;
@@ -92,7 +115,12 @@ export async function queryAgencyAnalysis(from: Date, to: Date): Promise<AgencyA
       r.salesContract?.commissionPercent ?? r.agency.commissionPercent ?? 0,
     );
     const revenue = Number(r.totalAmount);
-    const commission = r.commissionBasis === 'NET' ? 0 : (revenue * pct) / 100;
+    const commission =
+      accruedByRes.has(r.id)
+        ? accruedByRes.get(r.id)!
+        : r.commissionBasis === 'NET'
+          ? 0
+          : (revenue * pct) / 100;
     const e =
       map.get(code) ??
       { code, name: r.agency.name, nights: 0, revenue: 0, commission: 0, commPct: pct };
@@ -549,6 +577,28 @@ export async function queryAgencyProfitability(from: Date, to: Date): Promise<Ag
   const end = addDays(dayStart(toIso(to)), 1);
   const reservations = await fetchReservations(start, end);
 
+  const accruedByRes = new Map<string, number>();
+  try {
+    const { prisma } = await import('@/lib/prisma');
+    const { decimalToNumber } = await import('@/lib/decimal');
+    const lines = await prisma.agencyCommissionLine.findMany({
+      where: {
+        reservationId: { in: reservations.map((r) => r.id) },
+        status: { notIn: ['VOID'] },
+      },
+      select: { reservationId: true, amount: true, status: true },
+    });
+    for (const line of lines) {
+      if (line.status === 'SKIPPED_NET') continue;
+      accruedByRes.set(
+        line.reservationId,
+        (accruedByRes.get(line.reservationId) ?? 0) + decimalToNumber(line.amount),
+      );
+    }
+  } catch {
+    // ok before migrate
+  }
+
   const map = new Map<
     string,
     { code: string; name: string; nights: number; revenue: number; commission: number; commPct: number }
@@ -558,7 +608,12 @@ export async function queryAgencyProfitability(from: Date, to: Date): Promise<Ag
     const code = r.agency.code;
     const pct = Number(r.salesContract?.commissionPercent ?? r.agency.commissionPercent ?? 0);
     const revenue = Number(r.totalAmount);
-    const commission = r.commissionBasis === 'NET' ? 0 : (revenue * pct) / 100;
+    const commission =
+      accruedByRes.has(r.id)
+        ? accruedByRes.get(r.id)!
+        : r.commissionBasis === 'NET'
+          ? 0
+          : (revenue * pct) / 100;
     const e =
       map.get(code) ??
       { code, name: r.agency.name, nights: 0, revenue: 0, commission: 0, commPct: pct };

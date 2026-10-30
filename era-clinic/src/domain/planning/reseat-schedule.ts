@@ -196,7 +196,7 @@ export async function applyReseatFuturePlan(input: {
     });
     pins[row.orderId] = target;
   }
-  const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+  const { placeOrPinOrders } = await import("@/domain/procedure/place-or-pin-orders");
   const bathIds = loaded.preview
     .filter((row) => bathCodes.has(row.procedureCode) && pins[row.orderId])
     .map((row) => row.orderId);
@@ -207,7 +207,7 @@ export async function applyReseatFuturePlan(input: {
   for (const ids of [bathIds, otherIds]) {
     if (ids.length === 0) continue;
     const pinYmdByOrderId = Object.fromEntries(ids.map((id) => [id, pins[id]!]));
-    const result = await placeConfirmedProcedures(ids, { pinYmdByOrderId });
+    const result = await placeOrPinOrders(ids, { pinYmdByOrderId });
     placedIds.push(...result.placedIds);
     for (const fail of result.failures) {
       misses.push({

@@ -45,7 +45,7 @@ function LoginForm() {
         return;
       }
       if (org) persistLoginOrgNo(org);
-      assignNoStoreRedirect("/");
+      assignNoStoreRedirect("/select-outlet");
     } finally {
       setBusy(false);
     }

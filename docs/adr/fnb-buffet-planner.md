@@ -13,23 +13,29 @@ Sanatorium and canteen operations need a production plan per meal (covers → st
 
 1. **Commercial taxonomy:** Buffet Planner is a **module** of the F&B **satellite** (same pattern as `fnb_kitchen_kds`), not a satellite and not a platform add-on. Gate remains `industry_fnb_pos`.
 2. **Price:** 39 AZN/month in `pricing_modules`.
-3. **Covers:** manual-first (chef/manager enters or uses templates). Optional hotel covers pull when the org has hotel bridge/`hotelMode` — never a hard entitlement precondition.
+3. **Covers:** Spawn applies **Hotel pull | Manual** (manual = one adult+child for the week into all slots). Hotel guest-nights sync from PMS `pax` series (`source: HOTEL`). Never a hard entitlement precondition when hotel is down — warn + Manual.
 4. **Outlet = café:** each F&B `Outlet` has its own menu categories/items and its own buffet plans (Nafta: several cafés in one org).
 5. **Daily menu:** optional “publish plan lines to daily board” for that outlet/date — **merge** (upsert) dishes onto the board; never wipe other meals’ rows for the same date. Daily-menu is not the SKU packaging.
 6. **Materials:** explode Finance BOM via `MenuItem.recipeSku` / `financeSku`; balances and purchase drafts live in Finance. F&B does not store stock quantities.
 7. **Related debt:** `FIN-INV-SCOPE-01` — warehouse data-scope so a chef sees only kitchen/café warehouses.
+8. **Cost attribution (separate ADR):** buffet food cost, staff overlap, management covers, warehouse classes, and COGS posting modes — [fnb-buffet-cost-attribution.md](./fnb-buffet-cost-attribution.md). Planner remains production planning; residual/HYBRID cost runs live in Finance.
 
 ## Consequences
 
-- Nav `/admin/buffet` and APIs require `fnb_buffet_planner` in `activeModules` when modules are metered (same rule as KDS).
-- UI: **master Plans table** (full width) + ModalShell for plan header, composition (lines + lifecycle + materials + publish), and line CRUD. Icons: edit · composition (`ClipboardList`) · copy. Default date filter = today…today+6 (Asia/Baku). Status filter on list. Copy = `POST …/plans/:id/copy` (DRAFT, default today) then open header modal; unique `(outlet, date, meal)` → 409 `PLAN_SLOT_TAKEN`. Empty composition can pull lines from the last same-meal plan (`…/copy-lines-from-last`).
-- Second café = new `Outlet` via `/admin/settings` (`POST /api/outlets`, optional `copyFromOutletId` copies menu + halls + tables) — not from Buffet screen. Duplicate outlet code → 409.
-- Product-Readiness / edition `ga` stay closed until Pilot UAT; COVERAGE stays API/SCREEN until FB-5 sign-off.
+- Nav: Buffet **submenu** under `fnb_buffet_planner` — Planlar `/admin/buffet`, Şablonlar `/admin/buffet/templates`, Rəhbərlik `/admin/buffet/management`, Proqnoz `/admin/buffet/forecast`, Normalar `/admin/buffet/norms`, Maya dəyəri `/admin/buffet/cost-run`. Staff is **not** a separate nav item — filter by template/plan `kind` (`GUEST` | `STAFF`). Overlap Personal↔buffet lives in Settings only. On buffet routes, shell hides till/floor café ops even if outlet has `till`.
+- **Shared chrome:** `PageHeader.actions` for primary CTAs; `BuffetPageChrome` = filter panel only (outlet/dates/kind/status grid). Nav group: sentence case, collapses when leaving `/admin/buffet/*`. Settings → Buffet integrations stores **Finance web URL** only (Open Finance deep-link). Hotel guest-nights S2S = `resolvePeerSatelliteBaseUrl` (ADR peer-url); HR leadership = orch `resolveOrchestratorBaseUrl` + hub/parent workforce org — not Settings Hotel/Orch URL fields.
+- **Week templates:** **list table** + `ModalShell` create/edit; `kind` + `active` + notes; create seeds 21 slots (Mon–Sun × meal); slot editor = menu categories × multi-select dishes; station hidden (`MAIN`); waste from TTK else 0. Soft archive via `active=false`.
+- **Spawn (Planlar):** primary CTA week spawn; secondary one plan; template + week Monday + covers Hotel|Manual + `productionFactorPct` (guest default 80, staff 100 from buffet-cost settings; Spawn may override). `plannedPortions = round(covers × factor/100)`. Factor ≠ `wastePct` ≠ `staffBuffetOverlap.overlapPct`. Empty slots warn, do not block.
+- Plans UI: master table + ModalShell header/composition/line; compact filters; default outlet **NAFTANI** when present. Copy / `PLAN_SLOT_TAKEN` / copy-lines-from-last unchanged. Never invent outlet code `RESTAURANT` (ops: `scripts/ops/kill-restaurant-outlet.ts`).
+- **Management:** date × meal grid; PageHeader CTAs Bufet yeyənlər + Bu gün imzala; today-Baku sign from buffet eaters roster (orch `position.leadership` on hub/parent + self org + include/exclude); if orch down → `ORCH_UNAVAILABLE` + manual add honesty. Past days locked except café admin/chef. Management eats guest buffet — no dish template.
+- **Proqnoz / Normalar / Maya:** guest-nights calendar + hotel sync via peer (`HOTEL_UNAVAILABLE` → manual; toast must not ask for Settings Hotel URL); norms SKU/bands + **Saxla** in chrome; Maya = refresh primary → blockers («Əvvəl doldur») before zero cards → Finance secondary; model badge only when ≠ `HYBRID`.
+- Second café = Settings outlets create — not from Buffet. Product-Readiness / `ga` closed until Pilot UAT; COVERAGE API/SCREEN until FB-5 **signed**.
 
 ## Out of scope (v1)
 
 - Stock ledger inside F&B  
-- Hard-require hotel  
+- Hard-require hotel (pull preferred; Manual fallback)  
 - Auto-PO without approval  
 - Merging SKU into daily-menu  
-- Week bulk-copy of plans  
+- Per-dish take rates / staging batches  
+- Full job grade catalog (see [cp-workforce-job-architecture.md](./cp-workforce-job-architecture.md))  

@@ -1,3 +1,4 @@
+import { jsonOk } from "@/lib/api-utils";
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServiceRequest } from '@/lib/services/service-work-order.service';
@@ -38,5 +39,5 @@ export async function POST(req: Request) {
     category: 'guest_request',
     priority: 'NORMAL',
   });
-  return NextResponse.json({ ok: true, id: row.id }, { status: 201 });
+  return jsonOk({ ok: true, id: row.id }, 201);
 }

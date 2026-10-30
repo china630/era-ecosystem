@@ -104,6 +104,8 @@ export class WorkforceProvisionService {
       pin?: string;
       login?: string;
       commercialOrganizationId?: string;
+      managerEmploymentId?: string | null;
+      matrixManagerEmploymentId?: string | null;
     },
   ) {
     await this.entitlement.assertWorkforceHub(organizationId);
@@ -130,6 +132,21 @@ export class WorkforceProvisionService {
       include: { orgUnit: true },
     });
     if (!position) throw new NotFoundException("Position not found");
+
+    for (const mid of [dto.managerEmploymentId, dto.matrixManagerEmploymentId]) {
+      if (!mid) continue;
+      const other = await this.prisma.workforceEmployment.findFirst({
+        where: {
+          id: mid,
+          organizationId,
+          status: WorkforceEmploymentStatus.ACTIVE,
+        },
+        select: { id: true },
+      });
+      if (!other) {
+        throw new BadRequestException("Manager employment not found in organization");
+      }
+    }
 
     const entitledKeys = await this.resolveEntitledSatellites(
       organizationId,
@@ -183,6 +200,12 @@ export class WorkforceProvisionService {
           status: WorkforceEmploymentStatus.ACTIVE,
           commercialOrganizationId:
             dto.commercialOrganizationId?.trim() || organizationId,
+          ...(dto.managerEmploymentId
+            ? { managerEmploymentId: dto.managerEmploymentId }
+            : {}),
+          ...(dto.matrixManagerEmploymentId
+            ? { matrixManagerEmploymentId: dto.matrixManagerEmploymentId }
+            : {}),
         },
         include: { orgUnit: true, position: true },
       });

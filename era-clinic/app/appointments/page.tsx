@@ -178,8 +178,6 @@ export default function AppointmentsPage() {
   const matrixLabels = {
     free: t("matrixFree"),
     empty: t("matrixEmpty"),
-    move: t("matrixMove"),
-    cancel: t("cancelVisit"),
     staff: t("practitioner"),
     now: t("matrixNow"),
     dragHint: t("dragHint"),
@@ -188,6 +186,7 @@ export default function AppointmentsPage() {
     legendCompleted: t("legendCompleted"),
     legendBlocked: t("legendBlocked"),
     legendLunch: t("legendLunch"),
+    statusLabel: (status: string) => status,
   };
 
   return (
@@ -269,11 +268,6 @@ export default function AppointmentsPage() {
             onFreeClick={(id, time) => openCreate(id, time)}
             onDragStart={setDragId}
             onSelect={openDetail}
-            onMove={openDetail}
-            onCancel={(id) => {
-              setDetail({ appointmentId: id });
-              setCancelOpen(true);
-            }}
           />
         )}
       </div>

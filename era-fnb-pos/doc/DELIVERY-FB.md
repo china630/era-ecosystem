@@ -79,11 +79,12 @@ node scripts/quartet-smoke.mjs
 - [x] M12: Recipe depletion on ticket close (link Finance manufacturing)
 - [x] M13: Delivery aggregator order inbox
 - [~] M15: Buffet Planner (`fnb_buffet_planner`) — `/admin/buffet` master Plans table + header/composition/copy modals; list aggregates; `POST …/copy` (+ slot-taken retry); materials + publish→daily board; UAT FB-5 open (API/SCREEN, not SHIPPED). ADR `docs/adr/fnb-buffet-planner.md`
-- [~] FNB-AUD-01: Mutation audit Layer A via `jsonOk` + `/admin/audit` (`HTTP_MUTATION`); UAT open — not SHIPPED. ADR `docs/adr/era-mutation-audit-standard.md`
+- [~] FNB-AUD-01: Mutation audit Layer A via `jsonOk` + fail-closed CI; Layer B PAY/DISCOUNT/ROOM_CHARGE + PosShift OPEN/CLOSE + `/admin/audit`; UAT open — not SHIPPED. ADR `docs/adr/era-mutation-audit-standard.md`
 
 ## Planned — v1.1
 
 - [x] M14: Labor roster PIN
+- [ ] M16: Buffet cost attribution (HYBRID/residual, staff overlap, management covers, warehouse classes) — ADR + waves; Waves 1–6 F&B + Finance FOOD HYBRID + non-FOOD budget (`FNB-BUFFET-COST-01` API/SCREEN) — UAT open; not sellable
 
 ## Platform session (v1.0)
 

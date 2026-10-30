@@ -27,7 +27,10 @@ import {
   CreateWorkforceEmploymentDto,
   ListWorkforceEmploymentsQueryDto,
 } from "./dto/workforce-employment.dto";
-import { TransferEmploymentDto } from "./dto/workforce-org.dto";
+import {
+  TransferEmploymentDto,
+  UpdateEmploymentReportingDto,
+} from "./dto/workforce-org.dto";
 import { HireWorkforceEmploymentDto } from "./dto/workforce-provision.dto";
 import { ReprovisionEmploymentDto } from "./dto/workforce-reprovision.dto";
 import { WorkforceEmploymentsService } from "./workforce-employments.service";
@@ -110,6 +113,18 @@ export class WorkforceEmploymentsController {
       contractEndDate: dto.contractEndDate,
       workRegime: dto.workRegime,
     });
+  }
+
+  @Patch(":id/reporting")
+  @RequirePermissions(CP_PERMISSION.API_WORKFORCE_HIRE)
+  @ApiOperation({ summary: "Solid and matrix manager overrides" })
+  updateReporting(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @CurrentUser() user: EraJwtPayload,
+    @Body() dto: UpdateEmploymentReportingDto,
+  ) {
+    return this.employments.updateReporting(organizationId, id, user.sub, dto);
   }
 
   @Post("hire")

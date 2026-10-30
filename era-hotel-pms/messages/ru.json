@@ -167,7 +167,8 @@
     "unsettledDepartures": "Незакрытые выезды (CL)",
     "hkStaffGroup": "Персонал HK",
     "hkMinibarGroup": "Минибар",
-    "hkGuestServicesGroup": "Гостевые услуги"
+    "hkGuestServicesGroup": "Гостевые услуги",
+    "agencyCommission": "Комиссия агентств"
   },
   "foStatus": {
     "title": "Статус отеля",
@@ -778,8 +779,9 @@
     "ledgerPayment": "Оплата",
     "actions": "Действия",
     "rowMenu": "…",
-    "nightAuditNote": "Ночной аудит — проживание {date}",
-    "manualRoomNote": "Ручная проводка номера {date}",
+    "nightAuditNote": "Ночной аудит",
+    "manualRoomNote": "Ручная проводка номера",
+    "packageNightNote": "Медпакет",
     "pickTerminal": "Выберите терминал",
     "partyGuest": "Счёт гостя",
     "transfer": "Перенос",
@@ -880,7 +882,13 @@
     "agencyOwes": "Долг агентства",
     "payOpenDebtHint": "Статьи с открытым долгом сверху. Сначала закройте их, потом кредит.",
     "allowCreditWhileDebtHint": "Записать как кредит / предоплату, хотя по другим статьям ещё есть долг.",
-    "paymentArticleNoOpenDebtToast": "Выберите статью с долгом или подтвердите кредит / предоплату."
+    "paymentArticleNoOpenDebtToast": "Выберите статью с долгом или подтвердите кредит / предоплату.",
+    "colDebit": "Дебет",
+    "colCredit": "Кредит",
+    "chargeBadge": "Нач",
+    "voidBadge": "Аннул",
+    "manualChargeDenied": "Эту статью нельзя провести как доп. начисление.",
+    "manualPaymentDenied": "По этой статье нельзя принять ручной платёж или кредит."
   },
   "operations": {
     "title": "Операции",
@@ -2348,6 +2356,8 @@
     "entity_CityLedgerSnapshot": "Снимок city ledger",
     "entity_OpsWipe": "Операционная очистка",
     "entity_Reservation": "Бронь",
+    "entity_CashShift": "Кассовая смена",
+    "entity_BusinessDay": "Опердень (ночной аудит)",
     "entity_PriceSeason": "Сезон цен"
   },
   "closedRoomList": {
@@ -3346,7 +3356,9 @@
     "settlementStatus_NOT_APPLICABLE": "н/д",
     "financeOnlySettlementBanner": "City Ledger компании оплачивается только в Finance — на стойке отеля CL-деньги не принимают.",
     "financeOnlySettlementBannerAgency": "City Ledger агентства оплачивается только в Finance — на стойке отеля CL-деньги не принимают.",
-    "unsettledDeparturesLink": "Незакрытые выезды (повтор счёта / push snapshot)"
+    "unsettledDeparturesLink": "Незакрытые выезды (повтор счёта / push snapshot)",
+    "commissionPayableLink": "Комиссия агентствам (AP)",
+    "commissionPayableBanner": "Комиссия, которую мы должны агентствам, не на этом City Ledger. Distribution → Agency commission."
   },
   "masterData": {
     "code": "Код",
@@ -3456,7 +3468,9 @@
       "WALKIN_PROFILE": "Профиль walk-in",
       "NATIONALITY": "Гражданство",
       "RESERVATION_QUEUE": "Очереди списка броней"
-    }
+    },
+    "allowManualCharge": "Разрешить доп. начисление",
+    "allowManualPayment": "Разрешить доп. оплату"
   },
   "opsWipe": {
     "title": "Очистка операционных данных",
@@ -3562,7 +3576,10 @@
       "logoRemove": "Удалить логотип",
       "logoNone": "Логотипа нет",
       "logoTooLarge": "Файл больше 512 КБ.",
-      "logoWrongType": "Выберите файл PNG или JPEG."
+      "logoWrongType": "Выберите файл PNG или JPEG.",
+      "cpBanner": "Адрес, телефон, email, сайт и логотип берутся из профиля организации Control Plane после Sync. printName и вместимость по койкам остаются локальными для отеля.",
+      "cpFieldLocked": "Ведётся в профиле организации (Control Plane).",
+      "cpLogoLocked": "Логотип ведётся в профиле организации Control Plane."
     }
   },
   "logins": {
@@ -3663,7 +3680,7 @@
     "revenueRole": {
       "ROOM": "Ночь проживания",
       "BOARD": "Питание в пакете",
-      "PKG": "Ночь пакета",
+      "PKG": "Пакетная ночь",
       "TREATMENT": "Лечение в пакете",
       "RATE_ADJ": "Корректировка тарифа",
       "EARLY_CI": "Ранний заезд",
@@ -3671,12 +3688,32 @@
       "MINIBAR": "Минибар",
       "LAUNDRY": "Прачечная",
       "TRANSFER": "Трансфер",
-      "TOUR": "Тур",
+      "TAXI": "Такси",
+      "TOUR": "Экскурсия",
       "BANQUET": "Банкет",
-      "FOOD": "Еда через консьержа",
-      "MEDICAL": "Процедуры, которые ставит отель",
-      "DISCOUNT": "Скидка на фолио",
-      "CITY_TAX": "Туристический сбор"
+      "SPA": "SPA / wellness",
+      "PARKING": "Парковка",
+      "CXL_NOSHOW": "Отмена / no-show",
+      "DAMAGE": "Ущерб / потеря",
+      "OTHER": "Прочая услуга",
+      "FOOD": "Еда",
+      "BEVERAGE": "Напитки",
+      "ALCOHOL": "Алкоголь",
+      "TOBACCO": "Табак",
+      "HALL": "Аренда зала",
+      "ENTERTAINMENT": "Развлечения",
+      "FB_DISCOUNT": "Скидка F&B",
+      "MEDICAL": "Процедуры (legacy)",
+      "PROCEDURE": "Процедуры",
+      "DOCTOR": "Приём врача",
+      "DIAGNOSTIC": "Диагностика",
+      "LAB": "Лаборатория",
+      "PHARMA": "Лекарства",
+      "CLINIC_DISCOUNT": "Скидка клиники",
+      "DISCOUNT": "Скидка отеля",
+      "CITY_TAX": "Туристический сбор",
+      "TELECOM": "Telecom",
+      "RESORT_FEE": "Resort fee"
     },
     "noGlMappings": "Кодов дохода нет. Сначала добавьте их в основных данных.",
     "platformSubscriptionReadonlyBadge": "Только чтение"
@@ -4721,5 +4758,56 @@
     "autoCutoffMinutes": "Минут до сбора",
     "allowOverbook": "Разрешить overbook на резерве (жёсткий лимит на посаженных)",
     "dropUnboardedOnClose": "Снимать непосаженных при закрытии посадки"
+  },
+  "agencyCommission": {
+    "title": "Комиссия агентств",
+    "subtitle": "Отель должен агентствам — AP, не City Ledger AR",
+    "arBanner": "City Ledger агентства (они нам должны) отдельно:",
+    "openAgencyLedger": "Открыть agency ledger",
+    "financeOnlyPay": "Комиссия оплачивается только в Finance (AP).",
+    "tab_summary": "Сводка",
+    "tab_lines": "Ведомость",
+    "tab_forecast": "Прогноз",
+    "agency": "Агентство",
+    "agencyAll": "Все агентства",
+    "pickAgency": "Сначала выберите агентство",
+    "rebuild": "Пересчитать из CHECKED_OUT",
+    "markReady": "READY для выбранных",
+    "submitToFinance": "Отправить batch в Finance",
+    "markedReady": "Marked {count} line(s) READY",
+    "batchSubmitted": "Commission batch submitted to Finance",
+    "rebuilt": "Rebuilt {count}",
+    "hold": "Hold",
+    "dispute": "Спор",
+    "release": "Снять",
+    "holdReasonPrompt": "Причина hold",
+    "disputeReasonPrompt": "Причина спора",
+    "held": "Строка на hold",
+    "disputed": "Строка в споре",
+    "released": "Hold/спор снят",
+    "colCode": "Код",
+    "colName": "Name",
+    "colPct": "%",
+    "colPayable": "Payable",
+    "colAccrued": "Accrued",
+    "colReady": "Ready",
+    "colPaid": "Paid",
+    "colLines": "Lines",
+    "colSelect": "",
+    "colStay": "Stay",
+    "colGuest": "Guest",
+    "colFrom": "From",
+    "colTo": "To",
+    "colBase": "Room base",
+    "colAmount": "Commission",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "colStays": "Stays",
+    "colNights": "Nights",
+    "colRevenue": "Revenue",
+    "colEstCommission": "Est. commission",
+    "emptySummary": "Нет начислений за период",
+    "emptyLines": "Нет строк",
+    "emptyForecast": "Нет прогнозных ночей"
   }
 }

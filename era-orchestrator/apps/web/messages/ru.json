@@ -696,7 +696,9 @@
     "wfRequests": "Заявки",
     "wfHrSettings": "Кадровые настройки",
     "wfMe": "Мой кабинет",
-    "orgProfile": "Профиль организации"
+    "orgProfile": "Профиль организации",
+    "wfJobArchitecture": "Архитектура должностей",
+    "wfOrgChart": "Оргсхема"
   },
   "headerStrip": {
     "trialUntil": "Пробный период до {date}",
@@ -1364,7 +1366,10 @@
       "MISSING": "Нет",
       "PRESENT": "Есть",
       "EXPIRED": "Просрочено"
-    }
+    },
+    "fieldLineManager": "Линейный руководитель",
+    "fieldMatrixManager": "Матричный руководитель",
+    "managerEmpty": "Без руководителя"
   },
   "workforceSecurity": {
     "title": "Доступ и безопасность — матрица ролей",
@@ -1547,7 +1552,16 @@
     "commercialLinkUnit": "Подразделение",
     "commercialLinkRoot": "Весь контур (корень)",
     "commercialLinkSave": "Сохранить связь",
-    "commercialLinkOk": "Связь сохранена."
+    "commercialLinkOk": "Связь сохранена.",
+    "fieldUnitKind": "Тип подразделения",
+    "fieldManager": "Руководитель подразделения",
+    "managerEmpty": "Без руководителя",
+    "unitKind": {
+      "COMPANY": "Компания",
+      "DIVISION": "Дивизион",
+      "DEPARTMENT": "Отдел",
+      "TEAM": "Команда"
+    }
   },
   "workforcePositions": {
     "title": "Кадры — должности",
@@ -1588,7 +1602,11 @@
     "filterAll": "Все",
     "statusActive": "Активна",
     "statusArchived": "В архиве",
-    "goOrg": "Оргструктура"
+    "goOrg": "Оргструктура",
+    "fieldJob": "Каталог работ",
+    "fieldParentPosition": "Родительская должность",
+    "jobEmpty": "Без каталога",
+    "parentPositionEmpty": "Без родителя"
   },
   "workforceAbsences": {
     "title": "Отсутствия",
@@ -2358,14 +2376,20 @@
     },
     "step": {
       "REQUESTER_MANAGER": "Руководитель заявителя",
-      "ORG_UNIT_HEAD": "Руководитель подразделения",
-      "POSITION_IN_UNIT": "Должность в подразделении"
+      "ORG_UNIT_HEAD": "Глава подразделения",
+      "POSITION_IN_UNIT": "Должность в подразделении",
+      "MANAGER_CHAIN": "Цепочка руководителей",
+      "POSITION_HOLDER": "Держатель должности",
+      "MATRIX_MANAGER": "Матричный руководитель",
+      "GRADE_AT_LEAST": "Грейд не ниже"
     },
     "audienceKind": {
       "ALWAYS": "Всегда",
       "LEADERSHIP": "Только руководящие должности",
       "ORDINARY": "Только рядовые должности"
-    }
+    },
+    "chainOffset": "Смещение цепочки (по умолчанию 2)",
+    "minGradeLevel": "Минимальный уровень грейда"
   },
   "orgProfile": {
     "title": "Профиль организации",
@@ -2396,5 +2420,53 @@
     "purpose": "Назначение",
     "contactValue": "Значение",
     "addressKind": "Тип"
+  },
+  "workforceJobArchitecture": {
+    "title": "Архитектура должностей",
+    "subtitle": "Грейды и каталог работ для штата и согласований.",
+    "tab": "Каталог",
+    "tabGrades": "Грейды",
+    "tabJobs": "Работы",
+    "addGrade": "Добавить грейд",
+    "addJob": "Добавить работу",
+    "filterSearch": "Поиск",
+    "colCode": "Код",
+    "colName": "Название",
+    "colLevel": "Уровень",
+    "colStatus": "Статус",
+    "colActions": "Действия",
+    "colFamily": "Семейство",
+    "colGrade": "Грейд",
+    "statusActive": "Активен",
+    "statusArchived": "Архив",
+    "statusAll": "Все статусы",
+    "loading": "Загрузка…",
+    "empty": "Пока пусто.",
+    "createGrade": "Новый грейд",
+    "editGrade": "Редактировать грейд",
+    "createJob": "Новая работа",
+    "editJob": "Редактировать работу",
+    "fieldCode": "Код",
+    "fieldName": "Название",
+    "fieldLevel": "Уровень",
+    "fieldFamily": "Семейство работ",
+    "fieldGrade": "Грейд",
+    "gradeEmpty": "Без грейда",
+    "archive": "В архив",
+    "archiveGradeTitle": "Архивировать грейд",
+    "archiveGradeMsg": "Архивировать грейд «{name}»? Сначала отвяжите работы, которые на него ссылаются.",
+    "archiveJobTitle": "Архивировать работу",
+    "archiveJobMsg": "Архивировать работу «{name}»?"
+  },
+  "workforceOrgChart": {
+    "title": "Оргсхема",
+    "subtitle": "Деревья подразделений, должностей или линий подчинённости (только чтение).",
+    "mode": "Режим",
+    "modeUnits": "Подразделения",
+    "modePositions": "Должности",
+    "modePeople": "Люди",
+    "loading": "Загрузка…",
+    "empty": "Нет узлов для этого режима.",
+    "orphans": "Узлы без родителя в выборке"
   }
 }
