@@ -13,6 +13,7 @@ import { day1ProgramToastKey } from "@/lib/day1-program-toast";
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
+import { bakuDateDisplay } from "@/lib/baku-day";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -102,8 +103,8 @@ const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
 function formatStayDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+  if (Number.isNaN(d.getTime()) && !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "—";
+  return bakuDateDisplay(iso);
 }
 
 function maskPersonId(id: string | null | undefined): string {

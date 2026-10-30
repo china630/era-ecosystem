@@ -1,4 +1,5 @@
 import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
+import { bakuDateDisplay } from "@/lib/baku-day";
 import { prisma } from "@/lib/prisma";
 import { nightsBetween } from "@/lib/program-quota";
 
@@ -21,7 +22,7 @@ export type EpisodeListItem = {
 };
 
 function bakuDate(d: Date): string {
-  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+  return bakuDateDisplay(d);
 }
 
 export function formatEpisodeLabel(row: {

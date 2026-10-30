@@ -16,7 +16,7 @@ import {
   formatPhysioFieldsPrint,
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
-import { todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
 import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
@@ -100,16 +100,11 @@ export type PrintProceduresDocument = {
 };
 
 function bakuDate(d: Date): string {
-  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+  return bakuDateDisplay(d);
 }
 
 function bakuTime(d: Date): string {
-  return d.toLocaleTimeString("en-GB", {
-    timeZone: "Asia/Baku",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return bakuTimeLabel(d);
 }
 
 export async function buildProceduresPrint(
