@@ -20,6 +20,8 @@ import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
 import { bakuDateTimeLabel, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 import { printLabel } from "@/domain/print/print-labels";
 import type { PrintLang } from "@/domain/print/print-types";
+import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
+import { listPendingDiagnostics } from "@/domain/sanatorium/diagnostics-extras.service";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -245,6 +247,7 @@ export async function getPatientCardSummary(
         patientRefId,
         ...episodeFilter,
         status: { in: ["ORDERED", "COLLECTED", "IN_PROGRESS"] },
+        AND: [labOrderVisibleToLabWhere()],
       },
       orderBy: { createdAt: "desc" },
       take: 20,
@@ -254,6 +257,7 @@ export async function getPatientCardSummary(
         patientRefId,
         ...episodeFilter,
         status: { in: ["RESULT_READY", "PUBLISHED", "COMPLETED"] },
+        AND: [labOrderVisibleToLabWhere()],
         OR: [
           { items: { some: { results: { some: {} } } } },
           { AND: [{ resultJson: { not: null } }, { NOT: { resultJson: { in: ["", "[]"] } } }] },
@@ -319,6 +323,10 @@ export async function getPatientCardSummary(
   );
   const displayProcedureName = (code: string, stored: string) =>
     catalogNames.get(code) || stored;
+
+  const pendingDiagnostics = checklistEpisodeId
+    ? await listPendingDiagnostics(checklistEpisodeId)
+    : [];
 
   return {
     patientRefId,
@@ -401,6 +409,14 @@ export async function getPatientCardSummary(
       code: p.procedureCode,
       amountNet: Number(p.amountNet ?? 0),
       status: p.status,
+    })),
+    pendingDiagnostics: pendingDiagnostics.map((row) => ({
+      id: row.id,
+      kind: row.kind,
+      title: row.title,
+      code: row.serviceCode,
+      amountNet: row.amountNet,
+      status: row.status,
     })),
     intakeChecklist,
     examNotesPreview: examNotes.map((e) => {
@@ -564,9 +580,15 @@ export async function getPatientPlanPage(
   const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
 
   const showUnpaid = showsUnpaidExtraOnPlan(settings.extraProcedureRoute);
+  const unseatedPackage = {
+    status: "PROPOSED" as const,
+    inPackage: true,
+    resourceId: null,
+  };
   const where = {
     patientRefId,
     ...episodeFilter,
+    NOT: unseatedPackage,
     OR: [
       { status: "PROPOSED" as const },
       {
@@ -586,7 +608,7 @@ export async function getPatientPlanPage(
     ],
   };
 
-  const [total, rows] = await Promise.all([
+  const [total, rows, unplacedRows] = await Promise.all([
     prisma.procedureOrder.count({ where }),
     prisma.procedureOrder.findMany({
       where,
@@ -594,10 +616,15 @@ export async function getPatientPlanPage(
       orderBy: { scheduledAt: "asc" },
       ...(paged ? { skip: offset, take: limit } : {}),
     }),
+    prisma.procedureOrder.findMany({
+      where: { patientRefId, ...episodeFilter, ...unseatedPackage },
+      include: PROCEDURE_PHYSIO_INCLUDE,
+      orderBy: { procedureCode: "asc" },
+    }),
   ]);
 
   const catalogNames = await loadCatalogDisplayNameMap(
-    rows.map((row) => row.procedureCode),
+    [...rows, ...unplacedRows].map((row) => row.procedureCode),
     opts.locale ?? "az",
   );
   const events: PatientTimelineEvent[] = rows.map((p) =>
@@ -606,11 +633,19 @@ export async function getPatientPlanPage(
       procedureName: catalogNames.get(p.procedureCode) || p.procedureName,
     }),
   );
+  const unplaced: PatientTimelineEvent[] = unplacedRows.map((p) => ({
+    ...mapProcedureEvent({
+      ...p,
+      procedureName: catalogNames.get(p.procedureCode) || p.procedureName,
+    }),
+    showClock: false,
+  }));
 
   const hasMore = paged && offset + limit < total;
   return {
     patientRefId,
     events: events.map(withTimeSubtitle),
+    unplaced,
     days: groupDays(events, "plan"),
     offset,
     limit,

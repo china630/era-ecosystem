@@ -321,6 +321,7 @@ export class InventoryService {
       select: {
         id: true,
         name: true,
+        code: true,
         inventoryAccountCode: true,
         costClass: true,
         satelliteOutletCode: true,
@@ -335,6 +336,7 @@ export class InventoryService {
       data: {
         organizationId,
         name: dto.name.trim(),
+        code: dto.code?.trim() || null,
         location: (dto.location ?? "").trim(),
         costClass: dto.costClass ?? null,
         satelliteOutletCode: dto.satelliteOutletCode?.trim() || null,
@@ -345,7 +347,11 @@ export class InventoryService {
   async patchWarehouseScope(
     organizationId: string,
     warehouseId: string,
-    dto: { costClass?: string | null; satelliteOutletCode?: string | null },
+    dto: {
+      code?: string | null;
+      costClass?: string | null;
+      satelliteOutletCode?: string | null;
+    },
   ) {
     const existing = await this.prisma.warehouse.findFirst({
       where: { id: warehouseId, organizationId, deletedAt: null },
@@ -367,9 +373,27 @@ export class InventoryService {
     ) {
       throw new BadRequestException("Invalid costClass");
     }
+    let code: string | null | undefined = dto.code;
+    if (code !== undefined) {
+      const trimmed = code?.trim() || null;
+      if (trimmed) {
+        const clash = await this.prisma.warehouse.findFirst({
+          where: {
+            organizationId,
+            code: trimmed,
+            deletedAt: null,
+            NOT: { id: warehouseId },
+          },
+          select: { id: true },
+        });
+        if (clash) throw new BadRequestException("Warehouse code already in use");
+      }
+      code = trimmed;
+    }
     return this.prisma.warehouse.update({
       where: { id: warehouseId },
       data: {
+        ...(dto.code !== undefined ? { code: code ?? null } : {}),
         ...(dto.costClass !== undefined ? { costClass: costClass ?? null } : {}),
         ...(dto.satelliteOutletCode !== undefined
           ? {
@@ -380,6 +404,7 @@ export class InventoryService {
       select: {
         id: true,
         name: true,
+        code: true,
         costClass: true,
         satelliteOutletCode: true,
         location: true,

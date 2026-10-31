@@ -2,6 +2,7 @@
 import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useEffect, useState } from "react";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -12,6 +13,14 @@ import { PageHeader } from "../../../components/layout/page-header";
 import { Button } from "../../../components/ui/button";
 import {
   BORDER_MUTED_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TD_RIGHT_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   MODAL_CLOSE_BUTTON_CLASS,
   MODAL_DIALOG_CONTENT_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -325,21 +334,24 @@ export default function ReconciliationPage() {
       )}
 
       <div className="flex flex-col lg:flex-row flex-wrap gap-4 items-end rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700 min-w-[200px]">
-          <span>{t("reconciliation.counterparty")}</span>
-          <select
+        <div className="min-w-[200px]">
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("reconciliation.counterparty")}
             value={cpId}
-            onChange={(e) => setCpId(e.target.value)}
-            className="border border-slate-200 rounded-lg px-3 py-2"
-          >
-            <option value="">{t("reconciliation.cpPlaceholder")}</option>
-            {counterparties.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.taxId})
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(next) => {
+              const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+              setCpId(v);
+            }}
+            options={[
+              { value: "", label: t("reconciliation.cpPlaceholder") },
+              ...counterparties.map((c) => ({
+                value: c.id,
+                label: `${c.name} (${c.taxId})`,
+              })),
+            ]}
+          />
+        </div>
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           <span>{t("reporting.from")}</span>
           <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
@@ -348,44 +360,38 @@ export default function ReconciliationPage() {
           <span>{t("reporting.to")}</span>
           <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
         </label>
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => void runReport()}
-          className="px-4 py-2 rounded-lg bg-action text-white text-sm font-medium hover:bg-action-hover disabled:opacity-50"
-        >
+        <Button type="button" variant="primary" disabled={loading} onClick={() => void runReport()}>
           {loading ? "…" : t("reconciliation.run")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="primary"
           disabled={pdfBusy || !cpId}
           onClick={() => void downloadPdf()}
-          className={`${PRIMARY_BUTTON_CLASS} disabled:opacity-50`}
         >
           {pdfBusy ? t("reconciliation.downloadPdfBusy") : t("reconciliation.downloadPdf")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          disabled={
-            nettingBusy || !cpId || nettingLoad || !netCandidate?.canNet
-          }
+          variant="secondary"
+          disabled={nettingBusy || !cpId || nettingLoad || !netCandidate?.canNet}
           onClick={() => void openNettingModal()}
-          className="px-4 py-2.5 rounded-lg bg-slate-800 text-white text-sm font-medium hover:bg-slate-900 disabled:opacity-50 text-left leading-tight"
+          className="h-auto flex-col items-start gap-0.5 py-2 text-left leading-tight"
         >
           {nettingBusy && nettingOpen === false ? (
             t("reconciliation.nettingBusy")
           ) : (
             <>
               <span className="block">{t("reconciliation.nettingFormBtn")}</span>
-              <span className="block text-[11px] font-semibold opacity-95 mt-0.5">
+              <span className="block text-[11px] font-semibold opacity-95">
                 {t("invoiceView.payByNetting")}
               </span>
-              <span className="block text-[11px] font-normal opacity-90 mt-0.5">
+              <span className="block text-[11px] font-normal opacity-90">
                 {t("reconciliation.nettingFormBtnAz")}
               </span>
             </>
           )}
-        </button>
+        </Button>
       </div>
 
       {err && <p className="text-red-600 text-sm">{err}</p>}
@@ -490,27 +496,29 @@ export default function ReconciliationPage() {
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-100 bg-white shadow-sm">
-            <table className="text-sm min-w-full">
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={`${DATA_TABLE_CLASS} min-w-full`}>
               <thead>
-                <tr>
-                  <th className="text-left p-2">{t("reconciliation.thDate")}</th>
-                  <th className="text-left p-2">{t("reconciliation.thRef")}</th>
-                  <th className="text-left p-2">{t("reconciliation.thDesc")}</th>
-                  <th className="text-right p-2">{t("reconciliation.thDr")}</th>
-                  <th className="text-right p-2">{t("reconciliation.thCr")}</th>
-                  <th className="text-right p-2">{t("reconciliation.thBal")}</th>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reconciliation.thDate")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reconciliation.thRef")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reconciliation.thDesc")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reconciliation.thDr")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reconciliation.thCr")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reconciliation.thBal")}</th>
                 </tr>
               </thead>
               <tbody>
                 {data.lines.map((r, i) => (
-                  <tr key={`${r.kind}-${r.date}-${i}`} className="border-t border-slate-100">
-                    <td className="p-2 whitespace-nowrap">{r.date}</td>
-                    <td className="p-2">{r.reference}</td>
-                    <td className="p-2">{r.description}</td>
-                    <td className="p-2 text-right font-mono">{formatMoneyAzn(r.debit)}</td>
-                    <td className="p-2 text-right font-mono">{formatMoneyAzn(r.credit)}</td>
-                    <td className="p-2 text-right font-mono font-medium">{formatMoneyAzn(r.balanceAfter)}</td>
+                  <tr key={`${r.kind}-${r.date}-${i}`} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap`}>{r.date}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{r.reference}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{r.description}</td>
+                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono`}>{formatMoneyAzn(r.debit)}</td>
+                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono`}>{formatMoneyAzn(r.credit)}</td>
+                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono font-medium`}>
+                      {formatMoneyAzn(r.balanceAfter)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

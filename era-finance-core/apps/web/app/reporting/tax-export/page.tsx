@@ -1,5 +1,6 @@
 "use client";
 
+import { CatalogField } from "@era/satellite-kit/ui";
 import { bakuCalendarYear, todayBakuYmd } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -8,6 +9,8 @@ import { apiBaseUrl, apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -19,12 +22,16 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../../lib/design-system";
-import { CircleArrowUp, Download, Loader2, Upload } from "lucide-react";
+import { CircleArrowUp, Download, Loader2, Upload, X } from "lucide-react";
 
 type ExportStatus = "GENERATED" | "UPLOADED" | "CONFIRMED_BY_TAX";
 type TaxType = "SIMPLIFIED_TAX" | "VAT" | "PROFIT_TAX" | "PAYROLL_WITHHOLDING";
@@ -263,11 +270,11 @@ export default function TaxExportPage() {
 
   const statusLabel = useMemo(
     () => ({
-      GENERATED: "GENERATED",
-      UPLOADED: "UPLOADED",
-      CONFIRMED_BY_TAX: "CONFIRMED_BY_TAX",
+      GENERATED: t("reporting.taxExportStatuses.GENERATED"),
+      UPLOADED: t("reporting.taxExportStatuses.UPLOADED"),
+      CONFIRMED_BY_TAX: t("reporting.taxExportStatuses.CONFIRMED_BY_TAX"),
     }),
-    [],
+    [t],
   );
 
   const downloadDeclaration = useCallback(
@@ -353,25 +360,36 @@ export default function TaxExportPage() {
   if (!token) return null;
 
   return (
-    <div className="w-full max-w-5xl space-y-8">
+    <div className="w-full space-y-8">
       <PageHeader
         title={t("reporting.taxExportTitle")}
         subtitle={t("reporting.taxExportSubtitle")}
         leading={
           <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
-              <span>{t("reporting.taxExportType")}</span>
-              <select
-                className={`${MODAL_INPUT_CLASS} !min-w-[14rem]`}
+            <div className="min-w-[14rem]">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("reporting.taxExportType")}
                 value={taxType}
-                onChange={(e) => setTaxType(e.target.value as TaxType)}
-              >
-                <option value="SIMPLIFIED_TAX">{t("reporting.taxExportTypeSimplified")}</option>
-                <option value="VAT">{t("reporting.taxExportTypeVat")}</option>
-                <option value="PROFIT_TAX">{t("reporting.taxExportTypeProfitTax")}</option>
-                <option value="PAYROLL_WITHHOLDING">{t("reporting.taxExportTypePayroll")}</option>
-              </select>
-            </label>
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  if (
+                    v === "SIMPLIFIED_TAX" ||
+                    v === "VAT" ||
+                    v === "PROFIT_TAX" ||
+                    v === "PAYROLL_WITHHOLDING"
+                  ) {
+                    setTaxType(v);
+                  }
+                }}
+                options={[
+                  { value: "SIMPLIFIED_TAX", label: t("reporting.taxExportTypeSimplified") },
+                  { value: "VAT", label: t("reporting.taxExportTypeVat") },
+                  { value: "PROFIT_TAX", label: t("reporting.taxExportTypeProfitTax") },
+                  { value: "PAYROLL_WITHHOLDING", label: t("reporting.taxExportTypePayroll") },
+                ]}
+              />
+            </div>
             {taxType === "SIMPLIFIED_TAX" || taxType === "PAYROLL_WITHHOLDING" ? (
               <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
                 <span>{t("reporting.taxExportPeriod")}</span>
@@ -396,19 +414,22 @@ export default function TaxExportPage() {
                     onChange={(e) => setYear(Number(e.target.value))}
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
-                  <span>{t("reporting.vat.quarter")}</span>
-                  <select
-                    className={`${MODAL_INPUT_CLASS} !w-24`}
-                    value={quarter}
-                    onChange={(e) => setQuarter(Number(e.target.value))}
-                  >
-                    <option value={1}>Q1</option>
-                    <option value={2}>Q2</option>
-                    <option value={3}>Q3</option>
-                    <option value={4}>Q4</option>
-                  </select>
-                </label>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("reporting.vat.quarter")}
+                  value={String(quarter)}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "1" : String(next ?? "1");
+                    const n = Number(v);
+                    if (n >= 1 && n <= 4) setQuarter(n);
+                  }}
+                  options={[
+                    { value: "1", label: "Q1" },
+                    { value: "2", label: "Q2" },
+                    { value: "3", label: "Q3" },
+                    { value: "4", label: "Q4" },
+                  ]}
+                />
               </>
             ) : null}
             {taxType === "PROFIT_TAX" ? (
@@ -510,7 +531,19 @@ export default function TaxExportPage() {
                 <tr key={item.id} className={`${DATA_TABLE_TR_CLASS} align-top`}>
                   <td className={DATA_TABLE_TD_RIGHT_CLASS}>{item.period}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{item.taxType}</td>
-                  <td className={DATA_TABLE_TD_CENTER_CLASS}>{statusLabel[item.status]}</td>
+                  <td className={DATA_TABLE_TD_CENTER_CLASS}>
+                    <Badge
+                      variant={
+                        item.status === "CONFIRMED_BY_TAX"
+                          ? "success"
+                          : item.status === "UPLOADED"
+                            ? "owner"
+                            : "neutral"
+                      }
+                    >
+                      {statusLabel[item.status]}
+                    </Badge>
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <div className="flex flex-wrap items-center justify-end gap-1">
                       <button
@@ -589,18 +622,42 @@ export default function TaxExportPage() {
       </section>
 
       {showPayrollPreview && payrollPreview ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-[#2C3E50] m-0 mb-3">
-              {t("reporting.payrollWithholding.previewTitle", { period: payrollPreview.period })}
-            </h2>
-            <p className="text-sm text-[#34495E] m-0 mb-3">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowPayrollPreview(false);
+          }}
+        >
+          <div
+            className={`${MODAL_DIALOG_CONTENT_CLASS} flex max-h-[min(90vh,48rem)] w-full max-w-4xl flex-col`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tax-export-payroll-preview-title"
+          >
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h2
+                id="tax-export-payroll-preview-title"
+                className="m-0 text-lg font-semibold text-[#34495E]"
+              >
+                {t("reporting.payrollWithholding.previewTitle", { period: payrollPreview.period })}
+              </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={() => setShowPayrollPreview(false)}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
+            <p className="mt-3 m-0 text-sm text-[#34495E]">
               {t("reporting.payrollWithholding.totalsSummary", {
                 pit: formatMoneyAzn(payrollPreview.totals.pitTotal),
                 social: formatMoneyAzn(payrollPreview.totals.socialTotal),
               })}
             </p>
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <div className={`mt-3 min-h-0 flex-1 overflow-y-auto ${DATA_TABLE_VIEWPORT_CLASS}`}>
               <table className={`${DATA_TABLE_CLASS} min-w-full`}>
                 <thead>
                   <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -624,26 +681,28 @@ export default function TaxExportPage() {
                 </tbody>
               </table>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
+            <div className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
                 type="button"
-                className={PRIMARY_BUTTON_CLASS}
+                variant="outline"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                onClick={() => setShowPayrollPreview(false)}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
                 disabled={generating}
                 onClick={() => void generate()}
               >
                 {generating ? t("common.loading") : t("reporting.payrollWithholding.confirmGenerate")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setShowPayrollPreview(false)}
-              >
-                {t("common.cancel")}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
-        ) : null}
+      ) : null}
 
       <section className="space-y-3 rounded border border-[#D5DADF] p-4">
         <h2 className="text-base font-medium text-[#34495E]">
@@ -686,7 +745,14 @@ export default function TaxExportPage() {
           {amendments.map((row) => (
             <li key={row.id} className="flex flex-wrap items-center gap-3 text-sm text-[#34495E]">
               <span>
-                {row.period} · {row.taxType} · {row.deltaAmount} · {row.status}
+                {row.period} · {row.taxType} · {row.deltaAmount} ·{" "}
+                <Badge variant={row.status === "SENT" ? "success" : "neutral"}>
+                  {(() => {
+                    const key = `reporting.amendmentStatus.${row.status}`;
+                    const label = t(key);
+                    return label === key ? row.status : label;
+                  })()}
+                </Badge>
               </span>
               {row.status === "DRAFT" ? (
                 <button

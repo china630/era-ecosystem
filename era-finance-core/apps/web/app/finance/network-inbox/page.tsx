@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AcceptNetworkDocumentModal } from "../../../components/network/AcceptNetworkDocumentModal";
+import { X } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import {
@@ -17,6 +19,11 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
@@ -307,60 +314,126 @@ export default function NetworkInboxPage() {
       />
 
       {eqaimeDocId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-[#D5DADF] bg-white p-4 shadow-lg">
-            <h3 className="m-0 text-lg font-semibold text-[#34495E]">
-              {t("networkInbox.linkEqaimeTitle", { defaultValue: "e-Qaimə external ID" })}
-            </h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setEqaimeDocId(null);
+              setEqaimeRefInput("");
+            }
+          }}
+        >
+          <div
+            className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-md`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="network-inbox-eqaime-title"
+          >
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h3
+                id="network-inbox-eqaime-title"
+                className="m-0 text-lg font-semibold text-[#34495E]"
+              >
+                {t("networkInbox.linkEqaimeTitle")}
+              </h3>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={() => {
+                  setEqaimeDocId(null);
+                  setEqaimeRefInput("");
+                }}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
             <input
-              className="mt-3 w-full rounded-lg border border-[#D5DADF] p-2 text-[13px] text-[#34495E]"
+              className={`${MODAL_INPUT_CLASS} mt-4 w-full`}
               value={eqaimeRefInput}
               onChange={(e) => setEqaimeRefInput(e.target.value)}
               placeholder="eqaime-doc-id"
             />
-            <div className="mt-4 flex justify-end gap-2">
-              <button
+            <footer className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                variant="secondary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
                 onClick={() => {
                   setEqaimeDocId(null);
                   setEqaimeRefInput("");
                 }}
               >
                 {t("common.cancel")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={SECONDARY_BUTTON_CLASS}
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
                 disabled={eqaimeBusy || !eqaimeRefInput.trim()}
                 onClick={() => void saveEqaimeRef()}
               >
                 {t("common.save")}
-              </button>
-            </div>
+              </Button>
+            </footer>
           </div>
         </div>
       ) : null}
 
       {rejectId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-[#D5DADF] bg-white p-4 shadow-lg">
-            <h3 className="m-0 text-lg font-semibold text-[#34495E]">
-              {t("networkInbox.rejectTitle", { defaultValue: "Rədd səbəbi" })}
-            </h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setRejectId(null);
+          }}
+        >
+          <div
+            className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-md`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="network-inbox-reject-title"
+          >
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h3
+                id="network-inbox-reject-title"
+                className="m-0 text-lg font-semibold text-[#34495E]"
+              >
+                {t("networkInbox.rejectTitle")}
+              </h3>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={() => setRejectId(null)}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
             <textarea
-              className="mt-3 min-h-[5rem] w-full rounded-lg border border-[#D5DADF] p-2 text-[13px] text-[#34495E]"
+              className={`${MODAL_INPUT_CLASS} mt-4 min-h-[5rem] w-full`}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />
-            <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setRejectId(null)}>
+            <footer className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
+                type="button"
+                variant="secondary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                onClick={() => setRejectId(null)}
+              >
                 {t("common.cancel")}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void submitReject()}>
-                {t("networkInbox.reject", { defaultValue: "Rədd et" })}
-              </button>
-            </div>
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                onClick={() => void submitReject()}
+              >
+                {t("networkInbox.reject")}
+              </Button>
+            </footer>
           </div>
         </div>
       ) : null}

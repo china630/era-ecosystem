@@ -55,6 +55,10 @@ import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
     WorkforceEmploymentSyncService,
     WorkforceTimesheetSyncService,
   ],
-  exports: [FinanceAccountingAdapterService, SatelliteEventDispatchService],
+  exports: [
+    FinanceAccountingAdapterService,
+    SatelliteEventDispatchService,
+    WorkforceEmploymentSyncService,
+  ],
 })
 export class SatelliteIntegrationModule {}

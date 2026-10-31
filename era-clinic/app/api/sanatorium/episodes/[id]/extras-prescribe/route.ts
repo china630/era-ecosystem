@@ -18,6 +18,10 @@ import {
   listPendingExtras,
   prescribeExtras,
 } from "@/domain/sanatorium/extras-assign.service";
+import {
+  deletePendingDiagnostic,
+  listPendingDiagnostics,
+} from "@/domain/sanatorium/diagnostics-extras.service";
 
 const prescribeSchema = z.object({
   lines: z
@@ -54,9 +58,10 @@ export async function GET(
     const { id } = await params;
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
-    const [rows, paid] = await Promise.all([
+    const [rows, paid, diagnostics] = await Promise.all([
       listPendingExtras(id),
       listPaidExtras(id),
+      listPendingDiagnostics(id),
     ]);
     const prices = await listExtraUnitPrices();
     const locale = await readUiLocale(req);
@@ -65,21 +70,35 @@ export async function GET(
       locale,
     );
     return jsonOk({
-      items: rows.map((r) => ({
-        id: r.id,
-        procedureCode: r.procedureCode,
-        procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
-        amountNet: Number(r.amountNet),
-        note: r.note,
-        status: r.status,
-      })),
+      items: [
+        ...rows.map((r) => ({
+          id: r.id,
+          kind: "procedure" as const,
+          procedureCode: r.procedureCode,
+          procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
+          amountNet: Number(r.amountNet),
+          note: r.note,
+          status: r.status,
+        })),
+        ...diagnostics.map((r) => ({
+          id: r.id,
+          kind: r.kind,
+          procedureCode: r.serviceCode,
+          procedureName: r.title,
+          amountNet: r.amountNet,
+          note: null as string | null,
+          status: r.status,
+        })),
+      ],
       prices,
       paid: paid.map((r) => ({
         id: r.id,
+        kind: "procedure" as const,
         procedureCode: r.procedureCode,
         procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
         amountNet: Number(r.amountNet),
       })),
+      diagnostics,
     });
   } catch (err) {
     if (err instanceof PackageAssignError) {
@@ -133,7 +152,25 @@ export async function DELETE(
     const url = new URL(req.url);
     const orderId = url.searchParams.get("orderId");
     if (!orderId) return jsonError("orderId required", 400);
-    await deletePendingExtra(orderId);
+    const kind = url.searchParams.get("kind");
+    if (kind === "lab" || kind === "visit") {
+      await deletePendingDiagnostic(kind, orderId);
+      return jsonOk({ ok: true });
+    }
+    try {
+      await deletePendingExtra(orderId);
+    } catch (err) {
+      if (err instanceof PackageAssignError && err.code === "NOT_FOUND") {
+        try {
+          await deletePendingDiagnostic("lab", orderId);
+          return jsonOk({ ok: true });
+        } catch {
+          await deletePendingDiagnostic("visit", orderId);
+          return jsonOk({ ok: true });
+        }
+      }
+      throw err;
+    }
     return jsonOk({ ok: true });
   } catch (err) {
     if (err instanceof PackageAssignError) {

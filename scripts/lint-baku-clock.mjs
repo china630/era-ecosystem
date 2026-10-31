@@ -50,6 +50,7 @@ function buildScanRoots() {
     "era-finance-core/apps/web",
     "era-finance-core/apps/api/src",
     "era-orchestrator/apps/web",
+    "era-orchestrator/apps/platform-web",
     "era-orchestrator/apps/api/src",
     "era-data-hub/apps/api/src",
     "era-bank-core/apps",

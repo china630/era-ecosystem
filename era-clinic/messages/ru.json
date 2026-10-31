@@ -54,7 +54,8 @@
     "accounts": "Учётные записи",
     "users": "Пользователи",
     "logins": "Входы",
-    "sanatoriumPackages": "Санаторные пакеты"
+    "sanatoriumPackages": "Санаторные пакеты",
+    "patientAssignmentReport": "Назначения пациента"
   },
   "adminAccess": {
     "title": "Матрица доступа по ролям",
@@ -1922,6 +1923,7 @@
     "openHistory": "История",
     "planTitle": "План",
     "planEmpty": "Нет ближайших процедур.",
+    "planUnseated": "Не посажено",
     "openAttendance": "Свободное посещение",
     "openPlan": "Весь план",
     "historyModalTitle": "Клиническая история",
@@ -2064,7 +2066,7 @@
     "masseurLabel": "Массажист",
     "masseurAny": "любой",
     "masseurNotSkilled": "Этот массажист больше не делает эту процедуру",
-    "labExtraNoPrice": "У этого анализа нет цены, в чек его не поставить",
+    "labExtraNoPrice": "У этого анализа нет цены — платное назначение невозможно",
     "packageAssignMissDayFull": "дневной лимит этого блока пакета исчерпан",
     "replaceInfo": "Замена",
     "packageAssignMissRule": "свободное время закрывает правило расписания",
@@ -2123,7 +2125,21 @@
     "note": "Заметка",
     "extrasEmpty": "Нет дополнительных процедур.",
     "packageEmptyLeft": "Нет строк пакета.",
-    "packageEmptyRight": "Пока ничего не назначено."
+    "packageEmptyRight": "Пока ничего не назначено.",
+    "diagnosticsAssignTitle": "Анализы и диагностика",
+    "diagnosticsInPackage": "В пакете",
+    "diagnosticsPackageEmpty": "На курсе не осталось анализов или осмотров из пакета.",
+    "diagnosticsExtraTitle": "Дополнительно (ожидает оплаты)",
+    "diagnosticsPick": "Исследование",
+    "diagnosticsDraft": "К сохранению",
+    "labAlreadyOpen": "По этому исследованию уже есть открытый заказ",
+    "careTeamRequired": "Нужен врач курса",
+    "visitDate": "Дата",
+    "visitTime": "Время",
+    "visitTimeOptional": "Необязательно",
+    "fulfillmentLab": "Лаборатория",
+    "fulfillmentVisit": "Приём",
+    "pay": "Оплатить"
   },
   "catalogAdmin": {
     "title": "Каталог услуг",
@@ -2531,5 +2547,32 @@
     "yes": "да",
     "no": "нет",
     "sort": "Порядок"
+  },
+  "patientAssignmentReport": {
+    "subtitle": "Все процедуры, анализы, диагностика и приёмы курса. Сумма только после приёмки оплаты.",
+    "patient": "Пациент",
+    "episode": "Эпизод",
+    "room": "Комната",
+    "roomAll": "Все комнаты",
+    "kind": "Тип",
+    "kindAll": "Все типы",
+    "kindProcedure": "Процедуры",
+    "kindLab": "Лаборатория / диагностика",
+    "kindVisit": "Приёмы",
+    "kind_procedure": "Процедура",
+    "kind_lab": "Лаборатория",
+    "kind_visit": "Приём",
+    "colName": "Название",
+    "colAssigned": "Назначено",
+    "colCompleted": "Исполнено",
+    "colWhen": "Дата / время",
+    "colRoom": "Комната",
+    "colAmount": "Сумма",
+    "totals": "Итого",
+    "empty": "Нет строк на этом эпизоде",
+    "pickEpisode": "Выберите пациента и эпизод",
+    "loadFailed": "Не удалось загрузить отчёт",
+    "print": "Печать",
+    "headerLine": "{patient} · комната {room} · {program}"
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -8,6 +8,8 @@ import { useTranslation } from "react-i18next";
 import { FileDown, FileUp, LayoutTemplate, Sparkles } from "lucide-react";
 import { apiFetch } from "../../lib/api-client";
 import { PageHeader } from "../../components/layout/page-header";
+import { ListPaginationFooter } from "../../components/list-pagination-footer";
+import { Badge } from "../../components/ui/badge";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -45,8 +47,14 @@ export default function CustomsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [importBusy, setImportBusy] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const tradePro = Boolean(effectiveSnapshot?.modules.tradePro);
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [rows, page, pageSize]);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -69,8 +77,14 @@ export default function CustomsPage() {
   };
 
   const toggleAll = () => {
-    if (selectedIds.length === rows.length) setSelectedIds([]);
-    else setSelectedIds(rows.map((r) => r.id));
+    const pageIds = pagedRows.map((r) => r.id);
+    const allOnPageSelected =
+      pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+    if (allOnPageSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    }
   };
 
   const onWidgetUpsell = () => {
@@ -182,7 +196,9 @@ export default function CustomsPage() {
                 <input
                   type="checkbox"
                   aria-label="select all"
-                  checked={rows.length > 0 && selectedIds.length === rows.length}
+                  checked={
+                    pagedRows.length > 0 && pagedRows.every((r) => selectedIds.includes(r.id))
+                  }
                   onChange={toggleAll}
                 />
               </th>
@@ -196,7 +212,7 @@ export default function CustomsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {pagedRows.map((r) => (
               <tr
                 key={r.id}
                 className={
@@ -219,7 +235,23 @@ export default function CustomsPage() {
                 </td>
                 <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.bgdDate).slice(0, 10))}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.currency}</td>
-                <td className={DATA_TABLE_TD_CLASS}>{r.status}</td>
+                <td className={DATA_TABLE_TD_CLASS}>
+                  <Badge
+                    variant={
+                      r.status === "POSTED" || r.status === "ATTACHED"
+                        ? "success"
+                        : r.status === "CANCELLED"
+                          ? "user"
+                          : "neutral"
+                    }
+                  >
+                    {(() => {
+                      const key = `trade.customs.status.${r.status}`;
+                      const label = t(key);
+                      return label === key ? r.status : label;
+                    })()}
+                  </Badge>
+                </td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.senderName ?? "—"}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.receiverName ?? "—"}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r._count?.items ?? 0}</td>
@@ -228,6 +260,18 @@ export default function CustomsPage() {
           </tbody>
         </table>
       </div>
+      {rows.length > 0 ? (
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={rows.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

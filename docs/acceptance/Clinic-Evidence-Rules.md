@@ -38,6 +38,8 @@ AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quot
 
 AC-CLI-ASSIGN (CLI-57): unit `__tests__/cli57-package-assign.spec.ts` + `__tests__/package-assign-redispatch.spec.ts` (line-order attach). 2026-10-30 Saxla same-block redispatch + modal № + Pay keeps OPEN pin — still **no field negative path**. UAT open → AC stays 🟡; not Scaffold ✅.
 
+AC-CLI-ASSIGN-LEDGER (CLI-64): unit `__tests__/patient-assignment-ledger.spec.ts` (amount/completion helpers). UI path UAT-SMOKE «Patient assignment ledger (CLI-64)» open → AC stays 🟡; not Scaffold ✅.
+
 ## Forbidden as sole proof
 
 - Chat assertion without artifact

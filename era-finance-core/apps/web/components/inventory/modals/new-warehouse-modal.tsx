@@ -26,6 +26,7 @@ export function NewWarehouseModal({
   const { t } = useTranslation();
   const formId = "inventory-modal-new-warehouse";
   const [whName, setWhName] = useState("");
+  const [whCode, setWhCode] = useState("");
   const [whLoc, setWhLoc] = useState("");
   const [costClass, setCostClass] = useState("");
   const [outletCode, setOutletCode] = useState("");
@@ -45,6 +46,7 @@ export function NewWarehouseModal({
   useEffect(() => {
     if (!open) return;
     setWhName("");
+    setWhCode("");
     setWhLoc("");
     setCostClass("");
     setOutletCode("");
@@ -63,6 +65,7 @@ export function NewWarehouseModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: whName.trim(),
+        ...(whCode.trim() ? { code: whCode.trim() } : {}),
         location: whLoc,
         ...(costClass ? { costClass } : {}),
         ...(outletCode.trim() ? { satelliteOutletCode: outletCode.trim() } : {}),
@@ -95,6 +98,13 @@ export function NewWarehouseModal({
           placeholder={t("inventory.whNamePlaceholder")}
           value={whName}
           onChange={(e) => setWhName(e.target.value)}
+        />
+        <Field
+          label={t("inventory.whCodePh")}
+          preset="code"
+          placeholder={t("inventory.whCodePlaceholder")}
+          value={whCode}
+          onChange={(e) => setWhCode(e.target.value)}
         />
         <Field
           label={t("inventory.whLocPh")}

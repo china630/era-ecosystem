@@ -10,14 +10,16 @@ alwaysApply: true
 ## Stack
 
 - **API:** NestJS `apps/api` — port **4000** (`npm run start:dev -w @era365/api`)
-- **Web:** Next.js `apps/web` — port **3000**
+- **Web:** Next.js `apps/web` — port **3000** (client control plane)
+- **Platform Console:** Next.js `apps/platform-web` — port **3001** (`platform.era-365.online`)
 - **DBs:** `packages/database` (control plane), `packages/mdm-database` (`era_mdm`)
 
 ## Commands (from `era-orchestrator/`)
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | API + Web concurrently |
+| `npm run dev` | API + Web + Platform Console concurrently |
+| `npm run dev:platform` | Platform Console only (`:3001`) |
 | `npm run db:generate` | Generate both Prisma clients |
 | `npm run db:bootstrap-local` | Migrate control-plane + bootstrap platform admins |
 | `npm run platform:backfill-org-profile` | CP-ORG-PROFILE-01: Finance→orch profile seed (dry-run; `-- --apply`; optional `-- --with-satellites`). Needs `FINANCE_DATABASE_URL`; `/files/` logos need `FINANCE_PUBLIC_URL`. |

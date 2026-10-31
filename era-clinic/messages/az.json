@@ -54,7 +54,8 @@
     "accounts": "Hesablar",
     "users": "İstifadəçilər",
     "logins": "Girişlər",
-    "sanatoriumPackages": "Sanatoriya paketləri"
+    "sanatoriumPackages": "Sanatoriya paketləri",
+    "patientAssignmentReport": "Pasiyent təyinatları"
   },
   "adminAccess": {
     "title": "Rol giriş matrisi",
@@ -1922,6 +1923,7 @@
     "openHistory": "Tarixçə",
     "planTitle": "Plan",
     "planEmpty": "Gələcək prosedur yoxdur.",
+    "planUnseated": "Yerləşməyib",
     "openAttendance": "Sərbəst ziyarət",
     "openPlan": "Tam plan",
     "historyModalTitle": "Klinik tarixçə",
@@ -2064,7 +2066,7 @@
     "masseurLabel": "Masajçı",
     "masseurAny": "hər kəs",
     "masseurNotSkilled": "Bu masajçı artıq bu proseduru etmir",
-    "labExtraNoPrice": "Bu analizin qiyməti yoxdur, ona görə çekə düşmür",
+    "labExtraNoPrice": "Bu analizin qiyməti yoxdur — pullu təyin etmək olmaz",
     "packageAssignMissDayFull": "bu paket blokunun gün limiti dolub",
     "replaceInfo": "Əvəz",
     "packageAssignMissRule": "boş vaxtı plan qaydası bağlayır",
@@ -2123,7 +2125,21 @@
     "note": "Qeyd",
     "extrasEmpty": "Əlavə prosedur yoxdur.",
     "packageEmptyLeft": "Paket sətri yoxdur.",
-    "packageEmptyRight": "Hələ təyin edilməyib."
+    "packageEmptyRight": "Hələ təyin edilməyib.",
+    "diagnosticsAssignTitle": "Analizlər və diaqnostika",
+    "diagnosticsInPackage": "Paketdə",
+    "diagnosticsPackageEmpty": "Bu kursda paketdən qalan analiz və ya müayinə yoxdur.",
+    "diagnosticsExtraTitle": "Əlavə (ödəniş gözləyir)",
+    "diagnosticsPick": "Müayinə",
+    "diagnosticsDraft": "Saxlanılacaq",
+    "labAlreadyOpen": "Bu müayinə üçün açıq sifariş artıq var",
+    "careTeamRequired": "Kurs həkimi tələb olunur",
+    "visitDate": "Tarix",
+    "visitTime": "Vaxt",
+    "visitTimeOptional": "İstəyə bağlı",
+    "fulfillmentLab": "Laboratoriya",
+    "fulfillmentVisit": "Qəbul",
+    "pay": "Ödə"
   },
   "catalogAdmin": {
     "title": "Xidmət kataloqu",
@@ -2531,5 +2547,32 @@
     "yes": "bəli",
     "no": "xeyr",
     "sort": "Sıra"
+  },
+  "patientAssignmentReport": {
+    "subtitle": "Kurs üzrə bütün prosedurlar, analizlər, diaqnostika və qəbullar. Məbləğ yalnız ödəniş qəbulundan sonra.",
+    "patient": "Pasiyent",
+    "episode": "Epizod",
+    "room": "Otaq",
+    "roomAll": "Bütün otaqlar",
+    "kind": "Növ",
+    "kindAll": "Bütün növlər",
+    "kindProcedure": "Prosedurlar",
+    "kindLab": "Lab / diaqnostika",
+    "kindVisit": "Qəbullar",
+    "kind_procedure": "Prosedur",
+    "kind_lab": "Lab",
+    "kind_visit": "Qəbul",
+    "colName": "Ad",
+    "colAssigned": "Təyin",
+    "colCompleted": "İcra",
+    "colWhen": "Tarix / vaxt",
+    "colRoom": "Otaq",
+    "colAmount": "Məbləğ",
+    "totals": "Cəmi",
+    "empty": "Bu epizodda sətir yoxdur",
+    "pickEpisode": "Pasiyent və epizod seçin",
+    "loadFailed": "Hesabat yüklənmədi",
+    "print": "Çap",
+    "headerLine": "{patient} · otaq {room} · {program}"
   }
 }

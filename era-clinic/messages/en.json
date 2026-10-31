@@ -79,7 +79,8 @@
     "accounts": "Accounts",
     "users": "Users",
     "logins": "Logins",
-    "sanatoriumPackages": "Sanatorium packages"
+    "sanatoriumPackages": "Sanatorium packages",
+    "patientAssignmentReport": "Patient assignments"
   },
   "adminAccess": {
     "title": "Role access matrix",
@@ -1935,6 +1936,7 @@
     "openHistory": "History",
     "planTitle": "Plan",
     "planEmpty": "No upcoming procedures.",
+    "planUnseated": "Not seated",
     "openAttendance": "Open attendance",
     "openPlan": "Full plan",
     "historyModalTitle": "Clinical history",
@@ -2077,7 +2079,7 @@
     "masseurLabel": "Masseur",
     "masseurAny": "anyone",
     "masseurNotSkilled": "This masseur no longer performs this procedure",
-    "labExtraNoPrice": "This lab test has no price, so it cannot be added to a cheque",
+    "labExtraNoPrice": "This lab test has no price, so it cannot be prescribed as a paid extra",
     "packageAssignMissDayFull": "the daily limit for this package block is used up",
     "replaceInfo": "Replacement",
     "packageAssignMissRule": "a scheduling rule blocks the open times",
@@ -2136,7 +2138,21 @@
     "note": "Note",
     "extrasEmpty": "No additional procedures.",
     "packageEmptyLeft": "No package lines.",
-    "packageEmptyRight": "Nothing assigned yet."
+    "packageEmptyRight": "Nothing assigned yet.",
+    "diagnosticsAssignTitle": "Analyses and diagnostics",
+    "diagnosticsInPackage": "In package",
+    "diagnosticsPackageEmpty": "No package lab or exam remaining on this course.",
+    "diagnosticsExtraTitle": "Additional (awaiting payment)",
+    "diagnosticsPick": "Study",
+    "diagnosticsDraft": "To save",
+    "labAlreadyOpen": "An open lab order already exists for this study",
+    "careTeamRequired": "A care-team doctor is required",
+    "visitDate": "Date",
+    "visitTime": "Time",
+    "visitTimeOptional": "Optional",
+    "fulfillmentLab": "Lab",
+    "fulfillmentVisit": "Visit",
+    "pay": "Pay"
   },
   "catalogAdmin": {
     "title": "Service catalog",
@@ -2534,5 +2550,32 @@
     "validationRequired": "Code, name and duration are required.",
     "confirmDeleteBody": "Delete this sanatorium package?",
     "confirmCloseBody": "{count} stay(s) already use this package, so it cannot be erased. It will be closed with valid-to {date} and stop appearing for new check-ins; open stays keep their entitlements."
+  },
+  "patientAssignmentReport": {
+    "subtitle": "All procedures, labs, imaging, and visits on one course. Amount only after payment acceptance.",
+    "patient": "Patient",
+    "episode": "Episode",
+    "room": "Room",
+    "roomAll": "All rooms",
+    "kind": "Type",
+    "kindAll": "All types",
+    "kindProcedure": "Procedures",
+    "kindLab": "Labs / imaging",
+    "kindVisit": "Visits",
+    "kind_procedure": "Procedure",
+    "kind_lab": "Lab",
+    "kind_visit": "Visit",
+    "colName": "Name",
+    "colAssigned": "Assigned",
+    "colCompleted": "Completed",
+    "colWhen": "Date / time",
+    "colRoom": "Room",
+    "colAmount": "Amount",
+    "totals": "Totals",
+    "empty": "No rows on this episode",
+    "pickEpisode": "Choose a patient and episode",
+    "loadFailed": "Report failed to load",
+    "print": "Print",
+    "headerLine": "{patient} · room {room} · {program}"
   }
 }

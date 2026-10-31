@@ -37,6 +37,7 @@
 |--------|------|--------------------------|
 | Traefik dashboard | 8080 | — |
 | Orchestrator Web | 3000 | `app.era-365.online` — **ecosystem entry (v1.0): login, industry launcher, SSO** |
+| Platform Console | 3001 | `platform.era-365.online` — vendor operator console (`apps/platform-web`; `isSuperAdmin` only) |
 | Orchestrator API | 4000 | `api.era-365.online` |
 | Finance API | 4100 | **не публикуется** (прокси через Finance Web) |
 | Finance Web | 3100 | `finance-core.era-365.online` |
@@ -69,7 +70,7 @@ cd era-ecosystem
 Добавьте в `C:\Windows\System32\drivers\etc\hosts` (Windows) или `/etc/hosts` (Linux/macOS):
 
 ```
-127.0.0.1 app.era-365.online api.era-365.online data.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online
+127.0.0.1 app.era-365.online platform.era-365.online api.era-365.online data.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online
 ```
 
 ### Общий `.env` (корень umbrella)
@@ -132,7 +133,7 @@ docker compose up -d --build
 | `era-postgres` | PostgreSQL 16, 14 БД |
 | `era-redis` | Redis 7 (очереди, кэш) |
 | `era-traefik` | Reverse proxy (file provider) |
-| `era-orchestrator` | Control plane API `:4000` + Web `:3000` |
+| `era-orchestrator` | Control plane API `:4000` + Web `:3000` + Platform Console `:3001` |
 | `era-finance-core` | Finance API `:4100` (внутри сети; `/api` через web) |
 | `era-finance-web` | Finance ERP UI `:3100` |
 | `era-hotel-pms` | Hotel PMS `:3201` |
@@ -186,7 +187,7 @@ npm run bootstrap:local:demo
 
 Учётные данные пишутся в `tmp/era-local-credentials.md` (gitignored).
 
-**Orchestrator** — канонический IdP: login `:3000`, super-admin `:3000/super-admin`.  
+**Orchestrator** — канонический IdP: login `:3000`; super-admin still on `:3000/super-admin` until cutover; vendor console `:3001` / `platform.era-365.online`.  
 **Finance data hub** (NAS, i18n, customs) — `:3100/admin/data` (не Orch).  
 **Platform billing / MDM admin** — только Orch web.
 
@@ -244,6 +245,7 @@ docker compose up -d postgres redis
 |-----------|------|------|
 | API (NestJS) | `apps/api` | 4000 |
 | Web (Next.js) | `apps/web` | 3000 |
+| Platform Console (Next.js) | `apps/platform-web` | 3001 |
 | Prisma | `packages/database` | — |
 
 ### Настройка
@@ -275,7 +277,7 @@ CONTROL_PLANE_SERVICE_TOKEN=dev-control-plane-token
 ```bash
 npm install
 npm run db:generate
-npm run dev          # API :4000 + Web :3000 параллельно
+npm run dev          # API :4000 + Web :3000 + Platform Console :3001 параллельно
 # или отдельно:
 npm run dev:api
 npm run dev:web

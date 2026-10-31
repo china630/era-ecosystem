@@ -1,14 +1,16 @@
 "use client";
 
+import { CatalogField } from "@era/satellite-kit/ui";
 import { bakuCalendarYear } from "@era/satellite-kit/time";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Button } from "../../../components/ui/button";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -18,6 +20,11 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -304,52 +311,92 @@ export default function ProfitTaxPage() {
       </section>
 
       {modalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-[#2C3E50] m-0 mb-4">
-              {t("reporting.profitTax.addAdjustment")}
-            </h2>
-            <div className="space-y-3">
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
-                {t("reporting.profitTax.thKind")}
-                <select
-                  className={MODAL_INPUT_CLASS}
-                  value={formKind}
-                  onChange={(e) => setFormKind(e.target.value as AdjustmentKind)}
-                >
-                  <option value="PERMANENT">{t("reporting.profitTax.kindPermanent")}</option>
-                  <option value="TEMPORARY">{t("reporting.profitTax.kindTemporary")}</option>
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !busy) setModalOpen(false);
+          }}
+        >
+          <div
+            className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-lg`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profit-tax-adj-title"
+          >
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h2 id="profit-tax-adj-title" className="m-0 text-lg font-semibold text-[#34495E]">
+                {t("reporting.profitTax.addAdjustment")}
+              </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                disabled={busy}
+                onClick={() => setModalOpen(false)}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
+            <div className="mt-4 space-y-3">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("reporting.profitTax.thKind")}
+                value={formKind}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  if (v === "PERMANENT" || v === "TEMPORARY") setFormKind(v);
+                }}
+                options={[
+                  { value: "PERMANENT", label: t("reporting.profitTax.kindPermanent") },
+                  { value: "TEMPORARY", label: t("reporting.profitTax.kindTemporary") },
+                ]}
+              />
+              <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("reporting.profitTax.thCode")}
-                <input className={MODAL_INPUT_CLASS} value={formCode} onChange={(e) => setFormCode(e.target.value)} />
+                <input
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                  value={formCode}
+                  onChange={(e) => setFormCode(e.target.value)}
+                />
               </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+              <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("reporting.profitTax.thDescription")}
                 <input
-                  className={MODAL_INPUT_CLASS}
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+              <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("reporting.profitTax.thAmount")}
                 <input
-                  className={MODAL_INPUT_CLASS}
+                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
                   value={formAmount}
                   onChange={(e) => setFormAmount(e.target.value)}
                   placeholder="0.00"
                 />
               </label>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void createAdjustment()}>
-                {busy ? t("common.loading") : t("common.save")}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setModalOpen(false)}>
+            <div className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
+                type="button"
+                variant="outline"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                disabled={busy}
+                onClick={() => setModalOpen(false)}
+              >
                 {t("common.cancel")}
-              </button>
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                disabled={busy}
+                onClick={() => void createAdjustment()}
+              >
+                {busy ? t("common.loading") : t("common.save")}
+              </Button>
             </div>
           </div>
         </div>

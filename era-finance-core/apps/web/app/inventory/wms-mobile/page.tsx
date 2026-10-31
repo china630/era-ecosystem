@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
@@ -184,19 +185,19 @@ export default function WmsMobilePage() {
         subtitle={t("inventory.wms.subtitle")}
       />
 
-      <label className="text-sm font-medium">{t("inventory.filterWh")}</label>
-      <select
-        className={MODAL_INPUT_CLASS}
+      <CatalogField
+        kind="ENTITY_REF"
+        label={t("inventory.filterWh")}
         value={warehouseId}
-        onChange={(e) => setWarehouseId(e.target.value)}
-      >
-        <option value="">{t("inventory.whSelect")}</option>
-        {warehouses.map((w) => (
-          <option key={w.id} value={w.id}>
-            {w.name}
-          </option>
-        ))}
-      </select>
+        onChange={(next) => {
+          const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+          setWarehouseId(v);
+        }}
+        options={[
+          { value: "", label: t("inventory.whSelect") },
+          ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+        ]}
+      />
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {tabButtons.map((b) => (
@@ -259,22 +260,22 @@ export default function WmsMobilePage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-        <label className="mb-2 block text-sm font-medium">
-          {t("inventory.wms.productLabel")}
-        </label>
-        <select
-          className={MODAL_INPUT_CLASS}
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("inventory.wms.productLabel")}
           value={productId}
-          onChange={(e) => setProductId(e.target.value)}
-        >
-          <option value="">{t("inventory.wms.productPh")}</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-              {p.sku ? ` (${p.sku})` : ""}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => {
+            const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+            setProductId(v);
+          }}
+          options={[
+            { value: "", label: t("inventory.wms.productPh") },
+            ...products.map((p) => ({
+              value: p.id,
+              label: p.sku ? `${p.name} (${p.sku})` : p.name,
+            })),
+          ]}
+        />
 
         {tab === "count" ? (
           <div className="mt-3">

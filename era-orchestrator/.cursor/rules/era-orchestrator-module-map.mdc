@@ -2,13 +2,14 @@
 description: ERA Orchestrator web routes and control-plane modules
 globs:
   - era-orchestrator/apps/web/**
+  - era-orchestrator/apps/platform-web/**
   - era-orchestrator/apps/api/src/auth/**
   - era-orchestrator/apps/api/src/subscription/**
   - era-orchestrator/apps/api/src/membership/**
   - era-orchestrator/apps/api/src/platform/catalog/**
 ---
 
-# ERA Orchestrator — module map (web)
+# ERA Orchestrator — module map (web + platform console)
 
 **Acceptance SSOT (Platform):** [Platform-Acceptance-System](../../../docs/acceptance/Platform-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Platform-Product-Readiness-Matrix.md) · [Implementation-Matrix](../../../docs/acceptance/Platform-Implementation-Matrix.md) · edition [`docs/editions/platform.yaml`](../../../docs/editions/platform.yaml)
 
@@ -45,7 +46,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + modules + billing constructor (checkout/bundles/premium). Card «F&B edition» (`components/settings/fnb-edition-card.tsx`): `GET /v1/fnb/edition`, `POST /v1/fnb/edition/upgrade` (owner, ERA Kafe → full F&B, no new price line, re-runs Sync) |
 | `/settings/invoices` | `app/settings/invoices/page.tsx` | Platform subscription invoices + PDF |
 | `/settings/orders` | `app/settings/orders/page.tsx` | Payment orders registry |
-| `/super-admin/**` | `app/super-admin/**` | Platform admin |
+| `/super-admin/**` | `app/super-admin/**` | Platform admin on client `app` until cutover (see **Vendor console** below) |
 | `/super-admin/orgs` | `app/super-admin/orgs/page.tsx` | Org catalog (search name/UUID/VÖEN) |
 | `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, detach, departments, satellite endpoints, Elektraweb bridge / clinic cutover policy, Sync bindings |
 | `/super-admin/referrals` | `app/super-admin/referrals/page.tsx` | Referral partners CRUD + QR |
@@ -72,6 +73,19 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 |-------|------|-------|
 | `/super-admin/orgs/[orgId]/subscription` | `app/super-admin/orgs/[orgId]/subscription/page.tsx` | Topology + license (perpetual / date / ±1 month), Nafta preset |
 | `/super-admin/orgs/[orgId]/placement` | `app/super-admin/orgs/[orgId]/placement/page.tsx` | PlacementJob create/list/advance (lab hop; not SaaS pool) |
+
+## Vendor console (`apps/platform-web`, host `platform.era-365.online`, local `:3001`)
+
+Same admin APIs as `/super-admin/*`. Session keys `era_platform_*` (not shared with `app`). Login allows `isSuperAdmin` only.
+
+| Route | File | Notes |
+|-------|------|-------|
+| `/login` | `apps/platform-web/app/login/page.tsx` | Operator-only; `showAccountLinks={false}` |
+| `/` | `apps/platform-web/app/(console)/page.tsx` | → `/billing/pricing` |
+| `/billing/**` | `apps/platform-web/app/(console)/billing/**` | Pricing, addons, quotas, packages, trial-allowlist, settings |
+| `/orgs`, `/orgs/[orgId]`, `…/subscription`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org hub + license + PlacementJob |
+| `/mdm`, `/mdm/companies`, `/mdm/persons` | `apps/platform-web/app/(console)/mdm/**` | MDM overview + directories |
+| `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as client super-admin |
 
 ## Shared web components
 

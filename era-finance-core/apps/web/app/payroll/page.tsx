@@ -45,6 +45,8 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../lib/design-system";
 import { formatAzEmployeeListName } from "../../lib/employee-display-name";
+import { CatalogField } from "@era/satellite-kit/ui";
+import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { VacationCalcModal } from "../../components/payroll/vacation-calc-modal";
 import { SickCalcModal } from "../../components/payroll/sick-calc-modal";
@@ -780,9 +782,19 @@ function PayrollPageInner() {
           </h2>
           {currentRun ? (
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <span className="rounded-lg border border-[#D5DADF] bg-[#EBEDF0] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#34495E]">
-                {currentRun.status}
-              </span>
+              <Badge
+                variant={
+                  currentRun.status === "POSTED" || currentRun.status === "PAID"
+                    ? "success"
+                    : "neutral"
+                }
+              >
+                {(() => {
+                  const key = `payroll.status.${currentRun.status}`;
+                  const label = t(key);
+                  return label === key ? currentRun.status : label;
+                })()}
+              </Badge>
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -1104,7 +1116,17 @@ function PayrollPageInner() {
                     <div className="text-sm text-[#34495E]">
                       <span className="font-medium">{r.payoutFormat}</span> ·{" "}
                       {r.bankAccount ? `${r.bankAccount.bankName} (${r.bankAccount.currency})` : "—"} ·{" "}
-                      <span className="uppercase">{r.status}</span>
+                      <Badge
+                        variant={
+                          r.status === "PAID" || r.status === "SENT" ? "success" : "neutral"
+                        }
+                      >
+                        {(() => {
+                          const key = `payroll.registryStatus.${r.status}`;
+                          const label = t(key);
+                          return label === key ? r.status : label;
+                        })()}
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-2">
                       {r.payoutFormat === "UNIVERSAL_XLSX" && r.status !== "DRAFT" ? (
@@ -1261,20 +1283,19 @@ function PayrollPageInner() {
             </header>
             <div className="mt-4 flex min-h-0 flex-1 flex-col">
               <div className="min-h-0 flex-1 overflow-y-auto">
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("payroll.bankAccount")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={selectedBankAccountId}
-                    onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                  >
-                    {orgBankAccounts.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.bankName} • {a.accountNumber} ({a.currency})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <CatalogField
+                  kind="ENTITY_REF"
+                  label={t("payroll.bankAccount")}
+                  value={selectedBankAccountId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setSelectedBankAccountId(v);
+                  }}
+                  options={orgBankAccounts.map((a) => ({
+                    value: a.id,
+                    label: `${a.bankName} • ${a.accountNumber} (${a.currency})`,
+                  }))}
+                />
               </div>
               <div className={MODAL_FOOTER_ACTIONS_CLASS}>
                 <Button

@@ -38,14 +38,16 @@
 | AC-FIN-REF | Org Excel copy of FX, banks, calendar, HS | 🟡 | [ ] | `reference-manual.controller.ts`; COVERAGE FC-REF-01 | **Out of W6 BE rollup.** Uploads require `admin:org.settings`. No negative spec for a bad workbook. Reads cover FX spot/range/convert and calendar day/range/business days. Home FX uses hub `fallback=previous` (Excel workbook: same previous day only when that flag is set). Does not write the hub. SCREEN until UAT. Do **not** flip AC-FIN-GL or the finance BE ✅ rollup. |
 | AC-FIN-DAY | Hotel day document v2: article VAT, leaf post, `601.*` rollup, uncosted qty | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01 | **Out of W6 BE rollup.** No negative spec (group account, zero average, house-use qty). Reports already on screen. Does **not** flip AC-FIN-GL, AC-FIN-EVT, or the finance BE ✅ rollup. |
 | AC-FIN-AUD | Mutation audit Layer A align to ecosystem standard (deny-list naming / shared redaction) | 🟡 | [ ] | Finance TZ §9 / §11.1; `AuditMutationInterceptor`; FIN-AUD-01; `/admin/audit` + OWNER `/admin/security-audit`; `mutation-audit-exempt.spec.ts` + `data-masking.service.spec.ts`; `admin-security-audit.controller.spec.ts` (OWNER door) | **Out of W6 BE rollup.** Live Finance belt COVERAGE **SHIPPED** (FIN-AUD-01). Wave C kit-align + Wave D journal UI on `/admin/audit` and OWNER `/admin/security-audit` (`CatalogField`/`EraListFilterBar`/kit `DatePicker`) 2026-10-29. Residual = fuller AuthZ negatives for Scaffold ✅ (Evidence bar). Does not darken BE ✅ or reopen AC-FIN-GL. ADR era-mutation-audit-standard. |
+| AC-FIN-MIG | Migration machine: templates, draft staging, validate + assemble, workforce pull | ✅ | [ ] | TZ §12.7 / PRD §4.1.3; ADR finance-migration-machine; `/settings/migration`; `migration-machine-authz/validate/keys.spec.ts`; `migration-machine-gone.e2e-spec.ts` (410); UAT-SMOKE FIN-MIG-01 + `reports/finance-mig-uat-signoff.md` | Scaffold ✅ (PRD + negatives). Pilot `[ ]`. **Out of W6 BE rollup** (field UAT open) — does not darken Finance BE ✅. Does **not** flip AC-FIN-GL / AC-FIN-INV / AC-FIN-HR. |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
-**AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, AC-FIN-PROVISIONAL-VAT, and AC-FIN-AUD are out of Scaffold BE rollup** (SCREEN / UAT open, API-only watcher, or alignment residual) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX.  
+**AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, AC-FIN-PROVISIONAL-VAT, AC-FIN-AUD, and AC-FIN-MIG are out of Scaffold BE rollup** (field Pilot open, SCREEN residuals, or API-only watchers) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX. AC-FIN-MIG is Scaffold ✅ but still excluded from the W6 BE rollup until Pilot lab.  
 **Direct bank sync (2026-10-31):** default `off`. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  
 **Taxpayer and signature stubs (2026-10-31):** `settings.tax.taxLookupMock` and `signatureGatewayMock` default off. FIN-ASAN-01 stays API/STUB. Not Scaffold ✅. Does not change the BE rollup.  
 **Audit hash writer (2026-10-31):** VAT threshold `THRESHOLD_HIT` uses `AuditService`. AC-FIN-AUD stays 🟡. Not Scaffold ✅. Does not change the BE rollup.  
 **Close prompt (2026-10-31):** earliest unclosed past month. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  
 **Hotel day documents (2026-10-31):** list is `/reporting/hotel-day-documents`, not inventory. The row opens the package lines (revenue, sku, payments, deposits). Quantity purpose is labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. Not a new AC row and not Scaffold ✅. FIN-02 stays HEADLESS. Does not change the BE rollup.  
+**Sidebar UI debt polish (2026-11-01):** PageHeader/Badge/CatalogField/modal/table tokens on Home→Reports. Residual PARTIAL tail closed same day (cash CatalogField, report DATA_TABLE, tax/vat/profit-tax MODAL). Not a new AC row and not Scaffold ✅. Does not change the BE rollup or Pilot-ready.  
 Do not call this table «product readiness».
 
 **SaaS Wave 3 (audit only):** Finance already request-tenants via Nest `TenantContextInterceptor` + membership ALS from JWT. Wave 3 did **not** port kit `enterSatelliteTenant`. No silent process-bind stamps via kit in production paths.
@@ -61,6 +63,7 @@ Do not call this table «product readiness».
 | AC-FIN-FACT-QUEUE | No UAT; does not block open-month posting; clinic and hotel night audit are not this gate | Code | Out of BE rollup (🟡 API) |
 | AC-FIN-PROVISIONAL-VAT | No UAT; no cash refund; no live amendment send; does not extend AC-FIN-TAX | Code | Out of BE rollup (🟡 API) |
 | AC-FIN-AUD | Fuller AuthZ negatives for Scaffold ✅ (ledger-read non-owner mutation OK / security-audit 403; non-superadmin OWNER) | Code | Out of BE rollup (🟡); Wave C kit-align + Wave D both-journal UI landed 2026-10-29; OWNER door unit landed; FIN-AUD-01 COVERAGE stays SHIPPED; paths `/admin/audit` + OWNER `/admin/security-audit` |
+| AC-FIN-MIG | Pilot lab / field signoff | Out of BE plan | Scaffold ✅ + SHIPPED; Pilot `[ ]`; out of W6 BE rollup until field |
 
 ### Negative-path proof index
 
@@ -80,6 +83,11 @@ Do not call this table «product readiness».
 | `era-hotel-pms/__tests__/qaime-day-close-gate.spec.ts` | AC-FIN-EQAIME-DAY (out of BE rollup) |
 | `era-finance-core/apps/api/__tests__/fin-fa-negative.spec.ts` | AC-FIN-FA |
 | `era-finance-core/apps/api/test/rbac/rbac-bridge-sprint.spec.ts` | AC-FIN-RBAC (auditor belt) |
+| `era-finance-core/apps/api/test/migration/opening-balances-finance.e2e-spec.ts` | AC-FIN-MIG (legacy 410) |
+| `era-finance-core/apps/api/test/migration/migration-machine-gone.e2e-spec.ts` | AC-FIN-MIG (410) |
+| `era-finance-core/apps/api/__tests__/migration-machine-authz.spec.ts` | AC-FIN-MIG |
+| `era-finance-core/apps/api/__tests__/migration-machine-validate.spec.ts` | AC-FIN-MIG |
+| `era-finance-core/apps/api/__tests__/migration-machine-keys.spec.ts` | AC-FIN-MIG |
 | `era-finance-core/apps/api/test/trade-credit/trade-credit.service.spec.ts` | AC-FIN-TCC |
 | `era-finance-core/apps/api/test/trade-credit/trade-credit-classifier.spec.ts` | AC-FIN-TCC |
 | `era-finance-core/apps/api/test/trade-credit/trade-credit-limit.spec.ts` | AC-FIN-TCC |

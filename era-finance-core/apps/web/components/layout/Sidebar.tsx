@@ -1282,7 +1282,12 @@ export function MainSidebar({
                   onNavClick={onNavClick}
                 />
             </>
-            {user && (canPostAccounting || canManageOrgSettings || show({ permission: CP_PERMISSION.API_ORG_MEMBERS_READ })) ? (
+            {user &&
+            (canPostAccounting ||
+              canManageOrgSettings ||
+              show({ permission: CP_PERMISSION.API_ORG_MEMBERS_READ }) ||
+              perms.can(CP_PERMISSION.API_MIGRATION_UPLOAD) ||
+              perms.can(CP_PERMISSION.API_MIGRATION_ASSEMBLE)) ? (
               <>
                 {canManageOrgSettings && (
                   <>
@@ -1367,14 +1372,17 @@ export function MainSidebar({
                     />
                   </>
                 ) : null}
-                <SideNavItem
-                  href="/settings/migration"
-                  label={t("nav.settingsMigration")}
-                  isActive={pathname.startsWith("/settings/migration")}
-                  icon={Upload}
-                  nested
-                  onNavClick={onNavClick}
-                />
+                {perms.can(CP_PERMISSION.API_MIGRATION_UPLOAD) ||
+                perms.can(CP_PERMISSION.API_MIGRATION_ASSEMBLE) ? (
+                  <SideNavItem
+                    href="/settings/migration"
+                    label={t("nav.settingsMigration")}
+                    isActive={pathname.startsWith("/settings/migration")}
+                    icon={Upload}
+                    nested
+                    onNavClick={onNavClick}
+                  />
+                ) : null}
               </>
             ) : null}
           </CollapsibleNavSection>

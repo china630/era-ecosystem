@@ -49,6 +49,9 @@ export async function POST(
     const { id } = await params;
     const visit = await prisma.visit.findUnique({ where: { id } });
     if (!visit) return jsonError("Visit not found", 404);
+    const { visitAwaitingPaymentDenied } = await import("@/domain/visit/visit-pay-gate");
+    const unpaid = visitAwaitingPaymentDenied(visit);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     const body = bodySchema.parse(await req.json());
     const entry = await prisma.cpoeEntry.create({
       data: { visitId: id, templateId: body.templateId, payloadJson: body.payloadJson },

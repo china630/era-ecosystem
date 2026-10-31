@@ -6,7 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Badge } from "../../../components/ui/badge";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -351,15 +353,17 @@ export default function HrTimesheetPage() {
               />
             </div>
             {!loading && !cpMaster ? (
-              <p className="m-0 text-sm text-slate-600">
-                {t("timesheet.status")}:{" "}
-                <span className="font-medium text-gray-900">
-                  {timesheet
-                    ? timesheet.status === "APPROVED"
+              <p className="m-0 flex items-center gap-2 text-sm text-slate-600">
+                {t("timesheet.status")}:
+                {timesheet ? (
+                  <Badge variant={timesheet.status === "APPROVED" ? "success" : "neutral"}>
+                    {timesheet.status === "APPROVED"
                       ? t("timesheet.statusApproved")
-                      : t("timesheet.statusDraft")
-                    : "—"}
-                </span>
+                      : t("timesheet.statusDraft")}
+                  </Badge>
+                ) : (
+                  "—"
+                )}
               </p>
             ) : null}
           </div>
@@ -428,21 +432,22 @@ export default function HrTimesheetPage() {
           <section className={`${CARD_CONTAINER_CLASS} p-4`}>
             <h2 className="mb-3 text-base font-semibold text-[#34495E]">{t("timesheet.batchTitle")}</h2>
             <div className="flex flex-wrap items-end gap-3 text-sm">
-              <label className="block">
-                <span className="text-slate-600">{t("timesheet.batchEmployee")}</span>
-                <select
-                  className={`mt-1 block min-w-[200px] ${INPUT_BORDERED_CLASS} py-1.5`}
+              <div className="min-w-[200px]">
+                <CatalogField
+                  kind="SEARCHABLE"
+                  label={t("timesheet.batchEmployee")}
                   value={batchEmp}
-                  onChange={(e) => setBatchEmp(e.target.value)}
-                  disabled={!canEdit}
-                >
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {formatAzEmployeeListName(e)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  onChange={(next) => {
+                    if (!canEdit) return;
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setBatchEmp(v);
+                  }}
+                  options={employees.map((e) => ({
+                    value: e.id,
+                    label: formatAzEmployeeListName(e),
+                  }))}
+                />
+              </div>
               <label className="block">
                 <span className="text-slate-600">{t("timesheet.batchFrom")}</span>
                 <input
@@ -467,21 +472,25 @@ export default function HrTimesheetPage() {
                   disabled={!canEdit}
                 />
               </label>
-              <label className="block">
-                <span className="text-slate-600">{t("timesheet.batchType")}</span>
-                <select
-                  className={`mt-1 block ${INPUT_BORDERED_CLASS} py-1.5`}
+              <div className="min-w-[10rem]">
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("timesheet.batchType")}
                   value={batchType}
-                  onChange={(e) => setBatchType(e.target.value as TsEntry["type"])}
-                  disabled={!canEdit}
-                >
-                  <option value="WORK">{t("timesheet.typeWork")}</option>
-                  <option value="VACATION">{t("timesheet.typeVacation")}</option>
-                  <option value="SICK">{t("timesheet.typeSick")}</option>
-                  <option value="OFF">{t("timesheet.typeOff")}</option>
-                  <option value="BUSINESS_TRIP">{t("timesheet.typeTrip")}</option>
-                </select>
-              </label>
+                  onChange={(next) => {
+                    if (!canEdit) return;
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    if (v) setBatchType(v as TsEntry["type"]);
+                  }}
+                  options={[
+                    { value: "WORK", label: t("timesheet.typeWork") },
+                    { value: "VACATION", label: t("timesheet.typeVacation") },
+                    { value: "SICK", label: t("timesheet.typeSick") },
+                    { value: "OFF", label: t("timesheet.typeOff") },
+                    { value: "BUSINESS_TRIP", label: t("timesheet.typeTrip") },
+                  ]}
+                />
+              </div>
               <button
                 type="button"
                 disabled={busy || !canEdit || !batchEmp}

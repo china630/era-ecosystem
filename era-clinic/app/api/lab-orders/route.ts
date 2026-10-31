@@ -15,6 +15,7 @@ import {
 } from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
+import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const createSchema = z.object({
@@ -107,7 +108,7 @@ export async function GET(req: Request) {
       return jsonOk({ data: [], total: 0, page: query.page, pageSize: query.pageSize });
     }
 
-    const conditions: Prisma.LabOrderWhereInput[] = [];
+    const conditions: Prisma.LabOrderWhereInput[] = [labOrderVisibleToLabWhere()];
     if (dataScope.mode === "ASSIGNED" && dataScope.practitionerId) {
       conditions.push(labOrderAssignedToPractitionerWhere(dataScope.practitionerId));
     }

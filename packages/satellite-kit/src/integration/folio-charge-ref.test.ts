@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  clinicLabTicketRef,
   clinicProcedureTicketRef,
+  clinicVisitTicketRef,
   fnbTicketLineRef,
   parseFolioChargeRef,
   retailPendingLineRef,
@@ -23,6 +25,23 @@ test("clinic ticket ref is stable and ignores a pay prefix on read", () => {
   const prefixed = parseFolioChargeRef("pay-clinic-ticket-ord1");
   assert.equal(prefixed?.source, "clinic");
   if (prefixed?.source === "clinic") assert.equal(prefixed.orderId, "ord1");
+});
+
+test("lab and visit ticket refs stay off the procedure clinic-ticket prefix", () => {
+  const lab = clinicLabTicketRef("lab1");
+  const visit = clinicVisitTicketRef("vis1");
+  assert.equal(lab, "lab-ticket-lab1");
+  assert.equal(visit, "visit-ticket-vis1");
+  assert.deepEqual(parseFolioChargeRef(lab), {
+    source: "clinic-lab",
+    orderId: "lab1",
+    ref: lab,
+  });
+  assert.deepEqual(parseFolioChargeRef(visit), {
+    source: "clinic-visit",
+    visitId: "vis1",
+    ref: visit,
+  });
 });
 
 test("fnb, retail, and prescription refs keep their stored spelling", () => {

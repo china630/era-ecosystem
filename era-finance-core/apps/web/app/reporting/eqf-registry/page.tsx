@@ -1,11 +1,14 @@
 "use client";
 
+import { CatalogField } from "@era/satellite-kit/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -18,7 +21,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { formatMoneyAzn } from "../../../lib/format-money";
 
@@ -50,6 +52,28 @@ type EqfResponse = {
   groups: EqfGroup[];
   s2sEnabled: boolean;
 };
+
+function eqaimeLabel(t: (k: string) => string, status: string | null): string {
+  if (!status) return t("invoices.eqaimeStatusNone");
+  const map: Record<string, string> = {
+    DRAFT: "invoices.eqaimeStatusDraft",
+    READY: "invoices.eqaimeStatusDraft",
+    SUBMITTED: "invoices.eqaimeStatusSubmitted",
+    ACCEPTED: "invoices.eqaimeStatusAccepted",
+    REJECTED: "invoices.eqaimeStatusRejected",
+    ERROR: "invoices.eqaimeStatusRejected",
+    CANCELLED: "invoices.eqaimeStatusCancelled",
+    MANUAL: "invoices.eqaimeStatusManual",
+  };
+  const key = map[status];
+  return key ? t(key) : status;
+}
+
+function dvxLabel(t: (k: string) => string, status: string): string {
+  const key = `reporting.eqfDvx.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
 
 export default function EqfRegistryPage() {
   const { t } = useTranslation();
@@ -89,43 +113,51 @@ export default function EqfRegistryPage() {
       <PageHeader
         title={t("reporting.eqfRegistryTitle")}
         subtitle={t("reporting.eqfRegistrySubtitle")}
+        leading={
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[10rem]">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("invoices.eqaimeStatus")}
+                value={status}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  setStatus(v);
+                }}
+                options={[
+                  { value: "", label: t("reporting.eqfRegistryAllStatuses") },
+                  { value: "DRAFT", label: t("invoices.eqaimeStatusDraft") },
+                  { value: "READY", label: t("invoices.eqaimeStatusDraft") },
+                  { value: "SUBMITTED", label: t("invoices.eqaimeStatusSubmitted") },
+                  { value: "ACCEPTED", label: t("invoices.eqaimeStatusAccepted") },
+                  { value: "REJECTED", label: t("invoices.eqaimeStatusRejected") },
+                  { value: "ERROR", label: t("invoices.eqaimeStatusRejected") },
+                ]}
+              />
+            </div>
+            <label className="text-[13px] text-[#34495E]">
+              {t("invoices.counterparty")} ID
+              <input
+                className={`${MODAL_INPUT_CLASS} mt-1 block min-w-[16rem]`}
+                value={counterpartyId}
+                onChange={(e) => setCounterpartyId(e.target.value)}
+                placeholder="uuid"
+              />
+            </label>
+            <Button type="button" variant="primary" onClick={() => void load()}>
+              {t("common.refresh")}
+            </Button>
+          </div>
+        }
+        actions={
+          data ? (
+            <span className="text-[13px] text-[#7F8C8D]">
+              {data.s2sEnabled ? t("reporting.eqfRegistryS2sOn") : t("reporting.eqfRegistryS2sOff")} ·{" "}
+              {data.total}
+            </span>
+          ) : null
+        }
       />
-
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="text-[13px] text-[#34495E]">
-          {t("invoices.eqaimeStatus")}
-          <select
-            className={`${MODAL_INPUT_CLASS} mt-1 block min-w-[10rem]`}
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="">{t("reporting.eqfRegistryAllStatuses", { defaultValue: "Все статусы" })}</option>
-            <option value="DRAFT">DRAFT</option>
-            <option value="READY">READY</option>
-            <option value="SUBMITTED">SUBMITTED</option>
-            <option value="ACCEPTED">ACCEPTED</option>
-            <option value="REJECTED">REJECTED</option>
-            <option value="ERROR">ERROR</option>
-          </select>
-        </label>
-        <label className="text-[13px] text-[#34495E]">
-          {t("invoices.counterparty")} ID
-          <input
-            className={`${MODAL_INPUT_CLASS} mt-1 block min-w-[16rem]`}
-            value={counterpartyId}
-            onChange={(e) => setCounterpartyId(e.target.value)}
-            placeholder="uuid"
-          />
-        </label>
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void load()}>
-          {t("common.refresh", { defaultValue: "Refresh" })}
-        </button>
-        {data ? (
-          <span className="text-[13px] text-[#7F8C8D]">
-            S2S: {data.s2sEnabled ? "on" : "off"} · {data.total}
-          </span>
-        ) : null}
-      </div>
 
       {loading ? (
         <p className="text-[#7F8C8D]">{t("common.loading")}</p>
@@ -150,7 +182,9 @@ export default function EqfRegistryPage() {
                       <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("invoices.number")}</th>
                       <th className={DATA_TABLE_TH_CENTER_CLASS}>{t("invoices.eqaimeStatus")}</th>
                       <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("invoices.eqaimeNumber")}</th>
-                      <th className={DATA_TABLE_TH_CENTER_CLASS}>DVX</th>
+                      <th className={DATA_TABLE_TH_CENTER_CLASS}>
+                        {t("reporting.eqfRegistryDvxHeader")}
+                      </th>
                       <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("invoices.amount")}</th>
                     </tr>
                   </thead>
@@ -159,12 +193,26 @@ export default function EqfRegistryPage() {
                       <tr key={inv.id} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>{inv.number}</td>
                         <td className={DATA_TABLE_TD_CENTER_CLASS}>
-                          {inv.eqaimeStatus ?? "—"}
+                          <Badge
+                            variant={
+                              inv.eqaimeStatus === "ACCEPTED"
+                                ? "success"
+                                : inv.eqaimeStatus === "REJECTED" || inv.eqaimeStatus === "ERROR"
+                                  ? "user"
+                                  : "neutral"
+                            }
+                          >
+                            {eqaimeLabel(t, inv.eqaimeStatus)}
+                          </Badge>
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>
                           {inv.eqaimeNumber ?? inv.dvxExternalId ?? "—"}
                         </td>
-                        <td className={DATA_TABLE_TD_CENTER_CLASS}>{inv.dvxSyncStatus}</td>
+                        <td className={DATA_TABLE_TD_CENTER_CLASS}>
+                          <Badge variant={inv.dvxSyncStatus === "SYNCED" ? "success" : "neutral"}>
+                            {dvxLabel(t, inv.dvxSyncStatus)}
+                          </Badge>
+                        </td>
                         <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                           {formatMoneyAzn(inv.totalAmount)}
                         </td>

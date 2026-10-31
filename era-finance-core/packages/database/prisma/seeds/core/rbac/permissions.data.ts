@@ -19,6 +19,8 @@ export const PERMISSIONS = [
   { code: "api:psa.manage", category: "PSA", description: "Projects and time entries" },
   { code: "api:reports.nas", category: "REPORTING", description: "NAS reports" },
   { code: "api:book.mgmt", category: "ACCOUNTING", description: "MANAGEMENT book / compare" },
+  { code: "api:migration.upload", category: "ACCOUNTING", description: "Migration machine Excel upload" },
+  { code: "api:migration.assemble", category: "ACCOUNTING", description: "Migration machine assemble / post" },
   { code: "admin:org.settings", category: "ADMIN", description: "Org settings / extra-fields" },
   { code: "admin:platform", category: "ADMIN", description: "Platform super-admin (locked)" },
 ] as const;

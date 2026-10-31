@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CreditCard, Pencil, Scale, Users2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -92,7 +92,6 @@ export default function CounterpartiesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [bankModal, setBankModal] = useState<{ id: string; name: string } | null>(null);
-  const importRef = useRef<HTMLInputElement>(null);
   const [cardQueue, setCardQueue] = useState<
     Array<{ id: string; partyKind: string; taxId: string; name: string }>
   >([]);
@@ -136,32 +135,6 @@ export default function CounterpartiesPage() {
     setLoading(false);
   }, [token, t]);
 
-  async function downloadTemplate(path: string, filename: string) {
-    const res = await apiFetch(path);
-    if (!res.ok) {
-      setError(await res.text());
-      return;
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function importExcel(file: File) {
-    const body = new FormData();
-    body.append("file", file);
-    const res = await apiFetch("/api/counterparties/import-xlsx", { method: "POST", body });
-    if (!res.ok) {
-      setError(await res.text());
-      return;
-    }
-    await load();
-  }
-
   useEffect(() => {
     if (!ready || !token) return;
     void load();
@@ -186,37 +159,13 @@ export default function CounterpartiesPage() {
       <PageHeader
         title={t("counterparties.title")}
         actions={
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="text-sm text-[#2980B9] self-center"
-              onClick={() =>
-                void downloadTemplate(
-                  "/api/counterparties/import-template.xlsx",
-                  "counterparties-import.xlsx",
-                )
-              }
-            >
-              {t("counterparties.importTemplate", "Excel template")}
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/settings/migration" className="text-sm text-[#2980B9]">
+              {t("counterparties.bulkImportLink")}
+            </Link>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
+              + {t("counterparties.newBtn")}
             </button>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => importRef.current?.click()}
-            >
-              {t("counterparties.importExcel", "Import Excel")}
-            </button>
-            <input
-              ref={importRef}
-              type="file"
-              accept=".xlsx"
-              className={`hidden ${MODAL_INPUT_CLASS}`}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void importExcel(file);
-              }}
-            />
           </div>
         }
       />
@@ -276,9 +225,6 @@ export default function CounterpartiesPage() {
               </SelectContent>
             </Select>
           </div>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
-            + {t("counterparties.newBtn")}
-          </button>
         </div>
         {loading && <p className="text-gray-600">{t("common.loading")}</p>}
         {!loading && rows.length === 0 && !error && (

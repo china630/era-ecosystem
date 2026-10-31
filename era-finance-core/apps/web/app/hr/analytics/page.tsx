@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
 import { apiFetch } from "../../../lib/api-client";
@@ -11,7 +12,6 @@ import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { useAuth } from "../../../lib/auth-context";
 import { isDepartmentHeadRole } from "../../../lib/role-utils";
 import {
-  BORDER_MUTED_CLASS,
   CARD_CONTAINER_CLASS,
 } from "../../../lib/design-system";
 import { TOOLBAR_MONTH_INPUT_CLASS } from "../../../lib/form-styles";
@@ -224,21 +224,21 @@ export default function HrAnalyticsPage() {
         actions={
           <div className="flex flex-wrap items-end justify-end gap-3">
             {!isDeptHead ? (
-              <label className="block min-w-[12rem] shrink-0 text-[13px] font-medium text-[#34495E]">
-                {t("hrAnalytics.departmentFilter")}
-                <select
+              <div className="min-w-[12rem] shrink-0">
+                <CatalogField
+                  kind="ENTITY_REF"
+                  label={t("hrAnalytics.departmentFilter")}
                   value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                  className={`mt-1 block h-9 w-full rounded-lg border ${BORDER_MUTED_CLASS} bg-white px-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2980B9]/40`}
-                >
-                  <option value="">{t("hrAnalytics.departmentAll")}</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setDepartmentId(v);
+                  }}
+                  options={[
+                    { value: "", label: t("hrAnalytics.departmentAll") },
+                    ...departments.map((d) => ({ value: d.id, label: d.name })),
+                  ]}
+                />
+              </div>
             ) : null}
           </div>
         }

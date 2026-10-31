@@ -12,6 +12,7 @@ import {
   deleteVisitDiagnosis,
   listVisitDiagnoses,
 } from "@/domain/icd/diagnosis-write.service";
+import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
   icdCodeId: z.string().min(1),
@@ -46,6 +47,14 @@ export async function POST(
     if (denied) return denied;
 
     const { id } = await ctx.params;
+    const visit = await prisma.visit.findUnique({
+      where: { id },
+      select: { amountNet: true, settledAt: true },
+    });
+    if (!visit) return jsonError("Visit not found", 404);
+    const { visitAwaitingPaymentDenied } = await import("@/domain/visit/visit-pay-gate");
+    const unpaid = visitAwaitingPaymentDenied(visit);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     const body = createSchema.parse(await req.json());
     const row = await addVisitDiagnosis(id, {
       ...body,

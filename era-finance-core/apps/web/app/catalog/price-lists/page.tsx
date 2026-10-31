@@ -1,17 +1,18 @@
 "use client";
 import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
-import { Pencil, Plus } from "lucide-react";
-import { bakuDateDisplay } from "@era/satellite-kit/time";
+import { CatalogField } from "@era/satellite-kit/ui";
+import { Pencil, Plus, X } from "lucide-react";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { todayBakuYmd } from "@era/satellite-kit/time";
 import { EmptyState } from "../../../components/empty-state";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Button } from "../../../components/ui/button";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -19,10 +20,12 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
   MODAL_FIELD_LABEL_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../../lib/design-system";
 
@@ -157,14 +160,11 @@ export default function PriceListsPage() {
           unitPrice: Number(l.unitPrice.replace(",", ".")),
         })),
     };
-    const res = await apiFetch(
-      editId ? `/api/price-lists/${editId}` : "/api/price-lists",
-      {
-        method: editId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
+    const res = await apiFetch(editId ? `/api/price-lists/${editId}` : "/api/price-lists", {
+      method: editId ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     setSaving(false);
     if (!res.ok) {
       toast.error(t("catalog.priceList.saveErr"));
@@ -178,19 +178,22 @@ export default function PriceListsPage() {
   if (!ready) return <p>{t("common.loading")}</p>;
   if (!token) return null;
 
+  const channelOptions = (channel && !channels.includes(channel) ? [channel, ...channels] : channels).map(
+    (code) => ({ value: code, label: code }),
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={t("catalog.priceList.pageTitle")}
         subtitle={t("catalog.priceList.subtitle")}
+        actions={
+          <Button type="button" variant="primary" onClick={openCreate}>
+            <Plus className="mr-1 inline h-4 w-4" />
+            {t("catalog.priceList.newBtn")}
+          </Button>
+        }
       />
-
-      <div>
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-          <Plus className="mr-1 inline h-4 w-4" />
-          {t("catalog.priceList.newBtn")}
-        </button>
-      </div>
 
       {err && <p className="text-sm text-red-600">{err}</p>}
       {loading ? (
@@ -218,7 +221,9 @@ export default function PriceListsPage() {
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.name}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.currencyCode}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.validFrom).slice(0, 10))}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {bakuDateDisplay(String(r.validFrom).slice(0, 10))}
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.channel || "—"}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r._count?.lines ?? 0}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
@@ -238,15 +243,37 @@ export default function PriceListsPage() {
       )}
 
       {modalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setModalOpen(false);
+          }}
+        >
           <form
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-5 shadow-xl"
+            className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-lg`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="price-list-modal-title"
             onSubmit={(e) => void save(e)}
           >
-            <h2 className="mb-4 text-lg font-semibold">
-              {editId ? t("catalog.priceList.editTitle") : t("catalog.priceList.newTitle")}
-            </h2>
-            <div className="space-y-3">
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h2
+                id="price-list-modal-title"
+                className="m-0 text-lg font-semibold text-[#34495E]"
+              >
+                {editId ? t("catalog.priceList.editTitle") : t("catalog.priceList.newTitle")}
+              </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={() => setModalOpen(false)}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
+            <div className="mt-4 max-h-[60vh] space-y-3 overflow-y-auto">
               <label className="block">
                 <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.name")}</span>
                 <input
@@ -256,98 +283,114 @@ export default function PriceListsPage() {
                   onChange={(e) => setName(e.target.value)}
                 />
               </label>
-              <label className="block">
-                <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.currency")}</span>
-                <select
-                  className={`${MODAL_INPUT_CLASS} w-full`}
-                  value={currencyCode}
-                  onChange={(e) => setCurrencyCode(e.target.value)}
-                >
-                  {["AZN", "USD", "EUR"].map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("catalog.priceList.currency")}
+                value={currencyCode}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  if (v) setCurrencyCode(v);
+                }}
+                options={[
+                  { value: "AZN", label: "AZN" },
+                  { value: "USD", label: "USD" },
+                  { value: "EUR", label: "EUR" },
+                ]}
+              />
               <div className="grid grid-cols-2 gap-2">
                 <label className="block">
                   <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.validFrom")}</span>
-                  <FinanceDatePicker value={validFrom} onChange={(iso) => setValidFrom(iso)} respectPeriodLock={false} required />
+                  <FinanceDatePicker
+                    value={validFrom}
+                    onChange={(iso) => setValidFrom(iso)}
+                    respectPeriodLock={false}
+                    required
+                  />
                 </label>
                 <label className="block">
                   <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.validTo")}</span>
-                  <FinanceDatePicker value={validTo} onChange={(iso) => setValidTo(iso)} respectPeriodLock={false} />
+                  <FinanceDatePicker
+                    value={validTo}
+                    onChange={(iso) => setValidTo(iso)}
+                    respectPeriodLock={false}
+                  />
                 </label>
               </div>
-              <label className="block">
-                <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.channel")}</span>
-                <select
-                  className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value)}
-                >
-                  <option value="">{t("catalog.priceList.channelPh")}</option>
-                  {(channel && !channels.includes(channel) ? [channel, ...channels] : channels).map(
-                    (code) => (
-                      <option key={code} value={code}>
-                        {code}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("catalog.priceList.channel")}
+                value={channel}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  setChannel(v);
+                }}
+                options={[
+                  { value: "", label: t("catalog.priceList.channelPh") },
+                  ...channelOptions,
+                ]}
+              />
               <div>
                 <div className="mb-2 flex justify-between">
                   <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.lines")}</span>
-                  <button
+                  <Button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
+                    variant="secondary"
                     onClick={() => setLines((p) => [...p, { productId: "", unitPrice: "" }])}
                   >
                     {t("catalog.priceList.addLine")}
-                  </button>
+                  </Button>
                 </div>
                 {lines.map((line, idx) => (
                   <div key={idx} className="mb-2 grid grid-cols-2 gap-2">
-                    <select
-                      className={MODAL_INPUT_CLASS}
+                    <CatalogField
+                      kind="SEARCHABLE"
+                      label={t("catalog.priceList.selectProduct")}
                       value={line.productId}
-                      onChange={(e) =>
+                      onChange={(next) => {
+                        const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
                         setLines((p) =>
-                          p.map((x, i) => (i === idx ? { ...x, productId: e.target.value } : x)),
-                        )
-                      }
-                    >
-                      <option value="">{t("catalog.priceList.selectProduct")}</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.sku}) — {formatMoneyAzn(p.price)}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      className={MODAL_INPUT_CLASS}
-                      placeholder={t("catalog.priceList.unitPrice")}
-                      value={line.unitPrice}
-                      onChange={(e) =>
-                        setLines((p) =>
-                          p.map((x, i) => (i === idx ? { ...x, unitPrice: e.target.value } : x)),
-                        )
-                      }
+                          p.map((x, i) => (i === idx ? { ...x, productId: v } : x)),
+                        );
+                      }}
+                      options={products.map((p) => ({
+                        value: p.id,
+                        label: `${p.name} (${p.sku}) — ${formatMoneyAzn(p.price)}`,
+                      }))}
                     />
+                    <label className="block">
+                      <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.unitPrice")}</span>
+                      <input
+                        className={`${MODAL_INPUT_CLASS} w-full`}
+                        value={line.unitPrice}
+                        onChange={(e) =>
+                          setLines((p) =>
+                            p.map((x, i) => (i === idx ? { ...x, unitPrice: e.target.value } : x)),
+                          )
+                        }
+                      />
+                    </label>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="mt-4 flex gap-2">
-              <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={saving}>
-                {t("catalog.priceList.save")}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setModalOpen(false)}>
+            <footer className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
+                type="button"
+                variant="secondary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                onClick={() => setModalOpen(false)}
+              >
                 {t("common.cancel")}
-              </button>
-            </div>
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                disabled={saving}
+              >
+                {t("catalog.priceList.save")}
+              </Button>
+            </footer>
           </form>
         </div>
       ) : null}

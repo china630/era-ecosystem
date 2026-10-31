@@ -1496,14 +1496,16 @@ Cash Flow is generated for a period (`dateFrom`..`dateTo`, UTC inclusive). API: 
 - Внедрение горизонтального автоскейлинга воркеров через API DigitalOcean / Kubernetes.
 - Оптимизация транзакций Ledger: переход на пакетную запись итогов расчётов (**Batch Insert**) для массовых сценариев.
 - Разработка маппера данных **1С → ERA NAS** для сценариев Migration Mode.
-- [x] **COMPLETED:** реализация интерфейса ввода начальных остатков (**Opening Balances Wizard**) для кассы/банка, склада и зарплатных обязательств.
-- [x] **COMPLETED:** контракты Migration Wizard (`POST /api/migration/opening-balances/finance`, `.../hr`, `.../inventory`) введены в эксплуатацию (детали в §12.7).
+- [x] **COMPLETED:** Migration machine v2 (`/settings/migration`: Upload + Assemble) для кассы/банка, склада, капитала, open items и кадровых остатков (после workforce pull).
+- [x] **COMPLETED (архив v1):** контракты `POST /api/migration/opening-balances/{finance,hr,inventory}` реализованы, затем HTTP write path закрыт **410** (детали в §12.7).
 
-### 12.7. Opening Balances Wizard (Migration Wizard) — детальная проектная рамка
+### 12.7. Migration machine + Opening Balances (архив v1)
 
 **Цель:** безопасный ввод стартовых сальдо при переходе с 1С/legacy без нарушения инвариантов Double-Entry и tenant-изоляции.
 
-**Область v1 (MVP Wizard):**
+**Migration machine (2026-10):** UI `/settings/migration` — две зоны: **загрузка** справочников/черновиков по серверным Excel-шаблонам и **сборка** (`POST /api/migration/validate` → `POST /api/migration/assemble`). Карточки (контрагенты, товары, склады, рецепты) пишутся сразу; остатки — в `migration_draft_*` до `migrationAssembledAt`. Legacy `POST /api/migration/opening-balances/{finance,hr,inventory}` → **410 Gone**. Кадры не создаются Excel: `POST /api/migration/workforce/pull`. Права: `api:migration.upload` / `api:migration.assemble`.
+
+**Область v1 (MVP Wizard) — superseded by machine tiles:**
 
 - Шаг 1: **Cash/Bank Opening** — начальные остатки по счетам `101*` / `221*` (NAS).
 - Шаг 2: **Inventory Opening** — стартовые остатки ТМЦ по складам (`warehouseId`, `productId`, `qty`, `unitCost`).
@@ -1542,20 +1544,23 @@ Cash Flow is generated for a period (`dateFrom`..`dateTo`, UTC inclusive). API: 
 
 | Метод | Путь | Доступ | Контракт |
 |-------|------|--------|----------|
-| POST | `/api/migration/opening-balances/finance` | `OWNER`, `ACCOUNTANT` | Payload: массив `{ accountCode, amount, currency, date, description? }`. Авто-корреспонденция через техсчёт `000`: для активов/денег (`101*`, `221*`) — `Дт target / Кт 000`; для обязательств (`531*` и др. кредитных) — `Дт 000 / Кт target`. Проводки выполняются в `prisma.$transaction`, баланс проверяется через `validateBalance()`. |
-| POST | `/api/migration/opening-balances/hr` | `OWNER`, `ACCOUNTANT` | Payload: массив сотрудников с обязательными полями `finCode`, `firstName`, `lastName`, `patronymic`, `positionId`, `hireDate`, `salary`; миграционные поля `initialVacationDays` (default 0), `avgMonthlySalaryLastYear` (optional), `initialSalaryBalance` (default 0). |
-| POST | `/api/migration/opening-balances/inventory` | `OWNER`, `ACCOUNTANT` | Payload: массив `{ productId, warehouseId, quantity, costPrice }`. Проводки только в режиме opening: `Дт 201/204 — Кт 000` (без 611/731), плюс `StockMovement` типа `IN` (reason `ADJUSTMENT`) в той же транзакции. |
+| POST | `/api/migration/opening-balances/finance` | — | **410 Gone** (архив v1). Ранее: `{ accountCode, amount, currency, date }` через техсчёт `000`. |
+| POST | `/api/migration/opening-balances/hr` | — | **410 Gone** (архив v1). Excel create сотрудников снят; см. workforce pull. |
+| POST | `/api/migration/opening-balances/inventory` | — | **410 Gone** (архив v1). Остатки склада — draft upload + assemble. |
+| GET | `/api/migration/templates/:kind.xlsx` | `api:migration.upload` | Server XLSX template per kind. |
+| POST | `/api/migration/upload/:kind` | `api:migration.upload` | Masters write-through or draft batch lines. |
+| POST | `/api/migration/workforce/pull` | `api:migration.upload` | CP employment → Finance Employee mirrors. |
+| POST | `/api/migration/validate` | `api:migration.assemble` | Pre-assemble checks. |
+| POST | `/api/migration/assemble` | `api:migration.assemble` | One-shot atomic post via tech account `000`; locks drafts. |
 
-**Frontend UX / Templates (реализовано):**
+**Frontend UX / Templates (Migration machine v2):**
 
-- Для `client-side parsing` и генерации `XLSX templates` используется библиотека **`xlsx`** в браузере (без серверного преобразования файлов).
-- На каждом шаге Wizard добавлена кнопка `Скачать шаблон / Şablonu yüklə`, формирующая XLSX-файл на лету.
-- Обязательный стандарт заголовков для импорт-шаблонов:
-  - **Finance:** `accountCode`, `amount`, `currency`, `date`, `description`
-  - **HR:** `employeeId` (алиас) / `finCode`, `hireDate`, `initialVacationDays`, `avgMonthlySalaryLastYear`
-  - **Inventory:** `productId`, `warehouseId`, `quantity`, `costPrice`
-- Валидационная UX-подсказка на форме: даты в формате `YYYY-MM-DD`, числовые значения — без пробелов.
-- Маппинг HR-алиаса: в HR parser значение `employeeId` автоматически используется как `finCode` (правило `employeeId -> finCode`).
+- Экран `/settings/migration`: checklist → masters → drafts (+ workforce pull) → Assemble (DatePicker, validate + `trial000`, confirm).
+- Шаблоны XLSX: `GET /api/migration/templates/:kind.xlsx`; upload — `POST /api/migration/uploads/:kind`.
+- Ключи: VÖEN / sku / warehouse `code` / `cpEmploymentId`. Excel create сотрудников запрещён.
+- Kind → artifact: `ar` Invoice; `ap` JE + Transaction `purchaseSnapshot.migrationOpening`; advances PARTIAL GL-only; VAT Evidence (no GL); FA/stock/cash/capital/HR/payroll → JE (+ domain rows).
+- Legacy `POST /api/migration/opening-balances/*` → **410**; assemble via tech `000`. ADR [finance-migration-machine](../docs/adr/finance-migration-machine.md).
+- Даты шаблонов — `YYYY-MM-DD`; UI timestamps — Asia/Baku.
 
 **Hybrid IBAN validation (Local MOD-97 + Paid API):**
 
@@ -1565,11 +1570,10 @@ Cash Flow is generated for a period (`dateFrom`..`dateTo`, UTC inclusive). API: 
 
 **Статус backend-реализации API:**
 
-- [x] **COMPLETED:** `POST /api/migration/opening-balances/finance`
-- [x] **COMPLETED:** `POST /api/migration/opening-balances/hr`
-- [x] **COMPLETED:** `POST /api/migration/opening-balances/inventory`
-- [x] **COMPLETED (Early Guard):** `validateBalance()` вызывается **до** любых DB-записей (`StockMovement`, `JournalPosting`) для раннего отката при математическом дисбалансе.
-- [x] **COMPLETED (Inventory Integration Tests):** сценарии success, optimistic locking conflict (`409 Conflict`) и блокировка по `validateBalance()`.
+- [x] **COMPLETED (архив v1 + 410):** opening-balances finance/hr/inventory HTTP writers closed; service code retained for history/tests.
+- [x] **COMPLETED (v2):** templates, upload, workforce pull, validate, assemble (+ Early Guard / tech `000` on assemble path).
+- [x] **COMPLETED (Early Guard):** `validateBalance()` до DB-записей на assemble (и в архивном inventory service).
+- [x] **COMPLETED (Inventory Integration Tests):** архивные сценарии success / `409` / balance; e2e `migration-machine-gone` asserts **410**.
 
 **HR schema standard (migration baseline):**
 

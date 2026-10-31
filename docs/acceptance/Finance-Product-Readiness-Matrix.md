@@ -10,7 +10,11 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
-**Closeout (2026-10-31):** Finance home FX may show the previous CBAR day until today's FINAL exists. Postings stay on the document date. Direct bank sync stays off until `bankingDirect.syncMode` is `mock` or `rest`. Taxpayer and signature stubs stay off unless `settings.tax.taxLookupMock` or `signatureGatewayMock` is set. FIN-ASAN-01 stays API/STUB. VAT-threshold audit rows now take a chain hash; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, not the warehouse; the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. Gate / BE / UI / Demo / Pilot / Sell unchanged — do **not** claim GA; edition stays `mvp`.
+**Closeout (2026-10-31):** Finance home FX may show the previous CBAR day until today's FINAL exists. Postings stay on the document date. Direct bank sync stays off until `bankingDirect.syncMode` is `mock` or `rest`. Taxpayer and signature stubs stay off unless `settings.tax.taxLookupMock` or `signatureGatewayMock` is set. FIN-ASAN-01 stays API/STUB. VAT-threshold audit rows now take a chain hash; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, not the warehouse; the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. **Migration machine (FIN-MIG-01 / AC-FIN-MIG) 97–98% wave:** `/settings/migration` **SHOW**; COVERAGE **SHIPPED**; AC Scaffold ✅ (out of W6 BE rollup until Pilot); UAT-SMOKE + signoff — does **not** move Gate / BE ✅ / Demo ❌ / Pilot `[ ]` / Sell. Edition stays `mvp` (`pilot_ready: false`).
+
+**Closeout (2026-11-01) — sidebar UI debt polish (Home→Reports):** PageHeader / Badge / CatalogField / `MODAL_DIALOG_*` / `DATA_TABLE_*` / ListPaginationFooter tokens on former PARTIAL/GAP screens. **Does not** move Gate, BE ✅, UI 🟡 rollup, Demo ❌, Pilot `[ ]`, Sell, or edition `mvp`. No SHOW upgrade without UAT.
+
+**Closeout (2026-11-01) — residual PARTIAL tail:** cash CatalogField (account/flow/desk/employee/subtype); advance-reports + payroll Badge; reconciliation + balance-sheet `DATA_TABLE_*`; vat / tax-export / profit-tax `MODAL_DIALOG_*` + CatalogField filters. Create wizards (`/crm/counterparties/new`, `/sales/invoices/new`) stay without list-style PageHeader by design. Still no SHOW / Pilot / Sell flip.
 
 ---
 
@@ -42,11 +46,14 @@
 | Reference Excel | `/settings/reference-data` | 🟡 — FC-REF-01 SCREEN; upload stays in this org; UAT open; not SHOW |
 | Simplified-tax watch | `/reporting/tax-export`, org settings regime, SuperAdmin `/admin/data/tax-schemes` | 🟡 — SCREEN; FIN-TAX-SCHEME-01 API; AC-FIN-TAX-SCHEME 🟡 out of W6 BE rollup; does not post or switch regime; not SHOW |
 | e-qaimə day close | org settings checkbox, `/sales/invoices` list and invoice card, hotel `/night-audit` gap list and check-day stop | 🟡 — SCREEN; FIN-EQAIME-DAY-01 API; AC-FIN-EQAIME-DAY 🟡 out of W6 BE rollup; does not enable S2S; not SHOW |
-| Fact queue | `/reporting/fact-queue` meaning list; `/reporting` and dashboard close count; period-lock date refuses the same month | 🟡 — SCREEN; FIN-FACT-QUEUE-01 API; AC-FIN-FACT-QUEUE 🟡 out of W6 BE rollup; does not extend AC-FIN-GL; not SHOW |
+| Fact queue | `/reporting/fact-queue` meaning list (PageHeader period + DATA_TABLE); `/reporting` and dashboard close count; period-lock date refuses the same month | 🟡 — SCREEN (UI tokens 2026-11-01; not SHOW); FIN-FACT-QUEUE-01 API; AC-FIN-FACT-QUEUE 🟡 out of W6 BE rollup; does not extend AC-FIN-GL; not sell |
 | Provisional VAT | `/purchases` waiting-document status, document number on the purchase form, later credit link; `/sales/invoices` create lists the scheme VAT percent; `/reporting/tax-export` scheme-driven recalc or amendment draft; period-lock date refuses the same month | 🟡 — SCREEN; FIN-PROVISIONAL-VAT-01 API; AC-FIN-PROVISIONAL-VAT 🟡 out of W6 BE rollup; whole purchase stays in expense until the document; exempt line sent to the API is refused; no cash refund; does not extend AC-FIN-TAX; not SHOW |
 | Mutation audit (FIN-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (CatalogField entityType + EraListFilterBar + kit DatePicker; canonical filters incl. entityId); OWNER `/admin/security-audit` + `GET /api/admin/security-audit` (same filter kit; CatalogField entityName + All) | 🟡 — COVERAGE SHIPPED (Nest Layer A); Wave C kit-align + Wave D journal UI parity (+ security-audit sibling) 2026-10-29; AC-FIN-AUD 🟡 AuthZ-negatives residual out of W6. Does not move Gate, Demo ❌, Pilot, or Sell |
+| Migration machine (FIN-MIG-01) | `/settings/migration` dual-zone Upload + Assemble; DatePicker; confirm assemble; PARTIAL advances / Evidence VAT | 🟡 — **SHOW**; COVERAGE **SHIPPED**; AC-FIN-MIG ✅ out of W6 BE rollup; Pilot `[ ]`; not sell/GA |
 
-**Having routes ≠ UI ready for sell.** Demo/TE stays ❌ until live sign-off.
+**Having routes ≠ UI ready for sell.** Demo/TE stays ❌ until live sign-off. Line UI rollup stays 🟡 (other surfaces).
+
+**Migration machine (2026-10-31 SHOW):** SHOW + SHIPPED does not move Gate, Finance BE ✅ rollup, Demo ❌, Pilot, or Sell. Edition stays `mvp`. Does not extend AC-FIN-GL / AC-FIN-INV / AC-FIN-HR.
 
 **Tax scheme watcher (2026-10-24):** the screen row above does not move Gate, Scaffold BE, Demo, Pilot, or Sell. Edition stays `mvp`. AC-FIN-TAX is not extended.
 

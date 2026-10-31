@@ -96,6 +96,15 @@ export class BuffetFoodCostRunDto {
 
 export class PatchWarehouseScopeDto {
   @ApiPropertyOptional({
+    description: "Stable import key (unique per org); used by migration stock drafts",
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== undefined)
+  @IsString()
+  code?: string | null;
+
+  @ApiPropertyOptional({
     enum: COST_CLASSES,
     nullable: true,
   })

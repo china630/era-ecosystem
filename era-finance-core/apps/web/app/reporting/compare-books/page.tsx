@@ -3,13 +3,21 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DatePicker, FieldSelect } from "@era/satellite-kit/ui";
+import { CatalogField, DatePicker } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TD_RIGHT_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   LINK_ACCENT_CLASS,
-  PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
@@ -108,105 +116,115 @@ export default function CompareBooksPage() {
   if (!ready) return <p>{t("common.loading")}</p>;
   if (!token) return null;
 
+  const bookOptions = books.map((book) => ({
+    value: book.id,
+    label: `${book.code} — ${book.nameEn}`,
+  }));
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={t("compareBooks.title")}
-        subtitle={t("compareBooks.subtitle")}
-      />
-      <p className="text-sm text-slate-600">
-        {t(
-          "compareBooks.mgmtLaborHint",
-          "NAS vs MGMT payroll (FOT) is not GL compare-books — use",
-        )}{" "}
-        <Link href="/hr/mgmt-labor-delta" className={LINK_ACCENT_CLASS}>
-          {t("compareBooks.mgmtLaborLink", "MGMT labor delta")}
-        </Link>
-        .
-      </p>
-      <div className={`${CARD_CONTAINER_CLASS} grid gap-3 p-4 md:grid-cols-5`}>
-        <FieldSelect
-          label={t("compareBooks.bookA")}
-          preset="selectWide"
-          value={bookA}
-          onChange={(event) => setBookA(event.target.value)}
-        >
-          {books.map((book) => (
-            <option key={book.id} value={book.id}>
-              {book.code} — {book.nameEn}
-            </option>
-          ))}
-        </FieldSelect>
-        <FieldSelect
-          label={t("compareBooks.bookB")}
-          preset="selectWide"
-          value={bookB}
-          onChange={(event) => setBookB(event.target.value)}
-        >
-          {books.map((book) => (
-            <option key={book.id} value={book.id}>
-              {book.code} — {book.nameEn}
-            </option>
-          ))}
-        </FieldSelect>
-        <DatePicker
-          label={t("compareBooks.dateFrom")}
-          value={dateFrom}
-          onChange={setDateFrom}
-          placeholder={t("ui.datePickerPlaceholder")}
-        />
-        <DatePicker
-          label={t("compareBooks.dateTo")}
-          value={dateTo}
-          onChange={setDateTo}
-          placeholder={t("ui.datePickerPlaceholder")}
-        />
-        <div className="flex items-end">
-          <button
+        subtitle={
+          <>
+            {t("compareBooks.subtitle")}{" "}
+            <span className="block text-[12px] text-[#7F8C8D]">
+              {t(
+                "compareBooks.mgmtLaborHint",
+                "NAS vs MGMT payroll (FOT) is not GL compare-books — use",
+              )}{" "}
+              <Link href="/hr/mgmt-labor-delta" className={LINK_ACCENT_CLASS}>
+                {t("compareBooks.mgmtLaborLink", "MGMT labor delta")}
+              </Link>
+              .
+            </span>
+          </>
+        }
+        leading={
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[12rem]">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("compareBooks.bookA")}
+                value={bookA}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  setBookA(v);
+                }}
+                options={bookOptions}
+              />
+            </div>
+            <div className="min-w-[12rem]">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("compareBooks.bookB")}
+                value={bookB}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  setBookB(v);
+                }}
+                options={bookOptions}
+              />
+            </div>
+            <DatePicker
+              label={t("compareBooks.dateFrom")}
+              value={dateFrom}
+              onChange={setDateFrom}
+              placeholder={t("ui.datePickerPlaceholder")}
+            />
+            <DatePicker
+              label={t("compareBooks.dateTo")}
+              value={dateTo}
+              onChange={setDateTo}
+              placeholder={t("ui.datePickerPlaceholder")}
+            />
+          </div>
+        }
+        actions={
+          <Button
             type="button"
-            className={PRIMARY_BUTTON_CLASS}
+            variant="primary"
             disabled={busy || books.length < 2}
             onClick={() => void compare()}
           >
             {busy ? "…" : t("compareBooks.load")}
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {result ? (
         <div className="grid gap-5 xl:grid-cols-2">
           {[result.bookA, result.bookB].map((side) => (
             <section key={side.book.id} className={CARD_CONTAINER_CLASS}>
               <div className="border-b border-slate-200 p-4">
-                <h2 className="font-semibold">
+                <h2 className="m-0 font-semibold">
                   {side.book.code} — {side.book.nameEn}
                 </h2>
-                <p className="text-sm text-slate-600">
+                <p className="m-0 mt-1 text-sm text-slate-600">
                   {t("compareBooks.periodTotals")}:{" "}
                   {formatMoneyAzn(side.totals.periodDebit)} /{" "}
                   {formatMoneyAzn(side.totals.periodCredit)}
                 </p>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+              <div className={DATA_TABLE_VIEWPORT_CLASS}>
+                <table className={DATA_TABLE_CLASS}>
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="p-2 text-left">{t("compareBooks.account")}</th>
-                      <th className="p-2 text-right">{t("compareBooks.debit")}</th>
-                      <th className="p-2 text-right">{t("compareBooks.credit")}</th>
+                    <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("compareBooks.account")}</th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("compareBooks.debit")}</th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("compareBooks.credit")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {side.rows.map((row) => (
-                      <tr key={row.accountId} className="border-t border-slate-100">
-                        <td className="p-2">
-                          <span className="font-mono">{row.accountCode}</span>{" "}
-                          {row.accountName}
+                      <tr key={row.accountId} className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <span className="font-mono">{row.accountCode}</span> {row.accountName}
                         </td>
-                        <td className="p-2 text-right">
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                           {formatMoneyAzn(row.periodDebit)}
                         </td>
-                        <td className="p-2 text-right">
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                           {formatMoneyAzn(row.periodCredit)}
                         </td>
                       </tr>

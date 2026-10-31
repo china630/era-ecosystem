@@ -573,6 +573,7 @@ export async function addWalkInPartyLine(
       patientOrigin: "WALK_IN",
       amountNet: unitPrice,
       amountsByCode: { [priceCode]: unitPrice },
+      forcePaid: true,
     });
     await audit(actor, partyId, "LINE_ADD", `${guest.patientRef.fullName}: ${priceCode}`);
     void order;
