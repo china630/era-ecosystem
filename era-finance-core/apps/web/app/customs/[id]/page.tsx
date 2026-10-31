@@ -4,16 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
 import {
+  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  PRIMARY_BUTTON_CLASS,
+  LINK_ACCENT_CLASS,
+  MODAL_INPUT_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 
@@ -74,6 +79,12 @@ export default function CustomsDeclarationDetailPage() {
     if (!ready || !token) return;
     void load();
   }, [ready, token, load]);
+
+  function statusLabel(status: string): string {
+    const key = `trade.customs.status.${status}`;
+    const label = t(key);
+    return label === key ? status : label;
+  }
 
   const attach = async () => {
     if (!token || !purchaseTxId.trim()) return;
@@ -142,43 +153,45 @@ export default function CustomsDeclarationDetailPage() {
 
   if (!row) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="space-y-4">
         <PageHeader title={t("trade.customs.detailTitle")} />
-        <p className="text-sm text-slate-600">{t("common.loadErr")}</p>
-        <Link href="/customs" className="text-blue-600 underline text-sm">
-          ← {t("trade.customs.title")}
+        <p className="text-sm text-[#7F8C8D]">{t("common.loadErr")}</p>
+        <Link href="/customs" className={`${LINK_ACCENT_CLASS} text-sm`}>
+          {t("trade.customs.title")}
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4 max-w-6xl mx-auto">
-      <PageHeader title={`${t("trade.customs.detailTitle")} ${row.bgdNumber}`} />
-      <p className="text-sm">
-        <Link href="/customs" className="text-blue-600 underline">
-          ← {t("trade.customs.title")}
-        </Link>
-      </p>
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm space-y-1">
+    <div className="space-y-4">
+      <PageHeader
+        title={`${t("trade.customs.detailTitle")} ${row.bgdNumber}`}
+        actions={
+          <Link href="/customs" className={`${LINK_ACCENT_CLASS} text-sm`}>
+            {t("trade.customs.title")}
+          </Link>
+        }
+      />
+      <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm space-y-2`}>
         <div>
-          <span className="text-slate-500">{t("trade.customs.colDate")}: </span>
+          <span className="text-[#7F8C8D]">{t("trade.customs.colDate")}: </span>
           {String(row.bgdDate).slice(0, 10)}
         </div>
         <div>
-          <span className="text-slate-500">{t("trade.customs.colCurrency")}: </span>
+          <span className="text-[#7F8C8D]">{t("trade.customs.colCurrency")}: </span>
           {row.currency}
         </div>
-        <div>
-          <span className="text-slate-500">{t("trade.customs.colStatus")}: </span>
-          {row.status}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[#7F8C8D]">{t("trade.customs.colStatus")}:</span>
+          <Badge variant="neutral">{statusLabel(row.status)}</Badge>
         </div>
         <div>
-          <span className="text-slate-500">{t("trade.customs.colSender")}: </span>
+          <span className="text-[#7F8C8D]">{t("trade.customs.colSender")}: </span>
           {row.senderName ?? "—"}
         </div>
         <div>
-          <span className="text-slate-500">{t("trade.customs.colReceiver")}: </span>
+          <span className="text-[#7F8C8D]">{t("trade.customs.colReceiver")}: </span>
           {row.receiverName ?? "—"}
         </div>
         {row.mismatchPctDuty != null && row.mismatchPctDuty > 0.5 ? (
@@ -193,35 +206,41 @@ export default function CustomsDeclarationDetailPage() {
         ) : null}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-        <p className="text-xs font-semibold text-slate-700">
+      <div className={`${CARD_CONTAINER_CLASS} p-4 space-y-3`}>
+        <p className="text-sm font-semibold text-[#34495E] m-0">
           {t("trade.customs.detailAllocateLandedCost")}
         </p>
-        <div className="flex flex-wrap gap-2 items-center">
-          <label className="text-xs text-slate-600 flex items-center gap-2">
-            {t("trade.customs.detailAllocateMethod")}
-            <select
-              className="border rounded px-2 py-1 text-sm"
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="min-w-[12rem]">
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("trade.customs.detailAllocateMethod")}
               value={allocateMethod}
-              onChange={(e) => setAllocateMethod(e.target.value as AllocateMethod)}
-            >
-              <option value="STAT_VALUE">{t("trade.customs.methodStatValue")}</option>
-              <option value="WEIGHT">{t("trade.customs.methodWeight")}</option>
-              <option value="QUANTITY">{t("trade.customs.methodQuantity")}</option>
-            </select>
-          </label>
-          <button
+              onChange={(next) => {
+                const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                if (v === "STAT_VALUE" || v === "WEIGHT" || v === "QUANTITY") {
+                  setAllocateMethod(v);
+                }
+              }}
+              options={[
+                { value: "STAT_VALUE", label: t("trade.customs.methodStatValue") },
+                { value: "WEIGHT", label: t("trade.customs.methodWeight") },
+                { value: "QUANTITY", label: t("trade.customs.methodQuantity") },
+              ]}
+            />
+          </div>
+          <Button
             type="button"
-            className={PRIMARY_BUTTON_CLASS}
+            variant="primary"
             disabled={allocateBusy}
             onClick={() => void allocateLandedCost()}
           >
             {allocateBusy ? t("trade.customs.detailAllocateBusy") : t("trade.customs.detailAllocateLandedCost")}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <h2 className="text-sm font-semibold text-slate-800">{t("trade.customs.detailItems")}</h2>
+      <h2 className="text-sm font-semibold text-[#34495E]">{t("trade.customs.detailItems")}</h2>
       <div className={DATA_TABLE_VIEWPORT_CLASS}>
         <table className={DATA_TABLE_CLASS}>
           <thead>
@@ -254,7 +273,7 @@ export default function CustomsDeclarationDetailPage() {
                   ) : (
                     <div className="flex flex-col gap-1 min-w-[200px]">
                       <input
-                        className="border rounded px-2 py-1 text-xs font-mono"
+                        className={`${MODAL_INPUT_CLASS} font-mono text-xs`}
                         placeholder={t("trade.customs.detailLinkProduct")}
                         value={productLinkByItem[it.id] ?? ""}
                         onChange={(e) =>
@@ -264,16 +283,17 @@ export default function CustomsDeclarationDetailPage() {
                           }))
                         }
                       />
-                      <button
+                      <Button
                         type="button"
-                        className="text-xs text-blue-600 underline text-left"
+                        variant="ghost"
+                        className={`${LINK_ACCENT_CLASS} !h-auto !min-h-0 !px-0 justify-start underline`}
                         disabled={linkBusyItem === it.id}
                         onClick={() => void linkProduct(it.id)}
                       >
                         {linkBusyItem === it.id
                           ? "…"
                           : t("trade.customs.detailLinkProductCta")}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </td>
@@ -283,23 +303,23 @@ export default function CustomsDeclarationDetailPage() {
         </table>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-        <p className="text-xs text-slate-600">{t("trade.customs.detailAttachHint")}</p>
+      <div className={`${CARD_CONTAINER_CLASS} p-4 space-y-2`}>
+        <p className="text-xs text-[#7F8C8D] m-0">{t("trade.customs.detailAttachHint")}</p>
         <div className="flex flex-wrap gap-2 items-center">
           <input
-            className="border rounded px-2 py-1 text-sm flex-1 min-w-[240px]"
+            className={`${MODAL_INPUT_CLASS} flex-1 min-w-[240px]`}
             value={purchaseTxId}
             onChange={(e) => setPurchaseTxId(e.target.value)}
             placeholder="00000000-0000-0000-0000-000000000000"
           />
-          <button
+          <Button
             type="button"
-            className={PRIMARY_BUTTON_CLASS}
+            variant="primary"
             disabled={attachBusy}
             onClick={() => void attach()}
           >
             {attachBusy ? "…" : t("trade.customs.detailAttachCta")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

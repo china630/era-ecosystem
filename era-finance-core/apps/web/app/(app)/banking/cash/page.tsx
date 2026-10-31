@@ -1,10 +1,12 @@
 "use client";
 
+import { CatalogField } from "@era/satellite-kit/ui";
 import { CheckCircle2, Eye, Printer, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../../../components/empty-state";
+import { ListPaginationFooter } from "../../../../components/list-pagination-footer";
 import { KO1PrintForm, type KO1PrintOrder } from "../../../../components/print/KO1PrintForm";
 import { apiFetch } from "../../../../lib/api-client";
 import { formatAzEmployeeListName } from "../../../../lib/employee-display-name";
@@ -35,12 +37,12 @@ import { ledgerQueryParam, useLedger } from "../../../../lib/ledger-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { SubscriptionPaywall } from "../../../../components/subscription-paywall";
 import { PageHeader } from "../../../../components/layout/page-header";
+import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { AsyncCombobox } from "../../../../components/ui/async-combobox";
 import { CurrencySelect } from "../../../../components/ui/currency-select";
 import { DatePicker } from "../../../../components/ui/date-picker";
 import { NumericAmountInput } from "../../../../components/ui/numeric-amount-input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../components/ui/select";
 import type { SupportedCurrency } from "../../../../lib/currencies";
 import { billingPeriodKeyBaku, todayBakuYmd } from "@era/satellite-kit/time";
 
@@ -115,32 +117,38 @@ function CashAccountSelect({
   onChange,
   currency,
   catalog,
-  className,
+  label,
 }: {
   value: string;
   onChange: (code: string) => void;
   currency: string;
   catalog: CashCatalogRow[];
-  className: string;
+  label: string;
 }) {
   const opts = cashRowsForCurrency(currency, catalog);
   if (opts.length === 0) {
     return (
-      <input className={className} value={value} onChange={(e) => onChange(e.target.value)} />
+      <label className={MODAL_FIELD_LABEL_CLASS}>
+        {label}
+        <input
+          className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </label>
     );
   }
   return (
-    <select
-      className={className}
+    <CatalogField
+      kind={opts.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
+      label={label}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {opts.map((r) => (
-        <option key={r.code} value={r.code}>
-          {r.code} — {r.name}
-        </option>
-      ))}
-    </select>
+      onChange={(next) => {
+        const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+        onChange(v);
+      }}
+      options={opts.map((r) => ({ value: r.code, label: `${r.code} — ${r.name}` }))}
+    />
   );
 }
 
@@ -805,8 +813,10 @@ export default function BankingCashPage() {
                           {row.date?.slice?.(0, 10) ?? "—"}
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>
-                          <span className="block">{typeLabel(row)}</span>
-                          <span className="text-xs text-[#7F8C8D]">{statusLabel(row.status)}</span>
+                          <span className="mb-1 block">{typeLabel(row)}</span>
+                          <Badge variant={row.status === "POSTED" ? "success" : "neutral"}>
+                            {statusLabel(row.status)}
+                          </Badge>
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>{partyLabel(row)}</td>
                         <td className={`${DATA_TABLE_TD_CLASS} max-w-xs truncate`} title={row.purpose}>
@@ -851,49 +861,16 @@ export default function BankingCashPage() {
                 </table>
               </div>
               {ordersTotal > 0 ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEDF0] pt-3 text-[13px] text-[#34495E]">
-                  <label className="flex items-center gap-2">
-                    <span className="text-[#7F8C8D]">{t("common.paginationRowsPerPage")}</span>
-                    <select
-                      className={`${MODAL_INPUT_CLASS} !mt-0 h-9 min-w-[4.5rem]`}
-                      value={String(ordersPageSize)}
-                      onChange={(e) => {
-                        setOrdersPageSize(Number(e.target.value) || 25);
-                        setOrdersPage(1);
-                      }}
-                    >
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                    </select>
-                  </label>
-                  <span className="tabular-nums text-[#7F8C8D]">
-                    {t("common.paginationPageOf", {
-                      page: String(ordersPage),
-                      pages: String(ordersTotalPages),
-                      total: String(ordersTotal),
-                    })}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      disabled={ordersPage <= 1}
-                      onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
-                    >
-                      {t("common.paginationPrev")}
-                    </button>
-                    <button
-                      type="button"
-                      className={SECONDARY_BUTTON_CLASS}
-                      disabled={ordersPage >= ordersTotalPages}
-                      onClick={() => setOrdersPage((p) => Math.min(ordersTotalPages, p + 1))}
-                    >
-                      {t("common.paginationNext")}
-                    </button>
-                  </div>
-                </div>
+                <ListPaginationFooter
+                  page={ordersPage}
+                  pageSize={ordersPageSize}
+                  total={ordersTotal}
+                  onPageChange={setOrdersPage}
+                  onPageSizeChange={(size) => {
+                    setOrdersPageSize(size);
+                    setOrdersPage(1);
+                  }}
+                />
               ) : null}
               {!loading && ordersTotal === 0 && (
                 <p className="px-4 py-6 text-slate-500 text-sm">—</p>
@@ -1081,21 +1058,19 @@ export default function BankingCashPage() {
                   </label>
                   <div aria-hidden="true" className="min-h-0" />
                 </div>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashFlowItem")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={quickCfId}
-                    onChange={(e) => setQuickCfId(e.target.value)}
-                    required
-                  >
-                    {cashFlowItems.map((cf) => (
-                      <option key={cf.id} value={cf.id}>
-                        {cf.code} — {cf.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <CatalogField
+                  kind={cashFlowItems.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
+                  label={t("banking.cash.cashFlowItem")}
+                  value={quickCfId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setQuickCfId(v);
+                  }}
+                  options={cashFlowItems.map((cf) => ({
+                    value: cf.id,
+                    label: `${cf.code} — ${cf.name}`,
+                  }))}
+                />
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("banking.cash.outDesc")}
                   <input
@@ -1140,26 +1115,27 @@ export default function BankingCashPage() {
               </header>
 
               <form className="mt-4 flex min-h-0 flex-1 flex-col space-y-4" onSubmit={submitAdvanceDraft}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.advanceEmployee")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={advEmployeeId}
-                    onChange={(e) => setAdvEmployeeId(e.target.value)}
-                    required
-                  >
-                    <option value="">—</option>
-                    {(accountableOptions.length
+                <CatalogField
+                  kind="ENTITY_REF"
+                  label={t("banking.cash.advanceEmployee")}
+                  value={advEmployeeId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setAdvEmployeeId(v);
+                  }}
+                  options={[
+                    { value: "", label: "—" },
+                    ...(accountableOptions.length
                       ? accountableOptions
                       : employees.filter((e) => e.accountableAccountCode244?.trim())
-                    ).map((em) => (
-                      <option key={em.id} value={em.id}>
-                        {formatAzEmployeeListName(em)}
-                        {em.accountableAccountCode244 ? ` · ${em.accountableAccountCode244}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    ).map((em) => ({
+                      value: em.id,
+                      label: `${formatAzEmployeeListName(em)}${
+                        em.accountableAccountCode244 ? ` · ${em.accountableAccountCode244}` : ""
+                      }`,
+                    })),
+                  ]}
+                />
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("banking.cash.advanceReportDate")}
                   <DatePicker
@@ -1272,44 +1248,42 @@ export default function BankingCashPage() {
                     required
                   />
                 </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.pkoSubtype")}
-                  <span className="mt-1 block">
-                    <Select value={pkoSubtype} onValueChange={setPkoSubtype}>
-                      <SelectTrigger className="" />
-                      <SelectContent>
-                        {(pkoSubtypes.length
-                          ? pkoSubtypes
-                          : ([
-                              {
-                                code: "INCOME_FROM_CUSTOMER",
-                                nameEn: "Income from customer",
-                                nameAz: "",
-                                nameRu: "",
-                              },
-                              {
-                                code: "RETURN_FROM_ACCOUNTABLE",
-                                nameEn: "Return from accountable",
-                                nameAz: "",
-                                nameRu: "",
-                              },
-                              {
-                                code: "WITHDRAWAL_FROM_BANK",
-                                nameEn: "Withdrawal from bank",
-                                nameAz: "",
-                                nameRu: "",
-                              },
-                              { code: "OTHER", nameEn: "Other", nameAz: "", nameRu: "" },
-                            ] satisfies CashSubtypeOpt[])
-                        ).map((row) => (
-                          <SelectItem key={row.code} value={row.code}>
-                            {row.nameEn || row.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </span>
-                </label>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("banking.cash.pkoSubtype")}
+                  value={pkoSubtype}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    if (v) setPkoSubtype(v);
+                  }}
+                  options={(pkoSubtypes.length
+                    ? pkoSubtypes
+                    : ([
+                        {
+                          code: "INCOME_FROM_CUSTOMER",
+                          nameEn: "Income from customer",
+                          nameAz: "",
+                          nameRu: "",
+                        },
+                        {
+                          code: "RETURN_FROM_ACCOUNTABLE",
+                          nameEn: "Return from accountable",
+                          nameAz: "",
+                          nameRu: "",
+                        },
+                        {
+                          code: "WITHDRAWAL_FROM_BANK",
+                          nameEn: "Withdrawal from bank",
+                          nameAz: "",
+                          nameRu: "",
+                        },
+                        { code: "OTHER", nameEn: "Other", nameAz: "", nameRu: "" },
+                      ] satisfies CashSubtypeOpt[])
+                  ).map((row) => ({
+                    value: row.code,
+                    label: row.nameEn || row.code,
+                  }))}
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <label className={MODAL_FIELD_LABEL_CLASS}>
                     {t("banking.cash.amount")}
@@ -1337,16 +1311,13 @@ export default function BankingCashPage() {
                     required
                   />
                 </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashAccount")}
-                  <CashAccountSelect
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    currency={pkoCurrency}
-                    catalog={cashCatalog}
-                    value={pkoCash}
-                    onChange={setPkoCash}
-                  />
-                </label>
+                <CashAccountSelect
+                  label={t("banking.cash.cashAccount")}
+                  currency={pkoCurrency}
+                  catalog={cashCatalog}
+                  value={pkoCash}
+                  onChange={setPkoCash}
+                />
                 {(pkoSubtype === "OTHER" || pkoSubtype === "RETURN_FROM_ACCOUNTABLE") && (
                   <label className={MODAL_FIELD_LABEL_CLASS}>
                     {t("banking.cash.offsetAccount")}
@@ -1383,52 +1354,49 @@ export default function BankingCashPage() {
                   </label>
                 )}
                 {pkoSubtype === "RETURN_FROM_ACCOUNTABLE" && (
-                  <label className={MODAL_FIELD_LABEL_CLASS}>
-                    {t("banking.cash.employee")}
-                    <select
-                      className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                      value={pkoEmpId}
-                      onChange={(e) => setPkoEmpId(e.target.value)}
-                    >
-                      <option value="">—</option>
-                      {employees.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {formatAzEmployeeListName(c)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <CatalogField
+                    kind="ENTITY_REF"
+                    label={t("banking.cash.employee")}
+                    value={pkoEmpId}
+                    onChange={(next) => {
+                      const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                      setPkoEmpId(v);
+                    }}
+                    options={[
+                      { value: "", label: "—" },
+                      ...employees.map((c) => ({
+                        value: c.id,
+                        label: formatAzEmployeeListName(c),
+                      })),
+                    ]}
+                  />
                 )}
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashFlowItem")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={pkoCfId}
-                    onChange={(e) => setPkoCfId(e.target.value)}
-                    required
-                  >
-                    {cashFlowItems.map((cf) => (
-                      <option key={cf.id} value={cf.id}>
-                        {cf.code} — {cf.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashDeskOptional")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={pkoDeskId}
-                    onChange={(e) => setPkoDeskId(e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {cashDesks.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <CatalogField
+                  kind={cashFlowItems.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
+                  label={t("banking.cash.cashFlowItem")}
+                  value={pkoCfId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setPkoCfId(v);
+                  }}
+                  options={cashFlowItems.map((cf) => ({
+                    value: cf.id,
+                    label: `${cf.code} — ${cf.name}`,
+                  }))}
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("banking.cash.cashDeskOptional")}
+                  value={pkoDeskId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setPkoDeskId(v);
+                  }}
+                  options={[
+                    { value: "", label: "—" },
+                    ...cashDesks.map((d) => ({ value: d.id, label: d.name })),
+                  ]}
+                />
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("banking.cash.notes")}
                   <textarea
@@ -1484,40 +1452,38 @@ export default function BankingCashPage() {
                     required
                   />
                 </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.rkoSubtype")}
-                  <span className="mt-1 block">
-                    <Select value={rkoSubtype} onValueChange={setRkoSubtype}>
-                      <SelectTrigger className="" />
-                      <SelectContent>
-                        {(rkoSubtypes.length
-                          ? rkoSubtypes
-                          : [
-                              { code: "SALARY", nameEn: "Salary", nameAz: "", nameRu: "" },
-                              {
-                                code: "SUPPLIER_PAYMENT",
-                                nameEn: "Supplier payment",
-                                nameAz: "",
-                                nameRu: "",
-                              },
-                              {
-                                code: "ACCOUNTABLE_ISSUE",
-                                nameEn: "Accountable issue",
-                                nameAz: "",
-                                nameRu: "",
-                              },
-                              { code: "BANK_DEPOSIT", nameEn: "Bank deposit", nameAz: "", nameRu: "" },
-                              { code: "OTHER", nameEn: "Other", nameAz: "", nameRu: "" },
-                            ]
-                        ).map((row) => (
-                          <SelectItem key={row.code} value={row.code}>
-                            {row.nameEn || row.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </span>
-                </label>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("banking.cash.rkoSubtype")}
+                  value={rkoSubtype}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    if (v) setRkoSubtype(v);
+                  }}
+                  options={(rkoSubtypes.length
+                    ? rkoSubtypes
+                    : [
+                        { code: "SALARY", nameEn: "Salary", nameAz: "", nameRu: "" },
+                        {
+                          code: "SUPPLIER_PAYMENT",
+                          nameEn: "Supplier payment",
+                          nameAz: "",
+                          nameRu: "",
+                        },
+                        {
+                          code: "ACCOUNTABLE_ISSUE",
+                          nameEn: "Accountable issue",
+                          nameAz: "",
+                          nameRu: "",
+                        },
+                        { code: "BANK_DEPOSIT", nameEn: "Bank deposit", nameAz: "", nameRu: "" },
+                        { code: "OTHER", nameEn: "Other", nameAz: "", nameRu: "" },
+                      ]
+                  ).map((row) => ({
+                    value: row.code,
+                    label: row.nameEn || row.code,
+                  }))}
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <label className={MODAL_FIELD_LABEL_CLASS}>
                     {t("banking.cash.amount")}
@@ -1556,16 +1522,13 @@ export default function BankingCashPage() {
                     required
                   />
                 </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashAccount")}
-                  <CashAccountSelect
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    currency={rkoCurrency}
-                    catalog={cashCatalog}
-                    value={rkoCash}
-                    onChange={setRkoCash}
-                  />
-                </label>
+                <CashAccountSelect
+                  label={t("banking.cash.cashAccount")}
+                  currency={rkoCurrency}
+                  catalog={cashCatalog}
+                  value={rkoCash}
+                  onChange={setRkoCash}
+                />
                 {rkoSubtype === "OTHER" && (
                   <label className={MODAL_FIELD_LABEL_CLASS}>
                     {t("banking.cash.offsetAccount")}
@@ -1598,51 +1561,48 @@ export default function BankingCashPage() {
                     portaled
                   />
                 </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.employee")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={rkoEmpId}
-                    onChange={(e) => setRkoEmpId(e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {employees.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.firstName} {c.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashFlowItem")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={rkoCfId}
-                    onChange={(e) => setRkoCfId(e.target.value)}
-                    required
-                  >
-                    {cashFlowItems.map((cf) => (
-                      <option key={cf.id} value={cf.id}>
-                        {cf.code} — {cf.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("banking.cash.cashDeskOptional")}
-                  <select
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={rkoDeskId}
-                    onChange={(e) => setRkoDeskId(e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {cashDesks.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <CatalogField
+                  kind="ENTITY_REF"
+                  label={t("banking.cash.employee")}
+                  value={rkoEmpId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setRkoEmpId(v);
+                  }}
+                  options={[
+                    { value: "", label: "—" },
+                    ...employees.map((c) => ({
+                      value: c.id,
+                      label: formatAzEmployeeListName(c),
+                    })),
+                  ]}
+                />
+                <CatalogField
+                  kind={cashFlowItems.length > 12 ? "SEARCHABLE" : "CLOSED_SMALL"}
+                  label={t("banking.cash.cashFlowItem")}
+                  value={rkoCfId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setRkoCfId(v);
+                  }}
+                  options={cashFlowItems.map((cf) => ({
+                    value: cf.id,
+                    label: `${cf.code} — ${cf.name}`,
+                  }))}
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("banking.cash.cashDeskOptional")}
+                  value={rkoDeskId}
+                  onChange={(next) => {
+                    const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                    setRkoDeskId(v);
+                  }}
+                  options={[
+                    { value: "", label: "—" },
+                    ...cashDesks.map((d) => ({ value: d.id, label: d.name })),
+                  ]}
+                />
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("banking.cash.notes")}
                   <textarea

@@ -13,6 +13,7 @@ Canonical reference for domains, ports, repo folders, billing slugs, and environ
 |---|---------|-------------|----------------|-----------|------|------------|
 | 0 | ERA (apex) | — | traefik | `era-365.online` | 80/443 | redirect → `app` |
 | 1 | ERA Platform | `era-orchestrator` | `orchestrator` | `app` | 3000 (web), 4000 (api) | `https://app.era-365.online/` |
+| — | ERA Platform Console | `era-orchestrator` (`apps/platform-web`) | `orchestrator` | `platform` | 3001 | `https://platform.era-365.online/` |
 | 2 | Finance ERP | `era-finance-core` | `finance-web` | `finance-core` | 3100 | `https://finance-core.era-365.online/` |
 | 3 | Finance API | `era-finance-core` | `finance-core` | `finance-api` ‡ | 4100 | `https://finance-api.era-365.online/` |
 | — | Orchestrator API | `era-orchestrator` | `orchestrator` | `api` | 4000 | `https://api.era-365.online/` |
@@ -190,6 +191,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Role | Variable | Example (prod) |
 |------|----------|----------------|
 | Orch Web | `ERA_APP_ORIGIN` | `https://app.era-365.online` |
+| Platform Console | `ERA_PLATFORM_ORIGIN` | `https://platform.era-365.online` |
 | Orch API | `ERA_API_ORIGIN` | `https://api.era-365.online` |
 | Finance Web | `ERA_FINANCE_ORIGIN` | `https://finance-core.era-365.online` |
 | Finance API (public) | `ERA_FINANCE_API_ORIGIN` | `https://finance-api.era-365.online` |
@@ -254,7 +256,7 @@ See [ADR control-plane-jwt-keys](./adr/control-plane-jwt-keys.md).
 ## Local `hosts` (development)
 
 ```text
-127.0.0.1 era-365.online app.era-365.online api.era-365.online
+127.0.0.1 era-365.online app.era-365.online platform.era-365.online api.era-365.online
 127.0.0.1 finance-core.era-365.online finance-api.era-365.online
 127.0.0.1 hotel-pms.era-365.online fnb-pos.era-365.online clinic.era-365.online retail-pos.era-365.online
 127.0.0.1 logistics.era-365.online construction.era-365.online crm.era-365.online

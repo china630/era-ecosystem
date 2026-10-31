@@ -43,6 +43,9 @@ export async function POST(
       include: { patientRef: true, visit: true },
     });
     if (!order) return jsonError("Lab order not found", 404);
+    const { labAwaitingPaymentDenied } = await import("@/domain/lab/lab-order-pay-gate");
+    const unpaid = labAwaitingPaymentDenied(order);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     const publishBlock = labPublishDenied(order.status, Boolean(order.resultJson));
     if (publishBlock) return jsonError(publishBlock, 400);
 

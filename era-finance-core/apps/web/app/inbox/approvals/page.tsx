@@ -5,8 +5,19 @@ import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { PageHeader } from "../../../components/layout/page-header";
+import { EmptyState } from "../../../components/empty-state";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
-import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "../../../lib/design-system";
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_INPUT_CLASS,
+} from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 
 type Row = {
@@ -107,80 +118,104 @@ export default function ApprovalsInboxPage() {
   if (!token) return null;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <PageHeader title={t("approvals.inboxTitle")} subtitle={t("nav.approvalsInbox")} />
       {err ? <p className="text-sm text-red-600">{t("approvals.loadErr")}: {err}</p> : null}
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("common.loading")}</p> : null}
-      {!loading && rows.length === 0 ? (
-        <p className="text-sm text-[#7F8C8D]">{t("approvals.empty")}</p>
+      {!loading && rows.length === 0 ? <EmptyState title={t("approvals.empty")} /> : null}
+      {!loading && rows.length > 0 ? (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("approvals.step")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("approvals.rejectCommentLabel")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr
+                  key={r.id}
+                  className={`${DATA_TABLE_TR_CLASS}${
+                    highlightRequest === r.id ? " bg-[#2980B9]/5 ring-1 ring-inset ring-[#2980B9]/30" : ""
+                  }`}
+                >
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="font-medium text-[#34495E]">
+                      {r.documentType} · {r.entityId.slice(0, 8)}…
+                    </div>
+                    <div className="mt-1 text-[12px] text-[#7F8C8D]">
+                      {t("approvals.step")}: {r.currentStepNo}/{r.totalSteps}
+                    </div>
+                    <div className="mt-1">
+                      <Badge variant="neutral">
+                        {(() => {
+                          const key = `approvals.status.${r.status}`;
+                          const label = t(key);
+                          return label === key ? r.status : label;
+                        })()}
+                      </Badge>
+                    </div>
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {rejectFor === r.id ? (
+                      <textarea
+                        className={`${MODAL_INPUT_CLASS} w-full min-w-[14rem]`}
+                        rows={3}
+                        value={rejectComment}
+                        onChange={(e) => setRejectComment(e.target.value)}
+                        placeholder={t("approvals.rejectCommentLabel")}
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="primary"
+                        disabled={busy === r.id}
+                        onClick={() => void approve(r)}
+                      >
+                        {t("approvals.approve")}
+                      </Button>
+                      {rejectFor === r.id ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="primary"
+                            disabled={busy === r.id}
+                            onClick={() => void reject(r)}
+                          >
+                            {t("approvals.reject")}
+                          </Button>
+                          <Button type="button" variant="secondary" onClick={() => setRejectFor(null)}>
+                            {t("activityStream.cancel")}
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={busy === r.id}
+                          onClick={() => {
+                            setRejectFor(r.id);
+                            setRejectComment("");
+                          }}
+                        >
+                          {t("approvals.reject")}
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
-      <ul className="space-y-3">
-        {rows.map((r) => (
-          <li
-            key={r.id}
-            className={[
-              "rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm",
-              highlightRequest === r.id ? "ring-2 ring-primary/40" : "",
-            ].join(" ")}
-          >
-            <div className="text-xs text-[#7F8C8D]">
-              {r.documentType} · {r.entityId.slice(0, 8)}…
-            </div>
-            <div className="mt-1 text-sm font-medium text-[#34495E]">
-              {t("approvals.step")}: {r.currentStepNo}/{r.totalSteps}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={busy === r.id}
-                onClick={() => void approve(r)}
-              >
-                {t("approvals.approve")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={busy === r.id}
-                onClick={() => {
-                  setRejectFor(r.id);
-                  setRejectComment("");
-                }}
-              >
-                {t("approvals.reject")}
-              </button>
-            </div>
-            {rejectFor === r.id ? (
-              <div className="mt-3 space-y-2">
-                <label className="block text-xs text-[#7F8C8D]">{t("approvals.rejectCommentLabel")}</label>
-                <textarea
-                  className="w-full rounded border border-[#D1D5DB] p-2 text-sm"
-                  rows={3}
-                  value={rejectComment}
-                  onChange={(e) => setRejectComment(e.target.value)}
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={busy === r.id}
-                    onClick={() => void reject(r)}
-                  >
-                    {t("approvals.reject")}
-                  </button>
-                  <button
-                    type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    onClick={() => setRejectFor(null)}
-                  >
-                    {t("activityStream.cancel")}
-                  </button>
-                </div>
-              </div>
-            ) : null}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

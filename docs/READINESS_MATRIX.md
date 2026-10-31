@@ -10,7 +10,9 @@ Living snapshot of **code + DELIVERY** readiness (engineering API levels and che
 
 **R1 re-audit (2026-06-16):** Integration domains A–E **COMPLIANT**; automated strict audit **0 issues**. See [audit-snapshots/r1-delta-2026-06-16.md](./audit-snapshots/r1-delta-2026-06-16.md).
 
-Last updated: 2026-10-27 (F&B DELIVERY §1 recount after Buffet Planner `[~]` M15; sell/show unchanged — see Fnb-Product-Readiness)
+Last updated: 2026-10-31 (Finance FIN-MIG-01 SHIPPED + DELIVERY `[x]`; sell/Pilot/`ga` unchanged — see Finance-Product-Readiness)
+
+> **Finance migration machine (2026-10-31):** FIN-MIG-01 **SHIPPED** / UI **SHOW** (`/settings/migration`; trial000; AP opening Txn; PARTIAL advances; Evidence VAT; legacy **410**). DELIVERY `[x]`. Sell/Pilot/`ga` unchanged — [Finance-Product-Readiness-Matrix](./acceptance/Finance-Product-Readiness-Matrix.md) (AC-FIN-MIG Scaffold ✅ out of W6 BE rollup). Full §4 consumer % refresh not required.
 
 > **Deployment topology (2026-08-17 waves 9–18):** PlacementJob admin API + host agent poll + SHARED↔ONPREM reject + slice metadata stub (CP-PLACE-01 API). Bind/runtime-config/tenancy schema unchanged from prior waves. Nafta stays one org in DB. **Not** live SHARED pool ops / sellable automated migrate — sell/show still [Platform-Product-Readiness-Matrix](./acceptance/Platform-Product-Readiness-Matrix.md) (AC-CP-TOPO 🟡 not Scaffold ✅). Canon: [adr/deployment-topology.md](./adr/deployment-topology.md).
 

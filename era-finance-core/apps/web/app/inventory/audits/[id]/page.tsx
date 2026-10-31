@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AuditDetailConfirmModal } from "../../../../components/inventory/modals";
 import { PageHeader } from "../../../../components/layout/page-header";
+import { Badge } from "../../../../components/ui/badge";
+import { Button } from "../../../../components/ui/button";
 import { apiFetch } from "../../../../lib/api-client";
 import { notifyListRefresh } from "../../../../lib/list-refresh-bus";
 import { useAuth } from "../../../../lib/auth-context";
@@ -20,7 +22,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   MODAL_INPUT_NUMERIC_CLASS,
-  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../../lib/design-system";
 import { isRestrictedUserRole } from "../../../../lib/role-utils";
@@ -234,30 +235,34 @@ export default function InventoryAuditDetailPage() {
   if (!token) return null;
 
   return (
-    <div className="max-w-6xl space-y-8 lg:flex lg:items-start lg:gap-8">
+    <div className="space-y-8 lg:flex lg:items-start lg:gap-8">
       <div className="min-w-0 flex-1 space-y-8">
       <PageHeader
         title={t("inventory.auditDetailTitle")}
         subtitle={
           row ? (
-            <span>
-              {typeof row.date === "string" ? row.date.slice(0, 10) : "—"} ·{" "}
-              {row.warehouse?.name ? `${row.warehouse.name} · ` : null}
-              {statusLabel(row.status)}
+            <span className="inline-flex flex-wrap items-center gap-2">
+              <span>
+                {typeof row.date === "string" ? row.date.slice(0, 10) : "—"}
+                {row.warehouse?.name ? ` · ${row.warehouse.name}` : null}
+              </span>
+              <Badge variant={row.status === "COMPLETED" ? "success" : "neutral"}>
+                {statusLabel(row.status)}
+              </Badge>
             </span>
           ) : undefined
         }
         actions={
           <>
             {mayPost && isCounting && (
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setSubmitOpen(true)}>
+              <Button type="button" variant="primary" onClick={() => setSubmitOpen(true)}>
                 {t("inventory.auditSubmitReview")}
-              </button>
+              </Button>
             )}
             {mayPost && isReview && (
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCompleteOpen(true)}>
+              <Button type="button" variant="primary" onClick={() => setCompleteOpen(true)}>
                 {t("inventory.auditPostComplete")}
-              </button>
+              </Button>
             )}
             <Link href="/inventory/audits" className={SECONDARY_BUTTON_CLASS}>
               {t("inventory.auditHistoryBack")}

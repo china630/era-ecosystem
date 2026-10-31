@@ -25,6 +25,7 @@ globs: era-finance-core/**/*
 | `/settings/extra-fields` | `GET/POST/PATCH /api/extra-fields`, `PUT /api/extra-fields/values/FINANCE_INVOICE/:id` — ADR [extensibility-forms-print-reports](../../../docs/adr/extensibility-forms-print-reports.md) W1 |
 | `/settings/print-placeholders` | Read-only whitelist catalog for `FINANCE_INVOICE_COMMERCIAL` — ADR extensibility W3 |
 | `/settings/organization` | `GET/PATCH /api/organization/settings`; logo upload rejected. Legal address/phone/director/logo → `ORG_PROFILE_MOVED_TO_CONTROL_PLANE` (CP-ORG-PROFILE-01). Primary bank CRUD publishes orch `bankLine` via S2S `PATCH …/profile-bank-line` |
+| `/settings/migration` | Migration machine v2: `GET /api/migration/status` (draft kinds as kebab slugs); `GET /api/migration/templates/:kind.xlsx`; `POST /api/migration/uploads/:kind` (`api:migration.upload`); `POST /api/migration/workforce/pull`; `POST /api/migration/validate` → `{ ok, issues, trial000 }`; `POST /api/migration/assemble` (`api:migration.assemble`). Legacy `POST /api/migration/opening-balances/*` → **410**. Dual zone Upload then Assemble via tech `000`. ADR [finance-migration-machine](../../../docs/adr/finance-migration-machine.md). |
 | `/print/invoice/:id` | `GET /api/invoices/:id/print-snapshot`, `GET /api/invoices/:id/print-html` — commercial invoice vendor HTML (not fiscal) |
 | `/fixed-assets` | lifecycle journal ref → adjustments; `?asset=` deep link (wave 3) |
 | `/reporting/journal` | `GET /api/reporting/general-ledger` (read-only) |

@@ -1,7 +1,9 @@
 "use client";
 
+import { CatalogField } from "@era/satellite-kit/ui";
 import { bakuCalendarYear } from "@era/satellite-kit/time";
 import Link from "next/link";
+import { X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -9,6 +11,8 @@ import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -18,6 +22,10 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -186,19 +194,22 @@ export default function VatDeclarationPage() {
             onChange={(e) => setYear(Number(e.target.value))}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
-          {t("reporting.vat.quarter")}
-          <select
-            className={MODAL_INPUT_CLASS}
-            value={quarter}
-            onChange={(e) => setQuarter(Number(e.target.value))}
-          >
-            <option value={1}>Q1</option>
-            <option value={2}>Q2</option>
-            <option value={3}>Q3</option>
-            <option value={4}>Q4</option>
-          </select>
-        </label>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("reporting.vat.quarter")}
+          value={String(quarter)}
+          onChange={(next) => {
+            const v = Array.isArray(next) ? next[0] ?? "1" : String(next ?? "1");
+            const n = Number(v);
+            if (n >= 1 && n <= 4) setQuarter(n);
+          }}
+          options={[
+            { value: "1", label: "Q1" },
+            { value: "2", label: "Q2" },
+            { value: "3", label: "Q3" },
+            { value: "4", label: "Q4" },
+          ]}
+        />
         <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={loading} onClick={() => void load()}>
           {loading ? t("common.loading") : t("reporting.vat.load")}
         </button>
@@ -230,11 +241,11 @@ export default function VatDeclarationPage() {
             <span>
               {t("reporting.vat.payableVat")}: {formatMoneyAzn(data.package.totals.vatPayable)}
             </span>
-            <span>
+            <Badge variant={data.validation.readyToSubmit ? "success" : "neutral"}>
               {data.validation.readyToSubmit
                 ? t("reporting.vat.readyYes")
                 : `${t("reporting.vat.readyNo")} (${data.validation.errors.length})`}
-            </span>
+            </Badge>
           </div>
         </div>
       ) : null}
@@ -292,57 +303,86 @@ export default function VatDeclarationPage() {
       ) : null}
 
       {showPreview && data ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-[#2C3E50] m-0 mb-3">
-              {t("reporting.taxExportEtaxesModalTitle")}
-            </h2>
-            <p className="text-sm text-[#34495E]">
-              {t("reporting.taxExportEtaxesSummary", {
-                sales: data.package.appendixSales.length,
-                purchases: data.package.appendixPurchases.length,
-                ready: data.validation.readyToSubmit
-                  ? t("reporting.vat.readyYes")
-                  : t("reporting.vat.readyNo"),
-              })}
-            </p>
-            <div className="mt-3 rounded-lg bg-[#F4F5F7] p-3 text-sm">
-              <p className="font-medium m-0 mb-1">{t("reporting.vat.totalsTitle")}</p>
-              <p className="m-0">
-                {t("reporting.vat.outputVat")}: {formatMoneyAzn(data.package.totals.outputVat)}
-              </p>
-              <p className="m-0">
-                {t("reporting.vat.inputVat")}: {formatMoneyAzn(data.package.totals.inputVat)}
-              </p>
-              <p className="m-0">
-                {t("reporting.vat.payableVat")}: {formatMoneyAzn(data.package.totals.vatPayable)}
-              </p>
-            </div>
-            {data.validation.errors.length > 0 ? (
-              <div className="mt-3">
-                <p className="text-sm font-medium text-red-700 m-0 mb-1">
-                  {t("reporting.taxExportEtaxesValidationTitle")}
-                </p>
-                <ul className="text-xs text-red-600 max-h-40 overflow-auto pl-4">
-                  {data.validation.errors.map((e, i) => (
-                    <li key={`${e.code}-${i}`}>{e.message}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {submitMsg ? <p className="mt-3 text-sm text-[#34495E]">{submitMsg}</p> : null}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowPreview(false);
+          }}
+        >
+          <div
+            className={`${MODAL_DIALOG_CONTENT_CLASS} max-h-[min(90vh,48rem)] w-full max-w-2xl`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="vat-preview-title"
+          >
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h2 id="vat-preview-title" className="m-0 text-lg font-semibold text-[#34495E]">
+                {t("reporting.taxExportEtaxesModalTitle")}
+              </h2>
+              <Button
                 type="button"
-                className={PRIMARY_BUTTON_CLASS}
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={() => setShowPreview(false)}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
+            <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto">
+              <p className="m-0 text-sm text-[#34495E]">
+                {t("reporting.taxExportEtaxesSummary", {
+                  sales: data.package.appendixSales.length,
+                  purchases: data.package.appendixPurchases.length,
+                  ready: data.validation.readyToSubmit
+                    ? t("reporting.vat.readyYes")
+                    : t("reporting.vat.readyNo"),
+                })}
+              </p>
+              <div className="rounded-lg bg-[#F4F5F7] p-3 text-sm">
+                <p className="font-medium m-0 mb-1">{t("reporting.vat.totalsTitle")}</p>
+                <p className="m-0">
+                  {t("reporting.vat.outputVat")}: {formatMoneyAzn(data.package.totals.outputVat)}
+                </p>
+                <p className="m-0">
+                  {t("reporting.vat.inputVat")}: {formatMoneyAzn(data.package.totals.inputVat)}
+                </p>
+                <p className="m-0">
+                  {t("reporting.vat.payableVat")}: {formatMoneyAzn(data.package.totals.vatPayable)}
+                </p>
+              </div>
+              {data.validation.errors.length > 0 ? (
+                <div>
+                  <p className="text-sm font-medium text-red-700 m-0 mb-1">
+                    {t("reporting.taxExportEtaxesValidationTitle")}
+                  </p>
+                  <ul className="text-xs text-red-600 max-h-40 overflow-auto pl-4">
+                    {data.validation.errors.map((e, i) => (
+                      <li key={`${e.code}-${i}`}>{e.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {submitMsg ? <p className="m-0 text-sm text-[#34495E]">{submitMsg}</p> : null}
+            </div>
+            <div className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
+                type="button"
+                variant="outline"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                onClick={() => setShowPreview(false)}
+              >
+                {t("reporting.vat.close")}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
                 disabled={!data.validation.readyToSubmit || submitting}
                 onClick={() => void submit()}
               >
                 {submitting ? t("common.loading") : t("reporting.vat.submit")}
-              </button>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setShowPreview(false)}>
-                {t("reporting.vat.close")}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

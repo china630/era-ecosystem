@@ -310,5 +310,9 @@ export async function applyScheduleRecalc(episodeId?: string): Promise<ScheduleM
       { pinYmdByOrderId: pinOf(others) },
     );
   }
+  const { dropUnseatedInPackageOrders } = await import(
+    "@/domain/sanatorium/package-assign.service"
+  );
+  await dropUnseatedInPackageOrders(toPlace.map((row) => row.orderId));
   return moves;
 }

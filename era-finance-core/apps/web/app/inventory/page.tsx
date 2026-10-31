@@ -8,6 +8,7 @@ import { apiFetch } from "../../lib/api-client";
 import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../lib/list-refresh-bus";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../components/layout/page-header";
 import { EmptyState } from "../../components/empty-state";
 import {
@@ -20,7 +21,6 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  INPUT_BORDERED_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../lib/design-system";
@@ -103,21 +103,21 @@ export default function InventoryPage() {
       <section className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
         <h2 className="text-lg font-semibold text-[#34495E] m-0">{t("inventory.stockBalancesTitle")}</h2>
         <div className="flex flex-wrap items-end gap-3">
-          <label className="block text-sm font-medium text-gray-700">
-            {t("inventory.filterWh")}
-            <select
+          <div className="min-w-[14rem] max-w-md">
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("inventory.filterWh")}
               value={filterWh}
-              onChange={(e) => setFilterWh(e.target.value)}
-              className={`mt-1 block max-w-md ${INPUT_BORDERED_CLASS}`}
-            >
-              <option value="">{t("inventory.allWh")}</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(next) => {
+                const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                setFilterWh(v);
+              }}
+              options={[
+                { value: "", label: t("inventory.allWh") },
+                ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+              ]}
+            />
+          </div>
           <button type="button" onClick={() => void load()} className={`${SECONDARY_BUTTON_CLASS} px-4`}>
             {t("inventory.refresh")}
           </button>

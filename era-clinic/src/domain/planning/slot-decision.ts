@@ -240,6 +240,7 @@ export async function placeManualProcedureSlot(input: {
       OR: [
         { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
         { status: "PENDING_PAY", resourceId: { not: null } },
+        { status: "PROPOSED", inPackage: true },
       ],
     },
     select: {
@@ -283,11 +284,11 @@ export async function placeManualProcedureSlot(input: {
       packageQuotaCode: row.packageQuotaCode,
       procedureCode: row.procedureCode,
     }).quotaKey,
-    countsForRest: row.status !== "NO_SHOW",
+    countsForRest: row.status !== "NO_SHOW" && row.status !== "PROPOSED",
     holdsGuestDay: false,
   }));
   const rotationContext: RotationContextSlot[] = existing
-    .filter((row) => row.status !== "NO_SHOW")
+    .filter((row) => row.status !== "NO_SHOW" && row.status !== "PROPOSED")
     .map((row) => ({
       procedureCode: row.procedureCode,
       bodyPart: row.bodyPart,

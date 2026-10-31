@@ -10,6 +10,20 @@ export function clinicProcedureTicketRef(orderId: string): string {
   return `clinic-ticket-${id}`;
 }
 
+/** Folio / settlement key for a paid lab or imaging LabOrder (not a procedure). */
+export function clinicLabTicketRef(orderId: string): string {
+  const id = orderId.trim();
+  if (!id) throw new Error("orderId required");
+  return `lab-ticket-${id}`;
+}
+
+/** Folio / settlement key for a paid Visit service line. */
+export function clinicVisitTicketRef(visitId: string): string {
+  const id = visitId.trim();
+  if (!id) throw new Error("visitId required");
+  return `visit-ticket-${id}`;
+}
+
 export function fnbTicketLineRef(ticketId: string, lineId: string): string {
   const ticket = ticketId.trim();
   const line = lineId.trim();
@@ -57,6 +71,8 @@ export function retailPrescriptionRef(saleId: string, sku: string, returned = fa
 
 export type FolioChargeSource =
   | { source: "clinic"; orderId: string; ref: string }
+  | { source: "clinic-lab"; orderId: string; ref: string }
+  | { source: "clinic-visit"; visitId: string; ref: string }
   | { source: "fnb"; ref: string }
   | { source: "retail"; ref: string }
   | { source: "retail-return"; ref: string }
@@ -74,6 +90,16 @@ export function parseFolioChargeRef(ref: string | null | undefined): FolioCharge
     const orderId = value.slice("clinic-ticket-".length);
     if (!orderId) return null;
     return { source: "clinic", orderId, ref: clinicProcedureTicketRef(orderId) };
+  }
+  if (value.startsWith("lab-ticket-")) {
+    const orderId = value.slice("lab-ticket-".length);
+    if (!orderId) return null;
+    return { source: "clinic-lab", orderId, ref: clinicLabTicketRef(orderId) };
+  }
+  if (value.startsWith("visit-ticket-")) {
+    const visitId = value.slice("visit-ticket-".length);
+    if (!visitId) return null;
+    return { source: "clinic-visit", visitId, ref: clinicVisitTicketRef(visitId) };
   }
   if (value.startsWith("retail-return-")) return { source: "retail-return", ref: value };
   if (value.startsWith("retail-")) return { source: "retail", ref: value };

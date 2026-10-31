@@ -140,18 +140,9 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title={t("products.catalogPageTitle")} />
-
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-      <section>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <input
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-            placeholder={t("products.catalogSearchPlaceholder")}
-            className={CATALOG_TOOLBAR_SEARCH_CLASS}
-            aria-label={t("products.catalogSearchPlaceholder")}
-          />
+      <PageHeader
+        title={t("products.catalogPageTitle")}
+        actions={
           <details ref={addMenuRef} className="relative inline-block text-left">
             <summary
               className={`${PRIMARY_BUTTON_CLASS} inline-flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden`}
@@ -186,6 +177,19 @@ export default function ProductsPage() {
               </button>
             </div>
           </details>
+        }
+      />
+
+      {error && <p className="text-red-600 text-sm">{error}</p>}
+      <section>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <input
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            placeholder={t("products.catalogSearchPlaceholder")}
+            className={CATALOG_TOOLBAR_SEARCH_CLASS}
+            aria-label={t("products.catalogSearchPlaceholder")}
+          />
           <button
             type="button"
             className="text-sm text-[#2980B9]"

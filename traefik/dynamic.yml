@@ -32,6 +32,14 @@ http:
         certResolver: letsencrypt
       service: orchestrator-web
 
+    orchestrator-platform:
+      rule: Host(`platform.era-365.online`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: orchestrator-platform-web
+
     orchestrator-api:
       rule: Host(`api.era-365.online`)
       entryPoints:
@@ -175,6 +183,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://orchestrator:3000"
+
+    orchestrator-platform-web:
+      loadBalancer:
+        servers:
+          - url: "http://orchestrator:3001"
 
     orchestrator-api:
       loadBalancer:

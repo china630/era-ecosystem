@@ -203,6 +203,15 @@ export type CreateLabOrderWithItemsParams = {
   /** Allow repeat when a prior PUBLISHED/COMPLETED order exists on the episode. */
   confirmRepeat?: boolean;
   patientOrigin?: "WALK_IN" | "IN_HOUSE";
+  /**
+   * Paid diagnostic / lab extra: skip package stamp, keep settledAt null, stamp
+   * inPackage=false on header and items.
+   */
+  forcePaid?: boolean;
+  prescribedByPractitionerId?: string | null;
+  reservationId?: string | null;
+  roomNumber?: string | null;
+  paymentReceiptRef?: string | null;
 };
 
 /**
@@ -228,15 +237,21 @@ export async function createLabOrderWithItems(
   const stamps = new Map<string, { inPackage: boolean; packageQuotaCode: string | null }>();
   const amountsByCode: Record<string, number> = { ...(params.amountsByCode ?? {}) };
   let resolvedOrigin: "WALK_IN" | "IN_HOUSE" = params.patientOrigin ?? "IN_HOUSE";
+  let reservationId = params.reservationId ?? null;
+  let roomNumber = params.roomNumber ?? null;
   const overQuotaCodes: string[] = [];
+  const forcePaid = params.forcePaid === true;
 
   if (params.clinicalEpisodeId) {
     const episode = await prisma.clinicalEpisode.findUnique({
       where: { id: params.clinicalEpisodeId },
-      select: { patientOrigin: true },
+      select: { patientOrigin: true, reservationId: true, roomNumber: true },
     });
     if (episode?.patientOrigin === "WALK_IN") resolvedOrigin = "WALK_IN";
     else if (params.patientOrigin) resolvedOrigin = params.patientOrigin;
+    else if (episode?.patientOrigin === "IN_HOUSE") resolvedOrigin = "IN_HOUSE";
+    if (reservationId == null) reservationId = episode?.reservationId ?? null;
+    if (roomNumber == null) roomNumber = episode?.roomNumber ?? null;
   }
 
   {
@@ -250,17 +265,20 @@ export async function createLabOrderWithItems(
     // Runs without an episode too: no package can apply, so every code must carry
     // its list price instead of the silent 0 that used to be written.
     for (const code of codes) {
-      const stamp = params.clinicalEpisodeId
-        ? await resolvePackageStampForEpisode({
-            episodeId: params.clinicalEpisodeId,
-            serviceCode: code,
-          })
-        : null;
+      const stamp =
+        !forcePaid && params.clinicalEpisodeId
+          ? await resolvePackageStampForEpisode({
+              episodeId: params.clinicalEpisodeId,
+              serviceCode: code,
+            })
+          : null;
       if (stamp) {
         stamps.set(code, {
           inPackage: true,
           packageQuotaCode: stamp.packageQuotaCode,
         });
+      } else if (forcePaid) {
+        stamps.set(code, { inPackage: false, packageQuotaCode: null });
       }
       if (!Object.prototype.hasOwnProperty.call(amountsByCode, code)) {
         const charge = applyPriceMissingFallback(
@@ -269,13 +287,22 @@ export async function createLabOrderWithItems(
             patientOrigin: resolvedOrigin,
             quotaCode: stamp?.packageQuotaCode,
             serviceCode: code,
-            inPackage: Boolean(stamp),
+            inPackage: Boolean(stamp) && !forcePaid,
           }),
           { serviceCode: code, where: "lab" },
         );
         amountsByCode[code] = charge.amountNet;
         if (charge.overQuota) overQuotaCodes.push(code);
       }
+    }
+  }
+
+  if (forcePaid) {
+    const missing = codes.filter((code) => !(Number(amountsByCode[code]) > 0));
+    if (missing.length > 0) {
+      const err = new Error(`Lab ${missing.join(", ")} has no price`);
+      (err as Error & { code?: string }).code = "NO_PRICE";
+      throw err;
     }
   }
 
@@ -297,6 +324,10 @@ export async function createLabOrderWithItems(
   const orderAmountNet =
     params.amountNet ??
     Object.values(amountsByCode).reduce((sum, n) => sum + Number(n || 0), 0);
+  const headerInPackage = !forcePaid && [...stamps.values()].some((s) => s.inPackage);
+  const headerQuota =
+    [...stamps.values()].find((s) => s.inPackage && s.packageQuotaCode)?.packageQuotaCode ??
+    null;
 
   const orderId = await prisma.$transaction(async (tx) => {
     const created = await tx.labOrder.create({
@@ -311,6 +342,13 @@ export async function createLabOrderWithItems(
         resultDate: params.resultDate,
         fasting: params.fasting ?? false,
         scheduledCollectionAt: params.scheduledCollectionAt,
+        inPackage: headerInPackage,
+        packageQuotaCode: headerQuota,
+        prescribedByPractitionerId: params.prescribedByPractitionerId ?? undefined,
+        paymentReceiptRef: params.paymentReceiptRef ?? undefined,
+        reservationId: reservationId ?? undefined,
+        roomNumber: roomNumber ?? undefined,
+        patientOrigin: resolvedOrigin,
         ...(isExternal
           ? {
               status: "RESULT_READY" as const,

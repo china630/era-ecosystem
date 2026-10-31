@@ -403,6 +403,7 @@ model Practitioner {
   skills                    PractitionerSkill[]
   procedureAllocations      ProcedureAllocation[]
   prescribedProcedureOrders ProcedureOrder[]                @relation("ProcedureOrder_prescribedByPractitioner")
+  prescribedLabOrders       LabOrder[]                      @relation("LabOrder_prescribedByPractitioner")
   scheduleRules             PractitionerScheduleRule[]
   scheduleExceptions        PractitionerScheduleException[]
   dutyLines                 StaffDutyLine[]
@@ -598,6 +599,8 @@ model Visit {
   settlementPendingId String?
   hubFiscalReceiptId  String?
   settledAt           DateTime?
+  /// Clinic receipt number once reception Pay / walk-in send stamped this visit.
+  paymentReceiptRef   String?              @map("payment_receipt_ref")
   reservationId       String?
   roomNumber          String?
   amountNet           Decimal              @default(0) @db.Decimal(12, 2)
@@ -669,9 +672,21 @@ model LabOrder {
   /// Hotel cashier pending id once a walk-in party sent this lab.
   settlementPendingId   String?          @map("settlement_pending_id")
   settledAt             DateTime?        @map("settled_at")
+  /// Burns package entitlement when true (header mirror of LabOrderItem).
+  inPackage             Boolean          @default(false) @map("in_package")
+  /// Package balance line burned (pool / block / same as service code).
+  packageQuotaCode      String?          @map("package_quota_code")
+  /// Acting doctor who prescribed a paid diagnostic / lab extra.
+  prescribedByPractitionerId String?     @map("prescribed_by_practitioner_id")
+  /// Clinic receipt number once reception Pay / walk-in send stamped this order.
+  paymentReceiptRef     String?          @map("payment_receipt_ref")
+  reservationId         String?          @map("reservation_id")
+  roomNumber            String?          @map("room_number")
+  patientOrigin         PatientOrigin    @default(WALK_IN) @map("patient_origin")
   patientRef            PatientRef       @relation(fields: [patientRefId], references: [id])
   visit                 Visit?           @relation(fields: [visitId], references: [id])
   episode               ClinicalEpisode? @relation(fields: [clinicalEpisodeId], references: [id])
+  prescribedByPractitioner Practitioner? @relation("LabOrder_prescribedByPractitioner", fields: [prescribedByPractitionerId], references: [id])
   items                 LabOrderItem[]
   createdAt             DateTime         @default(now())
 
@@ -680,6 +695,9 @@ model LabOrder {
   @@index([clinicalEpisodeId])
   @@index([createdAt])
   @@index([organizationId])
+  @@index([inPackage])
+  @@index([settledAt])
+  @@index([prescribedByPractitionerId])
 }
 
 /// Diagnostic modality (LAB, USG, FUNCTIONAL, …) — catalog source of truth in DB.

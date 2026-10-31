@@ -221,6 +221,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
+    href: "/reports/patient-assignments",
+    labelKey: "patientAssignmentReport",
+    icon: FileSpreadsheet,
+    group: "reports",
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
     href: "/reports/patients-by-country",
     labelKey: "patientCountryReport",
     icon: Globe,

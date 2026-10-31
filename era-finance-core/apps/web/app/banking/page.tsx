@@ -38,6 +38,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../lib/design-system";
+import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogHeader } from "@erafinance/ui";
 import { ledgerQueryParam, useLedger } from "../../lib/ledger-context";
@@ -705,17 +706,21 @@ function BankingUnifiedRegistry({
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} max-w-md`}>{r.purpose}</td>
                     <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-medium text-rose-700`}>
-                      {t("banking.expense")} В· {formatMoneyAzn(Number(r.amount))} {r.currency}
+                      {t("banking.expense")} · {formatMoneyAzn(Number(r.amount))} {r.currency}
                     </td>
                     <td className={DATA_TABLE_TD_CENTER_CLASS}>
-                      <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-950">
-                        {r.status}
-                      </span>
+                      <Badge variant={r.status === "PENDING" ? "accountant" : "neutral"}>
+                        {(() => {
+                          const key = `banking.draftStatus.${r.status}`;
+                          const label = t(key);
+                          return label === key ? r.status : label;
+                        })()}
+                      </Badge>
                       {r.rejectionReason ? (
                         <div className="mt-1 text-xs text-rose-700">{r.rejectionReason}</div>
                       ) : null}
                     </td>
-                    <td className={DATA_TABLE_TD_CLASS}>вЂ”</td>
+                    <td className={DATA_TABLE_TD_CLASS}>—</td>
                   </tr>
                 ))
               )}

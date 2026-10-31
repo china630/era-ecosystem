@@ -46,4 +46,11 @@ export class CreateProductDto {
   @IsString()
   @MinLength(1)
   unitOfMeasureCode?: string;
+
+  @ApiPropertyOptional({
+    description: "Optional catalog category (menu section / price-list group)",
+  })
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

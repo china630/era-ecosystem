@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PageHeader } from "../../../components/layout/page-header";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { CreatePrepaidExpenseModal } from "../../../components/finance/modals/CreatePrepaidExpenseModal";
+import { Badge } from "../../../components/ui/badge";
 import { apiFetch } from "../../../lib/api-client";
 import {
   DATA_TABLE_CLASS,
@@ -129,7 +130,15 @@ export default function PrepaidExpensesPage() {
                   <td className={DATA_TABLE_TD_CLASS}>
                     {String(row.totalAmount)} {row.currency}
                   </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <Badge variant={row.status === "FULLY_AMORTIZED" ? "success" : "neutral"}>
+                      {(() => {
+                        const key = `prepaid.status.${row.status}`;
+                        const label = t(key);
+                        return label === key ? row.status : label;
+                      })()}
+                    </Badge>
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     <div className="flex flex-wrap items-center gap-2">
                       <input

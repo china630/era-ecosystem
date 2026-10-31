@@ -15,6 +15,12 @@ export class CreateWarehouseDto {
   @IsNotEmpty()
   name!: string;
 
+  @ApiPropertyOptional({ description: "Stable import key (unique per org)" })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  code?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

@@ -20,6 +20,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const denied = await requireClinicPermission(session, CLINIC_PERMISSION.API_LAB_ORDERS);
     if (denied) return denied;
     const { id } = await ctx.params;
+    const { prisma } = await import("@/lib/prisma");
+    const order = await prisma.labOrder.findUnique({
+      where: { id },
+      select: { amountNet: true, settledAt: true },
+    });
+    if (!order) return jsonError("Order not found", 404);
+    const { labAwaitingPaymentDenied } = await import("@/domain/lab/lab-order-pay-gate");
+    const unpaid = labAwaitingPaymentDenied(order);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     const body = bodySchema.parse(await req.json());
     const docx = Buffer.from(body.docxBase64, "base64");
     if (docx.length < 4) return jsonError("Empty file", 400);

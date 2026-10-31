@@ -9,6 +9,14 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TD_RIGHT_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -194,7 +202,7 @@ export default function MhbsStatementsPage() {
                 </button>
               ))}
             </div>
-            <div className="flex max-w-4xl flex-wrap items-end gap-3">
+            <div className="flex flex-wrap items-end gap-3">
               {showPeriod ? (
                 <>
                   <label className="flex flex-col gap-1">
@@ -270,33 +278,21 @@ export default function MhbsStatementsPage() {
       ) : null}
 
       {!data ? null : (
-        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
-          <table className="min-w-full text-sm">
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
             <thead>
-              <tr className="border-b border-[#EBEDF0] bg-[#F8F9FA]">
-                <th className="p-2 text-left text-[13px] font-semibold text-[#34495E]">
-                  {t("reports.mhbs.thLineCode")}
-                </th>
-                <th className="p-2 text-left text-[13px] font-semibold text-[#34495E]">
-                  {t("reports.mhbs.thLine")}
-                </th>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reports.mhbs.thLineCode")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reports.mhbs.thLine")}</th>
                 {equityTable ? (
                   <>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.mhbs.thOpening")}
-                    </th>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.mhbs.thIncrease")}
-                    </th>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.mhbs.thDecrease")}
-                    </th>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.mhbs.thClosing")}
-                    </th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reports.mhbs.thOpening")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reports.mhbs.thIncrease")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reports.mhbs.thDecrease")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reports.mhbs.thClosing")}</th>
                   </>
                 ) : (
-                  <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>
                     {t("reports.mhbs.thAmount")} (₼)
                   </th>
                 )}
@@ -304,8 +300,8 @@ export default function MhbsStatementsPage() {
             </thead>
             <tbody>
               {data.lines.length === 0 ? (
-                <tr>
-                  <td className="p-3 text-sm text-[#7F8C8D]" colSpan={equityTable ? 6 : 3}>
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={equityTable ? 6 : 3}>
                     —
                   </td>
                 </tr>
@@ -313,27 +309,29 @@ export default function MhbsStatementsPage() {
                 data.lines.map((line) => (
                   <tr
                     key={line.lineCode}
-                    className={`border-t border-[#EBEDF0] ${line.isTotal ? "bg-[#F8F9FA] font-semibold" : ""}`}
+                    className={`${DATA_TABLE_TR_CLASS}${line.isTotal ? " bg-[#F8F9FA] font-semibold" : ""}`}
                   >
-                    <td className="p-2 font-mono text-[#34495E]">{line.lineCode}</td>
-                    <td className="p-2 text-[#34495E]">{labelForLine(line)}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{line.lineCode}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{labelForLine(line)}</td>
                     {equityTable ? (
                       <>
-                        <td className="p-2 text-right font-mono tabular-nums">
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
                           {fmt(line.opening ?? 0)}
                         </td>
-                        <td className="p-2 text-right font-mono tabular-nums">
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
                           {fmt(line.increase ?? 0)}
                         </td>
-                        <td className="p-2 text-right font-mono tabular-nums">
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
                           {fmt(line.decrease ?? 0)}
                         </td>
-                        <td className="p-2 text-right font-mono tabular-nums">
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
                           {fmt(line.closing ?? line.amount)}
                         </td>
                       </>
                     ) : (
-                      <td className="p-2 text-right font-mono tabular-nums">{fmt(line.amount)}</td>
+                      <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
+                        {fmt(line.amount)}
+                      </td>
                     )}
                   </tr>
                 ))

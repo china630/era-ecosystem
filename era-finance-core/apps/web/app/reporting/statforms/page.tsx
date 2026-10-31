@@ -8,6 +8,7 @@ import { apiBaseUrl, apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Badge } from "../../../components/ui/badge";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -226,7 +227,15 @@ export default function StatformsPage() {
                       </div>
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.period}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <Badge variant={row.status === "READY" || row.status === "DONE" ? "success" : "neutral"}>
+                        {(() => {
+                          const key = `reporting.statforms.status.${row.status}`;
+                          const label = t(key);
+                          return label === key ? row.status : label;
+                        })()}
+                      </Badge>
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       {bakuDateTimeDisplay(row.createdAt)}
                     </td>

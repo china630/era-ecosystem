@@ -9,6 +9,14 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TD_RIGHT_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -164,7 +172,7 @@ export default function CashFlowPage() {
           </Fragment>
         }
         leading={
-          <div className="flex max-w-4xl flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1">
               <span className={FORM_LABEL_CLASS}>{t("reports.cashFlow.dateFrom")}</span>
               <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
@@ -252,7 +260,7 @@ export default function CashFlowPage() {
       {!data ? null : (
         <div className="space-y-4">
           {data.sections.map((s) => (
-            <div key={s.section} className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
+            <div key={s.section} className={CARD_CONTAINER_CLASS}>
               <div className="flex items-center justify-between gap-3 border-b border-[#D5DADF] bg-[#F8F9FA] px-4 py-3">
                 <div className="text-[13px] font-semibold text-[#34495E]">
                   {secTitle(s.section)}
@@ -263,52 +271,54 @@ export default function CashFlowPage() {
                   {data.cached ? ` · ${t("reports.cached")}` : ""}
                 </div>
               </div>
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#EBEDF0] bg-white">
-                    <th className="p-2 text-left text-[13px] font-semibold text-[#34495E]">
-                      {t("reports.cashFlow.thItem")}
-                    </th>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.cashFlow.thIn")} (₼)
-                    </th>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.cashFlow.thOut")} (₼)
-                    </th>
-                    <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                      {t("reports.cashFlow.thNet")} (₼)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {s.rows.length === 0 ? (
-                    <tr>
-                      <td className="p-3 text-sm text-[#7F8C8D]" colSpan={4}>
-                        —
-                      </td>
+              <div className={DATA_TABLE_VIEWPORT_CLASS}>
+                <table className={DATA_TABLE_CLASS}>
+                  <thead>
+                    <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reports.cashFlow.thItem")}</th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>
+                        {t("reports.cashFlow.thIn")} (₼)
+                      </th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>
+                        {t("reports.cashFlow.thOut")} (₼)
+                      </th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>
+                        {t("reports.cashFlow.thNet")} (₼)
+                      </th>
                     </tr>
-                  ) : (
-                    s.rows.map((r) => (
-                      <tr key={r.cashFlowItemId} className="border-t border-[#EBEDF0]">
-                        <td className="p-2">
-                          <div className="font-medium text-[#34495E]">
-                            {r.code} — {r.name}
-                          </div>
-                        </td>
-                        <td className="p-2 text-right font-mono tabular-nums">
-                          {fmt(r.inflow)}
-                        </td>
-                        <td className="p-2 text-right font-mono tabular-nums">
-                          {fmt(r.outflow)}
-                        </td>
-                        <td className="p-2 text-right font-mono tabular-nums font-semibold text-[#34495E]">
-                          {fmt(r.net)}
+                  </thead>
+                  <tbody>
+                    {s.rows.length === 0 ? (
+                      <tr className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS} colSpan={4}>
+                          —
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      s.rows.map((r) => (
+                        <tr key={r.cashFlowItemId} className={DATA_TABLE_TR_CLASS}>
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            <div className="font-medium text-[#34495E]">
+                              {r.code} — {r.name}
+                            </div>
+                          </td>
+                          <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
+                            {fmt(r.inflow)}
+                          </td>
+                          <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
+                            {fmt(r.outflow)}
+                          </td>
+                          <td
+                            className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums font-semibold`}
+                          >
+                            {fmt(r.net)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ))}
 

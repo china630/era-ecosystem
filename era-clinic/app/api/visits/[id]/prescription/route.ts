@@ -38,6 +38,9 @@ export async function POST(
       include: { patientRef: true },
     });
     if (!visit) return jsonError("Visit not found", 404);
+    const { visitAwaitingPaymentDenied } = await import("@/domain/visit/visit-pay-gate");
+    const unpaid = visitAwaitingPaymentDenied(visit);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
 
     await dispatchSatelliteEvent({
       type: SATELLITE_CLINIC_PRESCRIPTION_ISSUED,

@@ -104,6 +104,7 @@ services:
       dockerfile: era-orchestrator/Dockerfile
       args:
         NEXT_PUBLIC_ORCH_API_URL: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
+        NEXT_PUBLIC_ORCH_WEB_URL: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
         NEXT_PUBLIC_FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
         # Industry launcher deep-links — baked into the web bundle at build time.
         NEXT_PUBLIC_SATELLITE_HOTEL_URL: ${ERA_HOTEL_PMS_ORIGIN:-http://127.0.0.1:3201}
@@ -120,6 +121,7 @@ services:
       REDIS_URL: ${ORCHESTRATOR_REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379/0}
       API_PORT: "4000"
       WEB_PORT: "3000"
+      PLATFORM_WEB_PORT: "3001"
       FINANCE_CORE_URL: http://finance-core:4100
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
       ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}}
@@ -157,6 +159,7 @@ services:
         condition: service_healthy
     ports:
       - "${ORCHESTRATOR_WEB_PUBLISH_PORT:-3000}:3000"
+      - "${ORCHESTRATOR_PLATFORM_WEB_PUBLISH_PORT:-3001}:3001"
       - "${ORCHESTRATOR_API_PUBLISH_PORT:-4000}:4000"
     volumes:
       - ./era-orchestrator/dev-rs256-jwk.json:/run/era/rs256.jwk.json:ro

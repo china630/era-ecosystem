@@ -7,6 +7,7 @@ import { CatalogField } from "@era/satellite-kit/ui";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { apiFetch } from "../../../lib/api-client";
 import { PageHeader } from "../../../components/layout/page-header";
+import { Badge } from "../../../components/ui/badge";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -15,6 +16,7 @@ import {
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
@@ -231,7 +233,7 @@ export default function EmasQueuePage() {
         {loading ? (
           <p className="text-sm">{t("common.loading", "Loading…")}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -261,9 +263,26 @@ export default function EmasQueuePage() {
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.eventType}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {row.statusLabel ?? row.status}
-                      <div className="text-xs text-slate-500">
-                        {row.finPending ? "PENDING_FIN" : "READY"}
+                      <Badge
+                        variant={
+                          row.status === "SUBMITTED_MANUAL"
+                            ? "success"
+                            : row.status === "FAILED"
+                              ? "user"
+                              : "neutral"
+                        }
+                      >
+                        {row.statusLabel ??
+                          (() => {
+                            const key = `employees.emas.status.${row.status}`;
+                            const label = t(key);
+                            return label === key ? row.status : label;
+                          })()}
+                      </Badge>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {row.finPending
+                          ? t("employees.emas.finPending", "PENDING_FIN")
+                          : t("employees.emas.finReady", "READY")}
                       </div>
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>

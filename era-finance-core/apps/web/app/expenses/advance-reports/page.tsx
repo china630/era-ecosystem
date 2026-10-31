@@ -1,8 +1,9 @@
 "use client";
 import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
-import { ExternalLink, Pencil, Plus, Printer } from "lucide-react";
-import { bakuDateDisplay } from "@era/satellite-kit/time";
+import { CatalogField } from "@era/satellite-kit/ui";
+import { ExternalLink, Pencil, Plus, Printer, X } from "lucide-react";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,10 +11,11 @@ import { apiFetch } from "../../../lib/api-client";
 import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { todayBakuYmd } from "@era/satellite-kit/time";
 import { EmptyState } from "../../../components/empty-state";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -23,7 +25,11 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
   MODAL_FIELD_LABEL_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -258,27 +264,34 @@ function AdvanceReportsPageContent() {
         <PageHeader
           title={t("expenses.advanceReport.pageTitle")}
           subtitle={t("expenses.advanceReport.subtitle")}
+          leading={
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("expenses.advanceReport.filterStatus")}
+              value={statusFilter}
+              onChange={(next) => {
+                const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                setStatusFilter(v);
+              }}
+              options={[
+                { value: "", label: t("expenses.advanceReport.allStatuses") },
+                { value: "DRAFT", label: t("expenses.advanceReport.statusDraft") },
+                { value: "POSTED", label: t("expenses.advanceReport.statusPosted") },
+              ]}
+            />
+          }
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-[#7F8C8D]">
+                {t("expenses.advanceReport.totalCount", { count: totalLabel })}
+              </span>
+              <Button type="button" variant="primary" onClick={openCreate}>
+                <Plus className="mr-1 inline h-4 w-4" />
+                {t("expenses.advanceReport.newBtn")}
+              </Button>
+            </div>
+          }
         />
-
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            className={MODAL_INPUT_CLASS}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label={t("expenses.advanceReport.filterStatus")}
-          >
-            <option value="">{t("expenses.advanceReport.allStatuses")}</option>
-            <option value="DRAFT">{t("expenses.advanceReport.statusDraft")}</option>
-            <option value="POSTED">{t("expenses.advanceReport.statusPosted")}</option>
-          </select>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-            <Plus className="mr-1 inline h-4 w-4" />
-            {t("expenses.advanceReport.newBtn")}
-          </button>
-          <span className="text-sm text-[#7F8C8D]">
-            {t("expenses.advanceReport.totalCount", { count: totalLabel })}
-          </span>
-        </div>
 
         {err && <p className="text-sm text-red-600">{err}</p>}
 
@@ -312,9 +325,11 @@ function AdvanceReportsPageContent() {
                       {formatMoneyAzn(r.totalDeclared)} {r.currencyCode}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      {r.status === "POSTED"
-                        ? t("expenses.advanceReport.statusPosted")
-                        : t("expenses.advanceReport.statusDraft")}
+                      <Badge variant={r.status === "POSTED" ? "success" : "neutral"}>
+                        {r.status === "POSTED"
+                          ? t("expenses.advanceReport.statusPosted")
+                          : t("expenses.advanceReport.statusDraft")}
+                      </Badge>
                     </td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                       <button
@@ -354,53 +369,69 @@ function AdvanceReportsPageContent() {
         )}
 
         {drawerOpen ? (
-          <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
-            <div className="flex h-full w-full max-w-lg flex-col bg-white shadow-xl">
-              <div className="border-b border-[#E5E8EB] px-5 py-4">
-                <h2 className="text-lg font-semibold text-[#2C3E50]">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setDrawerOpen(false);
+            }}
+          >
+            <form
+              className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-lg`}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="advance-report-modal-title"
+              onSubmit={(e) => void saveDraft(e)}
+            >
+              <header className="flex shrink-0 items-start justify-between gap-3">
+                <h2
+                  id="advance-report-modal-title"
+                  className="m-0 text-lg font-semibold text-[#34495E]"
+                >
                   {editId
                     ? t("expenses.advanceReport.editTitle")
                     : t("expenses.advanceReport.newTitle")}
                 </h2>
-              </div>
-              <form className="flex flex-1 flex-col overflow-hidden" onSubmit={(e) => void saveDraft(e)}>
-                <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-                  <label className="block">
-                    <span className={MODAL_FIELD_LABEL_CLASS}>
-                      {t("expenses.advanceReport.employee")}
-                    </span>
-                    <select
-                      className={`${MODAL_INPUT_CLASS} w-full`}
-                      required
-                      value={employeeId}
-                      onChange={(e) => setEmployeeId(e.target.value)}
-                    >
-                      <option value="">{t("expenses.advanceReport.selectEmployee")}</option>
-                      {employees.map((e) => (
-                        <option key={e.id} value={e.id}>
-                          {employeeLabel(e)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={MODAL_CLOSE_BUTTON_CLASS}
+                  onClick={() => setDrawerOpen(false)}
+                  aria-label={t("common.close")}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </Button>
+              </header>
+              <div className="mt-4 max-h-[60vh] space-y-4 overflow-y-auto">
+                  <CatalogField
+                    kind="SEARCHABLE"
+                    label={t("expenses.advanceReport.employee")}
+                    value={employeeId}
+                    onChange={(next) => {
+                      const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                      setEmployeeId(v);
+                    }}
+                    options={[
+                      { value: "", label: t("expenses.advanceReport.selectEmployee") },
+                      ...employees.map((e) => ({ value: e.id, label: employeeLabel(e) })),
+                    ]}
+                  />
                   <label className="block">
                     <span className={MODAL_FIELD_LABEL_CLASS}>{t("expenses.advanceReport.reportDate")}</span>
                     <FinanceDatePicker value={reportDate} onChange={(iso) => setReportDate(iso)} respectPeriodLock={false} required />
                   </label>
-                  <label className="block">
-                    <span className={MODAL_FIELD_LABEL_CLASS}>{t("expenses.advanceReport.currency")}</span>
-                    <select
-                      className={`${MODAL_INPUT_CLASS} w-full`}
-                      value={currencyCode}
-                      onChange={(e) => setCurrencyCode(e.target.value)}
-                    >
-                      {["AZN", "USD", "EUR", "RUB", "TRY", "GBP"].map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("expenses.advanceReport.currency")}
+                    value={currencyCode}
+                    onChange={(next) => {
+                      const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                      if (v) setCurrencyCode(v);
+                    }}
+                    options={["AZN", "USD", "EUR", "RUB", "TRY", "GBP"].map((c) => ({
+                      value: c,
+                      label: c,
+                    }))}
+                  />
                   <label className="block">
                     <span className={MODAL_FIELD_LABEL_CLASS}>{t("expenses.advanceReport.cashOrderId")}</span>
                     <input
@@ -486,28 +517,33 @@ function AdvanceReportsPageContent() {
                       ))}
                     </div>
                   </div>
-                </div>
-                <div className="flex gap-2 border-t border-[#E5E8EB] px-5 py-4">
-                  <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={saving}>
-                    {t("expenses.advanceReport.saveDraft")}
-                  </button>
-                  <button
-                    type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    onClick={() => setDrawerOpen(false)}
-                  >
-                    {t("common.cancel")}
-                  </button>
-                  <a
-                    href="/banking/cash"
-                    className="ml-auto inline-flex items-center text-sm text-[#2980B9] hover:underline"
-                  >
-                    {t("expenses.advanceReport.linkCash")}
-                    <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </form>
-            </div>
+              </div>
+              <footer className={`${MODAL_FOOTER_ACTIONS_CLASS} items-center`}>
+                <a
+                  href="/banking/cash"
+                  className="mr-auto inline-flex items-center text-sm text-[#2980B9] hover:underline"
+                >
+                  {t("expenses.advanceReport.linkCash")}
+                  <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                </a>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className={MODAL_FOOTER_BUTTON_CLASS}
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className={MODAL_FOOTER_BUTTON_CLASS}
+                  disabled={saving}
+                >
+                  {t("expenses.advanceReport.saveDraft")}
+                </Button>
+              </footer>
+            </form>
           </div>
         ) : null}
       </div>
