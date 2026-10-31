@@ -797,7 +797,8 @@ export function PackageAssignModal({
     const quota = formBurnPool
       ? { rem: draftRemaining.get(formBurnPool) ?? 0, burnPool: formBurnPool }
       : quotaForCode(formCode);
-    const qty = Math.min(formQty, quota.rem);
+    const cap = formFulfillment === "LAB_ORDER" ? 1 : formQty;
+    const qty = Math.min(formQty, quota.rem, cap);
     if (qty < 1) return null;
     const detail = formDetail();
     return {
@@ -911,7 +912,10 @@ export function PackageAssignModal({
         ? { rem: draftRemaining.get(formBurnPool) ?? 0, burnPool: formBurnPool }
         : quotaForCode(formCode)
       : { rem: 0, burnPool: null };
-    const paid = formCode ? Math.max(0, formQty - quota.rem) : 0;
+    const inPackageQty = formCode
+      ? Math.min(formQty, quota.rem, formFulfillment === "LAB_ORDER" ? 1 : formQty)
+      : 0;
+    const paid = formCode ? Math.max(0, formQty - inPackageQty) : 0;
     if (line) pushDraft(line);
     if (paid > 0 && formCode) pushPaid(formCode, formName, paid, formDetail());
     if (line || paid > 0) closeForm();
@@ -1061,7 +1065,10 @@ export function PackageAssignModal({
           ? { rem: draftRemaining.get(formBurnPool) ?? 0 }
           : quotaForCode(formCode)
         : { rem: 0 };
-      const paid = formCode ? Math.max(0, formQty - quota.rem) : 0;
+      const inPackageQty = formCode
+        ? Math.min(formQty, quota.rem, formFulfillment === "LAB_ORDER" ? 1 : formQty)
+        : 0;
+      const paid = formCode ? Math.max(0, formQty - inPackageQty) : 0;
       if (paid > 0 && formCode) {
         const detail = formDetail();
         const unit = unitOf(formCode);
@@ -1204,6 +1211,8 @@ export function PackageAssignModal({
               error:
                 code === "QUOTA_REMAINING"
                   ? tPhysio("packageAssignQuotaRemaining")
+                  : code === "NO_PRICE"
+                    ? tPhysio("labExtraNoPrice")
                   : code === "CABIN_SEX"
                     ? tPhysio("packageAssignMissCabinSex")
                   : code === "MASSEUR_NOT_SKILLED"
@@ -2001,11 +2010,11 @@ export function PackageAssignModal({
                       className={`${MODAL_INPUT_CLASS} w-[5ch]`}
                       type="number"
                       min={1}
-                      max={formFulfillment === "LAB_ORDER" ? 1 : 40}
+                      max={40}
                       value={formQty}
                       onChange={(e) => {
                         const raw = Number(e.target.value) || 1;
-                        const cap = formFulfillment === "LAB_ORDER" ? 1 : 40;
+                        const cap = 40;
                         const n = Math.min(cap, Math.max(1, raw));
                         setFormQty(n);
                         if (n <= 1) {

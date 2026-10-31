@@ -725,7 +725,9 @@ export async function getPackageAssignSnapshot(
     const snapRow = snapByCode.get(line.procedureCode);
     const tplRow = tplByCode.get(line.procedureCode);
     const inSnapshot = snapMeta ? Boolean(snapRow) : Boolean(tplRow);
-    const showFlag = snapRow?.showInProcedures ?? tplRow?.showInProcedures ?? false;
+    const showFlag = tplRow
+      ? tplRow.showInProcedures === true
+      : snapRow?.showInProcedures === true;
     const procedureOrder =
       snapRow?.procedureOrder ?? tplRow?.procedureOrder ?? tplRow?.sortOrder ?? 0;
     const rawFulfillment = snapRow?.fulfillment ?? tplRow?.fulfillment ?? "PROCEDURE_ORDER";
@@ -1591,7 +1593,9 @@ export async function replacePackageProcedures(
       .filter((line) => {
         const snapRow = snapByCode.get(line.procedureCode);
         const tplRow = tplByCode.get(line.procedureCode);
-        const showFlag = snapRow?.showInProcedures ?? tplRow?.showInProcedures ?? false;
+        const showFlag = tplRow
+          ? tplRow.showInProcedures === true
+          : snapRow?.showInProcedures === true;
         return showsInProcedureMenu({
           isTransfer: isBathTransferQuota(line.procedureCode),
           inSnapshot: snapMeta ? Boolean(snapRow) : Boolean(tplRow),
