@@ -170,8 +170,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # service_started (not healthy): finance flap must not block data-hub /
+      # calendar / FX. Catalog calls fail soft at runtime if finance is down.
       finance-core:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "${DATA_HUB_API_PUBLISH_PORT:-4200}:4200"
     networks:
