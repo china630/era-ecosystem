@@ -68,6 +68,51 @@ fi
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env)
 
+# Map compose service -> fixed container_name (docker-compose.yml). No pipes:
+# appleboy/ssh-action drops script lines that contain `|`.
+container_name_for() {
+  case "$1" in
+    orchestrator) echo era-orchestrator ;;
+    finance-core) echo era-finance-core ;;
+    finance-web) echo era-finance-web ;;
+    data-hub) echo era-data-hub ;;
+    hotel-pms) echo era-hotel-pms ;;
+    clinic) echo era-clinic ;;
+    fnb-pos) echo era-fnb-pos ;;
+    retail-pos) echo era-retail-pos ;;
+    logistics) echo era-logistics ;;
+    construction) echo era-construction ;;
+    crm) echo era-crm ;;
+    auto-service) echo era-auto-service ;;
+    wholesale) echo era-wholesale ;;
+    bank-core) echo era-bank-core ;;
+    bank) echo era-bank ;;
+    bank-dbo) echo era-bank-dbo ;;
+    *) echo "" ;;
+  esac
+}
+
+# Drop leftover containers that still hold a fixed name but are outside the
+# current compose project (Create then fails with "name is already in use").
+clear_container_name_conflicts() {
+  local svc cname
+  if [ -z "$1" ]; then
+    set -- orchestrator finance-core finance-web data-hub hotel-pms clinic \
+      fnb-pos retail-pos logistics construction crm auto-service wholesale \
+      bank-core bank bank-dbo
+  fi
+  for svc in "$@"; do
+    cname="$(container_name_for "$svc")"
+    if [ -z "$cname" ]; then
+      continue
+    fi
+    if docker inspect "$cname" >/dev/null 2>&1; then
+      echo "==> clearing name conflict: $cname"
+      docker rm -f "$cname" || true
+    fi
+  done
+}
+
 if [ -z "$services" ]; then
   "${COMPOSE[@]}" pull
 else
@@ -85,6 +130,7 @@ else
 fi
 
 if [ -z "$services" ]; then
+  clear_container_name_conflicts
   "${COMPOSE[@]}" up -d --remove-orphans
   "${COMPOSE[@]}" up -d --wait --wait-timeout 180 orchestrator
   docker image prune -af || true
@@ -93,6 +139,8 @@ else
   # Do not --remove-orphans or prune — that would stop/delete other satellites.
   # --no-deps: scoped IMAGE_TAG only exists for the rebuilt service; pulling
   # depends_on siblings (e.g. finance-web → finance-core) 404s on GHCR.
+  # shellcheck disable=SC2086
+  clear_container_name_conflicts $services
   # shellcheck disable=SC2086
   "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services
 fi
