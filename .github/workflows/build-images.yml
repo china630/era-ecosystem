@@ -54,20 +54,27 @@ jobs:
             plan=$(node scripts/ci-changed-ghcr-services.mjs --files-from /tmp/changed-files.txt)
           fi
           echo "$plan"
-          skip=$(echo "$plan" | jq -r '.skipImages // .skip')
-          deploy_skip=$(echo "$plan" | jq -r '.deploySkip // .skip')
-          rebuild=$(echo "$plan" | jq -r '.rebuildPackages')
-          echo "skip=${skip}" >> "$GITHUB_OUTPUT"
-          echo "rebuild_packages=${rebuild}" >> "$GITHUB_OUTPUT"
-          echo "deploy_scope=$(echo "$plan" | jq -r '.deployScope')" >> "$GITHUB_OUTPUT"
-          echo "deploy_services=$(echo "$plan" | jq -r '.deployServices')" >> "$GITHUB_OUTPUT"
-          echo "matrix=$(echo "$plan" | jq -c '.matrix')" >> "$GITHUB_OUTPUT"
-          {
-            echo "SKIP=${deploy_skip}"
-            echo "DEPLOY_SCOPE=$(echo "$plan" | jq -r '.deployScope')"
-            echo "DEPLOY_SERVICES=$(echo "$plan" | jq -r '.deployServices')"
-            echo "IMAGE_TAG_MODE=$(echo "$plan" | jq -r '.imageTagMode // "sha"')"
-          } > deploy-scope.env
+          # Boolean fields via Node — never jq `false // .skip` (jq treats false as empty).
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import { formatDeployScopeArtifact } from "./scripts/ci-changed-ghcr-services.mjs";
+            const plan = JSON.parse(process.argv[1]);
+            const a = formatDeployScopeArtifact(plan);
+            fs.writeFileSync("deploy-scope.env", a.envText);
+            const out = process.env.GITHUB_OUTPUT;
+            if (!out) throw new Error("GITHUB_OUTPUT unset");
+            fs.appendFileSync(
+              out,
+              [
+                `skip=${a.skipImages}`,
+                `rebuild_packages=${a.rebuildPackages}`,
+                `deploy_scope=${a.deployScope}`,
+                `deploy_services=${a.deployServices}`,
+                `matrix=${JSON.stringify(a.matrix)}`,
+                "",
+              ].join("\n"),
+            );
+          ' "$plan"
 
       - uses: actions/upload-artifact@v4
         with:

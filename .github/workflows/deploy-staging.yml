@@ -94,6 +94,19 @@ jobs:
           echo "services=${DEPLOY_SERVICES:-}" >> "$GITHUB_OUTPUT"
           echo "image_tag_mode=${IMAGE_TAG_MODE:-sha}" >> "$GITHUB_OUTPUT"
 
+      # Belt: contract-only must be SKIP=false + DEPLOY_SCOPE=all. Docs-only is
+      # SKIP=true + DEPLOY_SCOPE=skip. Never allow SKIP=true with a real scope
+      # (false-green no-op that leaves the droplet on old images).
+      - name: Refuse false-green SKIP
+        run: |
+          set -euo pipefail
+          skip="${{ steps.scope.outputs.skip }}"
+          scope="${{ steps.scope.outputs.value }}"
+          if [ "$skip" = "true" ] && [ "$scope" != "skip" ]; then
+            echo "::error::deploy-scope has SKIP=true but DEPLOY_SCOPE=$scope (expected only when docs-only). Refusing no-op success — droplet would not update."
+            exit 1
+          fi
+
       - name: Resolve image tag
         id: tag
         run: |

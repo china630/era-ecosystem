@@ -136,6 +136,43 @@ function planFromServices(serviceSet, { rebuildPackages, all, deployScopeOverrid
   };
 }
 
+/**
+ * Serialize plan → deploy-scope.env + detect-job outputs.
+ * Do NOT pipe booleans through jq `//` — in jq, `false // x` yields `x`, which
+ * turned contract-only deploys into SKIP=true (SSH skipped, job still green).
+ */
+export function formatDeployScopeArtifact(plan) {
+  const skipImages = Boolean(
+    typeof plan.skipImages === "boolean" ? plan.skipImages : plan.skip,
+  );
+  const deploySkip =
+    typeof plan.deploySkip === "boolean"
+      ? plan.deploySkip
+      : String(plan.deployScope || "") === "skip";
+  const deployScope = plan.deployScope ?? (deploySkip ? "skip" : "all");
+  const deployServices = plan.deployServices ?? "";
+  const imageTagMode = plan.imageTagMode ?? "sha";
+  const rebuildPackages = Boolean(plan.rebuildPackages);
+  const matrix = Array.isArray(plan.matrix) ? plan.matrix : [];
+  const envText = [
+    `SKIP=${deploySkip}`,
+    `DEPLOY_SCOPE=${deployScope}`,
+    `DEPLOY_SERVICES=${deployServices}`,
+    `IMAGE_TAG_MODE=${imageTagMode}`,
+    "",
+  ].join("\n");
+  return {
+    skipImages,
+    deploySkip,
+    deployScope,
+    deployServices,
+    imageTagMode,
+    rebuildPackages,
+    matrix,
+    envText,
+  };
+}
+
 export function resolveGhcrPlan(files, { dispatchServices, forceAll } = {}) {
   if (forceAll) {
     return planFromServices(new Set(ALL_SERVICES), { rebuildPackages: true, all: true });
