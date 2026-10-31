@@ -337,6 +337,8 @@ export {
 } from "./integration/hotel-revenue-route";
 export {
   clinicProcedureTicketRef,
+  clinicLabTicketRef,
+  clinicVisitTicketRef,
   fnbTicketLineRef,
   parseFolioChargeRef,
   retailPendingLineRef,
