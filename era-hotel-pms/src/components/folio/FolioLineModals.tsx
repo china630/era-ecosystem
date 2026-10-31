@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CatalogField, Field, FieldTextarea, showApiError, showSuccess } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
 import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
@@ -703,7 +704,7 @@ export function FolioMissedNightsModal({
         <div className="space-y-2 text-[13px] text-[#34495E]">
           {nights.map((night) => (
             <div key={night.date} className="flex justify-between gap-3">
-              <span>{night.date}</span>
+              <span>{bakuDateDisplay(night.date)}</span>
               <span>{night.amount.toFixed(2)}</span>
             </div>
           ))}

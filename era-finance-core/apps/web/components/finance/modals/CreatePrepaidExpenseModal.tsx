@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../ui/date-picker";
 
 import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,21 +79,11 @@ export function CreatePrepaidExpenseModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <span className={lbl}>{t("prepaid.start", { defaultValue: "Başlanğıc" })}</span>
-            <input
-              type="date"
-              className={MODAL_INPUT_CLASS}
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-            />
+            <FinanceDatePicker value={start} onChange={(iso) => setStart(iso)} respectPeriodLock={false} />
           </div>
           <div>
             <span className={lbl}>{t("prepaid.end", { defaultValue: "Son" })}</span>
-            <input
-              type="date"
-              className={MODAL_INPUT_CLASS}
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-            />
+            <FinanceDatePicker value={end} onChange={(iso) => setEnd(iso)} respectPeriodLock={false} />
           </div>
         </div>
       </form>

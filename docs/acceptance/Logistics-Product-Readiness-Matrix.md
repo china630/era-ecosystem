@@ -29,7 +29,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | Trips | `/trips` | 🟡 |
-| Fuel reports | `/reports/fuel` | 🟡 |
+| Fuel reports | `/reports/fuel` | 🟡 — from/to are `DatePicker`. Does not move Gate, UI 🟡, Demo 🟡, Pilot, or edition |
 | Customs hub | `/customs` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (LOG-RBAC-01; not SHOW) |
 

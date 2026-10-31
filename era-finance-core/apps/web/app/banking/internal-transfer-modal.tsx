@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../components/ui/date-picker";
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -318,12 +319,7 @@ export function InternalTransferModal({
             </label>
             <label className={MODAL_FIELD_LABEL_CLASS}>
               {t("banking.transfer.date")}
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-              />
+              <FinanceDatePicker value={date} onChange={(iso) => setDate(iso)} respectPeriodLock={false} />
             </label>
           </div>
         </div>

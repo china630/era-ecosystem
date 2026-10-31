@@ -50,6 +50,8 @@ Industry practice in the source note:
 | **Package floor (min)** | Cost / minimum sell | Configured on package; versioned + audit |
 | **Package sell** | What guest pays | Sales; versioned + audit; may diverge from BAR |
 
+Mixed guest packages sell as the sum of each guest's own single-occupancy cell on that grid. Save, night rebuild, and the reservation card's package restore use that same compose. A night the user fixed or discounted stays as stored. Two guests on one package still use that package's pair cell.
+
 Cash-risk rule: **folio / night-audit postings must reconcile to reservation sell**, with explicit residual (medical / discount / market override) — never silent BAR≠package drift.
 
 ## 4. Future automation (phased)

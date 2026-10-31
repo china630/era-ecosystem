@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { FormEvent, useState } from "react";
@@ -83,12 +84,7 @@ export function AcceptNetworkDocumentModal({
         </label>
         <div>
           <span className={lbl}>{t("networkInbox.postingDate", { defaultValue: "Ödəniş tarixi" })}</span>
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={postingDate}
-            onChange={(e) => setPostingDate(e.target.value)}
-          />
+          <FinanceDatePicker value={postingDate} onChange={(iso) => setPostingDate(iso)} respectPeriodLock={false} />
         </div>
       </form>
     </SalesModalShell>

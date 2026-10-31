@@ -1,7 +1,7 @@
--- Nafta pilot: clinic hotel revenue codes (2001–2007). Codes sit on groups; services inherit them
+-- DO NOT RUN. Live revenue codes are on the hotel revenue-code screen.
+-- Archive only. Nafta pilot: clinic hotel revenue codes (2001–2007). Codes sit on groups; services inherit them
 -- (product -> modality / department -> tenant default, see billing-router revenueCodeForServiceLine).
 -- ADR: docs/adr/hotel-revenue-code-resolution.md
--- Run once: psql -v ON_ERROR_STOP=1 -d era_clinic -f nafta-revenue-codes-2026-10.sql
 \set org '6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b'
 
 BEGIN;

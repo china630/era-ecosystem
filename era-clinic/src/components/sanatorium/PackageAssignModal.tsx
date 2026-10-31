@@ -12,6 +12,7 @@ import {
   MODAL_INPUT_CLASS,
   CARD_CONTAINER_CLASS,
   CatalogField,
+  DatePicker,
   showApiError,
 } from "@era/satellite-kit/ui";
 import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
@@ -1500,15 +1501,13 @@ export function PackageAssignModal({
           <p className="mb-2 text-[13px] font-medium">{tPhysio("packageAssignStartTitle")}</p>
           <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignStartHint")}</p>
           <div className="flex flex-wrap items-end gap-3">
-            <label className="text-[12px]">
-              <span className="mb-1 block">{tPhysio("packageAssignStartDate")}</span>
-              <input
-                type="date"
-                className={MODAL_INPUT_CLASS}
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-            </label>
+            <DatePicker
+              label={tPhysio("packageAssignStartDate")}
+              value={startDate}
+              onChange={setStartDate}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
             <div className="w-28">
               <CatalogField
                 kind="CLOSED_SMALL"

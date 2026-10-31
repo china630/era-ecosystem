@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../../components/ui/date-picker";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -169,12 +170,7 @@ export default function InvoiceAllocatePage() {
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           <span>{t("invoices.paymentDate", { defaultValue: "Payment date" })}</span>
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
-          />
+          <FinanceDatePicker value={paymentDate} onChange={(iso) => setPaymentDate(iso)} respectPeriodLock={false} />
         </label>
         <button
           type="button"

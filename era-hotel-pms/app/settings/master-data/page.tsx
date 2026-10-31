@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useLocale, useTranslations } from 'next-intl';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -50,8 +51,19 @@ interface RoomType extends RetireRow {
   code: string;
   name: string;
   baseQuota: number;
+  overbookAllowance?: number;
   adultCapacity?: number;
   standardAdults?: number;
+}
+
+interface QuotaChangeRow {
+  id: string;
+  scope: string;
+  roomTypeId: string | null;
+  field: string;
+  oldValue: number;
+  newValue: number;
+  createdAt: string;
 }
 
 interface Room {
@@ -190,6 +202,8 @@ export default function MasterDataPage() {
   const locale = useLocale();
   const tc = useTranslations('common');
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [houseOverbook, setHouseOverbook] = useState('0');
+  const [quotaChanges, setQuotaChanges] = useState<QuotaChangeRow[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [ratePlans, setRatePlans] = useState<RatePlan[]>([]);
   const [revenueCodes, setRevenueCodes] = useState<RevenueCode[]>([]);
@@ -236,8 +250,9 @@ export default function MasterDataPage() {
   const [roomModalOpen, setRoomModalOpen] = useState(false);
 
   async function load() {
-    const [rt, rm, rp, rc, bt, rv, deps] = await Promise.all([
+    const [rt, caps, rm, rp, rc, bt, rv, deps] = await Promise.all([
       fetch('/api/master/room-types').then((r) => r.json()),
+      fetch('/api/master/inventory-caps').then((r) => (r.ok ? r.json() : null)),
       fetch('/api/rooms?scope=master').then((r) => r.json()),
       fetch('/api/master/rate-plans').then((r) => r.json()),
       fetch('/api/master/revenue-codes').then((r) => r.json()),
@@ -247,6 +262,10 @@ export default function MasterDataPage() {
     ]);
     if (Array.isArray(deps)) setDepartments(deps);
     setRoomTypes(rt);
+    if (caps && typeof caps.houseOverbookAllowance === 'number') {
+      setHouseOverbook(String(caps.houseOverbookAllowance));
+      setQuotaChanges(Array.isArray(caps.changes) ? caps.changes : []);
+    }
     setRooms(rm);
     setRatePlans(rp);
     setRevenueCodes(rc);
@@ -565,6 +584,77 @@ export default function MasterDataPage() {
             </button>
           </div>
         </div>
+        <form
+          className="mb-4 flex flex-wrap items-end gap-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            const res = await fetch('/api/master/inventory-caps', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ houseOverbookAllowance: Math.max(0, Number(houseOverbook) || 0) }),
+            });
+            setBusy(false);
+            if (res.ok) {
+              showSuccess(t('houseOverbookSaved'));
+              await load();
+            } else {
+              const json = await res.json().catch(() => null);
+              showApiError(json, tc('error'));
+            }
+          }}
+        >
+          <Field
+            label={t('houseOverbook')}
+            preset="count"
+            id="house-overbook"
+            name="houseOverbook"
+            type="number"
+            min={0}
+            value={houseOverbook}
+            onChange={(e) => setHouseOverbook(e.target.value)}
+          />
+          <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
+            {tc('save')}
+          </button>
+          <p className="m-0 text-[13px] text-[#7F8C8D]">{t('houseOverbookHint')}</p>
+        </form>
+        {quotaChanges.length > 0 ? (
+          <div className={`${DATA_TABLE_VIEWPORT_CLASS} mb-4`}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaWhen')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaScope')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaField')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaFrom')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaTo')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quotaChanges.map((row) => (
+                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.createdAt)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.scope === 'HOUSE'
+                        ? t('houseOverbook')
+                        : roomTypes.find((rt) => rt.id === row.roomTypeId)?.code ?? row.roomTypeId}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.field === 'BASE_QUOTA'
+                        ? t('quotaField_BASE_QUOTA')
+                        : row.field === 'OVERBOOK'
+                          ? t('quotaField_OVERBOOK')
+                          : t('quotaField_HOUSE_OVERBOOK')}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.oldValue}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{row.newValue}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -572,6 +662,7 @@ export default function MasterDataPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('code')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('name')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('quota')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('overbookAllowance')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('adultCapacity')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('standardAdults')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('activeStatus')}</th>
@@ -584,6 +675,7 @@ export default function MasterDataPage() {
                   <td className={DATA_TABLE_TD_CLASS}>{rt.code}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{catalogLabel(rt, locale)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.baseQuota}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{rt.overbookAllowance ?? 0}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.adultCapacity ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{rt.standardAdults ?? '—'}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
@@ -812,6 +904,7 @@ export default function MasterDataPage() {
                   name: fd.get('name'),
                   ...localizedNamesFromForm(fd),
                   baseQuota: Number(fd.get('quota')),
+                  overbookAllowance: Number(fd.get('overbook') || 0),
                   adultCapacity: Number(fd.get('adultCapacity') || 2),
                   standardAdults: Number(fd.get('standardAdults') || 2),
                   active: fd.get('active') === 'on',
@@ -821,6 +914,7 @@ export default function MasterDataPage() {
                   name: fd.get('name'),
                   ...localizedNamesFromForm(fd),
                   baseQuota: Number(fd.get('quota')),
+                  overbookAllowance: Number(fd.get('overbook') || 0),
                   adultCapacity: Number(fd.get('adultCapacity') || 2),
                   standardAdults: Number(fd.get('standardAdults') || 2),
                 };
@@ -882,6 +976,15 @@ export default function MasterDataPage() {
               type="number"
               defaultValue={editRoomType?.baseQuota ?? ''}
               required
+            />
+            <Field
+              label={t('overbookAllowance')}
+              preset="count"
+              id="rt-overbook"
+              name="overbook"
+              type="number"
+              min={0}
+              defaultValue={editRoomType?.overbookAllowance ?? 0}
             />
             <Field
               label={t('adultCapacity')}

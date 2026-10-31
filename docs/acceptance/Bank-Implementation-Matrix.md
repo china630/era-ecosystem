@@ -8,7 +8,7 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
-**Civil date labels (2026-10-30):** Deposit maturity, loan schedule, posting date, treasury value/maturity dates, and ECL as-of dates render `дд.мм.гггг` via `bakuDateDisplay`. Date inputs stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
+**Civil date labels (2026-10-30, controls 2026-10-31):** Deposit maturity, loan schedule, posting date, treasury value/maturity dates, and ECL as-of dates render `дд.мм.гггг` via `bakuDateDisplay`. FMN, FATCA, government-security maturity, EOD business date, product effective-from, and account statement range use kit `DatePicker`. Values stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
 
 ---
 

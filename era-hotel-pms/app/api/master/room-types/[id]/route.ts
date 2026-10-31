@@ -11,6 +11,7 @@ const schema = z.object({
   name: z.string().min(1).optional(),
   ...localizedNameFields,
   baseQuota: z.number().int().positive().optional(),
+  overbookAllowance: z.number().int().nonnegative().optional(),
   adultCapacity: z.number().int().optional(),
   standardAdults: z.number().int().min(1).max(10).optional(),
   childCapacity: z.number().int().optional(),
@@ -26,7 +27,7 @@ export async function PATCH(
     assertMasterDataWrite(session);
     const { id } = await params;
     const body = schema.parse(await request.json());
-    const updated = await updateRoomType(id, body);
+    const updated = await updateRoomType(id, body, { userId: session?.sub });
     if (body.active === false) {
       await recordHotelAudit(
         { userId: session?.sub, request },

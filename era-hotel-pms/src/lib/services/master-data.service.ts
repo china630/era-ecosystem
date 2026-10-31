@@ -1,10 +1,42 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal } from '@/lib/decimal';
-import type { FolioType, HotelLookupKind } from '@prisma/client';
+import type { FolioType, HotelLookupKind, QuotaChangeField } from '@prisma/client';
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 import { HOTEL_LOOKUP_DEFAULTS } from '@/lib/hotel-lookup-defaults';
+import { requestOrganizationId } from '@/lib/request-organization';
+import { recordHotelAudit } from '@/lib/satellite-audit';
 
 type LocalizedNames = { nameAz?: string | null; nameRu?: string | null; nameEn?: string | null };
+
+async function appendQuotaChange(input: {
+  scope: 'ROOM_TYPE' | 'HOUSE';
+  roomTypeId?: string | null;
+  field: QuotaChangeField;
+  oldValue: number;
+  newValue: number;
+  userId?: string | null;
+  entityId: string;
+}) {
+  if (input.oldValue === input.newValue) return;
+  await prisma.quotaChange.create({
+    data: {
+      organizationId: requestOrganizationId(),
+      scope: input.scope,
+      roomTypeId: input.roomTypeId ?? null,
+      field: input.field,
+      oldValue: input.oldValue,
+      newValue: input.newValue,
+      userId: input.userId ?? null,
+    },
+  });
+  await recordHotelAudit(
+    { userId: input.userId },
+    input.scope === 'HOUSE' ? 'HotelProfile' : 'RoomType',
+    input.entityId,
+    'QUOTA',
+    { field: input.field, from: input.oldValue, to: input.newValue },
+  );
+}
 
 export async function listRoomTypes() {
   return prisma.roomType.findMany({ orderBy: { code: 'asc' }, include: { _count: { select: { rooms: true } } } });
@@ -17,6 +49,7 @@ export async function createRoomType(input: {
   standardAdults?: number;
   childCapacity?: number;
   baseQuota: number;
+  overbookAllowance?: number;
 } & LocalizedNames) {
   return prisma.roomType.create({ data: input });
 }
@@ -29,10 +62,66 @@ export async function updateRoomType(
     standardAdults?: number;
     childCapacity?: number;
     baseQuota?: number;
+    overbookAllowance?: number;
     active?: boolean;
   } & LocalizedNames,
+  actor?: { userId?: string | null },
 ) {
-  return prisma.roomType.update({ where: { id }, data: input });
+  const existing = await prisma.roomType.findUnique({ where: { id } });
+  if (!existing) throw new Error('Room type not found');
+  const updated = await prisma.roomType.update({ where: { id }, data: input });
+  if (input.baseQuota != null) {
+    await appendQuotaChange({
+      scope: 'ROOM_TYPE',
+      roomTypeId: id,
+      field: 'BASE_QUOTA',
+      oldValue: existing.baseQuota,
+      newValue: input.baseQuota,
+      userId: actor?.userId,
+      entityId: id,
+    });
+  }
+  if (input.overbookAllowance != null) {
+    await appendQuotaChange({
+      scope: 'ROOM_TYPE',
+      roomTypeId: id,
+      field: 'OVERBOOK',
+      oldValue: existing.overbookAllowance,
+      newValue: input.overbookAllowance,
+      userId: actor?.userId,
+      entityId: id,
+    });
+  }
+  return updated;
+}
+
+export async function getInventoryCaps() {
+  const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+  const profile = await ensureHotelProfile();
+  const changes = await prisma.quotaChange.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+  return { houseOverbookAllowance: profile.houseOverbookAllowance, changes };
+}
+
+export async function updateHouseOverbook(value: number, actor?: { userId?: string | null }) {
+  const { ensureHotelProfile } = await import('@/lib/services/hotel.service');
+  const profile = await ensureHotelProfile();
+  if (profile.houseOverbookAllowance === value) return profile;
+  const updated = await prisma.hotelProfile.update({
+    where: { id: profile.id },
+    data: { houseOverbookAllowance: value },
+  });
+  await appendQuotaChange({
+    scope: 'HOUSE',
+    field: 'HOUSE_OVERBOOK',
+    oldValue: profile.houseOverbookAllowance,
+    newValue: value,
+    userId: actor?.userId,
+    entityId: profile.id,
+  });
+  return updated;
 }
 
 export async function listRatePlans() {

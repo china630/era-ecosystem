@@ -1,11 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { isStopSellForDate } from '@/lib/services/channel.service';
-import {
-  countDoorsUsedOnNight,
-  loadInventoryStays,
-  segmentsConsumingType,
-} from '@/lib/services/share-assignment.service';
-import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
+import { sellStatesForType } from '@/lib/services/inventory-guard.service';
+import { hotelDateKey, parseHotelNoon, addHotelDays } from '@/lib/hotel-calendar';
 
 type DayCell = {
   date: string;
@@ -36,8 +32,8 @@ function eachHotelNight(fromKey: string, toKey: string): string[] {
 /**
  * FO Room Type Availability matrix (Electra-style Avl / Occ).
  * An assigned door counts as that door's type. An unassigned stay counts as the sold type.
- * Avl may be negative (overbook signal).
- * Night membership is the Asia/Baku civil date — same `stayOccupiesHotelNight` as sellable/create.
+ * Avl is what can still be sold: baseQuota + type allowance, also inside the house cap.
+ * Stop-sell forces Avl 0. Night membership is the Asia/Baku civil date.
  */
 export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   const fromKey = hotelDateKey(from);
@@ -52,20 +48,22 @@ export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
     orderBy: { code: 'asc' },
     select: { id: true, code: true, name: true, baseQuota: true, adultCapacity: true },
   });
-  const stays = await loadInventoryStays(
-    parseHotelNoon(nights[0]!),
-    parseHotelNoon(addHotelDays(nights[nights.length - 1]!, 1)),
-  );
 
   const rows: TypeRow[] = [];
+  const houseLeftByNight = new Map<string, { quota: number; occupied: number; available: number; stopSell: boolean }>();
   for (const rt of roomTypes) {
-    const segments = segmentsConsumingType(rt.id, stays);
-    const maxBed = rt.adultCapacity ?? 2;
+    const { states } = await sellStatesForType(
+      rt.id,
+      parseHotelNoon(nights[0]!),
+      parseHotelNoon(addHotelDays(nights[nights.length - 1]!, 1)),
+    );
+    const byDate = new Map(states.map((state) => [hotelDateKey(state.night), state]));
     const days: DayCell[] = [];
     for (const night of nights) {
-      const occupied = countDoorsUsedOnNight(segments, parseHotelNoon(night), maxBed);
-      const stopSell = await isStopSellForDate(parseHotelNoon(night), rt.id);
-      const available = stopSell ? 0 : rt.baseQuota - occupied;
+      const state = byDate.get(night);
+      const stopSell = state?.stopSell ?? (await isStopSellForDate(parseHotelNoon(night), rt.id));
+      const occupied = state?.typeUsed ?? 0;
+      const available = state?.available ?? 0;
       days.push({
         date: night,
         quota: rt.baseQuota,
@@ -73,6 +71,14 @@ export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
         available,
         stopSell,
       });
+      if (state && !houseLeftByNight.has(night)) {
+        houseLeftByNight.set(night, {
+          quota: state.houseCap,
+          occupied: state.houseUsed,
+          available: Math.max(0, state.houseCap - state.houseUsed),
+          stopSell: false,
+        });
+      }
     }
     rows.push({
       roomTypeId: rt.id,
@@ -84,18 +90,21 @@ export async function getRoomTypeAvailabilityMatrix(from: Date, to: Date) {
   }
 
   const totals: DayCell[] = nights.map((night, i) => {
-    let occupied = 0;
-    let quota = 0;
-    let stopAll = true;
-    for (const row of rows) {
-      const d = row.days[i];
-      if (!d) continue;
-      occupied += d.occupied;
-      quota += d.quota;
-      if (!d.stopSell) stopAll = false;
+    const house = houseLeftByNight.get(night);
+    if (house) {
+      let stopAll = true;
+      for (const row of rows) {
+        if (!row.days[i]?.stopSell) stopAll = false;
+      }
+      return {
+        date: night,
+        quota: house.quota,
+        occupied: house.occupied,
+        available: stopAll ? 0 : house.available,
+        stopSell: stopAll,
+      };
     }
-    const available = stopAll ? 0 : quota - occupied;
-    return { date: night, quota, occupied, available, stopSell: stopAll };
+    return { date: night, quota: 0, occupied: 0, available: 0, stopSell: true };
   });
 
   return { from: fromKey, to: toKey, nights, rows, totals };

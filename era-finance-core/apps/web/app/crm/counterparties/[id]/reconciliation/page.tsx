@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../../../components/ui/date-picker";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -217,21 +218,11 @@ export default function CounterpartyReconciliationPage() {
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
         <div>
           <span className={lbl}>{t("counterparties.reconStart")}</span>
-          <input
-            type="date"
-            value={periodStart}
-            onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
-            className={inputFieldClass}
-          />
+          <FinanceDatePicker value={periodStart} onChange={(iso) => setPeriod((p) => ({ ...p, start: iso }))} respectPeriodLock={false} />
         </div>
         <div>
           <span className={lbl}>{t("counterparties.reconEnd")}</span>
-          <input
-            type="date"
-            value={periodEnd}
-            onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))}
-            className={inputFieldClass}
-          />
+          <FinanceDatePicker value={periodEnd} onChange={(iso) => setPeriod((p) => ({ ...p, end: iso }))} respectPeriodLock={false} />
         </div>
         <div>
           <span className={lbl}>{t("counterparties.reconCurrency")}</span>

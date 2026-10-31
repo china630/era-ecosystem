@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
@@ -72,24 +73,18 @@ export default function FuelReportPage() {
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
         <div className="flex flex-wrap items-end gap-4 text-[13px]">
-          <label>
-            {t("from")}
-            <input
-              type="date"
-              className="mt-1 block rounded border px-2 py-1"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-            />
-          </label>
-          <label>
-            {t("to")}
-            <input
-              type="date"
-              className="mt-1 block rounded border px-2 py-1"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            />
-          </label>
+          <DatePicker
+            label={t("from")}
+            value={from}
+            onChange={setFrom}
+            placeholder="dd.mm.yyyy"
+          />
+          <DatePicker
+            label={t("to")}
+            value={to}
+            onChange={setTo}
+            placeholder="dd.mm.yyyy"
+          />
         </div>
 
         {loading ? (

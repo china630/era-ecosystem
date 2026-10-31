@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -121,12 +122,7 @@ export default function BalanceSheetPage() {
           <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-3 p-4`}>
           <label className="flex flex-col gap-1">
             <span className={FORM_LABEL_CLASS}>{t("reports.balanceSheet.asOf")}</span>
-            <input
-              type="date"
-              className={FORM_INPUT_CLASS}
-              value={asOf}
-              onChange={(e) => setAsOf(e.target.value)}
-            />
+            <FinanceDatePicker value={asOf} onChange={(iso) => setAsOf(iso)} respectPeriodLock={false} />
           </label>
           <button
             type="button"

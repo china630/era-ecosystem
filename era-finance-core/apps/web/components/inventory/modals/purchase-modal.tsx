@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../ui/date-picker";
 
 import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -491,12 +492,7 @@ export function PurchaseModal({
           </label>
           <label className="block">
             <span className={MODAL_FIELD_LABEL_CLASS}>{t("inventory.purchaseFieldDate")}</span>
-            <input
-              type="date"
-              value={documentDate}
-              onChange={(e) => setDocumentDate(e.target.value)}
-              className={fieldErrorClass(!!err("documentDate"))}
-            />
+            <FinanceDatePicker value={documentDate} onChange={(iso) => setDocumentDate(iso)} respectPeriodLock={false} />
             {err("documentDate") ? (
               <p className="mt-1 text-xs text-red-600 m-0">{err("documentDate")}</p>
             ) : null}

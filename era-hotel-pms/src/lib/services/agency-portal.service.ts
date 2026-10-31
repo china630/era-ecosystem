@@ -120,6 +120,12 @@ export async function createAgencyPortalReservation(input: {
     input.salesContractId,
   );
   if (avail.available < 1) {
+    const reason = avail.nights.find((night) => night.available === avail.available);
+    const code = reason && 'reason' in reason ? reason.reason : null;
+    if (code === 'STOP_SELL' || code === 'TYPE_CAP' || code === 'HOUSE_CAP') {
+      const { InventoryCapError } = await import('@/lib/services/inventory-guard.service');
+      throw new InventoryCapError(code);
+    }
     throw Object.assign(new Error('No contract allotment available'), { status: 409 });
   }
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { bakuDateDisplay, todayBakuYmd, addBakuDays } from "@era/satellite-kit/time";
-import { Field, CatalogField, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { DatePicker, Field, CatalogField, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
 import {
@@ -360,18 +360,8 @@ export function AccountDetailModal({
       {tab === "statement" ? (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-3">
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="rounded border px-2 py-1 text-sm"
-            />
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="rounded border px-2 py-1 text-sm"
-            />
+            <DatePicker label="From" value={from} onChange={setFrom} placeholder="dd.mm.yyyy" />
+            <DatePicker label="To" value={to} onChange={setTo} placeholder="dd.mm.yyyy" />
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void loadStatement()}>
               {tCommon("refresh")}
             </button>

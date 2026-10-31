@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
@@ -779,29 +780,19 @@ export default function InvoicesPage() {
                 <span className="mb-1 block text-xs font-semibold text-[#475569]">
                   {t("savedViews.dueFrom")}
                 </span>
-                <input
-                  type="date"
-                  className="rounded border border-[#D5DADF] px-2 py-1"
-                  value={filters.dueFrom}
-                  onChange={(e) => {
-                    setFilters((f) => ({ ...f, dueFrom: e.target.value }));
+                <FinanceDatePicker value={filters.dueFrom} onChange={(iso) => {
+                    setFilters((f) => ({ ...f, dueFrom: iso }));
                     setPage(1);
-                  }}
-                />
+                  }} respectPeriodLock={false} />
               </label>
               <label className="block text-sm">
                 <span className="mb-1 block text-xs font-semibold text-[#475569]">
                   {t("savedViews.dueTo")}
                 </span>
-                <input
-                  type="date"
-                  className="rounded border border-[#D5DADF] px-2 py-1"
-                  value={filters.dueTo}
-                  onChange={(e) => {
-                    setFilters((f) => ({ ...f, dueTo: e.target.value }));
+                <FinanceDatePicker value={filters.dueTo} onChange={(iso) => {
+                    setFilters((f) => ({ ...f, dueTo: iso }));
                     setPage(1);
-                  }}
-                />
+                  }} respectPeriodLock={false} />
               </label>
             </EraListFilterBar>
           </div>
@@ -1140,12 +1131,7 @@ export default function InvoicesPage() {
                                   </label>
                                   <label className="flex flex-col gap-1 text-xs font-semibold text-[#475569]">
                                     {t("invoices.payDate")}
-                                    <input
-                                      type="date"
-                                      value={payDate}
-                                      onChange={(e) => setPayDate(e.target.value)}
-                                      className="rounded-lg border border-[#D5DADF] px-2 py-1.5 text-[13px]"
-                                    />
+                                    <FinanceDatePicker value={payDate} onChange={(iso) => setPayDate(iso)} respectPeriodLock={false} />
                                   </label>
                                   <button
                                     type="button"

@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -168,13 +169,13 @@ export default function HoldingConsolidatedReportingPage() {
               <span className="text-[13px] font-normal text-[#7F8C8D]">
                 {t("reporting.from", { defaultValue: "С" })}
               </span>
-              <input type="date" className={MODAL_INPUT_CLASS} value={from} onChange={(e) => setFrom(e.target.value)} />
+              <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span className="text-[13px] font-normal text-[#7F8C8D]">
                 {t("reporting.to", { defaultValue: "По" })}
               </span>
-              <input type="date" className={MODAL_INPUT_CLASS} value={to} onChange={(e) => setTo(e.target.value)} />
+              <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
             </label>
           </div>
         }

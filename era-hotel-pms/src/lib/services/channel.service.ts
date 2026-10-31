@@ -3,10 +3,6 @@ import { addHotelDays, hotelDateKey, hotelNightBounds } from '@/lib/hotel-calend
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
-import {
-  countDoorsUsedOnNight,
-  loadShareSlicesForType,
-} from '@/lib/services/share-assignment.service';
 
 /** Civil @db.Date night key (UTC midnight of Asia/Baku YMD). */
 function dateOnly(d: Date): Date {
@@ -105,13 +101,17 @@ export async function getChannelAvailability(from: Date, to: Date) {
   const result = [];
 
   for (const rt of roomTypes) {
+    const { sellStatesForType } = await import('@/lib/services/inventory-guard.service');
+    const { states } = await sellStatesForType(rt.id, from, to);
+    const byDate = new Map(states.map((state) => [state.night.toISOString().slice(0, 10), state]));
     const rows = [];
     for (const night of nights) {
-      const stopSell = await isStopSellForDate(night, rt.id);
-      const { start, end } = hotelNightBounds(night);
-      const slices = await loadShareSlicesForType(rt.id, start, end);
-      const overlapping = countDoorsUsedOnNight(slices, start, rt.adultCapacity ?? 2);
+      const key = night.toISOString().slice(0, 10);
+      const state = byDate.get(key);
+      const stopSell = state?.stopSell ?? (await isStopSellForDate(night, rt.id));
+      const overlapping = state?.typeUsed ?? 0;
       const contractQuota = await getContractAllotmentQuota(rt.id, night);
+      const { start, end } = hotelNightBounds(night);
       const contractBooked = await prisma.reservation.count({
         where: {
           roomTypeId: rt.id,
@@ -122,16 +122,17 @@ export async function getChannelAvailability(from: Date, to: Date) {
         },
       });
       const contractHeld = Math.max(contractQuota - contractBooked, 0);
-      const effectiveQuota = stopSell ? 0 : rt.baseQuota;
-      const barAvailable = Math.max(0, effectiveQuota - contractHeld - (overlapping - contractBooked));
+      const typeCap = state?.typeCap ?? (stopSell ? 0 : rt.baseQuota + rt.overbookAllowance);
+      const barAvailable = Math.max(0, typeCap - contractHeld - (overlapping - contractBooked));
+      const houseLeft = Math.max(0, (state?.houseCap ?? typeCap) - (state?.houseUsed ?? overlapping));
       rows.push({
-        date: night.toISOString().slice(0, 10),
+        date: key,
         baseQuota: rt.baseQuota,
         booked: overlapping,
         contractAllotment: contractQuota,
         contractBooked,
         stopSell,
-        available: barAvailable,
+        available: stopSell ? 0 : Math.min(barAvailable, houseLeft),
       });
     }
     result.push({ roomTypeId: rt.id, roomTypeCode: rt.code, days: rows });

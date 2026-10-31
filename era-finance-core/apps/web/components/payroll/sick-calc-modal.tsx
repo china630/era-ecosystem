@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -105,11 +106,11 @@ export function SickCalcModal({
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("payroll.absenceFrom")}
-                <input type="date" className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`} value={from} onChange={(e) => setFrom(e.target.value)} />
+                <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("payroll.absenceTo")}
-                <input type="date" className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`} value={to} onChange={(e) => setTo(e.target.value)} />
+                <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
               </label>
             </div>
 

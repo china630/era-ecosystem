@@ -15,6 +15,19 @@ export type AuditHashPayload = {
   prevHash?: string | null;
 };
 
+/** Postgres jsonb does not keep object key order. Sort so a row hashes the same after it is read back. */
+function sortAuditValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortAuditValue);
+  if (value && typeof value === "object" && !(value instanceof Date)) {
+    return Object.fromEntries(
+      Object.keys(value as Record<string, unknown>)
+        .sort()
+        .map((key) => [key, sortAuditValue((value as Record<string, unknown>)[key])]),
+    );
+  }
+  return value;
+}
+
 export function canonicalAuditJsonString(p: AuditHashPayload): string {
   return JSON.stringify({
     organizationId: p.organizationId,
@@ -22,9 +35,9 @@ export function canonicalAuditJsonString(p: AuditHashPayload): string {
     entityType: p.entityType,
     entityId: p.entityId,
     action: p.action,
-    oldValues: p.oldValues,
-    newValues: p.newValues,
-    changes: p.changes,
+    oldValues: sortAuditValue(p.oldValues),
+    newValues: sortAuditValue(p.newValues),
+    changes: sortAuditValue(p.changes),
     clientIp: p.clientIp,
     userAgent: p.userAgent,
     createdAt: p.createdAt.toISOString(),

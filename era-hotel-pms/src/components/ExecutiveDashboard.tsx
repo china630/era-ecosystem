@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import { DatePicker, SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import ExecutiveCockpit, { type CockpitData } from '@/components/ExecutiveCockpit';
 
@@ -42,11 +42,12 @@ export default function ExecutiveDashboard() {
           <p className="mt-1 text-[13px] text-[#7F8C8D]">{t('subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="date"
+          <DatePicker
+            label={t('businessDate')}
             value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-[#D5DADF] px-3 py-2 text-[13px]"
+            onChange={setDate}
+            placeholder={tc('datePlaceholder')}
+            openCalendarLabel={tc('openCalendar')}
           />
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
             {tc('load')}

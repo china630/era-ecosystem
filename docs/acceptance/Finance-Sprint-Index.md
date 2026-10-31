@@ -6,7 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ · BE ✅ · UI 🟡 · Demo ❌ · Sell: do not claim GA — many FIN-* API-only  
-**Bank sync (2026-10-31):** hourly poll does not write statements unless the org sets `bankingDirect.syncMode` to `mock` or `rest`. Taxpayer lookup and ASAN/SİMA stubs stay off unless the org settings say so. FIN-ASAN-01 stays API/STUB. VAT-threshold `THRESHOLD_HIT` is hashed; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, and the row opens the package lines, with quantity purpose labeled. Does not change the rollup.
+**Bank sync (2026-10-31):** hourly poll does not write statements unless the org sets `bankingDirect.syncMode` to `mock` or `rest`. Taxpayer lookup and ASAN/SİMA stubs stay off unless the org settings say so. FIN-ASAN-01 stays API/STUB. VAT-threshold `THRESHOLD_HIT` is hashed; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, and the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. Does not change the rollup.
 
 ---
 

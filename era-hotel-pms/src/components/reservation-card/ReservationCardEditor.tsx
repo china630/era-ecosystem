@@ -44,6 +44,10 @@ import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConf
 import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import {
+  composeNaftaPackageNightlySellBreakdown,
+  paxCodesForCompose,
+} from '@/lib/services/nafta-package-compose.service';
+import {
   medicalPackageChoices,
   ratePlanRequiresGuestPackage,
   stayProductFamily,
@@ -280,6 +284,22 @@ export function ReservationCardEditor({
     }
     if (code === 'COMPANY_REQUIRED_FOR_PAYER') {
       showApiError({ error: t('companyRequiredForPayerToast') }, fallback);
+      return;
+    }
+    if (code === 'TYPE_CAP') {
+      showApiError({ error: t('typeCapToast') }, fallback);
+      return;
+    }
+    if (code === 'HOUSE_CAP') {
+      showApiError({ error: t('houseCapToast') }, fallback);
+      return;
+    }
+    if (code === 'STOP_SELL') {
+      showApiError({ error: t('stopSellToast') }, fallback);
+      return;
+    }
+    if (code === 'ROOM_CONFLICT') {
+      showApiError({ error: t('roomConflictToast') }, fallback);
       return;
     }
     const clash = doorConflictToast(body);
@@ -2256,14 +2276,23 @@ export function ReservationCardEditor({
           return;
         }
         if (sellable && sellable.available < 1) {
+          const cap =
+            sellable.reason === 'STOP_SELL'
+              ? t('stopSellToast')
+              : sellable.reason === 'HOUSE_CAP'
+                ? t('houseCapToast')
+                : sellable.reason === 'TYPE_CAP'
+                  ? t('typeCapToast')
+                  : null;
           reportApiError(
             {
               error:
-                sellable.reason === 'NO_ALLOTMENT'
+                cap ??
+                (sellable.reason === 'NO_ALLOTMENT'
                   ? t('noContractAllotmentInventory')
                   : sellable.contractScoped
                     ? t('noContractSellableInventory')
-                    : t('noSellableInventory'),
+                    : t('noSellableInventory')),
             },
             tc('failed'),
           );
@@ -2698,6 +2727,46 @@ export function ReservationCardEditor({
     if (bookingGroupId && siblingStays.length > 1) return 'booking' as const;
     return 'exclusive' as const;
   }, [shareEligible, bookingGroupId, siblingStays.length]);
+
+  const livePackageCompose = useMemo(() => {
+    const plan = ratePlans.find((item) => item.id === ratePlanId);
+    if (!plan || stayProductFamily(plan) !== 'medical' || !roomTypeId || !checkIn) return null;
+    const roomCode = roomTypes.find((row) => row.id === roomTypeId)?.label.split('—')[0]?.trim() ?? '';
+    if (!roomCode) return null;
+    const cells = ratePlans.flatMap((item) => {
+      const code = (item.code ?? '').trim().toUpperCase();
+      if (!code.startsWith('PKG-')) return [];
+      return (item.sellCells ?? []).flatMap((cell) => {
+        const typeCode = roomTypes.find((row) => row.id === cell.roomTypeId)?.label.split('—')[0]?.trim();
+        if (!typeCode) return [];
+        if (mealPlanId && cell.mealPlanId !== mealPlanId) return [];
+        const from = cell.effectiveFrom.slice(0, 10);
+        const to = cell.effectiveTo ? cell.effectiveTo.slice(0, 10) : null;
+        if (from > checkIn || (to != null && to < checkIn)) return [];
+        return [{ code, roomCode: typeCode, occupancy: cell.occupancy, amount: cell.sellPrice }];
+      });
+    });
+    if (cells.length === 0) return null;
+    const codes = paxCodesForCompose(
+      pax.map((row) => ({
+        medicalPackageCode: row.medicalPackageCode,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        guestId: row.guestId,
+      })),
+      null,
+    );
+    const breakdown = composeNaftaPackageNightlySellBreakdown(codes, roomCode, cells);
+    if (!breakdown || !(breakdown.total > 0)) return null;
+    return {
+      total: breakdown.total,
+      lines: breakdown.lines.map((line) => ({
+        code: line.code,
+        label: line.note,
+        amount: line.amount,
+      })),
+    };
+  }, [ratePlans, ratePlanId, roomTypeId, roomTypes, mealPlanId, checkIn, pax]);
 
   const folios = (data?.folios as FolioAccount[] | undefined) ?? [];
 
@@ -3278,13 +3347,11 @@ export function ReservationCardEditor({
                   discountPercent={discountPercent}
                   busy={busy}
                   isLocked={isLocked}
-                  packageCompose={packageCompose}
+                  packageCompose={livePackageCompose ?? packageCompose}
                   tariffNightly={(() => {
                     const plan = ratePlans.find((item) => item.id === ratePlanId);
-                    if (plan?.medicalFlag) {
-                      return nightlyForChargedType(ratePlans, ratePlanId, roomTypeId, adults, checkIn);
-                    }
-                    return plan?.pricePerNight ?? null;
+                    if (!plan || stayProductFamily(plan) === 'medical') return null;
+                    return plan.pricePerNight ?? null;
                   })()}
                   businessDate={pricingBusinessDate}
                   postedDates={folios.flatMap((folio) =>

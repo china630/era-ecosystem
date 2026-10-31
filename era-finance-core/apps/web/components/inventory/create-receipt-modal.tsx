@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
@@ -360,14 +361,7 @@ export function CreateReceiptModal({
               <label htmlFor="receipt-date" className={MODAL_FIELD_LABEL_CLASS}>
                 {t("inventory.receiptDate")}
               </label>
-              <input
-                id="receipt-date"
-                type="date"
-                value={documentDate}
-                onChange={(e) => setDocumentDate(e.target.value)}
-                className={fieldErrorClass(!!err("date"))}
-                aria-invalid={!!err("date")}
-              />
+              <FinanceDatePicker value={documentDate} onChange={(iso) => setDocumentDate(iso)} respectPeriodLock={false} id="receipt-date" aria-invalid={!!err("date")} />
               {err("date") ? <p className="mt-1 text-xs text-red-600 m-0">{err("date")}</p> : null}
             </div>
             <div>

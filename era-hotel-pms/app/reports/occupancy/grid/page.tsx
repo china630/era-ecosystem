@@ -16,6 +16,7 @@ import {
   PageHeader,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateShort } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 
 interface OccupancyCell {
@@ -120,7 +121,7 @@ export default function OccupancyGridPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('type')}</th>
                 {(grid?.dates ?? []).map((d) => (
                   <th key={d} className={DATA_TABLE_TH_LEFT_CLASS}>
-                    {d.slice(5)}
+                    {bakuDateShort(d)}
                   </th>
                 ))}
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('avgPct')}</th>

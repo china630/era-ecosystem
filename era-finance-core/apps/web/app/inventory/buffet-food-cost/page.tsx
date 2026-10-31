@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { CatalogField, Field, FieldTextarea } from "@era/satellite-kit/ui";
+import { CatalogField, DatePicker, Field, FieldTextarea } from "@era/satellite-kit/ui";
 import { bakuCivilUtcDate, todayBakuYmd } from "@era/satellite-kit/time";
 import { apiFetch } from "../../../lib/api-client";
 import { decodeTheoSku } from "../../../lib/buffet-handoff-query";
@@ -507,19 +507,17 @@ export default function BuffetFoodCostRunPage() {
       <div
         className={`buffet-no-print ${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-3 p-4`}
       >
-        <Field
+        <DatePicker
           label={t("common.from", "From")}
-          preset="date"
-          type="date"
           value={from}
-          onChange={(e) => setFrom(e.target.value)}
+          onChange={setFrom}
+          placeholder={t("ui.datePickerPlaceholder")}
         />
-        <Field
+        <DatePicker
           label={t("common.to", "To")}
-          preset="date"
-          type="date"
           value={to}
-          onChange={(e) => setTo(e.target.value)}
+          onChange={setTo}
+          placeholder={t("ui.datePickerPlaceholder")}
         />
         <div className="min-w-[10rem]">
           <CatalogField

@@ -63,4 +63,19 @@ describe('handleRouteError share / room conflicts', () => {
     expect(body.code).toBe('STAY_RECORD_EXISTS');
     expect(body.error).not.toBe('Could not save this stay');
   });
+
+  it('maps a duplicate group code to GROUP_CODE_TAKEN', async () => {
+    const err = new Error('Unique constraint failed');
+    err.name = 'PrismaClientKnownRequestError';
+    (err as Error & { code: string; meta: { target: string[]; modelName: string } }).code = 'P2002';
+    (err as Error & { meta: { target: string[]; modelName: string } }).meta = {
+      target: ['organizationId', 'code'],
+      modelName: 'ReservationGroup',
+    };
+    const res = handleRouteError(err);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe('GROUP_CODE_TAKEN');
+    expect(body.error).not.toBe('Could not save this stay');
+  });
 });

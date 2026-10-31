@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -119,12 +120,7 @@ export default function QuickExpensePage() {
         </label>
         <label className="block text-[13px] font-medium text-[#34495E]">
           {t("quickExpense.date")}
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={`mt-1 block w-full ${INPUT_BORDERED_CLASS}`}
-          />
+          <FinanceDatePicker value={date} onChange={(iso) => setDate(iso)} respectPeriodLock={false} />
         </label>
         <label className="block text-[13px] font-medium text-[#34495E]">
           {t("quickExpense.description")}

@@ -9,6 +9,8 @@
 
 **BE deepen (2026-08-17):** Negative-path suites landed — `__tests__/log-trip-negative.spec.ts`, `log-pod-negative.spec.ts`, `log-ref-negative.spec.ts`, `log-plat-negative.spec.ts`. TENANT stays out of BE rollup.
 
+**Civil date controls (2026-10-31):** `/reports/fuel` from/to are kit `DatePicker`. Query values stay `YYYY-MM-DD`. Does not reopen AC-LOG-POD Scaffold ✅. Pilot-ready stays `[ ]`.
+
 ---
 
 ## AC rollup

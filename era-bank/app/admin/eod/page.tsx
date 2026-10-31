@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  Field,
+  DatePicker,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   showApiError,
@@ -89,12 +89,11 @@ export default function EodAdminPage() {
     <div className="space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <div className={`${CARD_CONTAINER_CLASS} grid gap-4 sm:grid-cols-2`}>
-        <Field
+        <DatePicker
           label={t("businessDate")}
-          preset="date"
-          type="date"
           value={businessDate}
-          onChange={(e) => setBusinessDate(e.target.value)}
+          onChange={setBusinessDate}
+          placeholder="dd.mm.yyyy"
         />
         <div className="flex items-end gap-2">
           <button

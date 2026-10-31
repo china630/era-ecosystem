@@ -1,6 +1,6 @@
 'use client';
 
-import { bakuDateDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateShort } from '@era/satellite-kit/time';
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -71,7 +71,7 @@ export function ChannelInventoryTab({
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('roomType')}</th>
                 {availability[0]?.days.map((d) => (
                   <th key={d.date} className={DATA_TABLE_TH_LEFT_CLASS}>
-                    {d.date.slice(5)}
+                    {bakuDateShort(d.date)}
                   </th>
                 ))}
               </tr>
