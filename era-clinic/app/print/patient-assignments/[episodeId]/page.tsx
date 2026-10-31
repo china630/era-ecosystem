@@ -41,7 +41,7 @@ export default async function PrintPatientAssignmentsPage({
     roomNumber: sp.roomNumber?.trim() || null,
     kind,
   });
-  if (!data) notFound();
+  if (!data?.episode.patientRefId) notFound();
 
   const patientRef = await prisma.patientRef.findUnique({
     where: { id: data.episode.patientRefId },
