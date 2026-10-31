@@ -28,6 +28,7 @@ import {
 type Warehouse = {
   id: string;
   name: string;
+  code?: string | null;
   location: string;
   costClass?: string | null;
   satelliteOutletCode?: string | null;
@@ -48,7 +49,7 @@ const COST_CLASS_OPTIONS = [
   "INVENTORY_GT",
 ] as const;
 
-type WhScopeDraft = { costClass: string; satelliteOutletCode: string };
+type WhScopeDraft = { code: string; costClass: string; satelliteOutletCode: string };
 
 export default function InventorySettingsPage() {
   const { t } = useTranslation();
@@ -133,6 +134,7 @@ export default function InventorySettingsPage() {
           whList.map((wh) => [
             wh.id,
             {
+              code: wh.code ?? "",
               costClass: wh.costClass ?? "",
               satelliteOutletCode: wh.satelliteOutletCode ?? "",
             },
@@ -208,6 +210,7 @@ export default function InventorySettingsPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          code: draft.code.trim() ? draft.code.trim() : null,
           costClass: draft.costClass.trim() ? draft.costClass.trim() : null,
           satelliteOutletCode: draft.satelliteOutletCode.trim()
             ? draft.satelliteOutletCode.trim()
@@ -305,21 +308,21 @@ export default function InventorySettingsPage() {
             </div>
           ) : null}
           <div className="flex flex-wrap items-end gap-3">
-            <label className="block min-w-0 max-w-xs flex-1 text-sm font-medium text-gray-700">
-              {t("inventory.defaultWhLabel")}
-              <select
+            <div className="min-w-0 max-w-xs flex-1">
+              <CatalogField
+                kind="ENTITY_REF"
+                label={t("inventory.defaultWhLabel")}
                 value={defWh}
-                onChange={(e) => setDefWh(e.target.value)}
-                className={`mt-1 block w-full max-w-[16rem] ${INPUT_BORDERED_CLASS}`}
-              >
-                <option value="">{t("inventory.defaultWhAuto")}</option>
-                {warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  setDefWh(v);
+                }}
+                options={[
+                  { value: "", label: t("inventory.defaultWhAuto") },
+                  ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+                ]}
+              />
+            </div>
             <button
               type="button"
               disabled={settingsSaving}
@@ -383,6 +386,7 @@ export default function InventorySettingsPage() {
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.thWh")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.whCodePh")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>
                     {t("inventory.whCostClass", "Cost class")}
                   </th>
@@ -395,10 +399,12 @@ export default function InventorySettingsPage() {
               <tbody>
                 {filteredWarehouses.map((wh) => {
                   const draft = whScopeDraft[wh.id] ?? {
+                    code: wh.code ?? "",
                     costClass: wh.costClass ?? "",
                     satelliteOutletCode: wh.satelliteOutletCode ?? "",
                   };
                   const dirty =
+                    (wh.code ?? "") !== draft.code ||
                     (wh.costClass ?? "") !== draft.costClass ||
                     (wh.satelliteOutletCode ?? "") !== draft.satelliteOutletCode;
                   return (
@@ -408,6 +414,24 @@ export default function InventorySettingsPage() {
                         {wh.location ? (
                           <div className="text-xs text-slate-500">{wh.location}</div>
                         ) : null}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <input
+                          type="text"
+                          value={draft.code}
+                          onChange={(e) =>
+                            setWhScopeDraft((prev) => ({
+                              ...prev,
+                              [wh.id]: {
+                                ...draft,
+                                code: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder={t("inventory.whCodePlaceholder")}
+                          className={`max-w-[8rem] ${INPUT_BORDERED_CLASS}`}
+                          aria-label={t("inventory.whCodePh")}
+                        />
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <div className="max-w-[14rem]">
@@ -483,18 +507,19 @@ export default function InventorySettingsPage() {
         <h2 className="text-lg font-semibold text-[#34495E]">{t("inventory.topologyTitle")}</h2>
         <p className="text-sm text-slate-600 m-0">{t("inventory.topologyHint")}</p>
         <div className="grid gap-3 md:grid-cols-4">
-          <select
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("inventory.whSelect")}
             value={binWh}
-            onChange={(e) => setBinWh(e.target.value)}
-            className={INPUT_BORDERED_CLASS}
-          >
-            <option value="">{t("inventory.whSelect")}</option>
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => {
+              const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+              setBinWh(v);
+            }}
+            options={[
+              { value: "", label: t("inventory.whSelect") },
+              ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+            ]}
+          />
           <input
             value={binCode}
             onChange={(e) => setBinCode(e.target.value)}

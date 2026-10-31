@@ -142,6 +142,7 @@ export async function hasProcedureSameDay(
       OR: [
         { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
         { status: "PENDING_PAY", resourceId: { not: null } },
+        { status: "PROPOSED", inPackage: true },
       ],
       ...(excludeOrderId ? { id: { not: excludeOrderId } } : {}),
     },
@@ -408,9 +409,11 @@ export async function placeConfirmedProcedures(
   const existing = await prisma.procedureOrder.findMany({
     where: {
       patientRefId,
+      id: { notIn: orderIds },
       OR: [
         { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
         { status: "PENDING_PAY", resourceId: { not: null } },
+        { status: "PROPOSED", inPackage: true },
       ],
     },
     select: {
@@ -441,12 +444,12 @@ export async function placeConfirmedProcedures(
       patientRestMinutes: row.procedureType?.patientRestMinutes ?? 15,
       inPackage: row.inPackage === true,
       quotaKey: quota.quotaKey,
-      countsForRest: row.status !== "NO_SHOW",
+      countsForRest: row.status !== "NO_SHOW" && row.status !== "PROPOSED",
       holdsGuestDay: false,
     };
   });
   const rotationContext: RotationContextSlot[] = existing
-    .filter((row) => row.status !== "NO_SHOW")
+    .filter((row) => row.status !== "NO_SHOW" && row.status !== "PROPOSED")
     .map((row) => ({
       procedureCode: row.procedureCode,
       bodyPart: row.bodyPart,

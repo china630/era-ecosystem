@@ -61,6 +61,8 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     },
   });
   if (!order) return null;
+  const { isLabOrderAwaitingPayment } = await import("@/domain/lab/lab-order-pay-gate");
+  if (isLabOrderAwaitingPayment(order)) return null;
 
   const branding = await getPrintBranding(lang);
   const stay = await loadPrintEpisodeStay({

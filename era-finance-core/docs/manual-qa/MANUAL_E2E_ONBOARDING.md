@@ -130,10 +130,10 @@
 
 | ID | Модуль | Роли | Предусловия | Шаги | Ожидаемый результат | Негатив |
 |----|--------|------|-------------|------|---------------------|---------|
-| **MIG-01** | §4.1.3 | `OWNER` / `ADMIN` / `ACCOUNTANT` | Новая орг, ветка «с нуля» | `/settings/migration`: выбрать **Start from scratch**, не проводить wizard | Система готова к обычным операциям без opening post | — |
-| **MIG-02** | §4.1.3 | `ACCOUNTANT` | Подготовлены файлы по шаблонам Finance | Wizard: **Cash/Bank** → загрузка → **Preview** → валидация | Preview показывает балансировку до Post | Дисбаланс → сообщение, Post недоступен |
-| **MIG-03** | §4.1.3 | `OWNER` / `ADMIN` / `ACCOUNTANT` | Корректный Preview | **Post** | Одна атомарная транзакция; Trial Balance сходится; повторный Post с тем же сценарием — **конфликт / блок** (optimistic / guard) | — |
-| **MIG-04** | §4.1.3 | `ACCOUNTANT` | Есть сотрудники с `finCode` | Шаг **HR Salary Debt**, шаблон с `finCode` или `employeeId` | Парсер принимает оба идентификатора (PRD) | — |
+| **MIG-01** | §4.1.3 | `OWNER` / `ACCOUNTANT` | Новая орг без cutover / без drafts | `/settings/migration`: не загружать drafts, не жать Assemble | Обычные операции доступны без opening post | — |
+| **MIG-02** | §4.1.3 | `ACCOUNTANT` | Шаблоны с сервера (`Download template`), файлы по kinds | Upload masters + drafts → **Validate** | Validate OK или список ошибок до Assemble | Ошибки → Assemble недоступен / отказ |
+| **MIG-03** | §4.1.3 | `OWNER` / `ACCOUNTANT` | Validate OK, cutover date задана | **Assemble** | Одна атомарная транзакция; Trial Balance сходится; повторный Assemble — **блок** (drafts locked) | Legacy `POST …/opening-balances/*` → **410** |
+| **MIG-04** | §4.1.3 | `ACCOUNTANT` | CP workforce с employment | **Pull employments**, затем draft HR по `cpEmploymentId` | Зеркала Employee созданы; Excel create сотрудников нет | Дубликат pull → skipped |
 
 ---
 

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../lib/use-require-auth";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
 import {
@@ -189,19 +190,21 @@ function ManufacturingOverheadContent() {
             {t("manufacturing.suggestedHint")}: {formatMoneyAzn(summary.suggestedOverheadTotal)}
           </p>
         )}
-        <label className="block min-w-[12rem]">
-          <span className={FORM_LABEL_CLASS}>{t("manufacturing.distributionKey")}</span>
-          <select
-            className={FORM_INPUT_CLASS}
+        <div className="min-w-[12rem]">
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("manufacturing.distributionKey")}
             value={distributionKey}
-            onChange={(e) =>
-              setDistributionKey(e.target.value as "QUANTITY" | "MATERIAL_COST")
-            }
-          >
-            <option value="QUANTITY">{t("manufacturing.distributionKeyQuantity")}</option>
-            <option value="MATERIAL_COST">{t("manufacturing.distributionKeyMaterial")}</option>
-          </select>
-        </label>
+            onChange={(next) => {
+              const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+              if (v === "QUANTITY" || v === "MATERIAL_COST") setDistributionKey(v);
+            }}
+            options={[
+              { value: "QUANTITY", label: t("manufacturing.distributionKeyQuantity") },
+              { value: "MATERIAL_COST", label: t("manufacturing.distributionKeyMaterial") },
+            ]}
+          />
+        </div>
         <button
           type="button"
           className={PRIMARY_BUTTON_CLASS}

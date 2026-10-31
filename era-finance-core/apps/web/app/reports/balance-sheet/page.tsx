@@ -10,6 +10,14 @@ import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TD_RIGHT_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -69,42 +77,42 @@ export default function BalanceSheetPage() {
   const renderSide = useMemo(
     () =>
       (title: string, rows: BsLine[], total: string) => (
-        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
+        <div className={CARD_CONTAINER_CLASS}>
           <div className="border-b border-[#D5DADF] bg-[#F8F9FA] px-4 py-3 text-[13px] font-semibold text-[#34495E]">
             {title}
           </div>
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#EBEDF0]">
-                <th className="p-2 text-left text-[13px] font-semibold text-[#34495E]">
-                  {t("reports.balanceSheet.thLine")}
-                </th>
-                <th className="p-2 text-right text-[13px] font-semibold text-[#34495E] tabular-nums">
-                  {t("reports.balanceSheet.thAmount")} (₼)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.code} className="border-t border-[#EBEDF0]">
-                  <td className="p-2 text-[#34495E]">
-                    <span className="font-medium">{r.name}</span>
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={`${DATA_TABLE_CLASS} min-w-full`}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reports.balanceSheet.thLine")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>
+                    {t("reports.balanceSheet.thAmount")} (₼)
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.code} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <span className="font-medium">{r.name}</span>
+                    </td>
+                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums`}>
+                      {fmt(r.amount)}
+                    </td>
+                  </tr>
+                ))}
+                <tr className={`${DATA_TABLE_TR_CLASS} bg-white`}>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-semibold`}>
+                    {t("reports.balanceSheet.total")}
                   </td>
-                  <td className="p-2 text-right font-mono tabular-nums">
-                    {fmt(r.amount)}
+                  <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-mono tabular-nums font-semibold`}>
+                    {fmt(total)}
                   </td>
                 </tr>
-              ))}
-              <tr className="border-t border-[#D5DADF] bg-white">
-                <td className="p-2 font-semibold text-[#34495E]">
-                  {t("reports.balanceSheet.total")}
-                </td>
-                <td className="p-2 text-right font-mono tabular-nums font-semibold text-[#34495E]">
-                  {fmt(total)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
       ),
     [t],

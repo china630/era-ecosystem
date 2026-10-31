@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
+import { CatalogField } from "@era/satellite-kit/ui";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
@@ -100,47 +101,39 @@ export default function InventoryWriteOffPage() {
       />
 
       <form onSubmit={(e) => void onSubmit(e)} className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
-        <label className="block text-sm font-medium text-gray-700">
-          {t("inventory.transferFrom")}
-          <select
-            className={INPUT_BORDERED_CLASS}
-            value={warehouseId}
-            onChange={(e) => setWarehouseId(e.target.value)}
-            required
-          >
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          {t("inventory.transferPickProduct")}
-          <select
-            className={INPUT_BORDERED_CLASS}
-            value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-            required
-          >
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.sku})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          {t("inventory.adjustInvAccount")}
-          <select
-            className={INPUT_BORDERED_CLASS}
-            value={inventoryAccountCode}
-            onChange={(e) => setInventoryAccountCode(e.target.value as "201" | "204")}
-          >
-            <option value="201">{t("inventory.adjustInv201")}</option>
-            <option value="204">{t("inventory.adjustInv204")}</option>
-          </select>
-        </label>
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("inventory.transferFrom")}
+          value={warehouseId}
+          onChange={(next) => {
+            const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+            setWarehouseId(v);
+          }}
+          options={warehouses.map((w) => ({ value: w.id, label: w.name }))}
+        />
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("inventory.transferPickProduct")}
+          value={productId}
+          onChange={(next) => {
+            const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+            setProductId(v);
+          }}
+          options={products.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("inventory.adjustInvAccount")}
+          value={inventoryAccountCode}
+          onChange={(next) => {
+            const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+            if (v === "201" || v === "204") setInventoryAccountCode(v);
+          }}
+          options={[
+            { value: "201", label: t("inventory.adjustInv201") },
+            { value: "204", label: t("inventory.adjustInv204") },
+          ]}
+        />
         <label className="block text-sm font-medium text-gray-700">
           {t("invoiceNew.quantity")}
           <input

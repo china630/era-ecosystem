@@ -128,6 +128,8 @@ export class ProductsService {
       if (!uom) throw new BadRequestException("Unknown unitOfMeasureCode");
     }
 
+    const category = dto.category?.trim() || null;
+
     return this.prisma.product.create({
       data: {
         organizationId: orgId,
@@ -138,6 +140,7 @@ export class ProductsService {
         isService,
         unitOfMeasureCode,
         revenueAccountCode,
+        category,
       },
     });
   }
@@ -164,6 +167,9 @@ export class ProductsService {
         ...(dto.revenueAccountCode !== undefined && { revenueAccountCode }),
         ...(dto.unitOfMeasureCode !== undefined
           ? { unitOfMeasureCode: dto.unitOfMeasureCode?.trim() || null }
+          : {}),
+        ...(dto.category !== undefined
+          ? { category: dto.category?.trim() || null }
           : {}),
       },
     });

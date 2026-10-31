@@ -7,8 +7,10 @@ import { apiFetch } from "../../../lib/api-client";
 import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
+import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
+import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -19,7 +21,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   INPUT_BORDERED_CLASS,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
@@ -130,21 +131,21 @@ export default function InventoryBalancesReportPage() {
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       <div className="flex flex-wrap items-end gap-3">
-        <label className="block text-sm font-medium text-[#475569]">
-          {t("inventory.filterWh")}
-          <select
+        <div className="min-w-[12rem]">
+          <CatalogField
+            kind="ENTITY_REF"
+            label={t("inventory.filterWh")}
             value={filterWh}
-            onChange={(e) => setFilterWh(e.target.value)}
-            className={`mt-1 block min-w-[12rem] ${INPUT_BORDERED_CLASS}`}
-          >
-            <option value="">{t("inventory.allWh")}</option>
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(next) => {
+              const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+              setFilterWh(v);
+            }}
+            options={[
+              { value: "", label: t("inventory.allWh") },
+              ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+            ]}
+          />
+        </div>
         <label className="block text-sm font-medium text-[#475569] min-w-[12rem] flex-1 max-w-md">
           {t("inventory.balancesFilterSearch")}
           <input
@@ -216,49 +217,16 @@ export default function InventoryBalancesReportPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEDF0] pt-3 text-[13px] text-[#34495E]">
-          <label className="flex items-center gap-2">
-            <span className="text-[#7F8C8D]">{t("common.paginationRowsPerPage")}</span>
-            <select
-              className={`${MODAL_INPUT_CLASS} !mt-0 h-9 min-w-[4.5rem]`}
-              value={String(pageSize)}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value) || 50);
-                setPage(1);
-              }}
-            >
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="200">200</option>
-            </select>
-          </label>
-          <span className="tabular-nums text-[#7F8C8D]">
-            {t("common.paginationPageOf", {
-              page: String(page),
-              pages: String(totalPages),
-              total: String(total),
-            })}
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              {t("common.paginationPrev")}
-            </button>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              {t("common.paginationNext")}
-            </button>
-          </div>
-        </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
         </>
       )}
     </div>

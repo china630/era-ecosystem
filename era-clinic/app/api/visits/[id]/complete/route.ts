@@ -30,6 +30,9 @@ export async function POST(
     });
     if (!visit) return jsonError("Visit not found", 404);
     if (visit.status === "COMPLETED") return jsonOk(visit);
+    const { visitAwaitingPaymentDenied } = await import("@/domain/visit/visit-pay-gate");
+    const unpaid = visitAwaitingPaymentDenied(visit);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
 
     const completed = await prisma.visit.update({
       where: { id },

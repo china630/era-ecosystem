@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { DashboardWidgets } from "../dashboard-widgets";
+import { PageHeader } from "../../components/layout/page-header";
 import { useAuth, type AuthUser } from "../../lib/auth-context";
 import { useRequireAuth } from "../../lib/use-require-auth";
 
@@ -35,10 +35,8 @@ export default function HomeDashboardPage() {
   if (!token) return null;
 
   return (
-    <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-[#34495E] md:text-3xl">{heading}</h1>
-      </div>
+    <div className="w-full space-y-6">
+      <PageHeader title={heading} />
       <DashboardWidgets />
     </div>
   );

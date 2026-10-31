@@ -22,6 +22,7 @@ const jsonOut = process.argv.includes("--json");
 const SCAN_ROOTS = [
   "packages/satellite-kit/src",
   "era-finance-core/apps/web",
+  "era-orchestrator/apps/platform-web",
   ...fs
     .readdirSync(root)
     .filter((n) => n.startsWith("era-") && fs.statSync(path.join(root, n)).isDirectory())

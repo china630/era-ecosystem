@@ -14,6 +14,7 @@ import { ListPaginationFooter } from "../../../components/list-pagination-footer
 import { ManufacturingOrderCreateModal } from "../../../components/manufacturing/manufacturing-order-create-modal";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
 import { Badge } from "../../../components/ui/badge";
+import { CatalogField } from "@era/satellite-kit/ui";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -128,23 +129,25 @@ function ManufacturingOrdersContent() {
             <Link href="/manufacturing" className={SECONDARY_BUTTON_CLASS}>
               ← {t("manufacturing.backHub")}
             </Link>
-            <select
-              className={SECONDARY_BUTTON_CLASS}
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              aria-label={t("manufacturing.orderFilterStatus")}
-            >
-              <option value="">{t("manufacturing.orderFilterAll")}</option>
-              <option value="DRAFT">{t("manufacturing.orderStatusDraft")}</option>
-              <option value="IN_PROGRESS">
-                {t("manufacturing.orderStatusInProgress")}
-              </option>
-              <option value="COMPLETED">{t("manufacturing.orderStatusCompleted")}</option>
-              <option value="CANCELLED">{t("manufacturing.orderStatusCancelled")}</option>
-            </select>
+            <div className="min-w-[12rem]">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("manufacturing.orderFilterStatus")}
+                value={statusFilter}
+                onChange={(next) => {
+                  const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                  setStatusFilter(v);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "", label: t("manufacturing.orderFilterAll") },
+                  { value: "DRAFT", label: t("manufacturing.orderStatusDraft") },
+                  { value: "IN_PROGRESS", label: t("manufacturing.orderStatusInProgress") },
+                  { value: "COMPLETED", label: t("manufacturing.orderStatusCompleted") },
+                  { value: "CANCELLED", label: t("manufacturing.orderStatusCancelled") },
+                ]}
+              />
+            </div>
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}

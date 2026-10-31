@@ -11,6 +11,7 @@ import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../../components/layout/page-header";
 import { EmptyState } from "../../../../components/empty-state";
+import { Badge } from "../../../../components/ui/badge";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -219,7 +220,23 @@ export default function InvoiceAllocatePage() {
               {openRows.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.number}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{r.status}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <Badge
+                      variant={
+                        r.status === "PAID"
+                          ? "success"
+                          : r.status === "CANCELLED"
+                            ? "user"
+                            : "neutral"
+                      }
+                    >
+                      {(() => {
+                        const key = `invoiceStatus.${r.status}`;
+                        const label = t(key);
+                        return label === key ? r.status : label;
+                      })()}
+                    </Badge>
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.dueDate).slice(0, 10))}</td>
                   <td className={DATA_TABLE_TD_RIGHT_CLASS}>
                     {formatMoneyAzn(Number(r.remaining ?? 0))}

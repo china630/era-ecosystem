@@ -14,6 +14,7 @@ Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/
   - [x] Registration / org onboarding, SSO handoff, profile — `/login`, `/register-org`, `/auth/cp-handoff`, `/settings/profile`
   - [x] Control-plane RBAC proxy (`ERA_CONTROL_PLANE_RBAC_PROXY`), org membership + company switcher — `/companies`, `/settings/team`
   - [x] Migration Mode / Onboarding 2.0 + Opening Balances Wizard — `/settings/migration`
+  - [x] Migration machine v2 — dual zone Upload + Assemble, Excel templates per kind, draft batches, workforce pull; legacy opening-balances POST → 410; UAT-SMOKE FIN-MIG-01 + lab signoff
   - [~] Mandatory company-select modal on login (FEAT-FC-UX-002) — PLANNED in PRD §4.17
 
 - [x] **M2 — Ledger & Chart of Accounts** (PRD §4.2, §4.2.1, §5.1)

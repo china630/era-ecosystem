@@ -45,6 +45,9 @@ export async function POST(
     const body = bodySchema.parse(await req.json());
     const order = await prisma.labOrder.findUnique({ where: { id } });
     if (!order) return jsonError("Lab order not found", 404);
+    const { labAwaitingPaymentDenied } = await import("@/domain/lab/lab-order-pay-gate");
+    const unpaid = labAwaitingPaymentDenied(order);
+    if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     if (!EDITABLE_STATUSES.includes(order.status)) {
       return jsonError(`Cannot enter results from status ${order.status}`, 400);
     }

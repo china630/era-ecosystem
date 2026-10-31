@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-# Control plane (API :4000 + Web :3000). Prisma clients generated in builder;
-# runner entrypoint must not prisma generate (see docker-entrypoint.sh).
+# Control plane (API :4000 + Web :3000 + Platform console :3001). Prisma clients
+# generated in builder; runner entrypoint must not prisma generate (see docker-entrypoint.sh).
 #   docker build -f era-orchestrator/Dockerfile -t era-orchestrator .
 
 FROM node:22-alpine AS builder
@@ -37,12 +37,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Industry launcher deep-link URLs must also be baked here; runtime env is ignored for
 # NEXT_PUBLIC_* client bundles. Local UAT overrides these via docker-compose build args.
 ARG NEXT_PUBLIC_ORCH_API_URL=https://api.era-365.online
+ARG NEXT_PUBLIC_ORCH_WEB_URL=https://app.era-365.online
 ARG NEXT_PUBLIC_FINANCE_WEB_URL=https://finance-core.era-365.online
 ARG NEXT_PUBLIC_SATELLITE_HOTEL_URL=https://hotel-pms.era-365.online
 ARG NEXT_PUBLIC_SATELLITE_FNB_POS_URL=https://fnb-pos.era-365.online
 ARG NEXT_PUBLIC_SATELLITE_CLINIC_URL=https://clinic.era-365.online
 ARG NEXT_PUBLIC_SATELLITE_RETAIL_URL=https://retail-pos.era-365.online
 ENV NEXT_PUBLIC_ORCH_API_URL=${NEXT_PUBLIC_ORCH_API_URL}
+ENV NEXT_PUBLIC_ORCH_WEB_URL=${NEXT_PUBLIC_ORCH_WEB_URL}
 ENV NEXT_PUBLIC_FINANCE_WEB_URL=${NEXT_PUBLIC_FINANCE_WEB_URL}
 ENV NEXT_PUBLIC_SATELLITE_HOTEL_URL=${NEXT_PUBLIC_SATELLITE_HOTEL_URL}
 ENV NEXT_PUBLIC_SATELLITE_FNB_POS_URL=${NEXT_PUBLIC_SATELLITE_FNB_POS_URL}
@@ -52,7 +54,9 @@ ENV NEXT_PUBLIC_SATELLITE_RETAIL_URL=${NEXT_PUBLIC_SATELLITE_RETAIL_URL}
 RUN npm config set strict-ssl false && npm ci
 RUN npm run build
 RUN mkdir -p apps/web/.next/standalone/apps/web/.next \
-  && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+  && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static \
+  && mkdir -p apps/platform-web/.next/standalone/apps/platform-web/.next \
+  && cp -r apps/platform-web/.next/static apps/platform-web/.next/standalone/apps/platform-web/.next/static
 RUN npm prune --omit=dev
 
 FROM node:22-alpine AS runner
@@ -98,7 +102,7 @@ RUN chmod +x /app/docker-entrypoint.sh && sed -i 's/\r$//' /app/docker-entrypoin
 
 USER era
 
-EXPOSE 3000 4000
+EXPOSE 3000 3001 4000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=6 \
   CMD wget -qO- http://127.0.0.1:4000/health || exit 1

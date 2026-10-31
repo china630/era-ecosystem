@@ -31,6 +31,7 @@ import {
   EpisodeAssignBlocks,
 } from "@/components/sanatorium/EpisodeAssignChrome";
 import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
+import { DiagnosticsAssignModal } from "@/components/sanatorium/DiagnosticsAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import {
   formatPackageAssignMissLines,
@@ -110,6 +111,14 @@ type CardSummary = {
   proposedPreview?: TimelineEvent[];
   pendingExtras?: Array<{
     id: string;
+    title: string;
+    code: string;
+    amountNet: number;
+    status: string;
+  }>;
+  pendingDiagnostics?: Array<{
+    id: string;
+    kind: "lab" | "visit";
     title: string;
     code: string;
     amountNet: number;
@@ -209,6 +218,7 @@ export function PatientCardClinicalSections({
   const [histLoading, setHistLoading] = useState(false);
 
   const [planDays, setPlanDays] = useState<TimelineDay[]>([]);
+  const [planUnplaced, setPlanUnplaced] = useState<TimelineEvent[]>([]);
   const [planOffset, setPlanOffset] = useState(0);
   const [planHasMore, setPlanHasMore] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
@@ -219,6 +229,8 @@ export function PatientCardClinicalSections({
   const [rescheduleTime, setRescheduleTime] = useState("10:00");
   const [cancelAskId, setCancelAskId] = useState<string | null>(null);
   const [packageModalOpen, setPackageModalOpen] = useState(false);
+  const [diagnosticsModalOpen, setDiagnosticsModalOpen] = useState(false);
+  const [diagnosticsPendingBusy, setDiagnosticsPendingBusy] = useState(false);
   const [quotaRows, setQuotaRows] = useState<
     Array<{
       procedureCode: string;
@@ -341,6 +353,7 @@ export function PatientCardClinicalSections({
       const row = data.data ?? data;
       const days = (row.days ?? []) as TimelineDay[];
       setPlanDays((prev) => (reset ? days : mergeDays(prev, days, "asc")));
+      if (reset) setPlanUnplaced((row.unplaced ?? []) as TimelineEvent[]);
       setPlanOffset(row.nextOffset ?? offset);
       setPlanHasMore(Boolean(row.hasMore));
       setPlanLoading(false);
@@ -482,6 +495,7 @@ export function PatientCardClinicalSections({
 
   const { resultsPreview } = summary;
   const pendingExtras = summary.pendingExtras ?? [];
+  const pendingDiagnostics = summary.pendingDiagnostics ?? [];
   const intakeChecklist = summary.intakeChecklist;
 
   const showDiagnostics = !section || section === "diagnostics";
@@ -490,6 +504,102 @@ export function PatientCardClinicalSections({
 
   return (
     <div className="space-y-6">
+      {showDiagnostics && episodeId ? (
+        <section className="space-y-2">
+          <EpisodeAssignBlocks
+            packageTitle={t("diagnosticsAssignTitle", {
+              defaultValue: "Analyses and diagnostics",
+            })}
+            extrasTitle={t("diagnosticsExtraTitle", {
+              defaultValue: "Additional (awaiting payment)",
+            })}
+            readOnly={readOnly || !anamnesisOk}
+            hidePackage={false}
+            extrasPending={pendingDiagnostics.map((row) => ({
+              id: row.id,
+              title: row.title,
+              amountNet: row.amountNet,
+              status: row.status,
+              kind: row.kind,
+            }))}
+            pendingPayLabel={t("pendingPay", { defaultValue: "Awaiting payment" })}
+            payLabel={t("pay", { defaultValue: "Pay" })}
+            deleteLabel={tc("delete")}
+            pendingTone="red"
+            pendingBusy={diagnosticsPendingBusy}
+            onPackagePlus={() => setDiagnosticsModalOpen(true)}
+            onExtrasPlus={() => setDiagnosticsModalOpen(true)}
+            onPayPending={(row) => {
+              if (!episodeId || !row.kind) return;
+              void (async () => {
+                setDiagnosticsPendingBusy(true);
+                try {
+                  const res = await fetch(
+                    `/api/sanatorium/episodes/${episodeId}/diagnostics-extras`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "pay",
+                        lines: [{ id: row.id, kind: row.kind }],
+                      }),
+                    },
+                  );
+                  const body = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    showApiError(body, tc("failed"));
+                    return;
+                  }
+                  const payload = body.data ?? body;
+                  const rejected = Array.isArray(payload.rejected)
+                    ? payload.rejected
+                    : [];
+                  if (
+                    rejected.length > 0 &&
+                    (!payload.accepted || payload.accepted.length === 0)
+                  ) {
+                    showApiError(
+                      { error: rejected[0]?.reason || tc("failed") },
+                      tc("failed"),
+                    );
+                  } else {
+                    showSuccess(tc("saved"));
+                  }
+                  await loadSummary();
+                  setQuotaTick((n) => n + 1);
+                } finally {
+                  setDiagnosticsPendingBusy(false);
+                }
+              })();
+            }}
+            onRemovePending={(row) => {
+              if (!episodeId || !row.kind) return;
+              void (async () => {
+                setDiagnosticsPendingBusy(true);
+                try {
+                  const res = await fetch(
+                    `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(row.id)}&kind=${row.kind}`,
+                    { method: "DELETE" },
+                  );
+                  if (!res.ok) {
+                    showApiError(
+                      await res.json().catch(() => ({})),
+                      tc("failed"),
+                    );
+                    return;
+                  }
+                  showSuccess(tc("saved"));
+                  await loadSummary();
+                  setQuotaTick((n) => n + 1);
+                } finally {
+                  setDiagnosticsPendingBusy(false);
+                }
+              })();
+            }}
+          />
+        </section>
+      ) : null}
+
       {showDiagnostics && resultsPreview.length > 0 ? (
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -853,11 +963,47 @@ export function PatientCardClinicalSections({
               </button>
             ))}
           </div>
-          {planVisible.length === 0 ? (
+          {planUnplaced.length > 0 ? (
+            <div className="space-y-2">
+              <h3 className={`text-[12px] font-medium uppercase tracking-wide ${TEXT_MUTED_CLASS}`}>
+                {t("planUnseated")}
+              </h3>
+              <ul className="space-y-2">
+                {planUnplaced.map((ev) => {
+                  const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
+                  return (
+                    <li
+                      key={ev.id}
+                      className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium">{eventTitle(ev, locale)}</div>
+                        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                          {planStatusLabel(ev.status)}
+                        </p>
+                      </div>
+                      {orderId ? (
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={ts("cancelProcedure")}
+                          disabled={planBusy || readOnly}
+                          onClick={() => setCancelAskId(orderId)}
+                        >
+                          <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+          {planVisible.length === 0 && (planLoading || planUnplaced.length === 0) ? (
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
               {planLoading ? tc("loading") : t("planEmpty")}
             </p>
-          ) : (
+          ) : planVisible.length === 0 ? null : (
             <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
               {planVisible.map((ev) => {
                 const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
@@ -975,6 +1121,19 @@ export function PatientCardClinicalSections({
             }}
           />
         </>
+      ) : null}
+
+      {episodeId ? (
+        <DiagnosticsAssignModal
+          open={diagnosticsModalOpen}
+          episodeId={episodeId}
+          onClose={() => setDiagnosticsModalOpen(false)}
+          readOnly={readOnly || !anamnesisOk}
+          onSaved={async () => {
+            await loadSummary();
+            setQuotaTick((n) => n + 1);
+          }}
+        />
       ) : null}
 
       <ModalShell

@@ -177,21 +177,17 @@
 - **HR Salary Debt:** начальная задолженность по зарплате и связанным обязательствам фиксируется отдельно, чтобы не искажать текущий payroll-период.
 - **MDM Lookup 2.0:** при вводе VÖEN система автоматически определяет статус плательщика НДС (**ƏDV ödəyicisi**) и подтягивает юридический адрес/данные руководителя из интеграционного контура.
 
-#### 4.1.3. Opening Balances Wizard (детальная рамка v1)
+#### 4.1.3. Migration machine (v2 — Upload + Assemble)
 
-- **Назначение:** пошаговый мастер миграции для контролируемого ввода стартовых остатков без ручного ввода проводок.
-- **Шаги мастера:** `Cash/Bank` -> `Inventory` -> `HR Salary Debt` -> `Preview` -> `Post`.
-- **Финальный инвариант:** проведение выполняется только в одном атомарном транзакционном блоке (`all-or-nothing`), с запретом частичной фиксации.
-- **Роли:** подготовка данных — `OWNER/ADMIN/ACCOUNTANT/PROCUREMENT`; `Post/Approve` — только `OWNER/ADMIN/ACCOUNTANT`; `AUDITOR` — read-only.
-- **UX-критерий:** пользователь получает детальный `Preview` (итоги по счетам и предупреждения валидации) до окончательного `Post`.
-- **Критерий успеха v1:** после проведения wizard стартовый баланс сходится в Trial Balance и не допускает повторного дублирующего постинга.
-- [x] **COMPLETED (горизонт v1 — Opening Balances Wizard):** полный контур мастера, Preview/Post, шаблоны и тесты — закрыт (см. пункты ниже).
-- [x] **COMPLETED (Backend API):** реализованы endpoints `POST /api/migration/opening-balances/finance`, `.../hr`, `.../inventory`.
-- [x] **COMPLETED (Early Balance Guard):** `validateBalance()` вызывается **до** любых записей в БД (включая `StockMovement` и `JournalPosting`) для ранней блокировки транзакции при дисбалансе.
-- [x] **COMPLETED (Inventory Tests):** endpoint `POST /api/migration/opening-balances/inventory` покрыт интеграционными тестами, включая конфликт `409 Conflict` по сценарию Optimistic Locking.
-- [x] **COMPLETED (UX Wizard):** реализован пошаговый интерфейс Migration Wizard на странице `/settings/migration` с `client-side parsing` Excel/CSV и `Preview` перед импортом.
-- [x] **COMPLETED (Templates):** добавлена динамическая генерация `XLSX templates` на каждом шаге (`Finance`, `HR`, `Inventory`) непосредственно в браузере.
-- [x] **COMPLETED (HR Alias):** HR-парсер принимает оба идентификатора `finCode` и `employeeId` с маппингом `employeeId -> finCode`.
+- **Назначение:** контролируемый ввод master-данных и стартовых остатков без ручных проводок; проведение — одной атомарной сборкой.
+- **Зоны UI (`/settings/migration`):** checklist → masters → drafts (workforce pull) → Assemble (DatePicker cutover, validate + `trial000`, confirm modal).
+- **Финальный инвариант:** проведение только в одном атомарном транзакционном блоке (`all-or-nothing`); после assemble draft-пакеты locked; повторный assemble запрещён.
+- **Права:** `api:migration.upload` / `api:migration.assemble` (OWNER, ACCOUNTANT); AUDITOR — read-only.
+- **Kind → artifact:** masters write-through; cash/bank/capital/stock/payroll/HR/FA → JE (+ stock/FA/employee fields); open items `ar` → Invoice; `ap` → JE + opening Transaction snapshot; advances → PARTIAL GL-only; VAT register → Evidence (no GL).
+- **Сотрудники:** Excel create запрещён; `POST /api/migration/workforce/pull`, затем HR drafts по `cpEmploymentId`.
+- **Legacy v1:** `POST /api/migration/opening-balances/*` → **410 Gone**. ADR: [finance-migration-machine.md](../docs/adr/finance-migration-machine.md).
+- [x] **COMPLETED (горизонт v1 — Opening Balances Wizard):** API Preview/Post — предшественник; UI wizard снят.
+- [x] **COMPLETED (Migration machine v2):** dual-zone Upload + Assemble, server templates, drafts, workforce pull, tech `000`, AuthZ/validate negatives, UAT-SMOKE FIN-MIG-01.
 
 ### 4.2. Модуль 2: Ledger & Finance Core
 
@@ -1127,7 +1123,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 
 ### 7.6. Платформа: Super-Admin Back-office
 
-**Экосистема (2026-05+):** канонический Super-Admin для **billing, MDM, early-access, org security** — **`era-orchestrator`** (`app.era-365.online` → `/super-admin/*`). **Marketing landing `/` + landing CMS** — Orchestrator (Finance `/` redirects guests to Orch). Finance **NAS, i18n overrides, customs tariffs** — Finance `/admin/data` (§7.6.2). Owner marketplace — Orch `/settings/subscription`.
+**Экосистема (2026-05+):** канонический Super-Admin для **billing, MDM, early-access, org security** — **`era-orchestrator`**: клиентский CP ещё держит `app.era-365.online` → `/super-admin/*`; параллельная **vendor console** — `platform.era-365.online` (`apps/platform-web`, короткие пути `/billing/*`, `/orgs`, `/mdm/*`, …; cutover с `app` — после деплоя). **Marketing landing `/` + landing CMS** — Orchestrator (Finance `/` redirects guests to Orch). Finance **NAS, i18n overrides, customs tariffs** — Finance `/admin/data` (§7.6.2). Owner marketplace — Orch `/settings/subscription`.
 
 **Цель:** централизованное управление платформой, пользователями и глобальными настройками (разделение контуров — см. таблицу ниже).
 

@@ -1,3 +1,8 @@
+/**
+ * Archive (v1 Opening Balances Wizard). HTTP writers are Gone (410) via
+ * OpeningBalancesLegacyController — use MigrationAssembleService + uploads instead.
+ * Kept for historical unit tests / reference; do not wire new write paths here.
+ */
 import {
   BadRequestException,
   ConflictException,

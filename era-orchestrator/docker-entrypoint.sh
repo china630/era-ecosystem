@@ -44,13 +44,22 @@ fi
 if [ "$1" = "start" ]; then
   API_PORT="${API_PORT:-4000}"
   WEB_PORT="${WEB_PORT:-3000}"
+  PLATFORM_WEB_PORT="${PLATFORM_WEB_PORT:-3001}"
   STANDALONE="apps/web/.next/standalone/apps/web"
+  PLATFORM_STANDALONE="apps/platform-web/.next/standalone/apps/platform-web"
   if [ -d apps/web/.next/static ] && [ ! -d "${STANDALONE}/.next/static" ]; then
     mkdir -p "${STANDALONE}/.next"
     cp -r apps/web/.next/static "${STANDALONE}/.next/static"
   fi
   if [ -d apps/web/public ] && [ ! -d "${STANDALONE}/public" ]; then
     cp -r apps/web/public "${STANDALONE}/public"
+  fi
+  if [ -d apps/platform-web/.next/static ] && [ ! -d "${PLATFORM_STANDALONE}/.next/static" ]; then
+    mkdir -p "${PLATFORM_STANDALONE}/.next"
+    cp -r apps/platform-web/.next/static "${PLATFORM_STANDALONE}/.next/static"
+  fi
+  if [ -d apps/platform-web/public ] && [ ! -d "${PLATFORM_STANDALONE}/public" ]; then
+    cp -r apps/platform-web/public "${PLATFORM_STANDALONE}/public"
   fi
   api_main="apps/api/dist/main.js"
   if [ ! -f "$api_main" ]; then
@@ -61,6 +70,28 @@ if [ "$1" = "start" ]; then
     exit 1
   fi
   PORT="${API_PORT}" node "$api_main" &
+  PLATFORM_SERVER=""
+  for candidate in \
+    "${PLATFORM_STANDALONE}/server.js" \
+    "apps/platform-web/.next/standalone/era-orchestrator/apps/platform-web/server.js" \
+    "apps/platform-web/.next/standalone/server.js"
+  do
+    if [ -f "$candidate" ]; then
+      PLATFORM_SERVER="$candidate"
+      break
+    fi
+  done
+  if [ -n "$PLATFORM_SERVER" ]; then
+    # Static assets must sit next to the standalone server entry.
+    PLATFORM_SERVER_DIR=$(dirname "$PLATFORM_SERVER")
+    if [ -d apps/platform-web/.next/static ] && [ ! -d "${PLATFORM_SERVER_DIR}/.next/static" ]; then
+      mkdir -p "${PLATFORM_SERVER_DIR}/.next"
+      cp -r apps/platform-web/.next/static "${PLATFORM_SERVER_DIR}/.next/static"
+    fi
+    PORT="${PLATFORM_WEB_PORT}" HOSTNAME=0.0.0.0 node "$PLATFORM_SERVER" &
+  else
+    echo "[entrypoint] WARN: platform-web standalone missing — skip :${PLATFORM_WEB_PORT}" >&2
+  fi
   if [ -f apps/web/.next/standalone/apps/web/server.js ]; then
     export PORT="${WEB_PORT}"
     export HOSTNAME=0.0.0.0

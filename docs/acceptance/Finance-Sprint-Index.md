@@ -6,7 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ · BE ✅ · UI 🟡 · Demo ❌ · Sell: do not claim GA — many FIN-* API-only  
-**Bank sync (2026-10-31):** hourly poll does not write statements unless the org sets `bankingDirect.syncMode` to `mock` or `rest`. Taxpayer lookup and ASAN/SİMA stubs stay off unless the org settings say so. FIN-ASAN-01 stays API/STUB. VAT-threshold `THRESHOLD_HIT` is hashed; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, and the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. Does not change the rollup.
+**Bank sync (2026-10-31):** hourly poll does not write statements unless the org sets `bankingDirect.syncMode` to `mock` or `rest`. Taxpayer lookup and ASAN/SİMA stubs stay off unless the org settings say so. FIN-ASAN-01 stays API/STUB. VAT-threshold `THRESHOLD_HIT` is hashed; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, and the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. **Migration machine (FIN-MIG-01):** SHOW / SHIPPED; AC-FIN-MIG Scaffold ✅ out of BE rollup — does not change Demo ❌ / Pilot / Sell.
 
 ---
 
@@ -37,5 +37,6 @@ Current rollup: Gate ✅ · BE ✅ · UI 🟡 · Demo ❌ · Sell: do not claim 
 | S-13 | Fact queue on month close | [~] | ADR finance-per-book-period-close; FIN-FACT-QUEUE-01 API; AC-FIN-FACT-QUEUE 🟡 out of W6; period-lock uses the same refusal; does not extend AC-FIN-GL; not SHOW |
 | S-14 | Provisional VAT and filed-period amendment | [~] | ADR finance-tax-scheme; FIN-PROVISIONAL-VAT-01 API; AC-FIN-PROVISIONAL-VAT 🟡 out of W6; whole purchase stays in expense until the document; recalc reads the scheme and the saved amount; invoice rate comes from the scheme; period-lock uses the same refusal; no cash refund; does not extend AC-FIN-TAX; not SHOW |
 | S-15 | Mutation audit ecosystem align (deny-list / redaction kit + journal UI) | [~] | FIN-AUD-01 COVERAGE SHIPPED; Wave C kit-align + Wave D `/admin/audit` + OWNER `/admin/security-audit` CatalogField/EraListFilterBar/DatePicker 2026-10-29; AC-FIN-AUD 🟡 AuthZ negatives residual; Nest industry cutover is separate P0 debt; Gate/Pilot/edition unchanged |
+| S-16 | Migration machine Upload + Assemble | [x] | FIN-MIG-01 SHIPPED; AC-FIN-MIG ✅; UI SHOW; UAT-SMOKE + `reports/finance-mig-uat-signoff.md`; Pilot `[ ]` |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

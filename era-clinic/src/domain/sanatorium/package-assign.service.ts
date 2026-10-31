@@ -535,6 +535,8 @@ export async function getPackageAssignSnapshot(
   locale = "az",
 ): Promise<{
   balances: PackageBalanceRow[];
+  /** LAB_ORDER / VISIT remaining — diagnostics modal (may be off the procedure menu). */
+  studyBalances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
   softWarnDay1: string | null;
   /**
@@ -573,6 +575,7 @@ export async function getPackageAssignSnapshot(
     if (!hasCode) {
       return {
         balances: [],
+        studyBalances: [],
         assigned: [],
         softWarnDay1: null,
         blockReason: "NO_PROGRAM_CODE",
@@ -607,6 +610,7 @@ export async function getPackageAssignSnapshot(
           : "NO_PROGRAM";
       return {
         balances: [],
+        studyBalances: [],
         assigned: [],
         softWarnDay1: null,
         blockReason: reason,
@@ -877,10 +881,24 @@ export async function getPackageAssignSnapshot(
         (a.procedureOrder ?? 0) - (b.procedureOrder ?? 0) ||
         a.procedureName.localeCompare(b.procedureName),
     );
+  /** Labs / exams for the diagnostics assign modal (includes blocks hidden from procedures). */
+  const studyBalances = balances
+    .filter(
+      (row) =>
+        (row.fulfillment === "LAB_ORDER" || row.fulfillment === "VISIT") &&
+        row.remaining > 0 &&
+        !row.isTransfer,
+    )
+    .sort(
+      (a, b) =>
+        (a.procedureOrder ?? 0) - (b.procedureOrder ?? 0) ||
+        a.procedureName.localeCompare(b.procedureName),
+    );
   const sexBlocked = await blockedProcedureCodesForGuest(episode.patientRef?.sex);
 
   return {
     balances: menuBalances,
+    studyBalances,
     assigned: [...batchMap.values()],
     softWarnDay1,
     blockReason: null,
@@ -986,6 +1004,39 @@ async function abandonCreatedPackageOrders(ids: string[]) {
   await prisma.procedureAllocation.deleteMany({ where: { procedureOrderId: { in: ids } } });
   await prisma.resourceBooking.deleteMany({ where: { procedureOrderId: { in: ids } } });
   await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
+}
+
+/**
+ * Package rows unseated for a refill that never received a new cabin.
+ * Leaving them PROPOSED keeps the old clock on the plan and does not block
+ * a second seat of the same code that day.
+ */
+export async function dropUnseatedInPackageOrders(ids: string[]) {
+  if (ids.length === 0) return;
+  const still = await prisma.procedureOrder.findMany({
+    where: { id: { in: ids }, status: "PROPOSED", inPackage: true, resourceId: null },
+    select: { id: true, clinicalEpisodeId: true, packageQuotaCode: true, procedureCode: true },
+  });
+  if (still.length === 0) return;
+  await abandonCreatedPackageOrders(still.map((row) => row.id));
+  const byEpisode = new Map<string, Set<string>>();
+  for (const row of still) {
+    if (!row.clinicalEpisodeId) continue;
+    const codes = byEpisode.get(row.clinicalEpisodeId) ?? new Set<string>();
+    codes.add(row.packageQuotaCode || row.procedureCode);
+    byEpisode.set(row.clinicalEpisodeId, codes);
+  }
+  for (const [episodeId, codes] of byEpisode) {
+    const episode = await prisma.clinicalEpisode.findUnique({
+      where: { id: episodeId },
+      select: { programInstance: { select: { id: true } } },
+    });
+    const instanceId = episode?.programInstance?.id;
+    if (!instanceId) continue;
+    for (const code of codes) {
+      await syncQuotaUsed(instanceId, episodeId, code);
+    }
+  }
 }
 
 /** One modal line → the order ids created for it, in add order. */
@@ -1462,6 +1513,11 @@ export async function assignPackageProcedures(
       );
     }
   }
+  const unseatedIds = [...redispatched.byKey.values()].flatMap((tail) => [
+    ...tail.openIds,
+    ...tail.fixedIds,
+  ]);
+  await dropUnseatedInPackageOrders(unseatedIds);
   const kept = new Set(placedIds);
   const leftover = createdIds.filter((id) => !kept.has(id));
   if (leftover.length > 0) await abandonCreatedPackageOrders(leftover);
@@ -1564,6 +1620,8 @@ export async function replacePackageProcedures(
   cancelled: number;
   mode: "in_package" | "extra_pending_pay";
   orderIds: string[];
+  labOrderIds?: string[];
+  visitIds?: string[];
 }> {
   if (input.qty < 1) {
     throw new PackageAssignError("qty must be >= 1", "INVALID", 400);
@@ -1726,6 +1784,8 @@ export async function replacePackageProcedures(
     cancelled: active.length,
     mode: "extra_pending_pay",
     orderIds: prescribed.orderIds,
+    labOrderIds: prescribed.labOrderIds,
+    visitIds: prescribed.visitIds,
   };
 }
 
@@ -2180,6 +2240,7 @@ export async function applyPreferredMasseurs(
         staffName: row.staffName,
       })),
     );
+    await dropUnseatedInPackageOrders(ids);
     const extraIds = changed.filter((row) => row.status === "PENDING_PAY" && !row.inPackage).map((row) => row.id);
     if (extraIds.length > 0) {
       await prisma.procedureOrder.updateMany({

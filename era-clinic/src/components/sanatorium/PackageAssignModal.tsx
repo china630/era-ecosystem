@@ -285,7 +285,13 @@ export function PackageAssignModal({
   const [extraDraft, setExtraDraft] = useState<ExtraDraftLine[]>([]);
   const [extraPrices, setExtraPrices] = useState<Record<string, number>>({});
   const [extraPending, setExtraPending] = useState<
-    Array<{ id: string; procedureCode: string; procedureName: string; amountNet: number }>
+    Array<{
+      id: string;
+      procedureCode: string;
+      procedureName: string;
+      amountNet: number;
+      kind?: "procedure" | "lab" | "visit";
+    }>
   >([]);
   const [paidExtras, setPaidExtras] = useState<
     Array<{ id: string; procedureCode: string; procedureName: string; amountNet: number }>
@@ -436,11 +442,13 @@ export function PackageAssignModal({
                 procedureCode?: string;
                 procedureName?: string;
                 amountNet?: number;
+                kind?: "procedure" | "lab" | "visit";
               }) => ({
                 id: row.id,
                 procedureCode: row.procedureCode || "",
                 procedureName: row.procedureName || row.id,
                 amountNet: Number(row.amountNet || 0),
+                kind: row.kind === "lab" || row.kind === "visit" ? row.kind : "procedure",
               }),
             ),
           );
@@ -1411,12 +1419,14 @@ export function PackageAssignModal({
     return Number.isFinite(n) && n > 0 ? n : 25;
   }
 
-  async function dropPendingExtra(id: string) {
+  async function dropPendingExtra(id: string, kind?: "procedure" | "lab" | "visit") {
     setBusy(true);
     setError(null);
     try {
+      const qs = new URLSearchParams({ orderId: id });
+      if (kind === "lab" || kind === "visit") qs.set("kind", kind);
       const res = await fetch(
-        `/api/sanatorium/episodes/${episodeId}/extras-prescribe?orderId=${encodeURIComponent(id)}`,
+        `/api/sanatorium/episodes/${episodeId}/extras-prescribe?${qs.toString()}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -1433,7 +1443,7 @@ export function PackageAssignModal({
   function extraMinus(code: string, paramsLabel: string) {
     if (peelPaid(code, paramsLabel)) return;
     const hit = extraPending.find((row) => row.procedureCode === code);
-    if (hit) void dropPendingExtra(hit.id);
+    if (hit) void dropPendingExtra(hit.id, hit.kind);
   }
 
   function extraPlus(code: string, name: string, paramsLabel: string) {

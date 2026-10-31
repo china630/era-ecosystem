@@ -39,13 +39,13 @@ See also: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md), [era-orchestrator/doc/adr/
 ```text
                     ┌─────────────────────────────┐
                     │   era-orchestrator      │
-                    │   (control plane :4000)     │
+                    │   (control plane API :4000) │
                     ├─────────────────────────────┤
                     │ Identity · SSO · RBAC       │
                     │ Billing · entitlements      │
                     │ Platform add-ons API        │
                     │ Satellite event ingress     │
-                    │ MDM Phase 1 · launcher web  │
+                    │ MDM Phase 1                 │
                     └───────────┬─────────────────┘
           SSO / JWT             │              events
     ┌───────────┬───────────────┼───────────────┬──────────────┐
@@ -54,6 +54,10 @@ See also: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md), [era-orchestrator/doc/adr/
  (ERP)       (ops)           (ops)           (ops)
     │                           │
     └──── GL / invoices / stock ┘  ← accounting source of truth stays in Finance
+
+Web shells (same API, separate sessions):
+  app.era-365.online (:3000)       — client CP (launcher, owner settings, /super-admin until cutover)
+  platform.era-365.online (:3001)  — vendor operator console (apps/platform-web)
 ```
 
 ---

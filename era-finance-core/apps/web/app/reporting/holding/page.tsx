@@ -212,7 +212,9 @@ export default function HoldingConsolidatedReportingPage() {
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>
                     {t("holdingReport.colOrg", { defaultValue: "Организация" })}
                   </th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>VÖEN</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>
+                    {t("holdingReport.colVoen")}
+                  </th>
                   <th className={DATA_TABLE_TH_RIGHT_CLASS}>
                     {t("holdingReport.colNetProfit", { defaultValue: "Чистая прибыль" })}
                   </th>

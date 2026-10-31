@@ -17,6 +17,7 @@
 - **Declared, not built:** procedure TTK → Finance inventory — [clinic-procedure-consumable-ttk.md](../adr/clinic-procedure-consumable-ttk.md) (CLI-47 STUB)
 - **Episode as care course (CLI-55 SCREEN):** [clinic-episode-as-clinical-course.md](../adr/clinic-episode-as-clinical-course.md) — card switcher + walk-in close landed; AC-CLI-EPISODE 🟡 out of BE rollup until field UAT; not SHIPPED / not Pilot
 - **Walk-in groups (CLI-61 SCREEN):** [clinic-walk-in-party.md](../adr/clinic-walk-in-party.md) — `/sanatorium/walk-in-parties` list + ModalShell CRUD; AC-CLI-WALKIN-PARTY 🟡 out of BE rollup; UAT §11a open; not SHIPPED / not Pilot
+- **Patient assignment ledger (CLI-64 SCREEN):** [clinic-patient-assignment-ledger.md](../adr/clinic-patient-assignment-ledger.md) — `/reports/patient-assignments` + print; AC-CLI-ASSIGN-LEDGER 🟡 out of BE rollup; UAT open; not SHIPPED / not Pilot
 - **W4 landed:** unmatched WO nahiye queue + `#23` nahiye column (CLI-49). Product-Readiness remains SCREEN until UAT-SMOKE.
 - **Nafta card wave (2026-08-30):** (1) check-in intake `PKG-NAFTA-INTAKE` (not WO `#33`); (2) physio S UX + rematch; (3) Baku slot clock. Still SCREEN / not Pilot-ready / not GA — droplet seed + re-Apply + UAT-SMOKE required.
 - **Nafta placement:** clinic runs SHARED (one process, one DB, many `organizationId`). **Not this edition:** selling that pool, and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). AC-CLI-TENANT stays 🟡 until field two-org UAT. Do not sell SHARED clinic.

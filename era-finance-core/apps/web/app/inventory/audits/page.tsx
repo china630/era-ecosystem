@@ -18,6 +18,7 @@ import { ClipboardList, Eye, X } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { EmptyState } from "../../../components/empty-state";
+import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import {
   MODAL_CLOSE_BUTTON_CLASS,
@@ -177,17 +178,27 @@ export default function InventoryAuditsHistoryPage() {
                         {r.warehouse?.name ?? "—"}
                       </td>
                       <td className={`${DATA_TABLE_TD_CENTER_CLASS} whitespace-nowrap`}>
-                        {r.status === "COMPLETED"
-                          ? t("inventory.auditStatusCompleted")
-                          : r.status === "DRAFT"
-                            ? t("inventory.auditStatusDraft")
-                            : r.status === "COUNTING"
-                              ? t("inventory.auditStatusCounting")
-                              : r.status === "REVIEW"
-                                ? t("inventory.auditStatusReview")
-                                : r.status === "CANCELLED"
-                                  ? t("inventory.auditStatusCancelled")
-                                  : r.status}
+                        <Badge
+                          variant={
+                            r.status === "COMPLETED"
+                              ? "success"
+                              : r.status === "CANCELLED"
+                                ? "user"
+                                : "neutral"
+                          }
+                        >
+                          {r.status === "COMPLETED"
+                            ? t("inventory.auditStatusCompleted")
+                            : r.status === "DRAFT"
+                              ? t("inventory.auditStatusDraft")
+                              : r.status === "COUNTING"
+                                ? t("inventory.auditStatusCounting")
+                                : r.status === "REVIEW"
+                                  ? t("inventory.auditStatusReview")
+                                  : r.status === "CANCELLED"
+                                    ? t("inventory.auditStatusCancelled")
+                                    : r.status}
+                        </Badge>
                       </td>
                       <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
                         {r.createdAt ? bakuDateTimeDisplay(r.createdAt) : "—"}

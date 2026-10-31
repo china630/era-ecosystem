@@ -16,7 +16,7 @@ See [INTEGRATION_AUDIT_CI.md](./INTEGRATION_AUDIT_CI.md).
 ## Hosts file
 
 ```
-127.0.0.1 app.era-365.online api.era-365.online finance-core.era-365.online data.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online retail-pos.era-365.online logistics.era-365.online construction.era-365.online crm.era-365.online auto-service.era-365.online wholesale.era-365.online clinic.era-365.online bank.era-365.online dbo.era-365.online
+127.0.0.1 app.era-365.online platform.era-365.online api.era-365.online finance-core.era-365.online data.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online retail-pos.era-365.online logistics.era-365.online construction.era-365.online crm.era-365.online auto-service.era-365.online wholesale.era-365.online clinic.era-365.online bank.era-365.online dbo.era-365.online
 ```
 
 ## Docker full stack

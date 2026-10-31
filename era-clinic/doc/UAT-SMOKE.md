@@ -136,7 +136,9 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 6. **`/reports/diagnoses`** (DOCTOR) — date range + source/chapter; table totals episode/visit/admission.
 7. **`/admin/icd-favorites`** — pin a favorite; Sync catalog; retire a code (`active=false`); titles are not editable.
 
+### Patient assignment ledger (CLI-64)
 
+1. **`/reports/patient-assignments`** — pick patient → one episode; table shows assigned/completed/when/room/amount; unpaid incomplete rows count as assigned only; footer totals; Print opens `/print/patient-assignments/[episodeId]` (same filters). SCREEN — not SHIPPED.
 
 ### Diagnostic catalog DB + lab registry (CLI-32)
 
@@ -247,7 +249,8 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 6b. After **Saxla**: one green toast per seated SKU (`qty × name`) and one red toast per missed SKU; Plan tab reloads. Care team trash asks confirm. `/lab-orders` create: guest picker + catalog chips; no Visit ID / create-modality.
 7. Print schedule: procedure name with params under title. Extra tickets: Pay opens **3 windows** for the batch (reception / nurse / guest), and each window lists every procedure on that receipt.
 8. Package modal: CHECKED_IN rows grey locked; `−1` reduces SCHEDULED qty; laterality saved on sites.
-9. **Package left menu** and the package-tab quota bars list a block only when it is in the course snapshot and **Show in procedures** is on, in procedure-list order. A block with the box off (typical lab or exam) is absent. `XFER-` stays under **Əvəz edilmiş prosedurlar**. `+` / **Hamısı** on a lab block creates a lab order; on an exam block, a visit; the physio form and the start-time dialog stay for procedure blocks. Save of a hidden code is `NOT_IN_PROCEDURES`. The quota editor has no block-code field; a new block stores `BLK-…`. Print shows the name, not the code.
+9. **Package left menu** and the package-tab quota bars list a block only when it is in the course snapshot and **Show in procedures** is on, in procedure-list order. A block with the box off (typical lab or exam) is absent. `XFER-` stays under **Əvəz edilmiş prosedurlar**. `+` / **Hamısı** on a lab block creates a lab order; on an exam block, a visit; the physio form and the start-time dialog stay for procedure blocks. Save of a hidden code is `NOT_IN_PROCEDURES`. The quota editor has no block-code field; a new block stores `BLK-…`. Print shows the name, not the code. Quantity above lab/exam quota (or a paid study from the **Diagnostics** tab) creates a paid `LabOrder`/`Visit` awaiting payment — not a procedure cheque row. It stays off `/lab-orders` until Pay; then it is ordinary `ORDERED`. Ready results (package + paid) share the card results list and the course summary print.
+9a. **Diagnostics tab:** `+` opens `DiagnosticsAssignModal` (package study remaining + catalog picker with kind in label + editable visit draft schedule). Red unpaid rows on the **card** and in the modal expose Pay/delete. Pay posts folio (`lab-ticket-` / `visit-ticket-`) or settlement pending. Direct `/lab-orders/[id]` for an unpaid priced order returns 409; unpaid priced visit complete/CPOE/diagnosis/Rx returns 409 `VISIT_AWAITING_PAYMENT`.
 10. Opening package assign on an OPEN episode **without** `ProgramInstance` returns **200** + `blockReason` (`NO_PROGRAM_CODE` / `NO_PROGRAM`) — modal shows how to set/open the package (not a generic load failure). Mutations still 409 `NO_PROGRAM`.
 11. **Naftalan vannası** overlay: title + **Miqdar** top-right (no duplicate Prosedur field); fill Tam / Oturaq (above navel) / Qurşaq (waist); no zone chips / Tətbiq; **Vanna ardıcıllığı** only if qty > 1. Overlay top aligns with **Paket qalığı** list.
 12. Assigned card copy: `Name ×qty (draft)` then one param per line (`naftalanFill`, `dayBlock`, `bathSequence`). Same SKU must not split into multiple cards.

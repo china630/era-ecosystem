@@ -339,7 +339,7 @@ export default function TradeCreditGrantsPage() {
   }
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title={t("tradeCredit.title")}
         subtitle={t("tradeCredit.subtitle")}

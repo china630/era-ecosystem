@@ -339,11 +339,17 @@ export async function saveBathCalendar(input: {
     pins[existing.id] = cell.ymd;
   }
   const seated = await seatPinnedOrders(pins);
+  const missedPins: string[] = [];
   for (const [orderId, ymd] of Object.entries(pins)) {
     if (seated.placedIds.includes(orderId)) continue;
+    missedPins.push(orderId);
     unplaced += 1;
     unplacedDays.push(ymd);
   }
+  const { dropUnseatedInPackageOrders } = await import(
+    "@/domain/sanatorium/package-assign.service"
+  );
+  await dropUnseatedInPackageOrders(missedPins);
   const drop = movable.filter((order) => !used.has(order.id));
   const restDrop = drop.filter((order) => restYmds.has(order.ymd));
   const otherDrop = drop.filter((order) => !restYmds.has(order.ymd));

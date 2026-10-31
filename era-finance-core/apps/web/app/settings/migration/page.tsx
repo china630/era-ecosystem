@@ -1,453 +1,799 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, Upload, X } from "lucide-react";
+import { CP_PERMISSION } from "@era/contracts";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
+import { DatePicker } from "../../../components/ui/date-picker";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
 import {
   CARD_CONTAINER_CLASS,
   INPUT_BORDERED_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
+  LINK_ACCENT_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 
-type FinanceLine = {
-  accountCode: string;
-  amount: number;
-  currency: string;
-  date: string;
-  description?: string;
-};
-
-type HrLine = {
-  finCode: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  positionId: string;
-  hireDate: string;
-  salary: number;
-  kind?: string;
-  initialVacationDays?: number;
-  avgMonthlySalaryLastYear?: number;
-  initialSalaryBalance?: number;
-  voen?: string;
-};
-
-type InventoryLine = {
-  productId: string;
-  warehouseId: string;
-  quantity: number;
-  costPrice: number;
-};
-
-type JsonRecord = Record<string, unknown>;
-
-type StepDef = {
-  id: "finance" | "hr" | "inventory";
+type KindDef = {
+  id: string;
+  master: boolean;
   titleKey: string;
   subtitleKey: string;
-  endpoint: string;
+  badge?: "partial" | "evidence";
 };
 
-const STEPS: StepDef[] = [
+const MASTER_KINDS: KindDef[] = [
   {
-    id: "finance",
-    titleKey: "migrationWizard.steps.financeTitle",
-    subtitleKey: "migrationWizard.steps.financeSubtitle",
-    endpoint: "/api/migration/opening-balances/finance",
+    id: "counterparties",
+    master: true,
+    titleKey: "migrationMachine.kinds.counterparties",
+    subtitleKey: "migrationMachine.kinds.counterpartiesHint",
   },
   {
-    id: "hr",
-    titleKey: "migrationWizard.steps.hrTitle",
-    subtitleKey: "migrationWizard.steps.hrSubtitle",
-    endpoint: "/api/migration/opening-balances/hr",
+    id: "products",
+    master: true,
+    titleKey: "migrationMachine.kinds.products",
+    subtitleKey: "migrationMachine.kinds.productsHint",
   },
   {
-    id: "inventory",
-    titleKey: "migrationWizard.steps.inventoryTitle",
-    subtitleKey: "migrationWizard.steps.inventorySubtitle",
-    endpoint: "/api/migration/opening-balances/inventory",
+    id: "warehouses",
+    master: true,
+    titleKey: "migrationMachine.kinds.warehouses",
+    subtitleKey: "migrationMachine.kinds.warehousesHint",
+  },
+  {
+    id: "recipes",
+    master: true,
+    titleKey: "migrationMachine.kinds.recipes",
+    subtitleKey: "migrationMachine.kinds.recipesHint",
   },
 ];
 
-const TEMPLATE_ROWS: Record<StepDef["id"], JsonRecord[]> = {
-  finance: [
-    {
-      accountCode: "101.01",
-      amount: 10000,
-      currency: "AZN",
-      date: "2026-01-01",
-      description: "Opening balance",
-    },
-  ],
-  hr: [
-    {
-      employeeId: "EMP-001",
-      finCode: "1A2B3C4",
-      hireDate: "2025-01-15",
-      initialVacationDays: 14,
-      avgMonthlySalaryLastYear: 2400,
-    },
-  ],
-  inventory: [
-    {
-      productId: "00000000-0000-0000-0000-000000000001",
-      warehouseId: "00000000-0000-0000-0000-000000000002",
-      quantity: 100,
-      costPrice: 12.5,
-    },
-  ],
+const DRAFT_KINDS: KindDef[] = [
+  {
+    id: "cash-bank",
+    master: false,
+    titleKey: "migrationMachine.kinds.cashBank",
+    subtitleKey: "migrationMachine.kinds.cashBankHint",
+  },
+  {
+    id: "stock",
+    master: false,
+    titleKey: "migrationMachine.kinds.stock",
+    subtitleKey: "migrationMachine.kinds.stockHint",
+  },
+  {
+    id: "capital",
+    master: false,
+    titleKey: "migrationMachine.kinds.capital",
+    subtitleKey: "migrationMachine.kinds.capitalHint",
+  },
+  {
+    id: "open-items",
+    master: false,
+    titleKey: "migrationMachine.kinds.openItems",
+    subtitleKey: "migrationMachine.kinds.openItemsHint",
+  },
+  {
+    id: "advances",
+    master: false,
+    titleKey: "migrationMachine.kinds.advances",
+    subtitleKey: "migrationMachine.kinds.advancesHint",
+    badge: "partial",
+  },
+  {
+    id: "hr-balances",
+    master: false,
+    titleKey: "migrationMachine.kinds.hrBalances",
+    subtitleKey: "migrationMachine.kinds.hrBalancesHint",
+  },
+  {
+    id: "payroll-liabilities",
+    master: false,
+    titleKey: "migrationMachine.kinds.payrollLiabilities",
+    subtitleKey: "migrationMachine.kinds.payrollLiabilitiesHint",
+  },
+  {
+    id: "fixed-assets",
+    master: false,
+    titleKey: "migrationMachine.kinds.fixedAssets",
+    subtitleKey: "migrationMachine.kinds.fixedAssetsHint",
+  },
+  {
+    id: "vat-register",
+    master: false,
+    titleKey: "migrationMachine.kinds.vatRegister",
+    subtitleKey: "migrationMachine.kinds.vatRegisterHint",
+    badge: "evidence",
+  },
+];
+
+type DraftStatus = {
+  id: string;
+  kind: string;
+  createdCount: number;
+  errorCount: number;
+  updatedAt: string;
 };
 
-function normalizeHeader(value: string): string {
-  return value.toLowerCase().replace(/[\s_-]+/g, "");
-}
+type StatusPayload = {
+  cutoverDate: string | null;
+  assembledAt: string | null;
+  drafts: DraftStatus[];
+  logs: Array<{
+    id: string;
+    kind: string;
+    createdCount: number;
+    errorCount: number;
+    createdAt: string;
+    fileName: string | null;
+  }>;
+  checklist: {
+    hasTaxId: boolean;
+    hasBankAccount: boolean;
+    hasCutoverDate: boolean;
+    assembled: boolean;
+  };
+};
 
-function getFromAliases(row: JsonRecord, aliases: string[]): unknown {
-  for (const [key, value] of Object.entries(row)) {
-    const normalized = normalizeHeader(key);
-    if (aliases.some((alias) => normalizeHeader(alias) === normalized)) {
-      return value;
-    }
-  }
-  return undefined;
-}
+type Issue = {
+  severity: "red" | "yellow";
+  code: string;
+  message: string;
+  kind?: string;
+  row?: number;
+};
 
-function parseNumber(raw: unknown): number | null {
-  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
-  if (typeof raw !== "string") return null;
-  const normalized = raw.replace(",", ".").replace(/\s+/g, "").trim();
-  if (!normalized) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function parseDate(raw: unknown): string | null {
-  if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
-    return raw.toISOString().slice(0, 10);
-  }
-  if (typeof raw !== "string") return null;
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  const date = new Date(trimmed);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString().slice(0, 10);
-}
-
-function toOptionalString(raw: unknown): string | undefined {
-  if (raw == null) return undefined;
-  const value = String(raw).trim();
-  return value ? value : undefined;
-}
-
-function parseFinance(rows: JsonRecord[]): FinanceLine[] {
-  return rows.map((row, idx) => {
-    const accountCode = toOptionalString(getFromAliases(row, ["accountCode", "account", "code"]));
-    const amount = parseNumber(getFromAliases(row, ["amount", "sum", "balance"]));
-    const currency = toOptionalString(getFromAliases(row, ["currency", "ccy"])) ?? "AZN";
-    const date = parseDate(getFromAliases(row, ["date", "operationDate"]));
-    const description = toOptionalString(getFromAliases(row, ["description", "comment", "note"]));
-
-    if (!accountCode || amount === null || !date) {
-      throw new Error(`finance row ${idx + 2}`);
-    }
-    return { accountCode, amount, currency, date, description };
+function downloadBase64Xlsx(base64: string, filename: string) {
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function parseHr(rows: JsonRecord[]): HrLine[] {
-  return rows.map((row, idx) => {
-    const finCode = toOptionalString(getFromAliases(row, ["finCode", "employeeId", "fin", "fincode"]));
-    const firstName = toOptionalString(getFromAliases(row, ["firstName", "name"]));
-    const lastName = toOptionalString(getFromAliases(row, ["lastName", "surname"]));
-    const middleName = toOptionalString(getFromAliases(row, ["middleName", "patronymic"]));
-    const positionId = toOptionalString(getFromAliases(row, ["positionId", "jobPositionId"]));
-    const hireDate = parseDate(getFromAliases(row, ["hireDate", "employmentDate"]));
-    const salary = parseNumber(getFromAliases(row, ["salary", "monthlySalary"]));
-    const kind = toOptionalString(getFromAliases(row, ["kind"]));
-    const initialVacationDays = parseNumber(getFromAliases(row, ["initialVacationDays", "vacationDays"]));
-    const avgMonthlySalaryLastYear = parseNumber(
-      getFromAliases(row, ["avgMonthlySalaryLastYear", "avgSalaryLastYear"]),
-    );
-    const initialSalaryBalance = parseNumber(
-      getFromAliases(row, ["initialSalaryBalance", "salaryBalance"]),
-    );
-    const voen = toOptionalString(getFromAliases(row, ["voen"]));
-
-    if (!finCode || !firstName || !lastName || !positionId || !hireDate || salary === null) {
-      throw new Error(`hr row ${idx + 2}`);
-    }
-    return {
-      finCode,
-      firstName,
-      lastName,
-      middleName: middleName ?? undefined,
-      positionId,
-      hireDate,
-      salary,
-      kind,
-      initialVacationDays: initialVacationDays ?? undefined,
-      avgMonthlySalaryLastYear: avgMonthlySalaryLastYear ?? undefined,
-      initialSalaryBalance: initialSalaryBalance ?? undefined,
-      voen,
-    };
-  });
-}
-
-function parseInventory(rows: JsonRecord[]): InventoryLine[] {
-  return rows.map((row, idx) => {
-    const productId = toOptionalString(getFromAliases(row, ["productId", "skuId"]));
-    const warehouseId = toOptionalString(getFromAliases(row, ["warehouseId", "whId"]));
-    const quantity = parseNumber(getFromAliases(row, ["quantity", "qty"]));
-    const costPrice = parseNumber(getFromAliases(row, ["costPrice", "unitCost", "price"]));
-    if (!productId || !warehouseId || quantity === null || costPrice === null) {
-      throw new Error(`inventory row ${idx + 2}`);
-    }
-    return { productId, warehouseId, quantity, costPrice };
-  });
-}
-
-async function parseSpreadsheetFile(file: File): Promise<JsonRecord[]> {
-  const xlsx = await import("xlsx");
-  const buffer = await file.arrayBuffer();
-  const workbook = xlsx.read(buffer, { type: "array", cellDates: true });
-  const firstSheetName = workbook.SheetNames[0];
-  if (!firstSheetName) return [];
-  const sheet = workbook.Sheets[firstSheetName];
-  return xlsx.utils.sheet_to_json<JsonRecord>(sheet, { defval: "" });
-}
-
-async function downloadStepTemplate(stepId: StepDef["id"], filename: string) {
-  const xlsx = await import("xlsx");
-  const rows = TEMPLATE_ROWS[stepId];
-  const workbook = xlsx.utils.book_new();
-  const worksheet = xlsx.utils.json_to_sheet(rows);
-  xlsx.utils.book_append_sheet(workbook, worksheet, "template");
-  xlsx.writeFile(workbook, filename);
+function ChecklistStatus({ ok, readyLabel, missingLabel }: {
+  ok: boolean;
+  readyLabel: string;
+  missingLabel: string;
+}) {
+  return (
+    <Badge variant={ok ? "success" : "neutral"}>
+      {ok ? readyLabel : missingLabel}
+    </Badge>
+  );
 }
 
 export default function MigrationSettingsPage() {
   const { t } = useTranslation();
   const { ready, token } = useRequireAuth();
   const perms = useOrgPermissions();
-  const [activeStep, setActiveStep] = useState(0);
-  const [isParsing, setIsParsing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const canUse =
+    perms.can(CP_PERMISSION.API_MIGRATION_UPLOAD) ||
+    perms.can(CP_PERMISSION.API_MIGRATION_ASSEMBLE);
 
-  const [financeRows, setFinanceRows] = useState<FinanceLine[]>([]);
-  const [hrRows, setHrRows] = useState<HrLine[]>([]);
-  const [inventoryRows, setInventoryRows] = useState<InventoryLine[]>([]);
+  const cutoverRef = useRef<HTMLDivElement | null>(null);
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const confirmPanelRef = useRef<HTMLDivElement | null>(null);
 
-  const canImport = perms.canPostAccounting;
-  const step = STEPS[activeStep];
+  const [status, setStatus] = useState<StatusPayload | null>(null);
+  const [cutoverInput, setCutoverInput] = useState("");
+  const [busyKind, setBusyKind] = useState<string | null>(null);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [validateOk, setValidateOk] = useState<boolean | null>(null);
+  const [trial000, setTrial000] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [workforceErrors, setWorkforceErrors] = useState<string[]>([]);
 
-  const previewRows = useMemo(() => {
-    if (step.id === "finance") return financeRows as JsonRecord[];
-    if (step.id === "hr") return hrRows as JsonRecord[];
-    return inventoryRows as JsonRecord[];
-  }, [financeRows, hrRows, inventoryRows, step.id]);
+  const closeConfirm = useCallback(() => setConfirmOpen(false), []);
 
-  const previewColumns = useMemo(() => {
-    if (!previewRows.length) return [];
-    return Object.keys(previewRows[0]);
-  }, [previewRows]);
+  const draftByKind = useMemo(() => {
+    const map = new Map<string, DraftStatus>();
+    for (const d of status?.drafts ?? []) map.set(d.kind, d);
+    return map;
+  }, [status?.drafts]);
 
-  async function onFileSelected(file: File | null) {
-    if (!file) return;
-    setIsParsing(true);
-    try {
-      const tableRows = await parseSpreadsheetFile(file);
-      if (!tableRows.length) {
-        toast.error(t("migrationWizard.errors.fileEmpty"));
-        return;
-      }
-      if (step.id === "finance") {
-        setFinanceRows(parseFinance(tableRows));
-      } else if (step.id === "hr") {
-        setHrRows(parseHr(tableRows));
-      } else {
-        setInventoryRows(parseInventory(tableRows));
-      }
-      toast.success(t("migrationWizard.fileParsed", { rows: tableRows.length }));
-    } catch {
-      toast.error(t("migrationWizard.errors.fileInvalid"), {
-        description: t("migrationWizard.errors.fileHint"),
-      });
-    } finally {
-      setIsParsing(false);
+  const lastLogByKind = useMemo(() => {
+    const map = new Map<string, StatusPayload["logs"][number]>();
+    for (const log of status?.logs ?? []) {
+      if (!map.has(log.kind)) map.set(log.kind, log);
     }
-  }
+    return map;
+  }, [status?.logs]);
 
-  async function submitStep() {
-    if (!token) return;
-    const payload = step.id === "finance" ? financeRows : step.id === "hr" ? hrRows : inventoryRows;
-    if (!payload.length) {
-      toast.error(t("migrationWizard.errors.noRows"));
+  const draftLineCount = useMemo(
+    () =>
+      (status?.drafts ?? []).reduce(
+        (sum, d) => sum + (d.createdCount || 0),
+        0,
+      ),
+    [status?.drafts],
+  );
+
+  const loadStatus = useCallback(async () => {
+    const res = await apiFetch("/api/migration/status");
+    if (!res.ok) {
+      toast.error(t("migrationMachine.errors.status", { code: res.status }));
       return;
     }
+    const data = (await res.json()) as StatusPayload;
+    setStatus(data);
+    setCutoverInput(data.cutoverDate ?? "");
+  }, [t]);
 
-    setIsSubmitting(true);
+  useEffect(() => {
+    if (!ready || !token || !canUse) return;
+    void loadStatus();
+  }, [ready, token, canUse, loadStatus]);
+
+  useEffect(() => {
+    if (!confirmOpen) return;
+    const panel = confirmPanelRef.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const focusables = () => {
+      if (!panel) return [] as HTMLElement[];
+      return Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => el.offsetParent !== null || el === document.activeElement,
+      );
+    };
+
+    focusables()[0]?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeConfirm();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const nodes = focusables();
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus?.();
+    };
+  }, [confirmOpen, closeConfirm]);
+
+  async function downloadTemplate(kind: string) {
+    const res = await apiFetch(`/api/migration/templates/${kind}.xlsx`);
+    if (!res.ok) {
+      toast.error(t("migrationMachine.errors.template"));
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `migration-${kind}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function uploadKind(kind: string, file: File) {
+    setBusyKind(kind);
+    setValidateOk(null);
+    setTrial000(null);
     try {
-      const res = await apiFetch(step.endpoint, {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await apiFetch(`/api/migration/uploads/${kind}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body,
       });
-      if (res.ok) {
-        toast.success(t("migrationWizard.importSuccess"));
+      const data = (await res.json().catch(() => ({}))) as {
+        created?: number;
+        errors?: number;
+        errorFileBase64?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        toast.error(data.message ?? t("migrationMachine.errors.upload"));
         return;
       }
-
-      if (res.status === 409) {
-        toast.error(t("migrationWizard.errors.conflict"));
-        return;
+      toast.success(
+        t("migrationMachine.uploadDone", {
+          created: data.created ?? 0,
+          errors: data.errors ?? 0,
+        }),
+      );
+      if (data.errorFileBase64) {
+        downloadBase64Xlsx(data.errorFileBase64, `migration-${kind}-errors.xlsx`);
       }
-      if (res.status === 400) {
-        const body = await res.text();
-        toast.error(t("migrationWizard.errors.badRequest"), {
-          description: body.slice(0, 240),
-        });
-        return;
-      }
-      toast.error(t("migrationWizard.errors.generic", { code: res.status }));
+      await loadStatus();
     } finally {
-      setIsSubmitting(false);
+      setBusyKind(null);
     }
   }
+
+  async function saveCutover() {
+    const res = await apiFetch("/api/migration/cutover-date", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cutoverDate: cutoverInput }),
+    });
+    if (!res.ok) {
+      toast.error(await res.text());
+      return;
+    }
+    toast.success(t("migrationMachine.cutoverSaved"));
+    setValidateOk(null);
+    await loadStatus();
+  }
+
+  async function runValidate() {
+    const res = await apiFetch("/api/migration/validate", { method: "POST" });
+    const data = (await res.json()) as {
+      ok?: boolean;
+      issues?: Issue[];
+      trial000?: string;
+    };
+    setIssues(data.issues ?? []);
+    setTrial000(data.trial000 ?? null);
+    setValidateOk(Boolean(data.ok));
+    if (data.ok) toast.success(t("migrationMachine.validateOk"));
+    else toast.error(t("migrationMachine.validateFail"));
+  }
+
+  async function runAssemble() {
+    setBusyKind("assemble");
+    setConfirmOpen(false);
+    try {
+      const res = await apiFetch("/api/migration/assemble", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as {
+        posted?: number;
+        message?: string;
+        issues?: Issue[];
+      };
+      if (!res.ok) {
+        if (data.issues) setIssues(data.issues);
+        toast.error(data.message ?? t("migrationMachine.errors.assemble"));
+        return;
+      }
+      toast.success(t("migrationMachine.assembleDone", { posted: data.posted ?? 0 }));
+      setValidateOk(true);
+      await loadStatus();
+    } finally {
+      setBusyKind(null);
+    }
+  }
+
+  async function pullWorkforce() {
+    setBusyKind("workforce");
+    try {
+      const res = await apiFetch("/api/migration/workforce/pull", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as {
+        pulled?: number;
+        skipped?: number;
+        errors?: string[];
+        message?: string;
+      };
+      if (!res.ok) {
+        toast.error(data.message ?? t("migrationMachine.errors.workforce"));
+        return;
+      }
+      toast.success(
+        t("migrationMachine.workforceDone", {
+          pulled: data.pulled ?? 0,
+          skipped: data.skipped ?? 0,
+        }),
+      );
+      setWorkforceErrors(data.errors ?? []);
+    } finally {
+      setBusyKind(null);
+    }
+  }
+
+  function tile(kind: KindDef) {
+    const lockedDraft = Boolean(status?.assembledAt) && !kind.master;
+    const draft = draftByKind.get(kind.id);
+    const log = lastLogByKind.get(kind.id);
+    const staged = Boolean(draft && draft.createdCount > 0);
+    const empty = !draft && !log;
+    return (
+      <div key={kind.id} className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-[#34495E] m-0">{t(kind.titleKey)}</h3>
+            {kind.badge === "partial" ? (
+              <Badge variant="accountant">{t("migrationMachine.badgePartial")}</Badge>
+            ) : null}
+            {kind.badge === "evidence" ? (
+              <Badge variant="neutral">{t("migrationMachine.badgeEvidence")}</Badge>
+            ) : null}
+          </div>
+          <p className="text-sm text-[#7F8C8D] mt-1">{t(kind.subtitleKey)}</p>
+          <p className="text-xs text-[#7F8C8D] mt-1">
+            {lockedDraft
+              ? t("migrationMachine.tileLocked")
+              : staged
+                ? t("migrationMachine.tileStaged", {
+                    created: draft?.createdCount ?? 0,
+                    errors: draft?.errorCount ?? 0,
+                  })
+                : empty
+                  ? t("migrationMachine.tileEmpty")
+                  : t("migrationMachine.tileUploaded", {
+                      created: log?.createdCount ?? 0,
+                      errors: log?.errorCount ?? 0,
+                    })}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void downloadTemplate(kind.id)}
+            disabled={busyKind !== null}
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            {t("migrationMachine.downloadTemplate")}
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            disabled={lockedDraft || busyKind !== null}
+            aria-label={t("migrationMachine.upload")}
+            onClick={() => fileRefs.current[kind.id]?.click()}
+          >
+            <Upload className="h-4 w-4" aria-hidden />
+            {busyKind === kind.id ? t("common.loading") : t("migrationMachine.upload")}
+          </Button>
+          <input
+            ref={(el) => {
+              fileRefs.current[kind.id] = el;
+            }}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            disabled={lockedDraft || busyKind !== null}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (f) void uploadKind(kind.id, f);
+            }}
+          />
+        </div>
+        {lockedDraft ? (
+          <p className="text-xs text-[#7F8C8D]">{t("migrationMachine.draftLocked")}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  const redIssues = issues.filter((i) => i.severity === "red");
+  const yellowIssues = issues.filter((i) => i.severity === "yellow");
+  const cutoverDirty = cutoverInput !== (status?.cutoverDate ?? "");
+  const assembleBlocked =
+    busyKind !== null ||
+    Boolean(status?.assembledAt) ||
+    validateOk !== true ||
+    redIssues.length > 0 ||
+    cutoverDirty ||
+    !status?.checklist.hasCutoverDate;
+
+  const readyLabel = t("migrationMachine.check.ready");
+  const missingLabel = t("migrationMachine.check.missing");
 
   if (!ready || !token) {
     return <p className="text-sm text-[#7F8C8D]">{t("common.loading")}</p>;
   }
 
-  if (!canImport) {
+  if (!canUse) {
     return (
-      <div className="max-w-3xl space-y-4">
-        <PageHeader title={t("migrationWizard.title")} subtitle={t("migrationWizard.noAccess")} />
+      <div className="space-y-4">
+        <PageHeader
+          title={t("migrationMachine.title")}
+          subtitle={t("migrationMachine.noAccess")}
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <PageHeader title={t("migrationWizard.title")} subtitle={t("migrationWizard.subtitle")} />
+    <div className="space-y-6">
+      <PageHeader
+        title={t("migrationMachine.title")}
+        subtitle={t("migrationMachine.subtitle")}
+      />
 
-      <section className={`${CARD_CONTAINER_CLASS} p-4 space-y-4`}>
-        <div className="flex flex-wrap gap-2">
-          {STEPS.map((s, idx) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setActiveStep(idx)}
-              className={[
-                "rounded border px-3 py-1.5 text-sm font-medium",
-                idx === activeStep
-                  ? "bg-white text-[#34495E] border-[#2980B9]"
-                  : "bg-transparent text-[#7F8C8D] border-transparent hover:border-[#D5DADF]",
-              ].join(" ")}
-            >
-              {idx + 1}. {t(s.titleKey)}
-            </button>
-          ))}
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold text-[#34495E]">{t(step.titleKey)}</h2>
-          <p className="text-sm text-[#7F8C8D] mt-1">{t(step.subtitleKey)}</p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={(e) => void onFileSelected(e.target.files?.[0] ?? null)}
-            disabled={isParsing || isSubmitting}
-            className={`text-sm ${INPUT_BORDERED_CLASS}`}
-          />
-          <button
-            type="button"
-            onClick={() => void submitStep()}
-            disabled={isSubmitting || isParsing}
-            className={PRIMARY_BUTTON_CLASS}
-          >
-            {isSubmitting ? t("common.loading") : t("migrationWizard.importBtn")}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              void downloadStepTemplate(
-                step.id,
-                step.id === "finance"
-                  ? "migration-template-finance.xlsx"
-                  : step.id === "hr"
-                    ? "migration-template-hr.xlsx"
-                    : "migration-template-inventory.xlsx",
-              )
-            }
-            disabled={isParsing || isSubmitting}
-            className={SECONDARY_BUTTON_CLASS}
-          >
-            <Download className="h-4 w-4" aria-hidden />
-            {t("migrationWizard.downloadTemplate")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveStep((v) => Math.max(0, v - 1))}
-            disabled={activeStep === 0}
-            className={SECONDARY_BUTTON_CLASS}
-          >
-            {t("migrationWizard.prev")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveStep((v) => Math.min(STEPS.length - 1, v + 1))}
-            disabled={activeStep === STEPS.length - 1}
-            className={SECONDARY_BUTTON_CLASS}
-          >
-            {t("migrationWizard.next")}
-          </button>
-        </div>
-        <div className="rounded-lg border border-[#D5DADF] bg-[#EBEDF0]/40 p-3 text-sm text-[#34495E]">
-          {t("migrationWizard.formatHint")}
-        </div>
+      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <h2 className="text-lg font-semibold text-[#34495E] m-0">
+          {t("migrationMachine.checklistTitle")}
+        </h2>
+        <ul className="text-sm text-[#34495E] space-y-2 list-none p-0 m-0">
+          <li className="flex flex-wrap items-center gap-2">
+            <span>{t("migrationMachine.check.voen")}</span>
+            <ChecklistStatus
+              ok={Boolean(status?.checklist.hasTaxId)}
+              readyLabel={readyLabel}
+              missingLabel={missingLabel}
+            />
+            {!status?.checklist.hasTaxId ? (
+              <Link href="/settings/organization" className={`${LINK_ACCENT_CLASS} text-sm`}>
+                {t("migrationMachine.check.fixVoen")}
+              </Link>
+            ) : null}
+          </li>
+          <li className="flex flex-wrap items-center gap-2">
+            <span>{t("migrationMachine.check.bank")}</span>
+            <ChecklistStatus
+              ok={Boolean(status?.checklist.hasBankAccount)}
+              readyLabel={readyLabel}
+              missingLabel={missingLabel}
+            />
+            {!status?.checklist.hasBankAccount ? (
+              <Link href="/settings/bank-accounts" className={`${LINK_ACCENT_CLASS} text-sm`}>
+                {t("migrationMachine.check.fixBank")}
+              </Link>
+            ) : null}
+          </li>
+          <li className="flex flex-wrap items-center gap-2">
+            <span>{t("migrationMachine.check.cutover")}</span>
+            <ChecklistStatus
+              ok={Boolean(status?.checklist.hasCutoverDate)}
+              readyLabel={readyLabel}
+              missingLabel={missingLabel}
+            />
+            {!status?.checklist.hasCutoverDate ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className={`${LINK_ACCENT_CLASS} !h-auto !min-h-0 !px-0 !shadow-none underline`}
+                onClick={() => cutoverRef.current?.scrollIntoView({ behavior: "smooth" })}
+              >
+                {t("migrationMachine.check.setCutover")}
+              </Button>
+            ) : null}
+          </li>
+        </ul>
       </section>
 
-      <section className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
-        <div className="p-3 border-b border-[#D5DADF] text-sm font-semibold text-[#34495E]">
-          {t("migrationWizard.previewTitle", { count: previewRows.length })}
-        </div>
-        {previewRows.length ? (
-          <table className="min-w-full text-[13px]">
-            <thead className="bg-[#EBEDF0] text-left text-[#34495E]">
-              <tr>
-                {previewColumns.map((key) => (
-                  <th key={key} className="px-3 py-2 font-semibold whitespace-nowrap">
-                    {key}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {previewRows.map((row, idx) => (
-                <tr key={idx} className="border-t border-[#D5DADF]">
-                  {previewColumns.map((key) => (
-                    <td key={`${idx}-${key}`} className="px-3 py-2 whitespace-nowrap text-[#34495E]">
-                      {String(row[key] ?? "")}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="p-4 text-sm text-[#7F8C8D]">{t("migrationWizard.previewEmpty")}</p>
-        )}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-[#34495E]">
+          {t("migrationMachine.mastersTitle")}
+        </h2>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{MASTER_KINDS.map(tile)}</div>
       </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-[#34495E] m-0">
+            {t("migrationMachine.draftsTitle")}
+          </h2>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busyKind !== null || Boolean(status?.assembledAt)}
+            onClick={() => void pullWorkforce()}
+          >
+            {busyKind === "workforce"
+              ? t("common.loading")
+              : t("migrationMachine.pullWorkforce")}
+          </Button>
+        </div>
+        <p className="text-sm text-[#7F8C8D] m-0">{t("migrationMachine.hrPullHint")}</p>
+        {workforceErrors.length > 0 ? (
+          <ul className="text-sm text-amber-800 space-y-1 m-0 pl-5">
+            {workforceErrors.slice(0, 8).map((err) => (
+              <li key={err}>{err}</li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{DRAFT_KINDS.map(tile)}</div>
+      </section>
+
+      <section ref={cutoverRef} className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>
+        <h2 className="text-lg font-semibold text-[#34495E]">
+          {t("migrationMachine.assembleTitle")}
+        </h2>
+        <p className="text-sm text-[#7F8C8D]">{t("migrationMachine.assembleHint")}</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[12rem]">
+            <label className="block text-sm text-[#34495E] mb-1">
+              {t("migrationMachine.cutoverDate")}
+            </label>
+            <DatePicker
+              respectPeriodLock={false}
+              triggerClassName={`block w-full max-w-xs ${INPUT_BORDERED_CLASS}`}
+              value={cutoverInput}
+              onChange={(next) => {
+                setCutoverInput(next);
+                setValidateOk(null);
+              }}
+              disabled={Boolean(status?.assembledAt)}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={Boolean(status?.assembledAt) || !cutoverInput || !cutoverDirty}
+            onClick={() => void saveCutover()}
+          >
+            {t("migrationMachine.saveCutover")}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busyKind !== null || cutoverDirty || !status?.checklist.hasCutoverDate}
+            onClick={() => void runValidate()}
+          >
+            {t("migrationMachine.validate")}
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            disabled={assembleBlocked}
+            onClick={() => setConfirmOpen(true)}
+          >
+            {busyKind === "assemble"
+              ? t("common.loading")
+              : t("migrationMachine.assemble")}
+          </Button>
+        </div>
+        {trial000 != null ? (
+          <p className="text-sm text-[#34495E]">
+            {t("migrationMachine.trial000", { amount: trial000 })}
+            {Math.abs(Number(trial000)) >= 0.01 ? (
+              <span className="text-amber-800"> {t("migrationMachine.trial000Hint")}</span>
+            ) : null}
+          </p>
+        ) : null}
+        {status?.assembledAt ? (
+          <p className="text-sm text-emerald-700">
+            {t("migrationMachine.assembledAt", {
+              at: bakuDateTimeDisplay(status.assembledAt),
+            })}
+          </p>
+        ) : null}
+        {issues.length > 0 ? (
+          <div className="rounded border border-[#D5DADF] p-3 space-y-2 max-h-64 overflow-auto">
+            <p className="text-sm font-medium text-[#34495E] m-0">
+              {t("migrationMachine.issuesTitle", {
+                red: redIssues.length,
+                yellow: yellowIssues.length,
+              })}
+            </p>
+            {redIssues.map((issue, idx) => (
+              <p key={`r-${issue.code}-${idx}`} className="text-sm text-red-700 m-0">
+                {issue.message}
+                {issue.kind ? ` (${issue.kind}` : ""}
+                {issue.row ? ` #${issue.row}` : ""}
+                {issue.kind ? ")" : ""}
+              </p>
+            ))}
+            {yellowIssues.map((issue, idx) => (
+              <p key={`y-${issue.code}-${idx}`} className="text-sm text-amber-700 m-0">
+                {issue.message}
+                {issue.kind ? ` (${issue.kind}` : ""}
+                {issue.row ? ` #${issue.row}` : ""}
+                {issue.kind ? ")" : ""}
+              </p>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      {status?.logs?.length ? (
+        <section className={`${CARD_CONTAINER_CLASS} p-4 space-y-2`}>
+          <h2 className="font-semibold text-[#34495E]">
+            {t("migrationMachine.logTitle")}
+          </h2>
+          <ul className="text-sm text-[#34495E] space-y-1">
+            {status.logs.map((log) => (
+              <li key={log.id}>
+                {bakuDateTimeDisplay(log.createdAt)} · {log.kind} · +
+                {log.createdCount} / err {log.errorCount}
+                {log.fileName ? ` · ${log.fileName}` : ""}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {confirmOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeConfirm();
+          }}
+        >
+          <div
+            ref={confirmPanelRef}
+            className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-md`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="migration-assemble-confirm-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <h3
+                id="migration-assemble-confirm-title"
+                className="m-0 text-lg font-semibold leading-snug text-[#34495E]"
+              >
+                {t("migrationMachine.confirmTitle")}
+              </h3>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={closeConfirm}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </Button>
+            </header>
+            <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto">
+              <p className="text-sm text-[#34495E] m-0">
+                {t("migrationMachine.confirmBody", {
+                  cutover: status?.cutoverDate || "—",
+                  batches: status?.drafts?.length ?? 0,
+                  lines: draftLineCount,
+                })}
+              </p>
+              {cutoverDirty ? (
+                <p className="text-sm text-amber-800 m-0">
+                  {t("migrationMachine.cutoverDirty")}
+                </p>
+              ) : null}
+              <p className="text-sm text-amber-800 m-0">
+                {t("migrationMachine.confirmIrreversible")}
+              </p>
+            </div>
+            <footer className={MODAL_FOOTER_ACTIONS_CLASS}>
+              <Button
+                type="button"
+                variant="secondary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                onClick={closeConfirm}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className={MODAL_FOOTER_BUTTON_CLASS}
+                disabled={busyKind !== null || cutoverDirty}
+                onClick={() => void runAssemble()}
+              >
+                {t("migrationMachine.confirmAssemble")}
+              </Button>
+            </footer>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

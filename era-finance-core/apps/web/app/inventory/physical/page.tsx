@@ -13,6 +13,7 @@ import { PageHeader } from "../../../components/layout/page-header";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { PhysicalAdjustmentModal } from "../../../components/inventory/modals/physical-adjustment-modal";
 import { EmptyState } from "../../../components/empty-state";
+import { Badge } from "../../../components/ui/badge";
 import {
   DATA_TABLE_ACTIONS_TD_CLASS,
   DATA_TABLE_ACTIONS_TH_CLASS,
@@ -180,9 +181,11 @@ export default function InventoryPhysicalPage() {
                         {t(`inventory.physicalDocType_${r.docType}`, { defaultValue: r.docType })}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {r.status === "POSTED"
-                          ? t("inventory.physicalStatusPosted")
-                          : t("inventory.physicalStatusDraft")}
+                        <Badge variant={r.status === "POSTED" ? "success" : "neutral"}>
+                          {r.status === "POSTED"
+                            ? t("inventory.physicalStatusPosted")
+                            : t("inventory.physicalStatusDraft")}
+                        </Badge>
                       </td>
                       <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r._count?.lines ?? "—"}</td>
                       <td className={DATA_TABLE_ACTIONS_TD_CLASS}>

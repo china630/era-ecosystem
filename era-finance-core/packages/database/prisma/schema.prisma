@@ -90,6 +90,10 @@ model Organization {
   kind                            OrganizationKind                 @default(COMMERCIAL) @map("kind")
   /// Legal form selected at onboarding (shared with Counterparty legal forms).
   legalForm                       CounterpartyLegalForm            @default(LLC) @map("legal_form")
+  /// Cutover calendar date for migration assemble (Asia/Baku operational day).
+  migrationCutoverDate            DateTime?                        @map("migration_cutover_date") @db.Date
+  /// When opening drafts were posted; blocks re-post of balance drafts.
+  migrationAssembledAt            DateTime?                        @map("migration_assembled_at") @db.Timestamptz(6)
   isDeleted                       Boolean                          @default(false) @map("is_deleted")
   /// External client id for Drakaris/yığım aggregator (uppercase alphanumeric).
   drakarisClientId                String?                          @unique @map("drakaris_client_id")
@@ -128,6 +132,9 @@ model Organization {
   agencyCityLedgerSnapshots       AgencyCityLedgerSnapshot[]
   agencyCommissionPayableSnapshots AgencyCommissionPayableSnapshot[]
   hotelPaymentCallbackOutbox      HotelPaymentCallbackOutbox[]
+  migrationDraftBatches           MigrationDraftBatch[]
+  migrationDraftLines             MigrationDraftLine[]
+  migrationUploadLogs             MigrationUploadLog[]
   tradeCreditFacilities           TradeCreditFacility[]
   tradeCreditGrants               TradeCreditGrant[]
   tradeCreditBuyerMeterSnapshots  TradeCreditBuyerMeterSnapshot[]
@@ -1153,6 +1160,8 @@ model Warehouse {
   id                    String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId        String                 @map("organization_id") @db.Uuid
   name                  String
+  /// Stable import key (unique per org when set).
+  code                  String?
   location              String                 @default("")
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
@@ -1183,6 +1192,7 @@ model Warehouse {
   @@index([organizationId, deletedAt], map: "warehouses_org_deleted_at_idx")
   @@index([organizationId, costClass], map: "warehouses_org_cost_class_idx")
   @@index([organizationId, satelliteOutletCode], map: "warehouses_org_outlet_code_idx")
+  @@unique([organizationId, code], map: "warehouses_org_code_uidx")
   @@map("warehouses")
 }
 
@@ -3618,6 +3628,8 @@ model Product {
   isService                Boolean                   @default(false) @map("is_service")
   /// NAS revenue account code for a sellable service or goods SKU. Empty for a pure ingredient.
   revenueAccountCode       String?                   @map("revenue_account_code")
+  /// Optional catalog category (menu section / price-list group) for migration imports.
+  category                 String?
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   inventoryAuditLines      InventoryAuditLine[]
   invoiceItems             InvoiceItem[]
@@ -5880,4 +5892,73 @@ enum BudgetYearStatus {
   DRAFT
   APPROVED
   AMENDED
+}
+
+enum MigrationDraftKind {
+  STOCK
+  OPEN_ITEMS
+  ADVANCES
+  CASH_BANK
+  HR_BALANCES
+  PAYROLL_LIABILITIES
+  FIXED_ASSETS
+  CAPITAL
+  VAT_REGISTER
+}
+
+enum MigrationDraftStatus {
+  DRAFT
+  CONSUMED
+}
+
+/// Staging batch for migration balance / open-item uploads (not master-data creates).
+model MigrationDraftBatch {
+  id               String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String               @map("organization_id") @db.Uuid
+  kind             MigrationDraftKind
+  status           MigrationDraftStatus @default(DRAFT)
+  uploadedByUserId String?              @map("uploaded_by_user_id") @db.Uuid
+  fileName         String?              @map("file_name")
+  createdCount     Int                  @default(0) @map("created_count")
+  errorCount       Int                  @default(0) @map("error_count")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  consumedAt       DateTime?            @map("consumed_at") @db.Timestamptz(6)
+  lines            MigrationDraftLine[]
+  organization     Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("migration_draft_batches")
+}
+
+model MigrationDraftLine {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  batchId        String              @map("batch_id") @db.Uuid
+  rowNumber      Int                 @map("row_number")
+  payload        Json                @default("{}")
+  resolved       Json                @default("{}")
+  error          String?
+  createdAt      DateTime            @default(now()) @map("created_at")
+  batch          MigrationDraftBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([organizationId])
+  @@map("migration_draft_lines")
+}
+
+model MigrationUploadLog {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String       @map("organization_id") @db.Uuid
+  kind             String
+  fileName         String?      @map("file_name")
+  createdCount     Int          @default(0) @map("created_count")
+  errorCount       Int          @default(0) @map("error_count")
+  uploadedByUserId String?      @map("uploaded_by_user_id") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at")
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt(sort: Desc)], map: "migration_upload_logs_org_idx")
+  @@map("migration_upload_logs")
 }

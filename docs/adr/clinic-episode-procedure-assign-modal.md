@@ -322,11 +322,15 @@ Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).
 
 The left menu and the package-tab quota bars list a balance only when that code is in the course entitlement snapshot and `showInProcedures` is true, ordered by `procedureOrder`. A transferred remainder (`XFER-`) stays under **Əvəz edilmiş prosedurlar**. A balance left behind after a block left the template does not appear.
 
-`+` and **Hamısı** follow the block's fulfillment: `PROCEDURE_ORDER` keeps the cabin planner and the physio form; `LAB_ORDER` creates a lab order for the in-quota quantity (one open order); quantity above that quota is an unpaid procedure on the cheque list, not a second lab order, and only when the lab has a catalog price. `VISIT` creates a visit line. Save rejects a code that is not on that list (`NOT_IN_PROCEDURES`). The assign list shows a block when the current template checkbox is on.
+`+` and **Hamısı** follow the block's fulfillment: `PROCEDURE_ORDER` keeps the cabin planner and the physio form; `LAB_ORDER` creates a lab order for the in-quota quantity (one open order); quantity above that quota is a paid `LabOrder` awaiting payment (not a `ProcedureOrder` cheque row; see [clinic-paid-diagnostics-from-episode.md](./clinic-paid-diagnostics-from-episode.md)), and only when the lab has a catalog price. `VISIT` creates a visit line (paid overflow → unpaid `Visit`). Save rejects a code that is not on that list (`NOT_IN_PROCEDURES`). The assign list shows a block when the current template checkbox is on.
 
 The quota-block editor shows the name, the checkbox, and a procedure-list order. The block code stays the stored key (`BLK-…` for a new block) and is not printed. Night-matrix `sortOrder` is unchanged.
 
 Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, lab, or visit line stamps that code. Used leftovers stay in the database and stay off the screen. They are also off the SKU picker: Save and replace burn a block only when that balance is on the procedure list. A leftover `*_POOL` must not become `burnPoolCode`. Migration `20261022160000_block_show_in_procedures` backfills the flags from fulfillment and strips the nine removed `*_POOL` codes from snapshots and unused balances.
+
+## Amendment 2026-11-01 — unseated package rows
+
+A package `PROPOSED` row with no cabin still occupies that procedure code on its Baku day, so a second seat of the same code is refused. Rows unseated for a package refill, a masseur change, a stay recalculation, or a bath-calendar pin that do not receive a new cabin are deleted and the quota is synced. A manual move uses the same day block. The plan day chips list only seated rows. A package `PROPOSED` without a cabin is a separate "not seated" line with no clock.
 
 ## Amendment 2026-10-22 — unpaid extra route (SCREEN)
 

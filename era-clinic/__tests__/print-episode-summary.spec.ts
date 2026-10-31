@@ -21,4 +21,12 @@ describe("course summary print", () => {
     expect(showsUnpaidExtraOnPlan("SHOW_ON_PLAN")).toBe(true);
     expect(showsUnpaidExtraOnPlan("HOLD_UNTIL_PAY")).toBe(false);
   });
+
+  it("lab journal visibility matches the epicrisis pay gate shape", () => {
+    const { labOrderVisibleToLabWhere } = require("@/domain/lab/lab-order-pay-gate");
+    expect(labOrderVisibleToLabWhere()).toEqual({
+      OR: [{ amountNet: { lte: 0 } }, { settledAt: { not: null } }],
+    });
+  });
 });
+
