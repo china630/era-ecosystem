@@ -34,7 +34,7 @@ export type AssignmentLedgerResult = {
     status: string;
     roomNumber: string | null;
     programCode: string | null;
-    patientRefId: string;
+    patientRefId: string | null;
     patientLabel: string;
   };
   rooms: string[];
