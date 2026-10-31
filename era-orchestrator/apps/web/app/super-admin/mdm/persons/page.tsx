@@ -8,6 +8,7 @@ import {
   CARD_CONTAINER_CLASS,
   CatalogField,
   DATA_TABLE_CLASS,
+  DatePicker,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
@@ -304,15 +305,12 @@ export default function SuperAdminMdmPersonsPage() {
             placeholder={t("fullNamePlaceholder")}
           />
         </label>
-        <label className="text-[13px] font-medium text-[#34495E]">
-          {t("filterDob")}
-          <input
-            type="date"
-            className={`${MODAL_INPUT_CLASS} mt-1 block`}
+          <DatePicker
+            label={t("filterDob")}
             value={filterDob}
-            onChange={(e) => setFilterDob(e.target.value)}
+            onChange={setFilterDob}
+            placeholder={tCommon("datePlaceholder")}
           />
-        </label>
         <label className="text-[13px] font-medium text-[#34495E]">
           {t("filterPhone")}
           <input
@@ -493,15 +491,12 @@ export default function SuperAdminMdmPersonsPage() {
             options={sexOptions}
             emptyLabel={null}
           />
-          <label className="block text-[13px] font-medium text-[#34495E]">
-            {t("birthDate")}
-            <input
-              type="date"
-              className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-              value={resolveDob}
-              onChange={(e) => setResolveDob(e.target.value)}
-            />
-          </label>
+          <DatePicker
+            label={t("birthDate")}
+            value={resolveDob}
+            onChange={setResolveDob}
+            placeholder={tCommon("datePlaceholder")}
+          />
           {resolveError ? (
             <p className="text-sm text-red-700">{resolveError}</p>
           ) : null}

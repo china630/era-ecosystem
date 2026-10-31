@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CatalogField,
+  DatePicker,
   LIST_PAGE_SHELL_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -259,17 +260,17 @@ export default function WorkforceMePage() {
               onChange={(next) => setKind(String(next))}
               options={kindOptions}
             />
-            <input
-              type="date"
-              className="w-full rounded border px-2 py-1"
+            <DatePicker
+              label={tCommon("date")}
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={setStartDate}
+              placeholder={tCommon("datePlaceholder")}
             />
-            <input
-              type="date"
-              className="w-full rounded border px-2 py-1"
+            <DatePicker
+              label={tCommon("date")}
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={setEndDate}
+              placeholder={tCommon("datePlaceholder")}
             />
             <button
               type="button"
@@ -283,11 +284,11 @@ export default function WorkforceMePage() {
 
           <section className="mb-6 space-y-2">
             <h2 className="font-semibold">{t("hourly")}</h2>
-            <input
-              type="date"
-              className="w-full rounded border px-2 py-1"
+            <DatePicker
+              label={tCommon("date")}
               value={workDate}
-              onChange={(e) => setWorkDate(e.target.value)}
+              onChange={setWorkDate}
+              placeholder={tCommon("datePlaceholder")}
             />
             <div className="flex gap-2">
               <input

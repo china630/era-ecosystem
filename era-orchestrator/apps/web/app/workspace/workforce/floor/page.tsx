@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CatalogField,
+  DatePicker,
   EraListWorkspace,
   LIST_PAGE_SHELL_CLASS,
   ModalFooter,
@@ -220,15 +221,12 @@ export default function WorkforceFloorPage() {
           subtitle={t("subtitle")}
           actions={
             <div className="flex flex-wrap items-end gap-3">
-              <label className="text-sm text-[#34495E]">
-                {t("date")}
-                <input
-                  type="date"
-                  className="ml-2 rounded border border-[#D5DADF] px-2 py-1"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </label>
+              <DatePicker
+                label={t("date")}
+                value={date}
+                onChange={setDate}
+                placeholder={tCommon("datePlaceholder")}
+              />
               <div className="min-w-[12rem]">
                 <CatalogField
                   kind="CLOSED_SMALL"
