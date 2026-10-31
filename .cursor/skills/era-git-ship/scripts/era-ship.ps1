@@ -494,6 +494,40 @@ function Assert-DeployStagingSshApplied {
     }
 }
 
+function Assert-StagingPublicSmoke {
+    # After SSH success: prove money/control plane answers publicly (not only job green).
+    $urls = @(
+        "https://finance-api.era-365.online/api/health",
+        "https://api.era-365.online/health",
+        "https://data.era-365.online/healthz",
+        "https://app.era-365.online/"
+    )
+    $deadline = (Get-Date).AddMinutes(3)
+    $failed = @()
+    while ((Get-Date) -lt $deadline) {
+        $failed = @()
+        foreach ($u in $urls) {
+            try {
+                $resp = Invoke-WebRequest -Uri $u -TimeoutSec 12 -UseBasicParsing
+                if ($resp.StatusCode -lt 200 -or $resp.StatusCode -ge 500) {
+                    $failed += "$u -> $($resp.StatusCode)"
+                }
+            }
+            catch {
+                $code = $null
+                if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+                $failed += "$(if ($code) { "$u -> $code" } else { "$u -> $($_.Exception.Message)" })"
+            }
+        }
+        if ($failed.Count -eq 0) {
+            Write-Host "OK staging public smoke ($($urls.Count) URLs)"
+            return
+        }
+        Start-Sleep -Seconds 10
+    }
+    throw ("Staging public smoke FAILED after Deploy SSH — droplet not healthy:`n  " + ($failed -join "`n  "))
+}
+
 function Complete-DeployStagingRun {
     param(
         [Parameter(Mandatory = $true)]$RunId,
@@ -501,6 +535,7 @@ function Complete-DeployStagingRun {
         [string]$Label = "OK Deploy staging"
     )
     Assert-DeployStagingSshApplied -RunId $RunId -Url $Url
+    Assert-StagingPublicSmoke
     Write-Host ("{0}: {1}" -f $Label, $Url)
 }
 

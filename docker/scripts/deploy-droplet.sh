@@ -8,6 +8,13 @@
 #   logistics | construction | crm | auto | wholesale | bank | custom
 # DEPLOY_SERVICES: optional space-separated compose service names. When set,
 #   this list wins over DEPLOY_SCOPE mapping (path-filtered auto-deploy).
+#
+# Safety (2026-10-31):
+# - Never `docker rm -f` compose-managed containers just to "clear names" —
+#   that wiped a live stack when finance then failed health (outage class).
+# - Only remove true orphans (wrong/missing compose project label).
+# - Full deploy: wait finance-core healthy before the rest; dump logs on fail;
+#   critical HTTP smoke is blocking (not WARN-only).
 set -euo pipefail
 cd /opt/era-ecosystem
 
@@ -60,13 +67,12 @@ echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
 echo "==> disk before pull"
 df -h /
-if [ -z "$services" ]; then
-  # Full stack: drop unused tags so pull can extract layers.
-  docker image prune -af || true
-  docker builder prune -af || true
-fi
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env)
+EXPECTED_PROJECT="${COMPOSE_PROJECT_NAME:-}"
+if [ -z "$EXPECTED_PROJECT" ]; then
+  EXPECTED_PROJECT="$(basename "$(pwd)")"
+fi
 
 # Map compose service -> fixed container_name (docker-compose.yml). No pipes:
 # appleboy/ssh-action drops script lines that contain `|`.
@@ -92,11 +98,10 @@ container_name_for() {
   esac
 }
 
-# Drop leftover containers that still hold a fixed name but are outside the
-# current compose project (Create then fails with "name is already in use").
-# Use "$#" not "$1" — with set -u, empty "$@" makes $1 unbound.
-clear_container_name_conflicts() {
-  local svc cname
+# Remove ONLY leftovers that hold a fixed name but are NOT this compose project.
+# Compose-managed containers are left alone — `compose up` recreates them safely.
+clear_orphan_name_conflicts() {
+  local svc cname proj
   local -a targets
   if [ "$#" -eq 0 ]; then
     targets=(orchestrator finance-core finance-web data-hub hotel-pms clinic
@@ -110,11 +115,28 @@ clear_container_name_conflicts() {
     if [ -z "$cname" ]; then
       continue
     fi
-    if docker inspect "$cname" >/dev/null 2>&1; then
-      echo "==> clearing name conflict: $cname"
-      docker rm -f "$cname" || true
+    if ! docker inspect "$cname" >/dev/null 2>&1; then
+      continue
     fi
+    proj="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$cname" 2>/dev/null || true)"
+    if [ "$proj" = "$EXPECTED_PROJECT" ]; then
+      echo "==> keep compose-managed $cname (project=$proj)"
+      continue
+    fi
+    echo "==> clearing orphan name conflict: $cname (project='${proj:-none}', expected=$EXPECTED_PROJECT)"
+    docker rm -f "$cname" || true
   done
+}
+
+dump_critical_logs() {
+  local c
+  echo "==> dump critical container logs (tail 150)"
+  for c in era-finance-core era-orchestrator era-data-hub era-finance-web; do
+    echo "---- docker logs $c ----"
+    docker logs --tail 150 "$c" 2>&1 || echo "(no logs for $c)"
+  done
+  echo "---- docker ps -a (critical) ----"
+  docker ps -a --filter name=era-finance --filter name=era-orchestrator --filter name=era-data-hub --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' 2>&1 || true
 }
 
 if [ -z "$services" ]; then
@@ -134,17 +156,46 @@ else
 fi
 
 if [ -z "$services" ]; then
-  clear_container_name_conflicts
+  clear_orphan_name_conflicts
+  echo "==> phase1: postgres redis"
+  "${COMPOSE[@]}" up -d postgres redis
+  "${COMPOSE[@]}" up -d --wait --wait-timeout 120 postgres redis
+  echo "==> phase2: finance-core (must be healthy before dependents)"
+  "${COMPOSE[@]}" up -d finance-core
+  if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 300 finance-core; then
+    echo "ERROR: finance-core failed to become healthy" >&2
+    dump_critical_logs
+    exit 1
+  fi
+  echo "==> phase3: full stack recreate (compose-managed; no wipe)"
   "${COMPOSE[@]}" up -d --remove-orphans
-  "${COMPOSE[@]}" up -d --wait --wait-timeout 180 orchestrator
-  docker image prune -af || true
-  node scripts/ecosystem-smoke-all.mjs || echo "WARN: ecosystem-smoke-all failed (non-blocking)"
+  if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 180 orchestrator; then
+    echo "ERROR: orchestrator wait failed" >&2
+    dump_critical_logs
+    exit 1
+  fi
+  if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 180 data-hub finance-web; then
+    echo "ERROR: data-hub / finance-web wait failed" >&2
+    dump_critical_logs
+    exit 1
+  fi
+  echo "==> critical smoke (blocking)"
+  if ! node scripts/ecosystem-smoke-critical.mjs; then
+    echo "ERROR: critical smoke failed — deploy not green" >&2
+    dump_critical_logs
+    exit 1
+  fi
+  docker image prune -f || true
+  node scripts/ecosystem-smoke-all.mjs || echo "WARN: full ecosystem-smoke-all failed (non-blocking; critical already passed)"
 else
   # Do not --remove-orphans or prune — that would stop/delete other satellites.
   # --no-deps: scoped IMAGE_TAG only exists for the rebuilt service; pulling
   # depends_on siblings (e.g. finance-web → finance-core) 404s on GHCR.
   # shellcheck disable=SC2086
-  clear_container_name_conflicts $services
+  clear_orphan_name_conflicts $services
   # shellcheck disable=SC2086
-  "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services
+  if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services; then
+    dump_critical_logs
+    exit 1
+  fi
 fi

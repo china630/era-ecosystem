@@ -65,6 +65,8 @@ Local **шип + пуш** (`era-ship.ps1 -PublishDev` / `-PublishMaster`) waits 
 
 **Compose / install-contract only** (`docker-compose.yml`, `docker-compose.prod.yml`, `config/satellite-install-contract.yaml`, `docker/scripts/deploy-droplet.sh`, `docker/scripts/migrate-all.sh`): build matrix may be empty (`skipImages`), but artifact sets `DEPLOY_SCOPE=all`, `SKIP=false`, and `IMAGE_TAG_MODE=floating` so the droplet recreates all services against current floating tags (no 16-image rebuild, no GHCR 404). App + compose uses the same floating tag after rebuilding only the touched images (those also push `:dev` / `:master`). Docs-only commits stay `deployScope=skip`. See `scripts/ci-changed-ghcr-services.mjs` (`formatDeployScopeArtifact`). A green Deploy job with **Deploy over SSH skipped** is a false success — the workflow fails that case unless scope is literally `skip`.
 
+**Do not wipe the live stack to clear names.** Only orphan containers (non-compose project label) are removed. Finance must become healthy before dependents; critical smoke is mandatory; failed health dumps `docker logs` for finance/orch/data/finance-web.
+
 This `deploy-staging.yml` listener is read from **`master`**. After changing it, promote `dev` → `master` before the next scoped (non-all) image build.
 
 Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`, **scope default `finance`**). Use `all` only when the whole stack must move.  
