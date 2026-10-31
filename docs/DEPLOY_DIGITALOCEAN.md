@@ -67,6 +67,8 @@ Local **шип + пуш** (`era-ship.ps1 -PublishDev` / `-PublishMaster`) waits 
 
 **Do not wipe the live stack to clear names.** Only orphan containers (non-compose project label) are removed. Finance must become healthy before dependents; critical smoke is mandatory; failed health dumps `docker logs` for finance/orch/data/finance-web.
 
+**Redis password:** staging `ENV_FILE` must include `REDIS_PASSWORD` matching the droplet Redis requirepass (AOF may retain it). Compose wires `redis://:${REDIS_PASSWORD}@redis:6379/<db>` — never hardcode passwordless `redis://redis:6379/*` (overrides `.env` and causes finance/orch `NOAUTH` after recreate).
+
 This `deploy-staging.yml` listener is read from **`master`**. After changing it, promote `dev` → `master` before the next scoped (non-all) image build.
 
 Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`, **scope default `finance`**). Use `all` only when the whole stack must move.  
