@@ -117,7 +117,7 @@ services:
       ERA_IN_DOCKER: "1"
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${ORCHESTRATOR_DB:-era_orchestrator}?schema=public
       MDM_DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${MDM_DB:-era_mdm}?schema=public
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: ${ORCHESTRATOR_REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379/0}
       API_PORT: "4000"
       WEB_PORT: "3000"
       FINANCE_CORE_URL: http://finance-core:4100
