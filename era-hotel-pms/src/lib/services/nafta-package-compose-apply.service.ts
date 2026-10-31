@@ -1,12 +1,17 @@
 /**
  * Persist a package night from the sell grid into ReservationDailyRate.
- * Existing nights are left as stored. A missing cell does not invent a price.
+ * One compose for create, save, and the card's "restore package price":
+ * each guest package takes its own cell. A night the user fixed stays.
+ * A missing cell does not invent a price. A posted night stays.
  */
 
 import { prisma } from "@/lib/prisma";
 import { toDecimal } from "@/lib/decimal";
 import { addHotelDays, hotelDateKey } from "@/lib/hotel-calendar";
 import { bakuCivilUtcDate } from "@era/satellite-kit/time";
+import { getCurrentBusinessDate } from "@/lib/services/business-date.service";
+import { parsePackageNight, parseRoomChargeNote } from "@/lib/folio-charge-note";
+import { revenueRoleIn, STAY_NIGHT_ROLES } from "@/lib/revenue-code-match";
 import {
   composeNaftaPackageNightlySellBreakdown,
   paxCodesForCompose,
@@ -179,8 +184,33 @@ export async function previewComposedPackageSell(
   });
 }
 
+async function postedNightKeys(reservationId: string): Promise<Set<string>> {
+  const charges = await prisma.folioCharge.findMany({
+    where: { folio: { reservationId } },
+    select: {
+      businessDate: true,
+      description: true,
+      revenueCode: { select: { code: true, name: true, systemRole: true } },
+    },
+  });
+  const posted = new Set<string>();
+  for (const charge of charges) {
+    const description = charge.description ?? "";
+    const noted = parseRoomChargeNote(description);
+    const packageNight = parsePackageNight(description);
+    if (noted?.date) posted.add(noted.date);
+    else if (packageNight) posted.add(packageNight);
+    else if (revenueRoleIn(charge.revenueCode, STAY_NIGHT_ROLES)) {
+      posted.add(hotelDateKey(charge.businessDate));
+    }
+  }
+  return posted;
+}
+
 /**
- * Fill nights that have no daily rate yet. Stored nights, including fix and in-house, stay as they are.
+ * Write the package compose onto every open night.
+ * The same breakdown the card previews. A fixed or posted night stays.
+ * A manual stay (useManualRate) only fills nights that are still empty.
  */
 export async function syncComposedDailyRates(
   reservationId: string,
@@ -193,6 +223,7 @@ export async function syncComposedDailyRates(
       medicalPackageCode: true,
       roomTypeId: true,
       mealPlanId: true,
+      useManualRate: true,
       paxGuests: {
         select: {
           medicalPackageCode: true,
@@ -202,7 +233,16 @@ export async function syncComposedDailyRates(
         },
         orderBy: { sortOrder: "asc" },
       },
-      dailyRates: { select: { stayDate: true, amount: true } },
+      dailyRates: {
+        select: {
+          id: true,
+          stayDate: true,
+          amount: true,
+          manualFlag: true,
+          fixPrice: true,
+          discountPct: true,
+        },
+      },
     },
   });
   if (!reservation) {
@@ -213,14 +253,23 @@ export async function syncComposedDailyRates(
       ? paxCodesForCompose(reservation.paxGuests, null)
       : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
   const nights = eachNight(reservation.checkInDate, reservation.checkOutDate);
+  const posted = await postedNightKeys(reservationId);
+  const bizKey = hotelDateKey(await getCurrentBusinessDate());
   let missing = false;
   let wrote = 0;
   let firstBreakdown: ComposeBreakdown | null = null;
   for (const stayDate of nights) {
-    const stored = reservation.dailyRates.some(
-      (d) => hotelDateKey(d.stayDate) === hotelDateKey(stayDate),
-    );
-    if (stored) continue;
+    const key = hotelDateKey(stayDate);
+    const stored = reservation.dailyRates.find((d) => hotelDateKey(d.stayDate) === key);
+    const consumed = key < bizKey || posted.has(key);
+    const held =
+      stored != null &&
+      (stored.manualFlag ||
+        stored.fixPrice ||
+        stored.discountPct != null ||
+        consumed ||
+        reservation.useManualRate);
+    if (held) continue;
     const breakdown = await ownerPackageNightlyBreakdown(stayDate, codes, {
       roomTypeId: reservation.roomTypeId,
       mealPlanId: reservation.mealPlanId,
@@ -230,16 +279,30 @@ export async function syncComposedDailyRates(
       continue;
     }
     if (!firstBreakdown) firstBreakdown = breakdown;
-    await prisma.reservationDailyRate.create({
-      data: {
-        reservationId,
-        stayDate,
-        amount: toDecimal(breakdown.total),
-        tariffAmount: toDecimal(breakdown.total),
-        manualFlag: false,
-        fixPrice: false,
-      },
-    });
+    const amount = toDecimal(breakdown.total);
+    if (stored) {
+      await prisma.reservationDailyRate.update({
+        where: { id: stored.id },
+        data: {
+          amount,
+          tariffAmount: amount,
+          manualFlag: false,
+          fixPrice: false,
+          discountPct: null,
+        },
+      });
+    } else {
+      await prisma.reservationDailyRate.create({
+        data: {
+          reservationId,
+          stayDate,
+          amount,
+          tariffAmount: amount,
+          manualFlag: false,
+          fixPrice: false,
+        },
+      });
+    }
     wrote += 1;
   }
   const rows = await prisma.reservationDailyRate.findMany({
@@ -253,8 +316,9 @@ export async function syncComposedDailyRates(
       data: { totalAmount: toDecimal(total) },
     });
   }
+  const covered = rows.length >= nights.length && nights.length > 0;
   return {
-    applied: wrote > 0 && !missing,
+    applied: !missing && (wrote > 0 || covered),
     total: rows.length > 0 ? total : null,
     missing,
     breakdown: firstBreakdown,

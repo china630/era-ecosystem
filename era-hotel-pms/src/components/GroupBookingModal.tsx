@@ -631,12 +631,22 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       if (!res.ok) {
         const code = String(data?.code ?? '');
         const err = String(data?.error ?? code);
-        if (code === 'CONTRACT_REQUIRED_FOR_PAYER') {
+        if (code === 'GROUP_CODE_TAKEN') {
+          showApiError({ error: t('codeTaken') }, tc('failed'));
+        } else if (code === 'CONTRACT_REQUIRED_FOR_PAYER') {
           showApiError({ error: tr('contractRequiredToast') }, tc('failed'));
         } else if (code === 'AGENCY_REQUIRED_FOR_PAYER') {
           showApiError({ error: tr('agencyRequiredForPayerToast') }, tc('failed'));
         } else if (code === 'COMPANY_REQUIRED_FOR_PAYER') {
           showApiError({ error: tr('companyRequiredForPayerToast') }, tc('failed'));
+        } else if (code === 'TYPE_CAP') {
+          showApiError({ error: tr('typeCapToast') }, tc('failed'));
+        } else if (code === 'HOUSE_CAP') {
+          showApiError({ error: tr('houseCapToast') }, tc('failed'));
+        } else if (code === 'STOP_SELL') {
+          showApiError({ error: tr('stopSellToast') }, tc('failed'));
+        } else if (code === 'ROOM_CONFLICT') {
+          showApiError({ error: tr('roomConflictToast') }, tc('failed'));
         } else if (/contract allotment exhausted/i.test(err)) {
           showApiError({ error: tr('noContractSellableInventory') }, tc('failed'));
         } else if (/no contract allotment|contract allotment/i.test(err)) {

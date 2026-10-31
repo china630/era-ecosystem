@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CatalogField, Field, showApiError } from "@era/satellite-kit/ui";
+import { CatalogField, DatePicker, Field, showApiError } from "@era/satellite-kit/ui";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { OpsError } from "@/components/ops-ui";
@@ -343,13 +343,12 @@ export function ProductFactoryModal({
           required
           disabled={readOnly || (mode === "edit" && initial?.status === "ACTIVE")}
         />
-        <Field
+        <DatePicker
           label={t("effectiveFrom")}
-          preset="shortText"
-          type="date"
           required
           value={effectiveFrom}
-          onChange={(e) => setEffectiveFrom(e.target.value)}
+          onChange={setEffectiveFrom}
+          placeholder="dd.mm.yyyy"
           disabled={readOnly}
         />
         <Field

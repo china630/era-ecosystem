@@ -3,7 +3,7 @@
 import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Field, FieldRow } from '@era/satellite-kit/ui';
+import { DatePicker, FieldRow } from '@era/satellite-kit/ui';
 
 type MenuItem = { id: string; plu: string; name: string; category: { name: string } };
 
@@ -82,12 +82,11 @@ export default function DailyMenuAdminPanel() {
   return (
     <div className="space-y-4">
       <FieldRow cols={2} className="items-end">
-        <Field
+        <DatePicker
           label={t('date')}
-          preset="date"
-          type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={setDate}
+          placeholder={tc('datePlaceholder')}
         />
         <div className="flex flex-wrap gap-2 pb-0.5">
           <button type="button" className="rounded bg-[#2980B9] px-3 py-1 text-white text-sm" onClick={() => void save()}>

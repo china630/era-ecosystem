@@ -9,7 +9,6 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
 
 const dryRun = process.argv.includes('--dry-run');
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,14 +20,19 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const matrixPath = join(__dirname, '../../../scripts/ops/nafta-revenue-remap-matrix.json');
-const matrix = JSON.parse(readFileSync(matrixPath, 'utf8'));
 const orgId =
   process.env.ORGANIZATION_ID?.trim() ||
-  process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ||
-  matrix.orgId;
+  process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
+if (!orgId) {
+  console.error('ORGANIZATION_ID is required');
+  process.exit(1);
+}
 
-const SHORT_CODES = new Set(['1001', '1002']);
+const LABELS = [
+  { code: '1001', nameEn: 'Room', nameRu: 'Номер', nameAz: 'Otaq' },
+  { code: '1002', nameEn: 'Medical package', nameRu: 'Медпакет', nameAz: 'Tibbi paket' },
+];
+
 const PACKAGE_NIGHT = /^(?:Package .+|Medical package) (\d{4}-\d{2}-\d{2})$/i;
 
 const prisma = new PrismaClient();
@@ -36,8 +40,7 @@ const prisma = new PrismaClient();
 async function main() {
   const report = { labels: 0, descriptions: 0, dryRun };
 
-  for (const t of matrix.targetCodes) {
-    if (!SHORT_CODES.has(t.code)) continue;
+  for (const t of LABELS) {
     const rows = await prisma.revenueCode.findMany({
       where: { organizationId: orgId, code: t.code },
       select: { id: true, name: true, nameEn: true, nameRu: true, nameAz: true },

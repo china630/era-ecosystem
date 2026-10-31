@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../ui/date-picker";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
@@ -909,12 +910,7 @@ export function ViewInvoiceModal({
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("invoiceView.creditAdjustDate")}
-                <input
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                  type="date"
-                  value={creditDate}
-                  onChange={(e) => setCreditDate(e.target.value)}
-                />
+                <FinanceDatePicker value={creditDate} onChange={(iso) => setCreditDate(iso)} respectPeriodLock={false} />
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("invoiceView.creditAdjustOffset")}

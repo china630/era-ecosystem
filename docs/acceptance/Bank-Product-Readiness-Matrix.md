@@ -62,7 +62,7 @@ Same columns as the line. Use **this** table when asking readiness of a module �
 
 | Surface | Path | Level |
 |---------|------|-------|
-| Teller / ops | `era-bank` ops | ✅ lab — civil dates on deposits, loans, postings, treasury, and ECL render `дд.мм.гггг` |
+| Teller / ops | `era-bank` ops | ✅ lab — civil dates on deposits, loans, postings, treasury, and ECL render `дд.мм.гггг`; remaining date fields are `DatePicker`. Does not move Gate, UI ✅, Demo ✅, Pilot field, or edition |
 | Product Factory | `/admin/product-factory` | ✅ lab |
 | Risk capital / ECL | `/risk/capital`, `/risk/ecl` | ✅ lab (`methodology=lab`) |
 | Cash / fees / SDB | `/cash`, `/fees` | ✅ lab |

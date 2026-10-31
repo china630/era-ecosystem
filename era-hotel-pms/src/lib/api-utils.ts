@@ -145,6 +145,18 @@ export function handleRouteError(err: unknown) {
           { status: 409 },
         );
       }
+      const targetText = fields.join(' ');
+      const modelName = (err as { meta?: { modelName?: string } }).meta?.modelName;
+      const groupCodeTaken =
+        code === 'P2002' &&
+        (modelName === 'ReservationGroup' ||
+          targetText.includes('ReservationGroup_organizationId_code'));
+      if (groupCodeTaken) {
+        return NextResponse.json(
+          { error: 'A group with this code already exists', code: 'GROUP_CODE_TAKEN' },
+          { status: 409 },
+        );
+      }
       return NextResponse.json(
         { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
         { status: 400 },

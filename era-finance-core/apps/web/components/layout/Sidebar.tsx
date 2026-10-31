@@ -230,11 +230,11 @@ function CollapsibleNavSection({
           }
         }}
         className={[
-          "flex w-full items-center gap-2 px-3 py-2 rounded-lg border transition",
+          "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-[13px] transition",
           layoutCollapsed ? "lg:justify-center lg:px-2" : "",
           headerOn
-            ? "bg-[#EBF5FB] border-[#2980B9]/30 text-[#34495E] shadow-sm"
-            : "bg-transparent border-transparent text-[#7F8C8D] hover:bg-[#E2E5E9]",
+            ? "border-[#D5DADF] bg-[#F8F9FA] text-[#34495E]"
+            : "border-transparent text-[#7F8C8D] hover:border-[#D5DADF] hover:bg-[#F8F9FA]",
         ].join(" ")}
       >
         <Icon
@@ -248,7 +248,7 @@ function CollapsibleNavSection({
         />
         <span
           className={[
-            "text-sm font-semibold flex-1 text-left",
+            "flex-1 truncate text-left text-[13px] font-semibold",
             layoutCollapsed ? "lg:sr-only" : "",
           ].join(" ")}
         >
@@ -275,10 +275,10 @@ function CollapsibleNavSection({
         </RailFlyout>
       ) : null}
       {!layoutCollapsed && open ? (
-        <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-gray-200 pl-4">{children}</div>
+        <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-[#ECF0F1] pl-2">{children}</div>
       ) : null}
       {layoutCollapsed ? (
-        <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-gray-200 pl-4 lg:hidden">
+        <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-[#ECF0F1] pl-2 lg:hidden">
           {open ? children : null}
         </div>
       ) : null}
@@ -314,8 +314,7 @@ function SideNavItem(props: {
         props.onNavClick?.();
       }}
       className={[
-        "flex items-center rounded-lg group transition",
-        props.nested ? "gap-2 px-2 py-1.5 text-sm" : "gap-3 px-3 py-2",
+        "flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] transition",
         iconOnly ? "lg:justify-center lg:px-2 lg:gap-0" : "",
         props.isActive
           ? "bg-[#2980B9]/10 text-[#2980B9]"
@@ -334,11 +333,13 @@ function SideNavItem(props: {
           aria-hidden
         />
       ) : (
-        <span className="inline-block h-2 w-2 rounded-full bg-primary shrink-0" />
+        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center" aria-hidden>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#BDC3C7]" />
+        </span>
       )}
       <span
         className={[
-          "min-w-0 flex-1 truncate text-sm",
+          "min-w-0 flex-1 truncate text-[13px]",
           props.isActive ? "font-semibold" : "font-medium",
           iconOnly ? "lg:sr-only" : "",
         ].join(" ")}

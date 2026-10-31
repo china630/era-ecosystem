@@ -374,6 +374,8 @@ model HotelProfile {
   currentBusinessDate      DateTime? @db.Date
   businessDateLocked       Boolean   @default(false)
   defaultCreditLimitAzn    Decimal?  @db.Decimal(12, 2)
+  /// Extra doors the whole house may sell above the sum of room-type baseQuota. 0 = heads cannot exceed doors.
+  houseOverbookAllowance   Int       @default(0)
   /**
    * Hotel-wide feature flags / settings JSON.
    *
@@ -556,6 +558,8 @@ model RoomType {
   standardAdults Int                @default(2)
   childCapacity Int                 @default(0)
   baseQuota     Int
+  /// Extra doors this type may sell above baseQuota. 0 keeps today's hard cap.
+  overbookAllowance Int             @default(0)
   active        Boolean             @default(true)
   rooms         Room[]
   sellVersions  RatePlanSellVersion[]
@@ -3527,6 +3531,32 @@ model RecurringServiceSchedule {
   @@index([nextDueAt])
   @@index([enabled])
   @@index([organizationId])
+}
+
+enum QuotaChangeScope {
+  ROOM_TYPE
+  HOUSE
+}
+
+enum QuotaChangeField {
+  BASE_QUOTA
+  OVERBOOK
+  HOUSE_OVERBOOK
+}
+
+/// Append-only journal of sell-cap changes. Sale reads the current numbers only.
+model QuotaChange {
+  id             String           @id @default(uuid())
+  organizationId String
+  scope          QuotaChangeScope
+  roomTypeId     String?
+  field          QuotaChangeField
+  oldValue       Int
+  newValue       Int
+  userId         String?
+  createdAt      DateTime         @default(now())
+
+  @@index([organizationId, createdAt])
 }
 
 model SatelliteAuditLog {

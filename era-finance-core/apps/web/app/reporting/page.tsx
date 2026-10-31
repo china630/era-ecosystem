@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../components/ui/date-picker";
 
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useState } from "react";
@@ -352,21 +353,11 @@ export default function ReportingPage() {
           <div className="flex flex-wrap items-end gap-3" role="group" aria-label="period">
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span>{t("reporting.from")}</span>
-              <input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className={MODAL_INPUT_CLASS}
-              />
+              <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span>{t("reporting.to")}</span>
-              <input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className={MODAL_INPUT_CLASS}
-              />
+              <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
             </label>
           </div>
         }

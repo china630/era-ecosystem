@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -99,21 +100,11 @@ export default function AuditHubSamplingPage() {
         </label>
         <label className="text-xs font-semibold text-[#34495E]">
           {t("auditHub.periodFrom")}
-          <input
-            type="date"
-            className={`${INPUT_BORDERED_CLASS} mt-1 w-full`}
-            value={periodFrom}
-            onChange={(e) => setPeriodFrom(e.target.value)}
-          />
+          <FinanceDatePicker value={periodFrom} onChange={(iso) => setPeriodFrom(iso)} respectPeriodLock={false} />
         </label>
         <label className="text-xs font-semibold text-[#34495E]">
           {t("auditHub.periodTo")}
-          <input
-            type="date"
-            className={`${INPUT_BORDERED_CLASS} mt-1 w-full`}
-            value={periodTo}
-            onChange={(e) => setPeriodTo(e.target.value)}
-          />
+          <FinanceDatePicker value={periodTo} onChange={(iso) => setPeriodTo(iso)} respectPeriodLock={false} />
         </label>
         {mode === "random" ? (
           <label className="text-xs font-semibold text-[#34495E]">

@@ -8,7 +8,6 @@ import { isFreeStayBilling } from '@/lib/stay-billing';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
-import { hasStopSellInRange } from '@/lib/services/channel.service';
 import {
   applyContractRuleToNightly,
   findApplicableContractRule,
@@ -17,7 +16,6 @@ import { assertContractAllotmentAvailable, getAvailabilityWithContractAllotment 
 import {
   assertRoomShareAssignable,
   assertShareInventory,
-  countDoorsUsedForRoomType,
   countRemainingInHouseOnDoor,
   isEffectiveShare,
   reservationIsOta,
@@ -87,17 +85,8 @@ export async function getAvailability(roomTypeId: string, from: Date, to: Date, 
 
   const fromNight = parseHotelNoon(from);
   const toNight = parseHotelNoon(to);
-  const booked = await countDoorsUsedForRoomType(roomTypeId, fromNight, toNight, excludeReservationId);
-
-  const stopSell = await hasStopSellInRange(roomTypeId, fromNight, toNight);
-  const effectiveQuota = stopSell ? 0 : roomType.baseQuota;
-
-  return {
-    quota: roomType.baseQuota,
-    booked,
-    stopSell,
-    available: Math.max(0, effectiveQuota - booked),
-  };
+  const { measureStaySellable } = await import('@/lib/services/inventory-guard.service');
+  return measureStaySellable(roomTypeId, fromNight, toNight, excludeReservationId);
 }
 
 function isChildAge(age?: number | null, birthDate?: string | null): boolean {
@@ -240,17 +229,26 @@ export async function createReservation(input: {
     throw new Error('CONTRACT_REQUIRED_FOR_PAYER');
   }
 
-  const availability = salesContractId
-    ? (
-        await getAvailabilityWithContractAllotment(
-          input.roomTypeId,
-          input.checkInDate,
-          input.checkOutDate,
-          salesContractId,
-        )
-      ).available
-    : (await getAvailability(input.roomTypeId, input.checkInDate, input.checkOutDate)).available;
-  if (availability < 1) throw new Error('No availability for room type');
+  const measured = salesContractId
+    ? await getAvailabilityWithContractAllotment(
+        input.roomTypeId,
+        input.checkInDate,
+        input.checkOutDate,
+        salesContractId,
+      )
+    : await getAvailability(input.roomTypeId, input.checkInDate, input.checkOutDate);
+  if (measured.available < 1) {
+    const nightReason =
+      'nights' in measured
+        ? measured.nights.find((night) => night.available === measured.available && night.reason)?.reason
+        : null;
+    const reason = ('reason' in measured ? measured.reason : null) ?? nightReason;
+    if (reason === 'STOP_SELL' || reason === 'TYPE_CAP' || reason === 'HOUSE_CAP') {
+      const { InventoryCapError } = await import('@/lib/services/inventory-guard.service');
+      throw new InventoryCapError(reason);
+    }
+    throw new Error('No availability for room type');
+  }
 
   const roomType = await prisma.roomType.findUnique({ where: { id: input.roomTypeId } });
   if (!roomType) throw new Error('Room type not found');
@@ -372,7 +370,10 @@ export async function createReservation(input: {
     }
     shareBedIndex = door.shareBedIndex;
     if (!roomStatusAllowedForBooking(room, door.joiningPool)) {
-      throw new Error('Room is not available for booking');
+      throw Object.assign(new Error('Room is not available for booking'), {
+        status: 409,
+        code: 'ROOM_CONFLICT',
+      });
     }
   }
 
@@ -448,8 +449,8 @@ export async function createReservation(input: {
         ) ?? [];
       const raw =
         named.length > 0
-          ? paxCodesForCompose(named, ratePlan.code)
-          : [ratePlan.code];
+          ? paxCodesForCompose(named, null)
+          : [];
       const codes = raw
         .map((c) => (c ?? '').trim().toUpperCase())
         .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
@@ -1081,11 +1082,8 @@ export async function checkInReservation(
           '@/lib/services/nafta-package-compose-apply.service'
         );
         const composed = await syncComposedDailyRates(id);
-        if (!composed.applied) {
-          const { recalcReservationDailyRates } = await import(
-            '@/lib/services/reservation-pricing.service'
-          );
-          await recalcReservationDailyRates(id);
+        if (composed.missing || !composed.applied) {
+          throw new Error('Package sell price is not set for this stay date');
         }
       } else {
         const { recalcReservationDailyRates } = await import(

@@ -9,6 +9,7 @@ import { PiiCryptoService } from "../security/pii-crypto.service";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { CounterpartiesModule } from "../counterparties/counterparties.module";
 import { InventoryModule } from "../inventory/inventory.module";
+import { NotificationModule } from "../notifications/notification.module";
 import { HotelDayDocumentController } from "./hotel-day-document.controller";
 import { HotelDayDocumentInternalController } from "./hotel-day-document.internal.controller";
 import { HotelCommissionOffsetController } from "./hotel-commission-offset.controller";
@@ -40,6 +41,7 @@ import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
     SubscriptionModule,
     CounterpartiesModule,
     InventoryModule,
+    NotificationModule,
   ],
   providers: [
     PiiCryptoService,

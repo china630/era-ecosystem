@@ -16,7 +16,7 @@
 
 | Edition | Gate | Scaffold BE | UI | Demo / TE | Pilot lab | Pilot field | Edition | Sell / show |
 |---------|------|-------------|----|-----------|-----------|-------------|---------|-------------|
-| **Clinic** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — fiscal/HL7 STUB; pilot open |
+| **Clinic** | ✅ | ✅ | 🟡 | 🟡 | [ ] | [ ] | `mvp` | do not claim GA — fiscal/HL7 STUB; pilot open. DatePicker on package start, shifts, and same-day-until does not move this rollup |
 
 ---
 
@@ -42,7 +42,7 @@
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
 | Cashier | `/cashier` | 🟡 |
-| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг` |
+| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Package start, practitioner dates, and same-day-until are `DatePicker` |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
 | Physio sites S (CLI-49) | `/admin/physio-sites` (Unmatched); card chips + Solyuks/`NAFTALAN_FILL` + empty-catalog banner + PLAN site titles | 🟡 SCREEN (seed S then re-Apply `#23`; UAT open) |
 | Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (Wave 6 lab; HOT-06 extension write still HEADLESS; not SHIPPED) |
@@ -50,10 +50,10 @@
 | Doctor first-day confirm (CLI-52 / Wave C) | `/sanatorium` + card proposed; `/admin/settings` scheduling mode | 🟡 SCREEN (no Confirm all; FIFO kept; UAT open; not SHIPPED) |
 | Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` fulfillment + doctor-bonus | 🟡 SCREEN (package/extra assigned vs completed; amount = completed paid extras; prescriber stamped; % stay 0 until FO; UAT open; not SHIPPED) |
 | Paid revenue by code (CLI-63) | `/reports/revenue` | 🟡 SCREEN (paid extras, labs, exams; code resolved at read; UAT open; not SHIPPED) |
-| One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (same surname stays two rows; UAT open; not SHIPPED) |
+| One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (same surname stays two rows; nationality code, first doctor, hotel checkout; UAT open; not SHIPPED) |
 | Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; in-house room change and stay-product room write the door on open episodes; UAT open — not SHOW / not Pilot) |
 | Role access matrix (CLI-RBAC-01) | `/admin/access` | 🟡 SCREEN (Phase A + custom roles/seed; UAT listed; not SHOW / not Pilot) |
-| Package/extras assign (CLI-57) | `/sanatorium` patient card Package tab + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay; Saxla same-block unfinished redispatch + modal №; close or cancel asks to save (blue saves and closes, gray discards and closes, question X returns); daily cap from the package cell (empty = 1), paid extras do not spend it; full stay can ask for checkout morning until 12:00; massage line can name one masseur; OPEN unpaid day-bucket; Pay/settlement keeps OPEN pin; nurse red block only if seated; day-end `UNPAID_MISSED`; cheque list is room or name, not the earliest 200, and hides days before today; leftover `*_POOL` not burn on Save/replace/plus; UAT open — not SHOW) |
+| Package/extras assign (CLI-57) | `/sanatorium` patient card Package tab + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay; Saxla same-block unfinished redispatch + modal №; close or cancel asks to save (blue saves and closes, gray discards and closes, question X returns); daily cap from the package cell (empty = 1), paid extras do not spend it; full stay can ask for checkout morning until 12:00; massage line can name one masseur; paid lab over quota is a cheque row only with a catalog price (in-quota lab stays a lab order); OPEN unpaid day-bucket; Pay/settlement keeps OPEN pin; nurse red block only if seated; day-end `UNPAID_MISSED`; cheque list is room or name, not the earliest 200, and hides days before today; leftover `*_POOL` not burn on Save/replace/plus; UAT open — not SHOW) |
 | Walk-in groups (CLI-61) | `/sanatorium/walk-in-parties` list + ModalShell CRUD | 🟡 SCREEN (empty selects; sticky doctor; physio on procedure; line grid + Eye; no journal in ops modal; hotel pending basket with `revenueCode`; UAT §11a open — not SHOW) |
 | Open attendance (CLI-62) | Admin type checkbox; plan/print label; `/nurse` seat-on-arrival; `/sanatorium/resources` foresight; settings SAME_DAY | 🟡 SCREEN (day-bucket + SAME_DAY; `prescribeExtras` OPEN pins stay days; Pay keeps pin; UAT §11b open — not SHOW / not Pilot) |
 | Mutation audit (CLI-19) | `/admin/audit` + `GET /api/admin/audit` (CatalogField incl. ClinicReceipt/ClinicShift; nav Mutation audit en/az/ru) | 🟡 SCREEN/SHIPPED viewer — Layer A + Wave B cashier SETTLE/VOID + shift + Wave E compound index (2026-10-29); HTTP_MUTATION UAT open; hash-chain deferred. Does not move Gate, Demo, Pilot, or Sell |

@@ -1,7 +1,6 @@
--- Nafta pilot: numeric BOCC revenue codes (B = business line, O = outlet, CC = category).
+-- DO NOT RUN. Live revenue codes are on the hotel revenue-code screen.
+-- Archive only. Nafta pilot: numeric BOCC revenue codes (B = business line, O = outlet, CC = category).
 -- ADR: docs/adr/hotel-revenue-code-resolution.md
--- Run once: psql -v ON_ERROR_STOP=1 -d era_hotel_pms -f nafta-revenue-codes-2026-10.sql
--- Safe to re-run: codes upsert by (organizationId, code); old codes are removed only when unused.
 \set org '6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b'
 
 BEGIN;

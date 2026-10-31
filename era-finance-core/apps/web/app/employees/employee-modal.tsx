@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Field, FieldRow, FieldSelect } from "@era/satellite-kit/ui";
+import { DatePicker, Field, FieldRow, FieldSelect } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../lib/api-client";
 import { parsePaginatedList } from "../../lib/paginated-list";
 import {
@@ -360,12 +360,11 @@ export function CreateEmployeeModal({
                 ))}
               </FieldSelect>
 
-              <Field
+              <DatePicker
                 label={t("employees.startDate")}
-                preset="date"
-                type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={setStartDate}
+                placeholder={t("ui.datePickerPlaceholder")}
               />
               <Field
                 label={t("employees.salaryGross")}

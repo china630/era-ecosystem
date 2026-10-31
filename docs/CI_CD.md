@@ -95,6 +95,10 @@ Docs-only pushes skip image build and skip droplet SSH.
 
 **Compose / contract path-filter:** `docker-compose.yml`, `docker-compose.prod.yml`, `config/satellite-install-contract.yaml`, `docker/scripts/deploy-droplet.sh`, `docker/scripts/migrate-all.sh` → `skipImages` + `deployScope=all` + floating tag. `docker/scripts/satellite-entrypoint.sh` → force **all** image rebuilds (copied into every satellite image).
 
+**Deploy integrity (2026-10-31):** `skipImages` ≠ `deploySkip`. Artifact `SKIP` is written by `formatDeployScopeArtifact` (Node) — never `jq '.deploySkip // .skip'` (`false // x` → `x` caused SKIP=true, SSH skipped, job still green). Deploy staging refuses `SKIP=true` unless `DEPLOY_SCOPE=skip`. Ship WaitStaging requires the **Deploy over SSH** step conclusion=`success` (job green alone is not enough).
+
+**Stack-wipe ban (2026-10-31):** `deploy-droplet.sh` must **not** `docker rm -f` compose-managed containers before `up` (that took down a live droplet when finance then failed health). Only remove **orphans** (wrong/missing `com.docker.compose.project`). Full deploy: wait **finance-core healthy** first, then orch/data/finance-web; dump `docker logs` on fail; **`ecosystem-smoke-critical.mjs` is blocking**. Ship also probes public staging URLs after SSH. `data-hub` depends on finance with `service_started` (not `healthy`) so a finance flap does not block calendar/FX.
+
 Manual: Actions → **Deploy staging** → `workflow_dispatch` (default **scope `finance`**, tag `dev`).  
 Choose `hotel` / `clinic` / … for one satellite, or `all` for the full stack.  
 Production stays **manual** (`deploy-production.yml`).

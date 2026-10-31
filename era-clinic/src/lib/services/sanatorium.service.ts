@@ -692,7 +692,11 @@ export async function listOpenEpisodes(input?: {
 
   const episodeInclude = {
     patientRef: true,
-    careDoctors: { select: { id: true }, take: 1 },
+    careDoctors: {
+      orderBy: { assignedAt: "asc" as const },
+      take: 1,
+      select: { practitioner: { select: { fullName: true } } },
+    },
     complaints: { orderBy: { recordedAt: "desc" as const }, take: 3 },
     diagnoses: {
       orderBy: { recordedAt: "desc" as const },
@@ -749,13 +753,17 @@ export async function listOpenEpisodes(input?: {
     walkInCloseDenied,
   } = await import("@/domain/sanatorium/episode-gates");
 
-  function withCareTeamFlag<T extends { careDoctors?: { id: string }[] }>(
+  function withCareTeamFlag<
+    T extends { careDoctors?: { practitioner?: { fullName?: string | null } | null }[] },
+  >(
     e: T,
-  ): Omit<T, "careDoctors"> & { hasCareTeam: boolean } {
+  ): Omit<T, "careDoctors"> & { hasCareTeam: boolean; firstDoctorName: string | null } {
     const { careDoctors, ...rest } = e;
+    const name = careDoctors?.[0]?.practitioner?.fullName?.trim() || null;
     return {
       ...rest,
       hasCareTeam: (careDoctors?.length ?? 0) > 0,
+      firstDoctorName: name,
     };
   }
 
@@ -785,7 +793,7 @@ export async function listOpenEpisodes(input?: {
       programCode: string | null;
       noPackageConfirmedAt?: Date | null;
       programInstance?: { id: string } | null;
-      careDoctors?: { id: string }[];
+      careDoctors?: { practitioner?: { fullName?: string | null } | null }[];
     },
   >(e: T) {
     const flagged = withCareTeamFlag(e);
@@ -812,16 +820,19 @@ export async function listOpenEpisodes(input?: {
   const { lookupHotelStayWindow } = await import("@/lib/hotel-stay-person");
   const { bakuDateKey } = await import("@/lib/baku-day");
   const arrivalByEpisodeId = new Map<string, string>();
+  const departureByEpisodeId = new Map<string, string>();
   await Promise.all(
     episodes.map(async (e) => {
-      if (e.reservationId) {
-        const window = await lookupHotelStayWindow(e.reservationId);
-        if (window?.checkInDate) {
-          const ymd = bakuDateKey(window.checkInDate);
-          if (ymd) {
-            arrivalByEpisodeId.set(e.id, ymd);
-            return;
-          }
+      const window = e.reservationId ? await lookupHotelStayWindow(e.reservationId) : null;
+      if (e.patientOrigin !== "WALK_IN" && window?.checkOutDate) {
+        const out = bakuDateKey(window.checkOutDate);
+        if (out) departureByEpisodeId.set(e.id, out);
+      }
+      if (window?.checkInDate) {
+        const ymd = bakuDateKey(window.checkInDate);
+        if (ymd) {
+          arrivalByEpisodeId.set(e.id, ymd);
+          return;
         }
       }
       const progStart = (e.programInstance as { startsOn?: Date | string } | null)?.startsOn;
@@ -839,6 +850,7 @@ export async function listOpenEpisodes(input?: {
   const withArrival = <T extends { id: string }>(row: T) => ({
     ...row,
     arrivalOn: arrivalByEpisodeId.get(row.id) ?? null,
+    departureOn: departureByEpisodeId.get(row.id) ?? null,
   });
 
   if (sortArrival) {

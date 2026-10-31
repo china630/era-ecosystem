@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -171,18 +172,8 @@ export default function AuditHubEngagementsPage() {
             onChange={(e) => setTitle(e.target.value)}
           />
           <div className="flex flex-wrap gap-2">
-            <input
-              type="date"
-              className="rounded border border-[#D1D5DB] p-2 text-xs"
-              value={periodFrom}
-              onChange={(e) => setPeriodFrom(e.target.value)}
-            />
-            <input
-              type="date"
-              className="rounded border border-[#D1D5DB] p-2 text-xs"
-              value={periodTo}
-              onChange={(e) => setPeriodTo(e.target.value)}
-            />
+            <FinanceDatePicker value={periodFrom} onChange={(iso) => setPeriodFrom(iso)} respectPeriodLock={false} />
+            <FinanceDatePicker value={periodTo} onChange={(iso) => setPeriodTo(iso)} respectPeriodLock={false} />
           </div>
           <button
             type="button"

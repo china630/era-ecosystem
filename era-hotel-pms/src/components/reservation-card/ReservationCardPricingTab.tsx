@@ -34,7 +34,10 @@ function tariffOf(row: DailyRateRow): number {
   return row.amount;
 }
 
-/** Night sell of the selected package. A plan price is only the fallback when no package is composed. */
+/**
+ * Night sell from the same package compose the server writes on save.
+ * A plan cell is only the fallback when this stay has no package compose.
+ */
 function packageNightBase(
   compose: PackageComposeSummary | null | undefined,
   planNightly: number | null,

@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { bakuDateDisplay, bakuDateKey, todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, bakuDateKey } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -65,6 +66,7 @@ export default function OrgSubscriptionAdminPage() {
   const orgId = String(params.orgId ?? "");
   const { token } = useAuth();
   const tc = useTranslations("superAdmin.orgBillingCoverage");
+  const tCommon = useTranslations("common");
   const [tree, setTree] = useState<TrialTree | null>(null);
   const [coverageDate, setCoverageDate] = useState("");
   const [loading, setLoading] = useState(true);
@@ -390,15 +392,12 @@ export default function OrgSubscriptionAdminPage() {
               />
               Mark as trial
             </label>
-            <label className="mt-3 block text-xs font-medium text-[#7F8C8D]">
-              License / trial end
-            </label>
-            <input
-              type="date"
-              className={`${MODAL_INPUT_CLASS} mt-1 max-w-xs`}
-              disabled={neverExpires}
+            <DatePicker
+              label="License / trial end"
               value={dateValue}
-              onChange={(e) => setDateValue(e.target.value)}
+              onChange={setDateValue}
+              placeholder={tCommon("datePlaceholder")}
+              disabled={neverExpires}
             />
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -469,15 +468,11 @@ export default function OrgSubscriptionAdminPage() {
               </strong>
             </p>
             <p className="text-xs text-[#95A5A6]">{tc("hint")}</p>
-            <label className="block text-xs font-medium text-[#7F8C8D]">
-              {tc("dateLabel")}
-            </label>
-            <input
-              type="date"
-              className={`${MODAL_INPUT_CLASS} max-w-xs`}
-              min={todayBakuYmd()}
+            <DatePicker
+              label={tc("dateLabel")}
               value={coverageDate}
-              onChange={(e) => setCoverageDate(e.target.value)}
+              onChange={setCoverageDate}
+              placeholder={tCommon("datePlaceholder")}
             />
             <div className="flex flex-wrap gap-2">
               <button
@@ -570,16 +565,16 @@ export default function OrgSubscriptionAdminPage() {
                         <span className="text-xs text-amber-700">overridden</span>
                       ) : null}
                     </div>
-                    <input
-                      type="date"
-                      className={`${MODAL_INPUT_CLASS} max-w-[11rem]`}
+                    <DatePicker
+                      label={s.satelliteKey}
                       value={satDates[s.satelliteKey] ?? ""}
-                      onChange={(e) =>
+                      onChange={(iso) =>
                         setSatDates((prev) => ({
                           ...prev,
-                          [s.satelliteKey]: e.target.value,
+                          [s.satelliteKey]: iso,
                         }))
                       }
+                      placeholder={tCommon("datePlaceholder")}
                     />
                     <button
                       type="button"
@@ -633,16 +628,16 @@ export default function OrgSubscriptionAdminPage() {
                   {m.trialOverridden ? (
                     <span className="text-amber-700">overridden</span>
                   ) : null}
-                  <input
-                    type="date"
-                    className={`${MODAL_INPUT_CLASS} max-w-[11rem]`}
+                  <DatePicker
+                    label={m.moduleKey}
                     value={modDates[m.moduleKey] ?? ""}
-                    onChange={(e) =>
+                    onChange={(iso) =>
                       setModDates((prev) => ({
                         ...prev,
-                        [m.moduleKey]: e.target.value,
+                        [m.moduleKey]: iso,
                       }))
                     }
+                    placeholder={tCommon("datePlaceholder")}
                   />
                   <button
                     type="button"

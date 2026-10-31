@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useEffect, useState } from "react";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
@@ -139,12 +140,7 @@ export default function ProcurementProtocolsPage() {
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span>{t("procurementProtocols.thDate")}</span>
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={protocolDate}
-            onChange={(e) => setProtocolDate(e.target.value)}
-          />
+          <FinanceDatePicker value={protocolDate} onChange={(iso) => setProtocolDate(iso)} respectPeriodLock={false} />
         </label>
         <button
           type="button"

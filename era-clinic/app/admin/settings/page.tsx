@@ -16,6 +16,7 @@ import {
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   CatalogField,
+  DatePicker,
   Field,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
@@ -796,18 +797,18 @@ export default function ClinicAdminSettingsPage() {
             }}
           />
           {draftSched.procedureCheckInWindow === "SAME_DAY" ? (
-            <Field
+            <DatePicker
               label={t("procedureCheckInSameDayUntil")}
               hint={t("procedureCheckInSameDayUntilHint")}
-              preset="shortText"
-              type="date"
               value={draftSched.procedureCheckInSameDayUntil}
-              onChange={(e) =>
+              onChange={(iso) =>
                 setDraftSched((prev) => ({
                   ...prev,
-                  procedureCheckInSameDayUntil: e.target.value,
+                  procedureCheckInSameDayUntil: iso,
                 }))
               }
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
             />
           ) : null}
           <label className="flex items-center gap-2 text-sm">

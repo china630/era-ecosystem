@@ -7,6 +7,7 @@ import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CatalogField,
   type CatalogFieldKind,
+  DatePicker,
   Field,
   FieldRow,
   ModalFooter,
@@ -1269,12 +1270,11 @@ export default function BuffetAdminPanel({
               setSpawnTemplateId(Array.isArray(next) ? next[0] ?? "" : next)
             }
           />
-          <Field
+          <DatePicker
             label={t("weekStart")}
-            preset="date"
-            type="date"
             value={spawnWeekStart}
-            onChange={(e) => setSpawnWeekStart(e.target.value)}
+            onChange={setSpawnWeekStart}
+            placeholder={tc("datePlaceholder")}
           />
           {kindFilter !== "STAFF" ? (
             <CatalogField
@@ -1404,12 +1404,11 @@ export default function BuffetAdminPanel({
           {planModal === "copy" ? (
             <p className="text-sm text-[#7F8C8D]">{t("copyRetryHint")}</p>
           ) : null}
-          <Field
+          <DatePicker
             label={t("serviceDate")}
-            preset="date"
-            type="date"
             value={planForm.serviceDate}
-            onChange={(e) => setPlanForm((f) => ({ ...f, serviceDate: e.target.value }))}
+            onChange={(iso) => setPlanForm((f) => ({ ...f, serviceDate: iso }))}
+            placeholder={tc("datePlaceholder")}
           />
           <CatalogField
             kind={"CLOSED_SMALL" as CatalogFieldKind}

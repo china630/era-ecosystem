@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -333,21 +334,11 @@ function VatDepositPageInner() {
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="text-sm">
             <span className="text-gray-600">{t("reporting.vatDeposit.dateFrom")}</span>
-            <input
-              className={MODAL_INPUT_CLASS}
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
+            <FinanceDatePicker value={dateFrom} onChange={(iso) => setDateFrom(iso)} respectPeriodLock={false} />
           </label>
           <label className="text-sm">
             <span className="text-gray-600">{t("reporting.vatDeposit.dateTo")}</span>
-            <input
-              className={MODAL_INPUT_CLASS}
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
+            <FinanceDatePicker value={dateTo} onChange={(iso) => setDateTo(iso)} respectPeriodLock={false} />
           </label>
           <button
             type="button"

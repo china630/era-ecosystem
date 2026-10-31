@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -228,14 +229,7 @@ export function CreateTransferModal({ open, onClose, onSaved }: CreateTransferMo
           <label htmlFor="transfer-date" className={MODAL_FIELD_LABEL_CLASS}>
             {t("inventory.stockTransferDate")}
           </label>
-          <input
-            id="transfer-date"
-            type="date"
-            value={documentDate}
-            onChange={(e) => setDocumentDate(e.target.value)}
-            className={fieldErrorClass(!!err("date"))}
-            aria-invalid={!!err("date")}
-          />
+          <FinanceDatePicker value={documentDate} onChange={(iso) => setDocumentDate(iso)} respectPeriodLock={false} id="transfer-date" aria-invalid={!!err("date")} />
           {err("date") ? <p className="mt-1 text-xs text-red-600 m-0">{err("date")}</p> : null}
         </div>
 

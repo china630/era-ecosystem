@@ -31,7 +31,7 @@
 | Admin | `/admin` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (FNB-RBAC-01; not SHOW) |
 | Edition + halls | `/admin/settings` (Halls modal) · orch `/settings/subscription` F&B edition card | 🟡 SCREEN (FNB-09 / FNB-10 API; browser run and UAT step open) |
-| Buffet planner | `/admin/buffet/*` submenu (module `fnb_buffet_planner`) | 🟡 SCREEN (playbook: PageHeader.actions, composition modal, nav collapse; service dates `дд.мм.гггг`; UAT FB-5 unsigned — not SHOW) |
+| Buffet planner | `/admin/buffet/*` submenu (module `fnb_buffet_planner`) | 🟡 SCREEN (playbook: PageHeader.actions, composition modal, nav collapse; service dates `дд.мм.гггг`; date controls are `DatePicker`. Does not move Gate, UI 🟡, Demo 🟡, Pilot, or edition. UAT FB-5 unsigned — not SHOW) |
 | Buffet cost attribution | `/admin/settings` (Finance web URL) + `/admin/buffet/*` · Finance `/inventory/buffet-food-cost` | 🟡 SCREEN (KPI planks; Hotel/HR via peer/orch not Settings URLs; punchlist open — not SHOW) |
 | Outlets (multi-café) | `/select-outlet` + `/admin/settings` caps/shape/DELETE; Floor till-only; Buffet cap filter; pay `printChrome` | 🟡 SCREEN (FNB-09; staging RESTAURANT→NAFTANI 2026-10-29; UAT FB-OUTLET-01 open — not SHOW) |
 | Mutation audit (FNB-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (CatalogField incl. PosShift) | SCREEN / 🟡 — Layer A + Wave B PAY/DEFER_HUB/PosShift + Wave E compound index (2026-10-29); UAT open — not SHOW; hash-chain deferred. Does not move Gate, Demo, Pilot, or Sell |

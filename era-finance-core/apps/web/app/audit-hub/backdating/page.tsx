@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -66,21 +67,11 @@ export default function AuditHubBackdatingPage() {
       <div className={`${CARD_CONTAINER_CLASS} grid gap-3 p-4 sm:grid-cols-2`}>
         <label className="text-xs font-semibold text-[#34495E]">
           {t("auditHub.periodFrom")}
-          <input
-            type="date"
-            className={`${INPUT_BORDERED_CLASS} mt-1 w-full`}
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
         </label>
         <label className="text-xs font-semibold text-[#34495E]">
           {t("auditHub.periodTo")}
-          <input
-            type="date"
-            className={`${INPUT_BORDERED_CLASS} mt-1 w-full`}
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
         </label>
         <label className="text-xs font-semibold text-[#34495E]">
           {t("auditHub.thresholdDays")}

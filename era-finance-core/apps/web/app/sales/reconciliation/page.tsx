@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useEffect, useState } from "react";
 import { X } from "lucide-react";
@@ -341,21 +342,11 @@ export default function ReconciliationPage() {
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           <span>{t("reporting.from")}</span>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className={`rounded-lg border bg-white px-2 py-1.5 text-sm ${BORDER_MUTED_CLASS}`}
-          />
+          <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           <span>{t("reporting.to")}</span>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className={`rounded-lg border bg-white px-2 py-1.5 text-sm ${BORDER_MUTED_CLASS}`}
-          />
+          <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
         </label>
         <button
           type="button"

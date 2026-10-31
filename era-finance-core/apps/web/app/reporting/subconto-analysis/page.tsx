@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -133,21 +134,11 @@ export default function SubcontoAnalysisPage() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           {t("reporting.from")}
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           {t("reporting.to")}
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           {t("reporting.subconto.type")}

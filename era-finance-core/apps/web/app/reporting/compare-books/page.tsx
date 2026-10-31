@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Field, FieldSelect } from "@era/satellite-kit/ui";
+import { DatePicker, FieldSelect } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { apiFetch } from "../../../lib/api-client";
 import {
@@ -149,19 +149,17 @@ export default function CompareBooksPage() {
             </option>
           ))}
         </FieldSelect>
-        <Field
+        <DatePicker
           label={t("compareBooks.dateFrom")}
-          preset="date"
-          type="date"
           value={dateFrom}
-          onChange={(event) => setDateFrom(event.target.value)}
+          onChange={setDateFrom}
+          placeholder={t("ui.datePickerPlaceholder")}
         />
-        <Field
+        <DatePicker
           label={t("compareBooks.dateTo")}
-          preset="date"
-          type="date"
           value={dateTo}
-          onChange={(event) => setDateTo(event.target.value)}
+          onChange={setDateTo}
+          placeholder={t("ui.datePickerPlaceholder")}
         />
         <div className="flex items-end">
           <button

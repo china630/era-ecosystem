@@ -31,9 +31,9 @@ The hotel looks codes up in two ways and never by name text:
 - **System role.** `RevenueCode.systemRole` (unique per org, list in `src/lib/revenue-code-match.ts`). A missing role refuses the post (`REVENUE_ROLE_MISSING`). Clinic a-la-carte uses `PROCEDURE` (not `MEDICAL`). F&B category roles: `FOOD`, `BEVERAGE`, `ALCOHOL`, `TOBACCO`, `HALL`, `ENTERTAINMENT`, `FB_DISCOUNT`.
 - **Exact code.** A satellite sends the numeric code; `findRevenueCodeByCode` matches active codes.
 
-**Cross-satellite remap SSOT:** [`scripts/ops/nafta-revenue-remap-matrix.json`](../../scripts/ops/nafta-revenue-remap-matrix.json) (`old_code → new_code → new_gl`). Apply hotel DB, then clinic/F&B string fields, then finance NAS + historical journal lines. Runbook: [`scripts/ops/nafta-revenue-remap-all.md`](../../scripts/ops/nafta-revenue-remap-all.md).
+The one-shot Nafta densify scripts are gone. Live revenue codes and their NAS accounts stay on the hotel revenue-code screen. Finance keeps the leaf that code already points at.
 
-Elektraweb text codes and name/token matchers stay import-only. Legacy `**/nafta-revenue-codes-2026-10.sql` seeds are superseded by the remap matrix + `nafta-revenue-remap-*.mjs` ops scripts.
+Elektraweb text codes and name/token matchers stay import-only.
 
 ## Consequences
 

@@ -84,6 +84,82 @@ async function listPriceForCode(procedureCode: string): Promise<number> {
   return charge.amountNet;
 }
 
+/** Catalog list price only. A missing lab price stays missing (no default AZN). */
+async function labListPrice(serviceCode: string): Promise<number> {
+  const { resolveEntitlementCharge } = await import(
+    "@/domain/sanatorium/entitlement-charge.service"
+  );
+  const charge = await resolveEntitlementCharge({
+    patientOrigin: "WALK_IN",
+    serviceCode,
+  });
+  if (charge.priceMissing) return 0;
+  return charge.amountNet;
+}
+
+/** Paid lab over the package quota. A cheque row, not a lab order and not a cabin. */
+async function prescribePaidLabOrders(input: {
+  episode: {
+    id: string;
+    patientRefId: string;
+    patientOrigin: string;
+    reservationId: string | null;
+    roomNumber: string | null;
+  };
+  line: ExtraPrescribeLine;
+  orgId: string;
+  prescribedByPractitionerId: string | null;
+  now: Date;
+  seqStart: number;
+}): Promise<{ ids: string[]; seq: number } | null> {
+  const service = await prisma.diagnosticService.findFirst({
+    where: {
+      active: true,
+      organizationId: input.orgId,
+      OR: [{ code: input.line.procedureCode }, { serviceCode: input.line.procedureCode }],
+    },
+    select: { code: true, serviceCode: true, titleAz: true, titleRu: true, titleEn: true },
+  });
+  if (!service) return null;
+  const unitPrice = await labListPrice(service.serviceCode || service.code);
+  if (!(unitPrice > 0)) {
+    throw new PackageAssignError(
+      `Lab ${input.line.procedureCode} has no price`,
+      "NO_PRICE",
+      400,
+    );
+  }
+  const name = service.titleAz?.trim() || service.titleRu?.trim() || service.titleEn?.trim() || service.code;
+  const ids: string[] = [];
+  let seq = input.seqStart;
+  for (let i = 0; i < input.line.qty; i++) {
+    const scheduledAt = new Date(input.now.getTime() + seq * 60_000);
+    const order = await prisma.procedureOrder.create({
+      data: {
+        organizationId: input.orgId,
+        patientRefId: input.episode.patientRefId,
+        clinicalEpisodeId: input.episode.id,
+        procedureCode: service.code,
+        procedureName: name,
+        scheduledAt,
+        endsAt: scheduledAt,
+        sequenceIndex: seq++,
+        status: "PENDING_PAY",
+        note: input.line.note ?? undefined,
+        patientOrigin: input.episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE",
+        reservationId: input.episode.reservationId ?? undefined,
+        amountNet: unitPrice,
+        bonusEligible: true,
+        inPackage: false,
+        prescribedByPractitionerId: input.prescribedByPractitionerId,
+        schedulingMode: "OPEN",
+      },
+    });
+    ids.push(order.id);
+  }
+  return { ids, seq };
+}
+
 /**
  * Balance code that still has unused package quota for this procedure
  * (the line itself, or a block that lists it). Null when it may be a paid extra.
@@ -180,11 +256,33 @@ export async function prescribeExtras(
     // Overflow past package quota is a paid extra. Quota no longer blocks the write.
     const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
-      throw new PackageAssignError(
-        `Unknown procedure type ${line.procedureCode}`,
-        "UNKNOWN_TYPE",
-        400,
-      );
+      if (!episode.patientRefId) {
+        throw new PackageAssignError("Episode has no patient", "NOT_FOUND", 404);
+      }
+      const labIds = await prescribePaidLabOrders({
+        episode: {
+          id: episode.id,
+          patientRefId: episode.patientRefId,
+          patientOrigin: episode.patientOrigin,
+          reservationId: episode.reservationId,
+          roomNumber: episode.roomNumber,
+        },
+        line,
+        orgId,
+        prescribedByPractitionerId,
+        now,
+        seqStart: seq,
+      });
+      if (!labIds) {
+        throw new PackageAssignError(
+          `Unknown procedure type ${line.procedureCode}`,
+          "UNKNOWN_TYPE",
+          400,
+        );
+      }
+      ids.push(...labIds.ids);
+      seq = labIds.seq;
+      continue;
     }
     if (!(await procedureFitsGuestSex(line.procedureCode, episode.patientRef?.sex))) {
       throw new PackageAssignError(

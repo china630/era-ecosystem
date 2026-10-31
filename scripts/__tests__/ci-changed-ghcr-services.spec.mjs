@@ -4,7 +4,11 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { resolveGhcrPlan, GHCR_MATRIX } from "../ci-changed-ghcr-services.mjs";
+import {
+  resolveGhcrPlan,
+  formatDeployScopeArtifact,
+  GHCR_MATRIX,
+} from "../ci-changed-ghcr-services.mjs";
 
 describe("resolveGhcrPlan", () => {
   it("rebuilds only orchestrator for orch-only diffs", () => {
@@ -91,6 +95,24 @@ describe("resolveGhcrPlan", () => {
     assert.equal(plan.deploySkip, false);
     assert.equal(plan.deployScope, "all");
     assert.equal(plan.imageTagMode, "floating");
+  });
+
+  it("formatDeployScopeArtifact: contract-only keeps SKIP=false (not skipImages)", () => {
+    const plan = resolveGhcrPlan(["docker/scripts/deploy-droplet.sh"]);
+    const a = formatDeployScopeArtifact(plan);
+    assert.equal(a.skipImages, true);
+    assert.equal(a.deploySkip, false);
+    assert.match(a.envText, /^SKIP=false$/m);
+    assert.match(a.envText, /^DEPLOY_SCOPE=all$/m);
+    assert.match(a.envText, /^IMAGE_TAG_MODE=floating$/m);
+  });
+
+  it("formatDeployScopeArtifact: docs-only SKIP=true + scope skip", () => {
+    const plan = resolveGhcrPlan(["docs/CI_CD.md"]);
+    const a = formatDeployScopeArtifact(plan);
+    assert.equal(a.deploySkip, true);
+    assert.match(a.envText, /^SKIP=true$/m);
+    assert.match(a.envText, /^DEPLOY_SCOPE=skip$/m);
   });
 
   it("clinic + compose → clinic image + deployScope all + floating tag", () => {

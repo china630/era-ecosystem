@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
 import {
+  DatePicker,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -14,7 +15,6 @@ import {
 } from "@era/satellite-kit/ui";
 import {
   CARD_CLASS,
-  INPUT_CLASS,
   PRIMARY_BTN_CLASS,
 } from "@/lib/design-system";
 
@@ -115,15 +115,12 @@ export default function CalendarPage() {
       </div>
       {msg && <p className="mb-3 text-sm text-[#7F8C8D]">{msg}</p>}
       <div className={`${CARD_CLASS} mb-6 p-4`}>
-        <label className="block text-sm text-[#7F8C8D]">
-          {tc("date")}
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={`${INPUT_CLASS} mt-1 block`}
-          />
-        </label>
+        <DatePicker
+          label={tc("date")}
+          value={date}
+          onChange={setDate}
+          placeholder={tc("datePlaceholder")}
+        />
       </div>
       <div className={`${CARD_CLASS} overflow-hidden`}>
         <table className="w-full text-sm">

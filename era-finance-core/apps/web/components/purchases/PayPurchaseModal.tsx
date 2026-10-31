@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { FormEvent, useEffect, useState } from "react";
@@ -125,12 +126,7 @@ export function PayPurchaseModal({
         </div>
         <div>
           <span className={lbl}>{t("inventory.purchasePayDate", { defaultValue: "Tarix" })}</span>
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
-          />
+          <FinanceDatePicker value={paymentDate} onChange={(iso) => setPaymentDate(iso)} respectPeriodLock={false} />
         </div>
         <div>
           <span className={lbl}>{t("invoiceNew.paymentAccount", { defaultValue: "Ödəniş hesabı" })}</span>

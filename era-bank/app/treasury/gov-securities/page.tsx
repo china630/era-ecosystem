@@ -5,6 +5,7 @@ import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -28,6 +29,7 @@ function GovSecuritiesPageInner() {
   const [busy, setBusy] = useState(false);
   const [createResult, setCreateResult] = useState("");
   const [actionResult, setActionResult] = useState("");
+  const [maturityDate, setMaturityDate] = useState("2027-06-14");
   const { mode, entityId, open, close, isOpen } = useOpsModal();
 
   const load = useCallback(async () => {
@@ -107,7 +109,13 @@ function GovSecuritiesPageInner() {
           <input name="isin" placeholder="ISIN" defaultValue="AZ0000000001" className="rounded border px-3 py-2 text-sm" />
           <input name="faceValueMinor" type="number" defaultValue={10000000} className="rounded border px-3 py-2 text-sm" />
           <input name="bookValueMinor" type="number" defaultValue={9800000} className="rounded border px-3 py-2 text-sm" />
-          <input name="maturityDate" type="date" defaultValue="2027-06-14" className="rounded border px-3 py-2 text-sm" />
+          <DatePicker
+            label="Maturity"
+            value={maturityDate}
+            onChange={setMaturityDate}
+            placeholder="dd.mm.yyyy"
+          />
+          <input type="hidden" name="maturityDate" value={maturityDate} />
         </div>
         <button type="submit" className={`${PRIMARY_BUTTON_CLASS} mt-4`} disabled={busy}>
           Record purchase

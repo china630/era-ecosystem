@@ -9,7 +9,7 @@
 
 **BE deepen (2026-08-17):** Negative-path suites landed — `__tests__/fnb-pos-negative.spec.ts`, `fnb-inv-negative.spec.ts`, `fnb-labor-negative.spec.ts`.
 
-**Civil date labels (2026-10-30):** Buffet plan and forecast dates render `дд.мм.гггг` via `bakuDateDisplay`. Pickers and request bodies stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
+**Civil date labels (2026-10-30, controls 2026-10-31):** Buffet plan and forecast dates render `дд.мм.гггг` via `bakuDateDisplay`. Forecast, admin, page chrome, daily menu, and the calendar use kit `DatePicker`. Request bodies stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
 
 ---
 

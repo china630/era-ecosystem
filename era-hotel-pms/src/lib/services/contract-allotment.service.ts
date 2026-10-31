@@ -5,10 +5,6 @@ import {
   computeContractNightAvailable,
   eachNight,
 } from '@/lib/services/contract-allotment-core';
-import {
-  countDoorsUsedOnNight,
-  loadShareSlicesForType,
-} from '@/lib/services/share-assignment.service';
 
 export async function listContractAllotments(salesContractId: string) {
   return prisma.contractAllotment.findMany({
@@ -139,14 +135,19 @@ export async function getAvailabilityWithContractAllotment(
   if (!roomType) throw new Error('Room type not found');
 
   const nights = eachNight(from, to);
+  const { sellStatesForType } = await import('@/lib/services/inventory-guard.service');
+  const { states } = await sellStatesForType(roomTypeId, from, to);
+  const byDate = new Map(states.map((state) => [state.night.toISOString().slice(0, 10), state]));
   const dayResults = [];
 
   for (const night of nights) {
-    const { start, end } = hotelNightBounds(night);
-    const slices = await loadShareSlicesForType(roomTypeId, start, end);
-    const overlapping = countDoorsUsedOnNight(slices, start, roomType.adultCapacity ?? 2);
-
-    let available = Math.max(0, roomType.baseQuota - overlapping);
+    const key = night.toISOString().slice(0, 10);
+    const state = byDate.get(key);
+    const overlapping = state?.typeUsed ?? 0;
+    const typeCap = state?.typeCap ?? (state?.stopSell ? 0 : roomType.baseQuota + roomType.overbookAllowance);
+    const houseLeft = Math.max(0, (state?.houseCap ?? typeCap) - (state?.houseUsed ?? overlapping));
+    let available = Math.min(Math.max(0, typeCap - overlapping), houseLeft);
+    const capReason = available < 1 ? state?.reason ?? null : null;
 
     if (salesContractId) {
       const allotment = await prisma.contractAllotment.findFirst({
@@ -180,21 +181,24 @@ export async function getAvailabilityWithContractAllotment(
         available,
         contractAllotment: allotment.nightlyQuota,
         contractBooked,
+        reason: available < 1 ? capReason : null,
       });
     } else {
       const contractQuota = await getContractAllotmentQuota(roomTypeId, night);
       const contractBooked = await countContractBookings(roomTypeId, night);
       const barPool = computeBarPoolAfterContractHold(
-        roomType.baseQuota,
+        typeCap,
         overlapping,
         contractQuota,
         contractBooked,
       );
+      available = Math.min(barPool, houseLeft);
       dayResults.push({
         date: night.toISOString().slice(0, 10),
-        available: barPool,
+        available,
         contractAllotment: contractQuota,
         contractBooked,
+        reason: available < 1 ? capReason : null,
       });
     }
   }
@@ -219,6 +223,12 @@ export async function assertContractAllotmentAvailable(
     salesContractId,
   );
   if (result.available < 1) {
+    const night = result.nights.find((row) => row.available === result.available);
+    const reason = night && 'reason' in night ? night.reason : null;
+    if (reason === 'STOP_SELL' || reason === 'TYPE_CAP' || reason === 'HOUSE_CAP') {
+      const { InventoryCapError } = await import('@/lib/services/inventory-guard.service');
+      throw new InventoryCapError(reason);
+    }
     throw new Error('Contract allotment exhausted for selected dates');
   }
 }

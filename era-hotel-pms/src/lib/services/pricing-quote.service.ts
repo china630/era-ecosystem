@@ -175,7 +175,7 @@ export async function getNightlyRoomChargeForDate(
   );
   const packageCodes = (
     res.paxGuests.length > 0
-      ? paxCodesForCompose(res.paxGuests, res.ratePlan.code ?? res.medicalPackageCode)
+      ? paxCodesForCompose(res.paxGuests, null)
       : [res.medicalPackageCode]
   )
     .map((c) => (c ?? '').trim().toUpperCase())

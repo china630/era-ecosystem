@@ -6,6 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable — do not claim GA; Pilot open; KKM STUB  
+**Overbook (2026-10-31):** type and house allowances default 0. HOT-FO-01/02 stay SHIPPED. AC-HOT-FO stays ✅. Does not change the rollup. `docs/editions/hotel.yaml` unchanged.
 **Night audit → finance (2026-10-31):** queue accepts the night-audit correlation id. HOT-NA-01 stays SHIPPED. Does not change the rollup.
 
 ---
@@ -34,7 +35,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-9 | Early checkout unused-nights refund (HOT-CO-04) | [x] | ADR Accepted; preview+apply+UI; UAT §33; AC-HOT-CO-EARLY 🟡 |
 | S-10 | Nafta HK deepen (roster, floor sheet, `/hk/rooms`, laundry) | [~] | Engineering SCREEN — soft sort+room#; void IN_PLANT; FO amount+express; stay linen edit-only; maids edit/unlink; discrepancy create modal; playbook filter+one grid+one PRIMARY; kit `DATA_TABLE_SHELL` / `CARD_CONTAINER` on secondary HK (incl. consumption/minibar/mobile); i18n trio; [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED. Does not move Gate, Pilot, or edition |
 | S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + agency table + FO pax SKU; **pilot punch open** |
-| S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; sell-versions catalog + main-SKU night audit; UAT §40 open |
+| S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; save, night audit, and the open card share the compose; unfixed nights replaced; UAT §40 open |
 | S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; companion MDM id stays on that row; **pilot punch open** |
 | S-16 | Reservation card IA D7 W1 | [~] | HOT-BOOK-04 API; ADR hotel-reservation-card-and-party-ops |
 | S-17 | Depart guest (D7 W2) | [~] | HOT-FO-05 API; closed folio on a departed guest is not recreated; stay save keeps `departedAt`; UAT §43 open |
@@ -45,7 +46,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-22 | Card right-pane Guests density | [~] | HOT-BOOK-06 API |
 | S-23 | Card Rate Grid + Folio chrome | [~] | HOT-BOOK-07/08 API |
 | S-24 | Card Notes feed + alert | [~] | HOT-BOOK-09 API |
-| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; Nafta v2 + SatAdmin manual flags + seed PROCEDURE; remap apply + NA day-doc open; not SHIPPED; out of BE and SHOW rollup |
+| S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; Nafta v2 + SatAdmin manual flags + seed PROCEDURE; one-shot remap scripts removed 2026-10-31; 2026-10-27 SQL seeds archive-only; not SHIPPED; out of BE and SHOW rollup |
 | S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
 | S-27 | Transfers/Tours boarding-first + Airport fold | [x] | HOT-XFER-01 / HOT-TOUR-01 SHIPPED SCREEN; AC-HOT-XFER/TOUR Scaffold ✅ out of BE rollup; UX closeout (list+modals, icon toolbar, bare print+letterhead); UAT §14/§14b; edition `mvp` unchanged |
 | S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit`; CI fail-closed; Wave B DAY_CLOSE; Wave E compound `(organizationId, createdAt)` 2026-10-29; HOT-AUD-01 / AC-HOT-AUD 🟡; hash-chain deferred; next = UAT; Nest API cutover is **P0 platform debt** ([industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md)) |

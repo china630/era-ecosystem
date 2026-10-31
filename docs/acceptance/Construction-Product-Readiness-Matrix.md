@@ -26,7 +26,7 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| Projects | `/projects` | 🟡 |
+| Projects | `/projects` | 🟡 — field-ops dates are `DatePicker`. Does not move Gate, UI 🟡, Demo 🟡, Pilot, or edition |
 | Plan vs actual | `/projects/[id]` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (CN-RBAC-01; not SHOW) |
 

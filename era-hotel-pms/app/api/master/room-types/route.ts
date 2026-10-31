@@ -11,6 +11,7 @@ const schema = z.object({
   name: z.string().min(1),
   ...localizedNameFields,
   baseQuota: z.number().int().positive(),
+  overbookAllowance: z.number().int().nonnegative().optional(),
   adultCapacity: z.number().int().optional(),
   standardAdults: z.number().int().min(1).max(10).optional(),
   childCapacity: z.number().int().optional(),

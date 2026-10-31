@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -166,21 +167,11 @@ export default function CashFlowPage() {
           <div className="flex max-w-4xl flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1">
               <span className={FORM_LABEL_CLASS}>{t("reports.cashFlow.dateFrom")}</span>
-              <input
-                type="date"
-                className={FORM_INPUT_CLASS}
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
+              <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
             </label>
             <label className="flex flex-col gap-1">
               <span className={FORM_LABEL_CLASS}>{t("reports.cashFlow.dateTo")}</span>
-              <input
-                type="date"
-                className={FORM_INPUT_CLASS}
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
+              <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
             </label>
             <label className="flex min-w-[220px] flex-col gap-1">
               <span className={FORM_LABEL_CLASS}>{t("reports.cashFlow.cashDeskId")}</span>

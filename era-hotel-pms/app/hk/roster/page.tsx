@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { bakuDateShort } from '@era/satellite-kit/time';
 import { addHotelDays, hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import {
   CatalogField,
@@ -166,7 +167,7 @@ export default function HkRosterPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('floor')}</th>
                 {days.map((d) => (
                   <th key={d} className={DATA_TABLE_TH_LEFT_CLASS}>
-                    {d.slice(5)}
+                    {bakuDateShort(d)}
                   </th>
                 ))}
               </tr>

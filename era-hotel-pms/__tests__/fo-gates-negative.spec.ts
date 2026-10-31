@@ -9,7 +9,9 @@ jest.mock('@/lib/prisma', () => ({
     },
     room: { findUnique: jest.fn() },
     roomChangePlan: { create: jest.fn() },
-    roomType: { findUnique: jest.fn() },
+    roomType: { findUnique: jest.fn(), findMany: jest.fn() },
+    hotelProfile: { findFirst: jest.fn().mockResolvedValue(null) },
+    channelStopSell: { findFirst: jest.fn().mockResolvedValue(null) },
   },
 }));
 
@@ -37,6 +39,7 @@ jest.mock('@/lib/integration/clinic-capacity-client', () => ({
 
 jest.mock('@/lib/services/channel.service', () => ({
   hasStopSellInRange: jest.fn().mockResolvedValue(false),
+  isStopSellForDate: jest.fn().mockResolvedValue(false),
 }));
 
 jest.mock('@/lib/services/folio.service', () => ({
@@ -196,12 +199,9 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
     it('throws when no availability for room type', async () => {
       const { prisma } = jest.requireMock('@/lib/prisma');
       // Patch module internals via counting overlapping = quota
-      prisma.roomType.findUnique.mockResolvedValue({
-        id: 'rt1',
-        baseQuota: 1,
-        adultCapacity: 2,
-        active: true,
-      });
+      prisma.roomType.findMany.mockResolvedValue([
+        { id: 'rt1', baseQuota: 1, overbookAllowance: 0, adultCapacity: 2 },
+      ]);
       prisma.reservation.findMany.mockResolvedValue([
         {
           id: 'other',
@@ -256,7 +256,7 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
           checkInDate: new Date('2026-08-10'),
           checkOutDate: new Date('2026-08-13'),
         }),
-      ).rejects.toThrow(/No availability/);
+      ).rejects.toThrow(/Room type overbook limit/);
     });
   });
 

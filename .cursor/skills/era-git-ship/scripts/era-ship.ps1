@@ -473,6 +473,72 @@ function Test-ShouldWaitStaging {
     return $true
 }
 
+function Assert-DeployStagingSshApplied {
+    param(
+        [Parameter(Mandatory = $true)]$RunId,
+        [string]$Url = ""
+    )
+    # Job conclusion=success is not enough: SKIP=true can skip Write/SSH and still
+    # leave the job green (2026-10-31 false-green after jq `deploySkip // skip`).
+    $payload = gh run view $RunId --json jobs | ConvertFrom-Json
+    $job = @($payload.jobs) | Where-Object { $_.name -eq "deploy" } | Select-Object -First 1
+    if (-not $job) { throw "Deploy staging: no deploy job on run $RunId ($Url)" }
+    $ssh = @($job.steps) | Where-Object { $_.name -eq "Deploy over SSH" } | Select-Object -First 1
+    if (-not $ssh) { throw "Deploy staging: missing Deploy over SSH step ($Url)" }
+    if ($ssh.conclusion -eq "skipped") {
+        throw ("Deploy staging false-green: Deploy over SSH was skipped — droplet not updated ({0}). " +
+            "Pass -SkipStaging only for intentional git-only / docs-only ships.") -f $Url
+    }
+    if ($ssh.conclusion -ne "success") {
+        throw "Deploy staging: Deploy over SSH conclusion=$($ssh.conclusion) ($Url)"
+    }
+}
+
+function Assert-StagingPublicSmoke {
+    # After SSH success: prove money/control plane answers publicly (not only job green).
+    $urls = @(
+        "https://finance-api.era-365.online/api/health",
+        "https://api.era-365.online/health",
+        "https://data.era-365.online/healthz",
+        "https://app.era-365.online/"
+    )
+    $deadline = (Get-Date).AddMinutes(3)
+    $failed = @()
+    while ((Get-Date) -lt $deadline) {
+        $failed = @()
+        foreach ($u in $urls) {
+            try {
+                $resp = Invoke-WebRequest -Uri $u -TimeoutSec 12 -UseBasicParsing
+                if ($resp.StatusCode -lt 200 -or $resp.StatusCode -ge 500) {
+                    $failed += "$u -> $($resp.StatusCode)"
+                }
+            }
+            catch {
+                $code = $null
+                if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+                $failed += "$(if ($code) { "$u -> $code" } else { "$u -> $($_.Exception.Message)" })"
+            }
+        }
+        if ($failed.Count -eq 0) {
+            Write-Host "OK staging public smoke ($($urls.Count) URLs)"
+            return
+        }
+        Start-Sleep -Seconds 10
+    }
+    throw ("Staging public smoke FAILED after Deploy SSH — droplet not healthy:`n  " + ($failed -join "`n  "))
+}
+
+function Complete-DeployStagingRun {
+    param(
+        [Parameter(Mandatory = $true)]$RunId,
+        [string]$Url = "",
+        [string]$Label = "OK Deploy staging"
+    )
+    Assert-DeployStagingSshApplied -RunId $RunId -Url $Url
+    Assert-StagingPublicSmoke
+    Write-Host ("{0}: {1}" -f $Label, $Url)
+}
+
 function Wait-DeployStagingAfterBuild {
     param([string]$Sha, [int]$TimeoutSec = 2400)
     Write-Host "Waiting for Deploy staging after build of $Sha..."
@@ -503,14 +569,14 @@ function Wait-DeployStagingAfterBuild {
                 Write-Host "Watching Deploy staging $($activeAny.databaseId) (post-build, SHA unmatched)..."
                 gh run watch $activeAny.databaseId --exit-status
                 if ($LASTEXITCODE -ne 0) { throw "Deploy staging failed: $($activeAny.url)" }
-                Write-Host ("OK Deploy staging: {0}" -f $activeAny.url)
+                Complete-DeployStagingRun -RunId $activeAny.databaseId -Url $activeAny.url
                 return
             }
             $doneFresh = @($fresh | Where-Object {
                 $_.status -eq "completed" -and $_.conclusion -eq "success"
             } | Select-Object -First 1)
             if ($doneFresh) {
-                Write-Host ("OK Deploy staging (fresh post-build): {0}" -f $doneFresh.url)
+                Complete-DeployStagingRun -RunId $doneFresh.databaseId -Url $doneFresh.url -Label "OK Deploy staging (fresh post-build)"
                 return
             }
             $failedFresh = @($fresh | Where-Object {
@@ -526,7 +592,7 @@ function Wait-DeployStagingAfterBuild {
             Write-Host "Watching Deploy staging $($active.databaseId)..."
             gh run watch $active.databaseId --exit-status
             if ($LASTEXITCODE -ne 0) { throw "Deploy staging failed: $($active.url)" }
-            Write-Host ("OK Deploy staging: {0}" -f $active.url)
+            Complete-DeployStagingRun -RunId $active.databaseId -Url $active.url
             return
         }
         $done = $forSha | Where-Object { $_.status -eq "completed" -and $_.conclusion -eq "success" } | Select-Object -First 1
@@ -534,7 +600,7 @@ function Wait-DeployStagingAfterBuild {
             $created = ConvertTo-UtcFromGhTime $done.createdAt
             # Do not accept a previous wave's staging success (was 45m and SHA-unrelated).
             if ($created -gt (Get-Date).ToUniversalTime().AddMinutes(-12)) {
-                Write-Host ("OK Deploy staging (recent success): {0}" -f $done.url)
+                Complete-DeployStagingRun -RunId $done.databaseId -Url $done.url -Label "OK Deploy staging (recent success)"
                 return
             }
         }

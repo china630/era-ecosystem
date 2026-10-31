@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { apiFetch } from "../../lib/api-client";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { EmptyState } from "../empty-state";
@@ -331,7 +332,7 @@ export function InventoryAuditCreateFlow({
             </label>
             <label className={MODAL_FIELD_LABEL_CLASS}>
               {t("inventory.auditThDateDoc")}
-              <input type="date" className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`} value={dateStr} readOnly />
+              <span className="mt-1 block text-[13px] text-[#34495E]">{dateStr ? bakuDateDisplay(dateStr) : ""}</span>
             </label>
           </div>
           <label className={MODAL_FIELD_LABEL_CLASS}>

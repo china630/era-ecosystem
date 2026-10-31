@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -277,27 +278,17 @@ export default function ManualAdjustmentsPage() {
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-[13px] font-medium text-[#34495E]">
             {t("reporting.from")}
-            <input
-              type="date"
-              className={MODAL_INPUT_CLASS}
-              value={from}
-              onChange={(e) => {
-                setFrom(e.target.value);
+            <FinanceDatePicker value={from} onChange={(iso) => {
+                setFrom(iso);
                 setPage(1);
-              }}
-            />
+              }} respectPeriodLock={false} />
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-medium text-[#34495E]">
             {t("reporting.to")}
-            <input
-              type="date"
-              className={MODAL_INPUT_CLASS}
-              value={to}
-              onChange={(e) => {
-                setTo(e.target.value);
+            <FinanceDatePicker value={to} onChange={(iso) => {
+                setTo(iso);
                 setPage(1);
-              }}
-            />
+              }} respectPeriodLock={false} />
           </label>
         </div>
         {canPostAccounting ? (
@@ -425,12 +416,7 @@ export default function ManualAdjustmentsPage() {
             <div className="mt-4 space-y-3">
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("manualAdjustments.date")}
-                <input
-                  type="date"
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                  value={reverseDate}
-                  onChange={(e) => setReverseDate(e.target.value)}
-                />
+                <FinanceDatePicker value={reverseDate} onChange={(iso) => setReverseDate(iso)} respectPeriodLock={false} />
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("manualAdjustments.reason")}

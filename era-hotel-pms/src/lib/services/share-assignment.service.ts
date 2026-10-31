@@ -746,10 +746,9 @@ export async function getDoorAvailability(
   to: Date,
   excludeReservationId?: string,
 ): Promise<{ quota: number; booked: number; available: number }> {
-  const roomType = await prisma.roomType.findUnique({ where: { id: roomTypeId } });
-  if (!roomType) throw new Error('Room type not found');
-  const booked = await countDoorsUsedForRoomType(roomTypeId, from, to, excludeReservationId);
-  return { quota: roomType.baseQuota, booked, available: Math.max(0, roomType.baseQuota - booked) };
+  const { measureStaySellable } = await import('@/lib/services/inventory-guard.service');
+  const sell = await measureStaySellable(roomTypeId, from, to, excludeReservationId);
+  return { quota: sell.quota, booked: sell.booked, available: sell.available };
 }
 
 export function validateShareCandidate(candidate: {
@@ -813,12 +812,15 @@ export async function assertShareInventory(
     checkOutDate: to,
   };
   const all = [...existing, withCandidate];
-  const nights = eachNight(from, to);
-  for (const night of nights) {
+  const { sellStatesForType, rejectIfAddedDoor, nightKey } = await import(
+    '@/lib/services/inventory-guard.service'
+  );
+  const { states } = await sellStatesForType(roomTypeId, from, to, candidate.id);
+  const byNight = new Map(states.map((state) => [nightKey(state.night), state]));
+  for (const night of eachNight(from, to)) {
     const used = countDoorsUsedOnNight(all, night, maxBed);
-    if (used > roomType.baseQuota) {
-      throw new Error('No availability for room type');
-    }
+    const state = byNight.get(nightKey(night));
+    if (state) rejectIfAddedDoor(state, used);
   }
 }
 
