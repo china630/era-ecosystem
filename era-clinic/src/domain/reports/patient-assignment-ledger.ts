@@ -91,11 +91,14 @@ export function sumLedgerTotals(rows: AssignmentLedgerRow[]): AssignmentLedgerTo
   );
 }
 
-function patientLabel(p: {
-  firstName: string | null;
-  lastName: string | null;
-  refCode: string;
-}): string {
+function patientLabel(
+  p: {
+    firstName: string | null;
+    lastName: string | null;
+    refCode: string;
+  } | null,
+): string {
+  if (!p) return "—";
   const name = [p.lastName, p.firstName].filter(Boolean).join(" ").trim();
   return name ? `${name} (${p.refCode})` : p.refCode;
 }
