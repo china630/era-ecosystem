@@ -67,7 +67,7 @@ import {
   useSubscription,
   type SubscriptionSnapshot,
 } from "../../lib/subscription-context";
-import { EraAppSidebar } from "@era/satellite-kit/ui";
+import { EraAppSidebar, RailFlyout, isRailFlyoutTarget } from "@era/satellite-kit/ui";
 import {
   opsNavProfileFromMe,
   opsNavRowVisible,
@@ -95,6 +95,8 @@ function isCpAttendanceMaster(snapshot: SubscriptionSnapshot | null): boolean {
 type SidebarLayout = {
   /** Collapsed rail только на lg+; на мобильном выезде — всегда полная ширина. */
   layoutCollapsed: boolean;
+  /** Links painted in the kit flyout keep their labels. */
+  inFlyout: boolean;
   openFlyoutKey: string | null;
   setOpenFlyoutKey: (k: string | null) => void;
 };
@@ -205,6 +207,7 @@ function CollapsibleNavSection({
     if (!layoutCollapsed || !flyoutOpen) return;
     const onDoc = (e: MouseEvent) => {
       if (rootRef.current?.contains(e.target as Node)) return;
+      if (isRailFlyoutTarget(e.target)) return;
       setOpenFlyoutKey(null);
     };
     document.addEventListener("mousedown", onDoc);
@@ -260,9 +263,16 @@ function CollapsibleNavSection({
         )}
       </button>
       {layoutCollapsed && flyoutOpen ? (
-        <div className="absolute left-full top-0 z-[60] ml-1 hidden min-w-[13rem] flex-col gap-0.5 rounded-lg border border-[#D5DADF] bg-white p-2 shadow-lg lg:flex">
-          {children}
-        </div>
+        <RailFlyout open anchorRef={rootRef}>
+          <SidebarLayoutContext.Provider
+            value={{ layoutCollapsed, inFlyout: true, openFlyoutKey, setOpenFlyoutKey }}
+          >
+            <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#7F8C8D]">
+              {title}
+            </p>
+            {children}
+          </SidebarLayoutContext.Provider>
+        </RailFlyout>
       ) : null}
       {!layoutCollapsed && open ? (
         <div className="ml-2 mt-1 flex flex-col gap-0.5 border-l-2 border-gray-200 pl-4">{children}</div>
@@ -286,26 +296,27 @@ function SideNavItem(props: {
   onNavClick?: () => void;
 }) {
   const { t } = useTranslation();
-  const { layoutCollapsed, setOpenFlyoutKey } = useSidebarLayout();
+  const { layoutCollapsed, inFlyout, setOpenFlyoutKey } = useSidebarLayout();
   const Icon = props.icon;
+  const iconOnly = layoutCollapsed && !props.nested && !inFlyout;
   return (
     <Link
       href={props.href}
       title={
         props.locked
           ? t("subscription.navLockedTooltip")
-          : layoutCollapsed
+          : iconOnly
             ? props.label
             : undefined
       }
       onClick={() => {
-        if (layoutCollapsed) setOpenFlyoutKey(null);
+        if (layoutCollapsed || inFlyout) setOpenFlyoutKey(null);
         props.onNavClick?.();
       }}
       className={[
         "flex items-center rounded-lg group transition",
         props.nested ? "gap-2 px-2 py-1.5 text-sm" : "gap-3 px-3 py-2",
-        layoutCollapsed && !props.nested ? "lg:justify-center lg:px-2 lg:gap-0" : "",
+        iconOnly ? "lg:justify-center lg:px-2 lg:gap-0" : "",
         props.isActive
           ? "bg-[#2980B9]/10 text-[#2980B9]"
           : "bg-transparent text-[#34495E] hover:bg-[#E2E5E9]",
@@ -329,7 +340,7 @@ function SideNavItem(props: {
         className={[
           "min-w-0 flex-1 truncate text-sm",
           props.isActive ? "font-semibold" : "font-medium",
-          layoutCollapsed && !props.nested ? "lg:sr-only" : "",
+          iconOnly ? "lg:sr-only" : "",
         ].join(" ")}
       >
         {props.label}
@@ -338,7 +349,7 @@ function SideNavItem(props: {
         <LockGlyph
           className={[
             "h-4 w-4 shrink-0 text-amber-600",
-            layoutCollapsed && !props.nested ? "lg:sr-only" : "",
+            iconOnly ? "lg:sr-only" : "",
           ].join(" ")}
           aria-hidden
         />
@@ -534,6 +545,7 @@ export function MainSidebar({
 
   const sidebarLayout: SidebarLayout = {
     layoutCollapsed,
+    inFlyout: false,
     openFlyoutKey,
     setOpenFlyoutKey: setOpenFlyoutKey,
   };
@@ -810,13 +822,6 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
-            href="/inventory/day-documents"
-            label={t("inventory.dayDocumentNav")}
-            isActive={pathname.startsWith("/inventory/day-documents")}
-            icon={FileText}
-            onNavClick={onNavClick}
-          />
-          <SideNavSubItem
             href="/inventory/receipts"
             label={t("inventory.receiptNav")}
             isActive={pathname.startsWith("/inventory/receipts")}
@@ -1072,6 +1077,13 @@ export function MainSidebar({
             label={t("reporting.factQueueLink")}
             isActive={pathname.startsWith("/reporting/fact-queue")}
             icon={ClipboardList}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/hotel-day-documents"
+            label={t("inventory.dayDocumentNav")}
+            isActive={pathname.startsWith("/reporting/hotel-day-documents")}
+            icon={FileText}
             onNavClick={onNavClick}
           />
           <SideNavSubItem

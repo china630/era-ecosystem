@@ -32,8 +32,10 @@ export async function GET(request: Request) {
       CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_READ,
     );
     if (denied) return denied;
-    const { dualRun, orders } = await listExtrasAwaitingTicket(
+    const url = new URL(request.url);
+    const { dualRun, orders, needsFilter } = await listExtrasAwaitingTicket(
       session?.organizationId,
+      { room: url.searchParams.get("room"), q: url.searchParams.get("q") },
     );
     const locale = new URL(request.url).searchParams.get("locale") || "az";
     const catalogNames = await loadCatalogDisplayNameMap(
@@ -42,6 +44,7 @@ export async function GET(request: Request) {
     );
     return jsonOk({
       dualRun,
+      needsFilter,
       count: orders.length,
       orders: orders.map((o) => ({
         id: o.id,

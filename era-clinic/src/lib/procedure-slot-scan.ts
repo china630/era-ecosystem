@@ -128,6 +128,9 @@ export type ScanOrder = {
   dailyCap?: number | null;
   /** Paid extra shares the package block cap without burning quota. */
   shareGuestDayCap?: boolean;
+  /** When set, only this practitioner may take the session. */
+  preferredStaffId?: string | null;
+  preferredStaffName?: string | null;
 };
 
 export type PlannedPlacement = {
@@ -152,6 +155,8 @@ export type PlacementFailure = {
   procedureName: string;
   reason: PlacementFailureReason;
   ymd?: string;
+  /** Named masseur who could not be seated. */
+  staffName?: string;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -208,12 +213,17 @@ function nextOpenSlot(
   closed: Set<string>,
   horizonEndYmd: string,
   slotMinutes: number,
+  noonCheckoutYmd?: string,
 ): Date | null {
   let d = snapUpToSlot(cursor, slotMinutes);
   for (let i = 0; i < 400; i++) {
     if (bakuDateKey(d) >= horizonEndYmd) return null;
     d = skipLunch(d, hours);
-    if (bakuHourMinute(d).hour >= dayEndHour) {
+    const endHour =
+      noonCheckoutYmd && bakuDateKey(d) === noonCheckoutYmd
+        ? Math.min(dayEndHour, 12)
+        : dayEndHour;
+    if (bakuHourMinute(d).hour >= endHour) {
       const nextYmd = addBakuDays(bakuDateKey(d), 1);
       d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
       continue;
@@ -238,10 +248,11 @@ function nextMorning(
   closed: Set<string>,
   horizonEndYmd: string,
   slotMinutes: number,
+  noonCheckoutYmd?: string,
 ): Date | null {
   const nextYmd = addBakuDays(bakuDateKey(from), 1);
   const d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
-  return nextOpenSlot(d, hours, dayEndHour, closed, horizonEndYmd, slotMinutes);
+  return nextOpenSlot(d, hours, dayEndHour, closed, horizonEndYmd, slotMinutes, noonCheckoutYmd);
 }
 
 function staffBusy(
@@ -353,6 +364,7 @@ export type CandidateSlotInput = {
   slotEnd: Date;
   packageCap: number;
   closedYmds: Set<string>;
+  noonCheckoutYmd?: string;
   staffByTypeAndYmd: Map<string, ScanStaff[]>;
   rules: ScanRule[];
   rotationRules: ScanRotationRule[];
@@ -397,7 +409,11 @@ export function evaluateCandidateSlot(
   const startHm = bakuHourMinute(slotStart);
   const endHm = bakuHourMinute(slotEnd);
   if (startHm.hour < order.typeHours.dayStartHour) return fail("no_slot");
-  if (endHm.hour > order.dayEndHour || (endHm.hour === order.dayEndHour && endHm.minute > 0)) {
+  const endLimit =
+    input.noonCheckoutYmd && ymd === input.noonCheckoutYmd
+      ? Math.min(order.dayEndHour, 12)
+      : order.dayEndHour;
+  if (endHm.hour > endLimit || (endHm.hour === endLimit && endHm.minute > 0)) {
     return fail("no_slot");
   }
   if (startHm.hour >= order.typeHours.lunchStartHour && startHm.hour < order.typeHours.lunchEndHour) {
@@ -458,7 +474,11 @@ export function evaluateCandidateSlot(
   });
   if (!rotation.ok) return fail("rule");
 
-  const pool = input.staffByTypeAndYmd.get(`${order.procedureTypeId}|${ymd}`) ?? [];
+  let pool = input.staffByTypeAndYmd.get(`${order.procedureTypeId}|${ymd}`) ?? [];
+  if (order.preferredStaffId) {
+    pool = pool.filter((person) => person.id === order.preferredStaffId);
+    if (pool.length === 0) return fail("no_staff");
+  }
   if (pool.length === 0) return fail("no_staff");
   const staff = pickStaff(
     pool,
@@ -544,6 +564,7 @@ export function scanProcedureSlots(input: {
   packageCap: number;
   horizonEndYmd: string;
   closedYmds: Set<string>;
+  noonCheckoutYmd?: string;
   staffByTypeAndYmd: Map<string, ScanStaff[]>;
   rules: ScanRule[];
   rotationRules: ScanRotationRule[];
@@ -574,6 +595,7 @@ export function scanProcedureSlots(input: {
       input.closedYmds,
       input.horizonEndYmd,
       input.slotMinutes,
+      input.noonCheckoutYmd,
     );
     if (slotStart && !order.afterLunchAllowed && bakuHourMinute(slotStart).hour >= order.typeHours.lunchEndHour) {
       slotStart = nextMorning(
@@ -582,7 +604,8 @@ export function scanProcedureSlots(input: {
         order.dayEndHour,
         input.closedYmds,
         input.horizonEndYmd,
-      input.slotMinutes,
+        input.slotMinutes,
+        input.noonCheckoutYmd,
       );
     }
     if (slotStart && !order.beforeLunchAllowed && bakuHourMinute(slotStart).hour < order.typeHours.lunchEndHour) {
@@ -592,7 +615,8 @@ export function scanProcedureSlots(input: {
         order.dayEndHour,
         input.closedYmds,
         input.horizonEndYmd,
-      input.slotMinutes,
+        input.slotMinutes,
+        input.noonCheckoutYmd,
       );
     }
 
@@ -608,7 +632,7 @@ export function scanProcedureSlots(input: {
       }
       slotStart = avoidLunchOverlap(slotStart, order.durationMin, order.typeHours);
       if (!order.afterLunchAllowed && bakuHourMinute(slotStart).hour >= order.typeHours.lunchEndHour) {
-        slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes);
+        slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd);
         continue;
       }
       if (!order.beforeLunchAllowed && bakuHourMinute(slotStart).hour < order.typeHours.lunchEndHour) {
@@ -618,7 +642,8 @@ export function scanProcedureSlots(input: {
           order.dayEndHour,
           input.closedYmds,
           input.horizonEndYmd,
-      input.slotMinutes,
+          input.slotMinutes,
+          input.noonCheckoutYmd,
         );
         continue;
       }
@@ -631,6 +656,7 @@ export function scanProcedureSlots(input: {
         slotEnd,
         packageCap: input.packageCap,
         closedYmds: input.closedYmds,
+        noonCheckoutYmd: input.noonCheckoutYmd,
         staffByTypeAndYmd: input.staffByTypeAndYmd,
         rules: input.rules,
         rotationRules: input.rotationRules,
@@ -651,7 +677,7 @@ export function scanProcedureSlots(input: {
           verdict.reason === "no_staff" ||
           verdict.reason === "closed";
         slotStart = jumpMorning
-          ? nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes)
+          ? nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd)
           : nextOpenSlot(
               addMinutes(slotStart, input.slotMinutes),
               order.typeHours,
@@ -659,6 +685,7 @@ export function scanProcedureSlots(input: {
               input.closedYmds,
               input.horizonEndYmd,
               input.slotMinutes,
+              input.noonCheckoutYmd,
             );
         continue;
       }
@@ -726,6 +753,7 @@ export function scanProcedureSlots(input: {
         procedureName: order.procedureName,
         reason: placementBlockReason(opened, sawStaffPool, blocks),
         ymd: lastYmd || undefined,
+        staffName: order.preferredStaffName?.trim() || undefined,
       });
     }
   }

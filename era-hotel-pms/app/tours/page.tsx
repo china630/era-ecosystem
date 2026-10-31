@@ -16,7 +16,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { TourRosterModal, type TourDepartureDetail } from '@/components/tours/TourRosterModal';
@@ -307,7 +307,7 @@ export default function ToursPage() {
           {
             key: 'date',
             header: t('date'),
-            render: (r) => r.date.slice(0, 10),
+            render: (r) => bakuDateDisplay(r.date.slice(0, 10)),
           },
           { key: 'agenda', header: t('agenda') },
           {

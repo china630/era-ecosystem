@@ -1,5 +1,5 @@
 import { monthStartYmd, round2, splitGross, yearStartYmd, ymdParam } from '@/lib/reports/civil-days';
-import { loadChargeDays, loadRevenueCodes } from './stay-ledger';
+import { loadChargeDays, loadRevenueCodes, revenueCodeLabel } from './stay-ledger';
 
 export type RevenuePeriodKey = 'today' | 'month' | 'year';
 
@@ -54,6 +54,7 @@ function roundLine<T extends DepartmentRevenueLine>(line: T): T {
 export async function queryDepartmentRevenues(
   _fromParam: string | Date,
   toParam: string | Date,
+  locale = 'az',
 ): Promise<DepartmentRevenuesResult> {
   const anchor = ymdParam(toParam);
   const monthStart = monthStartYmd(anchor);
@@ -70,7 +71,7 @@ export async function queryDepartmentRevenues(
     const rcCode = code?.code ?? c.revenueCodeId;
     let line = dept.codes.find((l) => l.code === rcCode);
     if (!line) {
-      line = emptyLine(rcCode, code?.name ?? rcCode);
+      line = emptyLine(rcCode, revenueCodeLabel(code, locale, rcCode));
       dept.codes.push(line);
     }
     const periods: RevenuePeriodKey[] = ['year'];

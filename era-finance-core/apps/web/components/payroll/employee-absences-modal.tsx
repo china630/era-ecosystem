@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -168,7 +169,7 @@ export function EmployeeAbsencesModal({
                     <tr key={a.id} className="border-t border-[#EBEDF0]">
                       <td className="p-2">{a.absenceType?.nameAz ?? t("payroll.absenceTypeUnknown")}</td>
                       <td className="whitespace-nowrap p-2 tabular-nums">
-                        {String(a.startDate).slice(0, 10)} — {String(a.endDate).slice(0, 10)}
+                        {bakuDateDisplay(String(a.startDate).slice(0, 10))} — {bakuDateDisplay(String(a.endDate).slice(0, 10))}
                       </td>
                       <td className="p-2">{a.note?.trim() ? a.note : t("common.emptyValue")}</td>
                     </tr>

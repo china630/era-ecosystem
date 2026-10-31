@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { enterSatelliteTenant } from "@era/satellite-kit";
+import { bakuDayBounds, todayBakuYmd } from "@era/satellite-kit/time";
 import { ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
 import {
   postProcedureFolioCharge,
@@ -19,14 +20,24 @@ import {
 import { enterRequestTenant } from "@/lib/request-organization";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 
-export async function listExtrasAwaitingTicket(organizationId?: string | null) {
+export async function listExtrasAwaitingTicket(
+  organizationId?: string | null,
+  filter?: { room?: string | null; q?: string | null },
+) {
   const orgId = resolveClinicCutoverOrgId(organizationId);
   enterSatelliteTenant({ organizationId: orgId });
   const dualRun = await isClinicElektrawebDualRun(orgId);
+  const room = filter?.room?.trim() ?? "";
+  const q = filter?.q?.trim() ?? "";
+  if (!room && !q) {
+    return { dualRun, orders: [], needsFilter: true as const };
+  }
+  const { start } = bakuDayBounds(todayBakuYmd());
   const orders = await prisma.procedureOrder.findMany({
     where: {
       extraTicketIssuedAt: null,
       importedHistorical: false,
+      scheduledAt: { gte: start },
       OR: [
         { status: "PENDING_PAY" },
         {
@@ -34,12 +45,27 @@ export async function listExtrasAwaitingTicket(organizationId?: string | null) {
           amountNet: { gt: 0 },
         },
       ],
+      ...(room
+        ? { clinicalEpisode: { roomNumber: room } }
+        : {}),
+      ...(q
+        ? {
+            AND: [
+              {
+                OR: [
+                  { procedureName: { contains: q, mode: "insensitive" } },
+                  { patientRef: { fullName: { contains: q, mode: "insensitive" } } },
+                  { patientRef: { refCode: { contains: q, mode: "insensitive" } } },
+                ],
+              },
+            ],
+          }
+        : {}),
     },
     include: { patientRef: true, clinicalEpisode: { select: { roomNumber: true } } },
     orderBy: { scheduledAt: "asc" },
-    take: 200,
   });
-  return { dualRun, orders };
+  return { dualRun, orders, needsFilter: false as const };
 }
 
 export async function issueExtraTickets(

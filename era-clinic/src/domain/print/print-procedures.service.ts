@@ -16,7 +16,7 @@ import {
   formatPhysioFieldsPrint,
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
-import { todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
 import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
@@ -56,7 +56,7 @@ export type PrintProcedureRow = {
 export function printDateFromYmd(ymd: string): string {
   const [year, month, day] = ymd.split("-");
   if (!year || !month || !day) return ymd;
-  return `${day}/${month}/${year}`;
+  return `${day}.${month}.${year}`;
 }
 
 export function appendCheckoutMarker(
@@ -85,8 +85,15 @@ export function appendCheckoutMarker(
   else next.push({ date, rows: [marker] });
   next.sort((a, b) => {
     const key = (value: string) => {
-      const [day, month, year] = value.split("/");
-      return `${year ?? ""}-${month ?? ""}-${day ?? ""}`;
+      const parts = value.includes(".")
+        ? value.split(".")
+        : value.includes("/")
+          ? value.split("/")
+          : null;
+      if (!parts || parts.length !== 3) return value;
+      const [day, month, year] = parts;
+      if (!day || !month || !year) return value;
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     };
     return key(a.date).localeCompare(key(b.date));
   });
@@ -100,16 +107,11 @@ export type PrintProceduresDocument = {
 };
 
 function bakuDate(d: Date): string {
-  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+  return bakuDateDisplay(d);
 }
 
 function bakuTime(d: Date): string {
-  return d.toLocaleTimeString("en-GB", {
-    timeZone: "Asia/Baku",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return bakuTimeLabel(d);
 }
 
 export async function buildProceduresPrint(
@@ -157,7 +159,7 @@ export async function buildProceduresPrint(
   orders.sort((a, b) => {
     const da = bakuDate(a.scheduledAt);
     const db = bakuDate(b.scheduledAt);
-    if (da !== db) return da.localeCompare(db);
+    if (da !== db) return a.scheduledAt.getTime() - b.scheduledAt.getTime();
     const aOpen = a.schedulingMode === "OPEN" && !a.resourceId ? 1 : 0;
     const bOpen = b.schedulingMode === "OPEN" && !b.resourceId ? 1 : 0;
     if (aOpen !== bOpen) return aOpen - bOpen;

@@ -33,8 +33,16 @@ describe("TaxpayerIntegrationService fallback", () => {
       ),
     };
     const audit = { logOrganizationSystemEvent: jest.fn().mockResolvedValue(undefined) };
+    const prisma = {
+      organization: { findUnique: jest.fn().mockResolvedValue({ settings: {} }) },
+    };
     return {
-      service: new TaxpayerIntegrationService(config, reliability as any, audit as any),
+      service: new TaxpayerIntegrationService(
+        config,
+        reliability as any,
+        audit as any,
+        prisma as any,
+      ),
       reliability,
       audit,
     };

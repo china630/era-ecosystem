@@ -46,6 +46,8 @@ type OrgSettings = {
       regime?: "SIMPLIFIED" | "PROFIT" | "PROFIT_VAT";
       pricesIncludeTax?: boolean;
       requireEqaimeForDayClose?: boolean;
+      taxLookupMock?: boolean;
+      signatureGatewayMock?: boolean;
     };
     hr?: {
       emasMode?: "OFF" | "SELECTIVE" | "FULL";
@@ -82,6 +84,8 @@ export default function OrganizationSettingsPage() {
   );
   const [pricesIncludeTax, setPricesIncludeTax] = useState(false);
   const [requireEqaimeForDayClose, setRequireEqaimeForDayClose] = useState(false);
+  const [taxLookupMock, setTaxLookupMock] = useState(false);
+  const [signatureGatewayMock, setSignatureGatewayMock] = useState(false);
   const [emasMode, setEmasMode] = useState<"OFF" | "SELECTIVE" | "FULL">("OFF");
   const [internalRateVisibleToHrManager, setInternalRateVisibleToHrManager] =
     useState(false);
@@ -120,6 +124,8 @@ export default function OrganizationSettingsPage() {
     );
     setPricesIncludeTax(o.settings?.tax?.pricesIncludeTax === true);
     setRequireEqaimeForDayClose(o.settings?.tax?.requireEqaimeForDayClose === true);
+    setTaxLookupMock(o.settings?.tax?.taxLookupMock === true);
+    setSignatureGatewayMock(o.settings?.tax?.signatureGatewayMock === true);
     setEmasMode(
       o.settings?.hr?.emasMode === "SELECTIVE" ||
         o.settings?.hr?.emasMode === "FULL"
@@ -153,6 +159,8 @@ export default function OrganizationSettingsPage() {
         taxRegime,
         pricesIncludeTax,
         requireEqaimeForDayClose,
+        taxLookupMock,
+        signatureGatewayMock,
         emasMode,
         internalRateVisibleToHrManager,
       }),
@@ -421,6 +429,26 @@ export default function OrganizationSettingsPage() {
                     disabled={!canEditGeneral}
                   />
                   {t("orgSettings.requireEqaimeForDayClose")}
+                </label>
+                <label className="flex items-center gap-2 text-[#34495E] text-sm">
+                  <input
+                    type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
+                    checked={taxLookupMock}
+                    onChange={(e) => setTaxLookupMock(e.target.checked)}
+                    disabled={!canEditGeneral}
+                  />
+                  {t("orgSettings.taxLookupMock")}
+                </label>
+                <label className="flex items-center gap-2 text-[#34495E] text-sm">
+                  <input
+                    type="checkbox"
+                    className={MODAL_CHECKBOX_CLASS}
+                    checked={signatureGatewayMock}
+                    onChange={(e) => setSignatureGatewayMock(e.target.checked)}
+                    disabled={!canEditGeneral}
+                  />
+                  {t("orgSettings.signatureGatewayMock")}
                 </label>
                 <div className="max-w-md">
                   <CatalogField

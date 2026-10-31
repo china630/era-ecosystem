@@ -19,6 +19,8 @@
 
 `ProcedureOrder.bonusEligible` at COMPLETED via `resolveBonusEligible` (`amountNet > 0`, not imported). Doctor-bonus report filters `bonusEligible`, splits **IN_HOUSE / WALK_IN**, applies `Tenant.doctorBonusPercentInHouse` / `doctorBonusPercentWalkIn` (default **0** until FO sets). Package confirm / in-quota lines with amountNet 0 are excluded (W3 entitlement charge keeps package fulfillment at 0).
 
+Paid extras store `prescribedByPractitionerId`: the acting practitioner when they are a doctor, otherwise the earliest `EpisodeCareDoctor` on the episode. Rows that were written without a doctor are backfilled the same way (`prisma/scripts/backfill-extra-prescriber.ts`). The procedure report `fulfillment` view counts package and extra assigned (`scheduledAt`) versus completed (`completedAt`); the amount column is completed paid extras only. `/reports/revenue` sums paid extras, paid lab items, and paid visit lines by the revenue code resolved at read time.
+
 ## Related
 
 HOT-PKG-03 (API until UAT), CLI-53 SCREEN; out of CASH/SAN rollups. Amends [hotel-bar-accounting-vs-package-sell.md](./hotel-bar-accounting-vs-package-sell.md).

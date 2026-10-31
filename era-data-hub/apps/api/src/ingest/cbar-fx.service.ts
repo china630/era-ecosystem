@@ -65,11 +65,11 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-/** Бросается до любых обращений к cbar.az при TAX_LOOKUP_MOCK=1 (дашборд → только БД). */
+/** Thrown when CBAR HTTP is disabled by the hub FX ingest policy. */
 export class CbarExternalFetchDisabledError extends Error {
   readonly code = "CBAR_EXTERNAL_FETCH_DISABLED" as const;
   constructor() {
-    super("CBAR external fetch disabled (TAX_LOOKUP_MOCK=1)");
+    super("CBAR external fetch disabled");
     this.name = "CbarExternalFetchDisabledError";
   }
 }
@@ -175,13 +175,9 @@ export class CbarFxService {
     return { ...CBAR_HTTP_HEADERS_DEFAULT };
   }
 
-  /**
-   * С TAX_LOOKUP_MOCK=1 (как в TaxService) внешние запросы к cbar.az отключены —
-   * без таймаутов и шума в логах при локальной разработке.
-   */
-  /** Test kill-switch only. Product on/off is the FX row of reference_ingest_policies. */
+  /** FX external fetch is the hub reference-policy row. There is no env kill-switch. */
   isExternalCbarFetchEnabled(): boolean {
-    return this.config.get<string>("TAX_LOOKUP_MOCK") !== "1";
+    return true;
   }
 
   private resetFetchHealth(): void {

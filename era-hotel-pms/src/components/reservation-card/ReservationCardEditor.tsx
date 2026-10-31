@@ -14,7 +14,7 @@ import {
   showSuccess,
   showWarning,
 } from '@era/satellite-kit/ui';
-import { bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
 import { guestListItems } from '@/lib/guest-list-identity';
 import {
   isPreArrivalStatus,
@@ -528,7 +528,7 @@ export function ReservationCardEditor({
     if (neighbors && neighbors.length > 0) {
       const n = neighbors[0]!;
       setShareNeighborHint(
-        `${n.guestName} (${String(n.checkInDate).slice(0, 10)} – ${String(n.checkOutDate).slice(0, 10)})`,
+        `${n.guestName} (${bakuDateDisplay(String(n.checkInDate).slice(0, 10))} – ${bakuDateDisplay(String(n.checkOutDate).slice(0, 10))})`,
       );
     } else {
       setShareNeighborHint('');

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import {
   CatalogField,
   DatePicker,
@@ -139,7 +140,7 @@ export default function LostAndFoundPage() {
       />
       <HotelDataGrid<Item>
         columns={[
-          { key: 'foundDate', header: t('date'), render: (r) => String(r.foundDate).slice(0, 10) },
+          { key: 'foundDate', header: t('date'), render: (r) => bakuDateDisplay(String(r.foundDate).slice(0, 10)) },
           { key: 'roomNumber', header: t('room'), render: (r) => r.roomNumber || '—' },
           { key: 'location', header: t('location') },
           { key: 'description', header: t('description') },

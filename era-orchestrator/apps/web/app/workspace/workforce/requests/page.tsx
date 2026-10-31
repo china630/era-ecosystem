@@ -11,6 +11,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import {
   isWorkforceGate403,
@@ -218,7 +219,7 @@ export default function WorkforceRequestsPage() {
             <span>{name(a.employment.globalPersonId)}</span>
             <span>{a.kind}</span>
             <span>
-              {String(a.startDate).slice(0, 10)} – {String(a.endDate).slice(0, 10)}
+              {bakuDateDisplay(String(a.startDate).slice(0, 10))} – {bakuDateDisplay(String(a.endDate).slice(0, 10))}
             </span>
             {stepLabel(a.id) ? <span>{stepLabel(a.id)}</span> : null}
             <span className="text-[#7F8C8D]">{entered(a.submittedByUserId)}</span>
@@ -246,7 +247,7 @@ export default function WorkforceRequestsPage() {
         {(data?.hourly ?? []).map((h) => (
           <div key={h.id} className="flex flex-wrap items-center gap-2 border-b py-2 text-sm">
             <span>{name(h.employment.globalPersonId)}</span>
-            <span>{String(h.workDate).slice(0, 10)}</span>
+            <span>{bakuDateDisplay(String(h.workDate).slice(0, 10))}</span>
             <span>
               {h.startMinute}–{h.endMinute}
             </span>
@@ -284,7 +285,7 @@ export default function WorkforceRequestsPage() {
             {chain(a.id) ? <span className="text-[11px] text-[#7F8C8D]">{chain(a.id)}</span> : null}
             {a.exceedsLimit ? <span>{t("exceedsLimit")}</span> : null}
             {a.plannedPayDate ? (
-              <span>{t("plannedPay", { date: String(a.plannedPayDate).slice(0, 10) })}</span>
+              <span>{t("plannedPay", { date: bakuDateDisplay(String(a.plannedPayDate).slice(0, 10)) })}</span>
             ) : null}
             <button
               type="button"

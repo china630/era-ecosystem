@@ -89,8 +89,12 @@ For **in-package** treatment lines:
 
 **Daily cap lives on the package block (2026-10-19), not on Tenant:**
 
-- `ProgramTemplateProcedure.dailyDistinctCap` (1–12). Empty uses the family default: physio **3**, bath **1**, paraffin **1**. Lab and exam are uncapped.
+- `ProgramTemplateProcedure.dailyDistinctCap` (1–12) on every block kind. Empty means **1**. The screen no longer hides the cell for massage or other kinds, and the code no longer substitutes physio 3 / bath 1 / paraffin 1.
 - SatAdmin sets it on `/admin/program-templates`. The entitlement snapshot stores the same field for the open stay.
+- Guest balance on a new course and on recalc (one course, all open courses, and a stay-date change) caps a per-night block at non-Sunday stay nights × that daily number, and never above the package knot. Per-stay blocks (labs, exams) keep the knot.
+- When the stay days are full, Save asks whether leftover cabin rows go on checkout morning until 12:00. Open attendance is not moved onto a cabin for that question.
+- A massage procedure (a type that has an active masseur skill) shows one masseur field on that line. Empty means any free skilled person. A surname keeps the pool to that person and the planner keeps searching later hours. Package sessions and paid sessions of the same procedure share the surname. Changing or clearing it reseats cabin rows in PROPOSED, SCHEDULED, and PENDING_PAY, including rows reception already moved. Open attendance keeps its day and only stores the name. A day where that masseur is absent is skipped. COMPLETED, CHECKED_IN, NO_SHOW, and CANCELLED stay.
+- A paid extra does not spend the block's daily cap. The same procedure code still cannot be seated twice on one Baku day.
 - A bath or paraffin **Əvəz et** writes `XFER-{predecessor}--{sku}` and spends the **predecessor** block's daily cap.
 
 ### D5 — Stay ↔ burn sync (max one per category per day)
@@ -98,7 +102,7 @@ For **in-package** treatment lines:
 Planner constraint for package (and default for extras unless overridden later):
 
 - **At most one session per procedure code (category) per calendar day** (Asia/Baku) for the episode.
-- **Daily in-package cap:** distinct in-package SKUs **of that block** on a Baku day (`dailyDistinctCap`; empty physio 3 / bath 1 / paraffin 1). Paid extras (`inPackage: false`) do **not** count and may still land today. Remainder of a large package Save starts on the **next work morning**, not from the last historical slot (avoids weekend “day after tomorrow” cursor). Same-code collision jumps the **whole next work day**, not +5 minutes.
+- **Daily in-package cap:** distinct in-package SKUs **of that block** on a Baku day (`dailyDistinctCap`; empty = 1). Paid extras (`inPackage: false`) do **not** count and may still land today. When the stay days are full, Save asks whether the leftover package rows go on checkout morning until 12:00. Same-code collision jumps the **whole next work day**, not +5 minutes.
 
 Consequences:
 

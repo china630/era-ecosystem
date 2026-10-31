@@ -19,6 +19,7 @@ alwaysApply: false
 | Prisma | `apps/api/src/prisma/` | DB access (`referenceDb()` → `era_data_hub` only) |
 | Reference policy | `GET/PATCH /registry/v1/admin/reference-policy` | Per-catalog external fetch + FX code lists |
 | FX display codes | `GET /registry/v1/fx/display-codes` | Dashboard and CBAR-check codes |
+| FX rates | `GET /registry/v1/fx/rates` | FINAL on the date. `fallback=previous` is dashboard-only. Convert stays date-strict. Ingest 09:30 Asia/Baku then every 30 min until today's FINAL |
 
 **Schema:** `packages/database/prisma/schema.prisma` (includes ISO `Currency` catalog — distinct from `CbarOfficialRate` FX).
 

@@ -36,7 +36,12 @@ export class CbarRateSyncService {
     const dateKey = this.dataHub.isoDateBaku(date);
     const remote = await this.dataHub.getFxRates(dateKey, upper);
     const hit = remote?.find((r) => r.currencyCode === upper);
-    if (hit?.rate != null && Number.isFinite(hit.rate)) {
+    const hitDay = hit?.rateDate?.slice(0, 10);
+    if (
+      hit?.rate != null &&
+      Number.isFinite(hit.rate) &&
+      (!hitDay || hitDay === dateKey)
+    ) {
       return hit.rate;
     }
     throw new BadRequestException(
@@ -75,7 +80,9 @@ export class CbarRateSyncService {
       };
     }
 
-    const remote = await this.dataHub.getFxRates(hubDateKey, codes.join(","));
+    const remote = await this.dataHub.getFxRates(hubDateKey, codes.join(","), {
+      previousFinal: true,
+    });
     if (!remote?.length) {
       return {
         rates: codes.map((code) => ({

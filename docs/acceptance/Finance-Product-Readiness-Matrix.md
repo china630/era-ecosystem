@@ -10,7 +10,7 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
-**Closeout (2026-08-17 Green Scaffold BE Wave 6):** Scaffold BE ✅. UI / Demo / Pilot / Sell unchanged — do **not** claim GA; edition stays `mvp`.
+**Closeout (2026-10-31):** Finance home FX may show the previous CBAR day until today's FINAL exists. Postings stay on the document date. Direct bank sync stays off until `bankingDirect.syncMode` is `mock` or `rest`. Taxpayer and signature stubs stay off unless `settings.tax.taxLookupMock` or `signatureGatewayMock` is set. FIN-ASAN-01 stays API/STUB. VAT-threshold audit rows now take a chain hash; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, not the warehouse; the row opens the package lines, with quantity purpose labeled. Gate / BE / UI / Demo / Pilot / Sell unchanged — do **not** claim GA; edition stays `mvp`.
 
 ---
 
@@ -28,7 +28,7 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| GL / invoices / adjustments | `/chart-of-accounts`, `/sales/invoices`, `/accounting/adjustments` | 🟡 |
+| GL / invoices / adjustments | `/chart-of-accounts`, `/sales/invoices`, `/accounting/adjustments` | 🟡 — due dates render `дд.мм.гггг` |
 | P&L and trial-balance profit proxy | `/reporting` sums `601` with `601.*` (AC-FIN-DAY) | 🟡 — same reports; not a new SHOW |
 | Payroll / employees | `/payroll, /employees`, `/hr/emas-queue` | 🟡 — ƏMAS manual queue + extension prefill STUB (`FIN-EMAS-01`); wave 11 minute premiums API (`FIN-HR-MIN-01`); not sell-ready without portal UAT |
 | FA / reporting | `/fixed-assets, /reporting/*` | 🟡 |

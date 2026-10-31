@@ -14,6 +14,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -279,7 +280,11 @@ export default function FrontCashPendingPage() {
                   ? t('basketLines', { count: receipt.basketCount })
                   : `${receipt.sourceSystem} · ${receipt.sourceRef.slice(0, 12)}`}
               </p>
-              <p>{receipt.businessDate?.slice?.(0, 10) ?? receipt.businessDate}</p>
+              <p>
+                {receipt.businessDate
+                  ? bakuDateDisplay(String(receipt.businessDate).slice(0, 10))
+                  : '—'}
+              </p>
             </div>
             <table className="w-full text-sm">
               <thead>

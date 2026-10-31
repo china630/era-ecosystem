@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -216,7 +217,7 @@ export default function CustomsPage() {
                     {r.bgdNumber}
                   </Link>
                 </td>
-                <td className={DATA_TABLE_TD_CLASS}>{String(r.bgdDate).slice(0, 10)}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.bgdDate).slice(0, 10))}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.currency}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.status}</td>
                 <td className={DATA_TABLE_TD_CLASS}>{r.senderName ?? "—"}</td>

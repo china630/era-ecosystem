@@ -12,6 +12,7 @@ import {
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 
 type Row = {
@@ -85,7 +86,7 @@ export default function InhouseDailyPage() {
           { key: 'room', header: t('room'), render: (r) => r.room?.roomNumber ?? '—' },
           { key: 'guest', header: t('guest'), render: (r) => r.guest.fullName },
           { key: 'type', header: t('type'), render: (r) => r.roomType.code },
-          { key: 'checkOut', header: t('departure'), render: (r) => r.checkOutDate.slice(0, 10) },
+          { key: 'checkOut', header: t('departure'), render: (r) => bakuDateDisplay(r.checkOutDate.slice(0, 10)) },
         ]}
         rows={inHouse}
         rowKey={(r) => r.id}

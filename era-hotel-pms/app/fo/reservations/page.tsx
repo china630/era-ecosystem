@@ -20,7 +20,7 @@ import {
 import { HotelDataGrid } from "@/components/HotelDataGrid";
 import { HkStatusMark } from '@/components/HkStatusMark';
 import { Cake, MessageSquare, Plus } from 'lucide-react';
-import { todayBakuYmd } from '@era/satellite-kit/time';
+import { bakuDateDisplay, todayBakuYmd } from '@era/satellite-kit/time';
 import { birthdayIconVisible, birthdayNightInStay } from '@/lib/stay-birthday';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { ReservationNoteLine } from '@/components/reservation-card/ReservationNoteLine';
@@ -369,13 +369,13 @@ export default function ReservationsListPage() {
                 key: 'arrival',
                 header: t('arrival'),
                 sortable: true,
-                render: (r) => String(r.checkInDate).slice(0, 10),
+                render: (r) => bakuDateDisplay(String(r.checkInDate).slice(0, 10)),
               },
               {
                 key: 'departure',
                 header: t('departure'),
                 sortable: true,
-                render: (r) => String(r.checkOutDate).slice(0, 10),
+                render: (r) => bakuDateDisplay(String(r.checkOutDate).slice(0, 10)),
               },
               { key: 'type', header: t('roomType'), sortable: true, render: (r) => r.roomType.code },
               {

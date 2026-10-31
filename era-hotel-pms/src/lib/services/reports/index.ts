@@ -62,7 +62,7 @@ import {
 } from './cubes-p2.report';
 import { queryThreeYearOcc, queryThreeYearRev } from './comparative-p2.report';
 
-export type ReportQueryExtras = { dim?: string };
+export type ReportQueryExtras = { dim?: string; locale?: string };
 
 function asDim(value: string | undefined, fallback: CubeDimension): CubeDimension {
   const allowed: CubeDimension[] = ['date', 'department', 'agency', 'revenueCode', 'roomType'];
@@ -72,10 +72,10 @@ function asDim(value: string | undefined, fallback: CubeDimension): CubeDimensio
 
 /** Single-day reports (business_date) anchor on the End date; the pack sends from = to. */
 const QUERY_MAP: Record<string, (from: string, to: string, extras?: ReportQueryExtras) => Promise<unknown>> = {
-  'trial-balance-period': queryTrialBalancePeriod,
+  'trial-balance-period': (from, to, extras) => queryTrialBalancePeriod(from, to, extras?.locale),
   'cash-report': queryCashReport,
   'folio-transactions': queryFolioTransactions,
-  'department-revenues': queryDepartmentRevenues,
+  'department-revenues': (from, to, extras) => queryDepartmentRevenues(from, to, extras?.locale),
   'daily-management': (_from, to) => queryDailyManagement(to),
   'in-house': (_from, to) => queryInHouse(to),
   'police-list': (_from, to) => queryPoliceList(to),
@@ -100,7 +100,7 @@ const QUERY_MAP: Record<string, (from: string, to: string, extras?: ReportQueryE
   'main-current': (_from, to) => queryMainCurrent(to),
   'date-range-management': (from, to) => queryDateRangeManagement(from, to),
 
-  'trial-balance': (_from, to) => queryTrialBalancePeriod(to, to),
+  'trial-balance': (_from, to, extras) => queryTrialBalancePeriod(to, to, extras?.locale),
   'department-payments': (_from, to) => queryDepartmentPayments(new Date(to)),
   'cumulative-revenue': (from, to) => queryCumulativeRevenue(new Date(from), new Date(to)),
   'dept-currency': (_from, to) => queryDeptCurrency(new Date(to)),

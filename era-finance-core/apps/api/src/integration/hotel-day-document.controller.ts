@@ -6,9 +6,9 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
 
-@ApiTags("inventory")
+@ApiTags("reporting")
 @ApiBearerAuth("bearer")
-@Controller("inventory/day-documents")
+@Controller("reporting/hotel-day-documents")
 @UseGuards(PermissionsGuard)
 export class HotelDayDocumentController {
   constructor(private readonly dispatch: SatelliteEventDispatchService) {}

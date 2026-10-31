@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { bakuDateDisplay, bakuDateTimeDisplay } from "@/lib/baku-day";
 import { getClinicSettings } from "@/domain/settings/settings.service";
 import {
   printsProcedureClock,
@@ -43,20 +44,12 @@ export type PrintEpisodeSummaryDocument = {
 
 function bakuStamp(d: Date | null | undefined): string {
   if (!d) return "—";
-  return d.toLocaleString("en-GB", {
-    timeZone: "Asia/Baku",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return bakuDateTimeDisplay(d);
 }
 
 function bakuDay(d: Date | null | undefined): string {
   if (!d) return "—";
-  return d.toLocaleDateString("en-GB", { timeZone: "Asia/Baku" });
+  return bakuDateDisplay(d);
 }
 
 function labReadyAt(order: {

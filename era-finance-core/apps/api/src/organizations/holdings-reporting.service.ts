@@ -400,7 +400,7 @@ export class HoldingsReportingService {
       } catch (e) {
         if (e instanceof CbarExternalFetchDisabledError) {
           fxNote =
-            "Курсы ЦБА недоступны (TAX_LOOKUP_MOCK / офлайн): конвертация в базовую валюту не выполнена.";
+            "Курсы ЦБА недоступны: конвертация в базовую валюту не выполнена.";
           row.cashBankInHoldingBase = null;
           this.logger.warn(
             `Holding summary FX disabled: org=${org.id} ${cur}->${baseCur} asOf=${asOfDate.toISOString().slice(0, 10)}`,
@@ -531,7 +531,7 @@ export class HoldingsReportingService {
       } catch (e) {
         if (e instanceof CbarExternalFetchDisabledError) {
           fxNote =
-            "Курсы ЦБА недоступны (TAX_LOOKUP_MOCK / офлайн): консолидация в базовую валюту не выполнена.";
+            "Курсы ЦБА недоступны: консолидация в базовую валюту не выполнена.";
           const last = organizations[organizations.length - 1]!;
           last.netProfitInHoldingBase = null;
         } else {

@@ -8,6 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
 import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
@@ -609,7 +610,7 @@ export function LoanDetailModal({
                   <tr key={row.sequenceNo} className="border-b">
                     <td className="px-3 py-2">{row.sequenceNo}</td>
                     <td className="px-3 py-2">
-                      {row.dueDate?.slice(0, 10) ?? "—"}
+                      {row.dueDate ? bakuDateDisplay(row.dueDate.slice(0, 10)) : "—"}
                     </td>
                     <td className="px-3 py-2">
                       {formatAznMinor(row.principalMinor)}

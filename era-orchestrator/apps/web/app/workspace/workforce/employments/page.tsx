@@ -2884,7 +2884,11 @@ export default function WorkforceEmploymentsPage() {
                 {t("hireDate")}
                 <input
                   className={FIELD_INPUT_CLASS}
-                  value={actionEmp ? String(actionEmp.hireDate).slice(0, 10) : "—"}
+                  value={
+                    actionEmp
+                      ? bakuDateDisplay(String(actionEmp.hireDate).slice(0, 10))
+                      : "—"
+                  }
                   readOnly
                 />
               </label>

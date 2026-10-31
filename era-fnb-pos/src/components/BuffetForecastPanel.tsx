@@ -13,6 +13,7 @@ import {
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { CARD_CLASS } from "@/lib/design-system";
 import { bandsOverlap, duplicateSkuCodes } from "@/lib/buffet-forecast-bands";
 
@@ -356,7 +357,7 @@ export default function BuffetForecastPanel({
             <tbody>
               {entries.map((row) => (
                 <tr key={row.serviceDate} className="border-b border-[#F3F4F6]">
-                  <td className="py-2 pr-2 tabular-nums">{row.serviceDate.slice(0, 10)}</td>
+                  <td className="py-2 pr-2 tabular-nums">{bakuDateDisplay(row.serviceDate.slice(0, 10))}</td>
                   <td className="py-2 pr-2 tabular-nums">{row.guestNights}</td>
                   <td className="py-2 pr-2">{row.source}</td>
                   <td className="py-2 text-right space-x-2">

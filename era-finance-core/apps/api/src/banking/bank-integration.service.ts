@@ -15,6 +15,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { BankMatchService } from "./bank-match.service";
+import { BankRestSyncService } from "./bank-rest-sync.service";
 import {
   fetchMockAbbTransactions,
   fetchMockPashaTransactions,
@@ -47,6 +48,7 @@ export class BankIntegrationService {
     private readonly prisma: PrismaService,
     private readonly bankMatch: BankMatchService,
     private readonly config: ConfigService,
+    private readonly restSync: BankRestSyncService,
   ) {}
 
   async ensureWebhookSecret(organizationId: string): Promise<string> {
@@ -255,6 +257,41 @@ export class BankIntegrationService {
     return { createdLineIds, skipped };
   }
 
+  private async readSyncMode(organizationId: string): Promise<"off" | "mock" | "rest"> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const direct = asSettingsRecord(asSettingsRecord(org?.settings).bankingDirect);
+    if (direct.syncMode === "mock" || direct.syncMode === "rest") return direct.syncMode;
+    return "off";
+  }
+
+  private async runRestPoll(organizationId: string, trigger: DirectSyncTrigger) {
+    const { results, configWarnings } = await this.restSync.fetchRestTransactions(organizationId);
+    const created: string[] = [];
+    let skipped = 0;
+    for (const row of results) {
+      if (row.transactions.length === 0) continue;
+      const r = await this.ingestTransactions(organizationId, row.bankName, trigger, row.transactions);
+      created.push(...r.createdLineIds);
+      skipped += r.skipped;
+    }
+    let autoMatched = 0;
+    for (const lineId of created) {
+      const m = await this.bankMatch.tryAutoMatchLine(organizationId, lineId);
+      if (m.autoMatched) autoMatched += 1;
+      const outMatched = await this.autoMatchOutgoingForLine(organizationId, lineId);
+      if (outMatched) autoMatched += 1;
+    }
+    return {
+      newLines: created.length,
+      skippedDuplicates: skipped,
+      autoMatched,
+      configWarnings,
+    };
+  }
+
   async runMockBankPoll(organizationId: string, trigger: DirectSyncTrigger) {
     const tick = await this.nextMockTick(organizationId);
     const pashaName = "Pasha Bank";
@@ -312,10 +349,17 @@ export class BankIntegrationService {
     organizationId: string,
     trigger: DirectSyncTrigger,
   ): Promise<Record<string, unknown>> {
+    const mode = await this.readSyncMode(organizationId);
+    if (mode === "off") {
+      return { ok: true, trigger, skipped: true, reason: "sync_off" };
+    }
     await this.ensureWebhookSecret(organizationId);
     const started = new Date().toISOString();
     try {
-      const result = await this.runMockBankPoll(organizationId, trigger);
+      const result =
+        mode === "rest"
+          ? await this.runRestPoll(organizationId, trigger)
+          : await this.runMockBankPoll(organizationId, trigger);
       await this.patchBankingDirectSettings(organizationId, {
         lastSyncAt: started,
         lastSyncStatus: "ok",

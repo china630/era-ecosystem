@@ -36,10 +36,10 @@ export class PatchBankingDirectBankDto {
 }
 
 export class PatchBankingDirectDto {
-  @ApiPropertyOptional({ enum: ["mock", "rest"] })
+  @ApiPropertyOptional({ enum: ["off", "mock", "rest"] })
   @IsOptional()
-  @IsIn(["mock", "rest"])
-  syncMode?: "mock" | "rest";
+  @IsIn(["off", "mock", "rest"])
+  syncMode?: "off" | "mock" | "rest";
 
   @ApiPropertyOptional()
   @IsOptional()

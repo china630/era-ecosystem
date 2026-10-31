@@ -10,7 +10,7 @@ import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../lib/list-refresh-bus";
 import { PageHeader } from "../../components/layout/page-header";
-import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
+import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { EmptyState } from "../../components/empty-state";
 import { ListPaginationFooter } from "../../components/list-pagination-footer";
 import { CreateReceiptModal } from "../../components/inventory/create-receipt-modal";
@@ -46,7 +46,7 @@ type PurchaseInvoiceRow = {
 
 function rowDate(m: PurchaseInvoiceRow): string {
   if (m.documentDate) {
-    return String(m.documentDate).slice(0, 10);
+    return bakuDateDisplay(String(m.documentDate).slice(0, 10));
   }
   return bakuDateTimeDisplay(m.createdAt);
 }

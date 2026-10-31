@@ -16,6 +16,7 @@ import {
   showApiError,
   usePaginatedList,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import GuestCardModal from '@/components/GuestCardModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -258,7 +259,10 @@ export default function GuestsPage() {
               {
                 key: 'birthDate',
                 header: t('birthDate'),
-                render: (r) => dash(r.birthDate),
+                render: (r) => {
+                  const ymd = r.birthDate?.slice(0, 10) ?? '';
+                  return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? bakuDateDisplay(ymd) : dash(r.birthDate);
+                },
               },
               {
                 key: 'nationality',

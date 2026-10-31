@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { apiFetch } from "../../lib/api-client";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../lib/list-refresh-bus";
@@ -35,7 +36,7 @@ type DashboardPayload = {
 };
 
 function formatDate(d: string): string {
-  return d.slice(0, 10);
+  return bakuDateDisplay(d.slice(0, 10));
 }
 
 export function ManufacturingDashboardWidgets() {

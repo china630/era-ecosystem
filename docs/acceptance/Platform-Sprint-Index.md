@@ -6,6 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ (scaffold only) · BE 🟡 (TOPO **in** rollup — PlacementJob API ≠ live hop) · UI 🟡 · Sell: do not claim GA or SHARED pool  
+**Satellite queue (2026-10-31):** job id strips `:`, including clinic and staff fan-out. FIN-02 stays HEADLESS. Does not change the rollup.  
 **BE honesty:** Wave 7 greened AUTH/BILL/MDM/WF/SA/INT/BIND/CFG. TOPO stays in rollup 🟡. Playbook: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md).
 
 ---

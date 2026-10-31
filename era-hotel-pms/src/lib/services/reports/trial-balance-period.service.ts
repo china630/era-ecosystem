@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { civilWindow, round2, splitGross, ymdParam } from '@/lib/reports/civil-days';
-import { loadChargeDays, loadRevenueCodes } from './stay-ledger';
+import { loadChargeDays, loadRevenueCodes, revenueCodeLabel } from './stay-ledger';
 
 export interface TrialBalanceLine {
   code: string;
@@ -37,6 +37,7 @@ function signed(kind: string, amount: unknown): number {
 export async function queryTrialBalancePeriod(
   fromParam: string | Date,
   toParam: string | Date,
+  locale = 'az',
 ): Promise<TrialBalancePeriodResult> {
   const from = ymdParam(fromParam);
   const to = ymdParam(toParam) < from ? from : ymdParam(toParam);
@@ -76,7 +77,7 @@ export async function queryTrialBalancePeriod(
     const rcCode = code?.code ?? c.revenueCodeId;
     let line = dept.codes.find((l) => l.code === rcCode);
     if (!line) {
-      line = { code: rcCode, name: code?.name ?? rcCode, net: 0, vat: 0, gross: 0 };
+      line = { code: rcCode, name: revenueCodeLabel(code, locale, rcCode), net: 0, vat: 0, gross: 0 };
       dept.codes.push(line);
     }
     line.net += split.net;

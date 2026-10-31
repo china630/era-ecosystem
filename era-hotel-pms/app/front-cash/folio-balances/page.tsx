@@ -11,6 +11,7 @@ import {
   showApiError,
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -141,7 +142,7 @@ export default function FolioBalancesPage() {
             sortable: true,
             sortValue: (r) => String(r.checkInDate),
             render: (r) =>
-              `${String(r.checkInDate).slice(0, 10)} → ${String(r.checkOutDate).slice(0, 10)}`,
+              `${bakuDateDisplay(String(r.checkInDate).slice(0, 10))} → ${bakuDateDisplay(String(r.checkOutDate).slice(0, 10))}`,
           },
           { key: 'guestBalance', header: t('colGuestBal'), sortable: true, sortValue: (r) => r.guestBalance, render: (r) => money(r.guestBalance) },
           { key: 'agencyBalance', header: t('colAgencyBal'), sortable: true, sortValue: (r) => r.agencyBalance, render: (r) => money(r.agencyBalance) },

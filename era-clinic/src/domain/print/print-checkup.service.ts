@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { bakuTimeLabel } from "@/lib/baku-day";
 import { getCheckupSectionsConfig, getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { formatIcdLabel, normalizeIcdLocale } from "@/domain/icd/icd-catalog";
@@ -108,13 +109,7 @@ export async function buildCheckupPrint(
         : printLabel(lang, `specialty_${cfg.specialty}`),
       enabled: cfg.enabled,
       doctorName: apt?.practitioner.fullName ?? null,
-      scheduleHint: apt
-        ? apt.scheduledAt.toLocaleString("en-GB", {
-            timeZone: "Asia/Baku",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : null,
+      scheduleHint: apt ? bakuTimeLabel(apt.scheduledAt) : null,
       status: intakeItem?.status ?? null,
     };
   });

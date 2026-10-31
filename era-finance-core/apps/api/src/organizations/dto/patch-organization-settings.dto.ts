@@ -145,6 +145,16 @@ export class PatchOrganizationSettingsDto {
   @IsBoolean()
   requireEqaimeForDayClose?: boolean;
 
+  /** Fake e-taxes taxpayer card. Default off. */
+  @IsOptional()
+  @IsBoolean()
+  taxLookupMock?: boolean;
+
+  /** Fake ASAN/SİMA completion. Default off. */
+  @IsOptional()
+  @IsBoolean()
+  signatureGatewayMock?: boolean;
+
   /** P0 Multi-GAAP: soft (default) | strict IFRS mirror policy */
   @IsOptional()
   @IsIn(["soft", "strict"])

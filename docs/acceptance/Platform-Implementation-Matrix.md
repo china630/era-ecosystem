@@ -8,6 +8,7 @@
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
 **BE deepen (2026-08-17):** Green Scaffold BE Wave 7 — `era-orchestrator/apps/api/src/**/cp-*-negative.spec.ts` (AUTH/BILL/MDM/WF/SA/INT/BIND/CFG).  
+**Night-audit enqueue (2026-10-31):** BullMQ job id replaces `:`, including clinic and staff fan-out. Not a new AC row and not Scaffold ✅. FIN-02 stays HEADLESS. Does not change the BE rollup.  
 **Wave 8 (2026-08-18):** TOPO briefly excluded; **reverted same day** — owner: TOPO stays **in** BE rollup as 🟡. Playbook: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md).
 
 ---
@@ -33,7 +34,9 @@
 AC-CP-TOPO is **in Scaffold BE rollup** (owner 2026-08-18). Do **not** mark TOPO Scaffold ✅ from API scaffold alone. TOPO ✅ (later) still ≠ SaaS pool sellable.  
 **AC-CP-RBAC is out of BE rollup** (matrix SCREEN / field UAT open) — does not darken Scaffold BE.  
 **AC-CP-ORG-PROFILE is out of BE rollup** until Pilot UAT (API+SCREEN + negatives landed; not Scaffold ✅).  
-**AC-CP-WF-JOB is out of BE rollup** (job architecture API+SCREEN; UAT open; not Scaffold ✅) — does not darken hub AC-CP-WF ✅.  
+**AC-CP-WF-JOB is out of BE rollup** (job architecture API+SCREEN; UAT open; not Scaffold ✅) — does not darken hub AC-CP-WF ✅.
+
+**Civil date labels (2026-10-30):** Workforce request intervals, the read-only hire date, and the migration “last updated” label render `дд.мм.гггг` via `bakuDateDisplay`. Pickers stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.  
 Do not call this table «product readiness».
 
 ### Residual register

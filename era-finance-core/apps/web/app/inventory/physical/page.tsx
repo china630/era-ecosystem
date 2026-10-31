@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -172,7 +173,7 @@ export default function InventoryPhysicalPage() {
                   rows.map((r) => (
                     <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                       <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                        {typeof r.date === "string" ? r.date.slice(0, 10) : "—"}
+                        {typeof r.date === "string" ? bakuDateDisplay(r.date.slice(0, 10)) : "—"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{r.warehouse?.name ?? "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>

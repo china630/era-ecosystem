@@ -37,7 +37,7 @@ import {
   parseTransferQuota,
 } from "@/domain/sanatorium/package-assign-quota";
 import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
-import { addBakuDays, bakuDateKey, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDateDisplay, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
 export type PackageBalanceRow = {
   procedureCode: string;
@@ -306,8 +306,13 @@ export function PackageAssignModal({
   const [replaceBatchId, setReplaceBatchId] = useState<string | null>(null);
   const [replaceReason, setReplaceReason] = useState("");
   const [packagePin, setPackagePin] = useState<string | null>(null);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const [checkoutAsk, setCheckoutAsk] = useState<string[] | null>(null);
   const [pendingCancel, setPendingCancel] = useState<Set<string>>(new Set());
   const [pendingCut, setPendingCut] = useState<Record<string, number>>({});
+  const [masseurOptions, setMasseurOptions] = useState<Record<string, Array<{ id: string; fullName: string }>>>({});
+  const [masseurByCode, setMasseurByCode] = useState<Record<string, string>>({});
+  const [masseurSaved, setMasseurSaved] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const res = await fetch(
@@ -335,6 +340,21 @@ export function PackageAssignModal({
     const payload = d.data ?? d;
     setBalances(payload.balances ?? []);
     setAssigned(payload.assigned ?? []);
+    const optionRows =
+      payload.masseurOptions && typeof payload.masseurOptions === "object"
+        ? (payload.masseurOptions as Record<string, Array<{ id: string; fullName: string }>>)
+        : {};
+    setMasseurOptions(optionRows);
+    const savedPick: Record<string, string> = {};
+    const byCode =
+      payload.masseurByCode && typeof payload.masseurByCode === "object"
+        ? (payload.masseurByCode as Record<string, string | null>)
+        : {};
+    for (const code of Object.keys(byCode)) {
+      savedPick[code] = typeof byCode[code] === "string" ? byCode[code] : "";
+    }
+    setMasseurSaved(savedPick);
+    setMasseurByCode(savedPick);
     setPoolEligible(payload.poolEligible ?? {});
     setSexBlockedCodes(
       new Set(
@@ -377,6 +397,9 @@ export function PackageAssignModal({
     setFormLane(null);
     setPendingCancel(new Set());
     setPendingCut({});
+    setMasseurByCode({});
+    setMasseurSaved({});
+    setMasseurOptions({});
     setFormCode(null);
     setFormBurnPool(null);
     setError(null);
@@ -539,10 +562,32 @@ export function PackageAssignModal({
     const stored = row.amountNet > 0 ? row.amountNet : unitOf(row.procedureCode);
     return sum + stored;
   }, 0);
+  const masseurDirty = Object.keys({ ...masseurByCode, ...masseurSaved }).some((code) => {
+    if (!masseurOptions[code]?.length) return false;
+    return (masseurByCode[code] ?? "") !== (masseurSaved[code] ?? "");
+  });
   const canSavePackage =
-    !blockReason && (draft.length > 0 || hasPendingAdjust || (formLane === "package" && Boolean(formCode)));
+    !blockReason &&
+    (draft.length > 0 ||
+      hasPendingAdjust ||
+      masseurDirty ||
+      (formLane === "package" && Boolean(formCode)));
   const canSaveExtras = !clinicalLock && (extraDraft.length > 0 || formLane === "extra");
   const canSave = !busy && (canSavePackage || canSaveExtras);
+  const unsaved =
+    canSavePackage ||
+    canSaveExtras ||
+    replaceFrom !== "" ||
+    replaceTo !== "" ||
+    replaceReason.trim() !== "";
+  function requestClose() {
+    if (busy) return;
+    if (unsaved) {
+      setDiscardOpen(true);
+      return;
+    }
+    onClose();
+  }
 
   const leftoverDraft = useMemo(() => {
     const used = new Set<string>();
@@ -955,6 +1000,7 @@ export function PackageAssignModal({
     const misses = placeMissText(payload.misses);
     if (misses) return misses;
     if (code === "CABIN_SEX") return tPhysio("packageAssignMissCabinSex");
+    if (code === "MASSEUR_NOT_SKILLED") return tPhysio("masseurNotSkilled");
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
     if (code === "PLACE_FAILED") return tPhysio("packageAssignPlaceFailed");
     if (code === "NOT_IN_PROCEDURES") return tPhysio("packageAssignNotInProcedures");
@@ -966,6 +1012,24 @@ export function PackageAssignModal({
       ? `${serverError} (${code})`
       : serverError;
     return tc("saveFailed");
+  }
+
+  function masseurPrefs(): Array<{ procedureCode: string; practitionerId: string | null }> {
+    const codes = new Set([...Object.keys(masseurByCode), ...Object.keys(masseurSaved)]);
+    const prefs: Array<{ procedureCode: string; practitionerId: string | null }> = [];
+    for (const code of codes) {
+      if (!masseurOptions[code]?.length) continue;
+      const next = masseurByCode[code] ?? "";
+      const prev = masseurSaved[code] ?? "";
+      if (next === prev) continue;
+      prefs.push({ procedureCode: code, practitionerId: next || null });
+    }
+    return prefs;
+  }
+
+  function masseurIdFor(code: string): string | null {
+    if (!masseurOptions[code]?.length) return null;
+    return masseurByCode[code] || null;
   }
 
   async function save(start?: { date: string; hour: string }) {
@@ -1018,7 +1082,12 @@ export function PackageAssignModal({
     const cuts = pendingCut;
     const hasAdjust =
       cancelKeys.size > 0 || Object.values(cuts).some((n) => n > 0);
-    if (lines.length === 0 && !hasAdjust && extras.length === 0) {
+    const prefs = masseurPrefs();
+    if (lines.length === 0 && !hasAdjust && extras.length === 0 && prefs.length === 0) {
+      if (replaceFrom !== "" || replaceTo !== "" || replaceReason.trim() !== "") {
+        await submitReplace();
+        return;
+      }
       onClose();
       return;
     }
@@ -1032,6 +1101,7 @@ export function PackageAssignModal({
     }
     setBusy(true);
     setError(null);
+    let pendingCheckout: string[] | null = null;
     try {
       for (const row of assigned) {
         if (row.locked) continue;
@@ -1059,7 +1129,7 @@ export function PackageAssignModal({
         }
       }
 
-      if (lines.length > 0 && !blockReason) {
+      if ((lines.length > 0 || prefs.length > 0) && !blockReason) {
         const res = await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1073,7 +1143,9 @@ export function PackageAssignModal({
               siteApplyMode: d.siteApplyMode ?? null,
               siteLaterality: d.siteLaterality ?? {},
               burnPoolCode: d.burnPoolCode ?? null,
+              preferredPractitionerId: masseurIdFor(d.procedureCode),
             })),
+            ...(prefs.length > 0 ? { staffPrefs: prefs } : {}),
             ...(start ? { startOn: start.date, startHour: Number(start.hour) } : {}),
           }),
         });
@@ -1083,15 +1155,25 @@ export function PackageAssignModal({
           return;
         }
         const payload = d.data ?? d;
-        toastPackageAssignOutcome(
-          lines.map((row) => ({
-            procedureCode: row.procedureCode,
-            procedureName: row.procedureName,
-            qty: row.qty,
-          })),
-          payload.misses,
-          (key, values) => tPhysio(key, values),
-        );
+        const missRows = Array.isArray(payload.misses) ? payload.misses : [];
+        const noonNames = missRows
+          .filter((row: { reason?: string }) => row.reason === "no_slot" || row.reason === "no_day")
+          .map((row: { procedureName?: string; procedureCode?: string }) => row.procedureName || row.procedureCode)
+          .filter((name: string | undefined): name is string => Boolean(name))
+          .filter((name: string, index: number, all: string[]) => all.indexOf(name) === index);
+        if (noonNames.length > 0) {
+          pendingCheckout = noonNames;
+        } else {
+          toastPackageAssignOutcome(
+            lines.map((row) => ({
+              procedureCode: row.procedureCode,
+              procedureName: row.procedureName,
+              qty: row.qty,
+            })),
+            payload.misses,
+            (key, values) => tPhysio(key, values),
+          );
+        }
         if (payload.softWarn) setSoftWarn(String(payload.softWarn));
       }
       if (extras.length > 0 && !clinicalLock) {
@@ -1109,6 +1191,7 @@ export function PackageAssignModal({
                 siteIds: row.siteIds ?? [],
                 siteApplyMode: row.siteApplyMode ?? null,
                 siteLaterality: row.siteLaterality ?? {},
+                preferredPractitionerId: masseurIdFor(row.procedureCode),
               })),
             }),
           },
@@ -1123,6 +1206,8 @@ export function PackageAssignModal({
                   ? tPhysio("packageAssignQuotaRemaining")
                   : code === "CABIN_SEX"
                     ? tPhysio("packageAssignMissCabinSex")
+                  : code === "MASSEUR_NOT_SKILLED"
+                    ? tPhysio("masseurNotSkilled")
                   : typeof extraBody?.error === "string"
                     ? extraBody.error
                     : tc("saveFailed"),
@@ -1138,6 +1223,10 @@ export function PackageAssignModal({
       setPendingCut({});
       closeForm();
       onSaved();
+      if (pendingCheckout) {
+        setCheckoutAsk(pendingCheckout);
+        return;
+      }
       onClose();
     } finally {
       setBusy(false);
@@ -1360,9 +1449,7 @@ export function PackageAssignModal({
     <ModalShell
       open={open}
       title={labels.title}
-      onClose={() => {
-        if (!busy) onClose();
-      }}
+      onClose={requestClose}
       maxWidthClass={EPISODE_MODAL_CLASS}
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
@@ -1371,7 +1458,7 @@ export function PackageAssignModal({
             type="button"
             className={SECONDARY_BUTTON_CLASS}
             disabled={busy}
-            onClick={onClose}
+            onClick={requestClose}
           >
             {cancelLabel}
           </button>
@@ -1453,7 +1540,7 @@ export function PackageAssignModal({
                             <ul className={`mt-1 space-y-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
                               {b.transfers!.map((row, index) => (
                                 <li key={`${row.createdAt}-${index}`}>
-                                  {bakuDateKey(new Date(row.createdAt))} · {row.qty} · {row.reason}
+                                  {bakuDateDisplay(row.createdAt)} · {row.qty} · {row.reason}
                                 </li>
                               ))}
                             </ul>
@@ -1859,6 +1946,29 @@ export function PackageAssignModal({
                           )}
                         </div>
                       </div>
+                      {masseurOptions[lane.code]?.length && !lane.pkgLocked ? (
+                        <div className="max-w-xs py-1">
+                          <CatalogField
+                            kind="SEARCHABLE"
+                            label={tPhysio("masseurLabel")}
+                            value={masseurByCode[lane.code] ?? ""}
+                            onChange={(value) =>
+                              setMasseurByCode((prev) => ({
+                                ...prev,
+                                [lane.code]: String(value ?? ""),
+                              }))
+                            }
+                            options={[
+                              { value: "", label: tPhysio("masseurAny") },
+                              ...(masseurOptions[lane.code] ?? []).map((person) => ({
+                                value: person.id,
+                                label: person.fullName,
+                              })),
+                            ]}
+                            widthPreset="select"
+                          />
+                        </div>
+                      ) : null}
                       {lane.paidQty > 0 ? (
                         <p className="pt-1 text-[13px] font-semibold text-[#1F4E79]">
                           {tPhysio("paidLine")}: {lane.paidQty}
@@ -1909,6 +2019,29 @@ export function PackageAssignModal({
                   </label>
                 ) : null}
               </div>
+              {formCode && masseurOptions[formCode]?.length ? (
+                <div className="mb-2 max-w-xs">
+                  <CatalogField
+                    kind="SEARCHABLE"
+                    label={tPhysio("masseurLabel")}
+                    value={masseurByCode[formCode] ?? ""}
+                    onChange={(value) =>
+                      setMasseurByCode((prev) => ({
+                        ...prev,
+                        [formCode]: String(value ?? ""),
+                      }))
+                    }
+                    options={[
+                      { value: "", label: tPhysio("masseurAny") },
+                      ...(masseurOptions[formCode] ?? []).map((person) => ({
+                        value: person.id,
+                        label: person.fullName,
+                      })),
+                    ]}
+                    widthPreset="select"
+                  />
+                </div>
+              ) : null}
               {formBurnPool && poolSkuOptions.length > 1 ? (
                 <div className="mb-2 max-w-xs">
                   <CatalogField
@@ -2058,6 +2191,116 @@ export function PackageAssignModal({
       </div>
     </ModalShell>
   );
-  if (typeof document === "undefined") return shell;
-  return createPortal(shell, document.body);
+  function answerCheckout(place: boolean) {
+    const names = checkoutAsk ?? [];
+    setCheckoutAsk(null);
+    if (!place || names.length === 0) {
+      onClose();
+      return;
+    }
+    setBusy(true);
+    void (async () => {
+      try {
+        const res = await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkoutMorning: true, lines: [] }),
+        });
+        const body = await res.json().catch(() => ({}));
+        const payload = body.data ?? body;
+        const left = Array.isArray(payload.misses) ? payload.misses : [];
+        const leftNames = [
+          ...new Set(
+            left
+              .map((row: { procedureName?: string; procedureCode?: string }) => row.procedureName || row.procedureCode)
+              .filter((name: string | undefined): name is string => Boolean(name)),
+          ),
+        ].join(", ");
+        if (!res.ok) {
+          showApiError({ error: assignSaveMessage(body) }, tc("saveFailed"));
+        } else if (leftNames) {
+          showApiError({ error: tPhysio("packageAssignCheckoutNoonLeft", { names: leftNames }) });
+        }
+        onSaved();
+      } finally {
+        setBusy(false);
+        onClose();
+      }
+    })();
+  }
+  const discard = (
+    <ModalShell
+      open={discardOpen}
+      title={tPhysio("packageAssignDiscardTitle")}
+      onClose={() => setDiscardOpen(false)}
+      overlayZClass="z-[400]"
+      maxWidthClass="max-w-md"
+      footer={
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => {
+              setDiscardOpen(false);
+              onClose();
+            }}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy}
+            onClick={() => {
+              setDiscardOpen(false);
+              void save(startOpen ? { date: startDate, hour: startHour } : undefined);
+            }}
+          >
+            {labels.save}
+          </button>
+        </div>
+      }
+    >
+      <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignDiscardBody")}</p>
+    </ModalShell>
+  );
+  const checkout = (
+    <ModalShell
+      open={checkoutAsk != null}
+      title={tPhysio("packageAssignCheckoutAskTitle")}
+      onClose={() => answerCheckout(false)}
+      overlayZClass="z-[400]"
+      maxWidthClass="max-w-md"
+      footer={
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => answerCheckout(false)}
+          >
+            {tPhysio("packageAssignCheckoutAskNo")}
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy}
+            onClick={() => answerCheckout(true)}
+          >
+            {tPhysio("packageAssignCheckoutAskYes")}
+          </button>
+        </div>
+      }
+    >
+      <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignCheckoutAskBody")}</p>
+    </ModalShell>
+  );
+  const tree = (
+    <>
+      {shell}
+      {discard}
+      {checkout}
+    </>
+  );
+  if (typeof document === "undefined") return tree;
+  return createPortal(tree, document.body);
 }

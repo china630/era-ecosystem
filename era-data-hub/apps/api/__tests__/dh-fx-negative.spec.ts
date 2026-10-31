@@ -27,6 +27,44 @@ describe("Data Hub FX negative paths (AC-DH-FX)", () => {
     }
   });
 
+  it("rates without fallback stays empty when the date has no FINAL row", async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const findFirst = jest.fn();
+    const ds = {
+      referenceDb: () => ({ cbarOfficialRate: { findMany, findFirst } }),
+    } as unknown as DataSourceService;
+    const fx = new FxService(ds, {} as never);
+    const body = await fx.getRates("2026-10-31", "USD", undefined);
+    expect(body.rates).toEqual([]);
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+
+  it("rates fallback=previous returns the latest earlier FINAL day", async () => {
+    const prior = new Date("2026-10-30T12:00:00.000Z");
+    const findMany = jest
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          currencyCode: "USD",
+          value: 1.7,
+          nominal: 1,
+          rate: 1.7,
+          status: "FINAL",
+          rateDate: prior,
+        },
+      ]);
+    const findFirst = jest.fn().mockResolvedValue({ rateDate: prior });
+    const ds = {
+      referenceDb: () => ({ cbarOfficialRate: { findMany, findFirst } }),
+    } as unknown as DataSourceService;
+    const fx = new FxService(ds, {} as never);
+    const body = await fx.getRates("2026-10-31", "USD", "previous");
+    expect(body.rates).toEqual([
+      expect.objectContaining({ currencyCode: "USD", rate: 1.7, rateDate: "2026-10-30", status: "FINAL" }),
+    ]);
+  });
+
   it("convert rejects non-numeric amount", async () => {
     const ds = {
       referenceDb: () => ({ cbarOfficialRate: { findUnique: jest.fn() } }),

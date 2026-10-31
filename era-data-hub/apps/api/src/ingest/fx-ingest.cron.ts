@@ -3,7 +3,8 @@ import { Cron } from "@nestjs/schedule";
 import { FxIngestService } from "./fx-ingest.service";
 
 /**
- * После 10:00 по Баку ЦБА обновляет XML; повторные запросы переводят PRELIMINARY → FINAL при смене Value.
+ * CBAR publishes the day's XML around 10:00 Asia/Baku.
+ * Poll from 09:30 every 30 minutes. syncTodayFromCbar skips HTTP once today's FINAL USD exists.
  */
 @Injectable()
 export class FxIngestCron {
@@ -11,23 +12,13 @@ export class FxIngestCron {
 
   constructor(private readonly ingest: FxIngestService) {}
 
-  @Cron("5 6 * * *", { timeZone: "Asia/Baku" })
-  async earlyMorning(): Promise<void> {
+  @Cron("30 9 * * *", { timeZone: "Asia/Baku" })
+  async atNineThirty(): Promise<void> {
     await this.runSafe();
   }
 
-  @Cron("5 10 * * *", { timeZone: "Asia/Baku" })
-  async afterCbarOpen(): Promise<void> {
-    await this.runSafe();
-  }
-
-  @Cron("0 12 * * *", { timeZone: "Asia/Baku" })
-  async noon(): Promise<void> {
-    await this.runSafe();
-  }
-
-  @Cron("0 16 * * *", { timeZone: "Asia/Baku" })
-  async afternoon(): Promise<void> {
+  @Cron("0,30 10-23 * * *", { timeZone: "Asia/Baku" })
+  async everyHalfHourAfterTen(): Promise<void> {
     await this.runSafe();
   }
 

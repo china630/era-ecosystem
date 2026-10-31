@@ -22,8 +22,10 @@ CBAR official FX rates were partially duplicated in `era-finance-core` (direct c
 
 | Mode | API | Consumers | Rules |
 |------|-----|-----------|-------|
-| **Strict accounting** | `GET /fx/rates?date=` FINAL | Revaluation, customs BGD, bank EOD | Exact Baku date; fail if no FINAL |
-| **Operational convert** | `GET /fx/convert` | Dashboard, logistics preview | PRELIMINARY acceptable before ~10:00 Baku; label `isFallback` |
+| **Strict accounting** | `GET /fx/rates?date=` and `GET /fx/convert` | Revaluation, customs BGD, bank EOD, document FX | FINAL on that Baku date only; fail if missing |
+| **Dashboard display** | `GET /fx/rates?date=&fallback=previous` | Finance home FX cards | If today has no FINAL yet, last earlier FINAL; response `rateDate` is the bulletin day |
+
+The XML `Date` attribute is the only signal that a day has been published. The same USD/EUR numbers as yesterday are still FINAL. Ingest polls from 09:30 Asia/Baku every 30 minutes until today's FINAL exists, then skips HTTP.
 
 ### Anti-patterns
 

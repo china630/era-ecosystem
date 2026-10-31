@@ -1728,6 +1728,9 @@ export class ReportingService {
     const curY = now.getUTCFullYear();
     const curM = now.getUTCMonth() + 1;
     const curKey = `${curY}-${String(curM).padStart(2, "0")}`;
+    // Walk newest → oldest, keep the last open month: that is the earliest
+    // unclosed past month. The home form then moves forward after each close.
+    let earliest: { year: number; month: number; periodKey: string } | null = null;
     for (let offset = 1; offset <= 36; offset += 1) {
       const d = new Date(Date.UTC(curY, curM - 1 - offset, 1));
       const y = d.getUTCFullYear();
@@ -1735,15 +1738,18 @@ export class ReportingService {
       const key = `${y}-${String(m).padStart(2, "0")}`;
       if (key >= curKey) continue;
       if (!closed.includes(key)) {
-        return {
-          show: true as const,
-          year: y,
-          month: m,
-          periodKey: key,
-          ledgerType: book.gaapKind,
-          accountingBookId: book.id,
-        };
+        earliest = { year: y, month: m, periodKey: key };
       }
+    }
+    if (earliest) {
+      return {
+        show: true as const,
+        year: earliest.year,
+        month: earliest.month,
+        periodKey: earliest.periodKey,
+        ledgerType: book.gaapKind,
+        accountingBookId: book.id,
+      };
     }
     return {
       show: false as const,

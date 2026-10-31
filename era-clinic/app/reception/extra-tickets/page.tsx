@@ -57,6 +57,7 @@ export default function ExtraTicketsPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const [dualRun, setDualRun] = useState(false);
+  const [needsFilter, setNeedsFilter] = useState(true);
   const [rows, setRows] = useState<ExtraRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -69,12 +70,16 @@ export default function ExtraTicketsPage() {
   const qDebounced = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/procedures/issue-ticket?locale=${encodeURIComponent(locale)}`);
+    const params = new URLSearchParams({ locale });
+    if (room.trim()) params.set("room", room.trim());
+    if (qDebounced.trim()) params.set("q", qDebounced.trim());
+    const res = await fetch(`/api/procedures/issue-ticket?${params}`);
     const d = await res.json();
     const payload = d.data ?? d;
     setDualRun(!!payload.dualRun);
+    setNeedsFilter(!!payload.needsFilter);
     setRows((payload.orders ?? []) as ExtraRow[]);
-  }, [locale]);
+  }, [locale, room, qDebounced]);
 
   useEffect(() => {
     void load();
@@ -185,6 +190,7 @@ export default function ExtraTicketsPage() {
 
   function resetFilters() {
     setQ("");
+    setRoom("");
     setOrigin("");
   }
 
@@ -357,7 +363,7 @@ export default function ExtraTicketsPage() {
               {groups.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                    {rows.length === 0 ? t("empty") : t("noMatch")}
+                    {needsFilter ? t("pickRoomOrName") : rows.length === 0 ? t("empty") : t("noMatch")}
                   </td>
                 </tr>
               ) : (

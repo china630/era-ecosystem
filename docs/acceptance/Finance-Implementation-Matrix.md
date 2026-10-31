@@ -9,6 +9,8 @@
 
 **BE deepen (2026-08-17):** Green Scaffold BE Wave 6 — `__tests__/fin-*-negative.spec.ts` (GL/ARAP/INV/EVT/CFG/HR/TAX/FA).
 
+**Civil date labels (2026-10-30):** Document, due, payroll, asset, customs, banking, and audit dates on ops screens render `дд.мм.гггг` via `bakuDateDisplay`. Pickers stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
+
 ---
 
 ## AC rollup
@@ -33,12 +35,17 @@
 | AC-FIN-VIEW | Invoice register saved views (SaaS core, not СКД) | 🟡 | [ ] | `test/saved-list-views/saved-list-views.service.spec.ts`; kit `saved-list-view.test.ts` | W2: whitelist columns/filters/sort; no JSONB extra filters; not SQL. ADR extensibility-forms-print-reports |
 | AC-FIN-PRINT | Commercial invoice print snapshot (SaaS core, not fiscal) | 🟡 | [ ] | `test/invoices/invoice-print-snapshot.spec.ts`; kit `print-snapshot.test.ts` | W3: flat placeholders + one lines loop; vendor HTML; not KO-1/e-qaimə. ADR extensibility-forms-print-reports |
 | AC-FIN-RBAC | Finance consumes CP JWT grants (`api:*` / `admin:*` / `screen:*`) | 🟡 | [ ] | UAT-SMOKE § FIN-RBAC-01; ADR finance-domain-permissions-and-rbac; `rbac-bridge-sprint.spec.ts` (auditor belt) | **Out of BE rollup.** Door = `PermissionsGuard` keys (Post/Approve = `api:ledger.post`). No Finance matrix UI. SCREEN until field UAT — not SHOW/GA. Do **not** flip AC-FIN-GL. |
-| AC-FIN-REF | Org Excel copy of FX, banks, calendar, HS | 🟡 | [ ] | `reference-manual.controller.ts`; COVERAGE FC-REF-01 | **Out of W6 BE rollup.** Uploads require `admin:org.settings`. No negative spec for a bad workbook. Reads cover FX spot/range/convert and calendar day/range/business days. Does not write the hub. SCREEN until UAT. Do **not** flip AC-FIN-GL or the finance BE ✅ rollup. |
+| AC-FIN-REF | Org Excel copy of FX, banks, calendar, HS | 🟡 | [ ] | `reference-manual.controller.ts`; COVERAGE FC-REF-01 | **Out of W6 BE rollup.** Uploads require `admin:org.settings`. No negative spec for a bad workbook. Reads cover FX spot/range/convert and calendar day/range/business days. Home FX uses hub `fallback=previous` (Excel workbook: same previous day only when that flag is set). Does not write the hub. SCREEN until UAT. Do **not** flip AC-FIN-GL or the finance BE ✅ rollup. |
 | AC-FIN-DAY | Hotel day document v2: article VAT, leaf post, `601.*` rollup, uncosted qty | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01 | **Out of W6 BE rollup.** No negative spec (group account, zero average, house-use qty). Reports already on screen. Does **not** flip AC-FIN-GL, AC-FIN-EVT, or the finance BE ✅ rollup. |
 | AC-FIN-AUD | Mutation audit Layer A align to ecosystem standard (deny-list naming / shared redaction) | 🟡 | [ ] | Finance TZ §9 / §11.1; `AuditMutationInterceptor`; FIN-AUD-01; `/admin/audit` + OWNER `/admin/security-audit`; `mutation-audit-exempt.spec.ts` + `data-masking.service.spec.ts`; `admin-security-audit.controller.spec.ts` (OWNER door) | **Out of W6 BE rollup.** Live Finance belt COVERAGE **SHIPPED** (FIN-AUD-01). Wave C kit-align + Wave D journal UI on `/admin/audit` and OWNER `/admin/security-audit` (`CatalogField`/`EraListFilterBar`/kit `DatePicker`) 2026-10-29. Residual = fuller AuthZ negatives for Scaffold ✅ (Evidence bar). Does not darken BE ✅ or reopen AC-FIN-GL. ADR era-mutation-audit-standard. |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
 **AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, AC-FIN-PROVISIONAL-VAT, and AC-FIN-AUD are out of Scaffold BE rollup** (SCREEN / UAT open, API-only watcher, or alignment residual) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX.  
+**Direct bank sync (2026-10-31):** default `off`. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  
+**Taxpayer and signature stubs (2026-10-31):** `settings.tax.taxLookupMock` and `signatureGatewayMock` default off. FIN-ASAN-01 stays API/STUB. Not Scaffold ✅. Does not change the BE rollup.  
+**Audit hash writer (2026-10-31):** VAT threshold `THRESHOLD_HIT` uses `AuditService`. AC-FIN-AUD stays 🟡. Not Scaffold ✅. Does not change the BE rollup.  
+**Close prompt (2026-10-31):** earliest unclosed past month. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  
+**Hotel day documents (2026-10-31):** list is `/reporting/hotel-day-documents`, not inventory. The row opens the package lines (revenue, sku, payments, deposits). Quantity purpose is labeled. Not a new AC row and not Scaffold ✅. FIN-02 stays HEADLESS. Does not change the BE rollup.  
 Do not call this table «product readiness».
 
 **SaaS Wave 3 (audit only):** Finance already request-tenants via Nest `TenantContextInterceptor` + membership ALS from JWT. Wave 3 did **not** port kit `enterSatelliteTenant`. No silent process-bind stamps via kit in production paths.

@@ -22,7 +22,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { TourDepartureStatusBadge, TourMoneyBadge } from '@/components/tours/tour-status-badge';
@@ -323,7 +323,7 @@ export function TourRosterModal({ open, departureId, onClose, onEdit, onChanged 
         title={dep?.agenda || t('rosterTitle')}
         subtitle={
           dep
-            ? `${dep.date.slice(0, 10)} · ${departureStatusLabel(dep.status)} · ${liveBookings.length}/${dep.capacity}`
+            ? `${bakuDateDisplay(dep.date.slice(0, 10))} · ${departureStatusLabel(dep.status)} · ${liveBookings.length}/${dep.capacity}`
             : undefined
         }
         onClose={onClose}

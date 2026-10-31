@@ -7,7 +7,13 @@ import { EraModal } from '@/components/EraModal';
 import { GuestCrmPromptListPage, GuestCrmReadOnly } from '@/components/guest-crm/GuestCrmPromptListPage';
 import { GuestCrmExtensionPage } from '@/components/guest-crm/GuestCrmExtensionPage';
 import { useGuestCrmList } from '@/components/guest-crm/useGuestCrmList';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { guestListItems } from '@/lib/guest-list-identity';
+
+function dayLabel(value: unknown): string {
+  const ymd = String(value ?? '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? bakuDateDisplay(ymd) : '—';
+}
 
 function ReadList({
   guestId,
@@ -98,7 +104,7 @@ function ReservationList({
               className="w-full rounded-xl border border-[#D5DADF] p-3 text-left hover:bg-[#F4F6F7]"
               onClick={() => onOpen(String(r.id))}
             >
-              {String(r.status ?? '')} · {String(r.checkInDate ?? '').slice(0, 10)} — {String(r.checkOutDate ?? '').slice(0, 10)}
+              {String(r.status ?? '')} · {dayLabel(r.checkInDate)} — {dayLabel(r.checkOutDate)}
               {room?.roomNumber ? ` · ${room.roomNumber}` : ''}
             </button>
           </li>
@@ -484,7 +490,7 @@ export function GuestCardCrmDialog({
           searchKeys={['dateType', 'eventDate']}
           renderItem={(r) => (
             <li key={String(r.id)} className="rounded-xl border border-[#D5DADF] p-3">
-              {String(r.dateType)} — {String(r.eventDate).slice(0, 10)}
+              {String(r.dateType)} — {dayLabel(r.eventDate)}
             </li>
           )}
         />
@@ -665,7 +671,7 @@ export function GuestCardCrmDialog({
         <ReadList
           guestId={guestId}
           path="/api/guests/{id}/contact-logs"
-          line={(r) => `${String(r.channel ?? '')} · ${String(r.contactDate ?? '').slice(0, 10)}`}
+          line={(r) => `${String(r.channel ?? '')} · ${dayLabel(r.contactDate)}`}
         />
       ) : null}
       {panelId === 'accompanying' ? (
@@ -686,7 +692,7 @@ export function GuestCardCrmDialog({
           path="/api/guests/{id}/booker-history"
           line={(r) => {
             const guest = r.guest as { fullName?: string } | undefined;
-            return `${guest?.fullName ?? ''} · ${String(r.checkInDate ?? '').slice(0, 10)}`;
+            return `${guest?.fullName ?? ''} · ${dayLabel(r.checkInDate)}`;
           }}
           onOpen={(r) => onOpenReservation?.(String(r.id))}
         />

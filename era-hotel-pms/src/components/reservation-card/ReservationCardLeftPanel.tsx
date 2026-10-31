@@ -21,7 +21,7 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal } from '@/components/EraModal';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
@@ -157,7 +157,7 @@ function RoomMoves({
         <ul className="m-0 mt-1 list-none p-0">
           {segments.map((slice) => (
             <li key={slice.id}>
-              {String(slice.fromDate).slice(0, 10)} – {String(slice.toDate).slice(0, 10)}
+              {bakuDateDisplay(String(slice.fromDate).slice(0, 10))} – {bakuDateDisplay(String(slice.toDate).slice(0, 10))}
               {' · '}
               {slice.roomTypeCode ?? '—'}
               {slice.roomNumber ? ` · ${slice.roomNumber}` : ''}

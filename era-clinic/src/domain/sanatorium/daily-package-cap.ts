@@ -1,6 +1,7 @@
 import { bakuDateKey } from "@/lib/baku-day";
 
-export const DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP = 3;
+/** Empty package-block cell. Not a physio/bath/paraffin family default. */
+export const DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP = 1;
 
 export type PackageCapSlot = {
   code: string;
@@ -43,21 +44,19 @@ export function packageDayIsFullForNewCode(
   return codesOnDay.size >= limit;
 }
 
-/** Empty stored cap: physio 3, bath 1, paraffin 1. Other blocks are uncapped. */
-export function defaultDailyDistinctCap(kind: string | null | undefined): number | null {
-  if (kind === "PHYSIO") return 3;
-  if (kind === "BATH") return 1;
-  if (kind === "PARAFFIN") return 1;
-  return null;
+/** @deprecated Kind no longer picks a cap. Empty stored value is 1. */
+export function defaultDailyDistinctCap(_kind: string | null | undefined): number {
+  return DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP;
 }
 
+/** Stored block cell wins. Empty, missing, or below 1 means one distinct procedure that day. */
 export function resolveDailyDistinctCap(
-  kind: string | null | undefined,
+  _kind: string | null | undefined,
   stored: number | null | undefined,
-): number | null {
-  if (stored == null || !Number.isFinite(Number(stored))) return defaultDailyDistinctCap(kind);
+): number {
+  if (stored == null || !Number.isFinite(Number(stored))) return DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP;
   const n = Math.floor(Number(stored));
-  if (n < 1) return defaultDailyDistinctCap(kind);
+  if (n < 1) return DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP;
   return Math.min(12, n);
 }
 
@@ -67,33 +66,10 @@ export type BlockCapSource = {
   dailyDistinctCap?: number | null;
 };
 
-/** Stored kind wins. Known pool codes still get a family when the row never saved one. */
-export function kindForDailyCap(
-  code: string,
-  kind: string | null | undefined,
-): string | null | undefined {
-  if (kind) return kind;
-  const c = code.trim().toUpperCase();
-  if (c === "PHYSIO_POOL" || c.startsWith("PHYSIO_POOL_")) return "PHYSIO";
-  if (
-    c === "PARAFFIN_POOL" ||
-    c.startsWith("PARAFFIN_POOL_") ||
-    c.includes("PARAFFIN") ||
-    c.includes("PARAFIN")
-  ) {
-    return "PARAFFIN";
-  }
-  if (c === "NAFTALAN" || c === "NAFTALAN_BATH" || c.includes("NAFTALAN")) return "BATH";
-  return kind;
-}
-
 export function capsByBlock(rows: BlockCapSource[]): Map<string, number | null> {
   const map = new Map<string, number | null>();
   for (const row of rows) {
-    map.set(
-      row.procedureCode,
-      resolveDailyDistinctCap(kindForDailyCap(row.procedureCode, row.kind), row.dailyDistinctCap),
-    );
+    map.set(row.procedureCode, resolveDailyDistinctCap(row.kind, row.dailyDistinctCap));
   }
   return map;
 }

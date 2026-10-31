@@ -4,6 +4,8 @@
 **Not readiness:** for sell/show/UI use [`Hotel-Product-Readiness-Matrix.md`](./Hotel-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Night-audit enqueue (2026-10-31):** orchestrator queue id no longer rejects `hotel-na:YYYY-MM-DD`. Not a new AC row and not Scaffold ✅. HOT-NA-01 stays SHIPPED. Does not change the BE rollup.
+
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
@@ -28,6 +30,10 @@
 **FO contract leftovers (2026-10-27):** `defaultsFromSalesContract` (corp→COMPANY); mandatory-contract hint + B2B link; `GET /api/fo/sellable?salesContractId=` allotment preview; API code→toast for payer/contract required. Second-pass: allotment-exhausted → 409 + create/group toasts. Negatives already on AC-HOT-CASH (`CONTRACT_REQUIRED_FOR_PAYER` path + room-payer policy). Scaffold ✅ / Pilot unchanged.
 
 **B2B contracts UI honesty (2026-10-27):** `/distribution/contracts` icon row actions (Cancel/Expire); no silent `AGENCY` default; create requires `counterpartyType` + `companyId` for CORPORATE; list `companyId`; hide decorative minStay/CTA/CTD/deposit (ADR Open debts SC-REST/DEP/REL). Status transition negatives: `__tests__/sales-contract-status.spec.ts`. Second-pass: EXPIRED/CANCELLED → notes/`externalRef` only; allotment upsert/delete 400; create-block hidden. **No new AC row** — HOT-AG-01 COVERAGE SHIPPED; does **not** reopen AC-HOT-CASH Scaffold ✅ or Pilot.
+
+**Civil date labels (2026-10-30):** Ops tables, the night-audit banner, city-ledger dates, the guest-list birth date, the reservation card, guest CRM, and tour print show Asia/Baku `дд.мм.гггг` via `bakuDateDisplay`. Inputs and API bodies stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
+
+**Pre-arrival door (2026-10-31):** `requestRoomMove` uses `canBookDoor` when the stay is not `IN_HOUSE`, so a dirty in-service door is assigned now and the old door is free. An in-house move still stays `PENDING` until the target is Clean or Inspected (`canAssignDoor`). AC-HOT-AMEND stays 🟡 (UAT §35). No Scaffold ✅ / Pilot change.
 
 **In-house room → clinic (2026-10-30):** The reservation card applies a door change through `requestRoomMove` → `relocateReservationRoom`, which already publishes `SATELLITE_HOTEL_ROOM_CHANGED`. An in-house schedule room change publishes the same event. Clinic `handleRoomChanged` and `handleStayProductChanged` write `roomNumber` on every OPEN episode of that reservation (and in-progress visits). A room assign before check-in still reaches the clinic on check-in. No Scaffold ✅ / Pilot change.
 
@@ -103,7 +109,7 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 |----|----------|----------|--------|
 | AC-HOT-RATE / HOT-02 | Nafta BAR Excel import | BLOCKED external | Scoped out of AC-HOT-RATE |
 | AC-HOT-INT | Live KKM / locks / notify | External ⏸ | Keep STUB; max Scaffold 🟡 |
-| HOT-RPT-01/02 | EW Management Reports catalog + nightly ZIP | W1–W3 code delivered (out of BE rollup) | Screens + PDF + ZIP + cubes + 3-year + email ZIP link; negative path `__tests__/hotel-reports-negative.spec.ts` (unknown slug / lang / empty pack); layout families + letterhead + date bar + zero-capacity ratios in `report-layout-families` / `report-letterhead` / `report-date-bar` / `report-workspace-export` specs — Scaffold 🟡 not ✅; no AC-HOT-RPT ✅ |
+| HOT-RPT-01/02 | EW Management Reports catalog + nightly ZIP | W1–W3 code delivered (out of BE rollup) | Screens + PDF + ZIP + cubes + 3-year + email ZIP link; VAT columns Total / Net / VAT; trial balance groups revenue codes under a bold department row (code names from `nameAz`/`nameRu`/`nameEn`); negative path `__tests__/hotel-reports-negative.spec.ts` (unknown slug / lang / empty pack); layout families + letterhead + date bar + zero-capacity ratios in `report-layout-families` / `report-letterhead` / `report-date-bar` / `report-workspace-export` specs — Scaffold 🟡 not ✅; no AC-HOT-RPT ✅ |
 | Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy/policy + `/hk/rooms` + secondary HK empty chrome / sidebar groups / maids picker / laundry preview / void IN_PLANT on grids+checkout / stay linen override + playbook filter/grid/modal + kit table shell tokens | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts` + `__tests__/hk-soft-sort.spec.ts` (soft sort + laundry amount + express %). Soft sort departures→VIP→needed-by→DIRTY→duty→room#. Void IN_PLANT; maids dept/unlink; discrepancy create modal; forecast 1/7/14/30; one PRIMARY; `DATA_TABLE_SHELL` / `CARD_CONTAINER` on secondary HK. Stays 🟡, not Scaffold ✅. UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | HOT-CO-04 | Early checkout unused-nights refund (net VAT, default CASH) | Out of BE rollup | ADR Accepted; AC-HOT-CO-EARLY 🟡 until fuller negatives; SHIPPED OpsUI |

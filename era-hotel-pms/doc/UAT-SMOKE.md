@@ -37,7 +37,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 1. Open `/login`, sign in as `reception` / `reception123`.
 2. Enter the 6-digit **ERA ID** (`orgNo`) on the login form or use `?org=104221` (from Control Plane → Super-admin → Organizations or Workforce → Login & access). The field is required unless the host already names the organization.
 3. Confirm Chessboard loads; AppNav shows allowed links only.
-4. **Clock (Asia/Baku):** FO availability / reservation-times / front-cash / HK date defaults and night-audit “today” use **Asia/Baku** civil day (`hotelDateKey` / `todayBakuYmd`), not UTC `toISOString().slice(0,10)`. Between 00:00–04:00 Baku the default date is already the new Baku day when Node `TZ=UTC`. **UI labels:** front-cash transactions / folio-journal / agency-ledger timestamps use `bakuDateTimeDisplay` (browser TZ ignored).
+4. **Clock (Asia/Baku):** FO availability / reservation-times / front-cash / HK date defaults and night-audit “today” use **Asia/Baku** civil day (`hotelDateKey` / `todayBakuYmd`), not UTC `toISOString().slice(0,10)`. Between 00:00–04:00 Baku the default date is already the new Baku day when Node `TZ=UTC`. **UI labels:** front-cash transactions / folio-journal / agency-ledger timestamps use `bakuDateTimeDisplay` (browser TZ ignored). Civil dates on FO reservation lists, in-house, agency inbox, folio balances, night audit (banner and year-end), city-ledger statement, pending receipt, HK consumption, tours (including print), the guest list birth date, guest CRM, HK closed rooms and lost-and-found, allotment blocks, and the reservation card use `bakuDateDisplay` (`дд.мм.гггг`). DatePicker values stay `YYYY-MM-DD`.
 
 ## 1b. Room type availability (FO chain)
 
@@ -177,7 +177,7 @@ Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`. Policy:
 1. `/admin/integration` � revenue ? GL mapping table (ROOM?601, FOOD?602, �).
 2. `PUT /api/master/revenue-gl-mappings` with `{ "revenueCodeId", "glAccountCode" }`.
 3. Run night audit on `/operations` � outbound journal shows `NIGHT_AUDIT_CLOSED` with mapped lines.
-4. With `ERA_EVENT_GATEWAY_MODE=orchestrator` (the default), the finance worker posts one day document (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`, reference `hotel-na:{date}`): sku sale lines, including a zero-price housekeeping line from `/hk/consumption`, no-sku revenue lines, split tenders, and a recipe write-off. A good with no recipe is written off itself. Repeating that day does not post a second journal. A missing catalog sku, including price 0, leaves the document rejected in Finance; the hotel day still closes and the night-audit screen shows the warning. Post the same document from Finance `/inventory/day-documents` after the card or warehouse is fixed. Reverse a closed housekeeping line from `/hk/consumption` onto the next open day. While `ElektrawebBridgePolicy.inboundEnabled`, the outbound log is `SKIPPED` and Finance has no posting.
+4. With `ERA_EVENT_GATEWAY_MODE=orchestrator` (the default), the finance worker posts one day document (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`, reference `hotel-na:{date}`): sku sale lines, including a zero-price housekeeping line from `/hk/consumption`, no-sku revenue lines, split tenders, and a recipe write-off. A good with no recipe is written off itself. Repeating that day does not post a second journal. A missing catalog sku, including price 0, leaves the document rejected in Finance; the hotel day still closes and the night-audit screen shows the warning. Post the same document from Finance `/reporting/hotel-day-documents` after the card or account is fixed. Reverse a closed housekeeping line from `/hk/consumption` onto the next open day. While `ElektrawebBridgePolicy.inboundEnabled`, the outbound log is `SKIPPED` and Finance has no posting.
 
 ## 17. INVOICE-AGENCY (Stage 23 / NW-2)
 
@@ -409,7 +409,7 @@ Prerequisite: W1 code deployed (`src/lib/reports/`, 8 P0 query services + pages 
 2. `/reports?report=daily-management`: Start and End show the business date and **Default** is selected. Click **This Month** → Start = 1st, End = last day of the month. Change End → no radio stays selected.
 3. Press **Show**: the Rooms and guests block has the columns Today / Tomorrow / Month to date / Year to date. With no bed capacity set, Bed % shows an em dash.
 4. **Export PDF** and **Export Excel**: both start with the letterhead (name, address, contacts, logo) and carry the same sections as the screen; dates print as `DD.MM.YYYY`.
-5. `/reports?report=trial-balance-period` → Show: the first row is Balance brought forward, and payment rows are negative.
+5. `/reports?report=trial-balance-period` → Show: the first row is Balance brought forward, and payment rows are negative. Money columns are Total amount, Net amount, VAT amount. Each department is a bold row with its totals; revenue codes sit under that row with the name for the report language.
 6. `/reports?report=monthly-daily-analysis` opens on the 1st → the last closed day with no radio selected.
 7. `/reports/nightly-pack`: the annual report in the pack ends on the closed day (not 31 Dec).
 

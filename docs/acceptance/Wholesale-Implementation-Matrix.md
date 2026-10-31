@@ -9,6 +9,8 @@
 
 **BE deepen (2026-08-17):** Negative-path suites landed — `__tests__/ws-ord-negative.spec.ts`, `ws-pick-negative.spec.ts`, `ws-credit-negative.spec.ts`, `ws-plat-negative.spec.ts`. TENANT stays out of BE rollup.
 
+**Civil date labels (2026-10-30):** Import-order due dates render `дд.мм.гггг` via `bakuDateDisplay`. No Scaffold ✅ / Pilot change.
+
 ---
 
 ## AC rollup

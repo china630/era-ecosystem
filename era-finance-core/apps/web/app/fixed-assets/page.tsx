@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { Building2, Pencil, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -348,7 +349,7 @@ function FixedAssetsPageContent() {
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.inventoryNumber}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>
-                      {String(r.purchaseDate).slice(0, 10)}
+                      {bakuDateDisplay(String(r.purchaseDate).slice(0, 10))}
                     </td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.purchasePrice)}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.usefulLifeMonths}</td>

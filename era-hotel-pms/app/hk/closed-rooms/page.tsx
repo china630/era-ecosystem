@@ -18,6 +18,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -112,7 +113,7 @@ export default function ClosedRoomsPage() {
   }
 
   function ymd(value: string | null | undefined) {
-    return value ? String(value).slice(0, 10) : '—';
+    return value ? bakuDateDisplay(String(value).slice(0, 10)) : '—';
   }
 
   function kindLabel(status: string) {

@@ -58,7 +58,10 @@ export function CityLedgerStatementGrid({
           header: labels.date,
           sortable: true,
           sortValue: (r) => r.businessDate ?? r.at,
-          render: (r) => r.businessDate ?? bakuDateDisplay(r.at),
+          render: (r) =>
+            r.businessDate
+              ? bakuDateDisplay(String(r.businessDate).slice(0, 10))
+              : bakuDateDisplay(r.at),
         },
         {
           key: 'kind',

@@ -29,7 +29,7 @@ const ROOM_METRICS: Metric[] = [
   { key: 'revPar', format: 'money', pick: (c) => c.revPar },
 ];
 
-/** Elektra flash family: KPI block per period, revenue Net/VAT/Total per department, payments by method. */
+/** Elektra flash family: KPI block per period, revenue Total/Net/VAT per department, payments by method. */
 export function buildFlashLayout(slug: string, data: FlashResult, ctx: LayoutCtx): ReportLayout {
   const kpiColumns: LayoutColumn[] = [
     col(ctx, 'metric', 'text', 2.2),
@@ -48,9 +48,9 @@ export function buildFlashLayout(slug: string, data: FlashResult, ctx: LayoutCtx
     for (const c of money) {
       const p = periodLabel(ctx, c);
       revColumns.push(
+        { key: `${c.key}_gross`, label: `${p} · ${colLabel(ctx, 'gross')}`, format: 'money' },
         { key: `${c.key}_net`, label: `${p} · ${colLabel(ctx, 'net')}`, format: 'money' },
         { key: `${c.key}_vat`, label: `${p} · ${colLabel(ctx, 'vat')}`, format: 'money' },
-        { key: `${c.key}_gross`, label: `${p} · ${colLabel(ctx, 'gross')}`, format: 'money' },
       );
     }
     const revRows: LayoutRow[] = [...deptCodes.entries()]
@@ -60,12 +60,12 @@ export function buildFlashLayout(slug: string, data: FlashResult, ctx: LayoutCtx
           name,
           ...money.flatMap((c) => {
             const d = c.departments.find((x) => x.code === code);
-            return [d?.net ?? 0, d?.vat ?? 0, d?.gross ?? 0];
+            return [d?.gross ?? 0, d?.net ?? 0, d?.vat ?? 0];
           }),
         ]),
       );
     revRows.push(
-      row([colLabel(ctx, 'total'), ...money.flatMap((c) => [c.totalNet, c.totalVat, c.totalGross])], 'total'),
+      row([colLabel(ctx, 'total'), ...money.flatMap((c) => [c.totalGross, c.totalNet, c.totalVat])], 'total'),
     );
     sections.push(section('revenue', revColumns, revRows, secTitle(ctx, 'revenue')));
 

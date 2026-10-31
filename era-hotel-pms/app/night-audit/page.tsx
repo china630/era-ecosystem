@@ -8,7 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { PageHeader } from '@era/satellite-kit/ui';
 import ReservationCardModal from '@/components/ReservationCardModal';
 
@@ -269,9 +269,10 @@ export default function OperationsPage() {
               : 'border-[#2980B9]/30 bg-[#F8FAFC] text-[#34495E]'
           }`}>
 
-          {t('bannerBusinessDate')}: <strong>{status.businessDate.currentBusinessDate}</strong>
+          {t('bannerBusinessDate')}:{' '}
+          <strong>{bakuDateDisplay(String(status.businessDate.currentBusinessDate).slice(0, 10))}</strong>
           {' · '}
-          {t('bannerWallClock')}: {status.businessDate.wallClockDate}
+          {t('bannerWallClock')}: {bakuDateDisplay(String(status.businessDate.wallClockDate).slice(0, 10))}
           {status.businessDate.lagDays > 0 && (
             <> · {t('bannerLag', { count: status.businessDate.lagDays })}</>
           )}
@@ -292,9 +293,11 @@ export default function OperationsPage() {
           </li>
           <li>
             {t('businessDay')}{' '}
-            {status?.businessDay?.date?.slice(0, 10) ??
-              status?.businessDate?.currentBusinessDate ??
-              tc('dash')}{' '}
+            {status?.businessDay?.date
+              ? bakuDateDisplay(String(status.businessDay.date).slice(0, 10))
+              : status?.businessDate?.currentBusinessDate
+                ? bakuDateDisplay(String(status.businessDate.currentBusinessDate).slice(0, 10))
+                : tc('dash')}{' '}
             ({status?.businessDay?.status ?? status?.businessDate?.businessDayStatus ?? tc('dash')})
           </li>
           <li>
@@ -461,7 +464,7 @@ export default function OperationsPage() {
           <ul className="space-y-2 text-[13px] text-[#7F8C8D]">
             {runs.map((r) => (
               <li key={r.id}>
-                {r.businessDay.date.slice(0, 10)} — {r.status} ({bakuDateTimeDisplay(r.createdAt)})
+                {bakuDateDisplay(String(r.businessDay.date).slice(0, 10))} — {r.status} ({bakuDateTimeDisplay(r.createdAt)})
               </li>
             ))}
           </ul>
@@ -504,7 +507,7 @@ export default function OperationsPage() {
                 <span>
                   {r.guest.fullName}
                   {r.room?.roomNumber ? ` · ${r.room.roomNumber}` : ''} — {t('due')}{' '}
-                  {String(r.checkInDate).slice(0, 10)}
+                  {bakuDateDisplay(String(r.checkInDate).slice(0, 10))}
                 </span>
                 <button
                   type="button"
@@ -519,7 +522,7 @@ export default function OperationsPage() {
               <li key={`out-${r.id}`} className="flex flex-wrap items-center gap-2">
                 <span>
                   {r.guest.fullName}
-                  {r.room?.roomNumber ? ` · ${r.room.roomNumber}` : ''} — {String(r.checkOutDate).slice(0, 10)}
+                  {r.room?.roomNumber ? ` · ${r.room.roomNumber}` : ''} — {bakuDateDisplay(String(r.checkOutDate).slice(0, 10))}
                 </span>
                 <button
                   type="button"
