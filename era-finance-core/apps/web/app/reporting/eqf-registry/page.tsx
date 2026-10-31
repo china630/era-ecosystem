@@ -53,7 +53,7 @@ type EqfResponse = {
   s2sEnabled: boolean;
 };
 
-function eqaimeLabel(t: (k: string, o?: object) => string, status: string | null): string {
+function eqaimeLabel(t: (k: string) => string, status: string | null): string {
   if (!status) return t("invoices.eqaimeStatusNone");
   const map: Record<string, string> = {
     DRAFT: "invoices.eqaimeStatusDraft",
