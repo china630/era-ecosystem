@@ -94,14 +94,18 @@ container_name_for() {
 
 # Drop leftover containers that still hold a fixed name but are outside the
 # current compose project (Create then fails with "name is already in use").
+# Use "$#" not "$1" — with set -u, empty "$@" makes $1 unbound.
 clear_container_name_conflicts() {
   local svc cname
-  if [ -z "$1" ]; then
-    set -- orchestrator finance-core finance-web data-hub hotel-pms clinic \
-      fnb-pos retail-pos logistics construction crm auto-service wholesale \
-      bank-core bank bank-dbo
+  local -a targets
+  if [ "$#" -eq 0 ]; then
+    targets=(orchestrator finance-core finance-web data-hub hotel-pms clinic
+      fnb-pos retail-pos logistics construction crm auto-service wholesale
+      bank-core bank bank-dbo)
+  else
+    targets=("$@")
   fi
-  for svc in "$@"; do
+  for svc in "${targets[@]}"; do
     cname="$(container_name_for "$svc")"
     if [ -z "$cname" ]; then
       continue
