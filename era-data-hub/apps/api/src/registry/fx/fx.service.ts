@@ -29,22 +29,47 @@ export class FxService {
     };
   }
 
-  async getRates(dateRaw: string | undefined, symbolsRaw: string | undefined) {
+  async getRates(
+    dateRaw: string | undefined,
+    symbolsRaw: string | undefined,
+    fallbackRaw?: string,
+  ) {
     const rateDate = parseDateParam(dateRaw);
     const symbols = (symbolsRaw ?? "USD,EUR")
       .split(",")
       .map((s) => s.trim().toUpperCase())
       .filter(Boolean);
+    const allowPrevious = fallbackRaw === "previous";
     const db = this.ds.referenceDb();
-    const rows = await db.cbarOfficialRate.findMany({
+    let rows = await db.cbarOfficialRate.findMany({
       where: {
         rateDate,
         currencyCode: { in: symbols },
         status: CbarRateStatus.FINAL,
       },
     });
+    if (rows.length === 0 && allowPrevious) {
+      const latest = await db.cbarOfficialRate.findFirst({
+        where: {
+          rateDate: { lte: rateDate },
+          currencyCode: { in: symbols },
+          status: CbarRateStatus.FINAL,
+        },
+        orderBy: { rateDate: "desc" },
+      });
+      if (latest) {
+        rows = await db.cbarOfficialRate.findMany({
+          where: {
+            rateDate: latest.rateDate,
+            currencyCode: { in: symbols },
+            status: CbarRateStatus.FINAL,
+          },
+        });
+      }
+    }
+    const metaDate = rows[0] ? bakuDateKey(rows[0].rateDate) : bakuDateKey(rateDate);
     return {
-      meta: registryMeta("cbar", bakuDateKey(rateDate)),
+      meta: registryMeta("cbar", metaDate),
       rates: rows.map((r) => ({
         currencyCode: r.currencyCode,
         value: Number(r.value),
@@ -81,6 +106,10 @@ export class FxService {
     };
   }
 
+  /**
+   * Accounting convert: FINAL on the requested Baku date only.
+   * A missing day is RATE_NOT_FOUND. Dashboard display uses GET /fx/rates?fallback=previous.
+   */
   async convert(
     from: string,
     to: string,

@@ -448,6 +448,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           !pathname.startsWith("/reporting/receivables") &&
           !pathname.startsWith("/reporting/aging") &&
           !pathname.startsWith("/reporting/tax-export") &&
+          !pathname.startsWith("/reporting/fact-queue") &&
+          !pathname.startsWith("/reporting/hotel-day-documents") &&
           !pathname.startsWith("/reporting/holding")));
     /** Только хаб остатков `/inventory`, без вложенных экранов (köçürmə, inventar və s.) */
     const inventoryMainActive = pathname === "/inventory";

@@ -19,6 +19,7 @@ import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import { reconciliationDocumentUuid } from "./reconciliation-document-id";
 import type { GovSignaturePurpose } from "./gov-signature.adapter";
 import { GovSignatureAdapterFactory } from "./gov-signature.adapters";
+import { readIntegrationStubs } from "../organizations/integration-stubs";
 
 const MOCK_DELAY_MS = 2000;
 
@@ -40,14 +41,18 @@ export class SignatureService {
     private readonly govSignatureFactory: GovSignatureAdapterFactory,
   ) {}
 
-  /** 1 — имитация Mobile ID (по умолчанию); 0 — только ожидание внешнего шлюза (без авто-завершения). */
-  isGatewayMock(): boolean {
-    return this.config.get<string>("SIGNATURE_GATEWAY_MOCK", "1") !== "0";
+  /** True only when the org turned the signature stub on. */
+  async isGatewayMock(organizationId: string): Promise<boolean> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    return readIntegrationStubs(org?.settings).signatureGatewayMock;
   }
 
   /**
    * Signs a gov-submit payload (tax declaration, e-qaimə, reconciliation package).
-   * Uses MockGovSignatureAdapter when SIGNATURE_GATEWAY_MOCK=1 and ERA_ASAN_SIMA_LIVE=0.
+   * Uses the mock adapter only when the org setting signatureGatewayMock is true.
    */
   async signGovPayload(
     payload: Buffer | string,
@@ -58,7 +63,7 @@ export class SignatureService {
       provider?: SignatureProvider;
     },
   ) {
-    const adapter = this.govSignatureFactory.get();
+    const adapter = await this.govSignatureFactory.get(opts.organizationId);
     return adapter.signPayload(payload, opts);
   }
 
@@ -168,7 +173,7 @@ export class SignatureService {
 
     if (
       log.status === DigitalSignatureStatus.PENDING_MOBILE &&
-      this.isGatewayMock()
+      (await this.isGatewayMock(organizationId))
     ) {
       const t0 = log.pendingStartedAt?.getTime() ?? log.createdAt.getTime();
       if (Date.now() - t0 >= MOCK_DELAY_MS) {
@@ -329,7 +334,7 @@ export class SignatureService {
 
     if (
       log.status === DigitalSignatureStatus.PENDING_MOBILE &&
-      this.isGatewayMock()
+      (await this.isGatewayMock(organizationId))
     ) {
       const t0 = log.pendingStartedAt?.getTime() ?? log.createdAt.getTime();
       if (Date.now() - t0 >= MOCK_DELAY_MS) {

@@ -131,6 +131,7 @@ export {
   readSidebarCollapsed,
   writeSidebarCollapsed,
 } from "./sidebar-collapsed";
+export { RailFlyout, isRailFlyoutTarget } from "./rail-flyout";
 export { SatelliteBillingBanner } from "./satellite-billing-banner";
 export { EraDataGrid } from "./era-data-grid";
 export {

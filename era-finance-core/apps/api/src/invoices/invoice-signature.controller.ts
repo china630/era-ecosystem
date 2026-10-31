@@ -27,7 +27,7 @@ export class InvoiceSignatureController {
   @Permissions(CP_PERMISSION.API_INVOICES_UPDATE)
   @ApiOperation({
     summary:
-      "Запуск ЭЦП: ASAN İmza (мобильное подтверждение) или SİMA (биометрия; в ответе simQrPayload для QR). SIGNATURE_GATEWAY_MOCK=1 — авто-завершение ~2 с при опросе. SIMA_QR_PAYLOAD_URL — URL от шлюза вместо mock JSON.",
+      "Запуск ЭЦП: ASAN İmza или SİMA. Заглушка включается в настройках организации (signatureGatewayMock), по умолчанию выключена.",
   })
   async initiate(
     @OrganizationId() orgId: string,

@@ -10,6 +10,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -91,11 +92,12 @@ export default function NightAuditYearEndPage() {
         {preview ? (
           <ul className="m-0 space-y-1 text-[13px] text-[#34495E]">
             <li>
-              {t('businessDate')}: <strong>{preview.businessDate}</strong>
+              {t('businessDate')}:{' '}
+              <strong>{bakuDateDisplay(String(preview.businessDate).slice(0, 10))}</strong>
               {preview.businessDayStatus ? ` (${preview.businessDayStatus})` : ''}
             </li>
             <li>
-              {t('wallClock')}: {preview.wallClockDate}
+              {t('wallClock')}: {bakuDateDisplay(String(preview.wallClockDate).slice(0, 10))}
             </li>
             <li>
               {t('yearLabel')}: {preview.year}

@@ -1446,10 +1446,7 @@ ${head}
               }}
               options={kindOptions}
             />
-            {blockDraft.kind === "PHYSIO" ||
-            blockDraft.kind === "BATH" ||
-            blockDraft.kind === "PARAFFIN" ? (
-              <Field
+            <Field
                 label={t("dailyDistinctCap")}
                 hint={t("dailyDistinctCapHint")}
                 preset="count"
@@ -1466,7 +1463,6 @@ ${head}
                   );
                 }}
               />
-            ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <CatalogField
                 kind="CLOSED_SMALL"

@@ -19,7 +19,7 @@ export type BankingDirectBankMasked = {
 };
 
 export type BankingDirectSettingsView = {
-  syncMode: "mock" | "rest";
+  syncMode: "off" | "mock" | "rest";
   pasha: BankingDirectBankMasked;
   abb: BankingDirectBankMasked;
   kapital: BankingDirectBankMasked;
@@ -44,7 +44,8 @@ export class BankingDirectSettingsService {
     const root = asRecord(org.settings);
     const direct = asRecord(root.bankingDirect);
 
-    const syncMode = direct.syncMode === "rest" ? "rest" : "mock";
+    const syncMode =
+      direct.syncMode === "rest" || direct.syncMode === "mock" ? direct.syncMode : "off";
 
     const pasha = this.maskBank(direct.pasha);
     const abb = this.maskBank(direct.abb);
@@ -66,7 +67,7 @@ export class BankingDirectSettingsService {
 
   private maskBank(raw: unknown): BankingDirectBankMasked {
     const b = raw as BankingDirectRestBankConfig | undefined;
-    const enabled = b?.enabled !== false;
+    const enabled = b?.enabled === true;
     const url = typeof b?.url === "string" ? b.url : "";
     const tok = typeof b?.token === "string" ? b.token.trim() : "";
     const hasToken = tok.length > 0;

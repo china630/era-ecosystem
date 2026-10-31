@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -413,7 +414,7 @@ export function CreateShipmentModal({
               <option value="">{t("inventory.shipmentBasisPlaceholder")}</option>
               {basisOptions.map((inv) => (
                 <option key={inv.id} value={inv.id}>
-                  {inv.invoiceNumber ?? inv.id.slice(0, 8)} · {inv.documentDate.slice(0, 10)} ·{" "}
+                  {inv.invoiceNumber ?? inv.id.slice(0, 8)} · {bakuDateDisplay(inv.documentDate.slice(0, 10))} ·{" "}
                   {basisKindTag(inv.kind, t)}
                 </option>
               ))}

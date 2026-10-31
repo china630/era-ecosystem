@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -612,7 +613,7 @@ export function ViewInvoiceModal({
                     </div>
                     <div>
                       <span className="text-[#7F8C8D]">{t("invoices.due")}: </span>
-                      <span>{String(inv.dueDate).slice(0, 10)}</span>
+                      <span>{bakuDateDisplay(String(inv.dueDate).slice(0, 10))}</span>
                     </div>
                     <div>
                       <span className="text-[#7F8C8D]">{t("invoices.amount")}: </span>
@@ -739,7 +740,7 @@ export function ViewInvoiceModal({
                         {inv.payments!.map((p) => (
                           <li key={p.id} className="flex flex-wrap justify-between gap-2 rounded border border-[#E8EAED] px-2 py-1">
                             <span>
-                              {String(p.date).slice(0, 10)}
+                              {bakuDateDisplay(String(p.date).slice(0, 10))}
                               {p.kind && p.kind !== "PAYMENT" ? (
                                 <span className="ml-2 text-[#7F8C8D]">
                                   ({t(`invoiceView.paymentKind_${p.kind}`, { defaultValue: p.kind })})

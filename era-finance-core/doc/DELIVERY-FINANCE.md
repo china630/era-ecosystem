@@ -96,7 +96,7 @@ Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/
   - [x] OCR foreign invoice ingest → purchase prefill + quota — `/purchases`
   - [x] Contract Management (`/contracts`), Gov Budget B2G (`/gov-budget`), Prepaid/РБП (`/finance/prepaid-expenses`), PSA (`/psa/projects`)
   - [~] Browser extension RPA (MV3) connectors emas/etaxes/customs/migration (TZ §13.6, §20)
-  - [~] **ASAN İmza / SİMA gov-payload signing** (`GovSignatureAdapter`, `ERA_ASAN_SIMA_LIVE`) — declarations + e-Qaimə + reconciliation; mock default — `[~]` API (Wave 4 G7) — [ADR](../../docs/adr/asan-sima-gov-signature.md)
+  - [~] **ASAN İmza / SİMA gov-payload signing** (`GovSignatureAdapter`; stub off unless `settings.tax.signatureGatewayMock`) — declarations + e-Qaimə + reconciliation — `[~]` API (Wave 4 G7) — [ADR](../../docs/adr/asan-sima-gov-signature.md)
   - [s] e-qaimé S2S production (FIN-EQAIME-01) — server submit behind `ERA_EQAIME_S2S_ENABLED`; RPA prefill + network-inbox when disabled — [ADR](../../docs/adr/eqaime-s2s-submission.md)
 
 ## Roadmap / gaps (tracked in PRD — not counted milestones)
@@ -128,7 +128,7 @@ These are open per PRD but deliberately excluded from the milestone count above 
 | Profit tax (mənfəət vergisi) declaration | `[x] SHIPPED` — `/reporting/profit-tax`, `PROFIT_TAX` in tax-export | Wave 2 G1 |
 | Payroll withholding declaration (PIT + DSMF) | `[x] SHIPPED` — `PAYROLL_WITHHOLDING` + preview in tax-export | Wave 2 G4/E8 |
 | Tax depreciation register (fixed assets) | `[~] PARTIAL` — auto on close; UI when `taxProfile` present | Wave 2, [ADR](../../docs/adr/fixed-asset-tax-depreciation-register.md) |
-| ASAN İmza / SİMA gov-payload signing | `[~]` API — mock default; live behind `ERA_ASAN_SIMA_LIVE` | Wave 4 G7; [ADR](../../docs/adr/asan-sima-gov-signature.md) |
+| ASAN İmza / SİMA gov-payload signing | `[~]` API — live adapter by default; stub only when `settings.tax.signatureGatewayMock` | Wave 4 G7; [ADR](../../docs/adr/asan-sima-gov-signature.md) |
 | Statutory financial statements (MHBS forms) | `[x]` SHIPPED — `/reports/statements/*` | Wave 4 G2; [ADR](../../docs/adr/mhbs-statement-mapping.md) |
 | Statistical reports | `[x]` SHIPPED engine + placeholder catalog; MoF blank verification pending | Wave 5 G3; `/reporting/statforms` |
 | Payroll declarations to DSMF / e-taxes (portal export) | `[x]` file generate + HSM seam; live submit behind flags | §4.6 / Wave 2 |

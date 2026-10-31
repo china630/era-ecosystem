@@ -11,6 +11,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 
 type Contract = {
   id: string;
@@ -223,7 +224,7 @@ export default function AgencyPortalHomePage() {
           {reservations.map((r) => (
             <li key={r.id} className="rounded border px-3 py-2">
               {r.guest?.fullName} · {r.roomType?.code} ·{' '}
-              {String(r.checkInDate).slice(0, 10)} → {String(r.checkOutDate).slice(0, 10)} ·{' '}
+              {bakuDateDisplay(String(r.checkInDate).slice(0, 10))} → {bakuDateDisplay(String(r.checkOutDate).slice(0, 10))} ·{' '}
               <strong>{r.status}</strong>
             </li>
           ))}

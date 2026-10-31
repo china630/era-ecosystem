@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
+import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { CARD_CONTAINER_CLASS } from "@era/satellite-kit/ui";
 import { OpsDataTable } from "@/components/ops";
 import { OpsError } from "@/components/ops-ui";
@@ -125,7 +125,7 @@ export default function LiquidityGapPage() {
             {
               key: "asOf",
               label: "As of",
-              render: (row) => row.asOf?.slice(0, 10) ?? "—",
+              render: (row) => (row.asOf ? bakuDateDisplay(row.asOf.slice(0, 10)) : "—"),
             },
             { key: "horizonDays", label: "Horizon (days)" },
             {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
@@ -255,7 +256,7 @@ function ManufacturingOverheadContent() {
                           onChange={() => toggleOne(row.id)}
                         />
                       </td>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.documentDate.slice(0, 10)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.documentDate.slice(0, 10))}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <div>{row.recipeName}</div>
                         <div className="text-xs text-[#7F8C8D]">{row.finishedProductName}</div>

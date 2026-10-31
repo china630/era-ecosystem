@@ -22,10 +22,6 @@ export class BankDirectSyncWorker implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
-    if (process.env.BANK_DIRECT_SYNC_DISABLED === "1") {
-      this.logger.warn("BANK_DIRECT_SYNC_DISABLED=1 — worker не запущен");
-      return;
-    }
     const connection = connectionFromRedisUrl(
       this.config.get<string>("REDIS_URL", "redis://127.0.0.1:6379"),
     );

@@ -33,9 +33,14 @@ Customs: `CustomsTaxCalculatorService` resolves tariffs from hub when enabled. `
 | Endpoint | Mode | Notes |
 |----------|------|-------|
 | `GET /fx/display-codes` | Settings | Dashboard and CBAR-check currency codes |
-| `GET /fx/rates?date=&symbols=` | Strict | FINAL rates for accounting; Baku `YYYY-MM-DD` |
+| `GET /fx/rates?date=&symbols=` | Strict | FINAL for that Baku date only. Accounting and bank EOD use this. |
+| `GET /fx/rates?date=&symbols=&fallback=previous` | Dashboard | If that date has no FINAL, the latest earlier FINAL. `rateDate` is the bulletin date. |
 | `GET /fx/rates/range?from=&to=&symbol=` | Strict | Historical series |
-| `GET /fx/convert?from=&to=&amount=&date=` | Operational | PRELIMINARY ok before ~10:00 Baku |
+| `GET /fx/convert?from=&to=&amount=&date=` | Strict | FINAL on that date only. Missing day → `RATE_NOT_FOUND`. No neighboring-day substitute. |
+
+The CBAR XML `Date` attribute is the rate day. Requesting a calendar day whose file still carries yesterday's `Date` does not create a row for today. An unchanged numeric rate versus yesterday is still `FINAL` once `Date` is that day.
+
+Ingest runs from 09:30 Asia/Baku, then every 30 minutes, and stops HTTP once today's FINAL USD row exists.
 
 **Consumers:** `era-finance-core` (converter, revaluation, customs), `era-bank-core` (EOD/treasury dated FINAL). Industry satellites use **Orchestrator Platform Gateway** `GET /platform/v1/catalog/fx/convert` via `@era/satellite-kit` — not hub or Finance direct.
 

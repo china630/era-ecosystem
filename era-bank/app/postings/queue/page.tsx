@@ -10,6 +10,7 @@ import {
   showApiError,
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { BankDataGrid } from "@/components/BankDataGrid";
 import { useOpsModal } from "@/components/ops";
 import { PostingCreateModal, PostingDetailModal } from "@/components/ops/modals/PostingModals";
@@ -119,7 +120,7 @@ function PostingsQueuePageContent() {
               key: "bookingDate",
               header: t("colDate"),
               render: (row) =>
-                row.bookingDate ? String(row.bookingDate).slice(0, 10) : "—",
+                row.bookingDate ? bakuDateDisplay(String(row.bookingDate).slice(0, 10)) : "—",
             },
           ]}
           rows={gridRows}

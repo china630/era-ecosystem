@@ -138,7 +138,7 @@ Accepted — **Pass 2** 2026-06-02 (Phase 1 cutover path, CBAR ingest, S8 cache)
 **Переезжает в `era-data-hub`:**
 
 - Таблица `CbarOfficialRate` (schema.prisma) — становится system of record в БД хаба.
-- Ingest: `apps/api/src/fx/cbar-fx.service.ts` (HTTP/XML-парсер ЦБА), `cbar-rate-sync.service.ts` (логика `PRELIMINARY→FINAL`, upsert), `cbar-rate-sync.cron.ts` (расписание).
+- Ingest: `apps/api/src/ingest/cbar-fx.service.ts` (HTTP/XML-парсер ЦБА), `cbar-rate-sync.service.ts` (upsert по атрибуту `Date`, статус `FINAL`), `fx-ingest.cron.ts` (с 09:30 Asia/Baku каждые 30 минут, пока нет сегодняшнего `FINAL`).
 - Публичная выдача: `getFinalOfficialAznPerUnit`, `getLatestFromDbForCode`, `resolveDashboardRates` → как эндпоинты `/registry/v1/fx/*`.
 
 **Остаётся в `era-finance-core` (потребление):**

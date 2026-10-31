@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Field, ModalFooter, ModalShell, showApiError } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from "@/components/HotelDataGrid";
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 
 export function GuestCardLoyaltyTab({
@@ -125,7 +126,7 @@ export function GuestCardLoyaltyTab({
       <HotelDataGrid
         rows={pointEntries as Array<Record<string, unknown>>}
         columns={[
-          { key: 'entryDate', header: t('loyalty.entryDate'), render: (r) => String(r.entryDate).slice(0, 10) },
+          { key: 'entryDate', header: t('loyalty.entryDate'), render: (r) => bakuDateDisplay(String(r.entryDate).slice(0, 10)) },
           { key: 'points', header: t('loyalty.points') },
           { key: 'description', header: t('loyalty.description') },
           { key: 'balanceAfter', header: t('loyalty.balanceAfter') },

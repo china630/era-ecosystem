@@ -7,6 +7,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   showApiError,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { formatAznMajor } from "@/lib/bank-lookups";
 
 type Dashboard = {
@@ -80,7 +81,10 @@ export default function RiskDashboardPage() {
         <div className="rounded-lg border border-border bg-card p-4 text-sm">
           <p className="text-[12px] text-muted-foreground">{t("lastEclRun")}</p>
           <p className="mt-1">
-            {data.lastEclRun.asOfDate} · {t("eclTotal")}:{" "}
+            {data.lastEclRun.asOfDate
+              ? bakuDateDisplay(String(data.lastEclRun.asOfDate).slice(0, 10))
+              : "—"}{" "}
+            · {t("eclTotal")}:{" "}
             {formatAznMajor(data.lastEclRun.totalEclMinor)} ·{" "}
             {t("provisionDelta")}:{" "}
             {formatAznMajor(data.lastEclRun.provisionDeltaMinor)}

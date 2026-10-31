@@ -11,7 +11,7 @@ export async function queryReportLayout(
   locale: string,
   extras?: ReportQueryExtras,
 ): Promise<ReportLayout> {
-  const data = await queryReport(slug, from, to, extras);
+  const data = await queryReport(slug, from, to, { ...extras, locale });
   return buildReportLayout(slug, data, { t: reportPdfT(locale), locale, from, to });
 }
 

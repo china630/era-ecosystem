@@ -12,7 +12,7 @@ import {
 
 const KIND_CLASS: Record<LayoutRowKind, string> = {
   data: '',
-  group: 'bg-[#EBF5FB] font-semibold',
+  group: 'bg-[#EBF5FB] font-bold',
   subtotal: 'bg-[#F8F9FA] font-semibold border-t border-[#D5DADF]',
   total: 'bg-[#EAEDF1] font-bold border-t-2 border-[#BDC3C7]',
 };

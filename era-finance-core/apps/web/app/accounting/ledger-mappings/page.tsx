@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useTranslation } from "react-i18next";
 import { accountDisplayName } from "../../../lib/account-display-name";
 import { apiFetch } from "../../../lib/api-client";
@@ -543,7 +544,7 @@ function LedgerMappingsContent() {
             {failed.map((f) => (
               <li key={f.id} className="flex flex-wrap gap-2 items-center">
                 <span>
-                  {String(f.date).slice(0, 10)} · {f.reference ?? f.id} ·{" "}
+                  {bakuDateDisplay(String(f.date).slice(0, 10))} · {f.reference ?? f.id} ·{" "}
                   {f.mirrorErrorCode}
                 </span>
                 {edit ? (

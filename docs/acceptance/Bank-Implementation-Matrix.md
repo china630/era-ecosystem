@@ -8,6 +8,8 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Civil date labels (2026-10-30):** Deposit maturity, loan schedule, posting date, treasury value/maturity dates, and ECL as-of dates render `дд.мм.гггг` via `bakuDateDisplay`. Date inputs stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
+
 ---
 
 ## AC rollup

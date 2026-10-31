@@ -36,7 +36,7 @@ P0 integrity gates NAS→IFRS mirroring. Period close and hard lock were org-glo
 
 - Reverse / storno gated by **`closedPeriodsByLedger` for the book**, not shared `Transaction.isLocked`.
 - IFRS month close locks **IFRS-only** txs (mirrored NAS+IFRS stay unlocked for NAS reverse).
-- `GET close-period-prompt` / `period-status` accept `ledgerType`.
+- `GET close-period-prompt` returns the earliest unclosed past UTC month in the last 36 months (not the newest). `period-status` accepts `ledgerType`.
 - `POST /reporting/reopen-period` unmerges month per ledger.
 - TB / standard-report openings use that ledger’s closed calendar.
 - `lockedPeriodUntilByLedger` write via period-lock API + active ledger in UI.

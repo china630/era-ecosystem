@@ -10,7 +10,7 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
-**Closeout (2026-10-23):** Scaffold BE **🟡** because AC-DH-POL (per-catalog fetch + FX codes) has no negative spec. REG/FX/BANK/HS stay ✅. VOEN stays excluded (e-taxes BLOCKED). Hub process is still HEADLESS; the settings screen is orchestrator `/super-admin/reference` (SCREEN, UAT open). Do **not** claim GA; edition stays `mvp`.
+**Closeout (2026-10-31):** CBAR ingest schedule and dashboard `fallback=previous` do not change this row. Scaffold BE stays **🟡** because AC-DH-POL has no negative spec. REG/FX/BANK/HS stay ✅. VOEN stays excluded (e-taxes BLOCKED). Hub process is still HEADLESS; the settings screen is orchestrator `/super-admin/reference` (SCREEN, UAT open). Do **not** claim GA; edition stays `mvp`.
 
 ---
 

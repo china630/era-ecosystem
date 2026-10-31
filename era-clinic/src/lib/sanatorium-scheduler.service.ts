@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
 import { addBakuDays, bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
+import { resolveDailyDistinctCap } from "@/domain/sanatorium/daily-package-cap";
 import {
   buildEntitlementSnapshot,
   findCurrentProgramTemplate,
@@ -55,6 +56,8 @@ export async function instantiateProgramFromTemplate(input: {
       quotaTotal: number;
       procedureCode: string;
       quotaBasis?: string | null;
+      kind?: string | null;
+      dailyDistinctCap?: number | null;
     }) => {
     let quotaTotal = p.quotaTotal;
     if (template.quotaKnots.length > 0) {
@@ -66,6 +69,10 @@ export async function instantiateProgramFromTemplate(input: {
         maxNights: template.maxNights,
         quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
       });
+    }
+    if (p.quotaBasis !== "PER_STAY") {
+      const perDay = resolveDailyDistinctCap(p.kind, p.dailyDistinctCap);
+      quotaTotal = Math.min(quotaTotal, nonSundayStayNights(checkIn, endsOn) * perDay);
     }
     return {
       procedureCode: p.procedureCode,
@@ -94,7 +101,7 @@ export async function instantiateProgramFromTemplate(input: {
       episodeId: input.episodeId,
       reservationId: input.reservationId,
       programCode: template.code,
-      startsOn: input.startsOn,
+      startsOn: checkIn,
       endsOn,
       entitlementSnapshot,
     },
@@ -139,6 +146,24 @@ export async function instantiateProgramFromTemplate(input: {
  * Night-only recalc keeps pinned templateId + snapshot knots.
  * Explicit programCode change switches to the **current** template version and refreshes snapshot.
  */
+/** Nights of the stay that are not Sunday in Asia/Baku. Checkout morning is not a night. */
+export function nonSundayStayNights(startsOn: Date, endsOn: Date): number {
+  const from = bakuDateKey(startsOn);
+  const to = bakuDateKey(endsOn);
+  let count = 0;
+  let ymd = from;
+  for (let guard = 0; ymd < to && guard < 400; guard++) {
+    const noon = parseBakuDateTime(ymd, "12:00");
+    const weekday = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Baku",
+      weekday: "short",
+    }).format(noon);
+    if (weekday !== "Sun") count += 1;
+    ymd = addBakuDays(ymd, 1);
+  }
+  return count;
+}
+
 export async function recalcProgramQuotas(
   instanceId: string,
   opts: {
@@ -188,6 +213,11 @@ export async function recalcProgramQuotas(
 
   const addedCodes: string[] = [];
 
+  const stayStart = opts.startsOn ?? instance.startsOn;
+  const stayEnd = opts.endsOn ?? instance.endsOn;
+  const procedureDays =
+    stayStart && stayEnd ? nonSundayStayNights(stayStart, stayEnd) : null;
+
   for (const p of template.procedures) {
     let newTotal = p.quotaTotal;
     if (template.quotaKnots.length > 0) {
@@ -199,6 +229,10 @@ export async function recalcProgramQuotas(
         maxNights: template.maxNights,
         quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
       });
+    }
+    if (procedureDays != null && p.quotaBasis !== "PER_STAY") {
+      const perDay = resolveDailyDistinctCap(p.kind, p.dailyDistinctCap);
+      newTotal = Math.min(newTotal, procedureDays * perDay);
     }
     const existing = existingByCode.get(p.procedureCode);
     if (existing) {

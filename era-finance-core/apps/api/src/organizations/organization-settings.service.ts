@@ -90,6 +90,8 @@ export class OrganizationSettingsService {
       dto.taxRegime !== undefined ||
       dto.pricesIncludeTax !== undefined ||
       dto.requireEqaimeForDayClose !== undefined ||
+      dto.taxLookupMock !== undefined ||
+      dto.signatureGatewayMock !== undefined ||
       dto.ledgerMirrorMode !== undefined ||
       dto.emasMode !== undefined ||
       dto.internalRateVisibleToHrManager !== undefined
@@ -109,7 +111,9 @@ export class OrganizationSettingsService {
         dto.asanUserId !== undefined ||
         dto.taxRegime !== undefined ||
         dto.pricesIncludeTax !== undefined ||
-        dto.requireEqaimeForDayClose !== undefined
+        dto.requireEqaimeForDayClose !== undefined ||
+        dto.taxLookupMock !== undefined ||
+        dto.signatureGatewayMock !== undefined
       ) {
         const prevTax =
           baseSettings.tax &&
@@ -127,6 +131,12 @@ export class OrganizationSettingsService {
             : {}),
           ...(dto.requireEqaimeForDayClose !== undefined
             ? { requireEqaimeForDayClose: dto.requireEqaimeForDayClose }
+            : {}),
+          ...(dto.taxLookupMock !== undefined
+            ? { taxLookupMock: dto.taxLookupMock }
+            : {}),
+          ...(dto.signatureGatewayMock !== undefined
+            ? { signatureGatewayMock: dto.signatureGatewayMock }
             : {}),
         };
       }

@@ -17,7 +17,7 @@
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
 | AC-DH-REG | Registry health + auth (API key / service token) | ✅ | [ ] | `__tests__/dh-reg-negative.spec.ts` | Negative: 401 without key; INVALID_API_KEY |
-| AC-DH-FX | FX rates ingest + convert APIs | ✅ | [ ] | `__tests__/dh-fx-negative.spec.ts` | Negative: RATE_NOT_FOUND; INVALID_AMOUNT |
+| AC-DH-FX | FX rates ingest + convert APIs | ✅ | [ ] | `__tests__/dh-fx-negative.spec.ts` | Negative: RATE_NOT_FOUND; INVALID_AMOUNT; exact date stays empty without `fallback=previous`; `fallback=previous` returns the earlier FINAL day. Ingest 09:30 Asia/Baku every 30 min. Unchanged value is FINAL. Does not move Pilot or sell |
 | AC-DH-BANK | Banks + IBAN validate | ✅ | [ ] | `__tests__/dh-bank-negative.spec.ts` | Negative: empty / format / MOD-97 IBAN |
 | AC-DH-VOEN | VÖEN company lookup + PII masking | 🟡 | [ ] | Wave 3; IND-VOEN live e-taxes BLOCKED | External ⏸ — e-taxes BLOCKED; **excluded from Scaffold BE rollup** (Hotel INT) |
 | AC-DH-HS | HS / tariff + static catalogs | ✅ | [ ] | `__tests__/dh-hs-negative.spec.ts` | Negative: HS_NOT_FOUND; TARIFF_NOT_FOUND |

@@ -749,7 +749,7 @@ function BankingUnifiedRegistry({
                   return (
                     <tr key={r.id} className={`${DATA_TABLE_TR_CLASS} align-top`}>
                       <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
-                        {r.valueDate ? String(r.valueDate).slice(0, 10) : "вЂ”"}
+                        {r.valueDate ? bakuDateDisplay(String(r.valueDate).slice(0, 10)) : "вЂ”"}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <span className="inline-flex rounded-lg bg-[#EBEDF0] px-2 py-0.5 text-xs font-medium text-[#34495E]">

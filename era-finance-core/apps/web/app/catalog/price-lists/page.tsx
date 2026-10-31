@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil, Plus } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -216,7 +217,7 @@ export default function PriceListsPage() {
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.name}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.currencyCode}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{String(r.validFrom).slice(0, 10)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.validFrom).slice(0, 10))}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.channel || "—"}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r._count?.lines ?? 0}</td>
                   <td className={DATA_TABLE_TD_CLASS}>

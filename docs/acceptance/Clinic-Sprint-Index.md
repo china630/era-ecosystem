@@ -33,7 +33,8 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-11 | Nafta medical SKU dual-run assign (Wave A) | [~] | CLI-50 SCREEN; AC-CLI-SAN-PKG 🟡; `/sanatorium` Select 4 SKUs + `?episode=`; **pilot punch open** |
 | S-12 | Nafta PDF quota knots (Wave B) | [~] | CLI-51 API; AC-CLI-SAN-QUOTA 🟡; knots **matrix** UI; UAT open |
 | S-13 | Nafta doctor first-day confirm (Wave C) | [~] | CLI-52 SCREEN; AC-CLI-SAN-DAY1 🟡; no Confirm all; AFTER_CHECKUP settings |
-| S-14 | Nafta doctor bonus extras (Wave D) | [~] | CLI-53 SCREEN; AC-CLI-BONUS 🟡; bonusEligible; % stay 0 until FO |
+| S-14 | Nafta doctor bonus extras (Wave D) | [~] | CLI-53 SCREEN; AC-CLI-BONUS 🟡; fulfillment view; prescriber stamp; % stay 0 until FO |
+| S-20 | Clinic paid-fact revenue statement (CLI-63) | [~] | SCREEN `/reports/revenue`; AC-CLI-REV 🟡 out of BE; no fixed article list; UAT open — not Pilot |
 | S-15 | Nafta one stay two episodes (Wave E) | [~] | CLI-54 SCREEN; AC-CLI-SAN-PAX 🟡; openEpisode per patient; shared surname does not merge; depart/move by stay id; **pilot punch open** |
 | S-16 | Episode as care course (CLI-55) | [~] | SCREEN waves W1–W5; AC-CLI-EPISODE 🟡; UAT open — not Pilot |
 | S-17 | Clinic RBAC Variant A + custom roles | [~] | AC-CLI-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |

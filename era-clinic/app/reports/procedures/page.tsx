@@ -21,15 +21,13 @@ import {
 } from "@era/satellite-kit/ui";
 import { addBakuDays, todayBakuYmd } from "@/lib/baku-day";
 
-type DoctorLinesItem = {
+type FulfillmentItem = {
   procedure: { code: string; name: string };
-  procedureDate: string;
-  status: string;
-  paid: string;
-  origin: string;
-  quantity: number;
-  totalAmount: number;
-  doctorName?: string;
+  packageAssigned: number;
+  packageCompleted: number;
+  extraAssigned: number;
+  extraCompleted: number;
+  extraAmount: number;
 };
 
 type DoctorBonusItem = {
@@ -37,14 +35,6 @@ type DoctorBonusItem = {
   quantity: number;
   price: number;
   totalAmount: number;
-};
-
-type ByProcedureItem = {
-  procedure?: { code: string; name: string };
-  procedureCode?: string;
-  procedureName?: string;
-  assignedCount: number;
-  completedCount: number;
 };
 
 type NurseWorkItem = {
@@ -85,13 +75,10 @@ export default function ProceduresReportPage() {
     auth?.staffKind === "DOCTOR" || auth?.canViewClinicAdmin === true;
   const canPickDoctor = auth?.staffKind !== "DOCTOR";
 
-  const [view, setView] = useState<"doctor-lines" | "doctor-bonus" | "by-procedure" | "nurse-work">(
-    "doctor-lines",
-  );
+  const [view, setView] = useState<"fulfillment" | "doctor-bonus" | "nurse-work">("fulfillment");
   const [from, setFrom] = useState(monthAgoBaku());
   const [to, setTo] = useState(todayIsoBaku());
   const [procedure, setProcedure] = useState<string>("");
-  const [paid, setPaid] = useState<"" | "paid" | "free">("");
   const [nurseId, setNurseId] = useState<string>("");
   const [nurses, setNurses] = useState<Array<{ id: string; fullName: string }>>([]);
   const [doctorId, setDoctorId] = useState<string>("");
@@ -114,58 +101,7 @@ export default function ProceduresReportPage() {
   } | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [sortKey, setSortKey] = useState<"procedure" | "paid" | "origin" | "qty" | "amount">("procedure");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  const tableItems = useMemo(() => {
-    if (view !== "doctor-lines") return items;
-    const grouped = new Map<
-      string,
-      DoctorLinesItem & { origins: string[] }
-    >();
-    for (const raw of items) {
-      const row = raw as DoctorLinesItem;
-      const key = `${row.procedure.code}\0${row.paid}`;
-      const prev = grouped.get(key);
-      if (!prev) {
-        grouped.set(key, {
-          ...row,
-          origins: row.origin ? [row.origin] : [],
-          quantity: row.quantity,
-          totalAmount: row.totalAmount,
-        });
-        continue;
-      }
-      prev.quantity += row.quantity;
-      prev.totalAmount = Math.round((prev.totalAmount + row.totalAmount) * 100) / 100;
-      if (row.origin && !prev.origins.includes(row.origin)) prev.origins.push(row.origin);
-    }
-    return [...grouped.values()].sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
-      const left =
-        sortKey === "procedure"
-          ? a.procedure.name
-          : sortKey === "paid"
-            ? a.paid
-            : sortKey === "origin"
-              ? a.origins.join(",")
-              : sortKey === "qty"
-                ? a.quantity
-                : a.totalAmount;
-      const right =
-        sortKey === "procedure"
-          ? b.procedure.name
-          : sortKey === "paid"
-            ? b.paid
-            : sortKey === "origin"
-              ? b.origins.join(",")
-              : sortKey === "qty"
-                ? b.quantity
-                : b.totalAmount;
-      if (typeof left === "number" && typeof right === "number") return (left - right) * dir;
-      return String(left).localeCompare(String(right), locale) * dir;
-    });
-  }, [items, view, sortKey, sortDir, locale]);
+  const tableItems = items;
 
   const pagedItems = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -174,7 +110,7 @@ export default function ProceduresReportPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [view, from, to, procedure, paid, nurseId, doctorId, pageSize]);
+  }, [view, from, to, procedure, nurseId, doctorId, pageSize]);
 
   const url = useMemo(() => {
     const params = new URLSearchParams({
@@ -184,13 +120,12 @@ export default function ProceduresReportPage() {
       locale,
     });
     if (procedure) params.set("procedure", procedure);
-    if (paid) params.set("paid", paid);
     if (view === "nurse-work" && nurseId) params.set("nurseId", nurseId);
-    if ((view === "doctor-lines" || view === "doctor-bonus") && doctorId) {
+    if ((view === "fulfillment" || view === "doctor-bonus") && doctorId) {
       params.set("doctorId", doctorId);
     }
     return `/api/reports/procedures?${params.toString()}`;
-  }, [view, from, to, procedure, paid, nurseId, doctorId, locale]);
+  }, [view, from, to, procedure, nurseId, doctorId, locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,7 +177,7 @@ export default function ProceduresReportPage() {
 
   useEffect(() => {
     if (!canPickDoctor) return;
-    if (view !== "doctor-lines" && view !== "doctor-bonus") return;
+    if (view !== "fulfillment" && view !== "doctor-bonus") return;
     if (doctors.length > 0) return;
 
     let cancelled = false;
@@ -303,17 +238,7 @@ export default function ProceduresReportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
-  function paidLabel(value: string) {
-    if (value === "paid") return tr("paidYes");
-    if (value === "free") return tr("paidNo");
-    return value;
-  }
-
-  function originLabel(value: string) {
-    if (value === "IN_HOUSE") return tr("origin_IN_HOUSE");
-    if (value === "WALK_IN") return tr("origin_WALK_IN");
-    return value;
-  }
+  const colSpan = view === "fulfillment" ? 6 : view === "doctor-bonus" ? 4 : 3;
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
@@ -323,28 +248,29 @@ export default function ProceduresReportPage() {
           <EraListFilterBar
             resetLabel={t("filterReset")}
             onReset={() => {
-              setView("doctor-lines");
+              setView("fulfillment");
               setFrom(monthAgoBaku());
               setTo(todayIsoBaku());
               setProcedure("");
-              setPaid("");
               setNurseId("");
               setDoctorId("");
             }}
           >
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={tr("view")}
-              value={view}
-              onChange={(value) => setView(String(value) as typeof view)}
-              emptyLabel={null}
-              options={[
-                { value: "doctor-lines", label: tr("viewDoctorLines") },
-                { value: "doctor-bonus", label: tr("viewDoctorBonus") },
-                { value: "by-procedure", label: tr("viewByProcedure") },
-                { value: "nurse-work", label: tr("viewNurseWork") },
-              ]}
-            />
+            <div className="basis-full">
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={tr("view")}
+                value={view}
+                onChange={(value) => setView(String(value) as typeof view)}
+                emptyLabel={null}
+                widthPreset="selectWide"
+                options={[
+                  { value: "fulfillment", label: tr("viewFulfillment") },
+                  { value: "doctor-bonus", label: tr("viewDoctorBonus") },
+                  { value: "nurse-work", label: tr("viewNurseWork") },
+                ]}
+              />
+            </div>
             <DatePicker
               label={tr("from")}
               value={from}
@@ -366,20 +292,9 @@ export default function ProceduresReportPage() {
               onChange={(value) => setProcedure(String(value ?? ""))}
               options={[{ value: "", label: t("all") }, ...procedureOptions]}
               emptyLabel={t("all")}
+              widthPreset="selectWide"
             />
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={tr("paid")}
-              value={paid}
-              onChange={(value) => setPaid(String(value) as typeof paid)}
-              options={[
-                { value: "", label: t("all") },
-                { value: "paid", label: tr("paidYes") },
-                { value: "free", label: tr("paidNo") },
-              ]}
-              emptyLabel={t("all")}
-            />
-            {(view === "doctor-lines" || view === "doctor-bonus") && canPickDoctor ? (
+            {(view === "fulfillment" || view === "doctor-bonus") && canPickDoctor ? (
               <CatalogField
                 kind="SEARCHABLE"
                 label={tr("doctor")}
@@ -390,6 +305,7 @@ export default function ProceduresReportPage() {
                   ...doctors.map((row) => ({ value: row.id, label: row.fullName })),
                 ]}
                 emptyLabel={tr("allDoctors")}
+                widthPreset="selectWide"
               />
             ) : null}
             {view === "nurse-work" && canSelectNurse ? (
@@ -403,6 +319,7 @@ export default function ProceduresReportPage() {
                   ...nurses.map((n) => ({ value: n.id, label: n.fullName })),
                 ]}
                 emptyLabel={tr("allNurses")}
+                widthPreset="selectWide"
               />
             ) : null}
           </EraListFilterBar>
@@ -411,7 +328,9 @@ export default function ProceduresReportPage() {
         toolbar={
           grandTotal != null || bonusBuckets ? (
             <div className={`space-y-1 text-sm ${TEXT_MUTED_CLASS}`}>
-              {grandTotal != null ? <p>{tr("grandTotal", { amount: grandTotal.toFixed(2) })}</p> : null}
+              {view === "fulfillment" && grandTotal != null ? (
+                <p>{tr("grandTotal", { amount: grandTotal.toFixed(2) })}</p>
+              ) : null}
               {bonusBuckets ? (
                 <>
                   <p>
@@ -440,35 +359,14 @@ export default function ProceduresReportPage() {
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                {view === "doctor-lines" ? (
+                {view === "fulfillment" ? (
                   <>
-                    {(
-                      [
-                        ["procedure", "colProcedure"],
-                        ["paid", "colPaid"],
-                        ["origin", "colOrigin"],
-                        ["qty", "colQty"],
-                        ["amount", "colAmount"],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <th key={key} className={DATA_TABLE_TH_LEFT_CLASS}>
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1"
-                          onClick={() => {
-                            setPage(1);
-                            if (sortKey === key) setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-                            else {
-                              setSortKey(key);
-                              setSortDir("asc");
-                            }
-                          }}
-                        >
-                          {tr(label)}
-                          {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
-                        </button>
-                      </th>
-                    ))}
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPackageAssigned")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPackageCompleted")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colExtraAssigned")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colExtraCompleted")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colExtraAmount")}</th>
                   </>
                 ) : view === "doctor-bonus" ? (
                   <>
@@ -476,12 +374,6 @@ export default function ProceduresReportPage() {
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colQty")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colPrice")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colTotal")}</th>
-                  </>
-                ) : view === "by-procedure" ? (
-                  <>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colProcedure")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colAssigned")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tr("colCompleted")}</th>
                   </>
                 ) : (
                   <>
@@ -495,26 +387,24 @@ export default function ProceduresReportPage() {
             <tbody>
               {tableItems.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={view === "doctor-lines" ? 5 : 7}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={colSpan}>
                     {tr("empty")}
                   </td>
                 </tr>
               ) : (
                 pagedItems.map((it: any, idx: number) => {
-                  if (view === "doctor-lines") {
-                    const row = it as DoctorLinesItem & { origins?: string[] };
-                    const origins = row.origins?.length ? row.origins : row.origin ? [row.origin] : [];
+                  if (view === "fulfillment") {
+                    const row = it as FulfillmentItem;
                     return (
-                      <tr key={`${row.procedure.code}-${row.paid}`} className={DATA_TABLE_TR_CLASS}>
+                      <tr key={row.procedure.code} className={DATA_TABLE_TR_CLASS}>
                         <td className={DATA_TABLE_TD_CLASS}>
                           {row.procedure.code} — {row.procedure.name}
                         </td>
-                        <td className={DATA_TABLE_TD_CLASS}>{paidLabel(row.paid)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>
-                          {origins.length ? origins.map((value) => originLabel(value)).join(", ") : "—"}
-                        </td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.quantity}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.totalAmount}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{row.packageAssigned}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{row.packageCompleted}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{row.extraAssigned}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{row.extraCompleted}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{row.extraAmount.toFixed(2)}</td>
                       </tr>
                     );
                   }
@@ -528,20 +418,6 @@ export default function ProceduresReportPage() {
                         <td className={DATA_TABLE_TD_CLASS}>{row.quantity}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.price}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{row.totalAmount}</td>
-                      </tr>
-                    );
-                  }
-                  if (view === "by-procedure") {
-                    const row = it as ByProcedureItem;
-                    const code = row.procedure?.code ?? row.procedureCode ?? "—";
-                    const name = row.procedure?.name ?? row.procedureName ?? "";
-                    return (
-                      <tr key={idx} className={DATA_TABLE_TR_CLASS}>
-                        <td className={DATA_TABLE_TD_CLASS}>
-                          {name ? `${code} — ${name}` : code}
-                        </td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.assignedCount}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.completedCount}</td>
                       </tr>
                     );
                   }

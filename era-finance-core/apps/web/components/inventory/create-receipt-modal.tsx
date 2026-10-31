@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -410,7 +411,7 @@ export function CreateReceiptModal({
               <option value="">{t("inventory.receiptBasisNone")}</option>
               {basisOptions.map((inv) => (
                 <option key={inv.id} value={inv.id}>
-                  {inv.documentDate.slice(0, 10)} · {basisKindTag(inv.kind, t)}
+                  {bakuDateDisplay(inv.documentDate.slice(0, 10))} · {basisKindTag(inv.kind, t)}
                 </option>
               ))}
             </select>

@@ -356,6 +356,8 @@ export async function placeConfirmedProcedures(
     scheduleBefore?: Date | null;
     startAt?: Date | null;
     pinYmdByOrderId?: Record<string, string>;
+    /** Include the checkout calendar day, and stop that day at 12:00. */
+    checkoutMorning?: boolean;
     /** When true, a pin on a closed day is a miss — do not remap to the next working day. */
     pinStrict?: boolean;
   },
@@ -440,7 +442,7 @@ export async function placeConfirmedProcedures(
       inPackage: row.inPackage === true,
       quotaKey: quota.quotaKey,
       countsForRest: row.status !== "NO_SHOW",
-      holdsGuestDay: row.inPackage !== true && Boolean(row.resourceId),
+      holdsGuestDay: false,
     };
   });
   const rotationContext: RotationContextSlot[] = existing
@@ -461,6 +463,11 @@ export async function placeConfirmedProcedures(
   if (opts?.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())) {
     horizonEndYmd = bakuDateKey(opts.scheduleBefore);
   }
+  const noonCheckoutYmd =
+    opts?.checkoutMorning && opts.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())
+      ? bakuDateKey(opts.scheduleBefore)
+      : undefined;
+  if (noonCheckoutYmd) horizonEndYmd = addBakuDays(noonCheckoutYmd, 1);
   const pinYmdByOrderId = { ...(opts?.pinYmdByOrderId ?? {}) };
   for (const pin of Object.values(pinYmdByOrderId)) {
     if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
@@ -557,6 +564,8 @@ export async function placeConfirmedProcedures(
       resources: [],
       staffMode: staffReq?.staffMode === "SOFT" ? "SOFT" : "HARD",
       procedureTypeId: pt.id,
+      preferredStaffId: order.preferredPractitionerId ?? null,
+      preferredStaffName: null,
       resourceCodeList: [...codes].sort(),
       extendedEndHour: pt.extendedEndHour,
       pinYmd: pinYmdByOrderId[order.id],
@@ -595,6 +604,28 @@ export async function placeConfirmedProcedures(
 
   const typeIds = [...new Set(scanOrders.map((order) => order.procedureTypeId))];
   const staffByTypeAndYmd = await loadStaffByDayForScan(typeIds, today, horizonEndYmd);
+  await ensurePreferredStaffInPool(
+    staffByTypeAndYmd,
+    scanOrders.map((order) => ({
+      procedureTypeId: order.procedureTypeId,
+      preferredStaffId: order.preferredStaffId,
+    })),
+    today,
+    horizonEndYmd,
+  );
+  const preferredIds = [
+    ...new Set(scanOrders.map((order) => order.preferredStaffId).filter((id): id is string => Boolean(id))),
+  ];
+  if (preferredIds.length > 0) {
+    const named = await prisma.practitioner.findMany({
+      where: { id: { in: preferredIds } },
+      select: { id: true, fullName: true },
+    });
+    const nameById = new Map(named.map((row) => [row.id, row.fullName]));
+    for (const order of scanOrders) {
+      if (order.preferredStaffId) order.preferredStaffName = nameById.get(order.preferredStaffId) ?? null;
+    }
+  }
   const staffIds = [...new Set([...staffByTypeAndYmd.values()].flat().map((person) => person.id))];
   const resourceIds = [...new Set(scanOrders.flatMap((order) => order.resources.map((row) => row.id)))];
   const allocations = await loadOccupancyForScan(resourceIds, staffIds, today, horizonEndYmd);
@@ -605,6 +636,7 @@ export async function placeConfirmedProcedures(
     slotMinutes,
     packageCap: 12,
     horizonEndYmd,
+    noonCheckoutYmd,
     closedYmds,
     staffByTypeAndYmd,
     rules,
@@ -736,6 +768,63 @@ export async function loadOccupancyForScan(
     procedureOrderId: row.procedureOrderId,
     resourceGapMinutes: row.procedureOrder.procedureType?.resourceGapMinutes ?? 5,
   }));
+}
+
+/** A named masseur stays in the pool on days they are not absent, even when the nurse roster posted someone else. */
+export async function ensurePreferredStaffInPool(
+  staffByTypeAndYmd: Map<string, ScanStaff[]>,
+  orders: Array<{ procedureTypeId: string; preferredStaffId?: string | null }>,
+  fromYmd: string,
+  horizonEndYmd: string,
+): Promise<void> {
+  const ids = [...new Set(orders.map((order) => order.preferredStaffId).filter((id): id is string => Boolean(id)))];
+  if (ids.length === 0 || fromYmd >= horizonEndYmd) return;
+  const people = await prisma.practitioner.findMany({
+    where: { id: { in: ids }, active: true, staffKind: "MASSAGE" },
+    select: { id: true, fullName: true, code: true },
+  });
+  if (people.length === 0) return;
+  const personIds = people.map((person) => person.id);
+  const from = bakuDayBounds(fromYmd).start;
+  const to = bakuDayBounds(horizonEndYmd).start;
+  const [absences, dayOffs] = await Promise.all([
+    prisma.staffAbsence.findMany({
+      where: { practitionerId: { in: personIds }, startsOn: { lte: to }, endsOn: { gte: from } },
+      select: { practitionerId: true, startsOn: true, endsOn: true },
+    }),
+    prisma.practitionerScheduleException.findMany({
+      where: { practitionerId: { in: personIds }, kind: "DAY_OFF", date: { gte: from, lt: to } },
+      select: { practitionerId: true, date: true },
+    }),
+  ]);
+  const absenceByPerson = new Map<string, Array<{ startsOn: Date; endsOn: Date }>>();
+  for (const row of absences) {
+    const list = absenceByPerson.get(row.practitionerId) ?? [];
+    list.push(row);
+    absenceByPerson.set(row.practitionerId, list);
+  }
+  const dayOffKey = new Set(dayOffs.map((row) => `${row.practitionerId}|${bakuDateKey(row.date)}`));
+  const byId = new Map(people.map((person) => [person.id, person]));
+  const ymds: string[] = [];
+  let cursor = fromYmd;
+  while (cursor < horizonEndYmd) {
+    ymds.push(cursor);
+    cursor = addBakuDays(cursor, 1);
+  }
+  for (const order of orders) {
+    const person = order.preferredStaffId ? byId.get(order.preferredStaffId) : undefined;
+    if (!person) continue;
+    for (const ymd of ymds) {
+      if (dayOffKey.has(`${person.id}|${ymd}`)) continue;
+      if (isAbsentOnYmd(absenceByPerson.get(person.id) ?? [], ymd)) continue;
+      const key = `${order.procedureTypeId}|${ymd}`;
+      const list = staffByTypeAndYmd.get(key) ?? [];
+      if (!list.some((row) => row.id === person.id)) {
+        list.push(person);
+        staffByTypeAndYmd.set(key, list);
+      }
+    }
+  }
 }
 
 export async function loadStaffByDayForScan(

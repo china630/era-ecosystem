@@ -24,6 +24,7 @@ import {
 } from "./satellite-endpoint-registry.service";
 import { SatelliteEventSubscriberRegistry } from "./satellite-event-subscriber.registry";
 import { SatelliteFanoutWorker } from "./satellite-fanout.worker";
+import { bullJobId } from "./bull-job-id";
 import { isClinicLifecycleEvent } from "./clinic-lifecycle-event";
 
 export const ERA_SATELLITE_EVENTS_QUEUE = "era-satellite-events";
@@ -91,7 +92,8 @@ export class SatelliteEventsService {
     }
 
     const job = await this.getQueue().add(eventType, body, {
-      jobId: correlationId,
+      // BullMQ rejects custom ids that contain ":". Night audit uses hotel-na:YYYY-MM-DD.
+      jobId: bullJobId(correlationId),
       removeOnComplete: 1000,
       removeOnFail: 5000,
     });

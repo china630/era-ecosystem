@@ -18,6 +18,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
 type Line = { id: string; sku: string; qty: number; businessDate?: string; reversed?: boolean };
@@ -125,7 +126,9 @@ export default function HkConsumptionPage() {
     <>
       <PageHeader
         title={t('title')}
-        subtitle={t('hint', { date: businessDate || '—' })}
+        subtitle={t('hint', {
+          date: businessDate ? bakuDateDisplay(String(businessDate).slice(0, 10)) : '—',
+        })}
         actions={
           <button
             type="button"
@@ -190,7 +193,9 @@ export default function HkConsumptionPage() {
               ) : (
                 closedLines.map((line) => (
                   <tr key={line.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{line.businessDate}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {line.businessDate ? bakuDateDisplay(String(line.businessDate).slice(0, 10)) : '—'}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>{line.sku}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{line.qty}</td>
                     <td className={DATA_TABLE_TD_CLASS}>

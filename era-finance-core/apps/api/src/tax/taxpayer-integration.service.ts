@@ -10,6 +10,9 @@ import axios, { type AxiosResponse } from "axios";
 import Redis from "ioredis";
 import { AuditService } from "../audit/audit.service";
 import { IntegrationReliabilityService } from "../integrations/integration-reliability.service";
+import { readIntegrationStubs } from "../organizations/integration-stubs";
+import { PrismaService } from "../prisma/prisma.service";
+import { tenantContextStorage } from "../prisma/tenant-context";
 
 export type TaxpayerLookupResult = {
   name: string;
@@ -82,6 +85,7 @@ export class TaxpayerIntegrationService implements OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly reliability: IntegrationReliabilityService,
     private readonly audit: AuditService,
+    private readonly prisma: PrismaService,
   ) {
     this.redis = new Redis(
       this.config.get<string>("REDIS_URL", "redis://127.0.0.1:6379"),
@@ -133,7 +137,7 @@ export class TaxpayerIntegrationService implements OnModuleDestroy {
     }
     await this.reliability.trackCache("tax", false);
 
-    if (this.config.get<string>("TAX_LOOKUP_MOCK") === "1") {
+    if (await this.taxLookupMockEnabled()) {
       const mock: TaxpayerLookupResult = {
         name: `Demo Vergi Ödəyicisi ${voen}`,
         isVatPayer: true,
@@ -393,6 +397,16 @@ export class TaxpayerIntegrationService implements OnModuleDestroy {
       }
     }
     return null;
+  }
+
+  private async taxLookupMockEnabled(): Promise<boolean> {
+    const organizationId = tenantContextStorage.getStore()?.organizationId?.trim();
+    if (!organizationId) return false;
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    return readIntegrationStubs(org?.settings).taxLookupMock;
   }
 
   async onModuleDestroy(): Promise<void> {

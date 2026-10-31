@@ -10,7 +10,7 @@ export type BankingDirectRestBankConfig = {
 };
 
 export type BankingDirectRestSettings = {
-  syncMode?: "mock" | "rest";
+  syncMode?: "off" | "mock" | "rest";
   pasha?: BankingDirectRestBankConfig;
   abb?: BankingDirectRestBankConfig;
   kapital?: BankingDirectRestBankConfig;

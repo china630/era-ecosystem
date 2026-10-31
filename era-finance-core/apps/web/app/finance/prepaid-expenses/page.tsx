@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { PageHeader } from "../../../components/layout/page-header";
@@ -123,7 +124,7 @@ export default function PrepaidExpensesPage() {
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{row.description ?? "—"}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {row.startDate.slice(0, 10)} — {row.endDate.slice(0, 10)}
+                    {bakuDateDisplay(row.startDate.slice(0, 10))} — {bakuDateDisplay(row.endDate.slice(0, 10))}
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     {String(row.totalAmount)} {row.currency}

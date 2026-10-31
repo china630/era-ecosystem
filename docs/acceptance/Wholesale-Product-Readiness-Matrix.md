@@ -32,7 +32,7 @@
 | Pick lists | `/pick-lists` | 🟡 |
 | Access matrix | `/admin/access` | 🟡 SCREEN (WS-RBAC-01; not SHOW) |
 
-Import-order admin now follows the modal CRUD playbook; Demo/TE stays 🟡 until live sign-off.
+Import-order admin now follows the modal CRUD playbook; due dates render `дд.мм.гггг`. Demo/TE stays 🟡 until live sign-off.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off. HEADLESS lines use `n/a` with reason.
 

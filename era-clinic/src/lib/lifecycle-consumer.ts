@@ -429,6 +429,7 @@ export async function handleStayProductChanged(
         await recalcProgramQuotas(existing.id, {
           nights,
           programCode: programCode ?? existing.programCode,
+          startsOn: checkIn,
           endsOn: checkOut,
           reservationId: p.reservationId,
         });

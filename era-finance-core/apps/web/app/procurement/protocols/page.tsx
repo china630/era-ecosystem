@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { parsePaginatedList } from "../../../lib/paginated-list";
@@ -186,7 +187,7 @@ export default function ProcurementProtocolsPage() {
                       <td className={DATA_TABLE_TD_CLASS}>{row.title}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.procedureType}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
-                        {String(row.protocolDate).slice(0, 10)}
+                        {bakuDateDisplay(String(row.protocolDate).slice(0, 10))}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row._count?.bids ?? 0}</td>

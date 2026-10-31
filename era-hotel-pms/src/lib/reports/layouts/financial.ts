@@ -14,24 +14,24 @@ import type {
 import type { LayoutColumn, LayoutRow, ReportLayout } from '../layout';
 import { col, colLabel, pivot, matrixSection, row, section, secTitle, sum, totalRow, valueLabel, type LayoutCtx } from './common';
 
-/** Trial balance: B/F, departments (Net / VAT / Total) with revenue codes, payments negative, closing balance. */
+/** Trial balance: B/F, departments (Total / Net / VAT) with revenue codes, payments negative, closing balance. */
 export function buildTrialBalanceLayout(slug: string, data: TrialBalancePeriodResult, ctx: LayoutCtx): ReportLayout {
   const columns: LayoutColumn[] = [
     col(ctx, 'code', 'text', 0.8),
     col(ctx, 'description', 'text', 2.4),
+    col(ctx, 'gross', 'money'),
     col(ctx, 'net', 'money'),
     col(ctx, 'vat', 'money'),
-    col(ctx, 'gross', 'money'),
   ];
-  const rows: LayoutRow[] = [row(['', colLabel(ctx, 'balanceForward'), '', '', data.openingBalance], 'subtotal')];
+  const rows: LayoutRow[] = [row(['', colLabel(ctx, 'balanceForward'), data.openingBalance, '', ''], 'subtotal')];
   for (const d of data.departments) {
-    rows.push(row([d.code, d.name, d.net, d.vat, d.gross], 'group'));
-    for (const l of d.codes) rows.push(row([l.code, l.name, l.net, l.vat, l.gross]));
+    rows.push(row([d.code, d.name, d.gross, d.net, d.vat], 'group'));
+    for (const l of d.codes) rows.push(row([l.code, l.name, l.gross, l.net, l.vat]));
   }
-  rows.push(row(['', colLabel(ctx, 'chargesTotal'), data.chargesNet, data.chargesVat, data.chargesGross], 'subtotal'));
-  for (const p of data.payments) rows.push(row(['', valueLabel(ctx, 'pay', p.method), '', '', -p.amount]));
-  rows.push(row(['', colLabel(ctx, 'paymentsTotal'), '', '', -data.paymentsTotal], 'subtotal'));
-  rows.push(row(['', colLabel(ctx, 'closingBalance'), '', '', data.closingBalance], 'total'));
+  rows.push(row(['', colLabel(ctx, 'chargesTotal'), data.chargesGross, data.chargesNet, data.chargesVat], 'subtotal'));
+  for (const p of data.payments) rows.push(row(['', valueLabel(ctx, 'pay', p.method), -p.amount, '', '']));
+  rows.push(row(['', colLabel(ctx, 'paymentsTotal'), -data.paymentsTotal, '', ''], 'subtotal'));
+  rows.push(row(['', colLabel(ctx, 'closingBalance'), data.closingBalance, '', ''], 'total'));
   return { slug, sections: [section('ledger', columns, rows)] };
 }
 
@@ -129,20 +129,20 @@ export function buildFolioTransactionsLayout(slug: string, data: FolioTransactio
   return { slug, sections: [section('folios', columns, rows)] };
 }
 
-/** Department revenues: Today / Month / Year × Net / VAT / Total, departments with revenue code lines. */
+/** Department revenues: Today / Month / Year × Total / Net / VAT, departments with revenue code lines. */
 export function buildDepartmentRevenuesLayout(slug: string, data: DepartmentRevenuesResult, ctx: LayoutCtx): ReportLayout {
   const periods = ['today', 'month', 'year'] as const;
   const columns: LayoutColumn[] = [col(ctx, 'code', 'text', 0.7), col(ctx, 'description', 'text', 2)];
   for (const p of periods) {
     const label = colLabel(ctx, `period_${p}`);
     columns.push(
+      { key: `${p}_gross`, label: `${label} · ${colLabel(ctx, 'gross')}`, format: 'money' },
       { key: `${p}_net`, label: `${label} · ${colLabel(ctx, 'net')}`, format: 'money' },
       { key: `${p}_vat`, label: `${label} · ${colLabel(ctx, 'vat')}`, format: 'money' },
-      { key: `${p}_gross`, label: `${label} · ${colLabel(ctx, 'gross')}`, format: 'money' },
     );
   }
   const amounts = (line: Record<(typeof periods)[number], RevenueAmounts>) =>
-    periods.flatMap((p) => [line[p].net, line[p].vat, line[p].gross]);
+    periods.flatMap((p) => [line[p].gross, line[p].net, line[p].vat]);
   const rows: LayoutRow[] = [];
   for (const d of data.departments) {
     rows.push(row([d.code, d.name, ...amounts(d)], 'group'));

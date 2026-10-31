@@ -409,6 +409,7 @@ model Practitioner {
   dutyDayOverrides          StaffDutyDayOverride[]
   absences                  StaffAbsence[]
   episodeCareRows           EpisodeCareDoctor[]
+  preferredProcedureOrders  ProcedureOrder[]                @relation("ProcedureOrder_preferredPractitioner")
   anamnesisEpisodes         ClinicalEpisode[]               @relation("EpisodeAnamnesisAuthor")
   authoredComplaints        ClinicalComplaint[]             @relation("ComplaintAuthor")
   authoredDiagnoses         ClinicalDiagnosis[]             @relation("DiagnosisAuthor")
@@ -2020,6 +2021,8 @@ model ProcedureOrder {
   confirmedByUserId          String?                  @map("confirmed_by_user_id")
   /// Practitioner who prescribed/confirmed the procedure (doctor attribution for reports/bonuses).
   prescribedByPractitionerId String?                  @map("prescribed_by_practitioner_id")
+  /// Guest asked for this masseur. Null = any free skilled person.
+  preferredPractitionerId    String?                  @map("preferred_practitioner_id")
   checkedInAt                DateTime?                @map("checked_in_at")
   checkedInByUserId          String?                  @map("checked_in_by_user_id")
   checkInChannel             ProcedureCheckInChannel? @map("check_in_channel")
@@ -2041,6 +2044,7 @@ model ProcedureOrder {
   clinicalEpisode            ClinicalEpisode?         @relation(fields: [clinicalEpisodeId], references: [id])
   procedureType              ProcedureType?           @relation(fields: [procedureTypeId], references: [id])
   prescribedByPractitioner   Practitioner?            @relation("ProcedureOrder_prescribedByPractitioner", fields: [prescribedByPractitionerId], references: [id])
+  preferredPractitioner      Practitioner?            @relation("ProcedureOrder_preferredPractitioner", fields: [preferredPractitionerId], references: [id])
   resource                   Resource?                @relation(fields: [resourceId], references: [id])
   resourceBooking            ResourceBooking?
   allocations                ProcedureAllocation[]
@@ -2054,6 +2058,7 @@ model ProcedureOrder {
   @@index([resourceId, scheduledAt])
   @@index([status, scheduledAt])
   @@index([prescribedByPractitionerId, scheduledAt])
+  @@index([preferredPractitionerId])
   @@index([organizationId])
   @@index([extraTicketId])
   @@index([assignBatchId])

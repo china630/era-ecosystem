@@ -11,6 +11,7 @@ export type AssignToastMiss = {
   procedureName?: string;
   ymd?: string;
   reason?: string;
+  staffName?: string;
 };
 
 export function packageAssignMissReasonText(
@@ -30,12 +31,15 @@ export function packageAssignMissReasonText(
 
 export function formatPackageAssignMissLines(
   misses: AssignToastMiss[] | undefined,
-  t: (key: string, values?: { date: string; reason: string }) => string,
+  t: (key: string, values?: { date: string; reason: string; name?: string }) => string,
 ): string {
   if (!misses?.length) return "";
   return misses
     .map((miss) => {
-      const reason = packageAssignMissReasonText(miss.reason, (key) => t(key));
+      const reasonText = packageAssignMissReasonText(miss.reason, (key) => t(key));
+      const reason = miss.staffName?.trim()
+        ? t("packageAssignMissNamed", { date: "", reason: reasonText, name: miss.staffName.trim() })
+        : reasonText;
       const who = miss.procedureName || miss.procedureCode;
       if (who) return `${who}${miss.ymd ? ` (${miss.ymd})` : ""}: ${reason}`;
       return t("packageAssignMiss", { date: miss.ymd || "—", reason });
@@ -87,7 +91,7 @@ export function toastPackageAssignOutcome(
   }
 
   const detail = formatPackageAssignMissLines(misses, (key, values) =>
-    values ? t(key, { count: 0, name: "", date: values.date, reason: values.reason }) : t(key),
+    values ? t(key, { count: 0, name: values.name ?? "", date: values.date, reason: values.reason }) : t(key),
   );
   if (detail) showApiError({ error: detail });
 }

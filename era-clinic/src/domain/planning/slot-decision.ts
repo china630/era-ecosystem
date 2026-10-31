@@ -229,6 +229,7 @@ export async function placeManualProcedureSlot(input: {
     })),
     staffMode: staffReq?.staffMode === "SOFT" ? "SOFT" : "HARD",
     procedureTypeId: pt.id,
+    preferredStaffId: order.preferredPractitionerId ?? null,
     pinYmd: targetYmd,
   };
 
@@ -283,7 +284,7 @@ export async function placeManualProcedureSlot(input: {
       procedureCode: row.procedureCode,
     }).quotaKey,
     countsForRest: row.status !== "NO_SHOW",
-    holdsGuestDay: row.inPackage !== true && Boolean(row.resourceId),
+    holdsGuestDay: false,
   }));
   const rotationContext: RotationContextSlot[] = existing
     .filter((row) => row.status !== "NO_SHOW")
@@ -294,10 +295,16 @@ export async function placeManualProcedureSlot(input: {
       endAt: row.endsAt ?? row.scheduledAt,
     }));
 
-  const { loadStaffByDayForScan, loadOccupancyForScan } = await import(
+  const { ensurePreferredStaffInPool, loadStaffByDayForScan, loadOccupancyForScan } = await import(
     "@/lib/treatment-planner.service"
   );
   const staffByTypeAndYmd = await loadStaffByDayForScan([pt.id], targetYmd, addBakuDays(targetYmd, 1));
+  await ensurePreferredStaffInPool(
+    staffByTypeAndYmd,
+    [{ procedureTypeId: pt.id, preferredStaffId: order.preferredPractitionerId }],
+    targetYmd,
+    addBakuDays(targetYmd, 1),
+  );
   const staffIds = [...new Set([...staffByTypeAndYmd.values()].flat().map((person) => person.id))];
   const resourceIds = scanOrder.resources.map((row) => row.id);
   const allocations: ScanAllocation[] = await loadOccupancyForScan(

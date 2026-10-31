@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { ClipboardList } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -112,7 +113,7 @@ export function AuditHistoryModal({
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-[#EBEDF0]">
                   <td className="whitespace-nowrap p-2">
-                    {typeof r.date === "string" ? r.date.slice(0, 10) : t("common.emptyValue")}
+                    {typeof r.date === "string" ? bakuDateDisplay(r.date.slice(0, 10)) : t("common.emptyValue")}
                   </td>
                   <td className="whitespace-nowrap p-2 text-slate-700">
                     {r.warehouse?.name ?? t("common.emptyValue")}

@@ -20,7 +20,7 @@ describe("daily package procedure cap", () => {
     const codes = inPackageCodesOnBakuDay(slots, day);
     expect(codes.size).toBe(3);
     expect(
-      packageDayIsFullForNewCode(codes, "AMPLIPULSE", DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP),
+      packageDayIsFullForNewCode(codes, "AMPLIPULSE", 3),
     ).toBe(true);
     expect(packageDayIsFullForNewCode(codes, "OZONE", 3)).toBe(false);
   });
@@ -33,7 +33,7 @@ describe("daily package procedure cap", () => {
     ];
     const codes = inPackageCodesOnBakuDay(slots, day);
     expect(
-      packageDayIsFullForNewCode(codes, "PARAFFIN", DEFAULT_DAILY_PACKAGE_PROCEDURE_CAP),
+      packageDayIsFullForNewCode(codes, "PARAFFIN", 3),
     ).toBe(false);
   });
 });
@@ -68,15 +68,24 @@ describe("package block daily cap", () => {
     ).toBe(false);
   });
 
-  it("uses the family default when a pool row has no stored kind", () => {
+  it("empty stored cap is one distinct procedure, whatever the block kind", () => {
     const caps = capsByBlock([
-      { procedureCode: "PHYSIO_POOL", kind: null, dailyDistinctCap: null },
+      { procedureCode: "PHYSIO_POOL", kind: "PHYSIO", dailyDistinctCap: null },
       { procedureCode: "PARAFFIN_POOL", dailyDistinctCap: null },
       { procedureCode: "NAFTALAN", dailyDistinctCap: null },
+      { procedureCode: "SVC_MASAJ_POOL", kind: "CUSTOM", dailyDistinctCap: null },
     ]);
-    expect(caps.get("PHYSIO_POOL")).toBe(3);
+    expect(caps.get("PHYSIO_POOL")).toBe(1);
     expect(caps.get("PARAFFIN_POOL")).toBe(1);
     expect(caps.get("NAFTALAN")).toBe(1);
+    expect(caps.get("SVC_MASAJ_POOL")).toBe(1);
+  });
+
+  it("uses the number stored on the block", () => {
+    const caps = capsByBlock([
+      { procedureCode: "PHYSIO_POOL", kind: "PHYSIO", dailyDistinctCap: 3 },
+    ]);
+    expect(caps.get("PHYSIO_POOL")).toBe(3);
   });
 
   it("charges a physio replacement against the bath predecessor", () => {

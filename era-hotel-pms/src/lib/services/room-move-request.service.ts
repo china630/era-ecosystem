@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { canAssignDoor } from '@/lib/room-state';
+import { canAssignDoor, canBookDoor } from '@/lib/room-state';
 import { hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import {
   doorTypeNeedsSettlement,
@@ -47,14 +47,19 @@ async function businessTodayKey(): Promise<string> {
   return hotelDateKey(await getCurrentBusinessDate());
 }
 
-async function doorReadyForMove(roomId: string, reservationId: string): Promise<boolean> {
+async function doorReadyForMove(
+  roomId: string,
+  reservationId: string,
+  preArrival: boolean,
+): Promise<boolean> {
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) return false;
   const occupied = await prisma.reservation.findFirst({
     where: { roomId, status: 'IN_HOUSE', id: { not: reservationId } },
     select: { id: true },
   });
-  return canAssignDoor(room, Boolean(occupied));
+  const gate = preArrival ? canBookDoor : canAssignDoor;
+  return gate(room, Boolean(occupied));
 }
 
 async function applyGuestClass(reservationId: string, doorRoomTypeId: string, effectiveYmd: string) {
@@ -95,9 +100,10 @@ export async function applyRoomMoveNow(
 }
 
 /**
- * One room move. A free clean door moves now.
- * A future date, or a door that is occupied, dirty, or out of service, stays PENDING
- * until that door is marked Clean or Inspected on or after the effective date.
+ * One room move. A free door moves now.
+ * Before check-in a dirty door is bookable (`canBookDoor`): the stay takes it immediately
+ * and the old door is released. An in-house guest waits (PENDING) until the target is
+ * Clean or Inspected, in service, and empty. A future effective date always stays PENDING.
  * No stay slice is written ahead of the move, so charges stay on the door the guest occupies.
  */
 export async function requestRoomMove(
@@ -136,7 +142,9 @@ export async function requestRoomMove(
   }
 
   const scheduledForLater = Boolean(explicit && explicit > today);
-  const ready = !scheduledForLater && (await doorReadyForMove(toRoomId, reservationId));
+  const preArrival = stay.status !== 'IN_HOUSE';
+  const ready =
+    !scheduledForLater && (await doorReadyForMove(toRoomId, reservationId, preArrival));
   if (ready) {
     await prisma.roomChangePlan.updateMany({
       where: { reservationId, status: 'PENDING' },
@@ -203,7 +211,7 @@ export async function requestRoomMove(
 
 /** When a door becomes Clean or Inspected and in service, run waiting moves onto it. */
 export async function applyPendingMovesForDoor(roomId: string): Promise<void> {
-  if (!(await doorReadyForMove(roomId, ''))) return;
+  if (!(await doorReadyForMove(roomId, '', false))) return;
   const today = await businessTodayKey();
   const end = new Date(`${today}T23:59:59.999+04:00`);
   const plans = await prisma.roomChangePlan.findMany({
@@ -222,7 +230,7 @@ export async function applyPendingMovesForDoor(roomId: string): Promise<void> {
   if (!door) return;
   for (const plan of plans) {
     if (!RELOCATABLE.includes(plan.reservation.status as (typeof RELOCATABLE)[number])) continue;
-    if (!(await doorReadyForMove(roomId, plan.reservationId))) continue;
+    if (!(await doorReadyForMove(roomId, plan.reservationId, false))) continue;
     const settlement = readSettlement(plan.notes);
     const needs = doorTypeNeedsSettlement(
       plan.reservation.roomTypeId,

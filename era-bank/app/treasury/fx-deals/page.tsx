@@ -8,7 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { todayBakuYmd } from "@era/satellite-kit/time";
+import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
 import { OpsDataTable, OpsModalShell, useOpsModal } from "@/components/ops";
 import { OpsError, OpsResult, StatusBadge } from "@/components/ops-ui";
 
@@ -232,7 +232,7 @@ function FxDealsPageInner() {
               </div>
               <div>
                 <dt className="text-muted-foreground">Value date</dt>
-                <dd>{detail.valueDate?.slice(0, 10) ?? "—"}</dd>
+                <dd>{detail.valueDate ? bakuDateDisplay(detail.valueDate.slice(0, 10)) : "—"}</dd>
               </div>
             </dl>
             <div className="flex flex-wrap gap-2">

@@ -15,8 +15,29 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync } from "node:fs";
+import { existsSync, readFileSync, statSync, writeFileSync, writeSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
+
+/** PowerShell on Windows drops a buffered console write; Cursor then logs `{}`. */
+function emit(obj) {
+  const line = `${JSON.stringify(obj)}\n`;
+  try {
+    writeSync(1, line);
+  } catch {
+    process.stdout.write(line);
+  }
+}
+
+function repoCwd(input) {
+  const root = Array.isArray(input.workspace_roots) ? input.workspace_roots[0] : "";
+  if (typeof root === "string" && root.trim()) {
+    const normalized = root.replace(/^\/([A-Za-z]:)/, "$1");
+    if (existsSync(join(normalized, ".git")) || existsSync(join(normalized, "era-data-hub"))) {
+      return normalized;
+    }
+  }
+  return process.cwd();
+}
 
 /** Paths that can affect acceptance / product closeout. */
 function isRelevantPath(rel) {
@@ -44,12 +65,14 @@ function readInput() {
   }
 }
 
+let gitCwd = process.cwd();
+
 function gitCapture(args) {
   try {
     return execFileSync("git", args, {
-      cwd: process.cwd(),
+      cwd: gitCwd,
       encoding: "utf8",
-      timeout: 8000,
+      timeout: 20000,
       windowsHide: true,
     });
   } catch {
@@ -68,7 +91,7 @@ function unquoteGitPath(path) {
 
 function fileDigest(relPath) {
   try {
-    const abs = join(process.cwd(), relPath);
+    const abs = join(gitCwd, relPath);
     if (!statSync(abs).isFile()) return "not-a-file";
     return createHash("sha256").update(readFileSync(abs)).digest("hex");
   } catch {
@@ -109,9 +132,9 @@ function workspaceStamp() {
 }
 
 function stateDirFile(name) {
-  const gitDir = join(process.cwd(), ".git");
+  const gitDir = join(gitCwd, ".git");
   if (existsSync(gitDir)) return join(gitDir, name);
-  return join(process.cwd(), name);
+  return join(gitCwd, name);
 }
 
 function baselinePath() {
@@ -127,17 +150,35 @@ function clearLegacyDirtyFlag() {
   }
 }
 
-function readBaseline() {
+/** generation_id is one user message; conversation_id is the chat. beforeSubmitPrompt may omit one of them. */
+function stampKeys(input) {
+  const keys = [];
+  for (const value of [input.generation_id, input.conversation_id, input.conversationId]) {
+    const key = typeof value === "string" ? value.trim() : "";
+    if (key && !keys.includes(key)) keys.push(key);
+  }
+  if (keys.length === 0) keys.push("default");
+  return keys;
+}
+
+/** Per-chat stamps. One shared hash let a question in another window consume this turn's delta. */
+function readBaselineMap() {
   try {
-    return readFileSync(baselinePath(), "utf8").trim();
+    const raw = readFileSync(baselinePath(), "utf8").trim();
+    if (!raw) return {};
+    if (raw.startsWith("{")) {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    }
+    return { default: raw };
   } catch {
-    return null;
+    return {};
   }
 }
 
-function writeBaseline(value) {
+function writeBaselineMap(map) {
   try {
-    writeFileSync(baselinePath(), value, "utf8");
+    writeFileSync(baselinePath(), JSON.stringify(map), "utf8");
   } catch {
     // Missing baseline must not loop forever — stay quiet next time.
   }
@@ -160,12 +201,19 @@ const mode = process.argv.includes("--baseline")
     : "stop";
 
 const input = readInput();
+gitCwd = repoCwd(input);
 clearLegacyDirtyFlag();
+
+const keys = stampKeys(input);
 
 if (mode === "baseline") {
   const stamp = workspaceStamp();
-  if (stamp) writeBaseline(stamp);
-  process.stdout.write("{}");
+  if (stamp) {
+    const map = readBaselineMap();
+    for (const key of keys) map[key] = stamp;
+    writeBaselineMap(map);
+  }
+  emit({});
   process.exit(0);
 }
 
@@ -174,26 +222,32 @@ const loopCount = Number(input.loop_count || input.followup_count || 0);
 const current = workspaceStamp();
 
 if (!current) {
-  process.stdout.write("{}");
+  emit({});
   process.exit(0);
+}
+
+const map = readBaselineMap();
+
+function remember() {
+  for (const key of keys) map[key] = current;
+  writeBaselineMap(map);
 }
 
 if (loopCount > 0) {
-  // Closeout / follow-up turn: do not nudge again; lock baseline to end state.
-  writeBaseline(current);
-  process.stdout.write("{}");
+  // Closeout / follow-up turn: do not nudge again; lock this chat's baseline.
+  remember();
+  emit({});
   process.exit(0);
 }
 
-const baseline = readBaseline();
+const baseline = keys.map((key) => map[key]).find((value) => typeof value === "string" && value.length > 0);
 if (!baseline || baseline === current) {
-  // No baseline (hook skipped) or no relevant change this turn → quiet.
-  // Refresh baseline so a later question with the same tree stays quiet.
-  writeBaseline(current);
-  process.stdout.write("{}");
+  // No baseline (hook skipped) or no relevant change since this chat's prompt → quiet.
+  remember();
+  emit({});
   process.exit(0);
 }
 
-writeBaseline(current);
-process.stdout.write(JSON.stringify({ followup_message: FOLLOWUP }));
+remember();
+emit({ followup_message: FOLLOWUP });
 process.exit(0);

@@ -15,6 +15,7 @@ import { PashaBankAdapter } from "./bank-providers/pasha-bank.adapter";
 import { ProviderRegistryService } from "./bank-providers/provider-registry.service";
 import { BankBalancesSyncQueueService } from "./bank-balances-sync.queue";
 import { BankBalancesSyncWorker } from "./bank-balances-sync.worker";
+import { BankRestSyncService } from "./bank-rest-sync.service";
 import { BankDirectSyncQueueService } from "./bank-sync.queue";
 import { BankDirectSyncWorker } from "./bank-sync.worker";
 import { BankWebhookController } from "./bank-webhook.controller";
@@ -50,6 +51,7 @@ import { UniversalBankExportService } from "./universal-bank-export.service";
     UniversalBankExportService,
     IbanValidationService,
     BankMatchService,
+    BankRestSyncService,
     BankIntegrationService,
     BankDirectSyncQueueService,
     BankDirectSyncWorker,

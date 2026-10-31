@@ -10,7 +10,7 @@ import {
   showApiError,
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { useAuth } from '@/hooks/useAuth';
@@ -131,14 +131,14 @@ export default function ReservationTimesPage() {
             header: t('plannedIn'),
             sortable: true,
             sortValue: (r) => r.checkInDate,
-            render: (r) => r.checkInDate.slice(0, 10),
+            render: (r) => bakuDateDisplay(r.checkInDate.slice(0, 10)),
           },
           {
             key: 'plannedOut',
             header: t('plannedOut'),
             sortable: true,
             sortValue: (r) => r.checkOutDate,
-            render: (r) => r.checkOutDate.slice(0, 10),
+            render: (r) => bakuDateDisplay(r.checkOutDate.slice(0, 10)),
           },
           {
             key: 'actualIn',

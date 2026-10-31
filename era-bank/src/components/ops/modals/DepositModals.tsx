@@ -8,6 +8,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
 import { meCan, useOpsMe } from "@/components/ops/useOpsMe";
@@ -365,7 +366,7 @@ export function DepositDetailModal({
             </div>
             <div>
               <dt className="text-muted-foreground">{t("maturityDate")}</dt>
-              <dd>{data.maturityDate ? String(data.maturityDate).slice(0, 10) : "—"}</dd>
+              <dd>{data.maturityDate ? bakuDateDisplay(String(data.maturityDate).slice(0, 10)) : "—"}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">ADİF</dt>

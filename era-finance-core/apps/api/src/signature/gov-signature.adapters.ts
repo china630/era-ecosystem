@@ -4,6 +4,8 @@ import {
   Injectable,
   Logger,
 } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { readIntegrationStubs } from "../organizations/integration-stubs";
 import { ConfigService } from "@nestjs/config";
 import { randomBytes, createHash } from "node:crypto";
 import axios from "axios";
@@ -162,18 +164,21 @@ export class AsanSimaGovSignatureAdapter implements GovSignatureAdapter {
 @Injectable()
 export class GovSignatureAdapterFactory {
   constructor(
-    private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
     private readonly mock: MockGovSignatureAdapter,
     private readonly live: AsanSimaGovSignatureAdapter,
   ) {}
 
-  isLiveEnabled(): boolean {
-    const asanLive = this.config.get<string>("ERA_ASAN_SIMA_LIVE", "0");
-    const mockOff = this.config.get<string>("SIGNATURE_GATEWAY_MOCK", "1") === "0";
-    return asanLive === "1" || asanLive?.toLowerCase() === "true" || mockOff;
+  /** Stub is on only when organization.settings.tax.signatureGatewayMock is true. */
+  async isMockEnabled(organizationId: string): Promise<boolean> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    return readIntegrationStubs(org?.settings).signatureGatewayMock;
   }
 
-  get(): GovSignatureAdapter {
-    return this.isLiveEnabled() ? this.live : this.mock;
+  async get(organizationId: string): Promise<GovSignatureAdapter> {
+    return (await this.isMockEnabled(organizationId)) ? this.mock : this.live;
   }
 }
