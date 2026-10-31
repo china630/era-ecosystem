@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   CatalogField,
   type CatalogFieldKind,
-  Field,
+  DatePicker,
 } from "@era/satellite-kit/ui";
 import { CARD_CLASS } from "@/lib/design-system";
 
@@ -54,6 +54,7 @@ export default function BuffetPageChrome({
   hint,
 }: Props) {
   const t = useTranslations("admin.buffet");
+  const tc = useTranslations("common");
   const outletOptions = outlets.map((o) => ({
     value: o.id,
     label: `${o.code} — ${o.name}`,
@@ -77,21 +78,19 @@ export default function BuffetPageChrome({
         {showDates && onFromDate && onToDate ? (
           <>
             <div className="min-w-0">
-              <Field
+              <DatePicker
                 label={t("fromDate")}
-                preset="date"
-                type="date"
                 value={fromDate ?? ""}
-                onChange={(e) => onFromDate(e.target.value)}
+                onChange={onFromDate}
+                placeholder={tc("datePlaceholder")}
               />
             </div>
             <div className="min-w-0">
-              <Field
+              <DatePicker
                 label={t("toDate")}
-                preset="date"
-                type="date"
                 value={toDate ?? ""}
-                onChange={(e) => onToDate(e.target.value)}
+                onChange={onToDate}
+                placeholder={tc("datePlaceholder")}
               />
             </div>
           </>

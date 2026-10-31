@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { CARD_CONTAINER_CLASS, SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import { bakuDateDisplay, bakuDateShort } from '@era/satellite-kit/time';
 
 type ForecastDay = {
   date: string;
@@ -166,8 +167,8 @@ export default function ForecastDashboard() {
                 icon={CalendarRange}
                 iconClass="bg-violet-500/10 text-violet-700"
                 label={t('summary.peakDate')}
-                value={data.summary.peakDate?.slice(5) ?? '—'}
-                hint={data.summary.peakDate ?? undefined}
+                value={data.summary.peakDate ? bakuDateShort(data.summary.peakDate) : '—'}
+                hint={data.summary.peakDate ? bakuDateDisplay(data.summary.peakDate) : undefined}
               />
             </div>
           </div>
@@ -196,11 +197,11 @@ export default function ForecastDashboard() {
                     <div
                       key={d.date}
                       className="flex flex-1 flex-col items-center justify-end gap-1"
-                      title={`${d.date}: ${d.occupancyPct}% (${d.roomsSold}/${d.roomsTotal})`}
+                      title={`${bakuDateDisplay(d.date)}: ${d.occupancyPct}% (${d.roomsSold}/${d.roomsTotal})`}
                     >
                       <span className="text-[9px] font-semibold text-[#7F8C8D]">{d.occupancyPct}%</span>
                       <div className={`w-full max-w-[28px] rounded-t ${barColor}`} style={{ height: h }} />
-                      <span className="text-[9px] text-[#7F8C8D]">{d.date.slice(5)}</span>
+                      <span className="text-[9px] text-[#7F8C8D]">{bakuDateShort(d.date)}</span>
                     </div>
                   );
                 })}
@@ -233,7 +234,7 @@ export default function ForecastDashboard() {
                 <tbody>
                   {data.daily.map((d) => (
                     <tr key={d.date} className="border-b border-[#D5DADF]/60 hover:bg-[#F8FAFC]/80">
-                      <td className="px-3 py-2 font-medium">{d.date}</td>
+                      <td className="px-3 py-2 font-medium">{bakuDateDisplay(d.date)}</td>
                       <td className="px-3 py-2 tabular-nums">
                         {d.roomsSold} / {d.roomsTotal}
                       </td>

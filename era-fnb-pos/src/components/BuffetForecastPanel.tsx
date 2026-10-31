@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   CatalogField,
   type CatalogFieldKind,
+  DatePicker,
   Field,
   ModalFooter,
   ModalShell,
@@ -93,6 +94,7 @@ export default function BuffetForecastPanel({
   const showNights = mode === "nights" || mode === "both";
   const showNorms = mode === "norms" || mode === "both";
   const t = useTranslations("admin.buffet");
+  const tc = useTranslations("common");
   const [report, setReport] = useState<ForecastReport | null>(null);
   const [norms, setNorms] = useState<NormRow[]>([]);
   const [bands, setBands] = useState<BandRow[]>([]);
@@ -386,12 +388,11 @@ export default function BuffetForecastPanel({
           </table>
         </div>
         <div className="flex flex-wrap items-end gap-3">
-          <Field
+          <DatePicker
             label={t("forecastManualDate")}
-            preset="shortText"
-            type="date"
             value={manualDate}
-            onChange={(e) => setManualDate(e.target.value)}
+            onChange={setManualDate}
+            placeholder={tc("datePlaceholder")}
           />
           <Field
             label={t("forecastManualNights")}
@@ -761,13 +762,12 @@ export default function BuffetForecastPanel({
         title={t("forecastEditNight")}
         onClose={() => setEditOpen(false)}
       >
-        <Field
+        <DatePicker
           label={t("forecastManualDate")}
-          preset="shortText"
-          type="date"
           value={editDate}
-          disabled
           onChange={() => undefined}
+          placeholder={tc("datePlaceholder")}
+          disabled
         />
         <Field
           label={t("forecastManualNights")}

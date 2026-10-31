@@ -68,7 +68,7 @@ export function DatePicker({
     return (day: Date) => !isAfter(startOfDay(day), lockDay);
   }, [respectPeriodLock, lockedPeriodUntil]);
 
-  const labelText = selected ? format(selected, "yyyy-MM-dd") : "";
+  const labelText = selected ? format(selected, "dd.MM.yyyy") : "";
 
   useEffect(() => {
     if (disabled) setOpen(false);

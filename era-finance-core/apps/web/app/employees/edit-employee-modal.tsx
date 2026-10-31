@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../components/ui/date-picker";
 
 import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -511,12 +512,7 @@ export function EditEmployeeModal({
                 </label>
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("employees.startDate")}
-                  <input
-                    type="date"
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
+                  <FinanceDatePicker value={startDate} onChange={(iso) => setStartDate(iso)} respectPeriodLock={false} />
                 </label>
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("employees.salaryGross")}

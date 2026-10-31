@@ -20,6 +20,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { bakuDateShort } from '@era/satellite-kit/time';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 
 type BarPlan = { id: string; code: string; name: string };
@@ -300,7 +301,7 @@ export default function BarCalendarPage() {
               <th className="p-2 text-left">{t('roomType')}</th>
               {dates.map((d) => (
                 <th key={d} className="whitespace-nowrap p-2 text-right">
-                  {d.slice(5)}
+                  {bakuDateShort(d)}
                 </th>
               ))}
             </tr>

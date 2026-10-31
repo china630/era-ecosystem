@@ -17,7 +17,9 @@ import { parseHotelNoon, reservationStayOverlaps, staysOverlap } from '@/lib/hot
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    roomType: { findUnique: jest.fn() },
+    roomType: { findUnique: jest.fn(), findMany: jest.fn() },
+    hotelProfile: { findFirst: jest.fn().mockResolvedValue({ houseOverbookAllowance: 0 }) },
+    channelStopSell: { findFirst: jest.fn().mockResolvedValue(null) },
     reservation: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -31,7 +33,7 @@ jest.mock('@/lib/prisma', () => ({
 
 const { prisma } = jest.requireMock('@/lib/prisma') as {
   prisma: {
-    roomType: { findUnique: jest.Mock };
+    roomType: { findUnique: jest.Mock; findMany: jest.Mock };
     reservation: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
@@ -39,7 +41,8 @@ const { prisma } = jest.requireMock('@/lib/prisma') as {
       count: jest.Mock;
     };
     room: { update: jest.Mock; findUnique: jest.Mock };
-    housekeepingTask: { create: jest.Mock };
+    hotelProfile: { findFirst: jest.Mock };
+    channelStopSell: { findFirst: jest.Mock };
   };
 };
 
@@ -297,7 +300,15 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
 
   describe('assertShareInventory', () => {
     it('rejects when doors exceed quota', async () => {
-      prisma.roomType.findUnique.mockResolvedValue({ baseQuota: 1, adultCapacity: 2 });
+      prisma.roomType.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        baseQuota: 1,
+        overbookAllowance: 0,
+        adultCapacity: 2,
+      });
+      prisma.roomType.findMany.mockResolvedValue([
+        { id: 'rt-1', baseQuota: 1, overbookAllowance: 0, adultCapacity: 2 },
+      ]);
       prisma.reservation.findMany.mockResolvedValue([
         {
           id: 'm1',
@@ -319,7 +330,7 @@ describe('shared twin assignment (AC-HOT-FO-SHARE)', () => {
           shareGender: 'F',
           adults: 1,
         }),
-      ).rejects.toThrow(/No availability/);
+      ).rejects.toThrow(/Room type overbook limit/);
     });
   });
 

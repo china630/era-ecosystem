@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -50,21 +51,11 @@ export default function AuditHubReconciliationPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className={MODAL_FIELD_LABEL_CLASS}>
             {t("auditHub.periodFrom")}
-            <input
-              type="date"
-              className={`${INPUT_BORDERED_CLASS} mt-1.5 w-full`}
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-            />
+            <FinanceDatePicker value={from} onChange={(iso) => setFrom(iso)} respectPeriodLock={false} />
           </label>
           <label className={MODAL_FIELD_LABEL_CLASS}>
             {t("auditHub.periodTo")}
-            <input
-              type="date"
-              className={`${INPUT_BORDERED_CLASS} mt-1.5 w-full`}
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            />
+            <FinanceDatePicker value={to} onChange={(iso) => setTo(iso)} respectPeriodLock={false} />
           </label>
           <label className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>
             {t("auditHub.reconTake")}

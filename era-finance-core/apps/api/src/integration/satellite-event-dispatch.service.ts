@@ -65,12 +65,14 @@ import {
 import {
   HotelDayDocumentStatus,
   LedgerType,
+  NotificationSeverity,
   Prisma,
   StockMovementReason,
   StockMovementType,
   type PostingRole,
 } from "@erafinance/database";
 import { departmentFinanceEventsSilenced } from "@era/satellite-kit";
+import { NotificationService } from "../notifications/notification.service";
 import {
   AccountingService,
   type PostTransactionLine,
@@ -158,6 +160,7 @@ export class SatelliteEventDispatchService {
     private readonly workforceTimesheetSync: WorkforceTimesheetSyncService,
     private readonly counterparties: CounterpartiesService,
     private readonly inventory: InventoryService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private async defaultOpsBookId(
@@ -828,10 +831,30 @@ export class SatelliteEventDispatchService {
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Day document rejected";
+      const prior = await this.prisma.hotelDayDocument.findUnique({
+        where: { organizationId_reference: { organizationId, reference } },
+        select: { status: true, errorMessage: true },
+      });
       await this.prisma.hotelDayDocument.update({
         where: { organizationId_reference: { organizationId, reference } },
         data: { status: HotelDayDocumentStatus.REJECTED, errorMessage: message },
       });
+      const sameReason =
+        prior?.status === HotelDayDocumentStatus.REJECTED && prior.errorMessage === message;
+      if (!sameReason) {
+        try {
+          await this.notifications.notifyFinanceUsers(organizationId, {
+            title: "Hotel day document was not posted",
+            message: `${event.payload.businessDate}: ${message}`,
+            severity: NotificationSeverity.WARNING,
+            link: "/reporting/hotel-day-documents",
+          });
+        } catch (notifyErr) {
+          this.logger.warn(
+            `Day document notify failed: ${notifyErr instanceof Error ? notifyErr.message : String(notifyErr)}`,
+          );
+        }
+      }
       return {
         meta: {
           businessDate: event.payload.businessDate,

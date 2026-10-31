@@ -9,6 +9,8 @@
 
 **BE deepen (2026-08-17):** Negative-path suites landed — `__tests__/con-prj-negative.spec.ts`, `con-mat-negative.spec.ts`, `con-plat-negative.spec.ts`.
 
+**Civil date controls (2026-10-31):** Field-ops work date and daily-log date are kit `DatePicker`. Form values stay `YYYY-MM-DD`. Does not reopen AC-CON-PRJ Scaffold ✅. Pilot-ready stays `[ ]`.
+
 ---
 
 ## AC rollup

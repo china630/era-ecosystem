@@ -59,10 +59,9 @@ export async function postNightlyPackageCharges(
     orderBy: { sortOrder: 'asc' },
   });
   const sellRow = reservation.dailyRates.find((d) => sameCalendarDay(d.stayDate, businessDate));
-  const stayCode = ratePlan.code ?? reservation.medicalPackageCode;
   const packageCodes =
     pax.length > 0
-      ? paxCodesForCompose(pax, stayCode)
+      ? paxCodesForCompose(pax, null)
       : [reservation.medicalPackageCode].filter((c): c is string => Boolean(c));
   const roomTypeId = slice?.roomTypeId ?? reservation.roomTypeId;
   if (sellRow) {

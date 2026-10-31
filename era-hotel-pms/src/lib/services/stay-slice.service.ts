@@ -124,6 +124,10 @@ export async function splitStayFromDate(input: {
     const { getAvailability } = await import('@/lib/services/reservation.service');
     const avail = await getAvailability(input.roomTypeId, from, checkOut, res.id);
     if (avail.available < 1 || avail.stopSell) {
+      if (avail.reason) {
+        const { InventoryCapError } = await import('@/lib/services/inventory-guard.service');
+        throw new InventoryCapError(avail.reason);
+      }
       throw new Error('No availability for that room type');
     }
   }
@@ -138,18 +142,20 @@ export async function splitStayFromDate(input: {
     keepRoomId: res.roomId,
   });
 
-  await prisma.roomChangePlan.create({
-    data: {
-      organizationId: res.organizationId,
-      reservationId: res.id,
-      fromRoomId: res.roomId,
-      toRoomId: input.roomId ?? null,
-      effectiveAt: from,
-      kind: 'SCHEDULED',
-      status: 'PENDING',
-      createdByUserId: input.actorUserId ?? undefined,
-    },
-  });
+  if (res.status === 'IN_HOUSE') {
+    await prisma.roomChangePlan.create({
+      data: {
+        organizationId: res.organizationId,
+        reservationId: res.id,
+        fromRoomId: res.roomId,
+        toRoomId: input.roomId ?? null,
+        effectiveAt: from,
+        kind: 'SCHEDULED',
+        status: 'PENDING',
+        createdByUserId: input.actorUserId ?? undefined,
+      },
+    });
+  }
 }
 
 const LIVE_STAY = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;

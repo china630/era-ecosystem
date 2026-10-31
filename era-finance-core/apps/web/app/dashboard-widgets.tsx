@@ -19,7 +19,7 @@ import { canCloseAccountingPeriod } from "../lib/role-utils";
 import { ledgerQueryParam, useLedger } from "../lib/ledger-context";
 import { MoneyAzn } from "../lib/money-azn";
 import { EmptyState } from "../components/empty-state";
-import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
+import { addBakuDays, bakuDateShort, todayBakuYmd } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -318,7 +318,7 @@ export function DashboardWidgets() {
       (data?.revenueByDay ?? []).map((r) => [r.date, Number(r.amount)]),
     );
     return keys.map((date) => ({
-      date: date.slice(5),
+      date: bakuDateShort(date),
       amount: map.get(date) ?? 0,
     }));
   }, [data]);

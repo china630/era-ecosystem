@@ -165,8 +165,22 @@ export default function Chessboard() {
           return;
         }
         const clash = doorConflictToast(data);
+        const cap =
+          data?.code === 'TYPE_CAP'
+            ? tCard('typeCapToast')
+            : data?.code === 'HOUSE_CAP'
+              ? tCard('houseCapToast')
+              : data?.code === 'STOP_SELL'
+                ? tCard('stopSellToast')
+                : data?.code === 'ROOM_CONFLICT'
+                  ? tCard('roomConflictToast')
+                  : null;
         showApiError(
-          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : data,
+          cap
+            ? { error: cap }
+            : clash
+              ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) }
+              : data,
           tCommon('actionFailed'),
         );
         return;
@@ -211,8 +225,22 @@ export default function Chessboard() {
       const data = await res.json();
       if (!res.ok) {
         const clash = doorConflictToast(data);
+        const cap =
+          data?.code === 'TYPE_CAP'
+            ? tCard('typeCapToast')
+            : data?.code === 'HOUSE_CAP'
+              ? tCard('houseCapToast')
+              : data?.code === 'STOP_SELL'
+                ? tCard('stopSellToast')
+                : data?.code === 'ROOM_CONFLICT'
+                  ? tCard('roomConflictToast')
+                  : null;
         showApiError(
-          clash ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) } : data,
+          cap
+            ? { error: cap }
+            : clash
+              ? { error: tCard(clash.key, { from: clash.from, to: clash.to }) }
+              : data,
           tCommon('actionFailed'),
         );
         return;

@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { useCallback, useEffect, useState } from "react";
@@ -97,12 +98,7 @@ export default function ApAgingPage() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
           <span>{t("apAging.asOf")}</span>
-          <input
-            type="date"
-            value={asOf}
-            onChange={(e) => setAsOf(e.target.value)}
-            className={MODAL_INPUT_CLASS}
-          />
+          <FinanceDatePicker value={asOf} onChange={(iso) => setAsOf(iso)} respectPeriodLock={false} />
         </label>
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void load()}>
           {t("apAging.applyAsOf")}

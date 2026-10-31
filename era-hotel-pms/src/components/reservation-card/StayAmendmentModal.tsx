@@ -10,6 +10,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal } from '@/components/EraModal';
 import type { RatePlanOption, SelectOption } from './types';
 import {
@@ -193,7 +194,7 @@ export function StayAmendmentModal({
               {preview.nights.map((n) => (
                 <tr key={n.date}>
                   <td className="p-1">
-                    {n.date}
+                    {bakuDateDisplay(n.date)}
                     {n.locked ? ` (${t('nightLocked')})` : ''}
                   </td>
                   <td className="p-1 text-right">{n.old.toFixed(2)}</td>

@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -99,12 +100,7 @@ export default function AgingPage() {
           <div className="flex flex-wrap items-end gap-3">
             <label className="block shrink-0 text-[13px] font-medium text-[#34495E]">
               {t("aging.asOf")}
-              <input
-                type="date"
-                value={asOf}
-                onChange={(e) => setAsOf(e.target.value)}
-                className={`mt-1 block h-9 ${MODAL_INPUT_CLASS}`}
-              />
+              <FinanceDatePicker value={asOf} onChange={(iso) => setAsOf(iso)} respectPeriodLock={false} />
             </label>
             <p className="m-0 max-w-xl pb-1 text-[12px] leading-snug text-[#7F8C8D]">
               {t("aging.asOfPickerHint")}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -40,18 +41,8 @@ export default function FmnReportPage() {
       <PageHeader title="FMN report" subtitle="Suspicious transaction export (test schema)" />
       <div className={CARD_CONTAINER_CLASS}>
         <div className="mb-3 grid gap-2 sm:grid-cols-2">
-          <input
-            type="date"
-            className="rounded border px-3 py-2 text-sm"
-            value={periodFrom}
-            onChange={(e) => setPeriodFrom(e.target.value)}
-          />
-          <input
-            type="date"
-            className="rounded border px-3 py-2 text-sm"
-            value={periodTo}
-            onChange={(e) => setPeriodTo(e.target.value)}
-          />
+          <DatePicker label="From" value={periodFrom} onChange={setPeriodFrom} placeholder="dd.mm.yyyy" />
+          <DatePicker label="To" value={periodTo} onChange={setPeriodTo} placeholder="dd.mm.yyyy" />
         </div>
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void generate()}>
           Generate FMN report

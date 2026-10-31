@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../ui/date-picker";
 
 import Link from "next/link";
 import { Trash2, X } from "lucide-react";
@@ -237,13 +238,7 @@ export function PhysicalAdjustmentModal({
               </label>
               <label className="flex flex-col gap-1 text-[13px]">
                 <span className="font-medium text-[#34495E]">{t("inventory.physicalDocDate")}</span>
-                <input
-                  type="date"
-                  className={INPUT_BORDERED_CLASS}
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
+                <FinanceDatePicker value={date} onChange={(iso) => setDate(iso)} respectPeriodLock={false} required />
               </label>
               <label className="flex flex-col gap-1 text-[13px]">
                 <span className="font-medium text-[#34495E]">{t("inventory.physicalDocType")}</span>

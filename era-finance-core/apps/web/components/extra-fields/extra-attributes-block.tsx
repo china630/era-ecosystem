@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { CatalogField } from "@era/satellite-kit/ui";
 import type { CatalogFieldKind } from "@era/satellite-kit/ui";
@@ -153,13 +154,7 @@ export function ExtraAttributesBlock({
                 {label}
                 {d.required ? <span className="text-[#E74C3C]"> *</span> : null}
               </span>
-              <input
-                className={MODAL_INPUT_CLASS}
-                type="date"
-                disabled={disabled}
-                value={typeof raw === "string" ? raw : ""}
-                onChange={(e) => setKey(d.key, e.target.value)}
-              />
+              <FinanceDatePicker value={typeof raw === "string" ? raw : ""} onChange={(iso) => setKey(d.key, iso)} respectPeriodLock={false} disabled={disabled} />
             </label>
           );
         }

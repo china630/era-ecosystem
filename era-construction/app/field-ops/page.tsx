@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   Field,
   FieldRow,
   FieldTextarea,
@@ -30,6 +31,8 @@ export default function FieldOpsPage() {
   const [projectId, setProjectId] = useState("");
   const [message, setMessage] = useState("");
   const [logModalOpen, setLogModalOpen] = useState(false);
+  const [workDate, setWorkDate] = useState("");
+  const [logDate, setLogDate] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -139,10 +142,14 @@ export default function FieldOpsPage() {
                 <label className={MODAL_FIELD_LABEL_CLASS}>{t("workerRef")}</label>
                 <input name="workerRef" defaultValue="W001" className={MODAL_INPUT_CLASS} />
               </div>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t("workDate")}</label>
-                <input name="workDate" type="date" required className={MODAL_INPUT_CLASS} />
-              </div>
+              <DatePicker
+                label={t("workDate")}
+                value={workDate}
+                onChange={setWorkDate}
+                placeholder="dd.mm.yyyy"
+                required
+              />
+              <input type="hidden" name="workDate" value={workDate} />
               <div className={FORM_FIELD_GROUP_CLASS}>
                 <label className={MODAL_FIELD_LABEL_CLASS}>{t("hours")}</label>
                 <input name="hours" type="number" defaultValue={8} min={0} step={0.5} className={MODAL_INPUT_CLASS} />
@@ -171,13 +178,14 @@ export default function FieldOpsPage() {
         }
       >
         <form id={logFormId} onSubmit={addDailyLog} className={FORM_STACK_CLASS}>
-          <Field
+          <DatePicker
             label={t("dailyLog")}
-            preset="date"
-            name="logDate"
-            type="date"
+            value={logDate}
+            onChange={setLogDate}
+            placeholder="dd.mm.yyyy"
             required
           />
+          <input type="hidden" name="logDate" value={logDate} />
           <FieldRow cols={2}>
             <Field
               label={t("weather")}

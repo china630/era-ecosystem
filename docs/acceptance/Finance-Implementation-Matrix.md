@@ -9,7 +9,7 @@
 
 **BE deepen (2026-08-17):** Green Scaffold BE Wave 6 — `__tests__/fin-*-negative.spec.ts` (GL/ARAP/INV/EVT/CFG/HR/TAX/FA).
 
-**Civil date labels (2026-10-30):** Document, due, payroll, asset, customs, banking, and audit dates on ops screens render `дд.мм.гггг` via `bakuDateDisplay`. Pickers stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
+**Civil date labels (2026-10-30, controls 2026-10-31):** Document, due, payroll, asset, customs, banking, and audit dates on ops screens render `дд.мм.гггг` via `bakuDateDisplay`. Native date fields now use the finance calendar with a `дд.мм.гггг` button; the home revenue axis is `дд.мм`. Values stay `YYYY-MM-DD`. Closed periods stay selectable on those fields. No Scaffold ✅ / Pilot change.
 
 ---
 
@@ -45,7 +45,7 @@
 **Taxpayer and signature stubs (2026-10-31):** `settings.tax.taxLookupMock` and `signatureGatewayMock` default off. FIN-ASAN-01 stays API/STUB. Not Scaffold ✅. Does not change the BE rollup.  
 **Audit hash writer (2026-10-31):** VAT threshold `THRESHOLD_HIT` uses `AuditService`. AC-FIN-AUD stays 🟡. Not Scaffold ✅. Does not change the BE rollup.  
 **Close prompt (2026-10-31):** earliest unclosed past month. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  
-**Hotel day documents (2026-10-31):** list is `/reporting/hotel-day-documents`, not inventory. The row opens the package lines (revenue, sku, payments, deposits). Quantity purpose is labeled. Not a new AC row and not Scaffold ✅. FIN-02 stays HEADLESS. Does not change the BE rollup.  
+**Hotel day documents (2026-10-31):** list is `/reporting/hotel-day-documents`, not inventory. The row opens the package lines (revenue, sku, payments, deposits). Quantity purpose is labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. Not a new AC row and not Scaffold ✅. FIN-02 stays HEADLESS. Does not change the BE rollup.  
 Do not call this table «product readiness».
 
 **SaaS Wave 3 (audit only):** Finance already request-tenants via Nest `TenantContextInterceptor` + membership ALS from JWT. Wave 3 did **not** port kit `enterSatelliteTenant`. No silent process-bind stamps via kit in production paths.

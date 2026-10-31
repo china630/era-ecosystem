@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../ui/date-picker";
 
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
@@ -284,12 +285,7 @@ export function FixedAssetModal({
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("fixedAssets.commission")}
-                <input
-                  type="date"
-                  value={purchaseDate}
-                  onChange={(e) => setPurchaseDate(e.target.value)}
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                />
+                <FinanceDatePicker value={purchaseDate} onChange={(iso) => setPurchaseDate(iso)} respectPeriodLock={false} />
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("fixedAssets.initial")}

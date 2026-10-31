@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Field, FieldSelect, FieldTextarea } from "@era/satellite-kit/ui";
+import { DatePicker, Field, FieldSelect, FieldTextarea } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../lib/api-client";
 import { parsePaginatedList } from "../../lib/paginated-list";
 import {
@@ -278,16 +278,15 @@ export function ManualAdjustmentModal({
     >
       <form id="manual-adjustment-form" onSubmit={(e) => void onSubmit(e)} className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field
+          <DatePicker
             label={t("manualAdjustments.date")}
-            preset="date"
-            type="date"
             required
             value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
+            onChange={(iso) => {
+              setDate(iso);
               setPreviewOk(false);
             }}
+            placeholder={t("ui.datePickerPlaceholder")}
           />
           <FieldSelect
             label={t("manualAdjustments.template")}

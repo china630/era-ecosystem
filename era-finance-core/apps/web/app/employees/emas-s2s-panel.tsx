@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../components/ui/date-picker";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -214,21 +215,11 @@ export function EmasS2sPanel({ employeeId, open }: { employeeId: string | null; 
               <div className="grid gap-2 md:grid-cols-2">
                 <label className="flex flex-col gap-1 text-xs font-medium text-[#34495E]">
                   {t("employees.emas.transferDate")}
-                  <input
-                    type="date"
-                    className={MODAL_INPUT_CLASS}
-                    value={transferDate}
-                    onChange={(e) => setTransferDate(e.target.value)}
-                  />
+                  <FinanceDatePicker value={transferDate} onChange={(iso) => setTransferDate(iso)} respectPeriodLock={false} />
                 </label>
                 <label className="flex flex-col gap-1 text-xs font-medium text-[#34495E]">
                   {t("employees.emas.terminateDate")}
-                  <input
-                    type="date"
-                    className={MODAL_INPUT_CLASS}
-                    value={terminateDate}
-                    onChange={(e) => setTerminateDate(e.target.value)}
-                  />
+                  <FinanceDatePicker value={terminateDate} onChange={(iso) => setTerminateDate(iso)} respectPeriodLock={false} />
                 </label>
                 <label className="flex flex-col gap-1 text-xs font-medium text-[#34495E] md:col-span-2">
                   {t("employees.emas.terminateReason")}

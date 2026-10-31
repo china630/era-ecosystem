@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-09-22  
-**Implementation:** Waves **0–5 landed** — kit, hotel/clinic/F&B ops day, orch/finance billing, UI labels, leftover satellites, lint lock (`lint:baku-clock`).  
+**Implementation:** Waves **0–6 landed** — kit, hotel/clinic/F&B ops day, orch/finance billing, UI labels, leftover satellites, lint lock (`lint:baku-clock`), native date controls and `MM-DD` headers.  
 **Related:** [era-common-laws.mdc](../../.cursor/rules/era-common-laws.mdc) · clinic `baku-day` · hotel `hotel-calendar.ts`
 
 ## Context
@@ -185,6 +185,22 @@ Closed leftovers that the wave lists missed:
 - Orch timesheets page duplicated Intl instead of `todayBakuYmd`; bank collections PTP / FX `valueDate` UI used `new Date().toISOString()`.
 
 Left alone: `@db.Date` / hireDate / check-in civil UTC slices; seed/`scripts`/`_tmp_utf8` generators; event `occurredAt` instants; number `toLocaleString`; CBAR previous-day walk on already-civil `@db.Date` noon.
+
+## Implementation wave 6 (native date + MM-DD headers)
+
+Visible leftovers that wave 3 missed because they were not `.slice(0, 10)`:
+
+| Surface | Change |
+|---------|--------|
+| Hotel executive cockpit, agency check-in/out | native `type="date"` → kit `DatePicker`. Query `date` and stay dates stay `YYYY-MM-DD` |
+| Hotel forecast peak, axis, hover, table | `bakuDateShort` / `bakuDateDisplay` |
+| Hotel channel inventory, HK roster, BAR calendar, occupancy grid headers | `bakuDateShort` (`дд.мм`) |
+| Hotel stay-amendment nights, missed folio nights | `bakuDateDisplay` |
+| Clinic package start, practitioner cycle anchor and exception, settings same-day-until | `DatePicker`. Same-day body stays `${ymd}T12:00:00.000Z` |
+
+Left alone: `fo/status` `cells.slice(5)` (array), hotel `stay-birthday` month-day compare, clinic patient timeline prose.
+
+Wave 6b (2026-10-31): F&B, orchestrator, logistics, construction, and bank native date fields use kit `DatePicker`. Finance native fields use the finance calendar (`FinanceDatePicker`) with `dd.MM.yyyy` on the button and `respectPeriodLock={false}` so a report date in a closed period stays selectable. The finance home revenue axis uses `bakuDateShort`. Read-only inventory-audit dates are `bakuDateDisplay`. Values stay `YYYY-MM-DD`. No SHIPPED / Scaffold / Pilot change.
 
 ## Enforcement
 

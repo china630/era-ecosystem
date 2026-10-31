@@ -73,6 +73,7 @@ const fullInclude = {
     orderBy: { effectiveAt: 'asc' as const },
   },
   roomChanges: {
+    where: { status: { not: 'CANCELLED' } },
     orderBy: { effectiveAt: 'asc' as const },
     include: { fromRoom: true, toRoom: true },
   },
@@ -954,8 +955,9 @@ export async function patchReservationFull(
     });
   }
 
-  // One rebuild after the slice tariff matches the card. A sent grid is kept
-  // only when the window, tariff, meal, billing and package did not change.
+  // Medical nights always come from the package compose, including a grid the
+  // card already sent. A fixed night stays. Other tariffs rebuild only when
+  // the window, meal, billing, or plan changed.
   const rebuildNights =
     datesChanged ||
     !clientDailyRates?.length ||
@@ -963,27 +965,22 @@ export async function patchReservationFull(
     paxSkuChanged ||
     mealPlanChanged ||
     billingModeChanged;
-  if (rebuildNights) {
-    const { usesMedicalPackageCompose } = await import(
-      '@/lib/services/medical-package-resolve.service'
+  const { usesMedicalPackageCompose } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
+  if (stayPlan && usesMedicalPackageCompose(stayPlan)) {
+    const { syncComposedDailyRates } = await import(
+      '@/lib/services/nafta-package-compose-apply.service'
     );
-    if (stayPlan && usesMedicalPackageCompose(stayPlan)) {
-      const { syncComposedDailyRates } = await import(
-        '@/lib/services/nafta-package-compose-apply.service'
-      );
-      const composed = await syncComposedDailyRates(id);
-      if (!composed.applied) {
-        const { recalcReservationDailyRates } = await import(
-          '@/lib/services/reservation-pricing.service'
-        );
-        await recalcReservationDailyRates(id);
-      }
-    } else {
-      const { recalcReservationDailyRates } = await import(
-        '@/lib/services/reservation-pricing.service'
-      );
-      await recalcReservationDailyRates(id);
+    const composed = await syncComposedDailyRates(id);
+    if (composed.missing) {
+      throw new Error('Package sell price is not set for this stay date');
     }
+  } else if (rebuildNights) {
+    const { recalcReservationDailyRates } = await import(
+      '@/lib/services/reservation-pricing.service'
+    );
+    await recalcReservationDailyRates(id);
   }
 
   const summed = await prisma.reservationDailyRate.aggregate({

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { canAssignDoor, canBookDoor } from '@/lib/room-state';
+import { canAssignDoor } from '@/lib/room-state';
 import { hotelDateKey, parseHotelNoon } from '@/lib/hotel-calendar';
 import {
   doorTypeNeedsSettlement,
@@ -47,19 +47,14 @@ async function businessTodayKey(): Promise<string> {
   return hotelDateKey(await getCurrentBusinessDate());
 }
 
-async function doorReadyForMove(
-  roomId: string,
-  reservationId: string,
-  preArrival: boolean,
-): Promise<boolean> {
+async function doorReadyForMove(roomId: string, reservationId: string): Promise<boolean> {
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) return false;
   const occupied = await prisma.reservation.findFirst({
     where: { roomId, status: 'IN_HOUSE', id: { not: reservationId } },
     select: { id: true },
   });
-  const gate = preArrival ? canBookDoor : canAssignDoor;
-  return gate(room, Boolean(occupied));
+  return canAssignDoor(room, Boolean(occupied));
 }
 
 async function applyGuestClass(reservationId: string, doorRoomTypeId: string, effectiveYmd: string) {
@@ -101,10 +96,12 @@ export async function applyRoomMoveNow(
 
 /**
  * One room move. A free door moves now.
- * Before check-in a dirty door is bookable (`canBookDoor`): the stay takes it immediately
- * and the old door is released. An in-house guest waits (PENDING) until the target is
- * Clean or Inspected, in service, and empty. A future effective date always stays PENDING.
- * No stay slice is written ahead of the move, so charges stay on the door the guest occupies.
+ * Before check-in there is no move plan. The room number changes immediately when the
+ * stay dates are free: a dirty door and a guest who is in-house today but leaves before
+ * this arrival do not block. Overlapping dates are refused. A plan exists only for an
+ * in-house guest, until the target is Clean or Inspected, in service, and empty, or when
+ * that guest's move date is still in the future.
+ * No stay slice is written ahead of an in-house move, so charges stay on the occupied door.
  */
 export async function requestRoomMove(
   reservationId: string,
@@ -143,8 +140,27 @@ export async function requestRoomMove(
 
   const scheduledForLater = Boolean(explicit && explicit > today);
   const preArrival = stay.status !== 'IN_HOUSE';
+  if (preArrival) {
+    await prisma.roomChangePlan.updateMany({
+      where: { reservationId, status: 'PENDING' },
+      data: { status: 'CANCELLED' },
+    });
+    if (explicit && explicit > arrival) {
+      const { splitStayFromDate } = await import('@/lib/services/stay-slice.service');
+      await splitStayFromDate({
+        reservationId,
+        fromDate: parseHotelNoon(explicit),
+        roomTypeId: door.roomTypeId,
+        roomId: toRoomId,
+        actorUserId: input.actorUserId,
+      });
+      return { pending: false, planId: null };
+    }
+    await applyRoomMoveNow(reservationId, toRoomId, { ...input, effectiveDate: effectiveYmd });
+    return { pending: false, planId: null };
+  }
   const ready =
-    !scheduledForLater && (await doorReadyForMove(toRoomId, reservationId, preArrival));
+    !scheduledForLater && (await doorReadyForMove(toRoomId, reservationId));
   if (ready) {
     await prisma.roomChangePlan.updateMany({
       where: { reservationId, status: 'PENDING' },
@@ -211,7 +227,7 @@ export async function requestRoomMove(
 
 /** When a door becomes Clean or Inspected and in service, run waiting moves onto it. */
 export async function applyPendingMovesForDoor(roomId: string): Promise<void> {
-  if (!(await doorReadyForMove(roomId, '', false))) return;
+  if (!(await doorReadyForMove(roomId, ''))) return;
   const today = await businessTodayKey();
   const end = new Date(`${today}T23:59:59.999+04:00`);
   const plans = await prisma.roomChangePlan.findMany({
@@ -230,7 +246,7 @@ export async function applyPendingMovesForDoor(roomId: string): Promise<void> {
   if (!door) return;
   for (const plan of plans) {
     if (!RELOCATABLE.includes(plan.reservation.status as (typeof RELOCATABLE)[number])) continue;
-    if (!(await doorReadyForMove(roomId, plan.reservationId, false))) continue;
+    if (!(await doorReadyForMove(roomId, plan.reservationId))) continue;
     const settlement = readSettlement(plan.notes);
     const needs = doorTypeNeedsSettlement(
       plan.reservation.roomTypeId,

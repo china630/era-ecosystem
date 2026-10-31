@@ -207,6 +207,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 
 | Date | Change |
 |------|--------|
+| 2026-10-31 | HOT-FO-01/02: SatAdmin sets type and house overbook on master data (journal on the same tab). FO Avl uses both caps. Chessboard uses the same four toasts. Stays **SHOW** / SHIPPED. A per-date allowance is not on the board. Gate/Pilot/edition unchanged. |
 | 2026-10-29 | Mutation-audit Wave E second-pass: CLI-19 capability row on board (SHIPPED viewer); Evidence Wave E ≠ Scaffold; thin-sat compound deferred. Gate/Pilot/edition unchanged. |
 | 2026-10-29 | Mutation-audit depth Wave E closeout: HOT-AUD-01 / FNB-AUD-01 stay **SCREEN**; CLI-19 SHIPPED; compound `(organizationId, createdAt)`; hash-chain deferred — not SHOW. Gate/Pilot/edition unchanged. |
 | 2026-10-29 | Mutation-audit Wave D second-pass closeout: FIN-AUD-01 stays **SHIPPED**; OWNER `/admin/security-audit` same filter kit sibling; AC-FIN-AUD 🟡 — not SHOW. Gate/Pilot/edition unchanged. |

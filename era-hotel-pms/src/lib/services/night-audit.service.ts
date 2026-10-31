@@ -790,7 +790,6 @@ async function medicalNightAmount(reservationId: string, date: Date): Promise<nu
       roomTypeId: true,
       mealPlanId: true,
       medicalPackageCode: true,
-      ratePlan: { select: { code: true } },
     },
   });
   if (!reservation) return null;
@@ -804,10 +803,9 @@ async function medicalNightAmount(reservationId: string, date: Date): Promise<nu
     orderBy: { sortOrder: 'asc' },
   });
   const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
-  const stayCode = reservation.ratePlan.code ?? reservation.medicalPackageCode;
   const packageCodes =
     pax.length > 0
-      ? paxCodesForCompose(pax, stayCode)
+      ? paxCodesForCompose(pax, null)
       : [reservation.medicalPackageCode].filter((code): code is string => Boolean(code));
   const { ownerPackageNightlyBreakdown } = await import(
     '@/lib/services/nafta-package-compose-apply.service'

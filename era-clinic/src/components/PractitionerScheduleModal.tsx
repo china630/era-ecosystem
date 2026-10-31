@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  DatePicker,
   Field,
   FieldSelect,
   MODAL_CHECKBOX_CLASS,
@@ -324,17 +325,13 @@ export function PractitionerScheduleModal({
 
                 {r.pattern === "CYCLE" && (
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={`mb-1 block text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {t("cycleAnchor")}
-                      </label>
-                      <input
-                        type="date"
-                        className={MODAL_INPUT_CLASS}
-                        value={r.cycleAnchor}
-                        onChange={(e) => patchRule(idx, { cycleAnchor: e.target.value })}
-                      />
-                    </div>
+                    <DatePicker
+                      label={t("cycleAnchor")}
+                      value={r.cycleAnchor}
+                      onChange={(iso) => patchRule(idx, { cycleAnchor: iso })}
+                      placeholder={tc("datePlaceholder")}
+                      openCalendarLabel={tc("openCalendar")}
+                    />
                     <Field
                       label={t("cycleLength")}
                       preset="count"
@@ -398,19 +395,15 @@ export function PractitionerScheduleModal({
 
             {exceptions.map((e, idx) => (
               <div key={idx} className={`${CARD_CONTAINER_CLASS} grid grid-cols-2 gap-3 p-3`}>
-                <div>
-                  <label className={`mb-1 block text-[12px] ${TEXT_MUTED_CLASS}`}>{t("date")}</label>
-                  <input
-                    type="date"
-                    className={MODAL_INPUT_CLASS}
-                    value={e.date}
-                    onChange={(ev) =>
-                      setExceptions((p) =>
-                        p.map((x, i) => (i === idx ? { ...x, date: ev.target.value } : x)),
-                      )
-                    }
-                  />
-                </div>
+                <DatePicker
+                  label={t("date")}
+                  value={e.date}
+                  onChange={(iso) =>
+                    setExceptions((p) => p.map((x, i) => (i === idx ? { ...x, date: iso } : x)))
+                  }
+                  placeholder={tc("datePlaceholder")}
+                  openCalendarLabel={tc("openCalendar")}
+                />
                 <FieldSelect
                   label={t("exceptionKind")}
                   preset="select"

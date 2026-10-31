@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../components/ui/date-picker";
 
 import { Building2, Clock, GitMerge, Landmark, Loader2, Plus, Search, Wallet, X } from "lucide-react";
 import { BankStatementImportModal } from "./banking-modals";
@@ -239,12 +240,7 @@ function BankingQuickExpenseModal({
               </label>
               <label className={MODAL_FIELD_LABEL_CLASS}>
                 {t("banking.cashOutDate")}
-                <input
-                  type="date"
-                  className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
+                <FinanceDatePicker value={date} onChange={(iso) => setDate(iso)} respectPeriodLock={false} />
               </label>
               <label className={`${MODAL_FIELD_LABEL_CLASS} md:col-span-2`}>
                 {t("banking.manualEntryDds")}

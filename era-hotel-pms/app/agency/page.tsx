@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   CatalogField,
+  DatePicker,
   Field,
   FORM_STACK_CLASS,
   PageHeader,
@@ -169,20 +170,20 @@ export default function AgencyPortalHomePage() {
           required
           emptyLabel={null}
         />
-        <Field
+        <DatePicker
           label="Check-in"
-          preset="shortText"
-          type="date"
           value={checkInDate}
-          onChange={(e) => setCheckInDate(e.target.value)}
+          onChange={setCheckInDate}
+          placeholder="dd.mm.yyyy"
+          openCalendarLabel="Open calendar"
           required
         />
-        <Field
+        <DatePicker
           label="Check-out"
-          preset="shortText"
-          type="date"
           value={checkOutDate}
-          onChange={(e) => setCheckOutDate(e.target.value)}
+          onChange={setCheckOutDate}
+          placeholder="dd.mm.yyyy"
+          openCalendarLabel="Open calendar"
           required
         />
         <Field

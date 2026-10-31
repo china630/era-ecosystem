@@ -36,7 +36,7 @@ AC-CP-TOPO is **in Scaffold BE rollup** (owner 2026-08-18). Do **not** mark TOPO
 **AC-CP-ORG-PROFILE is out of BE rollup** until Pilot UAT (API+SCREEN + negatives landed; not Scaffold ✅).  
 **AC-CP-WF-JOB is out of BE rollup** (job architecture API+SCREEN; UAT open; not Scaffold ✅) — does not darken hub AC-CP-WF ✅.
 
-**Civil date labels (2026-10-30):** Workforce request intervals, the read-only hire date, and the migration “last updated” label render `дд.мм.гггг` via `bakuDateDisplay`. Pickers stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.  
+**Civil date labels (2026-10-30, controls 2026-10-31):** Workforce request intervals, the read-only hire date, and the migration “last updated” label render `дд.мм.гггг` via `bakuDateDisplay`. Floor, self-service absence, subscription coverage, and MDM birth-date fields are kit `DatePicker`. Values stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.  
 Do not call this table «product readiness».
 
 ### Residual register

@@ -1,4 +1,5 @@
 "use client";
+import { DatePicker as FinanceDatePicker } from "../../../components/ui/date-picker";
 
 import { Pencil, Plus } from "lucide-react";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
@@ -272,22 +273,11 @@ export default function PriceListsPage() {
               <div className="grid grid-cols-2 gap-2">
                 <label className="block">
                   <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.validFrom")}</span>
-                  <input
-                    type="date"
-                    className={`${MODAL_INPUT_CLASS} w-full`}
-                    required
-                    value={validFrom}
-                    onChange={(e) => setValidFrom(e.target.value)}
-                  />
+                  <FinanceDatePicker value={validFrom} onChange={(iso) => setValidFrom(iso)} respectPeriodLock={false} required />
                 </label>
                 <label className="block">
                   <span className={MODAL_FIELD_LABEL_CLASS}>{t("catalog.priceList.validTo")}</span>
-                  <input
-                    type="date"
-                    className={`${MODAL_INPUT_CLASS} w-full`}
-                    value={validTo}
-                    onChange={(e) => setValidTo(e.target.value)}
-                  />
+                  <FinanceDatePicker value={validTo} onChange={(iso) => setValidTo(iso)} respectPeriodLock={false} />
                 </label>
               </div>
               <label className="block">
