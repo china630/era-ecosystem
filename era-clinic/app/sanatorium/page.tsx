@@ -30,7 +30,6 @@ import {
   ModalFooter,
   ModalShell,
   countryOptions,
-  countryLabel,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   PageHeader,
@@ -127,6 +126,9 @@ type Episode = {
   hotelStay?: { startsOn: string; endsOn: string } | null;
   /** YYYY-MM-DD — hotel check-in, else program start, else episode opened day. */
   arrivalOn?: string | null;
+  /** YYYY-MM-DD — hotel check-out. Empty for walk-in. */
+  departureOn?: string | null;
+  firstDoctorName?: string | null;
 };
 
 type WalkInForm = {
@@ -455,8 +457,15 @@ export default function SanatoriumPage() {
       {
         key: "nationality",
         header: tp("nationality"),
-        render: (e) =>
-          e.patientRef?.nationality ? countryLabel(e.patientRef.nationality, locale) : "—",
+        render: (e) => {
+          const code = e.patientRef?.nationality?.trim().toUpperCase();
+          return code || "—";
+        },
+      },
+      {
+        key: "doctor",
+        header: t("colDoctor"),
+        render: (e) => e.firstDoctorName?.trim() || "—",
       },
       {
         key: "arrival",
@@ -466,6 +475,11 @@ export default function SanatoriumPage() {
           const ymd = e.arrivalOn ?? e.programInstance?.startsOn ?? civilYmd(e.openedAt);
           return ymd ? bakuDateDisplay(ymd) : "—";
         },
+      },
+      {
+        key: "departure",
+        header: t("colDeparture"),
+        render: (e) => (e.departureOn ? bakuDateDisplay(e.departureOn) : "—"),
       },
       {
         key: "room",
