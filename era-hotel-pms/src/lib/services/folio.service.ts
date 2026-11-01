@@ -204,18 +204,29 @@ export async function allocatePaymentToCharges(
   paymentId: string,
   amount: number,
   revenueCodeId?: string,
+  paymentCategory?: string,
 ) {
   const charges = await prisma.folioCharge.findMany({
     where: {
       folioId,
       ...(revenueCodeId ? { revenueCodeId } : {}),
+      ...(paymentCategory && !revenueCodeId
+        ? { revenueCode: { paymentCategory } }
+        : {}),
     },
     orderBy: [{ businessDate: 'asc' }, { id: 'asc' }],
-    include: { paymentAllocations: true },
+    include: {
+      paymentAllocations: true,
+      revenueCode: { select: { paymentCategory: true, systemRole: true } },
+    },
   });
   let left = amount;
   for (const charge of charges) {
     if (left <= 0.009) break;
+    if (paymentCategory && !revenueCodeId) {
+      const { resolvePaymentCategory } = await import('@/lib/payment-category');
+      if (resolvePaymentCategory(charge) !== paymentCategory) continue;
+    }
     const gross = decimalToNumber(charge.amount) * charge.qty;
     if (gross <= 0.009) continue;
     const already = charge.paymentAllocations.reduce((sum, row) => sum + decimalToNumber(row.amount), 0);
@@ -283,6 +294,8 @@ export async function postPayment(input: {
   refundOfPaymentId?: string;
   refundReason?: string;
   revenueCodeId?: string;
+  /** Cashier category (LODGING | CLINIC | FB | OTHER). Preferred over article. */
+  paymentCategory?: string;
   /** Desk confirmed a credit / prepay while other articles still owe. */
   allowCredit?: boolean;
   auditRequest?: Request;
@@ -295,9 +308,19 @@ export async function postPayment(input: {
   });
   if (!folio) throw new Error('Folio not found');
   const kind = input.kind ?? 'PAYMENT';
+  const { isPaymentCategory, resolvePaymentCategory } = await import('@/lib/payment-category');
+  let paymentCategory =
+    input.paymentCategory && isPaymentCategory(input.paymentCategory)
+      ? input.paymentCategory
+      : null;
+  if (!paymentCategory && input.revenueCodeId) {
+    const code = await prisma.revenueCode.findUnique({ where: { id: input.revenueCodeId } });
+    paymentCategory = code ? resolvePaymentCategory(code) : null;
+  }
   if (
     kind === 'PAYMENT' &&
     input.revenueCodeId &&
+    !paymentCategory &&
     input.paymentMethod !== 'GUEST_DEBT' &&
     input.paymentMethod !== 'CL_AGENCY' &&
     input.paymentMethod !== 'CL_COMPANY'
@@ -464,7 +487,8 @@ export async function postPayment(input: {
       businessDate,
       fiscalReceiptId,
       fiscalQrPayload,
-      revenueCodeId: input.revenueCodeId ?? null,
+      revenueCodeId: paymentCategory ? null : input.revenueCodeId ?? null,
+      paymentCategory: paymentCategory ?? null,
     },
   });
 
@@ -480,7 +504,13 @@ export async function postPayment(input: {
   }
 
   if (kind === 'PAYMENT') {
-    await allocatePaymentToCharges(input.folioId, payment.id, input.amount, input.revenueCodeId);
+    await allocatePaymentToCharges(
+      input.folioId,
+      payment.id,
+      input.amount,
+      paymentCategory ? undefined : input.revenueCodeId,
+      paymentCategory ?? undefined,
+    );
   }
 
   await recalcReservationTotal(folio.reservationId);
@@ -937,29 +967,37 @@ export async function voidCharge(
       ''
     ).replace(/\/$/, '');
     const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? '';
-    if (clinicBase && token) {
-      const res = await fetch(`${clinicBase}/api/internal/v1/extras/hotel-void`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          organizationId: charge.organizationId,
-          externalTicketId: clinicCharge.ref,
-          orderId,
-        }),
-      }).catch(() => null);
-      if (res && res.ok) {
-        const body = (await res.json()) as {
-          reason?: string;
-          data?: { reason?: string };
-        };
-        const reason = body.reason ?? body.data?.reason;
-        if (reason === 'received') {
-          throw new Error('Clinic refused the void — procedure already received');
-        }
-      }
+    if (!clinicBase || !token) {
+      throw new Error('Clinic unavailable — charge not voided');
+    }
+    const res = await fetch(`${clinicBase}/api/internal/v1/extras/hotel-void`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        organizationId: charge.organizationId,
+        externalTicketId: clinicCharge.ref,
+        orderId,
+      }),
+    }).catch(() => null);
+    if (!res || !res.ok) {
+      throw new Error('Clinic unavailable — charge not voided');
+    }
+    const body = (await res.json()) as {
+      reason?: string;
+      cancelled?: boolean;
+      data?: { reason?: string; cancelled?: boolean };
+    };
+    const reason = body.reason ?? body.data?.reason;
+    const cancelled = body.cancelled ?? body.data?.cancelled;
+    // Only "already received / in cabin" refuses. not_found / idempotent cancel → drop hotel line.
+    if (reason === 'received') {
+      throw new Error('Clinic refused the void — procedure already received');
+    }
+    if (cancelled === false && reason !== 'not_found') {
+      throw new Error('Clinic refused the void — procedure already received');
     }
   }
 

@@ -157,15 +157,23 @@ export function handleRouteError(err: unknown) {
           { status: 409 },
         );
       }
+      // Surface the real Prisma code for desk ops (timeouts, unique) — do not
+      // mask cash-shift / settle failures as a generic stay-save error.
+      if (code === 'P2028' || lower.includes('transaction') || lower.includes('timeout')) {
+        return NextResponse.json(
+          { error: err.message || 'Database timed out', code: code ?? 'STAY_SAVE_FAILED' },
+          { status: 400 },
+        );
+      }
       return NextResponse.json(
-        { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
+        { error: err.message || 'Could not save this stay', code: code ?? 'STAY_SAVE_FAILED' },
         { status: 400 },
       );
     }
     if (err.name === 'PrismaClientValidationError') {
       console.error(err);
       return NextResponse.json(
-        { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
+        { error: err.message || 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
         { status: 400 },
       );
     }

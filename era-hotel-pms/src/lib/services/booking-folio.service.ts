@@ -107,11 +107,23 @@ export async function ensurePartyGuestFolios(reservationId: string) {
   return created;
 }
 
+async function mergeGuestFolioOnto(targetId: string, sourceId: string) {
+  if (targetId === sourceId) return;
+  await prisma.$transaction(async (tx) => {
+    await tx.folioCharge.updateMany({ where: { folioId: sourceId }, data: { folioId: targetId } });
+    await tx.folioPayment.updateMany({ where: { folioId: sourceId }, data: { folioId: targetId } });
+    await tx.folioDeposit.updateMany({ where: { folioId: sourceId }, data: { folioId: targetId } });
+    await tx.folioSettlement.updateMany({ where: { folioId: sourceId }, data: { folioId: targetId } });
+    await tx.fiscalDocument.updateMany({ where: { folioId: sourceId }, data: { folioId: targetId } });
+    await tx.cardAuthorization.updateMany({ where: { folioId: sourceId }, data: { folioId: targetId } });
+    await tx.folio.delete({ where: { id: sourceId } });
+  });
+}
+
 /**
- * A guest folio opened before the party exists has no guest id.
- * Once a primary guest has an open folio, that early folio is the same pocket:
- * move its lines there and drop it. Named guest, company, and agency folios stay put.
- * With no primary folio yet, the loose folio remains the stay account.
+ * One person = one open guest pocket.
+ * Loose (no guest id) folios fold onto the primary guest folio.
+ * Extra open folios for the same reservationGuestId fold onto the oldest open one.
  */
 export async function foldLooseGuestFolioOntoPrimary(reservationId: string) {
   const primary = await prisma.reservationGuest.findFirst({
@@ -123,37 +135,76 @@ export async function foldLooseGuestFolioOntoPrimary(reservationId: string) {
     },
     select: { id: true },
   });
-  if (!primary) return;
-  const target = await prisma.folio.findFirst({
-    where: {
-      reservationId,
-      type: 'GUEST',
-      reservationGuestId: primary.id,
-      status: 'OPEN',
-    },
-    select: { id: true },
-  });
-  if (!target) return;
-  const loose = await prisma.folio.findMany({
-    where: {
-      reservationId,
-      type: 'GUEST',
-      reservationGuestId: null,
-      status: 'OPEN',
-      NOT: { id: target.id },
-    },
-    select: { id: true },
-  });
-  for (const folio of loose) {
-    await prisma.$transaction(async (tx) => {
-      await tx.folioCharge.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
-      await tx.folioPayment.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
-      await tx.folioDeposit.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
-      await tx.folioSettlement.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
-      await tx.fiscalDocument.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
-      await tx.cardAuthorization.updateMany({ where: { folioId: folio.id }, data: { folioId: target.id } });
-      await tx.folio.delete({ where: { id: folio.id } });
+  if (primary) {
+    let target = await prisma.folio.findFirst({
+      where: {
+        reservationId,
+        type: 'GUEST',
+        reservationGuestId: primary.id,
+        status: 'OPEN',
+      },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
     });
+    if (!target) {
+      const looseFirst = await prisma.folio.findFirst({
+        where: {
+          reservationId,
+          type: 'GUEST',
+          reservationGuestId: null,
+          status: 'OPEN',
+        },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      });
+      if (looseFirst) {
+        await prisma.folio.update({
+          where: { id: looseFirst.id },
+          data: { reservationGuestId: primary.id },
+        });
+        target = looseFirst;
+      }
+    }
+    if (target) {
+      const loose = await prisma.folio.findMany({
+        where: {
+          reservationId,
+          type: 'GUEST',
+          reservationGuestId: null,
+          status: 'OPEN',
+          NOT: { id: target.id },
+        },
+        select: { id: true },
+      });
+      for (const folio of loose) {
+        await mergeGuestFolioOnto(target.id, folio.id);
+      }
+    }
+  }
+
+  const openGuest = await prisma.folio.findMany({
+    where: {
+      reservationId,
+      type: 'GUEST',
+      status: 'OPEN',
+      reservationGuestId: { not: null },
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, reservationGuestId: true },
+  });
+  const byGuest = new Map<string, string[]>();
+  for (const folio of openGuest) {
+    const guestId = folio.reservationGuestId!;
+    const list = byGuest.get(guestId) ?? [];
+    list.push(folio.id);
+    byGuest.set(guestId, list);
+  }
+  for (const ids of byGuest.values()) {
+    if (ids.length < 2) continue;
+    const keep = ids[0]!;
+    for (const extra of ids.slice(1)) {
+      await mergeGuestFolioOnto(keep, extra);
+    }
   }
 }
 
@@ -475,4 +526,175 @@ export async function postStayArticlePayment(input: {
   }
   if (!last) throw new Error('No open folio for payment');
   return last;
+}
+
+/** Accept payment for a cashier category on one pocket. */
+export async function postStayCategoryPayment(input: {
+  reservationId: string;
+  paymentCategory: string;
+  amount: number;
+  paymentMethod: Parameters<typeof import('@/lib/services/folio.service').postPayment>[0]['paymentMethod'];
+  registerRef?: string;
+  bankReference?: string;
+  bankTerminalId?: string;
+  folioType?: FolioType | null;
+  reservationGuestId?: string | null;
+  createdByUserId?: string;
+  auditRequest?: Request;
+}) {
+  const { isPaymentCategory } = await import('@/lib/payment-category');
+  if (!isPaymentCategory(input.paymentCategory)) {
+    throw new Error('PAYMENT_CATEGORY_REQUIRED');
+  }
+  const { postPayment } = await import('@/lib/services/folio.service');
+
+  let folio;
+  if (input.folioType === 'COMPANY' || input.folioType === 'AGENCY') {
+    folio = await ensureOpenFolio(input.reservationId, input.folioType);
+  } else {
+    const guestId = input.reservationGuestId ?? (await primaryGuestId(input.reservationId));
+    if (!guestId) throw new Error('Guest folio required');
+    folio = await ensureGuestFolio(input.reservationId, guestId);
+  }
+
+  await foldLooseGuestFolioOntoPrimary(input.reservationId);
+  const refreshed = await prisma.folio.findUnique({ where: { id: folio.id } });
+  if (!refreshed || refreshed.status !== 'OPEN') {
+    throw new Error('Folio is not open');
+  }
+
+  return postPayment({
+    folioId: refreshed.id,
+    amount: input.amount,
+    paymentMethod: input.paymentMethod,
+    registerRef: input.registerRef,
+    bankReference: input.bankReference,
+    bankTerminalId: input.bankTerminalId,
+    paymentCategory: input.paymentCategory,
+    allowCredit: true,
+    createdByUserId: input.createdByUserId,
+    auditRequest: input.auditRequest,
+  });
+}
+
+/**
+ * Mid-stay cash/card return of unused credit in one cashier category on one pocket.
+ * FIFO against category payments; never pulls lodging credit to cover a clinic refund.
+ */
+export async function refundStayCategoryCredit(input: {
+  reservationId: string;
+  paymentCategory: string;
+  amount: number;
+  reason: string;
+  paymentMethod?: 'CASH' | 'CARD';
+  bankTerminalId?: string;
+  folioType?: FolioType | null;
+  reservationGuestId?: string | null;
+  createdByUserId?: string;
+  auditRequest?: Request;
+}) {
+  const { isPaymentCategory, resolvePaymentCategory } = await import('@/lib/payment-category');
+  const { stayCategoryMoneyPair } = await import('@/lib/folio-money-pair');
+  const { refundFolioPayment } = await import('@/lib/services/folio-refund.service');
+  const { decimalToNumber } = await import('@/lib/decimal');
+
+  if (!isPaymentCategory(input.paymentCategory)) {
+    throw Object.assign(new Error('PAYMENT_CATEGORY_REQUIRED'), {
+      status: 400,
+      code: 'PAYMENT_CATEGORY_REQUIRED',
+    });
+  }
+  const reason = input.reason.trim();
+  if (!reason) {
+    throw Object.assign(new Error('REFUND_REASON_REQUIRED'), {
+      status: 400,
+      code: 'REFUND_REASON_REQUIRED',
+    });
+  }
+  if (!(input.amount > 0.01)) {
+    throw new Error('Refund amount must be positive');
+  }
+
+  let folio;
+  if (input.folioType === 'COMPANY' || input.folioType === 'AGENCY') {
+    folio = await ensureOpenFolio(input.reservationId, input.folioType);
+  } else {
+    const guestId = input.reservationGuestId ?? (await primaryGuestId(input.reservationId));
+    if (!guestId) throw new Error('Guest folio required');
+    folio = await ensureGuestFolio(input.reservationId, guestId);
+  }
+
+  await foldLooseGuestFolioOntoPrimary(input.reservationId);
+  const loaded = await prisma.folio.findUnique({
+    where: { id: folio.id },
+    include: { charges: true, payments: true },
+  });
+  if (!loaded || loaded.status !== 'OPEN') {
+    throw new Error('Folio is not open');
+  }
+
+  const unused = stayCategoryMoneyPair(
+    loaded.charges,
+    loaded.payments,
+    input.paymentCategory,
+  ).unused;
+  if (unused <= 0.01) {
+    throw Object.assign(new Error('PAYMENT_CATEGORY_NO_UNUSED'), {
+      status: 409,
+      code: 'PAYMENT_CATEGORY_NO_UNUSED',
+    });
+  }
+  if (input.amount > unused + 0.01) {
+    throw Object.assign(
+      new Error(`PAYMENT_CATEGORY_REFUND_EXCEEDS:${unused.toFixed(2)}`),
+      {
+        status: 409,
+        code: 'PAYMENT_CATEGORY_REFUND_EXCEEDS',
+        max: unused,
+      },
+    );
+  }
+
+  const ranked = loaded.payments
+    .filter(
+      (row) =>
+        !row.voidedAt &&
+        row.kind === 'PAYMENT' &&
+        resolvePaymentCategory(row) === input.paymentCategory,
+    )
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  let left = Math.round(input.amount * 100) / 100;
+  const posted: Awaited<ReturnType<typeof refundFolioPayment>>[] = [];
+  for (const payment of ranked) {
+    if (left <= 0.01) break;
+    const already = await prisma.folioPayment.aggregate({
+      where: { refundOfPaymentId: payment.id, kind: 'REFUND' },
+      _sum: { amount: true },
+    });
+    const refundedSoFar =
+      already._sum.amount != null ? decimalToNumber(already._sum.amount) : 0;
+    const remaining = decimalToNumber(payment.amount) - refundedSoFar;
+    if (remaining <= 0.01) continue;
+    const take = Math.min(left, remaining);
+    const row = await refundFolioPayment({
+      paymentId: payment.id,
+      amount: take,
+      reason,
+      paymentMethod: input.paymentMethod,
+      bankTerminalId: input.bankTerminalId,
+      createdByUserId: input.createdByUserId,
+      auditRequest: input.auditRequest,
+    });
+    posted.push(row);
+    left = Math.round((left - take) * 100) / 100;
+  }
+
+  if (left > 0.01) {
+    throw Object.assign(new Error('PAYMENT_CATEGORY_NO_UNUSED'), {
+      status: 409,
+      code: 'PAYMENT_CATEGORY_NO_UNUSED',
+    });
+  }
+  return posted;
 }

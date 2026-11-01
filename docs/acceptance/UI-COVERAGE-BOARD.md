@@ -265,6 +265,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-10-27 | HOT-TOUR-01 boarding-first + policy settings **SCREEN**; HOT-XFER-01 Airport folded to `?hasFlight=1` **SCREEN**. Out of Hotel SHOW rollup. Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-CL-07 / CP-PEER-01 **HEADLESS** — Finance→Hotel payment-applied + peer URL SoR. No hotel screen; Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-CO-05 unsettled CL **SCREEN** — HotelOpsShell + debts link + Folio-tab card. Out of Hotel SHOW rollup. COVERAGE SHIPPED OpsUI. Gate/Pilot/edition unchanged. |
+| 2026-11-01 | HOT-CASH-01 paymentCategory pay + mid-stay Return category credit (folio + FO header). Cash/CL stays **SHOW** / SHIPPED. Gate/Pilot/edition unchanged. |
 | 2026-11-01 | Clinic CLI-64 patient assignment ledger `/reports/patient-assignments` **SCREEN** (print included). Not SHOW. Gate/Pilot/edition unchanged. |
 | 2026-11-01 | Clinic CLI-64 second-pass: print RBAC mapped; room filter options stable; empty visit lines ≠ inPackage. Stays **SCREEN**. Gate/Pilot/edition unchanged. |
 | 2026-11-01 | Clinic diagnostics Extra tickets second-pass: kind badge + cancel copy; lab/visit search by title; MIXED_PATIENT across kinds; board UI text no longer claims card Pay. Stays **SCREEN**. Gate/Pilot/edition unchanged. |

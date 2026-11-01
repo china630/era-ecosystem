@@ -1,4 +1,13 @@
-import { stayMoneyPair, type MoneyLine } from '@/lib/folio-money-pair';
+import {
+  stayCategoryMoneyPair,
+  stayMoneyPair,
+  type MoneyLine,
+} from '@/lib/folio-money-pair';
+import {
+  PAYMENT_CATEGORIES,
+  resolvePaymentCategory,
+  type PaymentCategory,
+} from '@/lib/payment-category';
 
 export type FolioDebtSlice = {
   status: string;
@@ -9,6 +18,12 @@ export type FolioDebtSlice = {
 export type ArticleDebtRow = {
   revenueCodeId: string;
   debt: number;
+};
+
+export type CategoryDebtRow = {
+  category: PaymentCategory;
+  debt: number;
+  unused: number;
 };
 
 /** Open debt per revenue article across open folios (stay-wide). */
@@ -48,4 +63,43 @@ export function stayHasOpenDebt(folios: FolioDebtSlice[]): boolean {
 
 export function articleHasOpenDebt(folios: FolioDebtSlice[], revenueCodeId: string): boolean {
   return openDebtByArticle(folios).some((row) => row.revenueCodeId === revenueCodeId);
+}
+
+/** Open debt / unused per cashier category on one pocket (or stay-wide open folios). */
+export function openDebtByCategory(folios: FolioDebtSlice[]): CategoryDebtRow[] {
+  const open = folios.filter((folio) => folio.status === 'OPEN');
+  const charges = open.flatMap((folio) => folio.charges);
+  const payments = open.flatMap((folio) => folio.payments ?? []);
+  const rows: CategoryDebtRow[] = [];
+  for (const category of PAYMENT_CATEGORIES) {
+    const pair = stayCategoryMoneyPair(charges, payments, category);
+    if (pair.debt > 0.01 || pair.unused > 0.01) {
+      rows.push({ category, debt: pair.debt, unused: pair.unused });
+    }
+  }
+  return rows;
+}
+
+export function categorySpend(folios: FolioDebtSlice[]): Record<PaymentCategory, number> {
+  const open = folios.filter((folio) => folio.status === 'OPEN');
+  const out: Record<PaymentCategory, number> = {
+    LODGING: 0,
+    CLINIC: 0,
+    FB: 0,
+    OTHER: 0,
+  };
+  for (const folio of open) {
+    for (const charge of folio.charges) {
+      const cat = resolvePaymentCategory(charge);
+      if (!cat) continue;
+      const qty = charge.qty == null ? 1 : Number(charge.qty);
+      const amount = Number(charge.amount);
+      if (!Number.isFinite(amount)) continue;
+      out[cat] += amount * (Number.isFinite(qty) ? qty : 1);
+    }
+  }
+  for (const key of PAYMENT_CATEGORIES) {
+    out[key] = Math.round(out[key] * 100) / 100;
+  }
+  return out;
 }

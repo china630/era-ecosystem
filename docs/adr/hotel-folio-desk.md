@@ -31,9 +31,9 @@ Desk UI:
 
 - Pocket chips on ribbon 1 (`Hamısı` only when two or more pockets). Deleted chip only when voids exist. Printer icon on that ribbon prints the **current filter** plus stay header and the words guest owes / overpaid / settled.
 - Ribbon 2: `CatalogField` article + line kind (`Hamısı`, not “Bütün”) + search. Not three `Hamısı` chips. Line-kind filter stays; the **Sətir** grid column is gone (Debit|Credit already shows the money side).
-- Cash bar: Extra charge / Extra payment only (payment is the red button). Titles match buttons. Invoice, folio checkout, missed nights, folio print, and close-folio are not on this bar. Empty pockets are hidden. Check-out stays the card footer. Agency/company invoices live on city ledger. Guest fiscal receipt is at payment time.
+- Cash bar: Extra charge / Extra payment (payment is the red button); **Return category credit** when a pocket has unused category credit. Titles match buttons. Invoice, folio checkout, missed nights, folio print, and close-folio are not on this bar. Empty pockets are hidden. Check-out stays the card footer. Agency/company invoices live on city ledger. Guest fiscal receipt is at payment time.
 - Checkboxes stay. **Transfer** is enabled when at least one charge is selected. Row menu header is `…`. Row kebab: **Bu sətri ödə** (`FolioPayLineModal` → `POST …/charges/:id/pay`) first on **GUEST** open positive charges (not adjust / city-ledger / agency-company), then adjust / void / transfer / refund. Menu panel is kit `EraMenu` portaled fixed so folio `overflow-auto` cannot clip it.
-- Charge modal: pocket + article + amount. Payment modal: pocket + article + amount + tender (+ terminal). Keep the article on payment.
+- Charge modal: pocket + article + amount. Payment modal: pocket + **cashier `paymentCategory`** (LODGING|CLINIC|FB|OTHER) + amount + tender (+ terminal). Legacy article path remains on the API. Mid-stay return of unused credit is `POST /api/folios/category-refund` (FIFO inside one category+pocket; lodging credit cannot fund a clinic refund). Header quick actions: Accept payment + Return category credit.
 - Təsvir: room keys stay `night-audit:ymd` / `manual-room:ymd` in DB; UI shows night-audit / manual room **without** the date. New PKG nights store `Medical package` (no date); ops backfill strips trailing dates (`nafta-folio-label-cleanup.mjs`). Lodging labels short: **Otaq** / **Tibbi paket** (codes 1001/1002).
 
 Allocation (implementation bug, not the law):
@@ -54,7 +54,7 @@ The header keeps three cells. Stay total (`Qalma məbləği`) is the price of th
 
 There is no deposit intake form. `Əlavə ödəniş` is the only way to take money. Pocket, guest, and article start empty. Article comes first. A room article does not ask for a guest: the line follows the open room charge, or the room route when the night is not posted yet. Amount cannot exceed that article's open debt. When nothing is charged yet, the line is still written and stays visible.
 
-Checkout does not refund by itself and does not read `FolioDeposit`. While either sum is non-zero, checkout stays closed. The cashier returns a remainder from the blue line (`…` → `Geri qaytarma`). That return can be deleted like a payment. Same tender unless the cashier changes it and writes a reason. A return that already has a fiscal receipt is not deleted from the row menu.
+Checkout does not refund by itself and does not read `FolioDeposit`. While pocket debt remains, or when unused credit remains with no pocket debt, checkout stays closed (`UNUSED_PAYMENT` only when no open pocket still owes). The cashier returns a remainder via **Return category credit** or the blue line (`…` → Refund). That return can be deleted like a payment. Same tender unless the cashier changes it and writes a reason. A return that already has a fiscal receipt is not deleted from the row menu.
 
 Old `HELD` rows are not a screen. Opening a live stay moves each of them once onto a blue room payment so the header sum does not disappear. New money is not written into that table.
 

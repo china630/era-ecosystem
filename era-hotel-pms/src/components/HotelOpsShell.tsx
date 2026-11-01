@@ -54,6 +54,7 @@ import { HotelHeaderTierBar } from '@/components/HotelHeaderTierBar';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import GroupBookingModal from '@/components/GroupBookingModal';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
+import { FolioCategoryRefundModal } from '@/components/folio/FolioCategoryRefundModal';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { normalizeHotelPermission } from '@/lib/auth/hotel-permission-rename';
 
@@ -108,8 +109,10 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [categoryRefundOpen, setCategoryRefundOpen] = useState(false);
   const [folioCardId, setFolioCardId] = useState<string | null>(null);
   const t = useTranslations('nav');
+  const tf = useTranslations('folio');
   const tMeta = useTranslations('meta');
   const tHeader = useTranslations('header');
   const tNotify = useTranslations('notifications');
@@ -1035,16 +1038,28 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         </>
       ) : null}
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
-        <button
-          type="button"
-          className={headerQuickLinkClass(paymentOpen)}
-          title={t('acceptPayment')}
-          aria-label={t('acceptPayment')}
-          onClick={() => setPaymentOpen(true)}
-        >
-          <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>{t('acceptPayment')}</span>
-        </button>
+        <>
+          <button
+            type="button"
+            className={headerQuickLinkClass(paymentOpen)}
+            title={t('acceptPayment')}
+            aria-label={t('acceptPayment')}
+            onClick={() => setPaymentOpen(true)}
+          >
+            <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{t('acceptPayment')}</span>
+          </button>
+          <button
+            type="button"
+            className={headerQuickLinkClass(categoryRefundOpen)}
+            title={tf('categoryRefund')}
+            aria-label={tf('categoryRefund')}
+            onClick={() => setCategoryRefundOpen(true)}
+          >
+            <Banknote className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{tf('categoryRefund')}</span>
+          </button>
+        </>
       ) : null}
     </div>
   );
@@ -1122,11 +1137,17 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         </>
       ) : null}
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
-        <FolioPaymentModal
-          open={paymentOpen}
-          onClose={() => setPaymentOpen(false)}
-          onOpenStay={(id) => setFolioCardId(id)}
-        />
+        <>
+          <FolioPaymentModal
+            open={paymentOpen}
+            onClose={() => setPaymentOpen(false)}
+            onOpenStay={(id) => setFolioCardId(id)}
+          />
+          <FolioCategoryRefundModal
+            open={categoryRefundOpen}
+            onClose={() => setCategoryRefundOpen(false)}
+          />
+        </>
       ) : null}
       <ReservationCardModal
         open={Boolean(folioCardId)}
