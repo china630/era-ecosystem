@@ -150,6 +150,10 @@ export async function prescribeDiagnosticsExtras(
   const labOrderIds: string[] = [];
   const visitIds: string[] = [];
 
+  const { resolvePackageStampForEpisode, isOverEntitlementQuota } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+
   for (const line of lines) {
     if (line.qty < 1) continue;
     const service = await resolveDiagnosticService(line.serviceCode, orgId);
@@ -161,6 +165,29 @@ export async function prescribeDiagnosticsExtras(
       );
     }
     const sellable = service.serviceCode || service.code;
+    const stamp = await resolvePackageStampForEpisode({
+      episodeId,
+      serviceCode: sellable,
+    });
+    if (stamp) {
+      const instance = await prisma.programInstance.findFirst({
+        where: { episodeId },
+        select: { id: true },
+      });
+      if (instance) {
+        const check = await isOverEntitlementQuota({
+          instanceId: instance.id,
+          quotaCode: stamp.packageQuotaCode,
+        });
+        if (check.remaining > 0) {
+          throw new PackageAssignError(
+            "Use package remaining before a paid diagnostic extra",
+            "QUOTA_REMAINING",
+            409,
+          );
+        }
+      }
+    }
     const unitPrice = await listPriceOrZero(sellable);
     if (!(unitPrice > 0)) {
       throw new PackageAssignError(
@@ -284,16 +311,148 @@ export async function prescribeDiagnosticsExtras(
   return { labOrderIds, visitIds };
 }
 
+/**
+ * Zero mispriced package burns (inPackage + amountNet > 0, not settled).
+ * Drops unpaid forcePaid duplicates when a package sibling already covers the code.
+ */
+export async function healMispricedPackageDiagnostics(episodeId: string): Promise<{
+  healedVisits: number;
+  healedLabs: number;
+  removedPaidDupes: number;
+}> {
+  let healedVisits = 0;
+  let healedLabs = 0;
+  let removedPaidDupes = 0;
+
+  const packageVisits = await prisma.visit.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      settledAt: null,
+      amountNet: { gt: 0 },
+      status: { not: "CANCELLED" },
+      serviceLines: { some: { inPackage: true } },
+    },
+    select: { id: true },
+  });
+  for (const visit of packageVisits) {
+    await prisma.$transaction([
+      prisma.visit.update({
+        where: { id: visit.id },
+        data: { amountNet: 0 },
+      }),
+      prisma.visitServiceLine.updateMany({
+        where: { visitId: visit.id, inPackage: true },
+        data: { amount: 0 },
+      }),
+    ]);
+    healedVisits += 1;
+  }
+
+  const packageLabs = await prisma.labOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      settledAt: null,
+      amountNet: { gt: 0 },
+      inPackage: true,
+      status: { not: "CANCELLED" },
+    },
+    select: { id: true },
+  });
+  for (const order of packageLabs) {
+    await prisma.$transaction([
+      prisma.labOrder.update({
+        where: { id: order.id },
+        data: { amountNet: 0 },
+      }),
+      prisma.labOrderItem.updateMany({
+        where: { labOrderId: order.id, inPackage: true },
+        data: { amountNet: 0 },
+      }),
+    ]);
+    healedLabs += 1;
+  }
+
+  const packageLabCodes = new Set(
+    (
+      await prisma.labOrderItem.findMany({
+        where: {
+          inPackage: true,
+          labOrder: {
+            clinicalEpisodeId: episodeId,
+            status: { not: "CANCELLED" },
+          },
+        },
+        select: { serviceCode: true },
+      })
+    ).map((row) => row.serviceCode),
+  );
+  const packageVisitCodes = new Set(
+    (
+      await prisma.visitServiceLine.findMany({
+        where: {
+          inPackage: true,
+          visit: {
+            clinicalEpisodeId: episodeId,
+            status: { not: "CANCELLED" },
+          },
+        },
+        select: { serviceCode: true },
+      })
+    ).map((row) => row.serviceCode),
+  );
+
+  const unpaidPaidLabs = await prisma.labOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      amountNet: { gt: 0 },
+      settledAt: null,
+      inPackage: false,
+      status: "ORDERED",
+    },
+    include: { items: { select: { serviceCode: true }, take: 1 } },
+  });
+  for (const order of unpaidPaidLabs) {
+    const code = order.items[0]?.serviceCode || order.testCode;
+    if (code && packageLabCodes.has(code)) {
+      await prisma.labOrder.delete({ where: { id: order.id } });
+      removedPaidDupes += 1;
+    }
+  }
+
+  const unpaidPaidVisits = await prisma.visit.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      amountNet: { gt: 0 },
+      settledAt: null,
+      status: { not: "CANCELLED" },
+      serviceLines: { every: { inPackage: false } },
+    },
+    include: { serviceLines: { select: { serviceCode: true, inPackage: true } } },
+  });
+  for (const visit of unpaidPaidVisits) {
+    const code = visit.serviceLines[0]?.serviceCode;
+    if (code && packageVisitCodes.has(code)) {
+      await prisma.visit.delete({ where: { id: visit.id } });
+      removedPaidDupes += 1;
+    }
+  }
+
+  return { healedVisits, healedLabs, removedPaidDupes };
+}
+
 /** Unpaid paid diagnostics on the course (red / amber awaiting-payment list). */
 export async function listPendingDiagnostics(
   episodeId: string,
 ): Promise<PendingDiagnosticRow[]> {
+  await healMispricedPackageDiagnostics(episodeId);
+
   const [labs, visits] = await Promise.all([
     prisma.labOrder.findMany({
       where: {
         clinicalEpisodeId: episodeId,
         amountNet: { gt: 0 },
         settledAt: null,
+        inPackage: false,
         status: { not: "CANCELLED" },
       },
       include: {
@@ -315,6 +474,8 @@ export async function listPendingDiagnostics(
         amountNet: { gt: 0 },
         settledAt: null,
         status: { not: "CANCELLED" },
+        // Real paid extras only — package burns never belong here.
+        NOT: { serviceLines: { some: { inPackage: true } } },
       },
       include: {
         serviceLines: { orderBy: { id: "asc" }, take: 1 },
@@ -414,6 +575,29 @@ export async function payDiagnosticsExtras(
   const hotelOrganizationId = await getClinicHotelOrganizationId(orgId);
   const accepted: DiagnosticBatchLine[] = [];
   const rejected: DiagnosticBatchLine[] = [];
+
+  const labIds = lines.filter((line) => line.kind === "lab").map((line) => line.id);
+  const visitIds = lines.filter((line) => line.kind === "visit").map((line) => line.id);
+  const [labPatients, visitPatients] = await Promise.all([
+    labIds.length
+      ? prisma.labOrder.findMany({
+          where: { id: { in: labIds } },
+          select: { patientRefId: true },
+        })
+      : Promise.resolve([]),
+    visitIds.length
+      ? prisma.visit.findMany({
+          where: { id: { in: visitIds } },
+          select: { patientRefId: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const patientIds = new Set(
+    [...labPatients, ...visitPatients].map((row) => row.patientRefId).filter(Boolean),
+  );
+  if (patientIds.size > 1) {
+    throw new PackageAssignError("One cheque is one patient", "MIXED_PATIENT", 400);
+  }
 
   for (const line of lines) {
     if (line.kind === "lab") {

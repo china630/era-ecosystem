@@ -1,13 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  FIELD_PANEL_BODY_CLASS,
-  FIELD_PANEL_CLASS,
-  FIELD_PANEL_HEADER_CLASS,
-} from "./design-system";
+import { FieldGroupBox } from "./field-group-box";
 
-/** Static field group (always open) — FO reservation / guest cards. */
+/** Static field group (always open) — FO reservation / guest cards. Renders as FieldGroupBox. */
 export function FieldPanel({
   title,
   badge,
@@ -20,18 +16,8 @@ export function FieldPanel({
   className?: string;
 }) {
   return (
-    <section className={`${FIELD_PANEL_CLASS} ${className ?? ""}`.trim()}>
-      <div className={FIELD_PANEL_HEADER_CLASS}>
-        <span className="flex items-center justify-between gap-2">
-          <span>{title}</span>
-          {badge != null && badge !== "" ? (
-            <span className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#7F8C8D] shadow-sm">
-              {badge}
-            </span>
-          ) : null}
-        </span>
-      </div>
-      <div className={FIELD_PANEL_BODY_CLASS}>{children}</div>
-    </section>
+    <FieldGroupBox title={title} badge={badge} className={className}>
+      {children}
+    </FieldGroupBox>
   );
 }

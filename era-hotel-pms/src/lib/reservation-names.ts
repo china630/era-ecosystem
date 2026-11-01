@@ -2,6 +2,8 @@
  * FO gate: guest names not ready for assign / check-in (TBA / incomplete party).
  */
 
+import { isDepartedPartyRow } from '@/lib/party-departed-stamp';
+
 const TBA_NAME_RE =
   /^(tba|t\.?\s*b\.?\s*a\.?|to be announced|group\s*holder|qrup|группа|имя\s*позже|ad\s*sonra)/i;
 
@@ -11,15 +13,42 @@ export function isTbaDisplayName(name: string | null | undefined): boolean {
   return TBA_NAME_RE.test(n);
 }
 
+export type PartyGuestSegment = { name: string; departed: boolean };
+
+/** Named party members for FO lists (departed kept, marked). */
+export function partyGuestSegments(
+  guestFullName: string | null | undefined,
+  pax: Array<{
+    firstName?: string | null;
+    lastName?: string | null;
+    departedAt?: string | Date | null;
+    guestState?: string | null;
+  }>,
+): PartyGuestSegment[] {
+  if (pax.length === 0) {
+    const name = (guestFullName ?? '').trim();
+    return name ? [{ name, departed: false }] : [];
+  }
+  return pax
+    .map((row) => ({
+      name: [row.firstName, row.lastName].filter(Boolean).join(' ').trim(),
+      departed: isDepartedPartyRow(row),
+    }))
+    .filter((row) => Boolean(row.name));
+}
+
 export function partyGuestLabel(
   guestFullName: string | null | undefined,
-  pax: Array<{ firstName?: string | null; lastName?: string | null }>,
+  pax: Array<{
+    firstName?: string | null;
+    lastName?: string | null;
+    departedAt?: string | Date | null;
+    guestState?: string | null;
+  }>,
 ): string {
-  const names = pax
-    .map((row) => [row.firstName, row.lastName].filter(Boolean).join(' ').trim())
-    .filter(Boolean);
-  if (names.length === 0) return (guestFullName ?? '').trim();
-  return names.join(' / ');
+  const parts = partyGuestSegments(guestFullName, pax);
+  if (parts.length === 0) return (guestFullName ?? '').trim();
+  return parts.map((row) => row.name).join(' / ');
 }
 
 export function paxHasRealName(row: {

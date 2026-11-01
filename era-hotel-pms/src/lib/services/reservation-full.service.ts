@@ -4,7 +4,7 @@ import { todayBakuYmd } from '@era/satellite-kit/time';
 import { doorClashWindow, hotelDateKey } from '@/lib/hotel-calendar';
 import { countsFromPax } from '@/components/reservation-card/party-pax';
 import { isDepartedPartyRow, partyDepartedAt, primaryIndexForParty } from '@/lib/party-departed-stamp';
-import { partyGuestLabel, paxHasRealName } from '@/lib/reservation-names';
+import { partyGuestLabel, partyGuestSegments, paxHasRealName } from '@/lib/reservation-names';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
 import { ensurePartyGuestFolios, reconcilePartyFolios } from '@/lib/services/booking-folio.service';
 import { isReservationQueue, reservationQueueWhere } from '@/lib/reservation-queue';
@@ -1178,6 +1178,9 @@ export async function listReservationsForGrid(
       checkOutDate: true,
       status: true,
       adults: true,
+      children11_6: true,
+      children5_2: true,
+      children1_0: true,
       guest: { select: { fullName: true } },
       room: { select: { roomNumber: true, status: true, hkCondition: true } },
       roomType: { select: { code: true } },
@@ -1185,6 +1188,16 @@ export async function listReservationsForGrid(
       company: { select: { code: true, name: true } },
       source: { select: { code: true, name: true } },
       notes: { select: { text: true } },
+      paxGuests: {
+        select: {
+          firstName: true,
+          lastName: true,
+          sortOrder: true,
+          departedAt: true,
+          guestState: true,
+        },
+        orderBy: { sortOrder: 'asc' },
+      },
     },
   });
   const requestedSort = opts.sort?.trim() ?? '';
@@ -1198,7 +1211,7 @@ export async function listReservationsForGrid(
       case 'hk':
         return row.room?.hkCondition ?? row.room?.status ?? '';
       case 'guest':
-        return row.guest.fullName ?? '';
+        return partyGuestLabel(row.guest.fullName, row.paxGuests);
       case 'arrival':
         return hotelDateKey(row.checkInDate);
       case 'departure':
@@ -1207,6 +1220,11 @@ export async function listReservationsForGrid(
         return row.roomType.code ?? '';
       case 'adult':
         return String(row.adults).padStart(4, '0');
+      case 'children':
+      case 'child':
+        return String(
+          (row.children11_6 ?? 0) + (row.children5_2 ?? 0) + (row.children1_0 ?? 0),
+        ).padStart(4, '0');
       case 'state':
         return row.status;
       case 'agency':
@@ -1253,7 +1271,13 @@ export async function listReservationsForGrid(
             source: true,
             notes: true,
             paxGuests: {
-              select: { firstName: true, lastName: true, sortOrder: true },
+              select: {
+                firstName: true,
+                lastName: true,
+                sortOrder: true,
+                departedAt: true,
+                guestState: true,
+              },
               orderBy: { sortOrder: 'asc' },
             },
           },
@@ -1264,9 +1288,13 @@ export async function listReservationsForGrid(
   const items = rows.map((r) => {
     const filled = r.notes.filter((n) => (n.text ?? '').trim().length > 0);
     const preview = filled[0]?.text?.trim().slice(0, 80) ?? null;
+    const children =
+      (r.children11_6 ?? 0) + (r.children5_2 ?? 0) + (r.children1_0 ?? 0);
     return {
       ...r,
+      children,
       guestLabel: partyGuestLabel(r.guest.fullName, r.paxGuests),
+      guestSegments: partyGuestSegments(r.guest.fullName, r.paxGuests),
       hasNotes: filled.length > 0,
       notePreview: preview,
       noteText: filled.map((n) => n.text.trim()).join(' / '),

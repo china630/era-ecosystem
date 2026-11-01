@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import {
   CatalogField,
   Field,
-  FieldRow,
+  FieldGroupBox,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
   showApiError,
@@ -14,6 +14,7 @@ import {
 } from '@era/satellite-kit/ui';
 import {
   bookingSourceKind,
+  contractCounterpartyType,
   contractsForSource,
   isManualFoSourceKind,
   sourceKindLabel,
@@ -34,7 +35,7 @@ type ContractOption = SalesContractPick & {
 export type RoomPayerValue = 'GUEST' | 'AGENCY' | 'COMPANY';
 export type CommissionBasisValue = 'GROSS' | 'NET';
 
-/** Source, agency, and company above the stay dates. Contract + room payer under that row. */
+/** Source, agency, company + room payer / contract (Travel agent / Company group). */
 export function CommercialPartyStrip({
   sourceId,
   agencyId,
@@ -124,11 +125,24 @@ export function CommercialPartyStrip({
         : t('agency');
   const canQuickAddAgency =
     sourceKind === 'AGENCY' || sourceKind === 'CORPORATE' || sourceKind === 'OTHER';
+  const knownAgencyId = agencies.some((a) => a.id === agencyId) ? agencyId : '';
+  const knownCompanyId = companies.some((c) => c.id === companyId) ? companyId : '';
+  const showAgencyPlus = canQuickAddAgency && !agencyPickerLocked;
+  const contractRequired = roomPayer === 'AGENCY' || roomPayer === 'COMPANY';
+  const showPayerRow = Boolean(knownAgencyId || knownCompanyId);
+
+  /** When both party profiles are set, Müqavilə follows the active room payer (agency wins only if payer=AGENCY). */
   const visibleContracts = useMemo(() => {
     const matched = contractsForSource(contracts, { sourceKind, agencyId, companyId });
+    const byPayer =
+      roomPayer === 'AGENCY' && knownAgencyId
+        ? matched.filter((c) => contractCounterpartyType(c) === 'AGENCY')
+        : roomPayer === 'COMPANY' && knownCompanyId
+          ? matched.filter((c) => contractCounterpartyType(c) === 'CORPORATE')
+          : matched;
     const day = (checkIn ?? '').slice(0, 10);
-    if (!day) return matched;
-    return matched.filter((c) => {
+    if (!day) return byPayer;
+    return byPayer.filter((c) => {
       if (c.id === salesContractId) return true;
       if (!c.validFrom) return true;
       const from = String(c.validFrom).slice(0, 10);
@@ -137,13 +151,17 @@ export function CommercialPartyStrip({
       if (to && to < day) return false;
       return true;
     });
-  }, [contracts, sourceKind, agencyId, companyId, checkIn, salesContractId]);
-  const knownAgencyId = agencies.some((a) => a.id === agencyId) ? agencyId : '';
-  const knownCompanyId = companies.some((c) => c.id === companyId) ? companyId : '';
-  const showCommercial = Boolean(knownAgencyId || knownCompanyId || salesContractId);
-  const showAgencyPlus = canQuickAddAgency && !agencyPickerLocked;
-  const contractRequired = roomPayer === 'AGENCY' || roomPayer === 'COMPANY';
-  const showPayerRow = Boolean(knownAgencyId || knownCompanyId);
+  }, [
+    contracts,
+    sourceKind,
+    agencyId,
+    companyId,
+    checkIn,
+    salesContractId,
+    roomPayer,
+    knownAgencyId,
+    knownCompanyId,
+  ]);
 
   useEffect(() => {
     if (payerTouched.current) return;
@@ -158,6 +176,19 @@ export function CommercialPartyStrip({
     if (visibleContracts.length !== 1) return;
     onContract(visibleContracts[0]!.id);
   }, [contractRequired, salesContractId, visibleContracts, onContract]);
+
+  useEffect(() => {
+    if (!salesContractId) return;
+    if (roomPayer === 'GUEST') {
+      onContract('');
+      return;
+    }
+    const row = contracts.find((c) => c.id === salesContractId);
+    if (!row) return;
+    const kind = contractCounterpartyType(row);
+    if (roomPayer === 'AGENCY' && kind !== 'AGENCY') onContract('');
+    if (roomPayer === 'COMPANY' && kind !== 'CORPORATE') onContract('');
+  }, [roomPayer, salesContractId, contracts, onContract]);
 
   async function createAgency() {
     if (!agencyName.trim() || agencyPhone.trim().length < 5) {
@@ -268,242 +299,244 @@ export function CommercialPartyStrip({
   ];
 
   return (
-    <div className="space-y-2" data-testid="commercial-party-strip">
-      <div className="grid grid-cols-1 items-start gap-1.5 sm:grid-cols-3">
-        <CatalogField
-          kind="SEARCHABLE"
-          label={t('source')}
-          value={sourceId}
-          onChange={(v) => onSource(Array.isArray(v) ? (v[0] ?? '') : v)}
-          options={sourceOptions.map((s) => ({
-            value: s.id,
-            label: sourceKindLabel(t, bookingSourceKind(s.code), s.label),
-          }))}
-          disabled={disabled}
-        />
-        <div className="min-w-0 space-y-1.5">
-          <div className="flex items-end gap-1">
-            <div className="min-w-0 flex-1">
-              <CatalogField
-                kind="SEARCHABLE"
-                label={agencyFieldLabel}
-                value={
-                  sourceKind === 'WALKIN'
-                    ? walkInProfileCode
-                    : agencyPickerLocked
-                      ? ''
-                      : knownAgencyId
-                }
-                onChange={(v) => {
-                  const next = Array.isArray(v) ? (v[0] ?? '') : v;
-                  if (sourceKind === 'WALKIN') onWalkInProfile?.(next);
-                  else onAgency(next);
-                }}
-                options={
-                  sourceKind === 'WALKIN'
-                    ? [
-                        ...walkInProfiles.map((p) => ({ value: p.code, label: p.label })),
-                        ...(walkInProfileCode &&
-                        !walkInProfiles.some((p) => p.code === walkInProfileCode)
-                          ? [{ value: walkInProfileCode, label: walkInProfileCode }]
-                          : []),
-                      ]
-                    : agencyPickerLocked
-                      ? []
-                      : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
-                }
-                disabled={disabled || agencyPickerLocked}
-                emptyLabel={agencyPickerLocked ? t('individual') : tc('select')}
-              />
+    <FieldGroupBox title={t('travelAgentCompany')}>
+      <div className="space-y-2" data-testid="commercial-party-strip">
+        <div className="grid grid-cols-1 items-start gap-1.5 sm:grid-cols-3">
+          <CatalogField
+            kind="SEARCHABLE"
+            label={t('source')}
+            value={sourceId}
+            onChange={(v) => onSource(Array.isArray(v) ? (v[0] ?? '') : v)}
+            options={sourceOptions.map((s) => ({
+              value: s.id,
+              label: sourceKindLabel(t, bookingSourceKind(s.code), s.label),
+            }))}
+            disabled={disabled}
+          />
+          <div className="min-w-0 space-y-px">
+            <div className="flex items-end gap-1">
+              <div className="min-w-0 flex-1">
+                <CatalogField
+                  kind="SEARCHABLE"
+                  label={agencyFieldLabel}
+                  value={
+                    sourceKind === 'WALKIN'
+                      ? walkInProfileCode
+                      : agencyPickerLocked
+                        ? ''
+                        : knownAgencyId
+                  }
+                  onChange={(v) => {
+                    const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                    if (sourceKind === 'WALKIN') onWalkInProfile?.(next);
+                    else onAgency(next);
+                  }}
+                  options={
+                    sourceKind === 'WALKIN'
+                      ? [
+                          ...walkInProfiles.map((p) => ({ value: p.code, label: p.label })),
+                          ...(walkInProfileCode &&
+                          !walkInProfiles.some((p) => p.code === walkInProfileCode)
+                            ? [{ value: walkInProfileCode, label: walkInProfileCode }]
+                            : []),
+                        ]
+                      : agencyPickerLocked
+                        ? []
+                        : agencyOptions.map((a) => ({ value: a.id, label: a.label }))
+                  }
+                  disabled={disabled || agencyPickerLocked}
+                  emptyLabel={agencyPickerLocked ? t('individual') : tc('select')}
+                />
+              </div>
+              {showAgencyPlus ? (
+                <LookupPlus
+                  label={t('quickAddAgency')}
+                  pressed={agencyOpen}
+                  disabled={disabled || busy}
+                  onClick={() => {
+                    setAgencyOpen((v) => !v);
+                    setCompanyOpen(false);
+                  }}
+                />
+              ) : null}
             </div>
-            {showAgencyPlus ? (
+          </div>
+          <div className="min-w-0 space-y-px">
+            <div className="flex items-end gap-1">
+              <div className="min-w-0 flex-1">
+                <CatalogField
+                  kind="SEARCHABLE"
+                  label={t('company')}
+                  value={knownCompanyId}
+                  onChange={(v) => onCompany(Array.isArray(v) ? (v[0] ?? '') : v)}
+                  options={companies.map((c) => ({ value: c.id, label: c.label }))}
+                  disabled={disabled}
+                  emptyLabel={tc('select')}
+                />
+              </div>
               <LookupPlus
-                label={t('quickAddAgency')}
-                pressed={agencyOpen}
+                label={t('quickAddCompany')}
+                pressed={companyOpen}
                 disabled={disabled || busy}
                 onClick={() => {
-                  setAgencyOpen((v) => !v);
-                  setCompanyOpen(false);
+                  setCompanyOpen((v) => !v);
+                  setAgencyOpen(false);
                 }}
-              />
-            ) : null}
-          </div>
-        </div>
-        <div className="min-w-0 space-y-1.5">
-          <div className="flex items-end gap-1">
-            <div className="min-w-0 flex-1">
-              <CatalogField
-                kind="SEARCHABLE"
-                label={t('company')}
-                value={knownCompanyId}
-                onChange={(v) => onCompany(Array.isArray(v) ? (v[0] ?? '') : v)}
-                options={companies.map((c) => ({ value: c.id, label: c.label }))}
-                disabled={disabled}
-                emptyLabel={tc('select')}
               />
             </div>
-            <LookupPlus
-              label={t('quickAddCompany')}
-              pressed={companyOpen}
-              disabled={disabled || busy}
-              onClick={() => {
-                setCompanyOpen((v) => !v);
-                setAgencyOpen(false);
-              }}
-            />
           </div>
         </div>
-      </div>
-      {agencyOpen && showAgencyPlus ? (
-        <div className="flex items-end gap-1.5">
-          <Field
-            label={t('quickAgencyName')}
-            preset="shortText"
-            className="min-w-0 flex-1"
-            value={agencyName}
-            disabled={disabled || busy}
-            onChange={(e) => setAgencyName(e.target.value)}
-          />
-          <Field
-            label={t('quickAgencyPhone')}
-            preset="phone"
-            className="w-[9rem] shrink-0"
-            value={agencyPhone}
-            disabled={disabled || busy}
-            onChange={(e) => setAgencyPhone(e.target.value)}
-          />
-          <button
-            type="button"
-            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
-            disabled={disabled || busy}
-            onClick={() => {
-              setAgencyName('');
-              setAgencyPhone('');
-              setAgencyOpen(false);
-            }}
-          >
-            {tc('cancel')}
-          </button>
-          <button
-            type="button"
-            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
-            disabled={disabled || busy}
-            onClick={() => void createAgency()}
-          >
-            {tc('save')}
-          </button>
-        </div>
-      ) : null}
-      {companyOpen ? (
-        <div className="flex items-end gap-1.5">
-          <Field
-            label={t('quickCompanyName')}
-            preset="shortText"
-            className="min-w-0 flex-1"
-            value={companyName}
-            disabled={disabled || busy}
-            onChange={(e) => setCompanyName(e.target.value)}
-          />
-          <Field
-            label={t('quickCompanyVoen')}
-            preset="voen"
-            className="w-[9rem] shrink-0"
-            value={companyVoen}
-            disabled={disabled || busy}
-            onChange={(e) => setCompanyVoen(e.target.value)}
-          />
-          <button
-            type="button"
-            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
-            disabled={disabled || busy}
-            onClick={() => {
-              setCompanyName('');
-              setCompanyVoen('');
-              setCompanyOpen(false);
-            }}
-          >
-            {tc('cancel')}
-          </button>
-          <button
-            type="button"
-            className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
-            disabled={disabled || busy}
-            onClick={() => void createCompany()}
-          >
-            {tc('save')}
-          </button>
-        </div>
-      ) : null}
-      {showCommercial ? (
-        <div className="space-y-1.5">
-          <CatalogField
-            kind="ENTITY_REF"
-            label={
-              contractRequired ? `${t('stayContract')} (${t('contractRequiredMark')})` : t('stayContract')
-            }
-            value={salesContractId}
-            onChange={(v) => onContract(Array.isArray(v) ? (v[0] ?? '') : v)}
-            options={visibleContracts.map((c) => ({ value: c.id, label: c.label }))}
-            emptyLabel="—"
-            disabled={disabled || visibleContracts.length === 0}
-          />
-          {contractRequired && visibleContracts.length === 0 ? (
-            <p className={`m-0 text-[12px] text-rose-800`} data-testid="contract-create-hint">
-              {t('contractCreateHint')}{' '}
-              <Link href="/distribution/contracts" className="underline">
-                {t('openB2bContracts')}
-              </Link>
-            </p>
-          ) : null}
-          {contractRequired && !salesContractId && visibleContracts.length > 0 ? (
-            <p className={`m-0 text-[12px] text-rose-800`} data-testid="contract-required-hint">
-              {t('contractRequiredHint')}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-      {showPayerRow ? (
-        <div className="space-y-1.5">
-          <FieldRow cols={2}>
-            <CatalogField
-              kind="CLOSED_SMALL"
-              label={t('roomPayer')}
-              value={roomPayer}
-              onChange={(v) => {
-                payerTouched.current = true;
-                const next = Array.isArray(v) ? (v[0] ?? '') : v;
-                if (next === 'AGENCY' || next === 'COMPANY' || next === 'GUEST') onRoomPayer(next);
-              }}
-              options={payerOptions}
-              disabled={disabled}
+        {agencyOpen && showAgencyPlus ? (
+          <div className="flex items-end gap-1.5">
+            <Field
+              label={t('quickAgencyName')}
+              preset="shortText"
+              className="min-w-0 flex-1"
+              value={agencyName}
+              disabled={disabled || busy}
+              onChange={(e) => setAgencyName(e.target.value)}
             />
-            {knownAgencyId ? (
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t('commissionBasis')}
-                value={commissionBasis}
-                onChange={(v) => {
-                  const next = Array.isArray(v) ? (v[0] ?? '') : v;
-                  onCommissionBasis(next === 'NET' ? 'NET' : 'GROSS');
-                }}
-                options={[
-                  { value: 'GROSS', label: t('basisGross') },
-                  { value: 'NET', label: t('basisNet') },
-                ]}
-                disabled={disabled}
-              />
-            ) : (
-              <div />
-            )}
-          </FieldRow>
-          {billingSentence ? (
-            <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-payer-sentence">
-              {billingSentence}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
+            <Field
+              label={t('quickAgencyPhone')}
+              preset="phone"
+              className="w-[9rem] shrink-0"
+              value={agencyPhone}
+              disabled={disabled || busy}
+              onChange={(e) => setAgencyPhone(e.target.value)}
+            />
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+              disabled={disabled || busy}
+              onClick={() => {
+                setAgencyName('');
+                setAgencyPhone('');
+                setAgencyOpen(false);
+              }}
+            >
+              {tc('cancel')}
+            </button>
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+              disabled={disabled || busy}
+              onClick={() => void createAgency()}
+            >
+              {tc('save')}
+            </button>
+          </div>
+        ) : null}
+        {companyOpen ? (
+          <div className="flex items-end gap-1.5">
+            <Field
+              label={t('quickCompanyName')}
+              preset="shortText"
+              className="min-w-0 flex-1"
+              value={companyName}
+              disabled={disabled || busy}
+              onChange={(e) => setCompanyName(e.target.value)}
+            />
+            <Field
+              label={t('quickCompanyVoen')}
+              preset="voen"
+              className="w-[9rem] shrink-0"
+              value={companyVoen}
+              disabled={disabled || busy}
+              onChange={(e) => setCompanyVoen(e.target.value)}
+            />
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+              disabled={disabled || busy}
+              onClick={() => {
+                setCompanyName('');
+                setCompanyVoen('');
+                setCompanyOpen(false);
+              }}
+            >
+              {tc('cancel')}
+            </button>
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} mb-px shrink-0`}
+              disabled={disabled || busy}
+              onClick={() => void createCompany()}
+            >
+              {tc('save')}
+            </button>
+          </div>
+        ) : null}
+        {showPayerRow ? (
+          <div className="space-y-1.5">
+            <div className="grid grid-cols-1 items-start gap-2 lg:grid-cols-2">
+              <div className="min-w-0 space-y-2">
+                <CatalogField
+                  kind="OPS_HOT"
+                  label={t('roomPayer')}
+                  value={roomPayer}
+                  onChange={(v) => {
+                    payerTouched.current = true;
+                    const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                    if (next === 'AGENCY' || next === 'COMPANY' || next === 'GUEST') {
+                      onRoomPayer(next);
+                    }
+                  }}
+                  options={payerOptions}
+                  disabled={disabled}
+                />
+                {knownAgencyId ? (
+                  <CatalogField
+                    kind="OPS_HOT"
+                    label={t('commissionBasis')}
+                    value={commissionBasis}
+                    onChange={(v) => {
+                      const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                      onCommissionBasis(next === 'NET' ? 'NET' : 'GROSS');
+                    }}
+                    options={[
+                      { value: 'GROSS', label: t('basisGross') },
+                      { value: 'NET', label: t('basisNet') },
+                    ]}
+                    disabled={disabled}
+                  />
+                ) : null}
+              </div>
+              {contractRequired ? (
+                <div className="min-w-0 space-y-1">
+                  <CatalogField
+                    kind="ENTITY_REF"
+                    label={`${t('stayContract')} (${t('contractRequiredMark')})`}
+                    value={salesContractId}
+                    onChange={(v) => onContract(Array.isArray(v) ? (v[0] ?? '') : v)}
+                    options={visibleContracts.map((c) => ({ value: c.id, label: c.label }))}
+                    emptyLabel="—"
+                    disabled={disabled || visibleContracts.length === 0}
+                  />
+                  {visibleContracts.length === 0 ? (
+                    <p className="m-0 text-[12px] text-rose-800" data-testid="contract-create-hint">
+                      {t('contractCreateHint')}{' '}
+                      <Link href="/distribution/contracts" className="underline">
+                        {t('openB2bContracts')}
+                      </Link>
+                    </p>
+                  ) : null}
+                  {!salesContractId && visibleContracts.length > 0 ? (
+                    <p className="m-0 text-[12px] text-rose-800" data-testid="contract-required-hint">
+                      {t('contractRequiredHint')}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            {billingSentence ? (
+              <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-payer-sentence">
+                {billingSentence}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </FieldGroupBox>
   );
 }
 
@@ -521,7 +554,7 @@ function LookupPlus({
   return (
     <button
       type="button"
-      className={`mb-px inline-flex h-[30px] w-7 shrink-0 items-center justify-center rounded border text-[16px] leading-none disabled:opacity-40 ${
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-[18px] leading-none shadow-sm transition disabled:opacity-40 ${
         pressed
           ? 'border-[#2C3E50] bg-[#2C3E50] text-white'
           : 'border-[#D5DADF] bg-white text-[#34495E] hover:bg-[#F4F6F7]'

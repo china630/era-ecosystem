@@ -47,6 +47,12 @@ export async function refundFolioPayment(input: {
   if (method !== original.paymentMethod && !(input.reason && input.reason.trim())) {
     throw new Error('REFUND_REASON_REQUIRED');
   }
+  const { isPaymentCategory, resolvePaymentCategory } = await import('@/lib/payment-category');
+  const category =
+    (original.paymentCategory && isPaymentCategory(original.paymentCategory)
+      ? original.paymentCategory
+      : null) ?? resolvePaymentCategory(original);
+
   return postPayment({
     folioId: original.folioId,
     amount,
@@ -54,6 +60,8 @@ export async function refundFolioPayment(input: {
     bankTerminalId: input.bankTerminalId ?? original.bankTerminalId ?? undefined,
     kind: 'REFUND',
     refundOfPaymentId: original.id,
+    paymentCategory: category ?? undefined,
+    revenueCodeId: original.revenueCodeId ?? undefined,
     createdByUserId: input.createdByUserId,
     auditRequest: input.auditRequest,
     refundReason: (() => {

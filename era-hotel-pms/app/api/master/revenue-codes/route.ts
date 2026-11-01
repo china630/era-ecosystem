@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { localizedNameFields } from '@/lib/catalog-label';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
+import { PAYMENT_CATEGORIES } from '@/lib/payment-category';
 import { createRevenueCode, listRevenueCodes } from '@/lib/services/master-data.service';
 import { scheduleMasterDataSyncDebounced } from '@/lib/integration/master-data-sync-debounce';
 import { getSatelliteSession } from '@/lib/auth/session';
@@ -17,6 +18,7 @@ const schema = z.object({
   allowManualCharge: z.boolean().optional(),
   allowManualPayment: z.boolean().optional(),
   reportType: z.string().max(32).nullable().optional(),
+  paymentCategory: z.enum(PAYMENT_CATEGORIES).nullable().optional(),
 });
 
 export async function GET() {

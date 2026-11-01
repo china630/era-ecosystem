@@ -719,7 +719,14 @@ export async function applyHotelVoidToExtra(input: {
         })
       : null;
   if (!order) return { cancelled: false, reason: "not_found" };
-  if (["COMPLETED", "CANCELLED", "CHECKED_IN"].includes(order.status)) {
+  // Idempotent retry after hotel already cancelled in clinic but failed to drop the charge.
+  if (order.status === "CANCELLED" && order.cancelReason === "hotel_folio_void") {
+    return { cancelled: true };
+  }
+  if (["COMPLETED", "CHECKED_IN"].includes(order.status)) {
+    return { cancelled: false, reason: "received" };
+  }
+  if (order.status === "CANCELLED") {
     return { cancelled: false, reason: "received" };
   }
   if (order.status === "NO_SHOW") {

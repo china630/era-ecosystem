@@ -51,12 +51,33 @@ async function findLabOrder(
   episode?: EpisodeScope,
 ): Promise<{ id: string; status: string } | null> {
   const episodeFilter = episode ? { clinicalEpisodeId: episode.clinicalEpisodeId } : {};
+  const codes = lookupCodes(testCode);
+  // Prefer package burns so paid extras never close the intake slot.
+  const packageHit = await prisma.labOrder.findFirst({
+    where: {
+      patientRefId,
+      ...episodeFilter,
+      status: { not: "CANCELLED" },
+      inPackage: true,
+      OR: [
+        { items: { some: { serviceCode: { in: codes }, inPackage: true } } },
+        ...codes.flatMap((code) => [
+          { testCode: code },
+          { testCode: { startsWith: `${code},` } },
+          { testCode: { endsWith: `,${code}` } },
+        ]),
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, status: true },
+  });
+  if (packageHit) return packageHit;
   const byItem = await prisma.labOrder.findFirst({
     where: {
       patientRefId,
       ...episodeFilter,
       status: { not: "CANCELLED" },
-      items: { some: { serviceCode: { in: lookupCodes(testCode) } } },
+      items: { some: { serviceCode: { in: codes } } },
     },
     orderBy: { createdAt: "desc" },
     select: { id: true, status: true },
@@ -67,7 +88,7 @@ async function findLabOrder(
       patientRefId,
       ...episodeFilter,
       status: { not: "CANCELLED" },
-      OR: lookupCodes(testCode).flatMap((code) => [
+      OR: codes.flatMap((code) => [
         { testCode: code },
         { testCode: { startsWith: `${code},` } },
         { testCode: { endsWith: `,${code}` } },
@@ -83,20 +104,33 @@ async function findVisit(
   serviceCode: string,
   episodeId: string,
 ): Promise<{ id: string; status: string; scheduledAt: Date | null } | null> {
-  const visit = await prisma.visit.findFirst({
+  const select = {
+    id: true,
+    status: true,
+    appointment: { select: { scheduledAt: true } },
+  } as const;
+  const packageVisit = await prisma.visit.findFirst({
     where: {
       patientRefId,
       clinicalEpisodeId: episodeId,
       status: { not: "CANCELLED" },
-      serviceLines: { some: { serviceCode } },
+      serviceLines: { some: { serviceCode, inPackage: true } },
     },
     orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      status: true,
-      appointment: { select: { scheduledAt: true } },
-    },
+    select,
   });
+  const visit =
+    packageVisit ??
+    (await prisma.visit.findFirst({
+      where: {
+        patientRefId,
+        clinicalEpisodeId: episodeId,
+        status: { not: "CANCELLED" },
+        serviceLines: { some: { serviceCode } },
+      },
+      orderBy: { createdAt: "desc" },
+      select,
+    }));
   if (!visit) return null;
   return {
     id: visit.id,

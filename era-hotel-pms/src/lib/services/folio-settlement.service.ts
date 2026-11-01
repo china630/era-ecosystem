@@ -116,16 +116,18 @@ export async function settleFolio(input: {
     );
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const settlement = await tx.folioSettlement.create({
-      data: {
-        reservationId: refreshed.reservationId,
-        folioId: refreshed.id,
-        totalDue: toDecimal(balance),
-        status: 'OPEN',
-      },
-    });
+  // Cash / fiscal / loyalty run outside a DB transaction so the first settle
+  // does not hit interactive timeout when opening a shift or calling KKM.
+  const settlement = await prisma.folioSettlement.create({
+    data: {
+      reservationId: refreshed.reservationId,
+      folioId: refreshed.id,
+      totalDue: toDecimal(balance),
+      status: 'OPEN',
+    },
+  });
 
+  try {
     for (const line of cashLines) {
       if (line.method === 'LOYALTY_POINTS') {
         const ref =
@@ -151,26 +153,32 @@ export async function settleFolio(input: {
       });
       await allocatePaymentFifo(refreshed.id, payment.id, line.amount);
 
-      await tx.folioPayment.update({
+      await prisma.folioPayment.update({
         where: { id: payment.id },
         data: { settlementId: settlement.id },
       });
     }
 
-    return tx.folioSettlement.update({
+    const result = await prisma.folioSettlement.update({
       where: { id: settlement.id },
       data: { status: 'COMPLETED', completedAt: new Date() },
     });
-  });
 
-  const { syncTourBookingsAfterFolioSettle, usedGuestTender } = await import(
-    '@/lib/services/tour.service'
-  );
-  await syncTourBookingsAfterFolioSettle(
-    input.folioId,
-    usedGuestTender(cashLines.map((l) => l.method)),
-  );
-  return result;
+    const { syncTourBookingsAfterFolioSettle, usedGuestTender } = await import(
+      '@/lib/services/tour.service'
+    );
+    await syncTourBookingsAfterFolioSettle(
+      input.folioId,
+      usedGuestTender(cashLines.map((l) => l.method)),
+    );
+    return result;
+  } catch (err) {
+    await prisma.folioSettlement.update({
+      where: { id: settlement.id },
+      data: { status: 'OPEN' },
+    }).catch(() => undefined);
+    throw err;
+  }
 }
 
 export async function listSettlements(reservationId: string) {

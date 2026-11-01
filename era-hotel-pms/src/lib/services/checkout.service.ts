@@ -9,7 +9,7 @@ import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { prisma } from '@/lib/prisma';
 import { dispatchReservationCompleted } from '@/lib/integration/event-dispatcher';
 import type { DispatchResult } from '@/lib/integration/event-types';
-import { stayMoneyPair } from '@/lib/folio-money-pair';
+import { pocketNetMoney } from '@/lib/folio-money-pair';
 import {
   assertGuestFoliosZeroBalance,
   assertZeroBalance,
@@ -92,8 +92,15 @@ async function assertNoUnusedPayment(reservationId: string) {
     where: { reservationId, status: 'OPEN' },
     include: { charges: true, payments: true },
   });
+  let debt = 0;
   let unused = 0;
-  for (const folio of folios) unused += stayMoneyPair(folio.charges, folio.payments).unused;
+  for (const folio of folios) {
+    const net = pocketNetMoney(folio.charges, folio.payments);
+    debt += net.debt;
+    unused += net.unused;
+  }
+  // Do not treat guest credit + company debt as a single stay overpay.
+  if (debt > 0.01) return;
   if (unused > 0.01) {
     throw Object.assign(new Error(`UNUSED_PAYMENT:${unused.toFixed(2)}`), {
       status: 409,

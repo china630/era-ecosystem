@@ -538,7 +538,10 @@ export default function SanatoriumPage() {
               type="button"
               className={TABLE_ROW_ICON_BTN_CLASS}
               aria-label={t("treatmentChart")}
-              onClick={() => void openChart(e.id)}
+              onClick={(ev) => {
+                ev.stopPropagation();
+                void openChart(e.id);
+              }}
             >
               <ClipboardList className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
@@ -547,7 +550,8 @@ export default function SanatoriumPage() {
               className={TABLE_ROW_ICON_BTN_CLASS}
               aria-label={t("proceduresBtn")}
               disabled={!e.patientRef?.id}
-              onClick={() => {
+              onClick={(ev) => {
+                ev.stopPropagation();
                 if (!e.patientRef?.id) return;
                 openPatientCard(e.patientRef.id, e.id, "plan");
               }}
@@ -559,7 +563,10 @@ export default function SanatoriumPage() {
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
                 aria-label={t("diagnosticsBtn")}
-                onClick={() => openPatientCard(e.patientRef!.id, e.id, "diagnostics")}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  openPatientCard(e.patientRef!.id, e.id, "diagnostics");
+                }}
               >
                 <TestTube2 className="h-4 w-4 text-[#2980B9]" aria-hidden />
               </button>
@@ -569,7 +576,10 @@ export default function SanatoriumPage() {
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
                 aria-label={t("patientCard")}
-                onClick={() => openPatientCard(e.patientRef!.id, e.id, "guest")}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  openPatientCard(e.patientRef!.id, e.id, "guest");
+                }}
               >
                 <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
               </button>
@@ -583,7 +593,10 @@ export default function SanatoriumPage() {
                 title={
                   e.canCloseWalkIn === false ? t("closeWalkInBusyHint") : t("closeWalkIn")
                 }
-                onClick={() => void closeWalkIn(e.id)}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  void closeWalkIn(e.id);
+                }}
               >
                 <DoorClosed className="h-4 w-4 text-[#E74C3C]" aria-hidden />
               </button>
@@ -738,6 +751,19 @@ export default function SanatoriumPage() {
             embedded
             sort={listSort}
             onSortChange={setListSort}
+            onRowClick={(e) => setSelectedId(e.id)}
+            onRowDoubleClick={(e) => {
+              if (!e.patientRef?.id) {
+                setSelectedId(e.id);
+                return;
+              }
+              openPatientCard(e.patientRef.id, e.id, "guest");
+            }}
+            rowClassName={(e) =>
+              e.id === selectedId
+                ? "bg-white ring-2 ring-inset ring-[#2980B9]"
+                : undefined
+            }
           />
         }
         footer={

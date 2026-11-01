@@ -9,24 +9,88 @@ import {
   useDebouncedValue,
   Field,
   PageHeader,
+  TEXT_MUTED_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
 import { bakuDateDisplay } from '@era/satellite-kit/time';
-import { HotelDataGrid } from "@/components/HotelDataGrid";
+import { HotelDataGrid } from '@/components/HotelDataGrid';
 import GuestCardModal from '@/components/GuestCardModal';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { isDepartedPartyRow } from '@/lib/party-departed-stamp';
 
 type InHouseGuest = {
+  rowKey: string;
   reservationId: string;
-  guestId: string;
+  guestId: string | null;
   guestName: string;
   roomNumber: string | null;
   status: string;
   checkInDate: string;
   checkOutDate: string;
 };
+
+type StayPayload = {
+  id: string;
+  status: string;
+  guest: { id: string; fullName: string };
+  room: { roomNumber: string } | null;
+  checkInDate?: string;
+  checkOutDate?: string;
+  paxGuests?: Array<{
+    id: string;
+    guestId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    departedAt?: string | null;
+    guestState?: string | null;
+    isPrimary?: boolean;
+  }>;
+};
+
+function livePartyRows(stay: StayPayload): InHouseGuest[] {
+  const checkInDate = String(stay.checkInDate ?? '').slice(0, 10);
+  const checkOutDate = String(stay.checkOutDate ?? '').slice(0, 10);
+  const roomNumber = stay.room?.roomNumber ?? null;
+  const pax = stay.paxGuests ?? [];
+  const live = pax.filter((row) => !isDepartedPartyRow(row));
+
+  // Party rows exist but everyone departed → omit (not an occupied in-house line).
+  if (pax.length > 0 && live.length === 0) {
+    return [];
+  }
+
+  // Legacy stay with no pax rows → primary guest only.
+  if (live.length === 0) {
+    return [
+      {
+        rowKey: `${stay.id}:primary`,
+        reservationId: stay.id,
+        guestId: stay.guest.id,
+        guestName: stay.guest.fullName,
+        roomNumber,
+        status: stay.status,
+        checkInDate,
+        checkOutDate,
+      },
+    ];
+  }
+
+  return live.map((row) => {
+    const name = [row.firstName, row.lastName].filter(Boolean).join(' ').trim();
+    return {
+      rowKey: `${stay.id}:${row.id}`,
+      reservationId: stay.id,
+      guestId: row.guestId?.trim() || null,
+      guestName: name || stay.guest.fullName,
+      roomNumber,
+      status: stay.status,
+      checkInDate,
+      checkOutDate,
+    };
+  });
+}
 
 export default function InHousePage() {
   const { can } = useAuth();
@@ -42,33 +106,14 @@ export default function InHousePage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/reservations?status=IN_HOUSE');
+      const res = await fetch('/api/reservations?status=IN_HOUSE&includeParty=1');
       const data = await res.json();
       if (!res.ok) {
         showApiError(data, tc('loadError'));
         return;
       }
-      const list = Array.isArray(data) ? data : [];
-      setRows(
-        list.map(
-          (r: {
-            id: string;
-            status: string;
-            guest: { id: string; fullName: string };
-            room: { roomNumber: string } | null;
-            checkInDate?: string;
-            checkOutDate?: string;
-          }) => ({
-            reservationId: r.id,
-            guestId: r.guest.id,
-            guestName: r.guest.fullName,
-            roomNumber: r.room?.roomNumber ?? null,
-            status: r.status,
-            checkInDate: String(r.checkInDate ?? '').slice(0, 10),
-            checkOutDate: String(r.checkOutDate ?? '').slice(0, 10),
-          }),
-        ),
-      );
+      const list = (Array.isArray(data) ? data : []) as StayPayload[];
+      setRows(list.flatMap((stay) => livePartyRows(stay)));
     } catch (e) {
       showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     }
@@ -89,16 +134,16 @@ export default function InHousePage() {
   }, [rows]);
 
   const filtered = useMemo(() => {
-    const q = debouncedQ.trim().toLowerCase();
+    const needle = debouncedQ.trim().toLowerCase();
     return rows.filter((r) => {
       if (room && r.roomNumber !== room) return false;
-      if (!q) return true;
-      return `${r.guestName} ${r.roomNumber ?? ''} ${r.status}`.toLowerCase().includes(q);
+      if (!needle) return true;
+      return `${r.guestName} ${r.roomNumber ?? ''} ${r.status}`.toLowerCase().includes(needle);
     });
   }, [rows, debouncedQ, room]);
 
   if (!can(PERMISSIONS.FOLIO_READ) && !can(PERMISSIONS.RESERVATIONS_READ)) {
-    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
+    return <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc('accessDenied')}</p>;
   }
 
   return (
@@ -148,15 +193,18 @@ export default function InHousePage() {
             header: t('guest'),
             sortable: true,
             sortValue: (r) => r.guestName,
-            render: (r) => (
-              <button
-                type="button"
-                className="text-[#2980B9] hover:underline"
-                onClick={() => setGuestCardId(r.guestId)}
-              >
-                {r.guestName}
-              </button>
-            ),
+            render: (r) =>
+              r.guestId ? (
+                <button
+                  type="button"
+                  className="text-[#2980B9] hover:underline"
+                  onClick={() => setGuestCardId(r.guestId)}
+                >
+                  {r.guestName}
+                </button>
+              ) : (
+                <span>{r.guestName}</span>
+              ),
           },
           { key: 'status', header: tc('status'), sortable: true, render: (r) => r.status },
           {
@@ -191,7 +239,7 @@ export default function InHousePage() {
           },
         ]}
         rows={filtered as (InHouseGuest & Record<string, unknown>)[]}
-        rowKey={(r) => r.reservationId}
+        rowKey={(r) => r.rowKey}
         onRowDoubleClick={(r) => setStayCardId(r.reservationId)}
         defaultSort={{ key: 'room', dir: 'asc' }}
         emptyMessage={t('empty')}

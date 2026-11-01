@@ -379,9 +379,6 @@ export async function applyPackageAutoBlocks(
   const { syncEntitlementUsage } = await import(
     "@/domain/sanatorium/entitlement-usage.service"
   );
-  const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
-    "@/domain/sanatorium/entitlement-charge.service"
-  );
   const patientOrigin =
     episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
 
@@ -435,16 +432,8 @@ export async function applyPackageAutoBlocks(
       continue;
     }
 
-    const charge = applyPriceMissingFallback(
-      await resolveEntitlementCharge({
-        episodeId,
-        patientOrigin,
-        quotaCode: block.procedureCode,
-        serviceCode,
-        inPackage: true,
-      }),
-      { serviceCode, where: "auto-apply-visit" },
-    );
+    // Package auto visits are entitlement burns — never stamp list price here.
+    // Over-quota paid exams go through diagnostics-extras / forcePaid.
 
     const visit = await prisma.visit.create({
       data: {
@@ -457,7 +446,7 @@ export async function applyPackageAutoBlocks(
         patientOrigin: episode.patientOrigin,
         reservationId: episode.reservationId,
         roomNumber: episode.roomNumber,
-        amountNet: charge.amountNet,
+        amountNet: 0,
       },
     });
     await prisma.visitServiceLine.create({
@@ -465,7 +454,7 @@ export async function applyPackageAutoBlocks(
         visitId: visit.id,
         serviceCode,
         description: VISIT_TITLES[serviceCode] ?? block.procedureName ?? serviceCode,
-        amount: charge.amountNet,
+        amount: 0,
         inPackage: Boolean(instance),
         packageQuotaCode: instance ? block.procedureCode : null,
       },

@@ -20,52 +20,268 @@ import {
 import { enterRequestTenant } from "@/lib/request-organization";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 
+export type ExtraTicketListRow = {
+  id: string;
+  kind: "procedure" | "lab" | "visit";
+  procedureCode: string;
+  procedureName: string;
+  amountNet: number;
+  patientOrigin: string;
+  scheduledAt: Date;
+  resourceId: string | null;
+  patientRefId: string;
+  patientRef: { fullName: string; refCode: string };
+  clinicalEpisodeId: string | null;
+  clinicalEpisode: { roomNumber: string | null } | null;
+  status: string;
+  extraTicketIssuedAt: Date | null;
+};
+
+function diagnosticTitle(
+  locale: string | null | undefined,
+  svc:
+    | { titleAz: string | null; titleRu: string | null; titleEn: string | null }
+    | null
+    | undefined,
+  fallback: string,
+): string {
+  const loc = (locale || "az").slice(0, 2).toLowerCase();
+  const az = svc?.titleAz?.trim() || "";
+  const ru = svc?.titleRu?.trim() || "";
+  const en = svc?.titleEn?.trim() || "";
+  if (loc === "ru") return ru || az || en || fallback;
+  if (loc === "en") return en || az || ru || fallback;
+  return az || ru || en || fallback;
+}
+
 export async function listExtrasAwaitingTicket(
   organizationId?: string | null,
-  filter?: { room?: string | null; q?: string | null },
-) {
+  filter?: { room?: string | null; q?: string | null; locale?: string | null },
+): Promise<{
+  dualRun: boolean;
+  orders: ExtraTicketListRow[];
+  needsFilter: boolean;
+}> {
   const orgId = resolveClinicCutoverOrgId(organizationId);
   enterSatelliteTenant({ organizationId: orgId });
   const dualRun = await isClinicElektrawebDualRun(orgId);
   const room = filter?.room?.trim() ?? "";
   const q = filter?.q?.trim() ?? "";
+  const locale = filter?.locale ?? "az";
   if (!room && !q) {
-    return { dualRun, orders: [], needsFilter: true as const };
+    return { dualRun, orders: [], needsFilter: true };
   }
   const { start } = bakuDayBounds(todayBakuYmd());
-  const orders = await prisma.procedureOrder.findMany({
-    where: {
-      extraTicketIssuedAt: null,
-      importedHistorical: false,
-      scheduledAt: { gte: start },
-      OR: [
-        { status: "PENDING_PAY" },
-        {
-          status: { in: ["PROPOSED", "SCHEDULED"] },
-          amountNet: { gt: 0 },
+  const roomFilter = room ? { clinicalEpisode: { roomNumber: room } } : {};
+  const qMode = "insensitive" as const;
+  const patientNameQ = q
+    ? [
+        { patientRef: { fullName: { contains: q, mode: qMode } } },
+        { patientRef: { refCode: { contains: q, mode: qMode } } },
+      ]
+    : [];
+
+  const [procedures, labs, visits] = await Promise.all([
+    prisma.procedureOrder.findMany({
+      where: {
+        extraTicketIssuedAt: null,
+        importedHistorical: false,
+        scheduledAt: { gte: start },
+        OR: [
+          { status: "PENDING_PAY" },
+          {
+            status: { in: ["PROPOSED", "SCHEDULED"] },
+            amountNet: { gt: 0 },
+          },
+        ],
+        ...roomFilter,
+        ...(q
+          ? {
+              AND: [
+                {
+                  OR: [
+                    { procedureName: { contains: q, mode: qMode } },
+                    { procedureCode: { contains: q, mode: qMode } },
+                    ...patientNameQ,
+                  ],
+                },
+              ],
+            }
+          : {}),
+      },
+      include: { patientRef: true, clinicalEpisode: { select: { roomNumber: true } } },
+      orderBy: { scheduledAt: "asc" },
+    }),
+    prisma.labOrder.findMany({
+      where: {
+        amountNet: { gt: 0 },
+        settledAt: null,
+        inPackage: false,
+        status: { not: "CANCELLED" },
+        ...(room
+          ? {
+              AND: [
+                {
+                  OR: [
+                    { roomNumber: room },
+                    { episode: { roomNumber: room } },
+                  ],
+                },
+              ],
+            }
+          : {}),
+        ...(q
+          ? {
+              AND: [
+                {
+                  OR: [
+                    ...patientNameQ,
+                    { testCode: { contains: q, mode: qMode } },
+                    { items: { some: { serviceCode: { contains: q, mode: qMode } } } },
+                    {
+                      items: {
+                        some: {
+                          diagnosticService: {
+                            OR: [
+                              { titleAz: { contains: q, mode: qMode } },
+                              { titleRu: { contains: q, mode: qMode } },
+                              { titleEn: { contains: q, mode: qMode } },
+                              { code: { contains: q, mode: qMode } },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        patientRef: true,
+        episode: { select: { roomNumber: true } },
+        items: {
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          include: {
+            diagnosticService: {
+              select: { titleAz: true, titleRu: true, titleEn: true, code: true },
+            },
+          },
         },
-      ],
-      ...(room
-        ? { clinicalEpisode: { roomNumber: room } }
-        : {}),
-      ...(q
-        ? {
-            AND: [
-              {
-                OR: [
-                  { procedureName: { contains: q, mode: "insensitive" } },
-                  { patientRef: { fullName: { contains: q, mode: "insensitive" } } },
-                  { patientRef: { refCode: { contains: q, mode: "insensitive" } } },
-                ],
-              },
-            ],
-          }
-        : {}),
-    },
-    include: { patientRef: true, clinicalEpisode: { select: { roomNumber: true } } },
-    orderBy: { scheduledAt: "asc" },
-  });
-  return { dualRun, orders, needsFilter: false as const };
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.visit.findMany({
+      where: {
+        amountNet: { gt: 0 },
+        settledAt: null,
+        status: { not: "CANCELLED" },
+        NOT: { serviceLines: { some: { inPackage: true } } },
+        ...(room
+          ? {
+              AND: [
+                {
+                  OR: [
+                    { roomNumber: room },
+                    { clinicalEpisode: { roomNumber: room } },
+                  ],
+                },
+              ],
+            }
+          : {}),
+        ...(q
+          ? {
+              AND: [
+                {
+                  OR: [
+                    ...patientNameQ,
+                    {
+                      serviceLines: {
+                        some: {
+                          OR: [
+                            { serviceCode: { contains: q, mode: qMode } },
+                            { description: { contains: q, mode: qMode } },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        patientRef: true,
+        clinicalEpisode: { select: { roomNumber: true } },
+        serviceLines: { orderBy: { id: "asc" }, take: 1 },
+        appointment: { select: { scheduledAt: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
+
+  const orders: ExtraTicketListRow[] = [
+    ...procedures.map((o) => ({
+      id: o.id,
+      kind: "procedure" as const,
+      procedureCode: o.procedureCode,
+      procedureName: o.procedureName,
+      amountNet: Number(o.amountNet),
+      patientOrigin: o.patientOrigin,
+      scheduledAt: o.scheduledAt,
+      resourceId: o.resourceId,
+      patientRefId: o.patientRefId,
+      patientRef: o.patientRef,
+      clinicalEpisodeId: o.clinicalEpisodeId ?? null,
+      clinicalEpisode: o.clinicalEpisode,
+      status: o.status,
+      extraTicketIssuedAt: o.extraTicketIssuedAt,
+    })),
+    ...labs.map((o) => {
+      const svc = o.items[0]?.diagnosticService;
+      const code = o.items[0]?.serviceCode || o.testCode;
+      return {
+        id: o.id,
+        kind: "lab" as const,
+        procedureCode: code,
+        procedureName: diagnosticTitle(locale, svc, code),
+        amountNet: Number(o.amountNet),
+        patientOrigin: o.patientOrigin ?? "IN_HOUSE",
+        scheduledAt: o.scheduledCollectionAt ?? o.createdAt,
+        resourceId: null,
+        patientRefId: o.patientRefId,
+        patientRef: o.patientRef,
+        clinicalEpisodeId: o.clinicalEpisodeId ?? null,
+        clinicalEpisode: o.episode,
+        status: "AWAITING_PAYMENT",
+        extraTicketIssuedAt: null,
+      };
+    }),
+    ...visits.map((v) => {
+      const line = v.serviceLines[0];
+      return {
+        id: v.id,
+        kind: "visit" as const,
+        procedureCode: line?.serviceCode ?? "VISIT",
+        procedureName: line?.description || line?.serviceCode || "VISIT",
+        amountNet: Number(v.amountNet),
+        patientOrigin: v.patientOrigin ?? "IN_HOUSE",
+        scheduledAt: v.appointment?.scheduledAt ?? v.createdAt,
+        resourceId: null,
+        patientRefId: v.patientRefId,
+        patientRef: v.patientRef,
+        clinicalEpisodeId: v.clinicalEpisodeId ?? null,
+        clinicalEpisode: v.clinicalEpisode,
+        status: "AWAITING_PAYMENT",
+        extraTicketIssuedAt: null,
+      };
+    }),
+  ].sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+
+  return { dualRun, orders, needsFilter: false };
 }
 
 export async function issueExtraTickets(
