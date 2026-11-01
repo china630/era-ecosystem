@@ -5,6 +5,7 @@ import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 import { HOTEL_LOOKUP_DEFAULTS } from '@/lib/hotel-lookup-defaults';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { recordHotelAudit } from '@/lib/satellite-audit';
+import { defaultPaymentCategoryForRole } from '@/lib/payment-category';
 
 type LocalizedNames = { nameAz?: string | null; nameRu?: string | null; nameEn?: string | null };
 
@@ -275,11 +276,17 @@ export async function createRevenueCode(input: {
   allowManualCharge?: boolean;
   allowManualPayment?: boolean;
   reportType?: string | null;
+  paymentCategory?: string | null;
+  systemRole?: string | null;
 } & LocalizedNames) {
   if (!input.departmentId) throw new Error('DEPARTMENT_REQUIRED');
-  const { targetFolioType, ...codeData } = input;
+  const { targetFolioType, systemRole, paymentCategory: paymentCategoryIn, ...codeData } = input;
+  const paymentCategory =
+    paymentCategoryIn ?? defaultPaymentCategoryForRole(systemRole ?? null) ?? undefined;
   return prisma.$transaction(async (tx) => {
-    const code = await tx.revenueCode.create({ data: codeData });
+    const code = await tx.revenueCode.create({
+      data: { ...codeData, paymentCategory: paymentCategory ?? null },
+    });
     if (targetFolioType) {
       await tx.folioRoutingRule.create({
         data: { revenueCodeId: code.id, targetFolioType },
@@ -303,6 +310,7 @@ export async function updateRevenueCode(
     allowManualCharge?: boolean;
     allowManualPayment?: boolean;
     reportType?: string | null;
+    paymentCategory?: string | null;
   } & LocalizedNames,
 ) {
   const { targetFolioType, ...codeData } = input;

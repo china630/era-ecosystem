@@ -1,9 +1,15 @@
 /**
  * Two sums on a stay, not one net.
- * Debt is charges an article payment has not covered.
+ * Debt is charges a matching payment has not covered.
  * Unused is what is left on the blue payment lines.
- * A room payment does not cover a medical charge.
+ * Buckets are by revenue article (legacy) or by payment category.
  */
+
+import {
+  isPaymentCategory,
+  resolvePaymentCategory,
+  type PaymentCategory,
+} from '@/lib/payment-category';
 
 export type MoneyLine = {
   id?: string;
@@ -12,8 +18,13 @@ export type MoneyLine = {
   kind?: string | null;
   voidedAt?: string | Date | null;
   revenueCodeId?: string | null;
+  paymentCategory?: string | null;
   refundOfPaymentId?: string | null;
-  revenueCode?: { code?: string | null } | null;
+  revenueCode?: {
+    code?: string | null;
+    paymentCategory?: string | null;
+    systemRole?: string | null;
+  } | null;
 };
 
 function num(value: unknown): number {
@@ -42,12 +53,17 @@ export function articleKeyOf(row: {
   return row.revenueCodeId || row.revenueCode?.code?.trim() || '';
 }
 
-export function stayMoneyPair(
+export function categoryKeyOf(row: MoneyLine): string {
+  return resolvePaymentCategory(row) ?? '';
+}
+
+function pairByBuckets(
   charges: MoneyLine[],
   payments: MoneyLine[],
-  articleKey?: string | null,
+  keyOf: (row: MoneyLine) => string,
+  filter?: string | null,
 ): { debt: number; unused: number } {
-  const filter = articleKey?.trim() || '';
+  const want = filter?.trim() || '';
   const refundByOriginal = new Map<string, number>();
   let orphanRefund = 0;
   for (const payment of payments) {
@@ -79,19 +95,19 @@ export function stayMoneyPair(
 
   for (const charge of charges) {
     const qty = charge.qty == null ? 1 : Number(charge.qty);
-    bucket(articleKeyOf(charge)).charges += num(charge.amount) * (Number.isFinite(qty) ? qty : 1);
+    bucket(keyOf(charge)).charges += num(charge.amount) * (Number.isFinite(qty) ? qty : 1);
   }
   for (const payment of payments) {
     if (payment.voidedAt || payment.kind === 'REFUND') continue;
     const refunded = payment.id ? refundByOriginal.get(payment.id) ?? 0 : 0;
-    bucket(articleKeyOf(payment)).payments += num(payment.amount) - refunded;
+    bucket(keyOf(payment)).payments += num(payment.amount) - refunded;
   }
 
   let debt = 0;
   let unused = 0;
   let loosePay = 0;
   for (const [key, row] of buckets) {
-    if (filter && key !== filter) continue;
+    if (want && key !== want) continue;
     if (!key) {
       if (row.charges > 0) debt += row.charges;
       if (row.payments > 0) loosePay += row.payments;
@@ -102,7 +118,7 @@ export function stayMoneyPair(
     if (net > 0.009) debt += net;
     else if (net < -0.009) unused += -net;
   }
-  if (!filter) {
+  if (!want) {
     const take = Math.min(debt, Math.max(0, loosePay));
     debt -= take;
     loosePay -= take;
@@ -110,4 +126,64 @@ export function stayMoneyPair(
     debt += orphanRefund;
   }
   return { debt: round2(Math.max(0, debt)), unused: round2(Math.max(0, unused)) };
+}
+
+/** Legacy: debt / unused per revenue article. */
+export function stayMoneyPair(
+  charges: MoneyLine[],
+  payments: MoneyLine[],
+  articleKey?: string | null,
+): { debt: number; unused: number } {
+  return pairByBuckets(charges, payments, articleKeyOf, articleKey);
+}
+
+/** Debt / unused per cashier payment category (LODGING | CLINIC | FB | OTHER). */
+export function stayCategoryMoneyPair(
+  charges: MoneyLine[],
+  payments: MoneyLine[],
+  category?: PaymentCategory | string | null,
+): { debt: number; unused: number } {
+  const filter = isPaymentCategory(category) ? category : category?.trim() || null;
+  return pairByBuckets(charges, payments, categoryKeyOf, filter);
+}
+
+/** Net all categories in one pocket into a single debt or unused (checkout rollup). */
+export function pocketNetMoney(
+  charges: MoneyLine[],
+  payments: MoneyLine[],
+): { services: number; paymentsTotal: number; debt: number; unused: number } {
+  let services = 0;
+  for (const charge of charges) {
+    const qty = charge.qty == null ? 1 : Number(charge.qty);
+    services += num(charge.amount) * (Number.isFinite(qty) ? qty : 1);
+  }
+  const refundByOriginal = new Map<string, number>();
+  let refunds = 0;
+  for (const payment of payments) {
+    if (payment.voidedAt) continue;
+    if (payment.kind === 'REFUND') {
+      refunds += num(payment.amount);
+      if (payment.refundOfPaymentId) {
+        refundByOriginal.set(
+          payment.refundOfPaymentId,
+          (refundByOriginal.get(payment.refundOfPaymentId) ?? 0) + num(payment.amount),
+        );
+      }
+    }
+  }
+  let paymentsTotal = 0;
+  for (const payment of payments) {
+    if (payment.voidedAt || payment.kind === 'REFUND') continue;
+    const refunded = payment.id ? refundByOriginal.get(payment.id) ?? 0 : 0;
+    paymentsTotal += num(payment.amount) - refunded;
+  }
+  services = round2(services);
+  paymentsTotal = round2(Math.max(0, paymentsTotal));
+  const net = round2(services - paymentsTotal);
+  return {
+    services,
+    paymentsTotal,
+    debt: net > 0.009 ? net : 0,
+    unused: net < -0.009 ? -net : 0,
+  };
 }

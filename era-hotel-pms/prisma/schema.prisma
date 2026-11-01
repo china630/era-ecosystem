@@ -844,6 +844,8 @@ model RevenueCode {
   allowManualCharge  Boolean @default(true)
   /// Accept payment picker.
   allowManualPayment Boolean @default(true)
+  /// Cashier category: LODGING | CLINIC | FB | OTHER (editable; seeded from systemRole).
+  paymentCategory String?
   /// LODGING | EXTRA | MEDICAL | SHOP | FB | TAX | DISCOUNT
   reportType   String?
   departmentId String?
@@ -2574,9 +2576,11 @@ model FolioPayment {
   businessDate    DateTime         @db.Date
   fiscalReceiptId String?
   fiscalQrPayload String?
-  /** Article this payment is for. Leftover credit stays on this article. */
+  /** Article this payment is for. Leftover credit stays on this article (legacy). */
   revenueCodeId   String?
   revenueCode     RevenueCode?     @relation(fields: [revenueCodeId], references: [id], onDelete: SetNull)
+  /** Cashier category credit/debt bucket: LODGING | CLINIC | FB | OTHER. */
+  paymentCategory String?
   createdAt       DateTime         @default(now())
   allocations     FolioPaymentAllocation[]
 
@@ -2584,6 +2588,7 @@ model FolioPayment {
   @@index([refundOfPaymentId])
   @@index([organizationId])
   @@index([revenueCodeId])
+  @@index([paymentCategory])
 }
 
 /// Personal debt left by a guest at check-out. Not the agency city ledger.

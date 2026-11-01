@@ -23,7 +23,8 @@ import {
   showSuccess,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
-import { stayMoneyPair } from '@/lib/folio-money-pair';
+import { pocketNetMoney } from '@/lib/folio-money-pair';
+import { resolvePaymentCategory } from '@/lib/payment-category';
 import {
   formatLedgerAmount,
   ledgerCreditAmount,
@@ -46,12 +47,15 @@ import {
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
+import { FolioCategoryRefundModal } from '@/components/folio/FolioCategoryRefundModal';
 import { displayFolioChargeDescription } from '@/lib/folio-charge-note';
 import { escapePrintHtml, openPrintDocument } from '@/lib/print-window';
 import { revenueLabel } from '@/lib/folio-article-summary';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { accountBalance, type FolioParty, type PayerGuest } from '@/lib/folio-payer';
+import { stayCategoryMoneyPair } from '@/lib/folio-money-pair';
+import { PAYMENT_CATEGORIES } from '@/lib/payment-category';
 import type { FolioSubTab, PaxRow } from './types';
 
 export type FolioAccount = {
@@ -223,6 +227,7 @@ export function ReservationCardFolioTab({
   const locale = useLocale();
   const { can } = useAuth();
   const [payOpen, setPayOpen] = useState(false);
+  const [categoryRefundOpen, setCategoryRefundOpen] = useState(false);
   const [payLineId, setPayLineId] = useState<string | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [voidId, setVoidId] = useState<string | null>(null);
@@ -303,7 +308,19 @@ export function ReservationCardFolioTab({
           folioStatus: folio.status,
           kind: 'charge',
           description: `${isAdjust ? `${tf('adjustBadge')}: ` : ''}${cityLine}${received}`,
-          code: revenueLabel(charge.revenueCode, locale),
+          code: (() => {
+            const cat = resolvePaymentCategory({
+              ...charge,
+              revenueCode: charge.revenueCode
+                ? {
+                    ...charge.revenueCode,
+                    paymentCategory: (charge.revenueCode as { paymentCategory?: string | null })
+                      .paymentCategory,
+                  }
+                : null,
+            });
+            return cat ? tf(`paymentCategory_${cat}`) : revenueLabel(charge.revenueCode, locale);
+          })(),
           amount: Number(charge.amount) * (charge.qty == null ? 1 : Number(charge.qty)),
           ...stamp,
           adjustsChargeId: charge.adjustsChargeId,
@@ -326,9 +343,14 @@ export function ReservationCardFolioTab({
           folioStatus: folio.status,
           kind: 'payment',
           description: isRefund ? tf('refund') : tf('ledgerPayment'),
-          code: payment.revenueCode
-            ? revenueLabel(payment.revenueCode, locale)
-            : tPay(payment.paymentMethod as 'CASH'),
+          code: (() => {
+            const cat = resolvePaymentCategory(payment as {
+              paymentCategory?: string | null;
+              revenueCode?: { paymentCategory?: string | null; systemRole?: string | null } | null;
+            });
+            if (cat) return tf(`paymentCategory_${cat}`);
+            return tPay(payment.paymentMethod as 'CASH');
+          })(),
           amount: Number(payment.amount),
           ...stamp,
           paymentId: payment.id,
@@ -530,7 +552,7 @@ export function ReservationCardFolioTab({
         : []),
       {
         key: 'code',
-        header: tf('xercMaddesi'),
+        header: tf('folioCategory'),
         className: 'max-w-[9rem] truncate',
         render: (row) => row.code,
       },
@@ -673,6 +695,13 @@ export function ReservationCardFolioTab({
   const selectedPayments = filteredRows.filter(
     (row) => row.kind === 'payment' && selectedIds.includes(row.id) && row.paymentId && row.folioStatus === 'OPEN',
   );
+  const hasCategoryCredit = accounts.some(
+    (folio) =>
+      folio.status === 'OPEN' &&
+      PAYMENT_CATEGORIES.some(
+        (cat) => stayCategoryMoneyPair(folio.charges, folio.payments ?? [], cat).unused > 0.01,
+      ),
+  );
   const cashBar = (
     <div className="flex flex-wrap gap-2">
       {canPostCharges && can(PERMISSIONS.FOLIO_CHARGE) ? (
@@ -687,6 +716,15 @@ export function ReservationCardFolioTab({
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <button type="button" className={DANGER_BUTTON_CLASS} onClick={() => setPayOpen(true)}>
           {tf('extraPayment')}
+        </button>
+      ) : null}
+      {can(PERMISSIONS.FOLIO_PAYMENT) && hasCategoryCredit ? (
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          onClick={() => setCategoryRefundOpen(true)}
+        >
+          {tf('categoryRefund')}
         </button>
       ) : null}
       {can(PERMISSIONS.FOLIO_CHARGE) ? (
@@ -736,6 +774,15 @@ export function ReservationCardFolioTab({
         onDone={onChanged}
         reservationId={reservationId}
         party={partyOf(folioTab)}
+        guests={payers}
+        hasCompany={hasCompany || accounts.some((folio) => folio.type === 'COMPANY')}
+        hasAgency={hasAgency || accounts.some((folio) => folio.type === 'AGENCY')}
+      />
+      <FolioCategoryRefundModal
+        open={categoryRefundOpen}
+        onClose={() => setCategoryRefundOpen(false)}
+        onDone={onChanged}
+        reservationId={reservationId}
         guests={payers}
         hasCompany={hasCompany || accounts.some((folio) => folio.type === 'COMPANY')}
         hasAgency={hasAgency || accounts.some((folio) => folio.type === 'AGENCY')}
@@ -802,77 +849,35 @@ export function ReservationCardFolioTab({
         : focusGuestId
           ? accounts.filter((folio) => folio.type === 'GUEST' && folio.reservationGuestId === focusGuestId)
           : accounts;
-  const moneyPair = stayMoneyPair(
-    focusFolios.flatMap((folio) =>
-      folio.charges.filter(
-        (charge) => articleFilter === 'all' || revenueLabel(charge.revenueCode, locale) === articleFilter,
-      ),
-    ),
-    focusFolios.flatMap((folio) =>
-      (folio.payments ?? []).filter(
-        (payment) =>
-          articleFilter === 'all' ||
-          (payment.revenueCode != null && revenueLabel(payment.revenueCode, locale) === articleFilter),
-      ),
-    ),
-  );
-
-  const guestFocusDebt = stayMoneyPair(
-    accounts
-      .filter((folio) => folio.status === 'OPEN' && folio.type === 'GUEST')
-      .flatMap((folio) => folio.charges),
-    accounts
-      .filter((folio) => folio.status === 'OPEN' && folio.type === 'GUEST')
-      .flatMap((folio) => folio.payments ?? []),
-  ).debt;
-  const companyFocusDebt = stayMoneyPair(
-    accounts
-      .filter((folio) => folio.status === 'OPEN' && folio.type === 'COMPANY')
-      .flatMap((folio) => folio.charges),
-    accounts
-      .filter((folio) => folio.status === 'OPEN' && folio.type === 'COMPANY')
-      .flatMap((folio) => folio.payments ?? []),
-  ).debt;
-  const agencyFocusDebt = stayMoneyPair(
-    accounts
-      .filter((folio) => folio.status === 'OPEN' && folio.type === 'AGENCY')
-      .flatMap((folio) => folio.charges),
-    accounts
-      .filter((folio) => folio.status === 'OPEN' && folio.type === 'AGENCY')
-      .flatMap((folio) => folio.payments ?? []),
-  ).debt;
-
-  const debtSummaryLines = (() => {
-    if (folioFocus === 'agency') {
-      return [
-        `${t('agencyOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`,
-        `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
-      ];
-    }
-    if (folioFocus === 'company') {
-      return [
-        `${t('companyOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`,
-        `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
-      ];
-    }
-    if (focusGuestId || folioFocus.startsWith('guest:')) {
-      return [
-        `${t('guestOwes')}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`,
-        `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
-      ];
-    }
-    const lines: string[] = [];
-    if (guestFocusDebt > 0.01) lines.push(`${t('guestOwes')}: ${guestFocusDebt.toFixed(2)} ${displayCurrency}`);
-    if (companyFocusDebt > 0.01) {
-      lines.push(`${t('companyOwes')}: ${companyFocusDebt.toFixed(2)} ${displayCurrency}`);
-    }
-    if (agencyFocusDebt > 0.01) {
-      lines.push(`${t('agencyOwes')}: ${agencyFocusDebt.toFixed(2)} ${displayCurrency}`);
-    }
-    if (lines.length === 0) lines.push(`${t('guestOwes')}: 0.00 ${displayCurrency}`);
-    lines.push(`${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`);
-    return lines;
+  // Sum pocket debts; hide credit while any focused pocket still owes (no guest↔company net).
+  const moneyPair = (() => {
+    const nets = focusFolios.map((folio) =>
+      pocketNetMoney(folio.charges, folio.payments ?? []),
+    );
+    const debt = nets.reduce((sum, row) => sum + row.debt, 0);
+    const unused = debt > 0.01 ? 0 : nets.reduce((sum, row) => sum + row.unused, 0);
+    return { debt, unused };
   })();
+
+  const debtSummary = (() => {
+    if (moneyPair.debt > 0.01) {
+      const label =
+        folioFocus === 'agency'
+          ? t('agencyOwes')
+          : folioFocus === 'company'
+            ? t('companyOwes')
+            : t('guestOwes');
+      return { text: `${label}: ${moneyPair.debt.toFixed(2)} ${displayCurrency}`, tone: 'debt' as const };
+    }
+    if (moneyPair.unused > 0.01) {
+      return {
+        text: `${t('overpaid')}: ${moneyPair.unused.toFixed(2)} ${displayCurrency}`,
+        tone: 'credit' as const,
+      };
+    }
+    return { text: `${t('guestOwes')}: 0.00 ${displayCurrency}`, tone: 'zero' as const };
+  })();
+  const debtSummaryLines = [debtSummary.text];
 
   function printRows() {
     const body = filteredRows
@@ -970,7 +975,7 @@ export function ReservationCardFolioTab({
       <div className="flex w-full shrink-0 flex-nowrap items-end gap-2">
         <CatalogField
           kind="CLOSED_SMALL"
-          label={tf('xercMaddesi')}
+          label=""
           value={articleFilter}
           onChange={(v) => setArticleFilter(String(v ?? 'all'))}
           options={[
@@ -981,7 +986,7 @@ export function ReservationCardFolioTab({
         />
         <CatalogField
           kind="CLOSED_SMALL"
-          label={tf('lineKind')}
+          label=""
           value={lineKind}
           onChange={(v) => setLineKind((String(v ?? 'all') as 'all' | 'charge' | 'payment'))}
           options={[
@@ -1029,7 +1034,15 @@ export function ReservationCardFolioTab({
               <td className="px-2 py-1 text-right text-[14px] font-medium text-[#95A5A6]">
                 {t('folioTotalPayments')}: {paymentTotal.toFixed(2)} {displayCurrency}
               </td>
-              <td className="whitespace-nowrap px-2 py-1.5 text-right text-[14px] font-semibold text-[#34495E]">
+              <td
+                className={`whitespace-nowrap px-2 py-1.5 text-right text-[14px] font-semibold ${
+                  debtSummary.tone === 'debt'
+                    ? 'text-[#C0392B]'
+                    : debtSummary.tone === 'credit'
+                      ? 'text-sky-700'
+                      : 'text-[#34495E]'
+                }`}
+              >
                 {debtSummaryLines.map((line) => (
                   <div key={line}>{line}</div>
                 ))}

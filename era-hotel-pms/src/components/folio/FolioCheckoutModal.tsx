@@ -20,7 +20,7 @@ import {
   showWarning,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import { stayMoneyPair } from '@/lib/folio-money-pair';
+import { pocketNetMoney } from '@/lib/folio-money-pair';
 import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -89,6 +89,11 @@ type ClinicCheckout = {
   unavailable?: boolean;
   paid?: ClinicProcedure[];
   packageSessions?: ClinicProcedure[];
+  futurePaid?: ClinicProcedure[];
+  pastNoShowish?: ClinicProcedure[];
+  futureUnpaid?: ClinicProcedure[];
+  futurePackage?: ClinicProcedure[];
+  noShowKeepsCharge?: boolean;
   blocksCheckout?: boolean;
 };
 
@@ -239,7 +244,7 @@ export function FolioCheckoutModal({
       const isPayer = folio.type === 'AGENCY' || folio.type === 'COMPANY';
       // Guest unused nights come back as a refund after check-out; payer unused nights only shrink AR.
       const reversed = isPayer && early?.applicable ? (early.reversalByFolio[folio.id] ?? 0) : 0;
-      const debt = Math.round((stayMoneyPair(folio.charges, folio.payments ?? []).debt - reversed) * 100) / 100;
+      const debt = Math.round((pocketNetMoney(folio.charges, folio.payments ?? []).debt - reversed) * 100) / 100;
       if (debt <= 0.01) continue;
       if (folio.type === 'GUEST') {
         const rg = folio.reservationGuest;
@@ -310,12 +315,16 @@ export function FolioCheckoutModal({
     return Boolean(choices[b.folio.id]);
   });
   const unusedPayment = useMemo(() => {
-    return folios
-      .filter((folio) => folio.status === 'OPEN')
-      .reduce((sum, folio) => sum + stayMoneyPair(folio.charges, folio.payments ?? []).unused, 0);
+    // At check-out categories in a pocket already net; leftover is true overpay only.
+    // Ignore pocket credits while another open pocket still owes.
+    const open = folios.filter((folio) => folio.status === 'OPEN');
+    const nets = open.map((folio) => pocketNetMoney(folio.charges, folio.payments ?? []));
+    const debt = nets.reduce((sum, row) => sum + row.debt, 0);
+    if (debt > 0.01) return 0;
+    return nets.reduce((sum, row) => sum + row.unused, 0);
   }, [folios]);
   const refundNeeded = Boolean(early?.applicable && early.guestCashRefund > 0);
-  const blocksCheckout = Boolean(clinic?.medical && clinic.blocksCheckout);
+  const blocksCheckout = Boolean(clinic?.medical && clinic.unavailable);
 
   const terminalOptions = bankTerminals.map((row) => ({ value: row.id, label: row.label }));
 
@@ -553,7 +562,7 @@ export function FolioCheckoutModal({
               void submit().finally(() => setBusy(false));
             }}
             busy={busy}
-            submitDisabled={loading || loadFailed || !allChosen || blocksCheckout || unusedPayment > 0.01}
+            submitDisabled={loading || loadFailed || !allChosen || blocksCheckout}
             submitLabel={t('confirmCheckout')}
           />
         }
@@ -562,7 +571,19 @@ export function FolioCheckoutModal({
           {clinic?.medical ? (
             <div className="space-y-2">
               {clinic.unavailable ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicUnavailable')}</p> : null}
-              {blocksCheckout ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicBlocksCheckout')}</p> : null}
+              {(clinic.futurePaid?.length ?? 0) > 0 || (clinic.futureUnpaid?.length ?? 0) > 0 ? (
+                <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{t('clinicFutureWillCancel')}</p>
+              ) : null}
+              {(clinic.pastNoShowish?.length ?? 0) > 0 ? (
+                <p className={`m-0 ${TEXT_MUTED_CLASS}`}>
+                  {clinic.noShowKeepsCharge ? t('clinicNoShowRuleKeep') : t('clinicNoShowRuleVoid')}
+                </p>
+              ) : null}
+              {(clinic.futurePackage?.length ?? 0) > 0 ? (
+                <p className={`m-0 ${TEXT_MUTED_CLASS}`}>
+                  {t('clinicPackageFuture', { count: clinic.futurePackage!.length })}
+                </p>
+              ) : null}
               <p className="m-0 font-medium">{t('clinicPaidTitle')}</p>
               <table className={DATA_TABLE_CLASS}>
                 <tbody>
@@ -579,7 +600,7 @@ export function FolioCheckoutModal({
                           {row.status === 'in_plan' && charge?.id ? (
                             <button
                               type="button"
-                              className="underline"
+                              className={SECONDARY_BUTTON_CLASS}
                               onClick={() => {
                                 const reason = t('clinicVoid');
                                 void fetch(`/api/folios/charges/${charge.id}/void`, {

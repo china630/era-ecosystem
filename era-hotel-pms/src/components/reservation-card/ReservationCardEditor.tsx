@@ -111,7 +111,8 @@ import type {
   SourceOption,
   TabId,
 } from '@/components/reservation-card/types';
-import { stayMoneyPair } from '@/lib/folio-money-pair';
+import { pocketNetMoney } from '@/lib/folio-money-pair';
+import { categorySpend } from '@/lib/folio-open-debt';
 import {
   isOtaAgency,
   isWalkInRecordedAgency,
@@ -1024,6 +1025,8 @@ export function ReservationCardEditor({
       setSiblingStays([]);
       setIsLocked(false);
       setPartyBillingMode('PRIMARY');
+      setDiscountPercent('');
+      setDiscountActive(false);
     } else {
       void load();
     }
@@ -2769,24 +2772,28 @@ export function ReservationCardEditor({
   }, [ratePlans, ratePlanId, roomTypeId, roomTypes, mealPlanId, checkIn, pax]);
 
   const folios = (data?.folios as FolioAccount[] | undefined) ?? [];
-
-  const stayPair = stayMoneyPair(
-    folios.flatMap((folio) => folio.charges),
-    folios.flatMap((folio) => folio.payments ?? []),
+  const openFolios = folios.filter((folio) => folio.status === 'OPEN');
+  const stayCategorySpend = categorySpend(openFolios);
+  // Fifth chip: sum pocket debts; credit only when no pocket still owes (do not net guest vs company).
+  const pocketNets = openFolios.map((folio) =>
+    pocketNetMoney(folio.charges, folio.payments ?? []),
   );
-  const guestPocketDebt = stayMoneyPair(
-    folios.filter((folio) => folio.type === 'GUEST').flatMap((folio) => folio.charges),
-    folios.filter((folio) => folio.type === 'GUEST').flatMap((folio) => folio.payments ?? []),
-  ).debt;
-  const companyPocketDebt = stayMoneyPair(
-    folios.filter((folio) => folio.type === 'COMPANY').flatMap((folio) => folio.charges),
-    folios.filter((folio) => folio.type === 'COMPANY').flatMap((folio) => folio.payments ?? []),
-  ).debt;
-  const agencyPocketDebt = stayMoneyPair(
-    folios.filter((folio) => folio.type === 'AGENCY').flatMap((folio) => folio.charges),
-    folios.filter((folio) => folio.type === 'AGENCY').flatMap((folio) => folio.payments ?? []),
-  ).debt;
+  const stayDebtTotal = pocketNets.reduce((sum, row) => sum + row.debt, 0);
+  const stayCreditTotal =
+    stayDebtTotal > 0.01 ? 0 : pocketNets.reduce((sum, row) => sum + row.unused, 0);
+  const stayNet = { debt: stayDebtTotal, unused: stayCreditTotal };
+
+  const guestPocketDebt = openFolios
+    .filter((folio) => folio.type === 'GUEST')
+    .reduce((sum, folio) => sum + pocketNetMoney(folio.charges, folio.payments ?? []).debt, 0);
+  const companyPocketDebt = openFolios
+    .filter((folio) => folio.type === 'COMPANY')
+    .reduce((sum, folio) => sum + pocketNetMoney(folio.charges, folio.payments ?? []).debt, 0);
+  const agencyPocketDebt = openFolios
+    .filter((folio) => folio.type === 'AGENCY')
+    .reduce((sum, folio) => sum + pocketNetMoney(folio.charges, folio.payments ?? []).debt, 0);
   const guestFolioBalance = guestPocketDebt;
+  const stayPair = stayNet;
 
   const pricingDisplayCurrency =
     dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
@@ -3090,9 +3097,9 @@ export function ReservationCardEditor({
         <>
           <ReservationCardHeaderSnapshot
             isCreate={isCreate}
-            totalAmount={Number(data?.totalAmount ?? 0)}
-            unusedAmount={stayPair.unused}
-            folioBalance={stayPair.debt}
+            categorySpend={stayCategorySpend}
+            stayDebt={stayNet.debt}
+            stayCredit={stayNet.unused}
             occupancyWorld={occupancyWorld}
             bookingRoomCount={siblingStays.length || undefined}
             onOccupancyClick={

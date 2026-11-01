@@ -111,6 +111,7 @@ interface RevenueCode extends RetireRow {
   routingRule?: { targetFolioType: string } | null;
   allowManualCharge?: boolean | null;
   allowManualPayment?: boolean | null;
+  paymentCategory?: string | null;
 }
 
 function EditButton({ label, onClick }: { label: string; onClick: () => void }) {
@@ -1221,6 +1222,8 @@ export default function MasterDataPage() {
               return;
             }
             const folioType = (fd.get('folioType') as string) || null;
+            const paymentCategoryRaw = (fd.get('paymentCategory') as string) || null;
+            const paymentCategory = paymentCategoryRaw || null;
             const body = editRevenueCode
               ? {
                   name: fd.get('name'),
@@ -1228,6 +1231,7 @@ export default function MasterDataPage() {
                   taxTag: (fd.get('taxTag') as string) || null,
                   departmentId: revenueDepartmentId,
                   targetFolioType: folioType,
+                  paymentCategory,
                   active: fd.get('active') === 'on',
                   allowManualCharge: fd.get('allowManualCharge') === 'on',
                   allowManualPayment: fd.get('allowManualPayment') === 'on',
@@ -1239,6 +1243,7 @@ export default function MasterDataPage() {
                   taxTag: (fd.get('taxTag') as string) || undefined,
                   departmentId: revenueDepartmentId,
                   targetFolioType: folioType || undefined,
+                  paymentCategory: paymentCategory || undefined,
                   allowManualCharge: fd.get('allowManualCharge') === 'on',
                   allowManualPayment: fd.get('allowManualPayment') === 'on',
                 };
@@ -1314,6 +1319,19 @@ export default function MasterDataPage() {
               <option value="AGENCY">AGENCY</option>
             </FieldSelect>
           </FieldRow>
+          <FieldSelect
+            label={t('paymentCategory')}
+            preset="select"
+            id="rc-paymentCategory"
+            name="paymentCategory"
+            defaultValue={editRevenueCode?.paymentCategory ?? ''}
+          >
+            <option value="">{t('paymentCategory')}</option>
+            <option value="LODGING">{t('paymentCategory_LODGING')}</option>
+            <option value="CLINIC">{t('paymentCategory_CLINIC')}</option>
+            <option value="FB">{t('paymentCategory_FB')}</option>
+            <option value="OTHER">{t('paymentCategory_OTHER')}</option>
+          </FieldSelect>
           <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
             <input
               name="allowManualCharge"
