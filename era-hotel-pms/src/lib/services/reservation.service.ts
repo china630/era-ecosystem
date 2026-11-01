@@ -57,6 +57,24 @@ export async function listReservations(
       mealPlan: true,
       stay: true,
       folios: { include: { charges: true, payments: true } },
+      ...(includeParty
+        ? {
+            paxGuests: {
+              select: {
+                id: true,
+                guestId: true,
+                firstName: true,
+                lastName: true,
+                age: true,
+                sortOrder: true,
+                departedAt: true,
+                guestState: true,
+                isPrimary: true,
+              },
+              orderBy: { sortOrder: 'asc' as const },
+            },
+          }
+        : {}),
     },
     orderBy: { checkInDate: 'desc' },
   });

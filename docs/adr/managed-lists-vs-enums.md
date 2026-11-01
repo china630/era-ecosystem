@@ -173,7 +173,7 @@ Catalog SoR (T1/T2) is incomplete without the correct ops control. **SHIPPED for
 | Entity refs (account, GL, SKU, guest, project) | Autocomplete by API | Raw UUID text (except debug/scaffold explicitly marked) |
 | Soft hint over known codes (legacy import) | Prefer strict Select; `<datalist>` only transitional | Datalist as long-term ops control |
 
-**Kit (shipped):** `@era/satellite-kit/ui` — `CatalogFieldKind`, `resolveCatalogControl`, `inferCatalogFieldKind`, `CatalogField`. Agents/devs pick a **kind**; the kit assigns Select / Multi / Chips / Combobox. Plain text only for `FREE_TEXT`. Cursor rule: `era-managed-list-controls.mdc`. Full async entity fetch can deepen `ENTITY_REF` later; client filterable combobox is the Phase 0 baseline.
+**Kit (shipped):** `@era/satellite-kit/ui` — `CatalogFieldKind`, `resolveCatalogControl`, `inferCatalogFieldKind`, `CatalogField`. Agents/devs pick a **kind**; the kit assigns Select / Multi / Chips / Combobox. Plain text only for `FREE_TEXT`. Cursor rule: `era-managed-list-controls.mdc`. Full async entity fetch can deepen `ENTITY_REF` later; client filterable combobox is the Phase 0 baseline. Combobox dismiss (2026-11-02): outside `pointerdown` / `focusin`, Escape, and clear close the portaled list (no sticky reopen after ×); `disabled` also closes.
 
 ### UI status legend (debt matrix)
 

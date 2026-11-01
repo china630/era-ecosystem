@@ -174,11 +174,11 @@ Working home: stay lifecycle.
 | Screen | Path | What it does |
 |---|---|---|
 | Room-type availability | `/fo/availability` | Sellable Avl / Occ; create blocked when Avl = 0 |
-| Reservation list | `/fo/reservations` | Stay queue: filters, notes, assign, check-in |
+| Reservation list | `/fo/reservations` | Stay queue: filters, notes, children column, departed strike, Res. ID copy, click/dblclick |
 | Room rack | `/fo/rack` | Door tiles: HK status, in-house, quick actions |
 | Room plan | `/fo/room-plan` | Timeline bars; relocate / extend; share-twin lanes |
 | Groups | `/fo/groups` | Booking envelope (group) |
-| In-house | `/fo/in-house` | In-house guests → card / folio |
+| In-house | `/fo/in-house` | Live party rows (adults+children) → card / folio |
 | Room changes | `/fo/room-changes` | Move plans |
 | Agency inbox | `/fo/agency-inbox` | Confirm / decline OPTION stays from agency portal (**API**, not SHOW) |
 | Reservation card | modal / editor | Agency-first layout; assignment by stage; Additional collapsed |

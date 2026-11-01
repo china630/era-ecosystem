@@ -9,7 +9,6 @@ import {
   FieldPanel,
   FieldRow,
   MODAL_CHECKBOX_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
@@ -456,7 +455,7 @@ export function GuestCardLeftPanel({
                 checked={phoneVerified}
                 onChange={(e) => onVerified('phoneVerified', e.target.checked)}
               />
-              <span className={MODAL_FIELD_LABEL_CLASS.replace('mb-1.5 block ', '')}>
+              <span className="text-[13px] font-semibold text-[#34495E]">
                 {t('details.phoneVerified')}
               </span>
             </label>
@@ -467,7 +466,7 @@ export function GuestCardLeftPanel({
                 checked={emailVerified}
                 onChange={(e) => onVerified('emailVerified', e.target.checked)}
               />
-              <span className={MODAL_FIELD_LABEL_CLASS.replace('mb-1.5 block ', '')}>
+              <span className="text-[13px] font-semibold text-[#34495E]">
                 {t('details.emailVerified')}
               </span>
             </label>

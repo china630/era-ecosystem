@@ -271,7 +271,7 @@ function StayDateFlightIcons({
 }) {
   const t = useTranslations('reservationCard');
   const kind = resolveStayWindowPlane({ checkIn, checkOut, status });
-  if (!kind) return <div className="h-3.5" data-testid="stay-flight-icons" />;
+  if (!kind) return <div className="h-9" data-testid="stay-flight-icons" />;
   const landing = kind === 'earlyArrival' || kind === 'arrival';
   const early = kind === 'earlyArrival' || kind === 'earlyCheckout';
   const label =
@@ -285,7 +285,7 @@ function StayDateFlightIcons({
   const tone = early ? '!text-amber-500 hover:!text-amber-600' : '!text-[#E74C3C] hover:!text-[#C0392B]';
   const Icon = landing ? PlaneLanding : PlaneTakeoff;
   return (
-    <div className="flex items-end justify-start" data-testid="stay-flight-icons">
+    <div className="flex h-9 items-center justify-start self-end" data-testid="stay-flight-icons">
       <button
         type="button"
         title={label}
@@ -296,9 +296,9 @@ function StayDateFlightIcons({
           e.stopPropagation();
           onStayAction?.();
         }}
-        className={`${SECONDARY_BUTTON_CLASS} !px-2 ${tone} disabled:opacity-50`}
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#D5DADF] bg-white shadow-sm transition hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/40 disabled:pointer-events-none disabled:opacity-50 ${tone}`}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-5 w-5" aria-hidden />
       </button>
     </div>
   );

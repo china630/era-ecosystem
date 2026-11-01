@@ -15,6 +15,7 @@ import {
   payDiagnosticsExtras,
   prescribeDiagnosticsExtras,
 } from "@/domain/sanatorium/diagnostics-extras.service";
+import { listExtraUnitPrices } from "@/domain/sanatorium/extras-assign.service";
 
 const prescribeSchema = z.object({
   lines: z
@@ -62,8 +63,11 @@ export async function GET(
     const { id } = await params;
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
-    const items = await listPendingDiagnostics(id);
-    return jsonOk({ items });
+    const [items, prices] = await Promise.all([
+      listPendingDiagnostics(id),
+      listExtraUnitPrices(),
+    ]);
+    return jsonOk({ items, prices });
   } catch (err) {
     const mapped = mapError(err);
     if (mapped) return mapped;

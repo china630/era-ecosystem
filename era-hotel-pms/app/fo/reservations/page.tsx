@@ -9,15 +9,19 @@ import {
   EraListFilterBar,
   EraListWorkspace,
   Field,
+  FORM_FIELD_GROUP_CLASS,
   LIST_PAGE_SHELL_CLASS,
   ListPaginationFooter,
+  MODAL_FIELD_LABEL_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
+  showSuccess,
   usePaginatedList,
 } from '@era/satellite-kit/ui';
-import { HotelDataGrid } from "@/components/HotelDataGrid";
+import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { HkStatusMark } from '@/components/HkStatusMark';
 import { Cake, MessageSquare, Plus } from 'lucide-react';
 import { bakuDateDisplay, todayBakuYmd } from '@era/satellite-kit/time';
@@ -38,6 +42,8 @@ import {
   type ReservationQueue,
 } from '@/lib/reservation-queue';
 
+type GuestSegment = { name: string; departed: boolean };
+
 type Row = {
   id: string;
   status: string;
@@ -45,6 +51,7 @@ type Row = {
   checkOutDate: string;
   guest: { fullName: string; birthDate?: string | null };
   guestLabel?: string;
+  guestSegments?: GuestSegment[];
   noteText?: string | null;
   room: { roomNumber: string; status: string; hkCondition?: string | null } | null;
   roomType: { code: string };
@@ -53,6 +60,10 @@ type Row = {
   source?: { code: string; name?: string | null } | null;
   walkInProfileCode?: string | null;
   adults: number;
+  children?: number;
+  children11_6?: number;
+  children5_2?: number;
+  children1_0?: number;
   hasNotes?: boolean;
   notePreview?: string | null;
   notes?: Array<{ noteType: string; text: string }>;
@@ -82,6 +93,11 @@ function sourceLabel(row: Row, t: (key: string) => string): string {
   if (kind === 'CORPORATE') return row.company?.name || row.company?.code || t('sourceCorporate');
   if (kind === 'WEB') return row.source?.name || t('sourceWeb');
   return row.agency?.name || row.company?.name || row.source?.name || '—';
+}
+
+function childrenCount(row: Row): number {
+  if (typeof row.children === 'number') return row.children;
+  return (row.children11_6 ?? 0) + (row.children5_2 ?? 0) + (row.children1_0 ?? 0);
 }
 
 type ListFilters = {
@@ -205,8 +221,18 @@ export default function ReservationsListPage() {
     [rows, page, pageSize],
   );
 
+  async function copyResId(id: string) {
+    const short = id.slice(0, 8);
+    try {
+      await navigator.clipboard.writeText(short);
+      showSuccess(t('resIdCopied'));
+    } catch {
+      showApiError({ error: t('resIdCopyFailed') }, tc('error'));
+    }
+  }
+
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
-    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
+    return <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc('accessDenied')}</p>;
   }
 
   return (
@@ -257,13 +283,18 @@ export default function ReservationsListPage() {
               setDateTo('');
             }}
             actionsExtra={
-              <button
-                type="button"
-                className={notesOnly ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-                onClick={() => setNotesOnly((v) => !v)}
-              >
-                {t('filterNotes')}
-              </button>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <span className={MODAL_FIELD_LABEL_CLASS} aria-hidden>
+                  {'\u00a0'}
+                </span>
+                <button
+                  type="button"
+                  className={notesOnly ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                  onClick={() => setNotesOnly((v) => !v)}
+                >
+                  {t('filterNotes')}
+                </button>
+              </div>
             }
           >
             <Field
@@ -316,142 +347,180 @@ export default function ReservationsListPage() {
         })()}
         table={
           <div className="flex min-h-0 flex-1 flex-col">
-          <HotelDataGrid<NumberedRow & Record<string, unknown>>
-            columns={[
-              {
-                key: 'rowNo',
-                header: t('rowNo'),
-                sortable: false,
-                className: 'w-12 whitespace-nowrap tabular-nums text-[#7F8C8D]',
-                render: (r) => String(r.rowNo),
-              },
-              {
-                key: 'room',
-                header: t('room'),
-                sortable: true,
-                render: (r) => r.room?.roomNumber ?? '—',
-              },
-              {
-                key: 'hk',
-                header: t('hk'),
-                sortable: true,
-                render: (r) =>
-                  r.room ? <HkStatusMark status={r.room.hkCondition ?? r.room.status} /> : '—',
-              },
-              {
-                key: 'agency',
-                header: t('agency'),
-                sortable: true,
-                render: (r) => sourceLabel(r, tCard),
-              },
-              {
-                key: 'guest',
-                header: t('guest'),
-                sortable: true,
-                render: (r) => {
-                  const night = birthdayNightInStay(
-                    r.guest.birthDate,
-                    r.checkInDate,
-                    r.checkOutDate,
-                  );
-                  const showCake = night != null && birthdayIconVisible(night, todayBakuYmd());
-                  return (
-                    <span className="inline-flex items-center gap-1">
-                      {showCake ? (
-                        <Cake className="h-4 w-4 shrink-0 text-amber-500" aria-label={t('birthday')} />
-                      ) : null}
-                      {r.guestLabel || r.guest.fullName}
-                    </span>
-                  );
+            <HotelDataGrid<NumberedRow & Record<string, unknown>>
+              columns={[
+                {
+                  key: 'rowNo',
+                  header: t('rowNo'),
+                  sortable: false,
+                  className: `w-12 whitespace-nowrap tabular-nums ${TEXT_MUTED_CLASS}`,
+                  render: (r) => String(r.rowNo),
                 },
-              },
-              {
-                key: 'arrival',
-                header: t('arrival'),
-                sortable: true,
-                render: (r) => bakuDateDisplay(String(r.checkInDate).slice(0, 10)),
-              },
-              {
-                key: 'departure',
-                header: t('departure'),
-                sortable: true,
-                render: (r) => bakuDateDisplay(String(r.checkOutDate).slice(0, 10)),
-              },
-              { key: 'type', header: t('roomType'), sortable: true, render: (r) => r.roomType.code },
-              {
-                key: 'adult',
-                header: t('adult'),
-                sortable: true,
-                render: (r) => String(r.adults ?? 1),
-              },
-              {
-                key: 'state',
-                header: t('state'),
-                sortable: true,
-                render: (r) => tRes(r.status as 'CONFIRMED'),
-              },
-              {
-                key: 'notes',
-                header: t('notes'),
-                sortable: true,
-                render: (r) =>
-                  r.hasNotes ? (
+                {
+                  key: 'room',
+                  header: t('room'),
+                  sortable: true,
+                  render: (r) => r.room?.roomNumber ?? '—',
+                },
+                {
+                  key: 'hk',
+                  header: t('hk'),
+                  sortable: true,
+                  render: (r) =>
+                    r.room ? <HkStatusMark status={r.room.hkCondition ?? r.room.status} /> : '—',
+                },
+                {
+                  key: 'agency',
+                  header: t('agency'),
+                  sortable: true,
+                  render: (r) => sourceLabel(r, tCard),
+                },
+                {
+                  key: 'guest',
+                  header: t('guest'),
+                  sortable: true,
+                  render: (r) => {
+                    const night = birthdayNightInStay(
+                      r.guest.birthDate,
+                      r.checkInDate,
+                      r.checkOutDate,
+                    );
+                    const showCake = night != null && birthdayIconVisible(night, todayBakuYmd());
+                    const segments =
+                      r.guestSegments && r.guestSegments.length > 0
+                        ? r.guestSegments
+                        : [{ name: r.guestLabel || r.guest.fullName, departed: false }];
+                    return (
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        {showCake ? (
+                          <Cake
+                            className="h-4 w-4 shrink-0 text-amber-500"
+                            aria-label={t('birthday')}
+                          />
+                        ) : null}
+                        {segments.map((seg, index) => (
+                          <span key={`${seg.name}-${index}`} className="inline-flex items-center">
+                            {index > 0 ? (
+                              <span className={`${TEXT_MUTED_CLASS} mx-0.5`}>/</span>
+                            ) : null}
+                            <span
+                              className={
+                                seg.departed
+                                  ? `${TEXT_MUTED_CLASS} line-through`
+                                  : undefined
+                              }
+                            >
+                              {seg.name}
+                            </span>
+                          </span>
+                        ))}
+                      </span>
+                    );
+                  },
+                },
+                {
+                  key: 'arrival',
+                  header: t('arrival'),
+                  sortable: true,
+                  render: (r) => bakuDateDisplay(String(r.checkInDate).slice(0, 10)),
+                },
+                {
+                  key: 'departure',
+                  header: t('departure'),
+                  sortable: true,
+                  render: (r) => bakuDateDisplay(String(r.checkOutDate).slice(0, 10)),
+                },
+                {
+                  key: 'type',
+                  header: t('roomType'),
+                  sortable: true,
+                  render: (r) => r.roomType.code,
+                },
+                {
+                  key: 'adult',
+                  header: t('adult'),
+                  sortable: true,
+                  render: (r) => String(r.adults ?? 1),
+                },
+                {
+                  key: 'children',
+                  header: t('children'),
+                  sortable: true,
+                  render: (r) => String(childrenCount(r)),
+                },
+                {
+                  key: 'state',
+                  header: t('state'),
+                  sortable: true,
+                  render: (r) => tRes(r.status as 'CONFIRMED'),
+                },
+                {
+                  key: 'notes',
+                  header: t('notes'),
+                  sortable: true,
+                  render: (r) =>
+                    r.hasNotes ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center text-amber-700"
+                        title={t('notes')}
+                        aria-label={t('notes')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedId(r.id);
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
+                      </button>
+                    ) : (
+                      '—'
+                    ),
+                },
+                {
+                  key: 'id',
+                  header: t('resId'),
+                  sortable: true,
+                  render: (r) => (
                     <button
                       type="button"
-                      className="inline-flex items-center text-amber-700"
-                      title={t('notes')}
-                      aria-label={t('notes')}
+                      className="font-mono text-[#2980B9] hover:underline"
+                      title={t('resIdCopy')}
+                      aria-label={t('resIdCopy')}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedId(r.id);
+                        void copyResId(r.id);
                       }}
                     >
-                      <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
+                      {r.id.slice(0, 8)}
                     </button>
-                  ) : (
-                    '—'
                   ),
-              },
-              {
-                key: 'id',
-                header: t('resId'),
-                sortable: true,
-                render: (r) => (
-                  <button
-                    type="button"
-                    className="font-mono text-[#2980B9] hover:underline"
-                    onClick={() => setCardId(r.id)}
-                  >
-                    {r.id.slice(0, 8)}
-                  </button>
-                ),
-              },
-            ]}
-            rows={numberedRows as (NumberedRow & Record<string, unknown>)[]}
-            rowKey={(r) => r.id}
-            sort={sortKey && sortDir ? { key: sortKey, dir: sortDir } : null}
-            onSortChange={(next) => {
-              if (next.key === 'rowNo') return;
-              setSortKey(next.key);
-              setSortDir(next.dir);
-              setPage(1);
-            }}
-            onRowClick={(r) => setSelectedId(r.id)}
-            onRowDoubleClick={(r) => setCardId(r.id)}
-            emptyMessage={loading ? tc('loading') : tc('empty')}
-            pagination={false}
-            paginationMode="server"
-            embedded
-            rowClassName={(r) =>
-              [
-                ROW_BG[r.status] ?? '',
-                r.hasNotes ? 'ring-1 ring-inset ring-amber-300/80' : '',
-                r.id === selectedId ? 'ring-2 ring-inset ring-[#2980B9]' : '',
-              ]
-                .filter(Boolean)
-                .join(' ') || undefined
-            }
-          />
+                },
+              ]}
+              rows={numberedRows as (NumberedRow & Record<string, unknown>)[]}
+              rowKey={(r) => r.id}
+              sort={sortKey && sortDir ? { key: sortKey, dir: sortDir } : null}
+              onSortChange={(next) => {
+                if (next.key === 'rowNo') return;
+                setSortKey(next.key);
+                setSortDir(next.dir);
+                setPage(1);
+              }}
+              onRowClick={(r) => setSelectedId(r.id)}
+              onRowDoubleClick={(r) => setCardId(r.id)}
+              emptyMessage={loading ? tc('loading') : tc('empty')}
+              pagination={false}
+              paginationMode="server"
+              embedded
+              rowClassName={(r) =>
+                [
+                  ROW_BG[r.status] ?? '',
+                  r.hasNotes ? 'ring-1 ring-inset ring-amber-300/80' : '',
+                  r.id === selectedId ? 'ring-2 ring-inset ring-[#2980B9]' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              }
+            />
           </div>
         }
         footer={

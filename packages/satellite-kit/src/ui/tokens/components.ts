@@ -63,7 +63,7 @@ export const MODAL_FOOTER_PRIMARY_CLASS = `${MODAL_FOOTER_BUTTON_CLASS} bg-[#298
 export const MODAL_FOOTER_OUTLINE_CLASS = `${MODAL_FOOTER_BUTTON_CLASS} border border-[#D5DADF] bg-white font-medium text-[#34495E] hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/40`;
 
 export const MODAL_FIELD_LABEL_CLASS =
-  "mb-1.5 block text-[13px] font-semibold text-[#34495E]";
+  "mb-px block text-[13px] font-semibold text-[#34495E]";
 
 const MODAL_INPUT_BASE =
   "w-full rounded-lg border border-[#D5DADF] bg-white px-3 text-[13px] text-[#34495E] shadow-sm placeholder:text-[#7F8C8D] focus:outline-none focus:ring-1 focus:ring-[#2980B9] disabled:bg-[#F4F5F7] disabled:text-[#7F8C8D]";
@@ -177,16 +177,25 @@ export const FIELD_SECTION_HEADER_CLASS =
 export const FIELD_SECTION_BODY_CLASS = "space-y-4 border-t border-[#D5DADF] px-3 pb-3 pt-3";
 
 /**
- * Static (non-collapsible) field group panel — same chrome as FieldSection.
+ * Static field group — Win32-style group box (legend on the border).
  * Use for FO cards (reservation / guest) where sections stay always open.
+ * Corners stay rounded-xl (ERA chrome); title sits in the top border gap.
  */
 export const FIELD_PANEL_CLASS =
-  "overflow-hidden rounded-xl border border-[#D5DADF] bg-white";
+  "min-w-0 rounded-xl border border-[#D5DADF] bg-white px-3 pb-3 pt-1";
 
-export const FIELD_PANEL_HEADER_CLASS =
-  "bg-[#F8FAFC] px-3 py-2 text-[13px] font-semibold text-[#34495E]";
+export const FIELD_PANEL_LEGEND_CLASS =
+  "ml-1 px-1.5 text-[13px] font-semibold text-[#34495E]";
 
-export const FIELD_PANEL_BODY_CLASS = "space-y-3 border-t border-[#D5DADF] px-3 pb-3 pt-3";
+/** @deprecated Prefer FIELD_PANEL_LEGEND_CLASS; kept for any leftover header strip imports. */
+export const FIELD_PANEL_HEADER_CLASS = FIELD_PANEL_LEGEND_CLASS;
+
+export const FIELD_PANEL_BODY_CLASS = "space-y-3 pt-1";
+
+/** Alias token for FieldGroupBox (same chrome as FieldPanel). */
+export const FIELD_GROUP_BOX_CLASS = FIELD_PANEL_CLASS;
+export const FIELD_GROUP_BOX_LEGEND_CLASS = FIELD_PANEL_LEGEND_CLASS;
+export const FIELD_GROUP_BOX_BODY_CLASS = FIELD_PANEL_BODY_CLASS;
 
 /** Nested summary / balance blocks inside FieldSection / FieldPanel. */
 export const SUBSECTION_SURFACE_CLASS = "rounded-lg bg-[#F8FAFC] p-2 text-[12px] text-[#34495E]";

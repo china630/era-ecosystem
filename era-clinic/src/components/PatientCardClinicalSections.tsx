@@ -124,6 +124,20 @@ type CardSummary = {
     amountNet: number;
     status: string;
   }>;
+  paidExtrasScale?: Array<{
+    code: string;
+    title: string;
+    assigned: number;
+    completed: number;
+    amountNet: number;
+  }>;
+  paidDiagnosticsScale?: Array<{
+    code: string;
+    title: string;
+    assigned: number;
+    completed: number;
+    amountNet: number;
+  }>;
   intakeChecklist?: {
     packageCode: string;
     packageTitle: L10n | null;
@@ -241,6 +255,15 @@ export function PatientCardClinicalSections({
       assignable: boolean;
     }>
   >([]);
+  const [studyQuotaRows, setStudyQuotaRows] = useState<
+    Array<{
+      procedureCode: string;
+      procedureName: string;
+      quotaTotal: number;
+      quotaUsed: number;
+      consumed: number;
+    }>
+  >([]);
   const [packageBlock, setPackageBlock] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
   const [quotaTick, setQuotaTick] = useState(0);
@@ -271,8 +294,11 @@ export function PatientCardClinicalSections({
   }, [panel]);
 
   useEffect(() => {
-    if (section !== "package" || !episodeId) {
+    const needPackage = !section || section === "package";
+    const needStudies = !section || section === "diagnostics";
+    if (!episodeId || (!needPackage && !needStudies)) {
       setQuotaRows([]);
+      setStudyQuotaRows([]);
       setPackageBlock(null);
       setPackageCode(null);
       return;
@@ -281,33 +307,67 @@ export function PatientCardClinicalSections({
       .then((res) => res.json())
       .then((payload) => {
         const snap = payload.data ?? payload;
-        const rows = Array.isArray(snap.balances) ? snap.balances : [];
-        setQuotaRows(
-          rows.map((row: {
-            procedureCode: string;
-            procedureName: string;
-            quotaTotal: number;
-            quotaUsed: number;
-            consumed: number;
-            assignable: boolean;
-          }) => ({
-            procedureCode: row.procedureCode,
-            procedureName: row.procedureName,
-            quotaTotal: row.quotaTotal,
-            quotaUsed: row.quotaUsed,
-            consumed: row.consumed,
-            assignable: row.assignable !== false,
-          })),
-        );
-        setPackageBlock(typeof snap.blockReason === "string" ? snap.blockReason : null);
-        setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
+        if (needPackage) {
+          const rows = Array.isArray(snap.balances) ? snap.balances : [];
+          setQuotaRows(
+            rows.map((row: {
+              procedureCode: string;
+              procedureName: string;
+              quotaTotal: number;
+              quotaUsed: number;
+              consumed: number;
+              assignable: boolean;
+            }) => ({
+              procedureCode: row.procedureCode,
+              procedureName: row.procedureName,
+              quotaTotal: row.quotaTotal,
+              quotaUsed: row.quotaUsed,
+              consumed: row.consumed,
+              assignable: row.assignable !== false,
+            })),
+          );
+          setPackageBlock(typeof snap.blockReason === "string" ? snap.blockReason : null);
+          setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
+        } else {
+          setQuotaRows([]);
+          setPackageBlock(null);
+          setPackageCode(null);
+        }
+        if (needStudies) {
+          const studies = Array.isArray(snap.studyBalances) ? snap.studyBalances : [];
+          setStudyQuotaRows(
+            studies.map((row: {
+              procedureCode: string;
+              procedureName: string;
+              quotaTotal: number;
+              quotaUsed: number;
+              consumed: number;
+            }) => ({
+              procedureCode: row.procedureCode,
+              procedureName: row.procedureName,
+              quotaTotal: row.quotaTotal,
+              quotaUsed: row.quotaUsed,
+              consumed: row.consumed,
+            })),
+          );
+        } else {
+          setStudyQuotaRows([]);
+        }
       })
       .catch(() => {
         setQuotaRows([]);
+        setStudyQuotaRows([]);
         setPackageBlock(null);
         setPackageCode(null);
       });
-  }, [section, episodeId, refreshKey, packageModalOpen, quotaTick]);
+  }, [
+    section,
+    episodeId,
+    refreshKey,
+    packageModalOpen,
+    diagnosticsModalOpen,
+    quotaTick,
+  ]);
 
   const fromIso = useMemo(() => {
     if (period === "all") return undefined;
@@ -384,6 +444,56 @@ export function PatientCardClinicalSections({
         .flatMap((day) => day.events),
     [planDays, planDate],
   );
+
+  const unpaidExtraScales = useMemo(() => {
+    const rows = summary?.pendingExtras ?? [];
+    const map = new Map<
+      string,
+      { code: string; title: string; assigned: number; amountNet: number; ids: string[] }
+    >();
+    for (const row of rows) {
+      const cur = map.get(row.code) ?? {
+        code: row.code,
+        title: row.title,
+        assigned: 0,
+        amountNet: 0,
+        ids: [],
+      };
+      cur.assigned += 1;
+      cur.amountNet += Number(row.amountNet || 0);
+      cur.ids.push(row.id);
+      map.set(row.code, cur);
+    }
+    return [...map.values()];
+  }, [summary?.pendingExtras]);
+
+  const unpaidDiagnosticScales = useMemo(() => {
+    const rows = summary?.pendingDiagnostics ?? [];
+    const map = new Map<
+      string,
+      {
+        code: string;
+        title: string;
+        assigned: number;
+        amountNet: number;
+        ids: Array<{ id: string; kind: "lab" | "visit" }>;
+      }
+    >();
+    for (const row of rows) {
+      const cur = map.get(row.code) ?? {
+        code: row.code,
+        title: row.title,
+        assigned: 0,
+        amountNet: 0,
+        ids: [],
+      };
+      cur.assigned += 1;
+      cur.amountNet += Number(row.amountNet || 0);
+      cur.ids.push({ id: row.id, kind: row.kind });
+      map.set(row.code, cur);
+    }
+    return [...map.values()];
+  }, [summary?.pendingDiagnostics]);
 
   if (loading || !summary) {
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
@@ -494,8 +604,8 @@ export function PatientCardClinicalSections({
   }
 
   const { resultsPreview } = summary;
-  const pendingExtras = summary.pendingExtras ?? [];
-  const pendingDiagnostics = summary.pendingDiagnostics ?? [];
+  const paidExtrasScale = summary.paidExtrasScale ?? [];
+  const paidDiagnosticsScale = summary.paidDiagnosticsScale ?? [];
   const intakeChecklist = summary.intakeChecklist;
 
   const showDiagnostics = !section || section === "diagnostics";
@@ -505,7 +615,7 @@ export function PatientCardClinicalSections({
   return (
     <div className="space-y-6">
       {showDiagnostics && episodeId ? (
-        <section className="space-y-2">
+        <section className="space-y-3">
           <EpisodeAssignBlocks
             packageTitle={t("diagnosticsAssignTitle", {
               defaultValue: "Analyses and diagnostics",
@@ -515,46 +625,100 @@ export function PatientCardClinicalSections({
             })}
             readOnly={readOnly || !anamnesisOk}
             hidePackage={false}
-            extrasPending={pendingDiagnostics.map((row) => ({
-              id: row.id,
-              title: row.title,
-              amountNet: row.amountNet,
-              status: row.status,
-              kind: row.kind,
-            }))}
-            pendingPayLabel={t("pendingPayTicketsHint", {
-              defaultValue: "Awaiting payment — pay on Extra tickets",
-            })}
-            deleteLabel={tc("delete")}
-            pendingTone="red"
-            pendingBusy={diagnosticsPendingBusy}
+            extrasPending={[]}
             onPackagePlus={() => setDiagnosticsModalOpen(true)}
             onExtrasPlus={() => setDiagnosticsModalOpen(true)}
-            onRemovePending={(row) => {
-              if (!episodeId || !row.kind) return;
-              void (async () => {
-                setDiagnosticsPendingBusy(true);
-                try {
-                  const res = await fetch(
-                    `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(row.id)}&kind=${row.kind}`,
-                    { method: "DELETE" },
-                  );
-                  if (!res.ok) {
-                    showApiError(
-                      await res.json().catch(() => ({})),
-                      tc("failed"),
-                    );
-                    return;
-                  }
-                  showSuccess(tc("saved"));
-                  await loadSummary();
-                  setQuotaTick((n) => n + 1);
-                } finally {
-                  setDiagnosticsPendingBusy(false);
-                }
-              })();
-            }}
           />
+          {unpaidDiagnosticScales.map((row) => (
+            <QuotaScaleCard
+              key={`diag-unpaid:${row.code}`}
+              title={row.title}
+              assigned={row.assigned}
+              assignedTotal={row.assigned}
+              completed={0}
+              completedTotal={row.assigned}
+              tone="red"
+              subline={`${row.amountNet.toFixed(2)} AZN · ${t("pendingPayTicketsHint", {
+                defaultValue: "Awaiting payment — pay on Extra tickets",
+              })}`}
+              assignedLabel={ts("quotaAssigned")}
+              completedLabel={ts("quotaCompleted")}
+              usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              onDelete={
+                readOnly || diagnosticsPendingBusy
+                  ? undefined
+                  : () => {
+                      const first = row.ids[0];
+                      if (!first || !episodeId) return;
+                      void (async () => {
+                        setDiagnosticsPendingBusy(true);
+                        try {
+                          const res = await fetch(
+                            `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(first.id)}&kind=${first.kind}`,
+                            { method: "DELETE" },
+                          );
+                          if (!res.ok) {
+                            showApiError(
+                              await res.json().catch(() => ({})),
+                              tc("failed"),
+                            );
+                            return;
+                          }
+                          showSuccess(tc("saved"));
+                          await loadSummary();
+                          setQuotaTick((n) => n + 1);
+                        } finally {
+                          setDiagnosticsPendingBusy(false);
+                        }
+                      })();
+                    }
+              }
+              deleteLabel={tc("delete")}
+            />
+          ))}
+          {studyQuotaRows.map((line) => {
+            const paid = paidDiagnosticsScale.find(
+              (row) => row.code === line.procedureCode,
+            );
+            const paidAssigned = paid?.assigned ?? 0;
+            const paidDone = paid?.completed ?? 0;
+            const assigned = line.quotaUsed + paidAssigned;
+            const assignedTotal = line.quotaTotal + paidAssigned;
+            const completed = line.consumed + paidDone;
+            return (
+              <QuotaScaleCard
+                key={`diag-pkg:${line.procedureCode}`}
+                title={line.procedureName || line.procedureCode}
+                assigned={assigned}
+                assignedTotal={assignedTotal}
+                completed={completed}
+                completedTotal={assigned}
+                tone="blue"
+                assignedLabel={ts("quotaAssigned")}
+                completedLabel={ts("quotaCompleted")}
+                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              />
+            );
+          })}
+          {paidDiagnosticsScale
+            .filter(
+              (row) =>
+                !studyQuotaRows.some((line) => line.procedureCode === row.code),
+            )
+            .map((row) => (
+              <QuotaScaleCard
+                key={`diag-paid:${row.code}`}
+                title={row.title}
+                assigned={row.assigned}
+                assignedTotal={row.assigned}
+                completed={row.completed}
+                completedTotal={row.assigned}
+                tone="blue"
+                assignedLabel={ts("quotaAssigned")}
+                completedLabel={ts("quotaCompleted")}
+                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              />
+            ))}
         </section>
       ) : null}
 
@@ -765,13 +929,7 @@ export function PatientCardClinicalSections({
             extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
             readOnly={readOnly || !anamnesisOk}
             hidePackage={patientOrigin === "WALK_IN"}
-            extrasPending={pendingExtras.map((row) => ({
-              id: row.id,
-              title: row.title,
-              amountNet: row.amountNet,
-              status: row.status,
-            }))}
-            pendingPayLabel={t("pendingPay", { defaultValue: "Awaiting payment" })}
+            extrasPending={[]}
             onPackagePlus={() => setPackageModalOpen(true)}
             onExtrasPlus={() => setPackageModalOpen(true)}
           />
@@ -836,43 +994,94 @@ export function PatientCardClinicalSections({
         </div>
       ) : null}
 
-      {showPackage && quotaRows.length > 0 ? (
-        <section className="space-y-2">
-          <ul className="space-y-3">
-            {quotaRows.map((line) => {
-              const assignedPct =
-                line.quotaTotal > 0
-                  ? Math.min(100, (line.quotaUsed / line.quotaTotal) * 100)
-                  : 0;
-              const donePct =
-                line.quotaUsed > 0
-                  ? Math.min(100, (line.consumed / line.quotaUsed) * 100)
-                  : 0;
-              return (
-                <li key={line.procedureCode} className={`${CARD_CONTAINER_CLASS} p-3 text-[13px]`}>
-                  <div className="mb-1 font-medium">{line.procedureName || line.procedureCode}</div>
-                  <div className="mb-0.5 flex justify-between text-[12px]">
-                    <span>{ts("quotaAssigned")}</span>
-                    <span>
-                      {ts("quotaUsed", { used: line.quotaUsed, total: line.quotaTotal })}
-                    </span>
-                  </div>
-                  <div className="mb-1 h-2 overflow-hidden rounded-lg bg-slate-100">
-                    <div className="h-full bg-[#2980B9]" style={{ width: `${assignedPct}%` }} />
-                  </div>
-                  <div className="mb-0.5 flex justify-between text-[12px]">
-                    <span>{ts("quotaCompleted")}</span>
-                    <span>
-                      {ts("quotaUsed", { used: line.consumed, total: line.quotaUsed })}
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-lg bg-slate-100">
-                    <div className="h-full bg-emerald-600" style={{ width: `${donePct}%` }} />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+      {showPackage &&
+      (quotaRows.length > 0 ||
+        unpaidExtraScales.length > 0 ||
+        paidExtrasScale.length > 0) ? (
+        <section className="space-y-3">
+          {unpaidExtraScales.map((row) => (
+            <QuotaScaleCard
+              key={`extra-unpaid:${row.code}`}
+              title={row.title}
+              assigned={row.assigned}
+              assignedTotal={row.assigned}
+              completed={0}
+              completedTotal={row.assigned}
+              tone="red"
+              subline={`${row.amountNet.toFixed(2)} AZN · ${t("pendingPay", {
+                defaultValue: "Awaiting payment",
+              })}`}
+              assignedLabel={ts("quotaAssigned")}
+              completedLabel={ts("quotaCompleted")}
+              usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              onDelete={
+                readOnly
+                  ? undefined
+                  : () => {
+                      const id = row.ids[0];
+                      if (!id) return;
+                      void (async () => {
+                        const res = await fetch(`/api/procedures/${id}/cancel`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ reason: "card_unpaid_cancel" }),
+                        });
+                        if (!res.ok) {
+                          showApiError(
+                            await res.json().catch(() => ({})),
+                            tc("failed"),
+                          );
+                          return;
+                        }
+                        showSuccess(tc("saved"));
+                        await loadSummary();
+                        setQuotaTick((n) => n + 1);
+                      })();
+                    }
+              }
+              deleteLabel={tc("delete")}
+            />
+          ))}
+          {quotaRows.map((line) => {
+            const paid = paidExtrasScale.find((row) => row.code === line.procedureCode);
+            const paidAssigned = paid?.assigned ?? 0;
+            const paidDone = paid?.completed ?? 0;
+            const assigned = line.quotaUsed + paidAssigned;
+            const assignedTotal = line.quotaTotal + paidAssigned;
+            const completed = line.consumed + paidDone;
+            return (
+              <QuotaScaleCard
+                key={`pkg:${line.procedureCode}`}
+                title={line.procedureName || line.procedureCode}
+                assigned={assigned}
+                assignedTotal={assignedTotal}
+                completed={completed}
+                completedTotal={assigned}
+                tone="blue"
+                assignedLabel={ts("quotaAssigned")}
+                completedLabel={ts("quotaCompleted")}
+                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              />
+            );
+          })}
+          {paidExtrasScale
+            .filter(
+              (row) => !quotaRows.some((line) => line.procedureCode === row.code),
+            )
+            .map((row) => (
+              <QuotaScaleCard
+                key={`extra-paid:${row.code}`}
+                title={row.title}
+                assigned={row.assigned}
+                assignedTotal={row.assigned}
+                completed={row.completed}
+                completedTotal={row.assigned}
+                tone="blue"
+                assignedLabel={ts("quotaAssigned")}
+                completedLabel={ts("quotaCompleted")}
+                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              />
+            ))}
         </section>
       ) : null}
 
@@ -1364,5 +1573,80 @@ function HistoryCards({
         </li>
       ))}
     </ol>
+  );
+}
+
+function QuotaScaleCard({
+  title,
+  assigned,
+  assignedTotal,
+  completed,
+  completedTotal,
+  tone,
+  subline,
+  assignedLabel,
+  completedLabel,
+  usedLabel,
+  onDelete,
+  deleteLabel,
+}: {
+  title: string;
+  assigned: number;
+  assignedTotal: number;
+  completed: number;
+  completedTotal: number;
+  tone: "blue" | "red";
+  subline?: string;
+  assignedLabel: string;
+  completedLabel: string;
+  usedLabel: (used: number, total: number) => string;
+  onDelete?: () => void;
+  deleteLabel?: string;
+}) {
+  const assignedPct =
+    assignedTotal > 0 ? Math.min(100, (assigned / assignedTotal) * 100) : 0;
+  const donePct =
+    completedTotal > 0 ? Math.min(100, (completed / completedTotal) * 100) : 0;
+  const barClass = tone === "red" ? "bg-red-500" : "bg-[#2980B9]";
+  return (
+    <div
+      className={`${CARD_CONTAINER_CLASS} p-3 text-[13px] ${
+        tone === "red" ? "border border-red-100 bg-red-50/40" : ""
+      }`}
+    >
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <div className="min-w-0 font-medium">{title}</div>
+        {onDelete ? (
+          <button
+            type="button"
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            onClick={onDelete}
+            aria-label={deleteLabel || "Delete"}
+          >
+            <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+          </button>
+        ) : null}
+      </div>
+      {subline ? (
+        <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>{subline}</p>
+      ) : null}
+      <div className="mb-0.5 flex justify-between text-[12px]">
+        <span>{assignedLabel}</span>
+        <span>{usedLabel(assigned, assignedTotal)}</span>
+      </div>
+      <div className="mb-1 h-2 overflow-hidden rounded-lg bg-slate-100">
+        <div className={`h-full ${barClass}`} style={{ width: `${assignedPct}%` }} />
+      </div>
+      <div className="mb-0.5 flex justify-between text-[12px]">
+        <span>{completedLabel}</span>
+        <span>{usedLabel(completed, completedTotal)}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-lg bg-slate-100">
+        <div
+          className={`h-full ${tone === "red" ? "bg-red-300" : "bg-emerald-600"}`}
+          style={{ width: `${donePct}%` }}
+        />
+      </div>
+    </div>
   );
 }

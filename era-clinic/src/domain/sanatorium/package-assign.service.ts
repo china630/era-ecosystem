@@ -485,6 +485,21 @@ export type PackageAssignedAgg = {
   siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
 };
 
+/** In-package LabOrder / Visit rows for the diagnostics assign modal. */
+export type PackageAssignedStudy = {
+  id: string;
+  kind: "lab" | "visit";
+  serviceCode: string;
+  title: string;
+  qty: number;
+  packageQuotaCode: string;
+  status: string;
+  /** AUTO_ON_OPEN / AUTO_DAY1 burns, or past ORDERED / completed — UI must not remove. */
+  locked: boolean;
+  statusKind: "active" | "consumed";
+  amountNet: number;
+};
+
 /**
  * @param requireClinicalGates — CLI-55/56 anamnesis + care team.
  * GET snapshot must load without care-team/anamnesis gates (Nafta: many OPEN episodes still lack
@@ -535,9 +550,11 @@ export async function getPackageAssignSnapshot(
   locale = "az",
 ): Promise<{
   balances: PackageBalanceRow[];
-  /** LAB_ORDER / VISIT remaining — diagnostics modal (may be off the procedure menu). */
+  /** LAB_ORDER / VISIT package lines — diagnostics modal + card scales (may be off the procedure menu). */
   studyBalances: PackageBalanceRow[];
   assigned: PackageAssignedAgg[];
+  /** In-package lab/visit documents already on the course (diagnostics right column). */
+  assignedStudies: PackageAssignedStudy[];
   softWarnDay1: string | null;
   /**
    * Why balances are empty. Anamnesis, a complaint, and a care-team doctor stay the lock.
@@ -577,6 +594,7 @@ export async function getPackageAssignSnapshot(
         balances: [],
         studyBalances: [],
         assigned: [],
+        assignedStudies: [],
         softWarnDay1: null,
         blockReason: "NO_PROGRAM_CODE",
         poolEligible: {},
@@ -612,6 +630,7 @@ export async function getPackageAssignSnapshot(
         balances: [],
         studyBalances: [],
         assigned: [],
+        assignedStudies: [],
         softWarnDay1: null,
         blockReason: reason,
         poolEligible: {},
@@ -714,7 +733,7 @@ export async function getPackageAssignSnapshot(
 
   const balances: PackageBalanceRow[] = instance.procedureLines.map((line) => {
     const c = counts.get(line.procedureCode) ?? { circ: 0, consumed: 0 };
-    const used = c.circ + c.consumed;
+    const procUsed = c.circ + c.consumed;
     const configured = membersByBlock.get(line.procedureCode) ?? [];
     const isPool = isEntitlementBucket(line.procedureCode, configured);
     const isQuotaAlias = isPackageQuotaAlias(line.procedureCode);
@@ -739,6 +758,11 @@ export async function getPackageAssignSnapshot(
       rawFulfillment === "LAB_ORDER" || rawFulfillment === "VISIT"
         ? rawFulfillment
         : "PROCEDURE_ORDER";
+    // Lab/visit burns live on LabOrder/Visit — procedure-order counts miss them; use synced quotaUsed.
+    const used =
+      fulfillment === "LAB_ORDER" || fulfillment === "VISIT"
+        ? Number(line.quotaUsed ?? 0)
+        : procUsed;
     const assignable = showsInProcedureMenu({
       isTransfer: isBathTransferQuota(line.procedureCode),
       inSnapshot,
@@ -769,7 +793,10 @@ export async function getPackageAssignSnapshot(
       quotaUsed: line.quotaUsed,
       remaining: Math.max(0, line.quotaTotal - used),
       inCirculation: c.circ,
-      consumed: c.consumed,
+      consumed:
+        fulfillment === "LAB_ORDER" || fulfillment === "VISIT"
+          ? Math.min(Number(line.quotaUsed ?? 0), line.quotaTotal)
+          : c.consumed,
       isPool,
       isQuotaAlias,
       needsSkuPicker,
@@ -881,12 +908,11 @@ export async function getPackageAssignSnapshot(
         (a.procedureOrder ?? 0) - (b.procedureOrder ?? 0) ||
         a.procedureName.localeCompare(b.procedureName),
     );
-  /** Labs / exams for the diagnostics assign modal (includes blocks hidden from procedures). */
+  /** Labs / exams for diagnostics (includes blocks hidden from procedures; remaining 0 kept for card scales). */
   const studyBalances = balances
     .filter(
       (row) =>
         (row.fulfillment === "LAB_ORDER" || row.fulfillment === "VISIT") &&
-        row.remaining > 0 &&
         !row.isTransfer,
     )
     .sort(
@@ -894,12 +920,104 @@ export async function getPackageAssignSnapshot(
         (a.procedureOrder ?? 0) - (b.procedureOrder ?? 0) ||
         a.procedureName.localeCompare(b.procedureName),
     );
+
+  const [packageLabs, packageVisits] = await Promise.all([
+    prisma.labOrder.findMany({
+      where: {
+        clinicalEpisodeId: episodeId,
+        inPackage: true,
+        status: { not: "CANCELLED" },
+      },
+      include: {
+        items: {
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          include: {
+            diagnosticService: {
+              select: { titleAz: true, titleRu: true, titleEn: true, code: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.visit.findMany({
+      where: {
+        clinicalEpisodeId: episodeId,
+        status: { not: "CANCELLED" },
+        serviceLines: { some: { inPackage: true } },
+      },
+      include: {
+        serviceLines: {
+          where: { inPackage: true },
+          orderBy: { id: "asc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
+
+  const assignedStudies: PackageAssignedStudy[] = [];
+  const pickStudyTitle = (
+    svc:
+      | { titleAz: string | null; titleRu: string | null; titleEn: string | null }
+      | null
+      | undefined,
+    fallback: string,
+  ) => {
+    const az = svc?.titleAz?.trim() || "";
+    const ru = svc?.titleRu?.trim() || "";
+    const en = svc?.titleEn?.trim() || "";
+    if (locale.startsWith("ru")) return ru || az || en || fallback;
+    if (locale.startsWith("en")) return en || az || ru || fallback;
+    return az || ru || en || fallback;
+  };
+  for (const order of packageLabs) {
+    const item = order.items[0];
+    const serviceCode = item?.serviceCode || order.testCode.split(",")[0] || order.testCode;
+    const quota = order.packageQuotaCode || item?.packageQuotaCode || serviceCode;
+    // Product SoR: in-package studies (auto inventory) are not cancellable in diagnostics UI.
+    assignedStudies.push({
+      id: order.id,
+      kind: "lab",
+      serviceCode,
+      title: pickStudyTitle(item?.diagnosticService, serviceCode),
+      qty: 1,
+      packageQuotaCode: quota,
+      status: order.status,
+      locked: true,
+      statusKind: order.status === "ORDERED" ? "active" : "consumed",
+      amountNet: Number(order.amountNet),
+    });
+  }
+  for (const visit of packageVisits) {
+    const line = visit.serviceLines[0];
+    if (!line) continue;
+    const serviceCode = line.serviceCode;
+    const quota = line.packageQuotaCode || serviceCode;
+    const consumed = visit.status === "COMPLETED";
+    assignedStudies.push({
+      id: visit.id,
+      kind: "visit",
+      serviceCode,
+      title: line.description || serviceCode,
+      qty: 1,
+      packageQuotaCode: quota,
+      status: visit.status,
+      locked: true,
+      statusKind: consumed ? "consumed" : "active",
+      amountNet: Number(visit.amountNet),
+    });
+  }
+
   const sexBlocked = await blockedProcedureCodesForGuest(episode.patientRef?.sex);
 
   return {
     balances: menuBalances,
     studyBalances,
     assigned: [...batchMap.values()],
+    assignedStudies,
     softWarnDay1,
     blockReason: null,
     poolEligible,
@@ -2269,22 +2387,48 @@ export async function assignPackageMenuLines(
   }>;
 }> {
   const snap = await getPackageAssignSnapshot(episodeId);
+  // Menu balances omit hidden lab/visit blocks; diagnostics burns those via studyBalances.
   const byCode = new Map(snap.balances.map((row) => [row.procedureCode, row]));
+  for (const row of snap.studyBalances) {
+    if (!byCode.has(row.procedureCode)) byCode.set(row.procedureCode, row);
+  }
   const procedures: AssignLineInput[] = [];
   const studies: Array<AssignLineInput & { fulfillment: "LAB_ORDER" | "VISIT" }> = [];
   for (const line of lines) {
     if (line.qty < 1) continue;
     const quota = line.burnPoolCode?.trim() || line.procedureCode;
     const block = byCode.get(quota);
-    if (!block?.assignable) {
+    if (!block) {
+      throw new PackageAssignError(
+        `Code ${quota} not in package`,
+        "NOT_IN_PACKAGE",
+        400,
+      );
+    }
+    const isStudy =
+      block.fulfillment === "LAB_ORDER" || block.fulfillment === "VISIT";
+    // Procedure menu still requires assignable; package diagnostics may burn hidden study blocks.
+    if (!block.assignable && !isStudy) {
       throw new PackageAssignError(
         `Block ${quota} is not on the procedure list`,
         "NOT_IN_PROCEDURES",
         400,
       );
     }
-    if (block.fulfillment === "LAB_ORDER" || block.fulfillment === "VISIT") {
-      studies.push({ ...line, fulfillment: block.fulfillment });
+    if (isStudy) {
+      if (line.qty > block.remaining) {
+        throw new PackageAssignError(
+          `Qty ${line.qty} exceeds remaining ${block.remaining} for ${quota}`,
+          "QUOTA_EXCEEDED",
+          400,
+        );
+      }
+      // Reserve remaining for multi-line same batch (mirrors procedure path).
+      byCode.set(quota, { ...block, remaining: block.remaining - line.qty });
+      studies.push({
+        ...line,
+        fulfillment: block.fulfillment as "LAB_ORDER" | "VISIT",
+      });
     } else {
       procedures.push(line);
     }

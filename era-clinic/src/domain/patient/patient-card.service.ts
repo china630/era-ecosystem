@@ -328,6 +328,140 @@ export async function getPatientCardSummary(
     ? await listPendingDiagnostics(checklistEpisodeId)
     : [];
 
+  const paidExtraOrders = checklistEpisodeId
+    ? await prisma.procedureOrder.findMany({
+        where: {
+          clinicalEpisodeId: checklistEpisodeId,
+          inPackage: false,
+          status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] },
+          amountNet: { gt: 0 },
+        },
+        select: {
+          procedureCode: true,
+          procedureName: true,
+          status: true,
+          amountNet: true,
+        },
+      })
+    : [];
+  const paidLabExtras = checklistEpisodeId
+    ? await prisma.labOrder.findMany({
+        where: {
+          clinicalEpisodeId: checklistEpisodeId,
+          inPackage: false,
+          amountNet: { gt: 0 },
+          settledAt: { not: null },
+          status: { not: "CANCELLED" },
+        },
+        select: {
+          testCode: true,
+          status: true,
+          amountNet: true,
+          items: {
+            orderBy: { sortOrder: "asc" },
+            take: 1,
+            select: {
+              serviceCode: true,
+              diagnosticService: {
+                select: { titleAz: true, titleRu: true, titleEn: true, code: true },
+              },
+            },
+          },
+        },
+      })
+    : [];
+  const paidVisitExtras = checklistEpisodeId
+    ? await prisma.visit.findMany({
+        where: {
+          clinicalEpisodeId: checklistEpisodeId,
+          amountNet: { gt: 0 },
+          settledAt: { not: null },
+          status: { not: "CANCELLED" },
+          NOT: { serviceLines: { some: { inPackage: true } } },
+        },
+        select: {
+          status: true,
+          amountNet: true,
+          serviceLines: {
+            orderBy: { id: "asc" },
+            take: 1,
+            select: { serviceCode: true, description: true },
+          },
+        },
+      })
+    : [];
+
+  type ScaleAgg = {
+    code: string;
+    title: string;
+    assigned: number;
+    completed: number;
+    amountNet: number;
+  };
+  const paidExtrasByCode = new Map<string, ScaleAgg>();
+  for (const row of paidExtraOrders) {
+    const code = row.procedureCode;
+    const cur = paidExtrasByCode.get(code) ?? {
+      code,
+      title: displayProcedureName(code, row.procedureName),
+      assigned: 0,
+      completed: 0,
+      amountNet: 0,
+    };
+    cur.assigned += 1;
+    if (row.status === "COMPLETED" || row.status === "CHECKED_IN") cur.completed += 1;
+    cur.amountNet += Number(row.amountNet || 0);
+    paidExtrasByCode.set(code, cur);
+  }
+  const paidDiagnosticsByCode = new Map<string, ScaleAgg>();
+  const labDone = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
+  const localeKey = (opts?.locale ?? "az").toLowerCase();
+  const pickDiagTitle = (
+    svc:
+      | { titleAz: string | null; titleRu: string | null; titleEn: string | null; code: string }
+      | null
+      | undefined,
+    fallback: string,
+  ) => {
+    if (!svc) return fallback;
+    const az = svc.titleAz?.trim() || "";
+    const ru = svc.titleRu?.trim() || "";
+    const en = svc.titleEn?.trim() || "";
+    if (localeKey.startsWith("ru")) return ru || az || en || fallback;
+    if (localeKey.startsWith("en")) return en || az || ru || fallback;
+    return az || ru || en || fallback;
+  };
+  for (const row of paidLabExtras) {
+    const item = row.items[0];
+    const code = item?.serviceCode || row.testCode.split(",")[0] || row.testCode;
+    const cur = paidDiagnosticsByCode.get(code) ?? {
+      code,
+      title: pickDiagTitle(item?.diagnosticService, code),
+      assigned: 0,
+      completed: 0,
+      amountNet: 0,
+    };
+    cur.assigned += 1;
+    if (labDone.has(row.status)) cur.completed += 1;
+    cur.amountNet += Number(row.amountNet || 0);
+    paidDiagnosticsByCode.set(code, cur);
+  }
+  for (const row of paidVisitExtras) {
+    const line = row.serviceLines[0];
+    const code = line?.serviceCode || "VISIT";
+    const cur = paidDiagnosticsByCode.get(code) ?? {
+      code,
+      title: line?.description || code,
+      assigned: 0,
+      completed: 0,
+      amountNet: 0,
+    };
+    cur.assigned += 1;
+    if (row.status === "COMPLETED") cur.completed += 1;
+    cur.amountNet += Number(row.amountNet || 0);
+    paidDiagnosticsByCode.set(code, cur);
+  }
+
   return {
     patientRefId,
     limits: {
@@ -418,6 +552,8 @@ export async function getPatientCardSummary(
       amountNet: row.amountNet,
       status: row.status,
     })),
+    paidExtrasScale: [...paidExtrasByCode.values()],
+    paidDiagnosticsScale: [...paidDiagnosticsByCode.values()],
     intakeChecklist,
     examNotesPreview: examNotes.map((e) => {
       let titleL10n: L10n | undefined;
