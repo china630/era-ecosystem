@@ -171,9 +171,10 @@ export function handleRouteError(err: unknown) {
       );
     }
     if (err.name === 'PrismaClientValidationError') {
+      // Never echo the Prisma Request dump (headers/append) to the desk UI.
       console.error(err);
       return NextResponse.json(
-        { error: err.message || 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
+        { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
         { status: 400 },
       );
     }
