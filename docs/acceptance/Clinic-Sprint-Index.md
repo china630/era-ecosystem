@@ -44,5 +44,6 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-20 | CLI-26 matrix reception check-in + nurse unpaid Late | [x] | SHIPPED deepen; `receptionProcedureCheckIn` Nafta default on; AC-CLI-OPS stays ✅; Gate/Pilot/edition unchanged |
 | S-21 | Package Saxla redispatch + home/reports polish | [~] | CLI-57 SCREEN deepen (same-block redispatch + modal №; Pay keeps OPEN pin; save-ask blue/gray; extra-tickets room/name + today-forward; print/card Baku dates); CLI-13/17/29/42 SHIPPED deepen (arrival sort; range i18n); AC-CLI-ASSIGN stays 🟡; Gate/Pilot/edition unchanged |
 | S-22 | Patient assignment ledger (CLI-64) | [~] | SCREEN `/reports/patient-assignments` + print RBAC; AC-CLI-ASSIGN-LEDGER 🟡 out of BE; UAT open — not Pilot; Gate/edition unchanged |
+| S-23 | Diagnostics package money + Extra tickets pay desk | [~] | CLI-12/57 SCREEN deepen; package amountNet 0 + heal; Diagnostics modal no Pay; Extra tickets labs+visits (+ kind badge, title search, MIXED_PATIENT); AC-CLI-LAB ✅ ops / AC-CLI-ASSIGN 🟡; UAT open — not Pilot; Gate/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

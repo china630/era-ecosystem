@@ -31,6 +31,7 @@ import {
 
 type ExtraRow = {
   id: string;
+  kind?: "procedure" | "lab" | "visit";
   procedureName: string;
   amountNet: number;
   patientOrigin: string;
@@ -40,6 +41,7 @@ type ExtraRow = {
   patientName: string;
   refCode: string;
   roomNumber?: string | null;
+  clinicalEpisodeId?: string | null;
   status?: string;
 };
 
@@ -266,14 +268,23 @@ export default function ExtraTicketsPage() {
     setCancelAskId(null);
     setBusy(true);
     try {
-      const res = await fetch(`/api/procedures/${id}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "reception_unpaid_cancel" }),
-      });
-      const data = await res.json().catch(() => ({}));
+      const row = rows.find((r) => r.id === id);
+      const kind = row?.kind ?? "procedure";
+      let res: Response;
+      if ((kind === "lab" || kind === "visit") && row?.clinicalEpisodeId) {
+        res = await fetch(
+          `/api/sanatorium/episodes/${encodeURIComponent(row.clinicalEpisodeId)}/diagnostics-extras?id=${encodeURIComponent(id)}&kind=${kind}`,
+          { method: "DELETE" },
+        );
+      } else {
+        res = await fetch(`/api/procedures/${id}/cancel`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: "reception_unpaid_cancel" }),
+        });
+      }
       if (!res.ok) {
-        showApiError(data, t("cancelFailed"));
+        showApiError(await res.json().catch(() => ({})), t("cancelFailed"));
         return;
       }
       setSelected((prev) => {
@@ -292,6 +303,16 @@ export default function ExtraTicketsPage() {
     if (code === "WALK_IN") return t("origin_WALK_IN");
     return code;
   }
+
+  function kindLabel(kind?: ExtraRow["kind"]): string {
+    if (kind === "lab") return t("kind_lab");
+    if (kind === "visit") return t("kind_visit");
+    return t("kind_procedure");
+  }
+
+  const cancelAskRow = cancelAskId ? rows.find((row) => row.id === cancelAskId) : null;
+  const cancelAskIsDiagnostic =
+    cancelAskRow?.kind === "lab" || cancelAskRow?.kind === "visit";
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
@@ -390,6 +411,7 @@ export default function ExtraTicketsPage() {
                       payRowLabel={t("payRow")}
                       cancelRowLabel={t("cancelRow")}
                       originLabel={originLabel}
+                      kindLabel={kindLabel}
                       onTogglePatient={() => togglePatient(group)}
                       onToggleExpanded={() => toggleExpanded(group.patientRefId)}
                       onToggleProcedure={toggleProcedure}
@@ -424,7 +446,9 @@ export default function ExtraTicketsPage() {
           />
         }
       >
-        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("confirmCancel")}</p>
+        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+          {cancelAskIsDiagnostic ? t("confirmCancelDiagnostic") : t("confirmCancel")}
+        </p>
       </ModalShell>
     </div>
   );
@@ -444,6 +468,7 @@ function PatientBlock({
   payRowLabel,
   cancelRowLabel,
   originLabel,
+  kindLabel,
   onTogglePatient,
   onToggleExpanded,
   onToggleProcedure,
@@ -463,6 +488,7 @@ function PatientBlock({
   payRowLabel: string;
   cancelRowLabel: string;
   originLabel: (code: string) => string;
+  kindLabel: (kind?: ExtraRow["kind"]) => string;
   onTogglePatient: () => void;
   onToggleExpanded: () => void;
   onToggleProcedure: (row: ExtraRow) => void;
@@ -529,7 +555,12 @@ function PatientBlock({
               <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap tabular-nums`}>
                 {row.scheduledAt ? bakuDateTimeDisplay(row.scheduledAt) : "—"}
               </td>
-              <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
+              <td className={DATA_TABLE_TD_CLASS}>
+                <span className={`mr-2 text-[11px] uppercase tracking-wide ${TEXT_MUTED_CLASS}`}>
+                  {kindLabel(row.kind)}
+                </span>
+                {row.procedureName}
+              </td>
               <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
                 {Number(row.amountNet).toFixed(2)} AZN
               </td>

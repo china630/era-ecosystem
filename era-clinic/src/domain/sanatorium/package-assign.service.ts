@@ -2339,9 +2339,6 @@ async function assignPackageStudies(
   });
   const { createLabOrderWithItems } = await import("@/domain/lab/lab-order-write.service");
   const { LAB_ALREADY_OPEN } = await import("@/domain/lab/lab-order-conflict.service");
-  const { applyPriceMissingFallback, resolveEntitlementCharge } = await import(
-    "@/domain/sanatorium/entitlement-charge.service"
-  );
   const { syncEntitlementUsage } = await import("@/domain/sanatorium/entitlement-usage.service");
   const origin = episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
   const touched = new Set<string>();
@@ -2401,16 +2398,7 @@ async function assignPackageStudies(
           throw err;
         }
       } else {
-        const charge = applyPriceMissingFallback(
-          await resolveEntitlementCharge({
-            episodeId,
-            patientOrigin: origin,
-            quotaCode: quota,
-            serviceCode,
-            inPackage: true,
-          }),
-          { serviceCode, where: "package-assign-visit" },
-        );
+        // In-package assign burns entitlement — amount stays 0. Paid overflow uses diagnostics-extras.
         const visit = await prisma.visit.create({
           data: {
             organizationId: episode.organizationId,
@@ -2421,7 +2409,7 @@ async function assignPackageStudies(
             patientOrigin: origin,
             reservationId: episode.reservationId,
             roomNumber: episode.roomNumber,
-            amountNet: charge.amountNet,
+            amountNet: 0,
           },
         });
         await prisma.visitServiceLine.create({
@@ -2429,7 +2417,7 @@ async function assignPackageStudies(
             visitId: visit.id,
             serviceCode,
             description: line.procedureCode,
-            amount: charge.amountNet,
+            amount: 0,
             inPackage: true,
             packageQuotaCode: quota,
           },

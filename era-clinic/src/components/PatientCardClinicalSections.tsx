@@ -522,56 +522,14 @@ export function PatientCardClinicalSections({
               status: row.status,
               kind: row.kind,
             }))}
-            pendingPayLabel={t("pendingPay", { defaultValue: "Awaiting payment" })}
-            payLabel={t("pay", { defaultValue: "Pay" })}
+            pendingPayLabel={t("pendingPayTicketsHint", {
+              defaultValue: "Awaiting payment — pay on Extra tickets",
+            })}
             deleteLabel={tc("delete")}
             pendingTone="red"
             pendingBusy={diagnosticsPendingBusy}
             onPackagePlus={() => setDiagnosticsModalOpen(true)}
             onExtrasPlus={() => setDiagnosticsModalOpen(true)}
-            onPayPending={(row) => {
-              if (!episodeId || !row.kind) return;
-              void (async () => {
-                setDiagnosticsPendingBusy(true);
-                try {
-                  const res = await fetch(
-                    `/api/sanatorium/episodes/${episodeId}/diagnostics-extras`,
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        action: "pay",
-                        lines: [{ id: row.id, kind: row.kind }],
-                      }),
-                    },
-                  );
-                  const body = await res.json().catch(() => ({}));
-                  if (!res.ok) {
-                    showApiError(body, tc("failed"));
-                    return;
-                  }
-                  const payload = body.data ?? body;
-                  const rejected = Array.isArray(payload.rejected)
-                    ? payload.rejected
-                    : [];
-                  if (
-                    rejected.length > 0 &&
-                    (!payload.accepted || payload.accepted.length === 0)
-                  ) {
-                    showApiError(
-                      { error: rejected[0]?.reason || tc("failed") },
-                      tc("failed"),
-                    );
-                  } else {
-                    showSuccess(tc("saved"));
-                  }
-                  await loadSummary();
-                  setQuotaTick((n) => n + 1);
-                } finally {
-                  setDiagnosticsPendingBusy(false);
-                }
-              })();
-            }}
             onRemovePending={(row) => {
               if (!episodeId || !row.kind) return;
               void (async () => {

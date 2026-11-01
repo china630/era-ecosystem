@@ -320,9 +320,14 @@ export function DiagnosticsAssignModal({
                       ? t("careTeamRequired", {
                           defaultValue: "A care-team doctor is required",
                         })
-                      : typeof body?.error === "string"
-                        ? body.error
-                        : tc("saveFailed"),
+                      : code === "QUOTA_REMAINING"
+                        ? t("usePackageFirst", {
+                            defaultValue:
+                              "Use package remaining before a paid diagnostic",
+                          })
+                        : typeof body?.error === "string"
+                          ? body.error
+                          : tc("saveFailed"),
             },
           );
           return;
@@ -332,42 +337,6 @@ export function DiagnosticsAssignModal({
       setDraft([]);
       onSaved();
       onClose();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function payRow(row: PendingRow) {
-    setBusy(true);
-    try {
-      const res = await fetch(
-        `/api/sanatorium/episodes/${episodeId}/diagnostics-extras`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "pay",
-            lines: [{ id: row.id, kind: row.kind }],
-          }),
-        },
-      );
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        showApiError(body, tc("failed"));
-        return;
-      }
-      const payload = body.data ?? body;
-      const rejected = Array.isArray(payload.rejected) ? payload.rejected : [];
-      if (rejected.length > 0 && (!payload.accepted || payload.accepted.length === 0)) {
-        showApiError(
-          { error: rejected[0]?.reason || tc("failed") },
-          tc("failed"),
-        );
-      } else {
-        showSuccess(tc("saved"));
-      }
-      await load();
-      onSaved();
     } finally {
       setBusy(false);
     }
@@ -391,6 +360,23 @@ export function DiagnosticsAssignModal({
     }
   }
 
+  const draftSplit = useMemo(() => {
+    let packageQty = 0;
+    let paidQty = 0;
+    for (const d of draft) {
+      const bal = studyBalances.find((b) => b.procedureCode === d.serviceCode);
+      const inQuota = bal ? Math.min(d.qty, bal.remaining) : 0;
+      packageQty += inQuota;
+      paidQty += Math.max(0, d.qty - inQuota);
+    }
+    return { packageQty, paidQty };
+  }, [draft, studyBalances]);
+
+  const pendingTotal = useMemo(
+    () => pending.reduce((sum, row) => sum + Number(row.amountNet || 0), 0),
+    [pending],
+  );
+
   return (
     <ModalShell
       open={open}
@@ -400,102 +386,263 @@ export function DiagnosticsAssignModal({
       onClose={onClose}
       closeLabel={tc("close")}
       maxWidthClass={EPISODE_MODAL_CLASS}
+      bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
+      footer={
+        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+            {t("diagnosticsDraftSummary", {
+              defaultValue: "Package {packageQty} · paid overflow {paidQty} · awaiting {pendingAmount} AZN",
+              packageQty: draftSplit.packageQty,
+              paidQty: draftSplit.paidQty,
+              pendingAmount: pendingTotal.toFixed(2),
+            })}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={onClose}>
+              {tc("close")}
+            </button>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={readOnly || busy || draft.length < 1}
+              onClick={() => void save()}
+            >
+              {tc("save")}
+            </button>
+          </div>
+        </div>
+      }
     >
-      <div className="space-y-4">
-        {loading ? (
-          <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
-        ) : (
-          <>
-            <section className="space-y-2">
-              <h4 className="text-sm font-medium">
-                {t("diagnosticsInPackage", {
-                  defaultValue: "In package",
+      {loading ? (
+        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
+      ) : (
+        <div className="grid h-full min-h-0 flex-1 grid-rows-1 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+          <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
+            <h4 className="text-sm font-medium">
+              {t("diagnosticsInPackage", { defaultValue: "In package" })}
+            </h4>
+            {studyBalances.length === 0 ? (
+              <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+                {t("diagnosticsPackageEmpty", {
+                  defaultValue: "No package lab or exam remaining on this course.",
                 })}
-              </h4>
-              {studyBalances.length === 0 ? (
-                <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-                  {t("diagnosticsPackageEmpty", {
-                    defaultValue: "No package lab or exam remaining on this course.",
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {studyBalances.map((row) => (
+                  <li
+                    key={row.procedureCode}
+                    className="flex items-center justify-between gap-2 border-b border-slate-100 px-1 py-1.5 text-[13px]"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-medium leading-tight">
+                        {row.procedureName}
+                      </div>
+                      <p className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}>
+                        {row.remaining} ·{" "}
+                        {row.fulfillment === "VISIT"
+                          ? t("fulfillmentVisit", { defaultValue: "Visit" })
+                          : t("fulfillmentLab", { defaultValue: "Lab" })}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className={PRIMARY_BUTTON_CLASS}
+                      disabled={readOnly || busy}
+                      onClick={() => addFromBalance(row)}
+                      aria-label={row.procedureName}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h4 className="pt-2 text-sm font-medium">
+              {t("diagnosticsExtraTitle", {
+                defaultValue: "Additional (awaiting payment)",
+              })}
+            </h4>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="min-w-[180px] flex-1">
+                <CatalogField
+                  kind="SEARCHABLE"
+                  label={t("diagnosticsPick", { defaultValue: "Study" })}
+                  value={pickerCode}
+                  onChange={(v) => setPickerCode(String(v ?? ""))}
+                  options={catalog.map((c) => ({ value: c.value, label: c.label }))}
+                />
+              </div>
+              {catalog.find((c) => c.value === pickerCode)?.kind === "visit" ? (
+                <>
+                  <DatePicker
+                    label={t("visitDate", { defaultValue: "Date" })}
+                    value={visitDate}
+                    onChange={(v) => setVisitDate(v || todayBakuYmd())}
+                    placeholder="dd.mm.yyyy"
+                  />
+                  <Field
+                    type="time"
+                    preset="time"
+                    label={t("visitTime", { defaultValue: "Time" })}
+                    hint={t("visitTimeOptional", { defaultValue: "Optional" })}
+                    value={visitTime}
+                    onChange={(e) => setVisitTime(e.target.value)}
+                  />
+                </>
+              ) : null}
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={readOnly || busy || !pickerCode}
+                onClick={addFromCatalog}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
+            <h4 className="text-sm font-medium">
+              {t("diagnosticsDraft", { defaultValue: "Selected" })}
+            </h4>
+            {draft.length === 0 && pending.length === 0 ? (
+              <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
+                {t("diagnosticsDraftEmpty", {
+                  defaultValue: "Add studies from the package menu or catalog.",
+                })}
+              </p>
+            ) : null}
+
+            {draft.length > 0 ? (
+              <ul className="space-y-1.5">
+                {draft.map((row) => {
+                  const sched =
+                    row.kind === "visit"
+                      ? parseDraftSchedule(row.scheduledAt)
+                      : { date: "", time: "" };
+                  const bal = studyBalances.find(
+                    (b) => b.procedureCode === row.serviceCode,
+                  );
+                  const inQuota = bal ? Math.min(row.qty, bal.remaining) : 0;
+                  const paid = Math.max(0, row.qty - inQuota);
+                  return (
+                    <li
+                      key={row.key}
+                      className={`${CARD_CONTAINER_CLASS} space-y-2 px-3 py-2 text-[13px]`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="font-medium">{row.title}</div>
+                          <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                            {row.serviceCode}
+                            {inQuota > 0
+                              ? ` · ${t("diagnosticsPackageBurn", {
+                                  defaultValue: "package",
+                                })} ${inQuota}`
+                              : ""}
+                            {paid > 0
+                              ? ` · ${t("diagnosticsPaidOverflow", {
+                                  defaultValue: "paid",
+                                })} ${paid}`
+                              : ""}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON_CLASS}
+                            disabled={busy || row.qty <= 1}
+                            onClick={() =>
+                              setDraft((prev) =>
+                                prev.map((d) =>
+                                  d.key === row.key
+                                    ? { ...d, qty: Math.max(1, d.qty - 1) }
+                                    : d,
+                                ),
+                              )
+                            }
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="min-w-[1.5rem] text-center">{row.qty}</span>
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON_CLASS}
+                            disabled={busy}
+                            onClick={() =>
+                              setDraft((prev) =>
+                                prev.map((d) =>
+                                  d.key === row.key ? { ...d, qty: d.qty + 1 } : d,
+                                ),
+                              )
+                            }
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON_CLASS}
+                            disabled={busy}
+                            onClick={() =>
+                              setDraft((prev) => prev.filter((d) => d.key !== row.key))
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {row.kind === "visit" ? (
+                        <div className="flex flex-wrap items-end gap-2">
+                          <DatePicker
+                            label={t("visitDate", { defaultValue: "Date" })}
+                            value={sched.date || todayBakuYmd()}
+                            onChange={(v) =>
+                              patchDraftSchedule(
+                                row.key,
+                                v || todayBakuYmd(),
+                                sched.time,
+                              )
+                            }
+                            placeholder="dd.mm.yyyy"
+                          />
+                          <Field
+                            type="time"
+                            preset="time"
+                            label={t("visitTime", { defaultValue: "Time" })}
+                            hint={t("visitTimeOptional", {
+                              defaultValue: "Optional",
+                            })}
+                            value={sched.time}
+                            onChange={(e) =>
+                              patchDraftSchedule(
+                                row.key,
+                                sched.date || todayBakuYmd(),
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+
+            {pending.length > 0 ? (
+              <section className="space-y-1.5">
+                <h4 className="text-sm font-medium">
+                  {t("diagnosticsAwaitingTickets", {
+                    defaultValue: "Awaiting payment (Extra tickets)",
+                  })}
+                </h4>
+                <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                  {t("pendingPayTicketsHint", {
+                    defaultValue: "Pay on Extra tickets — not here.",
                   })}
                 </p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {studyBalances.map((row) => (
-                    <li
-                      key={row.procedureCode}
-                      className={`${CARD_CONTAINER_CLASS} flex items-center justify-between gap-2 px-3 py-2 text-[13px]`}
-                    >
-                      <div>
-                        <div className="font-medium">{row.procedureName}</div>
-                        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                          {row.remaining} ·{" "}
-                          {row.fulfillment === "VISIT"
-                            ? t("fulfillmentVisit", { defaultValue: "Visit" })
-                            : t("fulfillmentLab", { defaultValue: "Lab" })}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className={PRIMARY_BUTTON_CLASS}
-                        disabled={readOnly || busy}
-                        onClick={() => addFromBalance(row)}
-                        aria-label={row.procedureName}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="space-y-2">
-              <h4 className="text-sm font-medium">
-                {t("diagnosticsExtraTitle", {
-                  defaultValue: "Additional (awaiting payment)",
-                })}
-              </h4>
-              <div className="flex flex-wrap items-end gap-2">
-                <div className="min-w-[220px] flex-1">
-                  <CatalogField
-                    kind="SEARCHABLE"
-                    label={t("diagnosticsPick", { defaultValue: "Study" })}
-                    value={pickerCode}
-                    onChange={(v) => setPickerCode(String(v ?? ""))}
-                    options={catalog.map((c) => ({ value: c.value, label: c.label }))}
-                  />
-                </div>
-                {catalog.find((c) => c.value === pickerCode)?.kind === "visit" ? (
-                  <>
-                    <DatePicker
-                      label={t("visitDate", { defaultValue: "Date" })}
-                      value={visitDate}
-                      onChange={(v) => setVisitDate(v || todayBakuYmd())}
-                      placeholder="dd.mm.yyyy"
-                    />
-                    <Field
-                      type="time"
-                      preset="time"
-                      label={t("visitTime", { defaultValue: "Time" })}
-                      hint={t("visitTimeOptional", {
-                        defaultValue: "Optional",
-                      })}
-                      value={visitTime}
-                      onChange={(e) => setVisitTime(e.target.value)}
-                    />
-                  </>
-                ) : null}
-                <button
-                  type="button"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={readOnly || busy || !pickerCode}
-                  onClick={addFromCatalog}
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-
-              {pending.length > 0 ? (
                 <ul className="space-y-1.5">
                   {pending.map((row) => (
                     <li
@@ -506,164 +653,28 @@ export function DiagnosticsAssignModal({
                         <div>
                           <div className="font-medium">{row.title}</div>
                           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                            {row.kind === "visit"
-                              ? t("fulfillmentVisit", { defaultValue: "Visit" })
-                              : t("fulfillmentLab", { defaultValue: "Lab" })}{" "}
-                            · {row.amountNet.toFixed(2)} AZN ·{" "}
+                            {row.amountNet.toFixed(2)} AZN ·{" "}
                             {t("pendingPay", { defaultValue: "Awaiting payment" })}
                           </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            className={PRIMARY_BUTTON_CLASS}
-                            disabled={readOnly || busy}
-                            onClick={() => void payRow(row)}
-                          >
-                            {t("pay", { defaultValue: "Pay" })}
-                          </button>
-                          <button
-                            type="button"
-                            className={SECONDARY_BUTTON_CLASS}
-                            disabled={readOnly || busy}
-                            onClick={() => void removePending(row)}
-                            aria-label={tc("delete")}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={readOnly || busy}
+                          onClick={() => void removePending(row)}
+                          aria-label={tc("delete")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </li>
                   ))}
                 </ul>
-              ) : null}
-            </section>
-
-            {draft.length > 0 ? (
-              <section className="space-y-2">
-                <h4 className="text-sm font-medium">
-                  {t("diagnosticsDraft", { defaultValue: "To save" })}
-                </h4>
-                <ul className="space-y-1.5">
-                  {draft.map((row) => {
-                    const sched =
-                      row.kind === "visit"
-                        ? parseDraftSchedule(row.scheduledAt)
-                        : { date: "", time: "" };
-                    return (
-                      <li
-                        key={row.key}
-                        className={`${CARD_CONTAINER_CLASS} space-y-2 px-3 py-2 text-[13px]`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <div className="font-medium">{row.title}</div>
-                            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                              {row.serviceCode}
-                              {row.kind === "visit" && row.scheduledAt
-                                ? ` · ${formatDraftSchedule(row.scheduledAt)}`
-                                : ""}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              className={SECONDARY_BUTTON_CLASS}
-                              disabled={busy || row.qty <= 1}
-                              onClick={() =>
-                                setDraft((prev) =>
-                                  prev.map((d) =>
-                                    d.key === row.key
-                                      ? { ...d, qty: Math.max(1, d.qty - 1) }
-                                      : d,
-                                  ),
-                                )
-                              }
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="min-w-[1.5rem] text-center">{row.qty}</span>
-                            <button
-                              type="button"
-                              className={SECONDARY_BUTTON_CLASS}
-                              disabled={busy}
-                              onClick={() =>
-                                setDraft((prev) =>
-                                  prev.map((d) =>
-                                    d.key === row.key ? { ...d, qty: d.qty + 1 } : d,
-                                  ),
-                                )
-                              }
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              className={SECONDARY_BUTTON_CLASS}
-                              disabled={busy}
-                              onClick={() =>
-                                setDraft((prev) => prev.filter((d) => d.key !== row.key))
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                        {row.kind === "visit" ? (
-                          <div className="flex flex-wrap items-end gap-2">
-                            <DatePicker
-                              label={t("visitDate", { defaultValue: "Date" })}
-                              value={sched.date || todayBakuYmd()}
-                              onChange={(v) =>
-                                patchDraftSchedule(
-                                  row.key,
-                                  v || todayBakuYmd(),
-                                  sched.time,
-                                )
-                              }
-                              placeholder="dd.mm.yyyy"
-                            />
-                            <Field
-                              type="time"
-                              preset="time"
-                              label={t("visitTime", { defaultValue: "Time" })}
-                              hint={t("visitTimeOptional", {
-                                defaultValue: "Optional",
-                              })}
-                              value={sched.time}
-                              onChange={(e) =>
-                                patchDraftSchedule(
-                                  row.key,
-                                  sched.date || todayBakuYmd(),
-                                  e.target.value,
-                                )
-                              }
-                            />
-                          </div>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
               </section>
             ) : null}
-
-            <div className="flex justify-end gap-2">
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={onClose}>
-                {tc("close")}
-              </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={readOnly || busy || draft.length < 1}
-                onClick={() => void save()}
-              >
-                {tc("save")}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </ModalShell>
   );
 }

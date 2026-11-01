@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { enterRequestTenant } from "@/lib/request-organization";
-import { listStayProceduresForCheckout } from "@/domain/sanatorium/stay-checkout-snapshot.service";
+import {
+  clearStayProceduresAtCheckout,
+  listStayProceduresForCheckout,
+} from "@/domain/sanatorium/stay-checkout-snapshot.service";
+import { z } from "zod";
 
 function assertServiceToken(req: NextRequest): boolean {
   const expected = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
@@ -23,6 +27,23 @@ export async function GET(req: NextRequest) {
     }
     enterRequestTenant(organizationId);
     return jsonOk(await listStayProceduresForCheckout(reservationId));
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+const clearSchema = z.object({
+  organizationId: z.string().min(1),
+  reservationId: z.string().min(1),
+});
+
+/** Hotel check-out: cancel future extras / package seats; apply no-show policy. */
+export async function POST(req: NextRequest) {
+  try {
+    if (!assertServiceToken(req)) return jsonError("Unauthorized", 401);
+    const body = clearSchema.parse(await req.json());
+    enterRequestTenant(body.organizationId);
+    return jsonOk(await clearStayProceduresAtCheckout(body.reservationId));
   } catch (err) {
     return handleRouteError(err);
   }

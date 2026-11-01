@@ -95,7 +95,7 @@ type AssignBlocksProps = {
   deleteLabel?: string;
   /** unpaid rows: amber (procedures) or red (diagnostics). */
   pendingTone?: "amber" | "red";
-  /** When set, red/amber rows show Pay on the card (diagnostics). */
+  /** Optional Pay on the card (procedure extras). Diagnostics omit this — pay on Extra tickets. */
   onPayPending?: (row: AssignPendingRow) => void;
   /** When set, rows show delete on the card. */
   onRemovePending?: (row: AssignPendingRow) => void;
