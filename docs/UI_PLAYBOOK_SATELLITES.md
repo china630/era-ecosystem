@@ -121,7 +121,10 @@ For taxonomy / tender / channel / catalog-code fields, **do not** use `Field` `s
 |------|---------|
 | `CLOSED_SMALL` / `CLOSED_MEDIUM` | Select |
 | `MULTI` | Checkbox group |
-| `SEARCHABLE` / `ENTITY_REF` | Filterable combobox (Async API later) |
+| `SEARCHABLE` / `ENTITY_REF` | Filterable combobox (Async API later). Portaled list closes on outside pointer/focus, Escape, and clear (× does not force-reopen) |
+| `OPS_HOT` | Chip toggle (`CHIP_*`) for ≤4 exclusive ops values |
+
+Label→control gap is **1px** globally (`FORM_FIELD_GROUP_CLASS` / `MODAL_FIELD_LABEL_CLASS`). FO card sections use **`FieldGroupBox` / `FieldPanel`** (Win32-style legend on the border, `rounded-xl`).
 | `OPS_HOT` | Radio chips |
 | `FREE_TEXT` | Text (only when intentionally free) |
 

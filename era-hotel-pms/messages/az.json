@@ -1571,6 +1571,7 @@
     "sourceCorporate": "Korporativ",
     "sourceOta": "Onlayn",
     "stayContract": "Müqavilə",
+    "travelAgentCompany": "Agentlik / Şirkət",
     "nightsUp": "Gecə əlavə et",
     "nightsDown": "Gecəni azalt",
     "quickAddAgency": "Yeni agentlik",
@@ -2486,9 +2487,12 @@
     "departure": "Çıxış",
     "roomType": "Otaq tipi",
     "adult": "Böyük",
-    "children": "Uşaqlar",
+    "children": "Uşaq",
     "state": "Vəziyyət",
-    "resId": "Rez. ID"
+    "resId": "Rez. ID",
+    "resIdCopy": "Kopyala",
+    "resIdCopied": "Rezervasiya ID kopyalandı",
+    "resIdCopyFailed": "Rezervasiya ID kopyalanmadı"
   },
   "groupReservations": {
     "title": "Qrup rezervasiyaları",

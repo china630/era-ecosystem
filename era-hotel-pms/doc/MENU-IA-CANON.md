@@ -27,11 +27,11 @@ Related: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md) · [HotelOps
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | Room type availability | `/fo/availability` | Sellable Avl/Occ; entry to create when Avl > 0 |
-| Reservation list | `/fo/reservations` | Stay queue: filters, notes, assign / check-in |
+| Reservation list | `/fo/reservations` | Stay queue: filters, notes, children column, departed strike, Res. ID copy, click/dblclick |
 | Room plan | `/fo/room-plan` | Timeline by room; relocate / extend |
 | Room rack | `/fo/rack` | Shift doors: HK status, in-house, today's arrival, quick actions |
 | Group reservations | `/fo/groups` | Groups / booking envelope |
-| In-house | `/fo/in-house` | In-house guests; jump to card / folio |
+| In-house | `/fo/in-house` | Live party rows (adults + children); jump to card / folio |
 | Room changes | `/fo/room-changes` | Journal of moves; change door on plan / card Assignment |
 | Reservation times *(optional FO report)* | `/fo/reservation-times` | Actual CI/CO journal; guest + agency filters |
 | Agency inbox | `/fo/agency-inbox` | OPTION stays from agency portal — confirm / decline (`hotel_agency_portal`) |

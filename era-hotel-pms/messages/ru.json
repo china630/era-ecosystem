@@ -1571,6 +1571,7 @@
     "sourceCorporate": "Корпоратив",
     "sourceOta": "Онлайн",
     "stayContract": "Договор",
+    "travelAgentCompany": "Агентство / Компания",
     "nightsUp": "Добавить ночь",
     "nightsDown": "Убрать ночь",
     "quickAddAgency": "Новое агентство",
@@ -2488,7 +2489,10 @@
     "adult": "Взр.",
     "children": "Дети",
     "state": "Статус",
-    "resId": "№ брони"
+    "resId": "№ брони",
+    "resIdCopy": "Копировать",
+    "resIdCopied": "ID брони скопирован",
+    "resIdCopyFailed": "Не удалось скопировать ID брони"
   },
   "groupReservations": {
     "title": "Групповые бронирования",

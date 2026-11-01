@@ -1570,6 +1570,7 @@
     "sourceCorporate": "Corporate",
     "sourceOta": "Online",
     "stayContract": "Contract",
+    "travelAgentCompany": "Travel agent / Company",
     "nightsUp": "Add a night",
     "nightsDown": "Remove a night",
     "quickAddAgency": "New agency",
@@ -2487,7 +2488,10 @@
     "adult": "Adult",
     "children": "Children",
     "state": "State",
-    "resId": "Res. ID"
+    "resId": "Res. ID",
+    "resIdCopy": "Copy",
+    "resIdCopied": "Reservation id copied",
+    "resIdCopyFailed": "Could not copy reservation id"
   },
   "groupReservations": {
     "title": "Group reservations",

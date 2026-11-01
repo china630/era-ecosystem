@@ -35,7 +35,7 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-13 | Nafta doctor first-day confirm (Wave C) | [~] | CLI-52 SCREEN; AC-CLI-SAN-DAY1 🟡; no Confirm all; AFTER_CHECKUP settings |
 | S-14 | Nafta doctor bonus extras (Wave D) | [~] | CLI-53 SCREEN; AC-CLI-BONUS 🟡; fulfillment view; prescriber stamp; % stay 0 until FO |
 | S-20 | Clinic paid-fact revenue statement (CLI-63) | [~] | SCREEN `/reports/revenue`; AC-CLI-REV 🟡 out of BE; no fixed article list; UAT open — not Pilot |
-| S-15 | Nafta one stay two episodes (Wave E) | [~] | CLI-54 SCREEN; AC-CLI-SAN-PAX 🟡; openEpisode per patient; shared surname does not merge; depart/move by stay id; **pilot punch open** |
+| S-15 | Nafta one stay two episodes (Wave E) | [~] | CLI-54 SCREEN; AC-CLI-SAN-PAX 🟡; openEpisode per patient; shared surname does not merge; depart/move by stay id; `/sanatorium` 1-click select / 2-click open Guest deepen; **pilot punch open** |
 | S-16 | Episode as care course (CLI-55) | [~] | SCREEN waves W1–W5; AC-CLI-EPISODE 🟡; UAT open — not Pilot |
 | S-17 | Clinic RBAC Variant A + custom roles | [~] | AC-CLI-RBAC 🟡; `/admin/access` clone; system seed; UAT open — not Pilot |
 | S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | CLI-19 SHIPPED viewer; Wave B ClinicReceipt SETTLE/VOID + ClinicShift; Wave E compound `(organizationId, createdAt)` 2026-10-29; hash-chain deferred; HTTP_MUTATION UAT open; Gate/Pilot/edition unchanged |
@@ -44,6 +44,6 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-20 | CLI-26 matrix reception check-in + nurse unpaid Late | [x] | SHIPPED deepen; `receptionProcedureCheckIn` Nafta default on; AC-CLI-OPS stays ✅; Gate/Pilot/edition unchanged |
 | S-21 | Package Saxla redispatch + home/reports polish | [~] | CLI-57 SCREEN deepen (same-block redispatch + modal №; Pay keeps OPEN pin; save-ask blue/gray; extra-tickets room/name + today-forward; print/card Baku dates); CLI-13/17/29/42 SHIPPED deepen (arrival sort; range i18n); AC-CLI-ASSIGN stays 🟡; Gate/Pilot/edition unchanged |
 | S-22 | Patient assignment ledger (CLI-64) | [~] | SCREEN `/reports/patient-assignments` + print RBAC; AC-CLI-ASSIGN-LEDGER 🟡 out of BE; UAT open — not Pilot; Gate/edition unchanged |
-| S-23 | Diagnostics package money + Extra tickets pay desk | [~] | CLI-12/57 SCREEN deepen; package amountNet 0 + heal; Diagnostics modal no Pay; Extra tickets labs+visits (+ kind badge, title search, MIXED_PATIENT); AC-CLI-LAB ✅ ops / AC-CLI-ASSIGN 🟡; UAT open — not Pilot; Gate/edition unchanged |
+| S-23 | Diagnostics package money + Extra tickets pay desk | [~] | CLI-12/57 SCREEN; package amountNet 0; modal lane parity; Paket/Diaqnostika studyQuota red→blue merge; hidden LAB/VISIT burns via studyBalances; Extra tickets labs+visits; AC-CLI-LAB ✅ / AC-CLI-ASSIGN 🟡; UAT open; Gate/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

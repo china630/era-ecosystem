@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
+  CHIP_ACTIVE_CLASS,
+  CHIP_CLASS,
   FORM_FIELD_GROUP_CLASS,
   MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
@@ -148,7 +150,7 @@ export function CatalogField({
         className={className}
         hideLabel={hideLabel}
       >
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
           {options.map((opt) => {
             const active = str === opt.value;
             return (
@@ -158,11 +160,7 @@ export function CatalogField({
                 role="radio"
                 aria-checked={active}
                 disabled={disabled || opt.disabled}
-                className={`rounded border px-3 py-1.5 text-sm ${
-                  active
-                    ? "border-[#2C3E50] bg-[#2C3E50] text-white"
-                    : "border-[#BDC3C7] bg-white text-[#2C3E50]"
-                }`}
+                className={active ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
                 onClick={() => onChange(opt.value)}
               >
                 {opt.label}
@@ -298,7 +296,10 @@ function CatalogCombobox({
   emptyLabel?: string | null;
   hideLabel?: boolean;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const blurCloseTimer = useRef<number | null>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{
@@ -320,6 +321,19 @@ function CatalogCombobox({
       )
       .slice(0, 50);
   }, [options, query, serverSearch]);
+
+  function cancelBlurClose() {
+    if (blurCloseTimer.current != null) {
+      window.clearTimeout(blurCloseTimer.current);
+      blurCloseTimer.current = null;
+    }
+  }
+
+  function closeList() {
+    cancelBlurClose();
+    setOpen(false);
+    setQuery("");
+  }
 
   function updateCoords() {
     const el = inputRef.current;
@@ -353,31 +367,61 @@ function CatalogCombobox({
     };
   }, [open, filtered.length]);
 
+  // Windows-style: pointer/focus outside or Escape dismisses the portaled list immediately.
   useEffect(() => {
     if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const isInside = (target: Node | null) =>
+      Boolean(
+        target &&
+          (rootRef.current?.contains(target) || listRef.current?.contains(target)),
+      );
+    const onDoc = (e: PointerEvent) => {
+      if (isInside(e.target as Node | null)) return;
+      closeList();
+    };
+    const onFocusIn = (e: FocusEvent) => {
+      if (isInside(e.target as Node | null)) return;
+      closeList();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeList();
+        inputRef.current?.blur();
+      }
+    };
+    document.addEventListener("pointerdown", onDoc, true);
+    document.addEventListener("focusin", onFocusIn, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDoc, true);
+      document.removeEventListener("focusin", onFocusIn, true);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
+
+  useEffect(() => {
+    if (disabled) closeList();
+  }, [disabled]);
+
+  useEffect(() => () => cancelBlurClose(), []);
 
   function handleQueryChange(next: string) {
     setQuery(next);
     onQueryChange?.(next);
   }
 
+  /** Clear selection and hide the list (do not force-reopen). */
   function clearValue() {
     onChange("");
-    setQuery("");
     onQueryChange?.("");
-    setOpen(true);
+    closeList();
   }
 
   const list =
     open && !disabled && coords && typeof document !== "undefined"
       ? createPortal(
           <ul
+            ref={listRef}
             className="overflow-y-auto rounded border border-[#BDC3C7] bg-white shadow-lg"
             style={{
               position: "fixed",
@@ -395,10 +439,7 @@ function CatalogCombobox({
                   type="button"
                   className="block w-full px-2 py-1.5 text-left text-sm text-[#7F8C8D] hover:bg-[#EBEDF0]"
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    clearValue();
-                    setOpen(false);
-                  }}
+                  onClick={() => clearValue()}
                 >
                   {emptyLabel}
                 </button>
@@ -418,8 +459,7 @@ function CatalogCombobox({
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       onChange(opt.value);
-                      setOpen(false);
-                      setQuery("");
+                      closeList();
                     }}
                   >
                     {opt.label}
@@ -442,18 +482,21 @@ function CatalogCombobox({
       className={className}
       hideLabel={hideLabel}
     >
-      <div className="relative min-w-0 max-w-full">
+      <div ref={rootRef} className="relative min-w-0 max-w-full">
         <input
           ref={inputRef}
           id={id}
           name={name}
           disabled={disabled}
           aria-label={hideLabel ? label : undefined}
+          aria-expanded={open}
+          aria-autocomplete="list"
           className={`${MODAL_INPUT_CLASS} min-w-0 max-w-full pr-8 ${fieldWidthClass(widthPreset)}`.trim()}
           value={open ? query : selectedLabel}
           placeholder="…"
           autoComplete="off"
           onFocus={() => {
+            cancelBlurClose();
             setOpen(true);
             setQuery("");
             if (serverSearch) onQueryChange?.("");
@@ -463,7 +506,15 @@ function CatalogCombobox({
             setOpen(true);
           }}
           onBlur={() => {
-            window.setTimeout(() => setOpen(false), 150);
+            cancelBlurClose();
+            // Tab-away / focus move: close after option/clear mousedown can run.
+            blurCloseTimer.current = window.setTimeout(() => {
+              blurCloseTimer.current = null;
+              const active = document.activeElement;
+              if (rootRef.current?.contains(active)) return;
+              if (listRef.current?.contains(active)) return;
+              closeList();
+            }, 0);
           }}
         />
         {value && !disabled ? (
