@@ -31,6 +31,7 @@ export { countryLabel, countryOptions, ISO_COUNTRIES } from "../catalog/iso-coun
 export type { IsoCountry } from "../catalog/iso-countries";
 export { FieldSection } from "./field-section";
 export { FieldPanel } from "./field-panel";
+export { FieldGroupBox } from "./field-group-box";
 export { buildAuthLoginLabels } from "./auth-login-labels";
 export {
   AuthLoginCard,
