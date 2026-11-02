@@ -8,7 +8,6 @@ import {
   Field,
   FieldGroupBox,
   SECONDARY_BUTTON_CLASS,
-  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -268,29 +267,7 @@ export function CommercialPartyStrip({
     }
   }
 
-  const selectedContract = visibleContracts.find((c) => c.id === salesContractId);
-  const agencyLabel = agencies.find((a) => a.id === knownAgencyId)?.label ?? '';
-  const companyLabel = companies.find((c) => c.id === knownCompanyId)?.label ?? '';
-  const commissionPct =
-    selectedContract?.commissionPercent != null && selectedContract.commissionPercent !== ''
-      ? Number(selectedContract.commissionPercent)
-      : null;
-  const payerSentence =
-    roomPayer === 'AGENCY'
-      ? t('roomPaidByAgency', { name: agencyLabel || '—' })
-      : roomPayer === 'COMPANY'
-        ? t('roomPaidByCompany', { name: companyLabel || '—' })
-        : t('roomPaidByGuest');
-  const basisSentence = knownAgencyId
-    ? commissionBasis === 'NET'
-      ? selectedContract
-        ? t('basisNetWithContract', { contract: selectedContract.label })
-        : t('basisNetOnly')
-      : commissionPct != null && !Number.isNaN(commissionPct)
-        ? t('basisGrossWithPct', { pct: commissionPct })
-        : t('basisGrossOnly')
-    : '';
-  const billingSentence = [payerSentence, basisSentence].filter(Boolean).join(' · ');
+  const basisLocked = Boolean(salesContractId);
 
   const payerOptions = [
     { value: 'GUEST', label: t('roomPayerGuest') },
@@ -468,70 +445,66 @@ export function CommercialPartyStrip({
         ) : null}
         {showPayerRow ? (
           <div className="space-y-1.5">
-            <div className="grid grid-cols-1 items-start gap-2 lg:grid-cols-2">
-              <div className="min-w-0 space-y-2">
+            <div
+              className={`grid grid-cols-1 items-start gap-2 ${knownAgencyId ? 'sm:grid-cols-2' : ''}`}
+            >
+              <CatalogField
+                kind="OPS_HOT"
+                label={t('roomPayer')}
+                value={roomPayer}
+                onChange={(v) => {
+                  payerTouched.current = true;
+                  const next = Array.isArray(v) ? (v[0] ?? '') : v;
+                  if (next === 'AGENCY' || next === 'COMPANY' || next === 'GUEST') {
+                    onRoomPayer(next);
+                  }
+                }}
+                options={payerOptions}
+                disabled={disabled}
+              />
+              {knownAgencyId ? (
                 <CatalogField
                   kind="OPS_HOT"
-                  label={t('roomPayer')}
-                  value={roomPayer}
+                  label={t('commissionBasis')}
+                  value={commissionBasis}
                   onChange={(v) => {
-                    payerTouched.current = true;
+                    if (basisLocked) return;
                     const next = Array.isArray(v) ? (v[0] ?? '') : v;
-                    if (next === 'AGENCY' || next === 'COMPANY' || next === 'GUEST') {
-                      onRoomPayer(next);
-                    }
+                    onCommissionBasis(next === 'NET' ? 'NET' : 'GROSS');
                   }}
-                  options={payerOptions}
-                  disabled={disabled}
+                  options={[
+                    { value: 'GROSS', label: t('basisGross') },
+                    { value: 'NET', label: t('basisNet') },
+                  ]}
+                  disabled={disabled || basisLocked}
                 />
-                {knownAgencyId ? (
-                  <CatalogField
-                    kind="OPS_HOT"
-                    label={t('commissionBasis')}
-                    value={commissionBasis}
-                    onChange={(v) => {
-                      const next = Array.isArray(v) ? (v[0] ?? '') : v;
-                      onCommissionBasis(next === 'NET' ? 'NET' : 'GROSS');
-                    }}
-                    options={[
-                      { value: 'GROSS', label: t('basisGross') },
-                      { value: 'NET', label: t('basisNet') },
-                    ]}
-                    disabled={disabled}
-                  />
-                ) : null}
-              </div>
-              {contractRequired ? (
-                <div className="min-w-0 space-y-1">
-                  <CatalogField
-                    kind="ENTITY_REF"
-                    label={`${t('stayContract')} (${t('contractRequiredMark')})`}
-                    value={salesContractId}
-                    onChange={(v) => onContract(Array.isArray(v) ? (v[0] ?? '') : v)}
-                    options={visibleContracts.map((c) => ({ value: c.id, label: c.label }))}
-                    emptyLabel="—"
-                    disabled={disabled || visibleContracts.length === 0}
-                  />
-                  {visibleContracts.length === 0 ? (
-                    <p className="m-0 text-[12px] text-rose-800" data-testid="contract-create-hint">
-                      {t('contractCreateHint')}{' '}
-                      <Link href="/distribution/contracts" className="underline">
-                        {t('openB2bContracts')}
-                      </Link>
-                    </p>
-                  ) : null}
-                  {!salesContractId && visibleContracts.length > 0 ? (
-                    <p className="m-0 text-[12px] text-rose-800" data-testid="contract-required-hint">
-                      {t('contractRequiredHint')}
-                    </p>
-                  ) : null}
-                </div>
               ) : null}
             </div>
-            {billingSentence ? (
-              <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`} data-testid="room-payer-sentence">
-                {billingSentence}
-              </p>
+            {contractRequired ? (
+              <div className="min-w-0 space-y-1">
+                <CatalogField
+                  kind="ENTITY_REF"
+                  label={`${t('stayContract')} (${t('contractRequiredMark')})`}
+                  value={salesContractId}
+                  onChange={(v) => onContract(Array.isArray(v) ? (v[0] ?? '') : v)}
+                  options={visibleContracts.map((c) => ({ value: c.id, label: c.label }))}
+                  emptyLabel="—"
+                  disabled={disabled || visibleContracts.length === 0}
+                />
+                {visibleContracts.length === 0 ? (
+                  <p className="m-0 text-[12px] text-rose-800" data-testid="contract-create-hint">
+                    {t('contractCreateHint')}{' '}
+                    <Link href="/distribution/contracts" className="underline">
+                      {t('openB2bContracts')}
+                    </Link>
+                  </p>
+                ) : null}
+                {!salesContractId && visibleContracts.length > 0 ? (
+                  <p className="m-0 text-[12px] text-rose-800" data-testid="contract-required-hint">
+                    {t('contractRequiredHint')}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
           </div>
         ) : null}

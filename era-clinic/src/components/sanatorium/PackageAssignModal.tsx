@@ -1528,7 +1528,14 @@ export function PackageAssignModal({
             <DatePicker
               label={tPhysio("packageAssignStartDate")}
               value={startDate}
-              onChange={setStartDate}
+              onChange={(iso) => {
+                const yesterday = addBakuDays(todayBakuYmd(), -1);
+                if (iso && iso < yesterday) {
+                  setStartDate(yesterday);
+                  return;
+                }
+                setStartDate(iso);
+              }}
               placeholder={tc("datePlaceholder")}
               openCalendarLabel={tc("openCalendar")}
             />

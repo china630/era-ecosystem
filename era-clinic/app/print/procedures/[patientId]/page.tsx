@@ -53,7 +53,10 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
               {group.rows.map((r) => (
                 <tr key={r.no} className="border-b border-neutral-300 align-top">
                   <td className="p-1">{r.checkout ? "" : r.no}</td>
-                  <td className="p-1">{r.name}</td>
+                  <td className="p-1">
+                    <div>{r.name}</div>
+                    {r.nameAlt ? <div className="text-neutral-500">{r.nameAlt}</div> : null}
+                  </td>
                   <td className="p-1">{r.checkout ? "" : r.quantity}</td>
                   <td className="p-1">{r.time}</td>
                   <td className="p-1">{r.room}</td>
@@ -62,6 +65,8 @@ export default async function PrintProceduresPage({ params, searchParams }: Prop
                     {r.zones ? <div>{r.zones}</div> : null}
                     {r.settings ? <div className="mt-0.5">{r.settings}</div> : null}
                     {r.note ? <div className="mt-0.5">{r.note}</div> : null}
+                    {r.zonesAlt ? <div className="mt-0.5 text-neutral-500">{r.zonesAlt}</div> : null}
+                    {r.settingsAlt ? <div className="mt-0.5 text-neutral-500">{r.settingsAlt}</div> : null}
                   </td>
                 </tr>
               ))}

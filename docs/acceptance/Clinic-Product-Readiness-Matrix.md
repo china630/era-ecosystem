@@ -10,6 +10,14 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-03 yesterday start + diagnostics sheet):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Yesterday start (only with no seated procedures) and the studies list (labs plus package and payable visits) do not lift Demo or Pilot.
+
+**Closeout (2026-11-02 print extra language + lab rooms):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Extra language is a print-branding option, not a new screen. Lab room filter does not lift Demo or Pilot.
+
+**Closeout (2026-11-02 nurse list + lab clicks):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Nurse list and print are the same `/nurse` surface (not a new sell screen). Lab click and lab-tech room filter do not lift Demo or Pilot.
+
+**Closeout (2026-11-02 stay reconcile):** CLI-54 stays SCREEN. AC-CLI-SAN-PAX stays 🟡. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. The reconcile is HEADLESS (no new screen).
+
 ---
 
 ## Line summary (SSOT readiness)
@@ -26,12 +34,12 @@
 
 | Surface | Path | Level |
 |---------|------|-------|
-| Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 (CLI-26 Late + 2026-10-30 `from`/`to` range, no Həkim, range-neutral KPI copy; analyses and diagnostics are separate home tiles — does not lift Demo/Pilot) |
+| Ops home / appointments / nurse | `/, /appointments, /nurse` | 🟡 (CLI-26 Late + day list/print `/print/nurse-day`; 2026-10-30 `from`/`to` range, no Həkim, range-neutral KPI copy; analyses and diagnostics are separate home tiles — does not lift Demo/Pilot) |
 | Resource day matrix | `/sanatorium/resources` | 🟡 SCREEN (CLI-26: modal Check-in when `receptionProcedureCheckIn`; no bar Köçür/Ləğv et; UAT §4 punched path deepen — not Demo lift) |
 | Patient registry (P-codes, Ad/Soyad/Ata; Open-course badge; room/package on `/sanatorium`) | `/patients` | 🟡 SCREEN (wave UX landed; field UAT open) |
 | Nurse / lab monthly rotation | `/sanatorium/nurse-roster` | ✅ SCREEN (CLI-38 + CLI-38b: dual view + day override) |
 | МКБ санаторий | `/sanatorium` | 🟡 (2026-10-30 arrival + sort; 2026-11-02 1-click select / 2-click open Guest — list deepen only; not SHOW) |
-| Lab orders (q filter, Name (CODE), cancel ORDERED, repeat confirm) | `/lab-orders?lane=lab` and `?lane=diagnostic` + patient-card **Diagnostics** tab | 🟡 SCREEN (two list lanes, same order card; assign modal = package lanes + modality folders + Ödəniləcək; locked auto studies; package quota scales off this tab; no Pay on card; Extra tickets hide CLOSED episodes; UAT open — not SHOW) |
+| Lab orders (q filter, Name (CODE), cancel ORDERED, repeat confirm) | `/lab-orders?lane=lab` and `?lane=diagnostic` + patient-card **Diagnostics** tab | 🟡 SCREEN (1-click select / 2-click open; lab-tech room filter via episode read; two list lanes, same order card; assign modal = package lanes + modality folders + Ödəniləcək; locked auto studies; package quota scales off this tab; no Pay on card; Extra tickets hide CLOSED episodes; UAT open — not SHOW) |
 | МКБ карточка пациента | `/patients/[id]` (after contraindications) | 🟡 |
 | Nafta intake checklist (CLI-25/32/34) | `/patients/[id]` İlkin diaqnostik prosedurlar; `/print/checkup/[patientId]` 4 sections | 🟡 SCREEN (not WO `#33`; UAT open) |
 | Nafta slots clock (CLI-25/48) | Card now/next + compact PLAN — Baku labels, `scheduledAt >= now` | 🟡 SCREEN (re-Apply `#23` required on droplet) |
@@ -42,7 +50,7 @@
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
 | Cashier | `/cashier` | 🟡 |
-| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Package start, practitioner dates, and same-day-until are `DatePicker` |
+| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Guest procedure sheet can repeat name and note in `procedurePrintExtraLang` (lighter line; off by default). Assigned studies list is `/print/studies`. Plan print and + sit on the day-chip row. Package start, practitioner dates, and same-day-until are `DatePicker` |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
 | Physio sites S (CLI-49) | `/admin/physio-sites` (Unmatched); card chips + Solyuks/`NAFTALAN_FILL` + empty-catalog banner + PLAN site titles | 🟡 SCREEN (seed S then re-Apply `#23`; UAT open) |
 | Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (procedures + unpaid labs/visits Pay desk; kind badge + title search; HOT-06 extension write still HEADLESS; not SHIPPED) |

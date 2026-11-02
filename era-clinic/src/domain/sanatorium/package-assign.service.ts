@@ -25,7 +25,7 @@ import {
   isSeedProcedureCode,
   isWoProcedureCode,
 } from "@/lib/import/seed-catalog-match";
-import { bakuDateKey, bakuHourMinute, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDayBounds, bakuHourMinute, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import { saxlaRepeatClock } from "@/domain/planning/clinic-day";
 import {
   dailyCapForQuota,
@@ -1547,8 +1547,27 @@ export async function assignPackageProcedures(
   const softWarn: string | null = null;
 
   const orgId = requestOrganizationId();
-  const explicitStart =
+  const rawStart =
     opts?.startAt && !Number.isNaN(opts.startAt.getTime()) ? opts.startAt : null;
+  const todayYmd = todayBakuYmd();
+  const yesterdayYmd = addBakuDays(todayYmd, -1);
+  const alreadySeated = rawStart
+    ? await prisma.procedureOrder.count({
+        where: {
+          clinicalEpisodeId: episodeId,
+          status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] },
+        },
+      })
+    : 0;
+  const startYmd = rawStart ? bakuDateKey(rawStart) : null;
+  const allowYesterday = alreadySeated === 0 && startYmd === yesterdayYmd;
+  const explicitStart =
+    rawStart && startYmd && startYmd < todayYmd && !allowYesterday
+      ? parseBakuDateTime(
+          todayYmd,
+          `${String(bakuHourMinute(rawStart).hour).padStart(2, "0")}:00`,
+        )
+      : rawStart;
   const priorHour = explicitStart ? null : await rememberedSaxlaHour(episodeId);
   const startAt = explicitStart ?? saxlaRepeatClock({
     now: new Date(),
@@ -1824,6 +1843,18 @@ export async function assignPackageProcedures(
   const codes = [...new Set(resolved.map((l) => l.quotaCode))];
   for (const code of codes) {
     await syncQuotaUsed(instance.id, episodeId, code);
+  }
+  const yesterday = addBakuDays(todayBakuYmd(), -1);
+  if (allowYesterday && placedIds.length > 0) {
+    const { start, end } = bakuDayBounds(yesterday);
+    await prisma.procedureOrder.updateMany({
+      where: {
+        id: { in: placedIds },
+        status: "SCHEDULED",
+        scheduledAt: { gte: start, lt: end },
+      },
+      data: { status: "COMPLETED", completedAt: new Date() },
+    });
   }
 
   return {

@@ -585,11 +585,22 @@ export async function listOpenEpisodes(input?: {
     input?.dataScope?.mode === "ASSIGNED" &&
     !input.dataScope.practitionerId
   ) {
+    const { listHotelRoomNumbers, listProgramCodes } = await import(
+      "@/domain/patient/patient.service"
+    );
+    const hotelRooms = input?.includeHotelRooms
+      ? await listHotelRoomNumbers("OPEN")
+      : undefined;
+    const programCodes = input?.includeProgramCodes
+      ? await listProgramCodes("OPEN")
+      : undefined;
     return {
       data: [],
       total: 0,
       page,
       pageSize,
+      ...(hotelRooms ? { hotelRooms } : {}),
+      ...(programCodes ? { programCodes } : {}),
     };
   }
 

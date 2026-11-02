@@ -56,6 +56,30 @@ function isNeverCommitPath(p) {
   return false;
 }
 
+/** First path bucket: `era-clinic`, `packages/satellite-kit`, `docs`, … */
+function shipBucket(file) {
+  const n = file.replace(/\\/g, "/").replace(/^\.\//, "");
+  const parts = n.split("/");
+  if (parts[0] === "packages" && parts[1]) return `packages/${parts[1]}`;
+  return parts[0] || n;
+}
+
+/**
+ * Buckets touched by commits on this branch vs the ship base.
+ * Empty when HEAD is not ahead (nothing scoped yet) — callers then treat the whole tree as in scope.
+ */
+function committedShipBuckets(base) {
+  if (!base) return null;
+  const names = gitLines(["diff", "--name-only", `${base}...HEAD`]);
+  if (names.length === 0) return null;
+  return new Set(names.map(shipBucket));
+}
+
+function isInShipScope(file, buckets) {
+  if (!buckets) return true;
+  return buckets.has(shipBucket(file));
+}
+
 /** Prisma generate on Windows rewrites tracked *.d.ts as CRLF. That is not a content change. */
 function restoreEolOnlyDirt(files) {
   const restored = [];
@@ -80,13 +104,24 @@ function restoreEolOnlyDirt(files) {
   }
 }
 
-function assertWorkingTreeShipClean() {
-  restoreEolOnlyDirt(porcelainPaths().filter((f) => !isNeverCommitPath(f)));
-  const dirty = porcelainPaths().filter((f) => !isNeverCommitPath(f));
+function assertWorkingTreeShipClean(buckets = committedShipBuckets(resolveBase())) {
+  const relevant = porcelainPaths().filter((f) => !isNeverCommitPath(f));
+  const inScope = relevant.filter((f) => isInShipScope(f, buckets));
+  const foreign = relevant.filter((f) => !isInShipScope(f, buckets));
+  restoreEolOnlyDirt(inScope);
+  const dirty = porcelainPaths().filter((f) => !isNeverCommitPath(f) && isInShipScope(f, buckets));
+  if (foreign.length > 0) {
+    const dirs = [...new Set(foreign.map(shipBucket))].slice(0, 12).join(", ");
+    console.log(
+      `Protected ${foreign.length} uncommitted file(s) outside this ship's commits (${dirs}). ` +
+        `Not restored, not tested, not a push blocker.`,
+    );
+  }
   if (dirty.length === 0) return;
   console.error(
-    `FAIL: working tree dirty after ship gates (${dirty.length} files). ` +
-      `Commit generate/build output, clear ERA_SHIP_GATES_DONE, re-run. Do not push.`,
+    `FAIL: working tree dirty inside this ship's scope (${dirty.length} files). ` +
+      `Commit generate/build output, clear ERA_SHIP_GATES_DONE, re-run. Do not push. ` +
+      `Do not git checkout/restore/stash/reset paths outside this scope.`,
   );
   for (const f of dirty.slice(0, 20)) console.error(`  ${f}`);
   process.exit(1);
@@ -226,9 +261,10 @@ if (qualityOnly) {
 }
 
 const base = resolveBase();
-const files = collectFiles(base);
+const buckets = committedShipBuckets(base);
+const files = collectFiles(base).filter((f) => isInShipScope(f, buckets));
 console.log(`\nDiff base: ${base || "(working tree only)"}`);
-console.log(`Changed files: ${files.length}`);
+console.log(`Changed files in ship scope: ${files.length}`);
 
 rebuildDirtyPackages(files);
 

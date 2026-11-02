@@ -3739,3 +3739,25 @@ model ElektrawebFolioOutbox {
   @@unique([organizationId, idempotencyKey])
   @@index([organizationId, status, createdAt])
 }
+
+/// Hotel → clinic lifecycle waiting for an ack. Retried until the clinic applies it.
+model ClinicLifecycleOutbox {
+  id               String    @id @default(uuid())
+  organizationId   String
+  dedupeKey        String
+  kind             String
+  reservationId    String
+  paxKey           String    @default("")
+  correlationId    String
+  payload          Json
+  attempts         Int       @default(0)
+  lastError        String?
+  ackedAt          DateTime?
+  nextAttemptAt    DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([organizationId, dedupeKey])
+  @@index([ackedAt, nextAttemptAt])
+  @@map("clinic_lifecycle_outbox")
+}

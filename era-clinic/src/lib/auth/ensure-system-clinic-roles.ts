@@ -8,6 +8,7 @@ import {
 } from "@/lib/clinic-roles";
 import {
   CLINIC_PERMISSION,
+  type ClinicPermission,
   parseRolePermissions,
   permissionsJsonForRole,
   permissionsJsonNeedsTemplate,
@@ -83,15 +84,23 @@ async function upsertSystemRole(
   } else {
     const template = parseRolePermissions(templateJson);
     const current = parseRolePermissions(existing.permissionsJson);
+    const grant: ClinicPermission[] = [];
     if (
       template.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE) &&
       current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
       !current.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE)
     ) {
-      patch.permissionsJson = serializeRolePermissions([
-        ...current,
-        CLINIC_PERMISSION.API_LAB_ORDERS_WRITE,
-      ]);
+      grant.push(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
+    }
+    if (
+      template.includes(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ) &&
+      current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
+      !current.includes(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ)
+    ) {
+      grant.push(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
+    }
+    if (grant.length > 0) {
+      patch.permissionsJson = serializeRolePermissions([...current, ...grant]);
     }
   }
   // Keep display name if already set; only fill blank.

@@ -61,6 +61,7 @@ export const CLINIC_MODULE_BY_ROUTE: Record<string, string> = {
   "/insurance": "clinic_insurance",
   "/api/insurance": "clinic_insurance",
   "/api/cron/episode-walkin-close": "clinic_sanatorium",
+  "/api/cron/episode-hotel-checkout": "clinic_sanatorium",
   "/api/cron/appointment-reminders": "platform_notifications",
   "/api/cron/inpatient-daily-charges": "clinic_inpatient",
 };

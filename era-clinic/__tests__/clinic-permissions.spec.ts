@@ -185,6 +185,12 @@ describe("clinic default permissions", () => {
     expect(perms).toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE);
   });
 
+  it("LAB_TECH can read episodes for the room filter but not write them", () => {
+    const perms = DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.LAB_TECH];
+    expect(perms).toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
+    expect(perms).not.toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE);
+  });
+
   it("NURSE has episode read but not write", () => {
     const perms = DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.NURSE];
     expect(perms).toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);

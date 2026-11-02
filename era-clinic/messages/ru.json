@@ -616,7 +616,14 @@
     "staffKindMassage": "Массажист",
     "staffKindDoctor": "Врач",
     "openAttendance": "Свободное посещение",
-    "openAttendanceCabin": "При приходе"
+    "openAttendanceCabin": "При приходе",
+    "viewBoard": "Доска",
+    "viewList": "Список",
+    "printSheet": "Печать",
+    "colProcedure": "Процедура",
+    "colPatient": "Пациент",
+    "colNote": "Примечание",
+    "sheetEmpty": "На этот день ничего не запланировано."
   },
   "sanatoriumResources": {
     "title": "Матрица дня (ресурсы)",
@@ -1205,6 +1212,12 @@
     "peakDayEndHour": "Конец дня в пиковом режиме",
     "printBrandTitle": "Брендинг печати",
     "printBrandSubtitle": "Логотип, названия клиники, контакты для бланков",
+    "procedurePrintExtraLang": "Дополнительный язык на графике пациента",
+    "procedurePrintExtraLangHint": "Название процедуры и примечание печатаются ещё раз на этом языке, более светлым тоном. Если он совпадает с языком листа, строка одна.",
+    "procedurePrintExtraLangOff": "Выключено",
+    "procedurePrintExtraLangAz": "Азербайджанский",
+    "procedurePrintExtraLangRu": "Русский",
+    "procedurePrintExtraLangEn": "Английский",
     "cpPrintBanner": "Логотип/адрес/телефон в шапке берутся из профиля организации Control Plane после Sync. Колонтитулы и подписи остаются локальными.",
     "cpLogoLocked": "Логотип ведётся в профиле организации Control Plane.",
     "cpContactsLocked": "Адрес / телефон / email / сайт из Control Plane здесь только для чтения.",

@@ -45,8 +45,11 @@ describe("notBeforeYmdFromStart", () => {
     );
   });
 
-  it("does not start in the past", () => {
+  it("allows yesterday and snaps older days back to today", () => {
     expect(notBeforeYmdFromStart(parseBakuDateTime("2026-10-18", "10:00"), "2026-10-19")).toBe(
+      "2026-10-18",
+    );
+    expect(notBeforeYmdFromStart(parseBakuDateTime("2026-10-17", "10:00"), "2026-10-19")).toBe(
       "2026-10-19",
     );
   });
