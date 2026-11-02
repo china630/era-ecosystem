@@ -22,6 +22,7 @@ import {
 } from "@/domain/settings/scheduling-settings";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { orderCountsForWallClockRest } from "@/domain/procedure/open-attendance";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
 import {
   evaluateCandidateSlot,
@@ -252,6 +253,7 @@ export async function placeManualProcedureSlot(input: {
       inPackage: true,
       packageQuotaCode: true,
       resourceId: true,
+      schedulingMode: true,
       clinicalEpisodeId: true,
       physioFields: true,
       procedureType: { select: { patientRestMinutes: true } },
@@ -284,11 +286,21 @@ export async function placeManualProcedureSlot(input: {
       packageQuotaCode: row.packageQuotaCode,
       procedureCode: row.procedureCode,
     }).quotaKey,
-    countsForRest: row.status !== "NO_SHOW" && row.status !== "PROPOSED",
+    countsForRest: orderCountsForWallClockRest({
+      status: row.status,
+      schedulingMode: row.schedulingMode,
+      resourceId: row.resourceId,
+    }),
     holdsGuestDay: false,
   }));
   const rotationContext: RotationContextSlot[] = existing
-    .filter((row) => row.status !== "NO_SHOW" && row.status !== "PROPOSED")
+    .filter((row) =>
+      orderCountsForWallClockRest({
+        status: row.status,
+        schedulingMode: row.schedulingMode,
+        resourceId: row.resourceId,
+      }),
+    )
     .map((row) => ({
       procedureCode: row.procedureCode,
       bodyPart: row.bodyPart,

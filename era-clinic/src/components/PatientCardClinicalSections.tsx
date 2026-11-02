@@ -255,15 +255,6 @@ export function PatientCardClinicalSections({
       assignable: boolean;
     }>
   >([]);
-  const [studyQuotaRows, setStudyQuotaRows] = useState<
-    Array<{
-      procedureCode: string;
-      procedureName: string;
-      quotaTotal: number;
-      quotaUsed: number;
-      consumed: number;
-    }>
-  >([]);
   const [packageBlock, setPackageBlock] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
   const [quotaTick, setQuotaTick] = useState(0);
@@ -295,10 +286,8 @@ export function PatientCardClinicalSections({
 
   useEffect(() => {
     const needPackage = !section || section === "package";
-    const needStudies = !section || section === "diagnostics";
-    if (!episodeId || (!needPackage && !needStudies)) {
+    if (!episodeId || !needPackage) {
       setQuotaRows([]);
-      setStudyQuotaRows([]);
       setPackageBlock(null);
       setPackageCode(null);
       return;
@@ -333,30 +322,9 @@ export function PatientCardClinicalSections({
           setPackageBlock(null);
           setPackageCode(null);
         }
-        if (needStudies) {
-          const studies = Array.isArray(snap.studyBalances) ? snap.studyBalances : [];
-          setStudyQuotaRows(
-            studies.map((row: {
-              procedureCode: string;
-              procedureName: string;
-              quotaTotal: number;
-              quotaUsed: number;
-              consumed: number;
-            }) => ({
-              procedureCode: row.procedureCode,
-              procedureName: row.procedureName,
-              quotaTotal: row.quotaTotal,
-              quotaUsed: row.quotaUsed,
-              consumed: row.consumed,
-            })),
-          );
-        } else {
-          setStudyQuotaRows([]);
-        }
       })
       .catch(() => {
         setQuotaRows([]);
-        setStudyQuotaRows([]);
         setPackageBlock(null);
         setPackageCode(null);
       });
@@ -676,36 +644,7 @@ export function PatientCardClinicalSections({
               deleteLabel={tc("delete")}
             />
           ))}
-          {studyQuotaRows.map((line) => {
-            const paid = paidDiagnosticsScale.find(
-              (row) => row.code === line.procedureCode,
-            );
-            const paidAssigned = paid?.assigned ?? 0;
-            const paidDone = paid?.completed ?? 0;
-            const assigned = line.quotaUsed + paidAssigned;
-            const assignedTotal = line.quotaTotal + paidAssigned;
-            const completed = line.consumed + paidDone;
-            return (
-              <QuotaScaleCard
-                key={`diag-pkg:${line.procedureCode}`}
-                title={line.procedureName || line.procedureCode}
-                assigned={assigned}
-                assignedTotal={assignedTotal}
-                completed={completed}
-                completedTotal={assigned}
-                tone="blue"
-                assignedLabel={ts("quotaAssigned")}
-                completedLabel={ts("quotaCompleted")}
-                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
-              />
-            );
-          })}
-          {paidDiagnosticsScale
-            .filter(
-              (row) =>
-                !studyQuotaRows.some((line) => line.procedureCode === row.code),
-            )
-            .map((row) => (
+          {paidDiagnosticsScale.map((row) => (
               <QuotaScaleCard
                 key={`diag-paid:${row.code}`}
                 title={row.title}

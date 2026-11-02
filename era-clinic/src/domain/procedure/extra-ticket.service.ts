@@ -118,6 +118,7 @@ export async function listExtrasAwaitingTicket(
         settledAt: null,
         inPackage: false,
         status: { not: "CANCELLED" },
+        NOT: { episode: { status: "CLOSED" } },
         ...(room
           ? {
               AND: [
@@ -178,7 +179,10 @@ export async function listExtrasAwaitingTicket(
         amountNet: { gt: 0 },
         settledAt: null,
         status: { not: "CANCELLED" },
-        NOT: { serviceLines: { some: { inPackage: true } } },
+        NOT: [
+          { serviceLines: { some: { inPackage: true } } },
+          { clinicalEpisode: { status: "CLOSED" } },
+        ],
         ...(room
           ? {
               AND: [
