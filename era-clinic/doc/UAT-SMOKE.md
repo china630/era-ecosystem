@@ -335,7 +335,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 3. Confirm historical COMPLETED slots do not create folio lines or nurse bonus.
 4. After catalog seed + Apply `#31` (skip `#32`): patient **2019** shows **three** USG rows (`USG-BREAST` / `USG-THYROID` / `USG-ABD`) with organ fields plus original Qeyd (`sourceNote`). `/lab-orders` date is clinical day (`collectedAt`), not Apply time. After this deploy: re-Apply `#27` so lab rows have `LabOrderItem` (not empty COMPLETED shells) and single-test Word files (Dimer/CRP/PRL/Insulin/Hormon) bind to catalog codes.
 5. Intake checklist: after the first care-team doctor, the card section **İlkin diaqnostik prosedurlar** lists auto analyses and auto diagnostics from the current package template. It does not show a fixed four-row Nafta list. Check-up print form remains at `/print/checkup/...`.
-6. Live check-in: opening an episode does not create ECG/USG by itself. The first care-team doctor creates the template's auto analyses and diagnostics. The package opens only when anamnesis, one complaint, and one ICD-10 are all present.
+6. Live check-in: opening an episode does not create ECG/USG by itself. Saving the course creates the template's auto analyses, diagnostics, and visits. With no care-team doctor yet, analyses are created and visits wait. The package opens only when anamnesis, one complaint, and one ICD-10 are all present.
 7. After re-Apply `#23` (Baku `+04:00` slot parse): Yağmur — two Solyuks times both visible; compact PLAN date+time matches modal for the same `procedure:{id}`; **Növbəti** is nearest `scheduledAt >= now` in Baku (not a 2024 leftover). No 18:36↔10:36 jump after re-import.
 
 ## CLI-49 — Physio sites (W2–W4)

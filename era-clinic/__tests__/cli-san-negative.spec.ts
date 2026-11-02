@@ -228,6 +228,18 @@ describe("AC-CLI-SAN-PKG unknown program code", () => {
     jest.doMock("@/lib/treatment-planner.service", () => ({
       planProgramFifo: jest.fn().mockResolvedValue(undefined),
     }));
+    jest.doMock("@/domain/sanatorium/package-auto-apply.service", () => ({
+      applyPackageAutoBlocks: jest.fn().mockResolvedValue({
+        episodeId: "ep-1",
+        autoApplyState: "APPLIED",
+        createdVisitCodes: [],
+        createdLabCodes: [],
+        skippedVisitCodes: [],
+        skippedLabCodes: [],
+        skippedProcedureCodes: [],
+        pendingDoctor: false,
+      }),
+    }));
     const { instantiateProgramFromTemplate } = await import(
       "@/lib/sanatorium-scheduler.service"
     );
@@ -246,6 +258,12 @@ describe("AC-CLI-SAN-PKG unknown program code", () => {
       templateId: "tpl-1",
       episodeId: "ep-1",
       programCode: "PKG-PREMIUM",
+    });
+    const { applyPackageAutoBlocks } = await import(
+      "@/domain/sanatorium/package-auto-apply.service"
+    );
+    expect(applyPackageAutoBlocks).toHaveBeenCalledWith("ep-1", {
+      trigger: "CARE_TEAM",
     });
     expect(createMany).toHaveBeenCalledWith({
       data: [

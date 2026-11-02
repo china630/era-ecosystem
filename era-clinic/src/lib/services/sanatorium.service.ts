@@ -4,7 +4,6 @@ import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.servi
 import { requestOrganizationId } from '@/lib/request-organization';
 import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { splitFullNameToParts } from '@era/satellite-kit';
-import { applyPackageAutoBlocks } from '@/domain/sanatorium/package-auto-apply.service';
 import {
   assertLabOrderCanCreate,
   findEpisodeLabConflict,
@@ -156,15 +155,6 @@ async function findOpenEpisodeForStay(
   });
 }
 
-/** Package auto-blocks only. No hard-coded ECG/USG when the course has no program yet. */
-async function safeInstantiateIntake(episodeId: string) {
-  try {
-    await applyPackageAutoBlocks(episodeId, { trigger: "OPEN" });
-  } catch (err) {
-    console.error("[sanatorium] package auto-apply failed", episodeId, err);
-  }
-}
-
 function walkInLegacyRefCode(finOrPassport: string): string {
   return `WALKIN-${finOrPassport.replace(/\s+/g, '-').slice(0, 20)}`;
 }
@@ -250,10 +240,8 @@ export async function openEpisodeFromStay(input: {
         data,
         include: episodeInclude,
       });
-      await safeInstantiateIntake(updated.id);
       return updated;
     }
-    await safeInstantiateIntake(existing.id);
     return prisma.clinicalEpisode.findUniqueOrThrow({
       where: { id: existing.id },
       include: episodeInclude,
@@ -382,7 +370,6 @@ export async function openEpisodeFromStay(input: {
   }
 
   await fillPatientDemographics(created.patientRefId);
-  await safeInstantiateIntake(created.id);
   return created;
 }
 
@@ -514,7 +501,6 @@ export async function registerWalkInEpisode(input: {
     },
     include: { patientRef: true },
   });
-  await safeInstantiateIntake(episode.id);
   return episode;
 }
 

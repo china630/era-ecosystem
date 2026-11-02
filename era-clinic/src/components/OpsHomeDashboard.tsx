@@ -9,6 +9,7 @@ import {
   BedDouble,
   CheckCircle2,
   ClipboardList,
+  Activity,
   FlaskConical,
   LayoutGrid,
   ListOrdered,
@@ -49,6 +50,7 @@ type OpsDaySummary = {
   };
   visits: { inProgress: number; completedToday: number };
   labs: { open: number; resultReady: number; completedToday: number };
+  diagnostics?: { open: number; resultReady: number };
   queue: { waiting: number; called: number };
   overdueProcedures: number;
   inpatient?: { occupiedBeds: number; freeBeds: number };
@@ -338,7 +340,15 @@ export function OpsHomeDashboard({
           label={t("kpiOpenLabs")}
           value={summary.labs.open}
           hint={t("kpiLabsHint", { ready: summary.labs.resultReady })}
-          href="/lab-orders"
+          href="/lab-orders?lane=lab"
+        />
+        <MetricTile
+          icon={Activity}
+          iconClass="bg-sky-500/10 text-sky-700"
+          label={t("kpiOpenDiagnostics")}
+          value={summary.diagnostics?.open ?? 0}
+          hint={t("kpiDiagnosticsHint", { ready: summary.diagnostics?.resultReady ?? 0 })}
+          href="/lab-orders?lane=diagnostic"
         />
         {hasSanatorium ? (
           <MetricTile
@@ -498,10 +508,16 @@ export function OpsHomeDashboard({
           />
           ) : null}
           <QuickLink
-            href="/lab-orders"
+            href="/lab-orders?lane=lab"
             icon={FlaskConical}
             label={t("linkLabs")}
             iconClass="bg-violet-500/10 text-violet-700"
+          />
+          <QuickLink
+            href="/lab-orders?lane=diagnostic"
+            icon={Activity}
+            label={t("linkDiagnostics")}
+            iconClass="bg-sky-500/10 text-sky-700"
           />
           {hasSanatorium ? (
             <QuickLink

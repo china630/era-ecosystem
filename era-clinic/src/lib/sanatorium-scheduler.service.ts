@@ -133,7 +133,18 @@ export async function instantiateProgramFromTemplate(input: {
     },
   });
 
-  // CLI-57: balances only — doctor assigns via package modal (no buildProposedPlan pre-expand).
+  // Studies (labs, imaging, auto visits) are created once the course exists.
+  // A missing care-team doctor leaves visits in PENDING_DOCTOR; the first
+  // doctor assignment retries. A failure here must not roll back the course.
+  try {
+    const { applyPackageAutoBlocks } = await import(
+      "@/domain/sanatorium/package-auto-apply.service"
+    );
+    await applyPackageAutoBlocks(input.episodeId, { trigger: "CARE_TEAM" });
+  } catch (err) {
+    console.error("[program] auto studies failed", input.episodeId, err);
+  }
+
   return instance;
 }
 

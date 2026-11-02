@@ -269,6 +269,75 @@ describe("applyPackageAutoBlocks", () => {
     expect(r.autoApplyState).toBe("APPLIED");
   });
 
+  it("creates labs without a doctor and does not duplicate them on the next pass", async () => {
+    const episode = {
+      id: "ep1",
+      organizationId: "org1",
+      patientRefId: "p1",
+      patientOrigin: "IN_HOUSE",
+      reservationId: null,
+      roomNumber: "205",
+      patientRef: { sex: "FEMALE" },
+      programInstance: {
+        id: "pi1",
+        templateId: "t1",
+        programCode: "PKG-STANDART",
+        autoApplyState: "PENDING",
+        entitlementSnapshot: {
+          version: 1,
+          templateId: "t1",
+          code: "PKG-STANDART",
+          procedures: [
+            {
+              procedureCode: "LAB-CBC",
+              procedureName: "CBC",
+              quotaTotal: 1,
+              kind: "LAB",
+              sortOrder: 0,
+              assignMode: "AUTO_ON_OPEN",
+              fulfillment: "LAB_ORDER",
+              quotaBasis: "PER_STAY",
+              requiresDoctor: false,
+            },
+            {
+              procedureCode: "VISIT-NEURO",
+              procedureName: "Neurology",
+              quotaTotal: 1,
+              kind: "EXAM",
+              sortOrder: 1,
+              assignMode: "AUTO_ON_OPEN",
+              fulfillment: "VISIT",
+              quotaBasis: "PER_STAY",
+              requiresDoctor: true,
+            },
+          ],
+          knots: [],
+          members: [],
+        },
+        procedureLines: [{ procedureCode: "LAB-CBC" }, { procedureCode: "VISIT-NEURO" }],
+        template: { version: 1, procedures: [] },
+      },
+    };
+    mocked.clinicalEpisode.findUnique.mockResolvedValue(episode);
+    mocked.episodeCareDoctor.findFirst.mockResolvedValue(null);
+    mocked.labOrder.findFirst.mockResolvedValue(null);
+
+    const first = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
+    if ("skipped" in first) throw new Error("expected apply");
+    expect(first.createdLabCodes).toEqual(expect.arrayContaining(["LAB-CBC"]));
+    expect(first.pendingDoctor).toBe(true);
+    expect(mocked.visit.create).not.toHaveBeenCalled();
+    expect(createLabOrderWithItems).toHaveBeenCalled();
+
+    (createLabOrderWithItems as jest.Mock).mockClear();
+    mocked.labOrder.findFirst.mockResolvedValue({ id: "existing-lab" });
+    const second = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
+    if ("skipped" in second) throw new Error("expected apply");
+    expect(createLabOrderWithItems).not.toHaveBeenCalled();
+    expect(mocked.visit.create).not.toHaveBeenCalled();
+    expect(second.skippedLabCodes).toEqual(expect.arrayContaining(["LAB-CBC"]));
+  });
+
   it("PENDING_DOCTOR when requiresDoctor and no care team", async () => {
     mocked.clinicalEpisode.findUnique.mockResolvedValue({
       id: "ep1",
