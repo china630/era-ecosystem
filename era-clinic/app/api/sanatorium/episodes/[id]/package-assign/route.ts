@@ -134,11 +134,13 @@ export async function POST(
         "package_assign",
         {
           startOn: body.startOn ?? null,
-          startHour: body.startHour ?? null,
+          startHour: body.startHour ?? result.rememberedHour ?? null,
+          searchHour: result.searchHour ?? null,
           lineCount: body.lines.length,
           placed: result.placed,
           missCount: result.misses?.length ?? 0,
           staffPrefCount: body.staffPrefs?.length ?? 0,
+          seatMisses: result.seatMisses ?? [],
         },
       );
     }

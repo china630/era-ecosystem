@@ -330,6 +330,8 @@ describe("evaluateCandidateSlot", () => {
     });
     expect(result.planned).toEqual([]);
     expect(result.failures[0]?.reason).toBe("day_full");
+    expect(result.failures[0]?.ymd).toBe("2026-10-16");
+    expect(result.failures[0]?.counts?.day_full ?? 0).toBeGreaterThan(1);
   });
 
   it("reports no staff when the duty line is empty", () => {
@@ -343,7 +345,7 @@ describe("evaluateCandidateSlot", () => {
 });
 
 describe("placementBlockReason", () => {
-  const empty = { day_full: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
+  const empty = { day_full: 0, same_day: 0, no_staff: 0, closed: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
 
   it("prefers day_full when the package cap rejected every slot", () => {
     expect(placementBlockReason(true, false, { ...empty, day_full: 12 })).toBe("day_full");

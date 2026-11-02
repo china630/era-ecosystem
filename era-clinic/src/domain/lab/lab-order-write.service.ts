@@ -208,6 +208,12 @@ export type CreateLabOrderWithItemsParams = {
    * inPackage=false on header and items.
    */
   forcePaid?: boolean;
+  /**
+   * Package auto-apply (analyses + diagnostics): force inPackage burn on this
+   * quota block even when entitlement resolve has not caught up yet.
+   * Ignored when forcePaid is set.
+   */
+  packageStamp?: { packageQuotaCode: string } | null;
   prescribedByPractitionerId?: string | null;
   reservationId?: string | null;
   roomNumber?: string | null;
@@ -264,14 +270,20 @@ export async function createLabOrderWithItems(
 
     // Runs without an episode too: no package can apply, so every code must carry
     // its list price instead of the silent 0 that used to be written.
+    const forcedQuota =
+      !forcePaid && params.packageStamp?.packageQuotaCode?.trim()
+        ? params.packageStamp.packageQuotaCode.trim()
+        : null;
     for (const code of codes) {
-      const stamp =
-        !forcePaid && params.clinicalEpisodeId
-          ? await resolvePackageStampForEpisode({
-              episodeId: params.clinicalEpisodeId,
-              serviceCode: code,
-            })
-          : null;
+      let stamp: { inPackage: true; packageQuotaCode: string } | null = null;
+      if (forcedQuota) {
+        stamp = { inPackage: true, packageQuotaCode: forcedQuota };
+      } else if (!forcePaid && params.clinicalEpisodeId) {
+        stamp = await resolvePackageStampForEpisode({
+          episodeId: params.clinicalEpisodeId,
+          serviceCode: code,
+        });
+      }
       if (stamp) {
         stamps.set(code, {
           inPackage: true,
