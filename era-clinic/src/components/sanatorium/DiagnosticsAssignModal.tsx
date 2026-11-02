@@ -97,7 +97,6 @@ export function DiagnosticsAssignModal({
   readOnly,
 }: Props) {
   const t = useTranslations("patientCard");
-  const tPhysio = useTranslations("physio");
   const tc = useTranslations("common");
   const locale = useLocale();
   const [balances, setBalances] = useState<BalanceRow[]>([]);
@@ -391,7 +390,7 @@ export function DiagnosticsAssignModal({
             {
               error:
                 code === "NO_PRICE"
-                  ? tPhysio("labExtraNoPrice")
+                  ? t("labExtraNoPrice")
                   : code === "LAB_ALREADY_OPEN"
                     ? t("labAlreadyOpen", {
                         defaultValue:
@@ -586,7 +585,7 @@ export function DiagnosticsAssignModal({
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <p className={`text-[13px] font-medium tabular-nums`}>
-            {tPhysio("amountDue")}: {amountDue.toFixed(2)} AZN
+            {t("amountDue")}: {amountDue.toFixed(2)} AZN
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -640,7 +639,7 @@ export function DiagnosticsAssignModal({
                         <p
                           className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}
                         >
-                          {tPhysio("remaining")}: {rem} / {row.remaining}
+                          {t("remaining")}: {rem} / {row.remaining}
                         </p>
                       </div>
                       <button
@@ -723,7 +722,7 @@ export function DiagnosticsAssignModal({
 
           <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
             <h4 className="text-sm font-medium">
-              {tPhysio("assignedReceiptTitle")}
+              {t("assignedReceiptTitle")}
             </h4>
             {lanes.length === 0 ? (
               <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
@@ -774,7 +773,7 @@ export function DiagnosticsAssignModal({
                       {lane.pkgQty > 0 ? (
                         <div className="flex items-center justify-between gap-2 py-1">
                           <span className={TEXT_MUTED_CLASS}>
-                            {tPhysio("fromPackage")}
+                            {t("fromPackage")}
                           </span>
                           {lane.pkgLocked && !lane.pkgDraftKey ? (
                             <span className="tabular-nums">{lane.pkgQty}</span>
@@ -811,7 +810,7 @@ export function DiagnosticsAssignModal({
                       {lane.extraQty > 0 ? (
                         <div className="flex items-center justify-between gap-2 py-1">
                           <span className={TEXT_MUTED_CLASS}>
-                            {tPhysio("extraLine")}
+                            {t("extraLine")}
                           </span>
                           {lane.extraDraftKey ? (
                             stepper(

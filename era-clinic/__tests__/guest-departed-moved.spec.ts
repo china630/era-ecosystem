@@ -18,6 +18,9 @@ jest.mock("@/lib/prisma", () => ({
     visit: {
       updateMany: jest.fn(),
     },
+    labOrder: {
+      updateMany: jest.fn(),
+    },
   },
 }));
 
@@ -53,6 +56,9 @@ const mockedAllocations = prisma.procedureAllocation as unknown as {
 const mockedVisits = prisma.visit as unknown as {
   updateMany: jest.Mock;
 };
+const mockedLabs = prisma.labOrder as unknown as {
+  updateMany: jest.Mock;
+};
 
 describe("hotel person-level lifecycle (Depart / Move)", () => {
   beforeEach(() => {
@@ -67,6 +73,8 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
     mockedOrders.deleteMany.mockResolvedValue({ count: 0 });
     mockedBookings.deleteMany.mockResolvedValue({ count: 1 });
     mockedAllocations.deleteMany.mockResolvedValue({ count: 1 });
+    mockedVisits.updateMany.mockResolvedValue({ count: 0 });
+    mockedLabs.updateMany.mockResolvedValue({ count: 0 });
 
     await handleGuestDeparted({
       type: SATELLITE_HOTEL_GUEST_DEPARTED,

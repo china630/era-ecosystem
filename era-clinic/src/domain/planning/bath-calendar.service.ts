@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { lookupHotelStayWindow } from "@/lib/hotel-stay-person";
-import { addBakuDays, bakuDateKey, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDayBounds, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import {
   dayStartInstant,
   listClinicDays,
@@ -124,18 +124,120 @@ async function seatPinnedOrders(
   const ids = Object.keys(pins);
   if (ids.length === 0) return { placedIds: [], failures: [] };
   const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
+  const settings = await getSchedulingSettings();
   const ymds = Object.values(pins).sort();
   const first = ymds[0]!;
   const last = ymds[ymds.length - 1]!;
-  const dayHour = (await getSchedulingSettings()).dayStartHour;
+  const horizon = bakuDayBounds(addBakuDays(last, 21)).start;
+  const dayHour = settings.dayStartHour;
   const clock = saxlaFirstClock(startAt, first, dayHour);
-  const result = await placeConfirmedProcedures(ids, {
-    pinYmdByOrderId: pins,
-    startAt: clock,
-    pinStrict: true,
-    scheduleBefore: bakuDayBounds(addBakuDays(last, 1)).start,
-  });
-  return { placedIds: result.placedIds, failures: result.failures };
+  const placedIds: string[] = [];
+  const placed = new Set<string>();
+  let failures: Array<{
+    orderId: string;
+    reason: string;
+    ymd?: string;
+    procedureCode: string;
+    procedureName: string;
+  }> = [];
+  const mergePlace = (pass: {
+    placedIds: string[];
+    failures: Array<{
+      orderId: string;
+      reason: string;
+      ymd?: string;
+      procedureCode: string;
+      procedureName: string;
+    }>;
+  }) => {
+    for (const id of pass.placedIds) {
+      placed.add(id);
+      placedIds.push(id);
+    }
+    failures = pass.failures.filter((row) => !placed.has(row.orderId));
+  };
+
+  /** Same pin day from lunch end — morning cabins are often full at Saxla time. */
+  const tryAfternoon = async (
+    pinMap: Record<string, string>,
+    before: Date,
+  ): Promise<boolean> => {
+    const afternoonPins: Record<string, string> = {};
+    for (const fail of failures) {
+      const ymd = pinMap[fail.orderId];
+      if (ymd) afternoonPins[fail.orderId] = ymd;
+    }
+    const afternoonIds = Object.keys(afternoonPins);
+    if (afternoonIds.length === 0) return false;
+    const afternoonYmd = Object.values(afternoonPins).sort()[0]!;
+    const afternoonClock = parseBakuDateTime(
+      afternoonYmd,
+      `${String(settings.lunchEndHour).padStart(2, "0")}:00`,
+    );
+    mergePlace(
+      await placeConfirmedProcedures(afternoonIds, {
+        pinYmdByOrderId: afternoonPins,
+        startAt: afternoonClock,
+        pinStrict: true,
+        scheduleBefore: before,
+      }),
+    );
+    return failures.length === 0;
+  };
+
+  mergePlace(
+    await placeConfirmedProcedures(ids, {
+      pinYmdByOrderId: pins,
+      startAt: clock,
+      pinStrict: true,
+      scheduleBefore: horizon,
+    }),
+  );
+  if (failures.length === 0) return { placedIds, failures: [] };
+  if (await tryAfternoon(pins, horizon)) return { placedIds, failures: [] };
+
+  // Still miss: shift each leftover to the next free working day, then morning + afternoon.
+  const usedYmds = new Set(
+    Object.entries(pins)
+      .filter(([id]) => placed.has(id))
+      .map(([, ymd]) => ymd),
+  );
+  const shiftPins: Record<string, string> = {};
+  const clinicDays = await listClinicDays(first, addBakuDays(last, 28));
+  for (const fail of failures) {
+    const fromYmd = pins[fail.orderId] ?? fail.ymd;
+    if (!fromYmd) continue;
+    let cursor = addBakuDays(fromYmd, 1);
+    let next = nextWorkingYmd(clinicDays, cursor);
+    while (next && usedYmds.has(next)) {
+      next = nextWorkingYmd(clinicDays, addBakuDays(next, 1));
+    }
+    if (!next) continue;
+    shiftPins[fail.orderId] = next;
+    usedYmds.add(next);
+    await prisma.procedureOrder.update({
+      where: { id: fail.orderId },
+      data: { scheduledAt: dayStartInstant(next, dayHour) },
+    });
+  }
+  const shiftIds = Object.keys(shiftPins);
+  if (shiftIds.length > 0) {
+    const shiftYmds = Object.values(shiftPins).sort();
+    const shiftFirst = shiftYmds[0]!;
+    const shiftLast = shiftYmds[shiftYmds.length - 1]!;
+    const shiftBefore = bakuDayBounds(addBakuDays(shiftLast, 1)).start;
+    mergePlace(
+      await placeConfirmedProcedures(shiftIds, {
+        pinYmdByOrderId: shiftPins,
+        startAt: dayStartInstant(shiftFirst, dayHour),
+        pinStrict: true,
+        scheduleBefore: shiftBefore,
+      }),
+    );
+    if (failures.length > 0) await tryAfternoon(shiftPins, shiftBefore);
+  }
+
+  return { placedIds, failures };
 }
 
 /**

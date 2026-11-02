@@ -513,6 +513,49 @@ export async function listPendingDiagnostics(
   return rows;
 }
 
+/** Day-end and checkout: unpaid non-package labs and visits leave the cheque list. */
+export async function closeUnpaidDiagnostics(
+  scope: {
+    createdBefore?: Date;
+    clinicalEpisodeId?: string | { in: string[] };
+  },
+  reason: string,
+): Promise<{ labs: number; visits: number }> {
+  const created =
+    scope.createdBefore != null ? { createdAt: { lt: scope.createdBefore } } : {};
+  const episode =
+    scope.clinicalEpisodeId != null
+      ? { clinicalEpisodeId: scope.clinicalEpisodeId }
+      : {};
+  const labs = await prisma.labOrder.updateMany({
+    where: {
+      ...created,
+      ...episode,
+      amountNet: { gt: 0 },
+      settledAt: null,
+      inPackage: false,
+      status: "ORDERED",
+    },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelReason: reason,
+    },
+  });
+  const visits = await prisma.visit.updateMany({
+    where: {
+      ...created,
+      ...episode,
+      amountNet: { gt: 0 },
+      settledAt: null,
+      status: "IN_PROGRESS",
+      NOT: { serviceLines: { some: { inPackage: true } } },
+    },
+    data: { status: "CANCELLED" },
+  });
+  return { labs: labs.count, visits: visits.count };
+}
+
 export async function deletePendingDiagnostic(
   kind: "lab" | "visit",
   id: string,

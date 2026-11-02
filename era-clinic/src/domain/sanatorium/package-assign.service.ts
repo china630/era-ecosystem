@@ -902,7 +902,7 @@ export async function getPackageAssignSnapshot(
   }
 
   const menuBalances = balances
-    .filter((row) => row.assignable)
+    .filter((row) => row.assignable && row.fulfillment === "PROCEDURE_ORDER")
     .sort(
       (a, b) =>
         (a.procedureOrder ?? 0) - (b.procedureOrder ?? 0) ||

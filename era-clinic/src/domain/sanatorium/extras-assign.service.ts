@@ -157,7 +157,18 @@ export async function prescribeExtras(
   episodeId: string,
   lines: ExtraPrescribeLine[],
   actorUserId?: string | null,
-): Promise<{ orderIds: string[]; labOrderIds: string[]; visitIds: string[] }> {
+): Promise<{
+  orderIds: string[];
+  labOrderIds: string[];
+  visitIds: string[];
+  misses: Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+  }>;
+}> {
   const episode = await loadEpisode(episodeId);
   const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
   const types = await prisma.procedureType.findMany();
@@ -166,6 +177,13 @@ export async function prescribeExtras(
   const ids: string[] = [];
   const labOrderIds: string[] = [];
   const visitIds: string[] = [];
+  let misses: Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+  }> = [];
   const now = new Date();
   const prescribedByPractitionerId = await resolvePrescriberForExtra(episodeId, actorUserId);
   let seq = 0;
@@ -261,9 +279,15 @@ export async function prescribeExtras(
       .map((row) => row.id);
     if (fixedIds.length > 0) await seatUnpaidExtras(fixedIds);
     // OPEN = day-bucket across stay (no cabin). Pay keeps the pin; nurse seats on arrival.
-    if (openIds.length > 0) await pinUnpaidOpenExtras(openIds, episodeId);
+    if (openIds.length > 0) misses = await pinUnpaidOpenExtras(openIds, episodeId);
   }
-  return { orderIds: ids, labOrderIds, visitIds };
+  const missedIds = new Set(misses.map((row) => row.orderId));
+  return {
+    orderIds: ids.filter((id) => !missedIds.has(id)),
+    labOrderIds,
+    visitIds,
+    misses,
+  };
 }
 
 /** Place as PROPOSED, then return every row to PENDING_PAY so the cabin stays held. */
@@ -282,8 +306,17 @@ async function seatUnpaidExtras(ids: string[]): Promise<void> {
   }
 }
 
-/** Pin OPEN unpaid extras onto consecutive working days until stay endsOn; keep PENDING_PAY. */
-async function pinUnpaidOpenExtras(ids: string[], episodeId: string): Promise<void> {
+/**
+ * Pin OPEN unpaid extras onto working days until stay endsOn.
+ * Different codes share a day; the same code takes the next working day.
+ * Rows that do not fit are deleted so they do not stay on the prescribe clock.
+ */
+async function pinUnpaidOpenExtras(
+  ids: string[],
+  episodeId: string,
+): Promise<
+  Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>
+> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
@@ -292,20 +325,36 @@ async function pinUnpaidOpenExtras(ids: string[], episodeId: string): Promise<vo
     where: { id: episodeId },
     select: { programInstance: { select: { endsOn: true } } },
   });
+  let failures: Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+  }> = [];
   try {
     const { pinOpenAttendanceOrders } = await import(
       "@/domain/procedure/open-attendance"
     );
-    await pinOpenAttendanceOrders(ids, {
+    const pinned = await pinOpenAttendanceOrders(ids, {
       scheduleBefore: episode?.programInstance?.endsOn ?? undefined,
       startAt: new Date(),
     });
+    failures = pinned.failures;
   } finally {
     await prisma.procedureOrder.updateMany({
       where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
       data: { status: "PENDING_PAY" },
     });
   }
+  const missed = failures.map((row) => row.orderId);
+  if (missed.length > 0) {
+    await releaseProcedureOccupancy(missed);
+    await prisma.procedureOrder.deleteMany({
+      where: { id: { in: missed }, status: "PENDING_PAY", inPackage: false },
+    });
+  }
+  return failures;
 }
 
 export async function listPendingExtras(episodeId: string) {

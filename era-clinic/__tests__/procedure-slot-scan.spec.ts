@@ -3,6 +3,7 @@ import {
   evaluateCandidateSlot,
   pinSearchFrom,
   placementBlockReason,
+  restGap,
   scanProcedureSlots,
   type ScanOrder,
 } from "@/lib/procedure-slot-scan";
@@ -14,6 +15,8 @@ const hours: TenantWorkHours = {
   lunchStartHour: 13,
   lunchEndHour: 14,
   closedWeekdays: [0],
+  saturdayEndHour: 13,
+  shortenedDayEndHour: 13,
   peakModeEnabled: false,
   peakDayEndHour: 17,
 };
@@ -348,5 +351,164 @@ describe("placementBlockReason", () => {
 
   it("still reports no_staff when the duty pool was empty", () => {
     expect(placementBlockReason(true, false, empty)).toBe("no_staff");
+  });
+});
+
+describe("restGap / OPEN day-bucket", () => {
+  it("does not let an OPEN day-start stamp (countsForRest false) block a FIXED seat", () => {
+    const bathStart = parseBakuDateTime("2026-11-02", "09:00");
+    const bathEnd = parseBakuDateTime("2026-11-02", "09:20");
+    const openStamp = parseBakuDateTime("2026-11-02", "09:00");
+    const openEnd = parseBakuDateTime("2026-11-02", "09:10");
+    const extraStart = parseBakuDateTime("2026-11-02", "14:00");
+    const extraEnd = parseBakuDateTime("2026-11-02", "14:15");
+    expect(
+      restGap(
+        [
+          {
+            code: "SVC-NAFTALAN",
+            start: bathStart,
+            end: bathEnd,
+            patientRestMinutes: 30,
+            inPackage: true,
+            countsForRest: true,
+          },
+          {
+            code: "SVC-ZERBE",
+            start: openStamp,
+            end: openEnd,
+            patientRestMinutes: 15,
+            inPackage: true,
+            countsForRest: false,
+          },
+        ],
+        extraStart,
+        extraEnd,
+        15,
+      ),
+    ).toBe(false);
+  });
+
+  it("still enforces rest against a real FIXED neighbour", () => {
+    const bathEnd = parseBakuDateTime("2026-11-02", "09:20");
+    expect(
+      restGap(
+        [
+          {
+            code: "SVC-NAFTALAN",
+            start: parseBakuDateTime("2026-11-02", "09:00"),
+            end: bathEnd,
+            patientRestMinutes: 30,
+            inPackage: true,
+            countsForRest: true,
+          },
+        ],
+        parseBakuDateTime("2026-11-02", "09:30"),
+        parseBakuDateTime("2026-11-02", "09:45"),
+        15,
+      ),
+    ).toBe(true);
+  });
+
+  it("ignores OPEN day-anchor (countsForRest false) for compatibility overlap", () => {
+    const result = scanProcedureSlots({
+      orders: [
+        {
+          ...order(),
+          id: "bath-1",
+          procedureCode: "SVC-NAFTALAN",
+          procedureName: "Naftalan",
+          durationMin: 20,
+          patientRestMinutes: 0,
+          inPackage: true,
+        },
+      ],
+      now: parseBakuDateTime("2026-11-02", "09:00"),
+      slotMinutes: 5,
+      packageCap: 12,
+      horizonEndYmd: "2026-11-03",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([
+        ["type-1|2026-11-02", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+      ]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [
+        {
+          procedureCodeA: "SVC-ZERBE",
+          procedureCodeB: "SVC-NAFTALAN",
+          ruleType: "FORBID_SAME_DAY",
+          minHours: null,
+        },
+      ],
+      patientSlots: [
+        {
+          code: "SVC-ZERBE",
+          start: parseBakuDateTime("2026-11-02", "09:00"),
+          end: parseBakuDateTime("2026-11-02", "09:10"),
+          patientRestMinutes: 15,
+          inPackage: true,
+          countsForRest: false,
+        },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.failures).toEqual([]);
+    expect(result.planned).toHaveLength(1);
+    expect(bakuDateKey(result.planned[0]!.slotStart)).toBe("2026-11-02");
+  });
+
+  it("does not poison the day when two existing slots already overlap", () => {
+    const result = scanProcedureSlots({
+      orders: [
+        {
+          ...order(),
+          id: "extra-si",
+          procedureCode: "SVC-SUPER",
+          procedureName: "Super Inductive",
+          durationMin: 15,
+          patientRestMinutes: 15,
+          inPackage: false,
+        },
+      ],
+      now: parseBakuDateTime("2026-11-02", "09:00"),
+      slotMinutes: 5,
+      packageCap: 12,
+      horizonEndYmd: "2026-11-03",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([
+        ["type-1|2026-11-02", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+      ]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [
+        {
+          code: "SVC-NAFTALAN",
+          start: parseBakuDateTime("2026-11-02", "09:00"),
+          end: parseBakuDateTime("2026-11-02", "09:20"),
+          patientRestMinutes: 30,
+          inPackage: true,
+          countsForRest: true,
+        },
+        {
+          code: "SVC-ZERBE",
+          start: parseBakuDateTime("2026-11-02", "09:00"),
+          end: parseBakuDateTime("2026-11-02", "09:10"),
+          patientRestMinutes: 15,
+          inPackage: true,
+          countsForRest: true,
+        },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.failures).toEqual([]);
+    expect(result.planned).toHaveLength(1);
+    expect(bakuDateKey(result.planned[0]!.slotStart)).toBe("2026-11-02");
+    expect(result.planned[0]!.slotStart.getTime()).toBeGreaterThanOrEqual(
+      parseBakuDateTime("2026-11-02", "09:50").getTime(),
+    );
   });
 });

@@ -1261,6 +1261,11 @@ export async function closeWalkInEpisode(episodeId: string) {
     throw err;
   }
 
+  const { closeUnpaidDiagnostics } = await import(
+    "@/domain/sanatorium/diagnostics-extras.service"
+  );
+  await closeUnpaidDiagnostics({ clinicalEpisodeId: episodeId }, "unpaid_checkout");
+
   const [liveProcedureCount, openLabCount] = await Promise.all([
     prisma.procedureOrder.count({
       where: {

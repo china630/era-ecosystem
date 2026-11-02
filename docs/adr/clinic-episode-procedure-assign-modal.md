@@ -320,7 +320,7 @@ Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).
 
 ## Amendment 2026-10-22 — procedure list is a block checkbox (SCREEN)
 
-The left menu and the package-tab quota bars list a balance only when that code is in the course entitlement snapshot and `showInProcedures` is true, ordered by `procedureOrder`. A transferred remainder (`XFER-`) stays under **Əvəz edilmiş prosedurlar**. A balance left behind after a block left the template does not appear.
+The left menu and the package-tab quota bars list a balance only when that code is in the course entitlement snapshot, `showInProcedures` is true, and fulfillment is `PROCEDURE_ORDER` (labs and visits stay on the diagnostics modal), ordered by `procedureOrder`. A transferred remainder (`XFER-`) stays under **Əvəz edilmiş prosedurlar**. A balance left behind after a block left the template does not appear.
 
 `+` and **Hamısı** follow the block's fulfillment: `PROCEDURE_ORDER` keeps the cabin planner and the physio form; `LAB_ORDER` creates a lab order for the in-quota quantity (one open order); quantity above that quota is a paid `LabOrder` awaiting payment (not a `ProcedureOrder` cheque row; see [clinic-paid-diagnostics-from-episode.md](./clinic-paid-diagnostics-from-episode.md)), and only when the lab has a catalog price. `VISIT` creates a visit line (paid overflow → unpaid `Visit`). Save rejects a code that is not on that list (`NOT_IN_PROCEDURES`). The assign list shows a block when the current template checkbox is on.
 

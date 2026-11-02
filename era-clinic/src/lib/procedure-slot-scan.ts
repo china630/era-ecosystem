@@ -331,29 +331,32 @@ function sameProcedureThatDay(slots: ScanPatientSlot[], code: string, day: Date)
   return slots.some((slot) => slot.code === code && bakuDateKey(slot.start) === key);
 }
 
-function restGap(
+/**
+ * True when the candidate conflicts with an existing wall-clock rest slot.
+ * Only the candidate is validated — pre-existing overlaps among other rows must
+ * not poison every later seat that Baku day (OPEN day-bucket stamps used to).
+ */
+export function restGap(
   slots: ScanPatientSlot[],
   startAt: Date,
   endAt: Date,
   restAfter: number,
 ): boolean {
   const key = bakuDateKey(startAt);
-  const timeline = [
-    ...slots
-      .filter((slot) => slot.countsForRest && bakuDateKey(slot.start) === key)
-      .map((slot) => ({
-        start: slot.start,
-        end: slot.end,
-        restAfter: slot.patientRestMinutes,
-      })),
-    { start: startAt, end: endAt, restAfter },
-  ].sort((a, b) => a.start.getTime() - b.start.getTime());
-  for (let i = 1; i < timeline.length; i++) {
-    const prev = timeline[i - 1]!;
-    const curr = timeline[i]!;
-    if (curr.start.getTime() < prev.end.getTime()) return true;
-    const need = Math.max(0, prev.restAfter);
-    if (need > 0 && curr.start.getTime() - prev.end.getTime() < need * 60_000) return true;
+  const existing = slots.filter(
+    (slot) => slot.countsForRest && bakuDateKey(slot.start) === key,
+  );
+  for (const slot of existing) {
+    if (startAt.getTime() < slot.end.getTime() && slot.start.getTime() < endAt.getTime()) {
+      return true;
+    }
+    if (startAt.getTime() >= slot.end.getTime()) {
+      const need = Math.max(0, slot.patientRestMinutes);
+      if (need > 0 && startAt.getTime() - slot.end.getTime() < need * 60_000) return true;
+    } else if (endAt.getTime() <= slot.start.getTime()) {
+      const need = Math.max(0, restAfter);
+      if (need > 0 && slot.start.getTime() - endAt.getTime() < need * 60_000) return true;
+    }
   }
   return false;
 }
@@ -490,18 +493,21 @@ export function evaluateCandidateSlot(
   );
   if (!staff) return fail("staff_busy", true);
 
+  // OPEN day-bucket stamps stay in patientSlots for same-day / package caps, but
+  // must not enter wall-clock overlap, sequence gap, or compatibility (ADR CLI-62).
+  const wallClockSlots = input.patientSlots.filter((slot) => slot.countsForRest);
   const ruleOk = input.rules.every((rule) => {
     if (rule.kind === "MUTUAL_EXCLUSION") {
-      const hasBefore = input.patientSlots.some(
+      const hasBefore = wallClockSlots.some(
         (slot) => slot.code === rule.beforeCode && overlaps(slot.start, slot.end, slotStart, slotEnd),
       );
-      const hasAfter = input.patientSlots.some(
+      const hasAfter = wallClockSlots.some(
         (slot) => slot.code === rule.afterCode && overlaps(slot.start, slot.end, slotStart, slotEnd),
       );
       if (hasBefore && hasAfter) return false;
     }
     if (rule.kind === "SEQUENCE_GAP" && rule.afterCode === order.procedureCode) {
-      const prev = input.patientSlots.find((slot) => slot.code === rule.beforeCode);
+      const prev = wallClockSlots.find((slot) => slot.code === rule.beforeCode);
       if (prev) {
         const gapMs = slotStart.getTime() - prev.end.getTime();
         if (gapMs < (rule.minGapMinutes ?? 0) * 60_000) return false;
@@ -513,7 +519,7 @@ export function evaluateCandidateSlot(
     candidateCode: order.procedureCode,
     startAt: slotStart,
     endAt: slotEnd,
-    existing: input.patientSlots.map((slot) => ({
+    existing: wallClockSlots.map((slot) => ({
       procedureCode: slot.code,
       startAt: slot.start,
       endAt: slot.end,

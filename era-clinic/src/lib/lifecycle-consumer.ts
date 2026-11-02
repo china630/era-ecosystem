@@ -132,6 +132,13 @@ export async function closeOpenEpisodesForReservation(reservationId: string) {
     { OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }] },
     "unpaid_checkout",
   );
+  const { closeUnpaidDiagnostics } = await import(
+    "@/domain/sanatorium/diagnostics-extras.service"
+  );
+  await closeUnpaidDiagnostics(
+    { clinicalEpisodeId: { in: episodeIds } },
+    "unpaid_checkout",
+  );
   return { closed: episodes.length, cancelled: orderIds.length };
 }
 
@@ -219,6 +226,13 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
   }
   const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
   await closeUnpaidExtras(
+    { clinicalEpisodeId: { in: targetIds } },
+    "unpaid_checkout",
+  );
+  const { closeUnpaidDiagnostics } = await import(
+    "@/domain/sanatorium/diagnostics-extras.service"
+  );
+  await closeUnpaidDiagnostics(
     { clinicalEpisodeId: { in: targetIds } },
     "unpaid_checkout",
   );

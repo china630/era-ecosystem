@@ -19,7 +19,7 @@ Sanatorium revenue includes paid analyses, imaging (USG, ECG, …), and doctor v
 5. **Paid visits are work-gated the same way.** Unpaid priced visits refuse complete / CPOE write / diagnosis write / prescription until `settledAt` (409 `VISIT_AWAITING_PAYMENT`). Cancel and read stay open.
 6. **Folio keys stay distinct.** Procedure extras keep `clinic-ticket-{id}`. Labs use `lab-ticket-{id}` / `sourceRef` `lab:{id}`. Visits use `visit-ticket-{id}`.
 7. **UI — assign vs cash desk.** Diagnostics modal mirrors **PackageAssignModal** lanes (not a thin twin): `assignedStudies` from snapshot (in-package lab/visit, **locked** — no trash/minus), package remaining + catalog **group accordion** on the left, dual Paketdən / Əlavə steppers + **Ödəniləcək** from prices. No **Pay** on card/modal; cash desk `/reception/extra-tickets`. `QUOTA_REMAINING` before forcePaid.
-8. **Paket / Diaqnostika scales.** Unpaid extras are **red** progress cards (aggregate by code). After Extra tickets Pay they **merge into the blue/green** package scale: Təyin `(pkgAssigned+paidExtra)/(pkgQuota+paidExtra)`, İcra `(pkgDone+paidExtraDone)/(pkgAssigned+paidExtraAssigned)`. While unpaid remains for a code, blue and red cards sit side by side.
+8. **Scales.** Package quota bars stay on the Paket tab. The Diaqnostika tab does not draw them. Unpaid extras there are red cards. After Extra tickets Pay, a paid extra is a blue card of its own (assigned and completed counts), not a merge into the package quota bar.
 9. **Intake checklist** prefers package documents (`inPackage`) so a paid duplicate never closes the package slot.
 10. **Ready results and course print** list package and paid studies together once results exist. The episode summary print omits unpaid / not-ready lab rows.
 
