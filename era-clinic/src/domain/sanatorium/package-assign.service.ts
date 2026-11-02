@@ -25,7 +25,8 @@ import {
   isSeedProcedureCode,
   isWoProcedureCode,
 } from "@/lib/import/seed-catalog-match";
-import { bakuDateKey, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateKey, bakuHourMinute, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { saxlaRepeatClock } from "@/domain/planning/clinic-day";
 import {
   dailyCapForQuota,
   loadEpisodeDailyCaps,
@@ -644,7 +645,7 @@ export async function getPackageAssignSnapshot(
     }
   }
 
-  const instance = episode.programInstance;
+  let instance = episode.programInstance!;
   const snapMeta = parseEntitlementSnapshot(instance.entitlementSnapshot);
   const nameByCode = new Map(
     (instance.template?.procedures ?? []).map((p) => [p.procedureCode, p.procedureName]),
@@ -667,6 +668,70 @@ export async function getPackageAssignSnapshot(
   const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
   const softWarnDay1 = careDenied ?? anamnesisDenied;
+
+  // Heal auto analyses/diagnostics created without package stamp so the modal
+  // right column (assignedStudies) and left studyBalances stay honest.
+  {
+    const {
+      healUnstampedPackageAutoLabs,
+      resolveAutoBlockServiceCode,
+      effectiveAutoFulfillment,
+    } = await import("@/domain/sanatorium/package-auto-apply.service");
+    const sex = episode.patientRef?.sex ?? null;
+    const snapProcs = snapMeta?.procedures ?? instance.template?.procedures ?? [];
+    const autoLabBlocks: Array<{
+      procedureCode: string;
+      quotaTotal: number;
+      serviceCode: string;
+    }> = [];
+    for (const raw of snapProcs) {
+      const block = {
+        ...raw,
+        fulfillment: effectiveAutoFulfillment(
+          {
+            procedureCode: raw.procedureCode,
+            fulfillment:
+              "fulfillment" in raw && typeof raw.fulfillment === "string"
+                ? raw.fulfillment
+                : "PROCEDURE_ORDER",
+            kind: "kind" in raw ? (raw.kind as string | null) : null,
+          },
+          sex,
+        ),
+      };
+      if (block.fulfillment !== "LAB_ORDER") continue;
+      const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, sex);
+      if (!serviceCode) continue;
+      autoLabBlocks.push({
+        procedureCode: block.procedureCode,
+        quotaTotal: Number(
+          "quotaTotal" in raw ? (raw as { quotaTotal?: number }).quotaTotal : 1,
+        ) || 1,
+        serviceCode,
+      });
+    }
+    for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
+      if (autoLabBlocks.some((row) => row.serviceCode === code)) continue;
+      autoLabBlocks.push({
+        procedureCode: code,
+        quotaTotal: 1,
+        serviceCode: code,
+      });
+    }
+    if (autoLabBlocks.length > 0) {
+      await healUnstampedPackageAutoLabs({
+        episodeId,
+        instanceId: instance.id,
+        organizationId: episode.organizationId,
+        autoLabBlocks,
+      });
+      episode = await loadEpisodeForAssign(episodeId, {
+        requireClinicalGates: false,
+        requireProgram: true,
+      });
+      instance = episode.programInstance!;
+    }
+  }
 
   const { foldBathQuotaCards } = await import("@/domain/planning/bath-calendar.service");
   await foldBathQuotaCards(episodeId);
@@ -1244,6 +1309,40 @@ export async function unseatUnfinishedBlockTail(
   return { byKey };
 }
 
+/** Dialog hour from the latest package_assign audit that actually stored one. A later save with startHour null does not erase it. */
+async function rememberedSaxlaHour(episodeId: string): Promise<number | null> {
+  const rows = await prisma.satelliteAuditLog.findMany({
+    where: { entityType: "ClinicalEpisode", entityId: episodeId, action: "package_assign" },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: { changesJson: true },
+  });
+  for (const row of rows) {
+    if (!row.changesJson) continue;
+    try {
+      const parsed = JSON.parse(row.changesJson) as { startHour?: unknown };
+      const hour = parsed.startHour;
+      if (typeof hour !== "number" || !Number.isInteger(hour) || hour < 0 || hour > 23) continue;
+      return hour;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+/** Explicit dialog clock, or the repeat rule when this save did not send one. */
+async function resolvePackageStart(episodeId: string, explicit: Date | null | undefined): Promise<Date> {
+  if (explicit && !Number.isNaN(explicit.getTime())) return explicit;
+  const settings = await getSchedulingSettings();
+  return saxlaRepeatClock({
+    now: new Date(),
+    rememberedHour: await rememberedSaxlaHour(episodeId),
+    dayStartHour: settings.dayStartHour,
+    dayEndHour: settings.dayEndHour,
+  });
+}
+
 /**
  * Create PROPOSED orders for delta qty, place onto resources, burn quotaUsed to match circulation.
  */
@@ -1261,6 +1360,39 @@ export async function assignPackageProcedures(
     procedureName: string;
     reason: string;
     staffName?: string;
+    searchFrom?: string;
+    counts?: {
+      day_full: number;
+      same_day: number;
+      no_staff: number;
+      closed: number;
+      cabin_busy: number;
+      staff_busy: number;
+      rule: number;
+    };
+    movedTo?: string;
+  }>;
+  /** Hour the next save should remember. Explicit dialog hour, else the previous one. */
+  rememberedHour?: number | null;
+  /** Hour this save actually searched from. */
+  searchHour?: number | null;
+  seatMisses?: Array<{
+    orderId?: string;
+    ymd: string;
+    procedureCode: string;
+    procedureName?: string;
+    reason: string;
+    searchFrom?: string;
+    movedTo?: string;
+    counts?: {
+      day_full: number;
+      same_day: number;
+      no_staff: number;
+      closed: number;
+      cabin_busy: number;
+      staff_busy: number;
+      rule: number;
+    };
   }>;
 }> {
   const episode = await loadEpisodeForAssign(episodeId);
@@ -1415,10 +1547,18 @@ export async function assignPackageProcedures(
   const softWarn: string | null = null;
 
   const orgId = requestOrganizationId();
-  const workStart =
-    opts?.startAt && !Number.isNaN(opts.startAt.getTime())
-      ? opts.startAt
-      : parseBakuDateTime(todayBakuYmd(), `${String(settings.dayStartHour).padStart(2, "0")}:00`);
+  const explicitStart =
+    opts?.startAt && !Number.isNaN(opts.startAt.getTime()) ? opts.startAt : null;
+  const priorHour = explicitStart ? null : await rememberedSaxlaHour(episodeId);
+  const startAt = explicitStart ?? saxlaRepeatClock({
+    now: new Date(),
+    rememberedHour: priorHour,
+    dayStartHour: settings.dayStartHour,
+    dayEndHour: settings.dayEndHour,
+  });
+  const rememberedHour = explicitStart ? bakuHourMinute(explicitStart).hour : (priorHour ?? bakuHourMinute(startAt).hour);
+  const searchHour = bakuHourMinute(startAt).hour;
+  const workStart = startAt;
 
   const createdIds: string[] = [];
   const nameByCode = new Map<string, string>();
@@ -1507,7 +1647,19 @@ export async function assignPackageProcedures(
     procedureName: string;
     reason: string;
     staffName?: string;
+    searchFrom?: string;
+    counts?: {
+      day_full: number;
+      same_day: number;
+      no_staff: number;
+      closed: number;
+      cabin_busy: number;
+      staff_busy: number;
+      rule: number;
+    };
+    movedTo?: string;
   }> = [];
+  const seatMisses: typeof misses = [];
   const placedIds: string[] = [];
   const missingCabinNames: string[] = [];
   let genericCabinOnly = true;
@@ -1539,7 +1691,7 @@ export async function assignPackageProcedures(
       const openSeat = await pinOpenAttendanceOrders([...openTail, ...chunk.ids], {
         confirmedByUserId: opts?.confirmedByUserId,
         scheduleBefore: instance.endsOn ?? undefined,
-        startAt: opts?.startAt ?? undefined,
+        startAt,
       });
       misses.push(
         ...openSeat.failures.map((row) => ({
@@ -1553,7 +1705,7 @@ export async function assignPackageProcedures(
       continue;
     }
     if (bathCodes.has(chunk.procedureCode)) {
-      const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt: opts?.startAt });
+      const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt });
       genericCabinOnly = false;
       misses.push(
         ...bathSeat.missed.map((miss) => ({
@@ -1561,6 +1713,15 @@ export async function assignPackageProcedures(
           procedureCode: miss.procedureCode,
           procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
           reason: miss.reason,
+          searchFrom: miss.searchFrom,
+          counts: miss.counts,
+          movedTo: miss.movedTo,
+        })),
+      );
+      seatMisses.push(
+        ...bathSeat.seatMisses.map((miss) => ({
+          ...miss,
+          procedureName: miss.procedureName || miss.procedureCode,
         })),
       );
       placedIds.push(...bathSeat.placedIds);
@@ -1574,7 +1735,7 @@ export async function assignPackageProcedures(
     const placement = await placeConfirmedProcedures([...fixedTail, ...chunk.ids], {
       confirmedByUserId: opts?.confirmedByUserId,
       scheduleBefore: instance.endsOn,
-      startAt: opts?.startAt,
+      startAt,
     });
     missingCabinNames.push(...placement.missingCabinNames);
     if (placement.failures.some((row) => row.reason !== "no_cabin")) genericCabinOnly = false;
@@ -1596,7 +1757,7 @@ export async function assignPackageProcedures(
       const openSeat = await pinOpenAttendanceOrders(tail.openIds, {
         confirmedByUserId: opts?.confirmedByUserId,
         scheduleBefore: instance.endsOn ?? undefined,
-        startAt: opts?.startAt ?? undefined,
+        startAt,
       });
       placedIds.push(...openSeat.placedIds);
       misses.push(
@@ -1614,7 +1775,7 @@ export async function assignPackageProcedures(
       const placement = await placeConfirmedProcedures(tail.fixedIds, {
         confirmedByUserId: opts?.confirmedByUserId,
         scheduleBefore: instance.endsOn,
-        startAt: opts?.startAt,
+        startAt,
       });
       missingCabinNames.push(...placement.missingCabinNames);
       if (placement.failures.some((row) => row.reason !== "no_cabin")) {
@@ -1669,7 +1830,10 @@ export async function assignPackageProcedures(
     placed,
     softWarn,
     orderIds: createdIds.filter((id) => kept.has(id)),
+    rememberedHour,
+    searchHour,
     ...(misses.length > 0 ? { misses } : {}),
+    ...(seatMisses.length > 0 ? { seatMisses } : {}),
   };
 }
 
@@ -2305,6 +2469,7 @@ export async function applyPreferredMasseurs(
     select: { programInstance: { select: { endsOn: true } } },
   });
   const endsOn = episode?.programInstance?.endsOn ?? undefined;
+  const startAt = await resolvePackageStart(episodeId, opts?.startAt);
   for (const pref of prefs) {
     const code = pref.procedureCode.trim();
     if (!code) continue;
@@ -2347,7 +2512,7 @@ export async function applyPreferredMasseurs(
     const placement = await placeConfirmedProcedures(ids, {
       confirmedByUserId: opts?.confirmedByUserId,
       scheduleBefore: endsOn,
-      startAt: opts?.startAt,
+      startAt,
     });
     misses.push(
       ...placement.failures.map((row) => ({
@@ -2385,6 +2550,9 @@ export async function assignPackageMenuLines(
     reason: string;
     staffName?: string;
   }>;
+  rememberedHour?: number | null;
+  searchHour?: number | null;
+  seatMisses?: Awaited<ReturnType<typeof assignPackageProcedures>>["seatMisses"];
 }> {
   const snap = await getPackageAssignSnapshot(episodeId);
   // Menu balances omit hidden lab/visit blocks; diagnostics burns those via studyBalances.
@@ -2445,17 +2613,31 @@ export async function assignPackageMenuLines(
     staffName?: string;
   }> =
     [];
+  let rememberedHour: number | null | undefined;
+  let searchHour: number | null | undefined;
+  const seatMisses: NonNullable<Awaited<ReturnType<typeof assignPackageProcedures>>["seatMisses"]> = [];
   if (procedures.length > 0) {
     const result = await assignPackageProcedures(episodeId, procedures, opts);
     placed += result.placed;
     softWarn = result.softWarn;
     orderIds.push(...result.orderIds);
+    rememberedHour = result.rememberedHour;
+    searchHour = result.searchHour;
     if (result.misses) misses.push(...result.misses);
+    if (result.seatMisses) seatMisses.push(...result.seatMisses);
   }
   if (studies.length > 0) {
     placed += await assignPackageStudies(episodeId, studies);
   }
-  return { placed, softWarn, orderIds, misses };
+  return {
+    placed,
+    softWarn,
+    orderIds,
+    misses,
+    rememberedHour,
+    searchHour,
+    ...(seatMisses.length > 0 ? { seatMisses } : {}),
+  };
 }
 
 async function assignPackageStudies(
@@ -2529,6 +2711,7 @@ async function assignPackageStudies(
             fasting: false,
             confirmRepeat: true,
             patientOrigin: origin,
+            packageStamp: { packageQuotaCode: quota },
           });
         } catch (err) {
           const code = (err as { code?: string }).code;

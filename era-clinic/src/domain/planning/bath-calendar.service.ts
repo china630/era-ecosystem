@@ -119,10 +119,14 @@ async function seatPinnedOrders(
     ymd?: string;
     procedureCode: string;
     procedureName: string;
+    searchFrom?: string;
+    counts?: BathSeatMiss["counts"];
   }>;
+  /** Pin-day refusals kept even after a later day accepts the order. */
+  seatMisses: BathSeatMiss[];
 }> {
   const ids = Object.keys(pins);
-  if (ids.length === 0) return { placedIds: [], failures: [] };
+  if (ids.length === 0) return { placedIds: [], failures: [], seatMisses: [] };
   const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
   const settings = await getSchedulingSettings();
   const ymds = Object.values(pins).sort();
@@ -133,22 +137,19 @@ async function seatPinnedOrders(
   const clock = saxlaFirstClock(startAt, first, dayHour);
   const placedIds: string[] = [];
   const placed = new Set<string>();
-  let failures: Array<{
+  type PinFail = {
     orderId: string;
     reason: string;
     ymd?: string;
     procedureCode: string;
     procedureName: string;
-  }> = [];
+    searchFrom?: string;
+    counts?: BathSeatMiss["counts"];
+  };
+  let failures: PinFail[] = [];
   const mergePlace = (pass: {
     placedIds: string[];
-    failures: Array<{
-      orderId: string;
-      reason: string;
-      ymd?: string;
-      procedureCode: string;
-      procedureName: string;
-    }>;
+    failures: PinFail[];
   }) => {
     for (const id of pass.placedIds) {
       placed.add(id);
@@ -193,8 +194,20 @@ async function seatPinnedOrders(
       scheduleBefore: horizon,
     }),
   );
-  if (failures.length === 0) return { placedIds, failures: [] };
-  if (await tryAfternoon(pins, horizon)) return { placedIds, failures: [] };
+  const seatMisses: BathSeatMiss[] = failures.map((fail) => ({
+    orderId: fail.orderId,
+    ymd: pins[fail.orderId] ?? fail.ymd ?? "",
+    procedureCode: fail.procedureCode,
+    procedureName: fail.procedureName,
+    reason: fail.reason,
+    searchFrom: fail.searchFrom,
+    counts: fail.counts,
+  }));
+  if (failures.length === 0) return { placedIds, failures: [], seatMisses };
+  if (await tryAfternoon(pins, horizon)) {
+    await persistSeatMisses(seatMisses);
+    return { placedIds, failures: [], seatMisses };
+  }
 
   // Still miss: shift each leftover to the next free working day, then morning + afternoon.
   const usedYmds = new Set(
@@ -237,7 +250,33 @@ async function seatPinnedOrders(
     if (failures.length > 0) await tryAfternoon(shiftPins, shiftBefore);
   }
 
-  return { placedIds, failures };
+  for (const miss of seatMisses) {
+    if (!miss.orderId) continue;
+    const landing = shiftPins[miss.orderId];
+    if (landing && placed.has(miss.orderId) && landing !== miss.ymd) miss.movedTo = landing;
+  }
+  await persistSeatMisses(seatMisses);
+
+  return { placedIds, failures, seatMisses };
+}
+
+async function persistSeatMisses(misses: BathSeatMiss[]): Promise<void> {
+  for (const miss of misses) {
+    const orderId = miss.orderId;
+    if (!orderId) continue;
+    const order = await prisma.procedureOrder.findUnique({
+      where: { id: orderId },
+      select: { physioFields: true },
+    });
+    const prev =
+      order?.physioFields && typeof order.physioFields === "object" && !Array.isArray(order.physioFields)
+        ? (order.physioFields as Record<string, unknown>)
+        : {};
+    await prisma.procedureOrder.update({
+      where: { id: orderId },
+      data: { physioFields: { ...prev, seatMiss: miss } },
+    });
+  }
 }
 
 /**
@@ -512,10 +551,23 @@ export async function bathSeriesProcedureCodes(): Promise<Set<string>> {
 }
 
 export type BathSeatMiss = {
+  orderId?: string;
   ymd: string;
   procedureCode: string;
   procedureName?: string;
-  reason: "no_cabin" | "cabin_sex" | "no_staff" | "no_day" | "no_mode" | "day_full";
+  reason: string;
+  searchFrom?: string;
+  counts?: {
+    day_full: number;
+    same_day: number;
+    no_staff: number;
+    closed: number;
+    cabin_busy: number;
+    staff_busy: number;
+    rule: number;
+  };
+  /** Set when a rejected pin day was seated on another day. */
+  movedTo?: string;
 };
 
 function bathModeOf(fields: unknown): string | null {
@@ -538,8 +590,9 @@ export async function seatBathSeriesOrders(
   handledIds: string[];
   placedIds: string[];
   missed: BathSeatMiss[];
+  seatMisses: BathSeatMiss[];
 }> {
-  if (orderIds.length === 0) return { handledIds: [], placedIds: [], missed: [] };
+  if (orderIds.length === 0) return { handledIds: [], placedIds: [], missed: [], seatMisses: [] };
   const orders = await prisma.procedureOrder.findMany({
     where: { id: { in: orderIds }, status: "PROPOSED" },
   });
@@ -561,7 +614,7 @@ export async function seatBathSeriesOrders(
     }
   }
   const handled = orders.filter((order) => memberByCode.has(order.procedureCode) && order.clinicalEpisodeId);
-  if (handled.length === 0) return { handledIds: [], placedIds: [], missed: [] };
+  if (handled.length === 0) return { handledIds: [], placedIds: [], missed: [], seatMisses: [] };
 
   const snapshot = await getBathCalendar(handled[0]!.clinicalEpisodeId!);
   const settings = await getSchedulingSettings();
@@ -660,20 +713,17 @@ export async function seatBathSeriesOrders(
   const seated = await seatPinnedOrders(pins, opts?.startAt);
   placedIds.push(...seated.placedIds);
   for (const fail of seated.failures) {
-    const mapped =
-      fail.reason === "cabin_sex" ||
-      fail.reason === "no_staff" ||
-      fail.reason === "no_cabin" ||
-      fail.reason === "day_full"
-        ? fail.reason
-        : "no_cabin";
     missed.push({
+      orderId: fail.orderId,
       ymd: fail.ymd ?? pins[fail.orderId] ?? "",
       procedureCode: fail.procedureCode,
       procedureName: fail.procedureName,
-      reason: mapped,
+      reason: fail.reason,
+      searchFrom: fail.searchFrom,
+      counts: fail.counts,
     });
   }
+  const seatMisses = seated.seatMisses;
   const lastCellYmd = planned.map((cell) => cell.ymd).sort().at(-1);
   const leftoverYmd = lastCellYmd
     ? nextWorkingYmd(snapshot.days, addBakuDays(lastCellYmd, 1)) ?? lastCellYmd
@@ -689,5 +739,5 @@ export async function seatBathSeriesOrders(
     }
   }
 
-  return { handledIds: handled.map((order) => order.id), placedIds, missed };
+  return { handledIds: handled.map((order) => order.id), placedIds, missed, seatMisses };
 }

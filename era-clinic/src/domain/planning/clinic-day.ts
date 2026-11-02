@@ -113,6 +113,31 @@ export function notBeforeYmdFromStart(startAt: Date | null | undefined, todayYmd
   return ymd < todayYmd ? todayYmd : ymd;
 }
 
+/**
+ * Later Saxla, when the dialog is not shown again.
+ * Before the remembered hour, search from that hour. Once the clock has reached it, search from the current hour.
+ * A passed morning stays closed. No remembered hour means the current hour, not clinic open.
+ */
+export function saxlaRepeatClock(input: {
+  now: Date;
+  rememberedHour: number | null;
+  dayStartHour: number;
+  dayEndHour: number;
+}): Date {
+  const nowHour = bakuHourMinute(input.now).hour;
+  const remembered =
+    input.rememberedHour != null && input.rememberedHour >= 0 && input.rememberedHour <= 23
+      ? input.rememberedHour
+      : null;
+  let hour = Math.max(remembered ?? nowHour, nowHour, input.dayStartHour);
+  let ymd = bakuDateKey(input.now);
+  if (hour >= input.dayEndHour) {
+    ymd = addBakuDays(ymd, 1);
+    hour = input.dayStartHour;
+  }
+  return parseBakuDateTime(ymd, `${String(hour).padStart(2, "0")}:00`);
+}
+
 /** First series day keeps the Saxla hour when the start day is closed or shifted. */
 export function saxlaFirstClock(
   startAt: Date | null | undefined,

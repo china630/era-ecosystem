@@ -149,6 +149,16 @@ export type PlannedPlacement = {
   resourceGapMinutes: number;
 };
 
+export type PlacementBlockCounts = {
+  day_full: number;
+  same_day: number;
+  no_staff: number;
+  closed: number;
+  cabin_busy: number;
+  staff_busy: number;
+  rule: number;
+};
+
 export type PlacementFailure = {
   orderId: string;
   procedureCode: string;
@@ -157,6 +167,9 @@ export type PlacementFailure = {
   ymd?: string;
   /** Named masseur who could not be seated. */
   staffName?: string;
+  /** Baku clock the pin search started from, `YYYY-MM-DD HH:00`. */
+  searchFrom?: string;
+  counts?: PlacementBlockCounts;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -547,10 +560,12 @@ export function evaluateCandidateSlot(
 export function placementBlockReason(
   opened: boolean,
   sawStaffPool: boolean,
-  blocks: { day_full: number; staff_busy: number; cabin_busy: number; rule: number },
+  blocks: PlacementBlockCounts,
 ): PlacementFailureReason {
   if (!opened) return "no_slot";
   if (blocks.day_full > 0) return "day_full";
+  if (blocks.same_day > 0) return "same_day";
+  if (blocks.closed > 0) return "closed";
   if (!sawStaffPool) return "no_staff";
   const ranked = (Object.entries(blocks) as Array<[PlacementFailureReason, number]>)
     .filter(([, count]) => count > 0)
@@ -629,7 +644,15 @@ export function scanProcedureSlots(input: {
     let placed: PlannedPlacement | null = null;
     let sawStaffPool = false;
     let lastYmd = "";
-    const blocks = { day_full: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
+    const blocks: PlacementBlockCounts = {
+      day_full: 0,
+      same_day: 0,
+      no_staff: 0,
+      closed: 0,
+      cabin_busy: 0,
+      staff_busy: 0,
+      rule: 0,
+    };
     const opened = slotStart != null;
     for (let attempt = 0; attempt < 4000 && slotStart && !placed; attempt++) {
       if (order.pinYmd && bakuDateKey(slotStart) !== order.pinYmd) {
@@ -674,14 +697,20 @@ export function scanProcedureSlots(input: {
       if (!verdict.ok) {
         if (verdict.sawStaffPool) sawStaffPool = true;
         if (verdict.reason === "day_full") blocks.day_full += 1;
+        if (verdict.reason === "same_day") blocks.same_day += 1;
+        if (verdict.reason === "no_staff") blocks.no_staff += 1;
+        if (verdict.reason === "closed") blocks.closed += 1;
         if (verdict.reason === "staff_busy") blocks.staff_busy += 1;
         if (verdict.reason === "cabin_busy") blocks.cabin_busy += 1;
         if (verdict.reason === "rule" || verdict.reason === "lunch") blocks.rule += 1;
+        // A pinned day stays on that civil day. Jumping to the next morning
+        // makes the pin check abort the afternoon after the first miss.
         const jumpMorning =
-          verdict.reason === "day_full" ||
-          verdict.reason === "same_day" ||
-          verdict.reason === "no_staff" ||
-          verdict.reason === "closed";
+          !order.pinYmd &&
+          (verdict.reason === "day_full" ||
+            verdict.reason === "same_day" ||
+            verdict.reason === "no_staff" ||
+            verdict.reason === "closed");
         slotStart = jumpMorning
           ? nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd)
           : nextOpenSlot(
@@ -753,13 +782,16 @@ export function scanProcedureSlots(input: {
 
     if (placed) planned.push(placed);
     else {
+      const searchHm = bakuHourMinute(searchFrom);
       failures.push({
         orderId: order.id,
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
         reason: placementBlockReason(opened, sawStaffPool, blocks),
-        ymd: lastYmd || undefined,
+        ymd: lastYmd || order.pinYmd || undefined,
         staffName: order.preferredStaffName?.trim() || undefined,
+        searchFrom: `${bakuDateKey(searchFrom)} ${String(searchHm.hour).padStart(2, "0")}:${String(searchHm.minute).padStart(2, "0")}`,
+        counts: { ...blocks },
       });
     }
   }

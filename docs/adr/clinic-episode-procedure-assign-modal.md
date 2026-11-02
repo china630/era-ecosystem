@@ -332,6 +332,12 @@ Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, la
 
 A package `PROPOSED` row with no cabin still occupies that procedure code on its Baku day, so a second seat of the same code is refused. Rows unseated for a package refill, a masseur change, a stay recalculation, or a bath-calendar pin that do not receive a new cabin are deleted and the quota is synced. A manual move uses the same day block. The plan day chips list only seated rows. A package `PROPOSED` without a cabin is a separate "not seated" line with no clock.
 
+## Amendment 2026-11-02 — Saxla hour and a rejected bath day
+
+A pinned procedure day is not abandoned on the first `day_full`, `same_day`, `no_staff`, or `closed` answer. Those answers step to the next slot on that civil day. The afternoon retry runs only after that pass still has nothing. A pin that is then moved keeps `physioFields.seatMiss` (rejected day, search clock, scanner reason, slot counts, landing day). The same snapshot is returned as `seatMisses` and written on the `package_assign` audit.
+
+The first Save still asks for the start hour. A later Save does not. If the clock has not reached that hour, search starts there. If it has, search starts at the current hour. The search does not return to clinic opening, and it does not reopen a morning that has already passed. The audit keeps the dialog hour in `startHour` and the hour actually used in `searchHour`.
+
 ## Amendment 2026-10-22 — unpaid extra route (SCREEN)
 
 D8 “card only” is superseded for visibility. `Tenant.extraProcedureRoute` defaults to `PLAN_BEFORE_PAY`: the unpaid extra is seated, on the Plan tab and the guest sheet with its time and room, and on the nurse board as a red unpaid block. Check-in and QR stay closed until pay. `HOLD_UNTIL_PAY` hides the row until pay. See [clinic-extra-procedure-route.md](./clinic-extra-procedure-route.md). Amended 2026-10-25.
