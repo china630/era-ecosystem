@@ -67,7 +67,11 @@ export async function applyClinicStaySnapshot(
   const closed = await closeEpisodes(plan.closeEpisodeIds, "hotel_reconcile");
   let opened = 0;
   let patched = 0;
-  for (const guest of plan.sync) {
+  for (const planned of plan.sync) {
+    const guest = snapshot.inHouse.find(
+      (row) => row.reservationId === planned.reservationId && row.paxKey === planned.paxKey,
+    );
+    if (!guest) continue;
     await openEpisodeFromStay({
       reservationId: guest.reservationId,
       guestName: guest.guestName,
