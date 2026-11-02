@@ -314,7 +314,9 @@ async function seatUnpaidExtras(ids: string[]): Promise<void> {
 async function pinUnpaidOpenExtras(
   ids: string[],
   episodeId: string,
-): Promise<Array<{ procedureCode: string; procedureName: string; reason: string; ymd?: string }>> {
+): Promise<
+  Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>
+> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
