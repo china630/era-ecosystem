@@ -255,15 +255,6 @@ export function PatientCardClinicalSections({
       assignable: boolean;
     }>
   >([]);
-  const [studyQuotaRows, setStudyQuotaRows] = useState<
-    Array<{
-      procedureCode: string;
-      procedureName: string;
-      quotaTotal: number;
-      quotaUsed: number;
-      consumed: number;
-    }>
-  >([]);
   const [packageBlock, setPackageBlock] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
   const [quotaTick, setQuotaTick] = useState(0);
@@ -295,10 +286,8 @@ export function PatientCardClinicalSections({
 
   useEffect(() => {
     const needPackage = !section || section === "package";
-    const needStudies = !section || section === "diagnostics";
-    if (!episodeId || (!needPackage && !needStudies)) {
+    if (!episodeId || !needPackage) {
       setQuotaRows([]);
-      setStudyQuotaRows([]);
       setPackageBlock(null);
       setPackageCode(null);
       return;
@@ -333,30 +322,9 @@ export function PatientCardClinicalSections({
           setPackageBlock(null);
           setPackageCode(null);
         }
-        if (needStudies) {
-          const studies = Array.isArray(snap.studyBalances) ? snap.studyBalances : [];
-          setStudyQuotaRows(
-            studies.map((row: {
-              procedureCode: string;
-              procedureName: string;
-              quotaTotal: number;
-              quotaUsed: number;
-              consumed: number;
-            }) => ({
-              procedureCode: row.procedureCode,
-              procedureName: row.procedureName,
-              quotaTotal: row.quotaTotal,
-              quotaUsed: row.quotaUsed,
-              consumed: row.consumed,
-            })),
-          );
-        } else {
-          setStudyQuotaRows([]);
-        }
       })
       .catch(() => {
         setQuotaRows([]);
-        setStudyQuotaRows([]);
         setPackageBlock(null);
         setPackageCode(null);
       });
@@ -627,6 +595,12 @@ export function PatientCardClinicalSections({
             hidePackage={false}
             extrasPending={[]}
             onPackagePlus={() => setDiagnosticsModalOpen(true)}
+            onPackagePrint={() =>
+              openPrint(
+                `/print/studies/${patientRefId}?episode=${encodeURIComponent(episodeId)}`,
+              )
+            }
+            packagePrintLabel={t("printStudies", { defaultValue: "Print analyses and diagnostics" })}
             onExtrasPlus={() => setDiagnosticsModalOpen(true)}
           />
           {unpaidDiagnosticScales.map((row) => (
@@ -676,36 +650,7 @@ export function PatientCardClinicalSections({
               deleteLabel={tc("delete")}
             />
           ))}
-          {studyQuotaRows.map((line) => {
-            const paid = paidDiagnosticsScale.find(
-              (row) => row.code === line.procedureCode,
-            );
-            const paidAssigned = paid?.assigned ?? 0;
-            const paidDone = paid?.completed ?? 0;
-            const assigned = line.quotaUsed + paidAssigned;
-            const assignedTotal = line.quotaTotal + paidAssigned;
-            const completed = line.consumed + paidDone;
-            return (
-              <QuotaScaleCard
-                key={`diag-pkg:${line.procedureCode}`}
-                title={line.procedureName || line.procedureCode}
-                assigned={assigned}
-                assignedTotal={assignedTotal}
-                completed={completed}
-                completedTotal={assigned}
-                tone="blue"
-                assignedLabel={ts("quotaAssigned")}
-                completedLabel={ts("quotaCompleted")}
-                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
-              />
-            );
-          })}
-          {paidDiagnosticsScale
-            .filter(
-              (row) =>
-                !studyQuotaRows.some((line) => line.procedureCode === row.code),
-            )
-            .map((row) => (
+          {paidDiagnosticsScale.map((row) => (
               <QuotaScaleCard
                 key={`diag-paid:${row.code}`}
                 title={row.title}
@@ -1088,48 +1033,68 @@ export function PatientCardClinicalSections({
       {showInlinePlan ? (
         <section className="flex min-h-0 flex-1 flex-col space-y-3">
           {studiesUnlocked && episodeId ? (
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <button
                 type="button"
-                className={TABLE_ROW_ICON_BTN_CLASS}
-                aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
-                onClick={() =>
-                  openPrint(
-                    `/print/procedures/${patientRefId}?episode=${encodeURIComponent(episodeId)}`,
-                  )
-                }
+                className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                onClick={() => setPlanDate("all")}
               >
-                <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                {t("planAll")}
               </button>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={readOnly || !anamnesisOk}
-                onClick={() => setPackageModalOpen(true)}
-              >
-                +
-              </button>
+              {planChipDates.map((date) => (
+                <button
+                  key={date}
+                  type="button"
+                  className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                  onClick={() => setPlanDate(date)}
+                >
+                  {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
+                </button>
+              ))}
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
+                  onClick={() =>
+                    openPrint(
+                      `/print/procedures/${patientRefId}?episode=${encodeURIComponent(episodeId)}`,
+                    )
+                  }
+                >
+                  <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={readOnly || !anamnesisOk}
+                  onClick={() => setPackageModalOpen(true)}
+                >
+                  +
+                </button>
+              </div>
             </div>
-          ) : null}
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-              onClick={() => setPlanDate("all")}
-            >
-              {t("planAll")}
-            </button>
-            {planChipDates.map((date) => (
+          ) : (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <button
-                key={date}
                 type="button"
-                className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-                onClick={() => setPlanDate(date)}
+                className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                onClick={() => setPlanDate("all")}
               >
-                {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
+                {t("planAll")}
               </button>
-            ))}
-          </div>
+              {planChipDates.map((date) => (
+                <button
+                  key={date}
+                  type="button"
+                  className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                  onClick={() => setPlanDate(date)}
+                >
+                  {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
+                </button>
+              ))}
+            </div>
+          )}
           {planUnplaced.length > 0 ? (
             <div className="space-y-2">
               <h3 className={`text-[12px] font-medium uppercase tracking-wide ${TEXT_MUTED_CLASS}`}>

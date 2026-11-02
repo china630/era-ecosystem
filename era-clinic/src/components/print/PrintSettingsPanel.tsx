@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   Field,
   FieldTextarea,
   FORM_STACK_CLASS,
@@ -51,6 +52,7 @@ type PrintDraft = {
   printFooterAz: string;
   printSignatureLab: string;
   printSignatureDoctor: string;
+  procedurePrintExtraLang: "" | "az" | "ru" | "en";
   checkupSections: CheckupSectionConfig[];
   controlPlanePrint?: CpPrint | null;
 };
@@ -71,6 +73,7 @@ const EMPTY: PrintDraft = {
   printFooterAz: "",
   printSignatureLab: "",
   printSignatureDoctor: "",
+  procedurePrintExtraLang: "",
   checkupSections: DEFAULT_CHECKUP_SECTIONS,
   controlPlanePrint: null,
 };
@@ -104,6 +107,12 @@ export function PrintSettingsPanel() {
           printFooterAz: row.printFooterAz ?? "",
           printSignatureLab: row.printSignatureLab ?? "",
           printSignatureDoctor: row.printSignatureDoctor ?? "",
+          procedurePrintExtraLang:
+            row.procedurePrintExtraLang === "az" ||
+            row.procedurePrintExtraLang === "ru" ||
+            row.procedurePrintExtraLang === "en"
+              ? row.procedurePrintExtraLang
+              : "",
           checkupSections: Array.isArray(row.checkupSections)
             ? row.checkupSections
             : row.checkupSectionsJson
@@ -145,6 +154,7 @@ export function PrintSettingsPanel() {
       printFooterAz: draft.printFooterAz || null,
       printSignatureLab: draft.printSignatureLab || null,
       printSignatureDoctor: draft.printSignatureDoctor || null,
+      procedurePrintExtraLang: draft.procedurePrintExtraLang || null,
       checkupSectionsJson: JSON.stringify(draft.checkupSections),
     };
     if (!cp?.logo) body.printLogoDataUrl = draft.printLogoDataUrl;
@@ -237,6 +247,26 @@ export function PrintSettingsPanel() {
         maxWidthClass="max-w-2xl"
       >
         <div className={FORM_STACK_CLASS}>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("procedurePrintExtraLang")}
+            hint={t("procedurePrintExtraLangHint")}
+            value={draft.procedurePrintExtraLang}
+            onChange={(next) =>
+              setDraft((prev) => ({
+                ...prev,
+                procedurePrintExtraLang:
+                  next === "az" || next === "ru" || next === "en" ? next : "",
+              }))
+            }
+            options={[
+              { value: "", label: t("procedurePrintExtraLangOff") },
+              { value: "az", label: t("procedurePrintExtraLangAz") },
+              { value: "ru", label: t("procedurePrintExtraLangRu") },
+              { value: "en", label: t("procedurePrintExtraLangEn") },
+            ]}
+            emptyLabel={t("procedurePrintExtraLangOff")}
+          />
           {!cp?.logo ? (
             <div>
               <p className="mb-1 text-[12px] font-medium">{t("logo", { defaultValue: "Logo" })}</p>

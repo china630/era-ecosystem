@@ -647,6 +647,8 @@ export function PackageAssignModal({
       balances.filter(
         (b) =>
           b.assignable !== false &&
+          b.fulfillment !== "LAB_ORDER" &&
+          b.fulfillment !== "VISIT" &&
           !b.isTransfer &&
           !isBathTransferQuota(b.procedureCode),
       ),
@@ -1213,6 +1215,18 @@ export function PackageAssignModal({
           },
         );
         const extraBody = await res.json().catch(() => ({}));
+        const extraPayload = extraBody.data ?? extraBody;
+        if (res.ok && Array.isArray(extraPayload.misses) && extraPayload.misses.length > 0) {
+          toastPackageAssignOutcome(
+            extras.map((row) => ({
+              procedureCode: row.procedureCode,
+              procedureName: row.procedureName,
+              qty: row.qty,
+            })),
+            extraPayload.misses,
+            (key, values) => tPhysio(key, values),
+          );
+        }
         if (!res.ok) {
           const code = typeof extraBody?.code === "string" ? extraBody.code : null;
           showApiError(
@@ -1514,7 +1528,14 @@ export function PackageAssignModal({
             <DatePicker
               label={tPhysio("packageAssignStartDate")}
               value={startDate}
-              onChange={setStartDate}
+              onChange={(iso) => {
+                const yesterday = addBakuDays(todayBakuYmd(), -1);
+                if (iso && iso < yesterday) {
+                  setStartDate(yesterday);
+                  return;
+                }
+                setStartDate(iso);
+              }}
               placeholder={tc("datePlaceholder")}
               openCalendarLabel={tc("openCalendar")}
             />

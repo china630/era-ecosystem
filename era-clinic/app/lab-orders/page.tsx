@@ -43,6 +43,12 @@ import {
   filterAndSortCatalogItems,
 } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
+import {
+  DIAGNOSTIC_LANE_KINDS,
+  LAB_PANEL_KIND,
+  parseLabListLane,
+  type LabListLane,
+} from "@/domain/lab/lab-order-lane";
 
 type ModalityRef = { code: string; titleEn: string; titleRu: string; titleAz: string };
 type DiagnosticServiceRef = {
@@ -103,6 +109,7 @@ type ListFilters = {
   dateTo: string;
   sort: string;
   sortDir: "" | "asc" | "desc";
+  lane: LabListLane;
 };
 
 const emptyFilters: ListFilters = {
@@ -115,7 +122,12 @@ const emptyFilters: ListFilters = {
   dateTo: "",
   sort: "",
   sortDir: "",
+  lane: "lab",
 };
+
+function laneKinds(lane: LabListLane): readonly string[] {
+  return lane === "diagnostic" ? DIAGNOSTIC_LANE_KINDS : [LAB_PANEL_KIND];
+}
 
 function serviceDisplayName(
   item: LabOrderItem,
@@ -183,8 +195,12 @@ export default function LabOrdersPage() {
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [filters, setFilters] = useState<ListFilters>(emptyFilters);
+  const [filters, setFilters] = useState<ListFilters>(() => ({
+    ...emptyFilters,
+    lane: parseLabListLane(searchParams.get("lane")),
+  }));
   const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ patientRefCode: "", patientFullName: "" });
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
@@ -223,6 +239,8 @@ export default function LabOrdersPage() {
       if (f.status) params.set("status", f.status);
       if (f.criticalOnly) params.set("criticalOnly", "true");
       if (f.modality) params.set("modality", f.modality);
+      params.set("kinds", laneKinds(f.lane).join(","));
+      if (f.lane === "lab") params.set("unclassified", "true");
       if (f.q.trim()) params.set("q", f.q.trim());
       if (f.room.trim()) params.set("room", f.room.trim());
       if (f.dateFrom) params.set("dateFrom", f.dateFrom);
@@ -259,10 +277,18 @@ export default function LabOrdersPage() {
     if (fromQuery) setWorkflowId(fromQuery);
   }, [searchParams]);
 
+  const lane = parseLabListLane(searchParams.get("lane"));
+
+  useEffect(() => {
+    setFilters((prev) =>
+      prev.lane === lane ? prev : { ...prev, lane, modality: "" },
+    );
+  }, [lane]);
+
   function closeWorkflow() {
     setWorkflowId(null);
     if (searchParams.get("order")) {
-      router.replace("/lab-orders");
+      router.replace(`/lab-orders?lane=${lane}`);
     }
   }
 
@@ -335,24 +361,28 @@ export default function LabOrdersPage() {
   }, []);
 
   const modalities = useMemo(() => {
+    const allowed = new Set(laneKinds(filters.lane));
     const map = new Map<string, L10n>();
     for (const group of catalogGroups) {
       if (group.category) continue;
+      if (!allowed.has(group.kind)) continue;
       if (!group.modality || map.has(group.modality)) continue;
       map.set(group.modality, group.title);
     }
     return [...map.entries()].map(([code, title]) => ({ code, title }));
-  }, [catalogGroups]);
+  }, [catalogGroups, filters.lane]);
 
   const catalogOptions = useMemo(
     () =>
       filterAndSortCatalogItems(catalogItems, favoriteKeys, favoritesMode, {
         search: "",
-      }).map((item) => ({
+      })
+        .filter((item) => laneKinds(filters.lane).includes(item.kind))
+        .map((item) => ({
         value: item.code,
         label: formatNameAndCode(pickL10n(item.title, locale), item.code),
       })),
-    [catalogItems, favoriteKeys, favoritesMode, locale],
+    [catalogItems, favoriteKeys, favoritesMode, locale, filters.lane],
   );
 
   function patchFilters(patch: Partial<ListFilters>) {
@@ -360,7 +390,7 @@ export default function LabOrdersPage() {
   }
 
   function resetFilters() {
-    setFilters(emptyFilters);
+    setFilters({ ...emptyFilters, lane: filters.lane });
   }
 
   async function cancelOrder(id: string) {
@@ -495,7 +525,10 @@ export default function LabOrdersPage() {
           <button
             type="button"
             className="font-medium text-[#2980B9] hover:underline"
-            onClick={() => setWorkflowId(order.id)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setWorkflowId(order.id);
+            }}
           >
             {servicesLabel(order, locale)}
           </button>
@@ -538,12 +571,19 @@ export default function LabOrdersPage() {
         key: "actions",
         header: tc("actions"),
         render: (order) => (
-          <div className="flex flex-wrap items-center gap-1">
+          <div
+            className="flex flex-wrap items-center gap-1"
+            onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+          >
             <button
               type="button"
               className={TABLE_ROW_ICON_BTN_CLASS}
               aria-label={t("openOrder")}
-              onClick={() => setWorkflowId(order.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setWorkflowId(order.id);
+              }}
             >
               <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
@@ -578,11 +618,11 @@ export default function LabOrdersPage() {
     <div className={LIST_PAGE_SHELL_CLASS}>
       <div className="shrink-0">
         <PageHeader
-          title={t("title")}
+          title={filters.lane === "diagnostic" ? t("titleDiagnostic") : t("titleLab")}
           actions={
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4" aria-hidden />
-              {t("createTitle")}
+              {filters.lane === "diagnostic" ? t("createTitleDiagnostic") : t("createTitle")}
             </button>
           }
         />
@@ -664,7 +704,13 @@ export default function LabOrdersPage() {
             columns={columns}
             rows={orders as (LabOrder & Record<string, unknown>)[]}
             rowKey={(o) => o.id}
-            emptyMessage={loading ? tc("loading") : t("empty")}
+            emptyMessage={
+              loading
+                ? tc("loading")
+                : filters.lane === "diagnostic"
+                  ? t("emptyDiagnostic")
+                  : t("emptyLab")
+            }
             pagination={false}
             paginationMode="server"
             embedded
@@ -675,6 +721,16 @@ export default function LabOrdersPage() {
             }
             onSortChange={(next) =>
               setFilters((prev) => ({ ...prev, sort: next.key, sortDir: next.dir }))
+            }
+            onRowClick={(order) => setSelectedId(order.id)}
+            onRowDoubleClick={(order) => {
+              setSelectedId(order.id);
+              setWorkflowId(order.id);
+            }}
+            rowClassName={(order) =>
+              order.id === selectedId
+                ? "bg-white ring-2 ring-inset ring-[#2980B9]"
+                : undefined
             }
           />
         }
@@ -698,7 +754,7 @@ export default function LabOrdersPage() {
 
       <ModalShell
         open={createOpen}
-        title={t("createTitle")}
+        title={filters.lane === "diagnostic" ? t("createTitleDiagnostic") : t("createTitle")}
         onClose={() => {
           setCreateOpen(false);
         }}

@@ -16,4 +16,8 @@ export async function register() {
   } catch (err) {
     console.error("[clinic] onSatelliteBoot failed", err);
   }
+  const { startClinicStayReconcile } = await import(
+    /* webpackIgnore: true */ "@/lib/stay-reconcile-schedule"
+  );
+  startClinicStayReconcile();
 }

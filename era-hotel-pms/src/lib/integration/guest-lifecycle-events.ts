@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import { requestOrganizationId } from '@/lib/request-organization';
 import {
   SATELLITE_HOTEL_GUEST_CHECKED_IN,
   SATELLITE_HOTEL_GUEST_CHECKED_OUT,
@@ -13,13 +12,22 @@ import { publishToOrchestratorGateway } from "@era/satellite-kit/orchestrator-ga
 import { normalizeMedicalPackageCode } from "@/lib/services/medical-package-resolve.service";
 import { mapNationalityToIso } from "@/lib/person-documents";
 
-async function publishLifecycle(event: Record<string, unknown>) {
-  const organizationId = requestOrganizationId();
-  if (!organizationId || organizationId === "demo-org") return;
+export async function publishLifecycle(
+  event: Record<string, unknown>,
+  organizationId: string,
+) {
+  const org = organizationId.trim();
+  if (!org || org === "demo-org") {
+    throw new Error("clinic lifecycle requires the stay organization");
+  }
+  const correlationId =
+    typeof event.correlationId === "string" && event.correlationId.trim()
+      ? event.correlationId.trim()
+      : randomUUID();
   const result = await publishToOrchestratorGateway({
     ...event,
-    organizationId,
-    correlationId: randomUUID(),
+    organizationId: org,
+    correlationId,
     occurredAt: new Date().toISOString(),
   });
   if (!result.ok) {
@@ -27,6 +35,18 @@ async function publishLifecycle(event: Record<string, unknown>) {
       `lifecycle event publish failed status=${result.status ?? "n/a"} ${result.error ?? ""}`.trim(),
     );
   }
+}
+
+async function rememberClinicLifecycle(input: {
+  kind: string;
+  reservationId: string;
+  paxKey?: string;
+  payload: Record<string, unknown>;
+}) {
+  const { rememberClinicLifecycle: remember } = await import(
+    "@/lib/integration/clinic-lifecycle-outbox"
+  );
+  await remember(input);
 }
 
 export function lifecycleDemographicsFromPax(pax: {
@@ -93,7 +113,12 @@ export async function dispatchGuestCheckedIn(input: {
       phone: input.phone,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "CHECK_IN",
+    reservationId: input.reservationId,
+    paxKey: input.paxKey,
+    payload: event,
+  });
 }
 
 export async function dispatchGuestCheckedOut(input: {
@@ -111,7 +136,11 @@ export async function dispatchGuestCheckedOut(input: {
       earlyCheckout: input.earlyCheckout,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "CHECK_OUT",
+    reservationId: input.reservationId,
+    payload: event,
+  });
 }
 
 export async function dispatchGuestDeparted(input: {
@@ -136,7 +165,12 @@ export async function dispatchGuestDeparted(input: {
       checkOutDate: input.checkOutDate,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "DEPARTED",
+    reservationId: input.reservationId,
+    paxKey: input.paxKey,
+    payload: event,
+  });
 }
 
 export async function dispatchGuestMoved(input: {
@@ -166,7 +200,12 @@ export async function dispatchGuestMoved(input: {
       roomNumber: input.newRoomNumber,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "MOVED",
+    reservationId: input.toReservationId,
+    paxKey: input.paxKey,
+    payload: event,
+  });
 }
 
 export async function dispatchSanatoriumBookingCreated(input: {
@@ -199,7 +238,12 @@ export async function dispatchSanatoriumBookingCreated(input: {
       nationality: input.nationality,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "BOOKING",
+    reservationId: input.reservationId,
+    paxKey: input.paxKey,
+    payload: event,
+  });
 }
 
 export async function dispatchRoomChanged(input: {
@@ -217,7 +261,11 @@ export async function dispatchRoomChanged(input: {
       programCode: input.programCode,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "ROOM",
+    reservationId: input.reservationId,
+    payload: event,
+  });
 }
 
 export async function dispatchStayProductChanged(input: {
@@ -259,7 +307,12 @@ export async function dispatchStayProductChanged(input: {
       nationality: input.nationality,
     },
   };
-  await publishLifecycle(event);
+  await rememberClinicLifecycle({
+    kind: "STAY_PRODUCT",
+    reservationId: input.reservationId,
+    paxKey: input.paxKey,
+    payload: event,
+  });
 }
 
 export type ClinicPackageEventKind = "booking" | "stay-product" | "none";

@@ -11,6 +11,12 @@ import {
   todayBakuYmd,
 } from "@/lib/baku-day";
 import { listClinicDays, nextWorkingYmd } from "@/domain/planning/clinic-day";
+import { packageBlockIsFull } from "@/domain/sanatorium/daily-package-cap";
+import {
+  loadEpisodeDailyCaps,
+  quotaForGuestDay,
+  type EpisodeDailyCaps,
+} from "@/domain/sanatorium/block-daily-cap";
 import { getTenantWorkHours } from "@/domain/settings/scheduling-settings";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
@@ -26,6 +32,21 @@ export function isOpenSchedulingMode(
   mode: string | null | undefined,
 ): boolean {
   return mode === "OPEN";
+}
+
+/**
+ * OPEN without a cabin is a civil-day pin only (`scheduledAt` = day anchor, not an
+ * appointment clock). It must not participate in FIXED wall-clock rest / overlap.
+ * After nurse seat (`resourceId` set) it behaves like any timed row.
+ */
+export function orderCountsForWallClockRest(input: {
+  status: string;
+  schedulingMode?: string | null;
+  resourceId?: string | null;
+}): boolean {
+  if (input.status === "NO_SHOW" || input.status === "PROPOSED") return false;
+  if (isOpenSchedulingMode(input.schedulingMode) && !input.resourceId) return false;
+  return true;
 }
 
 /** OPEN day-bucket rows burn quota only after attendance. */
@@ -87,7 +108,77 @@ export function orderIsTodayBaku(
 }
 
 /**
- * Pin OPEN PROPOSED rows onto consecutive working days without cabin booking.
+ * First working day in range where this code is not already pinned.
+ * A different code may share the day. An in-package row also stops when its
+ * block's distinct-code cap is full. Paid extras ignore that cap.
+ * Returns null when nothing is left through horizonEndYmd.
+ */
+export function pickOpenAttendanceDay(input: {
+  procedureCode: string;
+  inPackage: boolean;
+  quotaKey: string;
+  dailyCap: number | null;
+  startYmd: string;
+  horizonEndYmd: string;
+  workingYmds: string[];
+  /** Baku YMD → procedure codes already on that day (package and extras). */
+  codesOnDay: Map<string, Set<string>>;
+  /** Baku YMD → quota block → in-package codes. Extras are not recorded here. */
+  packageCodesOnDay: Map<string, Map<string, Set<string>>>;
+}): string | null {
+  for (const ymd of input.workingYmds) {
+    if (ymd < input.startYmd || ymd > input.horizonEndYmd) continue;
+    if (input.codesOnDay.get(ymd)?.has(input.procedureCode)) continue;
+    const blockCodes = input.packageCodesOnDay.get(ymd)?.get(input.quotaKey);
+    if (
+      input.inPackage &&
+      input.dailyCap != null &&
+      packageBlockIsFull({
+        slots: [...(blockCodes ?? [])].map((code) => ({
+          code,
+          start: parseBakuDateTime(ymd, "12:00"),
+          inPackage: true,
+          quotaKey: input.quotaKey,
+        })),
+        day: parseBakuDateTime(ymd, "12:00"),
+        candidateCode: input.procedureCode,
+        quotaKey: input.quotaKey,
+        cap: input.dailyCap,
+      })
+    ) {
+      continue;
+    }
+    return ymd;
+  }
+  return null;
+}
+
+/** Remember a placed code. In-package rows also fill the block-cap set. */
+export function noteOpenAttendanceDay(
+  codesOnDay: Map<string, Set<string>>,
+  packageCodesOnDay: Map<string, Map<string, Set<string>>>,
+  ymd: string,
+  procedureCode: string,
+  inPackage: boolean,
+  quotaKey: string,
+): void {
+  const codes = codesOnDay.get(ymd) ?? new Set<string>();
+  codes.add(procedureCode);
+  codesOnDay.set(ymd, codes);
+  if (!inPackage) return;
+  const byQuota = packageCodesOnDay.get(ymd) ?? new Map<string, Set<string>>();
+  const block = byQuota.get(quotaKey) ?? new Set<string>();
+  block.add(procedureCode);
+  byQuota.set(quotaKey, block);
+  packageCodesOnDay.set(ymd, byQuota);
+}
+
+/**
+ * Pin OPEN rows onto working days through the stay. Different codes share a day.
+ * The same code goes to the next working day. No cabin.
+ * `scheduledAt` is the Baku civil-day anchor only (dayStartHour stamp) — UI hides
+ * the clock; planners must use `orderCountsForWallClockRest` so the stamp never
+ * blocks FIXED / paid-extra seating the same day.
  */
 export async function pinOpenAttendanceOrders(
   orderIds: string[],
@@ -150,6 +241,54 @@ export async function pinOpenAttendanceOrders(
     const next = nextWorkingYmd(clinicDays, cursorYmd);
     if (next) cursorYmd = next;
   }
+  const workingYmds = clinicDays.filter((day) => day.working).map((day) => day.ymd);
+  const codesOnDay = new Map<string, Set<string>>();
+  const packageCodesOnDay = new Map<string, Map<string, Set<string>>>();
+  const episodeIds = [
+    ...new Set(orders.map((row) => row.clinicalEpisodeId).filter((id): id is string => Boolean(id))),
+  ];
+  const capsByEpisode = new Map<string, EpisodeDailyCaps>();
+  for (const episodeId of episodeIds) {
+    if (orders.some((row) => row.clinicalEpisodeId === episodeId && row.inPackage)) {
+      capsByEpisode.set(episodeId, await loadEpisodeDailyCaps(episodeId));
+    }
+  }
+  if (episodeIds.length > 0) {
+    const existing = await prisma.procedureOrder.findMany({
+      where: {
+        clinicalEpisodeId: { in: episodeIds },
+        id: { notIn: orderIds },
+        schedulingMode: "OPEN",
+        status: { notIn: ["CANCELLED", "NO_SHOW", "UNPAID_MISSED"] },
+      },
+      select: {
+        procedureCode: true,
+        scheduledAt: true,
+        inPackage: true,
+        packageQuotaCode: true,
+        clinicalEpisodeId: true,
+      },
+    });
+    for (const row of existing) {
+      const ymd = bakuDateKey(row.scheduledAt);
+      const quota = quotaForGuestDay(
+        row.clinicalEpisodeId ? capsByEpisode.get(row.clinicalEpisodeId) ?? null : null,
+        {
+          inPackage: row.inPackage,
+          packageQuotaCode: row.packageQuotaCode,
+          procedureCode: row.procedureCode,
+        },
+      );
+      noteOpenAttendanceDay(
+        codesOnDay,
+        packageCodesOnDay,
+        ymd,
+        row.procedureCode,
+        row.inPackage,
+        quota.quotaKey,
+      );
+    }
+  }
 
   const prescribedByPractitionerId = opts?.confirmedByUserId
     ? (
@@ -177,27 +316,41 @@ export async function pinOpenAttendanceOrders(
 
   for (const order of ordered) {
     const pinned = opts?.pinYmdByOrderId?.[order.id];
-    let ymd = pinned ?? cursorYmd;
+    const quota = quotaForGuestDay(
+      order.clinicalEpisodeId ? capsByEpisode.get(order.clinicalEpisodeId) ?? null : null,
+      {
+        inPackage: order.inPackage,
+        packageQuotaCode: order.packageQuotaCode,
+        procedureCode: order.procedureCode,
+      },
+    );
+    let ymd: string | null = pinned ?? null;
     if (pinned) {
       const day = clinicDays.find((d) => d.ymd === pinned);
       if (!day?.working) {
-        const next = nextWorkingYmd(clinicDays, pinned);
-        if (next) ymd = next;
+        ymd = nextWorkingYmd(clinicDays, pinned);
       }
+    } else {
+      ymd = pickOpenAttendanceDay({
+        procedureCode: order.procedureCode,
+        inPackage: order.inPackage,
+        quotaKey: quota.quotaKey,
+        dailyCap: quota.dailyCap,
+        startYmd: cursorYmd,
+        horizonEndYmd,
+        workingYmds,
+        codesOnDay,
+        packageCodesOnDay,
+      });
     }
-    const working = clinicDays.find((d) => d.ymd === ymd && d.working);
-    if (!working || ymd > horizonEndYmd) {
+    if (!ymd || ymd > horizonEndYmd || !clinicDays.some((d) => d.ymd === ymd && d.working)) {
       failures.push({
         orderId: order.id,
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
         reason: "no_slot",
-        ymd,
+        ymd: ymd ?? horizonEndYmd,
       });
-      if (!pinned) {
-        const next = nextWorkingYmd(clinicDays, cursorYmd);
-        if (next) cursorYmd = next;
-      }
       continue;
     }
     const duration = order.procedureType?.durationMin ?? 30;
@@ -224,10 +377,14 @@ export async function pinOpenAttendanceOrders(
       },
     });
     placedIds.push(order.id);
-    if (!pinned) {
-      const next = nextWorkingYmd(clinicDays, addBakuDays(cursorYmd, 1));
-      cursorYmd = next ?? addBakuDays(cursorYmd, 1);
-    }
+    noteOpenAttendanceDay(
+      codesOnDay,
+      packageCodesOnDay,
+      ymd,
+      order.procedureCode,
+      order.inPackage,
+      quota.quotaKey,
+    );
   }
 
   return {

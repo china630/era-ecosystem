@@ -150,6 +150,7 @@ export async function GET(request: Request) {
       where,
       include: {
         patientRef: true,
+        clinicalEpisode: { select: { roomNumber: true } },
         resource: { select: { id: true, code: true, name: true } },
         allocations: {
           where: { role: "STAFF" },

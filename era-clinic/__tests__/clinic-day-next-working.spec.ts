@@ -2,6 +2,7 @@ import {
   nextWorkingYmd,
   notBeforeYmdFromStart,
   saxlaFirstClock,
+  saxlaRepeatClock,
   type ClinicDay,
 } from "@/domain/planning/clinic-day";
 import { bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
@@ -44,10 +45,34 @@ describe("notBeforeYmdFromStart", () => {
     );
   });
 
-  it("does not start in the past", () => {
+  it("allows yesterday and snaps older days back to today", () => {
     expect(notBeforeYmdFromStart(parseBakuDateTime("2026-10-18", "10:00"), "2026-10-19")).toBe(
+      "2026-10-18",
+    );
+    expect(notBeforeYmdFromStart(parseBakuDateTime("2026-10-17", "10:00"), "2026-10-19")).toBe(
       "2026-10-19",
     );
+  });
+});
+
+describe("saxlaRepeatClock", () => {
+  const now = parseBakuDateTime("2026-11-02", "12:26");
+
+  it("stays on the remembered hour while now is earlier", () => {
+    const clock = saxlaRepeatClock({ now, rememberedHour: 13, dayStartHour: 9, dayEndHour: 17 });
+    expect(bakuDateKey(clock)).toBe("2026-11-02");
+    expect(bakuHourMinute(clock).hour).toBe(13);
+  });
+
+  it("uses the current hour once the remembered hour has passed", () => {
+    const later = parseBakuDateTime("2026-11-02", "15:10");
+    const clock = saxlaRepeatClock({ now: later, rememberedHour: 13, dayStartHour: 9, dayEndHour: 17 });
+    expect(bakuHourMinute(clock).hour).toBe(15);
+  });
+
+  it("does not reopen the morning when nothing was remembered", () => {
+    const clock = saxlaRepeatClock({ now, rememberedHour: null, dayStartHour: 9, dayEndHour: 17 });
+    expect(bakuHourMinute(clock).hour).toBe(12);
   });
 });
 

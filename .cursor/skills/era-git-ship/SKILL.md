@@ -18,7 +18,7 @@ description: >-
 |-----------|--------|
 | **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + **local ship gates** + `-PublishDev` (**waits Deploy staging by default**) → return folder to `origin/dev` → `-PublishMaster` (**waits Deploy staging**) → return to `origin/dev`. **Merge ≠ ship done.** |
 | **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит**, **ship and push** | Same as full wave if there are uncommitted changes; if tree is already committed, gates then `-PublishDev` (+ master after CI when that wave promotes). Always await **Build images + Deploy staging** unless the user explicitly said git-only / `-SkipStaging`. End on `dev` with `HEAD` = `origin/dev`, clean status, **and** staging green for the merge SHA |
-| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → `-PublishDev` (staging wait is **default**). **Do not** promote `master` unless asked. **Do not** stop at an open PR URL or on the side branch after merge. In this same folder, `git checkout dev` and `git pull origin dev` until `HEAD` equals `origin/dev` and `git status` is clean. Path-filter rebuilds only matching GHCR services — do not dispatch a full 16-image build. |
+| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → `-PublishDev` (staging wait is **default**). **Do not** promote `master` unless asked. **Do not** stop at an open PR URL or on the side branch after merge. In this same folder, `git checkout dev` and `git pull origin dev` until `HEAD` equals `origin/dev`. Uncommitted work in **other** satellites stays in the working tree. Path-filter rebuilds only matching GHCR services — do not dispatch a full 16-image build. |
 | **собери образы оркестратор** (or `hotel`, `clinic`, …) | Manual `era-ship.ps1 -PublishImages -Services <ghcr>` (only if auto path-filter did not run) |
 | **задеплой оркестратор** | Manual `era-ship.ps1 -PublishDeploy -DeployScope orchestrator -ImageTag <tag>` |
 | **коммит оркестратор** / **orch commit** | Single scope `orchestrator` commit only (no PR unless also asked to push) |
@@ -44,8 +44,9 @@ Always read [quality-gates](../quality-gates/SKILL.md) before any `git push`.
 7. **No emergency reset:** never `git checkout origin/dev -- <app>/` (or equivalent) to discard a conflicting wave so CI goes green. Fix cleanly or split into a separate PR. See `.cursor/rules/era-no-emergency-reset.mdc`.
 8. **Local ship gates before every push** (not before each commit). Prisma migrate / `docker compose` health is **not** a substitute. See [Local ship gates](#local-ship-gates-before-push) below. Never pass `-SkipGates` / `ERA_SHIP_SKIP_GATES=1` unless the user explicitly asked to skip gates.
 9. **This folder must contain `origin/dev` before any commit.** `git fetch origin dev`, then `git merge-base --is-ancestor origin/dev HEAD` must exit 0. If it does not: **do not commit**, and **do not** create a second clone, worktree, or copy of the repo. Stop in this folder and reconcile first — confirm the uncommitted tree is not a stale copy lagging `origin/dev`. Only after that check may the folder be brought onto `origin/dev` and the ship continued.
-10. **After merge into `dev`, return this same folder to `origin/dev`.** `git checkout dev` then `git pull origin dev`. Folder sync is not finished while the folder stays on `integration/…`. Folder gate: `git rev-parse HEAD` equals `git rev-parse origin/dev` and `git status` is clean (except `never_commit`). Required for every ship, including a scoped ship that does not promote `master`.
-11. **Staging is part of ship (default).** `-PublishDev` / `-PublishMaster` wait for **Build and push images** then **Deploy staging** on the merge SHA. **Merge green ≠ droplet up** (outage class 2026-10-28: Nest boot fail, Deploy red, login dead). Opt out only with explicit user ask + `-SkipStaging` (git-only / docs-only with no image deploy). Never treat CI merge alone as done for «шип + пуш». **Deploy job green ≠ droplet up** either: WaitStaging requires **Deploy over SSH** `success` **and** public smoke (`finance-api` / `api` / `data` / `app`) (2026-10-31: false SKIP; then real SSH wiped all containers via `rm -f` and finance unhealthy left money/control plane 502).
+10. **After merge into `dev`, return this same folder to `origin/dev`.** `git checkout dev` then `git pull origin dev`. No `--force`, no `git restore`, no `git checkout -- <path>`, no `git stash`, no `git reset`, no `git clean`. Folder sync is not finished while the folder stays on `integration/…`. Folder gate: `git rev-parse HEAD` equals `git rev-parse origin/dev`. `git status` may still show uncommitted files **outside** the buckets committed on this branch (another satellite's WIP). That is expected. Required for every ship, including a scoped ship that does not promote `master`.
+11. **Foreign WIP is protected.** A hotel ship must not stage, test, build, revert, or "clean" `era-clinic/` (and the reverse). `ship:prepush` only treats dirty files whose path bucket appears in `origin/dev...HEAD` as in scope. If `checkout`/`pull` would overwrite those other files, **stop** and name them. Do not discard them to make status clean.
+12. **Staging is part of ship (default).** `-PublishDev` / `-PublishMaster` wait for **Build and push images** then **Deploy staging** on the merge SHA. **Merge green ≠ droplet up** (outage class 2026-10-28: Nest boot fail, Deploy red, login dead). Opt out only with explicit user ask + `-SkipStaging` (git-only / docs-only with no image deploy). Never treat CI merge alone as done for «шип + пуш». **Deploy job green ≠ droplet up** either: WaitStaging requires **Deploy over SSH** `success` **and** public smoke (`finance-api` / `api` / `data` / `app`) (2026-10-31: false SKIP; then real SSH wiped all containers via `rm -f` and finance unhealthy left money/control plane 502).
 
 ## Local ship gates (before push)
 
@@ -76,9 +77,9 @@ This runs:
 
 1. `git status` — ignore only `never_commit` (`tmp/`, `docker-data/`, `.env`, …).
 2. If anything else is dirty: **new commit** (same wave prefixes), **clear `ERA_SHIP_GATES_DONE`**, re-run `npm run ship:prepush`.
-3. Push / `-PublishDev` only when the tree is clean except `never_commit`.
+3. Push / `-PublishDev` only when the ship scope is clean (buckets in `origin/dev...HEAD`). Dirt in other satellites is protected and is not a blocker.
 
-`ERA_SHIP_GATES_DONE=1` skips re-running tests in the same session, but **`era-ship-prepush.mjs` still fails if the tree is dirty** (so a git hook cannot push generate leftovers). Never set the flag while porcelain remains except `never_commit`. `era-ship.ps1` also throws on a dirty tree.
+`ERA_SHIP_GATES_DONE=1` skips re-running tests in the same session, but **`era-ship-prepush.mjs` still fails if the ship scope is dirty** (so a git hook cannot push generate leftovers inside the committed buckets). Porcelain in other satellites is logged as protected and is not a failure. Never `git checkout`/`restore`/`stash`/`reset` those paths to make the tree empty. `era-ship.ps1` throws only for dirt inside the committed buckets.
 
 **Manual `git push` is not a bypass:** the pre-push hook runs the same script. Option B must still end on a clean tree.
 
@@ -147,7 +148,7 @@ Dry-run: add `-DryRun` to any command.
 8. **Local ship gates:** `npm run ship:prepush`. FAIL → fix → new commit → re-run.
 9. **Working tree clean** (except `never_commit`). If generate/build dirtied files → new commit → unset `ERA_SHIP_GATES_DONE` → re-run gates. Do **not** push a dirty tree.
 10. Push + PR (`-PublishDev`, staging wait **on by default**). Wait for **GitHub CI** green, merge **that PR number**, then **Build images + Deploy staging** green on the merge SHA. Never `gh pr view` without a PR number. Never treat `gh pr checks --watch` SUCCESS on a SHA that already passed on `dev` as enough to merge `dev`→`master` — retry `gh pr merge <n>` until branch protection accepts (queued `packages` / policy), or fail on real red checks.
-11. **Return this folder to `origin/dev`:** `git checkout dev`; `git pull origin dev`. Folder is not synced until `git rev-parse HEAD` equals `git rev-parse origin/dev` and `git status` is clean (except `never_commit`). PublishMaster only if the user asked, and only after this return (+ staging wait on master); then return to `dev` again so the folder still matches `origin/dev`.
+11. **Return this folder to `origin/dev`:** `git checkout dev`; `git pull origin dev` (no `--force`, no path restore). Folder is not synced until `git rev-parse HEAD` equals `git rev-parse origin/dev`. Dirty files outside this ship's commits stay. If checkout or pull refuses because of them, stop. PublishMaster only if the user asked, and only after this return (+ staging wait on master); then return to `dev` again so the folder still matches `origin/dev`.
 
 ## Single scope commit
 
@@ -297,14 +298,14 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 - [ ] Commit 4 rest (remaining — including kit/docs/platform; no leftover porcelain except `never_commit`)
 - [ ] `npm run ship:prepush` PASS (or FAIL → fix → new commit → re-run)
 - [ ] If generate/build dirtied the tree: new commit, clear `ERA_SHIP_GATES_DONE`, re-run gates
-- [ ] Working tree clean except `never_commit` (**this** is the push gate, not PASS alone)
+- [ ] Ship scope clean (**this** is the push gate, not PASS alone). Other satellites' uncommitted files are still there
 - [ ] git push -u origin <branch>
 - [ ] gh auth OK
 - [ ] PR → dev created
 - [ ] PR → dev merged (**GitHub CI green** — local gates are not enough)
 - [ ] **Build and push images** + **Deploy staging** green on the merge SHA (default; `-SkipStaging` only if user asked)
 - [ ] Same folder: `git checkout dev` and `git pull origin dev`
-- [ ] `git rev-parse HEAD` equals `git rev-parse origin/dev`, and `git status` is clean (except `never_commit`)
+- [ ] `git rev-parse HEAD` equals `git rev-parse origin/dev`. Other satellites' uncommitted files are still present (not restored)
 - [ ] PR dev → master created (only if the user asked; explicit PR number)
 - [ ] PR → master merged (only if asked; CI green on **this** PR; retry merge if protection still queued)
 - [ ] After master: **Build images + Deploy staging** green on the master merge SHA (unless `-SkipStaging`)
@@ -329,7 +330,8 @@ Runbook: [docs/runbooks/v3-workforce-cutover.md](../../../docs/runbooks/v3-workf
 | Agent turn ends on open PR / merge without staging | Bug — re-run `-PublishDev` (reuses open PR) or wait Deploy; do not ask user to click merge |
 | Agent ends «ship done» after merge only | Bug — **merge ≠ ship**; staging must be green unless `-SkipStaging` |
 | Folder does not contain `origin/dev` before commit | Stop. Do not commit. Do not create a second clone or worktree. Reconcile uncommitted work against `origin/dev` in this folder |
-| Agent turn ends on the side branch after merge | Bug — `git checkout dev`; `git pull origin dev`; not done until `HEAD` equals `origin/dev` and status is clean |
+| Agent turn ends on the side branch after merge | Bug — `git checkout dev`; `git pull origin dev`; not done until `HEAD` equals `origin/dev`. Do not clean other satellites |
+| Agent restores or stashes another satellite so status is clean | Bug — foreign WIP is protected. Stop if checkout/pull would overwrite it |
 | Shared index spans waves | Split per "Shared package index splitting" above |
 | Unbucketed files after `-Wave` | Bug — rest must take leftovers; check path slashes / manifests |
 | `ERA_SHIP_GATES_DONE=1` + dirty tree | prepush **FAIL** (hook and `npm run ship:prepush`); commit leftovers |

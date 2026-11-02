@@ -95,6 +95,116 @@ async function hasLabOrder(
   return Boolean(byEpisode);
 }
 
+/** Ensure a study block row exists so diagnostics modal studyBalances + stamp resolve. */
+async function ensureStudyQuotaLine(input: {
+  instanceId: string;
+  organizationId: string;
+  procedureCode: string;
+  quotaTotal: number;
+  existingCodes: Set<string>;
+}): Promise<void> {
+  if (input.existingCodes.has(input.procedureCode)) return;
+  await prisma.programProcedureBalance.create({
+    data: {
+      organizationId: input.organizationId,
+      instanceId: input.instanceId,
+      procedureCode: input.procedureCode,
+      quotaTotal: Math.max(1, input.quotaTotal || 1),
+      quotaUsed: 0,
+    },
+  });
+  input.existingCodes.add(input.procedureCode);
+}
+
+/**
+ * Heal auto labs/diagnostics created without package stamp (inPackage false,
+ * unpaid) so DiagnosticsAssignModal assignedStudies can list them.
+ */
+export async function healUnstampedPackageAutoLabs(input: {
+  episodeId: string;
+  instanceId: string;
+  organizationId: string;
+  autoLabBlocks: Array<{ procedureCode: string; quotaTotal: number; serviceCode: string }>;
+}): Promise<{ healed: number }> {
+  if (input.autoLabBlocks.length === 0) return { healed: 0 };
+  const { syncEntitlementUsage } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+  const existingLines = await prisma.programProcedureBalance.findMany({
+    where: { instanceId: input.instanceId },
+    select: { procedureCode: true },
+  });
+  const existingCodes = new Set(existingLines.map((row) => row.procedureCode));
+  let healed = 0;
+  const touchedQuota = new Set<string>();
+
+  for (const block of input.autoLabBlocks) {
+    await ensureStudyQuotaLine({
+      instanceId: input.instanceId,
+      organizationId: input.organizationId,
+      procedureCode: block.procedureCode,
+      quotaTotal: block.quotaTotal,
+      existingCodes,
+    });
+    const orders = await prisma.labOrder.findMany({
+      where: {
+        clinicalEpisodeId: input.episodeId,
+        inPackage: false,
+        settledAt: null,
+        status: { not: "CANCELLED" },
+        OR: [
+          { testCode: block.serviceCode },
+          { items: { some: { serviceCode: block.serviceCode } } },
+        ],
+      },
+      select: { id: true, amountNet: true },
+    });
+    const line = await prisma.programProcedureBalance.findFirst({
+      where: {
+        instanceId: input.instanceId,
+        procedureCode: block.procedureCode,
+      },
+      select: { quotaTotal: true, quotaUsed: true },
+    });
+    let remaining = line
+      ? Math.max(0, line.quotaTotal - line.quotaUsed)
+      : 0;
+    for (const order of orders) {
+      // No package slot left: keep unstamped rows as extras (paid or free duplicates).
+      if (remaining <= 0) continue;
+      await prisma.$transaction([
+        prisma.labOrder.update({
+          where: { id: order.id },
+          data: {
+            inPackage: true,
+            packageQuotaCode: block.procedureCode,
+            amountNet: 0,
+          },
+        }),
+        prisma.labOrderItem.updateMany({
+          where: { labOrderId: order.id },
+          data: {
+            inPackage: true,
+            packageQuotaCode: block.procedureCode,
+            amountNet: 0,
+          },
+        }),
+      ]);
+      healed += 1;
+      remaining -= 1;
+      touchedQuota.add(block.procedureCode);
+    }
+  }
+  for (const quotaCode of touchedQuota) {
+    await syncEntitlementUsage({
+      instanceId: input.instanceId,
+      episodeId: input.episodeId,
+      quotaCode,
+    });
+  }
+  return { healed };
+}
+
 /** Resolve block entitlement code → bookable visit/lab SKU (sex for GYN-OR-URO). */
 export function resolveAutoBlockServiceCode(
   blockCode: string,
@@ -375,6 +485,14 @@ export async function applyPackageAutoBlocks(
   const skippedProcedureCodes: string[] = [];
   let pendingDoctor = false;
   const quotaCodesTouched = new Set<string>();
+  const lineCodes = new Set(
+    (instance?.procedureLines ?? []).map((row) => row.procedureCode),
+  );
+  const autoLabBlocksForHeal: Array<{
+    procedureCode: string;
+    quotaTotal: number;
+    serviceCode: string;
+  }> = [];
 
   const { syncEntitlementUsage } = await import(
     "@/domain/sanatorium/entitlement-usage.service"
@@ -409,6 +527,20 @@ export async function applyPackageAutoBlocks(
     }
 
     if (block.fulfillment === "LAB_ORDER") {
+      if (instance) {
+        autoLabBlocksForHeal.push({
+          procedureCode: block.procedureCode,
+          quotaTotal: Number(block.quotaTotal) || 1,
+          serviceCode,
+        });
+        await ensureStudyQuotaLine({
+          instanceId: instance.id,
+          organizationId: episode.organizationId,
+          procedureCode: block.procedureCode,
+          quotaTotal: Number(block.quotaTotal) || 1,
+          existingCodes: lineCodes,
+        });
+      }
       if (await hasLabOrder(patientRefId, episodeId, serviceCode)) {
         skippedLabCodes.push(serviceCode);
         continue;
@@ -420,6 +552,9 @@ export async function applyPackageAutoBlocks(
         source: "IN_HOUSE",
         fasting: false,
         patientOrigin,
+        packageStamp: instance
+          ? { packageQuotaCode: block.procedureCode }
+          : null,
       });
       createdLabCodes.push(serviceCode);
       quotaCodesTouched.add(block.procedureCode);
@@ -466,6 +601,18 @@ export async function applyPackageAutoBlocks(
   if (instance) {
     for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
       if (createdLabCodes.includes(code) || skippedLabCodes.includes(code)) continue;
+      autoLabBlocksForHeal.push({
+        procedureCode: code,
+        quotaTotal: 1,
+        serviceCode: code,
+      });
+      await ensureStudyQuotaLine({
+        instanceId: instance.id,
+        organizationId: episode.organizationId,
+        procedureCode: code,
+        quotaTotal: 1,
+        existingCodes: lineCodes,
+      });
       if (await hasLabOrder(patientRefId, episodeId, code)) {
         skippedLabCodes.push(code);
         continue;
@@ -478,15 +625,23 @@ export async function applyPackageAutoBlocks(
           source: "IN_HOUSE",
           fasting: false,
           patientOrigin,
+          packageStamp: { packageQuotaCode: code },
         });
         createdLabCodes.push(code);
-      } catch {
+        quotaCodesTouched.add(code);
+      } catch (err) {
+        console.warn("[package-auto-apply] lab seed failed", code, err);
         skippedLabCodes.push(code);
       }
     }
-  }
 
-  if (instance) {
+    await healUnstampedPackageAutoLabs({
+      episodeId,
+      instanceId: instance.id,
+      organizationId: episode.organizationId,
+      autoLabBlocks: autoLabBlocksForHeal,
+    });
+
     for (const quotaCode of quotaCodesTouched) {
       await syncEntitlementUsage({
         instanceId: instance.id,
@@ -562,8 +717,11 @@ export async function applyPackageAutoBlocks(
 }
 
 /**
- * Package open does not create studies. Orders made at the first doctor were
- * outside the quota; once the instance exists, mark those auto lines in-package.
+ * Stamp auto orders that already exist onto the new course.
+ * Missing labs and visits are created by applyPackageAutoBlocks when the
+ * course is saved, not here. Labs go through healUnstampedPackageAutoLabs so
+ * LabOrder header + items + amountNet stay aligned (assignedStudies filters
+ * header inPackage).
  */
 export async function linkExistingAutoOrdersToPackage(episodeId: string): Promise<void> {
   const episode = await prisma.clinicalEpisode.findUnique({
@@ -587,39 +745,55 @@ export async function linkExistingAutoOrdersToPackage(episodeId: string): Promis
     "@/domain/sanatorium/entitlement-usage.service"
   );
 
+  const autoLabBlocks: Array<{
+    procedureCode: string;
+    quotaTotal: number;
+    serviceCode: string;
+  }> = [];
+
   for (const block of selected) {
     if (block.fulfillment === "PROCEDURE_ORDER") continue;
     const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, sex);
     if (!serviceCode) continue;
     if (block.fulfillment === "LAB_ORDER") {
-      await prisma.labOrderItem.updateMany({
-        where: {
-          inPackage: false,
-          serviceCode,
-          labOrder: {
-            clinicalEpisodeId: episodeId,
-            status: { not: "CANCELLED" },
-          },
-        },
-        data: { inPackage: true, packageQuotaCode: block.procedureCode },
+      autoLabBlocks.push({
+        procedureCode: block.procedureCode,
+        quotaTotal: Number(block.quotaTotal) || 1,
+        serviceCode,
       });
-    } else {
-      await prisma.visitServiceLine.updateMany({
-        where: {
-          inPackage: false,
-          serviceCode,
-          visit: {
-            clinicalEpisodeId: episodeId,
-            status: { not: "CANCELLED" },
-          },
-        },
-        data: { inPackage: true, packageQuotaCode: block.procedureCode },
-      });
+      continue;
     }
+    await prisma.visitServiceLine.updateMany({
+      where: {
+        inPackage: false,
+        serviceCode,
+        visit: {
+          clinicalEpisodeId: episodeId,
+          status: { not: "CANCELLED" },
+        },
+      },
+      data: { inPackage: true, packageQuotaCode: block.procedureCode },
+    });
     await syncEntitlementUsage({
       instanceId: instance.id,
       episodeId,
       quotaCode: block.procedureCode,
     });
   }
+
+  for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
+    if (autoLabBlocks.some((row) => row.serviceCode === code)) continue;
+    autoLabBlocks.push({
+      procedureCode: code,
+      quotaTotal: 1,
+      serviceCode: code,
+    });
+  }
+
+  await healUnstampedPackageAutoLabs({
+    episodeId,
+    instanceId: instance.id,
+    organizationId: episode.organizationId,
+    autoLabBlocks,
+  });
 }

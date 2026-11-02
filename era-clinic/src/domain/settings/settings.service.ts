@@ -121,6 +121,12 @@ export async function getClinicSettings() {
     hotelFolioRevenueCode: tenant.hotelFolioRevenueCode?.trim() || null,
     noShowKeepsCharge: tenant.noShowKeepsCharge !== false,
     extraProcedureRoute: parseExtraProcedureRoute(tenant.extraProcedureRoute),
+    procedurePrintExtraLang:
+      tenant.procedurePrintExtraLang === "az" ||
+      tenant.procedurePrintExtraLang === "ru" ||
+      tenant.procedurePrintExtraLang === "en"
+        ? tenant.procedurePrintExtraLang
+        : null,
     controlPlanePrint: await (async () => {
       const { resolveCpPrintLocks } = await import(
         "@/domain/print/cp-print-locks"
@@ -194,6 +200,7 @@ export async function updateClinicSettings(input: {
   hotelFolioRevenueCode?: string | null;
   noShowKeepsCharge?: boolean;
   extraProcedureRoute?: string | null;
+  procedurePrintExtraLang?: string | null;
 }) {
   // CP-ORG-PROFILE-01 Track A: ignore header branding writes when orch snapshot is cached.
   const cpLocks = await (async () => {
@@ -409,6 +416,16 @@ export async function updateClinicSettings(input: {
         : {}),
       ...(input.extraProcedureRoute
         ? { extraProcedureRoute: parseExtraProcedureRoute(input.extraProcedureRoute) }
+        : {}),
+      ...(input.procedurePrintExtraLang !== undefined
+        ? {
+            procedurePrintExtraLang:
+              input.procedurePrintExtraLang === "az" ||
+              input.procedurePrintExtraLang === "ru" ||
+              input.procedurePrintExtraLang === "en"
+                ? input.procedurePrintExtraLang
+                : null,
+          }
         : {}),
     },
   });

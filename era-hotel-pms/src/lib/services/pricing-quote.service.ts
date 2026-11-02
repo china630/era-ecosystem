@@ -138,6 +138,27 @@ export async function quoteReservationStay(
   }
 }
 
+/** ROOM folio amount: NET discount from contract percent, else agency percent. */
+export async function roomNightFolioAmount(reservationId: string, tariff: number): Promise<number> {
+  const { netLodgingAmount } = await import('@/lib/services/agency-commission.math');
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    select: {
+      commissionBasis: true,
+      salesContract: { select: { commissionPercent: true } },
+      agency: { select: { commissionPercent: true } },
+    },
+  });
+  if (!stay || stay.commissionBasis !== 'NET') return tariff;
+  const percent =
+    stay.salesContract?.commissionPercent != null
+      ? decimalToNumber(stay.salesContract.commissionPercent)
+      : stay.agency?.commissionPercent != null
+        ? decimalToNumber(stay.agency.commissionPercent)
+        : null;
+  return netLodgingAmount(tariff, percent);
+}
+
 export async function getNightlyRoomChargeForDate(
   reservationId: string,
   businessDate: Date,

@@ -83,14 +83,6 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
 
   for (const modality of modalities) {
     const modTitle: L10n = { en: modality.titleEn, ru: modality.titleRu, az: modality.titleAz };
-    const isLabKind = modality.kind === "lab_panel";
-    const isGroupless = modality.kind === "package" || modality.kind === "visit";
-
-    const modGroup =
-      !isLabKind && !isGroupless
-        ? ensureGroup(groupMap, `mod:${modality.code}`, modality.code, null, modality.kind, modTitle)
-        : null;
-
     for (const svc of modality.services) {
       const title: L10n = { en: svc.titleEn, ru: svc.titleRu, az: svc.titleAz };
       const item: DiagnosticCatalogItem = {
@@ -124,31 +116,15 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
       }
       items.push(item);
 
-      if (isLabKind) {
-        const labMod = ensureGroup(groupMap, "mod:LAB", modality.code, null, svc.kind, modTitle);
-        labMod.itemCodes.push(svc.code);
-        const labCat = ensureGroup(groupMap, `lab:${svc.category}`, modality.code, svc.category, svc.kind, {
-          en: svc.category,
-          ru: svc.category,
-          az: svc.category,
-        });
-        labCat.itemCodes.push(svc.code);
-      } else if (!isGroupless && modGroup) {
-        modGroup.itemCodes.push(svc.code);
-        const catGroup = ensureGroup(
-          groupMap,
-          `mod:${modality.code}:${svc.category}`,
-          modality.code,
-          svc.category,
-          svc.kind,
-          {
-            en: `${modTitle.en} · ${svc.category}`,
-            ru: `${modTitle.ru} · ${svc.category}`,
-            az: `${modTitle.az} · ${svc.category}`,
-          },
-        );
-        catGroup.itemCodes.push(svc.code);
-      }
+      const modGroup = ensureGroup(
+        groupMap,
+        `mod:${modality.code}`,
+        modality.code,
+        null,
+        modality.kind,
+        modTitle,
+      );
+      modGroup.itemCodes.push(svc.code);
     }
   }
 

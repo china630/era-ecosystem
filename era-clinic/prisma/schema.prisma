@@ -103,6 +103,8 @@ model Tenant {
   noShowKeepsCharge              Boolean                  @default(true) @map("no_show_keeps_charge")
   /// Unpaid extra: seat before pay (default) or hide until pay/folio.
   extraProcedureRoute            ExtraProcedureRoute      @default(PLAN_BEFORE_PAY) @map("extra_procedure_route")
+  /// Extra catalog language on the guest procedure sheet. Empty = sheet language only.
+  procedurePrintExtraLang        String?                  @map("procedure_print_extra_lang")
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)

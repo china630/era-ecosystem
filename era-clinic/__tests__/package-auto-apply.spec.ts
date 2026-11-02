@@ -4,9 +4,23 @@ jest.mock("@/lib/prisma", () => ({
     episodeCareDoctor: { findFirst: jest.fn() },
     visitServiceLine: { findFirst: jest.fn(), create: jest.fn() },
     visit: { create: jest.fn() },
-    labOrder: { findFirst: jest.fn() },
+    labOrder: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+    },
+    labOrderItem: { updateMany: jest.fn() },
     programInstance: { update: jest.fn(), findUnique: jest.fn() },
     programTemplate: { findFirst: jest.fn() },
+    programProcedureBalance: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+    },
+    $transaction: jest.fn(async (ops: unknown[]) => {
+      for (const op of ops) await op;
+      return ops;
+    }),
   },
 }));
 
@@ -44,18 +58,27 @@ import {
   applyPackageAutoBlocks,
   effectiveAutoFulfillment,
   fulfillmentRespectingStudyKind,
+  healUnstampedPackageAutoLabs,
   overlayTemplateAxes,
   resolveAutoBlockServiceCode,
 } from "@/domain/sanatorium/package-auto-apply.service";
+import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
 
 const mocked = prisma as unknown as {
   clinicalEpisode: { findUnique: jest.Mock };
   episodeCareDoctor: { findFirst: jest.Mock };
   visitServiceLine: { findFirst: jest.Mock; create: jest.Mock };
   visit: { create: jest.Mock };
-  labOrder: { findFirst: jest.Mock };
+  labOrder: { findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+  labOrderItem: { updateMany: jest.Mock };
   programInstance: { update: jest.Mock; findUnique: jest.Mock };
   programTemplate: { findFirst: jest.Mock };
+  programProcedureBalance: {
+    create: jest.Mock;
+    findMany: jest.Mock;
+    findFirst: jest.Mock;
+  };
+  $transaction: jest.Mock;
 };
 
 describe("fulfillmentRespectingStudyKind", () => {
@@ -109,6 +132,13 @@ describe("applyPackageAutoBlocks", () => {
     mocked.programTemplate.findFirst.mockResolvedValue(null);
     mocked.visitServiceLine.findFirst.mockResolvedValue(null);
     mocked.labOrder.findFirst.mockResolvedValue(null);
+    mocked.labOrder.findMany.mockResolvedValue([]);
+    mocked.programProcedureBalance.create.mockResolvedValue({});
+    mocked.programProcedureBalance.findMany.mockResolvedValue([]);
+    mocked.programProcedureBalance.findFirst.mockResolvedValue({
+      quotaTotal: 1,
+      quotaUsed: 0,
+    });
     mocked.visit.create.mockResolvedValue({ id: "v1" });
     mocked.visitServiceLine.create.mockResolvedValue({ id: "vsl1" });
     (createLabOrderWithItems as jest.Mock).mockResolvedValue({ id: "lo1" });
@@ -172,6 +202,19 @@ describe("applyPackageAutoBlocks", () => {
       expect.objectContaining({
         clinicalEpisodeId: "ep1",
         codes: ["CARDIO-ECG"],
+        packageStamp: { packageQuotaCode: "CARDIO-ECG" },
+      }),
+    );
+    expect(createLabOrderWithItems).toHaveBeenCalledWith(
+      expect.objectContaining({
+        codes: ["LAB-CBC"],
+        packageStamp: { packageQuotaCode: "LAB-CBC" },
+      }),
+    );
+    expect(createLabOrderWithItems).toHaveBeenCalledWith(
+      expect.objectContaining({
+        codes: ["LAB-URINE"],
+        packageStamp: { packageQuotaCode: "LAB-URINE" },
       }),
     );
     expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
@@ -224,6 +267,75 @@ describe("applyPackageAutoBlocks", () => {
     if ("skipped" in r) return;
     expect(r.skippedLabCodes).toContain("CARDIO-ECG");
     expect(r.autoApplyState).toBe("APPLIED");
+  });
+
+  it("creates labs without a doctor and does not duplicate them on the next pass", async () => {
+    const episode = {
+      id: "ep1",
+      organizationId: "org1",
+      patientRefId: "p1",
+      patientOrigin: "IN_HOUSE",
+      reservationId: null,
+      roomNumber: "205",
+      patientRef: { sex: "FEMALE" },
+      programInstance: {
+        id: "pi1",
+        templateId: "t1",
+        programCode: "PKG-STANDART",
+        autoApplyState: "PENDING",
+        entitlementSnapshot: {
+          version: 1,
+          templateId: "t1",
+          code: "PKG-STANDART",
+          procedures: [
+            {
+              procedureCode: "LAB-CBC",
+              procedureName: "CBC",
+              quotaTotal: 1,
+              kind: "LAB",
+              sortOrder: 0,
+              assignMode: "AUTO_ON_OPEN",
+              fulfillment: "LAB_ORDER",
+              quotaBasis: "PER_STAY",
+              requiresDoctor: false,
+            },
+            {
+              procedureCode: "VISIT-NEURO",
+              procedureName: "Neurology",
+              quotaTotal: 1,
+              kind: "EXAM",
+              sortOrder: 1,
+              assignMode: "AUTO_ON_OPEN",
+              fulfillment: "VISIT",
+              quotaBasis: "PER_STAY",
+              requiresDoctor: true,
+            },
+          ],
+          knots: [],
+          members: [],
+        },
+        procedureLines: [{ procedureCode: "LAB-CBC" }, { procedureCode: "VISIT-NEURO" }],
+        template: { version: 1, procedures: [] },
+      },
+    };
+    mocked.clinicalEpisode.findUnique.mockResolvedValue(episode);
+    mocked.episodeCareDoctor.findFirst.mockResolvedValue(null);
+    mocked.labOrder.findFirst.mockResolvedValue(null);
+
+    const first = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
+    if ("skipped" in first) throw new Error("expected apply");
+    expect(first.createdLabCodes).toEqual(expect.arrayContaining(["LAB-CBC"]));
+    expect(first.pendingDoctor).toBe(true);
+    expect(mocked.visit.create).not.toHaveBeenCalled();
+    expect(createLabOrderWithItems).toHaveBeenCalled();
+
+    (createLabOrderWithItems as jest.Mock).mockClear();
+    mocked.labOrder.findFirst.mockResolvedValue({ id: "existing-lab" });
+    const second = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
+    if ("skipped" in second) throw new Error("expected apply");
+    expect(createLabOrderWithItems).not.toHaveBeenCalled();
+    expect(mocked.visit.create).not.toHaveBeenCalled();
+    expect(second.skippedLabCodes).toEqual(expect.arrayContaining(["LAB-CBC"]));
   });
 
   it("PENDING_DOCTOR when requiresDoctor and no care team", async () => {
@@ -525,6 +637,75 @@ describe("applyPackageAutoBlocks", () => {
     if ("skipped" in r) return;
     expect(r.createdLabCodes).toEqual(["ALT"]);
     expect(mocked.programInstance.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("healUnstampedPackageAutoLabs", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mocked.programProcedureBalance.findMany.mockResolvedValue([]);
+    mocked.programProcedureBalance.create.mockResolvedValue({});
+    mocked.programProcedureBalance.findFirst.mockResolvedValue({
+      quotaTotal: 1,
+      quotaUsed: 0,
+    });
+    mocked.labOrder.findMany.mockResolvedValue([{ id: "lo-unstamped", amountNet: 25 }]);
+    mocked.labOrder.update.mockResolvedValue({});
+    mocked.labOrderItem.updateMany.mockResolvedValue({ count: 1 });
+    mocked.$transaction.mockImplementation(async (ops: Array<Promise<unknown>>) => {
+      for (const op of ops) await op;
+      return ops;
+    });
+  });
+
+  it("stamps unpaid auto lab/diagnostic orders onto the package quota", async () => {
+    const r = await healUnstampedPackageAutoLabs({
+      episodeId: "ep1",
+      instanceId: "pi1",
+      organizationId: "org1",
+      autoLabBlocks: [
+        { procedureCode: "CARDIO-ECG", quotaTotal: 1, serviceCode: "CARDIO-ECG" },
+      ],
+    });
+    expect(r.healed).toBe(1);
+    expect(mocked.programProcedureBalance.create).toHaveBeenCalled();
+    expect(mocked.labOrder.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "lo-unstamped" },
+        data: expect.objectContaining({
+          inPackage: true,
+          packageQuotaCode: "CARDIO-ECG",
+          amountNet: 0,
+        }),
+      }),
+    );
+    expect(syncEntitlementUsage).toHaveBeenCalledWith(
+      expect.objectContaining({ quotaCode: "CARDIO-ECG", episodeId: "ep1" }),
+    );
+  });
+
+  it("does not over-heal past remaining quota slots", async () => {
+    mocked.labOrder.findMany.mockResolvedValue([
+      { id: "lo-a", amountNet: 0 },
+      { id: "lo-b", amountNet: 25 },
+    ]);
+    mocked.programProcedureBalance.findFirst.mockResolvedValue({
+      quotaTotal: 1,
+      quotaUsed: 0,
+    });
+    const r = await healUnstampedPackageAutoLabs({
+      episodeId: "ep1",
+      instanceId: "pi1",
+      organizationId: "org1",
+      autoLabBlocks: [
+        { procedureCode: "LAB-CBC", quotaTotal: 1, serviceCode: "LAB-CBC" },
+      ],
+    });
+    expect(r.healed).toBe(1);
+    expect(mocked.labOrder.update).toHaveBeenCalledTimes(1);
+    expect(mocked.labOrder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "lo-a" } }),
+    );
   });
 });
 

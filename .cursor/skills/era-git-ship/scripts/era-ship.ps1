@@ -230,12 +230,47 @@ function Get-ChangedFiles {
     $files | Where-Object { -not (Test-NeverCommit $_ $manifest.never_commit) } | Select-Object -Unique
 }
 
+function Get-ShipBucket {
+    param([string]$Path)
+    $norm = ($Path -replace '\\', '/').TrimStart('./')
+    $parts = $norm -split '/'
+    if ($parts[0] -eq 'packages' -and $parts.Length -gt 1) { return "packages/$($parts[1])" }
+    return $parts[0]
+}
+
+# Buckets of commits ahead of origin/dev. $null = HEAD is not ahead, so the whole tree is in scope.
+function Get-CommittedShipBuckets {
+    $base = "origin/dev"
+    git rev-parse --verify $base 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { return $null }
+    $names = @(git diff --name-only "${base}...HEAD" 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $names.Count -eq 0 -or ($names.Count -eq 1 -and -not $names[0])) { return $null }
+    $set = @{}
+    foreach ($n in $names) {
+        if (-not $n) { continue }
+        $set[(Get-ShipBucket $n)] = $true
+    }
+    if ($set.Count -eq 0) { return $null }
+    return $set
+}
+
 function Assert-WorkingTreeShipClean {
-    $dirty = @(Get-ChangedFiles)
+    $buckets = Get-CommittedShipBuckets
+    $all = @(Get-ChangedFiles)
+    $dirty = @()
+    $foreign = @()
+    foreach ($f in $all) {
+        if ($null -eq $buckets -or $buckets.ContainsKey((Get-ShipBucket $f))) { $dirty += $f }
+        else { $foreign += $f }
+    }
+    if ($foreign.Count -gt 0) {
+        $dirs = ($foreign | ForEach-Object { Get-ShipBucket $_ } | Select-Object -Unique | Select-Object -First 12) -join ', '
+        Write-Host ("Protected {0} uncommitted file(s) outside this ship's commits ({1}). Not restored, not a push blocker." -f $foreign.Count, $dirs)
+    }
     if ($dirty.Count -eq 0) { return }
     Remove-Item Env:ERA_SHIP_GATES_DONE -ErrorAction SilentlyContinue
     $preview = ($dirty | Select-Object -First 20) -join ', '
-    throw ("Working tree dirty after ship gates ({0} files). Commit generate/build output, clear ERA_SHIP_GATES_DONE, re-run ship:prepush. Do not push. Files: {1}" -f $dirty.Count, $preview)
+    throw ("Working tree dirty inside this ship's scope ({0} files). Commit generate/build output, clear ERA_SHIP_GATES_DONE, re-run ship:prepush. Do not push. Do not checkout/restore/stash/reset other satellites. Files: {1}" -f $dirty.Count, $preview)
 }
 
 function Test-PathMatch {

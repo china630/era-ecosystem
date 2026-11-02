@@ -219,7 +219,7 @@ export async function createReservation(input: {
     } else if (contract.agencyId) {
       agencyId = contract.agencyId;
     }
-    if (commissionBasis == null && contract.commissionBasis) {
+    if (contract.commissionBasis === 'GROSS' || contract.commissionBasis === 'NET') {
       commissionBasis = contract.commissionBasis;
     }
     await assertContractAllotmentAvailable(

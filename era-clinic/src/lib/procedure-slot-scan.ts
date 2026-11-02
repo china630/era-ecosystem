@@ -149,6 +149,16 @@ export type PlannedPlacement = {
   resourceGapMinutes: number;
 };
 
+export type PlacementBlockCounts = {
+  day_full: number;
+  same_day: number;
+  no_staff: number;
+  closed: number;
+  cabin_busy: number;
+  staff_busy: number;
+  rule: number;
+};
+
 export type PlacementFailure = {
   orderId: string;
   procedureCode: string;
@@ -157,6 +167,9 @@ export type PlacementFailure = {
   ymd?: string;
   /** Named masseur who could not be seated. */
   staffName?: string;
+  /** Baku clock the pin search started from, `YYYY-MM-DD HH:00`. */
+  searchFrom?: string;
+  counts?: PlacementBlockCounts;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -331,29 +344,32 @@ function sameProcedureThatDay(slots: ScanPatientSlot[], code: string, day: Date)
   return slots.some((slot) => slot.code === code && bakuDateKey(slot.start) === key);
 }
 
-function restGap(
+/**
+ * True when the candidate conflicts with an existing wall-clock rest slot.
+ * Only the candidate is validated — pre-existing overlaps among other rows must
+ * not poison every later seat that Baku day (OPEN day-bucket stamps used to).
+ */
+export function restGap(
   slots: ScanPatientSlot[],
   startAt: Date,
   endAt: Date,
   restAfter: number,
 ): boolean {
   const key = bakuDateKey(startAt);
-  const timeline = [
-    ...slots
-      .filter((slot) => slot.countsForRest && bakuDateKey(slot.start) === key)
-      .map((slot) => ({
-        start: slot.start,
-        end: slot.end,
-        restAfter: slot.patientRestMinutes,
-      })),
-    { start: startAt, end: endAt, restAfter },
-  ].sort((a, b) => a.start.getTime() - b.start.getTime());
-  for (let i = 1; i < timeline.length; i++) {
-    const prev = timeline[i - 1]!;
-    const curr = timeline[i]!;
-    if (curr.start.getTime() < prev.end.getTime()) return true;
-    const need = Math.max(0, prev.restAfter);
-    if (need > 0 && curr.start.getTime() - prev.end.getTime() < need * 60_000) return true;
+  const existing = slots.filter(
+    (slot) => slot.countsForRest && bakuDateKey(slot.start) === key,
+  );
+  for (const slot of existing) {
+    if (startAt.getTime() < slot.end.getTime() && slot.start.getTime() < endAt.getTime()) {
+      return true;
+    }
+    if (startAt.getTime() >= slot.end.getTime()) {
+      const need = Math.max(0, slot.patientRestMinutes);
+      if (need > 0 && startAt.getTime() - slot.end.getTime() < need * 60_000) return true;
+    } else if (endAt.getTime() <= slot.start.getTime()) {
+      const need = Math.max(0, restAfter);
+      if (need > 0 && slot.start.getTime() - endAt.getTime() < need * 60_000) return true;
+    }
   }
   return false;
 }
@@ -490,18 +506,21 @@ export function evaluateCandidateSlot(
   );
   if (!staff) return fail("staff_busy", true);
 
+  // OPEN day-bucket stamps stay in patientSlots for same-day / package caps, but
+  // must not enter wall-clock overlap, sequence gap, or compatibility (ADR CLI-62).
+  const wallClockSlots = input.patientSlots.filter((slot) => slot.countsForRest);
   const ruleOk = input.rules.every((rule) => {
     if (rule.kind === "MUTUAL_EXCLUSION") {
-      const hasBefore = input.patientSlots.some(
+      const hasBefore = wallClockSlots.some(
         (slot) => slot.code === rule.beforeCode && overlaps(slot.start, slot.end, slotStart, slotEnd),
       );
-      const hasAfter = input.patientSlots.some(
+      const hasAfter = wallClockSlots.some(
         (slot) => slot.code === rule.afterCode && overlaps(slot.start, slot.end, slotStart, slotEnd),
       );
       if (hasBefore && hasAfter) return false;
     }
     if (rule.kind === "SEQUENCE_GAP" && rule.afterCode === order.procedureCode) {
-      const prev = input.patientSlots.find((slot) => slot.code === rule.beforeCode);
+      const prev = wallClockSlots.find((slot) => slot.code === rule.beforeCode);
       if (prev) {
         const gapMs = slotStart.getTime() - prev.end.getTime();
         if (gapMs < (rule.minGapMinutes ?? 0) * 60_000) return false;
@@ -513,7 +532,7 @@ export function evaluateCandidateSlot(
     candidateCode: order.procedureCode,
     startAt: slotStart,
     endAt: slotEnd,
-    existing: input.patientSlots.map((slot) => ({
+    existing: wallClockSlots.map((slot) => ({
       procedureCode: slot.code,
       startAt: slot.start,
       endAt: slot.end,
@@ -541,10 +560,12 @@ export function evaluateCandidateSlot(
 export function placementBlockReason(
   opened: boolean,
   sawStaffPool: boolean,
-  blocks: { day_full: number; staff_busy: number; cabin_busy: number; rule: number },
+  blocks: PlacementBlockCounts,
 ): PlacementFailureReason {
   if (!opened) return "no_slot";
   if (blocks.day_full > 0) return "day_full";
+  if (blocks.same_day > 0) return "same_day";
+  if (blocks.closed > 0) return "closed";
   if (!sawStaffPool) return "no_staff";
   const ranked = (Object.entries(blocks) as Array<[PlacementFailureReason, number]>)
     .filter(([, count]) => count > 0)
@@ -623,7 +644,15 @@ export function scanProcedureSlots(input: {
     let placed: PlannedPlacement | null = null;
     let sawStaffPool = false;
     let lastYmd = "";
-    const blocks = { day_full: 0, staff_busy: 0, cabin_busy: 0, rule: 0 };
+    const blocks: PlacementBlockCounts = {
+      day_full: 0,
+      same_day: 0,
+      no_staff: 0,
+      closed: 0,
+      cabin_busy: 0,
+      staff_busy: 0,
+      rule: 0,
+    };
     const opened = slotStart != null;
     for (let attempt = 0; attempt < 4000 && slotStart && !placed; attempt++) {
       if (order.pinYmd && bakuDateKey(slotStart) !== order.pinYmd) {
@@ -668,14 +697,20 @@ export function scanProcedureSlots(input: {
       if (!verdict.ok) {
         if (verdict.sawStaffPool) sawStaffPool = true;
         if (verdict.reason === "day_full") blocks.day_full += 1;
+        if (verdict.reason === "same_day") blocks.same_day += 1;
+        if (verdict.reason === "no_staff") blocks.no_staff += 1;
+        if (verdict.reason === "closed") blocks.closed += 1;
         if (verdict.reason === "staff_busy") blocks.staff_busy += 1;
         if (verdict.reason === "cabin_busy") blocks.cabin_busy += 1;
         if (verdict.reason === "rule" || verdict.reason === "lunch") blocks.rule += 1;
+        // A pinned day stays on that civil day. Jumping to the next morning
+        // makes the pin check abort the afternoon after the first miss.
         const jumpMorning =
-          verdict.reason === "day_full" ||
-          verdict.reason === "same_day" ||
-          verdict.reason === "no_staff" ||
-          verdict.reason === "closed";
+          !order.pinYmd &&
+          (verdict.reason === "day_full" ||
+            verdict.reason === "same_day" ||
+            verdict.reason === "no_staff" ||
+            verdict.reason === "closed");
         slotStart = jumpMorning
           ? nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd)
           : nextOpenSlot(
@@ -747,13 +782,16 @@ export function scanProcedureSlots(input: {
 
     if (placed) planned.push(placed);
     else {
+      const searchHm = bakuHourMinute(searchFrom);
       failures.push({
         orderId: order.id,
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
         reason: placementBlockReason(opened, sawStaffPool, blocks),
-        ymd: lastYmd || undefined,
+        ymd: lastYmd || order.pinYmd || undefined,
         staffName: order.preferredStaffName?.trim() || undefined,
+        searchFrom: `${bakuDateKey(searchFrom)} ${String(searchHm.hour).padStart(2, "0")}:${String(searchHm.minute).padStart(2, "0")}`,
+        counts: { ...blocks },
       });
     }
   }

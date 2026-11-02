@@ -361,6 +361,11 @@ function locDayBlock(lang: "en" | "az" | "ru", block: string): string {
   return loc(lang, block);
 }
 
+export function asPhysioLaterality(value: string | null | undefined): PhysioLateralityCode | null {
+  if (value === "LEFT" || value === "RIGHT" || value === "BOTH") return value;
+  return null;
+}
+
 export function formatLateralityLabel(
   lang: "en" | "az" | "ru",
   laterality: PhysioLateralityCode | null,

@@ -19,6 +19,7 @@ import {
 } from '@/lib/services/business-date.service';
 import {
   getNightlyRoomChargeForDate,
+  roomNightFolioAmount,
   NightlyPriceMissingError,
 } from '@/lib/services/pricing-quote.service';
 import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
@@ -609,16 +610,17 @@ async function executeLockedNightAudit() {
           throw err;
         }
 
+        const folioAmount = await roomNightFolioAmount(res.id, amount);
         await postCharge({
           reservationId: res.id,
           revenueCodeId: revenueRoom.id,
-          amount,
+          amount: folioAmount,
           qty: 1,
           description: roomChargeNote('night-audit', hotelDateKey(date)),
           businessDate: date,
           audit: { source: 'night_audit' },
         });
-        steps.push(`Step 3: Room charge posted (${amount} AZN) — reservation ${res.id}`);
+        steps.push(`Step 3: Room charge posted (${folioAmount} AZN) — reservation ${res.id}`);
       }
     }
     const businessDateKey = hotelDateKey(date);

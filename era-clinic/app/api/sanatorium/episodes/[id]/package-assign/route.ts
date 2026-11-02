@@ -17,6 +17,7 @@ import {
 } from "@/domain/sanatorium/package-assign.service";
 import { readUiLocale } from "@/lib/request-locale";
 import { parseBakuDateTime } from "@/lib/baku-day";
+import { recordClinicAudit } from "@/lib/satellite-audit";
 
 const lineSchema = z.object({
   procedureCode: z.string().min(1),
@@ -124,6 +125,24 @@ export async function POST(
         startAt,
       });
       result.misses = [...(result.misses ?? []), ...applied.misses];
+    }
+    if (body.lines.length > 0 || (body.staffPrefs?.length ?? 0) > 0) {
+      await recordClinicAudit(
+        { userId: session.sub, request: req },
+        "ClinicalEpisode",
+        id,
+        "package_assign",
+        {
+          startOn: body.startOn ?? null,
+          startHour: body.startHour ?? result.rememberedHour ?? null,
+          searchHour: result.searchHour ?? null,
+          lineCount: body.lines.length,
+          placed: result.placed,
+          missCount: result.misses?.length ?? 0,
+          staffPrefCount: body.staffPrefs?.length ?? 0,
+          seatMisses: result.seatMisses ?? [],
+        },
+      );
     }
     return jsonOk(result);
   } catch (err) {

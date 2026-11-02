@@ -22,7 +22,21 @@ jest.mock("@/lib/prisma", () => ({
           titleRu: "X",
           titleAz: "X",
           sortOrder: 0,
-          services: [],
+          services: [
+            {
+              code: "SVC",
+              kind: "imaging",
+              titleEn: "USM",
+              titleRu: "USM",
+              titleAz: "USM",
+              serviceCode: "USM",
+              category: "abdomen",
+              sortOrder: 0,
+              fieldsJson: null,
+              includesJson: null,
+              analytes: [],
+            },
+          ],
         },
       ]),
       count: jest.fn(async () => 1),
@@ -50,10 +64,18 @@ describe("getDiagnosticCatalog per-org cache", () => {
   it("caches separately per organizationId", async () => {
     const a = await getDiagnosticCatalog("org-a");
     const b = await getDiagnosticCatalog("org-b");
-    expect(a.items).toHaveLength(0);
-    expect(b.items).toHaveLength(0);
-    // Groups keyed by modality code include org-specific modality from mock
-    expect(a.groups.some((g) => g.modality === "MOD-org-a")).toBe(true);
-    expect(b.groups.some((g) => g.modality === "MOD-org-b")).toBe(true);
+    expect(a.items).toHaveLength(1);
+    expect(b.items).toHaveLength(1);
+    expect(a.groups).toEqual([
+      expect.objectContaining({
+        key: "mod:MOD-org-a",
+        modality: "MOD-org-a",
+        category: null,
+        title: { en: "X", ru: "X", az: "X" },
+        itemCodes: ["SVC"],
+      }),
+    ]);
+    expect(b.groups.map((g) => g.key)).toEqual(["mod:MOD-org-b"]);
+    expect(a.groups.some((g) => g.category === "abdomen")).toBe(false);
   });
 });

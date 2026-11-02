@@ -106,16 +106,30 @@ export async function closeOpenEpisodesForReservation(reservationId: string) {
     where: { reservationId: id, status: "OPEN" },
     select: { id: true },
   });
-  if (episodes.length === 0) return { closed: 0, cancelled: 0 };
-  const episodeIds = episodes.map((row) => row.id);
-  await prisma.clinicalEpisode.updateMany({
-    where: { id: { in: episodeIds } },
-    data: { status: "CLOSED", closedAt: new Date() },
-  });
+  return closeEpisodes(episodes.map((row) => row.id), "hotel_checkout", [id]);
+}
+
+export async function closeEpisodes(
+  episodeIds: string[],
+  reason: string,
+  reservationIds: string[] = [],
+) {
+  const ids = [...new Set(episodeIds.map((id) => id.trim()).filter(Boolean))];
+  const stayIds = [...new Set(reservationIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0 && stayIds.length === 0) return { closed: 0, cancelled: 0 };
+  if (ids.length > 0) {
+    await prisma.clinicalEpisode.updateMany({
+      where: { id: { in: ids }, status: "OPEN" },
+      data: { status: "CLOSED", closedAt: new Date() },
+    });
+  }
   const live = await prisma.procedureOrder.findMany({
     where: {
       status: { in: ["SCHEDULED", "CHECKED_IN"] },
-      OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }],
+      OR: [
+        ...(ids.length > 0 ? [{ clinicalEpisodeId: { in: ids } }] : []),
+        ...(stayIds.length > 0 ? [{ reservationId: { in: stayIds } }] : []),
+      ],
     },
     select: { id: true },
   });
@@ -124,15 +138,29 @@ export async function closeOpenEpisodesForReservation(reservationId: string) {
     await releaseProcedureOccupancy(orderIds);
     await prisma.procedureOrder.updateMany({
       where: { id: { in: orderIds } },
-      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
+      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason },
     });
   }
   const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
   await closeUnpaidExtras(
-    { OR: [{ reservationId: id }, { clinicalEpisodeId: { in: episodeIds } }] },
+    {
+      OR: [
+        ...(ids.length > 0 ? [{ clinicalEpisodeId: { in: ids } }] : []),
+        ...(stayIds.length > 0 ? [{ reservationId: { in: stayIds } }] : []),
+      ],
+    },
     "unpaid_checkout",
   );
-  return { closed: episodes.length, cancelled: orderIds.length };
+  if (ids.length > 0) {
+    const { closeUnpaidDiagnostics } = await import(
+      "@/domain/sanatorium/diagnostics-extras.service"
+    );
+    await closeUnpaidDiagnostics(
+      { clinicalEpisodeId: { in: ids } },
+      "unpaid_checkout",
+    );
+  }
+  return { closed: ids.length, cancelled: orderIds.length };
 }
 
 export async function handleGuestCheckedOut(
@@ -219,6 +247,13 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
   }
   const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
   await closeUnpaidExtras(
+    { clinicalEpisodeId: { in: targetIds } },
+    "unpaid_checkout",
+  );
+  const { closeUnpaidDiagnostics } = await import(
+    "@/domain/sanatorium/diagnostics-extras.service"
+  );
+  await closeUnpaidDiagnostics(
     { clinicalEpisodeId: { in: targetIds } },
     "unpaid_checkout",
   );

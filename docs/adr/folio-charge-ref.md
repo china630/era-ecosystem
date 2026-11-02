@@ -25,4 +25,4 @@ Clinic check-in and a no-show that keeps the charge mark `serviceReceivedAt` on 
 
 A medical-rate checkout asks the clinic for paid lines and package sessions. Planned paid lines block checkout. Removing a line drops the charge; an existing overpayment is returned with the same cash or card choice as unused nights. A non-medical hotel does not ask.
 
-`POST /api/cron/episode-hotel-checkout` closes an OPEN in-house episode only when the hotel reservation is already `CHECKED_OUT`.
+`POST /api/cron/episode-hotel-checkout` (06:00 and 18:00 Asia/Baku, and once after clinic boot) opens a missing in-house course, closes a checked-out or departed guest, and copies package, room, name, sex, and birth date. The planned date does not close a course. Live check-in and check-out still go through the hotel outbox. See [hotel-clinic-lifecycle-outbox.md](./hotel-clinic-lifecycle-outbox.md).

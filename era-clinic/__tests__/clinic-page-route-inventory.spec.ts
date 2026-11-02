@@ -65,6 +65,7 @@ describe("clinic page route inventory (Wave 3 fail-closed)", () => {
     expect(routePermission("/print/checkup/x")).toBe(
       CLINIC_PERMISSION.SCREEN_DOCTOR,
     );
+    expect(routePermission("/print/nurse-day")).toBe(CLINIC_PERMISSION.SCREEN_NURSE);
     expect(routePermissions("/print/procedures/x")).toEqual([
       CLINIC_PERMISSION.SCREEN_DOCTOR,
       CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,

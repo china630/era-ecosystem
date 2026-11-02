@@ -16,6 +16,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
+import { labOrderLaneWhere } from "@/domain/lab/lab-order-lane";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const createSchema = z.object({
@@ -65,6 +66,11 @@ const querySchema = z.object({
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   modality: z.string().optional(),
+  kinds: z.string().optional(),
+  unclassified: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
   patientRefId: z.string().optional(),
   q: z.string().optional(),
   room: z.string().optional(),
@@ -92,6 +98,8 @@ export async function GET(req: Request) {
       dateFrom: url.searchParams.get("dateFrom") ?? undefined,
       dateTo: url.searchParams.get("dateTo") ?? undefined,
       modality: url.searchParams.get("modality") ?? undefined,
+      kinds: url.searchParams.get("kinds") ?? undefined,
+      unclassified: url.searchParams.get("unclassified") ?? undefined,
       patientRefId: url.searchParams.get("patientRefId") ?? undefined,
       q: url.searchParams.get("q") ?? undefined,
       room: url.searchParams.get("room") ?? undefined,
@@ -146,6 +154,11 @@ export async function GET(req: Request) {
         items: { some: { diagnosticServiceId: { in: services.map((s) => s.id) } } },
       });
     }
+    const laneWhere = labOrderLaneWhere({
+      kinds: (query.kinds ?? "").split(","),
+      unclassified: query.unclassified,
+    });
+    if (laneWhere) conditions.push(laneWhere);
     if (query.criticalOnly) {
       conditions.push({
         items: { some: { results: { some: { flag: "CRITICAL" } } } },

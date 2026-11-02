@@ -10,7 +10,7 @@ import {
 } from '@/lib/revenue-code-token';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
-import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
+import { getNightlyRoomChargeForDate, roomNightFolioAmount } from '@/lib/services/pricing-quote.service';
 
 export type MissedNight = { date: string; amount: number };
 
@@ -53,6 +53,7 @@ export async function listMissedRoomNights(reservationId: string): Promise<{
           amount = 0;
         }
       }
+      amount = await roomNightFolioAmount(res.id, amount);
       if (amount > 0.009) nights.push({ date: cur, amount: Math.round(amount * 100) / 100 });
     }
     cur = addHotelDays(cur, 1);

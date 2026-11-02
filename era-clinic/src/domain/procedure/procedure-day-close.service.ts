@@ -156,6 +156,9 @@ export async function sweepUnpaidMissed(now = new Date()): Promise<{
   if (passes.length === 0) return { marked: 0, byPass: {} };
 
   const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  const { closeUnpaidDiagnostics } = await import(
+    "@/domain/sanatorium/diagnostics-extras.service"
+  );
   const byPass: Record<string, number> = {};
   let marked = 0;
   for (const pass of passes) {
@@ -163,5 +166,11 @@ export async function sweepUnpaidMissed(now = new Date()): Promise<{
     byPass[pass.reason] = n;
     marked += n;
   }
+  const diagnostics = await closeUnpaidDiagnostics(
+    { createdBefore: start },
+    "unpaid_missed",
+  );
+  byPass.unpaid_missed_diagnostics = diagnostics.labs + diagnostics.visits;
+  marked += diagnostics.labs + diagnostics.visits;
   return { marked, byPass };
 }

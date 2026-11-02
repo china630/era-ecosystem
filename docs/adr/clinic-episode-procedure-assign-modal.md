@@ -320,7 +320,7 @@ Not SHIPPED — UAT open (`era-clinic/doc/UAT-SMOKE.md` § CLI-57).
 
 ## Amendment 2026-10-22 — procedure list is a block checkbox (SCREEN)
 
-The left menu and the package-tab quota bars list a balance only when that code is in the course entitlement snapshot and `showInProcedures` is true, ordered by `procedureOrder`. A transferred remainder (`XFER-`) stays under **Əvəz edilmiş prosedurlar**. A balance left behind after a block left the template does not appear.
+The left menu and the package-tab quota bars list a balance only when that code is in the course entitlement snapshot, `showInProcedures` is true, and fulfillment is `PROCEDURE_ORDER` (labs and visits stay on the diagnostics modal), ordered by `procedureOrder`. A transferred remainder (`XFER-`) stays under **Əvəz edilmiş prosedurlar**. A balance left behind after a block left the template does not appear.
 
 `+` and **Hamısı** follow the block's fulfillment: `PROCEDURE_ORDER` keeps the cabin planner and the physio form; `LAB_ORDER` creates a lab order for the in-quota quantity (one open order); quantity above that quota is a paid `LabOrder` awaiting payment (not a `ProcedureOrder` cheque row; see [clinic-paid-diagnostics-from-episode.md](./clinic-paid-diagnostics-from-episode.md)), and only when the lab has a catalog price. `VISIT` creates a visit line (paid overflow → unpaid `Visit`). Save rejects a code that is not on that list (`NOT_IN_PROCEDURES`). The assign list shows a block when the current template checkbox is on.
 
@@ -331,6 +331,12 @@ Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, la
 ## Amendment 2026-11-01 — unseated package rows
 
 A package `PROPOSED` row with no cabin still occupies that procedure code on its Baku day, so a second seat of the same code is refused. Rows unseated for a package refill, a masseur change, a stay recalculation, or a bath-calendar pin that do not receive a new cabin are deleted and the quota is synced. A manual move uses the same day block. The plan day chips list only seated rows. A package `PROPOSED` without a cabin is a separate "not seated" line with no clock.
+
+## Amendment 2026-11-02 — Saxla hour and a rejected bath day
+
+A pinned procedure day is not abandoned on the first `day_full`, `same_day`, `no_staff`, or `closed` answer. Those answers step to the next slot on that civil day. The afternoon retry runs only after that pass still has nothing. A pin that is then moved keeps `physioFields.seatMiss` (rejected day, search clock, scanner reason, slot counts, landing day). The same snapshot is returned as `seatMisses` and written on the `package_assign` audit.
+
+The first Save still asks for the start hour. A later Save does not. If the clock has not reached that hour, search starts there. If it has, search starts at the current hour. The search does not return to clinic opening, and it does not reopen a morning that has already passed. The audit keeps the dialog hour in `startHour` and the hour actually used in `searchHour`.
 
 ## Amendment 2026-10-22 — unpaid extra route (SCREEN)
 

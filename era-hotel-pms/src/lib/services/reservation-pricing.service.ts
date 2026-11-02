@@ -16,7 +16,11 @@ import {
   slicePlanOverridesHeader,
   usesBarCalendar,
 } from '@/lib/pricing/own-nightly-price';
-import { getNightlyRoomChargeForDate, quoteReservationStay } from '@/lib/services/pricing-quote.service';
+import {
+  getNightlyRoomChargeForDate,
+  quoteReservationStay,
+  roomNightFolioAmount,
+} from '@/lib/services/pricing-quote.service';
 import { PricingEngineError } from '@/lib/services/pricing-engine.service';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { postCharge } from '@/lib/services/folio.service';
@@ -590,7 +594,7 @@ export async function chargeAllRoomNights(reservationId: string) {
     await postCharge({
       reservationId,
       revenueCodeId: revenueRoom.id,
-      amount: decimalToNumber(row.amount),
+      amount: await roomNightFolioAmount(reservationId, decimalToNumber(row.amount)),
       qty: 1,
       description: roomChargeNote('manual-room', hotelDateKey(biz)),
       businessDate: biz,
@@ -640,6 +644,7 @@ export async function postRoomNight(reservationId: string, ymd: string) {
   if (!row) {
     amount = await getNightlyRoomChargeForDate(reservationId, bakuCivilUtcDate(ymd));
   }
+  amount = await roomNightFolioAmount(reservationId, amount);
   await postCharge({
     reservationId,
     revenueCodeId: revenueRoom.id,

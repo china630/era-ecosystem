@@ -3,6 +3,7 @@ import {
   effectiveAutoFulfillment,
   resolveAutoBlockServiceCode,
 } from "@/domain/sanatorium/package-auto-apply.service";
+import { labOrderLaneHref } from "@/domain/lab/lab-order-lane";
 
 export type IntakeChecklistStatus = "DONE" | "ORDERED" | "MISSING";
 
@@ -224,7 +225,16 @@ export async function getIntakeChecklist(
       kind: serviceCode === "USG-ABD" ? "imaging" : "lab",
       title: { en: name, ru: name, az: name },
       status: order ? labStatus(order.status) : "MISSING",
-      href: order ? `/lab-orders?order=${order.id}` : null,
+      href: order
+        ? labOrderLaneHref(
+            order.id,
+            serviceCode === "USG-ABD" ||
+              serviceCode.startsWith("USG-") ||
+              serviceCode === "CARDIO-ECG"
+              ? "imaging"
+              : "lab_panel",
+          )
+        : null,
       recordId: order?.id ?? null,
       scheduledAt: null,
     });
