@@ -4,6 +4,7 @@ import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { bakuDateKey, bakuTimeLabel } from "@/lib/baku-day";
+import { labOrderLaneHref } from "@/domain/lab/lab-order-lane";
 
 export { bakuDateKey } from "@/lib/baku-day";
 
@@ -149,13 +150,14 @@ function parseResultLines(resultJson: string | null): ResultLineInput[] {
 function labCatalog(
   testCode: string,
   catalogItems: DiagnosticCatalogItem[],
-): { title: string; titleL10n?: L10n } {
+): { title: string; titleL10n?: L10n; kind: string | null } {
   const primary = testCode.split(",")[0]?.trim() ?? testCode;
   const item = catalogItems.find((i) => i.code === primary || i.serviceCode === primary);
-  if (!item) return { title: testCode };
+  if (!item) return { title: testCode, kind: null };
   return {
     title: `${item.title.en} (${testCode})`,
     titleL10n: item.title,
+    kind: item.kind,
   };
 }
 
@@ -243,7 +245,7 @@ export async function getPatientTimeline(
             : o.testCode
           : o.testCode,
       status: o.status,
-      href: `/lab-orders/${o.id}`,
+      href: labOrderLaneHref(o.id, labInfo.kind),
       codes,
       amountNet: o.amountNet.toString(),
       hasCritical: lines.length ? hasCriticalFlag(lines) : false,

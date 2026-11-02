@@ -122,7 +122,9 @@ export async function POST(
       const shouldRetryAuto =
         before === 0 || instance?.autoApplyState === "PENDING_DOCTOR";
       if (shouldRetryAuto) {
-        await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM" }).catch(() => null);
+        await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM" }).catch((err) => {
+          console.error("[care-team] package auto-apply failed", id, err);
+        });
       }
       const { tryOpenProgramAfterTherapistStage } = await import(
         "@/domain/sanatorium/open-program-after-therapist.service"

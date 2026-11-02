@@ -189,9 +189,16 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
-    href: "/lab-orders",
+    href: "/lab-orders?lane=lab",
     labelKey: "labOrders",
     icon: FlaskConical,
+    group: "clinical",
+    permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
+  },
+  {
+    href: "/lab-orders?lane=diagnostic",
+    labelKey: "diagnostics",
+    icon: Activity,
     group: "clinical",
     permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
   },

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
 import { listOverdueScheduledProcedures } from "@/domain/procedure/procedure-attendance.service";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import { labOrderLaneWhere } from "@/domain/lab/lab-order-lane";
 
 export { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
@@ -30,6 +31,7 @@ export type OpsDaySummary = {
   };
   visits: { inProgress: number; completedToday: number };
   labs: { open: number; resultReady: number; completedToday: number };
+  diagnostics: { open: number; resultReady: number };
   queue: { waiting: number; called: number };
   overdueProcedures: number;
   inpatient?: { occupiedBeds: number; freeBeds: number };
@@ -46,6 +48,9 @@ export async function getOpsDaySummary(
   const { start } = bakuDayBounds(fromYmd <= toYmd ? fromYmd : toYmd);
   const { end } = bakuDayBounds(fromYmd <= toYmd ? toYmd : fromYmd);
   const dayFilter = { gte: start, lt: end };
+  const labLane = labOrderLaneWhere({ kinds: ["lab_panel"], unclassified: true }) ?? {};
+  const diagnosticLane =
+    labOrderLaneWhere({ kinds: ["imaging", "functional", "endoscopy"] }) ?? {};
 
   const [
     appointmentGroups,
@@ -56,6 +61,8 @@ export async function getOpsDaySummary(
     labsOpen,
     labsResultReady,
     labsCompletedToday,
+    diagnosticsOpen,
+    diagnosticsResultReady,
     queueWaiting,
     queueCalled,
     overdueRows,
@@ -84,14 +91,31 @@ export async function getOpsDaySummary(
       },
     }),
     prisma.labOrder.count({
-      where: { status: { in: ["ORDERED", "COLLECTED", "IN_PROGRESS"] } },
+      where: {
+        status: { in: ["ORDERED", "COLLECTED", "IN_PROGRESS"] },
+        ...labLane,
+      },
     }),
-    prisma.labOrder.count({ where: { status: "RESULT_READY" } }),
+    prisma.labOrder.count({ where: { status: "RESULT_READY", ...labLane } }),
     prisma.labOrder.count({
       where: {
-        status: { in: ["COMPLETED", "PUBLISHED"] },
-        OR: [{ completedAt: dayFilter }, { publishedAt: dayFilter }],
+        AND: [
+          {
+            status: { in: ["COMPLETED", "PUBLISHED"] },
+            OR: [{ completedAt: dayFilter }, { publishedAt: dayFilter }],
+          },
+          labLane,
+        ],
       },
+    }),
+    prisma.labOrder.count({
+      where: {
+        status: { in: ["ORDERED", "COLLECTED", "IN_PROGRESS"] },
+        ...diagnosticLane,
+      },
+    }),
+    prisma.labOrder.count({
+      where: { status: "RESULT_READY", ...diagnosticLane },
     }),
     prisma.queueTicket.count({ where: { status: "WAITING" } }),
     prisma.queueTicket.count({ where: { status: "CALLED" } }),
@@ -136,6 +160,10 @@ export async function getOpsDaySummary(
       open: labsOpen,
       resultReady: labsResultReady,
       completedToday: labsCompletedToday,
+    },
+    diagnostics: {
+      open: diagnosticsOpen,
+      resultReady: diagnosticsResultReady,
     },
     queue: {
       waiting: queueWaiting,

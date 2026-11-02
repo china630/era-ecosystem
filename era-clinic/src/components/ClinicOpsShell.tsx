@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 import {
@@ -37,8 +37,25 @@ export function resolveClinicActive(pathname: string, href: string): boolean {
   return !hasLongerMatch;
 }
 
+function resolveClinicActiveWithLane(
+  pathname: string,
+  href: string,
+  lane: "lab" | "diagnostic",
+): boolean {
+  const path = href.split("?")[0] ?? href;
+  if (path === "/lab-orders" || path.startsWith("/lab-orders/")) {
+    const want = new URLSearchParams(href.split("?")[1] ?? "").get("lane") ?? "lab";
+    const onList =
+      pathname === "/lab-orders" || pathname.startsWith("/lab-orders/");
+    return onList && want === lane;
+  }
+  return resolveClinicActive(pathname, href);
+}
+
 export default function ClinicOpsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const lane = searchParams.get("lane") === "diagnostic" ? "diagnostic" : "lab";
   const t = useTranslations("nav");
   const tMeta = useTranslations("meta");
   const locale = useLocale() as Locale;
@@ -96,7 +113,7 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
       brandTitle={tMeta("title")}
       navItems={topItems}
       navSections={sections}
-      resolveActive={resolveClinicActive}
+      resolveActive={(path, href) => resolveClinicActiveWithLane(path, href, lane)}
       profile={
         <HeaderProfileMenu
           displayName={navReady ? profile.displayName : ""}

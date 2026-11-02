@@ -717,10 +717,11 @@ export async function applyPackageAutoBlocks(
 }
 
 /**
- * Package open does not create studies. Orders made at the first doctor were
- * outside the quota; once the instance exists, mark those auto lines in-package.
- * Labs go through healUnstampedPackageAutoLabs so LabOrder header + items +
- * amountNet stay aligned (assignedStudies filters header inPackage).
+ * Stamp auto orders that already exist onto the new course.
+ * Missing labs and visits are created by applyPackageAutoBlocks when the
+ * course is saved, not here. Labs go through healUnstampedPackageAutoLabs so
+ * LabOrder header + items + amountNet stay aligned (assignedStudies filters
+ * header inPackage).
  */
 export async function linkExistingAutoOrdersToPackage(episodeId: string): Promise<void> {
   const episode = await prisma.clinicalEpisode.findUnique({

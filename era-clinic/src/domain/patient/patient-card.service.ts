@@ -17,6 +17,7 @@ import {
   toPhysioOrderPayload,
 } from "@/domain/physio/physio-order-sites.service";
 import { getIntakeChecklist } from "@/domain/patient/intake-checklist.service";
+import { labOrderLaneHref } from "@/domain/lab/lab-order-lane";
 import { bakuDateTimeLabel, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 import { printLabel } from "@/domain/print/print-labels";
 import type { PrintLang } from "@/domain/print/print-types";
@@ -95,7 +96,7 @@ function mapLabEvent(
         : o.testCode
       : o.testCode,
     status: o.status,
-    href: `/lab-orders/${o.id}`,
+    href: labOrderLaneHref(o.id, catalog.kind),
     codes,
     amountNet: o.amountNet.toString(),
     hasCritical: lines.length ? hasCriticalFlag(lines) : false,
