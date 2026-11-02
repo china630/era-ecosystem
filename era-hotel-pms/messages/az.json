@@ -697,7 +697,6 @@
     "clinicNoShowRuleKeep": "Gəlmədi: ödəniş folioda qalır.",
     "clinicNoShowRuleVoid": "Gəlmədi: planlaşdırılmış ödəniş ləğv olunur.",
     "clinicPackageFuture": "Paket: {count} gələcək seans şəbəkədən çıxacaq (əlavə ödəniş yoxdur).",
-    "paymentExceedsArticle": "Bu maddənin açıq borcu {max} AZN-dir. Artıq məbləğ yazılmır.",
     "checkoutUnused": "Artıq ödəniş {amount} AZN. Çıxış bağlı qalır. Qalığı Kateqoriya kreditini qaytar (və ya sətir Geri qaytarma) ilə öz kateqoriyasında qaytarın.",
     "xercMaddesi": "Xərc maddəsi",
     "lineKind": "Sətir",

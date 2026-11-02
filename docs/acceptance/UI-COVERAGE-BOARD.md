@@ -265,6 +265,7 @@ Only rows a human must show/edit, plus explicit by-design exclusions.
 | 2026-10-27 | HOT-TOUR-01 boarding-first + policy settings **SCREEN**; HOT-XFER-01 Airport folded to `?hasFlight=1` **SCREEN**. Out of Hotel SHOW rollup. Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-CL-07 / CP-PEER-01 **HEADLESS** — Finance→Hotel payment-applied + peer URL SoR. No hotel screen; Gate/Pilot/edition unchanged. |
 | 2026-10-27 | HOT-CO-05 unsettled CL **SCREEN** — HotelOpsShell + debts link + Folio-tab card. Out of Hotel SHOW rollup. COVERAGE SHIPPED OpsUI. Gate/Pilot/edition unchanged. |
+| 2026-11-02 | HOT-CASH-01 Accept payment: amount may exceed open category debt (same-category credit). Cash/CL stays **SHOW**; HOT-FOLIO-DESK stays API. Gate/Pilot/edition unchanged. |
 | 2026-11-02 | HOT-BOOK-02 / HOT-CL-01 card UI: `FieldGroupBox`, Travel agent / Company, payer/Gross-Net chips, Müqavilə when AGENCY/COMPANY; `+`/plane `h-9` flush with inputs. Stays **SHOW** / SHIPPED. Kit 1px density + group-box (CLI-37). Gate/Pilot/edition unchanged. |
 | 2026-11-02 | Kit `CatalogField` combobox dismiss (CLI-37): outside pointer/focus / Escape / clear closes portaled list. Cross-satellite SHOW/SHIPPED screens unchanged; Gate/Pilot/edition unchanged. |
 | 2026-11-02 | HOT-UI-01 FO list polish: `/fo/reservations` children + departed strike + Res.ID copy; `/fo/in-house` live party. Stays **SHOW** / SHIPPED. Gate/Pilot/edition unchanged. |

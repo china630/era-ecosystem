@@ -227,7 +227,6 @@ export function FolioPaymentModal({
   const needsCategory = !paymentCategory;
   const needsStay = !knownStay && !activeStayId;
   const amountN = Number(amount);
-  const overCategory = categoryDebt > 0.01 && amountN > categoryDebt + 0.01;
   const methodOk =
     method.length > 0 &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
@@ -237,7 +236,6 @@ export function FolioPaymentModal({
     !needsGuest &&
     !needsPocket &&
     !needsCategory &&
-    !overCategory &&
     amountN > 0 &&
     methodOk;
 
@@ -365,11 +363,6 @@ export function FolioPaymentModal({
             options={namedGuests.map((g) => ({ value: g.id, label: g.name }))}
             emptyLabel={t('pickGuest')}
           />
-        ) : null}
-        {overCategory ? (
-          <p className="m-0 text-[12px] text-[#C0392B]">
-            {t('paymentExceedsArticle', { max: categoryDebt.toFixed(2) })}
-          </p>
         ) : null}
         <Field
           label={tc('amount')}

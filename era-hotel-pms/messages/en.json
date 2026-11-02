@@ -696,7 +696,6 @@
     "clinicNoShowRuleKeep": "No-show: keep the charge on the folio.",
     "clinicNoShowRuleVoid": "No-show: void the planned charge.",
     "clinicPackageFuture": "Package: {count} future session(s) leave the schedule (no extra charge).",
-    "paymentExceedsArticle": "Open debt on this article is {max} AZN. A larger amount is not posted.",
     "checkoutUnused": "Paid ahead {amount} AZN. Checkout stays closed. Use Return category credit (or row Refund) to return the remainder inside its category.",
     "xercMaddesi": "Article",
     "lineKind": "Line",
