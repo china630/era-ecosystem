@@ -256,6 +256,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]
       CLINIC_PERMISSION.API_LAB_ORDERS_FILE,
       CLINIC_PERMISSION.API_LAB_ORDERS,
       CLINIC_PERMISSION.API_LAB_ORDERS_WRITE,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
       CLINIC_PERMISSION.API_PATIENTS,
       CLINIC_PERMISSION.API_CATALOG_READ,
       CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
@@ -482,6 +483,7 @@ const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermis
     { prefix: "/print/extra-ticket", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
     { prefix: "/print/extra-storno", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
     { prefix: "/print/lab-order", permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS },
+    { prefix: "/print/nurse-day", permission: CLINIC_PERMISSION.SCREEN_NURSE },
     { prefix: "/print/checkup", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     {
       prefix: "/print/patient-assignments",
@@ -506,6 +508,13 @@ const ROUTE_ANY_OF_PREFIXES: Array<{
     permissions: [
       CLINIC_PERMISSION.SCREEN_DOCTOR,
       CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+    ],
+  },
+  {
+    prefix: "/print/studies",
+    permissions: [
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+      CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
     ],
   },
   {

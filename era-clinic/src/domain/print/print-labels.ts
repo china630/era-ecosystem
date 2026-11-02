@@ -35,7 +35,9 @@ const EN: Dict = {
   room: "Room",
   price: "Price",
   note: "Notes",
+  status: "Status",
   procedures: "Procedures",
+  studies: "Analyses and diagnostics",
   patientAssignments: "Patient assignments",
   assigned: "Assigned",
   completed: "Completed",
@@ -99,6 +101,9 @@ const EN: Dict = {
   procStatus_NO_SHOW: "No-show",
   unpaidExtra: "Not paid",
   openAttendance: "Open attendance",
+  nurseDay: "Nurse day sheet",
+  staff: "Staff",
+  allStaff: "All staff",
 };
 
 const RU: Dict = {
@@ -135,7 +140,9 @@ const RU: Dict = {
   room: "Кабинет",
   price: "Цена",
   note: "Примечание",
+  status: "Статус",
   procedures: "Процедуры",
+  studies: "Анализы и диагностика",
   patientAssignments: "Назначения пациента",
   assigned: "Назначено",
   completed: "Исполнено",
@@ -197,6 +204,9 @@ const RU: Dict = {
   procStatus_COMPLETED: "Выполнена",
   procStatus_NO_SHOW: "Неявка",
   unpaidExtra: "Не оплачено",
+  nurseDay: "Лист медсестры",
+  staff: "Сотрудник",
+  allStaff: "Все сотрудники",
   openAttendance: "Свободное посещение",
 };
 
@@ -234,7 +244,9 @@ const AZ: Dict = {
   room: "Otaq",
   price: "Qiymət",
   note: "Qeyd",
+  status: "Status",
   procedures: "Prosedurlar",
+  studies: "Analizlər və diaqnostika",
   patientAssignments: "Pasiyent təyinatları",
   assigned: "Təyin olunub",
   completed: "İcra olunub",
@@ -296,6 +308,9 @@ const AZ: Dict = {
   procStatus_COMPLETED: "Keçib",
   procStatus_NO_SHOW: "Gəlməyib",
   unpaidExtra: "Ödənilməyib",
+  nurseDay: "Tibb bacısı vərəqi",
+  staff: "İşçi",
+  allStaff: "Bütün işçilər",
   openAttendance: "Sərbəst ziyarət",
 };
 

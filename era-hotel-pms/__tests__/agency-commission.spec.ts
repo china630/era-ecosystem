@@ -3,6 +3,7 @@ import {
   buildComputedLines,
   computeCommissionAmount,
   forecastCommissionAmount,
+  netLodgingAmount,
   isCommissionRevenueBase,
   sumRevenueBaseForPeriod,
 } from '@/lib/services/agency-commission.math';
@@ -13,6 +14,12 @@ describe('agency commission math', () => {
       amount: 100,
       status: 'ACCRUED',
     });
+  });
+
+  it('NET lodging discount uses a percent and leaves the tariff when none', () => {
+    expect(netLodgingAmount(200, 10)).toBe(180);
+    expect(netLodgingAmount(200, null)).toBe(200);
+    expect(netLodgingAmount(200, 0)).toBe(200);
   });
 
   it('NET skips payable amount', () => {

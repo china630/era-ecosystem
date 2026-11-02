@@ -200,6 +200,7 @@ export default function LabOrdersPage() {
     lane: parseLabListLane(searchParams.get("lane")),
   }));
   const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ patientRefCode: "", patientFullName: "" });
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
@@ -524,7 +525,10 @@ export default function LabOrdersPage() {
           <button
             type="button"
             className="font-medium text-[#2980B9] hover:underline"
-            onClick={() => setWorkflowId(order.id)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setWorkflowId(order.id);
+            }}
           >
             {servicesLabel(order, locale)}
           </button>
@@ -567,12 +571,19 @@ export default function LabOrdersPage() {
         key: "actions",
         header: tc("actions"),
         render: (order) => (
-          <div className="flex flex-wrap items-center gap-1">
+          <div
+            className="flex flex-wrap items-center gap-1"
+            onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+          >
             <button
               type="button"
               className={TABLE_ROW_ICON_BTN_CLASS}
               aria-label={t("openOrder")}
-              onClick={() => setWorkflowId(order.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setWorkflowId(order.id);
+              }}
             >
               <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
             </button>
@@ -710,6 +721,16 @@ export default function LabOrdersPage() {
             }
             onSortChange={(next) =>
               setFilters((prev) => ({ ...prev, sort: next.key, sortDir: next.dir }))
+            }
+            onRowClick={(order) => setSelectedId(order.id)}
+            onRowDoubleClick={(order) => {
+              setSelectedId(order.id);
+              setWorkflowId(order.id);
+            }}
+            rowClassName={(order) =>
+              order.id === selectedId
+                ? "bg-white ring-2 ring-inset ring-[#2980B9]"
+                : undefined
             }
           />
         }

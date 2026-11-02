@@ -96,10 +96,12 @@ export async function postNightlyPackageCharges(
     return { posted: 0, skipped: false };
   }
 
+  const { roomNightFolioAmount } = await import('@/lib/services/pricing-quote.service');
+  const folioAmount = await roomNightFolioAmount(reservationId, sellAmount);
   await postCharge({
     reservationId,
     revenueCodeId: pkgCode.id,
-    amount: sellAmount,
+    amount: folioAmount,
     qty: 1,
     description,
     businessDate,

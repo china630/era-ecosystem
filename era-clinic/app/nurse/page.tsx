@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Info, Maximize2, X } from "lucide-react";
+import { Info, Maximize2, Printer, X } from "lucide-react";
 import {
   APP_SHELL_CLASS,
   CARD_CONTAINER_CLASS,
@@ -49,6 +49,7 @@ type Proc = {
   schedulingMode?: string | null;
   resourceId?: string | null;
   patientRef: { id: string; fullName: string; refCode?: string };
+  clinicalEpisode?: { roomNumber?: string | null } | null;
   resource?: { id: string; code: string; name: string } | null;
   instruction?: NurseInstruction | null;
 };
@@ -124,6 +125,7 @@ export default function NursePage() {
   const [loading, setLoading] = useState(true);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [fullscreen, setFullscreen] = useState(false);
+  const [view, setView] = useState<"board" | "list">("board");
   const [fourCols, setFourCols] = useState(false);
   const [info, setInfo] = useState<Proc | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -292,6 +294,27 @@ export default function NursePage() {
     buckets.late.length +
     buckets.done.length;
 
+  const sheetRows = useMemo(() => {
+    const source = boardReady ? orders : [];
+    return source
+      .filter((order) => {
+        if (order.status === "PENDING_PAY") return Boolean(order.resourceId || order.resource);
+        return (
+          order.status === "SCHEDULED" ||
+          order.status === "CHECKED_IN" ||
+          order.status === "COMPLETED" ||
+          order.status === "NO_SHOW"
+        );
+      })
+      .slice()
+      .sort((a, b) => {
+        const aOpen = a.schedulingMode === "OPEN" && !a.resourceId ? 1 : 0;
+        const bOpen = b.schedulingMode === "OPEN" && !b.resourceId ? 1 : 0;
+        if (aOpen !== bOpen) return aOpen - bOpen;
+        return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
+      });
+  }, [orders, boardReady]);
+
   function statusLabel(status: string) {
     const known = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW", "PENDING_PAY"] as const;
     if ((known as readonly string[]).includes(status)) {
@@ -309,6 +332,35 @@ export default function NursePage() {
     const start = bakuTimeLabel(order.scheduledAt);
     const endSrc = order.endsAt || order.effectiveEndsAt;
     return endSrc ? `${start}–${bakuTimeLabel(endSrc)}` : start;
+  }
+
+  function patientLine(order: Proc) {
+    const room = order.clinicalEpisode?.roomNumber?.trim();
+    return room ? `${order.patientRef.fullName} · ${room}` : order.patientRef.fullName;
+  }
+
+  function noteLine(order: Proc) {
+    const instruction = order.instruction;
+    const openUnseated = order.schedulingMode === "OPEN" && !order.resourceId && !order.resource;
+    const zones = [instruction?.bodyPart, ...(instruction?.sites ?? [])].filter(Boolean).join(", ");
+    const settings = [instruction?.applyMode, ...(instruction?.fields ?? [])].filter(Boolean).join(" · ");
+    const note = [
+      order.status === "PENDING_PAY" ? t("unpaidBlock") : "",
+      openUnseated ? t("openAttendance") : "",
+      instruction?.note ?? "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return [zones, settings, note].filter(Boolean).join(" — ") || "—";
+  }
+
+  function printSheet() {
+    const params = new URLSearchParams({ date, lang: locale, autoprint: "1" });
+    if (demoPractitionerId) params.set("practitionerId", demoPractitionerId);
+    else if (mineOn) params.set("mine", "1");
+    if (patient.trim()) params.set("patient", patient.trim());
+    if (procedure.trim()) params.set("procedure", procedure.trim());
+    window.open(`/print/nurse-day?${params.toString()}`, "_blank", "noopener");
   }
 
   function cabinOf(order: Proc) {
@@ -519,10 +571,34 @@ export default function NursePage() {
               {t("filterAll")}
             </button>
           </div>
+          <div className="inline-flex overflow-hidden rounded-lg border border-[#D5DADF] text-[12px]">
+            <button
+              type="button"
+              className={`px-3 py-1.5 ${view === "board" ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !rounded-none !shadow-none`}
+              onClick={() => setView("board")}
+            >
+              {t("viewBoard")}
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 ${view === "list" ? CHIP_ACTIVE_CLASS : CHIP_CLASS} !rounded-none !shadow-none`}
+              onClick={() => setView("list")}
+            >
+              {t("viewList")}
+            </button>
+          </div>
           <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-            {loading || !boardReady ? tc("loading") : t("resultCount", { count: visibleCount })}
+            {loading || !boardReady
+              ? tc("loading")
+              : t("resultCount", { count: view === "list" ? sheetRows.length : visibleCount })}
           </span>
-          {fullscreen ? null : (
+          {view === "list" ? (
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={printSheet}>
+              <Printer className="h-3.5 w-3.5" aria-hidden />
+              {t("printSheet")}
+            </button>
+          ) : null}
+          {fullscreen || view === "list" ? null : (
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
@@ -637,8 +713,39 @@ export default function NursePage() {
           <PageHeader title={t("title")} subtitle={t("subtitle")} />
           {demoFilter}
           {filters}
+          {view === "list" ? (
+            <div className={`${CARD_CONTAINER_CLASS} mt-3 overflow-x-auto p-0`}>
+              <table className="w-full border-collapse text-[13px]">
+                <thead>
+                  <tr className="border-b border-[#D5DADF] text-left text-[12px] text-[#34495E]">
+                    <th className="p-2">{t("timeLabel")}</th>
+                    <th className="p-2">{t("colProcedure")}</th>
+                    <th className="p-2">{t("colPatient")}</th>
+                    <th className="p-2">{t("colNote")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sheetRows.map((order) => (
+                    <tr key={order.id} className="border-b border-[#D5DADF]/70 align-top">
+                      <td className="whitespace-nowrap p-2">{timeRange(order)}</td>
+                      <td className="p-2">{order.procedureName}</td>
+                      <td className="p-2">{patientLine(order)}</td>
+                      <td className="p-2">{noteLine(order)}</td>
+                    </tr>
+                  ))}
+                  {sheetRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-3 text-slate-500">
+                        {boardReady ? t("sheetEmpty") : tc("loading")}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
           {unlinkedNotice}
-          {board}
+          {view === "board" ? board : null}
         </>
       )}
 

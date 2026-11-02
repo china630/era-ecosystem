@@ -16,4 +16,6 @@ export async function register() {
   } catch (err) {
     console.error("[hotel-pms] onSatelliteBoot failed", err);
   }
+  const { startClinicLifecycleOutbox } = await import("@/lib/integration/clinic-lifecycle-outbox");
+  startClinicLifecycleOutbox();
 }

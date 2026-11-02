@@ -12,6 +12,7 @@ import {
   loadPrintEpisodeStay,
 } from "@/domain/print/print-patient-strip";
 import {
+  asPhysioLaterality,
   formatLateralityLabel,
   formatPhysioFieldsPrint,
   readPhysioFields,
@@ -49,6 +50,10 @@ export type PrintProcedureRow = {
   room: string;
   price: string;
   note: string;
+  /** Catalog name in the extra print language. Omitted when it matches the sheet. */
+  nameAlt?: string;
+  zonesAlt?: string;
+  settingsAlt?: string;
   /** Closing marker for the checkout day. Not a procedure. */
   checkout?: boolean;
 };
@@ -105,6 +110,64 @@ export type PrintProceduresDocument = {
   patient: PrintPatientStrip;
   rowsByDate: { date: string; rows: PrintProcedureRow[] }[];
 };
+
+type PrintLangCode = "az" | "ru" | "en";
+
+function procedureBits(
+  lang: PrintLangCode,
+  order: {
+    siteApplyMode: string | null;
+    physioFields: unknown;
+    sites: Array<{
+      laterality: string | null;
+      site: { titleAz: string; titleRu: string; titleEn: string; titleLa?: string | null };
+    }>;
+  },
+  listById: Map<string, { titleAz: string; titleRu: string; titleEn: string }>,
+  translatedOnly = false,
+): { zones: string; settings: string } {
+  const siteBits = order.sites.map((row) => {
+    const local = (
+      lang === "ru" ? row.site.titleRu : lang === "az" ? row.site.titleAz : row.site.titleEn
+    )?.trim();
+    if (translatedOnly && !local) return "";
+    const latin = row.site.titleLa?.trim() ?? "";
+    const title = [local, latin].filter(Boolean).join(" / ");
+    const lat = formatLateralityLabel(lang, asPhysioLaterality(row.laterality));
+    return lat && title ? `${title} (${lat})` : title;
+  });
+  const mode =
+    order.siteApplyMode === "TURN"
+      ? lang === "ru"
+        ? "по очереди"
+        : lang === "az"
+          ? "növbəli"
+          : "in turn"
+      : order.siteApplyMode === "TOGETHER"
+        ? lang === "ru"
+          ? "вместе"
+          : lang === "az"
+            ? "birlikdə"
+            : "together"
+        : "";
+  const fields = readPhysioFields(order.physioFields);
+  const program = fields.deviceProgramId ? listById.get(fields.deviceProgramId) : null;
+  const substance = fields.substanceId ? listById.get(fields.substanceId) : null;
+  const titleOf = (row: { titleAz: string; titleRu: string; titleEn: string } | null | undefined) => {
+    const title = row
+      ? (lang === "ru" ? row.titleRu : lang === "az" ? row.titleAz : row.titleEn)?.trim()
+      : "";
+    return title || null;
+  };
+  const fieldBits = formatPhysioFieldsPrint(lang, fields, {
+    program: titleOf(program),
+    substance: titleOf(substance),
+  });
+  return {
+    zones: siteBits.filter(Boolean).join(", "),
+    settings: [mode, ...fieldBits].filter(Boolean).join(" · "),
+  };
+}
 
 function bakuDate(d: Date): string {
   return bakuDateDisplay(d);
@@ -178,6 +241,20 @@ export async function buildProceduresPrint(
     orders.map((row) => row.procedureCode),
     lang,
   );
+  const sheetLang: PrintLangCode = lang === "ru" || lang === "az" ? lang : "en";
+  const configured = clinicSettings.procedurePrintExtraLang;
+  const extraLang: PrintLangCode | null =
+    configured === "az" || configured === "ru" || configured === "en"
+      ? configured === sheetLang
+        ? null
+        : configured
+      : null;
+  const catalogAlt = extraLang
+    ? await loadCatalogDisplayNameMap(
+        orders.map((row) => row.procedureCode),
+        extraLang,
+      )
+    : null;
   const listItems = listIds.length
     ? await prisma.physioListItem.findMany({ where: { id: { in: listIds } } })
     : [];
@@ -198,55 +275,13 @@ export async function buildProceduresPrint(
       ? (o.resource?.room?.name ?? o.resource?.name ?? o.resource?.code ?? "—")
       : "";
     const ends = seated && o.endsAt ? `-${bakuTime(o.endsAt)}` : "";
-    const siteBits = o.sites.map((row) => {
-      const local =
-        lang === "ru" ? row.site.titleRu : lang === "az" ? row.site.titleAz : row.site.titleEn;
-      const latin = row.site.titleLa?.trim() ?? "";
-      const title = [local?.trim(), latin].filter(Boolean).join(" / ");
-      const lat = formatLateralityLabel(printLang, row.laterality);
-      return lat ? `${title} (${lat})` : title;
-    });
-    const mode =
-      o.siteApplyMode === "TURN"
-        ? lang === "ru"
-          ? "по очереди"
-          : lang === "az"
-            ? "növbəli"
-            : "in turn"
-        : o.siteApplyMode === "TOGETHER"
-          ? lang === "ru"
-            ? "вместе"
-            : lang === "az"
-              ? "birlikdə"
-              : "together"
-          : "";
-    const fields = readPhysioFields(o.physioFields);
-    const program = fields.deviceProgramId ? listById.get(fields.deviceProgramId) : null;
-    const substance = fields.substanceId ? listById.get(fields.substanceId) : null;
-    const fieldBits = formatPhysioFieldsPrint(printLang, fields, {
-      program: program
-        ? lang === "ru"
-          ? program.titleRu
-          : lang === "az"
-            ? program.titleAz
-            : program.titleEn
-        : null,
-      substance: substance
-        ? lang === "ru"
-          ? substance.titleRu
-          : lang === "az"
-            ? substance.titleAz
-            : substance.titleEn
-        : null,
-    });
-    const zones = siteBits.join(", ");
-    const settings = [mode, ...fieldBits].filter(Boolean).join(" · ");
+    const bits = procedureBits(printLang, o, listById);
     const row: PrintProcedureRow = {
       no: no++,
       date,
       name: resolveOrderDisplayName(o, catalogNames),
-      zones,
-      settings,
+      zones: bits.zones,
+      settings: bits.settings,
       quantity: o.quantity ?? 1,
       time: openUnseated
         ? printLabel(lang, "openAttendance")
@@ -263,6 +298,13 @@ export async function buildProceduresPrint(
         .filter(Boolean)
         .join(" · "),
     };
+    if (extraLang && catalogAlt && !row.checkout) {
+      const alt = procedureBits(extraLang, o, listById, true);
+      const nameAlt = resolveOrderDisplayName(o, catalogAlt).trim();
+      if (nameAlt && nameAlt !== row.name) row.nameAlt = nameAlt;
+      if (alt.zones && alt.zones !== row.zones) row.zonesAlt = alt.zones;
+      if (alt.settings && alt.settings !== row.settings) row.settingsAlt = alt.settings;
+    }
     const list = map.get(date) ?? [];
     list.push(row);
     map.set(date, list);

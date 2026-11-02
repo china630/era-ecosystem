@@ -447,6 +447,19 @@ export function DiagnosticsAssignModal({
     return map;
   }, [catalogItems]);
 
+  const nameByCode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of balances) {
+      const name = row.procedureName?.trim();
+      if (name && name !== row.procedureCode) map.set(row.procedureCode, name);
+    }
+    for (const item of catalogItems) {
+      const label = pickL10n(item.title, locale);
+      if (label && label !== item.code) map.set(item.code, label);
+    }
+    return map;
+  }, [balances, catalogItems, locale]);
+
   const extraGroupRows = useMemo(() => {
     const out: Array<{
       key: string;
@@ -583,8 +596,8 @@ export function DiagnosticsAssignModal({
       maxWidthClass={EPISODE_MODAL_CLASS}
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
-        <div className="flex w-full flex-wrap items-center justify-between gap-2">
-          <p className={`text-[13px] font-medium tabular-nums`}>
+        <div className="flex w-full flex-wrap items-center justify-end gap-3">
+          <p className="text-[13px] font-medium tabular-nums">
             {t("amountDue")}: {amountDue.toFixed(2)} AZN
           </p>
           <div className="flex flex-wrap gap-2">
@@ -750,7 +763,9 @@ export function DiagnosticsAssignModal({
                       }`}
                     >
                       <div className="mb-1 flex items-start justify-between gap-2">
-                        <div className="min-w-0 font-medium">{lane.title}</div>
+                        <div className="min-w-0 font-medium">
+                          {nameByCode.get(lane.code) || lane.title}
+                        </div>
                         {!lane.pkgLocked &&
                         lane.pkgDraftKey &&
                         lane.extraQty < 1 &&

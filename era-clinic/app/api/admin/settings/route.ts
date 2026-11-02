@@ -79,6 +79,7 @@ const patchSchema = z.object({
   printSignatureDoctor: z.string().nullable().optional(),
   checkupSectionsJson: z.string().nullable().optional(),
   extraProcedureRoute: z.enum(["PLAN_BEFORE_PAY", "HOLD_UNTIL_PAY", "SHOW_ON_PLAN"]).optional(),
+  procedurePrintExtraLang: z.enum(["az", "ru", "en"]).nullable().optional(),
 });
 
 export async function GET(req: Request) {

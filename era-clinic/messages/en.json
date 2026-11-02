@@ -641,7 +641,14 @@
     "staffKindMassage": "Massage therapist",
     "staffKindDoctor": "Doctor",
     "openAttendance": "Open attendance",
-    "openAttendanceCabin": "On arrival"
+    "openAttendanceCabin": "On arrival",
+    "viewBoard": "Board",
+    "viewList": "List",
+    "printSheet": "Print",
+    "colProcedure": "Procedure",
+    "colPatient": "Patient",
+    "colNote": "Note",
+    "sheetEmpty": "Nothing planned for this day."
   },
   "sanatoriumResources": {
     "title": "Resource day matrix",
@@ -1230,6 +1237,12 @@
     "peakDayEndHour": "Peak day end hour",
     "printBrandTitle": "Print branding",
     "printBrandSubtitle": "Logo, clinic names, contacts for printed forms",
+    "procedurePrintExtraLang": "Extra language on the guest procedure sheet",
+    "procedurePrintExtraLangHint": "Prints the procedure name and the note again in this language, in a lighter tone. Skipped when it is the same as the sheet language.",
+    "procedurePrintExtraLangOff": "Off",
+    "procedurePrintExtraLangAz": "Azerbaijani",
+    "procedurePrintExtraLangRu": "Russian",
+    "procedurePrintExtraLangEn": "English",
     "cpPrintBanner": "Header logo/address/phone come from the Control Plane organization profile when Sync is present. Footers and signatures stay local.",
     "cpLogoLocked": "Logo is managed on the Control Plane organization profile.",
     "cpContactsLocked": "Address / phone / email / website from Control Plane are read-only here.",

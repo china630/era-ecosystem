@@ -533,7 +533,20 @@ export async function patchReservationFull(
   }
 
   const nextRoomPayer = data.roomPayer ?? existing.roomPayer;
-  const nextBasis = data.commissionBasis ?? existing.commissionBasis;
+  const nextContractId =
+    data.salesContractId !== undefined ? data.salesContractId : existing.salesContractId;
+  let lockedBasis: 'GROSS' | 'NET' | null = null;
+  if (nextContractId) {
+    const contract = await prisma.salesContract.findUnique({
+      where: { id: nextContractId },
+      select: { commissionBasis: true },
+    });
+    if (contract?.commissionBasis === 'GROSS' || contract?.commissionBasis === 'NET') {
+      lockedBasis = contract.commissionBasis;
+      data.commissionBasis = lockedBasis;
+    }
+  }
+  const nextBasis = lockedBasis ?? data.commissionBasis ?? existing.commissionBasis;
   const commercialChanged =
     (data.roomPayer !== undefined && data.roomPayer !== existing.roomPayer) ||
     (data.commissionBasis !== undefined && data.commissionBasis !== existing.commissionBasis) ||

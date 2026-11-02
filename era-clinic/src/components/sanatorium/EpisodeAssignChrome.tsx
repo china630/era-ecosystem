@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Trash2 } from "lucide-react";
+import { Printer, Trash2 } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -84,6 +84,8 @@ type AssignBlocksProps = {
   packageTitle: string;
   extrasTitle: string;
   onPackagePlus: () => void;
+  onPackagePrint?: () => void;
+  packagePrintLabel?: string;
   onExtrasPlus: () => void;
   readOnly?: boolean;
   /** CLI-57 walk-in: hide package block (extras only). */
@@ -106,6 +108,8 @@ export function EpisodeAssignBlocks({
   packageTitle,
   extrasTitle,
   onPackagePlus,
+  onPackagePrint,
+  packagePrintLabel,
   onExtrasPlus,
   readOnly,
   hidePackage,
@@ -125,7 +129,17 @@ export function EpisodeAssignBlocks({
       {!hidePackage ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-semibold">{packageTitle}</h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onPackagePrint ? (
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200"
+                aria-label={packagePrintLabel ?? packageTitle}
+                onClick={onPackagePrint}
+              >
+                <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            ) : null}
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}

@@ -106,6 +106,16 @@ export function buildComputedLines(
   return out;
 }
 
+/**
+ * NET lodging on the folio. Missing or non-positive percent leaves the tariff unchanged.
+ * GROSS is not discounted here; commission stays in the agency report.
+ */
+export function netLodgingAmount(tariff: number, percent: number | null | undefined): number {
+  if (percent == null || !Number.isFinite(percent) || percent <= 0) return tariff;
+  const pct = Math.min(percent, 100);
+  return roundMoney(tariff * (1 - pct / 100));
+}
+
 /** Forecast: nights × nightly rate × % (GROSS only). */
 export function forecastCommissionAmount(
   nights: number,
