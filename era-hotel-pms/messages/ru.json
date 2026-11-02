@@ -697,7 +697,6 @@
     "clinicNoShowRuleKeep": "No-show: начисление остаётся на фолио.",
     "clinicNoShowRuleVoid": "No-show: плановое начисление сторнируется.",
     "clinicPackageFuture": "Пакет: {count} будущих сеансов уйдут с сетки (без доплаты).",
-    "paymentExceedsArticle": "Открытый долг по этой статье {max} AZN. Большую сумму провести нельзя.",
     "checkoutUnused": "Переплата {amount} AZN. Выезд закрыт. Верните остаток через «Вернуть кредит категории» (или строковый Refund) внутри своей категории.",
     "xercMaddesi": "Статья расхода",
     "lineKind": "Строка",
