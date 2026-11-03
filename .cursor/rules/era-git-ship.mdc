@@ -13,8 +13,8 @@ When the user asks for **git commit + PR workflow**, read and follow:
 
 | Phrase | Skill action |
 |--------|----------------|
-| **полный коммит**, **коммит всех сателлит**, **full commit**, **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит** | Full wave: orchestrator → data-hub → mdm → rest; **`npm run ship:prepush`**; PR → merge → **Build images + Deploy staging** (default) → return folder to `origin/dev` → master (same staging wait) → return to `origin/dev`. **Merge ≠ ship done.** |
-| **шип оркестратор**, **шип hotel**, **шип clinic**, **шип finance**, … | Scoped commit + PR → **dev only**; wait path-filtered images + deploy (staging wait is default). **Do not** promote master unless asked. |
+| **полный коммит**, **коммит всех сателлит**, **full commit**, **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит** | Full wave: orchestrator → data-hub → mdm → rest; **`-PublishDev -Full`** (scoped test/build + label `ci-full`); PR → merge → **Build images + Deploy staging** (default) → return folder to `origin/dev` → master (same staging wait) → return to `origin/dev`. **Merge ≠ ship done.** |
+| **шип оркестратор**, **шип hotel**, **шип clinic**, **шип finance**, … | Scoped commit + **`-PublishDev` without `-Full`** (quality-gates only) → **dev only**; wait path-filtered images + deploy (staging wait is default). **Do not** promote master unless asked. |
 | **собери образы …** / **задеплой …** | `era-ship.ps1 -PublishImages` / `-PublishDeploy` (manual GHCR dispatch) |
 | **коммит оркестратор** | Scope `orchestrator` only |
 | **коммит data-hub**, **коммит дата-хаб** | Scope `data-hub` |

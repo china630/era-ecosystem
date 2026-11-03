@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Blocking critical-path smoke for droplet deploy (control plane + money).
- * Satellites (clinic/hotel/…) are checked by ecosystem-smoke-all (non-blocking warn).
+ * Clinic and hotel on a full deploy are a separate blocking call
+ * (ecosystem-smoke-scope.mjs). Other satellites stay in ecosystem-smoke-all (warn).
  *
  * Usage: node scripts/ecosystem-smoke-critical.mjs
  * Env: BASE_URL (default http://127.0.0.1), SMOKE_WAIT_MS, SMOKE_ATTEMPTS
