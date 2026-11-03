@@ -108,6 +108,7 @@ export function DiagnosticsAssignModal({
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [pkgDraft, setPkgDraft] = useState<PkgDraft[]>([]);
   const [extraDraft, setExtraDraft] = useState<ExtraDraft[]>([]);
+  const [pendingDrop, setPendingDrop] = useState<Set<string>>(new Set());
   const [visitDate, setVisitDate] = useState(todayBakuYmd());
   const [visitTime, setVisitTime] = useState("");
   const [busy, setBusy] = useState(false);
@@ -187,6 +188,7 @@ export function DiagnosticsAssignModal({
             }),
           ),
         );
+        setPendingDrop(new Set());
         setPrices(
           data.prices && typeof data.prices === "object"
             ? (data.prices as Record<string, number>)
@@ -328,17 +330,17 @@ export function DiagnosticsAssignModal({
       (sum, row) => sum + row.amountNet * row.qty,
       0,
     );
-    const pendingSum = pending.reduce(
-      (sum, row) => sum + Number(row.amountNet || 0),
-      0,
-    );
+    const pendingSum = pending.reduce((sum, row) => {
+      if (pendingDrop.has(row.id)) return sum;
+      return sum + Number(row.amountNet || 0);
+    }, 0);
     return draftSum + pendingSum;
-  }, [extraDraft, pending]);
+  }, [extraDraft, pending, pendingDrop]);
 
   const canSave =
     !readOnly &&
     !busy &&
-    (pkgDraft.length > 0 || extraDraft.length > 0) &&
+    (pkgDraft.length > 0 || extraDraft.length > 0 || pendingDrop.size > 0) &&
     !(pkgDraft.length > 0 && clinicalLock);
 
   async function save() {
@@ -413,29 +415,26 @@ export function DiagnosticsAssignModal({
           return;
         }
       }
+      if (pendingDrop.size > 0) {
+        for (const id of pendingDrop) {
+          const row = pending.find((item) => item.id === id);
+          if (!row) continue;
+          const res = await fetch(
+            `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(row.id)}&kind=${row.kind}`,
+            { method: "DELETE" },
+          );
+          if (!res.ok) {
+            showApiError(await res.json().catch(() => ({})), tc("failed"));
+            return;
+          }
+        }
+      }
       showSuccess(tc("saved"));
       setPkgDraft([]);
       setExtraDraft([]);
+      setPendingDrop(new Set());
       onSaved();
       onClose();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function removePending(row: PendingRow) {
-    setBusy(true);
-    try {
-      const res = await fetch(
-        `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(row.id)}&kind=${row.kind}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), tc("failed"));
-        return;
-      }
-      await load();
-      onSaved();
     } finally {
       setBusy(false);
     }
@@ -547,6 +546,7 @@ export function DiagnosticsAssignModal({
       lane.extraDraftKey = d.key;
     }
     for (const row of pending) {
+      if (pendingDrop.has(row.id)) continue;
       const lane = ensure(row.serviceCode, row.title, row.kind);
       lane.extraQty += 1;
       if (!(lane.extraUnit > 0)) lane.extraUnit = Number(row.amountNet || 0);
@@ -555,7 +555,7 @@ export function DiagnosticsAssignModal({
     return [...map.values()].filter(
       (lane) => lane.pkgQty > 0 || lane.extraQty > 0,
     );
-  }, [assignedStudies, pkgDraft, extraDraft, pending, unitOf]);
+  }, [assignedStudies, pkgDraft, extraDraft, pending, pendingDrop, unitOf]);
 
   const stepper = (
     qty: number,
@@ -868,9 +868,9 @@ export function DiagnosticsAssignModal({
                               className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
                               disabled={busy}
                               onClick={() => {
-                                const id = lane.pendingIds[0];
-                                const row = pending.find((p) => p.id === id);
-                                if (row) void removePending(row);
+                                const id = lane.pendingIds[lane.pendingIds.length - 1];
+                                if (!id) return;
+                                setPendingDrop((prev) => new Set(prev).add(id));
                               }}
                               aria-label={tc("delete")}
                             >

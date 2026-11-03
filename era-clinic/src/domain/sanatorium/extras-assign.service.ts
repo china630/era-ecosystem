@@ -403,6 +403,62 @@ export async function deletePendingExtra(orderId: string): Promise<void> {
   await prisma.procedureOrder.delete({ where: { id: orderId } });
 }
 
+/** Drop unpaid sessions from the latest stay day backward. Started rows stay. */
+export async function dropPendingExtrasFromTail(
+  episodeId: string,
+  procedureCode: string,
+  qty: number,
+): Promise<number> {
+  if (qty < 1) return 0;
+  const rows = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      procedureCode,
+      inPackage: false,
+      status: "PENDING_PAY",
+      checkedInAt: null,
+    },
+    orderBy: [{ scheduledAt: "desc" }, { createdAt: "desc" }],
+    take: qty,
+    select: { id: true },
+  });
+  if (rows.length === 0) return 0;
+  await releaseProcedureOccupancy(rows.map((row) => row.id));
+  await prisma.procedureOrder.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } });
+  return rows.length;
+}
+
+/**
+ * Seat every unpaid OPEN extra of these codes from today forward.
+ * One code per working day; different codes share a day. Completed rows stay put.
+ */
+export async function repackPendingOpenExtras(
+  episodeId: string,
+  procedureCodes: string[],
+): Promise<
+  Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>
+> {
+  const codes = [...new Set(procedureCodes.map((code) => code.trim()).filter(Boolean))];
+  if (codes.length === 0) return [];
+  const rows = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      procedureCode: { in: codes },
+      inPackage: false,
+      status: "PENDING_PAY",
+      schedulingMode: "OPEN",
+      checkedInAt: null,
+    },
+    orderBy: [{ procedureCode: "asc" }, { scheduledAt: "asc" }, { createdAt: "asc" }],
+    select: { id: true },
+  });
+  if (rows.length === 0) return [];
+  return pinUnpaidOpenExtras(
+    rows.map((row) => row.id),
+    episodeId,
+  );
+}
+
 /**
  * Reception Pay: all-or-nothing — one system receipt for the batch, then charge all → place all.
  * The receipt number is yyyymmdd-xxx (Baku day, per organization). It is written on every order

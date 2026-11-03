@@ -283,6 +283,8 @@ export function PackageAssignModal({
   const [blockReason, setBlockReason] = useState<PackageBlockReason | null>(null);
   const [formLane, setFormLane] = useState<"package" | "extra" | null>(null);
   const [extraDraft, setExtraDraft] = useState<ExtraDraftLine[]>([]);
+  /** Unpaid sessions marked for removal. Saxla drops them from the latest day backward. */
+  const [extraPendingCut, setExtraPendingCut] = useState<Record<string, number>>({});
   const [extraPrices, setExtraPrices] = useState<Record<string, number>>({});
   const [extraPending, setExtraPending] = useState<
     Array<{
@@ -435,6 +437,7 @@ export function PackageAssignModal({
           const payload = data.data ?? data;
           setExtraPrices(payload.prices ?? {});
           const pending = Array.isArray(payload.items) ? payload.items : [];
+          setExtraPendingCut({});
           setExtraPending(
             pending.map(
               (row: {
@@ -570,6 +573,11 @@ export function PackageAssignModal({
   const extraPendingTotal = extraPending.reduce((sum, row) => {
     const stored = row.amountNet > 0 ? row.amountNet : unitOf(row.procedureCode);
     return sum + stored;
+  }, 0) - Object.entries(extraPendingCut).reduce((sum, [code, qty]) => {
+    if (qty < 1) return sum;
+    const sample = extraPending.find((row) => row.procedureCode === code);
+    const unit = sample && sample.amountNet > 0 ? sample.amountNet : unitOf(code);
+    return sum + unit * qty;
   }, 0);
   const masseurDirty = Object.keys({ ...masseurByCode, ...masseurSaved }).some((code) => {
     if (!masseurOptions[code]?.length) return false;
@@ -581,7 +589,9 @@ export function PackageAssignModal({
       hasPendingAdjust ||
       masseurDirty ||
       (formLane === "package" && Boolean(formCode)));
-  const canSaveExtras = !clinicalLock && (extraDraft.length > 0 || formLane === "extra");
+  const extraCutCount = Object.values(extraPendingCut).reduce((sum, n) => sum + (n > 0 ? n : 0), 0);
+  const canSaveExtras =
+    !clinicalLock && (extraDraft.length > 0 || extraCutCount > 0 || formLane === "extra");
   const canSave = !busy && (canSavePackage || canSaveExtras);
   const unsaved =
     canSavePackage ||
@@ -1101,7 +1111,14 @@ export function PackageAssignModal({
     const hasAdjust =
       cancelKeys.size > 0 || Object.values(cuts).some((n) => n > 0);
     const prefs = masseurPrefs();
-    if (lines.length === 0 && !hasAdjust && extras.length === 0 && prefs.length === 0) {
+    const extraRemovals = Object.entries(extraPendingCut)
+      .filter(([, qty]) => qty > 0)
+      .map(([procedureCode, qty]) => ({
+        procedureCode,
+        qty,
+        kind: extraPending.find((row) => row.procedureCode === procedureCode)?.kind ?? "procedure",
+      }));
+    if (lines.length === 0 && !hasAdjust && extras.length === 0 && extraRemovals.length === 0 && prefs.length === 0) {
       if (replaceFrom !== "" || replaceTo !== "" || replaceReason.trim() !== "") {
         await submitReplace();
         return;
@@ -1194,7 +1211,7 @@ export function PackageAssignModal({
         }
         if (payload.softWarn) setSoftWarn(String(payload.softWarn));
       }
-      if (extras.length > 0 && !clinicalLock) {
+      if ((extras.length > 0 || extraRemovals.length > 0) && !clinicalLock) {
         const res = await fetch(
           `/api/sanatorium/episodes/${episodeId}/extras-prescribe`,
           {
@@ -1211,6 +1228,7 @@ export function PackageAssignModal({
                 siteLaterality: row.siteLaterality ?? {},
                 preferredPractitionerId: masseurIdFor(row.procedureCode),
               })),
+              ...(extraRemovals.length > 0 ? { removals: extraRemovals } : {}),
             }),
           },
         );
@@ -1251,6 +1269,7 @@ export function PackageAssignModal({
       setStartOpen(false);
       setDraft([]);
       setExtraDraft([]);
+      setExtraPendingCut({});
       setPendingCancel(new Set());
       setPendingCut({});
       closeForm();
@@ -1433,34 +1452,25 @@ export function PackageAssignModal({
     return Number.isFinite(n) && n > 0 ? n : 25;
   }
 
-  async function dropPendingExtra(id: string, kind?: "procedure" | "lab" | "visit") {
-    setBusy(true);
-    setError(null);
-    try {
-      const qs = new URLSearchParams({ orderId: id });
-      if (kind === "lab" || kind === "visit") qs.set("kind", kind);
-      const res = await fetch(
-        `/api/sanatorium/episodes/${episodeId}/extras-prescribe?${qs.toString()}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        showApiError(d, tc("failed"));
-        return;
-      }
-      setExtraPending((prev) => prev.filter((row) => row.id !== id));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   function extraMinus(code: string, paramsLabel: string) {
     if (peelPaid(code, paramsLabel)) return;
-    const hit = extraPending.find((row) => row.procedureCode === code);
-    if (hit) void dropPendingExtra(hit.id, hit.kind);
+    const pendingCount = extraPending.filter((row) => row.procedureCode === code).length;
+    const cut = extraPendingCut[code] ?? 0;
+    if (cut >= pendingCount) return;
+    setExtraPendingCut((prev) => ({ ...prev, [code]: cut + 1 }));
   }
 
   function extraPlus(code: string, name: string, paramsLabel: string) {
+    const cut = extraPendingCut[code] ?? 0;
+    if (cut > 0) {
+      setExtraPendingCut((prev) => {
+        const next = { ...prev };
+        if (cut <= 1) delete next[code];
+        else next[code] = cut - 1;
+        return next;
+      });
+      return;
+    }
     if (refuseWrongSex(code)) return;
     const xfer = openTransferForSku(code);
     if (xfer && (draftRemaining.get(xfer) ?? 0) > 0) {
@@ -1772,12 +1782,15 @@ export function PackageAssignModal({
               if (hit) claimedExtra.add(hit.key);
               return hit;
             };
-            const takePending = (code: string) =>
-              extraPending.filter((row) => {
-                if (row.procedureCode !== code || usedPending.has(row.id)) return false;
-                usedPending.add(row.id);
-                return true;
-              });
+            const takePending = (code: string) => {
+              const rows = extraPending.filter(
+                (row) => row.procedureCode === code && !usedPending.has(row.id),
+              );
+              const cut = extraPendingCut[code] ?? 0;
+              const keep = rows.slice(0, Math.max(0, rows.length - cut));
+              for (const row of rows) usedPending.add(row.id);
+              return keep;
+            };
             const takePaid = (code: string) =>
               paidExtras.filter((row) => {
                 if (row.procedureCode !== code || usedPaid.has(row.id)) return false;
