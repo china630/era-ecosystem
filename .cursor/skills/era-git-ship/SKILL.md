@@ -16,9 +16,9 @@ description: >-
 
 | User says | Action |
 |-----------|--------|
-| **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + **local ship gates** + `-PublishDev` (**waits Deploy staging by default**) → return folder to `origin/dev` → `-PublishMaster` (**waits Deploy staging**) → return to `origin/dev`. **Merge ≠ ship done.** |
-| **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит**, **ship and push** | Same as full wave if there are uncommitted changes; if tree is already committed, gates then `-PublishDev` (+ master after CI when that wave promotes). Always await **Build images + Deploy staging** unless the user explicitly said git-only / `-SkipStaging`. End on `dev` with `HEAD` = `origin/dev`, clean status, **and** staging green for the merge SHA |
-| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → `-PublishDev` (staging wait is **default**). **Do not** promote `master` unless asked. **Do not** stop at an open PR URL or on the side branch after merge. In this same folder, `git checkout dev` and `git pull origin dev` until `HEAD` equals `origin/dev`. Uncommitted work in **other** satellites stays in the working tree. Path-filter rebuilds only matching GHCR services — do not dispatch a full 16-image build. |
+| **полный коммит**, **коммит всех сателлит**, **full commit**, **era-git-ship full** | Full wave (4 commits) + **`-PublishDev -Full`** (scoped test/build + PR label `ci-full`) → return folder to `origin/dev` → `-PublishMaster` (**waits Deploy staging**) → return to `origin/dev`. **Merge ≠ ship done.** |
+| **сделай шип**, **шип и пуш**, **шип + пуш**, **пуш на гит**, **ship and push** | Same as full wave if there are uncommitted changes; if tree is already committed, `-PublishDev -Full` (+ master after CI when that wave promotes). Always await **Build images + Deploy staging** unless the user explicitly said git-only / `-SkipStaging`. End on `dev` with `HEAD` = `origin/dev`, clean status, **and** staging green for the merge SHA |
+| **шип оркестратор** / **шип+пуш оркестратор** (or hotel, clinic, finance, …) | **Scoped ship:** commit that scope → `-PublishDev` without `-Full` (quality-gates only; CI tests that scope). **Do not** promote `master` unless asked. **Do not** stop at an open PR URL or on the side branch after merge. In this same folder, `git checkout dev` and `git pull origin dev` until `HEAD` equals `origin/dev`. Uncommitted work in **other** satellites stays in the working tree. Path-filter rebuilds only matching GHCR services — do not dispatch a full 16-image build. |
 | **собери образы оркестратор** (or `hotel`, `clinic`, …) | Manual `era-ship.ps1 -PublishImages -Services <ghcr>` (only if auto path-filter did not run) |
 | **задеплой оркестратор** | Manual `era-ship.ps1 -PublishDeploy -DeployScope orchestrator -ImageTag <tag>` |
 | **коммит оркестратор** / **orch commit** | Single scope `orchestrator` commit only (no PR unless also asked to push) |
@@ -47,6 +47,15 @@ Always read [quality-gates](../quality-gates/SKILL.md) before any `git push`.
 10. **After merge into `dev`, return this same folder to `origin/dev`.** `git checkout dev` then `git pull origin dev`. No `--force`, no `git restore`, no `git checkout -- <path>`, no `git stash`, no `git reset`, no `git clean`. Folder sync is not finished while the folder stays on `integration/…`. Folder gate: `git rev-parse HEAD` equals `git rev-parse origin/dev`. `git status` may still show uncommitted files **outside** the buckets committed on this branch (another satellite's WIP). That is expected. Required for every ship, including a scoped ship that does not promote `master`.
 11. **Foreign WIP is protected.** A hotel ship must not stage, test, build, revert, or "clean" `era-clinic/` (and the reverse). `ship:prepush` only treats dirty files whose path bucket appears in `origin/dev...HEAD` as in scope. If `checkout`/`pull` would overwrite those other files, **stop** and name them. Do not discard them to make status clean.
 12. **Staging is part of ship (default).** `-PublishDev` / `-PublishMaster` wait for **Build and push images** then **Deploy staging** on the merge SHA. **Merge green ≠ droplet up** (outage class 2026-10-28: Nest boot fail, Deploy red, login dead). Opt out only with explicit user ask + `-SkipStaging` (git-only / docs-only with no image deploy). Never treat CI merge alone as done for «шип + пуш». **Deploy job green ≠ droplet up** either: WaitStaging requires **Deploy over SSH** `success` **and** public smoke (`finance-api` / `api` / `data` / `app`) (2026-10-31: false SKIP; then real SSH wiped all containers via `rm -f` and finance unhealthy left money/control plane 502).
+
+## Two ship speeds
+
+| Mode | Prepush | CI | Images | Droplet smoke |
+|------|---------|----|--------|----------------|
+| Satellite `-PublishDev` | `quality-gates` only | Orchestrator always. Touched app for real. Other apps `exit 0` before `npm ci` (same check name, not a skipped job). | Path-filtered | Only `DEPLOY_SERVICES`, with retries |
+| Full `-PublishDev -Full` and `-PublishMaster` | Scoped test + `next build` (master prepush stays quality-only) | PR label `ci-full` runs every job. Nightly correctness does not depend on guessing the diff. | Whatever the path filter rebuilt | Full stack: critical URLs **and** clinic + hotel, blocking |
+
+`packages/`, a lockfile, `.github/workflows/`, or `docker/` forces the full CI matrix even without `ci-full`. A second CI on `push` to `dev` uses the same stubs. The comment in `ci.yml` says why that push run exists when more than one person commits.
 
 ## Local ship gates (before push)
 

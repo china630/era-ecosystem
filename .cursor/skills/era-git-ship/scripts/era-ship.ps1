@@ -3,7 +3,8 @@
 #   .\era-ship.ps1 -ListScopes
 #   .\era-ship.ps1 -Scope orchestrator -Subject "pricing seeds" [-Branch integration/my-wave]
 #   .\era-ship.ps1 -Wave full -Subject "ecosystem integration wave" [-Branch integration/ecosystem-wave]
-#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-SkipGates] [-SkipStaging]
+#   .\era-ship.ps1 -PublishDev -Head integration/ecosystem-wave [-Title "..."] [-Body "..."] [-Full] [-SkipGates] [-SkipStaging]
+#   Satellite PublishDev is quality-gates only. -Full runs scoped test/build and labels the PR ci-full.
 #   .\era-ship.ps1 -PublishImages -Services orchestrator [-Head dev]
 #   .\era-ship.ps1 -PublishDeploy -DeployScope orchestrator [-ImageTag dev] [-Head dev]
 #   .\era-ship.ps1 -PublishMaster -Head dev [-SkipGates] [-SkipStaging]
@@ -33,7 +34,8 @@ param(
     [switch]$WaitStaging,
     [switch]$SkipStaging,
     [switch]$DryRun,
-    [switch]$SkipGates
+    [switch]$SkipGates,
+    [switch]$Full
 )
 
 $ErrorActionPreference = "Stop"
@@ -71,6 +73,14 @@ function Invoke-ShipPrepush {
     }
     Assert-WorkingTreeShipClean
     $env:ERA_SHIP_GATES_DONE = "1"
+}
+
+function Ensure-CiFullLabel {
+    if ($DryRun) { Write-Host "[dry-run] gh label create ci-full"; return }
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    gh label create ci-full --color 5319e7 --description "Run the full CI matrix; no stubs" 2>&1 | Out-Null
+    $ErrorActionPreference = $prev
 }
 
 function Ensure-GhAuth {
@@ -659,7 +669,11 @@ function Invoke-PublishDev {
     if ($LASTEXITCODE -ne 0) { throw "gh not authenticated. Set GH_TOKEN or run: gh auth login" }
 
     Install-EraGitHook
-    Invoke-ShipPrepush
+    if ($Full) { Invoke-ShipPrepush }
+    else {
+        Write-Host "==> satellite ship: quality-gates only (CI runs test/build)"
+        Invoke-ShipPrepush -QualityOnly
+    }
 
     $waitStg = Test-ShouldWaitStaging
     if ($DryRun) {
@@ -671,15 +685,18 @@ function Invoke-PublishDev {
         return
     }
     git push -u origin $HeadBranch
+    if ($Full) { Ensure-CiFullLabel }
     $existing = gh pr list --base dev --head $HeadBranch --state open --json number,url --jq ".[0]"
     $prRef = $null
     if ($existing -and $existing -ne "null") {
         $prObj = $existing | ConvertFrom-Json
         $prRef = $prObj.number
         Write-Host "Reusing open PR #$prRef $($prObj.url)"
+        if ($Full) { gh pr edit $prRef --add-label ci-full }
     }
     else {
         $prArgs = @('pr', 'create', '--base', 'dev', '--head', $HeadBranch, '--title', $PrTitle)
+        if ($Full) { $prArgs += @('--label', 'ci-full') }
         if ($PrBody) { $prArgs += @('--body', $PrBody) }
         $prUrl = gh @prArgs
         Write-Host $prUrl
@@ -759,6 +776,7 @@ function Invoke-PublishMaster {
     git fetch origin dev master | Out-Null
     $title = "release: promote dev to master"
     Install-EraGitHook
+    Ensure-CiFullLabel
     Invoke-ShipPrepush -QualityOnly
     $waitStg = Test-ShouldWaitStaging
     if ($DryRun) {
@@ -774,9 +792,10 @@ function Invoke-PublishMaster {
         $prObj = $existing | ConvertFrom-Json
         $prRef = $prObj.number
         Write-Host "Reusing open PR #$prRef $($prObj.url)"
+        gh pr edit $prRef --add-label ci-full
     }
     else {
-        $prUrl = gh pr create --base master --head $HeadBranch --title $title --body "Promote integrated dev branch to master after CI green."
+        $prUrl = gh pr create --base master --head $HeadBranch --title $title --label ci-full --body "Promote integrated dev branch to master after CI green."
         Write-Host $prUrl
         if ($prUrl -match '/pull/(\d+)') {
             $prRef = $Matches[1]
