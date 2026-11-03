@@ -13,34 +13,44 @@ import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name
 import { readUiLocale } from "@/lib/request-locale";
 import {
   deletePendingExtra,
+  dropPendingExtrasFromTail,
   listExtraUnitPrices,
   listPaidExtras,
   listPendingExtras,
   prescribeExtras,
+  repackPendingOpenExtras,
 } from "@/domain/sanatorium/extras-assign.service";
 import {
   deletePendingDiagnostic,
   listPendingDiagnostics,
 } from "@/domain/sanatorium/diagnostics-extras.service";
 
+const lineSchema = z.object({
+  procedureCode: z.string().min(1),
+  qty: z.number().int().positive().max(40),
+  note: z.string().max(2000).optional().nullable(),
+  bodyPart: z.string().max(64).optional().nullable(),
+  physioFields: z.record(z.unknown()).optional().nullable(),
+  siteIds: z.array(z.string()).optional(),
+  siteApplyMode: z.enum(["TURN", "TOGETHER"]).optional().nullable(),
+  siteLaterality: z
+    .record(z.enum(["LEFT", "RIGHT", "BOTH"]).nullable())
+    .optional(),
+  preferredPractitionerId: z.string().min(1).nullable().optional(),
+});
+
 const prescribeSchema = z.object({
-  lines: z
+  lines: z.array(lineSchema).max(40).default([]),
+  removals: z
     .array(
       z.object({
         procedureCode: z.string().min(1),
         qty: z.number().int().positive().max(40),
-        note: z.string().max(2000).optional().nullable(),
-        bodyPart: z.string().max(64).optional().nullable(),
-        physioFields: z.record(z.unknown()).optional().nullable(),
-        siteIds: z.array(z.string()).optional(),
-        siteApplyMode: z.enum(["TURN", "TOGETHER"]).optional().nullable(),
-        siteLaterality: z
-          .record(z.enum(["LEFT", "RIGHT", "BOTH"]).nullable())
-          .optional(),
-        preferredPractitionerId: z.string().min(1).nullable().optional(),
+        kind: z.enum(["procedure", "lab", "visit"]).optional(),
       }),
     )
-    .min(1),
+    .max(40)
+    .optional(),
 });
 
 export async function GET(
@@ -124,8 +134,34 @@ export async function POST(
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
     const body = prescribeSchema.parse(await req.json());
-    const result = await prescribeExtras(id, body.lines, session.sub);
-    return jsonOk(result);
+    const removals = body.removals ?? [];
+    if (body.lines.length === 0 && removals.length === 0) {
+      return jsonError("Nothing to save", 400);
+    }
+    const touched = new Set<string>();
+    for (const removal of removals) {
+      touched.add(removal.procedureCode);
+      if (removal.kind === "lab" || removal.kind === "visit") {
+        const { listPendingDiagnostics, deletePendingDiagnostic } = await import(
+          "@/domain/sanatorium/diagnostics-extras.service"
+        );
+        const pending = await listPendingDiagnostics(id);
+        const matches = pending.filter(
+          (row) => row.kind === removal.kind && row.serviceCode === removal.procedureCode,
+        );
+        const drop = matches.slice(-removal.qty);
+        for (const row of drop) await deletePendingDiagnostic(removal.kind, row.id);
+        continue;
+      }
+      await dropPendingExtrasFromTail(id, removal.procedureCode, removal.qty);
+    }
+    const result =
+      body.lines.length > 0
+        ? await prescribeExtras(id, body.lines, session.sub)
+        : { orderIds: [], labOrderIds: [], visitIds: [], misses: [] };
+    for (const line of body.lines) touched.add(line.procedureCode);
+    const repackMisses = await repackPendingOpenExtras(id, [...touched]);
+    return jsonOk({ ...result, misses: [...result.misses, ...repackMisses] });
   } catch (err) {
     if (err instanceof PackageAssignError) {
       return jsonError(err.message, err.status, { code: err.code });

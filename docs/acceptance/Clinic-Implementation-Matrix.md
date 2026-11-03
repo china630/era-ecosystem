@@ -9,6 +9,8 @@
 
 **Closeout (2026-11-02 print extra language + lab rooms):** AC-CLI-LAB stays ✅ (room numbers return for episode-read without a practitioner; existing negative path). CLI-34 print extra language is a branding option on the existing guest sheet, not a new AC. Gate/Pilot unchanged.
 
+**Closeout (2026-11-03 extras draft + blank performer):** AC-CLI-ASSIGN and AC-CLI-OPEN-ATTEND stay 🟡 (draft +/− until Saxla; tail drop + OPEN repack from today; no new negative spec, not Scaffold ✅). AC-CLI-PRINT stays ✅ (performer name on lab/USM uses the existing missing-source path). Gate/Pilot unchanged.
+
 **Closeout (2026-11-03 yesterday start + diagnostics print):** AC-CLI-ASSIGN stays 🟡 (yesterday only when the course has no seated procedures; older dates and later saves snap to today; yesterday rows stored `COMPLETED`; no new negative spec, not Scaffold ✅). AC-CLI-PRINT stays ✅ (studies list includes package and payable visits; existing missing-source negative path). Gate/Pilot unchanged.
 
 **Closeout (2026-11-02 nurse list + lab clicks):** AC-CLI-OPS stays ✅ (nurse day list and `/print/nurse-day` are the same CLI-26 board; existing negative path; no Scaffold reopen). AC-CLI-LAB stays ✅ (grid click + `LAB_TECH` episode read for the room filter; existing lab negative path). Gate/Pilot unchanged.

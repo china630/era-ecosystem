@@ -5,6 +5,7 @@ import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print
 import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
+import { performerNameForUserIds } from "@/domain/print/print-performer";
 
 export type PrintLabRow = {
   no: number;
@@ -165,6 +166,12 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     patient,
     title: titleParts.join(", ") || order.testCode || "Lab results",
     sections,
-    signatureLab: branding.signatureLab,
+    signatureLab:
+      (await performerNameForUserIds(
+        order.items
+          .flatMap((item) => item.results)
+          .sort((a, b) => b.enteredAt.getTime() - a.enteredAt.getTime())
+          .map((result) => result.enteredByUserId),
+      )) ?? branding.signatureLab,
   };
 }
