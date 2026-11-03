@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { departmentFinanceEventsSilenced, publishToOrchestratorGateway } from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
 

@@ -59,7 +59,22 @@ const nextConfig: NextConfig = {
     ];
   },
   serverExternalPackages: ['@prisma/client', 'redis', 'dejavu-fonts-ttf', 'pdfkit', 'fontkit'],
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      const prev = config.externals;
+      config.externals = [
+        ...(Array.isArray(prev) ? prev : prev ? [prev] : []),
+        (
+          { request }: { request?: string },
+          callback: (err?: Error | null, result?: string) => void,
+        ) => {
+          if (request === "crypto" || request?.startsWith("node:")) {
+            return callback(null, `commonjs ${request}`);
+          }
+          callback();
+        },
+      ];
+    }
     config.module.rules.push({
       test: /\.(ttf|otf|woff2?|eot)$/i,
       type: 'asset/resource',
