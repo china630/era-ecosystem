@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { enterRequestTenant, requestOrganizationId } from "@/lib/request-organization";
 import { publishLifecycle } from "@/lib/integration/guest-lifecycle-events";

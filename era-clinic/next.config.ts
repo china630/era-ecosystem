@@ -22,6 +22,24 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["@prisma/client"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      const prev = config.externals;
+      config.externals = [
+        ...(Array.isArray(prev) ? prev : prev ? [prev] : []),
+        (
+          { request }: { request?: string },
+          callback: (err?: Error | null, result?: string) => void,
+        ) => {
+          if (request === "crypto" || request?.startsWith("node:")) {
+            return callback(null, `commonjs ${request}`);
+          }
+          callback();
+        },
+      ];
+    }
+    return config;
+  },
   async headers() {
     return [
       {
