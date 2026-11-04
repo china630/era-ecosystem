@@ -472,7 +472,46 @@
       "fiscalEmpty": "Cihaz yoxdur — Kafe KKM olmadan cash/card yazır.",
       "fiscalSaved": "Cihaz saxlanıldı",
       "fiscalSaveFailed": "Cihaz saxlanılmadı ({status})",
-      "fiscalRetired": "Cihaz retire olundu"
+      "fiscalRetired": "Cihaz retire olundu",
+      "payTitle": "Ödəniş üsulları",
+      "payHint": "Təşkilat kataloqu. Sync satellitlərə göndərir. Maliyyə yalnız kodu oxuyur.",
+      "payParentCash": "Bu departament valideyn otel kassasında ödəyir (fiscalRouting=PARENT).",
+      "payEmpty": "Hələ üsul yoxdur — sistem siyahısı ilk açılışda yaranır.",
+      "payCode": "Kod",
+      "payNameEn": "Ad (EN)",
+      "payNameRu": "Ad (RU)",
+      "payNameAz": "Ad (AZ)",
+      "payNoTerminal": "Bank terminalı yox",
+      "payAdd": "Üsul əlavə et",
+      "payDisable": "Söndür",
+      "payEnable": "Yandır",
+      "payOff": "söndürülüb",
+      "paySaved": "Ödəniş üsulu saxlanıldı",
+      "paySaveFailed": "Ödəniş üsulu saxlanılmadı ({status})",
+      "payDeptOnParent": "bu kassada ödəyir",
+      "payDeptOwn": "öz kassası",
+      "channelsTitle": "Inteqrasiya kanalları",
+      "channelsHint": "Peer siyasət kənarları (folio / settlement / revenue). URL yoxdur.",
+      "channelsOutbound": "Çıxan",
+      "channelsInbound": "Daxil olan",
+      "channelsEmpty": "Kanal yoxdur — entitlement-lərdən sonra operating mode saxlayın.",
+      "channelsEnable": "Aktiv et (PLATFORM)",
+      "channelsDisable": "Söndür",
+      "channelsOn": "Açıq",
+      "channelsOff": "Sönülü",
+      "channelsSaved": "Kanal yeniləndi",
+      "channelsSaveFailed": "Kanal xətası ({status})",
+      "kindFolio": "Folio yazısı",
+      "kindSettlement": "Settlement",
+      "kindRevenue": "Gəlir hadisəsi",
+      "kindRead": "Status oxu",
+      "satHotel": "Otel",
+      "satClinic": "Klinika",
+      "satFnb": "F&B",
+      "satRetail": "Retail",
+      "satFinance": "Maliyyə",
+      "managedPlatform": "Platform",
+      "managedAcceptor": "Acceptor"
     },
     "referrals": {
       "title": "Referal tərəfdaşlar",
@@ -701,7 +740,8 @@
     "wfJobArchitecture": "Vəzifə arxitekturası",
     "wfOrgChart": "Təşkilat strukturu (sxem)",
     "platformConsoleBrand": "ERA Platform",
-    "platformConsoleSubtitle": "Operator konsolu"
+    "platformConsoleSubtitle": "Operator konsolu",
+    "platformStructure": "Struktur"
   },
   "headerStrip": {
     "trialUntil": "Sınaq dövrü {date}-dək",
@@ -2472,5 +2512,11 @@
     "loading": "Yüklənir…",
     "empty": "Bu rejim üçün düyün yoxdur.",
     "orphans": "Valideyni olmayan düyünlər"
+  },
+  "platformStructurePage": {
+    "title": "Kommersiya strukturu",
+    "subtitle": "Org → departament → peyk → outlet. Kill switch və outlet reyestri.",
+    "body": "Abunəlik blokunu təşkilat hub-da idarə edin; sahibi Control Home Structure ekranından (eyni /v1/structure API) və ya peik ops-dan outlet yaradın (F&B avtomatik CP-yə yazır).",
+    "openOrgs": "Təşkilat kataloqu"
   }
 }

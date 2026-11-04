@@ -38,6 +38,9 @@ export type MembershipRow = {
   organizationName: string | null;
   role: string;
   isOwner: boolean;
+  isHome?: boolean;
+  operatingMode?: string | null;
+  parentOrgId?: string | null;
 };
 
 type JwtClaims = {
@@ -77,6 +80,7 @@ type AuthContextValue = {
   ) => void;
   logout: () => void;
   switchOrganization: (organizationId: string) => Promise<void>;
+  setHomeOrganization: (organizationId: string) => Promise<void>;
   applyAccessToken: (accessToken: string, refreshToken?: string | null) => void;
 };
 
@@ -275,6 +279,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [token, login],
   );
 
+  const setHomeOrganization = useCallback(
+    async (organizationId: string) => {
+      if (!token) return;
+      const res = await orchFetch("/auth/home-organization", {
+        method: "POST",
+        token,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizationId }),
+      });
+      if (!res.ok) throw new Error("Set home organization failed");
+      const next = await loadMemberships(token);
+      setMemberships(next);
+    },
+    [token, loadMemberships],
+  );
+
   const permissions = user?.permissions ?? [];
 
   const can = useCallback(
@@ -297,6 +317,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       switchOrganization,
+      setHomeOrganization,
       applyAccessToken,
     }),
     [
@@ -309,6 +330,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       switchOrganization,
+      setHomeOrganization,
       applyAccessToken,
     ],
   );

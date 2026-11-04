@@ -432,6 +432,12 @@ export class SatelliteOrgBindSyncService {
       body.fiscalDevices = [];
     }
 
+    const payCatalog = await this.resolvePaymentMethodCatalogOrg(organizationId);
+    body.paymentMethodCatalogOrgId = payCatalog.catalogOrgId;
+    body.fiscalRouting = payCatalog.fiscalRouting;
+    body.parentOrgId = payCatalog.parentOrgId;
+    body.paymentMethods = await this.loadPaymentMethodsForSync(payCatalog.catalogOrgId);
+
     try {
       body.orgProfile = await this.orgProfiles.getSnapshot(organizationId);
     } catch (err) {
@@ -540,6 +546,91 @@ export class SatelliteOrgBindSyncService {
         error: message,
       };
     }
+  }
+
+  private async resolvePaymentMethodCatalogOrg(organizationId: string): Promise<{
+    catalogOrgId: string;
+    fiscalRouting: string;
+    parentOrgId: string | null;
+  }> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        id: true,
+        operatingMode: true,
+        fiscalRouting: true,
+        parentOrgId: true,
+      },
+    });
+    if (!org) {
+      return { catalogOrgId: organizationId, fiscalRouting: "OWN", parentOrgId: null };
+    }
+    const useParent =
+      org.operatingMode === "DEPARTMENT" &&
+      org.fiscalRouting === "PARENT" &&
+      Boolean(org.parentOrgId);
+    return {
+      catalogOrgId: useParent && org.parentOrgId ? org.parentOrgId : org.id,
+      fiscalRouting: org.fiscalRouting,
+      parentOrgId: org.parentOrgId,
+    };
+  }
+
+  private async loadPaymentMethodsForSync(catalogOrgId: string) {
+    await this.ensurePaymentMethodSeed(catalogOrgId);
+    const rows = await this.prisma.orgPaymentMethod.findMany({
+      where: { organizationId: catalogOrgId, active: true },
+      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      organizationId: r.organizationId,
+      code: r.code,
+      nameAz: r.nameAz,
+      nameRu: r.nameRu,
+      nameEn: r.nameEn,
+      sortOrder: r.sortOrder,
+      active: r.active,
+      systemKey: r.systemKey,
+      fiscalHint: r.fiscalHint,
+      fiscalDeviceId: r.fiscalDeviceId,
+      satellites: Array.isArray(r.satellitesJson)
+        ? (r.satellitesJson as string[])
+        : [],
+      secrets: decryptFiscalSecrets(r.secretsCipher),
+    }));
+  }
+
+  private async ensurePaymentMethodSeed(organizationId: string): Promise<void> {
+    const count = await this.prisma.orgPaymentMethod.count({
+      where: { organizationId },
+    });
+    if (count > 0) return;
+    const seed = [
+      { code: "CASH", nameAz: "Nağd", nameRu: "Наличные", nameEn: "Cash", sortOrder: 10, fiscalHint: "CASH", satellites: ["hotel", "clinic", "fnb", "retail"] },
+      { code: "CARD", nameAz: "Kart", nameRu: "Карта", nameEn: "Card", sortOrder: 20, fiscalHint: "CARD", satellites: ["hotel", "clinic", "fnb", "retail"] },
+      { code: "EPOINT", nameAz: "E-point", nameRu: "E-point", nameEn: "E-point", sortOrder: 30, fiscalHint: "CARD", satellites: ["hotel"] },
+      { code: "BANK_TRANSFER", nameAz: "Köçürmə", nameRu: "Перевод", nameEn: "Bank transfer", sortOrder: 40, fiscalHint: "NONE", satellites: ["hotel", "clinic"] },
+      { code: "DEPOSIT", nameAz: "Depozit", nameRu: "Депозит", nameEn: "Deposit", sortOrder: 50, fiscalHint: "NONE", satellites: ["hotel"] },
+      { code: "CL_AGENCY", nameAz: "Agentlik CL", nameRu: "City Ledger агентства", nameEn: "Agency city ledger", sortOrder: 60, fiscalHint: "NONE", satellites: ["hotel"] },
+      { code: "CL_COMPANY", nameAz: "Şirkət CL", nameRu: "City Ledger компании", nameEn: "Company city ledger", sortOrder: 70, fiscalHint: "NONE", satellites: ["hotel"] },
+      { code: "LOYALTY_POINTS", nameAz: "Bonus", nameRu: "Баллы", nameEn: "Loyalty points", sortOrder: 80, fiscalHint: "NONE", satellites: ["hotel"] },
+    ];
+    await this.prisma.orgPaymentMethod.createMany({
+      data: seed.map((row) => ({
+        organizationId,
+        code: row.code,
+        nameAz: row.nameAz,
+        nameRu: row.nameRu,
+        nameEn: row.nameEn,
+        sortOrder: row.sortOrder,
+        active: true,
+        systemKey: row.code,
+        fiscalHint: row.fiscalHint,
+        satellitesJson: row.satellites,
+      })),
+      skipDuplicates: true,
+    });
   }
 }
 

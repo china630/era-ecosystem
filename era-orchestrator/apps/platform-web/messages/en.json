@@ -472,7 +472,46 @@
       "fiscalEmpty": "No devices yet — Kafe records cash/card without KKM.",
       "fiscalSaved": "Fiscal device saved",
       "fiscalSaveFailed": "Fiscal device save failed ({status})",
-      "fiscalRetired": "Device retired"
+      "fiscalRetired": "Device retired",
+      "payTitle": "Payment methods",
+      "payHint": "Org catalog for every cash desk. Sync pushes the list to satellites. Finance only reads the code.",
+      "payParentCash": "This department pays on the parent hotel cash desk (fiscalRouting=PARENT).",
+      "payEmpty": "No methods yet — open this page once to seed the system list.",
+      "payCode": "Code",
+      "payNameEn": "Name (EN)",
+      "payNameRu": "Name (RU)",
+      "payNameAz": "Name (AZ)",
+      "payNoTerminal": "No bank terminal",
+      "payAdd": "Add method",
+      "payDisable": "Disable",
+      "payEnable": "Enable",
+      "payOff": "off",
+      "paySaved": "Payment method saved",
+      "paySaveFailed": "Payment method save failed ({status})",
+      "payDeptOnParent": "pays on this cash desk",
+      "payDeptOwn": "own cash desk",
+      "channelsTitle": "Integration channels",
+      "channelsHint": "Peer policy edges (folio / settlement / revenue). No URLs. PLATFORM rows sync from operating mode; acceptor disable flips managedBy.",
+      "channelsOutbound": "Outbound",
+      "channelsInbound": "Inbound",
+      "channelsEmpty": "No channels yet — save operating mode after entitlements exist.",
+      "channelsEnable": "Enable (PLATFORM)",
+      "channelsDisable": "Disable",
+      "channelsOn": "On",
+      "channelsOff": "Off",
+      "channelsSaved": "Channel updated",
+      "channelsSaveFailed": "Channel update failed ({status})",
+      "kindFolio": "Folio post",
+      "kindSettlement": "Settlement",
+      "kindRevenue": "Revenue event",
+      "kindRead": "Read status",
+      "satHotel": "Hotel",
+      "satClinic": "Clinic",
+      "satFnb": "F&B",
+      "satRetail": "Retail",
+      "satFinance": "Finance",
+      "managedPlatform": "Platform",
+      "managedAcceptor": "Acceptor"
     },
     "referrals": {
       "title": "Referral partners",
@@ -702,7 +741,8 @@
     "wfJobArchitecture": "Job architecture",
     "wfOrgChart": "Org chart",
     "platformConsoleBrand": "ERA Platform",
-    "platformConsoleSubtitle": "Operator console"
+    "platformConsoleSubtitle": "Operator console",
+    "platformStructure": "Structure"
   },
   "headerStrip": {
     "trialUntil": "Trial until {date}",
@@ -2474,5 +2514,11 @@
     "loading": "Loading…",
     "empty": "No nodes for this mode.",
     "orphans": "Nodes with missing parent"
+  },
+  "platformStructurePage": {
+    "title": "Commercial structure",
+    "subtitle": "Org → department → satellite → outlet. Kill switches and outlet registry.",
+    "body": "Open an organization hub to manage subscription block, then use the owner Control Home Structure screen (same /v1/structure APIs) or create outlets via satellite ops (F&B registers to CP automatically).",
+    "openOrgs": "Organization catalog"
   }
 }

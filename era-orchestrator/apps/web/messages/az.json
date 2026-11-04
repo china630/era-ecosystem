@@ -472,7 +472,24 @@
       "fiscalEmpty": "Cihaz yoxdur — Kafe KKM olmadan cash/card yazır.",
       "fiscalSaved": "Cihaz saxlanıldı",
       "fiscalSaveFailed": "Cihaz saxlanılmadı ({status})",
-      "fiscalRetired": "Cihaz retire olundu"
+      "fiscalRetired": "Cihaz retire olundu",
+      "payTitle": "Ödəniş üsulları",
+      "payHint": "Təşkilat kataloqu. Sync satellitlərə göndərir. Maliyyə yalnız kodu oxuyur.",
+      "payParentCash": "Bu departament valideyn otel kassasında ödəyir (fiscalRouting=PARENT).",
+      "payEmpty": "Hələ üsul yoxdur — sistem siyahısı ilk açılışda yaranır.",
+      "payCode": "Kod",
+      "payNameEn": "Ad (EN)",
+      "payNameRu": "Ad (RU)",
+      "payNameAz": "Ad (AZ)",
+      "payNoTerminal": "Bank terminalı yox",
+      "payAdd": "Üsul əlavə et",
+      "payDisable": "Söndür",
+      "payEnable": "Yandır",
+      "payOff": "söndürülüb",
+      "paySaved": "Ödəniş üsulu saxlanıldı",
+      "paySaveFailed": "Ödəniş üsulu saxlanılmadı ({status})",
+      "payDeptOnParent": "bu kassada ödəyir",
+      "payDeptOwn": "öz kassası"
     },
     "referrals": {
       "title": "Referal tərəfdaşlar",
@@ -698,7 +715,12 @@
     "wfMe": "Kabinetim",
     "orgProfile": "Təşkilat profili",
     "wfJobArchitecture": "Vəzifə arxitekturası",
-    "wfOrgChart": "Təşkilat strukturu (sxem)"
+    "wfOrgChart": "Təşkilat strukturu (sxem)",
+    "structure": "Struktur",
+    "commsHub": "Comms Hub",
+    "homeOrg": "Əsas təşkilat",
+    "setHomeOrg": "Əsas et",
+    "openPlatformConsole": "Platform konsolu"
   },
   "headerStrip": {
     "trialUntil": "Sınaq dövrü {date}-dək",
@@ -857,7 +879,11 @@
       "enabled": "Modul aktiv edildi",
       "syncFailed": "Modul yazıldı, amma Sync uğursuz oldu — Super-admin Sync və ya yenidən cəhd edin.",
       "connectFailed": "Satellit qoşulmadı — yenidən cəhd edin və ya dəstəyə yazın.",
-      "billingFootnote": "Söndürülən modullar cari ayın post-paid hesabına daxil olur."
+      "billingFootnote": "Söndürülən modullar cari ayın post-paid hesabına daxil olur.",
+      "lateMonthConfirm": "7 günlük sınaq ayın sonuna yaxın bitir ({graceEnds}). Sınaqdan sonra tam təqvim ayı tutulacaq. OK — indi başlat. Cancel — təxirə sal.",
+      "lateMonthDefer": "Növbəti ayın 1-nə qədər təxirə salınsın?",
+      "deferredToFirst": "Növbəti ayın 1-nə planlaşdırıldı",
+      "graceStarted": "7 günlük sınaq başladı ({graceEnds}-dək). Tam ay ödəməmək üçün o tarixədək söndürün."
     },
     "systems": {
       "finance": {
@@ -937,7 +963,14 @@
         "highlight2": "Ödənişlər və məhsullar",
         "highlight3": "Tənzimlənən CBS mühərriki"
       }
-    }
+    },
+    "platformAppsSection": "Platform tətbiqləri",
+    "systemsSection": "Sistemlər",
+    "appWorkforce": "Workforce",
+    "appBilling": "Billing",
+    "appOrgProfile": "Təşkilat profili",
+    "appStructure": "Struktur",
+    "appCommsHub": "Comms Hub"
   },
   "settings": {
     "title": "Parametrlər",
@@ -1071,7 +1104,10 @@
       "downloadPdf": "PDF",
       "pdfFailed": "PDF yüklənmədi",
       "prev": "Əvvəl",
-      "next": "Sonra"
+      "next": "Sonra",
+      "noLines": "Sətir yoxdur",
+      "satNode": "Sat {sat} · {total}",
+      "outletNode": "Outlet {outlet} · {total}"
     },
     "orders": {
       "title": "Ödəniş sifarişləri",
@@ -2469,5 +2505,29 @@
     "loading": "Yüklənir…",
     "empty": "Bu rejim üçün düyün yoxdur.",
     "orphans": "Valideyni olmayan düyünlər"
+  },
+  "structure": {
+    "title": "Kommersiya strukturu",
+    "subtitle": "Org → departament → peyk → outlet. Suspend girişi və gələcək billingi dayandırır.",
+    "loading": "Yüklənir…",
+    "loadFailed": "Struktur yüklənmədi",
+    "suspendFailed": "Dayandırmaq alınmadı",
+    "satSuspended": "Peyk dayandırıldı",
+    "satResumed": "Peyk bərpa olundu",
+    "outletFailed": "Outlet xətası",
+    "outletCreated": "Outlet qeydə alındı",
+    "offParent": "Sönülü (valideyn)",
+    "suspended": "Dayandırılıb",
+    "resume": "Bərpa",
+    "suspend": "Dayandır",
+    "orgBlocked": "Bloklanıb",
+    "addOutlet": "Outlet qeyd et",
+    "createOutlet": "Yarat"
+  },
+  "commsHub": {
+    "title": "Comms Hub",
+    "subtitle": "Aktiv təşkilat üçün mərkəzi kommunikasiya",
+    "scopedOrg": "Aktiv təşkilat konteksti:",
+    "comingSoon": "Inbox orchestrator topologiya və billing dalğasından sonra gələcək."
   }
 }

@@ -48,6 +48,7 @@ import {
 import { useAuth } from "../../lib/auth-context";
 import { useSubscription } from "../../lib/subscription-context";
 import { workforceNavHref } from "../../lib/workforce-packages";
+import { platformConsoleOrigin } from "../../lib/platform-origin";
 
 /** Same bypass as `useAuth().can`: platform super admin and org owner pass every screen key. */
 function allowOrch(permission: string, profile: OpsNavProfile): boolean {
@@ -194,6 +195,22 @@ export function OrchSidebar({
             label={t("orgProfile")}
             isActive={pathname.startsWith("/workspace/organization")}
             icon={Building2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/structure"
+            label={t("structure")}
+            isActive={pathname.startsWith("/workspace/structure")}
+            icon={Network}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/comms-hub"
+            label={t("commsHub")}
+            isActive={pathname.startsWith("/workspace/comms-hub")}
+            icon={Inbox}
             nested
             onNavClick={onNavClick}
           />
@@ -526,153 +543,18 @@ export function OrchSidebar({
             sectionKey="platform"
             title={t("sectionPlatform")}
             icon={Shield}
-            sectionActive={sections.platform}
+            sectionActive={false}
           >
-            <CollapsibleNavSection
-              sectionKey="platform-billing"
-              title={t("platformBilling")}
-              icon={CreditCard}
-              sectionActive={pathname.startsWith("/super-admin/billing")}
+            <a
+              href={platformConsoleOrigin()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#34495E] hover:bg-action/10"
+              onClick={onNavClick}
             >
-              <SideNavItem
-                href="/super-admin/billing/pricing"
-                label={t("platformBillingModules")}
-                isActive={
-                  pathname.startsWith("/super-admin/billing/pricing") &&
-                  !pathname.startsWith("/super-admin/billing/pricing/addons")
-                }
-                icon={Tags}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/billing/pricing/addons"
-                label={t("platformBillingAddons")}
-                isActive={pathname.startsWith("/super-admin/billing/pricing/addons")}
-                icon={Tags}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/billing/quotas"
-                label={t("platformBillingQuotas")}
-                isActive={pathname.startsWith("/super-admin/billing/quotas")}
-                icon={Gauge}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/billing/packages"
-                label={t("platformBillingPackages")}
-                isActive={pathname.startsWith("/super-admin/billing/packages")}
-                icon={Package}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/billing/trial-allowlist"
-                label={t("platformTrialAllowlist")}
-                isActive={pathname.startsWith("/super-admin/billing/trial-allowlist")}
-                icon={CalendarClock}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/billing/settings"
-                label={t("platformBillingSettings")}
-                isActive={pathname.startsWith("/super-admin/billing/settings")}
-                icon={Settings}
-                nested
-                onNavClick={onNavClick}
-              />
-            </CollapsibleNavSection>
-            <SideNavItem
-              href="/super-admin/orgs"
-              label={t("platformOrgs")}
-              isActive={pathname.startsWith("/super-admin/orgs")}
-              icon={Building2}
-              nested
-              onNavClick={onNavClick}
-            />
-            <CollapsibleNavSection
-              sectionKey="platform-mdm"
-              title={t("platformMdm")}
-              icon={Database}
-              sectionActive={pathname.startsWith("/super-admin/mdm")}
-            >
-              <SideNavItem
-                href="/super-admin/mdm"
-                label={t("platformMdmOverview")}
-                isActive={pathname === "/super-admin/mdm"}
-                icon={Database}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/mdm/companies"
-                label={t("platformMdmCompanies")}
-                isActive={pathname.startsWith("/super-admin/mdm/companies")}
-                icon={Building2}
-                nested
-                onNavClick={onNavClick}
-              />
-              <SideNavItem
-                href="/super-admin/mdm/persons"
-                label={t("platformMdmPersons")}
-                isActive={pathname.startsWith("/super-admin/mdm/persons")}
-                icon={Users}
-                nested
-                onNavClick={onNavClick}
-              />
-            </CollapsibleNavSection>
-            <SideNavItem
-              href="/super-admin/reference"
-              label={t("platformReference")}
-              isActive={pathname.startsWith("/super-admin/reference")}
-              icon={Library}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/early-access"
-              label={t("platformEarlyAccess")}
-              isActive={pathname.startsWith("/super-admin/early-access")}
-              icon={Sparkles}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/referrals"
-              label={t("platformReferrals")}
-              isActive={pathname.startsWith("/super-admin/referrals")}
-              icon={Users}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/landing"
-              label={t("platformLanding")}
-              isActive={pathname.startsWith("/super-admin/landing")}
-              icon={Tags}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/security"
-              label={t("platformSecurity")}
-              isActive={pathname.startsWith("/super-admin/security")}
-              icon={ShieldAlert}
-              nested
-              onNavClick={onNavClick}
-            />
-            <SideNavItem
-              href="/super-admin/vendors/channex"
-              label={t("platformChannex")}
-              isActive={pathname.startsWith("/super-admin/vendors/channex")}
-              icon={Radio}
-              nested
-              onNavClick={onNavClick}
-            />
+              <Shield className="h-4 w-4 shrink-0" aria-hidden />
+              {t("openPlatformConsole")}
+            </a>
           </CollapsibleNavSection>
         ) : null}
         </>

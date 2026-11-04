@@ -20,6 +20,7 @@ import {
 } from "./billing-entitlement.util";
 import type { ToggleModuleDto } from "./dto/toggle-module.dto";
 import { WorkforceProvisionService } from "../platform/workforce/workforce-provision.service";
+import { ModuleGraceService } from "./module-grace.service";
 
 type ToggleModuleResult = {
   organizationId: string;
@@ -47,6 +48,7 @@ export class BillingToggleService {
     private readonly premiumActivation: BillingPremiumActivationService,
     private readonly provision: WorkforceProvisionService,
     private readonly satelliteNotify: BillingSatelliteNotifyService,
+    private readonly moduleGrace: ModuleGraceService,
   ) {}
 
   async toggle(
@@ -123,6 +125,46 @@ export class BillingToggleService {
 
       if (this.pricing.isPremiumModuleKey(dto.moduleKey)) {
         this.premiumActivation.assertNotTrialLockedPremium(subRow, dto.moduleKey);
+      }
+
+      const graceRow = await this.moduleGrace.getGraceRow(
+        organizationId,
+        dto.moduleKey,
+      );
+      if (
+        graceRow?.scheduledEnableAt != null &&
+        graceRow.scheduledEnableAt.getTime() > now.getTime()
+      ) {
+        throw new BadRequestException({
+          code: "MODULE_ENABLE_DEFERRED",
+          message: "Module enable is scheduled for the first day of next month.",
+          scheduledEnableAt: graceRow.scheduledEnableAt.toISOString(),
+        });
+      }
+
+      const lateMonth = await this.moduleGrace.assertLateMonthChoiceOrThrow({
+        organizationId,
+        moduleKey: dto.moduleKey,
+        now,
+        confirmLateMonth: dto.confirmLateMonth,
+      });
+      if (lateMonth === "deferred") {
+        return this.finishToggle(
+          {
+            organizationId,
+            moduleKey: dto.moduleKey,
+            enabled: false,
+            activeModules: snap.activeModules,
+            proRataAzn: "0.00",
+            orderId: null,
+            paymentUrl: null,
+            providerMode: null,
+            skipped: false,
+            requiresPayment: false,
+            note: "enable_deferred_to_first_of_next_month",
+          },
+          false,
+        );
       }
 
       if (fullyActive) {
@@ -221,6 +263,11 @@ export class BillingToggleService {
         );
         return u;
       });
+      await this.moduleGrace.startGraceIfEligible(
+        organizationId,
+        dto.moduleKey,
+        now,
+      );
       return this.finishToggle(
         {
           organizationId,
@@ -273,6 +320,11 @@ export class BillingToggleService {
         );
       }
 
+      await this.moduleGrace.consumeGraceOnDisable(
+        organizationId,
+        dto.moduleKey,
+        now,
+      );
       await this.provision.revokeAllForSatellite(
         organizationId,
         dto.moduleKey,

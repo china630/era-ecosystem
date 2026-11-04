@@ -6,8 +6,13 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { orchBillingErrorMessage } from "../../lib/orch-billing-error";
+import {
+  orchBillingErrorCode,
+  orchBillingErrorMessage,
+  orchBillingErrorPayload,
+} from "../../lib/orch-billing-error";
 import { useSubscription } from "../../lib/subscription-context";
 import { enableWorkforceModule } from "../../lib/workforce-fetch";
 import {
@@ -39,21 +44,56 @@ export function WorkforceGate({
     rank > 0 && feature != null && !pathname.startsWith("/pricing");
   const upgradeSlug = feature ? workforceUpgradeSlug(feature) : "platform_workforce_pro";
 
-  async function enable() {
+  async function enable(confirmLateMonth?: "start_now" | "defer_to_first") {
     setEnabling(true);
-    const result = await enableWorkforceModule(
-      upgrade ? upgradeSlug : "platform_workforce",
-    );
-    setEnabling(false);
-    if (!result.ok) {
-      toast.error(orchBillingErrorMessage(result.errorBody, tCommon("failed")));
-      return;
+    try {
+      const moduleKey = upgrade ? upgradeSlug : "platform_workforce";
+      const result = await enableWorkforceModule(moduleKey, confirmLateMonth);
+      if (!result.ok) {
+        if (
+          !confirmLateMonth &&
+          orchBillingErrorCode(result.errorBody) ===
+            "LATE_MONTH_CONFIRMATION_REQUIRED"
+        ) {
+          const payload = orchBillingErrorPayload(result.errorBody);
+          const graceEndsAt =
+            typeof payload.graceEndsAt === "string" ? payload.graceEndsAt : null;
+          const startNow = window.confirm(
+            tMods("lateMonthConfirm", {
+              graceEnds: graceEndsAt
+                ? bakuDateDisplay(graceEndsAt)
+                : "—",
+            }),
+          );
+          if (startNow) {
+            await enable("start_now");
+          } else if (window.confirm(tMods("lateMonthDefer"))) {
+            await enable("defer_to_first");
+            toast.info(tMods("deferredToFirst"));
+          }
+          return;
+        }
+        toast.error(
+          orchBillingErrorMessage(result.errorBody, tCommon("failed")),
+        );
+        return;
+      }
+      if (!result.synced) {
+        toast.message(tMods("syncFailed"));
+      } else if (result.inGrace) {
+        toast.success(
+          tMods("graceStarted", {
+            graceEnds: result.graceEndsAt
+              ? bakuDateDisplay(result.graceEndsAt)
+              : "—",
+          }),
+        );
+      }
+      await refresh();
+      await onEnabled?.();
+    } finally {
+      setEnabling(false);
     }
-    if (!result.synced) {
-      toast.message(tMods("syncFailed"));
-    }
-    await refresh();
-    await onEnabled?.();
   }
 
   return (

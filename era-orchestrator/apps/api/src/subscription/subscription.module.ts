@@ -8,6 +8,7 @@ import { SubscriptionController } from "./subscription.controller";
 import { InternalSubscriptionController } from "./internal-subscription.controller";
 import { SubscriptionGuard } from "./subscription.guard";
 import { SubscriptionTrialModule } from "./subscription-trial.module";
+import { ChannelsModule } from "../channels/channels.module";
 
 /**
  * Do not import BillingModule here — Quota→Billing→Admin→SubscriptionTrial cycle
@@ -22,6 +23,7 @@ import { SubscriptionTrialModule } from "./subscription-trial.module";
     AccessControlModule,
     AdminModule,
     SubscriptionTrialModule,
+    ChannelsModule,
   ],
   controllers: [SubscriptionController, InternalSubscriptionController],
   providers: [SubscriptionAccessService, SubscriptionGuard],

@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { SatelliteChannelsService } from "../channels/satellite-channels.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { DepartmentProvisionService } from "../subscription/department-provision.service";
 import {
@@ -22,6 +23,7 @@ export class OrgOperatingModeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly departmentProvision: DepartmentProvisionService,
+    private readonly channels: SatelliteChannelsService,
   ) {}
 
   async get(organizationId: string): Promise<OperatingModeView> {
@@ -143,6 +145,7 @@ export class OrgOperatingModeService {
         revenueRouting: true,
       },
     });
+    await this.channels.syncPlatformChannels(organizationId).catch(() => undefined);
     return {
       organizationId: updated.id,
       name: updated.name,

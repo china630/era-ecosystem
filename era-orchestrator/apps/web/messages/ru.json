@@ -472,7 +472,24 @@
       "fiscalEmpty": "Нет аппаратов — Kafe пишет cash/card без KKM.",
       "fiscalSaved": "Аппарат сохранён",
       "fiscalSaveFailed": "Не удалось сохранить ({status})",
-      "fiscalRetired": "Аппарат снят"
+      "fiscalRetired": "Аппарат снят",
+      "payTitle": "Методы оплаты",
+      "payHint": "Каталог организации. Sync раздаёт сателлитам. Финансы только читают код.",
+      "payParentCash": "Этот отдел платит на кассу отеля-родителя (fiscalRouting=PARENT).",
+      "payEmpty": "Методов ещё нет — системный список создаётся при первом открытии.",
+      "payCode": "Код",
+      "payNameEn": "Название (EN)",
+      "payNameRu": "Название (RU)",
+      "payNameAz": "Название (AZ)",
+      "payNoTerminal": "Без банковского терминала",
+      "payAdd": "Добавить метод",
+      "payDisable": "Выключить",
+      "payEnable": "Включить",
+      "payOff": "выкл",
+      "paySaved": "Метод оплаты сохранён",
+      "paySaveFailed": "Не удалось сохранить метод ({status})",
+      "payDeptOnParent": "платит на эту кассу",
+      "payDeptOwn": "своя касса"
     },
     "referrals": {
       "title": "Реферальные партнёры",
@@ -698,7 +715,12 @@
     "wfMe": "Мой кабинет",
     "orgProfile": "Профиль организации",
     "wfJobArchitecture": "Архитектура должностей",
-    "wfOrgChart": "Оргсхема"
+    "wfOrgChart": "Оргсхема",
+    "structure": "Структура",
+    "commsHub": "Comms Hub",
+    "homeOrg": "Организация по умолчанию",
+    "setHomeOrg": "Сделать основной",
+    "openPlatformConsole": "Открыть platform console"
   },
   "headerStrip": {
     "trialUntil": "Пробный период до {date}",
@@ -857,7 +879,11 @@
       "enabled": "Модуль включён",
       "syncFailed": "Модуль сохранён, но Sync на сателлит не прошёл — Super-admin Sync или повторите.",
       "connectFailed": "Не удалось подключить сателлит — повторите или обратитесь в поддержку.",
-      "billingFootnote": "Отключённые модули всё равно попадают в счёт текущего месяца (post-paid)."
+      "billingFootnote": "Отключённые модули всё равно попадают в счёт текущего месяца (post-paid).",
+      "lateMonthConfirm": "Пробные 7 дней заканчиваются ближе к концу месяца ({graceEnds}). После пробы будет полный календарный месяц. OK — начать сейчас. Отмена — отложить.",
+      "lateMonthDefer": "Отложить включение до 1-го числа следующего месяца?",
+      "deferredToFirst": "Запланировано на 1-е число следующего месяца",
+      "graceStarted": "Старт 7-дневной пробы (до {graceEnds}). Отключите до этой даты, чтобы не платить полный месяц."
     },
     "systems": {
       "finance": {
@@ -937,7 +963,14 @@
         "highlight2": "Платежи и продукты",
         "highlight3": "Регуляторное CBS-ядро"
       }
-    }
+    },
+    "platformAppsSection": "Приложения платформы",
+    "systemsSection": "Системы",
+    "appWorkforce": "Workforce",
+    "appBilling": "Биллинг",
+    "appOrgProfile": "Профиль организации",
+    "appStructure": "Структура",
+    "appCommsHub": "Comms Hub"
   },
   "settings": {
     "title": "Настройки",
@@ -1071,7 +1104,10 @@
       "downloadPdf": "PDF",
       "pdfFailed": "Не удалось скачать PDF",
       "prev": "Назад",
-      "next": "Далее"
+      "next": "Далее",
+      "noLines": "Нет строк",
+      "satNode": "Сат {sat} · {total}",
+      "outletNode": "Точка {outlet} · {total}"
     },
     "orders": {
       "title": "Заказы оплаты",
@@ -2468,5 +2504,29 @@
     "loading": "Загрузка…",
     "empty": "Нет узлов для этого режима.",
     "orphans": "Узлы без родителя в выборке"
+  },
+  "structure": {
+    "title": "Коммерческая структура",
+    "subtitle": "Орг → департамент → сателлит → outlet. Suspend останавливает доступ и начисления.",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить структуру",
+    "suspendFailed": "Не удалось приостановить",
+    "satSuspended": "Сателлит приостановлен",
+    "satResumed": "Сателлит возобновлён",
+    "outletFailed": "Ошибка outlet",
+    "outletCreated": "Outlet зарегистрирован",
+    "offParent": "Выкл (родитель)",
+    "suspended": "Приостановлен",
+    "resume": "Включить",
+    "suspend": "Приостановить",
+    "orgBlocked": "Заблокирован",
+    "addOutlet": "Зарегистрировать outlet",
+    "createOutlet": "Создать"
+  },
+  "commsHub": {
+    "title": "Comms Hub",
+    "subtitle": "Центральные коммуникации активной организации",
+    "scopedOrg": "Контекст активной организации:",
+    "comingSoon": "Inbox появится после волны топологии и биллинга оркестратора."
   }
 }

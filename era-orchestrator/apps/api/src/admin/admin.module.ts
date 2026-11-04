@@ -20,9 +20,12 @@ import { ElektrawebBridgePolicyController } from "./elektraweb-bridge-policy.con
 import { ElektrawebBridgePolicyService } from "./elektraweb-bridge-policy.service";
 import { FiscalHardwareDeviceController } from "./fiscal-hardware-device.controller";
 import { FiscalHardwareDeviceService } from "./fiscal-hardware-device.service";
+import { OrgPaymentMethodController } from "./org-payment-method.controller";
+import { OrgPaymentMethodService } from "./org-payment-method.service";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { AdminReferenceController } from "./admin-reference.controller";
 import { DataHubAdminClient } from "./data-hub-admin.client";
+import { ChannelsModule } from "../channels/channels.module";
 
 @Module({
   // SatelliteEventsModule imports SubscriptionModule, which imports AdminModule.
@@ -33,6 +36,7 @@ import { DataHubAdminClient } from "./data-hub-admin.client";
     SystemConfigModule,
     SubscriptionTrialModule,
     forwardRef(() => SatelliteEventsModule),
+    ChannelsModule,
   ],
   controllers: [
     AdminBillingController,
@@ -44,6 +48,7 @@ import { DataHubAdminClient } from "./data-hub-admin.client";
     AdminOrganizationsController,
     ElektrawebBridgePolicyController,
     FiscalHardwareDeviceController,
+    OrgPaymentMethodController,
     AdminReferenceController,
   ],
   providers: [
@@ -55,6 +60,7 @@ import { DataHubAdminClient } from "./data-hub-admin.client";
     AdminOrganizationsService,
     ElektrawebBridgePolicyService,
     FiscalHardwareDeviceService,
+    OrgPaymentMethodService,
     DataHubAdminClient,
     PermissionsGuard,
   ],
@@ -67,6 +73,7 @@ import { DataHubAdminClient } from "./data-hub-admin.client";
     AdminOrganizationsService,
     ElektrawebBridgePolicyService,
     FiscalHardwareDeviceService,
+    OrgPaymentMethodService,
   ],
 })
 export class AdminModule {}

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -34,4 +35,13 @@ export class ToggleModuleDto {
   @Min(1)
   @Max(7)
   quantity?: number;
+
+  @ApiPropertyOptional({
+    description:
+      "Late-month enable choice when API returns LATE_MONTH_CONFIRMATION_REQUIRED: start_now or defer_to_first.",
+    enum: ["start_now", "defer_to_first"],
+  })
+  @IsOptional()
+  @IsIn(["start_now", "defer_to_first"])
+  confirmLateMonth?: "start_now" | "defer_to_first";
 }
