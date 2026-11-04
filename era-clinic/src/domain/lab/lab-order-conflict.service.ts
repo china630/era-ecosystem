@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import type { SatelliteTransactionClient } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 
 export const LAB_ALREADY_OPEN = "LAB_ALREADY_OPEN";
@@ -83,12 +84,12 @@ function scanConflicts(
 export async function findPatientLabConflict(
   patientRefId: string,
   testCodes: string[],
-  db: LabConflictDb = prisma,
+  db: LabConflictDb | SatelliteTransactionClient = prisma,
 ): Promise<EpisodeLabConflict | null> {
   const wanted = new Set(testCodes.map((c) => c.trim()).filter(Boolean));
   if (!patientRefId || wanted.size === 0) return null;
 
-  const orders = await db.labOrder.findMany({
+  const orders = await (db as LabConflictDb).labOrder.findMany({
     where: {
       patientRefId,
       status: { not: "CANCELLED" },
@@ -120,15 +121,16 @@ export async function findEpisodeLabConflict(
 
 /** Serializes lab creates for one patient so two saves cannot both pass the open check. */
 export async function lockPatientForLabCreate(
-  db: Prisma.TransactionClient,
+  db: SatelliteTransactionClient | Prisma.TransactionClient,
   patientRefId: string,
 ): Promise<void> {
-  const row = await db.patientRef.findUnique({
+  const client = db as Prisma.TransactionClient;
+  const row = await client.patientRef.findUnique({
     where: { id: patientRefId },
     select: { refCode: true },
   });
   if (!row) return;
-  await db.patientRef.update({
+  await client.patientRef.update({
     where: { id: patientRefId },
     data: { refCode: row.refCode },
   });
