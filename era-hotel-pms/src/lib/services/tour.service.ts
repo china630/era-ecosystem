@@ -498,7 +498,7 @@ export async function removeTourBooking(id: string, reason?: string) {
 
 export async function payFolioCharge(
   chargeId: string,
-  paymentMethod: PaymentMethod,
+  paymentMethod: string,
   bankTerminalId?: string,
   createdByUserId?: string,
   auditRequest?: Request,
