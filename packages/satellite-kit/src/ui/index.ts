@@ -170,6 +170,12 @@ export {
   ChannelEdgeCard,
   type ChannelEdgeCardProps,
 } from "./channel-edge-card";
+export {
+  channelEdgeTitle,
+  labelChannelKind,
+  labelChannelManagedBy,
+  labelSatelliteKey,
+} from "../integration/satellite-channels-display";
 export type {
   EraOpsNavItem,
   EraOpsNavSection,

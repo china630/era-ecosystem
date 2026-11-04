@@ -10,13 +10,11 @@ import {
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
-} from "@era/satellite-kit/ui";
-import {
   channelEdgeTitle,
   labelChannelKind,
   labelChannelManagedBy,
   labelSatelliteKey,
-} from "@era/satellite-kit";
+} from "@era/satellite-kit/ui";
 import { useAuth } from "@/lib/auth-context";
 import { orchFetch } from "@/lib/orch-api";
 

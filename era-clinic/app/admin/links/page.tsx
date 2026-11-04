@@ -6,13 +6,11 @@ import {
   CARD_CONTAINER_CLASS,
   ChannelEdgeCard,
   PageHeader,
-} from "@era/satellite-kit/ui";
-import {
   channelEdgeTitle,
   labelChannelKind,
   labelChannelManagedBy,
   labelSatelliteKey,
-} from "@era/satellite-kit";
+} from "@era/satellite-kit/ui";
 
 type ChannelRow = {
   id: string;

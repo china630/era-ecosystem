@@ -7,11 +7,11 @@ import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  labelSatelliteKey,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useAuth } from "../../../lib/auth-context";
 import { orchFetch } from "../../../lib/orch-api";
-import { labelSatelliteKey } from "@era/satellite-kit";
 
 type InvoiceLine = {
   organizationId: string;
