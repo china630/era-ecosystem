@@ -152,7 +152,7 @@ export async function recordDeposit(input: {
   const { recordReservationAudit } = await import('@/lib/reservation-audit');
   await recordReservationAudit(input.reservationId, 'DEPOSIT_RECORDED', input.audit, {
     section: 'folio',
-    source: input.audit?.source ?? 'user',
+    source: 'user',
     summary: `Deposit ${input.amount.toFixed(2)} ${input.paymentMethod}`,
     fields: [{ key: 'deposit', from: null, to: input.amount.toFixed(2) }],
   });
@@ -196,13 +196,13 @@ export async function transferDeposit(input: {
   const summary = `Deposit ${decimalToNumber(row.amount).toFixed(2)} moved`;
   await recordReservationAudit(fromReservationId, 'DEPOSIT_TRANSFER', input.audit, {
     section: 'folio',
-    source: input.audit?.source ?? 'user',
+    source: 'user',
     summary,
     fields: [{ key: 'deposit', from: fromReservationId, to: input.targetReservationId }],
   });
   await recordReservationAudit(input.targetReservationId, 'DEPOSIT_TRANSFER', input.audit, {
     section: 'folio',
-    source: input.audit?.source ?? 'user',
+    source: 'user',
     summary,
     fields: [{ key: 'deposit', from: fromReservationId, to: input.targetReservationId }],
   });
@@ -254,6 +254,12 @@ export async function carryUnusedCreditToStay(input: {
       audit: input.audit,
     });
     targetReservationId = created.id;
+  }
+  if (!targetReservationId) {
+    throw Object.assign(new Error('Future stay was not created'), {
+      status: 409,
+      code: 'CARRY_TARGET_REQUIRED',
+    });
   }
   const target = await prisma.reservation.findUnique({
     where: { id: targetReservationId },
