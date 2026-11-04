@@ -56,7 +56,8 @@
     "users": "Пользователи",
     "logins": "Входы",
     "sanatoriumPackages": "Санаторные пакеты",
-    "patientAssignmentReport": "Назначения пациента"
+    "patientAssignmentReport": "Назначения пациента",
+    "adminLinks": "Связи"
   },
   "adminAccess": {
     "title": "Матрица доступа по ролям",
@@ -490,7 +491,8 @@
       "value": "Значение",
       "unit": "Единица",
       "refRange": "Референсный диапазон",
-      "flag": "Флаг"
+      "flag": "Флаг",
+      "sexUnknownNorm": "Пол не указан — диапазон не выбран"
     },
     "noResults": "Результаты пока не введены.",
     "resultsReadOnly": "После публикации результаты доступны только для просмотра.",
@@ -1218,6 +1220,7 @@
     "procedurePrintExtraLangAz": "Азербайджанский",
     "procedurePrintExtraLangRu": "Русский",
     "procedurePrintExtraLangEn": "Английский",
+    "modalitySigner": "Имя на бланке — {name}",
     "cpPrintBanner": "Логотип/адрес/телефон в шапке берутся из профиля организации Control Plane после Sync. Колонтитулы и подписи остаются локальными.",
     "cpLogoLocked": "Логотип ведётся в профиле организации Control Plane.",
     "cpContactsLocked": "Адрес / телефон / email / сайт из Control Plane здесь только для чтения.",
@@ -1678,7 +1681,23 @@
     "fieldOptionsHint": "Для select",
     "moveUp": "Вверх",
     "moveDown": "Вниз",
-    "fieldsEmpty": "Полей нет — добавьте поля протокола/осмотра."
+    "fieldsEmpty": "Полей нет — добавьте поля протокола/осмотра.",
+    "normText": "Текст нормы",
+    "normTextEn": "Текст нормы (EN)",
+    "normTextRu": "Текст нормы (RU)",
+    "normTextAz": "Текст нормы (AZ)",
+    "boundKind": "Тип нормы",
+    "boundKindInterval": "Интервал",
+    "boundKindUpper": "Только верх",
+    "boundKindLower": "Только низ",
+    "boundKindQualitative": "Качественная",
+    "boundKindZones": "Зоны",
+    "refMinFemale": "Мин (жен)",
+    "refMaxFemale": "Макс (жен)",
+    "refMinMale": "Мин (муж)",
+    "refMaxMale": "Макс (муж)",
+    "zonesJson": "Зоны (JSON)",
+    "zonesJsonHint": "[{code,min,max,inRange,labelEn,labelRu,labelAz}]"
   },
   "contraindications": {
     "addTitle": "Добавить противопоказание",
@@ -2607,5 +2626,32 @@
     "loadFailed": "Не удалось загрузить отчёт",
     "print": "Печать",
     "headerLine": "{patient} · комната {room} · {program}"
+  },
+  "adminLinks": {
+    "title": "Связи интеграции",
+    "subtitle": "Маршрут денег и peer-каналы клиники.",
+    "moneyTitle": "Маршрут денег",
+    "moneyLine": "Режим {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode недоступен",
+    "outbound": "Исходящие",
+    "inbound": "Входящие",
+    "empty": "Каналов нет",
+    "on": "вкл",
+    "off": "выкл",
+    "disable": "Выключить входящий",
+    "loadFailed": "Не удалось загрузить",
+    "saveFailed": "Не удалось обновить",
+    "loading": "Загрузка…",
+    "kindFolio": "Проводка folio",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Событие выручки",
+    "kindRead": "Чтение статуса",
+    "satHotel": "Отель",
+    "satClinic": "Клиника",
+    "satFnb": "F&B",
+    "satRetail": "Ритейл",
+    "satFinance": "Финансы",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor"
   }
 }

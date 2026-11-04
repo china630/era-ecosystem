@@ -15,6 +15,8 @@ type Props = {
   children: React.ReactNode;
   signatureLabel?: string;
   signatureName?: string | null;
+  /** Lab and diagnostic blanks: sample receipt and result, under the title. Hides the header date. */
+  blankDates?: { sampleReceived: string | null; resultDate: string } | null;
   /** Override the room line key (receipt uses hotel room, not ward). */
   roomLabelKey?: string;
 };
@@ -36,6 +38,7 @@ export function PrintShell({
   children,
   signatureLabel,
   signatureName,
+  blankDates,
   roomLabelKey = "roomNo",
 }: Props) {
   useEffect(() => {
@@ -84,14 +87,22 @@ export function PrintShell({
             </p>
           </div>
         </div>
-        {patient?.date ? (
+        {patient?.date && !blankDates ? (
           <p className="m-0 shrink-0 whitespace-nowrap text-right text-[11px]">
             <span className="font-semibold">{printLabel(lang, "date")}</span> {patient.date}
           </p>
         ) : null}
       </header>
 
-      <h2 className="mb-3 text-center text-[16px] font-bold uppercase">{title}</h2>
+      <h2 className={`${blankDates ? "mb-1" : "mb-3"} text-center text-[16px] font-bold uppercase`}>{title}</h2>
+      {blankDates ? (
+        <p className="mb-3 text-center text-[11px]">
+          <span className="font-semibold">{printLabel(lang, "sampleReceived")}:</span>{" "}
+          {blankDates.sampleReceived ?? "—"}
+          <span className="mx-2">·</span>
+          <span className="font-semibold">{printLabel(lang, "resultDate")}:</span> {blankDates.resultDate}
+        </p>
+      ) : null}
 
       {patient ? (
         paper === "receipt" ? (

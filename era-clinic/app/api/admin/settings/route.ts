@@ -77,6 +77,7 @@ const patchSchema = z.object({
   printFooterAz: z.string().nullable().optional(),
   printSignatureLab: z.string().nullable().optional(),
   printSignatureDoctor: z.string().nullable().optional(),
+  printModalitySignersJson: z.string().max(8000).nullable().optional(),
   checkupSectionsJson: z.string().nullable().optional(),
   extraProcedureRoute: z.enum(["PLAN_BEFORE_PAY", "HOLD_UNTIL_PAY", "SHOW_ON_PLAN"]).optional(),
   procedurePrintExtraLang: z.enum(["az", "ru", "en"]).nullable().optional(),

@@ -277,14 +277,34 @@ async function upsertServiceOrg(prisma, organizationId, input) {
   });
 }
 
+function analyteNormFields(analyte) {
+  const norm = analyte.normText ?? {};
+  return {
+    normTextEn: norm.en ?? analyte.normTextEn ?? null,
+    normTextRu: norm.ru ?? analyte.normTextRu ?? null,
+    normTextAz: norm.az ?? analyte.normTextAz ?? null,
+    boundKind: analyte.boundKind ?? "INTERVAL",
+    refMin: analyte.refMin ?? null,
+    refMax: analyte.refMax ?? null,
+    refMinFemale: analyte.refMinFemale ?? null,
+    refMaxFemale: analyte.refMaxFemale ?? null,
+    refMinMale: analyte.refMinMale ?? null,
+    refMaxMale: analyte.refMaxMale ?? null,
+    zonesJson: analyte.zones
+      ? JSON.stringify(analyte.zones)
+      : analyte.zonesJson ?? null,
+    valueType: analyte.valueType ?? "NUMERIC",
+    section: analyte.section ?? null,
+  };
+}
+
 async function upsertAnalyteOrg(prisma, serviceId, analyte, sortOrder) {
   const data = {
     unit: analyte.unit ?? null,
     labelEn: analyte.label.en,
     labelRu: analyte.label.ru,
     labelAz: analyte.label.az,
-    refMin: analyte.refMin ?? null,
-    refMax: analyte.refMax ?? null,
+    ...analyteNormFields(analyte),
     sortOrder,
   };
   return prisma.diagnosticAnalyte.upsert({
@@ -341,8 +361,7 @@ async function upsertAnalyteTemplate(prisma, serviceId, analyte, sortOrder) {
     labelEn: analyte.label.en,
     labelRu: analyte.label.ru,
     labelAz: analyte.label.az,
-    refMin: analyte.refMin ?? null,
-    refMax: analyte.refMax ?? null,
+    ...analyteNormFields(analyte),
     sortOrder,
   };
   return prisma.diagnosticAnalyteTemplate.upsert({
@@ -434,8 +453,17 @@ async function copyDiagnosticTemplatesToOrg(prisma, organizationId) {
             labelEn: at.labelEn,
             labelRu: at.labelRu,
             labelAz: at.labelAz,
+            normTextEn: at.normTextEn,
+            normTextRu: at.normTextRu,
+            normTextAz: at.normTextAz,
+            boundKind: at.boundKind ?? "INTERVAL",
             refMin: at.refMin,
             refMax: at.refMax,
+            refMinFemale: at.refMinFemale,
+            refMaxFemale: at.refMaxFemale,
+            refMinMale: at.refMinMale,
+            refMaxMale: at.refMaxMale,
+            zonesJson: at.zonesJson,
             section: at.section,
             valueType: at.valueType,
             sortOrder: at.sortOrder,
@@ -586,9 +614,7 @@ async function seedAnalyteDictionary(prisma) {
       labelEn: label.en || row.code,
       labelRu: label.ru || row.code,
       labelAz: label.az || row.code,
-      refMin: row.refMin ?? null,
-      refMax: row.refMax ?? null,
-      section: row.section ?? null,
+      ...analyteNormFields(row),
       valueType: row.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
       optionsJson: row.valueOptions ? JSON.stringify(row.valueOptions) : null,
       active: true,
@@ -664,7 +690,72 @@ async function seedDiagnosticNafta(prisma, organizationId = requireSeedOrgId()) 
     counts.servicePatches += 1;
   }
 
-  return { organizationId, layer: "nafta", ...counts };
+  const blank = await applyNaftaLabBlankNorms(prisma, organizationId);
+  return { organizationId, layer: "nafta", ...counts, blank };
+}
+
+/**
+ * Apply Nafta Word-blank labelAz + norm sentences + numeric pairs onto org analytes.
+ * Does not rewrite EN/RU labels. Scoped by optional service codes.
+ */
+async function applyNaftaLabBlankNorms(prisma, organizationId) {
+  const payload = loadJson("nafta", "lab-blank-norms.json");
+  const zonesCatalog = payload.vitaminDZones ?? [];
+  let updated = 0;
+  for (const row of payload.rows ?? []) {
+    const norm = row.normText ?? {};
+    const zones =
+      row.zonesFrom === "vitaminDZones"
+        ? zonesCatalog
+        : row.zones ?? null;
+    const data = {
+      labelAz: row.labelAz ?? undefined,
+      normTextEn: norm.en || null,
+      normTextRu: norm.ru || null,
+      normTextAz: norm.az || null,
+      boundKind: row.boundKind ?? "INTERVAL",
+      refMin: row.refMin ?? null,
+      refMax: row.refMax ?? null,
+      refMinFemale: row.refMinFemale ?? null,
+      refMaxFemale: row.refMaxFemale ?? null,
+      refMinMale: row.refMinMale ?? null,
+      refMaxMale: row.refMaxMale ?? null,
+      zonesJson: zones ? JSON.stringify(zones) : null,
+      ...(row.unit !== undefined ? { unit: row.unit } : {}),
+      ...(row.valueType ? { valueType: row.valueType } : {}),
+    };
+    const where = {
+      organizationId,
+      code: { in: row.codes },
+      ...(row.services?.length
+        ? { service: { code: { in: row.services } } }
+        : {}),
+    };
+    const res = await prisma.diagnosticAnalyte.updateMany({ where, data });
+    updated += res.count;
+
+    if (row.valueOptions?.length) {
+      const analytes = await prisma.diagnosticAnalyte.findMany({
+        where,
+        select: { id: true },
+      });
+      for (const a of analytes) {
+        await prisma.analyteValueOption.deleteMany({ where: { analyteId: a.id } });
+        await prisma.analyteValueOption.createMany({
+          data: row.valueOptions.map((o, i) => ({
+            organizationId,
+            analyteId: a.id,
+            code: o.code,
+            labelEn: o.labelEn,
+            labelRu: o.labelRu,
+            labelAz: o.labelAz,
+            sortOrder: i,
+          })),
+        });
+      }
+    }
+  }
+  return { analytesUpdated: updated };
 }
 
 module.exports = {
@@ -677,4 +768,5 @@ module.exports = {
   seedDiagnosticNafta,
   seedAnalyteDictionary,
   copyDiagnosticTemplatesToOrg,
+  applyNaftaLabBlankNorms,
 };

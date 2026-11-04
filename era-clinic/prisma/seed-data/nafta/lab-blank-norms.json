@@ -1,0 +1,787 @@
+{
+  "notes": [
+    "Nafta Word blank names (labelAz) and norm sentences. Numeric pairs are for flags; print uses normText*."
+  ],
+  "vitaminDZones": [
+    {
+      "code": "severe",
+      "max": "10",
+      "inRange": false,
+      "labelEn": "severe deficit < 10 ng/mL",
+      "labelRu": "тяжёлый дефицит < 10 ng/mL",
+      "labelAz": "ciddi defisit < 10 ng/mL"
+    },
+    {
+      "code": "deficit",
+      "min": "10",
+      "max": "30",
+      "inRange": false,
+      "labelEn": "deficit 10-30 ng/mL",
+      "labelRu": "дефицит 10-30 ng/mL",
+      "labelAz": "defisit 10-30 ng/mL"
+    },
+    {
+      "code": "ok",
+      "min": "30",
+      "max": "70",
+      "inRange": true,
+      "labelEn": "optimal 30-70 ng/mL",
+      "labelRu": "оптимум 30-70 ng/mL",
+      "labelAz": "optima 30-70 ng/mL"
+    },
+    {
+      "code": "toxic",
+      "min": "70",
+      "inRange": false,
+      "labelEn": "toxicity risk > 70 ng/mL",
+      "labelRu": "риск токсикации > 70 ng/mL",
+      "labelAz": "toksikasiya ehtimalı > 70 ng/mL"
+    }
+  ],
+  "rows": [
+    {
+      "codes": ["GLU", "GLU-F"],
+      "labelAz": "Qlükoza (şəkər) qan zərdabında",
+      "boundKind": "INTERVAL",
+      "refMin": "3.8",
+      "refMax": "6.4",
+      "unit": "mmol/l",
+      "normText": {
+        "az": "3.8-6.4 mmol/l",
+        "ru": "3.8-6.4 mmol/l",
+        "en": "3.8-6.4 mmol/l"
+      }
+    },
+    {
+      "codes": ["ALT", "LAB-ALAT"],
+      "labelAz": "ALAT (GPT) qan zərdabında",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "40",
+      "unit": "U/l",
+      "normText": {
+        "az": "≤40 U/l",
+        "ru": "≤40 U/l",
+        "en": "≤40 U/l"
+      }
+    },
+    {
+      "codes": ["AST", "LAB-ASAT"],
+      "labelAz": "ASAT (GOT) qan zərdabında",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "40",
+      "unit": "U/l",
+      "normText": {
+        "az": "≤40 U/l",
+        "ru": "≤40 U/l",
+        "en": "≤40 U/l"
+      }
+    },
+    {
+      "codes": ["CREA", "LAB-CREATININE"],
+      "labelAz": "Kreatinin",
+      "boundKind": "INTERVAL",
+      "refMin": null,
+      "refMax": null,
+      "refMinFemale": "53",
+      "refMaxFemale": "97",
+      "refMinMale": "80",
+      "refMaxMale": "115",
+      "unit": "µmol/l",
+      "normText": {
+        "az": "53-97 µmol/l (qadın); 80-115 µmol/l (kişi)",
+        "ru": "53-97 µmol/l (жен); 80-115 µmol/l (муж)",
+        "en": "53-97 µmol/l (female); 80-115 µmol/l (male)"
+      }
+    },
+    {
+      "codes": ["CHOL", "LAB-CHOL"],
+      "labelAz": "Cholesterol",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "200",
+      "unit": "mg/dl",
+      "normText": {
+        "az": "200mg/dl",
+        "ru": "200mg/dl",
+        "en": "200mg/dl"
+      }
+    },
+    {
+      "codes": ["TRIG", "LAB-TRIG"],
+      "labelAz": "Triqliseridlər",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "200",
+      "unit": "mg/dl",
+      "normText": {
+        "az": "≤200 mg/dl",
+        "ru": "≤200 mg/dl",
+        "en": "≤200 mg/dl"
+      }
+    },
+    {
+      "codes": ["UREA", "LAB-UREA"],
+      "labelAz": "Sidik cövhəri",
+      "boundKind": "INTERVAL",
+      "refMin": null,
+      "refMax": null,
+      "unit": null,
+      "normText": { "az": "", "ru": "", "en": "" }
+    },
+    {
+      "codes": ["HBA1C"],
+      "labelAz": "HbA1C",
+      "boundKind": "INTERVAL",
+      "refMin": "4.0",
+      "refMax": "6.5",
+      "unit": "%",
+      "normText": {
+        "az": "4.0-6.5%",
+        "ru": "4.0-6.5%",
+        "en": "4.0-6.5%"
+      }
+    },
+    {
+      "codes": ["CRP", "LAB-CRP"],
+      "labelAz": "CRP",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "10",
+      "unit": "mg/l",
+      "normText": {
+        "az": "10.000 mg/l",
+        "ru": "10.000 mg/l",
+        "en": "10.000 mg/l"
+      }
+    },
+    {
+      "codes": ["TSH", "LAB-TSH"],
+      "labelAz": "TSH",
+      "boundKind": "INTERVAL",
+      "refMin": "0.3",
+      "refMax": "4.2",
+      "unit": "mIU/L",
+      "normText": {
+        "az": "0.3-4.2 mIU/L",
+        "ru": "0.3-4.2 mIU/L",
+        "en": "0.3-4.2 mIU/L"
+      }
+    },
+    {
+      "codes": ["T3", "FT3", "LAB-T3"],
+      "labelAz": "T3",
+      "boundKind": "INTERVAL",
+      "refMin": "1.23",
+      "refMax": "3.07",
+      "unit": "nmol/L",
+      "normText": {
+        "az": "1.23-3.07 nmol/L",
+        "ru": "1.23-3.07 nmol/L",
+        "en": "1.23-3.07 nmol/L"
+      }
+    },
+    {
+      "codes": ["T4", "FT4", "LAB-T4"],
+      "labelAz": "T4",
+      "boundKind": "INTERVAL",
+      "refMin": "66",
+      "refMax": "181",
+      "unit": "nmol/L",
+      "normText": {
+        "az": "66-181 nmol/L",
+        "ru": "66-181 nmol/L",
+        "en": "66-181 nmol/L"
+      }
+    },
+    {
+      "codes": ["PSA", "LAB-PSA"],
+      "labelAz": "PSA total",
+      "boundKind": "INTERVAL",
+      "refMin": "0",
+      "refMax": "4",
+      "unit": "ng/mL",
+      "normText": {
+        "az": "0-4 ng/mL",
+        "ru": "0-4 ng/mL",
+        "en": "0-4 ng/mL"
+      }
+    },
+    {
+      "codes": ["VITD", "LAB-VITAMIN-D"],
+      "labelAz": "Vitamin D",
+      "boundKind": "ZONES",
+      "refMin": "30",
+      "refMax": "70",
+      "unit": "ng/mL",
+      "normText": {
+        "az": "ciddi defisit < 10 ng/mL; defisit 10-30 ng/mL; optima 30-70 ng/mL; toksikasiya ehtimalı > 70 ng/mL",
+        "ru": "тяжёлый дефицит < 10 ng/mL; дефицит 10-30 ng/mL; оптимум 30-70 ng/mL; риск токсикации > 70 ng/mL",
+        "en": "severe deficit < 10 ng/mL; deficit 10-30 ng/mL; optimal 30-70 ng/mL; toxicity risk > 70 ng/mL"
+      },
+      "zonesFrom": "vitaminDZones"
+    },
+    {
+      "codes": ["DDIMER", "LAB-D-DIMER"],
+      "labelAz": "D-dimer",
+      "boundKind": "INTERVAL",
+      "refMin": null,
+      "refMax": null,
+      "normText": { "az": "", "ru": "", "en": "" }
+    },
+    {
+      "codes": ["IGE-TOT", "LAB-IGE"],
+      "labelAz": "İmmunoglobin E (Total İgE)",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "100",
+      "unit": "İU/mL",
+      "normText": {
+        "az": "100 İU/mL",
+        "ru": "100 IU/mL",
+        "en": "100 IU/mL"
+      }
+    },
+    {
+      "codes": ["ASO", "LAB-ASO"],
+      "labelAz": "ASO",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "200",
+      "unit": "U/ml",
+      "normText": {
+        "az": "200 U/ml",
+        "ru": "200 U/ml",
+        "en": "200 U/ml"
+      }
+    },
+    {
+      "codes": ["ATPO", "LAB-ANTI-TPO"],
+      "labelAz": "Anti-TPO",
+      "boundKind": "INTERVAL",
+      "refMin": null,
+      "refMax": null,
+      "normText": { "az": "", "ru": "", "en": "" }
+    },
+    {
+      "codes": ["LDL", "LAB-LDL"],
+      "labelAz": "LDL Cholesterol",
+      "boundKind": "INTERVAL",
+      "refMin": null,
+      "refMax": null,
+      "normText": { "az": "", "ru": "", "en": "" }
+    },
+    {
+      "codes": ["HBsAg", "LAB-HBSAG"],
+      "labelAz": "Hepatit B (HbsAg) qan zərdabında",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "refMin": null,
+      "refMax": null,
+      "normText": {
+        "az": "Neqativ",
+        "ru": "Отрицательный",
+        "en": "Negative"
+      },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        },
+        {
+          "code": "POSITIVE",
+          "labelEn": "Positive",
+          "labelRu": "Положительный",
+          "labelAz": "Pozitiv"
+        }
+      ]
+    },
+    {
+      "codes": ["HCV", "LAB-HCV"],
+      "labelAz": "Hepatit C (HCV) qan zərdabında",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": {
+        "az": "Neqativ",
+        "ru": "Отрицательный",
+        "en": "Negative"
+      },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        },
+        {
+          "code": "POSITIVE",
+          "labelEn": "Positive",
+          "labelRu": "Положительный",
+          "labelAz": "Pozitiv"
+        }
+      ]
+    },
+    {
+      "codes": ["RPR", "LAB-SYPHILIS"],
+      "labelAz": "Syphilis qan zərdabında",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": {
+        "az": "Neqativ",
+        "ru": "Отрицательный",
+        "en": "Negative"
+      },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        },
+        {
+          "code": "POSITIVE",
+          "labelEn": "Positive",
+          "labelRu": "Положительный",
+          "labelAz": "Pozitiv"
+        }
+      ]
+    },
+    {
+      "codes": ["WBC"],
+      "services": ["LAB-CBC"],
+      "labelAz": "WBC (Leykositlər)",
+      "boundKind": "INTERVAL",
+      "refMin": "4.0",
+      "refMax": "10.0",
+      "unit": "x 10^9/l",
+      "normText": { "az": "4.0-10.0 x 10^9/l", "ru": "4.0-10.0 x 10^9/l", "en": "4.0-10.0 x 10^9/l" }
+    },
+    {
+      "codes": ["LYMPH%"],
+      "services": ["LAB-CBC"],
+      "labelAz": "LYM% (limfositlər%)",
+      "boundKind": "INTERVAL",
+      "refMin": "25",
+      "refMax": "50",
+      "unit": "%",
+      "normText": { "az": "25-50 %", "ru": "25-50 %", "en": "25-50 %" }
+    },
+    {
+      "codes": ["MXD%"],
+      "services": ["LAB-CBC"],
+      "labelAz": "MXD% (Orta həcmli hüceyrələr %)",
+      "boundKind": "INTERVAL",
+      "refMin": "2",
+      "refMax": "10",
+      "unit": "%",
+      "normText": { "az": "2-10 %", "ru": "2-10 %", "en": "2-10 %" }
+    },
+    {
+      "codes": ["NEUT%"],
+      "services": ["LAB-CBC"],
+      "labelAz": "NEUT% (Neytrofillər%)",
+      "boundKind": "INTERVAL",
+      "refMin": "50",
+      "refMax": "80",
+      "unit": "%",
+      "normText": { "az": "50-80 %", "ru": "50-80 %", "en": "50-80 %" }
+    },
+    {
+      "codes": ["LYMPH#"],
+      "services": ["LAB-CBC"],
+      "labelAz": "LYM# (Limfositlər #)",
+      "boundKind": "INTERVAL",
+      "refMin": "0.9",
+      "refMax": "5.0",
+      "unit": "#",
+      "normText": { "az": "0.9-5.0 #", "ru": "0.9-5.0 #", "en": "0.9-5.0 #" }
+    },
+    {
+      "codes": ["MXD#"],
+      "services": ["LAB-CBC"],
+      "labelAz": "MXD# (Orta həcmli hüceyrələr #)",
+      "boundKind": "INTERVAL",
+      "refMin": "0.1",
+      "refMax": "1.5",
+      "unit": "#",
+      "normText": { "az": "0.1-1.5 #", "ru": "0.1-1.5 #", "en": "0.1-1.5 #" }
+    },
+    {
+      "codes": ["NEUT#"],
+      "services": ["LAB-CBC"],
+      "labelAz": "NEUT# (Neytrofillər #)",
+      "boundKind": "INTERVAL",
+      "refMin": "1.2",
+      "refMax": "8.0",
+      "unit": "#",
+      "normText": { "az": "1.2-8.0 #", "ru": "1.2-8.0 #", "en": "1.2-8.0 #" }
+    },
+    {
+      "codes": ["RBC"],
+      "services": ["LAB-CBC"],
+      "labelAz": "RBC (Eritrositlər)",
+      "boundKind": "INTERVAL",
+      "refMin": "3.5",
+      "refMax": "5.5",
+      "unit": "x 10^12/l",
+      "normText": { "az": "3.5-5.5 x 10^12/l", "ru": "3.5-5.5 x 10^12/l", "en": "3.5-5.5 x 10^12/l" }
+    },
+    {
+      "codes": ["HGB"],
+      "services": ["LAB-CBC"],
+      "labelAz": "HGB (Hemoqlobin)",
+      "boundKind": "INTERVAL",
+      "refMin": "11.5",
+      "refMax": "16.5",
+      "unit": "g/dl",
+      "normText": { "az": "11.5-16.5 g/dl", "ru": "11.5-16.5 g/dl", "en": "11.5-16.5 g/dl" }
+    },
+    {
+      "codes": ["HCT"],
+      "services": ["LAB-CBC"],
+      "labelAz": "HCT (Hematokrit)",
+      "boundKind": "INTERVAL",
+      "refMin": "35",
+      "refMax": "55",
+      "unit": "%",
+      "normText": { "az": "35-55 %", "ru": "35-55 %", "en": "35-55 %" }
+    },
+    {
+      "codes": ["MCV"],
+      "services": ["LAB-CBC"],
+      "labelAz": "MCV (1 Eritrositin həcmi)",
+      "boundKind": "INTERVAL",
+      "refMin": "75",
+      "refMax": "100",
+      "unit": "fl",
+      "normText": { "az": "75-100 fl", "ru": "75-100 fl", "en": "75-100 fl" }
+    },
+    {
+      "codes": ["MCH"],
+      "services": ["LAB-CBC"],
+      "labelAz": "MCH (1 eritrositdə olan hemoqlobin miqdarı)",
+      "boundKind": "INTERVAL",
+      "refMin": "25",
+      "refMax": "35",
+      "unit": "pg",
+      "normText": { "az": "25-35 pg", "ru": "25-35 pg", "en": "25-35 pg" }
+    },
+    {
+      "codes": ["MCHC"],
+      "services": ["LAB-CBC"],
+      "labelAz": "MCHC (1 eritrositdə olan hemoqlobin konsentrasiyası)",
+      "boundKind": "INTERVAL",
+      "refMin": "31",
+      "refMax": "38",
+      "unit": "g/dl",
+      "normText": { "az": "31-38 g/dl", "ru": "31-38 g/dl", "en": "31-38 g/dl" }
+    },
+    {
+      "codes": ["RDW-CV"],
+      "services": ["LAB-CBC"],
+      "labelAz": "RDW CV (Eritrositlərin həcm üzrə paylanma əmsalı)",
+      "boundKind": "INTERVAL",
+      "refMin": "11",
+      "refMax": "16",
+      "unit": "%",
+      "normText": { "az": "11-16 %", "ru": "11-16 %", "en": "11-16 %" }
+    },
+    {
+      "codes": ["RDW-SD"],
+      "services": ["LAB-CBC"],
+      "labelAz": "RDW SD (Eritrositlərin həcm üzrə paylanma əmsalı)",
+      "boundKind": "INTERVAL",
+      "refMin": "40",
+      "refMax": "55",
+      "unit": "fl",
+      "normText": { "az": "40-55 fl", "ru": "40-55 fl", "en": "40-55 fl" }
+    },
+    {
+      "codes": ["PLT"],
+      "services": ["LAB-CBC"],
+      "labelAz": "PLT (Trombositlər)",
+      "boundKind": "INTERVAL",
+      "refMin": "130",
+      "refMax": "400",
+      "unit": "x 10^9/l",
+      "normText": { "az": "130-400 x 10^9/l", "ru": "130-400 x 10^9/l", "en": "130-400 x 10^9/l" }
+    },
+    {
+      "codes": ["MPV"],
+      "services": ["LAB-CBC"],
+      "labelAz": "MPV (Trombositin həcmi)",
+      "boundKind": "INTERVAL",
+      "refMin": "6.5",
+      "refMax": "11.5",
+      "unit": "fl",
+      "normText": { "az": "6.5-11.5 fl", "ru": "6.5-11.5 fl", "en": "6.5-11.5 fl" }
+    },
+    {
+      "codes": ["PCT"],
+      "services": ["LAB-CBC"],
+      "labelAz": "PCT (Trombokrit)",
+      "boundKind": "INTERVAL",
+      "refMin": "0.1",
+      "refMax": "9.99",
+      "unit": "%",
+      "normText": { "az": "0.1-9.99 %", "ru": "0.1-9.99 %", "en": "0.1-9.99 %" }
+    },
+    {
+      "codes": ["PDW"],
+      "services": ["LAB-CBC"],
+      "labelAz": "PDW (Trombositlərin ölçü üzrə paylanma əmsalı)",
+      "boundKind": "INTERVAL",
+      "refMin": "0.1",
+      "refMax": "99.9",
+      "unit": "%",
+      "normText": { "az": "0.1-99.9 %", "ru": "0.1-99.9 %", "en": "0.1-99.9 %" }
+    },
+    {
+      "codes": ["P-LCR"],
+      "services": ["LAB-CBC"],
+      "labelAz": "P-LC (trombositlərin ən böyük fraksiya əmsalı)",
+      "boundKind": "INTERVAL",
+      "refMin": "0.1",
+      "refMax": "99.9",
+      "unit": "%",
+      "normText": { "az": "0.1-99.9 %", "ru": "0.1-99.9 %", "en": "0.1-99.9 %" }
+    },
+    {
+      "codes": ["ESR"],
+      "labelAz": "EÇS (Eritrositlərin çökmə sürəti)",
+      "boundKind": "INTERVAL",
+      "refMin": "0",
+      "refMax": "20",
+      "unit": "mm/san",
+      "normText": { "az": "0-20 mm/san", "ru": "0-20 mm/час", "en": "0-20 mm/h" }
+    },
+    {
+      "codes": ["U-VOL"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Miqdarı",
+      "boundKind": "INTERVAL",
+      "normText": { "az": "", "ru": "", "en": "" }
+    },
+    {
+      "codes": ["U-COLOR"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Rəngi",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Açıq sarı", "ru": "Светло-жёлтый", "en": "Light yellow" },
+      "valueOptions": [
+        {
+          "code": "LIGHT_YELLOW",
+          "labelEn": "Light yellow",
+          "labelRu": "Светло-жёлтый",
+          "labelAz": "Açıq sarı"
+        }
+      ]
+    },
+    {
+      "codes": ["U-CLARITY"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Şəffaflığı",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Şəffaf", "ru": "Прозрачная", "en": "Clear" },
+      "valueOptions": [
+        {
+          "code": "CLEAR",
+          "labelEn": "Clear",
+          "labelRu": "Прозрачная",
+          "labelAz": "Şəffaf"
+        }
+      ]
+    },
+    {
+      "codes": ["U-SG"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Xüsusi çəki",
+      "boundKind": "INTERVAL",
+      "refMin": "1010",
+      "refMax": "1030",
+      "normText": { "az": "1010-1030", "ru": "1010-1030", "en": "1010-1030" }
+    },
+    {
+      "codes": ["U-PH"],
+      "services": ["LAB-URINE"],
+      "labelAz": "PH",
+      "boundKind": "INTERVAL",
+      "refMin": "6.0",
+      "refMax": "7.4",
+      "normText": { "az": "6.0-7.4", "ru": "6.0-7.4", "en": "6.0-7.4" }
+    },
+    {
+      "codes": ["U-PRO"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Protein",
+      "boundKind": "INTERVAL",
+      "refMin": "0.0",
+      "refMax": "0.33",
+      "unit": "g/l",
+      "normText": { "az": "0.0-0.33 g/l", "ru": "0.0-0.33 g/l", "en": "0.0-0.33 g/l" }
+    },
+    {
+      "codes": ["U-GLU"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Qlükoza",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "0.0",
+      "unit": "mg/dl",
+      "normText": { "az": "0.0 mg/dl", "ru": "0.0 mg/dl", "en": "0.0 mg/dl" }
+    },
+    {
+      "codes": ["U-KET"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Keton",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        }
+      ]
+    },
+    {
+      "codes": ["U-NIT"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Nitrit",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        }
+      ]
+    },
+    {
+      "codes": ["U-BIL"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Bilirubin",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        }
+      ]
+    },
+    {
+      "codes": ["U-URO"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Urobilinoqen",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "valueOptions": [
+        {
+          "code": "NEGATIVE",
+          "labelEn": "Negative",
+          "labelRu": "Отрицательный",
+          "labelAz": "Neqativ"
+        }
+      ]
+    },
+    {
+      "codes": ["U-WBC"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Leykositlər",
+      "boundKind": "INTERVAL",
+      "refMin": "0",
+      "refMax": "5",
+      "unit": "g/s",
+      "normText": { "az": "0-5 g/s", "ru": "0-5 в п/зр", "en": "0-5 /HPF" }
+    },
+    {
+      "codes": ["U-RBC-FRESH"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Eritrositlər dəyişməmiş",
+      "boundKind": "INTERVAL",
+      "refMin": "0",
+      "refMax": "5",
+      "unit": "g/s",
+      "normText": { "az": "0-5 g/s", "ru": "0-5 в п/зр", "en": "0-5 /HPF" }
+    },
+    {
+      "codes": ["U-RBC-DYSM"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Eritrositlər dəyişmiş",
+      "boundKind": "UPPER_ONLY",
+      "refMin": null,
+      "refMax": "0",
+      "unit": "g/s",
+      "normText": { "az": "0 g/s", "ru": "0 в п/зр", "en": "0 /HPF" }
+    },
+    {
+      "codes": ["U-EPI-SQ"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Epitel yastı",
+      "boundKind": "INTERVAL",
+      "refMin": "0",
+      "refMax": "5",
+      "unit": "g/s",
+      "normText": { "az": "0-5 g/s", "ru": "0-5 в п/зр", "en": "0-5 /HPF" }
+    },
+    {
+      "codes": ["U-MUCUS"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Selik",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
+      "valueOptions": [
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+      ]
+    },
+    {
+      "codes": ["U-YEAST"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Göbələk",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
+      "valueOptions": [
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+      ]
+    },
+    {
+      "codes": ["U-BACT"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Bakteriyalar",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
+      "valueOptions": [
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+      ]
+    },
+    {
+      "codes": ["U-SALT"],
+      "services": ["LAB-URINE"],
+      "labelAz": "Duzlar",
+      "boundKind": "QUALITATIVE",
+      "valueType": "QUALITATIVE",
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
+      "valueOptions": [
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+      ]
+    }
+  ]
+}

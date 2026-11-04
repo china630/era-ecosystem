@@ -81,7 +81,8 @@
     "users": "Users",
     "logins": "Logins",
     "sanatoriumPackages": "Sanatorium packages",
-    "patientAssignmentReport": "Patient assignments"
+    "patientAssignmentReport": "Patient assignments",
+    "adminLinks": "Links"
   },
   "adminAccess": {
     "title": "Role access matrix",
@@ -515,7 +516,8 @@
       "value": "Value",
       "unit": "Unit",
       "refRange": "Reference range",
-      "flag": "Flag"
+      "flag": "Flag",
+      "sexUnknownNorm": "Sex unknown — range not chosen"
     },
     "noResults": "No results recorded yet.",
     "resultsReadOnly": "Results are read-only after publish.",
@@ -1243,6 +1245,7 @@
     "procedurePrintExtraLangAz": "Azerbaijani",
     "procedurePrintExtraLangRu": "Russian",
     "procedurePrintExtraLangEn": "English",
+    "modalitySigner": "Name on the blank — {name}",
     "cpPrintBanner": "Header logo/address/phone come from the Control Plane organization profile when Sync is present. Footers and signatures stay local.",
     "cpLogoLocked": "Logo is managed on the Control Plane organization profile.",
     "cpContactsLocked": "Address / phone / email / website from Control Plane are read-only here.",
@@ -1691,7 +1694,23 @@
     "fieldOptionsHint": "Used for select fields",
     "moveUp": "Up",
     "moveDown": "Down",
-    "fieldsEmpty": "No fields yet — add protocol/exam fields here."
+    "fieldsEmpty": "No fields yet — add protocol/exam fields here.",
+    "normText": "Norm text",
+    "normTextEn": "Norm text (EN)",
+    "normTextRu": "Norm text (RU)",
+    "normTextAz": "Norm text (AZ)",
+    "boundKind": "Bound kind",
+    "boundKindInterval": "Interval",
+    "boundKindUpper": "Upper only",
+    "boundKindLower": "Lower only",
+    "boundKindQualitative": "Qualitative",
+    "boundKindZones": "Zones",
+    "refMinFemale": "Min (female)",
+    "refMaxFemale": "Max (female)",
+    "refMinMale": "Min (male)",
+    "refMaxMale": "Max (male)",
+    "zonesJson": "Zones (JSON)",
+    "zonesJsonHint": "[{code,min,max,inRange,labelEn,labelRu,labelAz}]"
   },
   "contraindications": {
     "addTitle": "Add contraindication",
@@ -2610,5 +2629,32 @@
     "loadFailed": "Report failed to load",
     "print": "Print",
     "headerLine": "{patient} · room {room} · {program}"
+  },
+  "adminLinks": {
+    "title": "Integration links",
+    "subtitle": "Money routing and peer channels for this clinic.",
+    "moneyTitle": "Money routing",
+    "moneyLine": "Mode {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode unavailable",
+    "outbound": "Outbound",
+    "inbound": "Inbound",
+    "empty": "No channels yet.",
+    "on": "on",
+    "off": "off",
+    "disable": "Disable inbound",
+    "loadFailed": "Could not load links",
+    "saveFailed": "Could not update channel",
+    "loading": "Loading…",
+    "kindFolio": "Folio post",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Revenue event",
+    "kindRead": "Read status",
+    "satHotel": "Hotel",
+    "satClinic": "Clinic",
+    "satFnb": "F&B",
+    "satRetail": "Retail",
+    "satFinance": "Finance",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor"
   }
 }

@@ -10,6 +10,12 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-04 Nafta lab norms + second-pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Norm sentence + bound kind + sex/zones; catalog/lab editors; urine align + EXTERNAL/import; droplet overlay. Existing screens deepen only — not Demo/Pilot lift.
+
+**Closeout (2026-11-04 Nafta lab blank norms wave):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Norm sentence + bound kind + sex pairs; catalog/lab editors; droplet overlay. Does not lift Demo or Pilot.
+
+**Closeout (2026-11-04 Nafta lab blank norms):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Droplet catalog and saved lab results match the Word blanks. No new screen. Does not lift Demo or Pilot.
+
 **Closeout (2026-11-03 extras draft + blank name):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Staging extra +/− until Saxla and printing the result-enterer name do not lift Demo or Pilot.
 
 **Closeout (2026-11-03 yesterday start + diagnostics sheet):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Yesterday start (only with no seated procedures) and the studies list (labs plus package and payable visits) do not lift Demo or Pilot.
@@ -52,7 +58,7 @@
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
 | Cashier | `/cashier` | 🟡 |
-| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Guest procedure sheet can repeat name and note in `procedurePrintExtraLang` (lighter line; off by default). Assigned studies list is `/print/studies`. Plan print and + sit on the day-chip row. Package start, practitioner dates, and same-day-until are `DatePicker` |
+| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Guest procedure sheet can repeat name and note in `procedurePrintExtraLang` (lighter line; off by default). Lab/USM blanks: modality signer, then result author; sample receipt and result under the title. Assigned studies list is `/print/studies`. Plan print and + sit on the day-chip row. Package start, practitioner dates, and same-day-until are `DatePicker` |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
 | Physio sites S (CLI-49) | `/admin/physio-sites` (Unmatched); card chips + Solyuks/`NAFTALAN_FILL` + empty-catalog banner + PLAN site titles | 🟡 SCREEN (seed S then re-Apply `#23`; UAT open) |
 | Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (procedures + unpaid labs/visits Pay desk; kind badge + title search; HOT-06 extension write still HEADLESS; not SHIPPED) |

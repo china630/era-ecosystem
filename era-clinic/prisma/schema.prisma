@@ -105,6 +105,8 @@ model Tenant {
   extraProcedureRoute            ExtraProcedureRoute      @default(PLAN_BEFORE_PAY) @map("extra_procedure_route")
   /// Extra catalog language on the guest procedure sheet. Empty = sheet language only.
   procedurePrintExtraLang        String?                  @map("procedure_print_extra_lang")
+  /// Blank signer name per diagnostic modality code. JSON object, empty = use the result author.
+  printModalitySignersJson       String?                  @map("print_modality_signers_json") @db.Text
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
@@ -764,6 +766,15 @@ enum AnalyteValueType {
   QUALITATIVE
 }
 
+/// How numeric/qualitative bounds are interpreted for flags vs print.
+enum AnalyteBoundKind {
+  INTERVAL
+  UPPER_ONLY
+  LOWER_ONLY
+  QUALITATIVE
+  ZONES
+}
+
 model DiagnosticAnalyte {
   id             String               @id @default(cuid())
   organizationId String
@@ -774,8 +785,19 @@ model DiagnosticAnalyte {
   labelEn        String               @map("label_en")
   labelRu        String               @map("label_ru")
   labelAz        String               @map("label_az")
+  /// Blank sentence for print (az/ru/en). When set, print does not append unit.
+  normTextEn     String?              @map("norm_text_en") @db.Text
+  normTextRu     String?              @map("norm_text_ru") @db.Text
+  normTextAz     String?              @map("norm_text_az") @db.Text
+  boundKind      AnalyteBoundKind     @default(INTERVAL) @map("bound_kind")
   refMin         String?              @map("ref_min")
   refMax         String?              @map("ref_max")
+  refMinFemale   String?              @map("ref_min_female")
+  refMaxFemale   String?              @map("ref_max_female")
+  refMinMale     String?              @map("ref_min_male")
+  refMaxMale     String?              @map("ref_max_male")
+  /// JSON array of { code, min?, max?, labelEn, labelRu, labelAz } for ZONES (e.g. vitamin D).
+  zonesJson      String?              @map("zones_json") @db.Text
   /// Print grouping within a panel (e.g. physical-chemical / microscopy)
   section        String?
   valueType      AnalyteValueType     @default(NUMERIC) @map("value_type")
@@ -886,19 +908,28 @@ model DiagnosticServiceTemplate {
 }
 
 model DiagnosticAnalyteTemplate {
-  id        String                    @id @default(cuid())
-  serviceId String                    @map("service_id")
-  service   DiagnosticServiceTemplate @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  code      String
-  unit      String?
-  labelEn   String                    @map("label_en")
-  labelRu   String                    @map("label_ru")
-  labelAz   String                    @map("label_az")
-  refMin    String?                   @map("ref_min")
-  refMax    String?                   @map("ref_max")
-  section   String?
-  valueType AnalyteValueType          @default(NUMERIC) @map("value_type")
-  sortOrder Int                       @default(0) @map("sort_order")
+  id           String                    @id @default(cuid())
+  serviceId    String                    @map("service_id")
+  service      DiagnosticServiceTemplate @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  code         String
+  unit         String?
+  labelEn      String                    @map("label_en")
+  labelRu      String                    @map("label_ru")
+  labelAz      String                    @map("label_az")
+  normTextEn   String?                   @map("norm_text_en") @db.Text
+  normTextRu   String?                   @map("norm_text_ru") @db.Text
+  normTextAz   String?                   @map("norm_text_az") @db.Text
+  boundKind    AnalyteBoundKind          @default(INTERVAL) @map("bound_kind")
+  refMin       String?                   @map("ref_min")
+  refMax       String?                   @map("ref_max")
+  refMinFemale String?                   @map("ref_min_female")
+  refMaxFemale String?                   @map("ref_max_female")
+  refMinMale   String?                   @map("ref_min_male")
+  refMaxMale   String?                   @map("ref_max_male")
+  zonesJson    String?                   @map("zones_json") @db.Text
+  section      String?
+  valueType    AnalyteValueType          @default(NUMERIC) @map("value_type")
+  sortOrder    Int                       @default(0) @map("sort_order")
 
   @@unique([serviceId, code])
   @@index([serviceId])
@@ -908,20 +939,29 @@ model DiagnosticAnalyteTemplate {
 /// Unscoped lab analyte dictionary. Shared by every organization.
 /// A panel row copies code, unit, labels, and the usual adult range; the panel keeps its own norms.
 model AnalyteDictionary {
-  id          String           @id @default(cuid())
-  code        String           @unique
-  unit        String?
-  labelEn     String           @map("label_en")
-  labelRu     String           @map("label_ru")
-  labelAz     String           @map("label_az")
-  refMin      String?          @map("ref_min")
-  refMax      String?          @map("ref_max")
-  section     String?
-  valueType   AnalyteValueType @default(NUMERIC) @map("value_type")
-  optionsJson String?          @map("options_json") @db.Text
-  active      Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  code         String           @unique
+  unit         String?
+  labelEn      String           @map("label_en")
+  labelRu      String           @map("label_ru")
+  labelAz      String           @map("label_az")
+  normTextEn   String?          @map("norm_text_en") @db.Text
+  normTextRu   String?          @map("norm_text_ru") @db.Text
+  normTextAz   String?          @map("norm_text_az") @db.Text
+  boundKind    AnalyteBoundKind @default(INTERVAL) @map("bound_kind")
+  refMin       String?          @map("ref_min")
+  refMax       String?          @map("ref_max")
+  refMinFemale String?          @map("ref_min_female")
+  refMaxFemale String?          @map("ref_max_female")
+  refMinMale   String?          @map("ref_min_male")
+  refMaxMale   String?          @map("ref_max_male")
+  zonesJson    String?          @map("zones_json") @db.Text
+  section      String?
+  valueType    AnalyteValueType @default(NUMERIC) @map("value_type")
+  optionsJson  String?          @map("options_json") @db.Text
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([active])
   @@map("analyte_dictionary")
@@ -962,8 +1002,13 @@ model LabResult {
   label           String?
   value           String
   unit            String?
+  /// Chosen numeric pair for this guest (after sex resolve).
   refMin          String?       @map("ref_min")
   refMax          String?       @map("ref_max")
+  /// Blank sentence snapshot at save (print prefers this over min–max glue).
+  normTextEn      String?       @map("norm_text_en") @db.Text
+  normTextRu      String?       @map("norm_text_ru") @db.Text
+  normTextAz      String?       @map("norm_text_az") @db.Text
   flag            LabResultFlag @default(NORMAL)
   enteredByUserId String?       @map("entered_by_user_id")
   enteredAt       DateTime      @default(now()) @map("entered_at")
