@@ -45,7 +45,13 @@ jest.mock('@/lib/services/tour-ops-policy.service', () => ({
 }));
 
 import { prisma } from '@/lib/prisma';
-import { postCharge, postPayment, voidCharge, folioBalance } from '@/lib/services/folio.service';
+import {
+  postCharge,
+  postPayment,
+  voidCharge,
+  folioBalance,
+  createAllocationOnce,
+} from '@/lib/services/folio.service';
 import { refundFolioPayment } from '@/lib/services/folio-refund.service';
 import { getTourOpsPolicy } from '@/lib/services/tour-ops-policy.service';
 import {
@@ -285,7 +291,9 @@ describe('tour money', () => {
     db.tourBooking.findFirst.mockResolvedValue({ id: 'b1' });
     db.tourBooking.update.mockResolvedValue({});
     await payTourBooking('b1', 'CASH');
-    expect(db.folioPaymentAllocation.create).toHaveBeenCalled();
+    expect(createAllocationOnce).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentId: 'p1', chargeId: 'ch1' }),
+    );
     expect(db.tourBooking.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: 'PAID' }) }),
     );
