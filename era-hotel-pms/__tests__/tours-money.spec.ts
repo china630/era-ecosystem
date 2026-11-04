@@ -33,6 +33,7 @@ jest.mock('@/lib/services/folio.service', () => ({
   postCharge: jest.fn(),
   postPayment: jest.fn(),
   voidCharge: jest.fn(),
+  createAllocationOnce: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('@/lib/services/folio-refund.service', () => ({
