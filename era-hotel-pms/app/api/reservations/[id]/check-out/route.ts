@@ -19,6 +19,12 @@ const bodySchema = z
     unusedNightsReason: z.string().max(500).optional(),
     procedureCreditRefundMethod: z.enum(['CASH', 'CARD']).optional(),
     procedureCreditBankTerminalId: z.string().min(1).max(64).optional(),
+    surplusAction: z.enum(['REFUND', 'CARRY']).optional(),
+    surplusMethod: z.enum(['CASH', 'CARD']).optional(),
+    surplusBankTerminalId: z.string().min(1).max(64).optional(),
+    targetReservationId: z.string().uuid().optional(),
+    newStayCheckIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    newStayCheckOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   })
   .optional();
 

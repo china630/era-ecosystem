@@ -89,6 +89,16 @@ Coverage rows: `HOT-CL-*`, `HOT-CASH-*`, `HOT-CO-04` (STUB), `HOT-NA-01`, `HOT-A
 
 Do not mark City Ledger / Night Audit / deposit as SHIPPED until COVERAGE actor columns + UAT-SMOKE UI path match Opera-depth claims in product copy. Ops snapshot ≠ AR.
 
+### D5 — Reservation deposit (2026-11-04)
+
+A deposit is an advance on one reservation and one guest (`FolioDeposit.reservationGuestId`), not a guest wallet. Intake is open again for OPTION, CONFIRMED, and IN_HOUSE (`recordDeposit`, CASH or CARD). Check-in still applies HELD onto the folio. No-show and cancel still use the existing payout.
+
+Checkout with unused guest credit stays blocked until the cashier picks one end: cash/card refund, or carry. Carry writes a HELD row on another open stay (existing id, or a new stay with the same guest, room type, and rate plan and no room) and zeros this stay with a DEPOSIT refund. That transfer row is marked `externalRef` `TRANSFER_FROM:` and is left out of night-audit deposit receipts.
+
+Saving the party refuses to drop a guest who still has a payment or a HELD deposit (`PAYER_HAS_MONEY`). Moving that money is `POST /api/folios/deposits/transfer` (from stay+guest to stay+guest), audited as `DEPOSIT_TRANSFER`. The folio tab lists held rows and the guest's other open stays.
+
+Planned paid clinic rows are on the folio tab (`ClinicPlanPanel`): per-row void, pay the whole plan, or void the whole plan. Checkout only names the count.
+
 ## Consequences
 
 - Next implementation plan starts from P5 / HOT-* API rows, not from green DELIVERY checkboxes alone.

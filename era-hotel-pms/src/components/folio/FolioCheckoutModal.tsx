@@ -4,9 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   CatalogField,
-  DATA_TABLE_CLASS,
-  DATA_TABLE_TD_CLASS,
-  DATA_TABLE_TR_CLASS,
   Field,
   FieldSection,
   FieldTextarea,
@@ -24,12 +21,6 @@ import { pocketNetMoney } from '@/lib/folio-money-pair';
 import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-
-function sameChargeRef(stored: string | null | undefined, folioRef: string | null): boolean {
-  if (!stored || !folioRef) return false;
-  const norm = (value: string) => value.trim().replace(/^pay-/, '');
-  return norm(stored) === norm(folioRef);
-}
 
 const GUEST_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
 const PAYER_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER'] as const;
@@ -160,6 +151,15 @@ export function FolioCheckoutModal({
   const [refundMethod, setRefundMethod] = useState('');
   const [refundTerminal, setRefundTerminal] = useState('');
   const [refundReason, setRefundReason] = useState('');
+  const [surplusAction, setSurplusAction] = useState('');
+  const [surplusMethod, setSurplusMethod] = useState('');
+  const [surplusTerminal, setSurplusTerminal] = useState('');
+  const [targetReservationId, setTargetReservationId] = useState('');
+  const [depositTargets, setDepositTargets] = useState<
+    Array<{ reservationId: string; roomNumber: string; checkIn: string; checkOut: string }>
+  >([]);
+  const [newStayCheckIn, setNewStayCheckIn] = useState('');
+  const [newStayCheckOut, setNewStayCheckOut] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [clinic, setClinic] = useState<ClinicCheckout | null>(null);
@@ -209,6 +209,18 @@ export function FolioCheckoutModal({
       })
       .catch(() => setClinic(null));
     void loadFolios();
+    void fetch(`/api/reservations/${reservationId}/deposit-targets`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data ?? body) as Array<{
+          reservationId: string;
+          roomNumber: string;
+          checkIn: string;
+          checkOut: string;
+        }> | null;
+        setDepositTargets(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => setDepositTargets([]));
     void fetch('/api/fiscal/devices?kind=BANK_POS')
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
@@ -367,6 +379,14 @@ export function FolioCheckoutModal({
       if (!refundMethod) return t('checkoutPickRefundMethod');
       if (refundMethod === 'CARD' && !refundTerminal) return t('checkoutPickTerminal');
     }
+    if (unusedPayment > 0.01) {
+      if (surplusAction !== 'REFUND' && surplusAction !== 'CARRY') return t('surplusPick');
+      if (surplusAction === 'REFUND' && !surplusMethod) return t('checkoutPickRefundMethod');
+      if (surplusAction === 'REFUND' && surplusMethod === 'CARD' && !surplusTerminal) return t('checkoutPickTerminal');
+      if (surplusAction === 'CARRY' && !targetReservationId.trim() && (!newStayCheckIn || !newStayCheckOut)) {
+        return t('surplusPickStay');
+      }
+    }
     return null;
   }
 
@@ -428,6 +448,14 @@ export function FolioCheckoutModal({
           unusedNightsBankTerminalId:
             refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
           unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
+          surplusAction: unusedPayment > 0.01 ? surplusAction : undefined,
+          surplusMethod: surplusAction === 'REFUND' ? surplusMethod : undefined,
+          surplusBankTerminalId:
+            surplusAction === 'REFUND' && surplusMethod === 'CARD' ? surplusTerminal : undefined,
+          targetReservationId:
+            surplusAction === 'CARRY' && targetReservationId.trim() ? targetReservationId.trim() : undefined,
+          newStayCheckIn: surplusAction === 'CARRY' && !targetReservationId.trim() ? newStayCheckIn : undefined,
+          newStayCheckOut: surplusAction === 'CARRY' && !targetReservationId.trim() ? newStayCheckOut : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -584,65 +612,82 @@ export function FolioCheckoutModal({
                   {t('clinicPackageFuture', { count: clinic.futurePackage!.length })}
                 </p>
               ) : null}
-              <p className="m-0 font-medium">{t('clinicPaidTitle')}</p>
-              <table className={DATA_TABLE_CLASS}>
-                <tbody>
-                  {(clinic.paid ?? []).map((row) => {
-                    const charge = folios
-                      .flatMap((folio) => folio.charges)
-                      .find((item) => sameChargeRef(item.externalRef, row.folioRef));
-                    return (
-                      <tr key={row.orderId} className={DATA_TABLE_TR_CLASS}>
-                        <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{money(row.amount)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{t(`clinicStatus_${row.status}`)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>
-                          {row.status === 'in_plan' && charge?.id ? (
-                            <button
-                              type="button"
-                              className={SECONDARY_BUTTON_CLASS}
-                              onClick={() => {
-                                const reason = t('clinicVoid');
-                                void fetch(`/api/folios/charges/${charge.id}/void`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ reason }),
-                                }).then(async (res) => {
-                                  if (!res.ok) {
-                                    showApiError(await res.json().catch(() => null), tc('error'));
-                                    return;
-                                  }
-                                  await loadFolios();
-                                  const again = await fetch(`/api/reservations/${reservationId}/clinic-checkout`);
-                                  const body = await again.json().catch(() => null);
-                                  setClinic((body?.data ?? body) as ClinicCheckout);
-                                });
-                              }}
-                            >
-                              {t('clinicVoid')}
-                            </button>
-                          ) : null}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <p className="m-0 font-medium">{t('clinicPackageTitle')}</p>
-              <table className={DATA_TABLE_CLASS}>
-                <tbody>
-                  {(clinic.packageSessions ?? []).map((row) => (
-                    <tr key={row.orderId} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{t(`clinicStatus_${row.status}`)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {(clinic.paid ?? []).some((row) => row.status === 'in_plan') ? (
+                <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicPaidOnFolio')}</p>
+              ) : null}
             </div>
           ) : null}
           {unusedPayment > 0.01 ? (
-            <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('checkoutUnused', { amount: money(unusedPayment) })}</p>
+            <FieldSection title={t('surplusTitle', { amount: money(unusedPayment) })}>
+              <div className="space-y-2">
+                <CatalogField
+                  kind="OPS_HOT"
+                  label={t('surplusTitle', { amount: money(unusedPayment) })}
+                  required
+                  value={surplusAction}
+                  onChange={(v) => setSurplusAction(String(v ?? ''))}
+                  options={[
+                    { value: 'REFUND', label: t('surplusRefund') },
+                    { value: 'CARRY', label: t('surplusCarry') },
+                  ]}
+                  emptyLabel={null}
+                />
+                {surplusAction === 'REFUND' ? (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <CatalogField
+                      kind="OPS_HOT"
+                      label={t('earlyCheckoutTender')}
+                      required
+                      value={surplusMethod}
+                      onChange={(v) => setSurplusMethod(String(v ?? ''))}
+                      options={[
+                        { value: 'CASH', label: tPay('CASH') },
+                        { value: 'CARD', label: tPay('CARD') },
+                      ]}
+                      emptyLabel={null}
+                    />
+                    {surplusMethod === 'CARD' && terminalOptions.length > 0 ? (
+                      <CatalogField
+                        kind="CLOSED_SMALL"
+                        label={t('bankTerminal')}
+                        required
+                        value={surplusTerminal}
+                        onChange={(v) => setSurplusTerminal(String(v ?? ''))}
+                        options={terminalOptions}
+                        emptyLabel={t('pickTerminal')}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+                {surplusAction === 'CARRY' ? (
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <CatalogField
+                      kind="CLOSED_SMALL"
+                      label={t('surplusTarget')}
+                      value={targetReservationId}
+                      onChange={(v) => setTargetReservationId(String(v ?? ''))}
+                      options={depositTargets.map((row) => ({
+                        value: row.reservationId,
+                        label: `${row.roomNumber || '—'} ${row.checkIn}–${row.checkOut}`,
+                      }))}
+                      emptyLabel={t('surplusTarget')}
+                    />
+                    <Field
+                      label={t('surplusCheckIn')}
+                      preset="shortText"
+                      value={newStayCheckIn}
+                      onChange={(e) => setNewStayCheckIn(e.target.value)}
+                    />
+                    <Field
+                      label={t('surplusCheckOut')}
+                      preset="shortText"
+                      value={newStayCheckOut}
+                      onChange={(e) => setNewStayCheckOut(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </FieldSection>
           ) : null}
           <FieldSection title={t('checkoutTotals')}>
             <div className="grid grid-cols-2 gap-2 font-mono text-[13px]">

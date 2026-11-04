@@ -1771,6 +1771,7 @@ model ReservationGuest {
   /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
   departedAt    DateTime?
   folio         Folio?
+  deposits      FolioDeposit[]
 
   @@index([reservationId])
   @@index([guestId])
@@ -2681,6 +2682,9 @@ model FolioDeposit {
   reservation   Reservation        @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   folioId       String?
   folio         Folio?             @relation(fields: [folioId], references: [id], onDelete: SetNull)
+  /** Guest who paid. Party save refuses to drop that guest while status is HELD. */
+  reservationGuestId String?
+  reservationGuest   ReservationGuest? @relation(fields: [reservationGuestId], references: [id], onDelete: SetNull)
   amount        Decimal            @db.Decimal(12, 2)
   paymentMethod PaymentMethod
   status        FolioDepositStatus @default(HELD)
@@ -2696,6 +2700,7 @@ model FolioDeposit {
   createdAt     DateTime           @default(now())
 
   @@index([reservationId])
+  @@index([reservationGuestId])
   @@index([status])
   @@index([organizationId])
   @@index([organizationId, businessDate])

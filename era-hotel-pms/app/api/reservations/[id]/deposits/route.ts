@@ -1,16 +1,16 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { listDeposits, recordDeposit } from '@/lib/services/folio-deposit.service';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { listDeposits, recordDeposit } from '@/lib/services/folio-deposit.service';
 
-const createSchema = z.object({
+const bodySchema = z.object({
+  reservationGuestId: z.string().uuid(),
   amount: z.number().positive(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT', 'BANK_TRANSFER', 'LOYALTY_POINTS', 'EPOINT']),
-  registerRef: z.string().optional(),
-  externalRef: z.string().optional(),
+  paymentMethod: z.enum(['CASH', 'CARD']),
+  bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
 export async function GET(
@@ -35,17 +35,16 @@ export async function POST(
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.FOLIO_PAYMENT);
     const { id } = await params;
-    const body = createSchema.parse(await request.json());
-    return jsonOk(
-      serialize(
-        await recordDeposit({
-          reservationId: id,
-          ...body,
-          audit: { userId: session?.sub, request },
-        }),
-      ),
-      201,
-    );
+    const data = bodySchema.parse(await request.json());
+    const row = await recordDeposit({
+      reservationId: id,
+      reservationGuestId: data.reservationGuestId,
+      amount: data.amount,
+      paymentMethod: data.paymentMethod,
+      bankTerminalId: data.bankTerminalId,
+      audit: { userId: session?.sub, request },
+    });
+    return jsonOk(serialize(row), 201);
   } catch (err) {
     return handleRouteError(err);
   }
