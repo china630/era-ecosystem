@@ -1,7 +1,14 @@
 import type { Prisma } from "@prisma/client";
 
-/** Paid unpaid labs stay off the lab journal until settledAt is set. */
+/** Paid unpaid labs stay off the lab journal until settledAt, except release-after-pay work. */
 export function labOrderVisibleToLabWhere(): Prisma.LabOrderWhereInput {
+  return {
+    OR: [{ amountNet: { lte: 0 } }, { settledAt: { not: null } }, { releaseAfterPay: true }],
+  };
+}
+
+/** Guest card and course print: a release-after-pay row stays hidden until it is paid or in package (amount 0). */
+export function labOrderVisibleToGuestWhere(): Prisma.LabOrderWhereInput {
   return {
     OR: [{ amountNet: { lte: 0 } }, { settledAt: { not: null } }],
   };
@@ -16,11 +23,13 @@ export function isLabOrderAwaitingPayment(order: {
 
 export const LAB_AWAITING_PAYMENT = "LAB_AWAITING_PAYMENT";
 
-/** Collect / results / blank refuse work until folio or cashier confirms pay. */
+/** Collect / results stay open for release-after-pay. The guest blank does not. */
 export function assertLabOrderReadyForWork(order: {
   amountNet: unknown;
   settledAt: Date | null;
+  releaseAfterPay?: boolean;
 }): void {
+  if (order.releaseAfterPay) return;
   if (!isLabOrderAwaitingPayment(order)) return;
   const err = new Error("Lab order awaits payment");
   (err as Error & { code?: string }).code = LAB_AWAITING_PAYMENT;
@@ -31,7 +40,9 @@ export function assertLabOrderReadyForWork(order: {
 export function labAwaitingPaymentDenied(order: {
   amountNet: unknown;
   settledAt: Date | null;
-}): { message: string; status: 409; code: typeof LAB_AWAITING_PAYMENT } | null {
+  releaseAfterPay?: boolean;
+}, opts?: { guestBlank?: boolean }): { message: string; status: 409; code: typeof LAB_AWAITING_PAYMENT } | null {
+  if (!opts?.guestBlank && order.releaseAfterPay) return null;
   if (!isLabOrderAwaitingPayment(order)) return null;
   return {
     message: "Lab order awaits payment",

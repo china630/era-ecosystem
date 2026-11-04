@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   assertLabOrderCanCreate,
-  findEpisodeLabConflict,
+  findPatientLabConflict,
+  lockPatientForLabCreate,
 } from "@/domain/lab/lab-order-conflict.service";
 import {
   applyAnalyteNormToLine,
@@ -307,10 +308,6 @@ export async function createLabOrderWithItems(
   params: CreateLabOrderWithItemsParams,
 ): Promise<Prisma.LabOrderGetPayload<{ include: typeof labOrderFullInclude }>> {
   const codes = params.codes;
-  if (params.clinicalEpisodeId) {
-    const conflict = await findEpisodeLabConflict(params.clinicalEpisodeId, codes);
-    assertLabOrderCanCreate(conflict, params.confirmRepeat);
-  }
   const servicesByCode = await resolveDiagnosticServicesByCodes(codes);
   const isExternal = params.source === "EXTERNAL";
   const patientSex =
@@ -430,11 +427,27 @@ export async function createLabOrderWithItems(
     params.amountNet ??
     Object.values(amountsByCode).reduce((sum, n) => sum + Number(n || 0), 0);
   const headerInPackage = !forcePaid && [...stamps.values()].some((s) => s.inPackage);
+  const releaseAfterPay =
+    !headerInPackage &&
+    [...servicesByCode.values()].some((service) => service.guestBlankRelease === "AFTER_PAYMENT");
   const headerQuota =
     [...stamps.values()].find((s) => s.inPackage && s.packageQuotaCode)?.packageQuotaCode ??
     null;
 
   const orderId = await prisma.$transaction(async (tx) => {
+    await lockPatientForLabCreate(tx, params.patientRefId);
+    const conflict = await findPatientLabConflict(params.patientRefId, codes, tx);
+    if (forcePaid && releaseAfterPay && conflict) {
+      const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
+      if (existing && !existing.inPackage && !existing.settledAt) {
+        await tx.labOrder.update({
+          where: { id: existing.id },
+          data: { amountNet: orderAmountNet, releaseAfterPay: true },
+        });
+      }
+      if (existing) return existing.id;
+    }
+    assertLabOrderCanCreate(conflict, params.confirmRepeat);
     const created = await tx.labOrder.create({
       data: {
         organizationId: requestOrganizationId(),
@@ -449,6 +462,7 @@ export async function createLabOrderWithItems(
         scheduledCollectionAt: params.scheduledCollectionAt,
         inPackage: headerInPackage,
         packageQuotaCode: headerQuota,
+        releaseAfterPay,
         prescribedByPractitionerId: params.prescribedByPractitionerId ?? undefined,
         paymentReceiptRef: params.paymentReceiptRef ?? undefined,
         reservationId: reservationId ?? undefined,
@@ -613,6 +627,9 @@ export async function createImportedLabOrder(params: {
   );
 
   const orderId = await prisma.$transaction(async (tx) => {
+    await lockPatientForLabCreate(tx, params.patientRefId);
+    const conflict = await findPatientLabConflict(params.patientRefId, [params.code], tx);
+    assertLabOrderCanCreate(conflict, true);
     const created = await tx.labOrder.create({
       data: {
         organizationId: requestOrganizationId(),

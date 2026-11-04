@@ -27,6 +27,11 @@ const createSchema = z.object({
   financeSku: z.string().nullable().optional(),
   fields: z.array(fieldDefSchema).nullable().optional(),
   includes: z.array(z.string()).nullable().optional(),
+  guestBlankRelease: z.enum(["PAY_WITH_WORK", "AFTER_PAYMENT"]).optional(),
+  usageContour: z.enum(["GUEST", "INTERNAL"]).optional(),
+  menuSurface: z.enum(["LAB", "DIAGNOSTIC", "VISIT"]).nullable().optional(),
+  schedulingMode: z.enum(["FIXED", "OPEN"]).optional(),
+  broughtInMaxDays: z.number().int().min(1).max(365).nullable().optional(),
   sortOrder: z.number().int().optional(),
   active: z.boolean().optional(),
 });

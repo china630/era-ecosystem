@@ -23,8 +23,8 @@ describe("course summary print", () => {
   });
 
   it("lab journal visibility matches the epicrisis pay gate shape", () => {
-    const { labOrderVisibleToLabWhere } = require("@/domain/lab/lab-order-pay-gate");
-    expect(labOrderVisibleToLabWhere()).toEqual({
+    const { labOrderVisibleToGuestWhere } = require("@/domain/lab/lab-order-pay-gate");
+    expect(labOrderVisibleToGuestWhere()).toEqual({
       OR: [{ amountNet: { lte: 0 } }, { settledAt: { not: null } }],
     });
   });

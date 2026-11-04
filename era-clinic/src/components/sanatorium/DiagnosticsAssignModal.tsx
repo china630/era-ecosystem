@@ -27,6 +27,7 @@ type BalanceRow = {
   procedureCode: string;
   procedureName: string;
   remaining: number;
+  quotaTotal?: number;
   fulfillment?: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
   assignable?: boolean;
 };
@@ -265,16 +266,17 @@ export function DiagnosticsAssignModal({
     return map;
   }, [studyBalances, pkgDraft]);
 
-  function addPackageBurn(row: BalanceRow) {
+  function addPackageBurn(row: BalanceRow, qty = 1) {
     if (readOnly || clinicalLock || busy) return;
     const rem = draftRemaining.get(row.procedureCode) ?? 0;
-    if (rem < 1) return;
+    const take = Math.min(qty, rem);
+    if (take < 1) return;
     const kind = row.fulfillment === "VISIT" ? "visit" : "lab_panel";
     setPkgDraft((prev) => {
       const hit = prev.find((d) => d.serviceCode === row.procedureCode);
       if (hit) {
         return prev.map((d) =>
-          d.key === hit.key ? { ...d, qty: d.qty + 1 } : d,
+          d.key === hit.key ? { ...d, qty: d.qty + take } : d,
         );
       }
       return [
@@ -283,7 +285,7 @@ export function DiagnosticsAssignModal({
           key: `pkg:${row.procedureCode}:${Date.now()}`,
           serviceCode: row.procedureCode,
           title: row.procedureName,
-          qty: 1,
+          qty: take,
           kind,
         },
       ];
@@ -652,9 +654,18 @@ export function DiagnosticsAssignModal({
                         <p
                           className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}
                         >
-                          {t("remaining")}: {rem} / {row.remaining}
+                          {t("remaining")}: {rem} / {row.quotaTotal ?? row.remaining}
                         </p>
                       </div>
+                      <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
+                        disabled={readOnly || busy || clinicalLock || rem < 1}
+                        onClick={() => addPackageBurn(row, rem)}
+                      >
+                        {tc("all")}
+                      </button>
                       <button
                         type="button"
                         className={`${PRIMARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
@@ -665,6 +676,7 @@ export function DiagnosticsAssignModal({
                       >
                         +
                       </button>
+                      </div>
                     </li>
                   );
                 })}

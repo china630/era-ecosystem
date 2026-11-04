@@ -23,11 +23,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const { prisma } = await import("@/lib/prisma");
     const order = await prisma.labOrder.findUnique({
       where: { id },
-      select: { amountNet: true, settledAt: true },
+      select: { amountNet: true, settledAt: true, releaseAfterPay: true },
     });
     if (!order) return jsonError("Order not found", 404);
     const { labAwaitingPaymentDenied } = await import("@/domain/lab/lab-order-pay-gate");
-    const unpaid = labAwaitingPaymentDenied(order);
+    const unpaid = labAwaitingPaymentDenied(order, { guestBlank: true });
     if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     const body = bodySchema.parse(await req.json());
     const docx = Buffer.from(body.docxBase64, "base64");

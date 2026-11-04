@@ -7,6 +7,7 @@ import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
 import { signerForModality } from "@/domain/print/print-modality-signer";
 import { formatNormDisplay } from "@/lib/lab-analyte-norms";
+import { isUnsetLabValue } from "@/lib/lab-result-flags";
 
 export type PrintLabRow = {
   no: number;
@@ -121,6 +122,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
         }
       }
       const shown = String(value ?? "").trim();
+      const unset = shown === "" || isUnsetLabValue(shown);
       const catalogLabel = analyte
         ? pickL10n(
             {
@@ -132,8 +134,9 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
           )
         : code;
       const label = saved?.label?.trim() || catalogLabel;
-      const norm =
-        formatNormDisplay(
+      const norm = unset
+        ? "—"
+        : formatNormDisplay(
           {
             normTextEn: saved?.normTextEn ?? analyte?.normTextEn,
             normTextRu: saved?.normTextRu ?? analyte?.normTextRu,
@@ -157,7 +160,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
         value: shown || "—",
         unit: saved?.unit ?? analyte?.unit ?? "",
         norm,
-        flag: saved?.flag || "—",
+        flag: unset ? "—" : saved?.flag || "—",
         section,
       };
       const list = sectionMap.get(sectionKey) ?? [];

@@ -16,10 +16,27 @@ export async function GET(req: Request) {
     if (denied) return denied;
 
     const rows = await prisma.procedureType.findMany({
+      where: { active: true },
       orderBy: { code: "asc" },
     });
     const locale = await readUiLocale(req);
-    return jsonOk(await overlayProcedureTypeNames(rows, locale));
+    const named = await overlayProcedureTypeNames(rows, locale);
+    const deptCodes = [
+      ...new Set(named.map((row) => row.departmentCode).filter((code): code is string => Boolean(code))),
+    ];
+    const inactiveDepts = new Set(
+      deptCodes.length
+        ? (
+            await prisma.serviceDepartment.findMany({
+              where: { code: { in: deptCodes }, active: false },
+              select: { code: true },
+            })
+          ).map((row) => row.code)
+        : [],
+    );
+    return jsonOk(
+      named.filter((row) => !row.departmentCode || !inactiveDepts.has(row.departmentCode)),
+    );
   } catch (err) {
     return handleRouteError(err);
   }

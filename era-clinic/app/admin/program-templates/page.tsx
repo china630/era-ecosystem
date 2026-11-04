@@ -52,6 +52,7 @@ type ProgramBlock = {
   memberCodes: string[];
   assignMode: AssignMode | "";
   fulfillment: ProgramBlockFulfillment | "";
+  fulfillmentExplicit: boolean;
   quotaBasis: QuotaBasis | "";
   requiresDoctor: boolean | null;
   dailyDistinctCap: number | null;
@@ -80,7 +81,7 @@ type ProgramTemplate = {
   quotaKnots?: ProgramKnot[];
 };
 
-type ProcTypeOpt = { code: string; name: string };
+type ProcTypeOpt = { code: string; name: string; blockCategory?: string | null };
 
 const KNOT_NIGHT_CHIPS = [7, 10, 14, 21];
 
@@ -151,6 +152,7 @@ function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
     memberCodes: [],
     assignMode: "",
     fulfillment: "",
+    fulfillmentExplicit: false,
     quotaBasis: "",
     requiresDoctor: null,
     dailyDistinctCap: null,
@@ -293,8 +295,8 @@ export default function ProgramTemplatesAdminPage() {
       if (ptRes.ok) {
         const ptJson = await ptRes.json();
         const ptRaw = (ptJson.data ?? ptJson) as
-          | Array<{ code: string; name?: string }>
-          | { items?: Array<{ code: string; name?: string }> };
+          | Array<{ code: string; name?: string; blockCategory?: string | null }>
+          | { items?: Array<{ code: string; name?: string; blockCategory?: string | null }> };
         const ptList = Array.isArray(ptRaw) ? ptRaw : (ptRaw.items ?? []);
         const seen = new Set<string>();
         const unique: ProcTypeOpt[] = [];
@@ -304,7 +306,7 @@ export default function ProgramTemplatesAdminPage() {
           const key = code.normalize("NFC").toUpperCase();
           if (seen.has(key)) continue;
           seen.add(key);
-          unique.push({ code, name: x.name ?? code });
+          unique.push({ code, name: x.name ?? code, blockCategory: x.blockCategory ?? null });
         }
         unique.sort((a, b) => a.code.localeCompare(b.code));
         setProcTypes(unique);
@@ -495,7 +497,13 @@ export default function ProgramTemplatesAdminPage() {
           sortOrder: p.sortOrder ?? i,
           memberCodes: Array.isArray(p.memberCodes) ? p.memberCodes : [],
           assignMode: (p.assignMode as AssignMode) || "MANUAL",
-          fulfillment: fulfillmentFromKind(kind),
+          fulfillment:
+            p.fulfillment === "LAB_ORDER" ||
+            p.fulfillment === "VISIT" ||
+            (p.fulfillment === "PROCEDURE_ORDER" && p.fulfillmentExplicit)
+              ? p.fulfillment
+              : fulfillmentFromKind(kind),
+          fulfillmentExplicit: p.fulfillmentExplicit === true,
           quotaBasis: (p.quotaBasis as QuotaBasis) || "PER_NIGHTS",
           requiresDoctor: Boolean(p.requiresDoctor),
           dailyDistinctCap: p.dailyDistinctCap ?? null,
@@ -549,7 +557,7 @@ export default function ProgramTemplatesAdminPage() {
     setBlockDraft({
       ...b,
       kind,
-      fulfillment: fulfillmentFromKind(kind),
+      fulfillment: b.fulfillment || fulfillmentFromKind(kind),
       memberCodes: [...b.memberCodes],
     });
     setMemberPick("");
@@ -627,7 +635,8 @@ export default function ProgramTemplatesAdminPage() {
       procedureName: name,
       quotaTotal: Math.max(1, blockDraft.quotaTotal || 1),
       kind,
-      fulfillment: fulfillmentFromKind(kind),
+      fulfillment: blockDraft.fulfillment || fulfillmentFromKind(kind),
+      fulfillmentExplicit: true,
       memberCodes: [...blockDraft.memberCodes],
     };
 
@@ -840,7 +849,8 @@ ${head}
           sortOrder: b.sortOrder ?? i,
           memberCodes: b.memberCodes,
           assignMode: b.assignMode || "MANUAL",
-          fulfillment: fulfillmentFromKind(b.kind),
+          fulfillment: b.fulfillment || fulfillmentFromKind(b.kind),
+          fulfillmentExplicit: b.fulfillmentExplicit === true,
           quotaBasis: b.quotaBasis || "PER_NIGHTS",
           requiresDoctor: Boolean(b.requiresDoctor),
           showInProcedures: b.showInProcedures === true,
@@ -1254,7 +1264,7 @@ ${head}
                             <p className={`mb-0 mt-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
                               {defaultBlockName(kind, t)}
                               {" · "}
-                              {t(`fulfillment_${fulfillmentFromKind(kind)}`)}
+                              {t(`fulfillment_${b.fulfillment || fulfillmentFromKind(kind)}`)}
                               {dailyCap != null ? ` · ${dailyCap}` : ""}
                             </p>
                             {chips.length === 0 ? (
@@ -1475,6 +1485,22 @@ ${head}
                   })
                 }
                 options={assignModeOptions}
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("fulfillment")}
+                value={blockDraft.fulfillment}
+                onChange={(v) =>
+                  setBlockDraft({
+                    ...blockDraft,
+                    fulfillment: String(v ?? "") as ProgramBlockFulfillment | "",
+                    fulfillmentExplicit: true,
+                  })
+                }
+                options={(["PROCEDURE_ORDER", "LAB_ORDER", "VISIT"] as const).map((value) => ({
+                  value,
+                  label: t(`fulfillment_${value}`),
+                }))}
               />
               <CatalogField
                 kind="CLOSED_SMALL"

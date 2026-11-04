@@ -95,7 +95,7 @@ const EMPTY: PrintDraft = {
   controlPlanePrint: null,
 };
 
-export function PrintSettingsPanel() {
+export function PrintSettingsPanel({ part = "all" }: { part?: "all" | "brand" | "signers" }) {
   const t = useTranslations("adminSettings");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -240,7 +240,11 @@ export function PrintSettingsPanel() {
     <div className="mt-8">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold">{t("printBrandTitle", { defaultValue: "Print branding" })}</h2>
+          <h2 className="text-base font-semibold">
+            {part === "signers"
+              ? t("chipLabs")
+              : t("printBrandTitle", { defaultValue: "Print branding" })}
+          </h2>
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
             {t("printBrandSubtitle", { defaultValue: "Logo, clinic names, contacts for printed forms" })}
           </p>
@@ -264,6 +268,7 @@ export function PrintSettingsPanel() {
           {tc("edit")}
         </button>
       </div>
+      {part === "signers" ? null : (
       <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
         <div className="flex items-center gap-3">
           {previewLogo ? (
@@ -284,6 +289,7 @@ export function PrintSettingsPanel() {
         </div>
         <p className={TEXT_MUTED_CLASS}>{previewAddress}</p>
       </div>
+      )}
 
       <ModalShell
         open={open}
@@ -292,6 +298,7 @@ export function PrintSettingsPanel() {
         maxWidthClass="max-w-2xl"
       >
         <div className={FORM_STACK_CLASS}>
+          {part !== "signers" ? (
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("procedurePrintExtraLang")}
@@ -312,7 +319,9 @@ export function PrintSettingsPanel() {
             ]}
             emptyLabel={t("procedurePrintExtraLangOff")}
           />
-          {modalities.map((modality) => {
+          ) : null}
+          {part !== "brand"
+            ? modalities.map((modality) => {
             const title =
               locale === "ru"
                 ? modality.titleRu
@@ -336,7 +345,10 @@ export function PrintSettingsPanel() {
                 }
               />
             );
-          })}
+          })
+            : null}
+          {part !== "signers" ? (
+          <>
           {!cp?.logo ? (
             <div>
               <p className="mb-1 text-[12px] font-medium">{t("logo", { defaultValue: "Logo" })}</p>
@@ -422,6 +434,8 @@ export function PrintSettingsPanel() {
               </label>
             ))}
           </fieldset>
+          </>
+          ) : null}
         </div>
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />
       </ModalShell>

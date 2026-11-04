@@ -99,6 +99,13 @@ async function createImportedLabOrder(
   },
 ): Promise<string> {
   const episode = await ensureCutoverEpisode(tx, input.patientId);
+  if (input.status !== "COMPLETED") {
+    const { findPatientLabConflict, assertLabOrderCanCreate, lockPatientForLabCreate } =
+      await import("@/domain/lab/lab-order-conflict.service");
+    await lockPatientForLabCreate(tx, input.patientId);
+    const conflict = await findPatientLabConflict(input.patientId, [input.testCode], tx);
+    assertLabOrderCanCreate(conflict, false);
+  }
   const order = await tx.labOrder.create({
     data: {
       organizationId: orgId(),

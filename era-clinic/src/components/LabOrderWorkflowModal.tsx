@@ -36,6 +36,7 @@ import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { formatNormDisplay } from "@/lib/lab-analyte-norms";
+import { isUnsetLabValue } from "@/lib/lab-result-flags";
 
 const resultsFormId = "lab-results-form";
 
@@ -282,6 +283,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       flag?: string | null;
     }): LabResultRow => {
       const analyte = analyteByCode.get(r.code);
+      const dash = isUnsetLabValue(r.value);
       const hasSentence = Boolean(
         (r.normTextAz ?? analyte?.normText?.az)?.trim() ||
           (r.normTextEn ?? analyte?.normText?.en)?.trim() ||
@@ -300,13 +302,15 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
         label: resolveResultLabel(r.code, r.label, catalogItem, metaFields, locale),
         value: r.value,
         unit: r.unit ?? null,
-        refMin: r.refMin ?? null,
-        refMax: r.refMax ?? null,
-        normTextEn: r.normTextEn ?? analyte?.normText?.en ?? null,
-        normTextRu: r.normTextRu ?? analyte?.normText?.ru ?? null,
-        normTextAz: r.normTextAz ?? analyte?.normText?.az ?? null,
-        flag: r.flag ?? null,
-        chosenRange: hasSentence
+        refMin: dash ? null : r.refMin ?? null,
+        refMax: dash ? null : r.refMax ?? null,
+        normTextEn: dash ? null : r.normTextEn ?? analyte?.normText?.en ?? null,
+        normTextRu: dash ? null : r.normTextRu ?? analyte?.normText?.ru ?? null,
+        normTextAz: dash ? null : r.normTextAz ?? analyte?.normText?.az ?? null,
+        flag: dash ? null : r.flag ?? null,
+        chosenRange: dash
+          ? null
+          : hasSentence
           ? chosen ?? (sexPaired ? "__SEX_UNKNOWN__" : null)
           : null,
       };

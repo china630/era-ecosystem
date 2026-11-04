@@ -99,12 +99,12 @@ export async function buildEpisodeSummaryPrint(
     patientRefId: patientId,
   });
 
-  const { labOrderVisibleToLabWhere } = await import("@/domain/lab/lab-order-pay-gate");
+  const { labOrderVisibleToGuestWhere } = await import("@/domain/lab/lab-order-pay-gate");
   const [labOrders, procedureOrders, examNotes] = await Promise.all([
     prisma.labOrder.findMany({
       where: {
         AND: [
-          labOrderVisibleToLabWhere(),
+          labOrderVisibleToGuestWhere(),
           {
             OR: [
               { clinicalEpisodeId: episode.id },

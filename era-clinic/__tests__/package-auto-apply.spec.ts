@@ -12,6 +12,8 @@ jest.mock("@/lib/prisma", () => ({
     labOrderItem: { updateMany: jest.fn() },
     programInstance: { update: jest.fn(), findUnique: jest.fn() },
     programTemplate: { findFirst: jest.fn() },
+    diagnosticService: { findMany: jest.fn().mockResolvedValue([]) },
+    episodeBroughtInResult: { findMany: jest.fn().mockResolvedValue([]) },
     programProcedureBalance: {
       create: jest.fn(),
       findMany: jest.fn(),

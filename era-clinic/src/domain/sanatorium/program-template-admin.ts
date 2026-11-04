@@ -28,6 +28,7 @@ const procedureSchema = z.object({
   memberCodes: z.array(z.string().min(1)).optional(),
   assignMode: assignModeSchema.optional(),
   fulfillment: fulfillmentSchema.optional(),
+  fulfillmentExplicit: z.boolean().optional(),
   quotaBasis: quotaBasisSchema.optional(),
   requiresDoctor: z.boolean().optional(),
 });
@@ -77,6 +78,7 @@ export const programTemplateInclude = {
 export type EntitlementBlockAxes = {
   assignMode: "AUTO_ON_OPEN" | "AUTO_DAY1" | "ON_INDICATION" | "MANUAL";
   fulfillment: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
+  fulfillmentExplicit: boolean;
   quotaBasis: "PER_NIGHTS" | "PER_STAY";
   requiresDoctor: boolean;
 };
@@ -102,6 +104,7 @@ export type EntitlementSnapshot = {
 function normalizeBlockAxes(p: {
   assignMode?: string | null;
   fulfillment?: string | null;
+  fulfillmentExplicit?: boolean | null;
   quotaBasis?: string | null;
   requiresDoctor?: boolean | null;
 }): EntitlementBlockAxes {
@@ -111,6 +114,7 @@ function normalizeBlockAxes(p: {
   return {
     assignMode: assignMode.success ? assignMode.data : "MANUAL",
     fulfillment: fulfillment.success ? fulfillment.data : "PROCEDURE_ORDER",
+    fulfillmentExplicit: p.fulfillmentExplicit === true,
     quotaBasis: quotaBasis.success ? quotaBasis.data : "PER_NIGHTS",
     requiresDoctor: Boolean(p.requiresDoctor),
   };
@@ -347,6 +351,7 @@ export async function replaceTemplateProceduresAndKnots(
           procedureOrder: p.procedureOrder ?? p.sortOrder ?? i,
           assignMode: axes.assignMode,
           fulfillment: axes.fulfillment,
+          fulfillmentExplicit: axes.fulfillmentExplicit,
           quotaBasis: axes.quotaBasis,
           requiresDoctor: axes.requiresDoctor,
           dailyDistinctCap: p.dailyDistinctCap ?? null,

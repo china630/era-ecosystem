@@ -7,6 +7,22 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Closeout (2026-11-05 own lab blank, second pass):** Package assign of a lab already covered by a fresh blank returns 409 `BROUGHT_IN_ACCEPTED`. Saving the blank cancels an `ORDERED` lab for that code. No new negative suite, so this does not open Scaffold ✅. AC-CLI-LAB unchanged. Gate/Pilot unchanged.
+
+**Closeout (2026-11-05 own lab blank):** No new Scaffold ✅. `DiagnosticService.broughtInMaxDays` and `EpisodeBroughtInResult`. Stale or future dates return 400. Auto-apply skips a fresh blank. AC-CLI-LAB stays as it was. Gate/Pilot unchanged. Sprint-Index and `clinic.yaml` untouched.
+
+**Closeout (2026-11-05 settings chips + service route axes):** No new Scaffold ✅. AC-CLI-LAB and AC-CLI-ASSIGN stay as they were. An explicit package route is stored only when `fulfillmentExplicit` is set; older lab/exam rows still follow kind. Internal contour skips guest pay on a new extra. Menu surface overrides the diagnostic lane when set. No new negative suite for these axes. Gate/Pilot unchanged. Sprint-Index and `clinic.yaml` untouched.
+
+**Org payment methods Sync (2026-11-05):** Cashier settle modal reads `GET /api/payment-methods`; LOCAL settle asserts enabled codes. SoR is Platform AC-CP-PAY-METHODS 🟡 (out of BE rollup). Does **not** reopen any Clinic Scaffold ✅; Pilot `[ ]`; Sprint-Index and `clinic.yaml` untouched.
+
+**Closeout (2026-11-04 guest blank after pay + reception day sheets):** AC-CLI-LAB stays ✅ (pay-gate negative path: lab and the staff patient card work `releaseAfterPay`, guest blank and course print stay closed). AC-CLI-ASSIGN stays 🟡. Gate/Pilot unchanged. The switch is `DiagnosticService.guestBlankRelease`, not a service code.
+
+**Closeout (2026-11-04 open lab duplicate + diagnostic lane):** AC-CLI-LAB stays ✅ (existing `lab-order-cancel` negative path; check is now per patient inside the create transaction; an older open order wins over a newer completed one; unlinked ECG/US/endoscopy leave the analyses lane — `lab-order-lane.spec.ts`). Gate/Pilot unchanged. Live duplicate cleanup not run.
+
+**Closeout (2026-11-04 fizio + special pool script):** applied on the clinic droplet after dump `/root/era-clinic-2026-11-04.sql.gz`. Premium 54+54 → 108 and Derma 57+42 → 99 on `SVC_FIZIO_POOL`, daily cap 10. Detoks physio cap 10, quantity 49 (no special pool). Four open courses retargeted; no session cancelled by the script. AC-CLI-ASSIGN stays 🟡. Gate/Pilot unchanged.
+
+**Closeout (2026-11-04 blank Tarix + dash):** AC-CLI-PRINT stays ✅. Lab and USM blanks label the two dates **Tarix** (draw, then result). A dash result keeps no norm and no flag on the blank and on the order screen. An empty cell still shows the catalog norm while it is being filled. Gate/Pilot unchanged.
+
 **Closeout (2026-11-04 lab/USM blank signer + dates):** AC-CLI-PRINT stays ✅. Modality signer and sample/result dates are on the existing blanks, not a new AC. Gate/Pilot unchanged.
 
 **Closeout (2026-11-02 print extra language + lab rooms):** AC-CLI-LAB stays ✅ (room numbers return for episode-read without a practitioner; existing negative path). CLI-34 print extra language is a branding option on the existing guest sheet, not a new AC. Gate/Pilot unchanged.

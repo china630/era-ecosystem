@@ -77,6 +77,11 @@ type DiagnosticService = {
   hotelRevenueCode?: string | null;
   fieldsJson?: string | null;
   includesJson?: string | null;
+  guestBlankRelease?: "PAY_WITH_WORK" | "AFTER_PAYMENT";
+  usageContour?: "GUEST" | "INTERNAL";
+  menuSurface?: "LAB" | "DIAGNOSTIC" | "VISIT" | "";
+  schedulingMode?: "FIXED" | "OPEN";
+  broughtInMaxDays?: number | null;
   sortOrder: number;
   active: boolean;
   _count?: { analytes?: number };
@@ -521,6 +526,14 @@ export default function DiagnosticCatalogAdminPage() {
       titleRu: row.titleRu,
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
+      guestBlankRelease: row.guestBlankRelease ?? "PAY_WITH_WORK",
+      usageContour: row.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST",
+      menuSurface: row.menuSurface ?? "",
+      schedulingMode: row.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
+      broughtInMaxDays:
+        row.broughtInMaxDays != null && row.broughtInMaxDays > 0
+          ? String(row.broughtInMaxDays)
+          : "",
       financeSku: linkedSku,
       includes: includesText,
       sortOrder: String(row.sortOrder),
@@ -646,6 +659,17 @@ export default function DiagnosticCatalogAdminPage() {
         titleRu: form.titleRu?.trim(),
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
+        guestBlankRelease: form.guestBlankRelease === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
+        usageContour: form.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST",
+        menuSurface:
+          form.menuSurface === "LAB" || form.menuSurface === "DIAGNOSTIC" || form.menuSurface === "VISIT"
+            ? form.menuSurface
+            : null,
+        schedulingMode: form.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
+        broughtInMaxDays:
+          form.broughtInMaxDays != null && Number(form.broughtInMaxDays) > 0
+            ? Number(form.broughtInMaxDays)
+            : null,
         financeSku: form.financeSku?.trim() || null,
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
@@ -1499,6 +1523,82 @@ export default function DiagnosticCatalogAdminPage() {
                 required
                 value={form.titleAz ?? ""}
                 onChange={(e) => setForm({ ...form, titleAz: e.target.value })}
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("guestBlankRelease")}
+                hint={t("guestBlankReleaseHint")}
+                value={form.guestBlankRelease ?? "PAY_WITH_WORK"}
+                options={[
+                  { value: "PAY_WITH_WORK", label: t("guestBlankPayWithWork") },
+                  { value: "AFTER_PAYMENT", label: t("guestBlankAfterPayment") },
+                ]}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    guestBlankRelease: value === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
+                  })
+                }
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("usageContour")}
+                hint={t("usageContourHint")}
+                value={form.usageContour ?? "GUEST"}
+                options={[
+                  { value: "GUEST", label: t("usageContourGuest") },
+                  { value: "INTERNAL", label: t("usageContourInternal") },
+                ]}
+                onChange={(value) =>
+                  setForm({ ...form, usageContour: value === "INTERNAL" ? "INTERNAL" : "GUEST" })
+                }
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("menuSurface")}
+                hint={t("menuSurfaceHint")}
+                value={form.menuSurface ?? ""}
+                emptyLabel={t("menuSurfaceDefault")}
+                options={[
+                  { value: "LAB", label: t("menuSurfaceLab") },
+                  { value: "DIAGNOSTIC", label: t("menuSurfaceDiagnostic") },
+                  { value: "VISIT", label: t("menuSurfaceVisit") },
+                ]}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    menuSurface:
+                      value === "LAB" || value === "DIAGNOSTIC" || value === "VISIT" ? value : "",
+                  })
+                }
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("schedulingMode")}
+                hint={t("schedulingModeHint")}
+                value={form.schedulingMode ?? "FIXED"}
+                options={[
+                  { value: "FIXED", label: t("schedulingModeFixed") },
+                  { value: "OPEN", label: t("schedulingModeOpen") },
+                ]}
+                onChange={(value) =>
+                  setForm({ ...form, schedulingMode: value === "OPEN" ? "OPEN" : "FIXED" })
+                }
+              />
+              <Field
+                label={t("broughtInMaxDays")}
+                hint={t("broughtInMaxDaysHint")}
+                preset="count"
+                type="number"
+                min={1}
+                max={365}
+                value={form.broughtInMaxDays ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    broughtInMaxDays: e.target.value.trim(),
+                  })
+                }
               />
               <Field
                 label={t("serviceCode")}
