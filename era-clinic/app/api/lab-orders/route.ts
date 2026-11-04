@@ -16,7 +16,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
-import { labOrderLaneWhere, loadDiagnosticLaneCodes, loadMenuSurfaceCodes } from "@/domain/lab/lab-order-lane";
+import { labOrderLaneWhere } from "@/domain/lab/lab-order-lane";
+import { loadDiagnosticLaneCodes, loadMenuSurfaceCodes } from "@/domain/lab/lab-order-lane.server";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const createSchema = z.object({

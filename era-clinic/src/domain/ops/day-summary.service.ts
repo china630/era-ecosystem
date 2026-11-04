@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
 import { listOverdueScheduledProcedures } from "@/domain/procedure/procedure-attendance.service";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
-import { labOrderLaneWhere, loadDiagnosticLaneCodes, loadMenuSurfaceCodes } from "@/domain/lab/lab-order-lane";
+import { labOrderLaneWhere } from "@/domain/lab/lab-order-lane";
+import { loadDiagnosticLaneCodes, loadMenuSurfaceCodes } from "@/domain/lab/lab-order-lane.server";
 
 export { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
