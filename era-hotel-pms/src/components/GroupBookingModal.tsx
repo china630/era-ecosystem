@@ -9,7 +9,6 @@ import {
   FieldPanel,
   FieldRow,
   FieldSelect,
-  hotelTenderOptions,
   MODAL_FULL_CLASS,
   SECONDARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
@@ -131,7 +130,6 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const tc = useTranslations('common');
   const tr = useTranslations('reservationCard');
   const locale = useLocale();
-  const tenderLocale = locale.startsWith('az') ? 'az' : locale.startsWith('ru') ? 'ru' : 'en';
 
   const [checkIn, setCheckIn] = useState(todayIso);
   const [checkOut, setCheckOut] = useState(() => addDaysIso(todayIso(), 1));
@@ -155,8 +153,30 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
   const [paidBy, setPaidBy] = useState('');
   const [folioMode, setFolioMode] = useState<'INDIVIDUAL' | 'MASTER' | 'SPLIT'>('MASTER');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [tenderOptions, setTenderOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: 'CASH', label: 'CASH' },
+    { value: 'CARD', label: 'CARD' },
+    { value: 'EPOINT', label: 'EPOINT' },
+    { value: 'COMPANY_ACCOUNT', label: 'COMPANY_ACCOUNT' },
+    { value: 'LOYALTY_POINTS', label: 'LOYALTY_POINTS' },
+    { value: 'DEPOSIT', label: 'DEPOSIT' },
+  ]);
   const [lines, setLines] = useState<StayLine[]>([newLine()]);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    void fetch('/api/payment-methods')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data?.methods ?? body?.methods) as
+          | Array<{ code: string; label: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setTenderOptions(rows.map((row) => ({ value: row.code, label: row.label || row.code })));
+        }
+      })
+      .catch(() => undefined);
+  }, [locale]);
 
   const [guests, setGuests] = useState<SelectOpt[]>([]);
   const [ratePlans, setRatePlans] = useState<RatePlanOpt[]>([]);
@@ -886,7 +906,7 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
                 label={tb('paymentMethod')}
                 value={paymentMethod}
                 onChange={(v) => setPaymentMethod(String(v))}
-                options={hotelTenderOptions(tenderLocale)}
+                options={tenderOptions}
               />
               <FieldSelect
                 label={t('folioMode')}

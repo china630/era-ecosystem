@@ -172,11 +172,14 @@ export function pocketNetMoney(
     }
   }
   let paymentsTotal = 0;
+  let linkedRefunds = 0;
+  for (const amount of refundByOriginal.values()) linkedRefunds += amount;
   for (const payment of payments) {
     if (payment.voidedAt || payment.kind === 'REFUND') continue;
     const refunded = payment.id ? refundByOriginal.get(payment.id) ?? 0 : 0;
     paymentsTotal += num(payment.amount) - refunded;
   }
+  paymentsTotal -= Math.max(0, refunds - linkedRefunds);
   services = round2(services);
   paymentsTotal = round2(Math.max(0, paymentsTotal));
   const net = round2(services - paymentsTotal);

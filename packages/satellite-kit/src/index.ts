@@ -367,6 +367,15 @@ export {
   hydrateFiscalDevicesFromSync,
   type FiscalDeviceSyncRow,
 } from "./integration/fiscal-device-hydrate";
+export {
+  hydratePaymentMethodsFromSync,
+  listPaymentMethodsForSatellite,
+  paymentMethodsSynced,
+  paymentMethodRouting,
+  clearPaymentMethodCatalog,
+  type PaymentMethodSyncRow,
+  type OrgPaymentMethodDesk,
+} from "./integration/payment-method-catalog";
 export { reportPosStationCapacity } from "./integration/report-pos-station-capacity";
 export { reportClinicCapacity } from "./integration/report-clinic-capacity";
 export {
