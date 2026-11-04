@@ -80,19 +80,34 @@ const ROW_BG: Record<string, string> = {
   NO_SHOW: 'bg-rose-50',
 };
 
-function sourceLabel(row: Row, t: (key: string) => string): string {
+/** Sell path + company when both are set (corp walk-in / agency+company, etc.). */
+function partyChannelLabel(row: Row, t: (key: string) => string): string {
   const kind = row.source?.code
     ? bookingSourceKind(row.source.code)
     : inferSourceKindFromAgency(row.agency?.code, row.agency?.name);
+  const company = (row.company?.name || row.company?.code || '').trim();
+  const agency = (row.agency?.name || row.agency?.code || '').trim();
+  const parts: string[] = [];
   if (kind === 'WALKIN') {
     const profile = row.walkInProfileCode?.trim();
-    return profile ? `${t('sourceWalkIn')} · ${profile}` : t('sourceWalkIn');
+    parts.push(profile ? `${t('sourceWalkIn')} · ${profile}` : t('sourceWalkIn'));
+  } else if (kind === 'AGENCY') {
+    parts.push(agency || t('sourceAgency'));
+  } else if (kind === 'BOOKING') {
+    parts.push(agency || row.source?.name || t('sourceOta'));
+  } else if (kind === 'CORPORATE') {
+    // Company is the bill-to; still show travel agent when both are on the stay.
+    if (agency) parts.push(agency);
+  } else if (kind === 'WEB') {
+    parts.push(row.source?.name || t('sourceWeb'));
+  } else if (agency) {
+    parts.push(agency);
+  } else if (row.source?.name) {
+    parts.push(row.source.name);
   }
-  if (kind === 'AGENCY') return row.agency?.name || row.agency?.code || t('sourceAgency');
-  if (kind === 'BOOKING') return row.agency?.name || row.source?.name || t('sourceOta');
-  if (kind === 'CORPORATE') return row.company?.name || row.company?.code || t('sourceCorporate');
-  if (kind === 'WEB') return row.source?.name || t('sourceWeb');
-  return row.agency?.name || row.company?.name || row.source?.name || '—';
+  if (company && !parts.includes(company)) parts.push(company);
+  if (parts.length === 0 && kind === 'CORPORATE') parts.push(t('sourceCorporate'));
+  return parts.length > 0 ? parts.join(' · ') : '—';
 }
 
 function childrenCount(row: Row): number {
@@ -371,9 +386,10 @@ export default function ReservationsListPage() {
                 },
                 {
                   key: 'agency',
-                  header: t('agency'),
+                  header: t('partyChannel'),
                   sortable: true,
-                  render: (r) => sourceLabel(r, tCard),
+                  sortValue: (r) => partyChannelLabel(r, tCard),
+                  render: (r) => partyChannelLabel(r, tCard),
                 },
                 {
                   key: 'guest',

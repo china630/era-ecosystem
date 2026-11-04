@@ -170,7 +170,7 @@ describe('listReservationsForGrid pagination', () => {
     expect(prisma.reservation.findMany).not.toHaveBeenCalled();
   });
 
-  it('applies q to guest/room/agency/id/notes', async () => {
+  it('applies q to guest/room/agency/company/id/notes', async () => {
     const { prisma } = await import('@/lib/prisma');
     (prisma.reservation.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.reservation.count as jest.Mock).mockResolvedValue(0);
@@ -186,6 +186,12 @@ describe('listReservationsForGrid pagination', () => {
       expect.arrayContaining([
         expect.objectContaining({
           notes: { some: { text: { contains: 'Ali', mode: 'insensitive' } } },
+        }),
+        expect.objectContaining({
+          company: { name: { contains: 'Ali', mode: 'insensitive' } },
+        }),
+        expect.objectContaining({
+          company: { code: { contains: 'Ali', mode: 'insensitive' } },
         }),
       ]),
     );

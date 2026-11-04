@@ -13,6 +13,7 @@ import {
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
   TEXT_MUTED_CLASS,
+  showWarning,
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
@@ -176,8 +177,12 @@ export function ReservationCardGuestsTab({
 
   function assignGuestAt(index: number, g: SelectOption) {
     const slot = pax[index];
-    if (!slot || !guestFitsSlot(g.birthDate, slot)) return;
+    if (!slot) return;
     if (pax.some((row, i) => i !== index && row.guestId === g.id)) return;
+    // Always fill the clicked row; DOB may reband adult↔child (counters follow onPax).
+    if (g.birthDate && !guestFitsSlot(g.birthDate, slot)) {
+      showWarning(t('guestAgeMismatch'));
+    }
     const next = pax.map((row, i) => (i === index ? withGuestDemographics(row, g) : row));
     onPax(next);
     const chosen = next[index];
@@ -333,10 +338,8 @@ export function ReservationCardGuestsTab({
                   (g) => !q || g.label.toLowerCase().includes(q) || g.id.toLowerCase().includes(q),
                 )
           )
-            .filter(
-              (g) =>
-                guestFitsSlot(g.birthDate, row) && !pax.some((person) => person.guestId === g.id),
-            )
+            // Keep age-mismatched guests visible — assign rebands the clicked row.
+            .filter((g) => !pax.some((person) => person.guestId === g.id))
             .slice(0, 40);
           return (
           <div className="relative flex items-center justify-end gap-1">

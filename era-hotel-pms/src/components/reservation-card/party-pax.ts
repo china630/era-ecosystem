@@ -9,7 +9,11 @@ export function isMinorPax(row: Pick<PaxRow, 'birthDate' | 'age'>): boolean {
   return Number.isFinite(age) && age >= 0 && age < 18;
 }
 
-export function isIncompletePax(row: Pick<PaxRow, 'firstName' | 'lastName'>): boolean {
+/** Empty name and no master link — fillable. A guestId keeps the row even without a typed name. */
+export function isIncompletePax(
+  row: Pick<PaxRow, 'firstName' | 'lastName' | 'guestId'>,
+): boolean {
+  if ((row.guestId ?? '').trim()) return false;
   return !paxHasRealName(row);
 }
 
@@ -247,6 +251,81 @@ export function syncPaxToBandCounts(
   return syncPaxToPartySize(next, next.length, equalMode);
 }
 
+function fillPaxRowWithGuest(
+  row: PaxRow,
+  guest: { id: string; firstName: string; lastName: string; birthDate?: string },
+  isPrimary: boolean,
+): PaxRow {
+  return {
+    ...row,
+    guestId: guest.id,
+    firstName: guest.firstName || row.firstName,
+    lastName: guest.lastName || row.lastName,
+    birthDate: guest.birthDate || row.birthDate,
+    age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : row.age,
+    isPrimary,
+    ownsFolio: true,
+  };
+}
+
+/**
+ * Fill the row the FO clicked (New guest / search). DOB may reband the slot;
+ * party counters follow via countsFromPax. Prefer this over attachGuestToPax when
+ * a target index is known so the clicked row never stays empty.
+ */
+export function placeGuestOnPaxRow(
+  pax: PaxRow[],
+  targetIndex: number,
+  guest: { id: string; firstName: string; lastName: string; birthDate?: string },
+  opts: { equalMode: boolean; reservationGuestId: string },
+): { pax: PaxRow[]; guestId: string; grew: boolean; rebander: boolean } {
+  const already = pax.some((p) => p.guestId === guest.id);
+  if (already) {
+    return { pax, guestId: opts.reservationGuestId, grew: false, rebander: false };
+  }
+  if (targetIndex < 0 || targetIndex >= pax.length) {
+    const attached = attachGuestToPax(pax, guest, opts);
+    return { ...attached, rebander: false };
+  }
+  const slot = pax[targetIndex];
+  if (slot.guestId && slot.guestId !== guest.id && !isIncompletePax(slot)) {
+    const attached = attachGuestToPax(pax, guest, opts);
+    return { ...attached, rebander: false };
+  }
+  const rebander = Boolean(guest.birthDate && !guestFitsSlot(guest.birthDate, slot));
+  const fillingPrimary =
+    Boolean(slot.isPrimary) ||
+    (!pax.some((r) => r.isPrimary) && targetIndex === 0) ||
+    !opts.reservationGuestId;
+  const next = pax.map((row, j) => {
+    if (j !== targetIndex) {
+      if (!fillingPrimary || opts.equalMode) return { ...row, ownsFolio: true };
+      return { ...row, isPrimary: false, ownsFolio: true };
+    }
+    return fillPaxRowWithGuest(
+      row,
+      guest,
+      fillingPrimary && !opts.equalMode ? true : row.isPrimary && !opts.equalMode,
+    );
+  });
+  if (opts.equalMode) {
+    const primaryIdx = next.findIndex((row) => row.isPrimary);
+    const keep = primaryIdx >= 0 ? primaryIdx : 0;
+    return {
+      pax: next.map((row, index) => ({ ...row, isPrimary: index === keep, ownsFolio: true })),
+      guestId: fillingPrimary || !opts.reservationGuestId ? guest.id : opts.reservationGuestId,
+      grew: false,
+      rebander,
+    };
+  }
+  return {
+    pax: next,
+    guestId: fillingPrimary || !opts.reservationGuestId ? guest.id : opts.reservationGuestId,
+    grew: false,
+    rebander,
+  };
+}
+
 /** Fill an empty slot of the same age band, else append. An adult never occupies a child slot. */
 export function attachGuestToPax(
   pax: PaxRow[],
@@ -270,16 +349,11 @@ export function attachGuestToPax(
         if (!fillingPrimary || opts.equalMode) return { ...row, ownsFolio: true };
         return { ...row, isPrimary: false, ownsFolio: true };
       }
-      return {
-        ...row,
-        guestId: guest.id,
-        firstName: guest.firstName || row.firstName,
-        lastName: guest.lastName || row.lastName,
-        birthDate: guest.birthDate || row.birthDate,
-        age: guest.birthDate ? ageYearsFromBirthDate(guest.birthDate) : row.age,
-        isPrimary: fillingPrimary && !opts.equalMode ? true : row.isPrimary && !opts.equalMode,
-        ownsFolio: true,
-      };
+      return fillPaxRowWithGuest(
+        row,
+        guest,
+        fillingPrimary && !opts.equalMode ? true : row.isPrimary && !opts.equalMode,
+      );
     });
     if (opts.equalMode) {
       const primaryIdx = next.findIndex((row) => row.isPrimary);
@@ -340,7 +414,8 @@ export function hydratePaxNames(
   nameByGuestId?: Map<string, string>,
 ): PaxRow[] {
   return rows.map((g) => {
-    if (!isIncompletePax(g)) return g;
+    // guestId alone must not block name fill (isIncompletePax is false once linked).
+    if (paxHasRealName(g)) return g;
     let full = '';
     // Only hydrate rows linked to that guest — never paint empty companion slots with booker name.
     if (masterGuest?.fullName && g.guestId && g.guestId === masterGuest.id) {
