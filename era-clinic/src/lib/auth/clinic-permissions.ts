@@ -750,6 +750,7 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/catalog/services", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/imaging-phrases", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/identity/guest-qr", permission: CLINIC_PERMISSION.API_IDENTITY_GUEST_QR },
+  { prefix: "/api/payment-methods", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/billing/context", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/cashier", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/fiscal", permission: CLINIC_PERMISSION.API_CASHIER },

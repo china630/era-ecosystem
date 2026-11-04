@@ -25,22 +25,9 @@ export async function postHotelSettlementPending(input: {
   if (!hotelOrganizationId) {
     throw new Error("hotelOrganizationId required for hotel pending charge");
   }
-  const {
-    PEER_SATELLITE_HOTEL,
-    resolvePeerSatelliteBaseUrl,
-    checkChannelEnabledLive,
-    SatelliteChannelDisabledError,
-  } = await import("@era/satellite-kit");
-  const channelOk = await checkChannelEnabledLive({
-    fromOrgId: orgId,
-    fromSatelliteKey: "industry_clinic",
-    toOrgId: hotelOrganizationId,
-    toSatelliteKey: "industry_hotel_pms",
-    kind: "SETTLEMENT",
-  });
-  if (!channelOk) {
-    throw new SatelliteChannelDisabledError("SETTLEMENT");
-  }
+  const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
+    "@era/satellite-kit"
+  );
   const base = (
     await resolvePeerSatelliteBaseUrl({
       organizationId: hotelOrganizationId,

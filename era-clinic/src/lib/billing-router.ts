@@ -312,22 +312,9 @@ export async function postHotelRoomCharge(input: {
   if (!hotelOrganizationId) {
     throw new Error("hotelOrganizationId required for hotel room charge");
   }
-  const {
-    PEER_SATELLITE_HOTEL,
-    resolvePeerSatelliteBaseUrl,
-    checkChannelEnabledLive,
-    SatelliteChannelDisabledError,
-  } = await import("@era/satellite-kit");
-  const channelOk = await checkChannelEnabledLive({
-    fromOrgId: requestOrganizationId(),
-    fromSatelliteKey: "industry_clinic",
-    toOrgId: hotelOrganizationId,
-    toSatelliteKey: "industry_hotel_pms",
-    kind: "FOLIO_POST",
-  });
-  if (!channelOk) {
-    throw new SatelliteChannelDisabledError("FOLIO_POST");
-  }
+  const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
+    "@era/satellite-kit"
+  );
   const base = (
     await resolvePeerSatelliteBaseUrl({
       organizationId: hotelOrganizationId,
