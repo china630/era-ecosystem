@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import {
   CatalogField,
   Field,
@@ -18,12 +19,13 @@ import {
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { pocketNetMoney } from '@/lib/folio-money-pair';
+import { PAYMENT_CATEGORIES, resolvePaymentCategory } from '@/lib/payment-category';
 import { earlyReversalByFolio } from '@/lib/early-checkout-reversal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
-const GUEST_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
-const PAYER_TENDERS = ['CASH', 'CARD', 'BANK_TRANSFER'] as const;
+const FALLBACK_GUEST_TENDERS = ['CASH', 'CARD', 'EPOINT', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
+const FALLBACK_PAYER_TENDERS = ['CASH', 'CARD', 'EPOINT', 'BANK_TRANSFER'] as const;
 
 type FolioRow = {
   id: string;
@@ -50,6 +52,8 @@ type FolioRow = {
     qty?: number | null;
     businessDate?: string;
     revenueCode?: {
+      paymentCategory?: string | null;
+      systemRole?: string | null;
       code?: string | null;
       name?: string | null;
       nameAz?: string | null;
@@ -61,6 +65,7 @@ type FolioRow = {
   payments?: Array<{
     amount: number | string;
     kind?: string | null;
+    paymentCategory?: string | null;
     voidedAt?: string | null;
   }>;
 };
@@ -73,12 +78,15 @@ type ClinicProcedure = {
   status: 'in_plan' | 'arrived' | 'no_show' | 'completed' | 'cancelled';
   folioRef: string | null;
   inPackage: boolean;
+  checkedInAt?: string | null;
 };
 
 type ClinicCheckout = {
   medical: boolean;
   unavailable?: boolean;
   paid?: ClinicProcedure[];
+  unpaidExtras?: ClinicProcedure[];
+  executed?: ClinicProcedure[];
   packageSessions?: ClinicProcedure[];
   futurePaid?: ClinicProcedure[];
   pastNoShowish?: ClinicProcedure[];
@@ -106,6 +114,8 @@ type DebtBlock = {
   party: 'GUEST' | 'AGENCY' | 'COMPANY';
   title: string;
   debt: number;
+  /** Hotel owes this folio. Settled in the same block, not a second form. */
+  credit: number;
   /** Early checkout voids lodging on this payer folio; settle would see the pre-void balance. */
   pendingReversal: boolean;
 };
@@ -116,6 +126,23 @@ function emptyLine(amount = ''): TenderLine {
 
 function money(n: number): string {
   return n.toFixed(2);
+}
+
+function categorySplit(folio: FolioRow) {
+  const services: Record<string, number> = { LODGING: 0, CLINIC: 0, FB: 0, OTHER: 0 };
+  const paid: Record<string, number> = { LODGING: 0, CLINIC: 0, FB: 0, OTHER: 0 };
+  for (const charge of folio.charges) {
+    const cat = resolvePaymentCategory(charge) ?? 'OTHER';
+    const qty = charge.qty == null ? 1 : Number(charge.qty);
+    services[cat] += Number(charge.amount) * (Number.isFinite(qty) ? qty : 1);
+  }
+  for (const payment of folio.payments ?? []) {
+    if (payment.voidedAt) continue;
+    const cat = resolvePaymentCategory(payment) ?? 'OTHER';
+    const sign = payment.kind === 'REFUND' ? -1 : 1;
+    paid[cat] += sign * Number(payment.amount);
+  }
+  return { services, paid };
 }
 
 /**
@@ -151,16 +178,8 @@ export function FolioCheckoutModal({
   const [refundMethod, setRefundMethod] = useState('');
   const [refundTerminal, setRefundTerminal] = useState('');
   const [refundReason, setRefundReason] = useState('');
-  const [surplusAction, setSurplusAction] = useState('');
-  const [surplusMethod, setSurplusMethod] = useState('');
-  const [surplusTerminal, setSurplusTerminal] = useState('');
-  const [targetReservationId, setTargetReservationId] = useState('');
-  const [depositTargets, setDepositTargets] = useState<
-    Array<{ reservationId: string; roomNumber: string; checkIn: string; checkOut: string }>
-  >([]);
-  const [newStayCheckIn, setNewStayCheckIn] = useState('');
-  const [newStayCheckOut, setNewStayCheckOut] = useState('');
   const [error, setError] = useState('');
+  const [checkoutChip, setCheckoutChip] = useState<'money' | 'open' | 'fact'>('money');
   const [busy, setBusy] = useState(false);
   const [clinic, setClinic] = useState<ClinicCheckout | null>(null);
   const [laundry, setLaundry] = useState<
@@ -169,6 +188,8 @@ export function FolioCheckoutModal({
   const [laundryTicketId, setLaundryTicketId] = useState('');
   const [laundryScan, setLaundryScan] = useState('');
   const [laundryBusy, setLaundryBusy] = useState(false);
+  const [guestTenders, setGuestTenders] = useState<string[]>([...FALLBACK_GUEST_TENDERS]);
+  const [payerTenders, setPayerTenders] = useState<string[]>([...FALLBACK_PAYER_TENDERS]);
 
   const loadFolios = useCallback(async () => {
     setLoading(true);
@@ -209,18 +230,17 @@ export function FolioCheckoutModal({
       })
       .catch(() => setClinic(null));
     void loadFolios();
-    void fetch(`/api/reservations/${reservationId}/deposit-targets`)
+    void fetch('/api/payment-methods?guest=1')
       .then((r) => (r.ok ? r.json() : null))
       .then((body) => {
-        const rows = (body?.data ?? body) as Array<{
-          reservationId: string;
-          roomNumber: string;
-          checkIn: string;
-          checkOut: string;
-        }> | null;
-        setDepositTargets(Array.isArray(rows) ? rows : []);
+        const rows = (body?.data?.methods ?? body?.methods) as Array<{ code: string }> | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          const codes = rows.map((row) => row.code);
+          setGuestTenders(codes);
+          setPayerTenders(codes.filter((c) => c !== 'LOYALTY_POINTS'));
+        }
       })
-      .catch(() => setDepositTargets([]));
+      .catch(() => undefined);
     void fetch('/api/fiscal/devices?kind=BANK_POS')
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
@@ -256,8 +276,10 @@ export function FolioCheckoutModal({
       const isPayer = folio.type === 'AGENCY' || folio.type === 'COMPANY';
       // Guest unused nights come back as a refund after check-out; payer unused nights only shrink AR.
       const reversed = isPayer && early?.applicable ? (early.reversalByFolio[folio.id] ?? 0) : 0;
-      const debt = Math.round((pocketNetMoney(folio.charges, folio.payments ?? []).debt - reversed) * 100) / 100;
-      if (debt <= 0.01) continue;
+      const net = pocketNetMoney(folio.charges, folio.payments ?? []);
+      const debt = Math.round((net.debt - reversed) * 100) / 100;
+      const credit = debt > 0.01 ? 0 : Math.round(net.unused * 100) / 100;
+      if (debt <= 0.01 && credit <= 0.01) continue;
       if (folio.type === 'GUEST') {
         const rg = folio.reservationGuest;
         const own =
@@ -267,6 +289,7 @@ export function FolioCheckoutModal({
           party: 'GUEST',
           title: t('checkoutGuestBlock', { name: own || stayGuest || '—' }),
           debt,
+          credit,
           pendingReversal: false,
         });
       } else if (folio.type === 'AGENCY' || folio.type === 'COMPANY') {
@@ -283,6 +306,7 @@ export function FolioCheckoutModal({
               ? t('checkoutAgencyBlock', { name })
               : t('checkoutCompanyBlock', { name }),
           debt,
+          credit,
           pendingReversal: reversed > 0.01,
         });
       }
@@ -323,6 +347,7 @@ export function FolioCheckoutModal({
   const anyMovePayerCl = blocks.some((b) => choices[b.folio.id] === 'MOVE_PAYER_CL');
   const anyGuestDebt = blocks.some((b) => choices[b.folio.id] === 'DEBT');
   const allChosen = blocks.every((b) => {
+    if (b.credit > 0.01) return Boolean(lines[b.folio.id]?.[0]?.method);
     if (anyMovePayerCl && (b.party === 'AGENCY' || b.party === 'COMPANY')) return true;
     return Boolean(choices[b.folio.id]);
   });
@@ -379,13 +404,11 @@ export function FolioCheckoutModal({
       if (!refundMethod) return t('checkoutPickRefundMethod');
       if (refundMethod === 'CARD' && !refundTerminal) return t('checkoutPickTerminal');
     }
-    if (unusedPayment > 0.01) {
-      if (surplusAction !== 'REFUND' && surplusAction !== 'CARRY') return t('surplusPick');
-      if (surplusAction === 'REFUND' && !surplusMethod) return t('checkoutPickRefundMethod');
-      if (surplusAction === 'REFUND' && surplusMethod === 'CARD' && !surplusTerminal) return t('checkoutPickTerminal');
-      if (surplusAction === 'CARRY' && !targetReservationId.trim() && (!newStayCheckIn || !newStayCheckOut)) {
-        return t('surplusPickStay');
-      }
+    for (const block of blocks) {
+      if (block.credit <= 0.01) continue;
+      const line = lines[block.folio.id]?.[0];
+      if (!line?.method) return t('checkoutPickRefundMethod');
+      if (line.method === 'CARD' && !line.bankTerminalId) return t('checkoutPickTerminal');
     }
     return null;
   }
@@ -448,14 +471,12 @@ export function FolioCheckoutModal({
           unusedNightsBankTerminalId:
             refundNeeded && refundMethod === 'CARD' ? refundTerminal : undefined,
           unusedNightsReason: early?.applicable && refundReason.trim() ? refundReason.trim() : undefined,
-          surplusAction: unusedPayment > 0.01 ? surplusAction : undefined,
-          surplusMethod: surplusAction === 'REFUND' ? surplusMethod : undefined,
+          surplusAction: blocks.some((b) => b.credit > 0.01) ? 'REFUND' : undefined,
+          surplusMethod: (lines[blocks.find((b) => b.credit > 0.01)?.folio.id ?? '']?.[0]?.method ||
+            undefined) as 'CASH' | 'CARD' | undefined,
           surplusBankTerminalId:
-            surplusAction === 'REFUND' && surplusMethod === 'CARD' ? surplusTerminal : undefined,
-          targetReservationId:
-            surplusAction === 'CARRY' && targetReservationId.trim() ? targetReservationId.trim() : undefined,
-          newStayCheckIn: surplusAction === 'CARRY' && !targetReservationId.trim() ? newStayCheckIn : undefined,
-          newStayCheckOut: surplusAction === 'CARRY' && !targetReservationId.trim() ? newStayCheckOut : undefined,
+            lines[blocks.find((b) => b.credit > 0.01)?.folio.id ?? '']?.[0]?.bankTerminalId ||
+            undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -499,7 +520,7 @@ export function FolioCheckoutModal({
   function renderTender(block: DebtBlock) {
     const isGuest = block.party === 'GUEST';
     const isFirstGuest = block.folio.id === firstGuestBlockId;
-    const tenders = isGuest ? GUEST_TENDERS : PAYER_TENDERS;
+    const tenders = isGuest ? guestTenders : payerTenders;
     const rows = linesOf(block);
     return (
       <div className="space-y-2">
@@ -572,6 +593,61 @@ export function FolioCheckoutModal({
     );
   }
 
+  const openProcedures = [
+    ...(clinic?.paid ?? []).filter((row) => row.status === 'in_plan'),
+    ...(clinic?.unpaidExtras ?? []).filter((row) => row.status === 'in_plan'),
+  ];
+  function chargeForProcedure(row: ClinicProcedure) {
+    return folios
+      .flatMap((folio) => folio.charges)
+      .find((item) => {
+        if (!item.externalRef || !row.folioRef) return false;
+        const norm = (value: string) => value.trim().replace(/^pay-/, '');
+        return norm(item.externalRef) === norm(row.folioRef);
+      });
+  }
+  async function reloadClinic() {
+    const again = await fetch(`/api/reservations/${reservationId}/clinic-checkout`);
+    const body = await again.json().catch(() => null);
+    setClinic((body?.data ?? body) as ClinicCheckout);
+    await loadFolios();
+  }
+  async function voidOneProcedure(row: ClinicProcedure) {
+    const charge = chargeForProcedure(row);
+    if (!charge?.id) return;
+    const res = await fetch(`/api/folios/charges/${charge.id}/void`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: t('clinicVoid') }),
+    });
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => null), tc('error'));
+      return;
+    }
+    await reloadClinic();
+  }
+  async function voidOpenProcedures() {
+    for (const row of openProcedures) await voidOneProcedure(row);
+  }
+  async function payOpenProcedures() {
+    const amount = openProcedures.reduce((sum, row) => sum + row.amount, 0);
+    if (!(amount > 0)) return;
+    const res = await fetch('/api/folios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reservationId,
+        paymentCategory: 'CLINIC',
+        amount: Math.round(amount * 100) / 100,
+        paymentMethod: 'CASH',
+      }),
+    });
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => null), tc('error'));
+      return;
+    }
+    await reloadClinic();
+  }
   const subtitle = [stayGuest, stayRoom].filter(Boolean).join(' · ') || undefined;
 
   return (
@@ -596,99 +672,59 @@ export function FolioCheckoutModal({
         }
       >
         <div className="space-y-3 text-[13px]">
-          {clinic?.medical ? (
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutChip('money')}>
+              {t('checkoutChipMoney')}
+            </button>
+            {openProcedures.length > 0 ? (
+              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutChip('open')}>
+                {t('checkoutChipOpen', { count: openProcedures.length })}
+              </button>
+            ) : null}
+            {(clinic?.executed?.length ?? 0) > 0 ? (
+              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutChip('fact')}>
+                {t('checkoutChipFact')}
+              </button>
+            ) : null}
+          </div>
+          {checkoutChip === 'open' ? (
             <div className="space-y-2">
-              {clinic.unavailable ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicUnavailable')}</p> : null}
-              {(clinic.futurePaid?.length ?? 0) > 0 || (clinic.futureUnpaid?.length ?? 0) > 0 ? (
-                <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{t('clinicFutureWillCancel')}</p>
-              ) : null}
-              {(clinic.pastNoShowish?.length ?? 0) > 0 ? (
-                <p className={`m-0 ${TEXT_MUTED_CLASS}`}>
-                  {clinic.noShowKeepsCharge ? t('clinicNoShowRuleKeep') : t('clinicNoShowRuleVoid')}
-                </p>
-              ) : null}
-              {(clinic.futurePackage?.length ?? 0) > 0 ? (
-                <p className={`m-0 ${TEXT_MUTED_CLASS}`}>
-                  {t('clinicPackageFuture', { count: clinic.futurePackage!.length })}
-                </p>
-              ) : null}
-              {(clinic.paid ?? []).some((row) => row.status === 'in_plan') ? (
-                <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{t('clinicPaidOnFolio')}</p>
-              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void payOpenProcedures()}>
+                  {t('clinicPayAll', { amount: money(openProcedures.reduce((s, row) => s + row.amount, 0)) })}
+                </button>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void voidOpenProcedures()}>
+                  {t('clinicVoidAll')}
+                </button>
+              </div>
+              {openProcedures.map((row) => (
+                <div key={row.orderId} className="flex items-center justify-between gap-2">
+                  <span>{row.procedureName}</span>
+                  <span className="font-mono">{money(row.amount)}</span>
+                  <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void voidOneProcedure(row)}>
+                    {t('clinicVoid')}
+                  </button>
+                </div>
+              ))}
             </div>
           ) : null}
-          {unusedPayment > 0.01 ? (
-            <FieldSection title={t('surplusTitle', { amount: money(unusedPayment) })}>
-              <div className="space-y-2">
-                <CatalogField
-                  kind="OPS_HOT"
-                  label={t('surplusTitle', { amount: money(unusedPayment) })}
-                  required
-                  value={surplusAction}
-                  onChange={(v) => setSurplusAction(String(v ?? ''))}
-                  options={[
-                    { value: 'REFUND', label: t('surplusRefund') },
-                    { value: 'CARRY', label: t('surplusCarry') },
-                  ]}
-                  emptyLabel={null}
-                />
-                {surplusAction === 'REFUND' ? (
-                  <div className="flex flex-wrap items-end gap-2">
-                    <CatalogField
-                      kind="OPS_HOT"
-                      label={t('earlyCheckoutTender')}
-                      required
-                      value={surplusMethod}
-                      onChange={(v) => setSurplusMethod(String(v ?? ''))}
-                      options={[
-                        { value: 'CASH', label: tPay('CASH') },
-                        { value: 'CARD', label: tPay('CARD') },
-                      ]}
-                      emptyLabel={null}
-                    />
-                    {surplusMethod === 'CARD' && terminalOptions.length > 0 ? (
-                      <CatalogField
-                        kind="CLOSED_SMALL"
-                        label={t('bankTerminal')}
-                        required
-                        value={surplusTerminal}
-                        onChange={(v) => setSurplusTerminal(String(v ?? ''))}
-                        options={terminalOptions}
-                        emptyLabel={t('pickTerminal')}
-                      />
-                    ) : null}
-                  </div>
-                ) : null}
-                {surplusAction === 'CARRY' ? (
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <CatalogField
-                      kind="CLOSED_SMALL"
-                      label={t('surplusTarget')}
-                      value={targetReservationId}
-                      onChange={(v) => setTargetReservationId(String(v ?? ''))}
-                      options={depositTargets.map((row) => ({
-                        value: row.reservationId,
-                        label: `${row.roomNumber || '—'} ${row.checkIn}–${row.checkOut}`,
-                      }))}
-                      emptyLabel={t('surplusTarget')}
-                    />
-                    <Field
-                      label={t('surplusCheckIn')}
-                      preset="shortText"
-                      value={newStayCheckIn}
-                      onChange={(e) => setNewStayCheckIn(e.target.value)}
-                    />
-                    <Field
-                      label={t('surplusCheckOut')}
-                      preset="shortText"
-                      value={newStayCheckOut}
-                      onChange={(e) => setNewStayCheckOut(e.target.value)}
-                    />
-                  </div>
-                ) : null}
-              </div>
-            </FieldSection>
+          {checkoutChip === 'fact' ? (
+            <div className="space-y-1">
+              {(clinic?.executed ?? []).map((row) => (
+                <div key={row.orderId} className="flex gap-3">
+                  <span className="font-mono">
+                    {bakuDateTimeDisplay(row.checkedInAt || row.scheduledAt)}
+                  </span>
+                  <span>
+                    {row.inPackage ? t('clinicFromPackage') : `${money(row.amount)} `}
+                    {row.procedureName}
+                  </span>
+                </div>
+              ))}
+            </div>
           ) : null}
+          {checkoutChip === 'money' ? (
+          <>
           <FieldSection title={t('checkoutTotals')}>
             <div className="grid grid-cols-2 gap-2 font-mono text-[13px]">
               {(() => {
@@ -772,9 +808,83 @@ export function FolioCheckoutModal({
               <FieldSection
                 key={block.folio.id}
                 title={block.title}
-                badge={`${money(block.debt)} AZN`}
+                badge={`${money(block.credit > 0.01 ? block.credit : block.debt)} AZN`}
               >
                 <div className="space-y-3">
+                  {(() => {
+                    const split = categorySplit(block.folio);
+                    const serviceTotal = PAYMENT_CATEGORIES.reduce((sum, cat) => sum + split.services[cat], 0);
+                    const paidTotal = PAYMENT_CATEGORIES.reduce((sum, cat) => sum + split.paid[cat], 0);
+                    return (
+                      <div className="grid grid-cols-2 gap-2 font-mono text-[12px]">
+                        <div>{t('checkoutServices')}</div>
+                        <div>{t('checkoutPaymentsCol')}</div>
+                        {PAYMENT_CATEGORIES.map((cat) => (
+                          <div key={cat} className="contents">
+                            <div>
+                              {t(`paymentCategory_${cat}`)} {money(split.services[cat])}
+                            </div>
+                            <div>{money(split.paid[cat])}</div>
+                          </div>
+                        ))}
+                        <div>
+                          {t('checkoutServiceTotal')} {money(serviceTotal)}
+                        </div>
+                        <div>
+                          {t('checkoutPaidTotal')} {money(paidTotal)}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {block.credit > 0.01 ? (
+                    <>
+                    <CatalogField
+                      kind="OPS_HOT"
+                      label={t('surplusRefund')}
+                      required
+                      value={lines[block.folio.id]?.[0]?.method ?? ''}
+                      onChange={(v) =>
+                        setLines((prev) => ({
+                          ...prev,
+                          [block.folio.id]: [
+                            {
+                              ...(prev[block.folio.id]?.[0] ?? emptyLine(money(block.credit))),
+                              method: String(v ?? ''),
+                              amount: money(block.credit),
+                            },
+                          ],
+                        }))
+                      }
+                      options={[
+                        { value: 'CASH', label: tPay('CASH') },
+                        { value: 'CARD', label: tPay('CARD') },
+                      ]}
+                      emptyLabel={null}
+                    />
+                    {lines[block.folio.id]?.[0]?.method === 'CARD' && terminalOptions.length > 0 ? (
+                      <CatalogField
+                        kind="CLOSED_SMALL"
+                        label={t('bankTerminal')}
+                        required
+                        value={lines[block.folio.id]?.[0]?.bankTerminalId ?? ''}
+                        onChange={(v) =>
+                          setLines((prev) => ({
+                            ...prev,
+                            [block.folio.id]: [
+                              {
+                                ...(prev[block.folio.id]?.[0] ?? emptyLine(money(block.credit))),
+                                bankTerminalId: String(v ?? ''),
+                              },
+                            ],
+                          }))
+                        }
+                        options={terminalOptions}
+                        emptyLabel={t('pickTerminal')}
+                      />
+                    ) : null}
+                    </>
+                  ) : null}
+                  {block.credit > 0.01 ? null : (
                   <CatalogField
                     kind="OPS_HOT"
                     label={t('checkoutChoice')}
@@ -798,6 +908,7 @@ export function FolioCheckoutModal({
                     options={isGuest ? guestOptions : payerOptions}
                     emptyLabel={null}
                   />
+                  )}
                   {!canPay ? (
                     <p className={`m-0 text-[12px] ${TEXT_MUTED_CLASS}`}>{t('checkoutNoPaymentRight')}</p>
                   ) : block.pendingReversal ? (
@@ -878,6 +989,8 @@ export function FolioCheckoutModal({
                 ) : null}
               </div>
             </FieldSection>
+          ) : null}
+          </>
           ) : null}
           {error ? (
             <p className={`m-0 ${TEXT_DANGER_CLASS}`} role="alert">

@@ -36,7 +36,6 @@ import {
   ledgerMoneyKind,
 } from '@/lib/folio-ledger-display';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { FolioChargeModal } from '@/components/folio/FolioChargeModal';
 import {
@@ -47,7 +46,6 @@ import {
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
-import { ClinicPlanPanel } from '@/components/folio/ClinicPlanPanel';
 import { FolioCategoryRefundModal } from '@/components/folio/FolioCategoryRefundModal';
 import { displayFolioChargeDescription } from '@/lib/folio-charge-note';
 import { escapePrintHtml, openPrintDocument } from '@/lib/print-window';
@@ -723,9 +721,6 @@ export function ReservationCardFolioTab({
         (cat) => stayCategoryMoneyPair(folio.charges, folio.payments ?? [], cat).unused > 0.01,
       ),
   );
-  const clinicCharges = accounts.flatMap((folio) =>
-    folio.charges.map((charge) => ({ id: charge.id, externalRef: charge.externalRef })),
-  );
   const depositGuests = pax.filter((row) => row.id);
   async function takeDeposit() {
     const amount = Number(depositAmount);
@@ -1143,9 +1138,6 @@ export function ReservationCardFolioTab({
             </tr>
           </tbody>
         </table>
-        {folioFocus === 'deleted' ? null : (
-          <ClinicPlanPanel reservationId={reservationId} charges={clinicCharges} onChanged={onChanged} />
-        )}
         {depositOpen ? (
           <div className="flex flex-wrap items-end gap-2">
             <CatalogField
@@ -1237,7 +1229,6 @@ export function ReservationCardFolioTab({
           {folioFocus === 'deleted' ? null : cashBar}
         </div>
       </div>
-      <FinanceBoundaryBanner target="salesInvoices" />
       {modals}
       <EraModal
         open={Boolean(adjustCharge)}

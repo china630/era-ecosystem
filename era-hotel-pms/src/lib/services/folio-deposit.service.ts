@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { decimalToNumber } from '@/lib/decimal';
-import type { PaymentMethod } from '@prisma/client';
 import type { ReservationAuditActor } from '@/lib/reservation-audit';
 
 /** Other open stays of the same guest, for carry and cashier transfer. */
@@ -62,7 +61,7 @@ export async function recordDeposit(input: {
   reservationId: string;
   reservationGuestId: string;
   amount: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: string;
   registerRef?: string;
   bankTerminalId?: string;
   externalRef?: string;
@@ -413,7 +412,7 @@ export async function refundRemainingDeposits(reservationId: string) {
 
 export async function payoutDepositRemainder(
   depositId: string,
-  paymentMethod: PaymentMethod,
+  paymentMethod: string,
   bankTerminalId?: string,
   audit?: ReservationAuditActor,
 ) {

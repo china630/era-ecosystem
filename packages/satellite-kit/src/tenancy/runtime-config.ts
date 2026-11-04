@@ -83,6 +83,30 @@ const runtimeBodySchema = z.object({
   clinicCutover: clinicCutoverSchema.optional(),
   /** Per-org fiscal KKM / bank POS devices — hydrate @era/fiscal directory. */
   fiscalDevices: z.array(fiscalDeviceSyncSchema).max(200).optional(),
+  /** Org payment method catalog (orchestrator SoR). */
+  paymentMethods: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        organizationId: z.string().uuid(),
+        code: z.string().min(1).max(64),
+        nameAz: z.string().min(1).max(120),
+        nameRu: z.string().min(1).max(120),
+        nameEn: z.string().min(1).max(120),
+        sortOrder: z.number().int(),
+        active: z.boolean(),
+        systemKey: z.string().max(64).nullable().optional(),
+        fiscalHint: z.string().min(1).max(16),
+        fiscalDeviceId: z.string().uuid().nullable().optional(),
+        satellites: z.array(z.string()).max(16),
+        secrets: z.record(z.string()).nullable().optional(),
+      }),
+    )
+    .max(100)
+    .optional(),
+  paymentMethodCatalogOrgId: z.string().uuid().optional(),
+  fiscalRouting: z.string().max(16).optional(),
+  parentOrgId: z.string().uuid().nullable().optional(),
   /** ACTIVE white-label satellite login hosts for this org (B2 Sync). */
   loginHostnames: z
     .array(
@@ -255,6 +279,16 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       if (opts.onFiscalDevices) {
         await opts.onFiscalDevices(body.organizationId, body.fiscalDevices);
       }
+    }
+    if (body.organizationId && body.paymentMethods !== undefined) {
+      const { hydratePaymentMethodsFromSync } = await import(
+        "../integration/payment-method-catalog"
+      );
+      hydratePaymentMethodsFromSync(body.organizationId, body.paymentMethods, {
+        catalogOrgId: body.paymentMethodCatalogOrgId,
+        fiscalRouting: body.fiscalRouting,
+        parentOrgId: body.parentOrgId ?? null,
+      });
     }
     if (body.organizationId && opts.onSharedOrgSnapshot) {
       await opts.onSharedOrgSnapshot(body.organizationId, {

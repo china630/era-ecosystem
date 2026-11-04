@@ -36,7 +36,7 @@ NEXT_PUBLIC_FINANCE_WEB_URL="http://localhost:3000"
 | `/reports/agency-ledger` | `/crm/counterparties` (pick agency → reconciliation) |
 | `/admin/stock` | `/inventory` |
 
-Banner component: `FinanceBoundaryBanner` — shows when `NEXT_PUBLIC_FINANCE_WEB_URL` is set.
+Banner component: `FinanceBoundaryBanner` — shows when `NEXT_PUBLIC_FINANCE_WEB_URL` is set. The reservation folio tab does not show it: reception works the guest ledger there, and the Finance handoff stays on the report and ledger screens above.
 
 ## Nafta catalog
 

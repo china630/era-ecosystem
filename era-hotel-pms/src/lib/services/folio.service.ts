@@ -285,7 +285,7 @@ async function allocateArticleCreditsToCharge(folioId: string, chargeId: string,
 export async function postPayment(input: {
   folioId: string;
   amount: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: string;
   registerRef?: string;
   bankReference?: string;
   bankTerminalId?: string;
@@ -308,6 +308,10 @@ export async function postPayment(input: {
   });
   if (!folio) throw new Error('Folio not found');
   const kind = input.kind ?? 'PAYMENT';
+  if (kind === 'PAYMENT' && input.paymentMethod !== 'GUEST_DEBT') {
+    const { assertHotelPaymentMethodAllowed } = await import('@/lib/org-payment-methods');
+    assertHotelPaymentMethodAllowed(input.paymentMethod);
+  }
   const { isPaymentCategory, resolvePaymentCategory } = await import('@/lib/payment-category');
   let paymentCategory =
     input.paymentCategory && isPaymentCategory(input.paymentCategory)

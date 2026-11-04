@@ -13,7 +13,6 @@ import {
   FieldRow,
   FieldSection,
   FieldSelect,
-  hotelTenderOptions,
   MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
@@ -470,7 +469,27 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   useEffect(() => {
     setHotelCoversClass(priceNoteChoosesHotel(props.priceNote));
   }, [props.priceNote]);
-  const tenderLocale = locale.startsWith('az') ? 'az' : locale.startsWith('ru') ? 'ru' : 'en';
+  const [tenderOptions, setTenderOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: 'CASH', label: 'CASH' },
+    { value: 'CARD', label: 'CARD' },
+    { value: 'EPOINT', label: 'EPOINT' },
+    { value: 'COMPANY_ACCOUNT', label: 'COMPANY_ACCOUNT' },
+    { value: 'LOYALTY_POINTS', label: 'LOYALTY_POINTS' },
+    { value: 'DEPOSIT', label: 'DEPOSIT' },
+  ]);
+  useEffect(() => {
+    void fetch('/api/payment-methods')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data?.methods ?? body?.methods) as
+          | Array<{ code: string; label: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setTenderOptions(rows.map((row) => ({ value: row.code, label: row.label || row.code })));
+        }
+      })
+      .catch(() => undefined);
+  }, [locale]);
   const {
     isCreate,
     isLocked,
@@ -1139,7 +1158,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             label={tb('paymentMethod')}
             value={props.paymentMethod}
             onChange={setCatalog('paymentMethod')}
-            options={hotelTenderOptions(tenderLocale)}
+            options={tenderOptions}
             disabled={disabled}
           />
           {props.billingRoutingSummary ? (

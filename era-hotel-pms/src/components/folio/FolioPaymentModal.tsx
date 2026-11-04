@@ -17,14 +17,11 @@ import {
   type FolioParty,
   type PayerGuest,
 } from '@/lib/folio-payer';
-import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
 import {
   PAYMENT_CATEGORIES,
   type PaymentCategory,
   isPaymentCategory,
 } from '@/lib/payment-category';
-
-const METHODS = DESK_PAYMENT_METHODS;
 
 type FolioRow = {
   id: string;
@@ -97,6 +94,13 @@ export function FolioPaymentModal({
   const [paymentCategory, setPaymentCategory] = useState<'' | PaymentCategory>('');
   const [pocket, setPocket] = useState<'' | FolioParty>('');
   const [busy, setBusy] = useState(false);
+  const [methodOptions, setMethodOptions] = useState<Array<{ code: string; label: string }>>([
+    { code: 'CASH', label: 'CASH' },
+    { code: 'CARD', label: 'CARD' },
+    { code: 'EPOINT', label: 'EPOINT' },
+    { code: 'BANK_TRANSFER', label: 'BANK_TRANSFER' },
+    { code: 'LOYALTY_POINTS', label: 'LOYALTY_POINTS' },
+  ]);
 
   const knownStay = Boolean(reservationId);
   const activeStayId = knownStay ? reservationId! : stayId;
@@ -148,6 +152,21 @@ export function FolioPaymentModal({
 
   useEffect(() => {
     if (!open) return;
+    void fetch('/api/payment-methods')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data?.methods ?? body?.methods) as
+          | Array<{ code: string; label?: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setMethodOptions(
+            rows
+              .filter((row) => row.code !== 'DEPOSIT')
+              .map((row) => ({ code: row.code, label: row.label || row.code })),
+          );
+        }
+      })
+      .catch(() => undefined);
     setAmount('');
     setMethod('');
     setBankReference('');
@@ -221,7 +240,7 @@ export function FolioPaymentModal({
     if (categoryDebt > 0.01) setAmount(categoryDebt.toFixed(2));
   }, [open, paymentCategory, pocket, categoryDebt]);
 
-  const methods = METHODS.filter((m) => m !== 'DEPOSIT');
+  const methods = methodOptions;
   const needsGuest = pocket === 'guest' && payer.kind === 'pick' && !selectedGuest;
   const needsPocket = !pocket;
   const needsCategory = !paymentCategory;
@@ -230,7 +249,9 @@ export function FolioPaymentModal({
   const methodOk =
     method.length > 0 &&
     (method !== 'BANK_TRANSFER' || bankReference.trim().length > 0) &&
-    (method !== 'CARD' || (bankTerminals.length > 0 && bankTerminalId.trim().length > 0));
+    ((method !== 'CARD' && method !== 'EPOINT') ||
+      bankTerminals.length === 0 ||
+      bankTerminalId.trim().length > 0);
   const canSubmit =
     !needsStay &&
     !needsGuest &&
@@ -255,7 +276,10 @@ export function FolioPaymentModal({
           amount: amountN,
           paymentMethod: method,
           bankReference: method === 'BANK_TRANSFER' ? bankReference.trim() : undefined,
-          bankTerminalId: method === 'CARD' ? bankTerminalId.trim() || undefined : undefined,
+          bankTerminalId:
+            method === 'CARD' || method === 'EPOINT'
+              ? bankTerminalId.trim() || undefined
+              : undefined,
         }),
       });
       const data = await res.json();
@@ -376,13 +400,16 @@ export function FolioPaymentModal({
           label={t('method')}
           value={method}
           onChange={(v) => setMethod(String(v ?? ''))}
-          options={methods.map((m) => ({ value: m, label: tPay(m) }))}
+          options={methods.map((m) => ({
+            value: m.code,
+            label: m.label !== m.code ? m.label : tPay(m.code as 'CASH'),
+          }))}
           emptyLabel={t('pickMethod')}
         />
         {method === 'CL_AGENCY' || method === 'CL_COMPANY' || method === 'COMPANY_ACCOUNT' ? (
           <p className="m-0 text-[12px] text-[#7F8C8D]">{t('cityLedgerTenderHint')}</p>
         ) : null}
-        {method === 'CARD' ? (
+        {method === 'CARD' || method === 'EPOINT' ? (
           bankTerminals.length > 0 ? (
             <CatalogField
               kind="CLOSED_SMALL"

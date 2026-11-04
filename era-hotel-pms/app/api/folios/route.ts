@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { listFolios, postCharge, postPayment } from '@/lib/services/folio.service';
-import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
 import { PAYMENT_CATEGORIES } from '@/lib/payment-category';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
@@ -36,7 +35,7 @@ const paymentSchema = z
     revenueCodeId: z.string().uuid().optional(),
     paymentCategory: z.enum(PAYMENT_CATEGORIES).optional(),
     amount: z.number().positive(),
-    paymentMethod: z.enum(DESK_PAYMENT_METHODS),
+    paymentMethod: z.string().min(1).max(64),
     registerRef: z.string().optional(),
     bankReference: z.string().max(120).optional(),
     bankTerminalId: z.string().min(1).max(64).optional(),

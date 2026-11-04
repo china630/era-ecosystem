@@ -6,10 +6,8 @@ import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 import { payFolioCharge } from '@/lib/services/tour.service';
-import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
-
 const bodySchema = z.object({
-  paymentMethod: z.enum(DESK_PAYMENT_METHODS),
+  paymentMethod: z.string().min(1).max(64),
   bankTerminalId: z.string().min(1).max(64).optional(),
 });
 
