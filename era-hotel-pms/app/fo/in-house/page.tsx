@@ -11,6 +11,7 @@ import {
   PageHeader,
   TEXT_MUTED_CLASS,
   showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
 import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
@@ -138,9 +139,21 @@ export default function InHousePage() {
     return rows.filter((r) => {
       if (room && r.roomNumber !== room) return false;
       if (!needle) return true;
-      return `${r.guestName} ${r.roomNumber ?? ''} ${r.status}`.toLowerCase().includes(needle);
+      return `${r.guestName} ${r.roomNumber ?? ''} ${r.status} ${r.reservationId}`
+        .toLowerCase()
+        .includes(needle);
     });
   }, [rows, debouncedQ, room]);
+
+  async function copyResId(id: string) {
+    const short = id.slice(0, 8);
+    try {
+      await navigator.clipboard.writeText(short);
+      showSuccess(t('resIdCopied'));
+    } catch {
+      showApiError({ error: t('resIdCopyFailed') }, tc('error'));
+    }
+  }
 
   if (!can(PERMISSIONS.FOLIO_READ) && !can(PERMISSIONS.RESERVATIONS_READ)) {
     return <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc('accessDenied')}</p>;
@@ -236,6 +249,26 @@ export default function InHousePage() {
               ) : (
                 '—'
               ),
+          },
+          {
+            key: 'resId',
+            header: t('resId'),
+            sortable: true,
+            sortValue: (r) => r.reservationId,
+            render: (r) => (
+              <button
+                type="button"
+                className="font-mono text-[#2980B9] hover:underline"
+                title={t('resIdCopy')}
+                aria-label={t('resIdCopy')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void copyResId(r.reservationId);
+                }}
+              >
+                {r.reservationId.slice(0, 8)}
+              </button>
+            ),
           },
         ]}
         rows={filtered as (InHouseGuest & Record<string, unknown>)[]}

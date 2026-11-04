@@ -168,7 +168,8 @@
     "hkStaffGroup": "Персонал HK",
     "hkMinibarGroup": "Минибар",
     "hkGuestServicesGroup": "Гостевые услуги",
-    "agencyCommission": "Комиссия агентств"
+    "agencyCommission": "Комиссия агентств",
+    "adminLinks": "Связи"
   },
   "foStatus": {
     "title": "Статус отеля",
@@ -597,6 +598,10 @@
     "openFolio": "Открыть фолио",
     "arrival": "Заезд",
     "departure": "Выезд",
+    "resId": "№ брони",
+    "resIdCopy": "Копировать",
+    "resIdCopied": "ID брони скопирован",
+    "resIdCopyFailed": "Не удалось скопировать ID брони",
     "empty": "Нет проживающих гостей."
   },
   "guestsPage": {
@@ -1527,6 +1532,7 @@
     "contractSellableLabel": "Аллотмент договора (тип / даты)",
     "contractSellableDetail": "По договору занято {booked} из аллотмента {allotment} (квота отеля {quota})",
     "noContractAllotmentHint": "Нет аллотмента на этот тип номера и даты по выбранному договору.",
+    "noContractAllotmentBarHint": "У договора нет квоты на этот тип — продаём из инвентаря отеля (договор всё равно привязан).",
     "noContractAllotmentInventory": "Нет аллотмента договора на этот тип и даты. Откройте B2B-контракты, добавьте ночную квоту и попробуйте снова.",
     "noContractSellableInventory": "Аллотмент договора исчерпан на этот тип и даты. Откройте B2B-контракты или выберите другие даты.",
     "stopSell": "stop-sell",
@@ -1564,7 +1570,8 @@
     "availableAfterSave": "Доступно после сохранения брони",
     "medicalPackageCode": "Medical package",
     "packageFollowStay": "Выберите пакет",
-    "guestAgeMismatch": "Возраст этого гостя не подходит к этой строке",
+    "guestAgeMismatch": "Возраст гостя не совпал со строкой — гость записан в выбранную строку, счётчики возраста обновлены",
+    "partyAttachPersistFailed": "Гость на карточке, но сохранить состав party не удалось — нажмите Save на брони",
     "sourceWalkIn": "Walk-in (сами пришли)",
     "sourceAgency": "Агентство",
     "sourceCorporate": "Корпоратив",
@@ -2481,6 +2488,7 @@
     "room": "Номер",
     "hk": "HK",
     "agency": "Агентство",
+    "partyChannel": "Агентство / компания",
     "guest": "Гость",
     "arrival": "Заезд",
     "departure": "Выезд",
@@ -4858,5 +4866,32 @@
     "emptySummary": "Нет начислений за период",
     "emptyLines": "Нет строк",
     "emptyForecast": "Нет прогнозных ночей"
+  },
+  "adminLinks": {
+    "title": "Связи интеграции",
+    "subtitle": "Маршрут денег и peer-каналы.",
+    "moneyTitle": "Маршрут денег",
+    "moneyLine": "Режим {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode недоступен",
+    "outbound": "Исходящие",
+    "inbound": "Входящие",
+    "empty": "Каналов нет",
+    "on": "вкл",
+    "off": "выкл",
+    "disable": "Выключить входящий",
+    "loadFailed": "Не удалось загрузить",
+    "saveFailed": "Не удалось обновить",
+    "loading": "Загрузка…",
+    "kindFolio": "Проводка folio",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Событие выручки",
+    "kindRead": "Чтение статуса",
+    "satHotel": "Отель",
+    "satClinic": "Клиника",
+    "satFnb": "F&B",
+    "satRetail": "Ритейл",
+    "satFinance": "Финансы",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor"
   }
 }

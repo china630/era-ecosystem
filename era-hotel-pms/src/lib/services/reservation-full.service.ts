@@ -1178,6 +1178,9 @@ export async function listReservationsForGrid(
       { paxGuests: { some: { lastName: { contains: q, mode: 'insensitive' } } } },
       { room: { roomNumber: { contains: q, mode: 'insensitive' } } },
       { agency: { code: { contains: q, mode: 'insensitive' } } },
+      { agency: { name: { contains: q, mode: 'insensitive' } } },
+      { company: { code: { contains: q, mode: 'insensitive' } } },
+      { company: { name: { contains: q, mode: 'insensitive' } } },
       { notes: { some: { text: { contains: q, mode: 'insensitive' } } } },
     ];
   }

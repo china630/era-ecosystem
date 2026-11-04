@@ -76,11 +76,11 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   ageYearsFromBirthDate,
   attachGuestToPax,
-  guestFitsSlot,
   countsFromPax,
   paxAgeYears,
   hydratePaxDemographicsFromGuest,
   hydratePaxNames,
+  placeGuestOnPaxRow,
   stampEmptySlotsFromCounts,
   syncPaxToBandCounts,
   syncPaxToPartySize,
@@ -411,7 +411,8 @@ export function ReservationCardEditor({
   const [stayAuditStatus, setStayAuditStatus] = useState<'idle' | 'loading' | 'error' | 'ready'>(
     'idle',
   );
-  const [scanPaxIndex, setScanPaxIndex] = useState<number | null>(null);
+  /** Survives async guest create so onCreated still knows which empty row was clicked. */
+  const scanPaxIndexRef = useRef<number | null>(null);
   const [allergenCount, setAllergenCount] = useState(0);
   const staysBarRef = useRef<HTMLDivElement | null>(null);
   const [mealPlanId, setMealPlanId] = useState('');
@@ -459,6 +460,13 @@ export function ReservationCardEditor({
   const [ratePlanId, setRatePlanId] = useState('');
   const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
   const [guestId, setGuestId] = useState('');
+  /** Latest party for async guest-card create/save (avoid stale closure). */
+  const paxRef = useRef<PaxRow[]>(pax);
+  paxRef.current = pax;
+  const guestIdRef = useRef(guestId);
+  guestIdRef.current = guestId;
+  const partyBillingModeRef = useRef(partyBillingMode);
+  partyBillingModeRef.current = partyBillingMode;
   const [guestOptions, setGuestOptions] = useState<SelectOption[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [creditLimitAzn, setCreditLimitAzn] = useState('');
@@ -2004,23 +2012,61 @@ export function ReservationCardEditor({
       if (cid) {
         const contract = salesContracts.find((c) => c.id === cid);
         if (contract) {
-          setRatePlanId(contract.ratePlanId);
           const defaults = defaultsFromSalesContract(contract);
           if (defaults.agencyId !== undefined) setAgencyId(defaults.agencyId ?? '');
           if (defaults.companyId !== undefined) setCompanyId(defaults.companyId ?? '');
           if (defaults.commissionBasis) setCommissionBasis(defaults.commissionBasis);
           if (defaults.roomPayer) setRoomPayer(defaults.roomPayer);
-          const linkedRp = ratePlans.find((r) => r.id === contract.ratePlanId);
-          if (linkedRp?.mealPlanId) setMealPlanId(linkedRp.mealPlanId);
-          if (linkedRp?.roomTypeId) setRoomTypeId(linkedRp.roomTypeId);
-          if (stayProductFamily(linkedRp ?? {}) === 'medical') setSegment('Medical');
-          if (
-            !ratePlanRequiresGuestPackage({
-              code: linkedRp?.code,
-              medicalFlag: linkedRp?.medicalFlag,
-            })
-          ) {
-            setPax((rows) => rows.map((row) => ({ ...row, medicalPackageCode: '' })));
+          // Keep FO medical package (Volkin / Merikl…) when it differs from the
+          // contract Infotur tariff — same rule as reservation.service create.
+          const foRp = ratePlans.find((r) => r.id === ratePlanId);
+          const keepFoMedical =
+            Boolean(foRp) &&
+            foRp!.id !== contract.ratePlanId &&
+            ratePlanRequiresGuestPackage({
+              code: foRp?.code,
+              medicalFlag: foRp?.medicalFlag,
+            });
+          if (!keepFoMedical) {
+            setRatePlanId(contract.ratePlanId);
+            const linkedRp = ratePlans.find((r) => r.id === contract.ratePlanId);
+            if (linkedRp?.mealPlanId) setMealPlanId(linkedRp.mealPlanId);
+            // Medical Infotur: drop a charged type not on that plan's open sell grid
+            // so OTAXHP / peers can be chosen after switching package.
+            if (linkedRp?.medicalFlag) {
+              const day = (checkIn || '').slice(0, 10);
+              const openTypeIds = new Set(
+                (linkedRp.sellCells ?? [])
+                  .filter((c) => {
+                    if (!day) return true;
+                    const from = String(c.effectiveFrom ?? '').slice(0, 10);
+                    const to = c.effectiveTo ? String(c.effectiveTo).slice(0, 10) : '';
+                    if (from && from > day) return false;
+                    if (to && to < day) return false;
+                    return true;
+                  })
+                  .map((c) => c.roomTypeId),
+              );
+              setRoomTypeId((prev) => {
+                const preferred = linkedRp.roomTypeId || prev;
+                if (openTypeIds.size === 0) return preferred || prev;
+                if (preferred && openTypeIds.has(preferred)) return preferred;
+                return '';
+              });
+            } else if (linkedRp?.roomTypeId) {
+              setRoomTypeId(linkedRp.roomTypeId);
+            }
+            if (stayProductFamily(linkedRp ?? {}) === 'medical') setSegment('Medical');
+            if (
+              !ratePlanRequiresGuestPackage({
+                code: linkedRp?.code,
+                medicalFlag: linkedRp?.medicalFlag,
+              })
+            ) {
+              setPax((rows) => rows.map((row) => ({ ...row, medicalPackageCode: '' })));
+            }
+          } else if (stayProductFamily(foRp ?? {}) === 'medical') {
+            setSegment('Medical');
           }
         }
       }
@@ -2046,13 +2092,44 @@ export function ReservationCardEditor({
     if (patch.ratePlanId !== undefined) {
       const rp = ratePlans.find((r) => r.id === patch.ratePlanId);
       const contract = salesContracts.find((c) => c.id === salesContractId);
-      if (contract && patch.ratePlanId && patch.ratePlanId !== contract.ratePlanId) {
+      // Medical FO package beside corp Infotur is intentional — do not warn.
+      if (
+        contract &&
+        patch.ratePlanId &&
+        patch.ratePlanId !== contract.ratePlanId &&
+        !ratePlanRequiresGuestPackage({
+          code: rp?.code,
+          medicalFlag: rp?.medicalFlag,
+        })
+      ) {
         showWarning(t('rateNotContractToast'));
       }
       // Package / BAR → meal from plan; scoped package may set room type; medical → segment
       if (rp?.mealPlanId) setMealPlanId(rp.mealPlanId);
       else if (!patch.ratePlanId) setMealPlanId('');
-      if (rp?.roomTypeId) setRoomTypeId(rp.roomTypeId);
+      if (rp?.medicalFlag) {
+        const day = (checkIn || '').slice(0, 10);
+        const openTypeIds = new Set(
+          (rp.sellCells ?? [])
+            .filter((c) => {
+              if (!day) return true;
+              const from = String(c.effectiveFrom ?? '').slice(0, 10);
+              const to = c.effectiveTo ? String(c.effectiveTo).slice(0, 10) : '';
+              if (from && from > day) return false;
+              if (to && to < day) return false;
+              return true;
+            })
+            .map((c) => c.roomTypeId),
+        );
+        setRoomTypeId((prev) => {
+          const preferred = rp.roomTypeId || prev;
+          if (openTypeIds.size === 0) return preferred || prev;
+          if (preferred && openTypeIds.has(preferred)) return preferred;
+          return '';
+        });
+      } else if (rp?.roomTypeId) {
+        setRoomTypeId(rp.roomTypeId);
+      }
       if (stayProductFamily(rp ?? {}) === 'medical') setSegment('Medical');
     }
     if (patch.roomTypeId !== undefined) {
@@ -2199,7 +2276,7 @@ export function ReservationCardEditor({
   }
 
   /** Party list → adults/children counts (bidirectional with onLeftChange pax sync). */
-  function applyPaxChange(rows: PaxRow[]) {
+  function applyPaxChange(rows: PaxRow[], opts?: { persist?: boolean; reservationGuestId?: string }) {
     const next = syncPaxToPartySize(rows, rows.length, partyBillingMode === 'EQUAL');
     setPax(next);
     const counts = countsFromPax(next);
@@ -2207,6 +2284,104 @@ export function ReservationCardEditor({
     setChildren11_6(String(counts.children11_6));
     setChildren5_2(String(counts.children5_2));
     setChildren1_0(String(counts.children1_0));
+    if (opts?.persist) {
+      void persistPartySnapshot(next, opts.reservationGuestId ?? guestId);
+    }
+  }
+
+  function rememberScanPaxIndex(index: number | null) {
+    scanPaxIndexRef.current = index;
+  }
+
+  function paxGuestsPatchBody(rows: PaxRow[]) {
+    return rows
+      .filter((p) => Boolean(p.guestId) || Boolean(p.firstName.trim()) || Boolean(p.lastName.trim()))
+      .map((p) => ({
+        guestId: p.guestId || null,
+        firstName: p.firstName || null,
+        lastName: p.lastName || null,
+        middleName: p.middleName || null,
+        sex: p.sex || null,
+        nationality: p.nationality || null,
+        birthDate: p.birthDate || null,
+        age: p.age ? Number(p.age) : null,
+        idCardNo: p.idCardNo || null,
+        passportNo: p.passportNo || null,
+        isPrimary: p.isPrimary,
+        ownsFolio: p.ownsFolio ?? false,
+        medicalPackageCode: p.medicalPackageCode?.trim()
+          ? p.medicalPackageCode.trim().toUpperCase()
+          : null,
+      }));
+  }
+
+  /** Persist party after attach so guest-card reload cannot wipe an unsaved local row. */
+  async function persistPartySnapshot(rows: PaxRow[], nextGuestId: string) {
+    if (!reservationId || isCreate || isLocked) return;
+    const counts = countsFromPax(rows);
+    const primary =
+      nextGuestId ||
+      rows.find((row) => row.isPrimary && row.guestId)?.guestId ||
+      rows.find((row) => row.guestId)?.guestId ||
+      '';
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/full`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(primary ? { guestId: primary } : {}),
+          adults: counts.adults,
+          children11_6: counts.children11_6,
+          children5_2: counts.children5_2,
+          children1_0: counts.children1_0,
+          paxGuests: paxGuestsPatchBody(rows),
+        }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        console.warn('[reservation] party attach persist failed', json);
+        showWarning(t('partyAttachPersistFailed'));
+      }
+    } catch (err) {
+      console.warn('[reservation] party attach persist failed', err);
+      showWarning(t('partyAttachPersistFailed'));
+    }
+  }
+
+  async function hydratePaxFromSavedGuest(savedId: string) {
+    try {
+      const res = await fetch(`/api/guests/${savedId}/full`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      const firstName = String(json.firstName ?? '');
+      const lastName = String(json.lastName ?? '');
+      const fullName = String(json.fullName ?? '').trim();
+      const fromFull = fullName ? fullName.split(/\s+/).filter(Boolean) : [];
+      const fn = firstName || fromFull[0] || '';
+      const ln = lastName || (fromFull.length > 1 ? fromFull.slice(1).join(' ') : '');
+      const birthRaw = json.birthDate ? String(json.birthDate) : '';
+      const birthDate = birthRaw ? birthRaw.slice(0, 10) : '';
+      const prev = paxRef.current;
+      let touched = false;
+      const mapped = prev.map((row) => {
+        if (row.guestId !== savedId) return row;
+        touched = true;
+        return {
+          ...row,
+          firstName: fn || row.firstName,
+          lastName: ln || row.lastName,
+          birthDate: birthDate || row.birthDate,
+          age: birthDate ? ageYearsFromBirthDate(birthDate) : row.age,
+          sex: json.sex ? String(json.sex) : row.sex,
+          nationality: json.nationality ? String(json.nationality) : row.nationality,
+        };
+      });
+      if (!touched) return;
+      // Sync adults/children counters (DOB may reband) and persist names onto the stay.
+      applyPaxChange(mapped, { persist: true });
+    } catch {
+      /* guest list refresh is enough */
+    }
   }
 
   async function save(choice?: { reason?: RoomMoveReason; settlement?: ClassSettlement }) {
@@ -3306,7 +3481,7 @@ export function ReservationCardEditor({
                   partyBillingMode={partyBillingMode}
                   onPartyBillingMode={setPartyBillingMode}
                   onGuestId={setGuestId}
-                  onPax={applyPaxChange}
+                  onPax={(rows) => applyPaxChange(rows, { persist: true })}
                   preferredBed={preferredBed}
                   preferredLocation={preferredLocation}
                   voucherNo={voucherNo}
@@ -3321,18 +3496,19 @@ export function ReservationCardEditor({
                     siblingStays.length > 1 ? (idx) => setMovePaxIdx(idx) : undefined
                   }
                   onOpenGuestCard={(id) => {
+                    rememberScanPaxIndex(null);
                     setGuestCardId(id);
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
                   onScanId={(id, index) => {
-                    setScanPaxIndex(index ?? null);
+                    rememberScanPaxIndex(index ?? null);
                     setGuestCardId(id);
                     setGuestCardOpenIdReader(true);
                     setGuestCardOpen(true);
                   }}
                   onNewGuest={(index) => {
-                    setScanPaxIndex(index);
+                    rememberScanPaxIndex(index);
                     setGuestCardId(null);
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
@@ -3589,10 +3765,12 @@ export function ReservationCardEditor({
           setGuestCardOpen(false);
           setGuestCardOpenIdReader(false);
           setGuestCardId(null);
+          rememberScanPaxIndex(null);
         }}
-        onSaved={() => {
+        onSaved={(savedId) => {
+          // Do NOT load() the reservation — that wiped local/pending party rows.
           void loadGuests();
-          void load();
+          if (savedId) void hydratePaxFromSavedGuest(savedId);
         }}
         onCreated={(id, meta) => {
           const firstName = meta?.firstName ?? '';
@@ -3603,40 +3781,28 @@ export function ReservationCardEditor({
           void loadGuests();
           setGuestCardId(id);
           setGuestCardOpen(true);
-          const target = scanPaxIndex;
-          setScanPaxIndex(null);
-          if (
-            target != null &&
-            pax[target] &&
-            meta?.birthDate &&
-            !guestFitsSlot(meta.birthDate, pax[target])
-          ) {
+          const target = scanPaxIndexRef.current;
+          rememberScanPaxIndex(null);
+          const guest = {
+            id,
+            firstName: fn,
+            lastName: ln,
+            birthDate: meta?.birthDate,
+          };
+          const opts = {
+            equalMode: partyBillingModeRef.current === 'EQUAL',
+            reservationGuestId: guestIdRef.current,
+          };
+          const currentPax = paxRef.current;
+          const placed =
+            target != null
+              ? placeGuestOnPaxRow(currentPax, target, guest, opts)
+              : { ...attachGuestToPax(currentPax, guest, opts), rebander: false };
+          if (placed.rebander) {
             showWarning(t('guestAgeMismatch'));
-            return;
           }
-          if (target != null && pax[target]) {
-            const filled: PaxRow = {
-              ...pax[target],
-              guestId: id,
-              firstName: fn || pax[target].firstName,
-              lastName: ln || pax[target].lastName,
-              birthDate: meta?.birthDate || pax[target].birthDate,
-              age: meta?.birthDate ? ageYearsFromBirthDate(meta.birthDate) : pax[target].age,
-            };
-            if (filled.isPrimary || !guestId) setGuestId(id);
-            applyPaxChange(pax.map((row, i) => (i === target ? filled : row)));
-            return;
-          }
-          const attached = attachGuestToPax(
-            pax,
-            { id, firstName: fn, lastName: ln, birthDate: meta?.birthDate },
-            {
-              equalMode: partyBillingMode === 'EQUAL',
-              reservationGuestId: guestId,
-            },
-          );
-          setGuestId(attached.guestId);
-          applyPaxChange(attached.pax);
+          setGuestId(placed.guestId);
+          applyPaxChange(placed.pax, { persist: true, reservationGuestId: placed.guestId });
         }}
       />
       {reservationId ? (

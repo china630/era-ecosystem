@@ -124,6 +124,11 @@ export async function applyCommercialAmend(input: {
       data: {
         roomPayer: input.roomPayer,
         commissionBasis: input.commissionBasis,
+        // Posted-night move reads these. The later reservation update is too late:
+        // transfer to a company folio throws NO_COMPANY_ON_STAY while companyId is still null.
+        agencyId: input.agencyId ?? null,
+        companyId: input.companyId ?? null,
+        salesContractId: input.salesContractId ?? null,
       },
     });
 

@@ -2,6 +2,8 @@ import {
   attachGuestToPax,
   countsFromPax,
   guestFitsSlot,
+  isIncompletePax,
+  placeGuestOnPaxRow,
   syncPaxToBandCounts,
 } from '@/components/reservation-card/party-pax';
 
@@ -102,5 +104,40 @@ describe('party age bands', () => {
     expect(guestFitsSlot('1981-07-07', child!)).toBe(false);
     expect(guestFitsSlot('2018-05-01', child!)).toBe(true);
     expect(guestFitsSlot('', child!)).toBe(true);
+  });
+
+  it('keeps a guestId row complete even without a typed name', () => {
+    expect(isIncompletePax({ firstName: '', lastName: '', guestId: 'g1' })).toBe(false);
+    expect(isIncompletePax({ firstName: '', lastName: '', guestId: '' })).toBe(true);
+  });
+
+  it('placeGuestOnPaxRow fills the clicked adult row with a child and rebands', () => {
+    const rows = party();
+    const adultIdx = rows.findIndex((row) => row.age === '');
+    expect(adultIdx).toBeGreaterThanOrEqual(0);
+    const placed = placeGuestOnPaxRow(
+      rows,
+      adultIdx,
+      { id: 'kid2', firstName: 'Nara', lastName: 'Y', birthDate: '2018-05-01' },
+      { equalMode: false, reservationGuestId: 'booker' },
+    );
+    expect(placed.rebander).toBe(true);
+    expect(placed.grew).toBe(false);
+    expect(placed.pax[adultIdx]?.guestId).toBe('kid2');
+    expect(placed.pax[adultIdx]?.firstName).toBe('Nara');
+    expect(countsFromPax(placed.pax).children11_6).toBe(2);
+  });
+
+  it('placeGuestOnPaxRow does not leave the clicked row empty', () => {
+    const rows = party();
+    const emptyAdult = rows.findIndex((row) => !row.firstName && row.age === '');
+    const placed = placeGuestOnPaxRow(
+      rows,
+      emptyAdult,
+      { id: 'a2', firstName: 'Ada', lastName: 'B', birthDate: '1990-01-01' },
+      { equalMode: false, reservationGuestId: 'booker' },
+    );
+    expect(placed.pax[emptyAdult]?.guestId).toBe('a2');
+    expect(placed.rebander).toBe(false);
   });
 });

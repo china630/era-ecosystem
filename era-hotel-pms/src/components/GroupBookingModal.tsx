@@ -32,6 +32,7 @@ import {
 import { guestListItems } from '@/lib/guest-list-identity';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import {
+  ratePlanRequiresGuestPackage,
   stayProductFamilyRank,
   stayProductFamilySuffixKey,
 } from '@/lib/services/medical-package-resolve.service';
@@ -492,7 +493,16 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
     if (defaults.companyId !== undefined) setCompanyId(defaults.companyId ?? '');
     if (defaults.commissionBasis) setCommissionBasis(defaults.commissionBasis);
     if (defaults.roomPayer) setRoomPayer(defaults.roomPayer);
-    if (c.ratePlanId) applyRatePlan(c.ratePlanId);
+    // Same as reservation card: keep FO medical package beside corp Infotur contract.
+    const foRp = ratePlans.find((r) => r.id === ratePlanId);
+    const keepFoMedical =
+      Boolean(foRp) &&
+      foRp!.id !== c.ratePlanId &&
+      ratePlanRequiresGuestPackage({
+        code: foRp?.code,
+        medicalFlag: foRp?.medicalFlag,
+      });
+    if (!keepFoMedical && c.ratePlanId) applyRatePlan(c.ratePlanId);
   }
 
   function updateLine(key: string, patch: Partial<StayLine>) {
