@@ -1262,9 +1262,9 @@ const labResultsAdapter: ImportAdapter<{
     unit: z.string(),
     refMin: z.string(),
     refMax: z.string(),
-    normTextAz: z.string().optional(),
-    normTextRu: z.string().optional(),
-    normTextEn: z.string().optional(),
+    normTextAz: z.string().default(""),
+    normTextRu: z.string().default(""),
+    normTextEn: z.string().default(""),
   }),
   mapRow: (raw) => ({
     orderRef: req(raw.orderRef),
