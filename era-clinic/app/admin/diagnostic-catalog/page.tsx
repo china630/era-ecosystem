@@ -530,7 +530,10 @@ export default function DiagnosticCatalogAdminPage() {
       usageContour: row.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST",
       menuSurface: row.menuSurface ?? "",
       schedulingMode: row.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
-      broughtInMaxDays: row.broughtInMaxDays ?? null,
+      broughtInMaxDays:
+        row.broughtInMaxDays != null && row.broughtInMaxDays > 0
+          ? String(row.broughtInMaxDays)
+          : "",
       financeSku: linkedSku,
       includes: includesText,
       sortOrder: String(row.sortOrder),
@@ -1593,7 +1596,7 @@ export default function DiagnosticCatalogAdminPage() {
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    broughtInMaxDays: e.target.value.trim() ? Number(e.target.value) : null,
+                    broughtInMaxDays: e.target.value.trim(),
                   })
                 }
               />

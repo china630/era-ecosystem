@@ -68,6 +68,8 @@ type IntakeChecklistItem = {
   href: string | null;
   recordId: string | null;
   scheduledAt?: string | null;
+  broughtInMaxDays?: number | null;
+  broughtInOn?: string | null;
 };
 
 type CardSummary = {
@@ -244,7 +246,12 @@ function BroughtInBlank({
       </label>
       {on ? (
         <>
-          <DatePicker value={date} onChange={setDate} />
+          <DatePicker
+            label={t("broughtInOwn", { days: maxDays })}
+            value={date}
+            onChange={setDate}
+            placeholder="dd.mm.yyyy"
+          />
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
