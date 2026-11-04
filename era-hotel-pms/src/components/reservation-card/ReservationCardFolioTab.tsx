@@ -746,7 +746,7 @@ export function ReservationCardFolioTab({
     }
     setDepositOpen(false);
     setDepositAmount('');
-    onChanged();
+    onChanged?.();
   }
   useEffect(() => {
     if (!depositOpen) return;
@@ -788,7 +788,7 @@ export function ReservationCardFolioTab({
       return;
     }
     setTransferDepositId('');
-    onChanged();
+    onChanged?.();
   }
   const cashBar = (
     <div className="flex flex-wrap gap-2">
