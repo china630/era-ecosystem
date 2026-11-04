@@ -82,14 +82,25 @@ type DiagnosticService = {
   _count?: { analytes?: number };
 };
 
+type BoundKind = "INTERVAL" | "UPPER_ONLY" | "LOWER_ONLY" | "QUALITATIVE" | "ZONES";
+
 type DictionaryAnalyte = {
   code: string;
   unit?: string | null;
   labelEn: string;
   labelRu: string;
   labelAz: string;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: BoundKind | null;
   refMin?: string | null;
   refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  zonesJson?: string | null;
   section?: string | null;
   valueType?: string;
   optionsJson?: string | null;
@@ -103,8 +114,17 @@ type DiagnosticAnalyte = {
   labelEn: string;
   labelRu: string;
   labelAz: string;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: BoundKind | null;
   refMin?: string | null;
   refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  zonesJson?: string | null;
   section?: string | null;
   valueType?: string;
   sortOrder: number;
@@ -518,8 +538,17 @@ export default function DiagnosticCatalogAdminPage() {
       labelEn: row.labelEn,
       labelRu: row.labelRu,
       labelAz: row.labelAz,
+      normTextEn: row.normTextEn ?? "",
+      normTextRu: row.normTextRu ?? "",
+      normTextAz: row.normTextAz ?? "",
+      boundKind: row.boundKind ?? "INTERVAL",
       refMin: row.refMin ?? "",
       refMax: row.refMax ?? "",
+      refMinFemale: row.refMinFemale ?? "",
+      refMaxFemale: row.refMaxFemale ?? "",
+      refMinMale: row.refMinMale ?? "",
+      refMaxMale: row.refMaxMale ?? "",
+      zonesJson: row.zonesJson ?? "",
       section: row.section ?? "",
       valueType: row.valueType ?? "NUMERIC",
       valueOptionsJson: row.valueOptions?.length
@@ -690,8 +719,17 @@ export default function DiagnosticCatalogAdminPage() {
         labelEn: form.labelEn?.trim(),
         labelRu: form.labelRu?.trim(),
         labelAz: form.labelAz?.trim(),
+        normTextEn: form.normTextEn?.trim() || null,
+        normTextRu: form.normTextRu?.trim() || null,
+        normTextAz: form.normTextAz?.trim() || null,
+        boundKind: (form.boundKind as BoundKind) || "INTERVAL",
         refMin: form.refMin?.trim() || null,
         refMax: form.refMax?.trim() || null,
+        refMinFemale: form.refMinFemale?.trim() || null,
+        refMaxFemale: form.refMaxFemale?.trim() || null,
+        refMinMale: form.refMinMale?.trim() || null,
+        refMaxMale: form.refMaxMale?.trim() || null,
+        zonesJson: form.zonesJson?.trim() || null,
         section: form.section?.trim() || null,
         valueType: form.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
@@ -773,12 +811,32 @@ export default function DiagnosticCatalogAdminPage() {
       labelEn: row.labelEn,
       labelRu: row.labelRu,
       labelAz: row.labelAz,
+      normTextEn: row.normTextEn ?? "",
+      normTextRu: row.normTextRu ?? "",
+      normTextAz: row.normTextAz ?? "",
+      boundKind: row.boundKind ?? "INTERVAL",
       refMin: row.refMin ?? "",
       refMax: row.refMax ?? "",
+      refMinFemale: row.refMinFemale ?? "",
+      refMaxFemale: row.refMaxFemale ?? "",
+      refMinMale: row.refMinMale ?? "",
+      refMaxMale: row.refMaxMale ?? "",
+      zonesJson: row.zonesJson ?? "",
       section: row.section ?? "",
       valueType: row.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
       valueOptionsJson: row.optionsJson ?? "",
     }));
+  }
+
+  function analyteNormCell(row: DiagnosticAnalyte): string {
+    const sentence = locale.startsWith("ru")
+      ? row.normTextRu
+      : locale.startsWith("az")
+        ? row.normTextAz
+        : row.normTextEn;
+    if (sentence?.trim()) return sentence.trim();
+    if (row.refMin && row.refMax) return `${row.refMin}–${row.refMax}`;
+    return row.refMin || row.refMax || "—";
   }
 
   function dictionaryLabel(row: DictionaryAnalyte) {
@@ -1530,6 +1588,7 @@ export default function DiagnosticCatalogAdminPage() {
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("unit")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("normText")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMin")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMax")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("section")}</th>
@@ -1551,6 +1610,9 @@ export default function DiagnosticCatalogAdminPage() {
                             : row.labelEn) || row.labelEn}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.unit || "—"}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} max-w-[14rem] whitespace-pre-wrap`}>
+                        {analyteNormCell(row)}
+                      </td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.refMin || "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.refMax || "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.section || "—"}</td>
@@ -1704,6 +1766,33 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.labelAz ?? ""}
                 onChange={(e) => setForm({ ...form, labelAz: e.target.value })}
               />
+              <FieldTextarea
+                label={t("normTextEn")}
+                value={form.normTextEn ?? ""}
+                onChange={(e) => setForm({ ...form, normTextEn: e.target.value })}
+              />
+              <FieldTextarea
+                label={t("normTextRu")}
+                value={form.normTextRu ?? ""}
+                onChange={(e) => setForm({ ...form, normTextRu: e.target.value })}
+              />
+              <FieldTextarea
+                label={t("normTextAz")}
+                value={form.normTextAz ?? ""}
+                onChange={(e) => setForm({ ...form, normTextAz: e.target.value })}
+              />
+              <FieldSelect
+                label={t("boundKind")}
+                preset="select"
+                value={form.boundKind ?? "INTERVAL"}
+                onChange={(e) => setForm({ ...form, boundKind: e.target.value })}
+              >
+                <option value="INTERVAL">{t("boundKindInterval")}</option>
+                <option value="UPPER_ONLY">{t("boundKindUpper")}</option>
+                <option value="LOWER_ONLY">{t("boundKindLower")}</option>
+                <option value="QUALITATIVE">{t("boundKindQualitative")}</option>
+                <option value="ZONES">{t("boundKindZones")}</option>
+              </FieldSelect>
               <FieldRow cols={2}>
                 <Field
                   label={t("refMin")}
@@ -1718,6 +1807,40 @@ export default function DiagnosticCatalogAdminPage() {
                   onChange={(e) => setForm({ ...form, refMax: e.target.value })}
                 />
               </FieldRow>
+              <FieldRow cols={2}>
+                <Field
+                  label={t("refMinFemale")}
+                  preset="shortText"
+                  value={form.refMinFemale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMinFemale: e.target.value })}
+                />
+                <Field
+                  label={t("refMaxFemale")}
+                  preset="shortText"
+                  value={form.refMaxFemale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMaxFemale: e.target.value })}
+                />
+              </FieldRow>
+              <FieldRow cols={2}>
+                <Field
+                  label={t("refMinMale")}
+                  preset="shortText"
+                  value={form.refMinMale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMinMale: e.target.value })}
+                />
+                <Field
+                  label={t("refMaxMale")}
+                  preset="shortText"
+                  value={form.refMaxMale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMaxMale: e.target.value })}
+                />
+              </FieldRow>
+              <FieldTextarea
+                label={t("zonesJson")}
+                hint={t("zonesJsonHint")}
+                value={form.zonesJson ?? ""}
+                onChange={(e) => setForm({ ...form, zonesJson: e.target.value })}
+              />
               <Field
                 label={t("sortOrder")}
                 preset="count"

@@ -233,8 +233,17 @@ export type AnalyteInput = {
   labelEn: string;
   labelRu: string;
   labelAz: string;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: "INTERVAL" | "UPPER_ONLY" | "LOWER_ONLY" | "QUALITATIVE" | "ZONES";
   refMin?: string | null;
   refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  zonesJson?: string | null;
   section?: string | null;
   valueType?: "NUMERIC" | "QUALITATIVE";
   sortOrder?: number;

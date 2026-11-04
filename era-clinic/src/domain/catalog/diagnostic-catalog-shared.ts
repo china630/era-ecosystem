@@ -18,8 +18,15 @@ export type CatalogAnalyteDef = {
   code: string;
   unit?: string;
   label: L10n;
+  normText?: L10n;
+  boundKind?: "INTERVAL" | "UPPER_ONLY" | "LOWER_ONLY" | "QUALITATIVE" | "ZONES";
   refMin?: string;
   refMax?: string;
+  refMinFemale?: string;
+  refMaxFemale?: string;
+  refMinMale?: string;
+  refMaxMale?: string;
+  zonesJson?: string;
   section?: string;
   valueType?: "NUMERIC" | "QUALITATIVE";
   valueOptions?: CatalogAnalyteValueOption[];

@@ -7,6 +7,8 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Closeout (2026-11-04 lab/USM blank signer + dates):** AC-CLI-PRINT stays ✅. Modality signer and sample/result dates are on the existing blanks, not a new AC. Gate/Pilot unchanged.
+
 **Closeout (2026-11-02 print extra language + lab rooms):** AC-CLI-LAB stays ✅ (room numbers return for episode-read without a practitioner; existing negative path). CLI-34 print extra language is a branding option on the existing guest sheet, not a new AC. Gate/Pilot unchanged.
 
 **Closeout (2026-11-03 extras draft + blank performer):** AC-CLI-ASSIGN and AC-CLI-OPEN-ATTEND stay 🟡 (draft +/− until Saxla; tail drop + OPEN repack from today; no new negative spec, not Scaffold ✅). AC-CLI-PRINT stays ✅ (performer name on lab/USM uses the existing missing-source path). Gate/Pilot unchanged.
@@ -84,7 +86,7 @@ Do not call this table «product readiness».
 | AC-CLI-TENANT | Live SHARED pool + field isolation UAT | Out of BE rollup | Wave 5 lab + Wave 9 live-smoke + Wave 10 cron discover; Scaffold ✅ still needs field pass |
 | CLI-47 | Procedure TTK → Finance inventory | Out of BE plan | ADR `clinic-procedure-consumable-ttk`; API W1 (BOM+event); Finance write-off W2 |
 | CLI-49 | Physio S + program/substance catalogs | Out of BE plan | Nafta card wave: Solyuks/`belinə`/`NAFTALAN_FILL`; empty-catalog UX; `#23` always `replaceSites`; satellite templates + copy-if-empty (ADR clinic-catalog-template-overlay); UAT open until droplet proof |
-| CLI-32 / CLI-34 / CLI-25 | Nafta intake checklist + Baku slots | Out of BE plan | `PKG-NAFTA-INTAKE` card/print + live instantiate; `#23` `parseBakuDateTime(+04:00)` + PLAN/now `gte now` — UAT punch in `UAT-SMOKE.md` |
+| CLI-32 / CLI-34 / CLI-25 | Nafta intake checklist + Baku slots | Out of BE plan | `PKG-NAFTA-INTAKE` card/print + live instantiate; `#23` `parseBakuDateTime(+04:00)` + PLAN/now `gte now` — UAT punch in `UAT-SMOKE.md`. 2026-11-04 lab norms (`normText*`/`boundKind`/sex; urine align; droplet script) deepen SHIPPED only — do not move Scaffold |
 | Dual-run extra tickets | Nafta Elektraweb SPA outbox | Out of BE plan | `/reception/extra-tickets`; HOT-06 HEADLESS; Wave 9 field runbook [`reports/hot06-field-runbook.md`](../../reports/hot06-field-runbook.md). Not Scaffold / not SHIPPED. |
 | CLI-55 / AC-CLI-EPISODE | Episode as care course | Out of BE plan | ADR `clinic-episode-as-clinical-course`; SCREEN W1–W5; AC stays 🟡 until field UAT; do not reopen AC-CLI-PT demographics anamnesis |
 | CLI-56 | Episode care team (multi-doctor) | Out of BE plan | ADR `clinic-episode-care-team`; SCREEN; assigned-only scope + card gate; appointments link deferred |

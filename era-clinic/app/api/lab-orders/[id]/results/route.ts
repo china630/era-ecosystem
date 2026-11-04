@@ -20,6 +20,12 @@ const bodySchema = z.object({
         unit: z.string().optional(),
         refMin: z.string().optional(),
         refMax: z.string().optional(),
+        normTextEn: z.string().optional(),
+        normTextRu: z.string().optional(),
+        normTextAz: z.string().optional(),
+        boundKind: z
+          .enum(["INTERVAL", "UPPER_ONLY", "LOWER_ONLY", "QUALITATIVE", "ZONES"])
+          .optional(),
         flag: z.enum(["NORMAL", "HIGH", "LOW", "CRITICAL"]).optional(),
       }),
     )

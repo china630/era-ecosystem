@@ -28,7 +28,7 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-6 | ICD-10 waves CLI-39…42 | [~] | ADR clinic-icd10-catalog; UAT-SMOKE ICD; `__tests__/icd10-catalog.spec.ts` |
 | S-7 | Procedure TTK → Finance stock (CLI-47) | [~] | ADR clinic-procedure-consumable-ttk; W1 BOM+event API; Finance write-off W2 |
 | S-8 | Physio S catalog (CLI-49) | [~] | W4 + Nafta card wave: Solyuks/`belinə`/`NAFTALAN_FILL`/empty-catalog; always rematch `#23`; UAT-SMOKE CLI-49 open |
-| S-9 | Nafta card wave — intake + Baku slots (CLI-25/32/34/48) | [~] | `PKG-NAFTA-INTAKE` checklist/print/live instantiate; `#23` `parseBakuDateTime`; now/PLAN `gte now`; ops: seed catalogs → re-Apply `#23` (+ `#31` if USG) |
+| S-9 | Nafta card wave — intake + Baku slots (CLI-25/32/34/48) | [~] | `PKG-NAFTA-INTAKE` checklist/print/live instantiate; `#23` `parseBakuDateTime`; now/PLAN `gte now`; ops: seed catalogs → re-Apply `#23` (+ `#31` if USG). 2026-11-04 lab norms wave + second-pass do not move Gate/Pilot |
 | S-10 | Catalog seed layers base + Nafta overlay | [~] | ADR clinic-catalog-base-and-org-overlay-seeds; `db:seed:physio` / `db:seed:diagnostic-catalog` = base then org overlay |
 | S-11 | Nafta medical SKU dual-run assign (Wave A) | [~] | CLI-50 SCREEN; AC-CLI-SAN-PKG 🟡; `/sanatorium` Select 4 SKUs + `?episode=`; **pilot punch open** |
 | S-12 | Nafta PDF quota knots (Wave B) | [~] | CLI-51 API; AC-CLI-SAN-QUOTA 🟡; knots **matrix** UI; UAT open |

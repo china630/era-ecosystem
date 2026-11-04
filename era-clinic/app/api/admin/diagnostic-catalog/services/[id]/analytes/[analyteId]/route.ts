@@ -6,14 +6,31 @@ import {
   deleteAnalyte,
 } from "@/domain/catalog/diagnostic-catalog-admin.service";
 
+const boundKindSchema = z.enum([
+  "INTERVAL",
+  "UPPER_ONLY",
+  "LOWER_ONLY",
+  "QUALITATIVE",
+  "ZONES",
+]);
+
 const updateSchema = z.object({
   code: z.string().min(1).optional(),
   unit: z.string().nullable().optional(),
   labelEn: z.string().min(1).optional(),
   labelRu: z.string().min(1).optional(),
   labelAz: z.string().min(1).optional(),
+  normTextEn: z.string().nullable().optional(),
+  normTextRu: z.string().nullable().optional(),
+  normTextAz: z.string().nullable().optional(),
+  boundKind: boundKindSchema.optional(),
   refMin: z.string().nullable().optional(),
   refMax: z.string().nullable().optional(),
+  refMinFemale: z.string().nullable().optional(),
+  refMaxFemale: z.string().nullable().optional(),
+  refMinMale: z.string().nullable().optional(),
+  refMaxMale: z.string().nullable().optional(),
+  zonesJson: z.string().nullable().optional(),
   section: z.string().nullable().optional(),
   valueType: z.enum(["NUMERIC", "QUALITATIVE"]).optional(),
   sortOrder: z.number().int().optional(),

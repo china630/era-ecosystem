@@ -1234,12 +1234,26 @@ const labResultsAdapter: ImportAdapter<{
   unit: string;
   refMin: string;
   refMax: string;
+  normTextAz: string;
+  normTextRu: string;
+  normTextEn: string;
 }> = {
   entity: "lab-results",
   label: "Lab result fields",
   order: 13,
   templateHint: "28-Lab-Results.xlsx — WO Word tables",
-  headerAliases: aliases("orderRef", "code", "label", "value", "unit", "refMin", "refMax"),
+  headerAliases: aliases(
+    "orderRef",
+    "code",
+    "label",
+    "value",
+    "unit",
+    "refMin",
+    "refMax",
+    "normTextAz",
+    "normTextRu",
+    "normTextEn",
+  ),
   rowSchema: z.object({
     orderRef: z.string().min(1),
     code: z.string().min(1),
@@ -1248,6 +1262,9 @@ const labResultsAdapter: ImportAdapter<{
     unit: z.string(),
     refMin: z.string(),
     refMax: z.string(),
+    normTextAz: z.string(),
+    normTextRu: z.string(),
+    normTextEn: z.string(),
   }),
   mapRow: (raw) => ({
     orderRef: req(raw.orderRef),
@@ -1257,6 +1274,9 @@ const labResultsAdapter: ImportAdapter<{
     unit: cellString(raw.unit) ?? "",
     refMin: cellString(raw.refMin) ?? "",
     refMax: cellString(raw.refMax) ?? "",
+    normTextAz: cellString(raw.normTextAz) ?? "",
+    normTextRu: cellString(raw.normTextRu) ?? "",
+    normTextEn: cellString(raw.normTextEn) ?? "",
   }),
   upsert: async (tx, row, dryRun) => {
     const orderId = await findImportRecordId(tx, "lab-orders", row.orderRef);
@@ -1273,6 +1293,9 @@ const labResultsAdapter: ImportAdapter<{
       unit: row.unit || null,
       refMin: row.refMin || null,
       refMax: row.refMax || null,
+      normTextAz: row.normTextAz || null,
+      normTextRu: row.normTextRu || null,
+      normTextEn: row.normTextEn || null,
     };
     if (existing) {
       await tx.labResult.update({ where: { id: existing.id }, data });
@@ -1300,6 +1323,9 @@ const labResultsAdapter: ImportAdapter<{
       unit: row.unit,
       refMin: row.refMin,
       refMax: row.refMax,
+      ...(row.normTextAz ? { normTextAz: row.normTextAz } : {}),
+      ...(row.normTextRu ? { normTextRu: row.normTextRu } : {}),
+      ...(row.normTextEn ? { normTextEn: row.normTextEn } : {}),
     });
     const clinicalAt = order?.collectedAt ?? order?.completedAt ?? new Date();
     await tx.labOrder.update({

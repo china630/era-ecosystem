@@ -104,8 +104,22 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
           code: a.code,
           unit: a.unit ?? undefined,
           label: { en: a.labelEn, ru: a.labelRu, az: a.labelAz },
+          normText:
+            a.normTextEn || a.normTextRu || a.normTextAz
+              ? {
+                  en: a.normTextEn ?? "",
+                  ru: a.normTextRu ?? "",
+                  az: a.normTextAz ?? "",
+                }
+              : undefined,
+          boundKind: a.boundKind ?? undefined,
           refMin: a.refMin ?? undefined,
           refMax: a.refMax ?? undefined,
+          refMinFemale: a.refMinFemale ?? undefined,
+          refMaxFemale: a.refMaxFemale ?? undefined,
+          refMinMale: a.refMinMale ?? undefined,
+          refMaxMale: a.refMaxMale ?? undefined,
+          zonesJson: a.zonesJson ?? undefined,
           section: a.section ?? undefined,
           valueType: a.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
           valueOptions: (a.valueOptions ?? []).map((o) => ({
