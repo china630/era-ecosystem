@@ -47,6 +47,7 @@ import {
   FolioVoidModal,
 } from '@/components/folio/FolioLineModals';
 import { FolioPaymentModal } from '@/components/folio/FolioPaymentModal';
+import { ClinicPlanPanel } from '@/components/folio/ClinicPlanPanel';
 import { FolioCategoryRefundModal } from '@/components/folio/FolioCategoryRefundModal';
 import { displayFolioChargeDescription } from '@/lib/folio-charge-note';
 import { escapePrintHtml, openPrintDocument } from '@/lib/print-window';
@@ -75,6 +76,7 @@ export type FolioAccount = {
     paxNo?: number | null;
     invoiceRef?: string | null;
     revenueCodeId?: string | null;
+    externalRef?: string | null;
     revenueCode?: {
       code: string;
       name?: string | null;
@@ -227,6 +229,25 @@ export function ReservationCardFolioTab({
   const locale = useLocale();
   const { can } = useAuth();
   const [payOpen, setPayOpen] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [depositGuestId, setDepositGuestId] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositMethod, setDepositMethod] = useState('CASH');
+  const [depositTerminal, setDepositTerminal] = useState('');
+  const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
+  const [heldDeposits, setHeldDeposits] = useState<Array<{ id: string; amount: number | string }>>([]);
+  const [transferDepositId, setTransferDepositId] = useState('');
+  const [transferStayId, setTransferStayId] = useState('');
+  const [transferGuestId, setTransferGuestId] = useState('');
+  const [depositTargets, setDepositTargets] = useState<
+    Array<{
+      reservationId: string;
+      roomNumber: string;
+      checkIn: string;
+      checkOut: string;
+      guests: Array<{ id: string; name: string }>;
+    }>
+  >([]);
   const [categoryRefundOpen, setCategoryRefundOpen] = useState(false);
   const [payLineId, setPayLineId] = useState<string | null>(null);
   const [chargeOpen, setChargeOpen] = useState(false);
@@ -702,6 +723,73 @@ export function ReservationCardFolioTab({
         (cat) => stayCategoryMoneyPair(folio.charges, folio.payments ?? [], cat).unused > 0.01,
       ),
   );
+  const clinicCharges = accounts.flatMap((folio) =>
+    folio.charges.map((charge) => ({ id: charge.id, externalRef: charge.externalRef })),
+  );
+  const depositGuests = pax.filter((row) => row.id);
+  async function takeDeposit() {
+    const amount = Number(depositAmount);
+    if (!depositGuestId || !(amount > 0)) return;
+    const res = await fetch(`/api/reservations/${reservationId}/deposits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reservationGuestId: depositGuestId,
+        amount,
+        paymentMethod: depositMethod,
+        bankTerminalId: depositMethod === 'CARD' ? depositTerminal || undefined : undefined,
+      }),
+    });
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => null), tc('error'));
+      return;
+    }
+    setDepositOpen(false);
+    setDepositAmount('');
+    onChanged?.();
+  }
+  useEffect(() => {
+    if (!depositOpen) return;
+    void fetch('/api/fiscal/devices?kind=BANK_POS')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { devices?: { id: string; label: string }[] } | null) => {
+        setBankTerminals(body?.devices ?? []);
+      })
+      .catch(() => setBankTerminals([]));
+    void fetch(`/api/reservations/${reservationId}/deposits`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data ?? body) as Array<{ id: string; amount: number | string; status: string }> | null;
+        setHeldDeposits(Array.isArray(rows) ? rows.filter((row) => row.status === 'HELD') : []);
+      })
+      .catch(() => setHeldDeposits([]));
+    void fetch(`/api/reservations/${reservationId}/deposit-targets`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = body?.data ?? body;
+        setDepositTargets(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => setDepositTargets([]));
+  }, [depositOpen, reservationId]);
+  const transferGuests = depositTargets.find((row) => row.reservationId === transferStayId)?.guests ?? [];
+  async function transferDeposit() {
+    if (!transferDepositId || !transferStayId || !transferGuestId) return;
+    const res = await fetch('/api/folios/deposits/transfer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        depositId: transferDepositId,
+        targetReservationId: transferStayId,
+        targetReservationGuestId: transferGuestId,
+      }),
+    });
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => null), tc('error'));
+      return;
+    }
+    setTransferDepositId('');
+    onChanged?.();
+  }
   const cashBar = (
     <div className="flex flex-wrap gap-2">
       {canPostCharges && can(PERMISSIONS.FOLIO_CHARGE) ? (
@@ -716,6 +804,11 @@ export function ReservationCardFolioTab({
       {can(PERMISSIONS.FOLIO_PAYMENT) ? (
         <button type="button" className={DANGER_BUTTON_CLASS} onClick={() => setPayOpen(true)}>
           {tf('extraPayment')}
+        </button>
+      ) : null}
+      {can(PERMISSIONS.FOLIO_PAYMENT) ? (
+        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setDepositOpen((open) => !open)}>
+          {tf('takeDeposit')}
         </button>
       ) : null}
       {can(PERMISSIONS.FOLIO_PAYMENT) && hasCategoryCredit ? (
@@ -1050,6 +1143,96 @@ export function ReservationCardFolioTab({
             </tr>
           </tbody>
         </table>
+        {folioFocus === 'deleted' ? null : (
+          <ClinicPlanPanel reservationId={reservationId} charges={clinicCharges} onChanged={onChanged} />
+        )}
+        {depositOpen ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={tf('depositGuest')}
+              required
+              value={depositGuestId}
+              onChange={(v) => setDepositGuestId(String(v ?? ''))}
+              options={depositGuests.map((row) => ({
+                value: row.id ?? '',
+                label: [row.firstName, row.lastName].filter(Boolean).join(' ') || row.id || '',
+              }))}
+              emptyLabel={tf('depositGuest')}
+            />
+            <Field
+              label={tf('depositAmount')}
+              preset="shortText"
+              value={depositAmount}
+              onChange={(e) => setDepositAmount(e.target.value)}
+            />
+            <CatalogField
+              kind="OPS_HOT"
+              label={tf('earlyCheckoutTender')}
+              value={depositMethod}
+              onChange={(v) => setDepositMethod(String(v ?? 'CASH'))}
+              options={[
+                { value: 'CASH', label: tPay('CASH') },
+                { value: 'CARD', label: tPay('CARD') },
+              ]}
+              emptyLabel={null}
+            />
+            {depositMethod === 'CARD' && bankTerminals.length > 0 ? (
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={tf('bankTerminal')}
+                required
+                value={depositTerminal}
+                onChange={(v) => setDepositTerminal(String(v ?? ''))}
+                options={bankTerminals.map((row) => ({ value: row.id, label: row.label }))}
+                emptyLabel={tf('pickTerminal')}
+              />
+            ) : null}
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void takeDeposit()}>
+              {tf('takeDeposit')}
+            </button>
+            {heldDeposits.length > 0 ? (
+              <>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={tf('depositHeld')}
+                  value={transferDepositId}
+                  onChange={(v) => setTransferDepositId(String(v ?? ''))}
+                  options={heldDeposits.map((row) => ({
+                    value: row.id,
+                    label: String(row.amount),
+                  }))}
+                  emptyLabel={tf('depositHeld')}
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={tf('depositTargetStay')}
+                  value={transferStayId}
+                  onChange={(v) => {
+                    setTransferStayId(String(v ?? ''));
+                    setTransferGuestId('');
+                  }}
+                  options={depositTargets.map((row) => ({
+                    value: row.reservationId,
+                    label: `${row.roomNumber || '—'} ${row.checkIn}–${row.checkOut}`,
+                  }))}
+                  emptyLabel={tf('depositTargetStay')}
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={tf('depositTargetGuest')}
+                  value={transferGuestId}
+                  onChange={(v) => setTransferGuestId(String(v ?? ''))}
+                  options={transferGuests.map((row) => ({ value: row.id, label: row.name || row.id }))}
+                  emptyLabel={tf('depositTargetGuest')}
+                />
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void transferDeposit()}>
+                  {tf('depositTransfer')}
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
           {folioFocus === 'deleted' ? null : cashBar}
         </div>

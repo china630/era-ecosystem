@@ -244,7 +244,10 @@ async function collectDayDocument(date: Date) {
   const paymentLines = [...payByMethod.values()].filter((row) => row.amount !== 0);
 
   const receipts = await prisma.folioDeposit.findMany({
-    where: { businessDate: date },
+    where: {
+      businessDate: date,
+      NOT: { externalRef: { startsWith: 'TRANSFER_FROM:' } },
+    },
     include: { reservation: { select: { company: { select: { voen: true } } } } },
   });
   const depositReceiptLines = receipts.map((row) => ({

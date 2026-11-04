@@ -124,6 +124,12 @@ export async function checkoutReservation(
     unusedNightsReason?: string;
     procedureCreditRefundMethod?: 'CASH' | 'CARD';
     procedureCreditBankTerminalId?: string;
+    surplusAction?: 'REFUND' | 'CARRY';
+    surplusMethod?: 'CASH' | 'CARD';
+    surplusBankTerminalId?: string;
+    targetReservationId?: string;
+    newStayCheckIn?: string;
+    newStayCheckOut?: string;
     auditRequest?: Request;
   },
 ): Promise<CheckoutResult> {
@@ -304,6 +310,23 @@ export async function checkoutReservation(
     where: { reservationId: id, status: 'OPEN' },
     include: { charges: true, payments: true },
   });
+  if (opts?.surplusAction === 'REFUND') {
+    const { refundGuestCredit } = await import('@/lib/services/folio-credit-refund');
+    await refundGuestCredit(id, {
+      method: opts.surplusMethod ?? 'CASH',
+      bankTerminalId: opts.surplusBankTerminalId,
+      reason: 'Checkout surplus',
+    });
+  } else if (opts?.surplusAction === 'CARRY') {
+    const { carryUnusedCreditToStay } = await import('@/lib/services/folio-deposit.service');
+    await carryUnusedCreditToStay({
+      sourceReservationId: id,
+      targetReservationId: opts.targetReservationId,
+      newCheckIn: opts.newStayCheckIn,
+      newCheckOut: opts.newStayCheckOut,
+      audit: { userId: opts.createdByUserId, request: opts.auditRequest },
+    });
+  }
   await assertNoUnusedPayment(id);
 
   const arCandidates = payerDebtFolios(openFolios);
