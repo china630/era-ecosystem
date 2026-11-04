@@ -314,7 +314,11 @@ export default function ProgramTemplatesAdminPage() {
       if (diagRes.ok) {
         const diagJson = await diagRes.json();
         const payload = (diagJson.data ?? diagJson) as { items?: DiagnosticCatalogItem[] };
-        setDiagItems(Array.isArray(payload.items) ? payload.items : []);
+        setDiagItems(
+          Array.isArray(payload.items)
+            ? payload.items.filter((item) => item.categoryActive !== false)
+            : [],
+        );
       }
     } catch {
       setRows([]);

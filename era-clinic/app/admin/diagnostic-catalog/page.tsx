@@ -78,13 +78,20 @@ type DiagnosticService = {
   fieldsJson?: string | null;
   includesJson?: string | null;
   guestBlankRelease?: "PAY_WITH_WORK" | "AFTER_PAYMENT";
-  usageContour?: "GUEST" | "INTERNAL";
   menuSurface?: "LAB" | "DIAGNOSTIC" | "VISIT" | "";
+  autoPaidOnOpen?: boolean;
   schedulingMode?: "FIXED" | "OPEN";
   broughtInMaxDays?: number | null;
   sortOrder: number;
   active: boolean;
+  packageOnly?: boolean;
   _count?: { analytes?: number };
+};
+
+type DiagnosticCategoryRow = {
+  id: string;
+  name: string;
+  active: boolean;
 };
 
 type BoundKind = "INTERVAL" | "UPPER_ONLY" | "LOWER_ONLY" | "QUALITATIVE" | "ZONES";
@@ -142,7 +149,7 @@ type DiagnosticAnalyte = {
   }>;
 };
 
-type Tab = "modalities" | "services" | "favorites";
+type Tab = "modalities" | "services" | "categories" | "favorites";
 
 const ORDERABLE_KINDS = new Set([
   "lab_panel",
@@ -202,6 +209,7 @@ export default function DiagnosticCatalogAdminPage() {
   const [favSaving, setFavSaving] = useState(false);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [services, setServices] = useState<DiagnosticService[]>([]);
+  const [categories, setCategories] = useState<DiagnosticCategoryRow[]>([]);
   const [analytes, setAnalytes] = useState<DiagnosticAnalyte[]>([]);
   const [serviceModalityFilter, setServiceModalityFilter] = useState("");
   const [serviceKindFilter, setServiceKindFilter] = useState("");
@@ -249,6 +257,11 @@ export default function DiagnosticCatalogAdminPage() {
     setServices(unwrap<DiagnosticService[]>(await res.json()));
   }, [serviceModalityFilter]);
 
+  const loadCategories = useCallback(async () => {
+    const res = await fetch("/api/admin/diagnostic-catalog/categories");
+    setCategories(unwrap<DiagnosticCategoryRow[]>(await res.json()));
+  }, []);
+
   const loadAnalytes = useCallback(async (serviceId: string) => {
     const res = await fetch(`/api/admin/diagnostic-catalog/services/${serviceId}/analytes`);
     setAnalytes(unwrap<DiagnosticAnalyte[]>(await res.json()));
@@ -256,7 +269,8 @@ export default function DiagnosticCatalogAdminPage() {
 
   useEffect(() => {
     void loadModalities();
-  }, [loadModalities]);
+    void loadCategories();
+  }, [loadModalities, loadCategories]);
 
   useEffect(() => {
     if (!modalOpen || tab !== "services") return;
@@ -473,8 +487,11 @@ export default function DiagnosticCatalogAdminPage() {
             modalityId: serviceModalityFilter || modalities[0]?.id || "",
             kind: serviceKindFilter || "lab_panel",
             active: "true",
+            packageOnly: "false",
           }
-        : { kind: "imaging", active: "true" },
+        : tab === "categories"
+          ? { name: "", active: "true" }
+          : { kind: "imaging", active: "true" },
     );
     setModalOpen(true);
   }
@@ -527,8 +544,8 @@ export default function DiagnosticCatalogAdminPage() {
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
       guestBlankRelease: row.guestBlankRelease ?? "PAY_WITH_WORK",
-      usageContour: row.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST",
       menuSurface: row.menuSurface ?? "",
+      autoPaidOnOpen: row.autoPaidOnOpen === true,
       schedulingMode: row.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
       broughtInMaxDays:
         row.broughtInMaxDays != null && row.broughtInMaxDays > 0
@@ -538,6 +555,7 @@ export default function DiagnosticCatalogAdminPage() {
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
+      packageOnly: row.packageOnly ? "true" : "false",
     });
     setModalOpen(true);
   }
@@ -572,6 +590,32 @@ export default function DiagnosticCatalogAdminPage() {
   }
 
   async function save() {
+    if (tab === "categories") {
+      const name = form.name?.trim() ?? "";
+      if (!name) {
+        showApiError({ error: t("requiredFields", { fields: t("category") }) });
+        return;
+      }
+      const res = await fetch(
+        editingId
+          ? `/api/admin/diagnostic-catalog/categories/${editingId}`
+          : "/api/admin/diagnostic-catalog/categories",
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, active: form.active !== "false" }),
+        },
+      );
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+        return;
+      }
+      setModalOpen(false);
+      showSuccess(tc("saved"));
+      await loadCategories();
+      return;
+    }
+
     if (tab === "modalities") {
       const missingModality = [
         !editingId && !form.code?.trim() ? t("code") : "",
@@ -660,7 +704,7 @@ export default function DiagnosticCatalogAdminPage() {
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
         guestBlankRelease: form.guestBlankRelease === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
-        usageContour: form.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST",
+        autoPaidOnOpen: form.kind === "lab_panel" && form.autoPaidOnOpen === true,
         menuSurface:
           form.menuSurface === "LAB" || form.menuSurface === "DIAGNOSTIC" || form.menuSurface === "VISIT"
             ? form.menuSurface
@@ -674,6 +718,7 @@ export default function DiagnosticCatalogAdminPage() {
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
+        packageOnly: form.packageOnly === "true",
       };
       const url = editingId
         ? `/api/admin/diagnostic-catalog/services/${editingId}`
@@ -933,10 +978,11 @@ export default function DiagnosticCatalogAdminPage() {
   const tabs: { id: Tab; label: string }[] = [
     { id: "modalities", label: t("tabModalities") },
     { id: "services", label: t("tabServices") },
+    { id: "categories", label: t("tabCategories") },
     { id: "favorites", label: t("tabFavorites") },
   ];
 
-  const showAddButton = tab === "modalities" || tab === "services";
+  const showAddButton = tab === "modalities" || tab === "services" || tab === "categories";
 
   return (
     <>
@@ -1295,6 +1341,75 @@ export default function DiagnosticCatalogAdminPage() {
         </div>
       )}
 
+      {tab === "categories" && (
+        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("category")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("status")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((row) => (
+                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {row.active ? (
+                      <span className={TEXT_SUCCESS_CLASS}>{t("statusActive")}</span>
+                    ) : (
+                      <span className={TEXT_DANGER_CLASS}>{t("statusInactive")}</span>
+                    )}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={tc("edit")}
+                        onClick={() => {
+                          setEditingId(row.id);
+                          setForm({ name: row.name, active: row.active ? "true" : "false" });
+                          setModalOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={row.active ? tc("delete") : t("restore")}
+                        onClick={() => {
+                          void fetch(`/api/admin/diagnostic-catalog/categories/${row.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ active: !row.active }),
+                          }).then(() => loadCategories());
+                        }}
+                      >
+                        {row.active ? (
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {categories.length === 0 ? (
+                <tr>
+                  <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={3}>
+                    {t("emptyCategories")}
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {tab === "favorites" && (
         <div className={`${CARD_CONTAINER_CLASS} space-y-6 p-6`}>
           {favLoading ? (
@@ -1439,6 +1554,15 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.active !== "false"}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                />
+                {t("statusActive")}
+              </label>
               {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
               <CatalogField
                 kind="SEARCHABLE"
@@ -1483,11 +1607,14 @@ export default function DiagnosticCatalogAdminPage() {
                 ))}
               </FieldSelect>
               <FieldRow cols={2}>
-                <Field
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={t("category")}
-                  preset="shortText"
                   value={form.category ?? ""}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  options={categories
+                    .filter((row) => row.active || row.name === form.category)
+                    .map((row) => ({ value: row.name, label: row.name }))}
+                  onChange={(next) => setForm({ ...form, category: String(next ?? "") })}
                 />
                 <FieldSelect
                   label={t("kind")}
@@ -1540,19 +1667,20 @@ export default function DiagnosticCatalogAdminPage() {
                   })
                 }
               />
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("usageContour")}
-                hint={t("usageContourHint")}
-                value={form.usageContour ?? "GUEST"}
-                options={[
-                  { value: "GUEST", label: t("usageContourGuest") },
-                  { value: "INTERNAL", label: t("usageContourInternal") },
-                ]}
-                onChange={(value) =>
-                  setForm({ ...form, usageContour: value === "INTERNAL" ? "INTERNAL" : "GUEST" })
-                }
-              />
+              {form.kind === "lab_panel" ? (
+                <label className="flex items-start gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={form.autoPaidOnOpen === true}
+                    onChange={(e) => setForm({ ...form, autoPaidOnOpen: e.target.checked })}
+                  />
+                  <span>
+                    <span className="font-medium">{t("autoPaidOnOpen")}</span>
+                    <span className="mt-0.5 block text-[12px] text-slate-500">{t("autoPaidOnOpenHint")}</span>
+                  </span>
+                </label>
+              ) : null}
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={t("menuSurface")}
@@ -1653,6 +1781,44 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.active !== "false"}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                />
+                {t("statusActive")}
+              </label>
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.packageOnly === "true"}
+                  onChange={(e) => setForm({ ...form, packageOnly: e.target.checked ? "true" : "false" })}
+                />
+                {t("packageOnly")}
+              </label>
+            </>
+          )}
+          {tab === "categories" && (
+            <>
+              <Field
+                label={t("category")}
+                preset="shortText"
+                required
+                value={form.name ?? ""}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.active !== "false"}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                />
+                {t("statusActive")}
+              </label>
             </>
           )}
         </div>

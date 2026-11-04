@@ -1,7 +1,8 @@
 # ADR: Organization operating mode (STANDALONE / DEPARTMENT)
 
 **Status:** Accepted (2026-06-04)  
-**Context:** Hotel + clinic cycle — «свой VOEN» vs «департамент отеля» without shared operational DB.
+**Context:** Hotel + clinic cycle — «свой VOEN» vs «департамент отеля» without shared operational DB.  
+**Related:** [satellite-integration-channels.md](./satellite-integration-channels.md) — PLATFORM channel sync on operating-mode save.
 
 ## Decision
 

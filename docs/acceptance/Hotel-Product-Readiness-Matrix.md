@@ -14,7 +14,7 @@
 
 **Closeout (2026-11-02 lifecycle outbox):** HOT-PKG-04 stays API. AC-HOT-PKG-PAX stays 🟡. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/hotel.yaml` unchanged.
 
-**Closeout (2026-11-05 checkout blocks):** Each non-zero folio is a block with category columns. Credit on any open folio is returned in that block. Procedure chips are in the same dialog, not on the folio tab. HOT-CO-01 stays SHIPPED. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
+**Closeout (2026-11-05 checkout tables):** Category columns are a table; stay balance sits under the blocks. Sanatorium procedure chips are tables (open paid, and every procedure on the fact chip). Duplicate payment allocation is skipped. HOT-CO-01 stays SHIPPED. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
 
 **Closeout (2026-11-05 org payment methods):** Hotel desks consume orch Sync catalog (HOT-CASH-01 deepen). Catalog SoR is Platform CP-PAY-METHODS-01 API. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
 

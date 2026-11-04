@@ -412,6 +412,8 @@ export async function applyPackageAutoBlocks(
   if (!episode?.patientRefId || !episode.patientRef) {
     throw new Error("Episode patient not found");
   }
+  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+  await seedAutoPaidLabs(episodeId);
   const instance = episode.programInstance;
   const programCode = (instance?.programCode ?? episode.programCode)?.trim() || "";
   if (!instance && (opts.trigger !== "CARE_TEAM" || !programCode)) {

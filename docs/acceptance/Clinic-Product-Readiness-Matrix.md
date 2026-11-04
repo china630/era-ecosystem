@@ -10,9 +10,15 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-05 paid lab on episode open):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `clinic.yaml` untouched. The contour checkbox is removed from procedure and lab cards and no longer zeros an extra. A lab panel checkbox `autoPaidOnOpen` creates one priced order when the episode opens; the lab sees it before pay; the guest blank waits for payment; a package or finished order of the same code does not block the paid one; a missing price is a line on the episode and does not block the open; day-end and checkout leave that order until it is paid or cancelled. No new screen. No Demo or Pilot lift.
+
+**Closeout (2026-11-05 diagnostic catalog active / package-only / categories):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Existing catalog screens deepen. An inactive category leaves pickers and keeps order titles. Does not lift Demo or Pilot.
+
 **Closeout (2026-11-05 own lab blank, second pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `clinic.yaml` untouched. Assign refuses a lab the fresh blank already covers, and saving the blank drops an uncollected order. No Demo or Pilot lift.
 
 **Closeout (2026-11-05 own lab blank):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `clinic.yaml` untouched. A catalog day count shows a checkbox and blank date on that intake row only. A fresh blank skips the in-house order. Nafta data sets 30 days on `LAB-INFECT`. No Demo or Pilot lift.
+
+**Closeout (2026-11-05 droplet route axes):** Migration `20261105010000_service_route_axes` is on the clinic droplet. Procedure categories 75 PHYSIO / 10 BATH / 4 PARAFFIN. Menu surfaces 110 LAB / 86 DIAGNOSTIC / 14 VISIT match modality kind. Three BATH rows are name collisions (`SVC-NAFTALAN-APLIKASIYA`, `SVC-NAFTALAN-APLIKASIYA-KISI`, `SVC-ULTRAFONOFOREZ-YAG`) and stay for a card edit. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `clinic.yaml` untouched.
 
 **Closeout (2026-11-05 settings chips + service route axes):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `clinic.yaml` untouched. Settings are the same keys, grouped into chips. Package route, block category, guest/internal contour, diagnostic menu surface, and diagnostic slot are catalog fields. They do not add a screen and do not lift Demo or Pilot.
 

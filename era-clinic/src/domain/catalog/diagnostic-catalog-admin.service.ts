@@ -127,12 +127,13 @@ export type ServiceInput = {
   fields?: CatalogFieldDef[] | null;
   includes?: string[] | null;
   guestBlankRelease?: "PAY_WITH_WORK" | "AFTER_PAYMENT";
-  usageContour?: "GUEST" | "INTERNAL";
   menuSurface?: "LAB" | "DIAGNOSTIC" | "VISIT" | null;
+  autoPaidOnOpen?: boolean;
   schedulingMode?: "FIXED" | "OPEN";
   broughtInMaxDays?: number | null;
   sortOrder?: number;
   active?: boolean;
+  packageOnly?: boolean;
 };
 
 type ServicePersistData<T> = Omit<T, "fields" | "includes"> & {
@@ -380,6 +381,47 @@ export async function updateMetaField(
     data: toMetaFieldPersistData(data),
   });
   await audit(ctx, "diagnosticMetaField", id, "UPDATE", data);
+  invalidateDiagnosticCatalogCache();
+  return row;
+}
+
+export async function listDiagnosticCategories() {
+  return prisma.diagnosticCategory.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function createDiagnosticCategory(
+  ctx: AuditCtx,
+  name: string,
+  active = true,
+) {
+  const trimmed = name.trim();
+  const row = await prisma.diagnosticCategory.create({ data: { name: trimmed, active } });
+  await audit(ctx, "diagnosticCategory", row.id, "CREATE", { name: trimmed });
+  invalidateDiagnosticCatalogCache();
+  return row;
+}
+
+export async function updateDiagnosticCategory(
+  ctx: AuditCtx,
+  id: string,
+  data: { name?: string; active?: boolean },
+) {
+  const current = await prisma.diagnosticCategory.findUnique({ where: { id } });
+  const nextName = data.name?.trim();
+  const row = await prisma.diagnosticCategory.update({
+    where: { id },
+    data: {
+      ...(nextName !== undefined ? { name: nextName } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
+    },
+  });
+  if (current && nextName && nextName !== current.name) {
+    await prisma.diagnosticService.updateMany({
+      where: { organizationId: current.organizationId, category: current.name },
+      data: { category: nextName },
+    });
+  }
+  await audit(ctx, "diagnosticCategory", id, "UPDATE", data);
   invalidateDiagnosticCatalogCache();
   return row;
 }

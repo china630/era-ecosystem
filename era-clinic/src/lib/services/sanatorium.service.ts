@@ -235,18 +235,20 @@ export async function openEpisodeFromStay(input: {
     if (input.programCode && existing.programCode !== input.programCode) {
       data.programCode = input.programCode;
     }
-    if (Object.keys(data).length > 0) {
-      const updated = await prisma.clinicalEpisode.update({
-        where: { id: existing.id },
-        data,
-        include: episodeInclude,
-      });
-      return updated;
-    }
-    return prisma.clinicalEpisode.findUniqueOrThrow({
-      where: { id: existing.id },
-      include: episodeInclude,
-    });
+    const row =
+      Object.keys(data).length > 0
+        ? await prisma.clinicalEpisode.update({
+            where: { id: existing.id },
+            data,
+            include: episodeInclude,
+          })
+        : await prisma.clinicalEpisode.findUniqueOrThrow({
+            where: { id: existing.id },
+            include: episodeInclude,
+          });
+    const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+    await seedAutoPaidLabs(row.id);
+    return row;
   };
 
   const stayLookup = {
@@ -371,6 +373,8 @@ export async function openEpisodeFromStay(input: {
   }
 
   await fillPatientDemographics(created.patientRefId);
+  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+  await seedAutoPaidLabs(created.id);
   return created;
 }
 
@@ -502,6 +506,8 @@ export async function registerWalkInEpisode(input: {
     },
     include: { patientRef: true },
   });
+  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+  await seedAutoPaidLabs(episode.id);
   return episode;
 }
 

@@ -25,7 +25,7 @@ import {
 import { recordFbAudit } from "@/lib/satellite-audit";
 
 const paySchema = z.object({
-  method: z.enum(["CASH", "CARD", "TRANSFER"]),
+  method: z.string().min(1).max(64),
   amount: z.number().positive().optional(),
   cashTendered: z.number().nonnegative().optional(),
   delivery: z.boolean().optional(),
@@ -54,6 +54,8 @@ export async function POST(
 
   const { id } = await params;
   const body = paySchema.parse(await request.json());
+  const { assertFnbPaymentMethodAllowed } = await import('@/lib/org-payment-methods');
+  assertFnbPaymentMethodAllowed(body.method);
 
   const ticket = await prisma.ticket.findUnique({
     where: { id },

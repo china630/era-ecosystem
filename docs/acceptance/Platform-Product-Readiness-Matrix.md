@@ -31,12 +31,27 @@
 |---------|------|-------|
 | Workspace / org hub | `/workspace, /organizations`, `/workspace/organization` | 🟡 — OrgOwner org profile (multi-contact/logo, `CatalogField` kinds): [ADR](../adr/cp-organization-profile-and-branding.md); CP-ORG-PROFILE-01 API/SCREEN; Finance Sync + hotel/clinic prefer CP; dual-edit closed; F&B/Retail pay `printChrome` + Outlet contact overlay; Finance→orch backfill ops script; UAT open; not sellable. Modules modal + workforce/connect (CP-BILL-OWNER-01): TIER_3; auto-Sync ([ADR](../adr/billing-module-change-satellite-sync.md)); `synced:false` toast; UAT E-C.7 open; not sellable |
 | Workforce | `/workspace/workforce/*` | 🟡 SCREEN — request dates, hire date, and migration stamp render `дд.мм.гггг`. Floor and self-service dates are `DatePicker`. Does not move Gate, BE 🟡, UI 🟡, Demo 🟡, Pilot, or edition. Month timesheet harden + vacation multi-line; **not sell-ready** (no UAT-SMOKE). **BE:** hub AC-CP-WF ✅; job architecture **AC-CP-WF-JOB 🟡** out of BE rollup (`CP-WF-JOB-01` Status=API). **UI:** `/job-architecture`, `/org-chart` (package `org`), org-structure manager/`unitKind`, positions job/parent, employments reporting + hire managers, hr-settings new step kinds — SCREEN only ([ADR](../adr/cp-workforce-job-architecture.md)). **Demo/TE / Pilot / Edition / Sell:** unchanged 🟡 / [ ] / `mvp` / do not claim GA. 2026-10-26 grants: one active row per employment+satellite+role (409), Active filter is `revokedAt` null. 2026-10-27: satellite uncheck/disconnect revokes linked and orphan grants for that key; orphan grant bindings heal on reprovision; MANUAL_GRANT emits last. Evrostar: group HR (`CP-WF-GROUP-01` API), roster wave 2, orders/templates (`CP-WF-ORD-02` API); MGMT book wave 5; FaceID attendance (`CP-WF-ATT-01` API, not SHIPPED); live floor (`CP-WF-FLOOR-01` API); minute buckets (`CP-WF-MIN-01` API); Finance minute pricing (`FIN-HR-MIN-01` API); employee cabinet (`CP-WF-SELF-01` API); fitness files (`CP-WF-FIT-01` API) — [ADR](../adr/evrostar-workforce-pilot.md) / [floor ADR](../adr/cp-workforce-floor-attendance.md) |
-| Super-admin | `/super-admin/*` on `app` **and** vendor console `platform.era-365.online` (`apps/platform-web`, short paths) | 🟡 SCREEN — dual shell until deploy proof + cutover decision; same APIs; not SHOW |
-| Reference settings | `/super-admin/reference` **and** `platform…/reference` (after MDM) | 🟡 SCREEN — hub fetch switches and per-org hub/Excel; UAT open; not SHOW |
-| Placement hop / freeze | `/super-admin/orgs/[orgId]/placement` **and** `platform…/orgs/[orgId]/placement` | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
+| Super-admin | `platform.era-365.online` (`apps/platform-web`); `app` `/super-admin/*` redirects | 🟡 SCREEN — cutover redirects landed (CP-SA-CONSOLE-01); org hub Payment methods (CP-PAY-METHODS-01) next to KKM/BANK_POS; UAT/SHOW open; not SHOW |
+| Control Home / Structure | `/workspace` zones; `/workspace/structure`; `/workspace/comms-hub` stub | 🟡 SCREEN — home org ★; Platform apps vs Systems; sat/outlet suspend; Comms messaging stub; UAT open; not sellable |
+| Integration channels | `platform…/orgs/[id]` Channels; hotel/clinic/F&B `/admin/links`; F&B ops hide | 🟡 SCREEN — CP-CHANNELS-01; ChannelEdgeCard polish; deferred retail/finance/auto links + REVENUE/retail gates (Sprint); UAT open; not sellable |
+| Owner invoices | `/settings/invoices` | 🟡 SCREEN — Org→Sat→Outlet line tree (CP-BILL-LINES-01); UAT open; not sellable |
+| Reference settings | `platform…/reference` (after MDM; app path redirects) | 🟡 SCREEN — hub fetch switches and per-org hub/Excel; UAT open; not SHOW |
+| Placement hop / freeze | `platform…/orgs/[orgId]/placement` (app path redirects) | 🟡 SCREEN — lab create/advance; AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
 
 Routes added 2026-08-17 (still 🟡 / not sell-ready): org catalog, referrals, landing, owner invoices/orders, workforce vacation/orders/ştat/timesheets.  
 **Closeout (2026-11-01):** vendor console `platform.era-365.online` parallel to `app` `/super-admin/*` (CP-SA-CONSOLE-01 API). Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-03):** Control Home (home org, Structure, Platform apps), 7-day SKU grace, structured invoice dims, commercial outlets, operator Finance bridge stub, app `/super-admin` redirect to platform, Comms Hub stub. Second-pass (launch suspend, late-month workforce siblings, retail→CP outlet) does not move sell layers. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-03 b):** CP-CHANNELS-01 (integration channels + `/admin/links` + bridge gates) + owner invoice tree. Messaging CP-COMMS remains stub. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-03 c):** Second-pass — F&B `SETTLEMENT` fail-closed + edition `folioPostEnabled`/`settlementEnabled` UI hide; channel error → 403. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-03 d):** Channels UI polish (`ChannelEdgeCard`) + F&B `/admin/links`; deferred debts in ADR/Sprint (`S-CHANNELS-*`, `S-COMMS-HUB`). Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-03 e):** Channels second-pass — kit rebuild for new exports; ChannelEdgeCard kind/sat/managed i18n (en/az/ru); invoice sat labels; Nest `GET …/channels/check` static before `:channelId`. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-05):** CP-PAY-METHODS-01 org payment methods on SuperAdmin org hub + Sync to hotel/clinic/F&B; Finance tenders PUT 410. AC-CP-PAY-METHODS 🟡 out of BE rollup. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
 
 **Having routes ≠ UI ready for sell.** Demo/TE stays 🟡 until live sign-off.
 

@@ -297,6 +297,8 @@ export type CreateLabOrderWithItemsParams = {
   reservationId?: string | null;
   roomNumber?: string | null;
   paymentReceiptRef?: string | null;
+  /** Paid lab created when the episode opens. Lab sees it before pay; checkout does not cancel it. */
+  autoPaidStay?: boolean;
 };
 
 /**
@@ -428,16 +430,35 @@ export async function createLabOrderWithItems(
     Object.values(amountsByCode).reduce((sum, n) => sum + Number(n || 0), 0);
   const headerInPackage = !forcePaid && [...stamps.values()].some((s) => s.inPackage);
   const releaseAfterPay =
-    !headerInPackage &&
-    [...servicesByCode.values()].some((service) => service.guestBlankRelease === "AFTER_PAYMENT");
+    params.autoPaidStay === true ||
+    (!headerInPackage &&
+      [...servicesByCode.values()].some((service) => service.guestBlankRelease === "AFTER_PAYMENT"));
   const headerQuota =
     [...stamps.values()].find((s) => s.inPackage && s.packageQuotaCode)?.packageQuotaCode ??
     null;
 
   const orderId = await prisma.$transaction(async (tx) => {
     await lockPatientForLabCreate(tx, params.patientRefId);
-    const conflict = await findPatientLabConflict(params.patientRefId, codes, tx);
-    if (forcePaid && releaseAfterPay && conflict) {
+    let conflict = await findPatientLabConflict(params.patientRefId, codes, tx);
+    if (params.autoPaidStay && conflict) {
+      const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
+      const openNonPackage =
+        existing != null &&
+        !existing.inPackage &&
+        existing.status !== "CANCELLED" &&
+        existing.status !== "PUBLISHED" &&
+        existing.status !== "COMPLETED";
+      if (openNonPackage && existing) {
+        if (!existing.settledAt) {
+          await tx.labOrder.update({
+            where: { id: existing.id },
+            data: { amountNet: orderAmountNet, releaseAfterPay: true, autoPaidStay: true },
+          });
+        }
+        return existing.id;
+      }
+      if (existing?.inPackage || conflict.kind === "COMPLETED") conflict = null;
+    } else if (forcePaid && releaseAfterPay && conflict) {
       const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
       if (existing && !existing.inPackage && !existing.settledAt) {
         await tx.labOrder.update({
@@ -463,6 +484,7 @@ export async function createLabOrderWithItems(
         inPackage: headerInPackage,
         packageQuotaCode: headerQuota,
         releaseAfterPay,
+        autoPaidStay: params.autoPaidStay === true,
         prescribedByPractitionerId: params.prescribedByPractitionerId ?? undefined,
         paymentReceiptRef: params.paymentReceiptRef ?? undefined,
         reservationId: reservationId ?? undefined,

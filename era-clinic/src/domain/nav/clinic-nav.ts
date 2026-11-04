@@ -30,6 +30,7 @@ import {
   Grid3x3,
   CalendarRange,
   Trash2,
+  Link2,
 } from "lucide-react";
 import type { EraOpsNavItem, EraOpsNavSection } from "@era/satellite-kit/ui";
 import {
@@ -416,6 +417,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: ScrollText,
     group: "platform",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
+  },
+  {
+    href: "/admin/links",
+    labelKey: "adminLinks",
+    icon: Link2,
+    group: "platform",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   },
   {
     href: "/admin/settings",

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
-import { folioBalance, postPayment } from '@/lib/services/folio.service';
+import { createAllocationOnce, folioBalance, postPayment } from '@/lib/services/folio.service';
 import { toDecimal, decimalToNumber } from '@/lib/decimal';
 import type { PaymentMethod } from '@prisma/client';
 import { captureAuthorization } from '@/lib/services/card-auth.service';
@@ -57,12 +57,10 @@ async function allocatePaymentFifo(folioId: string, paymentId: string, amount: n
     const open = gross - already;
     if (open <= 0.009) continue;
     const take = Math.min(open, left);
-    await prisma.folioPaymentAllocation.create({
-      data: {
-        paymentId,
-        chargeId: charge.id,
-        amount: toDecimal(Math.round(take * 100) / 100),
-      },
+    await createAllocationOnce({
+      paymentId,
+      chargeId: charge.id,
+      amount: toDecimal(Math.round(take * 100) / 100),
     });
     left -= take;
   }

@@ -686,6 +686,8 @@ model LabOrder {
   paymentReceiptRef     String?          @map("payment_receipt_ref")
   /// Lab works before pay; guest blank stays closed until settledAt. Ignored when inPackage.
   releaseAfterPay       Boolean          @default(false) @map("release_after_pay")
+  /// Created by the paid-on-open flag. Day-end and checkout do not cancel it unpaid.
+  autoPaidStay          Boolean          @default(false) @map("auto_paid_stay")
   reservationId         String?          @map("reservation_id")
   roomNumber            String?          @map("room_number")
   patientOrigin         PatientOrigin    @default(WALK_IN) @map("patient_origin")
@@ -727,6 +729,19 @@ model Modality {
   @@index([organizationId])
 }
 
+/// Shared label on diagnostic services. Inactive categories stay off assignment lists.
+model DiagnosticCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
 /// Diagnostic / lab service from catalog (USG-ABD, LAB-CBC, packages, visit templates).
 model DiagnosticService {
   id             String              @id @default(cuid())
@@ -758,10 +773,14 @@ model DiagnosticService {
   menuSurface    String?             @map("menu_surface")
   /// FIXED cabin clock or OPEN day bucket. The resource matrix still seats procedures only.
   schedulingMode String              @default("FIXED") @map("scheduling_mode")
+  /// On episode open, create one paid lab order the lab can see before the cashier.
+  autoPaidOnOpen Boolean             @default(false) @map("auto_paid_on_open")
   /// When set, the episode analyses row can accept the guest's own blank not older than this many days.
   broughtInMaxDays Int?              @map("brought_in_max_days")
   sortOrder      Int                 @default(0) @map("sort_order")
   active         Boolean             @default(true)
+  /// Package composition only. Stays on the course and off the paid-extra catalog.
+  packageOnly    Boolean             @default(false) @map("package_only")
   analytes       DiagnosticAnalyte[]
   labOrderItems  LabOrderItem[]
   createdAt      DateTime            @default(now())
@@ -1065,6 +1084,8 @@ model ClinicalEpisode {
   patientOrigin              PatientOrigin             @default(IN_HOUSE)
   programCode                String?
   checkupCompletedAt         DateTime?
+  /// Paid auto-labs that could not be created (no list price). Shown on the episode.
+  autoPaidLabMisses          String?                   @map("auto_paid_lab_misses") @db.Text
   /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
   anamnesisText              String?                   @map("anamnesis_text") @db.Text
   anamnesisUpdatedAt         DateTime?                 @map("anamnesis_updated_at")

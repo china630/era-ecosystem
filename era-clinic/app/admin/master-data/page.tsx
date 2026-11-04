@@ -101,7 +101,6 @@ type ProcedureType = {
   active?: boolean;
   openAttendance?: boolean;
   blockCategory?: string | null;
-  usageContour?: string | null;
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
   extendedEndHour?: number | null;
@@ -215,7 +214,6 @@ export default function MasterDataPage() {
   const [procedureActive, setProcedureActive] = useState(true);
   const [openAttendance, setOpenAttendance] = useState(false);
   const [blockCategory, setBlockCategory] = useState("");
-  const [usageContour, setUsageContour] = useState("GUEST");
   const [needsExtraFields, setNeedsExtraFields] = useState(false);
   const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
   const [allowedSiteCodes, setAllowedSiteCodes] = useState<string[]>([]);
@@ -632,7 +630,6 @@ export default function MasterDataPage() {
     setProcedureActive(row.active !== false);
     setOpenAttendance(row.openAttendance === true);
     setBlockCategory(row.blockCategory ?? "");
-    setUsageContour(row.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST");
     setPhysioOrderFields(row.physioOrderFields ?? []);
     setNeedsExtraFields((row.physioOrderFields ?? []).length > 0);
     setAllowedSiteCodes(row.allowedSiteCodes ?? []);
@@ -748,7 +745,6 @@ export default function MasterDataPage() {
           active: procedureActive,
           openAttendance,
           blockCategory: blockCategory || null,
-          usageContour,
           physioOrderFields,
           allowedSiteCodes,
           extendedEndHour: form.extendedEndHour?.trim()
@@ -793,7 +789,6 @@ export default function MasterDataPage() {
         active: procedureActive,
         openAttendance,
         blockCategory: blockCategory || null,
-        usageContour,
         physioOrderFields,
         allowedSiteCodes,
         extendedEndHour: form.extendedEndHour?.trim()
@@ -1578,17 +1573,6 @@ export default function MasterDataPage() {
                   { value: "PARAFFIN", label: t("blockCategoryParaffin") },
                 ]}
                 emptyLabel="—"
-              />
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("usageContour")}
-                hint={t("usageContourHint")}
-                value={usageContour}
-                onChange={(v) => setUsageContour(String(v ?? "GUEST") === "INTERNAL" ? "INTERNAL" : "GUEST")}
-                options={[
-                  { value: "GUEST", label: t("usageContourGuest") },
-                  { value: "INTERNAL", label: t("usageContourInternal") },
-                ]}
               />
               {openAttendance ? (
                 <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("openAttendanceHint")}</p>

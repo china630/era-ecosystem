@@ -101,6 +101,11 @@ export default function FloorPanel() {
   const [ticketCaption, setTicketCaption] = useState("");
   const [dayNo, setDayNo] = useState<number | null>(null);
   const [cashReceived, setCashReceived] = useState("");
+  const [payMethods, setPayMethods] = useState<Array<{ code: string; label: string }>>([
+    { code: "CASH", label: "CASH" },
+    { code: "CARD", label: "CARD" },
+    { code: "TRANSFER", label: "TRANSFER" },
+  ]);
   const [discountInput, setDiscountInput] = useState("0");
   const [storedDiscount, setStoredDiscount] = useState(0);
   const [lastPaid, setLastPaid] = useState<{
@@ -324,6 +329,20 @@ export default function FloorPanel() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    void fetch("/api/payment-methods")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.methods ?? body?.data?.methods) as
+          | Array<{ code: string; label: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setPayMethods(rows.map((row) => ({ code: row.code, label: row.label || row.code })));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
   async function selectOutlet(outletId: string) {
     setSelectedOutletId(outletId);
     setOutletSaving(true);
@@ -528,7 +547,7 @@ export default function FloorPanel() {
     return total;
   }
 
-  async function pay(method: "CASH" | "CARD" | "TRANSFER") {
+  async function pay(method: string) {
     if (busy.current || !activeTicketId || !canPay) return;
     const persisted = await persistDiscount();
     if (persisted == null) return;
@@ -1135,27 +1154,32 @@ export default function FloorPanel() {
                 {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
                   <div className="mt-3 shrink-0 space-y-2">
                     <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:justify-end">
-                      <button
-                        type="button"
-                        className="w-full rounded bg-[#27AE60] px-3 py-2 text-sm text-white lg:w-auto"
-                        onClick={() => void pay("CASH")}
-                      >
-                        {t("payCash")}
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full rounded bg-[#2980B9] px-3 py-2 text-sm text-white lg:w-auto"
-                        onClick={() => void pay("CARD")}
-                      >
-                        {t("payCard")}
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full rounded bg-[#1A5276] px-3 py-2 text-sm text-white lg:w-auto"
-                        onClick={() => void pay("TRANSFER")}
-                      >
-                        {t("payTransfer")}
-                      </button>
+                      {payMethods.map((row) => {
+                        const tone =
+                          row.code === "CASH"
+                            ? "bg-[#27AE60]"
+                            : row.code === "CARD"
+                              ? "bg-[#2980B9]"
+                              : "bg-[#1A5276]";
+                        const label =
+                          row.code === "CASH"
+                            ? t("payCash")
+                            : row.code === "CARD"
+                              ? t("payCard")
+                              : row.code === "TRANSFER"
+                                ? t("payTransfer")
+                                : row.label;
+                        return (
+                          <button
+                            key={row.code}
+                            type="button"
+                            className={`w-full rounded ${tone} px-3 py-2 text-sm text-white lg:w-auto`}
+                            onClick={() => void pay(row.code)}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                       <button
                         type="button"
                         className="w-full rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B] lg:w-auto"

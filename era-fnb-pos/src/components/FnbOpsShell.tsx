@@ -16,6 +16,7 @@ import {
   Upload,
   Shield,
   Soup,
+  Link2,
 } from "lucide-react";
 import {
   EraAppRouteShell,
@@ -53,6 +54,7 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/admin/import": PERMISSIONS.SCREEN_ADMIN_IMPORT,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
   "/admin/audit": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
+  "/admin/links": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
   "/sales": PERMISSIONS.SCREEN_SALES,
 };
 
@@ -172,6 +174,7 @@ function buildShellLinks(caps: CapFlags): ShellLink[] {
     { href: "/sales", key: "sales", icon: ScrollText, preset: HALLS, when: caps.till },
     { href: "/admin/import", key: "import", icon: Upload, preset: HALLS },
     { href: "/admin/settings", key: "settings", icon: Settings, preset: HALLS },
+    { href: "/admin/links", key: "adminLinks", icon: Link2, preset: HALLS },
     { href: "/admin/audit", key: "audit", icon: ScrollText, preset: HALLS },
     { href: "/admin/access", key: "access", icon: Shield, preset: HALLS },
   ];

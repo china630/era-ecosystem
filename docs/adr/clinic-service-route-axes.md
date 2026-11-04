@@ -4,7 +4,7 @@ Package block **kind** stays the category (physio, bath, paraffin, lab, exam, cu
 
 A procedure type has `blockCategory`. A bath block lists only bath procedures when the category is set. A null category still uses the name fallback until the row is classified. The migration backfills paraffin, bath, then physio.
 
-`usageContour` is `GUEST` or `INTERNAL` on procedure types and diagnostic services. An internal procedure prescribed as an extra is `SCHEDULED` with a zero amount and is not a paid extra. Guest rows stay on the pay path.
+The catalog contour checkbox is gone. A service stays sellable as an extra. A lab analysis (`kind = lab_panel`) can set `autoPaidOnOpen`. Opening an episode then creates one priced order (`forcePaid`, `releaseAfterPay`, `autoPaidStay`). The lab journal sees it before the cashier. The guest blank stays closed until payment. A package order or a finished order of the same code does not block this paid order. An open non-package order does. A missing list price is written on the episode and does not block the open. Day-end and checkout cancel ordinary unpaid extras and leave `autoPaidStay` orders until they are paid or cancelled by hand. Package auto-labs stay free and are unchanged.
 
 A diagnostic service has `menuSurface` (`LAB`, `DIAGNOSTIC`, `VISIT`). The lab list uses that when it is set. An empty surface still follows the modality kind. `schedulingMode` on a diagnostic service is `FIXED` or `OPEN`. The resource matrix still seats procedure orders only.
 
