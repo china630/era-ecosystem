@@ -3,7 +3,7 @@ import { requestOrganizationId } from '@/lib/request-organization';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
-import type { FolioType, PaymentMethod, Reservation } from '@prisma/client';
+import type { FolioType, Reservation } from '@prisma/client';
 import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
@@ -43,7 +43,7 @@ import type {
 const LOG_DIR = join(process.cwd(), 'logs');
 const LOG_FILE = join(LOG_DIR, 'failed-events.log');
 
-function mapPaymentMethod(method: PaymentMethod): SatellitePaymentMethod {
+function mapPaymentMethod(method: string): SatellitePaymentMethod {
   return method as SatellitePaymentMethod;
 }
 
