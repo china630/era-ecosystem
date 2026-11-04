@@ -18,6 +18,7 @@ import {
   CatalogField,
   DatePicker,
   Field,
+  FilterChips,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
   MODAL_FIELD_LABEL_CLASS,
@@ -161,6 +162,7 @@ export default function ClinicAdminSettingsPage() {
   const [draftCard, setDraftCard] = useState<CardLimits>(CARD_DEFAULTS);
   const [draftWork, setDraftWork] = useState<WorkHours>(WORK_DEFAULTS);
   const [draftSched, setDraftSched] = useState<SchedulingDefaults>(SCHED_DEFAULTS);
+  const [chip, setChip] = useState("clinic");
 
   useEffect(() => {
     void fetch("/api/admin/settings")
@@ -359,20 +361,32 @@ export default function ClinicAdminSettingsPage() {
           </Link>
         }
       />
-      <ClinicDayPanel />
+      <FilterChips
+        ariaLabel={t("settingsChips")}
+        value={chip}
+        onChange={setChip}
+        alwaysVisibleIds={["clinic", "day", "baths", "procedures", "labs", "money", "card", "print"]}
+        items={[
+          { id: "clinic", label: t("chipClinic") },
+          { id: "day", label: t("chipDay") },
+          { id: "baths", label: t("chipBaths") },
+          { id: "procedures", label: t("chipProcedures") },
+          { id: "labs", label: t("chipLabs") },
+          { id: "money", label: t("chipMoney") },
+          { id: "card", label: t("chipCard") },
+          { id: "print", label: t("chipPrint") },
+        ]}
+      />
+      {chip === "day" ? <ClinicDayPanel /> : null}
+      {chip === "labs" ? <PrintSettingsPanel part="signers" /> : null}
+      {chip === "print" ? <PrintSettingsPanel part="brand" /> : null}
+      {chip === "labs" || chip === "print" ? null : (
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
           <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
             <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("field")}</th>
             <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("value")}</th>
-            <th className={`${DATA_TABLE_TH_LEFT_CLASS} text-right`}>{tc("actions")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="border-b">
-            <td className="p-3 font-medium">{t("clinicName")}</td>
-            <td className="p-3">{clinicName}</td>
-            <td className="p-3 text-right" rowSpan={17}>
+            <th className={`${DATA_TABLE_TH_LEFT_CLASS} text-right`}>
               <button
                 type="button"
                 className={TABLE_ROW_ICON_BTN_CLASS}
@@ -388,37 +402,44 @@ export default function ClinicAdminSettingsPage() {
               >
                 <Pencil className="h-3.5 w-3.5" aria-hidden />
               </button>
-            </td>
+            </th>
           </tr>
-          <tr className="border-b">
+        </thead>
+        <tbody>
+          <style>{`tr[data-chip]:not([data-chip="${chip}"]){display:none}`}</style>
+          <tr data-chip="clinic" className="border-b">
+            <td className="p-3 font-medium">{t("clinicName")}</td>
+            <td className="p-3">{clinicName}</td>
+          </tr>
+          <tr data-chip="clinic" className="border-b">
             <td className="p-3 font-medium">{t("enabledPresets")}</td>
             <td className="p-3">
               {enabledPresets.map((p) => PRESET_LABELS[p] ?? p).join(", ")}
             </td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("dayStartHour")}</td>
             <td className="p-3">{workHours.dayStartHour}:00</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("dayEndHour")}</td>
             <td className="p-3">{workHours.dayEndHour}:00</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("lunchHours")}</td>
             <td className="p-3">
               {workHours.lunchStartHour}:00 – {workHours.lunchEndHour}:00
             </td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("saturdayEndHour")}</td>
             <td className="p-3">{workHours.saturdayEndHour}:00</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("shortenedDayEndHour")}</td>
             <td className="p-3">{workHours.shortenedDayEndHour}:00</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("bathModesTitle")}</td>
             <td className="p-3">
               {workHours.bathDayModes
@@ -426,84 +447,86 @@ export default function ClinicAdminSettingsPage() {
                 .join(", ")}
             </td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("defaultBathMode")}</td>
             <td className="p-3">{workHours.defaultBathMode}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("closedDaySpendsOwedRest")}</td>
             <td className="p-3">{workHours.closedDaySpendsOwedRest ? t("bathFlagOn") : t("bathFlagOff")}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("closedDayResetsOpenStreak")}</td>
             <td className="p-3">{workHours.closedDayResetsOpenStreak ? t("bathFlagOn") : t("bathFlagOff")}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("weeklyNaftalanCap")}</td>
             <td className="p-3">{workHours.weeklyNaftalanCap}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("closedWeekdays")}</td>
             <td className="p-3">{closedLabel || "—"}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="money" className="border-b">
             <td className="p-3 font-medium">{t("hotelFolioRevenueCode")}</td>
             <td className="p-3">{schedDefaults.hotelFolioRevenueCode || "—"}</td>
           </tr>
-          <tr className="border-t border-slate-100">
+          <tr data-chip="procedures" className="border-t border-slate-100">
             <td className="p-3 font-medium">{t("schedulingSlotMinutes")}</td>
             <td className="p-3">{schedDefaults.schedulingSlotMinutes} min</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="procedures" className="border-b">
             <td className="p-3 font-medium">{t("defaultProcedureGapMinutes")}</td>
             <td className="p-3">{schedDefaults.defaultProcedureGapMinutes} min</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="procedures" className="border-b">
             <td className="p-3 font-medium">{t("defaultAppointmentSlotMinutes")}</td>
             <td className="p-3">{schedDefaults.defaultAppointmentSlotMinutes} min</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="procedures" className="border-b">
             <td className="p-3 font-medium">{t("procedureCheckInMode")}</td>
             <td className="p-3">{schedDefaults.procedureCheckInMode}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="procedures" className="border-b">
             <td className="p-3 font-medium">
               {t("programSchedulingMode", { defaultValue: "Program scheduling mode" })}
             </td>
             <td className="p-3">{schedDefaults.programSchedulingMode}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="money" className="border-b">
             <td className="p-3 font-medium">{t("doctorBonusPercentInHouse")}</td>
             <td className="p-3">{schedDefaults.doctorBonusPercentInHouse}%</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="money" className="border-b">
             <td className="p-3 font-medium">{t("doctorBonusPercentWalkIn")}</td>
             <td className="p-3">{schedDefaults.doctorBonusPercentWalkIn}%</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("peakModeEnabled")}</td>
             <td className="p-3">{schedDefaults.peakModeEnabled ? "Yes" : "No"}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="day" className="border-b">
             <td className="p-3 font-medium">{t("peakDayEndHour")}</td>
             <td className="p-3">{schedDefaults.peakDayEndHour}:00</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="card" className="border-b">
             <td className="p-3 font-medium">{t("cardResultsPreview")}</td>
             <td className="p-3">{cardLimits.patientCardResultsPreview}</td>
           </tr>
-          <tr className="border-b">
+          <tr data-chip="card" className="border-b">
             <td className="p-3 font-medium">{t("cardPlanPreview")}</td>
             <td className="p-3">{cardLimits.patientCardPlanPreview}</td>
           </tr>
-          <tr>
+          <tr data-chip="card">
             <td className="p-3 font-medium">{t("cardHistoryPageSize")}</td>
             <td className="p-3">{cardLimits.patientCardHistoryPageSize}</td>
           </tr>
         </tbody>
       </table>
+      )}
       <ModalShell open={open} title={t("editClinic")} onClose={() => setOpen(false)}>
         <div className={FORM_STACK_CLASS}>
+          <div className={chip === "clinic" ? "contents" : "hidden"}>
           <Field
             label={t("clinicName")}
             preset="shortText"
@@ -524,8 +547,10 @@ export default function ClinicAdminSettingsPage() {
               </label>
             ))}
           </fieldset>
-          <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
+          </div>
+          <fieldset className={`grid gap-3 text-[13px] sm:grid-cols-2 ${chip === "day" || chip === "baths" ? "" : "hidden"}`}>
             <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("workingHoursTitle")}</legend>
+            <div className={chip === "day" ? "contents" : "hidden"}>
             {(
               [
                 ["dayStartHour", "dayStartHour"],
@@ -568,7 +593,8 @@ export default function ClinicAdminSettingsPage() {
                 ))}
               </div>
             </div>
-            <div className="space-y-2 sm:col-span-2">
+            </div>
+            <div className={`space-y-2 sm:col-span-2 ${chip === "baths" ? "" : "hidden"}`}>
               <p className={MODAL_FIELD_LABEL_CLASS}>{t("bathModesTitle")}</p>
               {draftWork.bathDayModes.map((row, index) => (
                 <div key={`${row.code}-${index}`} className="grid grid-cols-4 items-end gap-2">
@@ -702,6 +728,7 @@ export default function ClinicAdminSettingsPage() {
               />
             </div>
           </fieldset>
+          <div className={chip === "money" ? "contents" : "hidden"}>
           {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
           <CatalogField
             kind="SEARCHABLE"
@@ -715,6 +742,8 @@ export default function ClinicAdminSettingsPage() {
               }))
             }
           />
+          </div>
+          <div className={chip === "procedures" ? "contents" : "hidden"}>
           <Field
             label={t("schedulingSlotMinutes")}
             preset="count"
@@ -881,6 +910,8 @@ export default function ClinicAdminSettingsPage() {
               }));
             }}
           />
+          </div>
+          <div className={chip === "day" ? "contents" : "hidden"}>
           <label className="flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"
@@ -906,6 +937,8 @@ export default function ClinicAdminSettingsPage() {
               }))
             }
           />
+          </div>
+          <div className={chip === "money" ? "contents" : "hidden"}>
           <Field
             label={t("doctorBonusPercentInHouse")}
             preset="count"
@@ -936,7 +969,8 @@ export default function ClinicAdminSettingsPage() {
               }))
             }
           />
-          <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
+          </div>
+          <fieldset className={`grid gap-3 text-[13px] sm:grid-cols-2 ${chip === "card" ? "" : "hidden"}`}>
             <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("cardLimitsTitle")}</legend>
             {(
               [

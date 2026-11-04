@@ -126,6 +126,11 @@ export type ServiceInput = {
   hotelRevenueCode?: string | null;
   fields?: CatalogFieldDef[] | null;
   includes?: string[] | null;
+  guestBlankRelease?: "PAY_WITH_WORK" | "AFTER_PAYMENT";
+  usageContour?: "GUEST" | "INTERNAL";
+  menuSurface?: "LAB" | "DIAGNOSTIC" | "VISIT" | null;
+  schedulingMode?: "FIXED" | "OPEN";
+  broughtInMaxDays?: number | null;
   sortOrder?: number;
   active?: boolean;
 };

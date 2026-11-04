@@ -2733,6 +2733,14 @@ async function assignPackageStudies(
     }
     for (let n = 0; n < line.qty; n += 1) {
       if (line.fulfillment === "LAB_ORDER") {
+        const { freshBroughtInCodes } = await import("@/domain/lab/brought-in-result");
+        if ((await freshBroughtInCodes(episodeId)).has(serviceCode)) {
+          throw new PackageAssignError(
+            "A fresh brought-in blank already covers this lab",
+            "BROUGHT_IN_ACCEPTED",
+            409,
+          );
+        }
         try {
           await createLabOrderWithItems({
             patientRefId,

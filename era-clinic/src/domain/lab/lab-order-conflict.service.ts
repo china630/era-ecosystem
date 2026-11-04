@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const LAB_ALREADY_OPEN = "LAB_ALREADY_OPEN";
@@ -26,6 +27,78 @@ function orderServiceCodes(testCode: string, itemCodes: string[]): string[] {
     .filter(Boolean);
 }
 
+type LabConflictDb = {
+  labOrder: {
+    findMany: (args: {
+      where: { patientRefId?: string; clinicalEpisodeId?: string; status: { not: "CANCELLED" } };
+      include: { items: { select: { serviceCode: true } } };
+      orderBy: { createdAt: "desc" };
+    }) => Promise<
+      Array<{
+        id: string;
+        status: string;
+        testCode: string;
+        items: Array<{ serviceCode: string }>;
+      }>
+    >;
+  };
+};
+
+function scanConflicts(
+  orders: Array<{
+    id: string;
+    status: string;
+    testCode: string;
+    items: Array<{ serviceCode: string }>;
+  }>,
+  wanted: Set<string>,
+): EpisodeLabConflict | null {
+  let openHit: EpisodeLabConflict | null = null;
+  let completedHit: EpisodeLabConflict | null = null;
+  for (const order of orders) {
+    const codes = orderServiceCodes(
+      order.testCode,
+      order.items.map((i) => i.serviceCode),
+    );
+    const hit = codes.find((c) => wanted.has(c));
+    if (!hit) continue;
+
+    if (OPEN_DUPLICATE_STATUSES.includes(order.status as (typeof OPEN_DUPLICATE_STATUSES)[number])) {
+      openHit = { kind: "OPEN", orderId: order.id, testCode: hit };
+      break;
+    }
+    if (
+      !completedHit &&
+      COMPLETED_DUPLICATE_STATUSES.includes(
+        order.status as (typeof COMPLETED_DUPLICATE_STATUSES)[number],
+      )
+    ) {
+      completedHit = { kind: "COMPLETED", orderId: order.id, testCode: hit };
+    }
+  }
+  return openHit ?? completedHit;
+}
+
+/** Same patient, any episode and orders with no episode. */
+export async function findPatientLabConflict(
+  patientRefId: string,
+  testCodes: string[],
+  db: LabConflictDb = prisma,
+): Promise<EpisodeLabConflict | null> {
+  const wanted = new Set(testCodes.map((c) => c.trim()).filter(Boolean));
+  if (!patientRefId || wanted.size === 0) return null;
+
+  const orders = await db.labOrder.findMany({
+    where: {
+      patientRefId,
+      status: { not: "CANCELLED" },
+    },
+    include: { items: { select: { serviceCode: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return scanConflicts(orders, wanted);
+}
+
 /** Finds an existing non-cancelled lab on the episode that overlaps any requested code. */
 export async function findEpisodeLabConflict(
   clinicalEpisodeId: string,
@@ -42,28 +115,23 @@ export async function findEpisodeLabConflict(
     include: { items: { select: { serviceCode: true } } },
     orderBy: { createdAt: "desc" },
   });
+  return scanConflicts(orders, wanted);
+}
 
-  for (const order of orders) {
-    const codes = orderServiceCodes(
-      order.testCode,
-      order.items.map((i) => i.serviceCode),
-    );
-    const hit = codes.find((c) => wanted.has(c));
-    if (!hit) continue;
-
-    if (OPEN_DUPLICATE_STATUSES.includes(order.status as (typeof OPEN_DUPLICATE_STATUSES)[number])) {
-      return { kind: "OPEN", orderId: order.id, testCode: hit };
-    }
-    if (
-      COMPLETED_DUPLICATE_STATUSES.includes(
-        order.status as (typeof COMPLETED_DUPLICATE_STATUSES)[number],
-      )
-    ) {
-      return { kind: "COMPLETED", orderId: order.id, testCode: hit };
-    }
-  }
-
-  return null;
+/** Serializes lab creates for one patient so two saves cannot both pass the open check. */
+export async function lockPatientForLabCreate(
+  db: Prisma.TransactionClient,
+  patientRefId: string,
+): Promise<void> {
+  const row = await db.patientRef.findUnique({
+    where: { id: patientRefId },
+    select: { refCode: true },
+  });
+  if (!row) return;
+  await db.patientRef.update({
+    where: { id: patientRefId },
+    data: { refCode: row.refCode },
+  });
 }
 
 export function assertLabOrderCanCreate(
@@ -73,7 +141,7 @@ export function assertLabOrderCanCreate(
   if (!conflict) return;
   if (conflict.kind === "OPEN") {
     const err = new Error(
-      `An open lab order already exists for ${conflict.testCode} on this episode`,
+      `An open lab order already exists for ${conflict.testCode} for this patient`,
     );
     (err as Error & { code?: string; testCode?: string }).code = LAB_ALREADY_OPEN;
     (err as Error & { testCode?: string }).testCode = conflict.testCode;
@@ -81,7 +149,7 @@ export function assertLabOrderCanCreate(
   }
   if (!confirmRepeat) {
     const err = new Error(
-      `Lab ${conflict.testCode} was already completed for this episode`,
+      `Lab ${conflict.testCode} was already completed for this patient`,
     );
     (err as Error & { code?: string; testCode?: string }).code =
       LAB_ALREADY_COMPLETED;

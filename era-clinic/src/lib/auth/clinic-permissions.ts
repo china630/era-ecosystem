@@ -439,6 +439,7 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/reception/queue": CLINIC_PERMISSION.SCREEN_RECEPTION_QUEUE,
   "/cashier": CLINIC_PERMISSION.SCREEN_CASHIER,
   "/reception/extra-tickets": CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
+  "/reception/nurse-sheets": CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
   "/doctor": CLINIC_PERMISSION.SCREEN_DOCTOR,
   "/nurse": CLINIC_PERMISSION.SCREEN_NURSE,
   "/check-in": CLINIC_PERMISSION.SCREEN_CHECK_IN,
@@ -484,6 +485,7 @@ const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermis
     { prefix: "/print/extra-storno", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
     { prefix: "/print/lab-order", permission: CLINIC_PERMISSION.SCREEN_LAB_ORDERS },
     { prefix: "/print/nurse-day", permission: CLINIC_PERMISSION.SCREEN_NURSE },
+    { prefix: "/print/reception-day", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
     { prefix: "/print/checkup", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     {
       prefix: "/print/patient-assignments",

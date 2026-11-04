@@ -6,7 +6,8 @@ import { linkPatientGlobalPerson } from '@/lib/patient-identity';
 import { splitFullNameToParts } from '@era/satellite-kit';
 import {
   assertLabOrderCanCreate,
-  findEpisodeLabConflict,
+  findPatientLabConflict,
+  lockPatientForLabCreate,
 } from '@/domain/lab/lab-order-conflict.service';
 import { allocatePatientRefCode } from '@/domain/patient/allocate-patient-ref-code';
 import { composeFullName } from '@/domain/patient/patient-ref-code';
@@ -1078,7 +1079,7 @@ export async function createEpisodeLabOrder(
     throw err;
   }
 
-  const conflict = await findEpisodeLabConflict(episodeId, [testCode]);
+  const conflict = await findPatientLabConflict(episode.patientRefId, [testCode]);
   assertLabOrderCanCreate(conflict, options?.confirmRepeat);
 
   const patientRefId = episode.patientRefId;
@@ -1110,6 +1111,9 @@ export async function createEpisodeLabOrder(
   });
 
   const orderId = await prisma.$transaction(async (tx) => {
+    await lockPatientForLabCreate(tx, patientRefId);
+    const again = await findPatientLabConflict(patientRefId, [testCode], tx);
+    assertLabOrderCanCreate(again, options?.confirmRepeat);
     const order = await tx.labOrder.create({
       data: {
         organizationId: episode.organizationId || requestOrganizationId(),

@@ -684,6 +684,8 @@ model LabOrder {
   prescribedByPractitionerId String?     @map("prescribed_by_practitioner_id")
   /// Clinic receipt number once reception Pay / walk-in send stamped this order.
   paymentReceiptRef     String?          @map("payment_receipt_ref")
+  /// Lab works before pay; guest blank stays closed until settledAt. Ignored when inPackage.
+  releaseAfterPay       Boolean          @default(false) @map("release_after_pay")
   reservationId         String?          @map("reservation_id")
   roomNumber            String?          @map("room_number")
   patientOrigin         PatientOrigin    @default(WALK_IN) @map("patient_origin")
@@ -747,6 +749,17 @@ model DiagnosticService {
   fieldsJson     String?             @map("fields_json") @db.Text
   /// Package composition: child service codes JSON (string[])
   includesJson   String?             @map("includes_json") @db.Text
+  /// PAY_WITH_WORK: lab sees a priced order only after pay.
+  /// AFTER_PAYMENT: lab works immediately; the guest blank waits for pay unless the line is in the package.
+  guestBlankRelease GuestBlankRelease @default(PAY_WITH_WORK) @map("guest_blank_release")
+  /// GUEST bills the stay. INTERNAL stays off the guest folio.
+  usageContour   String              @default("GUEST") @map("usage_contour")
+  /// LAB or DIAGNOSTIC overrides the modality kind when the menu lane is chosen.
+  menuSurface    String?             @map("menu_surface")
+  /// FIXED cabin clock or OPEN day bucket. The resource matrix still seats procedures only.
+  schedulingMode String              @default("FIXED") @map("scheduling_mode")
+  /// When set, the episode analyses row can accept the guest's own blank not older than this many days.
+  broughtInMaxDays Int?              @map("brought_in_max_days")
   sortOrder      Int                 @default(0) @map("sort_order")
   active         Boolean             @default(true)
   analytes       DiagnosticAnalyte[]
@@ -759,6 +772,27 @@ model DiagnosticService {
   @@index([kind])
   @@index([active])
   @@index([organizationId])
+}
+
+/// Guest arrived with their own lab blank. Satisfies that panel on the episode without an in-house order.
+model EpisodeBroughtInResult {
+  id             String          @id @default(cuid())
+  organizationId String
+  episodeId      String          @map("episode_id")
+  episode        ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  serviceCode    String          @map("service_code")
+  /// Date printed on the guest's blank (Asia/Baku calendar day).
+  resultOn       DateTime        @map("result_on") @db.Date
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@unique([episodeId, serviceCode])
+  @@index([organizationId])
+  @@map("episode_brought_in_result")
+}
+
+enum GuestBlankRelease {
+  PAY_WITH_WORK
+  AFTER_PAYMENT
 }
 
 enum AnalyteValueType {
@@ -1047,6 +1081,7 @@ model ClinicalEpisode {
   diagnoses                  ClinicalDiagnosis[]
   contraindications          PatientContraindication[]
   labOrders                  LabOrder[]
+  broughtInResults           EpisodeBroughtInResult[]
   visits                     Visit[]
   procedureOrders            ProcedureOrder[]
   programInstance            ProgramInstance?
@@ -1406,6 +1441,8 @@ model ProcedureType {
   organizationId     String
   code               String
   name               String
+  /// Hidden from assignment lists. Existing orders stay.
+  active             Boolean                    @default(true)
   durationMin        Int                        @default(30)
   /// Cabin/device idle minutes after occupancy ends (0 = back-to-back). ADR clinic-scheduling-time-layers.
   resourceGapMinutes Int                        @default(5) @map("resource_gap_minutes")
@@ -1419,6 +1456,10 @@ model ProcedureType {
   needsSite          Boolean                    @default(true) @map("needs_site")
   /// Day-bucket attendance: no rigid cabin clock until nurse seat (CLI-62).
   openAttendance     Boolean                    @default(false) @map("open_attendance")
+  /// Package block family. Null until classified; the picker falls back to the name heuristic.
+  blockCategory      String?                    @map("block_category")
+  /// GUEST bills the stay. INTERNAL is the sanatorium's own use and does not wait for pay.
+  usageContour       String                     @default("GUEST") @map("usage_contour")
   /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
   physioOrderFields  String[]                   @default([]) @map("physio_order_fields")
   /// PhysioSite.code allowlist for the doctor picker. Empty + needsSite = legacy all; seed fills concrete lists.
@@ -1957,6 +1998,8 @@ model ProgramTemplateProcedure {
    * PROCEDURE_ORDER | LAB_ORDER | VISIT
    */
   fulfillment    String          @default("PROCEDURE_ORDER")
+  /// When true, fulfillment is the route. When false, LAB/EXAM kind still overrides a procedure default.
+  fulfillmentExplicit Boolean       @default(false) @map("fulfillment_explicit")
   /**
    * PER_NIGHTS | PER_STAY
    */

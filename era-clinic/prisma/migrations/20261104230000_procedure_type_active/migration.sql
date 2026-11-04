@@ -1,0 +1,1 @@
+ALTER TABLE "ProcedureType" ADD COLUMN "active" BOOLEAN NOT NULL DEFAULT true;

@@ -120,7 +120,24 @@ function flagZones(num: number, zonesJson?: string): ResultLineInput["flag"] {
   return "NORMAL";
 }
 
+/** An explicit dash is not a result: no norm and no flag. An empty cell is still unfilled. */
+export function isUnsetLabValue(value: string | null | undefined): boolean {
+  const trimmed = (value ?? "").trim();
+  return trimmed === "—" || trimmed === "-" || trimmed === "–";
+}
+
 function enrichOne(line: ResultLineInput): ResultLineInput {
+  if (isUnsetLabValue(line.value)) {
+    return {
+      ...line,
+      flag: undefined,
+      refMin: undefined,
+      refMax: undefined,
+      normTextEn: undefined,
+      normTextRu: undefined,
+      normTextAz: undefined,
+    };
+  }
   if (line.flag === "CRITICAL") return line;
 
   const src: AnalyteNormSource = {

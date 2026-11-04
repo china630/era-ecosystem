@@ -100,7 +100,7 @@ export function PrintShell({
           <span className="font-semibold">{printLabel(lang, "sampleReceived")}:</span>{" "}
           {blankDates.sampleReceived ?? "—"}
           <span className="mx-2">·</span>
-          <span className="font-semibold">{printLabel(lang, "resultDate")}:</span> {blankDates.resultDate}
+          {blankDates.resultDate}
         </p>
       ) : null}
 

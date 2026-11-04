@@ -67,6 +67,13 @@ export function handleRouteError(err: unknown) {
         : 403;
     return jsonError(err.message, status);
   }
+  if (err instanceof Error && err.name === "SatelliteChannelDisabledError") {
+    const code =
+      "code" in err && typeof (err as { code?: string }).code === "string"
+        ? (err as { code: string }).code
+        : "SATELLITE_CHANNEL_DISABLED";
+    return jsonError(err.message, 403, { code });
+  }
   if (err instanceof Error && err.name === "FiscalError") {
     return jsonError(err.message, 400);
   }

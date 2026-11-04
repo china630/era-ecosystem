@@ -99,6 +99,15 @@ describe("lab analyte norms", () => {
     ).toBe("HIGH");
   });
 
+  it("does not flag or keep a norm when the value is a dash", () => {
+    const [row] = enrichResultLines([
+      { code: "U-PRO", value: "—", refMin: "0.0", refMax: "0.33", normTextAz: "0.0-0.33 g/l" },
+    ]);
+    expect(row.flag).toBeUndefined();
+    expect(row.normTextAz).toBeUndefined();
+    expect(row.refMin).toBeUndefined();
+  });
+
   it("resolves shared bounds when sex pairs are absent", () => {
     expect(resolveNumericBounds({ refMin: "3.8", refMax: "6.4" }, "FEMALE")).toEqual({
       refMin: "3.8",

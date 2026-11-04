@@ -98,7 +98,10 @@ type ProcedureType = {
   resourceCode?: string | null;
   bodyPart?: string | null;
   needsSite?: boolean;
+  active?: boolean;
   openAttendance?: boolean;
+  blockCategory?: string | null;
+  usageContour?: string | null;
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
   extendedEndHour?: number | null;
@@ -209,7 +212,10 @@ export default function MasterDataPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [needsSite, setNeedsSite] = useState(true);
+  const [procedureActive, setProcedureActive] = useState(true);
   const [openAttendance, setOpenAttendance] = useState(false);
+  const [blockCategory, setBlockCategory] = useState("");
+  const [usageContour, setUsageContour] = useState("GUEST");
   const [needsExtraFields, setNeedsExtraFields] = useState(false);
   const [physioOrderFields, setPhysioOrderFields] = useState<string[]>([]);
   const [allowedSiteCodes, setAllowedSiteCodes] = useState<string[]>([]);
@@ -524,7 +530,10 @@ export default function MasterDataPage() {
     setFinanceServiceQ("");
     setSkillCoverageMsg(null);
     setNeedsSite(true);
+    setProcedureActive(true);
     setOpenAttendance(false);
+    setBlockCategory("");
+    setUsageContour("GUEST");
     setNeedsExtraFields(false);
     setPhysioOrderFields([]);
     setAllowedSiteCodes([]);
@@ -620,7 +629,10 @@ export default function MasterDataPage() {
       financeSku: row.financeSku?.trim() || row.code,
     });
     setNeedsSite(row.needsSite !== false);
+    setProcedureActive(row.active !== false);
     setOpenAttendance(row.openAttendance === true);
+    setBlockCategory(row.blockCategory ?? "");
+    setUsageContour(row.usageContour === "INTERNAL" ? "INTERNAL" : "GUEST");
     setPhysioOrderFields(row.physioOrderFields ?? []);
     setNeedsExtraFields((row.physioOrderFields ?? []).length > 0);
     setAllowedSiteCodes(row.allowedSiteCodes ?? []);
@@ -733,7 +745,10 @@ export default function MasterDataPage() {
           patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
           bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
           needsSite,
+          active: procedureActive,
           openAttendance,
+          blockCategory: blockCategory || null,
+          usageContour,
           physioOrderFields,
           allowedSiteCodes,
           extendedEndHour: form.extendedEndHour?.trim()
@@ -775,7 +790,10 @@ export default function MasterDataPage() {
         patientRestMinutes: Number(form.patientRestMinutes ?? "15"),
         bodyPart: form.bodyPart?.trim() ? form.bodyPart.trim() : null,
         needsSite,
+        active: procedureActive,
         openAttendance,
+        blockCategory: blockCategory || null,
+        usageContour,
         physioOrderFields,
         allowedSiteCodes,
         extendedEndHour: form.extendedEndHour?.trim()
@@ -1154,6 +1172,7 @@ export default function MasterDataPage() {
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                   <SortableTh label={t("name")} columnKey="name" sort={sort} onSort={onSort} />
                   <SortableTh label={t("code")} columnKey="code" sort={sort} onSort={onSort} />
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureActive")}</th>
                   <SortableTh label={t("durationMin")} columnKey="duration" sort={sort} onSort={onSort} />
                   <SortableTh label={t("resourceGapMinutes")} columnKey="gap" sort={sort} onSort={onSort} />
                   <SortableTh label={t("patientRestMinutes")} columnKey="rest" sort={sort} onSort={onSort} />
@@ -1166,6 +1185,7 @@ export default function MasterDataPage() {
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.active === false ? "—" : "✓"}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.durationMin}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.resourceGapMinutes ?? 5}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.patientRestMinutes ?? 15}</td>
@@ -1532,11 +1552,44 @@ export default function MasterDataPage() {
                 <input
                   type="checkbox"
                   className={MODAL_CHECKBOX_CLASS}
+                  checked={procedureActive}
+                  onChange={(e) => setProcedureActive(e.target.checked)}
+                />
+                {t("procedureActive")}
+              </label>
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
                   checked={openAttendance}
                   onChange={(e) => setOpenAttendance(e.target.checked)}
                 />
                 {t("openAttendance")}
               </label>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("blockCategory")}
+                hint={t("blockCategoryHint")}
+                value={blockCategory}
+                onChange={(v) => setBlockCategory(String(v ?? ""))}
+                options={[
+                  { value: "PHYSIO", label: t("blockCategoryPhysio") },
+                  { value: "BATH", label: t("blockCategoryBath") },
+                  { value: "PARAFFIN", label: t("blockCategoryParaffin") },
+                ]}
+                emptyLabel="—"
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("usageContour")}
+                hint={t("usageContourHint")}
+                value={usageContour}
+                onChange={(v) => setUsageContour(String(v ?? "GUEST") === "INTERNAL" ? "INTERNAL" : "GUEST")}
+                options={[
+                  { value: "GUEST", label: t("usageContourGuest") },
+                  { value: "INTERNAL", label: t("usageContourInternal") },
+                ]}
+              />
               {openAttendance ? (
                 <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("openAttendanceHint")}</p>
               ) : null}

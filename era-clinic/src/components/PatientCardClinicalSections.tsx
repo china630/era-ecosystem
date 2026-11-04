@@ -184,6 +184,81 @@ function typeDot(type: string): string {
   return "bg-slate-400";
 }
 
+function BroughtInBlank({
+  episodeId,
+  serviceCode,
+  maxDays,
+  resultOn,
+  onSaved,
+}: {
+  episodeId: string;
+  serviceCode: string;
+  maxDays: number;
+  resultOn: string | null;
+  onSaved: () => void;
+}) {
+  const t = useTranslations("patientCard");
+  const tc = useTranslations("common");
+  const [on, setOn] = useState(Boolean(resultOn));
+  const [date, setDate] = useState(resultOn ?? "");
+  const [busy, setBusy] = useState(false);
+
+  async function save(nextOn: boolean, nextDate: string) {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/sanatorium/episodes/${episodeId}/brought-in`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceCode,
+          resultOn: nextOn ? nextDate : null,
+        }),
+      });
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc("failed"));
+        setOn(Boolean(resultOn));
+        setDate(resultOn ?? "");
+        return;
+      }
+      showSuccess(tc("saved"));
+      onSaved();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex shrink-0 items-end gap-2">
+      <label className="flex items-center gap-1 text-[12px]">
+        <input
+          type="checkbox"
+          checked={on}
+          disabled={busy}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setOn(next);
+            if (!next) void save(false, "");
+          }}
+        />
+        {t("broughtInOwn", { days: maxDays })}
+      </label>
+      {on ? (
+        <>
+          <DatePicker value={date} onChange={setDate} />
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={busy || !date}
+            onClick={() => void save(true, date)}
+          >
+            {tc("save")}
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 type Props = {
   patientRefId: string;
   panel?: string | null;
@@ -850,9 +925,19 @@ export function PatientCardClinicalSections({
                           ? bakuDateTimeLabel(item.scheduledAt)
                           : t("intakeAssignTime", { defaultValue: "Assign time" })}
                       </button>
+                    ) : episodeId && item.broughtInMaxDays != null && item.kind === "lab" && item.status !== "DONE" ? (
+                      <BroughtInBlank
+                        episodeId={episodeId}
+                        serviceCode={item.resolvedCode}
+                        maxDays={item.broughtInMaxDays}
+                        resultOn={item.broughtInOn}
+                        onSaved={() => void loadSummary()}
+                      />
                     ) : (
                       <span className={`shrink-0 text-[12px] font-medium ${statusClass}`}>
-                        {statusLabel}
+                        {item.broughtInOn
+                          ? t("broughtInAccepted", { date: item.broughtInOn })
+                          : statusLabel}
                       </span>
                     )}
                   </li>

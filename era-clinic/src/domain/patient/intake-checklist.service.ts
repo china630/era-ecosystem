@@ -18,6 +18,10 @@ export type IntakeChecklistItem = {
   recordId: string | null;
   /** Set on auto doctor visits when a slot is already booked (Asia/Baku instant). */
   scheduledAt: string | null;
+  /** Catalog allows a guest blank not older than this many days. Null = in-house only. */
+  broughtInMaxDays: number | null;
+  /** Saved blank date (YYYY-MM-DD) when the guest's own result was accepted. */
+  broughtInOn: string | null;
 };
 
 export type IntakeChecklist = {
@@ -186,6 +190,26 @@ export async function getIntakeChecklist(
   if (!template) return emptyChecklist(programCode);
 
   const title = { en: template.name, ru: template.name, az: template.name };
+  const [broughtServices, broughtRows] = await Promise.all([
+    prisma.diagnosticService.findMany({
+      where: { organizationId: episode.organizationId, broughtInMaxDays: { not: null } },
+      select: { code: true, serviceCode: true, broughtInMaxDays: true },
+    }),
+    prisma.episodeBroughtInResult.findMany({
+      where: { episodeId },
+      select: { serviceCode: true, resultOn: true },
+    }),
+  ]);
+  const broughtMax = new Map<string, number>();
+  for (const service of broughtServices) {
+    if (service.broughtInMaxDays == null) continue;
+    broughtMax.set(service.code, service.broughtInMaxDays);
+    broughtMax.set(service.serviceCode, service.broughtInMaxDays);
+  }
+  const broughtOn = new Map<string, string>();
+  for (const row of broughtRows) {
+    broughtOn.set(row.serviceCode, row.resultOn.toISOString().slice(0, 10));
+  }
   const items: IntakeChecklistItem[] = [];
   const seen = new Set<string>();
 
@@ -213,6 +237,8 @@ export async function getIntakeChecklist(
         href: visit ? `/visits/${visit.id}` : null,
         recordId: visit?.id ?? null,
         scheduledAt: visit?.scheduledAt?.toISOString() ?? null,
+        broughtInMaxDays: null,
+        broughtInOn: null,
       });
       continue;
     }
@@ -237,6 +263,8 @@ export async function getIntakeChecklist(
         : null,
       recordId: order?.id ?? null,
       scheduledAt: null,
+      broughtInMaxDays: broughtMax.get(serviceCode) ?? null,
+      broughtInOn: broughtOn.get(serviceCode) ?? null,
     });
   }
 

@@ -25,7 +25,7 @@ export function isLabBlockCatalogKind(kind: string | null | undefined): boolean 
   return (LAB_BLOCK_CATALOG_KINDS as readonly string[]).includes(kind ?? "");
 }
 
-export type CatalogSku = { code: string; name: string };
+export type CatalogSku = { code: string; name: string; blockCategory?: string | null };
 
 function foldHay(s: string): string {
   return s
@@ -75,6 +75,10 @@ export function filterTreatmentSkus(
 ): CatalogSku[] {
   return types.filter((t) => {
     if (isPoolOrAliasCode(t.code)) return false;
+    const category = t.blockCategory?.trim().toUpperCase();
+    if (category === "PHYSIO" || category === "BATH" || category === "PARAFFIN") {
+      return category === kind;
+    }
     return treatmentFamily(t.code, t.name) === kind;
   });
 }

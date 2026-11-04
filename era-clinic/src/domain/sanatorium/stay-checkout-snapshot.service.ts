@@ -14,6 +14,8 @@ export type StayProcedureRow = {
   status: StayProcedureStatus;
   folioRef: string | null;
   inPackage: boolean;
+  /** When the guest was checked in to this procedure. */
+  checkedInAt: string | null;
   /** Civil date of the session vs checkout day (Asia/Baku). */
   timing: "future" | "past" | "other";
 };
@@ -48,9 +50,9 @@ export async function listStayProceduresForCheckout(reservationId: string) {
   const paid: StayProcedureRow[] = [];
   const unpaidExtras: StayProcedureRow[] = [];
   const packageSessions: StayProcedureRow[] = [];
+  const executed: StayProcedureRow[] = [];
   for (const order of orders) {
     const status = mapStatus(order.status);
-    if (status === "completed" || status === "cancelled" || status === "arrived") continue;
     const row: StayProcedureRow = {
       orderId: order.id,
       procedureName: order.procedureName,
@@ -60,7 +62,13 @@ export async function listStayProceduresForCheckout(reservationId: string) {
       folioRef: order.extraTicketId,
       inPackage: order.inPackage,
       timing: timingOf(order.scheduledAt, today),
+      checkedInAt: order.checkedInAt ? order.checkedInAt.toISOString() : null,
     };
+    if (status === "arrived" || status === "completed") {
+      executed.push(row);
+      continue;
+    }
+    if (status === "cancelled") continue;
     if (order.inPackage) {
       packageSessions.push(row);
       continue;
@@ -84,6 +92,7 @@ export async function listStayProceduresForCheckout(reservationId: string) {
   return {
     paid,
     unpaidExtras,
+    executed,
     packageSessions,
     futurePaid,
     pastNoShowish,

@@ -162,6 +162,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
+  {
+    href: "/reception/nurse-sheets",
+    labelKey: "nurseSheets",
+    icon: ScrollText,
+    group: "frontdesk",
+    permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
 
   // Clinical — DOCTOR / NURSE
   {

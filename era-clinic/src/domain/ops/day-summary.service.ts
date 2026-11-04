@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
 import { listOverdueScheduledProcedures } from "@/domain/procedure/procedure-attendance.service";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
-import { labOrderLaneWhere } from "@/domain/lab/lab-order-lane";
+import { labOrderLaneWhere, loadDiagnosticLaneCodes, loadMenuSurfaceCodes } from "@/domain/lab/lab-order-lane";
 
 export { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
@@ -48,9 +48,23 @@ export async function getOpsDaySummary(
   const { start } = bakuDayBounds(fromYmd <= toYmd ? fromYmd : toYmd);
   const { end } = bakuDayBounds(fromYmd <= toYmd ? toYmd : fromYmd);
   const dayFilter = { gte: start, lt: end };
-  const labLane = labOrderLaneWhere({ kinds: ["lab_panel"], unclassified: true }) ?? {};
+  const diagnosticCodes = await loadDiagnosticLaneCodes();
+  const surfaces = await loadMenuSurfaceCodes();
+  const labLane =
+    labOrderLaneWhere({
+      kinds: ["lab_panel"],
+      unclassified: true,
+      diagnosticCodes,
+      surfaceDiagnosticCodes: surfaces.diagnostic,
+      surfaceLabCodes: surfaces.lab,
+    }) ?? {};
   const diagnosticLane =
-    labOrderLaneWhere({ kinds: ["imaging", "functional", "endoscopy"] }) ?? {};
+    labOrderLaneWhere({
+      kinds: ["imaging", "functional", "endoscopy"],
+      diagnosticCodes,
+      surfaceDiagnosticCodes: surfaces.diagnostic,
+      surfaceLabCodes: surfaces.lab,
+    }) ?? {};
 
   const [
     appointmentGroups,
