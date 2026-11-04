@@ -17,7 +17,7 @@ import {
   folioBalance,
 } from '@/lib/services/folio.service';
 import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.service';
-import { createFiscalDocumentsOnCheckout, issueFolioInvoice } from '@/lib/services/fiscal-document.service';
+import { createFiscalDocumentsOnCheckout } from '@/lib/services/fiscal-document.service';
 import { getReservation } from '@/lib/services/reservation.service';
 import {
   clinicProgramCodeFromTariff,
@@ -419,77 +419,6 @@ export async function checkoutReservation(
 
     return reservation;
   });
-
-  if (wantCl) {
-    const pending = await prisma.folio.findMany({
-      where: { reservationId: id, status: 'PENDING_AR' },
-    });
-    let anyInvoiceOk = false;
-    for (const f of pending) {
-      const handoff: CheckoutCityLedgerHandoff = { folioId: f.id, invoiceOk: false };
-      try {
-        await issueFolioInvoice(f.id);
-        handoff.invoiceOk = true;
-        anyInvoiceOk = true;
-        await prisma.folio.update({ where: { id: f.id }, data: { status: 'TRANSFERRED_AR' } });
-        cityLedgerTransferred.push(f.id);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'CL invoice issue failed';
-        handoff.invoiceError = msg;
-        warnings.push(`Invoice failed for folio ${f.id}: ${msg}`);
-        console.error('CL invoice issue failed', e);
-      }
-      cityLedgerHandoff.push(handoff);
-    }
-
-    if (anyInvoiceOk) {
-      await prisma.reservation.update({
-        where: { id },
-        data: { checkoutSettlementStatus: 'INVOICED' },
-      });
-    }
-
-    const asOf = todayBakuYmd();
-    const { dispatchCityLedgerSnapshot, dispatchCompanyCityLedgerSnapshot } = await import(
-      '@/lib/integration/event-dispatcher'
-    );
-    if (completed.agencyId && pending.some((folio) => folio.type === 'AGENCY')) {
-      try {
-        await dispatchCityLedgerSnapshot(completed.agencyId, asOf);
-        for (const row of cityLedgerHandoff) {
-          if (pending.find((f) => f.id === row.folioId)?.type === 'AGENCY') row.snapshotOk = true;
-        }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'CL snapshot failed';
-        warnings.push(`Agency City Ledger snapshot failed: ${msg}`);
-        console.error('CL snapshot failed', e);
-        for (const row of cityLedgerHandoff) {
-          if (pending.find((f) => f.id === row.folioId)?.type === 'AGENCY') {
-            row.snapshotOk = false;
-            row.snapshotError = msg;
-          }
-        }
-      }
-    }
-    if (completed.companyId && pending.some((folio) => folio.type === 'COMPANY')) {
-      try {
-        await dispatchCompanyCityLedgerSnapshot(completed.companyId, asOf);
-        for (const row of cityLedgerHandoff) {
-          if (pending.find((f) => f.id === row.folioId)?.type === 'COMPANY') row.snapshotOk = true;
-        }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Company CL snapshot failed';
-        warnings.push(`Company City Ledger snapshot failed: ${msg}`);
-        console.error('Company CL snapshot failed', e);
-        for (const row of cityLedgerHandoff) {
-          if (pending.find((f) => f.id === row.folioId)?.type === 'COMPANY') {
-            row.snapshotOk = false;
-            row.snapshotError = msg;
-          }
-        }
-      }
-    }
-  }
 
   const dispatch = await dispatchReservationCompleted(completed);
   if (completed.agencyId) {

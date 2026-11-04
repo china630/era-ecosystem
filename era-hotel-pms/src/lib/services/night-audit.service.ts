@@ -625,6 +625,14 @@ async function executeLockedNightAudit() {
     }
     const businessDateKey = hotelDateKey(date);
     steps.push(`Step 3 complete: room charges for ${businessDateKey}`);
+    const { handoffPendingCityLedger } = await import(
+      '@/lib/services/city-ledger-night-handoff.service'
+    );
+    const cityLedgerLines = await handoffPendingCityLedger(businessDateKey);
+    for (const line of cityLedgerLines) {
+      steps.push(`Step 3b: ${line.message}`);
+      if (line.level === 'exception') errors.push(line.message);
+    }
     await prisma.nightAuditRun.update({
       where: { id: run.id },
       data: { stepsJson: JSON.stringify(steps) },

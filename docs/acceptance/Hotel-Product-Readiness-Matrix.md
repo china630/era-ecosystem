@@ -14,6 +14,8 @@
 
 **Closeout (2026-11-02 lifecycle outbox):** HOT-PKG-04 stays API. AC-HOT-PKG-PAX stays 🟡. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/hotel.yaml` unchanged.
 
+**Closeout (2026-11-04 City Ledger night handoff):** Checkout leaves company/agency debt `PENDING_AR`. Night audit transfers only when Finance already has the VÖEN card; otherwise it queues a card request. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
+
 ---
 
 ## Line summary (SSOT readiness)
@@ -37,7 +39,7 @@
 | Move guest (HOT-FO-06) | MoveGuestModal | SCREEN (out of FO SHOW until UAT-SMOKE §44). Dialog copy az/ru/en. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Cash / CL | `/folio/[id]`, `/front-cash/pending`, `/front-cash/agency-ledger`, `/front-cash/company-ledger`, `/operations` | ✅ signed demo. Accept payment by cashier category (Yaşayış/Klinika/F&B/Digər) + pocket; amount may exceed that category's open debt (surplus is credit for later nights of the same category); empty method until chosen; mid-stay **Return category credit** (FIFO inside category) on folio cash bar + FO header; header category spends + one stay net; folio Kateqoriya column; one open pocket per guest. Checkout nets categories per pocket and clears future clinic extras. Gate/UI/Demo/Pilot/Edition unchanged (UAT §27 1c re-sign + §29 1a still open) |
 | Agency commission (HOT-AG-COMM) | `/distribution/agency-commission` (+ Finance CP card / purchase pay batch id) | SCREEN — accrual/statement/forecast/hold-release + Finance submit/pay sibling; out of Cash/CL SHOW rollup until Demo/TE. Gate/Pilot/edition unchanged (`mvp`, `pilot_ready: false`) |
-| Night audit (HOT-NA-01/02) | `/night-audit` | ✅ SHIPPED. 2026-10-28: stop-step reservation refs + Open card (folio/price/due/arrival); PAID pending without `revenueCode` fails with source refs (no `UNKNOWN`). Banner and year-end dates render `дд.мм.гггг`. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
+| Night audit (HOT-NA-01/02) | `/night-audit` | ✅ SHIPPED. 2026-10-28: stop-step reservation refs + Open card (folio/price/due/arrival); PAID pending without `revenueCode` fails with source refs (no `UNKNOWN`). Banner and year-end dates render `дд.мм.гггг`. 2026-11-04: Step 3b hands PENDING_AR to Finance when the VÖEN card exists; a missing card is an exception line and the folio stays. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Unsettled CL (HOT-CO-05) | `/front-cash/unsettled-departures` | SCREEN — out of Cash/CL SHOW rollup until Demo/TE; does not move Gate, Pilot, or edition |
 | Finance→Hotel CL pay (HOT-CL-07) | no new hotel screen (Finance allocate / bank match → `payment-applied`) | NONE / API — HEADLESS handoff; unsettled clears when SETTLED. Does not move Gate, UI ✅, Demo ✅, Pilot, or edition |
 | Early unused-nights refund (HOT-CO-04) | checkout confirm (folio + chessboard) | ✅ SHIPPED |
