@@ -937,7 +937,7 @@ export function PatientCardClinicalSections({
                         episodeId={episodeId}
                         serviceCode={item.resolvedCode}
                         maxDays={item.broughtInMaxDays}
-                        resultOn={item.broughtInOn}
+                        resultOn={item.broughtInOn ?? null}
                         onSaved={() => void loadSummary()}
                       />
                     ) : (
