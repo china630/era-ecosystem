@@ -25,6 +25,7 @@ import {
   FieldSelect,
   FieldTextarea,
   MODAL_CHECKBOX_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
