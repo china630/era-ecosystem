@@ -33,7 +33,9 @@ export function routePermissions(pathname: string): Permission[] | null {
     pathname === "/admin/settings" ||
     pathname.startsWith("/admin/settings/") ||
     pathname === "/admin/audit" ||
-    pathname.startsWith("/admin/audit/")
+    pathname.startsWith("/admin/audit/") ||
+    pathname === "/admin/links" ||
+    pathname.startsWith("/admin/links/")
   ) {
     return [PERMISSIONS.SCREEN_ADMIN_SETTINGS];
   }

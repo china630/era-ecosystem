@@ -12,6 +12,9 @@ describe("SatelliteEndpointRegistryService", () => {
       upsert: jest.fn(),
       deleteMany: jest.fn(),
     },
+    organizationSatelliteEntitlement: {
+      findUnique: jest.fn(),
+    },
   };
 
   function svc(env: Record<string, string | undefined> = {}) {
@@ -27,6 +30,7 @@ describe("SatelliteEndpointRegistryService", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     process.env.PII_ENCRYPTION_KEY = "test-key-for-registry-spec-32chars!!";
+    prisma.organizationSatelliteEntitlement.findUnique.mockResolvedValue(null);
   });
 
   it("returns DB endpoint when row exists", async () => {
@@ -158,5 +162,33 @@ describe("SatelliteEndpointRegistryService", () => {
     const r = await svc().resolveLaunchBaseUrl("org-1", "not_a_satellite");
     expect(r).toBeNull();
     expect(prisma.satelliteEndpoint.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("resolveLaunchBaseUrl returns null when entitlement is suspended (no env fallback)", async () => {
+    prisma.organizationSatelliteEntitlement.findUnique.mockResolvedValue({
+      suspendedAt: new Date("2026-11-01T00:00:00.000Z"),
+    });
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue({
+      enabled: false,
+      baseUrl: "https://clinic.customer.example/",
+      secretCipher: null,
+    });
+    const r = await svc({
+      NEXT_PUBLIC_SATELLITE_CLINIC_URL: "http://127.0.0.1:3203",
+    }).resolveLaunchBaseUrl("org-1", SATELLITE_KEY_CLINIC);
+    expect(r).toBeNull();
+    expect(prisma.satelliteEndpoint.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("resolveLaunchBaseUrl returns null when endpoint disabled (no env fallback)", async () => {
+    prisma.satelliteEndpoint.findUnique.mockResolvedValue({
+      enabled: false,
+      baseUrl: "https://clinic.customer.example/",
+      secretCipher: null,
+    });
+    const r = await svc({
+      NEXT_PUBLIC_SATELLITE_CLINIC_URL: "http://127.0.0.1:3203",
+    }).resolveLaunchBaseUrl("org-1", SATELLITE_KEY_CLINIC);
+    expect(r).toBeNull();
   });
 });

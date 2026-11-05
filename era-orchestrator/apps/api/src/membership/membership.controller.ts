@@ -35,4 +35,13 @@ export class MembershipController {
     const userId = await this.userIdFromBearer(authorization);
     return this.auth.switchOrganization(userId, body.organizationId);
   }
+
+  @Post("auth/home-organization")
+  async setHome(
+    @Headers("authorization") authorization: string | undefined,
+    @Body() body: { organizationId: string },
+  ) {
+    const userId = await this.userIdFromBearer(authorization);
+    return this.auth.setHomeOrganization(userId, body.organizationId);
+  }
 }

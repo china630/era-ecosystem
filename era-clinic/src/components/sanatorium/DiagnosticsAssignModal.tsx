@@ -55,6 +55,8 @@ type CatalogItem = {
   code: string;
   kind: string;
   title: L10n;
+  packageOnly?: boolean;
+  categoryActive?: boolean;
 };
 
 type CatalogGroup = {
@@ -471,6 +473,7 @@ export function DiagnosticsAssignModal({
       const items = g.itemCodes
         .map((code) => itemByCode.get(code))
         .filter((row): row is CatalogItem => Boolean(row))
+        .filter((row) => row.categoryActive !== false && !row.packageOnly)
         .map((row) => ({
           code: row.code,
           kind: row.kind,
@@ -487,7 +490,7 @@ export function DiagnosticsAssignModal({
       out.push({
         key: "all",
         title: t("diagnosticsExtraTitle", { defaultValue: "Additional (catalog)" }),
-        items: catalogItems.map((row) => ({
+        items: catalogItems.filter((row) => row.categoryActive !== false && !row.packageOnly).map((row) => ({
           code: row.code,
           kind: row.kind,
           label: pickL10n(row.title, locale) || row.code,

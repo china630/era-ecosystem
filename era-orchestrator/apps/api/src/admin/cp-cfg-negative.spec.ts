@@ -64,8 +64,12 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
     const prisma = {
       organization: {
         findUnique: jest.fn().mockResolvedValue({
+          id: orgId,
           deploymentTopology: "DEDICATED",
           subscriptionPlan: null,
+          operatingMode: "STANDALONE",
+          fiscalRouting: "OWN",
+          parentOrgId: null,
         }),
       },
       organizationSubscription: {
@@ -78,6 +82,10 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
         findUnique: jest.fn().mockResolvedValue(null),
       },
       fiscalHardwareDevice: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      orgPaymentMethod: {
+        count: jest.fn().mockResolvedValue(1),
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
@@ -103,8 +111,12 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
     const prisma = {
       organization: {
         findUnique: jest.fn().mockResolvedValue({
+          id: orgId,
           deploymentTopology: "DEDICATED",
           subscriptionPlan: null,
+          operatingMode: "STANDALONE",
+          fiscalRouting: "OWN",
+          parentOrgId: null,
         }),
       },
       organizationSubscription: {
@@ -117,6 +129,10 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
         findUnique: jest.fn().mockResolvedValue(null),
       },
       fiscalHardwareDevice: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      orgPaymentMethod: {
+        count: jest.fn().mockResolvedValue(1),
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
@@ -197,6 +213,9 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
           publicOrgNumber: null,
           deletedAt: null,
           settings: null,
+          operatingMode: "STANDALONE",
+          fiscalRouting: "OWN",
+          parentOrgId: null,
         }),
       },
       satelliteEndpoint: {
@@ -212,6 +231,10 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
         findUnique: jest.fn().mockResolvedValue(null),
       },
       fiscalHardwareDevice: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      orgPaymentMethod: {
+        count: jest.fn().mockResolvedValue(1),
         findMany: jest.fn().mockResolvedValue([]),
       },
     };

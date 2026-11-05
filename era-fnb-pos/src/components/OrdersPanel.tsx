@@ -76,10 +76,17 @@ export default function OrdersPanel() {
   const [entitlements, setEntitlements] = useState<GuestEntitlements | null>(null);
   const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
   const [hotelMode, setHotelMode] = useState(false);
+  const [folioPostEnabled, setFolioPostEnabled] = useState(false);
+  const [settlementEnabled, setSettlementEnabled] = useState(false);
   const [hasKds, setHasKds] = useState(false);
   const [canPay, setCanPay] = useState<boolean | null>(null);
   const [canDiscount, setCanDiscount] = useState<boolean | null>(null);
   const [cashReceived, setCashReceived] = useState("");
+  const [payMethods, setPayMethods] = useState<Array<{ code: string; label: string }>>([
+    { code: "CASH", label: "CASH" },
+    { code: "CARD", label: "CARD" },
+    { code: "TRANSFER", label: "TRANSFER" },
+  ]);
   const [lastPaid, setLastPaid] = useState<{
     dayNo: number | null;
     amount: number;
@@ -92,6 +99,20 @@ export default function OrdersPanel() {
       taxId?: string;
     } | null;
   } | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/payment-methods")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.methods ?? body?.data?.methods) as
+          | Array<{ code: string; label: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setPayMethods(rows.map((row) => ({ code: row.code, label: row.label || row.code })));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -131,6 +152,8 @@ export default function OrdersPanel() {
         if (!d) return;
         setHotelMode(d.hotelMode === true);
         setHasKds(d.kitchen === true);
+        setFolioPostEnabled(d.folioPostEnabled === true);
+        setSettlementEnabled(d.settlementEnabled === true);
       })
       .catch(() => undefined);
     void fetch("/api/billing/context")
@@ -183,7 +206,7 @@ export default function OrdersPanel() {
     await load();
   }
 
-  async function pay(method: "CASH" | "CARD" | "TRANSFER") {
+  async function pay(method: string) {
     if (!selected || !canPay) return;
     const persisted = await persistDiscount();
     if (persisted == null) return;
@@ -663,7 +686,9 @@ export default function OrdersPanel() {
                 {t("fireKitchen")}
               </button>
               ) : null}
-              {hotelMode && (inHouse || selected.roomChargeReservationId) ? (
+              {hotelMode &&
+              folioPostEnabled &&
+              (inHouse || selected.roomChargeReservationId) ? (
                 <button
                   type="button"
                   className="rounded bg-[#8E44AD] px-3 py-1.5 text-sm text-white"
@@ -671,7 +696,7 @@ export default function OrdersPanel() {
                 >
                   {t("roomCharge")}
                 </button>
-              ) : hotelMode && deferWalkInToHub ? (
+              ) : hotelMode && deferWalkInToHub && settlementEnabled ? (
                 <button
                   type="button"
                   className="rounded bg-[#D35400] px-3 py-1.5 text-sm text-white"
@@ -682,27 +707,32 @@ export default function OrdersPanel() {
               ) : canPay ? (
                 <div className="flex w-full shrink-0 flex-col items-end gap-2">
                   <div className="flex flex-wrap justify-end gap-2">
-                  <button
-                    type="button"
-                    className="rounded bg-[#27AE60] px-3 py-1.5 text-sm text-white"
-                    onClick={() => void pay("CASH")}
-                  >
-                    {t("payCash")}
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded bg-[#16A085] px-3 py-1.5 text-sm text-white"
-                    onClick={() => void pay("CARD")}
-                  >
-                    {t("payCard")}
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white"
-                    onClick={() => void pay("TRANSFER")}
-                  >
-                    {t("payTransfer")}
-                  </button>
+                  {payMethods.map((row) => {
+                    const tone =
+                      row.code === "CASH"
+                        ? "bg-[#27AE60]"
+                        : row.code === "CARD"
+                          ? "bg-[#16A085]"
+                          : "bg-[#2980B9]";
+                    const label =
+                      row.code === "CASH"
+                        ? t("payCash")
+                        : row.code === "CARD"
+                          ? t("payCard")
+                          : row.code === "TRANSFER"
+                            ? t("payTransfer")
+                            : row.label;
+                    return (
+                      <button
+                        key={row.code}
+                        type="button"
+                        className={`rounded ${tone} px-3 py-1.5 text-sm text-white`}
+                        onClick={() => void pay(row.code)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                   </div>
                 </div>
               ) : null}

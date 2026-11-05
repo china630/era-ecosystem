@@ -469,6 +469,7 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/admin/physio-sites": CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
   "/admin/ops-wipe": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   "/admin/audit": CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
+  "/admin/links": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   "/admin/settings": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   "/admin/access": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
   "/admin/users": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
@@ -665,6 +666,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/physio-lists", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES },
   { prefix: "/api/admin/physio-nahiye-queue", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES },
   { prefix: "/api/admin/ops-wipe", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  { prefix: "/api/admin/links", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/settings", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/workforce-policy", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   {

@@ -1403,7 +1403,7 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/super-admin/billing/pricing`}
+              href={`${(process.env.NEXT_PUBLIC_ERA_PLATFORM_ORIGIN ?? "https://platform.era-365.online").replace(/\/$/, "")}/billing/pricing`}
               label={t("nav.superAdminBilling")}
               isActive={false}
               icon={CreditCard}
@@ -1411,7 +1411,7 @@ export function MainSidebar({
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/super-admin`}
+              href={`${(process.env.NEXT_PUBLIC_ERA_PLATFORM_ORIGIN ?? "https://platform.era-365.online").replace(/\/$/, "")}/`}
               label={t("nav.superAdmin")}
               isActive={false}
               icon={ShieldCheck}

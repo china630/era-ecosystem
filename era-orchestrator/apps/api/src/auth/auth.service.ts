@@ -72,9 +72,10 @@ export class AuthService {
       };
     }
 
-    const membership = dto.organizationId
-      ? memberships.find((m) => m.organizationId === dto.organizationId)
-      : memberships[0];
+    const membership = this.resolveLoginMembership(
+      memberships,
+      dto.organizationId,
+    );
     if (!membership) {
       throw new UnauthorizedException("Organization access denied");
     }
@@ -162,6 +163,16 @@ export class AuthService {
       await this.prisma.organizationMembership.update({
         where: { userId_organizationId: { userId, organizationId } },
         data: { organizationRoleId: ownerRole.id },
+      });
+    }
+    const hasHome = await this.prisma.organizationMembership.findFirst({
+      where: { userId, isHome: true, deletedAt: null },
+      select: { organizationId: true },
+    });
+    if (!hasHome) {
+      await this.prisma.organizationMembership.update({
+        where: { userId_organizationId: { userId, organizationId } },
+        data: { isHome: true },
       });
     }
     return this.switchOrganization(userId, organizationId);
@@ -305,7 +316,13 @@ export class AuthService {
       orgIds.length > 0
         ? await this.prisma.organization.findMany({
             where: { id: { in: orgIds } },
-            select: { id: true, name: true, ownerId: true },
+            select: {
+              id: true,
+              name: true,
+              ownerId: true,
+              operatingMode: true,
+              parentOrgId: true,
+            },
           })
         : [];
     const orgMap = new Map(orgs.map((o) => [o.id, o]));
@@ -316,9 +333,43 @@ export class AuthService {
         organizationName: org?.name ?? null,
         role: m.role,
         isOwner: org?.ownerId === userId,
+        isHome: m.isHome,
+        operatingMode: org?.operatingMode ?? null,
+        parentOrgId: org?.parentOrgId ?? null,
         joinedAt: m.joinedAt,
       };
     });
+  }
+
+  async setHomeOrganization(userId: string, organizationId: string) {
+    const m = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+    });
+    if (!m || m.deletedAt) {
+      throw new UnauthorizedException("Organization access denied");
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.organizationMembership.updateMany({
+        where: { userId, deletedAt: null },
+        data: { isHome: false },
+      });
+      await tx.organizationMembership.update({
+        where: { userId_organizationId: { userId, organizationId } },
+        data: { isHome: true },
+      });
+    });
+    return this.listMemberships(userId);
+  }
+
+  private resolveLoginMembership<
+    T extends { organizationId: string; isHome: boolean },
+  >(memberships: T[], organizationId?: string | null): T | undefined {
+    if (organizationId) {
+      return memberships.find((m) => m.organizationId === organizationId);
+    }
+    return memberships.find((m) => m.isHome) ?? memberships[0];
   }
 
   private readonly usedSsoSignatures = new Map<string, number>();
@@ -574,6 +625,12 @@ export class AuthService {
       input.organizationId ??
       (
         await this.prisma.organizationMembership.findFirst({
+          where: { userId: input.userId, deletedAt: null, isHome: true },
+          select: { organizationId: true },
+        })
+      )?.organizationId ??
+      (
+        await this.prisma.organizationMembership.findFirst({
           where: { userId: input.userId, deletedAt: null },
           orderBy: { joinedAt: "asc" },
           select: { organizationId: true },
@@ -608,11 +665,18 @@ export class AuthService {
       organizationId =
         (
           await this.prisma.organizationMembership.findFirst({
+            where: { userId: row.userId, deletedAt: null, isHome: true },
+            select: { organizationId: true },
+          })
+        )?.organizationId ??
+        (
+          await this.prisma.organizationMembership.findFirst({
             where: { userId: row.userId, deletedAt: null },
             orderBy: { joinedAt: "asc" },
             select: { organizationId: true },
           })
-        )?.organizationId ?? null;
+        )?.organizationId ??
+        null;
     }
     const membership = organizationId
       ? await this.prisma.organizationMembership.findFirst({

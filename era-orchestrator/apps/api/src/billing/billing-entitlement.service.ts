@@ -254,7 +254,13 @@ export class BillingEntitlementService {
     periodStart: Date,
     periodEnd: Date,
   ): Promise<
-    Array<{ description: string; amountAzn: number; kind: "bundle" | "module" }>
+    Array<{
+      description: string;
+      amountAzn: number;
+      kind: "bundle" | "module";
+      moduleKey?: string;
+      unitPriceAzn?: number;
+    }>
   > {
     const [catalogModules, orgBundles, orgModules] = await Promise.all([
       this.prisma.pricingModule.findMany(),
@@ -327,6 +333,8 @@ export class BillingEntitlementService {
       description: string;
       amountAzn: number;
       kind: "bundle" | "module";
+      moduleKey?: string;
+      unitPriceAzn?: number;
     }> = [];
 
     for (const b of allocation.bundleLines) {
@@ -341,6 +349,8 @@ export class BillingEntitlementService {
       if (m.amountAzn <= 0) continue;
       lines.push({
         kind: "module",
+        moduleKey: m.moduleKey,
+        unitPriceAzn: m.amountAzn,
         description: `Module ${m.moduleKey}`,
         amountAzn: m.amountAzn,
       });

@@ -26,6 +26,36 @@ const copySchema = z.object({
   capBuffetPlanner: z.boolean().optional(),
 });
 
+async function registerCommercialOutletOnCp(input: {
+  organizationId: string;
+  code: string;
+  name: string;
+}): Promise<void> {
+  const base =
+    process.env.ORCHESTRATOR_URL?.trim() ||
+    process.env.CONTROL_PLANE_URL?.trim() ||
+    "";
+  const token =
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+    "";
+  if (!base || !token) return;
+  await fetch(`${base.replace(/\/$/, "")}/v1/internal/structure/outlets/upsert`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-service-token": token,
+    },
+    body: JSON.stringify({
+      organizationId: input.organizationId,
+      satelliteKey: "industry_fnb_pos",
+      code: input.code,
+      name: input.name,
+    }),
+  });
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getSatelliteSession();
@@ -107,6 +137,13 @@ export async function POST(request: Request) {
           : {}),
       },
     });
+
+    // Best-effort CP commercial outlet registry (billing / Structure allowlist).
+    void registerCommercialOutletOnCp({
+      organizationId,
+      code,
+      name: body.name.trim(),
+    }).catch(() => undefined);
 
     if (source) {
       const cats = await prisma.menuCategory.findMany({

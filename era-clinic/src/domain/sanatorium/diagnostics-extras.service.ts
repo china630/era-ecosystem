@@ -127,7 +127,6 @@ async function resolveDiagnosticService(code: string, orgId: string) {
       titleAz: true,
       titleRu: true,
       titleEn: true,
-      usageContour: true,
     },
   });
 }
@@ -189,9 +188,8 @@ export async function prescribeDiagnosticsExtras(
         }
       }
     }
-    const internal = service.usageContour === "INTERNAL";
-    const unitPrice = internal ? 0 : await listPriceOrZero(sellable);
-    if (!internal && !(unitPrice > 0)) {
+    const unitPrice = await listPriceOrZero(sellable);
+    if (!(unitPrice > 0)) {
       throw new PackageAssignError(
         `Lab ${line.serviceCode} has no price`,
         "NO_PRICE",
@@ -281,7 +279,7 @@ export async function prescribeDiagnosticsExtras(
           fasting: false,
           confirmRepeat: true,
           patientOrigin: origin,
-          forcePaid: !internal,
+          forcePaid: true,
           amountNet: unitPrice,
           amountsByCode: { [service.code]: unitPrice, [sellable]: unitPrice },
           prescribedByPractitionerId,
@@ -536,6 +534,7 @@ export async function closeUnpaidDiagnostics(
       amountNet: { gt: 0 },
       settledAt: null,
       inPackage: false,
+      autoPaidStay: false,
       status: "ORDERED",
     },
     data: {

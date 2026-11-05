@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import {
+  BillingLineRatingBasis,
   BillingStatus,
   Prisma,
   shouldWaiveEraFoundation,
@@ -24,8 +25,27 @@ import {
   todayBakuYmd,
 } from "./baku-billing.util";
 import { PREMIUM_MODULE_MONTHLY_AZN } from "./tariff-limits";
+import { ModuleGraceService } from "./module-grace.service";
+import { OperatorFinanceBridgeService } from "./operator-finance-bridge.service";
 
 const Decimal = Prisma.Decimal;
+
+type MonthlyInvoiceLine = {
+  organizationId: string;
+  description: string;
+  amount: Prisma.Decimal;
+  parentOrganizationId?: string | null;
+  satelliteKey?: string | null;
+  outletCode?: string | null;
+  catalogKind?: string | null;
+  moduleKey?: string | null;
+  meterKey?: string | null;
+  period?: string | null;
+  ratingBasis?: BillingLineRatingBasis;
+  unitPrice?: Prisma.Decimal | null;
+  qty?: Prisma.Decimal | null;
+  priceSnapshot?: Prisma.Decimal | null;
+};
 
 function roundMoney2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -44,6 +64,8 @@ export class BillingMonthlyService {
     private readonly entitlements: BillingEntitlementService,
     private readonly referrals: ReferralsService,
     private readonly systemConfig: SystemConfigService,
+    private readonly moduleGrace: ModuleGraceService,
+    private readonly operatorFinanceBridge: OperatorFinanceBridgeService,
   ) {}
 
   /**
@@ -130,11 +152,7 @@ export class BillingMonthlyService {
       });
       if (dup) continue;
 
-      const items: Array<{
-        organizationId: string;
-        description: string;
-        amount: Prisma.Decimal;
-      }> = [];
+      const items: MonthlyInvoiceLine[] = [];
 
       for (const o of list) {
         const sub = o.subscription;
@@ -145,6 +163,7 @@ export class BillingMonthlyService {
           o.name,
           decodeOrganizationTaxId(o),
           sub,
+          billingPeriod,
           periodStart,
           periodEnd,
           meteredSpendAzn,
@@ -155,6 +174,24 @@ export class BillingMonthlyService {
             organizationId: o.id,
             description: line.description,
             amount: new Decimal(roundMoney2(line.amountAzn)),
+            parentOrganizationId: line.parentOrganizationId ?? null,
+            satelliteKey: line.satelliteKey ?? null,
+            outletCode: line.outletCode ?? null,
+            catalogKind: line.catalogKind ?? null,
+            moduleKey: line.moduleKey ?? null,
+            meterKey: line.meterKey ?? null,
+            period: line.period ?? billingPeriod,
+            ratingBasis: line.ratingBasis ?? BillingLineRatingBasis.OTHER,
+            unitPrice:
+              line.unitPriceAzn != null
+                ? new Decimal(line.unitPriceAzn)
+                : null,
+            qty:
+              line.qty != null ? new Decimal(line.qty) : new Decimal(1),
+            priceSnapshot:
+              line.priceSnapshotAzn != null
+                ? new Decimal(line.priceSnapshotAzn)
+                : null,
           });
           if (!billedOrgIds.includes(o.id)) billedOrgIds.push(o.id);
         }
@@ -181,10 +218,30 @@ export class BillingMonthlyService {
               organizationId: it.organizationId,
               description: it.description,
               amount: it.amount,
+              parentOrganizationId: it.parentOrganizationId,
+              satelliteKey: it.satelliteKey,
+              outletCode: it.outletCode,
+              catalogKind: it.catalogKind,
+              moduleKey: it.moduleKey,
+              meterKey: it.meterKey,
+              period: it.period,
+              ratingBasis: it.ratingBasis,
+              unitPrice: it.unitPrice,
+              qty: it.qty,
+              priceSnapshot: it.priceSnapshot,
             })),
           },
         },
       });
+      try {
+        await this.operatorFinanceBridge.onPlatformInvoiceIssued(
+          subscriptionInvoice.id,
+        );
+      } catch (e) {
+        this.logger.error(
+          `Operator Finance bridge failed for invoice ${subscriptionInvoice.id}: ${e}`,
+        );
+      }
       try {
         await this.referrals.accrueCommissionsForSubscriptionInvoice(
           subscriptionInvoice.id,
@@ -240,19 +297,56 @@ export class BillingMonthlyService {
       expiresAt: Date | null;
       activatedPremiumModules: string[];
     },
+    billingPeriod: string,
     periodStart: Date,
     periodEnd: Date,
     meteredSpendAzn: number,
-  ): Promise<Array<{ description: string; amountAzn: number }>> {
-    const lines: Array<{ description: string; amountAzn: number }> = [];
+  ): Promise<
+    Array<{
+      description: string;
+      amountAzn: number;
+      parentOrganizationId?: string | null;
+      satelliteKey?: string | null;
+      outletCode?: string | null;
+      catalogKind?: string | null;
+      moduleKey?: string | null;
+      meterKey?: string | null;
+      period?: string;
+      ratingBasis?: BillingLineRatingBasis;
+      unitPriceAzn?: number;
+      qty?: number;
+      priceSnapshotAzn?: number;
+    }>
+  > {
+    const lines: Array<{
+      description: string;
+      amountAzn: number;
+      parentOrganizationId?: string | null;
+      satelliteKey?: string | null;
+      outletCode?: string | null;
+      catalogKind?: string | null;
+      moduleKey?: string | null;
+      meterKey?: string | null;
+      period?: string;
+      ratingBasis?: BillingLineRatingBasis;
+      unitPriceAzn?: number;
+      qty?: number;
+      priceSnapshotAzn?: number;
+    }> = [];
     const trialEnd = sub.trialExpiresAt ?? sub.expiresAt;
     const trialCoversPeriod =
       sub.isTrial && trialEnd != null && trialEnd.getTime() > periodEnd.getTime();
 
     const orgRow = await this.prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { subscriptionPlan: true, settings: true, activeModules: true },
+      select: {
+        subscriptionPlan: true,
+        settings: true,
+        activeModules: true,
+        parentOrgId: true,
+      },
     });
+    const parentOrganizationId = orgRow?.parentOrgId ?? null;
     const foundationAzn =
       trialCoversPeriod || (orgRow && shouldWaiveEraFoundation(orgRow))
         ? 0
@@ -261,6 +355,13 @@ export class BillingMonthlyService {
       lines.push({
         description: `ERA Core (Foundation) — ${orgName} (VÖEN ${taxId})`,
         amountAzn: foundationAzn,
+        parentOrganizationId,
+        catalogKind: "FOUNDATION",
+        period: billingPeriod,
+        ratingBasis: BillingLineRatingBasis.FULL_MONTH,
+        unitPriceAzn: foundationAzn,
+        qty: 1,
+        priceSnapshotAzn: foundationAzn,
       });
     }
 
@@ -282,6 +383,14 @@ export class BillingMonthlyService {
           lines.push({
             description: `ERA Banking Core (Foundation) — ${orgName} (VÖEN ${taxId})`,
             amountAzn: bankingFoundationAzn,
+            parentOrganizationId,
+            satelliteKey: "industry_banking",
+            catalogKind: "FOUNDATION",
+            period: billingPeriod,
+            ratingBasis: BillingLineRatingBasis.FULL_MONTH,
+            unitPriceAzn: bankingFoundationAzn,
+            qty: 1,
+            priceSnapshotAzn: bankingFoundationAzn,
           });
         }
       }
@@ -294,18 +403,35 @@ export class BillingMonthlyService {
           where: { organizationId, status: "ACTIVE" },
         });
         if (headcount > 0) {
+          const amountAzn = roundMoney2(headcount * headcountRate);
           lines.push({
             description: `Workforce headcount ${headcount} × ${headcountRate} AZN — ${orgName} (VÖEN ${taxId})`,
-            amountAzn: roundMoney2(headcount * headcountRate),
+            amountAzn,
+            parentOrganizationId,
+            catalogKind: "METER",
+            meterKey: "WORKFORCE_HEADCOUNT",
+            period: billingPeriod,
+            ratingBasis: BillingLineRatingBasis.METER,
+            unitPriceAzn: headcountRate,
+            qty: headcount,
+            priceSnapshotAzn: amountAzn,
           });
         }
       }
     }
 
     if (meteredSpendAzn > 0) {
+      const meteredAzn = roundMoney2(meteredSpendAzn);
       lines.push({
         description: `Metered usage — ${orgName} (VÖEN ${taxId})`,
-        amountAzn: roundMoney2(meteredSpendAzn),
+        amountAzn: meteredAzn,
+        parentOrganizationId,
+        catalogKind: "METER",
+        period: billingPeriod,
+        ratingBasis: BillingLineRatingBasis.METER,
+        unitPriceAzn: meteredAzn,
+        qty: 1,
+        priceSnapshotAzn: meteredAzn,
       });
     }
 
@@ -315,9 +441,28 @@ export class BillingMonthlyService {
       periodEnd,
     );
     for (const ml of moduleLines) {
+      if (
+        ml.moduleKey &&
+        (await this.moduleGrace.shouldSkipModuleForBillingPeriod(
+          organizationId,
+          ml.moduleKey,
+          periodStart,
+          periodEnd,
+        ))
+      ) {
+        continue;
+      }
       lines.push({
         description: `${ml.description} — ${orgName} (VÖEN ${taxId})`,
         amountAzn: ml.amountAzn,
+        parentOrganizationId,
+        catalogKind: "MODULE",
+        moduleKey: ml.moduleKey ?? null,
+        period: billingPeriod,
+        ratingBasis: BillingLineRatingBasis.FULL_MONTH,
+        unitPriceAzn: ml.unitPriceAzn ?? ml.amountAzn,
+        qty: 1,
+        priceSnapshotAzn: ml.amountAzn,
       });
     }
 
@@ -330,6 +475,14 @@ export class BillingMonthlyService {
       lines.push({
         description: `Premium module ${slug} — ${orgName} (VÖEN ${taxId})`,
         amountAzn: fee,
+        parentOrganizationId,
+        catalogKind: "ADDON",
+        moduleKey: slug,
+        period: billingPeriod,
+        ratingBasis: BillingLineRatingBasis.FULL_MONTH,
+        unitPriceAzn: fee,
+        qty: 1,
+        priceSnapshotAzn: fee,
       });
     }
     return lines;

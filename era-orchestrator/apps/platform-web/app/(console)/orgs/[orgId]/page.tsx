@@ -6,9 +6,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  ChannelEdgeCard,
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  channelEdgeTitle,
+  labelChannelKind,
+  labelChannelManagedBy,
+  labelSatelliteKey,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "@/lib/auth-context";
 import { orchFetch } from "@/lib/orch-api";
@@ -84,6 +89,19 @@ type FiscalDeviceRow = {
   hasSecrets: boolean;
 };
 
+type ChannelRow = {
+  id: string;
+  fromOrgId: string;
+  fromSatelliteKey: string;
+  toOrgId: string;
+  toSatelliteKey: string;
+  kind: string;
+  enabled: boolean;
+  managedBy: string;
+  fromOrgName?: string | null;
+  toOrgName?: string | null;
+};
+
 const ENDPOINT_PRESETS = [
   "industry_hotel_pms",
   "industry_fnb_pos",
@@ -152,6 +170,50 @@ export default function SuperAdminOrgHubPage() {
   const orgId = String(params.orgId ?? "");
   const { token } = useAuth();
   const t = useTranslations("superAdmin.orgHub");
+  const satLabel = useCallback(
+    (key: string) => {
+      switch (key) {
+        case "industry_hotel_pms":
+          return t("satHotel");
+        case "industry_clinic":
+          return t("satClinic");
+        case "industry_fnb_pos":
+          return t("satFnb");
+        case "industry_retail":
+          return t("satRetail");
+        case "finance_core":
+          return t("satFinance");
+        default:
+          return labelSatelliteKey(key);
+      }
+    },
+    [t],
+  );
+  const kindLabel = useCallback(
+    (kind: string) => {
+      switch (kind) {
+        case "FOLIO_POST":
+          return t("kindFolio");
+        case "SETTLEMENT":
+          return t("kindSettlement");
+        case "REVENUE_EVENT":
+          return t("kindRevenue");
+        case "READ_STATUS":
+          return t("kindRead");
+        default:
+          return labelChannelKind(kind);
+      }
+    },
+    [t],
+  );
+  const managedLabel = useCallback(
+    (managedBy: string) => {
+      if (managedBy === "PLATFORM") return t("managedPlatform");
+      if (managedBy === "ACCEPTOR") return t("managedAcceptor");
+      return labelChannelManagedBy(managedBy);
+    },
+    [t],
+  );
   const [mode, setMode] = useState<OperatingMode | null>(null);
   const [endpoints, setEndpoints] = useState<SatelliteEndpoint[]>([]);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
@@ -180,6 +242,11 @@ export default function SuperAdminOrgHubPage() {
     isOrgDefault: false,
   });
   const [savingFiscal, setSavingFiscal] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<
+    Array<{ id: string; code: string; nameEn: string; active: boolean; satellites: string[]; fiscalHint: string }>
+  >([]);
+  const [channelsOut, setChannelsOut] = useState<ChannelRow[]>([]);
+  const [channelsIn, setChannelsIn] = useState<ChannelRow[]>([]);
 
   const showHotelBridge =
     industries.includes("hotel") ||
@@ -195,12 +262,14 @@ export default function SuperAdminOrgHubPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const [modeRes, epRes, deptRes, bridgeRes, fiscalRes] = await Promise.all([
+      const [modeRes, epRes, deptRes, bridgeRes, fiscalRes, payRes, chRes] = await Promise.all([
         orchFetch(`/v1/admin/orgs/${orgId}/operating-mode`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/satellite-endpoints`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/departments`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/elektraweb-bridge`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices`, { token }),
+        orchFetch(`/v1/admin/orgs/${orgId}/payment-methods`, { token }),
+        orchFetch(`/v1/admin/organizations/${orgId}/channels`, { token }),
       ]);
       if (modeRes.ok) setMode((await modeRes.json()) as OperatingMode);
       if (epRes.ok) {
@@ -244,6 +313,29 @@ export default function SuperAdminOrgHubPage() {
       if (fiscalRes.ok) {
         setFiscalDevices((await fiscalRes.json()) as FiscalDeviceRow[]);
       }
+      if (payRes.ok) {
+        setPaymentMethods(
+          (await payRes.json()) as Array<{
+            id: string;
+            code: string;
+            nameEn: string;
+            active: boolean;
+            satellites: string[];
+            fiscalHint: string;
+          }>,
+        );
+      }
+      if (chRes.ok) {
+        const body = (await chRes.json()) as {
+          outbound?: ChannelRow[];
+          inbound?: ChannelRow[];
+        };
+        setChannelsOut(body.outbound ?? []);
+        setChannelsIn(body.inbound ?? []);
+      } else {
+        setChannelsOut([]);
+        setChannelsIn([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -276,6 +368,29 @@ export default function SuperAdminOrgHubPage() {
     }
     setMode((await res.json()) as OperatingMode);
     setMessage(t("operatingModeSaved"));
+    await reload();
+  }
+
+  async function toggleChannel(channelId: string, enabled: boolean, asAdmin: boolean) {
+    if (!token) return;
+    setMessage("");
+    const res = await orchFetch(
+      `/v1/admin/organizations/${orgId}/channels/${channelId}`,
+      {
+        token,
+        method: "PATCH",
+        body: JSON.stringify(
+          asAdmin && enabled
+            ? { enabled: true, managedBy: "PLATFORM" }
+            : { enabled },
+        ),
+      },
+    );
+    if (!res.ok) {
+      setMessage(t("channelsSaveFailed", { status: res.status }));
+      return;
+    }
+    setMessage(t("channelsSaved"));
     await reload();
   }
 
@@ -597,6 +712,75 @@ export default function SuperAdminOrgHubPage() {
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <h2 className="font-medium text-[#34495E]">{t("channelsTitle")}</h2>
+        <p className="text-xs text-[#7F8C8D]">{t("channelsHint")}</p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-[#5D6D7E]">{t("channelsOutbound")}</h3>
+            <ul className="space-y-2">
+              {channelsOut.map((c) => (
+                <ChannelEdgeCard
+                  key={c.id}
+                  title={channelEdgeTitle({
+                    fromKey: c.fromSatelliteKey,
+                    toKey: c.toSatelliteKey,
+                    fromOrgName: c.fromOrgName,
+                    toOrgName: c.toOrgName,
+                    direction: "outbound",
+                    labelSat: satLabel,
+                  })}
+                  detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
+                  kindLabel={kindLabel(c.kind)}
+                  managedLabel={managedLabel(c.managedBy)}
+                  enabled={c.enabled}
+                  onLabel={t("channelsOn")}
+                  offLabel={t("channelsOff")}
+                  actionLabel={
+                    c.enabled ? t("channelsDisable") : t("channelsEnable")
+                  }
+                  onAction={() => void toggleChannel(c.id, !c.enabled, true)}
+                />
+              ))}
+              {channelsOut.length === 0 ? (
+                <li className="text-sm text-[#7F8C8D]">{t("channelsEmpty")}</li>
+              ) : null}
+            </ul>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-[#5D6D7E]">{t("channelsInbound")}</h3>
+            <ul className="space-y-2">
+              {channelsIn.map((c) => (
+                <ChannelEdgeCard
+                  key={c.id}
+                  title={channelEdgeTitle({
+                    fromKey: c.fromSatelliteKey,
+                    toKey: c.toSatelliteKey,
+                    fromOrgName: c.fromOrgName,
+                    toOrgName: c.toOrgName,
+                    direction: "inbound",
+                    labelSat: satLabel,
+                  })}
+                  detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
+                  kindLabel={kindLabel(c.kind)}
+                  managedLabel={managedLabel(c.managedBy)}
+                  enabled={c.enabled}
+                  onLabel={t("channelsOn")}
+                  offLabel={t("channelsOff")}
+                  actionLabel={
+                    c.enabled ? t("channelsDisable") : t("channelsEnable")
+                  }
+                  onAction={() => void toggleChannel(c.id, !c.enabled, true)}
+                />
+              ))}
+              {channelsIn.length === 0 ? (
+                <li className="text-sm text-[#7F8C8D]">{t("channelsEmpty")}</li>
+              ) : null}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <h2 className="font-medium text-[#34495E]">{t("fiscalTitle")}</h2>
         <p className="text-xs text-[#7F8C8D]">{t("fiscalHint")}</p>
         <ul className="space-y-1 text-sm">
@@ -686,6 +870,28 @@ export default function SuperAdminOrgHubPage() {
         >
           {savingFiscal ? t("saving") : t("fiscalAdd")}
         </button>
+      </section>
+
+      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <h2 className="font-medium text-[#34495E]">{t("payTitle")}</h2>
+        <p className="text-xs text-[#7F8C8D]">{t("payHint")}</p>
+        {mode?.mode === "DEPARTMENT" && mode.fiscalRouting === "PARENT" ? (
+          <p className="text-xs text-[#2980B9]">{t("payParentCash")}</p>
+        ) : null}
+        <ul className="space-y-1 text-sm">
+          {paymentMethods.map((row) => (
+            <li key={row.id} className="flex flex-wrap gap-2">
+              <code className="font-mono text-[#2980B9]">{row.code}</code>
+              <span>
+                {row.nameEn} · {row.fiscalHint} · {(row.satellites ?? []).join(",")}
+                {!row.active ? ` · ${t("payOff")}` : ""}
+              </span>
+            </li>
+          ))}
+          {paymentMethods.length === 0 ? (
+            <li className="text-[#7F8C8D]">{t("payEmpty")}</li>
+          ) : null}
+        </ul>
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>

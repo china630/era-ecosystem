@@ -63,7 +63,7 @@ function ensureGroup(
 }
 
 async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<DiagnosticCatalog> {
-  const [modalities, metaFieldRows] = await Promise.all([
+  const [modalities, metaFieldRows, inactiveCategories] = await Promise.all([
     prisma.modality.findMany({
       where: { organizationId, active: true },
       orderBy: { sortOrder: "asc" },
@@ -76,7 +76,12 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
       },
     }),
     prisma.diagnosticMetaField.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.diagnosticCategory.findMany({
+      where: { organizationId, active: false },
+      select: { name: true },
+    }),
   ]);
+  const hiddenCategories = new Set(inactiveCategories.map((row) => row.name));
 
   const items: DiagnosticCatalogItem[] = [];
   const groupMap = new Map<string, DiagnosticCatalogGroup>();
@@ -92,6 +97,8 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
         category: svc.category,
         title,
         serviceCode: svc.serviceCode,
+        packageOnly: svc.packageOnly,
+        categoryActive: !svc.category || !hiddenCategories.has(svc.category),
       };
       if (svc.fieldsJson) {
         item.fields = JSON.parse(svc.fieldsJson) as CatalogFieldDef[];

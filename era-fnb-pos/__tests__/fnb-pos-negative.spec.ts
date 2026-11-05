@@ -19,8 +19,16 @@ jest.mock("@era/satellite-kit", () => {
       this.moduleKey = moduleKey;
     }
   }
+  class SatelliteChannelDisabledError extends Error {
+    readonly code = "CHANNEL_DISABLED";
+    constructor(kind: string) {
+      super(`Channel disabled: ${kind}`);
+      this.name = "SatelliteChannelDisabledError";
+    }
+  }
   return {
     IndustryModuleInactiveError,
+    SatelliteChannelDisabledError,
     requireSatelliteModule: jest.fn(async (moduleKey: string) => {
       // Simulate unbound / source=fallback (kit fail-closed).
       throw new IndustryModuleInactiveError(moduleKey);

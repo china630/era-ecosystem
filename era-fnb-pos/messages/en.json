@@ -25,6 +25,7 @@
     "sales": "Sales journal",
     "settings": "Settings",
     "audit": "Mutation audit",
+    "adminLinks": "Links",
     "access": "Access",
     "switchOutlet": "Switch outlet",
     "buffetPlans": "Plans",
@@ -1065,5 +1066,32 @@
       "api_admin_integration": "Manage integration",
       "api_import_cutover": "Import"
     }
+  },
+  "adminLinks": {
+    "title": "Integration links",
+    "subtitle": "Money routing and peer channels to/from this F&B org.",
+    "moneyTitle": "Money routing",
+    "moneyLine": "Mode {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode unavailable",
+    "outbound": "Outbound",
+    "inbound": "Inbound",
+    "empty": "No channels (PLATFORM sync after operating mode + entitlements).",
+    "on": "on",
+    "off": "off",
+    "disable": "Disable inbound",
+    "loadFailed": "Could not load links",
+    "saveFailed": "Could not update channel",
+    "loading": "Loading…",
+    "kindFolio": "Folio post",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Revenue event",
+    "kindRead": "Read status",
+    "satHotel": "Hotel",
+    "satClinic": "Clinic",
+    "satFnb": "F&B",
+    "satRetail": "Retail",
+    "satFinance": "Finance",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor"
   }
 }

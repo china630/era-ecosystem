@@ -47,6 +47,9 @@ jest.mock("@/lib/prisma", () => ({
     diagnosticMetaField: {
       findMany: jest.fn(async () => []),
     },
+    diagnosticCategory: {
+      findMany: jest.fn(async () => []),
+    },
   },
 }));
 

@@ -5,6 +5,9 @@ import { useTranslations } from 'next-intl';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TR_CLASS,
   Field,
   FieldSection,
   FieldTextarea,
@@ -435,7 +438,8 @@ export function FolioCheckoutModal({
       }),
     });
     if (res.ok) return null;
-    return `${block.title}: ${parseApiError(await res.json().catch(() => null), tc('error'))}`;
+    showApiError(await res.json().catch(() => null), tc('error'));
+    return 'failed';
   }
 
   async function submit() {
@@ -449,7 +453,6 @@ export function FolioCheckoutModal({
       if (choices[block.folio.id] !== 'PAY') continue;
       const failed = await settleBlock(block);
       if (failed) {
-        setError(failed);
         await loadFolios();
         return;
       }
@@ -597,6 +600,21 @@ export function FolioCheckoutModal({
     ...(clinic?.paid ?? []).filter((row) => row.status === 'in_plan'),
     ...(clinic?.unpaidExtras ?? []).filter((row) => row.status === 'in_plan'),
   ];
+  const factProcedures = (() => {
+    const seen = new Set<string>();
+    const rows = [
+      ...(clinic?.executed ?? []),
+      ...(clinic?.paid ?? []),
+      ...(clinic?.packageSessions ?? []),
+      ...(clinic?.unpaidExtras ?? []),
+    ];
+    return rows.filter((row) => {
+      if (seen.has(row.orderId)) return false;
+      seen.add(row.orderId);
+      return true;
+    });
+  })();
+  const sanatorium = Boolean(clinic?.medical);
   function chargeForProcedure(row: ClinicProcedure) {
     return folios
       .flatMap((folio) => folio.charges)
@@ -614,7 +632,10 @@ export function FolioCheckoutModal({
   }
   async function voidOneProcedure(row: ClinicProcedure) {
     const charge = chargeForProcedure(row);
-    if (!charge?.id) return;
+    if (!charge?.id) {
+      showApiError({ error: t('clinicChargeMissing') }, tc('error'));
+      return;
+    }
     const res = await fetch(`/api/folios/charges/${charge.id}/void`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -676,12 +697,12 @@ export function FolioCheckoutModal({
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutChip('money')}>
               {t('checkoutChipMoney')}
             </button>
-            {openProcedures.length > 0 ? (
+            {sanatorium && openProcedures.length > 0 ? (
               <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutChip('open')}>
                 {t('checkoutChipOpen', { count: openProcedures.length })}
               </button>
             ) : null}
-            {(clinic?.executed?.length ?? 0) > 0 ? (
+            {sanatorium ? (
               <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setCheckoutChip('fact')}>
                 {t('checkoutChipFact')}
               </button>
@@ -697,75 +718,62 @@ export function FolioCheckoutModal({
                   {t('clinicVoidAll')}
                 </button>
               </div>
-              {openProcedures.map((row) => (
-                <div key={row.orderId} className="flex items-center justify-between gap-2">
-                  <span>{row.procedureName}</span>
-                  <span className="font-mono">{money(row.amount)}</span>
-                  <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void voidOneProcedure(row)}>
-                    {t('clinicVoid')}
-                  </button>
-                </div>
-              ))}
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_TR_CLASS}>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('checkoutWhen')}</th>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('checkoutProcedure')}</th>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('depositAmount')}</th>
+                    <th className={DATA_TABLE_TD_CLASS} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {openProcedures.map((row) => (
+                    <tr key={row.orderId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.scheduledAt)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{money(row.amount)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void voidOneProcedure(row)}>
+                          {t('clinicVoid')}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : null}
           {checkoutChip === 'fact' ? (
             <div className="space-y-1">
-              {(clinic?.executed ?? []).map((row) => (
-                <div key={row.orderId} className="flex gap-3">
-                  <span className="font-mono">
-                    {bakuDateTimeDisplay(row.checkedInAt || row.scheduledAt)}
-                  </span>
-                  <span>
-                    {row.inPackage ? t('clinicFromPackage') : `${money(row.amount)} `}
-                    {row.procedureName}
-                  </span>
-                </div>
-              ))}
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_TR_CLASS}>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('checkoutWhen')}</th>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('checkoutProcedure')}</th>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('checkoutStatusCol')}</th>
+                    <th className={DATA_TABLE_TD_CLASS}>{t('depositAmount')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {factProcedures.map((row) => (
+                    <tr key={row.orderId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {bakuDateTimeDisplay(row.checkedInAt || row.scheduledAt)}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{row.procedureName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{t(`clinicStatus_${row.status}`)}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        {row.inPackage ? t('clinicFromPackage') : money(row.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : null}
           {checkoutChip === 'money' ? (
           <>
-          <FieldSection title={t('checkoutTotals')}>
-            <div className="grid grid-cols-2 gap-2 font-mono text-[13px]">
-              {(() => {
-                const guestDebt = blocks
-                  .filter((b) => b.party === 'GUEST')
-                  .reduce((sum, b) => sum + b.debt, 0);
-                const companyDebt = blocks
-                  .filter((b) => b.party === 'COMPANY')
-                  .reduce((sum, b) => sum + b.debt, 0);
-                const agencyDebt = blocks
-                  .filter((b) => b.party === 'AGENCY')
-                  .reduce((sum, b) => sum + b.debt, 0);
-                return (
-                  <>
-                    {guestDebt > 0.01 || (companyDebt <= 0.01 && agencyDebt <= 0.01) ? (
-                      <div>
-                        <div className={TEXT_MUTED_CLASS}>{t('guestOwes')}</div>
-                        <div>{money(guestDebt)}</div>
-                      </div>
-                    ) : null}
-                    {companyDebt > 0.01 ? (
-                      <div>
-                        <div className={TEXT_MUTED_CLASS}>{t('companyOwes')}</div>
-                        <div>{money(companyDebt)}</div>
-                      </div>
-                    ) : null}
-                    {agencyDebt > 0.01 ? (
-                      <div>
-                        <div className={TEXT_MUTED_CLASS}>{t('agencyOwes')}</div>
-                        <div>{money(agencyDebt)}</div>
-                      </div>
-                    ) : null}
-                    <div>
-                      <div className={TEXT_MUTED_CLASS}>{t('overpaid')}</div>
-                      <div>{money(unusedPayment)}</div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </FieldSection>
           {loading ? <p className={`m-0 ${TEXT_MUTED_CLASS}`}>{tc('loading')}</p> : null}
           {loadFailed ? <p className={`m-0 ${TEXT_DANGER_CLASS}`}>{tc('loadError')}</p> : null}
           {blocks.map((block) => {
@@ -816,24 +824,29 @@ export function FolioCheckoutModal({
                     const serviceTotal = PAYMENT_CATEGORIES.reduce((sum, cat) => sum + split.services[cat], 0);
                     const paidTotal = PAYMENT_CATEGORIES.reduce((sum, cat) => sum + split.paid[cat], 0);
                     return (
-                      <div className="grid grid-cols-2 gap-2 font-mono text-[12px]">
-                        <div>{t('checkoutServices')}</div>
-                        <div>{t('checkoutPaymentsCol')}</div>
-                        {PAYMENT_CATEGORIES.map((cat) => (
-                          <div key={cat} className="contents">
-                            <div>
-                              {t(`paymentCategory_${cat}`)} {money(split.services[cat])}
-                            </div>
-                            <div>{money(split.paid[cat])}</div>
-                          </div>
-                        ))}
-                        <div>
-                          {t('checkoutServiceTotal')} {money(serviceTotal)}
-                        </div>
-                        <div>
-                          {t('checkoutPaidTotal')} {money(paidTotal)}
-                        </div>
-                      </div>
+                      <table className={DATA_TABLE_CLASS}>
+                        <thead>
+                          <tr className={DATA_TABLE_TR_CLASS}>
+                            <th className={DATA_TABLE_TD_CLASS}>{t('folioCategory')}</th>
+                            <th className={DATA_TABLE_TD_CLASS}>{t('checkoutServices')}</th>
+                            <th className={DATA_TABLE_TD_CLASS}>{t('checkoutPaymentsCol')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {PAYMENT_CATEGORIES.map((cat) => (
+                            <tr key={cat} className={DATA_TABLE_TR_CLASS}>
+                              <td className={DATA_TABLE_TD_CLASS}>{t(`paymentCategory_${cat}`)}</td>
+                              <td className={DATA_TABLE_TD_CLASS}>{money(split.services[cat])}</td>
+                              <td className={DATA_TABLE_TD_CLASS}>{money(split.paid[cat])}</td>
+                            </tr>
+                          ))}
+                          <tr className={DATA_TABLE_TR_CLASS}>
+                            <td className={DATA_TABLE_TD_CLASS}>{t('checkoutServiceTotal')}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{money(serviceTotal)}</td>
+                            <td className={DATA_TABLE_TD_CLASS}>{money(paidTotal)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     );
                   })()}
                   {block.credit > 0.01 ? (
@@ -935,6 +948,9 @@ export function FolioCheckoutModal({
               </FieldSection>
             );
           })}
+          <p className="m-0 font-mono text-[13px]">
+            {t('checkoutStayNet')}: {money(blocks.reduce((sum, block) => sum + block.debt - block.credit, 0))}
+          </p>
           {anyGuestDebt ? (
             <FieldTextarea
               label={t('guestDebtNote')}

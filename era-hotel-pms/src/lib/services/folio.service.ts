@@ -199,6 +199,31 @@ export async function postCharge(input: {
   return charge;
 }
 
+/** One row per payment and charge. A second pass skips the pair instead of throwing. */
+export async function createAllocationOnce(input: {
+  paymentId: string;
+  chargeId: string;
+  amount: ReturnType<typeof toDecimal>;
+}) {
+  const existing = await prisma.folioPaymentAllocation.findUnique({
+    where: { paymentId_chargeId: { paymentId: input.paymentId, chargeId: input.chargeId } },
+  });
+  if (existing) return existing;
+  try {
+    return await prisma.folioPaymentAllocation.create({
+      data: { paymentId: input.paymentId, chargeId: input.chargeId, amount: input.amount },
+    });
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === 'P2002') {
+      return prisma.folioPaymentAllocation.findUnique({
+        where: { paymentId_chargeId: { paymentId: input.paymentId, chargeId: input.chargeId } },
+      });
+    }
+    throw err;
+  }
+}
+
 export async function allocatePaymentToCharges(
   folioId: string,
   paymentId: string,
@@ -233,12 +258,10 @@ export async function allocatePaymentToCharges(
     const open = gross - already;
     if (open <= 0.009) continue;
     const take = Math.min(open, left);
-    await prisma.folioPaymentAllocation.create({
-      data: {
-        paymentId,
-        chargeId: charge.id,
-        amount: toDecimal(Math.round(take * 100) / 100),
-      },
+    await createAllocationOnce({
+      paymentId,
+      chargeId: charge.id,
+      amount: toDecimal(Math.round(take * 100) / 100),
     });
     left -= take;
   }
@@ -271,12 +294,10 @@ async function allocateArticleCreditsToCharge(folioId: string, chargeId: string,
     const leftover = decimalToNumber(payment.amount) - used;
     if (leftover <= 0.009) continue;
     const take = Math.min(open, leftover);
-    await prisma.folioPaymentAllocation.create({
-      data: {
-        paymentId: payment.id,
-        chargeId,
-        amount: toDecimal(Math.round(take * 100) / 100),
-      },
+    await createAllocationOnce({
+      paymentId: payment.id,
+      chargeId,
+      amount: toDecimal(Math.round(take * 100) / 100),
     });
     open -= take;
   }

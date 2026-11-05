@@ -34,6 +34,8 @@ type DepartmentRow = {
   name: string;
   operatingMode: string;
   parentOrgId: string | null;
+  fiscalRouting?: string;
+  revenueRouting?: string;
   publicOrgNumber: number;
   createdAt: string;
 };
@@ -83,6 +85,23 @@ type FiscalDeviceRow = {
   isOrgDefault: boolean;
   hasSecrets: boolean;
 };
+
+type PaymentMethodRow = {
+  id: string;
+  code: string;
+  nameAz: string;
+  nameRu: string;
+  nameEn: string;
+  sortOrder: number;
+  active: boolean;
+  systemKey: string | null;
+  fiscalHint: string;
+  fiscalDeviceId: string | null;
+  satellites: string[];
+  hasSecrets: boolean;
+};
+
+const PAY_SATELLITES = ["hotel", "clinic", "fnb", "retail"] as const;
 
 const ENDPOINT_PRESETS = [
   "industry_hotel_pms",
@@ -180,6 +199,17 @@ export default function SuperAdminOrgHubPage() {
     isOrgDefault: false,
   });
   const [savingFiscal, setSavingFiscal] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodRow[]>([]);
+  const [payDraft, setPayDraft] = useState({
+    code: "",
+    nameAz: "",
+    nameRu: "",
+    nameEn: "",
+    fiscalHint: "CASH",
+    satellites: ["hotel"] as string[],
+    fiscalDeviceId: "",
+  });
+  const [savingPay, setSavingPay] = useState(false);
 
   const showHotelBridge =
     industries.includes("hotel") ||
@@ -195,12 +225,13 @@ export default function SuperAdminOrgHubPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const [modeRes, epRes, deptRes, bridgeRes, fiscalRes] = await Promise.all([
+      const [modeRes, epRes, deptRes, bridgeRes, fiscalRes, payRes] = await Promise.all([
         orchFetch(`/v1/admin/orgs/${orgId}/operating-mode`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/satellite-endpoints`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/departments`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/elektraweb-bridge`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices`, { token }),
+        orchFetch(`/v1/admin/orgs/${orgId}/payment-methods`, { token }),
       ]);
       if (modeRes.ok) setMode((await modeRes.json()) as OperatingMode);
       if (epRes.ok) {
@@ -243,6 +274,9 @@ export default function SuperAdminOrgHubPage() {
       }
       if (fiscalRes.ok) {
         setFiscalDevices((await fiscalRes.json()) as FiscalDeviceRow[]);
+      }
+      if (payRes.ok) {
+        setPaymentMethods((await payRes.json()) as PaymentMethodRow[]);
       }
     } finally {
       setLoading(false);
@@ -521,6 +555,97 @@ export default function SuperAdminOrgHubPage() {
     await reload();
   }
 
+  async function addPaymentMethod() {
+    if (!token || !payDraft.code.trim() || !payDraft.nameEn.trim()) return;
+    setSavingPay(true);
+    setMessage("");
+    try {
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/payment-methods`, {
+        token,
+        method: "POST",
+        body: JSON.stringify({
+          code: payDraft.code.trim().toUpperCase(),
+          nameAz: payDraft.nameAz.trim() || payDraft.nameEn.trim(),
+          nameRu: payDraft.nameRu.trim() || payDraft.nameEn.trim(),
+          nameEn: payDraft.nameEn.trim(),
+          fiscalHint: payDraft.fiscalHint,
+          satellites: payDraft.satellites,
+          fiscalDeviceId: payDraft.fiscalDeviceId.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        setMessage(t("paySaveFailed", { status: res.status }));
+        return;
+      }
+      setPayDraft((d) => ({ ...d, code: "", nameAz: "", nameRu: "", nameEn: "" }));
+      setMessage(t("paySaved"));
+      await reload();
+    } finally {
+      setSavingPay(false);
+    }
+  }
+
+  async function togglePaymentActive(row: PaymentMethodRow) {
+    if (!token) return;
+    if (row.active) {
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/payment-methods/${row.id}`, {
+        token,
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        setMessage(t("paySaveFailed", { status: res.status }));
+        return;
+      }
+    } else {
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/payment-methods/${row.id}`, {
+        token,
+        method: "PUT",
+        body: JSON.stringify({
+          nameAz: row.nameAz,
+          nameRu: row.nameRu,
+          nameEn: row.nameEn,
+          fiscalHint: row.fiscalHint,
+          satellites: row.satellites,
+          fiscalDeviceId: row.fiscalDeviceId,
+          active: true,
+          sortOrder: row.sortOrder,
+        }),
+      });
+      if (!res.ok) {
+        setMessage(t("paySaveFailed", { status: res.status }));
+        return;
+      }
+    }
+    await reload();
+  }
+
+  async function togglePaySatellite(row: PaymentMethodRow, key: string) {
+    if (!token) return;
+    const next = row.satellites.includes(key)
+      ? row.satellites.filter((s) => s !== key)
+      : [...row.satellites, key];
+    if (next.length === 0) return;
+    const res = await orchFetch(`/v1/admin/orgs/${orgId}/payment-methods/${row.id}`, {
+      token,
+      method: "PUT",
+      body: JSON.stringify({
+        nameAz: row.nameAz,
+        nameRu: row.nameRu,
+        nameEn: row.nameEn,
+        fiscalHint: row.fiscalHint,
+        satellites: next,
+        fiscalDeviceId: row.fiscalDeviceId,
+        active: row.active,
+        sortOrder: row.sortOrder,
+      }),
+    });
+    if (!res.ok) {
+      setMessage(t("paySaveFailed", { status: res.status }));
+      return;
+    }
+    await reload();
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -689,6 +814,127 @@ export default function SuperAdminOrgHubPage() {
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        <h2 className="font-medium text-[#34495E]">{t("payTitle")}</h2>
+        <p className="text-xs text-[#7F8C8D]">{t("payHint")}</p>
+        {mode?.mode === "DEPARTMENT" && mode.fiscalRouting === "PARENT" ? (
+          <p className="text-xs text-[#2980B9]">{t("payParentCash")}</p>
+        ) : null}
+        <ul className="space-y-2 text-sm">
+          {paymentMethods.map((row) => (
+            <li key={row.id} className="space-y-1 rounded border border-[#ECF0F1] p-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <code className="font-mono text-[#2980B9]">{row.code}</code>
+                <span>
+                  {row.nameEn} · {row.fiscalHint}
+                  {!row.active ? ` · ${t("payOff")}` : ""}
+                  {row.systemKey ? " · system" : ""}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs text-[#E74C3C]"
+                  onClick={() => void togglePaymentActive(row)}
+                >
+                  {row.active ? t("payDisable") : t("payEnable")}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-3 text-xs">
+                {PAY_SATELLITES.map((key) => (
+                  <label key={key} className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={row.satellites.includes(key)}
+                      disabled={!row.active}
+                      onChange={() => void togglePaySatellite(row, key)}
+                    />
+                    {key}
+                  </label>
+                ))}
+              </div>
+            </li>
+          ))}
+          {paymentMethods.length === 0 ? (
+            <li className="text-[#7F8C8D]">{t("payEmpty")}</li>
+          ) : null}
+        </ul>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("payCode")}
+            value={payDraft.code}
+            onChange={(e) => setPayDraft((d) => ({ ...d, code: e.target.value }))}
+          />
+          <select
+            className={MODAL_INPUT_CLASS}
+            value={payDraft.fiscalHint}
+            onChange={(e) => setPayDraft((d) => ({ ...d, fiscalHint: e.target.value }))}
+          >
+            <option value="CASH">CASH</option>
+            <option value="CARD">CARD</option>
+            <option value="NONE">NONE</option>
+          </select>
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("payNameEn")}
+            value={payDraft.nameEn}
+            onChange={(e) => setPayDraft((d) => ({ ...d, nameEn: e.target.value }))}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("payNameRu")}
+            value={payDraft.nameRu}
+            onChange={(e) => setPayDraft((d) => ({ ...d, nameRu: e.target.value }))}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("payNameAz")}
+            value={payDraft.nameAz}
+            onChange={(e) => setPayDraft((d) => ({ ...d, nameAz: e.target.value }))}
+          />
+          <select
+            className={MODAL_INPUT_CLASS}
+            value={payDraft.fiscalDeviceId}
+            onChange={(e) => setPayDraft((d) => ({ ...d, fiscalDeviceId: e.target.value }))}
+          >
+            <option value="">{t("payNoTerminal")}</option>
+            {fiscalDevices
+              .filter((d) => d.kind === "BANK_POS")
+              .map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.label}
+                </option>
+              ))}
+          </select>
+        </div>
+        <div className="flex flex-wrap gap-3 text-sm">
+          {PAY_SATELLITES.map((key) => (
+            <label key={key} className="flex items-center gap-1">
+              <input
+                type="checkbox"
+                checked={payDraft.satellites.includes(key)}
+                onChange={() =>
+                  setPayDraft((d) => ({
+                    ...d,
+                    satellites: d.satellites.includes(key)
+                      ? d.satellites.filter((s) => s !== key)
+                      : [...d.satellites, key],
+                  }))
+                }
+              />
+              {key}
+            </label>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          disabled={savingPay || !token}
+          onClick={() => void addPaymentMethod()}
+        >
+          {savingPay ? t("saving") : t("payAdd")}
+        </button>
+      </section>
+
+      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <h2 className="font-medium text-[#34495E]">{t("departmentsTitle")}</h2>
         <div className="flex flex-wrap gap-2">
           <input
@@ -705,6 +951,9 @@ export default function SuperAdminOrgHubPage() {
           {departments.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-2">
               <span>{d.name}</span>
+              <span className="text-xs text-[#7F8C8D]">
+                {d.fiscalRouting === 'PARENT' ? t('payDeptOnParent') : t('payDeptOwn')}
+              </span>
               <code className="font-mono text-sm font-semibold text-[#2980B9]">
                 {d.publicOrgNumber}
               </code>

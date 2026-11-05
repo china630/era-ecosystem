@@ -333,8 +333,12 @@ async function openWalkInEpisode(patientRefId: string, organizationId: string) {
       409,
     );
   }
-  if (open) return open;
-  return prisma.clinicalEpisode.create({
+  if (open) {
+    const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+    await seedAutoPaidLabs(open.id);
+    return open;
+  }
+  const created = await prisma.clinicalEpisode.create({
     data: {
       patientRefId,
       organizationId,
@@ -342,6 +346,9 @@ async function openWalkInEpisode(patientRefId: string, organizationId: string) {
       status: "OPEN",
     },
   });
+  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+  await seedAutoPaidLabs(created.id);
+  return created;
 }
 
 export async function addWalkInPartyGuest(

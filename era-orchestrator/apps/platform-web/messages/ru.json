@@ -472,7 +472,46 @@
       "fiscalEmpty": "Нет аппаратов — Kafe пишет cash/card без KKM.",
       "fiscalSaved": "Аппарат сохранён",
       "fiscalSaveFailed": "Не удалось сохранить ({status})",
-      "fiscalRetired": "Аппарат снят"
+      "fiscalRetired": "Аппарат снят",
+      "payTitle": "Методы оплаты",
+      "payHint": "Каталог организации. Sync раздаёт сателлитам. Финансы только читают код.",
+      "payParentCash": "Этот отдел платит на кассу отеля-родителя (fiscalRouting=PARENT).",
+      "payEmpty": "Методов ещё нет — системный список создаётся при первом открытии.",
+      "payCode": "Код",
+      "payNameEn": "Название (EN)",
+      "payNameRu": "Название (RU)",
+      "payNameAz": "Название (AZ)",
+      "payNoTerminal": "Без банковского терминала",
+      "payAdd": "Добавить метод",
+      "payDisable": "Выключить",
+      "payEnable": "Включить",
+      "payOff": "выкл",
+      "paySaved": "Метод оплаты сохранён",
+      "paySaveFailed": "Не удалось сохранить метод ({status})",
+      "payDeptOnParent": "платит на эту кассу",
+      "payDeptOwn": "своя касса",
+      "channelsTitle": "Каналы интеграции",
+      "channelsHint": "Рёбра peer-политики (folio / settlement / revenue). Без URL. PLATFORM синхронизируется с operating mode.",
+      "channelsOutbound": "Исходящие",
+      "channelsInbound": "Входящие",
+      "channelsEmpty": "Каналов нет — сохраните operating mode после entitlements.",
+      "channelsEnable": "Включить (PLATFORM)",
+      "channelsDisable": "Выключить",
+      "channelsOn": "Вкл",
+      "channelsOff": "Выкл",
+      "channelsSaved": "Канал обновлён",
+      "channelsSaveFailed": "Ошибка канала ({status})",
+      "kindFolio": "Проводка folio",
+      "kindSettlement": "Settlement",
+      "kindRevenue": "Событие выручки",
+      "kindRead": "Чтение статуса",
+      "satHotel": "Отель",
+      "satClinic": "Клиника",
+      "satFnb": "F&B",
+      "satRetail": "Ритейл",
+      "satFinance": "Финансы",
+      "managedPlatform": "Platform",
+      "managedAcceptor": "Acceptor"
     },
     "referrals": {
       "title": "Реферальные партнёры",
@@ -701,7 +740,8 @@
     "wfJobArchitecture": "Архитектура должностей",
     "wfOrgChart": "Оргсхема",
     "platformConsoleBrand": "ERA Platform",
-    "platformConsoleSubtitle": "Консоль оператора"
+    "platformConsoleSubtitle": "Консоль оператора",
+    "platformStructure": "Структура"
   },
   "headerStrip": {
     "trialUntil": "Пробный период до {date}",
@@ -2471,5 +2511,11 @@
     "loading": "Загрузка…",
     "empty": "Нет узлов для этого режима.",
     "orphans": "Узлы без родителя в выборке"
+  },
+  "platformStructurePage": {
+    "title": "Коммерческая структура",
+    "subtitle": "Орг → департамент → сателлит → outlet. Kill-switch и реестр outlet.",
+    "body": "Блок подписки — в хабе организации; дерево владельца — на Control Home Structure (те же /v1/structure API) или outlet из ops сателлита (F&B пишет в CP автоматически).",
+    "openOrgs": "Каталог организаций"
   }
 }

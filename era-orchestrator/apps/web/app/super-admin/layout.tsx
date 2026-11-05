@@ -1,25 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAuth } from "../../lib/auth-context";
+import { platformConsoleUrl } from "../../lib/platform-origin";
 
+/**
+ * Cutover: vendor SuperAdmin UI lives on platform-web.
+ * Client /super-admin/* redirects to platform.era-365.online short paths.
+ */
 export default function SuperAdminLayout({
-  children,
+  children: _children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const { ready, user } = useAuth();
-
   useEffect(() => {
-    if (!ready) return;
-    if (!user?.isSuperAdmin) {
-      router.replace("/");
-    }
-  }, [ready, user, router]);
+    const path =
+      typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
+    window.location.replace(platformConsoleUrl(path));
+  }, []);
 
-  if (!ready || !user?.isSuperAdmin) return null;
-
-  return <>{children}</>;
+  return (
+    <p className="p-6 text-sm text-[#7F8C8D]">Redirecting to platform console…</p>
+  );
 }

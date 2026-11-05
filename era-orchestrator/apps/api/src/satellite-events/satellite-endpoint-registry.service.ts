@@ -138,6 +138,17 @@ export class SatelliteEndpointRegistryService {
       return null;
     }
 
+    const entitlement =
+      await this.prisma.organizationSatelliteEntitlement.findUnique({
+        where: {
+          organizationId_satelliteKey: { organizationId, satelliteKey: key },
+        },
+        select: { suspendedAt: true },
+      });
+    if (entitlement?.suspendedAt != null) {
+      return null;
+    }
+
     const row = await this.prisma.satelliteEndpoint.findUnique({
       where: {
         organizationId_satelliteKey: { organizationId, satelliteKey: key },
@@ -149,6 +160,11 @@ export class SatelliteEndpointRegistryService {
         source: "registry",
         satelliteKey: key,
       };
+    }
+
+    // Suspended sat disables the endpoint; do not fall back to env (would reopen Open).
+    if (row && row.enabled === false) {
+      return null;
     }
 
     const fromEnv = this.launchEnvFallback(key);

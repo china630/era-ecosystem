@@ -132,6 +132,10 @@ Do not store FIN/passport plaintext on `Lead` per [era-common-laws](../../.curso
 
 ---
 
+## §7b. Operator CRM dogfood (deferred — forward pointer)
+
+ERA operator company will later run `industry_crm` on the **operator** org to manage SaaS customer stages. Cards link `platformOrganizationId`; **systems connected** and **invoice status** are read-only projections from orchestrator entitlements / platform invoices and operator Finance AR — never a second entitlement SoT. Build is **out of** the Control Home / grace / cutover wave. See [operator-finance-dogfood.md](./operator-finance-dogfood.md) · [control-home-ia.md](./control-home-ia.md).
+
 ## §8. Bitrix24 benchmark backlog (deferred)
 
 **Reference:** [era-crm PRD §2](../../era-crm/PRD.md) — Bitrix24 (leads + Open Channels), Kommo, Respond.io, HubSpot lite.

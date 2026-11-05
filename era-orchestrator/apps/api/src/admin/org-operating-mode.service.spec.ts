@@ -14,9 +14,11 @@ describe("OrgOperatingModeService", () => {
   };
 
   function svc() {
-    return new OrgOperatingModeService(prisma as never, {
-      snapshotFromParent: jest.fn().mockResolvedValue(undefined),
-    } as never);
+    return new OrgOperatingModeService(
+      prisma as never,
+      { snapshotFromParent: jest.fn().mockResolvedValue(undefined) } as never,
+      { syncPlatformChannels: jest.fn().mockResolvedValue(undefined) } as never,
+    );
   }
 
   beforeEach(() => {

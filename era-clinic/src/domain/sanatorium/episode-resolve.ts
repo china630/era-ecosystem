@@ -16,6 +16,7 @@ export type EpisodeListItem = {
   stayEndsOn: string | null;
   stayNights: number | null;
   anamnesisText: string | null;
+  autoPaidLabMisses: string | null;
   anamnesisUpdatedAt: string | null;
   anamnesisByPractitioner: { fullName: string; specialty: string | null } | null;
   label: string;
@@ -57,6 +58,7 @@ export async function listPatientEpisodes(
       openedAt: true,
       closedAt: true,
       anamnesisText: true,
+      autoPaidLabMisses: true,
       anamnesisUpdatedAt: true,
       anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
       programInstance: { select: { startsOn: true, endsOn: true } },
@@ -94,6 +96,7 @@ export async function listPatientEpisodes(
       stayEndsOn: datesOk ? endsOn.toISOString() : null,
       stayNights: datesOk ? nightsBetween(startsOn, endsOn) : null,
       anamnesisText: r.anamnesisText,
+      autoPaidLabMisses: r.autoPaidLabMisses,
       anamnesisUpdatedAt: r.anamnesisUpdatedAt?.toISOString() ?? null,
       anamnesisByPractitioner: r.anamnesisByPractitioner,
       label: formatEpisodeLabel(r),

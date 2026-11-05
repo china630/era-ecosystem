@@ -320,6 +320,21 @@ export {
   type SettlementPolicySnapshot,
 } from "./integration/operating-mode";
 export {
+  parseChannels,
+  isChannelEnabled,
+  assertChannelEnabled,
+  checkChannelEnabledLive,
+  SatelliteChannelDisabledError,
+  type SatelliteChannelKind,
+  type SatelliteChannelSnapshotRow,
+} from "./integration/satellite-channels";
+export {
+  labelSatelliteKey,
+  labelChannelKind,
+  labelChannelManagedBy,
+  channelEdgeTitle,
+} from "./integration/satellite-channels-display";
+export {
   searchFinanceCatalog,
   type FinanceCatalogItem,
 } from "./integration/finance-catalog";

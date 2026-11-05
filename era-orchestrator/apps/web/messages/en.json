@@ -472,7 +472,24 @@
       "fiscalEmpty": "No devices yet — Kafe records cash/card without KKM.",
       "fiscalSaved": "Fiscal device saved",
       "fiscalSaveFailed": "Fiscal device save failed ({status})",
-      "fiscalRetired": "Device retired"
+      "fiscalRetired": "Device retired",
+      "payTitle": "Payment methods",
+      "payHint": "Org catalog for every cash desk. Sync pushes the list to satellites. Finance only reads the code.",
+      "payParentCash": "This department pays on the parent hotel cash desk (fiscalRouting=PARENT). Methods and terminals come from the parent.",
+      "payEmpty": "No methods yet — open this page once to seed the system list.",
+      "payCode": "Code",
+      "payNameEn": "Name (EN)",
+      "payNameRu": "Name (RU)",
+      "payNameAz": "Name (AZ)",
+      "payNoTerminal": "No bank terminal",
+      "payAdd": "Add method",
+      "payDisable": "Disable",
+      "payEnable": "Enable",
+      "payOff": "off",
+      "paySaved": "Payment method saved",
+      "paySaveFailed": "Payment method save failed ({status})",
+      "payDeptOnParent": "pays on this cash desk",
+      "payDeptOwn": "own cash desk"
     },
     "referrals": {
       "title": "Referral partners",
@@ -699,7 +716,12 @@
     "wfMe": "My cabinet",
     "orgProfile": "Organization profile",
     "wfJobArchitecture": "Job architecture",
-    "wfOrgChart": "Org chart"
+    "wfOrgChart": "Org chart",
+    "structure": "Structure",
+    "commsHub": "Comms Hub",
+    "homeOrg": "Home organization",
+    "setHomeOrg": "Set as home",
+    "openPlatformConsole": "Open platform console"
   },
   "headerStrip": {
     "trialUntil": "Trial until {date}",
@@ -858,7 +880,11 @@
       "enabled": "Module enabled",
       "syncFailed": "Module saved, but satellite Sync failed — open Super-admin Sync or retry.",
       "connectFailed": "Could not connect satellite — try again or contact support.",
-      "billingFootnote": "Disabled modules remain on the current month's invoice (post-paid billing)."
+      "billingFootnote": "Disabled modules remain on the current month's invoice (post-paid billing).",
+      "lateMonthConfirm": "Your 7-day try ends near month-end ({graceEnds}). After the try you will be charged for the full calendar month. OK = start try now. Cancel = choose defer.",
+      "lateMonthDefer": "Defer enable until the 1st of next month?",
+      "deferredToFirst": "Scheduled for the 1st of next month",
+      "graceStarted": "7-day try started (until {graceEnds}). Cancel before then to avoid a full month charge."
     },
     "systems": {
       "finance": {
@@ -938,7 +964,14 @@
         "highlight2": "Payments & products",
         "highlight3": "Regulatory CBS engine"
       }
-    }
+    },
+    "platformAppsSection": "Platform apps",
+    "systemsSection": "Systems",
+    "appWorkforce": "Workforce",
+    "appBilling": "Billing",
+    "appOrgProfile": "Organization profile",
+    "appStructure": "Structure",
+    "appCommsHub": "Comms Hub"
   },
   "settings": {
     "title": "Settings",
@@ -1072,7 +1105,10 @@
       "downloadPdf": "PDF",
       "pdfFailed": "PDF download failed",
       "prev": "Previous",
-      "next": "Next"
+      "next": "Next",
+      "noLines": "No line items",
+      "satNode": "Sat {sat} · {total}",
+      "outletNode": "Outlet {outlet} · {total}"
     },
     "orders": {
       "title": "Payment orders",
@@ -2471,5 +2507,29 @@
     "loading": "Loading…",
     "empty": "No nodes for this mode.",
     "orphans": "Nodes with missing parent"
+  },
+  "structure": {
+    "title": "Commercial structure",
+    "subtitle": "Org → department → satellite → outlet. Suspend stops access and forward billing.",
+    "loading": "Loading…",
+    "loadFailed": "Could not load structure",
+    "suspendFailed": "Suspend failed",
+    "satSuspended": "Satellite suspended",
+    "satResumed": "Satellite resumed",
+    "outletFailed": "Outlet update failed",
+    "outletCreated": "Outlet registered",
+    "offParent": "Off (parent)",
+    "suspended": "Suspended",
+    "resume": "Resume",
+    "suspend": "Suspend",
+    "orgBlocked": "Blocked",
+    "addOutlet": "Register commercial outlet",
+    "createOutlet": "Create"
+  },
+  "commsHub": {
+    "title": "Comms Hub",
+    "subtitle": "Central communications for the active organization",
+    "scopedOrg": "Scoped to active organization:",
+    "comingSoon": "Inbox and channels land after the orchestrator topology and billing wave."
   }
 }

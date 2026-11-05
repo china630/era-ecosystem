@@ -120,6 +120,12 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.SCREEN_SETTINGS),
     },
     {
+      href: '/admin/links',
+      labelKey: 'adminLinks',
+      icon: Link2,
+      show: can(PERMISSIONS.SCREEN_SETTINGS),
+    },
+    {
       href: '/settings/stock',
       labelKey: 'stock',
       icon: Package,

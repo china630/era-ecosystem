@@ -21,6 +21,7 @@ ERA deployments span multiple legal entities, department satellites, and multipl
 - Use when one purchased satellite deployment serves several physical points of sale under the **same** organization and VOEN.
 - Examples: F&B outlets, retail registers, hotel revenue centers.
 - Staff operational login remains **local satellite auth** (PIN / local user), not org picker SSO.
+- **Commercial registry / suspend / capacity** for those points live on the control plane — [commercial-outlet-registry.md](./commercial-outlet-registry.md) · [commercial-topology-and-suspend.md](./commercial-topology-and-suspend.md). Satellite DB remains ops SoT (menu, tables, shifts).
 
 ### DEPARTMENT (cross-deployment)
 

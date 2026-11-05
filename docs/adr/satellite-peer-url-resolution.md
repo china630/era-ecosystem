@@ -1,7 +1,8 @@
 # ADR: Satellite peer URL resolution (S2S, not env SoR)
 
 **Status:** Accepted — 2026-10-27  
-**Scope:** Orchestrator `SatelliteEndpoint` + `@era/satellite-kit` resolve helper; Finance → Hotel city-ledger payment callbacks; Clinic / F&B / Retail → Hotel bridges
+**Scope:** Orchestrator `SatelliteEndpoint` + `@era/satellite-kit` resolve helper; Finance → Hotel city-ledger payment callbacks; Clinic / F&B / Retail → Hotel bridges  
+**Related:** [satellite-integration-channels.md](./satellite-integration-channels.md) — peer **policy** (enabled kinds); this ADR remains address SoR only.
 
 ## Context
 

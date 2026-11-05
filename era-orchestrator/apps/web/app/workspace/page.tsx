@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Plus, Settings, SlidersHorizontal } from "lucide-react";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   SANATORIUM_SYSTEM_KEYS,
   WORKSPACE_SYSTEMS,
@@ -33,7 +34,11 @@ import { fetchPublicPricingSnapshot } from "../../lib/pricing/fetch-public-prici
 import { useAuth } from "../../lib/auth-context";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { useSubscription } from "../../lib/subscription-context";
-import { orchBillingErrorMessage } from "../../lib/orch-billing-error";
+import {
+  orchBillingErrorCode,
+  orchBillingErrorMessage,
+  orchBillingErrorPayload,
+} from "../../lib/orch-billing-error";
 import {
   industryNavItemForKey,
   workforceHubStatus,
@@ -328,7 +333,9 @@ export default function WorkspacePage() {
     );
   }
 
-  async function enableWorkforce() {
+  async function enableWorkforce(
+    confirmLateMonth?: "start_now" | "defer_to_first",
+  ) {
     const token = getOrchAccessToken();
     if (!token) return;
     setAddingWorkforce(true);
@@ -337,14 +344,53 @@ export default function WorkspacePage() {
         token,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
+        body: JSON.stringify({
+          moduleKey: "platform_workforce",
+          enabled: true,
+          ...(confirmLateMonth ? { confirmLateMonth } : {}),
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => null);
+        if (
+          !confirmLateMonth &&
+          orchBillingErrorCode(err) === "LATE_MONTH_CONFIRMATION_REQUIRED"
+        ) {
+          const payload = orchBillingErrorPayload(err);
+          const graceEndsAt =
+            typeof payload.graceEndsAt === "string" ? payload.graceEndsAt : null;
+          const startNow = window.confirm(
+            tMods("lateMonthConfirm", {
+              graceEnds: graceEndsAt
+                ? bakuDateDisplay(graceEndsAt)
+                : "—",
+            }),
+          );
+          if (startNow) {
+            await enableWorkforce("start_now");
+          } else if (window.confirm(tMods("lateMonthDefer"))) {
+            await enableWorkforce("defer_to_first");
+            toast.info(tMods("deferredToFirst"));
+          }
+          return;
+        }
         toast.error(orchBillingErrorMessage(err, tCommon("failed")));
         return;
       }
-      const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+      const body = (await res.json().catch(() => null)) as {
+        synced?: boolean;
+        inGrace?: boolean;
+        graceEndsAt?: string;
+      } | null;
+      if (body?.inGrace) {
+        toast.success(
+          tMods("graceStarted", {
+            graceEnds: body.graceEndsAt
+              ? bakuDateDisplay(body.graceEndsAt)
+              : "—",
+          }),
+        );
+      }
       if (body?.synced === false) {
         toast.message(tMods("syncFailed"));
       }
@@ -407,9 +453,29 @@ export default function WorkspacePage() {
       {loading ? (
         <p className="text-sm text-[#7F8C8D]">{t("loadingEntitlements")}</p>
       ) : null}
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("platformAppsSection")}</h2>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/workspace/workforce/employments" className={SECONDARY_BUTTON_CLASS}>
+            {t("appWorkforce")}
+          </Link>
+          <Link href="/settings/subscription" className={SECONDARY_BUTTON_CLASS}>
+            {t("appBilling")}
+          </Link>
+          <Link href="/workspace/organization" className={SECONDARY_BUTTON_CLASS}>
+            {t("appOrgProfile")}
+          </Link>
+          <Link href="/workspace/structure" className={SECONDARY_BUTTON_CLASS}>
+            {t("appStructure")}
+          </Link>
+          <Link href="/workspace/comms-hub" className={SECONDARY_BUTTON_CLASS}>
+            {t("appCommsHub")}
+          </Link>
+        </div>
+      </section>
       <section>
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-[#34495E]">{t("sanatoriumSection")}</h2>
+          <h2 className="text-sm font-semibold text-[#34495E]">{t("systemsSection")}</h2>
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}

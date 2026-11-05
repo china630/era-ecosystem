@@ -39,6 +39,9 @@ export type DiagnosticCatalogItem = {
   category: string;
   title: L10n;
   serviceCode: string;
+  packageOnly?: boolean;
+  /** False when the service category is turned off. Titles still resolve. */
+  categoryActive?: boolean;
   fields?: CatalogFieldDef[];
   analytes?: CatalogAnalyteDef[];
   includes?: string[];

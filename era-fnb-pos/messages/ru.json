@@ -33,6 +33,7 @@
     "sales": "Журнал продаж",
     "settings": "Настройки",
     "audit": "Журнал изменений",
+    "adminLinks": "Связи",
     "access": "Доступ",
     "switchOutlet": "Сменить точку",
     "buffetPlans": "Планы",
@@ -1065,5 +1066,32 @@
       "buffet_kitchen": "Буфет-кухня",
       "disco": "Диско"
     }
+  },
+  "adminLinks": {
+    "title": "Интеграционные связи",
+    "subtitle": "Маршрут денег и peer-каналы этой F&B организации.",
+    "moneyTitle": "Маршрут денег",
+    "moneyLine": "Режим {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode недоступен",
+    "outbound": "Исходящие",
+    "inbound": "Входящие",
+    "empty": "Каналов нет (PLATFORM sync после operating mode + entitlements).",
+    "on": "вкл",
+    "off": "выкл",
+    "disable": "Отключить входящий",
+    "loadFailed": "Не удалось загрузить связи",
+    "saveFailed": "Не удалось обновить канал",
+    "loading": "Загрузка…",
+    "kindFolio": "Проводка folio",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Событие выручки",
+    "kindRead": "Чтение статуса",
+    "satHotel": "Отель",
+    "satClinic": "Клиника",
+    "satFnb": "F&B",
+    "satRetail": "Ритейл",
+    "satFinance": "Финансы",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor"
   }
 }

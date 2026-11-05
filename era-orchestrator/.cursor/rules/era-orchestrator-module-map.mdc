@@ -31,14 +31,16 @@ globs:
 
 ## Post-login IA (workspace launcher)
 
-Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization (organizations, holdings, team) → Workforce (employments, org-structure, positions, absences, security, export) → Resources (pricing, help) → Settings (settings, subscription) → Platform admin (super-admin only: nested Billing + MDM, Early access, Security).
+Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization (organizations, org profile, **Structure**, Comms Hub stub, holdings, team) → Workforce → Resources → Settings → Platform admin link (**external** `platform.era-365.online`, not in-app `/super-admin`).
 
 | Route | File | Notes |
 |-------|------|-------|
 | `/` | `app/page.tsx` | Guest marketing hub (no app shell); authed → `/workspace` |
 | `/organizations` | `app/organizations/page.tsx` | Org hub; `CreateOrganizationModal`; company-less onboarding gate auto-opens create modal; lists pending invites with Accept; link to `/holdings` |
 | `/holdings` | `app/holdings/page.tsx` | Holding SoT: create, attach/detach orgs, report-access members; API `v1/holdings/*` |
-| `/workspace` | `app/workspace/page.tsx` | Satellite cards (Open / Modules / Settings). Workforce tile only while `platform_workforce` is off (sidebar otherwise). No Hotel upsell banner; department UUIDs live on `/super-admin/orgs/[orgId]`. `POST connect-satellite`, `POST billing/toggle-module` |
+| `/workspace` | `app/workspace/page.tsx` | Control Home: Platform apps strip + Systems tiles (Open / Modules / Settings). `POST connect-satellite`, `POST billing/toggle-module` (+ 7d SKU grace). Home org via `POST /auth/home-organization` |
+| `/workspace/structure` | `app/workspace/structure/page.tsx` | Org → Dept → Sat → Outlet tree; sat/outlet suspend; commercial outlet create. APIs `GET/POST /v1/structure/*` |
+| `/workspace/comms-hub` | `app/workspace/comms-hub/page.tsx` | Comms Hub slot stub (active-org scoped); full inbox later |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
 | `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership; invite `organizationRoleCode` from org roles |
@@ -46,46 +48,21 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/settings/subscription` | `app/settings/subscription/page.tsx` | Plan + modules + billing constructor (checkout/bundles/premium). Card «F&B edition» (`components/settings/fnb-edition-card.tsx`): `GET /v1/fnb/edition`, `POST /v1/fnb/edition/upgrade` (owner, ERA Kafe → full F&B, no new price line, re-runs Sync) |
 | `/settings/invoices` | `app/settings/invoices/page.tsx` | Platform subscription invoices + PDF |
 | `/settings/orders` | `app/settings/orders/page.tsx` | Payment orders registry |
-| `/super-admin/**` | `app/super-admin/**` | Platform admin on client `app` until cutover (see **Vendor console** below) |
-| `/super-admin/orgs` | `app/super-admin/orgs/page.tsx` | Org catalog (search name/UUID/VÖEN) |
-| `/super-admin/orgs/[orgId]` | `app/super-admin/orgs/[orgId]/page.tsx` | Operating mode, detach, departments, satellite endpoints, Elektraweb bridge / clinic cutover policy, Sync bindings |
-| `/super-admin/referrals` | `app/super-admin/referrals/page.tsx` | Referral partners CRUD + QR |
-| `/super-admin/landing` | `app/super-admin/landing/page.tsx` | Landing module marketing copy |
-
-## Super-admin billing / MDM
-
-| Route | File | Notes |
-|-------|------|-------|
-| `/super-admin/billing/pricing` | `app/super-admin/billing/pricing/page.tsx` | Modules (core + satellites); filters + premium/standard/free |
-| `/super-admin/billing/pricing/addons` | `app/super-admin/billing/pricing/addons/page.tsx` | Platform add-ons catalog |
-| `/super-admin/billing/quotas` | `app/super-admin/billing/quotas/page.tsx` | Tier matrix + unit pricing modal |
-| `/super-admin/billing/packages` | `app/super-admin/billing/packages/page.tsx` | Bundles CRUD; soft-archive (no delete) |
-| `/super-admin/billing/settings` | `app/super-admin/billing/settings/page.tsx` | ERA Core + Banking foundations + yearly discount + default trial days |
-| `/super-admin/billing/trial-allowlist` | `app/super-admin/billing/trial-allowlist/page.tsx` | Trial-eligible modules per core/satellite |
-| `/super-admin/mdm` | `app/super-admin/mdm/page.tsx` | MDM health overview |
-| `/super-admin/mdm/companies` | `app/super-admin/mdm/companies/page.tsx` | Legal entities |
-| `/super-admin/mdm/persons` | `app/super-admin/mdm/persons/page.tsx` | Natural persons directory + resolve/merge modals |
-| `/super-admin/reference` | `app/super-admin/reference/page.tsx` | Hub fetch switches, FX codes, per-org hub or Excel |
-
-## Super-admin trial
-
-| Route | File | Notes |
-|-------|------|-------|
-| `/super-admin/orgs/[orgId]/subscription` | `app/super-admin/orgs/[orgId]/subscription/page.tsx` | Topology + license (perpetual / date / ±1 month), Nafta preset |
-| `/super-admin/orgs/[orgId]/placement` | `app/super-admin/orgs/[orgId]/placement/page.tsx` | PlacementJob create/list/advance (lab hop; not SaaS pool) |
+| `/super-admin/**` | `app/super-admin/**` | **Cutover:** redirects to `platform.era-365.online` short paths (`next.config` + layout). Do not add new SA UI here |
 
 ## Vendor console (`apps/platform-web`, host `platform.era-365.online`, local `:3001`)
 
-Same admin APIs as `/super-admin/*`. Session keys `era_platform_*` (not shared with `app`). Login allows `isSuperAdmin` only.
+Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). Login allows `isSuperAdmin` only. Legacy `app` `/super-admin/*` bookmarks redirect here.
 
 | Route | File | Notes |
 |-------|------|-------|
 | `/login` | `apps/platform-web/app/login/page.tsx` | Operator-only; `showAccountLinks={false}` |
 | `/` | `apps/platform-web/app/(console)/page.tsx` | → `/billing/pricing` |
 | `/billing/**` | `apps/platform-web/app/(console)/billing/**` | Pricing, addons, quotas, packages, trial-allowlist, settings |
-| `/orgs`, `/orgs/[orgId]`, `…/subscription`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org hub + license + PlacementJob |
+| `/orgs`, `/orgs/[orgId]`, `…/subscription`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org hub + license + PlacementJob; payment methods CRUD (`GET/POST/PATCH/DELETE /v1/admin/orgs/:orgId/payment-methods`, Sync `paymentMethods`) next to KKM/BANK_POS |
+| `/structure` | `apps/platform-web/app/(console)/structure/page.tsx` | Ops entry for commercial topology (owner tree on app `/workspace/structure`) |
 | `/mdm`, `/mdm/companies`, `/mdm/persons` | `apps/platform-web/app/(console)/mdm/**` | MDM overview + directories |
-| `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as client super-admin |
+| `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as former client super-admin |
 
 ## Shared web components
 
@@ -116,9 +93,18 @@ Same admin APIs as `/super-admin/*`. Session keys `era_platform_*` (not shared w
 | `GET /internal/v1/organizations/:id/profile-snapshot` | `internal-organizations.controller.ts` — S2S branding snapshot (service token) |
 | `PATCH /internal/v1/organizations/:id/profile-bank-line` | `internal-organizations.controller.ts` — Finance primary bank → denormalized `bankLine` (service token; CP-ORG-PROFILE-01) |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
-| `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint (env fallback) |
+| `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint; env fallback only when endpoint not disabled; `403 SATELLITE_SUSPENDED` when entitlement.suspendedAt set |
+| `GET /v1/structure/tree` | `structure.controller.ts` — Org→Dept→Sat→Outlet tree (effective suspend/block) |
+| `POST /v1/structure/satellites/:key/suspend` | `structure.controller.ts` — owner kill sat (`suspendedAt` + endpoint disable) |
+| `GET/POST /v1/structure/outlets` | `structure.controller.ts` — commercial outlet list/create |
+| `PATCH/DELETE /v1/structure/outlets/:id` | `structure.controller.ts` — outlet update/retire |
+| `POST /internal/v1/structure/outlets/upsert` | `structure-internal.controller.ts` — F&B/retail register commercial outlet (service token) |
+| `GET/PATCH /v1/admin/organizations/:id/channels` | `admin-channels.controller.ts` — SA integration channels |
+| `GET/PATCH /platform/v1/channels` | `platform-channels.controller.ts` — org JWT list + acceptor disable |
+| `GET/PATCH /v1/internal/channels` (+ `/check`) | `internal-channels.controller.ts` — satellite BFF + live gate (service token) |
+| `POST /auth/home-organization` | `auth` / membership — set `isHome` for Control Home default org |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |
-| `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable; best-effort `syncForOrg` (`BillingSatelliteNotifyService`); response `synced` |
+| `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable + 7d SKU grace / late-month `confirmLateMonth`; best-effort `syncForOrg`; response `synced` |
 | `POST /v1/billing/toggle-bundle` | `billing.controller.ts` — same Sync notify as toggle-module |
 | `GET /v1/billing/module-states` | `billing.controller.ts` — pending deactivation flags |
 | `GET /v1/admin/mdm/companies` | `admin-mdm.controller.ts` — legal entities (name decrypt + org fallback) |

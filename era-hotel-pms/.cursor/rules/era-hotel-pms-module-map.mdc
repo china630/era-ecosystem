@@ -231,6 +231,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 | Route | API | Notes |
 |-------|-----|-------|
 | `/admin/audit` | `GET /api/admin/audit?entityType&entityId&action&dateFrom&dateTo&userId` | SatAdmin mutation audit (`api:reports.read` / `screen:reports` — **not** `SCREEN_ADMIN`). Layer A `HTTP_MUTATION` + Layer B. UAT open — not SHIPPED. ADR era-mutation-audit-standard |
+| `/admin/links` | `GET/PATCH /api/admin/links` → CP `/v1/internal/channels` | Integration channels vitrine (money routing + inbound ACCEPTOR disable). CP-CHANNELS-01; UAT open |
 | `/settings/access` | `GET/POST /api/admin/roles`, `GET/PATCH …/[code]/permissions`, `PATCH/DELETE …/[code]`, `POST /api/auth/session/refresh-permissions`, `GET /api/internal/v1/workforce/roles` | Role×permission matrix plus a searchable extra-action field. `api:reservations.agency_pick` and `api:reservations.company_pick` open the booking name lists without `api:reports.read`. `admin:access_manage`; system seed `ensureSystemHotelRoles`; role code+name pushed to CP catalog (ADR cp-workforce-satellite-role-catalog) |
 | `/settings/users` | `GET/POST /api/admin/users`, `PATCH …/[id]` | Local logins; workforce (`cpEmploymentId`) name and password stay on provision. Position is `User.positionTitle` |
 | `/settings/logins` | `GET /api/admin/user-logins?q&from&to` | Successful staff and SSO sign-ins (`UserLogin`). `q` matches login, name, or IP; `from`/`to` are Asia/Baku days (swapped if reversed) |

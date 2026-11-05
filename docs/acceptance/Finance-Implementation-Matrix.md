@@ -9,6 +9,8 @@
 
 **BE deepen (2026-08-17):** Green Scaffold BE Wave 6 — `__tests__/fin-*-negative.spec.ts` (GL/ARAP/INV/EVT/CFG/HR/TAX/FA).
 
+**Org payment methods SoR moved (2026-11-05):** `PUT …/organization/tenders` returns 410; tender catalog lives on orch (CP-PAY-METHODS-01). Finance only reads payment method codes on money documents. Does **not** reopen any Finance Scaffold ✅; Pilot unchanged.
+
 **Civil date labels (2026-10-30, controls 2026-10-31):** Document, due, payroll, asset, customs, banking, and audit dates on ops screens render `дд.мм.гггг` via `bakuDateDisplay`. Native date fields now use the finance calendar with a `дд.мм.гггг` button; the home revenue axis is `дд.мм`. Values stay `YYYY-MM-DD`. Closed periods stay selectable on those fields. No Scaffold ✅ / Pilot change.
 
 ---

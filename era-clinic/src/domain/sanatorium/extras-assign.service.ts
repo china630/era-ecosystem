@@ -224,7 +224,6 @@ export async function prescribeExtras(
     const preferredPractitionerId = await resolveMasseurId(pt.id, line.preferredPractitionerId);
     const unitPrice = await listPriceForCode(line.procedureCode);
     const duration = pt.durationMin ?? 30;
-    const internal = pt.usageContour === "INTERNAL";
     for (let i = 0; i < line.qty; i++) {
       const scheduledAt = new Date(now.getTime() + seq * 60_000);
       const order = await prisma.procedureOrder.create({
@@ -239,14 +238,14 @@ export async function prescribeExtras(
           endsAt: new Date(scheduledAt.getTime() + duration * 60_000),
           sequenceIndex: seq++,
           bodyPart: line.bodyPart ?? pt.bodyPart ?? undefined,
-          status: internal ? "SCHEDULED" : "PENDING_PAY",
+          status: "PENDING_PAY",
           note: line.note ?? undefined,
           physioFields: line.physioFields ?? undefined,
           siteApplyMode: line.siteApplyMode ?? undefined,
           patientOrigin: episode.patientOrigin,
           reservationId: episode.reservationId ?? undefined,
-          amountNet: internal ? 0 : unitPrice,
-          bonusEligible: !internal,
+          amountNet: unitPrice,
+          bonusEligible: true,
           inPackage: false,
           preferredPractitionerId,
           prescribedByPractitionerId,
