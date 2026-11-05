@@ -1639,6 +1639,7 @@
     "classHotelRefundNote": "Hotel refunds the difference. Charged class follows the given room from today.",
     "classGuestCheaperNote": "Guest asked for the cheaper class from today.",
     "roomMoves": "Moves",
+    "roomMoveWaiting": "waiting until the room is clean",
     "roomMoveReasonCard": "from the reservation card",
     "roomMoveReasonSwap": "room swap",
     "roomMoveReasonRelocate": "from the room plan",

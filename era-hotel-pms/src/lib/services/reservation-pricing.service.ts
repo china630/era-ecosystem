@@ -142,6 +142,7 @@ async function writeOwnerNightly(
   },
   nightly: number | ((night: Date) => Promise<number>),
   remainingFrom?: Date,
+  opts?: { replaceUnposted?: boolean },
 ) {
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   const fromKey = remainingFrom ? dateOnly(remainingFrom) : null;
@@ -159,13 +160,12 @@ async function writeOwnerNightly(
     const existing = res.dailyRates.find(
       (d) => d.stayDate.toDateString() === night.toDateString(),
     );
-    if (
+    const consumed = existing && nightAlreadyConsumed(night, closed.bizKey, closed.posted);
+    const keptByHand =
+      !opts?.replaceUnposted &&
       existing &&
-      (nightAlreadyConsumed(night, closed.bizKey, closed.posted) ||
-        existing.manualFlag ||
-        existing.fixPrice ||
-        (fromKey && dateOnly(night) < fromKey))
-    ) {
+      (existing.manualFlag || existing.fixPrice || (fromKey != null && dateOnly(night) < fromKey));
+    if ((consumed || keptByHand) && existing) {
       rows.push({
         stayDate: night,
         amount: decimalToNumber(existing.amount as never),
@@ -258,7 +258,7 @@ export async function recalcReservationDailyRates(
   if (res.isLocked) throw new Error('Reservation is locked');
 
   if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
-    return writeOwnerNightly(res, 0, opts?.remainingFrom);
+    return writeOwnerNightly(res, 0, opts?.remainingFrom, { replaceUnposted: true });
   }
 
   const packageCodes = stayPackageCodes(res);

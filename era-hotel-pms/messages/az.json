@@ -1640,6 +1640,7 @@
     "classHotelRefundNote": "Otel fərqi qaytarır. Ödənilən sinif bu gündən verilən otağa uyğun gəlir.",
     "classGuestCheaperNote": "Qonaq bu gündən daha ucuz sinif istəyib.",
     "roomMoves": "Köçürmələr",
+    "roomMoveWaiting": "otaq təmizlənənə qədər gözləyir",
     "roomMoveReasonCard": "bron kartından",
     "roomMoveReasonSwap": "otaq dəyişməsi",
     "roomMoveReasonRelocate": "otaq planından",
