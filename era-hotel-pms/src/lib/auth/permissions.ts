@@ -21,6 +21,8 @@ export const PERMISSIONS = {
   FOLIO_VOID: "api:folio.void",
   ROOMS_STATUS: "api:rooms.status",
   HOUSEKEEPING_MANAGE: "api:housekeeping.manage",
+  /** Reception / security / engineering week boards (not HK HkRosterWeek). */
+  DUTY_SCHEDULES_MANAGE: "api:duty_schedules.manage",
   MEDICAL_MANAGE: "api:medical.manage",
   CHANNEL_MANAGE: "api:channel.manage",
   NIGHT_AUDIT_RUN: "api:night_audit.run",
@@ -37,6 +39,8 @@ export const PERMISSIONS = {
   SCREEN_HOME: "screen:home",
   SCREEN_FO: "screen:fo",
   SCREEN_HK: "screen:hk",
+  /** Department schedules hub + reception/security/engineering boards. */
+  SCREEN_SCHEDULES: "screen:schedules",
   SCREEN_MEDICAL: "screen:medical",
   SCREEN_DISTRIBUTION: "screen:distribution",
   SCREEN_NIGHT_AUDIT: "screen:night_audit",
@@ -84,6 +88,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       PERMISSIONS.SCREEN_FOLIO,
       PERMISSIONS.SCREEN_FRONT_CASH,
       PERMISSIONS.SCREEN_HK,
+      PERMISSIONS.SCREEN_SCHEDULES,
       PERMISSIONS.SCREEN_MEDICAL,
       PERMISSIONS.SCREEN_DISTRIBUTION,
       PERMISSIONS.SCREEN_NIGHT_AUDIT,
@@ -123,6 +128,11 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     id: "hk",
     labelKey: "groupHk",
     permissions: [PERMISSIONS.HOUSEKEEPING_MANAGE, PERMISSIONS.ROOMS_STATUS],
+  },
+  {
+    id: "schedules",
+    labelKey: "groupSchedules",
+    permissions: [PERMISSIONS.DUTY_SCHEDULES_MANAGE],
   },
   {
     id: "channel",
@@ -201,6 +211,11 @@ export const PERMISSION_PROCESSES: PermissionGroup[] = [
     permissions: [PERMISSIONS.SCREEN_HK, PERMISSIONS.HOUSEKEEPING_MANAGE],
   },
   {
+    id: "schedules",
+    labelKey: "procSchedules",
+    permissions: [PERMISSIONS.SCREEN_SCHEDULES, PERMISSIONS.DUTY_SCHEDULES_MANAGE],
+  },
+  {
     id: "medical",
     labelKey: "procMedical",
     permissions: [PERMISSIONS.SCREEN_MEDICAL, PERMISSIONS.MEDICAL_MANAGE],
@@ -259,6 +274,7 @@ export const ROLE_PERMISSIONS: Record<RoleCode, Permission[]> = {
     PERMISSIONS.FOLIO_VOID,
     PERMISSIONS.ROOMS_STATUS,
     PERMISSIONS.HOUSEKEEPING_MANAGE,
+    PERMISSIONS.DUTY_SCHEDULES_MANAGE,
     PERMISSIONS.MEDICAL_MANAGE,
     PERMISSIONS.CHANNEL_MANAGE,
     PERMISSIONS.NIGHT_AUDIT_RUN,
@@ -278,6 +294,7 @@ export const ROLE_PERMISSIONS: Record<RoleCode, Permission[]> = {
     PERMISSIONS.FOLIO_PAYMENT,
     PERMISSIONS.ROOMS_STATUS,
     PERMISSIONS.CASH_SHIFT,
+    PERMISSIONS.DUTY_SCHEDULES_MANAGE,
     PERMISSIONS.API_INTEGRATION_ELEKTRAWEB_BRIDGE,
   ]) as Permission[],
   [ROLE_CODES.NIGHT_AUDITOR]: withPairedScreens([

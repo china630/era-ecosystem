@@ -255,6 +255,9 @@ describe("fnb rbac catalog", () => {
 
   it("floor and admin access map to screens", () => {
     expect(routePermissions("/floor")).toContain(PERMISSIONS.SCREEN_FLOOR);
+    expect(routePermissions("/admin/cedvel")).toEqual([
+      PERMISSIONS.SCREEN_ADMIN_ROSTER,
+    ]);
     expect(routePermissions("/admin/access")).toContain(
       PERMISSIONS.SCREEN_ADMIN_ACCESS,
     );

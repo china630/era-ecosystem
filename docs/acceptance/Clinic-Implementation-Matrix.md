@@ -7,9 +7,19 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Closeout (2026-11-06 CP-CHANNELS second-pass):** Platform AC-CP-CHANNELS — `REVENUE_EVENT` assert before visit/procedure/lab COMPLETED (Finance) and hub visit settle-confirm. No new clinic Scaffold ✅; does not reopen AC-CLI-* ✅. Gate/Pilot/`clinic.yaml` untouched.
+
+**Closeout (2026-11-05 working hours second pass):** No new Scaffold ✅. Settings no longer edits day/peak hours (link to working-hours). Appointments grid follows `listClinicDays`. AC-CLI-SAN/MD unchanged. CLI-59 stays SCREEN. Gate/Pilot unchanged. `clinic.yaml` untouched.
+
+**Closeout (2026-11-05 working hours + peak journal):** No new Scaffold ✅. AC-CLI-SAN and AC-CLI-MD stay ✅ (window unit path `__tests__/procedure-day-window.spec.ts`; no new negative suite for calendar/peaks). CLI-59 stays SCREEN. Saving calendar or peaks does not reseat. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs migrate + image deploy.
+
+**Closeout (2026-11-05 execution-plan chip):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. The package tab id is unchanged. Paid and unpaid study scales render on that tab. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
 **Closeout (2026-11-05 extra tickets date pickers):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. The extra-tickets period is kit `DatePicker` (`gg.aa.iiii`). The API still takes `YYYY-MM-DD`. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
 
 **Closeout (2026-11-05 catalog range is not a result):** No new Scaffold ✅. AC-CLI-PRINT stays ✅. A lab result that only repeats the catalog range (`0.9-5.0 #` on LYM# / MXD# / NEUT#) prints as a dash with no norm and no flag. The order screen does the same. A numeric result stays. No new negative suite beyond `lab-analyte-norms.spec.ts`. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-05 infection note parentheses):** AC-CLI-PRINT stays ✅. The boxed note no longer prints the method name in parentheses (az/ru/en). No new Scaffold ✅. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
 
 **Closeout (2026-11-05 infection card note + diagnostics row):** No new Scaffold ✅. AC-CLI-LAB stays ✅. AC-CLI-ASSIGN stays 🟡. The lab blank prints a boxed PCR note when the order has an express card analyte (HBsAg, HCV, syphilis). The diagnostics assigned row uses the procedure order: title and trash, package stepper, extra price beside the extra stepper. No new negative suite. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
 

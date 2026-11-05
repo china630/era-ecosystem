@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { IndustryModuleInactiveError } from '@era/satellite-kit';
+import {
+  IndustryModuleInactiveError,
+  SatelliteChannelDisabledError,
+} from '@era/satellite-kit';
 import { isSatelliteBillingBlockedError } from '@era/satellite-kit/billing/gate';
 import { GuestMdmRequiredError } from '@/lib/guest-identity';
 import {
@@ -36,6 +39,12 @@ export function handleRouteError(err: unknown) {
   }
   if (err instanceof IndustryModuleInactiveError) {
     return jsonError(err.message, 403);
+  }
+  if (err instanceof SatelliteChannelDisabledError) {
+    return NextResponse.json(
+      { error: err.message, code: err.code },
+      { status: 403 },
+    );
   }
   if (err instanceof Error && err.name === 'FiscalError') {
     return jsonError(err.message, 400);

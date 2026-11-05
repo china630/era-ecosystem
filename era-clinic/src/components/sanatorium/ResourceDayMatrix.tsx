@@ -10,6 +10,8 @@ export type MatrixSlot = {
   occupied: boolean;
   blocked?: boolean;
   lunch?: boolean;
+  /** Outside this cabin's bookable window (peak darkening). */
+  outside?: boolean;
   procedureOrderId?: string;
   patientName?: string;
   roomNumber?: string;
@@ -55,6 +57,7 @@ export type ResourceDayMatrixLabels = {
   legendCompleted: string;
   legendBlocked: string;
   legendLunch: string;
+  legendOutside?: string;
   /** Localized status chip on the bar (PENDING_PAY → unpaid, etc.). */
   statusLabel: (status: string) => string;
 };
@@ -63,6 +66,7 @@ type Segment =
   | { kind: "free"; slot: MatrixSlot; col: number }
   | { kind: "blocked"; slot: MatrixSlot; col: number }
   | { kind: "lunch"; slot: MatrixSlot; col: number }
+  | { kind: "outside"; slot: MatrixSlot; col: number }
   | {
       kind: "bar";
       slot: MatrixSlot;
@@ -222,6 +226,7 @@ function alignRowSlots(row: MatrixResourceRow, timeSlots: MatrixSlot[]): MatrixS
         occupied: false,
         blocked: false,
         lunch: ts.lunch,
+        outside: ts.outside,
       },
   );
 }
@@ -233,6 +238,11 @@ function buildSegments(slots: MatrixSlot[]): Segment[] {
     const slot = slots[i];
     if (slot.lunch) {
       out.push({ kind: "lunch", slot, col: i });
+      i += 1;
+      continue;
+    }
+    if (slot.outside) {
+      out.push({ kind: "outside", slot, col: i });
       i += 1;
       continue;
     }
@@ -333,6 +343,15 @@ export function ResourceDayMatrix({
             label: labels.legendLunch,
             swatchClassName: "bg-slate-200 border-slate-300",
           },
+          ...(labels.legendOutside
+            ? [
+                {
+                  id: "outside",
+                  label: labels.legendOutside,
+                  swatchClassName: "bg-slate-200 border-slate-300",
+                },
+              ]
+            : []),
         ]}
       />
       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{labels.dragHint}</p>
@@ -369,13 +388,17 @@ export function ResourceDayMatrix({
                       </span>
                     </div>
                     {segments.map((seg) => {
-                      if (seg.kind === "lunch") {
+                      if (seg.kind === "lunch" || seg.kind === "outside") {
                         return (
                           <div
-                            key={`${row.resourceId}-lunch-${seg.slot.time}`}
+                            key={`${row.resourceId}-${seg.kind}-${seg.slot.time}`}
                             className="min-h-[3.25rem] border-b border-r border-slate-300 bg-slate-200/80"
                             style={{ gridColumn: "span 1" }}
-                            title={labels.legendLunch}
+                            title={
+                              seg.kind === "lunch"
+                                ? labels.legendLunch
+                                : labels.legendOutside ?? labels.legendLunch
+                            }
                           />
                         );
                       }

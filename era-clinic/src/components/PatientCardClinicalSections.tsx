@@ -685,67 +685,6 @@ export function PatientCardClinicalSections({
             packagePrintLabel={t("printStudies", { defaultValue: "Print analyses and diagnostics" })}
             onExtrasPlus={() => setDiagnosticsModalOpen(true)}
           />
-          {unpaidDiagnosticScales.map((row) => (
-            <QuotaScaleCard
-              key={`diag-unpaid:${row.code}`}
-              title={row.title}
-              assigned={row.assigned}
-              assignedTotal={row.assigned}
-              completed={0}
-              completedTotal={row.assigned}
-              tone="red"
-              subline={`${row.amountNet.toFixed(2)} AZN · ${t("pendingPayTicketsHint", {
-                defaultValue: "Awaiting payment — pay on Extra tickets",
-              })}`}
-              assignedLabel={ts("quotaAssigned")}
-              completedLabel={ts("quotaCompleted")}
-              usedLabel={(used, total) => ts("quotaUsed", { used, total })}
-              onDelete={
-                readOnly || diagnosticsPendingBusy
-                  ? undefined
-                  : () => {
-                      const first = row.ids[0];
-                      if (!first || !episodeId) return;
-                      void (async () => {
-                        setDiagnosticsPendingBusy(true);
-                        try {
-                          const res = await fetch(
-                            `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(first.id)}&kind=${first.kind}`,
-                            { method: "DELETE" },
-                          );
-                          if (!res.ok) {
-                            showApiError(
-                              await res.json().catch(() => ({})),
-                              tc("failed"),
-                            );
-                            return;
-                          }
-                          showSuccess(tc("saved"));
-                          await loadSummary();
-                          setQuotaTick((n) => n + 1);
-                        } finally {
-                          setDiagnosticsPendingBusy(false);
-                        }
-                      })();
-                    }
-              }
-              deleteLabel={tc("delete")}
-            />
-          ))}
-          {paidDiagnosticsScale.map((row) => (
-              <QuotaScaleCard
-                key={`diag-paid:${row.code}`}
-                title={row.title}
-                assigned={row.assigned}
-                assignedTotal={row.assigned}
-                completed={row.completed}
-                completedTotal={row.assigned}
-                tone="blue"
-                assignedLabel={ts("quotaAssigned")}
-                completedLabel={ts("quotaCompleted")}
-                usedLabel={(used, total) => ts("quotaUsed", { used, total })}
-              />
-            ))}
         </section>
       ) : null}
 
@@ -1034,7 +973,9 @@ export function PatientCardClinicalSections({
       {showPackage &&
       (quotaRows.length > 0 ||
         unpaidExtraScales.length > 0 ||
-        paidExtrasScale.length > 0) ? (
+        paidExtrasScale.length > 0 ||
+        unpaidDiagnosticScales.length > 0 ||
+        paidDiagnosticsScale.length > 0) ? (
         <section className="space-y-3">
           {unpaidExtraScales.map((row) => (
             <QuotaScaleCard
@@ -1119,6 +1060,67 @@ export function PatientCardClinicalSections({
                 usedLabel={(used, total) => ts("quotaUsed", { used, total })}
               />
             ))}
+          {unpaidDiagnosticScales.map((row) => (
+            <QuotaScaleCard
+              key={`diag-unpaid:${row.code}`}
+              title={row.title}
+              assigned={row.assigned}
+              assignedTotal={row.assigned}
+              completed={0}
+              completedTotal={row.assigned}
+              tone="red"
+              subline={`${row.amountNet.toFixed(2)} AZN · ${t("pendingPayTicketsHint", {
+                defaultValue: "Awaiting payment — pay on Extra tickets",
+              })}`}
+              assignedLabel={ts("quotaAssigned")}
+              completedLabel={ts("quotaCompleted")}
+              usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+              onDelete={
+                readOnly || diagnosticsPendingBusy
+                  ? undefined
+                  : () => {
+                      const first = row.ids[0];
+                      if (!first || !episodeId) return;
+                      void (async () => {
+                        setDiagnosticsPendingBusy(true);
+                        try {
+                          const res = await fetch(
+                            `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(first.id)}&kind=${first.kind}`,
+                            { method: "DELETE" },
+                          );
+                          if (!res.ok) {
+                            showApiError(
+                              await res.json().catch(() => ({})),
+                              tc("failed"),
+                            );
+                            return;
+                          }
+                          showSuccess(tc("saved"));
+                          await loadSummary();
+                          setQuotaTick((n) => n + 1);
+                        } finally {
+                          setDiagnosticsPendingBusy(false);
+                        }
+                      })();
+                    }
+              }
+              deleteLabel={tc("delete")}
+            />
+          ))}
+          {paidDiagnosticsScale.map((row) => (
+            <QuotaScaleCard
+              key={`diag-paid:${row.code}`}
+              title={row.title}
+              assigned={row.assigned}
+              assignedTotal={row.assigned}
+              completed={row.completed}
+              completedTotal={row.assigned}
+              tone="blue"
+              assignedLabel={ts("quotaAssigned")}
+              completedLabel={ts("quotaCompleted")}
+              usedLabel={(used, total) => ts("quotaUsed", { used, total })}
+            />
+          ))}
         </section>
       ) : null}
 

@@ -34,7 +34,9 @@ type MatchType =
   | 'NAME_BIRTH'
   | 'LAST_BIRTH'
   | 'LAST_PHONE'
-  | 'DOC_CITIZENSHIP';
+  | 'DOC_CITIZENSHIP'
+  | 'SIMILAR_NAME'
+  | 'METAPHONE';
 
 type GuestCard = {
   id: string;
@@ -58,6 +60,7 @@ type Group = {
   matchType: MatchType;
   guestIds: string[];
   needsPersonMerge: boolean;
+  nameClash?: boolean;
   guests: GuestCard[];
 };
 
@@ -216,6 +219,8 @@ export default function GuestDedupReportPage() {
             'LAST_BIRTH',
             'LAST_PHONE',
             'DOC_CITIZENSHIP',
+            'SIMILAR_NAME',
+            'METAPHONE',
             'GLOBAL_PERSON_ID',
           ] as const).map(
             (code) => ({ value: code, label: t(`match.${code}`) }),
@@ -230,6 +235,7 @@ export default function GuestDedupReportPage() {
           >
             <h2 className="m-0 text-[13px] font-semibold text-[#34495E]">
               {t(`match.${group.matchType}`)}
+              {group.nameClash ? ` · ${t('passportNameClash')}` : ''}
               {group.matchType === 'NAME_BIRTH' || group.matchType === 'GLOBAL_PERSON_ID'
                 ? ''
                 : ` · ${group.key}`}

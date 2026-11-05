@@ -1,13 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { departmentFinanceEventsSilenced, publishToOrchestratorGateway } from "@era/satellite-kit";
+import {
+  REVENUE_EVENT_TYPES,
+  assertRevenueEventForPublish,
+  departmentFinanceEventsSilenced,
+  publishToOrchestratorGateway,
+} from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
-
-const DAY_DOCUMENT_EVENTS = new Set([
-  "SATELLITE_CLINIC_VISIT_COMPLETED",
-  "SATELLITE_CLINIC_PROCEDURE_COMPLETED",
-  "SATELLITE_CLINIC_LAB_ORDER_COMPLETED",
-  "SATELLITE_CLINIC_WARD_DAY_CHARGE",
-]);
 
 export async function dispatchSatelliteEvent(event: {
   type: string;
@@ -18,11 +16,18 @@ export async function dispatchSatelliteEvent(event: {
 }) {
   const organizationId = requestOrganizationId();
   if (
-    DAY_DOCUMENT_EVENTS.has(event.type) &&
+    REVENUE_EVENT_TYPES.has(event.type) &&
     organizationId &&
     (await departmentFinanceEventsSilenced(organizationId))
   ) {
     return { skipped: true, reason: "day document" };
+  }
+  if (organizationId) {
+    await assertRevenueEventForPublish({
+      organizationId,
+      fromSatelliteKey: "industry_clinic",
+      eventType: event.type,
+    });
   }
   const { correlationId, ...rest } = event;
   return publishToOrchestratorGateway({

@@ -92,6 +92,22 @@ export async function postRoomCharge(
   }
 
   const hotelOrg = await hotelOrganizationId();
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const {
+    checkChannelEnabledLive,
+    SatelliteChannelDisabledError,
+  } = await import("@era/satellite-kit");
+  const retailOrg = requestOrganizationId();
+  const folioOk = await checkChannelEnabledLive({
+    fromOrgId: retailOrg,
+    fromSatelliteKey: "industry_retail",
+    toOrgId: hotelOrg,
+    toSatelliteKey: "industry_hotel_pms",
+    kind: "FOLIO_POST",
+  });
+  if (!folioOk) {
+    throw new SatelliteChannelDisabledError("FOLIO_POST");
+  }
   const base = await pmsBaseUrl(hotelOrg);
   if (!base) throw new Error("Hotel PMS peer URL is not configured");
   const headers: Record<string, string> = {
@@ -115,6 +131,21 @@ export async function postHotelSettlementPending(
   if (!secret) throw new Error("POS_BRIDGE_SECRET is not configured");
   const { requestOrganizationId } = await import("@/lib/request-organization");
   const hotelOrg = await hotelOrganizationId();
+  const {
+    checkChannelEnabledLive,
+    SatelliteChannelDisabledError,
+  } = await import("@era/satellite-kit");
+  const retailOrg = requestOrganizationId();
+  const settlementOk = await checkChannelEnabledLive({
+    fromOrgId: retailOrg,
+    fromSatelliteKey: "industry_retail",
+    toOrgId: hotelOrg,
+    toSatelliteKey: "industry_hotel_pms",
+    kind: "SETTLEMENT",
+  });
+  if (!settlementOk) {
+    throw new SatelliteChannelDisabledError("SETTLEMENT");
+  }
   const base = (await pmsBaseUrl(hotelOrg)) ?? "";
   if (!base) throw new Error("Hotel PMS peer URL is not configured");
   const res = await fetch(`${base}/api/settlement/pending`, {

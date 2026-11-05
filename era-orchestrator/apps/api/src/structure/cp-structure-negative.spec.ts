@@ -4,6 +4,7 @@ import { StructureService } from "./structure.service";
 describe("CP-STRUCTURE negative paths", () => {
   const orgId = "00000000-0000-4000-8000-000000000001";
   const userId = "00000000-0000-4000-8000-0000000000u1";
+  const moduleRef = { get: jest.fn().mockReturnValue(undefined) };
 
   it("assertOwner rejects when access control denies", async () => {
     const access = {
@@ -14,7 +15,11 @@ describe("CP-STRUCTURE negative paths", () => {
         ),
     };
     const prisma = {};
-    const svc = new StructureService(prisma as never, access as never);
+    const svc = new StructureService(
+      prisma as never,
+      access as never,
+      moduleRef as never,
+    );
     await expect(svc.assertOwner(userId, orgId)).rejects.toBeInstanceOf(
       ForbiddenException,
     );
@@ -26,9 +31,11 @@ describe("CP-STRUCTURE negative paths", () => {
         findUnique: jest.fn().mockResolvedValue(null),
       },
     };
-    const svc = new StructureService(prisma as never, {
-      assertOwnerForBilling: jest.fn(),
-    } as never);
+    const svc = new StructureService(
+      prisma as never,
+      { assertOwnerForBilling: jest.fn() } as never,
+      moduleRef as never,
+    );
     await expect(svc.assertMember(userId, orgId)).rejects.toBeInstanceOf(
       ForbiddenException,
     );
@@ -43,7 +50,11 @@ describe("CP-STRUCTURE negative paths", () => {
         findFirst: jest.fn().mockResolvedValue(null),
       },
     };
-    const svc = new StructureService(prisma as never, access as never);
+    const svc = new StructureService(
+      prisma as never,
+      access as never,
+      moduleRef as never,
+    );
     await expect(
       svc.updateOutlet(userId, orgId, "00000000-0000-4000-8000-0000000000o1", {
         name: "x",

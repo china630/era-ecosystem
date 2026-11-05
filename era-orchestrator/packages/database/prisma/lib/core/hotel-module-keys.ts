@@ -10,6 +10,7 @@ export const HOTEL_PRICING_MODULE_KEYS = [
   "hotel_spa_scheduling",
   "hotel_distribution",
   "hotel_agency_portal",
+  "hotel_passport_scan",
   "hotel_guest_experience",
   "hotel_banquets",
   "hotel_medical_sanatorium",

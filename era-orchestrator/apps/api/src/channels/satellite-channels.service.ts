@@ -12,6 +12,7 @@ import {
   CHANNEL_FINANCE_KEY,
   CHANNEL_HOTEL_BRIDGE_FROM,
   CHANNEL_HOTEL_KEY,
+  CHANNEL_OPS_HANDOFF_PAIRS,
 } from "./satellite-channels.constants";
 
 export type ChannelView = {
@@ -128,6 +129,33 @@ export class SatelliteChannelsService {
     }
   }
 
+  /**
+   * SuperAdmin one-shot / lab backfill: sync every org; never throws per-org.
+   */
+  async syncPlatformChannelsAll(): Promise<{
+    ok: number;
+    failed: Array<{ organizationId: string; error: string }>;
+  }> {
+    const orgs = await this.prisma.organization.findMany({
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
+    let ok = 0;
+    const failed: Array<{ organizationId: string; error: string }> = [];
+    for (const { id } of orgs) {
+      try {
+        await this.syncPlatformChannels(id);
+        ok += 1;
+      } catch (err) {
+        failed.push({
+          organizationId: id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    return { ok, failed };
+  }
+
   private async syncPlatformChannelsForOrg(organizationId: string): Promise<void> {
     const desired = await this.computeDesiredPlatformEdges(organizationId);
     const desiredKeys = new Set(desired.map((e) => this.edgeKey(e)));
@@ -241,16 +269,17 @@ export class SatelliteChannelsService {
       }
     }
 
-    if (
+    const routeRevenueToParent =
       org.operatingMode === "DEPARTMENT" &&
-      org.parentOrgId &&
-      org.revenueRouting === "PARENT"
-    ) {
+      !!org.parentOrgId &&
+      org.revenueRouting === "PARENT";
+
+    if (routeRevenueToParent) {
       const parentFinance =
         await this.prisma.organizationSatelliteEntitlement.findUnique({
           where: {
             organizationId_satelliteKey: {
-              organizationId: org.parentOrgId,
+              organizationId: org.parentOrgId!,
               satelliteKey: CHANNEL_FINANCE_KEY,
             },
           },
@@ -262,12 +291,36 @@ export class SatelliteChannelsService {
           out.push({
             fromOrgId: organizationId,
             fromSatelliteKey: fromKey,
-            toOrgId: org.parentOrgId,
+            toOrgId: org.parentOrgId!,
             toSatelliteKey: CHANNEL_FINANCE_KEY,
             kind: SatelliteChannelKind.REVENUE_EVENT,
           });
         }
       }
+    } else if (keys.has(CHANNEL_FINANCE_KEY)) {
+      for (const fromKey of keys) {
+        if (fromKey === CHANNEL_FINANCE_KEY) continue;
+        out.push({
+          fromOrgId: organizationId,
+          fromSatelliteKey: fromKey,
+          toOrgId: organizationId,
+          toSatelliteKey: CHANNEL_FINANCE_KEY,
+          kind: SatelliteChannelKind.REVENUE_EVENT,
+        });
+      }
+    }
+
+    for (const pair of CHANNEL_OPS_HANDOFF_PAIRS) {
+      if (!keys.has(pair.fromSatelliteKey) || !keys.has(pair.toSatelliteKey)) {
+        continue;
+      }
+      out.push({
+        fromOrgId: organizationId,
+        fromSatelliteKey: pair.fromSatelliteKey,
+        toOrgId: organizationId,
+        toSatelliteKey: pair.toSatelliteKey,
+        kind: SatelliteChannelKind.OPS_HANDOFF,
+      });
     }
 
     return out;

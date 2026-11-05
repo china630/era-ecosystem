@@ -5,6 +5,7 @@ const SATELLITE_KEY_LABELS: Record<string, string> = {
   industry_clinic: "Clinic",
   industry_fnb_pos: "F&B",
   industry_retail: "Retail",
+  industry_auto_service: "Auto",
   industry_auto: "Auto",
   industry_crm: "CRM",
   industry_wholesale: "Wholesale",
@@ -21,6 +22,7 @@ const CHANNEL_KIND_LABELS: Record<string, string> = {
   SETTLEMENT: "Settlement",
   REVENUE_EVENT: "Revenue event",
   READ_STATUS: "Read status",
+  OPS_HANDOFF: "Ops handoff",
 };
 
 const MANAGED_BY_LABELS: Record<string, string> = {

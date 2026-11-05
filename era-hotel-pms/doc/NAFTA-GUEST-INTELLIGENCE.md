@@ -21,6 +21,10 @@ Suspected duplicates are grouped by:
 
 - Same normalized phone (+994…)
 - Same `globalPersonId` on multiple `Guest` rows (data quality — should be one guest row per person per deployment)
+- Same passport / FIN / email / document+citizenship
+- Same name + birth date (case and hyphens folded), surname + birth, surname + phone tail
+- Similar name (one-letter slip) or Latin metaphone on the same birth date — confirm-only; `Jean-Paul` ≠ `Jean-Pierre`
+- A shared passport with different names is flagged on the group; never auto-merged
 
 **Merge workflow (guest dedup screen):**
 

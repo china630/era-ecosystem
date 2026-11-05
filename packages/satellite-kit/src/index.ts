@@ -324,7 +324,11 @@ export {
   isChannelEnabled,
   assertChannelEnabled,
   checkChannelEnabledLive,
+  assertRevenueEventChannelEnabled,
+  assertRevenueEventForPublish,
+  REVENUE_EVENT_TYPES,
   SatelliteChannelDisabledError,
+  CHANNEL_FINANCE_SATELLITE_KEY,
   type SatelliteChannelKind,
   type SatelliteChannelSnapshotRow,
 } from "./integration/satellite-channels";

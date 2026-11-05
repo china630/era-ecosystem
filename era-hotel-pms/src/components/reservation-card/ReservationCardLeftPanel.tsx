@@ -804,31 +804,29 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           ) : null}
           {splitOpen && props.onSplitStay && !props.isCreate ? (
             <div className="space-y-2 rounded-md border border-[#D5DADF] p-2">
-              <div className="grid grid-cols-2 items-end gap-2">
-                <DatePicker
-                  label={tc('date')}
-                  fluid
-                  value={splitFrom}
-                  onChange={setSplitFrom}
-                  placeholder={tc('datePlaceholder')}
-                  openCalendarLabel={tc('openCalendar')}
-                  disabled={disabled || props.splitBusy}
-                />
-                <button
-                  type="button"
-                  className={SECONDARY_BUTTON_CLASS}
-                  disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
-                  onClick={() =>
-                    props.onSplitStay?.({
-                      fromDate: splitFrom,
-                      roomTypeId: splitTypeId,
-                      roomId: splitRoomId || null,
-                    })
-                  }
-                >
-                  {t('splitStay')}
-                </button>
-              </div>
+              <DatePicker
+                label={tc('date')}
+                fluid
+                value={splitFrom}
+                onChange={setSplitFrom}
+                placeholder={tc('datePlaceholder')}
+                openCalendarLabel={tc('openCalendar')}
+                disabled={disabled || props.splitBusy}
+              />
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={disabled || props.splitBusy || !splitFrom || !splitTypeId}
+                onClick={() =>
+                  props.onSplitStay?.({
+                    fromDate: splitFrom,
+                    roomTypeId: splitTypeId,
+                    roomId: splitRoomId || null,
+                  })
+                }
+              >
+                {t('splitStay')}
+              </button>
               <FieldRow cols={2}>
               <CatalogField
                 kind="ENTITY_REF"

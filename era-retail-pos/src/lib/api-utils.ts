@@ -36,6 +36,18 @@ export function handleRouteError(err: unknown) {
   if (err instanceof IndustryModuleInactiveError) {
     return jsonError(err.message, 403);
   }
+  if (err instanceof Error && err.name === "SatelliteChannelDisabledError") {
+    return NextResponse.json(
+      {
+        error: err.message,
+        code:
+          "code" in err && typeof (err as { code?: string }).code === "string"
+            ? (err as { code: string }).code
+            : "SATELLITE_CHANNEL_DISABLED",
+      },
+      { status: 403 },
+    );
+  }
   if (err instanceof Error && (err.name === "UnauthorizedError" || err.name === "PermissionDeniedError")) {
     return jsonError(err.message, err.name === "UnauthorizedError" ? 401 : 403);
   }

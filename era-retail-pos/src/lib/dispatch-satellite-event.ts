@@ -1,5 +1,10 @@
 import { randomUUID } from "crypto";
-import { departmentFinanceEventsSilenced, publishToOrchestratorGateway } from "@era/satellite-kit";
+import {
+  REVENUE_EVENT_TYPES,
+  assertRevenueEventForPublish,
+  departmentFinanceEventsSilenced,
+  publishToOrchestratorGateway,
+} from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
 
 export async function dispatchSatelliteEvent(event: {
@@ -8,11 +13,18 @@ export async function dispatchSatelliteEvent(event: {
 }) {
   const organizationId = requestOrganizationId();
   if (
-    event.type === "SATELLITE_RETAIL_SALE_COMPLETED" &&
+    REVENUE_EVENT_TYPES.has(event.type) &&
     organizationId &&
     (await departmentFinanceEventsSilenced(organizationId))
   ) {
     return { skipped: true, reason: "day document" };
+  }
+  if (organizationId) {
+    await assertRevenueEventForPublish({
+      organizationId,
+      fromSatelliteKey: "industry_retail",
+      eventType: event.type,
+    });
   }
   return publishToOrchestratorGateway({
     ...event,

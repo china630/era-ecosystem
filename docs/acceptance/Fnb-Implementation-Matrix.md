@@ -17,19 +17,21 @@
 
 | AC ID | Intent (PRD) | Scaffold | Pilot-ready | Proof | Notes / COVERAGE |
 |-------|--------------|----------|-------------|-------|------------------|
-| AC-FNB-POS | POS floor + courses / KDS | ✅ | [ ] | `__tests__/fnb-pos-negative.spec.ts` | Negative: module gate 403; CLOSED ticket; hotel-folio pay block |
+| AC-FNB-POS | POS floor + courses / KDS | ✅ | [ ] | `__tests__/fnb-pos-negative.spec.ts` | Negative: module gate 403; CLOSED ticket; hotel-folio pay block. **2026-11-06** LOCAL_CASHIER / Z-close assert `REVENUE_EVENT` before mutate (Platform AC-CP-CHANNELS second-pass) — does **not** reopen Scaffold ✅ |
 | AC-FNB-INV | Recipe depletion / stock events | ✅ | [ ] | `__tests__/fnb-inv-negative.spec.ts` | Negative: stock off unless enabled; VOID lines excluded |
-| AC-FNB-LABOR | Labor roster / PIN clock | ✅ | [ ] | `__tests__/fnb-labor-negative.spec.ts` | Negative: module gate; invalid PIN hash |
+| AC-FNB-LABOR | Labor roster / PIN clock | ✅ | [ ] | `__tests__/fnb-labor-negative.spec.ts` | Negative: module gate; invalid PIN hash. **FNB-CEDVEL-01** weekly cədvəl is a separate SCREEN/API capability — does **not** reopen this Scaffold ✅ |
+| AC-FNB-CEDVEL | Weekly staff cədvəl (WEEK_PERSON) | 🟡 | [ ] | ADR hotel-department-duty-schedules; `/admin/cedvel`; COVERAGE FNB-CEDVEL-01; `fnb-rbac` `/admin/cedvel` → SCREEN_ADMIN_ROSTER; `__tests__/fnb-cedvel-catalog.spec.ts`; UAT-SMOKE FNB-CEDVEL-01 | **Out of BE rollup.** Click-cell UX + copy week; UAT open — max 🟡; PIN StaffRoster unchanged |
 | AC-FNB-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `fnb-rbac` + page inventory + role-name grep + staff-provision unknown; ADR fnb-domain-permissions-and-rbac; `/admin/access` clone | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 | AC-FNB-AUD | Mutation audit Layer A (HTTP belt) + Layer B enrich | 🟡 | [ ] | ADR era-mutation-audit-standard; FNB-AUD-01; kit belt + `/admin/audit`; CI fail-closed; Wave B PAY/DISCOUNT/ROOM_CHARGE/DEFER_HUB + PosShift; Wave E compound `(organizationId, createdAt)` | **Out of Scaffold BE rollup.** Belt + SCREEN + Layer B money/shift + Wave E index landed; UAT open — max 🟡; hash-chain deferred. Does not darken BE ✅. |
 
 **Topology note (out of BE rollup):** F&B tenant roots carry `organizationId` + kit filter (CP-TENANT-01 API). Wave 3: login/SSO JWT org + `enterSatelliteTenant` + ops `requestOrganizationId()`. SHARED F&B pool still not an AC this edition — see Fnb-Acceptance-System.
 
-**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-FNB-RBAC) → **✅**.  
+**Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-FNB-RBAC / AC-FNB-AUD / AC-FNB-CEDVEL) → **✅**.  
 Do not call this table «product readiness».
 
 AC-FNB-RBAC is 🟡 (Variant A shipped; field UAT open) and stays **out of Scaffold BE rollup**.
 AC-FNB-AUD is 🟡 (belt + `/admin/audit` SCREEN + Wave B money/shift Layer B + Wave E compound index; UAT open; hash-chain deferred) and stays **out of Scaffold BE rollup**.
+AC-FNB-CEDVEL is 🟡 (WEEK_PERSON `/admin/cedvel`; UAT open) and stays **out of Scaffold BE rollup**.
 
 ### Residual register
 

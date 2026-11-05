@@ -45,6 +45,7 @@ export const HOTEL_CANONICAL_PERMISSIONS = [
   "api:folio.void",
   "api:rooms.status",
   "api:housekeeping.manage",
+  "api:duty_schedules.manage",
   "api:medical.manage",
   "api:channel.manage",
   "api:night_audit.run",
@@ -58,6 +59,7 @@ export const HOTEL_CANONICAL_PERMISSIONS = [
   "screen:home",
   "screen:fo",
   "screen:hk",
+  "screen:schedules",
   "screen:medical",
   "screen:distribution",
   "screen:night_audit",
@@ -126,6 +128,7 @@ export function screensImpliedByCanonKeys(keys: readonly string[]): string[] {
   if (have.has("api:housekeeping.manage") || have.has("api:rooms.status")) {
     add("screen:hk");
   }
+  if (have.has("api:duty_schedules.manage")) add("screen:schedules");
   if (have.has("api:medical.manage")) add("screen:medical");
   if (have.has("api:channel.manage")) add("screen:distribution");
   if (have.has("api:night_audit.run") || have.has("api:reports.read")) {

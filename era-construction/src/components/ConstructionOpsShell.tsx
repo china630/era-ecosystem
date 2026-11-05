@@ -35,6 +35,7 @@ export default function ConstructionOpsShell({ children }: { children: React.Rea
         permission: P.SCREEN_MATERIAL_REQUISITIONS,
       },
       { href: "/admin/settings", label: t("settings"), icon: Settings, permission: P.SCREEN_ADMIN_SETTINGS },
+      { href: "/admin/links", label: t("links"), icon: Settings, permission: P.SCREEN_ADMIN_SETTINGS },
       {
         href: "/admin/access",
         label: t("access"),

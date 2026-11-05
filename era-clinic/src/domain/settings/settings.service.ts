@@ -72,6 +72,7 @@ export async function getClinicSettings() {
     lunchEndHour: tenant.lunchEndHour,
     closedWeekdays: tenant.closedWeekdays ?? [0],
     saturdayEndHour: tenant.saturdayEndHour ?? 13,
+    shortenedDayStartHour: tenant.shortenedDayStartHour ?? tenant.dayStartHour ?? 9,
     shortenedDayEndHour: tenant.shortenedDayEndHour ?? 13,
     bathDayModes: parseBathDayModes(tenant.bathDayModesJson),
     defaultBathMode: tenant.defaultBathMode?.trim() || "3",
@@ -162,6 +163,7 @@ export async function updateClinicSettings(input: {
   lunchEndHour?: number;
   closedWeekdays?: number[];
   saturdayEndHour?: number;
+  shortenedDayStartHour?: number;
   shortenedDayEndHour?: number;
   bathDayModes?: BathModeDef[];
   defaultBathMode?: string;
@@ -251,6 +253,7 @@ export async function updateClinicSettings(input: {
   const lunchEndHour = clampHour(input.lunchEndHour, 14);
   const closedWeekdays = clampWeekdays(input.closedWeekdays);
   const saturdayEndHour = clampHour(input.saturdayEndHour, 13);
+  const shortenedDayStartHour = clampHour(input.shortenedDayStartHour, 9);
   const shortenedDayEndHour = clampHour(input.shortenedDayEndHour, 13);
   const bathDayModesJson =
     input.bathDayModes != null ? JSON.stringify(parseBathDayModes(input.bathDayModes)) : undefined;
@@ -283,6 +286,7 @@ export async function updateClinicSettings(input: {
       lunchEndHour: lunchEndHour ?? 14,
       closedWeekdays: closedWeekdays ?? [0],
       saturdayEndHour: saturdayEndHour ?? 13,
+      shortenedDayStartHour: shortenedDayStartHour ?? 9,
       shortenedDayEndHour: shortenedDayEndHour ?? 13,
       ...(bathDayModesJson != null ? { bathDayModesJson } : {}),
       ...(defaultBathMode != null ? { defaultBathMode } : {}),
@@ -320,6 +324,7 @@ export async function updateClinicSettings(input: {
       ...(lunchEndHour != null ? { lunchEndHour } : {}),
       ...(closedWeekdays != null ? { closedWeekdays } : {}),
       ...(saturdayEndHour != null ? { saturdayEndHour } : {}),
+      ...(shortenedDayStartHour != null ? { shortenedDayStartHour } : {}),
       ...(shortenedDayEndHour != null ? { shortenedDayEndHour } : {}),
       ...(bathDayModesJson != null ? { bathDayModesJson } : {}),
       ...(defaultBathMode != null ? { defaultBathMode } : {}),

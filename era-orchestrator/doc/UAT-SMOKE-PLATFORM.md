@@ -211,12 +211,25 @@ Between Wave 7 hop and field host apply:
 Curated models: role → user → guest. Host compose/restore still **pending**.
 Host agent `scripts/era-placement-agent.mjs` polls PENDING/PROVISION and **logs** apply steps only (no live dump/compose).
 
+## CP-CHANNELS harden (2026-11-05)
+
+Lab evidence artifact: `reports/platform-channels-harden-signoff.md`. Stay SCREEN / AC 🟡 until human UI walk signed.
+
+1. SuperAdmin `platform…/orgs/{id}` → Channels → **Resync** — FOLIO/SETTLEMENT/REVENUE rows match entitlements (no mode re-save).
+2. On hotel or finance `/admin/links`, disable inbound FOLIO/SETTLEMENT/REVENUE → matching guest/money publish from retail/clinic/F&B fails closed (403 / channel error). Retail Z-close / return / hub settle-confirm and F&B LOCAL_CASHIER pay / Z-close must refuse **before** mutate when REVENUE off.
+3. Connect `finance_core` on STANDALONE org → self `REVENUE_EVENT` appears after connect/billing notify (or Resync).
+4. Suspend industry sat (structure) → Resync → PLATFORM guest edges from that sat leave desired set; ACCEPTOR rows stay.
+
+Batch lab: `POST /v1/admin/channels/resync-all` (SuperAdmin) once after deploy.
+
 ## UI paths (SCREEN — no Demo/TE sign-off yet)
 
 Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readiness UI/Demo ✅ from this list alone.
 
 | Surface | Path | Check |
 |---------|------|-------|
+| Control Home structure strip (CP-HOME-01) | `/workspace` | Platform apps includes Structure; summary shows department/system/outlet counts when tree loads; **Manage structure** opens `/workspace/structure`. **Open** — lab [`reports/platform-structure-owner-ux-signoff.md`](../../reports/platform-structure-owner-ux-signoff.md); not Demo/SHOW. |
+| Structure owner UX (CP-STRUCTURE-01) | `/workspace/structure` | Hierarchical root + departments (**Switch here**); systems for active org; CatalogField sat (no free-text key); Add/Edit/Suspend/Delete outlet; Suspend/Resume sat; **Open in {system}** SSO. Dept banner when not root. Billing-only create toast (no CP→sat materialize). **Open** — same lab signoff; not Demo/SHOW. |
 | Org profile (CP-ORG-PROFILE-01) | `/workspace/organization` | Edit trade name, logo URL, multi phone/email (primary per kind), legal address; Save; Reload. DEPARTMENT banner when operatingMode=DEPARTMENT. After Super-admin Sync, hotel/clinic/finance print prefer `orgProfile` cache; Finance legal fields RO + reject dual-edit; hotel/clinic header branding locks when CP present; primary bank → orch `bankLine`; F&B/Retail pay returns `printChrome` (org + outlet overlay). **Open** — not Demo sign-off. |
 | Workforce employments | `/workspace/workforce/employments` | ⋯ Login & access: tick/untick Hotel/Clinic/F&B (incl. hire-default), Save; `emp-{staffCode}` + copy org ID + Open login. **Clock:** default hireDate / personnel-order effectiveDate = **Asia/Baku** (`todayBakuYmd`), not UTC slice. |
 | Workforce attendance | `/workspace/workforce/attendance` | Punch list **occurredAt** labels = Asia/Baku via `bakuDateTimeDisplay` (browser TZ ignored). |
@@ -231,3 +244,4 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 | Landing | `/super-admin/landing` | list |
 | Owner billing | `/settings/subscription`, `/settings/invoices`, `/settings/orders` | pages load for owner |
 | Placement hop | `/super-admin/orgs/{id}/placement` | create SHARED→DEDICATED; advance lab states; create SHARED→ONPREM shows REJECTED (Wave 7 lab) |
+| Integration channels | `platform…/orgs/{id}` Channels + sat `/admin/links` | Resync; inbound disable; shared `SatelliteAdminLinksPage`. **Open** — harden lab partial; not Demo/SHIPPED |

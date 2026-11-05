@@ -1,7 +1,11 @@
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dispatchFbShiftClosed } from "@/lib/fb-finance-events";
+import {
+  assertFbRevenueChannel,
+  dispatchFbShiftClosed,
+} from "@/lib/fb-finance-events";
+import { SATELLITE_FB_SHIFT_CLOSED } from "@era/contracts";
 import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 import { getSatelliteSession } from "@/lib/session";
@@ -70,6 +74,9 @@ export async function POST(request: Request) {
       closedAt,
       countedCash: body.countedCash,
     });
+
+    // Fail-closed before Z-close: post-close void dispatch cannot reopen the shift.
+    await assertFbRevenueChannel(SATELLITE_FB_SHIFT_CLOSED);
 
     const closed = await prisma.posShift.update({
       where: { id: shift.id },

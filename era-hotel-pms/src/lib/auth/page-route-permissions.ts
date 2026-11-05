@@ -26,6 +26,9 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname === "/hk" || pathname.startsWith("/hk/")) {
     return [PERMISSIONS.SCREEN_HK];
   }
+  if (pathname === "/schedules" || pathname.startsWith("/schedules/")) {
+    return [PERMISSIONS.SCREEN_SCHEDULES];
+  }
   if (pathname.startsWith("/medical")) {
     return [PERMISSIONS.SCREEN_MEDICAL];
   }
@@ -78,6 +81,10 @@ export function routePermissions(pathname: string): Permission[] | null {
   // Mutation audit journal — reports grant, not blanket SCREEN_ADMIN (ADR era-mutation-audit-standard).
   if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) {
     return [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.REPORTS_READ];
+  }
+  // CP-CHANNELS vitrine — same SETTINGS class as AppSidebar / integration, not SCREEN_ADMIN.
+  if (pathname === "/admin/links" || pathname.startsWith("/admin/links/")) {
+    return [PERMISSIONS.SCREEN_SETTINGS];
   }
   if (pathname.startsWith("/admin")) {
     return [PERMISSIONS.SCREEN_ADMIN];

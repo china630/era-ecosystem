@@ -313,6 +313,7 @@ export async function createGuestDocument(
     isPrimary?: boolean;
     issuedAt?: Date;
     expiresAt?: Date;
+    mrzNameField?: string | null;
   },
 ) {
   return prisma.guestDocument.create({ data: { guestId, ...input } });
@@ -330,6 +331,7 @@ export async function updateGuestDocument(
     isPrimary: boolean;
     issuedAt: Date | null;
     expiresAt: Date | null;
+    mrzNameField: string | null;
   }>,
 ) {
   return prisma.guestDocument.update({ where: { id }, data: input });

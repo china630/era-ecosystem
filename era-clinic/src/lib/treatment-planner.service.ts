@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { listClinicDays, nextWorkingYmd } from "@/domain/planning/clinic-day";
+import { loadPeakRulesForRange } from "@/domain/planning/peak-rules.service";
+import { mapProcedureWindows } from "@/domain/planning/procedure-day-window";
 import {
   addBakuDays,
   bakuDateKey,
@@ -14,7 +16,6 @@ import {
   alignDurationToSlotMinutes,
   getSchedulingSettings,
   getTenantWorkHours,
-  resolveEffectiveDayEndHour,
   type TenantWorkHours,
 } from "@/domain/settings/scheduling-settings";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
@@ -46,6 +47,7 @@ type PlannedSlot = {
   beforeLunchAllowed: boolean;
   minGapMinutes: number;
   sequenceIndex: number;
+  extendedStartHour?: number | null;
   extendedEndHour?: number | null;
   dayStartHour?: number | null;
   dayEndHour?: number | null;
@@ -300,6 +302,7 @@ async function expandProposedSlots(instanceId: string): Promise<{
           pt.patientRestMinutes ?? 15,
         ),
         sequenceIndex: seq++,
+        extendedStartHour: pt.extendedStartHour,
         extendedEndHour: pt.extendedEndHour,
         dayStartHour: pt.dayStartHour,
         dayEndHour: pt.dayEndHour,
@@ -488,6 +491,11 @@ export async function placeConfirmedProcedures(
     if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
   }
   const clinicDays = await listClinicDays(today, addBakuDays(horizonEndYmd, 7));
+  const peakRules = await loadPeakRulesForRange(
+    today,
+    addBakuDays(horizonEndYmd, 7),
+    orders[0]!.organizationId,
+  );
   const closedYmds = new Set(clinicDays.filter((day) => !day.working).map((day) => day.ymd));
   if (!opts?.pinStrict) {
     for (const [orderId, pin] of Object.entries(pinYmdByOrderId)) {
@@ -507,7 +515,11 @@ export async function placeConfirmedProcedures(
 
   const untyped: PlacementFailure[] = [];
   const scanOrders: Array<
-    ScanOrder & { resourceCodeList: string[]; extendedEndHour: number | null }
+    ScanOrder & {
+      resourceCodeList: string[];
+      extendedStartHour: number | null;
+      extendedEndHour: number | null;
+    }
   > = [];
   const resourceCodes = new Set<string>();
   for (const order of orders) {
@@ -582,7 +594,8 @@ export async function placeConfirmedProcedures(
       preferredStaffId: order.preferredPractitionerId ?? null,
       preferredStaffName: null,
       resourceCodeList: [...codes].sort(),
-      extendedEndHour: pt.extendedEndHour,
+      extendedStartHour: pt.extendedStartHour ?? null,
+      extendedEndHour: pt.extendedEndHour ?? null,
       pinYmd: pinYmdByOrderId[order.id],
     });
   }
@@ -611,10 +624,37 @@ export async function placeConfirmedProcedures(
       capacity: row.capacity,
       role: order.physicalRole,
     }));
-    order.dayEndHour = resolveEffectiveDayEndHour(order.typeHours, {
-      procedureExtendedEndHour: order.extendedEndHour,
-      resourceExtendedEndHour: resourceByCode.get(order.resourceCodeList[0] ?? "")?.extendedEndHour,
+    const resource = resourceByCode.get(order.resourceCodeList[0] ?? "");
+    const windows = mapProcedureWindows({
+      days: clinicDays,
+      peaks: peakRules,
+      procedure: {
+        extendedStartHour: order.extendedStartHour,
+        extendedEndHour: order.extendedEndHour,
+      },
+      resource: resource
+        ? {
+            extendedStartHour: resource.extendedStartHour,
+            extendedEndHour: resource.extendedEndHour,
+          }
+        : null,
+      peakModeEnabled: workHours.peakModeEnabled,
     });
+    const dayWindowByYmd = new Map<string, { startHour: number; endHour: number }>();
+    let maxEnd = order.typeHours.dayEndHour;
+    let minStart = order.typeHours.dayStartHour;
+    for (const [ymd, win] of windows) {
+      if (win.closed) {
+        dayWindowByYmd.set(ymd, { startHour: 0, endHour: 0 });
+        continue;
+      }
+      dayWindowByYmd.set(ymd, { startHour: win.startHour, endHour: win.endHour });
+      maxEnd = Math.max(maxEnd, win.endHour);
+      minStart = Math.min(minStart, win.startHour);
+    }
+    order.dayWindowByYmd = dayWindowByYmd;
+    order.dayEndHour = maxEnd;
+    void minStart;
   }
 
   const typeIds = [...new Set(scanOrders.map((order) => order.procedureTypeId))];

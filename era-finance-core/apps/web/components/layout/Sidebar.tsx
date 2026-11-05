@@ -1358,6 +1358,20 @@ export function MainSidebar({
                       nested
                       onNavClick={onNavClick}
                     />
+                    {perms.canAccessBilling ||
+                    perms.can(CP_PERMISSION.API_BILLING_MANAGE) ? (
+                      <SideNavItem
+                        href="/admin/links"
+                        label={t("nav.integrationLinks")}
+                        isActive={
+                          pathname === "/admin/links" ||
+                          pathname.startsWith("/admin/links/")
+                        }
+                        icon={Link2}
+                        nested
+                        onNavClick={onNavClick}
+                      />
+                    ) : null}
                   </>
                 )}
                 {perms.canAccessBilling ? (

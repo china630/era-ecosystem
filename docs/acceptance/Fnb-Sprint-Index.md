@@ -28,9 +28,13 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-BUFFET-COST | Buffet cost attribution (HYBRID / residual) + staff overlap + management covers | [ ] | Waves 1–6 + Phase A–D + chef-ready + WP0–WP8 + second-pass + tail API/SCREEN; punchlist open/unsigned; C3 won't-do; C8 = future RBAC; not sellable |
 | S-OUTLET | Multi-outlet create + caps + Elektra gate | [~] | FNB-09 / FB-OUTLET-01; staging RESTAURANT→NAFTANI (rename, data kept); kill-script rename path; UAT open — not SHIPPED |
 | S-AUD | Mutation audit Layer A belt (ecosystem standard) | [~] | FNB-AUD-01 / AC-FNB-AUD 🟡; Wave B PAY/DISCOUNT/ROOM_CHARGE/DEFER_HUB + PosShift; Wave E compound `(organizationId, createdAt)` 2026-10-29; hash-chain deferred; UAT open — not SHIPPED; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
+| S-CEDVEL | Weekly staff cədvəl (WEEK_PERSON) | [~] | FNB-CEDVEL-01 / AC-FNB-CEDVEL 🟡; `/admin/cedvel`; PIN StaffRoster separate; UAT open — not SHIPPED/SHOW; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 
+**2026-11-05:** FNB-CEDVEL-01 weekly cədvəl closeout — COVERAGE API/SCREEN; IM AC-FNB-CEDVEL 🟡 out of BE rollup; PRM UI SCREEN 🟡 not SHOW; Gate/BE/Demo/Pilot/Edition/Sell unchanged; `fnb.yaml` `mvp` / `pilot_ready: false` untouched. Second-pass RBAC/binding harden — same statuses. `era-readiness-matrix` skipped (no consumer API/% flip).
+
+**2026-11-06:** FNB-CEDVEL-01 UX deepen (click-cell, week chrome, copy week) — still SCREEN / AC 🟡 / not SHOW; Gate/Pilot/edition/Sell unchanged; second-pass copy guard — same statuses; `era-readiness-matrix` skipped.
 **2026-10-30:** Buffet Hotel/HR S2S fix — peer-first guest-nights + hub/parent hotel org; HR leadership hub/parent+self; Settings Finance URL only; honesty toasts. Status unchanged API/SCREEN; `S-BUFFET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` `mvp`; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped.
 **2026-10-29:** Buffet UI playbook pass — NavItemGroup sentence-case + collapse; PageHeader.actions; filter gutters; template composition modal; norms hideLabel; Maya KPI always; Settings integration URLs (Finance/Hotel/Orch). Status unchanged API/SCREEN; `S-BUFFET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` `mvp`; **no** Demo ✅ / SHOW / SHIPPED. `era-readiness-matrix` skipped.
 **2026-10-29:** WP0–WP8 tail closeout — Spawn-free AZ/RU; template modal kind; select-outlet Nöqtə; kill rename-if-no-NAFTANI; staging RESTAURANT→NAFTANI. COVERAGE/IM/PRM status unchanged API/SCREEN; `S-BUFFET`/`S-OUTLET` [~] / `S-BUFFET-COST` `[ ]`; `fnb.yaml` `mvp` untouched; **no** Demo ✅ / SHOW / SHIPPED / Scaffold ✅. Droplet UI still needs image deploy. `era-readiness-matrix` skipped.

@@ -56,16 +56,18 @@ export function GuestCardActions({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1.5">
-      <button
-        type="button"
-        className={ICON_BTN}
-        title={t('idReader')}
-        aria-label={t('idReader')}
-        disabled={busy || !onIdReader}
-        onClick={onIdReader}
-      >
-        <ScanLine className="h-4 w-4" />
-      </button>
+      {onIdReader ? (
+        <button
+          type="button"
+          className={ICON_BTN}
+          title={t('idReader')}
+          aria-label={t('idReader')}
+          disabled={busy}
+          onClick={onIdReader}
+        >
+          <ScanLine className="h-4 w-4" />
+        </button>
+      ) : null}
       <button
         type="button"
         className={ICON_BTN}
