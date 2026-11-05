@@ -201,6 +201,8 @@ export async function getResourceDayMatrix(date: Date) {
           manuallyAdjusted: ord?.manuallyAdjusted,
           schedulingMode: ord?.schedulingMode,
           blocked: s.occupied,
+          lunch: s.lunch,
+          outside: "outside" in s ? Boolean((s as { outside?: boolean }).outside) : false,
         };
       }),
     })),

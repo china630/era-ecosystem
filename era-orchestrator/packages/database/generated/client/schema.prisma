@@ -273,6 +273,7 @@ enum SatelliteChannelKind {
   SETTLEMENT
   REVENUE_EVENT
   READ_STATUS
+  OPS_HANDOFF
 }
 
 enum SatelliteChannelManagedBy {

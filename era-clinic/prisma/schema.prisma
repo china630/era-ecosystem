@@ -53,9 +53,11 @@ model Tenant {
   lunchEndHour                   Int                      @default(14) @map("lunch_end_hour")
   /// JS getUTCDay-style weekday numbers closed (0=Sunday). Default Sunday only.
   closedWeekdays                 Int[]                    @default([0]) @map("closed_weekdays")
-  /// Saturday end hour (Asia/Baku), exclusive. Saturday stays a short working day unless it is closed.
+  /// Legacy Saturday end hour. Scheduling treats Saturday as a short day and uses shortenedDay* hours.
   saturdayEndHour                Int                      @default(13) @map("saturday_end_hour")
-  /// Country shortened / mourning-eve end hour (Asia/Baku), exclusive.
+  /// Short day start hour (Asia/Baku), inclusive. Saturday and country shortened days use this.
+  shortenedDayStartHour          Int                      @default(9) @map("shortened_day_start_hour")
+  /// Short day end hour (Asia/Baku), exclusive. Saturday and country shortened days use this.
   shortenedDayEndHour            Int                      @default(13) @map("shortened_day_end_hour")
   /// Bath day modes JSON: [{ code, baths, rest }]. Null uses 2, 3, 5, and alternating.
   bathDayModesJson               String?                  @map("bath_day_modes_json") @db.Text
@@ -532,7 +534,9 @@ model Resource {
   capacity             Int                   @default(1)
   /// MALE / FEMALE cabins refuse the other sex. ANY is shared.
   sexAudience          ResourceSexAudience   @default(ANY) @map("sex_audience")
-  /// When peak mode is on, this resource may run until this hour (exclusive)
+  /// Optional earlier start hour under peak rules (inclusive Asia/Baku).
+  extendedStartHour    Int?                  @map("extended_start_hour")
+  /// Optional later end hour under peak rules (exclusive Asia/Baku).
   extendedEndHour      Int?                  @map("extended_end_hour")
   roomId               String?
   room                 Room?                 @relation(fields: [roomId], references: [id])
@@ -1492,7 +1496,9 @@ model ProcedureType {
   dayStartHour       Int?                       @map("day_start_hour")
   /// Optional exclusive end hour. Null = tenant dayEndHour.
   dayEndHour         Int?                       @map("day_end_hour")
-  /// When peak mode is on, this procedure may run until this hour (exclusive)
+  /// Peak journal / legacy peakMode: optional earlier start hour (inclusive Asia/Baku).
+  extendedStartHour  Int?                       @map("extended_start_hour")
+  /// Peak journal / legacy peakMode: optional later end hour (exclusive Asia/Baku).
   extendedEndHour    Int?                       @map("extended_end_hour")
   /// Sellable Finance Product.sku on the hotel parent catalog
   financeSku         String?                    @map("finance_sku")
@@ -1685,20 +1691,59 @@ model ProcedureDaySeriesMember {
   @@map("procedure_day_series_member")
 }
 
-/// One civil day opened or closed on top of the production calendar.
+enum ClinicDayKind {
+  WORKING
+  SHORT
+  CLOSED
+}
+
+enum PeakDayKind {
+  WORKING
+  SHORT
+}
+
+enum PeakScope {
+  OWN_ONLY
+  EMPTY_DEFAULT
+  CLINIC_WIDE
+}
+
+/// One civil day opened, shortened, or closed on top of the production calendar.
 model ClinicDayOverride {
-  id             String   @id @default(cuid())
+  id             String         @id @default(cuid())
   organizationId String
-  dayYmd         String   @map("day_ymd")
+  dayYmd         String         @map("day_ymd")
+  /// Legacy flag kept in sync with dayKind === CLOSED.
   closed         Boolean
-  endHour        Int?     @map("end_hour")
+  dayKind        ClinicDayKind  @default(WORKING) @map("day_kind")
+  startHour      Int?           @map("start_hour")
+  endHour        Int?           @map("end_hour")
   note           String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
 
   @@unique([organizationId, dayYmd])
   @@index([organizationId])
   @@map("clinic_day_override")
+}
+
+/// Dated peak rule. Does not reseat; does not close or shorten a day.
+model ClinicPeakRule {
+  id             String      @id @default(cuid())
+  organizationId String
+  fromYmd        String      @map("from_ymd")
+  toYmd          String      @map("to_ymd")
+  dayKind        PeakDayKind @map("day_kind")
+  scope          PeakScope
+  startHour      Int?        @map("start_hour")
+  endHour        Int?        @map("end_hour")
+  note           String?
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  @@index([organizationId, fromYmd, toYmd])
+  @@index([organizationId, dayKind])
+  @@map("clinic_peak_rule")
 }
 
 enum LabBlankKind {

@@ -31,6 +31,7 @@ export default function LogisticsOpsShell({ children }: { children: React.ReactN
       { href: "/customs", label: t("customs"), icon: Globe, permission: P.SCREEN_CUSTOMS },
       { href: "/reports/fuel", label: t("fuelReport"), icon: Fuel, permission: P.SCREEN_REPORTS_FUEL },
       { href: "/admin/settings", label: t("settings"), icon: Settings, permission: P.SCREEN_ADMIN_SETTINGS },
+      { href: "/admin/links", label: t("links"), icon: Settings, permission: P.SCREEN_ADMIN_SETTINGS },
       {
         href: "/admin/access",
         label: t("access"),

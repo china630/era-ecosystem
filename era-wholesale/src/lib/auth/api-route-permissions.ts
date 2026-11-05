@@ -27,6 +27,7 @@ export const HANDLER_GATE_EXCEPTIONS: readonly string[] = [
 
 /** Any-of grants per staff API. Unlisted paths deny. */
 export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
+  ["/api/admin/links", [P.SCREEN_ADMIN_SETTINGS]],
   ["/api/admin/**", [P.ACCESS_MANAGE]],
   ["/api/orders", [P.ORDERS]],
   ["/api/orders/*/confirm", [P.ORDERS_CONFIRM]],

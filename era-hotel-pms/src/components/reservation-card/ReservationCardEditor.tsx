@@ -29,6 +29,8 @@ import { CatalogField, FieldTextarea } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
 import GuestCardModal from '@/components/GuestCardModal';
+import { PassportScanModal } from '@/components/guest-card/PassportScanModal';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ReservationCardActions,
   ReservationCardBottomBar,
@@ -71,7 +73,6 @@ import { buildStayFormHtml, type StayPrintKind } from '@/components/reservation-
 import { StayJournal } from '@/components/reservation-card/StayJournal';
 import { openPrintDocument } from '@/lib/print-window';
 import type { StayJournalEntry } from '@/lib/reservation-journal';
-import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   ageYearsFromBirthDate,
@@ -483,6 +484,8 @@ export function ReservationCardEditor({
   const [guestCardOpen, setGuestCardOpen] = useState(false);
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [guestCardOpenIdReader, setGuestCardOpenIdReader] = useState(false);
+  const [passportScanOpen, setPassportScanOpen] = useState(false);
+  const { isPlatformSuperAdmin } = useAuth();
   const [notesAlertOpen, setNotesAlertOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -3441,12 +3444,15 @@ export function ReservationCardEditor({
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
-                  onScanId={(id, index) => {
-                    rememberScanPaxIndex(index ?? null);
-                    setGuestCardId(id);
-                    setGuestCardOpenIdReader(true);
-                    setGuestCardOpen(true);
-                  }}
+                  onScanId={
+                    isPlatformSuperAdmin
+                      ? (id, index) => {
+                          rememberScanPaxIndex(index ?? null);
+                          setGuestCardId(id);
+                          setPassportScanOpen(true);
+                        }
+                      : undefined
+                  }
                   onNewGuest={(index) => {
                     rememberScanPaxIndex(index);
                     setGuestCardId(null);
@@ -3712,6 +3718,38 @@ export function ReservationCardEditor({
         defaultRatePlanId={ratePlanId}
         onClose={() => setAmendOpen(false)}
         onApplied={() => void load()}
+      />
+      <PassportScanModal
+        open={passportScanOpen}
+        currentGuestId={guestCardId}
+        onClose={() => {
+          setPassportScanOpen(false);
+          rememberScanPaxIndex(null);
+        }}
+        onDone={(saved) => {
+          setPassportScanOpen(false);
+          void loadGuests();
+          const target = scanPaxIndexRef.current;
+          rememberScanPaxIndex(null);
+          const guest = {
+            id: saved.id,
+            firstName: saved.firstName,
+            lastName: saved.lastName,
+            birthDate: saved.birthDate,
+          };
+          const opts = {
+            equalMode: partyBillingModeRef.current === 'EQUAL',
+            reservationGuestId: guestIdRef.current,
+          };
+          const currentPax = paxRef.current;
+          const placed =
+            target != null
+              ? placeGuestOnPaxRow(currentPax, target, guest, opts)
+              : { ...attachGuestToPax(currentPax, guest, opts), rebander: false };
+          if (placed.rebander) showWarning(t('guestAgeMismatch'));
+          setGuestId(placed.guestId);
+          applyPaxChange(placed.pax, { persist: true, reservationGuestId: placed.guestId });
+        }}
       />
       <GuestCardModal
         open={guestCardOpen}

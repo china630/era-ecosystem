@@ -31,6 +31,7 @@ export const HANDLER_GATE_EXCEPTIONS: readonly string[] = [
  * on one path list both grants here and assert the method grant in the handler.
  */
 export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
+  ["/api/admin/links", [P.ADMIN_PIPELINE]],
   ["/api/admin/**", [P.ACCESS_MANAGE]],
   ["/api/leads/import", [P.ADMIN_IMPORT]],
   ["/api/leads/import/*", [P.ADMIN_IMPORT]],

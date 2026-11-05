@@ -65,9 +65,12 @@ SatAdmin maintains `ProcedureRotationRule` (`/admin/procedure-rules`, `/api/admi
 
 ### Peak / extended hours
 
-1. Tenant `peakModeEnabled` allows modalities with `ProcedureType.extendedEndHour` (and matching resources) to run past `dayEndHour`.
-2. Seed sets `extendedEndHour=22` for laser / infrared / darsonval / sollyuks (salux) / ultrafonophoresis-class types.
-3. When peak mode is off, effective end hour remains `dayEndHour`.
+1. Working time lives under **Параметры → Рабочее время** (`/admin/working-hours`): Schedule (including lunch), Day calendar, Peak journal.
+2. Saturday is a short day (`shortenedDayStartHour` / `shortenedDayEndHour`). There is no separate Saturday end in the resolver.
+3. Peak journal rows are per day kind (WORKING / SHORT) with scope OWN_ONLY, EMPTY_DEFAULT, or CLINIC_WIDE. Overlapping rows of the same day kind are refused. Peak may only start earlier or end later than the clinic day boundary; it does not close a day or reseat by itself.
+4. `ProcedureType.extendedStartHour` / `extendedEndHour` (and matching resource fields) are card hours for OWN_ONLY / EMPTY_DEFAULT. Empty cards do not extend. Clinic-wide `peakDayEndHour` (legacy 22) is ignored by the window resolver.
+5. Legacy bridge: when `peakModeEnabled` is true and no journal row covers a **working** day, card hours apply as OWN_ONLY. Short days stay on the short boundary unless a SHORT journal row exists.
+6. Resource matrix shares one time axis; cabins outside their bookable window are darkened like lunch. New seating (manual, package `placeConfirmedProcedures`, planner) reads one procedure-day window map per seat call.
 
 ### Labs
 
@@ -78,5 +81,5 @@ SatAdmin maintains `ProcedureRotationRule` (`/admin/procedure-rules`, `/api/admi
 
 - Package instantiate → proposed plan → doctor confirm is the happy path; one-shot auto-place is deprecated.
 - Cabins, rotation, substitution, body part, and extended hours are master data. `planning-rules` import and `prisma/seed-planning-rules.ts` do not rewrite them.
-- UAT: patient card confirm; bulk cancel+replace on sanatorium course; external lab >90d blocked; peak mode in `/admin/settings`.
+- UAT: patient card confirm; bulk cancel+replace on sanatorium course; external lab >90d blocked; peak journal + schedule on `/admin/working-hours` (Settings day chip links there).
 - Coverage: CLI row for doctor-confirm planning (OpsUI doctor/reception + SatAdmin rules).

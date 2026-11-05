@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SATELLITE_RETAIL_SALE_COMPLETED } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { isRetailPreset } from "@/lib/retail-preset";
@@ -67,6 +68,13 @@ export async function POST(request: Request) {
         return jsonOk({ ok: true, waiting: left.length });
       }
     }
+
+    // Fail-closed before PAID — hub settle still emits retail sale to Finance.
+    await assertRevenueEventForPublish({
+      organizationId: body.organizationId,
+      fromSatelliteKey: "industry_retail",
+      eventType: SATELLITE_RETAIL_SALE_COMPLETED,
+    });
 
     const paid = await prisma.receipt.update({
       where: { id: receipt.id },

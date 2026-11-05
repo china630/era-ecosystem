@@ -43,6 +43,7 @@ export default function RetailOpsShell({ children }: { children: React.ReactNode
       { href: "/stock-check", label: t("stockCheck"), icon: Package, permission: P.SCREEN_STOCK_CHECK },
       { href: "/admin/replenishment", label: t("replenishment"), icon: Package, permission: P.ADMIN_IMPORT },
       { href: "/admin/catalog", label: t("catalog"), icon: ClipboardList, permission: P.HOTEL_REVENUE_CODES },
+      { href: "/admin/links", label: t("links"), icon: ClipboardList, permission: P.ADMIN_SETTINGS },
       { href: "/admin/import", label: t("import"), icon: Upload, permission: P.ADMIN_IMPORT },
       { href: "/settings", label: t("settings"), icon: Settings, permission: P.SCREEN_SETTINGS },
       {

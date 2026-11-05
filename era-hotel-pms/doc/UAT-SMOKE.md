@@ -51,6 +51,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 1. `/bookings/new` — create guest via **+ New guest**; enter FIN/passport in lookup fields → MDM link → verify guest row has `globalPersonId` and **no** local FIN/passport columns (DB).
 2. `/guests` — open guest card; left panel shows **Ad / Ata adı / Soyad** (`firstName` / `middleName` / `lastName`); save composes `fullName` with patronymic; **Sex** catalog (M/F) writes `Guest.sex`; nationality Select stores ISO code (e.g. `KZ`, not collapsed to `OTHER` on MDM wire).
 3. Guest card Details tab shows **masked** FIN/passport from MDM ops-profile; parent names (`parentFatherName` / `parentMotherName`) separate from patronymic; edit uses transient lookup only.
+3a. **Passport MRZ (platform super-admin only):** guest-card scanner icon (and stay Guests ⋮ Scan) opens crop → OCR → confirm. Staff without super-admin do not see the button. Shared passport number with a different name attaches that card and does **not** overwrite its name. Not SHIPPED until this step is signed (`HOT-MRZ-01` / `AC-HOT-MRZ`).
 4. Re-save guest with empty middle name — MDM **does not** clear existing patronymic (fill-not-clear).
 5. Create 3-night booking (room type + rate + dates).
 6. Confirm reservation. Arrival day on the rack: guest name as arrival. Other days: rack tile is Reserved without the name; the room-plan bar still shows the stay.
@@ -346,7 +347,7 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 4. **Meal gate:** BB guest zero-post ticket → 201; RO guest zero-post → 403 `MEAL_NOT_INCLUDED`.
 5. **Deposits:** `POST /api/reservations/{id}/deposits` HELD → check-in applies payment to folio.
 6. **Split settlement:** `/folio/{id}` → add CASH + CARD lines → Complete settlement → balance 0.
-7. **Guest dedup:** `/reports/guest-dedup` summary loads. A group shows guest cards; **Keep this card** and **Not the same people** are buttons (no typed FIN). See `doc/NAFTA-GUEST-INTELLIGENCE.md`.
+7. **Guest dedup:** `/reports/guest-dedup` summary loads. A group shows guest cards; **Keep this card** and **Not the same people** are buttons (no typed FIN). Filter includes similar-name / metaphone; a shared passport with different names is flagged. See `doc/NAFTA-GUEST-INTELLIGENCE.md`.
 8. **Omnichannel:** guest card send SMS/WA with CP env → `GuestCommunication.status=SENT`.
 
 ## 24. Nafta P3 — H-BL-20…28 (2026-06-14)
@@ -527,6 +528,17 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Secondary HK list table
 11. `/hk` soft sort — departures → VIP → needed-by → DIRTY → duty → room# (sheet + PDF); FO DND/SO creates GuestTask.
 12. `/hk/consumption` — open/closed lane filter; add sku/qty in modal. The line is not a folio charge. An empty day still closes. Changing linen/deep N on `/settings/policies#hk` does not add a line. Minibar on `/hk/minibar` still posts to the guest folio (catalog/postings filter + post modal).
 13. `/hk/rooms` — whole hotel. Chips: Dirty vacant, Clean vacant, For inspection, OOO, OOS. Set Dirty, Pickup, Clean, Inspected. Inspected is disabled on an occupied door. Occupied number is pink, vacant number is green. The same pill is on `/fo/reservations`, the room plan, the rack, and the reservation card.
+
+## 34b. Department schedules (HOT-DUTY-01) — open, not signed
+
+ADR: [hotel-department-duty-schedules.md](../../docs/adr/hotel-department-duty-schedules.md). Do **not** mark SHIPPED until signed.
+
+1. Sidebar **Schedules** → `/schedules` hub (ops labels, not type codes); links open HK roster + reception / security / engineering.
+2. `/schedules/reception` — Board settings: bind Workforce org units (+ add a post if needed). On a day cell click **Assign** → person + shift in the editor strip; save; same person on a second post same day → `PERSON_DOUBLE_BOOKED`.
+3. Prev / This week / Next; **Copy previous week** into an empty draft (confirm replace if cells exist).
+4. Approve week (confirm) → chips read-only; Reopen draft (confirm) → editable again.
+5. Orchestrator down / no token → amber banner; existing cells visible; new save refused (`ORCH_UNAVAILABLE`).
+6. Clinic nurse roster `/sanatorium/nurse-roster` unchanged (not hosted under hotel Schedules).
 
 ## 35. Stay amendment + Manual Price (HOT-FO-04) — checklist, not signed
 

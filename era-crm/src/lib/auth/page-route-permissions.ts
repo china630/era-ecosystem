@@ -16,6 +16,7 @@ export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/visits", [P.SCREEN_VISITS]],
   ["/admin/import", [P.ADMIN_IMPORT]],
   ["/admin/settings", [P.ADMIN_PIPELINE]],
+  ["/admin/links", [P.ADMIN_PIPELINE]],
   ["/admin/access", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
 ];
 

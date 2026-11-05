@@ -16,6 +16,7 @@ const schema = z.object({
   isPrimary: z.boolean().optional(),
   issuedAt: z.coerce.date().optional(),
   expiresAt: z.coerce.date().optional(),
+  mrzNameField: z.string().trim().nullable().optional(),
 });
 
 export async function GET(

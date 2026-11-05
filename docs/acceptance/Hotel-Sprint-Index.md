@@ -50,5 +50,10 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
 | S-27 | Transfers/Tours boarding-first + Airport fold | [x] | HOT-XFER-01 / HOT-TOUR-01 SHIPPED SCREEN; AC-HOT-XFER/TOUR Scaffold ✅ out of BE rollup; UX closeout (list+modals, icon toolbar, bare print+letterhead); UAT §14/§14b; edition `mvp` unchanged |
 | S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit`; CI fail-closed; Wave B DAY_CLOSE; Wave E compound `(organizationId, createdAt)` 2026-10-29; HOT-AUD-01 / AC-HOT-AUD 🟡; hash-chain deferred; next = UAT; Nest API cutover is **P0 platform debt** ([industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md)) |
+| S-29 | Department duty schedules (reception / security / engineering) | [~] | HOT-DUTY-01 / AC-HOT-DUTY 🟡; `/schedules/*`; Workforce picker; UAT open — not SHIPPED/SHOW; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
+
+**2026-11-05:** HOT-DUTY-01 department schedules closeout — COVERAGE API/SCREEN; IM AC-HOT-DUTY 🟡 out of BE rollup; PRM UI SCREEN 🟡 not SHOW; Gate/BE/Demo/Pilot/Edition/Sell unchanged; `hotel.yaml` `mvp` / `pilot_ready: false` untouched. Second-pass RBAC/i18n/binding harden — same statuses. `era-readiness-matrix` skipped (no consumer API/% flip).
+
+**2026-11-06:** HOT-DUTY-01 UX deepen (chip assign, week chrome, copy week, axes settings) — still SCREEN / AC 🟡 / not SHOW; Gate/Pilot/edition/Sell unchanged; second-pass copy/axis harden — same statuses; `era-readiness-matrix` skipped.

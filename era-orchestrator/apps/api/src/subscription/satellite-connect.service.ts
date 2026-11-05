@@ -8,6 +8,7 @@ import {
 import { ModuleRef } from "@nestjs/core";
 import { Prisma } from "@era365/database";
 import { SatelliteOrgBindSyncService } from "../admin/satellite-org-bind-sync.service";
+import { SatelliteChannelsService } from "../channels/satellite-channels.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { TrialCatalogService } from "./trial-catalog.service";
 import { TrialEntitlementResolver } from "./trial-entitlement.resolver";
@@ -59,6 +60,17 @@ export class SatelliteConnectService {
       },
     });
     if (existing) {
+      // Idempotent connect still refreshes PLATFORM channel edges (lab/UAT path).
+      try {
+        const channels = this.moduleRef.get(SatelliteChannelsService, {
+          strict: false,
+        });
+        if (channels) await channels.syncPlatformChannels(organizationId);
+      } catch (err) {
+        this.log.warn(
+          `Connect (existing) channel sync failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
       return {
         satelliteKey: key,
         activeModules: sub.activeModules,
@@ -141,6 +153,17 @@ export class SatelliteConnectService {
       synced = false;
       this.log.warn(
         `Connect satellite Sync failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    try {
+      const channels = this.moduleRef.get(SatelliteChannelsService, {
+        strict: false,
+      });
+      if (channels) await channels.syncPlatformChannels(organizationId);
+    } catch (err) {
+      this.log.warn(
+        `Connect satellite channel sync failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   SATELLITE_CLINIC_VISIT_COMPLETED,
 } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { enterRequestTenant } from "@/lib/request-organization";
 
@@ -105,6 +106,15 @@ export async function POST(request: Request) {
       }
     }
 
+    const amountNet = Number(visit.amountNet);
+    if (amountNet > 0) {
+      await assertRevenueEventForPublish({
+        organizationId,
+        fromSatelliteKey: "industry_clinic",
+        eventType: SATELLITE_CLINIC_VISIT_COMPLETED,
+      });
+    }
+
     await prisma.visit.update({
       where: { id: visit.id },
       data: {
@@ -115,7 +125,6 @@ export async function POST(request: Request) {
       },
     });
 
-    const amountNet = Number(visit.amountNet);
     if (amountNet > 0) {
       await dispatchSatelliteEvent({
         type: SATELLITE_CLINIC_VISIT_COMPLETED,

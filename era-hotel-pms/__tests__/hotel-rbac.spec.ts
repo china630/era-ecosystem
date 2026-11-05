@@ -26,6 +26,9 @@ import { sessionHasHotelPermission } from "@/lib/auth/permission-check";
 describe("hotel page route permissions", () => {
   it("HK and front-cash use any-of grants", () => {
     expect(routePermissions("/hk")).toEqual([PERMISSIONS.SCREEN_HK]);
+    expect(routePermissions("/schedules/reception")).toEqual([
+      PERMISSIONS.SCREEN_SCHEDULES,
+    ]);
     expect(routePermissions("/front-cash")).toEqual([
       PERMISSIONS.SCREEN_FRONT_CASH,
     ]);

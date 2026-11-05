@@ -45,7 +45,12 @@ export function routePermissions(pathname: string): Permission[] | null {
   ) {
     return [PERMISSIONS.SCREEN_ADMIN_INTEGRATION];
   }
-  if (pathname === "/admin/roster" || pathname.startsWith("/admin/roster/")) {
+  if (
+    pathname === "/admin/roster" ||
+    pathname.startsWith("/admin/roster/") ||
+    pathname === "/admin/cedvel" ||
+    pathname.startsWith("/admin/cedvel/")
+  ) {
     return [PERMISSIONS.SCREEN_ADMIN_ROSTER];
   }
   if (pathname.startsWith("/admin")) {

@@ -47,6 +47,7 @@ alwaysApply: false
 | Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
 
 | Admin import UI | `app/admin/import/` | SatAdmin upload (v3.0) |
+| Integration channels | `/admin/links`, `GET/PATCH /api/admin/links` | CP-CHANNELS-01 SatAdmin peer channels + money mode |
 
 | Access matrix (CRM-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `api/internal/v1/workforce/roles`, `admin/users`, `auth/session/refresh-permissions`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
 

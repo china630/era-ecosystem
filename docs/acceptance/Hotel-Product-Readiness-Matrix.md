@@ -18,9 +18,17 @@
 
 **Closeout (2026-11-05 cross-class door):** HOT-FO-04 stays API. AC-HOT-AMEND stays 🟡. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
 
+**Closeout (2026-11-05 from-date plan CTA):** HOT-FO-04 stays API (label + layout only). AC-HOT-AMEND stays 🟡. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
+
 **Closeout (2026-11-05 checkout tables):** Category columns are a table; stay balance sits under the blocks. Sanatorium procedure chips are tables (open paid, and every procedure on the fact chip). Duplicate payment allocation is skipped. HOT-CO-01 stays SHIPPED. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
 
 **Closeout (2026-11-05 org payment methods):** Hotel desks consume orch Sync catalog (HOT-CASH-01 deepen). Catalog SoR is Platform CP-PAY-METHODS-01 API. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
+
+**Closeout (2026-11-05 department schedules):** HOT-DUTY-01 SCREEN/API (not SHOW). AC-HOT-DUTY 🟡 out of BE rollup. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index S-29 [~]; `hotel.yaml` untouched. Second-pass: `screen:schedules` page map + settingsAccess i18n + binding `orgUnitOptions` — no Gate/Demo/Pilot/Sell flip.
+
+**Closeout (2026-11-06 passport MRZ):** HOT-MRZ-01 is API. The scanner is a modal on the guest card and the stay guest row, platform super-admin only. AC-HOT-MRZ stays 🟡 (parser negative in `__tests__/mrz-parse.spec.ts`; UAT-SMOKE §2 3a open). Shared passport with a different name attaches that card and does not overwrite names. `GuestDocument.mrzNameField` stores the raw ICAO name; match order is raw MRZ → passport → exact name → translit/typo/metaphone (confirm-only). Catalog `hotel_passport_scan` is 19 AZN and is not entitled. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched. HOT-GST-01 stays API (dedup name fold + similar-name / metaphone groups stay confirm-only).
+
+**Closeout (2026-11-06 duty UX deepen):** HOT-DUTY-01 stays SCREEN/API (chip assign, week chrome, copy week, axes settings) — **not SHOW**. AC-HOT-DUTY 🟡. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. `hotel.yaml` untouched. Second-pass: copy replace guard + skip retired axes on copy + ops subtitles — no Gate/Demo/Pilot/Sell flip.
 
 **Closeout (2026-11-04 deposit / surplus / party money):** Folio tab takes a deposit for one guest. Checkout surplus is return change or carry to another stay. Party save refuses a guest who still has a payment or a HELD deposit; transfer of that money is on the same folio form. Planned paid procedures are on the folio tab. HOT-CASH-03 stays API. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched.
 
@@ -61,6 +69,8 @@
 | Agency portal (extranet) | `/agency/*` + FO `/fo/agency-inbox` | SCREEN / 🟡 (HOT-AGP API; not SHOW — no Demo-TE) |
 | HK / admin | HK MVP Dirty/Clean/Inspected, `/admin/*` | ✅ |
 | Nafta HK deepen | `/hk` `/hk/rooms` `/hk/mobile` `/hk/roster` `/hk/rotation` `/hk/laundry` `/hk/forecast` `/hk/discrepancy` (+ closed-rooms, maids, minibar, consumption, `/fo/laundry`) | SCREEN / 🟡 (not SHOW — UAT §34 open). Soft sort + room#; void IN_PLANT; FO amount+express; stay linen edit-only; maids edit/unlink; discrepancy create modal; playbook one-PRIMARY + filter bars; kit table/card shell (`rounded-2xl`). Closeout 2026-10-28 (shell tokens): Gate/UI/Demo/Pilot/Edition unchanged (rollup = Pilot open → mvp, not GA) |
+| Passport MRZ (HOT-MRZ-01) | guest card scanner + stay guest row | SCREEN — super-admin only; not SHOW; UAT open. Does not move Gate, Demo, Pilot, or Sell |
+| Department schedules (HOT-DUTY-01) | `/schedules` + `/schedules/reception` `/security` `/engineering` (+ HK link `/hk/roster`) | SCREEN / 🟡 — WEEK_POST/WEEK_CREW; chip assign + week chrome + copy; Workforce picker; not SHOW; UAT §34b open. Does not move Gate, Demo, Pilot, or Sell |
 | Management reports catalog / nightly ZIP | `/reports` workspace (Start/End + radios) + nightly pack + cubes (HOT-RPT W1–W3); one layout for screen/PDF/Excel with hotel letterhead (`/settings/policies#letterhead`; address/phone/email/website/logo lock when Sync orgProfile present — CP-ORG-PROFILE-01). VAT reports print Total amount, Net amount, VAT amount. Trial balance: bold department totals, revenue codes underneath with the report-language name | SCREEN / 🟡 (not SHOW — no UAT / Demo-TE) |
 | Revenue codes + day document (HOT-REV-01) | `/settings/master-data` (manual charge/pay flags) + `/settings/integration?view=gl`; F&B `/admin/settings` warehouse | SCREEN / 🟡 (out of Hotel SHOW rollup — SatAdmin flags; one-shot remap scripts removed; not SHIPPED; hub refuses blank pending `revenueCode`) |
 | e-qaimə day close (FIN-EQAIME-DAY-01) | `/night-audit` gap list and check-day stop when the finance checkbox is on | SCREEN / 🟡 — API, not SHOW. Rule off by default. Does not move Hotel Gate, UI ✅, Demo ✅, or Sell |

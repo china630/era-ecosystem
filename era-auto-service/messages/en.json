@@ -34,7 +34,8 @@
     "workOrders": "Work orders",
     "appointments": "Appointments",
     "settings": "Settings",
-    "access": "Access"
+    "access": "Access",
+    "links": "Links"
   },
   "login": {
     "title": "Sign in",
@@ -197,5 +198,40 @@
       "admin_settings": "Workshop settings",
       "admin_access_manage": "Manage roles and access"
     }
+  },
+  "adminLinks": {
+    "title": "Integration links",
+    "subtitle": "Money routing and peer channels for this organization.",
+    "moneyTitle": "Money routing",
+    "moneyLine": "Mode {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode unavailable",
+    "outbound": "Outbound",
+    "inbound": "Inbound",
+    "empty": "No channels (PLATFORM sync after operating mode + entitlements).",
+    "on": "on",
+    "off": "off",
+    "disable": "Disable inbound",
+    "loadFailed": "Could not load links",
+    "saveFailed": "Could not update channel",
+    "loading": "Loading…",
+    "kindFolio": "Folio post",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Revenue event",
+    "kindRead": "Read status",
+    "kindOpsHandoff": "Ops handoff",
+    "satHotel": "Hotel",
+    "satClinic": "Clinic",
+    "satFnb": "F&B",
+    "satRetail": "Retail",
+    "satAuto": "Auto",
+    "satWholesale": "Wholesale",
+    "satLogistics": "Logistics",
+    "satConstruction": "Construction",
+    "satCrm": "CRM",
+    "satFinance": "Finance",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor",
+    "legacyTitle": "Legacy bridges",
+    "legacyHint": "Display-only CODE_LEGACY hints — not live channel gates."
   }
 }

@@ -171,6 +171,20 @@ export {
   type ChannelEdgeCardProps,
 } from "./channel-edge-card";
 export {
+  SatelliteAdminLinksPage,
+  SatelliteAdminLinksPanels,
+  satelliteAdminLinksLabelsFromT,
+  type SatelliteAdminLinksPageProps,
+  type SatelliteAdminLinksPanelsProps,
+  type SatelliteAdminLinksLabels,
+  type SatelliteAdminLinksChannelRow,
+  type SatelliteAdminLinksMode,
+} from "./satellite-admin-links-page";
+export {
+  CHANNEL_LEGACY_HINTS,
+  type ChannelLegacyHint,
+} from "../integration/channel-legacy-hints";
+export {
   channelEdgeTitle,
   labelChannelKind,
   labelChannelManagedBy,

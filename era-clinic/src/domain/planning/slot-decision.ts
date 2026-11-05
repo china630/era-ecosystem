@@ -6,6 +6,8 @@ import {
   bakuMondayYmd,
 } from "@/domain/planning/bath-calendar";
 import { listClinicDays } from "@/domain/planning/clinic-day";
+import { loadPeakRulesForRange } from "@/domain/planning/peak-rules.service";
+import { resolveProcedureDayWindow } from "@/domain/planning/procedure-day-window";
 import { addBakuDays, bakuDateKey, bakuDayBounds, parseBakuDateTime } from "@/lib/baku-day";
 import {
   dailyCapForQuota,
@@ -18,7 +20,6 @@ import {
   defaultBathModeFromSettings,
   getSchedulingSettings,
   getTenantWorkHours,
-  resolveEffectiveDayEndHour,
 } from "@/domain/settings/scheduling-settings";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
@@ -136,6 +137,11 @@ export async function placeManualProcedureSlot(input: {
   if (clinicDays[0] && !clinicDays[0].working) {
     throw new SlotDecisionError("closed");
   }
+  const peakRules = await loadPeakRulesForRange(
+    targetYmd,
+    addBakuDays(targetYmd, 1),
+    order.organizationId,
+  );
 
   const settings = await getSchedulingSettings();
   const workHours = await getTenantWorkHours();
@@ -204,6 +210,25 @@ export async function placeManualProcedureSlot(input: {
     dayStartHour: pt.dayStartHour ?? workHours.dayStartHour,
     dayEndHour: pt.dayEndHour ?? workHours.dayEndHour,
   };
+  const day = clinicDays[0]!;
+  const window = resolveProcedureDayWindow({
+    day,
+    peaks: peakRules,
+    procedure: {
+      extendedStartHour: pt.extendedStartHour,
+      extendedEndHour: pt.extendedEndHour,
+    },
+    resource: matching[0]
+      ? {
+          extendedStartHour: matching[0].extendedStartHour,
+          extendedEndHour: matching[0].extendedEndHour,
+        }
+      : null,
+    peakModeEnabled: workHours.peakModeEnabled,
+  });
+  const dayWindowByYmd = new Map([
+    [targetYmd, { startHour: window.startHour, endHour: window.endHour }],
+  ]);
   const scanOrder: ScanOrder = {
     id: order.id,
     organizationId: order.organizationId,
@@ -213,10 +238,8 @@ export async function placeManualProcedureSlot(input: {
     inPackage: order.inPackage === true,
     ...capFields,
     durationMin: duration,
-    dayEndHour: resolveEffectiveDayEndHour(typeHours, {
-      procedureExtendedEndHour: pt.extendedEndHour,
-      resourceExtendedEndHour: matching[0]?.extendedEndHour,
-    }),
+    dayEndHour: window.endHour,
+    dayWindowByYmd,
     patientRestMinutes: pt.patientRestMinutes ?? 15,
     resourceGapMinutes: pt.resourceGapMinutes ?? 5,
     afterLunchAllowed: pt.afterLunchAllowed ?? true,

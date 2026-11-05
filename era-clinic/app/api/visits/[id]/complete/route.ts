@@ -1,3 +1,5 @@
+import { SATELLITE_CLINIC_VISIT_COMPLETED } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   jsonOk,
@@ -7,7 +9,10 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { completeVisitBilling } from "@/lib/billing-router";
+import {
+  completeVisitBilling,
+  resolveBillingTarget,
+} from "@/lib/billing-router";
 import {
   createPortalLink,
   createPaymentLink,
@@ -33,6 +38,21 @@ export async function POST(
     const { visitAwaitingPaymentDenied } = await import("@/domain/visit/visit-pay-gate");
     const unpaid = visitAwaitingPaymentDenied(visit);
     if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
+
+    // Mirror completeVisitBilling target — assert REVENUE before COMPLETED when Finance path.
+    const billingTarget =
+      visit.billingTarget === "HOTEL_FOLIO"
+        ? "HOTEL_FOLIO"
+        : visit.billingTarget === "SETTLEMENT_HUB"
+          ? "SETTLEMENT_HUB"
+          : await resolveBillingTarget(visit.patientOrigin);
+    if (billingTarget === "FINANCE") {
+      await assertRevenueEventForPublish({
+        organizationId: requestOrganizationId(),
+        fromSatelliteKey: "industry_clinic",
+        eventType: SATELLITE_CLINIC_VISIT_COMPLETED,
+      });
+    }
 
     const completed = await prisma.visit.update({
       where: { id },

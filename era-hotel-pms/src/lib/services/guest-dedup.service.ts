@@ -4,6 +4,8 @@ import { ymdParam } from '@/lib/reports/civil-days';
 import { GUEST_FIN_DOC_TYPES, GUEST_PASSPORT_DOC_TYPES } from '@/lib/guest-list-identity';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { dedupPair } from '@/lib/services/guest-merge.service';
+import { isSimilarPersonName, namesClearlyDiffer, sameMetaphoneName } from '@/lib/guest-name-match';
+import { normalizeNameKey } from '@/lib/mrz/names';
 
 export type GuestDedupSummary = {
   totalGuests: number;
@@ -22,7 +24,9 @@ export type DedupMatchType =
   | 'NAME_BIRTH'
   | 'LAST_BIRTH'
   | 'LAST_PHONE'
-  | 'DOC_CITIZENSHIP';
+  | 'DOC_CITIZENSHIP'
+  | 'SIMILAR_NAME'
+  | 'METAPHONE';
 
 export type DedupGuestCard = {
   id: string;
@@ -47,6 +51,8 @@ export type DuplicateGroup = {
   guestIds: string[];
   labels: string[];
   needsPersonMerge: boolean;
+  /** Passport number matches but the names are not the same person-key. */
+  nameClash: boolean;
   guests: DedupGuestCard[];
 };
 
@@ -129,6 +135,7 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       email: true,
       phone: true,
       nationality: true,
+      sex: true,
       globalPersonId: true,
       documents: { select: { docType: true, docNumber: true, nationality: true } },
     },
@@ -160,9 +167,12 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
     const email = g.email?.trim().toLowerCase();
     if (email?.includes('@')) add('EMAIL', email, g.id);
     const birth = g.birthDate ? ymdParam(g.birthDate) : '';
-    const last = (g.lastName ?? '').trim().toLowerCase();
-    const first = (g.firstName ?? '').trim().toLowerCase();
-    const name = last && first ? `${last}|${first}` : (g.fullName ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const last = normalizeNameKey(g.lastName ?? '');
+    const first = normalizeNameKey(g.firstName ?? '');
+    const name =
+      last && first
+        ? `${last}|${first}`
+        : normalizeNameKey(g.fullName ?? '');
     if (birth && name) add('NAME_BIRTH', `${name}|${birth}`, g.id);
     if (birth && last.length >= 2) add('LAST_BIRTH', `${last}|${birth}`, g.id);
     const phoneTail = (g.phone ?? '').replace(/\D/g, '').slice(-9);
@@ -172,6 +182,34 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       const number = doc.docNumber.replace(/[\s-]/g, '').toUpperCase();
       const country = (doc.nationality ?? citizenship).trim().toUpperCase();
       if (number.length >= 4 && country) add('DOC_CITIZENSHIP', `${number}|${country}`, g.id);
+    }
+  }
+
+  const byBirth = new Map<string, typeof guests>();
+  for (const guest of guests) {
+    const birth = guest.birthDate ? ymdParam(guest.birthDate) : '';
+    if (!birth || !guest.firstName || !guest.lastName) continue;
+    const list = byBirth.get(birth) ?? [];
+    list.push(guest);
+    byBirth.set(birth, list);
+  }
+  for (const [birth, rows] of byBirth) {
+    for (let i = 0; i < rows.length; i += 1) {
+      for (let j = i + 1; j < rows.length; j += 1) {
+        const a = rows[i]!;
+        const b = rows[j]!;
+        const natA = (a.nationality ?? '').trim().toUpperCase();
+        const natB = (b.nationality ?? '').trim().toUpperCase();
+        if (natA && natB && natA !== natB) continue;
+        if (a.sex && b.sex && a.sex !== b.sex) continue;
+        if (isSimilarPersonName(a.firstName ?? '', a.lastName ?? '', b.firstName ?? '', b.lastName ?? '')) {
+          add('SIMILAR_NAME', `${birth}|${normalizeNameKey(a.lastName ?? '')}`, a.id);
+          add('SIMILAR_NAME', `${birth}|${normalizeNameKey(a.lastName ?? '')}`, b.id);
+        } else if (sameMetaphoneName(a.firstName ?? '', a.lastName ?? '', b.firstName ?? '', b.lastName ?? '')) {
+          add('METAPHONE', `${birth}|${normalizeNameKey(a.lastName ?? '')}`, a.id);
+          add('METAPHONE', `${birth}|${normalizeNameKey(a.lastName ?? '')}`, b.id);
+        }
+      }
     }
   }
 
@@ -270,7 +308,16 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       .filter((card): card is DedupGuestCard => Boolean(card));
     const personIds = guests.map((card) => people.find((row) => row.id === card.id)?.globalPersonId).filter(Boolean);
     const needsPersonMerge = new Set(personIds).size > 1;
-    return { ...group, guests, needsPersonMerge };
+    const nameClash =
+      group.matchType === 'PASSPORT' &&
+      guests.some((left) =>
+        guests.some(
+          (right) =>
+            left.id !== right.id &&
+            namesClearlyDiffer(left.firstName ?? '', left.lastName ?? '', right.firstName ?? '', right.lastName ?? ''),
+        ),
+      );
+    return { ...group, guests, needsPersonMerge, nameClash };
   });
 }
 

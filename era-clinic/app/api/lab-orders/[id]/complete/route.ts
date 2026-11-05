@@ -1,4 +1,5 @@
 import { SATELLITE_CLINIC_LAB_ORDER_COMPLETED } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   jsonOk,
@@ -45,6 +46,12 @@ export async function POST(
         400,
       );
     }
+
+    await assertRevenueEventForPublish({
+      organizationId: requestOrganizationId(),
+      fromSatelliteKey: "industry_clinic",
+      eventType: SATELLITE_CLINIC_LAB_ORDER_COMPLETED,
+    });
 
     const completed = await prisma.labOrder.update({
       where: { id },

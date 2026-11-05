@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedCatalogDescription } from "@era/clinic-domain";
@@ -84,6 +85,7 @@ type Resource = {
   capacity: number;
   roomId?: string | null;
   room?: { code: string; name?: string } | null;
+  extendedStartHour?: number | null;
   extendedEndHour?: number | null;
   sexAudience?: "MALE" | "FEMALE" | "ANY";
 };
@@ -103,6 +105,7 @@ type ProcedureType = {
   blockCategory?: string | null;
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
+  extendedStartHour?: number | null;
   extendedEndHour?: number | null;
   financeSku?: string | null;
   hotelRevenueCode?: string | null;
@@ -195,11 +198,19 @@ function matchesFilter(
   return fields.some((f) => (f ?? "").toLowerCase().includes(needle));
 }
 
+const MASTER_TABS = ["practitioners", "rooms", "resources", "procedureTypes"] as const;
+
+function tabFromQuery(raw: string | null): Tab {
+  if (raw && (MASTER_TABS as readonly string[]).includes(raw)) return raw as Tab;
+  return "practitioners";
+}
+
 export default function MasterDataPage() {
   const t = useTranslations("masterData");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const [tab, setTab] = useState<Tab>("practitioners");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => tabFromQuery(searchParams.get("tab")));
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 300);
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
@@ -606,6 +617,7 @@ export default function MasterDataPage() {
       kind: row.kind,
       capacity: String(row.capacity),
       roomId: row.roomId ?? "",
+      extendedStartHour: row.extendedStartHour != null ? String(row.extendedStartHour) : "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
       sexAudience: row.sexAudience ?? "ANY",
     });
@@ -622,6 +634,7 @@ export default function MasterDataPage() {
       resourceGapMinutes: String(row.resourceGapMinutes ?? 5),
       patientRestMinutes: String(row.patientRestMinutes ?? 15),
       bodyPart: row.bodyPart ?? "",
+      extendedStartHour: row.extendedStartHour != null ? String(row.extendedStartHour) : "",
       extendedEndHour: row.extendedEndHour != null ? String(row.extendedEndHour) : "",
       financeSku: row.financeSku?.trim() || row.code,
     });
@@ -727,6 +740,9 @@ export default function MasterDataPage() {
           kind: form.kind || "EQUIPMENT",
           capacity: Number(form.capacity || "1"),
           roomId: form.roomId?.trim() ? form.roomId.trim() : null,
+          extendedStartHour: form.extendedStartHour?.trim()
+            ? Number(form.extendedStartHour)
+            : null,
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
@@ -746,6 +762,9 @@ export default function MasterDataPage() {
           blockCategory: blockCategory || null,
           physioOrderFields,
           allowedSiteCodes,
+          extendedStartHour: form.extendedStartHour?.trim()
+            ? Number(form.extendedStartHour)
+            : null,
           extendedEndHour: form.extendedEndHour?.trim()
             ? Number(form.extendedEndHour)
             : null,
@@ -771,6 +790,9 @@ export default function MasterDataPage() {
         kind: form.kind || "EQUIPMENT",
         capacity: Number(form.capacity || "1"),
         roomId: form.roomId?.trim() ? form.roomId.trim() : null,
+        extendedStartHour: form.extendedStartHour?.trim()
+          ? Number(form.extendedStartHour)
+          : null,
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
           : null,
@@ -790,6 +812,9 @@ export default function MasterDataPage() {
         blockCategory: blockCategory || null,
         physioOrderFields,
         allowedSiteCodes,
+        extendedStartHour: form.extendedStartHour?.trim()
+          ? Number(form.extendedStartHour)
+          : null,
         extendedEndHour: form.extendedEndHour?.trim()
           ? Number(form.extendedEndHour)
           : null,
@@ -1170,6 +1195,8 @@ export default function MasterDataPage() {
                   <SortableTh label={t("durationMin")} columnKey="duration" sort={sort} onSort={onSort} />
                   <SortableTh label={t("resourceGapMinutes")} columnKey="gap" sort={sort} onSort={onSort} />
                   <SortableTh label={t("patientRestMinutes")} columnKey="rest" sort={sort} onSort={onSort} />
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("extendedStartHour")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("extendedEndHour")}</th>
                   <SortableTh label={t("resourceCode")} columnKey="resource" sort={sort} onSort={onSort} />
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
                 </tr>
@@ -1183,6 +1210,12 @@ export default function MasterDataPage() {
                     <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.durationMin}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.resourceGapMinutes ?? 5}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} text-center`}>{row.patientRestMinutes ?? 15}</td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-center`}>
+                      {row.extendedStartHour != null ? `${row.extendedStartHour}:00` : "—"}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-center`}>
+                      {row.extendedEndHour != null ? `${row.extendedEndHour}:00` : "—"}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>{displayProcedureResourceNames(row, resources)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex gap-1">
@@ -1463,12 +1496,34 @@ export default function MasterDataPage() {
                 }))}
                 onChange={(next) => setForm({ ...form, roomId: String(next ?? "") })}
               />
-              <Field
-                label={t("extendedEndHour")}
-                preset="count"
-                value={form.extendedEndHour ?? ""}
-                onChange={(e) => setForm({ ...form, extendedEndHour: e.target.value })}
-              />
+              <FieldRow cols={2}>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("extendedStartHour")}
+                  value={form.extendedStartHour ?? ""}
+                  emptyLabel="—"
+                  options={Array.from({ length: 25 }, (_, h) => ({
+                    value: String(h),
+                    label: `${String(h).padStart(2, "0")}:00`,
+                  }))}
+                  onChange={(next) =>
+                    setForm({ ...form, extendedStartHour: String(next ?? "") })
+                  }
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("extendedEndHour")}
+                  value={form.extendedEndHour ?? ""}
+                  emptyLabel="—"
+                  options={Array.from({ length: 25 }, (_, h) => ({
+                    value: String(h),
+                    label: `${String(h).padStart(2, "0")}:00`,
+                  }))}
+                  onChange={(next) =>
+                    setForm({ ...form, extendedEndHour: String(next ?? "") })
+                  }
+                />
+              </FieldRow>
             </>
           )}
           {tab === "procedureTypes" && (
@@ -1487,7 +1542,7 @@ export default function MasterDataPage() {
                 }
                 onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
               />
-              <FieldRow cols={4}>
+              <FieldRow cols={3}>
                 <Field
                   label={t("durationMin")}
                   preset="count"
@@ -1506,11 +1561,33 @@ export default function MasterDataPage() {
                   value={form.patientRestMinutes ?? "15"}
                   onChange={(e) => setForm({ ...form, patientRestMinutes: e.target.value })}
                 />
-                <Field
+              </FieldRow>
+              <FieldRow cols={2}>
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("extendedStartHour")}
+                  value={form.extendedStartHour ?? ""}
+                  emptyLabel="—"
+                  options={Array.from({ length: 25 }, (_, h) => ({
+                    value: String(h),
+                    label: `${String(h).padStart(2, "0")}:00`,
+                  }))}
+                  onChange={(next) =>
+                    setForm({ ...form, extendedStartHour: String(next ?? "") })
+                  }
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
                   label={t("extendedEndHour")}
-                  preset="count"
                   value={form.extendedEndHour ?? ""}
-                  onChange={(e) => setForm({ ...form, extendedEndHour: e.target.value })}
+                  emptyLabel="—"
+                  options={Array.from({ length: 25 }, (_, h) => ({
+                    value: String(h),
+                    label: `${String(h).padStart(2, "0")}:00`,
+                  }))}
+                  onChange={(next) =>
+                    setForm({ ...form, extendedEndHour: String(next ?? "") })
+                  }
                 />
               </FieldRow>
               <FieldRow cols={2}>

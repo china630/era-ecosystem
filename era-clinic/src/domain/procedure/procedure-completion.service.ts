@@ -1,6 +1,8 @@
 import { SATELLITE_CLINIC_PROCEDURE_COMPLETED } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { resolveBillingTarget } from "@/lib/billing-router";
 import { recordClinicAudit } from "@/lib/satellite-audit";
@@ -78,6 +80,13 @@ export async function completeProcedureOrder(
     "@/domain/procedure/procedure-consumption-outbox"
   );
   await enqueueProcedureConsumables(order.id, lines);
+
+  // Fail-closed before COMPLETED — dispatch after update cannot roll back status.
+  await assertRevenueEventForPublish({
+    organizationId: requestOrganizationId(),
+    fromSatelliteKey: "industry_clinic",
+    eventType: SATELLITE_CLINIC_PROCEDURE_COMPLETED,
+  });
 
   const now = new Date();
   const updated = await prisma.procedureOrder.update({

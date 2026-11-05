@@ -6,7 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
-import { dispatchFbSaleCompleted } from "@/lib/fb-finance-events";
+import {
+  assertFbRevenueChannel,
+  dispatchFbSaleCompleted,
+} from "@/lib/fb-finance-events";
+import { SATELLITE_FB_SALE_COMPLETED } from "@era/contracts";
 import { dispatchStockConsumptionIfEnabled } from "@/lib/stock-consumption";
 import {
   payBlockedReason,
@@ -93,6 +97,11 @@ export async function POST(
   const payBlock = payBlockedReason(settlement);
   if (payBlock) {
     return NextResponse.json({ error: payBlock }, { status: 400 });
+  }
+
+  // Fail-closed before CLOSE: fire-and-forget dispatch after pay cannot roll back.
+  if (settlement === "LOCAL_CASHIER") {
+    await assertFbRevenueChannel(SATELLITE_FB_SALE_COMPLETED);
   }
 
   const { saleForSatelliteRouted, isFiscalPaymentMethod, isFiscalSkipped } =

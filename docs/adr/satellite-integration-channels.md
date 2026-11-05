@@ -27,8 +27,9 @@ Unique on the five identity fields. **No URL or token columns** — executors ke
 
 ### PLATFORM allowlist (auto on operating-mode save)
 
-1. DEPARTMENT + `revenueRouting=PARENT` → `REVENUE_EVENT` from each entitled industry sat on the dept → parent `finance_core` when parent has that entitlement.
-2. Child industry sat in `{industry_clinic, industry_fnb_pos, industry_retail}` with hotel on parent/hub → `FOLIO_POST` and `SETTLEMENT` → parent/hub `industry_hotel_pms` when both sides entitled.
+1. DEPARTMENT + `revenueRouting=PARENT` → `REVENUE_EVENT` from each entitled industry sat on the dept → parent `finance_core` when parent has that entitlement. **No same-org self edge** in that case (one money recipient).
+2. Otherwise (OWN / STANDALONE) → when this org has live `finance_core`, `REVENUE_EVENT` from each other entitled sat on this org → this org's `finance_core`.
+3. Child industry sat in `{industry_clinic, industry_fnb_pos, industry_retail}` with hotel on parent/hub → `FOLIO_POST` and `SETTLEMENT` → parent/hub `industry_hotel_pms` when both sides entitled.
 
 `READ_STATUS` is schema-ready; v1 creates no PLATFORM rows for it.
 
@@ -42,14 +43,20 @@ Satellite staff may disable an **incoming** channel: first disable flips `manage
 
 ### Snapshot + gate
 
-`/v1/subscription/me` (and Sync consumers) expose `channels[]`. Kit helper `isChannelEnabled`. Until bridge call sites are wired, bridges stay fail-open. Wired bridges (F&B room charge `FOLIO_POST`; F&B defer-to-hub `SETTLEMENT`; clinic settlement `SETTLEMENT`; clinic folio `FOLIO_POST`) are **fail-closed** when the row is missing or `enabled=false`. F&B `/api/edition` exposes `folioPostEnabled` / `settlementEnabled` (fail-closed) so ops UI can hide the buttons.
+`/v1/subscription/me` (and Sync consumers) expose `channels[]`. Kit helpers `isChannelEnabled`, `checkChannelEnabledLive`, `assertRevenueEventChannelEnabled` (money publishes to `finance_core` only — not guest-status/stock). Wired bridges are **fail-closed** when the row is missing or `enabled=false`:
+
+- Guest charge: F&B + retail + clinic `FOLIO_POST` / `SETTLEMENT`.
+- Revenue spine: hotel night-audit / invoice / reservation completed / city-ledger snapshot / agency commission payable; clinic day-document money events (`VISIT` / `PROCEDURE` / `LAB_ORDER` / `WARD_DAY_CHARGE`); F&B sale/shift finance events; retail `SATELLITE_RETAIL_SALE_COMPLETED` + `SATELLITE_RETAIL_SHIFT_CLOSED`. PLATFORM edges also re-sync on satellite connect. F&B LOCAL_CASHIER pay and Z-close assert **before** ticket/shift mutation (post-close `void` publish stays best-effort). Retail asserts before PAID / return create / hub settlement-confirm / Z-close; skips the revenue event on hotel room-charge (FOLIO only). Clinic asserts before visit/procedure/lab COMPLETED (Finance path) and before hub visit settle-confirm when amount > 0; ward day charge asserts via dispatch before daily-charge row create.
+
+F&B and retail `/api/edition` expose `folioPostEnabled` / `settlementEnabled` (fail-closed) so ops UI can hide the buttons.
 
 UI may show code-only bridges as `CODE_LEGACY` (display only; never satisfies the gate).
 
 ### Screens
 
 - SuperAdmin org hub: Channels block (in/out, toggle). Owner Control Home does **not** edit this graph.
-- Satellite `/admin/links`: money routing read-only + outbound + inbound (ACCEPTOR toggle).
+- Satellite `/admin/links`: money routing read-only + outbound + inbound (ACCEPTOR toggle) on hotel, clinic, F&B, retail, auto, wholesale, logistics, construction, CRM.
+- Finance `/admin/links` (Nest `GET/PATCH /api/integration/channels`): inbound spine acceptor surface.
 
 ## Consequences
 
@@ -62,10 +69,9 @@ Recorded 2026-11-03. Tracked in [Platform-Sprint-Index](../acceptance/Platform-S
 
 | Debt | Notes |
 |------|--------|
-| `/admin/links` on retail, finance, auto (+ other sats as bridges appear) | Hotel + clinic + F&B landed. Empty sat without hotel bridge may show money mode only. |
-| Retail → hotel fail-closed gates | PLATFORM already creates FOLIO/SETTLEMENT for `industry_retail`; retail call sites still fail-open until wired. |
-| `REVENUE_EVENT` gate on finance dispatch | PLATFORM creates parent-finance edges; event publishers still fail-open. |
+| Auto folio/settlement PLATFORM rows | Do not add `industry_auto_service` to hotel bridge list until an auto room-charge call exists. CODE_LEGACY hint shown on shared links. |
+| `OPS_HANDOFF` call-site gate | Enum + wholesale→retail PLATFORM desired edges landed 2026-11-05; `assertChannelEnabled` waits first S2S client. |
 | `READ_STATUS` PLATFORM rows + consumers | Schema-ready; v1 creates none. |
-| UI `CODE_LEGACY` display | ADR allows showing pre-channel code bridges as display-only; not implemented. |
-| Messaging Comms Hub (`CP-COMMS-01`) | Separate product from channels; `/workspace/comms-hub` stays stub. |
-| UAT-SMOKE → SHOW / SHIPPED | Channels stay SCREEN / API until UI smoke on SA + sat links + bridge off. |
+| UI `CODE_LEGACY` display | Kit `CHANNEL_LEGACY_HINTS` + shared links section (display-only). |
+| Messaging Comms Hub (`CP-COMMS-01`) | Separate product — see [cp-comms-hub-messaging.md](./cp-comms-hub-messaging.md). |
+| UAT-SMOKE → SHOW / SHIPPED | Lab partial (`reports/platform-channels-harden-signoff.md`); human UI walk still open. |

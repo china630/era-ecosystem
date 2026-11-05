@@ -114,7 +114,8 @@
   },
   "nav": {
     "importOrders": "Импортные заказы",
-    "access": "Доступ"
+    "access": "Доступ",
+    "links": "Связи"
   },
   "settingsAccess": {
     "title": "Роли и доступ",
@@ -166,5 +167,40 @@
       "admin_import_orders": "Импортные заказы",
       "admin_access_manage": "Управление ролями и доступом"
     }
+  },
+  "adminLinks": {
+    "title": "Связи интеграции",
+    "subtitle": "Маршрут денег и peer-каналы этой организации.",
+    "moneyTitle": "Маршрут денег",
+    "moneyLine": "Режим {mode} · фискал {fiscal} · выручка {revenue} · родитель {parent}",
+    "moneyUnknown": "Режим организации недоступен",
+    "outbound": "Исходящие",
+    "inbound": "Входящие",
+    "empty": "Нет каналов (PLATFORM sync после режима и entitlements).",
+    "on": "вкл",
+    "off": "выкл",
+    "disable": "Выключить входящий",
+    "loadFailed": "Не удалось загрузить связи",
+    "saveFailed": "Не удалось обновить канал",
+    "loading": "Загрузка…",
+    "kindFolio": "Пост в фолио",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Событие выручки",
+    "kindRead": "Чтение статуса",
+    "kindOpsHandoff": "Ops-передача",
+    "satHotel": "Отель",
+    "satClinic": "Клиника",
+    "satFnb": "F&B",
+    "satRetail": "Розница",
+    "satAuto": "Авто",
+    "satWholesale": "Опт",
+    "satLogistics": "Логистика",
+    "satConstruction": "Строительство",
+    "satCrm": "CRM",
+    "satFinance": "Финансы",
+    "managedPlatform": "Платформа",
+    "managedAcceptor": "Принимающий",
+    "legacyTitle": "Устаревшие мосты",
+    "legacyHint": "Только отображение CODE_LEGACY — не живые гейты."
   }
 }

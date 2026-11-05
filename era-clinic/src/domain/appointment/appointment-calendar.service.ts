@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import {
-  getSchedulingSettings,
-  isClosedWeekday,
-} from "@/domain/settings/scheduling-settings";
-import { isElectiveSchedulingAllowed } from "@/lib/production-calendar";
+import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
+import { listClinicDays } from "@/domain/planning/clinic-day";
+import { addBakuDays } from "@/lib/baku-day";
 import {
   intervalsCover,
   resolveManyDayIntervals,
@@ -83,16 +81,10 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
     name: row.name,
     durationMin: row.durationMin > 0 ? row.durationMin : defaultAppointmentSlotMinutes,
   }));
-  const {
-    dayStartHour,
-    dayEndHour,
-    lunchStartHour,
-    lunchEndHour,
-    closedWeekdays,
-  } = settings;
+  const { lunchStartHour, lunchEndHour } = settings;
 
-  const noonBaku = new Date(`${dateYmd}T12:00:00${BAKU_OFFSET}`);
-  if (isClosedWeekday(noonBaku, closedWeekdays)) {
+  const [clinicDay] = await listClinicDays(dateYmd, addBakuDays(dateYmd, 1));
+  if (!clinicDay?.working) {
     return {
       date: dateYmd,
       slotMinutes: gridMinutes,
@@ -101,15 +93,9 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
       resources: [],
     };
   }
-  if (!(await isElectiveSchedulingAllowed(noonBaku))) {
-    return {
-      date: dateYmd,
-      slotMinutes: gridMinutes,
-      defaultAppointmentSlotMinutes,
-      visitServices: visits,
-      resources: [],
-    };
-  }
+
+  const dayStartHour = clinicDay.startHour;
+  const dayEndHour = clinicDay.endHour;
 
   const dayStart = bakuSlotStart(dateYmd, 0, 0);
   const dayEnd = addMinutes(bakuSlotStart(dateYmd, 23, 59), 1);

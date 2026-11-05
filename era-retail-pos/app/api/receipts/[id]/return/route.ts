@@ -1,7 +1,10 @@
 import { Prisma, type ReceiptLine } from "@prisma/client";
 import { z } from "zod";
 import { SATELLITE_RETAIL_SALE_COMPLETED } from "@era/contracts";
-import { departmentFinanceEventsSilenced } from "@era/satellite-kit";
+import {
+  assertRevenueEventForPublish,
+  departmentFinanceEventsSilenced,
+} from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { postHotelSettlementPending, postRoomCharge } from "@/lib/pms-bridge-client";
@@ -40,6 +43,19 @@ export async function POST(
     }
 
     const amountNet = -Number(original.amountNet);
+    const preset = resolveOutletPreset(original.outlet.preset);
+    const orgId = requestOrganizationId();
+    const dayDocSilenced =
+      Boolean(orgId) && (await departmentFinanceEventsSilenced(orgId));
+    // Local return → Finance: assert before creating the PAID return receipt.
+    if (!dayDocSilenced) {
+      await assertRevenueEventForPublish({
+        organizationId: orgId,
+        fromSatelliteKey: "industry_retail",
+        eventType: SATELLITE_RETAIL_SALE_COMPLETED,
+      });
+    }
+
     const returnReceipt = await prisma.receipt.create({
       data: {
         outletId: original.outletId,
@@ -75,9 +91,7 @@ export async function POST(
       include: { lines: true },
     });
 
-    const preset = resolveOutletPreset(original.outlet.preset);
-    const orgId = requestOrganizationId();
-    if (orgId && (await departmentFinanceEventsSilenced(orgId))) {
+    if (dayDocSilenced) {
       const lines = returnReceipt.lines.filter((line: ReceiptLine) => line.lineStatus === "ACTIVE");
       for (const line of lines) {
         const sku = line.plu?.trim();

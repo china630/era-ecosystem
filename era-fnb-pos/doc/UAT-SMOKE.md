@@ -36,6 +36,16 @@
 8. Manager: `/admin/daily-menu` (or DailyMenuAdminPanel) — default board date = Asia/Baku today
 9. RBAC Variant A: doors are grants (`api:*` / `screen:*`), not role names. Waiter can fire/pay (hotel); manager required for void/Z — strip void on `/admin/access` → API 403. Kitchen without `screen:admin.menu` cannot open that page. Kitchen also cannot `GET /api/tickets` / `GET /api/menu` (till-read grants).
 
+## FNB-CEDVEL-01 — weekly staff cədvəl (SCREEN; not SHIPPED)
+
+ADR: [hotel-department-duty-schedules.md](../../docs/adr/hotel-department-duty-schedules.md). PIN `StaffRoster` / `/api/labor/roster` stay separate.
+
+1. Manager → `/admin/cedvel` — week grid person × day; shift codes E/A/L/P/N/OFF/EG/IB (legend in Board settings).
+2. Board settings: bind Workforce org units. Click empty day → set shift (+ outlet); click chip to change; × removes.
+3. Prev / This week / Next; **Copy previous week**; Approve (confirm) → read-only; Reopen draft.
+4. Workforce unavailable → banner; existing cells stay; new save refused.
+5. Confirm PIN roster `/api/labor/roster` still creates PIN staff (not this grid).
+
 ## FNB-RBAC-01 — access matrix (SCREEN; not SHIPPED)
 
 1. Manager login → `/admin/access` — edit `FB_MANAGER`, uncheck `api:tickets.void`, Save, refresh-permissions.

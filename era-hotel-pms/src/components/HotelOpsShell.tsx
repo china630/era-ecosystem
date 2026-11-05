@@ -34,6 +34,8 @@ import {
   SprayCan,
   Wrench,
   Banknote,
+  CalendarClock,
+  Shield,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -537,6 +539,48 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           ]),
         },
         {
+          id: 'hotel_schedules',
+          title: t('sectionSchedules'),
+          icon: CalendarClock,
+          items: sectionItems([
+            {
+              id: 'sched-hub',
+              href: '/schedules',
+              labelKey: 'schedulesHub',
+              icon: CalendarClock,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
+            },
+            {
+              id: 'sched-hk',
+              href: '/hk/roster',
+              labelKey: 'hkRoster',
+              icon: Users,
+              permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
+              id: 'sched-reception',
+              href: '/schedules/reception',
+              labelKey: 'scheduleReception',
+              icon: ClipboardList,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
+            },
+            {
+              id: 'sched-security',
+              href: '/schedules/security',
+              labelKey: 'scheduleSecurity',
+              icon: Shield,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
+            },
+            {
+              id: 'sched-engineering',
+              href: '/schedules/engineering',
+              labelKey: 'scheduleEngineering',
+              icon: Wrench,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
+            },
+          ]),
+        },
+        {
           id: 'hotel_guest_experience',
           title: t('sectionGuests'),
           icon: Users,
@@ -950,6 +994,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               id: 'set-int-journal',
               href: '/settings/integration?view=journal',
               labelKey: 'integrationJournal',
+              icon: Link2,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+            },
+            {
+              id: 'set-channel-links',
+              href: '/admin/links',
+              labelKey: 'adminLinks',
               icon: Link2,
               permission: PERMISSIONS.SCREEN_SETTINGS,
             },
