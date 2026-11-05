@@ -7,6 +7,12 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Closeout (2026-11-05 extra tickets date pickers):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. The extra-tickets period is kit `DatePicker` (`gg.aa.iiii`). The API still takes `YYYY-MM-DD`. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-05 catalog range is not a result):** No new Scaffold ✅. AC-CLI-PRINT stays ✅. A lab result that only repeats the catalog range (`0.9-5.0 #` on LYM# / MXD# / NEUT#) prints as a dash with no norm and no flag. The order screen does the same. A numeric result stays. No new negative suite beyond `lab-analyte-norms.spec.ts`. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-05 infection card note + diagnostics row):** No new Scaffold ✅. AC-CLI-LAB stays ✅. AC-CLI-ASSIGN stays 🟡. The lab blank prints a boxed PCR note when the order has an express card analyte (HBsAg, HCV, syphilis). The diagnostics assigned row uses the procedure order: title and trash, package stepper, extra price beside the extra stepper. No new negative suite. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
 **Closeout (2026-11-05 auto block members):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. Auto lab and visit blocks book every catalog member of the block. The quota key is not a service code. On the clinic droplet, short auto quotas were raised to the member count (Premium USG 14, gyn/uro blocks 2), 20 open package orders whose code was not a catalog service were cancelled, and open courses were re-applied. Closed courses were left. Gate/Pilot unchanged. Sprint-Index S-23 notes the repair. `clinic.yaml` untouched.
 
 **Closeout (2026-11-05 package biochem own blank):** No new Scaffold ✅. AC-CLI-LAB stays ✅. Standart, Premium, Derma, Detoks, and infect biochemistry accept a guest blank for 30 days. Saving the date cancels an ORDERED order stored as the panel or its quota key, so it is not billed. A block with no catalog member is not booked as the quota key. A quota key resolves to the panel on this course's template only. A fresh blank is not recreated as a paid open lab. No new negative suite. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy; the day count is already on the clinic droplet.

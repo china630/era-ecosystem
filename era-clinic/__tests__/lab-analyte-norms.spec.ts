@@ -1,6 +1,7 @@
 import { enrichResultLines } from "@/lib/lab-result-flags";
 import {
   formatNormDisplay,
+  isCatalogNormEcho,
   resolveNumericBounds,
 } from "@/lib/lab-analyte-norms";
 
@@ -16,6 +17,21 @@ describe("lab analyte norms", () => {
     refMaxMale: "115",
     unit: "µmol/l",
   };
+
+  it("treats a copied catalog range as an empty result", () => {
+    const lymph = {
+      refMin: "0.9",
+      refMax: "5.0",
+      unit: "#",
+      normTextAz: "0.9-5.0 #",
+    };
+    expect(isCatalogNormEcho("0.9-5.0 #", lymph)).toBe(true);
+    expect(isCatalogNormEcho("2.1", lymph)).toBe(false);
+    const line = enrichResultLines([{ code: "LYMPH#", value: "0.9-5.0 #", ...lymph }]);
+    expect(line[0].value).toBe("—");
+    expect(line[0].normTextAz).toBeUndefined();
+    expect(line[0].flag).toBeUndefined();
+  });
 
   it("prints the blank sentence without appending unit", () => {
     expect(formatNormDisplay(crea, { lang: "az" })).toBe(

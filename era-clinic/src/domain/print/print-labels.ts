@@ -28,6 +28,8 @@ const EN: Dict = {
   saturday: "Sat",
   signature: "Signature",
   labDoctor: "Lab physician",
+  expressCardNote:
+    "NOTE: If the express (card-test) result is positive or doubtful, a PCR test is recommended to confirm the diagnosis.",
   radiologist: "Radiologist",
   doctorComment: "Doctor comment",
   temporarilyUnavailable: "Temporarily unavailable",
@@ -135,6 +137,8 @@ const RU: Dict = {
   saturday: "Сб",
   signature: "Подпись",
   labDoctor: "Врач-лаборант",
+  expressCardNote:
+    "ПРИМЕЧАНИЕ: Если результат экспресс-метода (карт-тест) положительный или сомнительный, для уточнения диагноза рекомендуется исследование ПЦР (PCR).",
   radiologist: "Врач-радиолог",
   doctorComment: "Комментарий врача",
   temporarilyUnavailable: "Временно нет",
@@ -241,6 +245,8 @@ const AZ: Dict = {
   saturday: "VI",
   signature: "İmza",
   labDoctor: "Həkim laborant",
+  expressCardNote:
+    "QEYD: Ekspres (kart-test) metodunun nəticəsi müsbət və ya şübhəli olduqda, yekun diaqnozun dəqiqləşdirilməsi üçün PZR (PCR) müayinəsi tövsiyə olunur.",
   radiologist: "Dr.Radioloq",
   doctorComment: "Həkim şərhi",
   temporarilyUnavailable: "Müvəqqəti yoxdur",

@@ -8,6 +8,7 @@ import { bakuDateTimeDisplay } from "@/lib/baku-day";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
+  DatePicker,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -435,17 +436,19 @@ export default function ExtraTicketsPage() {
             />
             {scope !== "due" ? (
               <>
-                <Field
+                <DatePicker
                   label={t("filterDateFrom")}
-                  preset="date"
                   value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
+                  onChange={setDateFrom}
+                  placeholder={tc("datePlaceholder")}
+                  openCalendarLabel={tc("openCalendar")}
                 />
-                <Field
+                <DatePicker
                   label={t("filterDateTo")}
-                  preset="date"
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
+                  onChange={setDateTo}
+                  placeholder={tc("datePlaceholder")}
+                  openCalendarLabel={tc("openCalendar")}
                 />
               </>
             ) : null}

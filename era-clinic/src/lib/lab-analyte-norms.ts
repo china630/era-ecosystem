@@ -127,6 +127,34 @@ export function pickNormSentence(
  * When a norm sentence exists, return it as-is (do not append unit).
  * Else fall back to min–max (+ unit for legacy rows).
  */
+function compactNorm(value: string): string {
+  return value.replace(/\s+/g, "").replace(/–/g, "-").toLowerCase();
+}
+
+/** A result cell that repeats the catalog range is not a measurement. */
+export function isCatalogNormEcho(
+  value: string | null | undefined,
+  src: AnalyteNormSource,
+): boolean {
+  const raw = (value ?? "").trim();
+  if (!raw || !/\d\s*[-–]\s*\d/.test(raw)) return false;
+  const forms = [
+    pickNormSentence(src, "az"),
+    pickNormSentence(src, "ru"),
+    pickNormSentence(src, "en"),
+    formatNormDisplay(src, { lang: "az" }),
+  ];
+  const min = trimOrUndef(src.refMin);
+  const max = trimOrUndef(src.refMax);
+  const unit = trimOrUndef(src.unit);
+  if (min && max) {
+    forms.push(`${min}-${max}`);
+    if (unit) forms.push(`${min}-${max} ${unit}`);
+  }
+  const compact = compactNorm(raw);
+  return forms.some((form) => form && compactNorm(form) === compact);
+}
+
 export function formatNormDisplay(
   src: AnalyteNormSource,
   opts?: { lang?: "en" | "ru" | "az"; chosen?: { refMin?: string; refMax?: string } },

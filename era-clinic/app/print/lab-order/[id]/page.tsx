@@ -62,6 +62,11 @@ export default async function PrintLabOrderPage({ params, searchParams }: Props)
           </table>
         </div>
       ))}
+      {doc.expressCardNote ? (
+        <p className="mt-10 border border-black p-2 text-[11px] leading-snug">
+          {printLabel(lang, "expressCardNote")}
+        </p>
+      ) : null}
     </PrintShell>
   );
 }
