@@ -7,6 +7,7 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
+import { EXTRA_LIST_SCOPES, type ExtraListScope } from "@/domain/procedure/extra-ticket";
 import {
   issueExtraTickets,
   listExtrasAwaitingTicket,
@@ -35,12 +36,19 @@ export async function GET(request: Request) {
     if (denied) return denied;
     const url = new URL(request.url);
     const locale = url.searchParams.get("locale") || "az";
-    const { dualRun, orders, needsFilter } = await listExtrasAwaitingTicket(
+    const scopeRaw = url.searchParams.get("scope") || "due";
+    const scope = (EXTRA_LIST_SCOPES as readonly string[]).includes(scopeRaw)
+      ? (scopeRaw as ExtraListScope)
+      : "due";
+    const { dualRun, orders, needsFilter, needsDates } = await listExtrasAwaitingTicket(
       session?.organizationId,
       {
         room: url.searchParams.get("room"),
         q: url.searchParams.get("q"),
         locale,
+        scope,
+        dateFrom: url.searchParams.get("dateFrom"),
+        dateTo: url.searchParams.get("dateTo"),
       },
     );
     const catalogNames = await loadCatalogDisplayNameMap(
@@ -50,6 +58,8 @@ export async function GET(request: Request) {
     return jsonOk({
       dualRun,
       needsFilter,
+      needsDates,
+      scope,
       count: orders.length,
       orders: orders.map((o) => ({
         id: o.id,
@@ -68,6 +78,8 @@ export async function GET(request: Request) {
         amountNet: Number(o.amountNet),
         patientOrigin: o.patientOrigin,
         status: o.status,
+        bucket: o.bucket,
+        printPath: o.printPath,
         scheduledAt: o.scheduledAt.toISOString(),
         resourceId: o.resourceId,
         patientRefId: o.patientRefId,

@@ -10,6 +10,18 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-05 extra tickets keep today's paid rows):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. The default extra-tickets desk still lists unpaid rows and also keeps procedures, labs, and visits scheduled today that are already paid, with the hotel in-house amber row. Pay and cancel stay on unpaid due and overdue rows. A mixed patient total is the unpaid sum; an all-paid group total is those amber rows. Columns are Appointment and Payment. No new screen. No Demo or Pilot lift. `clinic.yaml` untouched.
+
+**Closeout (2026-11-05 package biochem own blank):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. The own-blank control is the existing course list, not a new screen. The 30-day window is on the clinic droplet. The list shows it after the image deploy. No Demo or Pilot lift. `clinic.yaml` untouched.
+
+**Closeout (2026-11-05 auto block members):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Auto package labs and visits book catalog members, not the quota key. Open courses on the clinic droplet were repaired; the clinic image still has the old resolver until deploy. No new screen. No Demo or Pilot lift. `clinic.yaml` untouched.
+
+**Closeout (2026-11-05 package-only catalog map):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Guest card keeps the package-only flag; lab picker and walk-in hide those rows. Live image still shows the four biochem panels until this map ships. `clinic.yaml` untouched. No Demo or Pilot lift.
+
+**Closeout (2026-11-05 droplet package-only biochem):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. The four biochem panels are package-only in the DB. The running guest card still lists them as extras because `clinic:master-72341e9` has no `packageOnly` filter. `clinic.yaml` untouched. No Demo or Pilot lift.
+
+**Closeout (2026-11-05 blank Tarix + serology options):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index notes the single issue date. Serology options are on the clinic droplet DB; the single Tarix line waits for the image. `clinic.yaml` untouched. No Demo or Pilot lift.
+
 **Closeout (2026-11-05 paid lab on episode open):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `clinic.yaml` untouched. The contour checkbox is removed from procedure and lab cards and no longer zeros an extra. A lab panel checkbox `autoPaidOnOpen` creates one priced order when the episode opens; the lab sees it before pay; the guest blank waits for payment; a package or finished order of the same code does not block the paid one; a missing price is a line on the episode and does not block the open; day-end and checkout leave that order until it is paid or cancelled. No new screen. No Demo or Pilot lift.
 
 **Closeout (2026-11-05 diagnostic catalog active / package-only / categories):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `docs/editions/clinic.yaml` unchanged. Existing catalog screens deepen. An inactive category leaves pickers and keeps order titles. Does not lift Demo or Pilot.
@@ -72,10 +84,10 @@
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
 | Cashier | `/cashier` | 🟡 |
-| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Guest procedure sheet can repeat name and note in `procedurePrintExtraLang` (lighter line; off by default). Lab/USM blanks: modality signer, then result author; **Tarix** with the draw date and the result date; a dash result has no norm on the blank or the order screen. Assigned studies list is `/print/studies`. Plan print and + sit on the day-chip row. Package start, practitioner dates, and same-day-until are `DatePicker` |
+| Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Guest procedure sheet can repeat name and note in `procedurePrintExtraLang` (lighter line; off by default). Lab/USM blanks: modality signer, then result author; one **Tarix** (issue date; draw date is not printed); a dash result has no norm on the blank or the order screen. Assigned studies list is `/print/studies`. Plan print and + sit on the day-chip row. Package start, practitioner dates, and same-day-until are `DatePicker` |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
 | Physio sites S (CLI-49) | `/admin/physio-sites` (Unmatched); card chips + Solyuks/`NAFTALAN_FILL` + empty-catalog banner + PLAN site titles | 🟡 SCREEN (seed S then re-Apply `#23`; UAT open) |
-| Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (procedures + unpaid labs/visits Pay desk; kind badge + title search; HOT-06 extension write still HEADLESS; not SHIPPED) |
+| Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (procedures + unpaid labs/visits Pay desk; kind badge + title search; scope due by default keeps today's already-paid rows (amber, same as hotel in-house) with Appointment and Payment columns; overdue/noshow/issued/all with a date range; HOT-06 extension write still HEADLESS; not SHIPPED) |
 | Local staff password (CLI-WF-PWD-01) | `/account/password` | 🟡 SCREEN (UAT listed; not SHOW / not GA) |
 | Doctor first-day confirm (CLI-52 / Wave C) | `/sanatorium` + card proposed; `/admin/settings` scheduling mode | 🟡 SCREEN (no Confirm all; FIFO kept; UAT open; not SHIPPED) |
 | Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` fulfillment + doctor-bonus | 🟡 SCREEN (package/extra assigned vs completed; amount = completed paid extras; prescriber stamped; % stay 0 until FO; UAT open; not SHIPPED) |

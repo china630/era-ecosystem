@@ -39,3 +39,35 @@ export function extraNeedsPaperTicket(input: {
   if (input.packageIncluded === true && amount <= 0) return false;
   return amount > 0;
 }
+
+export const EXTRA_LIST_SCOPES = ["due", "overdue", "noshow", "issued", "all"] as const;
+export type ExtraListScope = (typeof EXTRA_LIST_SCOPES)[number];
+export type ExtraListBucket = "due" | "overdue" | "noshow" | "issued";
+
+/** One desk label per row. Cancelled lines are not a cheque. */
+export function classifyExtraListBucket(input: {
+  status: string;
+  scheduledAt: Date;
+  issuedAt: Date | null;
+  todayStart: Date;
+}): ExtraListBucket | null {
+  if (input.status === "CANCELLED") return null;
+  if (input.status === "NO_SHOW" || input.status === "UNPAID_MISSED") return "noshow";
+  if (input.issuedAt) return "issued";
+  if (input.scheduledAt.getTime() < input.todayStart.getTime()) return "overdue";
+  return "due";
+}
+
+export function extraListBucketMatches(scope: ExtraListScope, bucket: ExtraListBucket): boolean {
+  return scope === "all" || scope === bucket;
+}
+
+/** Default desk keeps a paid cheque when its appointment is still today (Asia/Baku). */
+export function dueDeskKeepsIssuedToday(input: {
+  scheduledAt: Date;
+  todayStart: Date;
+  todayEnd: Date;
+}): boolean {
+  const t = input.scheduledAt.getTime();
+  return t >= input.todayStart.getTime() && t < input.todayEnd.getTime();
+}

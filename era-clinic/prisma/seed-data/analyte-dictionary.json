@@ -221,7 +221,7 @@
         "ru": "Anti-HCV",
         "az": "Anti-HCV"
       },
-      "valueType": "NUMERIC"
+      "valueType": "QUALITATIVE"
     },
     {
       "code": "Anti-HIV",

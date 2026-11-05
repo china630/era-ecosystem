@@ -217,9 +217,13 @@ export function DiagnosticsAssignModal({
                 titleAz?: string;
                 titleRu?: string;
                 titleEn?: string;
+                packageOnly?: boolean;
+                categoryActive?: boolean;
               }) => ({
                 code: s.code,
                 kind: s.kind,
+                packageOnly: s.packageOnly === true,
+                categoryActive: s.categoryActive !== false,
                 title:
                   s.title && typeof s.title === "object"
                     ? s.title

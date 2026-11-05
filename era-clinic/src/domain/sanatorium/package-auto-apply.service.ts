@@ -7,12 +7,6 @@ import {
   type EntitlementBlockAxes,
   type EntitlementSnapshot,
 } from "@/domain/sanatorium/program-template-admin";
-import {
-  GYN_OR_URO_SLOT,
-  resolveNaftaIntakeCode,
-  type NaftaIntakeSlotCode,
-} from "@/lib/import/nafta-intake-map";
-
 export type AutoApplyTrigger = "OPEN" | "DAY1" | "MANUAL_RETRY" | "CARE_TEAM";
 
 export type AutoApplyResult =
@@ -205,35 +199,31 @@ export async function healUnstampedPackageAutoLabs(input: {
   return { healed };
 }
 
-/** Resolve block entitlement code → bookable visit/lab SKU (sex for GYN-OR-URO). */
-export function resolveAutoBlockServiceCode(
+/**
+ * Catalog SKUs attached to a quota block. The block code is only the quota key
+ * and is never itself a bookable service.
+ */
+export function resolveAutoBlockServiceCodes(
   blockCode: string,
-  sex: string | null | undefined,
-): string | null {
+  members: ReadonlyArray<{ blockCode: string; procedureCode: string }>,
+): string[] {
   const code = blockCode.trim();
-  if (!code) return null;
-  if (code === GYN_OR_URO_SLOT || code === "GYN" || code === "GYN_URO") {
-    const resolved = resolveNaftaIntakeCode(
-      GYN_OR_URO_SLOT as NaftaIntakeSlotCode,
-      sex,
-    );
-    if (resolved === "GYN-OR-URO") return null;
-    return resolved;
+  if (!code) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const member of members) {
+    if (member.blockCode !== code) continue;
+    const sku = member.procedureCode.trim();
+    if (!sku || seen.has(sku)) continue;
+    seen.add(sku);
+    out.push(sku);
   }
-  if (code === "THERAPIST" || code === "SANATORIUM-INTAKE") return "VISIT-SANATORIUM-INTAKE";
-  if (code === "ECG" || code === "ECG-12") return "CARDIO-ECG";
-  if (code === "GYN-VISIT") return "VISIT-GYN";
-  if (code === "URO-VISIT") return "VISIT-URO";
-  if (code === "USG") return "USG-ABD";
-  return code;
+  return out;
 }
-
-/** Block codes whose Auto flag means a diagnostic order, even if fulfillment is still the procedure default. */
-const DIAGNOSTIC_LAB_ALIASES = new Set(["CARDIO-ECG", "USG-ABD"]);
 
 /**
  * LAB/EXAM kind wins over a stored PROCEDURE_ORDER default.
- * ECG/USG blocks saved as CUSTOM + procedure still book CARDIO-ECG / USG-ABD when Auto.
+ * A procedure block stays a procedure: auto booking uses block members, not the quota key.
  */
 export function effectiveAutoFulfillment(
   block: {
@@ -242,17 +232,29 @@ export function effectiveAutoFulfillment(
     fulfillmentExplicit?: boolean | null;
     procedureCode: string;
   },
-  sex: string | null | undefined,
+  _sex?: string | null,
 ): "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT" {
-  const base = fulfillmentRespectingStudyKind(
+  return fulfillmentRespectingStudyKind(
     block.kind,
     block.fulfillment,
     block.fulfillmentExplicit === true,
   );
-  if (base !== "PROCEDURE_ORDER") return base;
-  const resolved = resolveAutoBlockServiceCode(block.procedureCode, sex);
-  if (resolved && DIAGNOSTIC_LAB_ALIASES.has(resolved)) return "LAB_ORDER";
-  return "PROCEDURE_ORDER";
+}
+
+/** Catalog codes that can become a lab order. Unknown strings are not bookable. */
+async function catalogLabCodes(codes: string[]): Promise<Set<string>> {
+  if (codes.length === 0) return new Set();
+  const rows = await prisma.diagnosticService.findMany({
+    where: { OR: [{ code: { in: codes } }, { serviceCode: { in: codes } }] },
+    select: { code: true, serviceCode: true, active: true },
+  });
+  const known = new Set<string>();
+  for (const row of rows) {
+    if (row.active === false) continue;
+    known.add(row.code);
+    if (row.serviceCode) known.add(row.serviceCode);
+  }
+  return new Set(codes.filter((code) => known.has(code)));
 }
 
 type TemplateAxisRow = {
@@ -404,7 +406,7 @@ export async function applyPackageAutoBlocks(
       programInstance: {
         include: {
           procedureLines: true,
-          template: { include: { procedures: true } },
+          template: { include: { procedures: true, blockMembers: true } },
         },
       },
     },
@@ -426,7 +428,7 @@ export async function applyPackageAutoBlocks(
       code: programCode,
       isCurrent: true,
     },
-    include: { procedures: true },
+    include: { procedures: true, blockMembers: true },
   });
 
   let snap =
@@ -438,7 +440,10 @@ export async function applyPackageAutoBlocks(
           code: instance.programCode,
           procedures: (instance.template?.procedures ?? []).map(axesFromLegacyTemplateProc),
           knots: [],
-          members: [],
+          members: (instance.template?.blockMembers ?? []).map((member) => ({
+            blockCode: member.blockCode,
+            procedureCode: member.procedureCode,
+          })),
         } satisfies EntitlementSnapshot)
       : null);
 
@@ -450,7 +455,10 @@ export async function applyPackageAutoBlocks(
       code: currentTemplate.code,
       procedures: currentTemplate.procedures.map(axesFromLegacyTemplateProc),
       knots: [],
-      members: [],
+      members: (currentTemplate.blockMembers ?? []).map((member) => ({
+        blockCode: member.blockCode,
+        procedureCode: member.procedureCode,
+      })),
     };
   }
 
@@ -547,126 +555,113 @@ export async function applyPackageAutoBlocks(
       continue;
     }
 
-    const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, sex);
-    if (!serviceCode) {
+    const serviceCodes = resolveAutoBlockServiceCodes(block.procedureCode, snap.members);
+    if (serviceCodes.length === 0) {
       if (block.fulfillment === "VISIT") skippedVisitCodes.push(block.procedureCode);
       else skippedLabCodes.push(block.procedureCode);
       continue;
     }
 
-    if (block.fulfillment === "LAB_ORDER") {
-      if (instance) {
-        autoLabBlocksForHeal.push({
-          procedureCode: block.procedureCode,
-          quotaTotal: Number(block.quotaTotal) || 1,
-          serviceCode,
-        });
-        await ensureStudyQuotaLine({
-          instanceId: instance.id,
-          organizationId: episode.organizationId,
-          procedureCode: block.procedureCode,
-          quotaTotal: Number(block.quotaTotal) || 1,
-          existingCodes: lineCodes,
-        });
-      }
-      if (await hasLabOrder(patientRefId, episodeId, serviceCode)) {
-        skippedLabCodes.push(serviceCode);
-        continue;
-      }
-      if (broughtInFresh.has(serviceCode)) {
-        skippedLabCodes.push(serviceCode);
-        continue;
-      }
-      await createLabOrderWithItems({
-        patientRefId,
-        clinicalEpisodeId: episodeId,
-        codes: [serviceCode],
-        source: "IN_HOUSE",
-        fasting: false,
-        patientOrigin,
-        packageStamp: instance
-          ? { packageQuotaCode: block.procedureCode }
-          : null,
-      });
-      createdLabCodes.push(serviceCode);
-      quotaCodesTouched.add(block.procedureCode);
-      continue;
-    }
-
-    // VISIT
-    if (await hasVisitLine(patientRefId, episodeId, serviceCode)) {
-      skippedVisitCodes.push(serviceCode);
-      continue;
-    }
-
-    // Package auto visits are entitlement burns — never stamp list price here.
-    // Over-quota paid exams go through diagnostics-extras / forcePaid.
-
-    const visit = await prisma.visit.create({
-      data: {
-        organizationId,
-        patientRefId,
-        // Guaranteed by the needsDoctor guard above.
-        practitionerId: practitionerId!,
-        clinicalEpisodeId: episodeId,
-        status: "IN_PROGRESS",
-        patientOrigin: episode.patientOrigin,
-        reservationId: episode.reservationId,
-        roomNumber: episode.roomNumber,
-        amountNet: 0,
-      },
-    });
-    await prisma.visitServiceLine.create({
-      data: {
-        visitId: visit.id,
-        serviceCode,
-        description: VISIT_TITLES[serviceCode] ?? block.procedureName ?? serviceCode,
-        amount: 0,
-        inPackage: Boolean(instance),
-        packageQuotaCode: instance ? block.procedureCode : null,
-      },
-    });
-    createdVisitCodes.push(serviceCode);
-    quotaCodesTouched.add(block.procedureCode);
-  }
-
-  if (instance) {
-    for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
-      if (createdLabCodes.includes(code) || skippedLabCodes.includes(code)) continue;
-      autoLabBlocksForHeal.push({
-        procedureCode: code,
-        quotaTotal: 1,
-        serviceCode: code,
-      });
+    const quotaTotal = Math.max(Number(block.quotaTotal) || 1, serviceCodes.length);
+    if (instance) {
       await ensureStudyQuotaLine({
         instanceId: instance.id,
         organizationId: episode.organizationId,
-        procedureCode: code,
-        quotaTotal: 1,
+        procedureCode: block.procedureCode,
+        quotaTotal,
         existingCodes: lineCodes,
       });
-      if (await hasLabOrder(patientRefId, episodeId, code) || broughtInFresh.has(code)) {
-        skippedLabCodes.push(code);
-        continue;
-      }
-      try {
-        await createLabOrderWithItems({
-          patientRefId,
-          clinicalEpisodeId: episodeId,
-          codes: [code],
-          source: "IN_HOUSE",
-          fasting: false,
-          patientOrigin,
-          packageStamp: { packageQuotaCode: code },
-        });
-        createdLabCodes.push(code);
-        quotaCodesTouched.add(code);
-      } catch (err) {
-        console.warn("[package-auto-apply] lab seed failed", code, err);
-        skippedLabCodes.push(code);
-      }
+      await prisma.programProcedureBalance.updateMany({
+        where: {
+          instanceId: instance.id,
+          procedureCode: block.procedureCode,
+          quotaTotal: { lt: quotaTotal },
+        },
+        data: { quotaTotal },
+      });
     }
 
+    if (block.fulfillment === "LAB_ORDER") {
+      const catalog = await catalogLabCodes(serviceCodes);
+      for (const serviceCode of serviceCodes) {
+        if (instance) {
+          autoLabBlocksForHeal.push({
+            procedureCode: block.procedureCode,
+            quotaTotal,
+            serviceCode,
+          });
+        }
+        if (!catalog.has(serviceCode)) {
+          skippedLabCodes.push(serviceCode);
+          continue;
+        }
+        if (await hasLabOrder(patientRefId, episodeId, serviceCode)) {
+          skippedLabCodes.push(serviceCode);
+          continue;
+        }
+        if (broughtInFresh.has(serviceCode)) {
+          skippedLabCodes.push(serviceCode);
+          continue;
+        }
+        try {
+          await createLabOrderWithItems({
+            patientRefId,
+            clinicalEpisodeId: episodeId,
+            codes: [serviceCode],
+            source: "IN_HOUSE",
+            fasting: false,
+            patientOrigin,
+            packageStamp: instance
+              ? { packageQuotaCode: block.procedureCode }
+              : null,
+          });
+        } catch (err) {
+          console.warn("[package-auto-apply] lab member skipped", serviceCode, err);
+          skippedLabCodes.push(serviceCode);
+          continue;
+        }
+        createdLabCodes.push(serviceCode);
+        quotaCodesTouched.add(block.procedureCode);
+      }
+      continue;
+    }
+
+    for (const serviceCode of serviceCodes) {
+      if (await hasVisitLine(patientRefId, episodeId, serviceCode)) {
+        skippedVisitCodes.push(serviceCode);
+        continue;
+      }
+
+      // Package auto visits are entitlement burns — never stamp list price here.
+      const visit = await prisma.visit.create({
+        data: {
+          organizationId,
+          patientRefId,
+          practitionerId: practitionerId!,
+          clinicalEpisodeId: episodeId,
+          status: "IN_PROGRESS",
+          patientOrigin: episode.patientOrigin,
+          reservationId: episode.reservationId,
+          roomNumber: episode.roomNumber,
+          amountNet: 0,
+        },
+      });
+      await prisma.visitServiceLine.create({
+        data: {
+          visitId: visit.id,
+          serviceCode,
+          description: VISIT_TITLES[serviceCode] ?? block.procedureName ?? serviceCode,
+          amount: 0,
+          inPackage: Boolean(instance),
+          packageQuotaCode: instance ? block.procedureCode : null,
+        },
+      });
+      createdVisitCodes.push(serviceCode);
+      quotaCodesTouched.add(block.procedureCode);
+    }
+  }
+
+  if (instance) {
     await healUnstampedPackageAutoLabs({
       episodeId,
       instanceId: instance.id,
@@ -841,41 +836,36 @@ export async function linkExistingAutoOrdersToPackage(episodeId: string): Promis
 
   for (const block of selected) {
     if (block.fulfillment === "PROCEDURE_ORDER") continue;
-    const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, sex);
-    if (!serviceCode) continue;
+    const serviceCodes = resolveAutoBlockServiceCodes(block.procedureCode, snap.members);
+    const quotaTotal = Math.max(Number(block.quotaTotal) || 1, serviceCodes.length);
     if (block.fulfillment === "LAB_ORDER") {
-      autoLabBlocks.push({
-        procedureCode: block.procedureCode,
-        quotaTotal: Number(block.quotaTotal) || 1,
-        serviceCode,
-      });
+      for (const serviceCode of serviceCodes) {
+        autoLabBlocks.push({
+          procedureCode: block.procedureCode,
+          quotaTotal,
+          serviceCode,
+        });
+      }
       continue;
     }
-    await prisma.visitServiceLine.updateMany({
-      where: {
-        inPackage: false,
-        serviceCode,
-        visit: {
-          clinicalEpisodeId: episodeId,
-          status: { not: "CANCELLED" },
+    for (const serviceCode of serviceCodes) {
+      await prisma.visitServiceLine.updateMany({
+        where: {
+          inPackage: false,
+          serviceCode,
+          visit: {
+            clinicalEpisodeId: episodeId,
+            status: { not: "CANCELLED" },
+          },
         },
-      },
-      data: { inPackage: true, packageQuotaCode: block.procedureCode },
-    });
-    await syncEntitlementUsage({
-      instanceId: instance.id,
-      episodeId,
-      quotaCode: block.procedureCode,
-    });
-  }
-
-  for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
-    if (autoLabBlocks.some((row) => row.serviceCode === code)) continue;
-    autoLabBlocks.push({
-      procedureCode: code,
-      quotaTotal: 1,
-      serviceCode: code,
-    });
+        data: { inPackage: true, packageQuotaCode: block.procedureCode },
+      });
+      await syncEntitlementUsage({
+        instanceId: instance.id,
+        episodeId,
+        quotaCode: block.procedureCode,
+      });
+    }
   }
 
   await healUnstampedPackageAutoLabs({

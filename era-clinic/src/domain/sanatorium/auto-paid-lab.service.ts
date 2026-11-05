@@ -40,8 +40,11 @@ export async function seedAutoPaidLabs(episodeId: string): Promise<void> {
     return;
   }
 
+  const { freshBroughtInCodes } = await import("@/domain/lab/brought-in-result");
+  const broughtIn = await freshBroughtInCodes(episodeId);
   const misses: string[] = [];
   for (const service of services) {
+    if (broughtIn.has(service.code)) continue;
     try {
       await createLabOrderWithItems({
         patientRefId: episode.patientRefId,

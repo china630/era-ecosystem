@@ -377,7 +377,7 @@ export default function LabOrdersPage() {
       filterAndSortCatalogItems(catalogItems, favoriteKeys, favoritesMode, {
         search: "",
       })
-        .filter((item) => laneKinds(filters.lane).includes(item.kind))
+        .filter((item) => laneKinds(filters.lane).includes(item.kind) && !item.packageOnly)
         .map((item) => ({
         value: item.code,
         label: formatNameAndCode(pickL10n(item.title, locale), item.code),
