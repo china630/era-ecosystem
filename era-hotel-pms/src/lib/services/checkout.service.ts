@@ -15,6 +15,7 @@ import {
   assertZeroBalance,
   closeFolios,
   folioBalance,
+  offsetFreeStayCharges,
 } from '@/lib/services/folio.service';
 import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.service';
 import { createFiscalDocumentsOnCheckout } from '@/lib/services/fiscal-document.service';
@@ -133,6 +134,7 @@ export async function checkoutReservation(
     auditRequest?: Request;
   },
 ): Promise<CheckoutResult> {
+  await offsetFreeStayCharges(id);
   const existing = await getReservation(id);
   if (usesMedicalPackageCompose(existing.ratePlan)) {
     const { assertClinicCheckoutClear } = await import('@/lib/integration/clinic-checkout-gate');

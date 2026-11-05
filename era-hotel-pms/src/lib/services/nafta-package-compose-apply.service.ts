@@ -224,6 +224,7 @@ export async function syncComposedDailyRates(
       roomTypeId: true,
       mealPlanId: true,
       useManualRate: true,
+      billingMode: true,
       paxGuests: {
         select: {
           medicalPackageCode: true,
@@ -255,6 +256,8 @@ export async function syncComposedDailyRates(
   const nights = eachNight(reservation.checkInDate, reservation.checkOutDate);
   const posted = await postedNightKeys(reservationId);
   const bizKey = hotelDateKey(await getCurrentBusinessDate());
+  const { isFreeStayBilling } = await import('@/lib/stay-billing');
+  const freeStay = isFreeStayBilling(reservation.billingMode);
   let missing = false;
   let wrote = 0;
   let firstBreakdown: ComposeBreakdown | null = null;
@@ -262,6 +265,29 @@ export async function syncComposedDailyRates(
     const key = hotelDateKey(stayDate);
     const stored = reservation.dailyRates.find((d) => hotelDateKey(d.stayDate) === key);
     const consumed = key < bizKey || posted.has(key);
+    if (freeStay) {
+      if (consumed) continue;
+      const zero = toDecimal(0);
+      if (stored) {
+        await prisma.reservationDailyRate.update({
+          where: { id: stored.id },
+          data: { amount: zero, tariffAmount: zero, manualFlag: false, fixPrice: false, discountPct: null },
+        });
+      } else {
+        await prisma.reservationDailyRate.create({
+          data: {
+            reservationId,
+            stayDate,
+            amount: zero,
+            tariffAmount: zero,
+            manualFlag: false,
+            fixPrice: false,
+          },
+        });
+      }
+      wrote += 1;
+      continue;
+    }
     const held =
       stored != null &&
       (stored.manualFlag ||

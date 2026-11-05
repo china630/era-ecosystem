@@ -11,10 +11,10 @@ const base = {
 };
 
 describe('doorAssignBlock', () => {
-  it('blocks a different physical type', () => {
+  it('allows a different physical type', () => {
     expect(
       doorAssignBlock(base, { needTypeId: 'stwn', needTypeCode: 'STWN', inHouse: false, occupied: false }),
-    ).toEqual({ code: 'WRONG_TYPE', doorType: 'SDBL', needType: 'STWN' });
+    ).toBeNull();
   });
 
   it('blocks OOS and OOO before type-ready checks', () => {

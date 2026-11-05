@@ -1640,6 +1640,7 @@
     "classHotelRefundNote": "Отель возвращает разницу. Оплачиваемый класс с сегодняшнего дня совпадает с выданным.",
     "classGuestCheaperNote": "Гость с сегодняшнего дня просит более дешёвый класс.",
     "roomMoves": "Переезды",
+    "roomMoveWaiting": "ждёт, пока номер уберут",
     "roomMoveReasonCard": "из карточки брони",
     "roomMoveReasonSwap": "обмен номерами",
     "roomMoveReasonRelocate": "с плана номеров",

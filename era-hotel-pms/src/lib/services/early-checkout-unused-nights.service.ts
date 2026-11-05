@@ -160,6 +160,8 @@ export async function previewEarlyCheckoutUnusedNights(
     for (const charge of folio.charges) {
       const code = charge.revenueCode.code;
       if (!isLodgingCode(charge.revenueCode, packageCodes)) continue;
+      const ref = charge.externalRef ?? '';
+      if (ref.startsWith('house-use:') || ref.startsWith('comp-stay:') || ref.startsWith('void-')) continue;
 
       const noted = parseRoomChargeNote(charge.description ?? '');
       const bizKey = noted?.date ?? (charge.businessDate ? hotelDateKey(charge.businessDate) : null);

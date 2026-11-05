@@ -42,14 +42,6 @@ export function doorAssignBlock(
   },
 ): DoorBlock | null {
   if (opts.currentAssignedId && room.id === opts.currentAssignedId) return null;
-  const needTypeId = opts.needTypeId?.trim();
-  if (needTypeId && room.roomTypeId && room.roomTypeId !== needTypeId) {
-    return {
-      code: 'WRONG_TYPE',
-      doorType: room.roomTypeCode?.trim() || '—',
-      needType: opts.needTypeCode?.trim() || '—',
-    };
-  }
   const axes = resolveAxes(asRoom(room));
   if (axes.inventoryStatus === 'OOS') return { code: 'OOS' };
   if (axes.inventoryStatus === 'OOO') return { code: 'OOO' };

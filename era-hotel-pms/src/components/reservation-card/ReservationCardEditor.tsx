@@ -2145,19 +2145,6 @@ export function ReservationCardEditor({
       ) {
         setMealPlanId(current.mealPlanId);
       }
-      // Physical filter may fall back to Room type — drop incompatible pending door
-      const physical = (givenRoomTypeId || nextType).trim();
-      if (physical && pendingRoomId) {
-        const door = rooms.find((r) => r.id === pendingRoomId);
-        if (door?.roomTypeId && door.roomTypeId !== physical) setPendingRoomId('');
-      }
-    }
-    if (patch.givenRoomTypeId !== undefined) {
-      const physical = (patch.givenRoomTypeId || roomTypeId).trim();
-      if (physical && pendingRoomId) {
-        const door = rooms.find((r) => r.id === pendingRoomId);
-        if (door?.roomTypeId && door.roomTypeId !== physical) setPendingRoomId('');
-      }
     }
 
     const paxCountKeys = ['adults', 'children11_6', 'children5_2', 'children1_0'] as const;
@@ -2860,7 +2847,9 @@ export function ReservationCardEditor({
       return {
         ...r,
         disabled: Boolean(block),
-        roomNumber: block ? `${r.roomNumber} · ${doorBlockLabel(block)}` : r.roomNumber,
+        roomNumber: [r.roomNumber, r.roomType?.code, block ? doorBlockLabel(block) : '']
+          .filter(Boolean)
+          .join(' · '),
       };
     });
   }, [
@@ -2877,15 +2866,6 @@ export function ReservationCardEditor({
     status,
     t,
   ]);
-
-  /** Drop pending door when physical category no longer matches. */
-  useEffect(() => {
-    if (!physicalRoomTypeId || !pendingRoomId) return;
-    const door = rooms.find((r) => r.id === pendingRoomId);
-    if (door?.roomTypeId && door.roomTypeId !== physicalRoomTypeId) {
-      setPendingRoomId('');
-    }
-  }, [physicalRoomTypeId, pendingRoomId, rooms]);
 
   /** Badge follows the door in the dropdown, not only the already-assigned room. */
   const selectedRoomStatus = useMemo(() => {
@@ -3348,6 +3328,7 @@ export function ReservationCardEditor({
                 ? (data.roomChanges as Array<{
                     id: string;
                     effectiveAt: string;
+                    status?: string | null;
                     fromRoom?: { roomNumber: string } | null;
                     toRoom?: { roomNumber: string } | null;
                     reasonCode?: string | null;
@@ -3355,47 +3336,6 @@ export function ReservationCardEditor({
                   }>)
                 : []
             }
-            onClassSettlement={(action) => {
-              const givenNightly = nightlyForChargedType(
-                ratePlans,
-                ratePlanId,
-                givenRoomTypeId,
-                adults,
-                checkIn,
-              );
-              const note =
-                action === 'HOTEL'
-                  ? t('classHotelCoversNote')
-                  : action === 'GUEST_PAY'
-                    ? t('classGuestPaysNote')
-                    : action === 'HOTEL_REFUND'
-                      ? t('classHotelRefundNote')
-                      : t('classGuestCheaperNote');
-              if (action !== 'HOTEL' && givenRoomTypeId) {
-                setRoomTypeId(givenRoomTypeId);
-                setGivenRoomTypeId('');
-                if (givenNightly != null && givenNightly > 0) {
-                  const today = todayBakuYmd();
-                  setUseManualRate(true);
-                  setManualDailyRate(String(givenNightly));
-                  setDailyRates((rows) =>
-                    rows.map((d) =>
-                      d.fixPrice || d.stayDate < today
-                        ? d
-                        : { ...d, amount: givenNightly, manualFlag: true, fixPrice: true },
-                    ),
-                  );
-                }
-              }
-              setNotes((prev) => {
-                const existing = prev.PRICE_NOTE ?? '';
-                if (existing.includes(note)) return prev;
-                return {
-                  ...prev,
-                  PRICE_NOTE: [existing, note].filter(Boolean).join('\n'),
-                };
-              });
-            }}
             reservationId={reservationId}
             folioBalance={stayPair.debt}
             unusedAmount={stayPair.unused}
@@ -3725,6 +3665,14 @@ export function ReservationCardEditor({
         busy={busy}
         askReason={Boolean(cardMoveAsk?.askReason)}
         askSettlement={Boolean(cardMoveAsk?.askSettlement)}
+        chargedNightly={nightlyForChargedType(ratePlans, ratePlanId, roomTypeId, adults, checkIn)}
+        doorNightly={nightlyForChargedType(
+          ratePlans,
+          ratePlanId,
+          rooms.find((row) => row.id === pendingRoomId)?.roomTypeId ?? '',
+          adults,
+          checkIn,
+        )}
         onClose={() => setCardMoveAsk(null)}
         onConfirm={(choice) => {
           setCardMoveAsk(null);
@@ -3736,6 +3684,14 @@ export function ReservationCardEditor({
         busy={busy}
         askReason={Boolean(splitMoveAsk?.askReason)}
         askSettlement={Boolean(splitMoveAsk?.askSettlement)}
+        chargedNightly={nightlyForChargedType(ratePlans, ratePlanId, roomTypeId, adults, checkIn)}
+        doorNightly={nightlyForChargedType(
+          ratePlans,
+          ratePlanId,
+          rooms.find((row) => row.id === splitMoveAsk?.roomId)?.roomTypeId ?? '',
+          adults,
+          checkIn,
+        )}
         onClose={() => setSplitMoveAsk(null)}
         onConfirm={(choice) => {
           const ask = splitMoveAsk;
@@ -3957,7 +3913,9 @@ export function ReservationCardEditor({
               );
               return {
                 value: r.id,
-                label: block ? `${r.roomNumber} · ${doorBlockLabel(block)}` : r.roomNumber,
+                label: [r.roomNumber, r.roomType?.code, block ? doorBlockLabel(block) : '']
+                  .filter(Boolean)
+                  .join(' · '),
                 disabled: Boolean(block),
               };
             })}
