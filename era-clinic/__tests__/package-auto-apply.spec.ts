@@ -12,12 +12,30 @@ jest.mock("@/lib/prisma", () => ({
     labOrderItem: { updateMany: jest.fn() },
     programInstance: { update: jest.fn(), findUnique: jest.fn() },
     programTemplate: { findFirst: jest.fn() },
-    diagnosticService: { findMany: jest.fn().mockResolvedValue([]) },
+    diagnosticService: {
+      findMany: jest.fn(
+        async (args: {
+          where?: {
+            guestBlankRelease?: string;
+            OR?: Array<{ code?: { in?: string[] }; serviceCode?: { in?: string[] } }>;
+          };
+        }) => {
+          if (args?.where?.guestBlankRelease) return [];
+          const codes = new Set<string>();
+          for (const clause of args?.where?.OR ?? []) {
+            for (const code of clause.code?.in ?? []) codes.add(code);
+            for (const code of clause.serviceCode?.in ?? []) codes.add(code);
+          }
+          return [...codes].map((code) => ({ code, serviceCode: code }));
+        },
+      ),
+    },
     episodeBroughtInResult: { findMany: jest.fn().mockResolvedValue([]) },
     programProcedureBalance: {
       create: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     $transaction: jest.fn(async (ops: unknown[]) => {
       for (const op of ops) await op;
@@ -62,7 +80,7 @@ import {
   fulfillmentRespectingStudyKind,
   healUnstampedPackageAutoLabs,
   overlayTemplateAxes,
-  resolveAutoBlockServiceCode,
+  resolveAutoBlockServiceCodes,
 } from "@/domain/sanatorium/package-auto-apply.service";
 import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
 
@@ -90,19 +108,19 @@ describe("fulfillmentRespectingStudyKind", () => {
     expect(fulfillmentRespectingStudyKind("LAB", null)).toBe("LAB_ORDER");
   });
 
-  it("books ECG and USG aliases when the block is still a procedure", () => {
+  it("keeps a procedure block as a procedure even when the quota key looks like a study", () => {
     expect(
       effectiveAutoFulfillment(
         { procedureCode: "ECG", kind: "CUSTOM", fulfillment: "PROCEDURE_ORDER" },
         "FEMALE",
       ),
-    ).toBe("LAB_ORDER");
+    ).toBe("PROCEDURE_ORDER");
     expect(
       effectiveAutoFulfillment(
         { procedureCode: "USG", kind: "CUSTOM", fulfillment: "PROCEDURE_ORDER" },
         "FEMALE",
       ),
-    ).toBe("LAB_ORDER");
+    ).toBe("PROCEDURE_ORDER");
     expect(
       effectiveAutoFulfillment(
         { procedureCode: "PHYSIO_POOL", kind: "PHYSIO", fulfillment: "PROCEDURE_ORDER" },
@@ -118,11 +136,19 @@ describe("fulfillmentRespectingStudyKind", () => {
   });
 });
 
-describe("resolveAutoBlockServiceCode", () => {
-  it("resolves GYN-OR-URO by sex", () => {
-    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "FEMALE")).toBe("VISIT-GYN");
-    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "MALE")).toBe("VISIT-URO");
-    expect(resolveAutoBlockServiceCode("GYN-OR-URO", "UNKNOWN")).toBeNull();
+describe("resolveAutoBlockServiceCodes", () => {
+  it("returns every member of the block and ignores the quota key", () => {
+    const members = [
+      { blockCode: "LAB_BIOCHEM", procedureCode: "LAB-BIOCHEM-PREMIUM" },
+      { blockCode: "USG", procedureCode: "USG-ABD" },
+      { blockCode: "USG", procedureCode: "USG-THYROID" },
+      { blockCode: "SVC_FIZIO_POOL", procedureCode: "SVC-AMPLIPULS" },
+    ];
+    expect(resolveAutoBlockServiceCodes("LAB_BIOCHEM", members)).toEqual([
+      "LAB-BIOCHEM-PREMIUM",
+    ]);
+    expect(resolveAutoBlockServiceCodes("USG", members)).toEqual(["USG-ABD", "USG-THYROID"]);
+    expect(resolveAutoBlockServiceCodes("LAB_BIOCHEM", [])).toEqual([]);
   });
 });
 
@@ -189,7 +215,7 @@ describe("applyPackageAutoBlocks", () => {
             },
           ],
           knots: [],
-          members: [],
+          members: [{ blockCode: "CARDIO-ECG", procedureCode: "CARDIO-ECG" }],
         },
         procedureLines: [{ procedureCode: "CARDIO-ECG", quotaTotal: 1, quotaUsed: 0 }],
         template: { version: 1, procedures: [] },
@@ -207,19 +233,7 @@ describe("applyPackageAutoBlocks", () => {
         packageStamp: { packageQuotaCode: "CARDIO-ECG" },
       }),
     );
-    expect(createLabOrderWithItems).toHaveBeenCalledWith(
-      expect.objectContaining({
-        codes: ["LAB-CBC"],
-        packageStamp: { packageQuotaCode: "LAB-CBC" },
-      }),
-    );
-    expect(createLabOrderWithItems).toHaveBeenCalledWith(
-      expect.objectContaining({
-        codes: ["LAB-URINE"],
-        packageStamp: { packageQuotaCode: "LAB-URINE" },
-      }),
-    );
-    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
     expect(r.autoApplyState).toBe("APPLIED");
   });
 
@@ -255,7 +269,7 @@ describe("applyPackageAutoBlocks", () => {
             },
           ],
           knots: [],
-          members: [],
+          members: [{ blockCode: "CARDIO-ECG", procedureCode: "CARDIO-ECG" }],
         },
         procedureLines: [],
         template: { version: 1, procedures: [] },
@@ -314,7 +328,10 @@ describe("applyPackageAutoBlocks", () => {
             },
           ],
           knots: [],
-          members: [],
+          members: [
+            { blockCode: "LAB-CBC", procedureCode: "LAB-CBC" },
+            { blockCode: "VISIT-NEURO", procedureCode: "VISIT-NEURO" },
+          ],
         },
         procedureLines: [{ procedureCode: "LAB-CBC" }, { procedureCode: "VISIT-NEURO" }],
         template: { version: 1, procedures: [] },
@@ -426,7 +443,7 @@ describe("applyPackageAutoBlocks", () => {
       }),
     );
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
+    expect(r.createdLabCodes).toEqual(["CARDIO-ECG"]);
   });
 
   it("AUTO lab stored as PROCEDURE_ORDER still creates a lab order", async () => {
@@ -443,7 +460,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["LAB-CBC", "LAB-URINE"]);
+    expect(r.createdLabCodes).toEqual(["LAB-CBC"]);
     expect(createLabOrderWithItems).toHaveBeenCalled();
   });
 
@@ -462,8 +479,8 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["LAB-CBC", "LAB-URINE"]);
-    expect(createLabOrderWithItems).toHaveBeenCalled();
+    expect(r.createdLabCodes).toEqual([]);
+    expect(createLabOrderWithItems).not.toHaveBeenCalled();
   });
 
   it("CARE_TEAM retries a day-1 exam that was waiting on a doctor", async () => {
@@ -486,22 +503,26 @@ describe("applyPackageAutoBlocks", () => {
     expect(mocked.visit.create).toHaveBeenCalled();
   });
 
-  it("creates an ECG lab from an auto procedure block", async () => {
+  it("books every member of an auto lab block and not the quota key", async () => {
     mocked.clinicalEpisode.findUnique.mockResolvedValue(
       episodeWithBlock({
-        procedureCode: "ECG",
-        procedureName: "EKQ",
-        kind: "CUSTOM",
-        fulfillment: "PROCEDURE_ORDER",
+        procedureCode: "LAB_BIOCHEM",
+        procedureName: "Biochemistry",
+        kind: "LAB",
+        fulfillment: "LAB_ORDER",
         requiresDoctor: false,
         assignMode: "AUTO_ON_OPEN",
+        memberCodes: ["LAB-BIOCHEM-PREMIUM", "LAB-BIOCHEM-EXT"],
       }),
     );
     mocked.episodeCareDoctor.findFirst.mockResolvedValue(null);
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "OPEN" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["CARDIO-ECG", "LAB-CBC", "LAB-URINE"]);
+    expect(r.createdLabCodes).toEqual(["LAB-BIOCHEM-PREMIUM", "LAB-BIOCHEM-EXT"]);
+    expect(createLabOrderWithItems).not.toHaveBeenCalledWith(
+      expect.objectContaining({ codes: ["LAB_BIOCHEM"] }),
+    );
   });
 
   it("MANUAL_RETRY reads current template axes and creates a day-1 lab", async () => {
@@ -531,7 +552,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "MANUAL_RETRY" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["ALT", "LAB-CBC", "LAB-URINE"]);
+    expect(r.createdLabCodes).toEqual(["ALT"]);
     expect(recalcProgramQuotas).toHaveBeenCalledWith(
       "pi1",
       expect.objectContaining({ adoptCurrentVersion: true, nights: 14 }),
@@ -588,7 +609,7 @@ describe("applyPackageAutoBlocks", () => {
 
     const r = await applyPackageAutoBlocks("ep1", { trigger: "CARE_TEAM" });
     if ("skipped" in r) return;
-    expect(r.createdLabCodes).toEqual(["LAB-CBC", "LAB-URINE"]);
+    expect(r.createdLabCodes).toEqual(["LAB-CBC"]);
     expect(createLabOrderWithItems).toHaveBeenCalled();
   });
 
@@ -609,6 +630,7 @@ describe("applyPackageAutoBlocks", () => {
       id: "t4",
       version: 4,
       code: "PKG-STANDART",
+      blockMembers: [{ blockCode: "ALT", procedureCode: "ALT" }],
       procedures: [
         {
           procedureCode: "ALT",
@@ -719,6 +741,7 @@ function episodeWithBlock(block: {
   requiresDoctor: boolean;
   assignMode?: string;
   autoApplyState?: string;
+  memberCodes?: string[];
 }) {
   return {
     id: "ep1",
@@ -747,7 +770,10 @@ function episodeWithBlock(block: {
           },
         ],
         knots: [],
-        members: [],
+        members: (block.memberCodes ?? [block.procedureCode]).map((procedureCode) => ({
+          blockCode: block.procedureCode,
+          procedureCode,
+        })),
       },
       procedureLines: [],
       startsOn: new Date("2026-10-01T00:00:00.000Z"),

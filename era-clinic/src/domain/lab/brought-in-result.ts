@@ -44,7 +44,13 @@ export async function freshBroughtInCodes(episodeId: string): Promise<Set<string
     const maxDays = maxByCode.get(row.serviceCode);
     if (maxDays == null) continue;
     const ymd = row.resultOn.toISOString().slice(0, 10);
-    if (broughtInIsFresh(ymd, maxDays)) fresh.add(row.serviceCode);
+    if (!broughtInIsFresh(ymd, maxDays)) continue;
+    fresh.add(row.serviceCode);
+    for (const service of services) {
+      if (service.code !== row.serviceCode && service.serviceCode !== row.serviceCode) continue;
+      fresh.add(service.code);
+      if (service.serviceCode) fresh.add(service.serviceCode);
+    }
   }
   return fresh;
 }

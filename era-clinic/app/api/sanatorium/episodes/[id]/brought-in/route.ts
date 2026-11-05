@@ -33,18 +33,46 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const body = bodySchema.parse(await req.json());
     const episode = await prisma.clinicalEpisode.findUnique({
       where: { id },
-      select: { id: true, organizationId: true },
+      select: {
+        id: true,
+        organizationId: true,
+        programInstance: { select: { templateId: true } },
+      },
     });
     if (!episode) return jsonError("Episode not found", 404);
-    const service = await prisma.diagnosticService.findFirst({
+    let service = await prisma.diagnosticService.findFirst({
       where: {
         organizationId: episode.organizationId,
         active: true,
         broughtInMaxDays: { not: null },
         OR: [{ code: body.serviceCode }, { serviceCode: body.serviceCode }],
       },
-      select: { code: true, broughtInMaxDays: true },
+      select: { code: true, serviceCode: true, broughtInMaxDays: true },
     });
+    if (!service) {
+      const links = episode.programInstance
+        ? await prisma.programTemplateBlockMember.findMany({
+            where: {
+              organizationId: episode.organizationId,
+              templateId: episode.programInstance.templateId,
+              blockCode: body.serviceCode,
+            },
+            select: { procedureCode: true },
+          })
+        : [];
+      const skus = [...new Set(links.map((link) => link.procedureCode))];
+      if (skus.length === 1) {
+        service = await prisma.diagnosticService.findFirst({
+          where: {
+            organizationId: episode.organizationId,
+            active: true,
+            broughtInMaxDays: { not: null },
+            OR: [{ code: skus[0] }, { serviceCode: skus[0] }],
+          },
+          select: { code: true, serviceCode: true, broughtInMaxDays: true },
+        });
+      }
+    }
     if (!service || service.broughtInMaxDays == null) {
       return jsonError("This lab does not accept a brought-in blank", 400);
     }
@@ -68,11 +96,27 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       },
       update: { resultOn: new Date(`${body.resultOn}T00:00:00.000Z`) },
     });
+    const codes = new Set<string>([service.code, service.serviceCode].filter(Boolean));
+    const blocks = episode.programInstance
+      ? await prisma.programTemplateBlockMember.findMany({
+          where: {
+            organizationId: episode.organizationId,
+            templateId: episode.programInstance.templateId,
+            procedureCode: { in: [...codes] },
+          },
+          select: { blockCode: true },
+        })
+      : [];
+    for (const block of blocks) codes.add(block.blockCode);
+    const codeList = [...codes];
     const openOrders = await prisma.labOrder.findMany({
       where: {
         clinicalEpisodeId: id,
         status: "ORDERED",
-        items: { some: { serviceCode: service.code } },
+        OR: [
+          { testCode: { in: codeList } },
+          { items: { some: { serviceCode: { in: codeList } } } },
+        ],
       },
       select: { id: true },
     });

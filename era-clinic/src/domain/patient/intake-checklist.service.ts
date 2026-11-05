@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   effectiveAutoFulfillment,
-  resolveAutoBlockServiceCode,
+  resolveAutoBlockServiceCodes,
 } from "@/domain/sanatorium/package-auto-apply.service";
 import { labOrderLaneHref } from "@/domain/lab/lab-order-lane";
 
@@ -180,7 +180,10 @@ export async function getIntakeChecklist(
         code: programCode,
         isCurrent: true,
       },
-      include: { procedures: { orderBy: { sortOrder: "asc" } } },
+      include: {
+        procedures: { orderBy: { sortOrder: "asc" } },
+        blockMembers: true,
+      },
     }),
     prisma.patientRef.findUnique({
       where: { id: patientRefId },
@@ -206,6 +209,10 @@ export async function getIntakeChecklist(
     broughtMax.set(service.code, service.broughtInMaxDays);
     broughtMax.set(service.serviceCode, service.broughtInMaxDays);
   }
+  for (const member of template.blockMembers ?? []) {
+    const days = broughtMax.get(member.procedureCode);
+    if (days != null) broughtMax.set(member.blockCode, days);
+  }
   const broughtOn = new Map<string, string>();
   for (const row of broughtRows) {
     broughtOn.set(row.serviceCode, row.resultOn.toISOString().slice(0, 10));
@@ -218,8 +225,12 @@ export async function getIntakeChecklist(
     if (mode !== "AUTO_ON_OPEN" && mode !== "AUTO_DAY1") continue;
     const fulfillment = effectiveAutoFulfillment(block, patient?.sex);
     if (fulfillment !== "LAB_ORDER" && fulfillment !== "VISIT") continue;
-    const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, patient?.sex);
-    if (!serviceCode || seen.has(serviceCode)) continue;
+    const serviceCodes = resolveAutoBlockServiceCodes(
+      block.procedureCode,
+      template.blockMembers,
+    );
+    for (const serviceCode of serviceCodes) {
+    if (seen.has(serviceCode)) continue;
     seen.add(serviceCode);
     const name = block.procedureName?.trim() || serviceCode;
     if (fulfillment === "VISIT") {
@@ -266,6 +277,7 @@ export async function getIntakeChecklist(
       broughtInMaxDays: broughtMax.get(serviceCode) ?? null,
       broughtInOn: broughtOn.get(serviceCode) ?? null,
     });
+    }
   }
 
   return { packageCode: programCode, packageTitle: title, items };

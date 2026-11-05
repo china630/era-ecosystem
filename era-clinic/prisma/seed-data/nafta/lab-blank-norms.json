@@ -296,11 +296,17 @@
           "labelEn": "Positive",
           "labelRu": "Положительный",
           "labelAz": "Pozitiv"
+        },
+        {
+          "code": "WEAK_POSITIVE",
+          "labelEn": "Weakly positive",
+          "labelRu": "Слабоположительный",
+          "labelAz": "Zəif müsbət"
         }
       ]
     },
     {
-      "codes": ["HCV", "LAB-HCV"],
+      "codes": ["HCV", "LAB-HCV", "Anti-HCV"],
       "labelAz": "Hepatit C (HCV) qan zərdabında",
       "boundKind": "QUALITATIVE",
       "valueType": "QUALITATIVE",
@@ -321,6 +327,12 @@
           "labelEn": "Positive",
           "labelRu": "Положительный",
           "labelAz": "Pozitiv"
+        },
+        {
+          "code": "WEAK_POSITIVE",
+          "labelEn": "Weakly positive",
+          "labelRu": "Слабоположительный",
+          "labelAz": "Zəif müsbət"
         }
       ]
     },
@@ -346,6 +358,12 @@
           "labelEn": "Positive",
           "labelRu": "Положительный",
           "labelAz": "Pozitiv"
+        },
+        {
+          "code": "WEAK_POSITIVE",
+          "labelEn": "Weakly positive",
+          "labelRu": "Слабоположительный",
+          "labelAz": "Zəif müsbət"
         }
       ]
     },
