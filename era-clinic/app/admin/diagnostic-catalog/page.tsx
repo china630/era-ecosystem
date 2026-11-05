@@ -545,7 +545,7 @@ export default function DiagnosticCatalogAdminPage() {
       serviceCode: row.serviceCode,
       guestBlankRelease: row.guestBlankRelease ?? "PAY_WITH_WORK",
       menuSurface: row.menuSurface ?? "",
-      autoPaidOnOpen: row.autoPaidOnOpen === true,
+      autoPaidOnOpen: row.autoPaidOnOpen === true ? "1" : "",
       schedulingMode: row.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
       broughtInMaxDays:
         row.broughtInMaxDays != null && row.broughtInMaxDays > 0
@@ -704,7 +704,7 @@ export default function DiagnosticCatalogAdminPage() {
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
         guestBlankRelease: form.guestBlankRelease === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
-        autoPaidOnOpen: form.kind === "lab_panel" && form.autoPaidOnOpen === true,
+        autoPaidOnOpen: form.kind === "lab_panel" && form.autoPaidOnOpen === "1",
         menuSurface:
           form.menuSurface === "LAB" || form.menuSurface === "DIAGNOSTIC" || form.menuSurface === "VISIT"
             ? form.menuSurface
@@ -1672,8 +1672,8 @@ export default function DiagnosticCatalogAdminPage() {
                   <input
                     type="checkbox"
                     className="mt-0.5"
-                    checked={form.autoPaidOnOpen === true}
-                    onChange={(e) => setForm({ ...form, autoPaidOnOpen: e.target.checked })}
+                    checked={form.autoPaidOnOpen === "1"}
+                    onChange={(e) => setForm({ ...form, autoPaidOnOpen: e.target.checked ? "1" : "" })}
                   />
                   <span>
                     <span className="font-medium">{t("autoPaidOnOpen")}</span>
