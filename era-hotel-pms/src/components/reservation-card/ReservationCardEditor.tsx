@@ -73,7 +73,6 @@ import { buildStayFormHtml, type StayPrintKind } from '@/components/reservation-
 import { StayJournal } from '@/components/reservation-card/StayJournal';
 import { openPrintDocument } from '@/lib/print-window';
 import type { StayJournalEntry } from '@/lib/reservation-journal';
-import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   ageYearsFromBirthDate,
