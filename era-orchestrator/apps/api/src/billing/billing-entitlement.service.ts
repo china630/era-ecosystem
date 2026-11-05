@@ -350,7 +350,7 @@ export class BillingEntitlementService {
       lines.push({
         kind: "module",
         moduleKey: m.moduleKey,
-        unitPriceAzn: m.pricePerMonth,
+        unitPriceAzn: m.amountAzn,
         description: `Module ${m.moduleKey}`,
         amountAzn: m.amountAzn,
       });
