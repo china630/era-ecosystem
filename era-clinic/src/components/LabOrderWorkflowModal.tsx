@@ -35,7 +35,7 @@ import type {
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
-import { formatNormDisplay } from "@/lib/lab-analyte-norms";
+import { formatNormDisplay, isCatalogNormEcho } from "@/lib/lab-analyte-norms";
 import { isUnsetLabValue } from "@/lib/lab-result-flags";
 
 const resultsFormId = "lab-results-form";
@@ -283,7 +283,16 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       flag?: string | null;
     }): LabResultRow => {
       const analyte = analyteByCode.get(r.code);
-      const dash = isUnsetLabValue(r.value);
+      const dash =
+        isUnsetLabValue(r.value) ||
+        isCatalogNormEcho(r.value, {
+          normTextEn: r.normTextEn ?? analyte?.normText?.en,
+          normTextRu: r.normTextRu ?? analyte?.normText?.ru,
+          normTextAz: r.normTextAz ?? analyte?.normText?.az,
+          refMin: r.refMin ?? analyte?.refMin,
+          refMax: r.refMax ?? analyte?.refMax,
+          unit: r.unit ?? analyte?.unit,
+        });
       const hasSentence = Boolean(
         (r.normTextAz ?? analyte?.normText?.az)?.trim() ||
           (r.normTextEn ?? analyte?.normText?.en)?.trim() ||
@@ -300,7 +309,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       return {
         code: r.code,
         label: resolveResultLabel(r.code, r.label, catalogItem, metaFields, locale),
-        value: r.value,
+        value: dash ? "—" : r.value,
         unit: r.unit ?? null,
         refMin: dash ? null : r.refMin ?? null,
         refMax: dash ? null : r.refMax ?? null,

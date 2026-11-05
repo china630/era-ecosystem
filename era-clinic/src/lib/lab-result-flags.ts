@@ -1,5 +1,6 @@
 import {
   effectiveBoundKind,
+  isCatalogNormEcho,
   parseZonesJson,
   resolveNumericBounds,
   type AnalyteBoundKind,
@@ -127,9 +128,10 @@ export function isUnsetLabValue(value: string | null | undefined): boolean {
 }
 
 function enrichOne(line: ResultLineInput): ResultLineInput {
-  if (isUnsetLabValue(line.value)) {
+  if (isUnsetLabValue(line.value) || isCatalogNormEcho(line.value, line)) {
     return {
       ...line,
+      value: "—",
       flag: undefined,
       refMin: undefined,
       refMax: undefined,
