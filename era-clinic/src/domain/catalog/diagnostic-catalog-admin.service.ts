@@ -126,8 +126,14 @@ export type ServiceInput = {
   hotelRevenueCode?: string | null;
   fields?: CatalogFieldDef[] | null;
   includes?: string[] | null;
+  guestBlankRelease?: "PAY_WITH_WORK" | "AFTER_PAYMENT";
+  menuSurface?: "LAB" | "DIAGNOSTIC" | "VISIT" | null;
+  autoPaidOnOpen?: boolean;
+  schedulingMode?: "FIXED" | "OPEN";
+  broughtInMaxDays?: number | null;
   sortOrder?: number;
   active?: boolean;
+  packageOnly?: boolean;
 };
 
 type ServicePersistData<T> = Omit<T, "fields" | "includes"> & {
@@ -233,8 +239,17 @@ export type AnalyteInput = {
   labelEn: string;
   labelRu: string;
   labelAz: string;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: "INTERVAL" | "UPPER_ONLY" | "LOWER_ONLY" | "QUALITATIVE" | "ZONES";
   refMin?: string | null;
   refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  zonesJson?: string | null;
   section?: string | null;
   valueType?: "NUMERIC" | "QUALITATIVE";
   sortOrder?: number;
@@ -366,6 +381,47 @@ export async function updateMetaField(
     data: toMetaFieldPersistData(data),
   });
   await audit(ctx, "diagnosticMetaField", id, "UPDATE", data);
+  invalidateDiagnosticCatalogCache();
+  return row;
+}
+
+export async function listDiagnosticCategories() {
+  return prisma.diagnosticCategory.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function createDiagnosticCategory(
+  ctx: AuditCtx,
+  name: string,
+  active = true,
+) {
+  const trimmed = name.trim();
+  const row = await prisma.diagnosticCategory.create({ data: { name: trimmed, active } });
+  await audit(ctx, "diagnosticCategory", row.id, "CREATE", { name: trimmed });
+  invalidateDiagnosticCatalogCache();
+  return row;
+}
+
+export async function updateDiagnosticCategory(
+  ctx: AuditCtx,
+  id: string,
+  data: { name?: string; active?: boolean },
+) {
+  const current = await prisma.diagnosticCategory.findUnique({ where: { id } });
+  const nextName = data.name?.trim();
+  const row = await prisma.diagnosticCategory.update({
+    where: { id },
+    data: {
+      ...(nextName !== undefined ? { name: nextName } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
+    },
+  });
+  if (current && nextName && nextName !== current.name) {
+    await prisma.diagnosticService.updateMany({
+      where: { organizationId: current.organizationId, category: current.name },
+      data: { category: nextName },
+    });
+  }
+  await audit(ctx, "diagnosticCategory", id, "UPDATE", data);
   invalidateDiagnosticCatalogCache();
   return row;
 }

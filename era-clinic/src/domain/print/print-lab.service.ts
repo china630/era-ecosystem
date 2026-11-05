@@ -5,6 +5,9 @@ import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print
 import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
+import { signerForModality } from "@/domain/print/print-modality-signer";
+import { formatNormDisplay } from "@/lib/lab-analyte-norms";
+import { isUnsetLabValue } from "@/lib/lab-result-flags";
 
 export type PrintLabRow = {
   no: number;
@@ -23,18 +26,9 @@ export type PrintLabDocument = {
   title: string;
   sections: { key: string; title: string; rows: PrintLabRow[] }[];
   signatureLab: string | null;
+  sampleReceived: string | null;
+  resultDate: string;
 };
-
-function formatNorm(refMin?: string | null, refMax?: string | null, unit?: string | null): string {
-  const a = (refMin ?? "").trim();
-  const b = (refMax ?? "").trim();
-  let n = "";
-  if (a && b) n = `${a}-${b}`;
-  else if (a) n = a;
-  else if (b) n = b;
-  if (unit && n) return `${n} ${unit}`;
-  return n || unit || "—";
-}
 
 export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Promise<PrintLabDocument | null> {
   const order = await prisma.labOrder.findUnique({
@@ -47,6 +41,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
           results: { orderBy: { code: "asc" } },
           diagnosticService: {
             include: {
+              modality: { select: { code: true } },
               analytes: {
                 orderBy: { sortOrder: "asc" },
                 include: {
@@ -76,7 +71,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     birthDate: order.patientRef?.birthDate,
     phone: order.patientRef?.phone,
     nationality: order.patientRef?.nationality,
-    date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
+    date: "",
     stay,
   });
 
@@ -127,6 +122,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
         }
       }
       const shown = String(value ?? "").trim();
+      const unset = shown === "" || isUnsetLabValue(shown);
       const catalogLabel = analyte
         ? pickL10n(
             {
@@ -138,14 +134,33 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
           )
         : code;
       const label = saved?.label?.trim() || catalogLabel;
+      const norm = unset
+        ? "—"
+        : formatNormDisplay(
+          {
+            normTextEn: saved?.normTextEn ?? analyte?.normTextEn,
+            normTextRu: saved?.normTextRu ?? analyte?.normTextRu,
+            normTextAz: saved?.normTextAz ?? analyte?.normTextAz,
+            refMin: saved?.refMin ?? analyte?.refMin,
+            refMax: saved?.refMax ?? analyte?.refMax,
+            unit: saved?.unit ?? analyte?.unit,
+          },
+          {
+            lang,
+            chosen: {
+              refMin: saved?.refMin ?? analyte?.refMin ?? undefined,
+              refMax: saved?.refMax ?? analyte?.refMax ?? undefined,
+            },
+          },
+        ) || "—";
       const row: PrintLabRow = {
         no: no++,
         code,
         label,
         value: shown || "—",
         unit: saved?.unit ?? analyte?.unit ?? "",
-        norm: formatNorm(saved?.refMin ?? analyte?.refMin, saved?.refMax ?? analyte?.refMax) || "—",
-        flag: saved?.flag || "—",
+        norm,
+        flag: unset ? "—" : saved?.flag || "—",
         section,
       };
       const list = sectionMap.get(sectionKey) ?? [];
@@ -165,6 +180,14 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     patient,
     title: titleParts.join(", ") || order.testCode || "Lab results",
     sections,
-    signatureLab: branding.signatureLab,
+    signatureLab: await signerForModality(
+      order.items[0]?.diagnosticService?.modality?.code,
+      order.items
+        .flatMap((item) => item.results)
+        .sort((a, b) => b.enteredAt.getTime() - a.enteredAt.getTime())
+        .map((result) => result.enteredByUserId),
+    ),
+    sampleReceived: order.collectedAt ? bakuDateKey(order.collectedAt) : null,
+    resultDate: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
   };
 }

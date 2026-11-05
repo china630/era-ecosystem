@@ -10,9 +10,9 @@ Super-admin UI lived on Finance web (`/super-admin/*`) while APIs are on Orchest
 
 ## Decision
 
-- **Canonical admin UI host:** `era-orchestrator/apps/web` at `/super-admin/*`
+- **Canonical admin UI host (2026-11 cutover):** `era-orchestrator/apps/platform-web` on `platform.era-365.online` (short paths) — [platform-console-cutover.md](./platform-console-cutover.md). Client `apps/web` `/super-admin/*` redirects to platform.
 - **BFF:** Next.js routes `/api/cp-admin/*` and `/api/cp-mdm/*` proxy to Orch API with user Bearer JWT (and service token for MDM internal reads)
-- **Finance:** `/super-admin/*` redirects to `NEXT_PUBLIC_ORCH_WEB_URL/super-admin/*`
+- **Finance:** `/super-admin/*` redirects to platform origin (`ERA_PLATFORM_ORIGIN` / `platform.era-365.online`), not app `/super-admin`
 - **Finance-specific NAS/GL reference data** remains on Finance web only (domain data plane)
 
 ## Consequences

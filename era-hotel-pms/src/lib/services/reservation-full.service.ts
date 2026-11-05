@@ -725,12 +725,38 @@ export async function patchReservationFull(
         folio: {
           include: {
             charges: { select: { id: true } },
-            payments: { select: { id: true } },
-            deposits: { select: { id: true } },
+            payments: { select: { id: true, voidedAt: true } },
+            deposits: { select: { id: true, status: true } },
           },
         },
       },
     });
+    const staying = new Set<string>();
+    for (const p of paxGuests) {
+      if (p.guestId) staying.add(`id:${p.guestId}`);
+      const name = `${(p.firstName ?? '').trim().toLowerCase()}|${(p.lastName ?? '').trim().toLowerCase()}`;
+      if (name !== '|') staying.add(`name:${name}`);
+    }
+    for (const prev of previousGuests) {
+      const name = `${(prev.firstName ?? '').trim().toLowerCase()}|${(prev.lastName ?? '').trim().toLowerCase()}`;
+      const stillHere =
+        (prev.guestId && staying.has(`id:${prev.guestId}`)) ||
+        (name !== '|' && staying.has(`name:${name}`));
+      if (stillHere) continue;
+      const heldOnGuest = await prisma.folioDeposit.count({
+        where: { reservationId: id, reservationGuestId: prev.id, status: 'HELD' },
+      });
+      const livePayments = (prev.folio?.payments ?? []).filter((row) => !row.voidedAt);
+      const heldOnFolio = (prev.folio?.deposits ?? []).filter((row) => row.status === 'HELD');
+      const hasMoney = livePayments.length > 0 || heldOnFolio.length > 0 || heldOnGuest > 0;
+      if (hasMoney) {
+        const name = [prev.firstName, prev.lastName].filter(Boolean).join(' ') || prev.guestId;
+        throw Object.assign(
+          new Error(`Cannot remove ${name}: this guest has a payment or a deposit`),
+          { status: 409, code: 'PAYER_HAS_MONEY' },
+        );
+      }
+    }
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
     const primaryIdx = primaryIndexForParty(paxGuests);
     await prisma.reservation.update({
@@ -1178,6 +1204,9 @@ export async function listReservationsForGrid(
       { paxGuests: { some: { lastName: { contains: q, mode: 'insensitive' } } } },
       { room: { roomNumber: { contains: q, mode: 'insensitive' } } },
       { agency: { code: { contains: q, mode: 'insensitive' } } },
+      { agency: { name: { contains: q, mode: 'insensitive' } } },
+      { company: { code: { contains: q, mode: 'insensitive' } } },
+      { company: { name: { contains: q, mode: 'insensitive' } } },
       { notes: { some: { text: { contains: q, mode: 'insensitive' } } } },
     ];
   }

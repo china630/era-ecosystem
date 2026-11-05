@@ -27,6 +27,7 @@ export default async function PrintLabOrderPage({ params, searchParams }: Props)
       autoPrint={sp.autoprint === "1"}
       signatureLabel={printLabel(lang, "labDoctor")}
       signatureName={doc.signatureLab}
+      blankDates={{ sampleReceived: doc.sampleReceived, resultDate: doc.resultDate }}
     >
       {doc.sections.map((sec) => (
         <div key={sec.key || "default"} className="mb-4">

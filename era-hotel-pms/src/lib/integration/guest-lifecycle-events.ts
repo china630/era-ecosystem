@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import {
   SATELLITE_HOTEL_GUEST_CHECKED_IN,
   SATELLITE_HOTEL_GUEST_CHECKED_OUT,

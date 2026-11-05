@@ -1,86 +1,42 @@
 import { Permissions } from "../common/decorators/permissions.decorator";
-import { Body, Controller, Get, Put, UseGuards } from "@nestjs/common";
+import { Controller, Get, GoneException, Put, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
-import { IsArray, IsBoolean, IsString, ValidateNested } from "class-validator";
-import { Type } from "class-transformer";
 import { TENDER_SEED_ROWS, CP_PERMISSION } from "@era/contracts";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
 
-class TenderEnablementItemDto {
-  @IsString()
-  code!: string;
-
-  @IsBoolean()
-  enabled!: boolean;
-}
-
-class PutTenderEnablementDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => TenderEnablementItemDto)
-  items!: TenderEnablementItemDto[];
-}
-
+/**
+ * Read-only seed snapshot for ledger mapping.
+ * Org payment method catalog SoR is orchestrator (org card + Sync).
+ */
 @ApiTags("organization-tenders")
 @ApiBearerAuth("bearer")
 @Controller("organization/tenders")
 @UseGuards(JwtAuthGuard)
 export class OrganizationTendersController {
-  constructor(private readonly prisma: PrismaService) {}
-
   @Get()
   @Permissions(CP_PERMISSION.API_LEDGER_READ)
   @ApiOperation({
     summary:
-      "Org tender catalog (Finance SoR) — seed rows + enabled codes for satellites",
+      "Legacy seed tender rows (read-only). Edit methods on the orchestrator org card.",
   })
-  async list(@OrganizationId() organizationId: string) {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { settings: true },
-    });
-    const settings =
-      org?.settings && typeof org.settings === "object" && !Array.isArray(org.settings)
-        ? (org.settings as Record<string, unknown>)
-        : {};
-    const raw = settings.tenderEnablement;
-    const enabledCodes: string[] = Array.isArray(raw)
-      ? raw.filter((c): c is string => typeof c === "string")
-      : TENDER_SEED_ROWS.filter((r) => r.active).map((r) => r.code);
+  async list(@OrganizationId() _organizationId: string) {
     return {
       tenders: TENDER_SEED_ROWS,
-      enabledCodes,
+      enabledCodes: TENDER_SEED_ROWS.filter((r) => r.active).map((r) => r.code),
+      sourceOfRecord: "orchestrator-org-payment-methods",
     };
   }
 
   @Put()
   @Permissions(CP_PERMISSION.ADMIN_ORG_SETTINGS)
-  @ApiOperation({ summary: "Update org tender enablement list" })
-  async put(
-    @OrganizationId() organizationId: string,
-    @Body() dto: PutTenderEnablementDto,
-  ) {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { settings: true },
-    });
-    const prev =
-      org?.settings && typeof org.settings === "object" && !Array.isArray(org.settings)
-        ? (org.settings as Record<string, unknown>)
-        : {};
-    const enabledCodes = dto.items.filter((i) => i.enabled).map((i) => i.code);
-    await this.prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        settings: {
-          ...prev,
-          tenderEnablement: enabledCodes,
-        },
-      },
-    });
-    return { tenders: TENDER_SEED_ROWS, enabledCodes };
+  @ApiOperation({
+    summary: "Removed — payment methods are edited on the orchestrator org card",
+  })
+  put() {
+    throw new GoneException(
+      "Payment methods are edited on the orchestrator organization card (KKM / payment methods). Finance only reads the tender code.",
+    );
   }
 }

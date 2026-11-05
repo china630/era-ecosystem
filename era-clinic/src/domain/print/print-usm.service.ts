@@ -5,6 +5,7 @@ import type { PrintBranding, PrintLang, PrintPatientStrip } from "@/domain/print
 import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/print-patient-strip";
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
+import { signerForModality } from "@/domain/print/print-modality-signer";
 
 export type PrintUsmRow = {
   label: string;
@@ -18,6 +19,8 @@ export type PrintUsmDocument = {
   title: string;
   rows: PrintUsmRow[];
   signatureDoctor: string | null;
+  sampleReceived: string | null;
+  resultDate: string;
 };
 
 export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<PrintUsmDocument | null> {
@@ -29,7 +32,7 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
         orderBy: { sortOrder: "asc" },
         include: {
           results: true,
-          diagnosticService: true,
+          diagnosticService: { include: { modality: { select: { code: true } } } },
         },
       },
     },
@@ -157,11 +160,19 @@ export async function buildUsmPrint(orderId: string, lang: PrintLang): Promise<P
       birthDate: order.patientRef?.birthDate,
       phone: order.patientRef?.phone,
       nationality: order.patientRef?.nationality,
-      date: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
+      date: "",
       stay,
     }),
     title,
     rows,
-    signatureDoctor: branding.signatureDoctor,
+    signatureDoctor: await signerForModality(
+      order.items.find((item) => item.diagnosticService?.modality?.code)?.diagnosticService?.modality?.code,
+      order.items
+        .flatMap((item) => item.results)
+        .sort((a, b) => b.enteredAt.getTime() - a.enteredAt.getTime())
+        .map((result) => result.enteredByUserId),
+    ),
+    sampleReceived: order.collectedAt ? bakuDateKey(order.collectedAt) : null,
+    resultDate: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
   };
 }

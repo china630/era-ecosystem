@@ -13,7 +13,6 @@ import {
   FieldRow,
   FieldSection,
   FieldSelect,
-  hotelTenderOptions,
   MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
   SUBSECTION_SURFACE_CLASS,
@@ -47,17 +46,15 @@ function ratePlanFitsRoomType(
   rp: RatePlanOption,
   roomTypeId: string,
   checkIn: string,
-  mealPlanId: string,
+  _mealPlanId: string,
 ): boolean {
   if (rp.medicalFlag) {
     const open = (rp.sellCells ?? []).filter((c) => cellCoversDate(c, checkIn));
     if (open.length === 0) return false;
     if (!roomTypeId) return true;
-    return open.some(
-      (c) =>
-        c.roomTypeId === roomTypeId &&
-        (!mealPlanId || !c.mealPlanId || c.mealPlanId === mealPlanId),
-    );
+    // Room-type list ignores meal: a contract-applied meal must not hide types
+    // that are priced on this package (OTAXHP under Volkin/Merikl).
+    return open.some((c) => c.roomTypeId === roomTypeId);
   }
   if (!roomTypeId) return true;
   if (rp.type === 'BASE' || !rp.roomTypeId) return true;
@@ -472,7 +469,27 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   useEffect(() => {
     setHotelCoversClass(priceNoteChoosesHotel(props.priceNote));
   }, [props.priceNote]);
-  const tenderLocale = locale.startsWith('az') ? 'az' : locale.startsWith('ru') ? 'ru' : 'en';
+  const [tenderOptions, setTenderOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: 'CASH', label: 'CASH' },
+    { value: 'CARD', label: 'CARD' },
+    { value: 'EPOINT', label: 'EPOINT' },
+    { value: 'COMPANY_ACCOUNT', label: 'COMPANY_ACCOUNT' },
+    { value: 'LOYALTY_POINTS', label: 'LOYALTY_POINTS' },
+    { value: 'DEPOSIT', label: 'DEPOSIT' },
+  ]);
+  useEffect(() => {
+    void fetch('/api/payment-methods')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data?.methods ?? body?.methods) as
+          | Array<{ code: string; label: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setTenderOptions(rows.map((row) => ({ value: row.code, label: row.label || row.code })));
+        }
+      })
+      .catch(() => undefined);
+  }, [locale]);
   const {
     isCreate,
     isLocked,
@@ -543,18 +560,16 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const chargedRoomTypes = useMemo(() => {
     const plan = ratePlans.find((rp) => rp.id === props.ratePlanId);
     if (!plan?.medicalFlag) return roomTypes;
+    // Date-open sell cells only — do not require mealPlan match (contract may stamp
+    // a meal that would otherwise hide OTAXHP / other medical room classes).
     const openIds = new Set(
       (plan.sellCells ?? [])
-        .filter(
-          (c) =>
-            cellCoversDate(c, props.checkIn) &&
-            (!props.mealPlanId || !c.mealPlanId || c.mealPlanId === props.mealPlanId),
-        )
+        .filter((c) => cellCoversDate(c, props.checkIn))
         .map((c) => c.roomTypeId),
     );
     if (openIds.size === 0) return roomTypes.filter((rt) => rt.id === props.roomTypeId);
     return roomTypes.filter((rt) => rt.id === props.roomTypeId || openIds.has(rt.id));
-  }, [ratePlans, roomTypes, props.ratePlanId, props.roomTypeId, props.checkIn, props.mealPlanId]);
+  }, [ratePlans, roomTypes, props.ratePlanId, props.roomTypeId, props.checkIn]);
 
   const openMealPlans = useMemo(() => {
     const plan = ratePlans.find((rp) => rp.id === props.ratePlanId);
@@ -767,6 +782,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               </div>
               {sellable.reason === 'NO_ALLOTMENT' ? (
                 <div className="mt-1 text-rose-900">{t('noContractAllotmentHint')}</div>
+              ) : null}
+              {sellable.reason === 'NO_ALLOTMENT_BAR' && sellable.available > 0 ? (
+                <div className={`mt-1 ${TEXT_MUTED_CLASS}`}>{t('noContractAllotmentBarHint')}</div>
               ) : null}
               <div className="mt-1">
                 {sellable.available < 1 && sellable.reason !== 'NO_ALLOTMENT' ? (
@@ -1140,7 +1158,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             label={tb('paymentMethod')}
             value={props.paymentMethod}
             onChange={setCatalog('paymentMethod')}
-            options={hotelTenderOptions(tenderLocale)}
+            options={tenderOptions}
             disabled={disabled}
           />
           {props.billingRoutingSummary ? (

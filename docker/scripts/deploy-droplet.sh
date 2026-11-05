@@ -185,6 +185,12 @@ if [ -z "$services" ]; then
     dump_critical_logs
     exit 1
   fi
+  echo "==> clinic and hotel health (blocking on full deploy)"
+  if ! node scripts/ecosystem-smoke-scope.mjs hotel-pms clinic; then
+    echo "ERROR: clinic/hotel smoke failed — deploy not green" >&2
+    dump_critical_logs
+    exit 1
+  fi
   docker image prune -f || true
   node scripts/ecosystem-smoke-all.mjs || echo "WARN: full ecosystem-smoke-all failed (non-blocking; critical already passed)"
 else
@@ -195,6 +201,13 @@ else
   clear_orphan_name_conflicts $services
   # shellcheck disable=SC2086
   if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services; then
+    dump_critical_logs
+    exit 1
+  fi
+  echo "==> scope smoke (blocking, only deployed services)"
+  # shellcheck disable=SC2086
+  if ! node scripts/ecosystem-smoke-scope.mjs $services; then
+    echo "ERROR: scope smoke failed — deploy not green" >&2
     dump_critical_logs
     exit 1
   fi

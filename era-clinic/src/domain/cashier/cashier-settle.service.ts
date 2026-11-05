@@ -194,6 +194,10 @@ export async function settleVisitBill(input: SettleInput) {
     input.payments && input.payments.length > 0
       ? input.payments
       : [{ method: "CASH", amount: amountNet }];
+  const { assertClinicPaymentMethodAllowed } = await import("@/lib/org-payment-methods");
+  for (const row of payments) {
+    assertClinicPaymentMethodAllowed(row.method);
+  }
   const paySum = sumPayments(payments);
   if (Math.abs(paySum - amountNet) > 0.01) {
     throw new Error(`Payment split ${paySum} must equal amountNet ${amountNet}`);

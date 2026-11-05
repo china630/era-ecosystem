@@ -119,8 +119,10 @@ export async function isWorkforceGate403(res: Response): Promise<boolean> {
 /** Enable the platform_workforce module for the current org. */
 export async function enableWorkforceModule(
   moduleKey = "platform_workforce",
+  confirmLateMonth?: "start_now" | "defer_to_first",
 ): Promise<
-  { ok: true; synced: boolean } | { ok: false; errorBody: unknown }
+  | { ok: true; synced: boolean; inGrace?: boolean; graceEndsAt?: string }
+  | { ok: false; errorBody: unknown }
 > {
   const { orchFetch } = await import("./orch-api");
   const token = getOrchAccessToken();
@@ -129,19 +131,32 @@ export async function enableWorkforceModule(
     token,
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ moduleKey, enabled: true }),
+    body: JSON.stringify({
+      moduleKey,
+      enabled: true,
+      ...(confirmLateMonth ? { confirmLateMonth } : {}),
+    }),
   }).catch(() => null);
   if (!res?.ok) {
     const errorBody = res ? await res.json().catch(() => null) : null;
     return { ok: false, errorBody };
   }
-  const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+  const body = (await res.json().catch(() => null)) as {
+    synced?: boolean;
+    inGrace?: boolean;
+    graceEndsAt?: string;
+  } | null;
   await fetch("/api/platform/workforce/scope/bootstrap", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: "{}",
   }).catch(() => null);
-  return { ok: true, synced: body?.synced !== false };
+  return {
+    ok: true,
+    synced: body?.synced !== false,
+    inGrace: body?.inGrace === true,
+    graceEndsAt: body?.graceEndsAt,
+  };
 }
 
 /** CSV text or xlsx base64 for workforce import endpoints. */

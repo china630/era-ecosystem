@@ -33,6 +33,7 @@
     "sales": "Satış jurnalı",
     "settings": "Parametrlər",
     "audit": "Dəyişiklik jurnalı",
+    "adminLinks": "Bağlantılar",
     "access": "Giriş",
     "switchOutlet": "Nöqtəni dəyiş",
     "buffetPlans": "Planlar",
@@ -1065,5 +1066,32 @@
       "buffet_kitchen": "Bufet mətbəxi",
       "disco": "Disko"
     }
+  },
+  "adminLinks": {
+    "title": "İnteqrasiya bağlantıları",
+    "subtitle": "Pul marşrutu və peer kanallar (bu F&B org).",
+    "moneyTitle": "Pul marşrutu",
+    "moneyLine": "Rejim {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
+    "moneyUnknown": "Operating mode əlçatan deyil",
+    "outbound": "Çıxan",
+    "inbound": "Daxil olan",
+    "empty": "Kanal yoxdur (operating mode + entitlement-lərdən sonra PLATFORM sync).",
+    "on": "açıq",
+    "off": "sönülü",
+    "disable": "Daxil olanı söndür",
+    "loadFailed": "Bağlantılar yüklənmədi",
+    "saveFailed": "Kanal yenilənmədi",
+    "loading": "Yüklənir…",
+    "kindFolio": "Folio yazısı",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Gəlir hadisəsi",
+    "kindRead": "Status oxu",
+    "satHotel": "Otel",
+    "satClinic": "Klinika",
+    "satFnb": "F&B",
+    "satRetail": "Retail",
+    "satFinance": "Maliyyə",
+    "managedPlatform": "Platform",
+    "managedAcceptor": "Acceptor"
   }
 }

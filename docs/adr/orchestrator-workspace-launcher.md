@@ -32,8 +32,9 @@ Orchestrator web home (`/`) rendered all nine industry tiles. When `hasIndustryM
 ## Consequences
 
 - New users: register → `/organizations` → create org → `/workspace`.
-- `/workspace` is the satellite launcher (Open / Modules / Settings). Hotel Channel Manager upsell is not a banner (use the Hotel card **Modules**). Department UUIDs and satellite URLs are Super-Admin `/super-admin/orgs/{id}` (copy UUID). Workforce card appears only while `platform_workforce` is off; entitled orgs use the sidebar.
-- Nafta UAT: owner **Connect** satellites on `/workspace`; ops extends trial via `/super-admin/orgs/{id}/subscription` — see [platform-trial-hierarchy](./platform-trial-hierarchy.md).
+- `/workspace` is the satellite launcher (Open / Modules / Settings). Hotel Channel Manager upsell is not a banner (use the Hotel card **Modules**). Department UUIDs and satellite URLs are Super-Admin on **platform** console (after cutover — [platform-console-cutover](./platform-console-cutover.md)). Workforce card appears only while `platform_workforce` is off; entitled orgs use the sidebar.
+- **Control Home IA (2026-11-03):** context bar + home org, Platform apps vs Systems tiles vs Structure — [control-home-ia](./control-home-ia.md). Module toggle post-paid uses lifetime 7-day SKU grace — [sku-grace-trial-7d](./sku-grace-trial-7d.md).
+- Nafta UAT: owner **Connect** satellites on `/workspace`; ops extends trial via platform org subscription — see [platform-trial-hierarchy](./platform-trial-hierarchy.md).
 - Docs: `ECOSYSTEM_URLS.md`, `LOCAL_UAT_GAP_CHECKLIST.md`, `NAFTA_SANATORIUM_UAT.md`, `QUARTET_UAT.md`, module-map rule.
 
 ## References

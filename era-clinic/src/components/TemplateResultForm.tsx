@@ -25,6 +25,10 @@ export type ResultLineState = {
   unit?: string;
   refMin?: string;
   refMax?: string;
+  normTextEn?: string;
+  normTextRu?: string;
+  normTextAz?: string;
+  boundKind?: string;
 };
 
 type ImagingPhraseRow = {
@@ -256,6 +260,10 @@ export function TemplateResultForm({
               unit: a.unit,
               refMin: a.refMin,
               refMax: a.refMax,
+              normTextEn: a.normText?.en,
+              normTextRu: a.normText?.ru,
+              normTextAz: a.normText?.az,
+              boundKind: a.boundKind,
             };
             const lineIdx = lines.findIndex((l) => l.code === a.code);
             const name = `${pickL10n(a.label, locale)}${a.unit ? ` (${a.unit})` : ""}`;
@@ -267,6 +275,10 @@ export function TemplateResultForm({
                 unit: a.unit,
                 refMin: a.refMin,
                 refMax: a.refMax,
+                normTextEn: a.normText?.en,
+                normTextRu: a.normText?.ru,
+                normTextAz: a.normText?.az,
+                boundKind: a.boundKind,
               };
               if (lineIdx >= 0) next[lineIdx] = row;
               else next.push(row);
@@ -334,6 +346,10 @@ export function linesFromAnalytes(analytes: CatalogAnalyteDef[]): ResultLineStat
     unit: a.unit,
     refMin: a.refMin,
     refMax: a.refMax,
+    normTextEn: a.normText?.en,
+    normTextRu: a.normText?.ru,
+    normTextAz: a.normText?.az,
+    boundKind: a.boundKind,
   }));
 }
 

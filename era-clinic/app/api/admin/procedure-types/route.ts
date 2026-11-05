@@ -38,9 +38,12 @@ const createSchema = z.object({
   extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
   needsSite: z.boolean().optional(),
   openAttendance: z.boolean().optional(),
+  blockCategory: z.enum(["PHYSIO", "BATH", "PARAFFIN"]).nullable().optional(),
+  usageContour: z.enum(["GUEST", "INTERNAL"]).optional(),
   physioOrderFields: z.array(z.string().min(1)).optional(),
   allowedSiteCodes: z.array(z.string().min(1)).optional(),
   financeSku: z.string().nullable().optional(),
+  active: z.boolean().optional(),
 });
 
 export async function GET(req: Request) {

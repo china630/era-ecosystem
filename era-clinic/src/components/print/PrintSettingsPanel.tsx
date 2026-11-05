@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -53,9 +53,25 @@ type PrintDraft = {
   printSignatureLab: string;
   printSignatureDoctor: string;
   procedurePrintExtraLang: "" | "az" | "ru" | "en";
+  modalitySigners: Record<string, string>;
   checkupSections: CheckupSectionConfig[];
   controlPlanePrint?: CpPrint | null;
 };
+
+function parseSignerMap(raw: unknown): Record<string, string> {
+  if (typeof raw !== "string" || !raw.trim()) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const out: Record<string, string> = {};
+    for (const [code, name] of Object.entries(parsed)) {
+      if (typeof name === "string") out[code] = name;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
 
 const EMPTY: PrintDraft = {
   printLogoDataUrl: null,
@@ -74,16 +90,21 @@ const EMPTY: PrintDraft = {
   printSignatureLab: "",
   printSignatureDoctor: "",
   procedurePrintExtraLang: "",
+  modalitySigners: {},
   checkupSections: DEFAULT_CHECKUP_SECTIONS,
   controlPlanePrint: null,
 };
 
-export function PrintSettingsPanel() {
+export function PrintSettingsPanel({ part = "all" }: { part?: "all" | "brand" | "signers" }) {
   const t = useTranslations("adminSettings");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [data, setData] = useState<PrintDraft>(EMPTY);
   const [draft, setDraft] = useState<PrintDraft>(EMPTY);
   const [open, setOpen] = useState(false);
+  const [modalities, setModalities] = useState<
+    { code: string; titleEn: string; titleRu: string; titleAz: string }[]
+  >([]);
 
   useEffect(() => {
     void fetch("/api/admin/settings")
@@ -113,6 +134,7 @@ export function PrintSettingsPanel() {
             row.procedurePrintExtraLang === "en"
               ? row.procedurePrintExtraLang
               : "",
+          modalitySigners: parseSignerMap(row.printModalitySignersJson),
           checkupSections: Array.isArray(row.checkupSections)
             ? row.checkupSections
             : row.checkupSectionsJson
@@ -123,6 +145,28 @@ export function PrintSettingsPanel() {
         setData(next);
         setDraft(next);
       });
+    void fetch("/api/admin/diagnostic-catalog/modalities")
+      .then((r) => r.json())
+      .then((body) => {
+        const rows = (body.data ?? body) as {
+          code?: string;
+          titleEn?: string;
+          titleRu?: string;
+          titleAz?: string;
+        }[];
+        if (!Array.isArray(rows)) return;
+        setModalities(
+          rows
+            .filter((row) => row.code)
+            .map((row) => ({
+              code: String(row.code),
+              titleEn: row.titleEn ?? String(row.code),
+              titleRu: row.titleRu ?? String(row.code),
+              titleAz: row.titleAz ?? String(row.code),
+            })),
+        );
+      })
+      .catch(() => setModalities([]));
   }, []);
 
   const cp = draft.controlPlanePrint;
@@ -155,6 +199,7 @@ export function PrintSettingsPanel() {
       printSignatureLab: draft.printSignatureLab || null,
       printSignatureDoctor: draft.printSignatureDoctor || null,
       procedurePrintExtraLang: draft.procedurePrintExtraLang || null,
+      printModalitySignersJson: JSON.stringify(draft.modalitySigners),
       checkupSectionsJson: JSON.stringify(draft.checkupSections),
     };
     if (!cp?.logo) body.printLogoDataUrl = draft.printLogoDataUrl;
@@ -195,7 +240,11 @@ export function PrintSettingsPanel() {
     <div className="mt-8">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold">{t("printBrandTitle", { defaultValue: "Print branding" })}</h2>
+          <h2 className="text-base font-semibold">
+            {part === "signers"
+              ? t("chipLabs")
+              : t("printBrandTitle", { defaultValue: "Print branding" })}
+          </h2>
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
             {t("printBrandSubtitle", { defaultValue: "Logo, clinic names, contacts for printed forms" })}
           </p>
@@ -219,6 +268,7 @@ export function PrintSettingsPanel() {
           {tc("edit")}
         </button>
       </div>
+      {part === "signers" ? null : (
       <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
         <div className="flex items-center gap-3">
           {previewLogo ? (
@@ -239,6 +289,7 @@ export function PrintSettingsPanel() {
         </div>
         <p className={TEXT_MUTED_CLASS}>{previewAddress}</p>
       </div>
+      )}
 
       <ModalShell
         open={open}
@@ -247,6 +298,7 @@ export function PrintSettingsPanel() {
         maxWidthClass="max-w-2xl"
       >
         <div className={FORM_STACK_CLASS}>
+          {part !== "signers" ? (
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("procedurePrintExtraLang")}
@@ -267,6 +319,36 @@ export function PrintSettingsPanel() {
             ]}
             emptyLabel={t("procedurePrintExtraLangOff")}
           />
+          ) : null}
+          {part !== "brand"
+            ? modalities.map((modality) => {
+            const title =
+              locale === "ru"
+                ? modality.titleRu
+                : locale === "az"
+                  ? modality.titleAz
+                  : modality.titleEn;
+            return (
+              <Field
+                key={modality.code}
+                label={t("modalitySigner", { name: title || modality.code })}
+                preset="shortText"
+                value={draft.modalitySigners[modality.code] ?? ""}
+                onChange={(e) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    modalitySigners: {
+                      ...prev.modalitySigners,
+                      [modality.code]: e.target.value,
+                    },
+                  }))
+                }
+              />
+            );
+          })
+            : null}
+          {part !== "signers" ? (
+          <>
           {!cp?.logo ? (
             <div>
               <p className="mb-1 text-[12px] font-medium">{t("logo", { defaultValue: "Logo" })}</p>
@@ -352,6 +434,8 @@ export function PrintSettingsPanel() {
               </label>
             ))}
           </fieldset>
+          </>
+          ) : null}
         </div>
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />
       </ModalShell>

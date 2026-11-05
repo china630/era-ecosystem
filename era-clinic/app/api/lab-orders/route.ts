@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { createLabOrderWithItems } from "@/domain/lab/lab-order-write.service";
 import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
 import { labOrderLaneWhere } from "@/domain/lab/lab-order-lane";
+import { loadDiagnosticLaneCodes, loadMenuSurfaceCodes } from "@/domain/lab/lab-order-lane.server";
 import { stampEpisodeOnCreate } from "@/domain/sanatorium/episode-stamp";
 
 const createSchema = z.object({
@@ -37,6 +38,12 @@ const createSchema = z.object({
         unit: z.string().optional(),
         refMin: z.string().optional(),
         refMax: z.string().optional(),
+        normTextEn: z.string().optional(),
+        normTextRu: z.string().optional(),
+        normTextAz: z.string().optional(),
+        boundKind: z
+          .enum(["INTERVAL", "UPPER_ONLY", "LOWER_ONLY", "QUALITATIVE", "ZONES"])
+          .optional(),
         flag: z.string().optional(),
       }),
     )
@@ -154,9 +161,13 @@ export async function GET(req: Request) {
         items: { some: { diagnosticServiceId: { in: services.map((s) => s.id) } } },
       });
     }
+    const surfaces = await loadMenuSurfaceCodes();
     const laneWhere = labOrderLaneWhere({
       kinds: (query.kinds ?? "").split(","),
       unclassified: query.unclassified,
+      diagnosticCodes: await loadDiagnosticLaneCodes(),
+      surfaceDiagnosticCodes: surfaces.diagnostic,
+      surfaceLabCodes: surfaces.lab,
     });
     if (laneWhere) conditions.push(laneWhere);
     if (query.criticalOnly) {

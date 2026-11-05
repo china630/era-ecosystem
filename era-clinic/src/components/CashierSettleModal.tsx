@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   CatalogField,
-  clinicTenderOptions,
   Field,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -51,13 +50,29 @@ type Props = {
 
 export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Props) {
   const t = useTranslations("cashier");
-  const locale = useLocale();
   const [bill, setBill] = useState<UnifiedBill | null>(null);
   const [loading, setLoading] = useState(false);
   const [extraDiscount, setExtraDiscount] = useState("0");
   const [payments, setPayments] = useState<PaymentRow[]>([{ method: "CASH", amount: "" }]);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
+  const [methodOptions, setMethodOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: "CASH", label: "CASH" },
+    { value: "CARD", label: "CARD" },
+    { value: "TRANSFER", label: "TRANSFER" },
+  ]);
+
+  useEffect(() => {
+    void fetch("/api/payment-methods")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.methods ?? body?.data?.methods) as Array<{ code: string; label: string }> | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setMethodOptions(rows.map((row) => ({ value: row.code, label: row.label })));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!visitId) {
@@ -246,9 +261,7 @@ export function CashierSettleModal({ visitId, shiftId, onClose, onSettled }: Pro
                         next[idx] = { ...next[idx], method: String(v) };
                         setPayments(next);
                       }}
-                      options={clinicTenderOptions(
-                        locale.startsWith("az") ? "az" : locale.startsWith("ru") ? "ru" : "en",
-                      )}
+                      options={methodOptions}
                     />
                     <Field
                       label={t("payAmount")}

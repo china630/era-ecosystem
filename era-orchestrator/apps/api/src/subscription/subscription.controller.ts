@@ -21,6 +21,7 @@ import { buildSettlementPolicy } from "./settlement-policy.util";
 import { ConnectSatelliteDto } from "./dto/connect-satellite.dto";
 import { SelectPlanDto } from "./dto/select-plan.dto";
 import { UpdateSubscriptionModulesDto } from "./dto/update-subscription-modules.dto";
+import { SatelliteChannelsService } from "../channels/satellite-channels.service";
 @ApiTags("subscription")
 @ApiBearerAuth("bearer")
 @Controller("v1/subscription")
@@ -33,6 +34,7 @@ export class SubscriptionController {
     private readonly connect: SatelliteConnectService,
     private readonly trialResolver: TrialEntitlementResolver,
     private readonly moduleRef: ModuleRef,
+    private readonly channels: SatelliteChannelsService,
   ) {}
 
   @Get("me")
@@ -157,6 +159,9 @@ export class SubscriptionController {
         fiscalRouting: org?.fiscalRouting ?? "OWN",
         revenueRouting: org?.revenueRouting ?? "OWN",
       },
+      channels: await this.channels
+        .listSnapshotForOrganization(organizationId)
+        .catch(() => []),
       settlementPolicy,
       expiresAt: expiresAt?.toISOString() ?? null,
       isTrial: snapshot.isTrial,

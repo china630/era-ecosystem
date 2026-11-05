@@ -498,7 +498,7 @@ export async function removeTourBooking(id: string, reason?: string) {
 
 export async function payFolioCharge(
   chargeId: string,
-  paymentMethod: PaymentMethod,
+  paymentMethod: string,
   bankTerminalId?: string,
   createdByUserId?: string,
   auditRequest?: Request,
@@ -521,8 +521,11 @@ export async function payFolioCharge(
     createdByUserId,
     auditRequest,
   });
-  await prisma.folioPaymentAllocation.create({
-    data: { paymentId: payment.id, chargeId: charge.id, amount: toDecimal(amount) },
+  const { createAllocationOnce } = await import('@/lib/services/folio.service');
+  await createAllocationOnce({
+    paymentId: payment.id,
+    chargeId: charge.id,
+    amount: toDecimal(amount),
   });
 
   const booking = await prisma.tourBooking.findFirst({

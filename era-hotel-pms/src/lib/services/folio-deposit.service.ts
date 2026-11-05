@@ -1,7 +1,48 @@
 import { prisma } from '@/lib/prisma';
+import { hotelDateKey } from '@/lib/hotel-calendar';
 import { decimalToNumber } from '@/lib/decimal';
-import type { PaymentMethod } from '@prisma/client';
 import type { ReservationAuditActor } from '@/lib/reservation-audit';
+
+/** Other open stays of the same guest, for carry and cashier transfer. */
+export async function listDepositTargets(reservationId: string) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    select: { guestId: true },
+  });
+  if (!stay) return [];
+  const rows = await prisma.reservation.findMany({
+    where: {
+      id: { not: reservationId },
+      guestId: stay.guestId,
+      status: { in: ['OPTION', 'CONFIRMED', 'IN_HOUSE'] },
+    },
+    select: {
+      id: true,
+      status: true,
+      checkInDate: true,
+      checkOutDate: true,
+      room: { select: { roomNumber: true } },
+      paxGuests: {
+        select: { id: true, firstName: true, lastName: true, isPrimary: true },
+        orderBy: { sortOrder: 'asc' },
+      },
+    },
+    orderBy: { checkInDate: 'asc' },
+    take: 20,
+  });
+  return rows.map((row) => ({
+    reservationId: row.id,
+    status: row.status,
+    roomNumber: row.room?.roomNumber ?? '',
+    checkIn: hotelDateKey(row.checkInDate),
+    checkOut: hotelDateKey(row.checkOutDate),
+    guests: row.paxGuests.map((guest) => ({
+      id: guest.id,
+      name: [guest.firstName, guest.lastName].filter(Boolean).join(' '),
+      isPrimary: guest.isPrimary,
+    })),
+  }));
+}
 
 export async function listDeposits(reservationId: string) {
   return prisma.folioDeposit.findMany({
@@ -10,15 +51,254 @@ export async function listDeposits(reservationId: string) {
   });
 }
 
-export async function recordDeposit(_input: {
+const OPEN_FOR_DEPOSIT = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
+
+/**
+ * Advance on this reservation, not revenue and not a guest wallet.
+ * Room may be empty. Dates are already required on the stay.
+ */
+export async function recordDeposit(input: {
   reservationId: string;
+  reservationGuestId: string;
   amount: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: string;
   registerRef?: string;
+  bankTerminalId?: string;
   externalRef?: string;
   audit?: { userId?: string | null; request?: Request };
-}): Promise<never> {
-  throw new Error('DEPOSIT_INTAKE_CLOSED');
+}) {
+  if (!(input.amount > 0)) throw new Error('Amount must be positive');
+  if (input.paymentMethod !== 'CASH' && input.paymentMethod !== 'CARD' && input.paymentMethod !== 'DEPOSIT') {
+    throw new Error('Deposit accepts CASH or CARD');
+  }
+  const stay = await prisma.reservation.findUnique({
+    where: { id: input.reservationId },
+    select: { id: true, status: true, organizationId: true },
+  });
+  if (!stay || !OPEN_FOR_DEPOSIT.includes(stay.status as (typeof OPEN_FOR_DEPOSIT)[number])) {
+    throw Object.assign(new Error('Deposit is only for an open future or in-house stay'), {
+      status: 409,
+      code: 'DEPOSIT_STAY_CLOSED',
+    });
+  }
+  const guest = await prisma.reservationGuest.findFirst({
+    where: { id: input.reservationGuestId, reservationId: input.reservationId },
+  });
+  if (!guest) {
+    throw Object.assign(new Error('Deposit guest is not on this stay'), {
+      status: 409,
+      code: 'DEPOSIT_GUEST_REQUIRED',
+    });
+  }
+  if (input.paymentMethod === 'CARD') {
+    const { requestOrganizationId } = await import('@/lib/request-organization');
+    const { listDevicesForSatellite } = await import('@era/satellite-kit');
+    const terminals = listDevicesForSatellite({
+      organizationId: requestOrganizationId(),
+      kind: 'BANK_POS',
+    });
+    if (terminals.length > 0 && !input.bankTerminalId?.trim()) {
+      throw Object.assign(new Error('BANK_TERMINAL_REQUIRED'), { status: 409, code: 'BANK_TERMINAL_REQUIRED' });
+    }
+  }
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const businessDate = await getCurrentBusinessDate();
+  let fiscalReceiptId: string | null = null;
+  if (input.paymentMethod === 'CASH' || input.paymentMethod === 'CARD') {
+    const { requestOrganizationId } = await import('@/lib/request-organization');
+    const orgId = requestOrganizationId();
+    const { fiscalizeForSatellite, isFiscalSkipped } = await import('@era/satellite-kit');
+    try {
+      const { ensureOpenCashShift } = await import('@/lib/services/cash-shift.service');
+      const cashShift = await ensureOpenCashShift({
+        registerId: input.registerRef?.trim() || undefined,
+      });
+      const receipt = await fiscalizeForSatellite(
+        {
+          documentRef: input.reservationId,
+          amount: input.amount,
+          paymentMethod: input.paymentMethod,
+          registerRef: input.registerRef ?? cashShift.registerId,
+          organizationId: orgId,
+          fiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+          bankTerminalId: input.bankTerminalId?.trim() || cashShift.bankTerminalId || undefined,
+          shiftFiscalDeviceId: cashShift.fiscalDeviceId ?? undefined,
+          shiftBankTerminalId: cashShift.bankTerminalId ?? undefined,
+          lines: [{ name: 'Deposit', qty: 1, unitPrice: input.amount }],
+        },
+        orgId,
+      );
+      if (!isFiscalSkipped(receipt)) fiscalReceiptId = receipt.receiptId;
+    } catch (e) {
+      console.error('Deposit fiscalize failed', e);
+      if (process.env.ERA_FISCAL_LIVE === 'true' || (e instanceof Error && e.name === 'FiscalError')) throw e;
+    }
+  }
+  const row = await prisma.folioDeposit.create({
+    data: {
+      organizationId: stay.organizationId,
+      reservationId: input.reservationId,
+      reservationGuestId: guest.id,
+      amount: input.amount,
+      paymentMethod: input.paymentMethod,
+      registerRef: input.registerRef ?? null,
+      externalRef: input.externalRef ?? null,
+      fiscalReceiptId,
+      businessDate,
+      status: 'HELD',
+    },
+  });
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  await recordReservationAudit(input.reservationId, 'DEPOSIT_RECORDED', input.audit, {
+    section: 'folio',
+    source: 'user',
+    summary: `Deposit ${input.amount.toFixed(2)} ${input.paymentMethod}`,
+    fields: [{ key: 'deposit', from: null, to: input.amount.toFixed(2) }],
+  });
+  return row;
+}
+
+/** Cashier move of a HELD deposit onto another stay and guest. Not a new receipt. */
+export async function transferDeposit(input: {
+  depositId: string;
+  targetReservationId: string;
+  targetReservationGuestId: string;
+  audit?: { userId?: string | null; request?: Request };
+}) {
+  const row = await prisma.folioDeposit.findUnique({ where: { id: input.depositId } });
+  if (!row || row.status !== 'HELD') {
+    throw Object.assign(new Error('Only a held deposit can be transferred'), {
+      status: 409,
+      code: 'DEPOSIT_NOT_HELD',
+    });
+  }
+  const targetGuest = await prisma.reservationGuest.findFirst({
+    where: { id: input.targetReservationGuestId, reservationId: input.targetReservationId },
+  });
+  if (!targetGuest) {
+    throw Object.assign(new Error('Target guest is not on the target stay'), {
+      status: 409,
+      code: 'DEPOSIT_TARGET_REQUIRED',
+    });
+  }
+  const fromReservationId = row.reservationId;
+  const updated = await prisma.folioDeposit.update({
+    where: { id: row.id },
+    data: {
+      reservationId: input.targetReservationId,
+      reservationGuestId: targetGuest.id,
+      folioId: null,
+      externalRef: `TRANSFER_FROM:${fromReservationId}`,
+    },
+  });
+  const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  const summary = `Deposit ${decimalToNumber(row.amount).toFixed(2)} moved`;
+  await recordReservationAudit(fromReservationId, 'DEPOSIT_TRANSFER', input.audit, {
+    section: 'folio',
+    source: 'user',
+    summary,
+    fields: [{ key: 'deposit', from: fromReservationId, to: input.targetReservationId }],
+  });
+  await recordReservationAudit(input.targetReservationId, 'DEPOSIT_TRANSFER', input.audit, {
+    section: 'folio',
+    source: 'user',
+    summary,
+    fields: [{ key: 'deposit', from: fromReservationId, to: input.targetReservationId }],
+  });
+  return updated;
+}
+
+/**
+ * Checkout surplus leaves this stay at zero and becomes HELD on another stay.
+ * The offset uses payment method DEPOSIT so it is not a cash refund.
+ */
+export async function carryUnusedCreditToStay(input: {
+  sourceReservationId: string;
+  targetReservationId?: string;
+  newCheckIn?: string;
+  newCheckOut?: string;
+  audit?: { userId?: string | null; request?: Request };
+}) {
+  const { folioBalance, postPayment } = await import('@/lib/services/folio.service');
+  const folios = await prisma.folio.findMany({
+    where: { reservationId: input.sourceReservationId, status: 'OPEN', type: 'GUEST' },
+    include: { charges: true, payments: true },
+  });
+  let unused = 0;
+  for (const folio of folios) {
+    const balance = folioBalance(folio.charges, folio.payments);
+    if (balance < -0.009) unused += -balance;
+  }
+  if (unused <= 0.009) return { carried: 0, targetReservationId: input.targetReservationId ?? null };
+
+  let targetReservationId = input.targetReservationId ?? null;
+  if (!targetReservationId) {
+    if (!input.newCheckIn || !input.newCheckOut) {
+      throw Object.assign(new Error('Pick a future stay or its dates'), {
+        status: 409,
+        code: 'CARRY_TARGET_REQUIRED',
+      });
+    }
+    const { getReservation, createReservation } = await import('@/lib/services/reservation.service');
+    const source = await getReservation(input.sourceReservationId);
+    const created = await createReservation({
+      guestId: source.guestId,
+      roomTypeId: source.roomTypeId,
+      ratePlanId: source.ratePlanId,
+      checkInDate: new Date(input.newCheckIn),
+      checkOutDate: new Date(input.newCheckOut),
+      adults: 1,
+      status: 'CONFIRMED',
+      copyGuestNameToPax: true,
+      audit: input.audit,
+    });
+    targetReservationId = created.id;
+  }
+  if (!targetReservationId) {
+    throw Object.assign(new Error('Future stay was not created'), {
+      status: 409,
+      code: 'CARRY_TARGET_REQUIRED',
+    });
+  }
+  const target = await prisma.reservation.findUnique({
+    where: { id: targetReservationId },
+    include: { paxGuests: { orderBy: { sortOrder: 'asc' } } },
+  });
+  if (!target || !OPEN_FOR_DEPOSIT.includes(target.status as (typeof OPEN_FOR_DEPOSIT)[number])) {
+    throw Object.assign(new Error('Future stay is not open for a deposit'), {
+      status: 409,
+      code: 'CARRY_TARGET_REQUIRED',
+    });
+  }
+  const payer = target.paxGuests.find((row) => row.isPrimary) ?? target.paxGuests[0];
+  if (!payer) {
+    throw Object.assign(new Error('Future stay has no guest'), {
+      status: 409,
+      code: 'DEPOSIT_GUEST_REQUIRED',
+    });
+  }
+  await recordDeposit({
+    reservationId: target.id,
+    reservationGuestId: payer.id,
+    amount: Math.round(unused * 100) / 100,
+    paymentMethod: 'DEPOSIT',
+    externalRef: `TRANSFER_FROM:${input.sourceReservationId}`,
+    audit: input.audit,
+  });
+  for (const folio of folios) {
+    const balance = folioBalance(folio.charges, folio.payments);
+    if (balance >= -0.009) continue;
+    await postPayment({
+      folioId: folio.id,
+      amount: Math.round(-balance * 100) / 100,
+      paymentMethod: 'DEPOSIT',
+      kind: 'REFUND',
+      refundReason: 'Unused credit carried to a future stay',
+      createdByUserId: input.audit?.userId ?? undefined,
+      auditRequest: input.audit?.request,
+    });
+  }
+  return { carried: unused, targetReservationId: target.id };
 }
 
 /** Old HELD rows become one blue room payment. This does not take new money. */
@@ -132,7 +412,7 @@ export async function refundRemainingDeposits(reservationId: string) {
 
 export async function payoutDepositRemainder(
   depositId: string,
-  paymentMethod: PaymentMethod,
+  paymentMethod: string,
   bankTerminalId?: string,
   audit?: ReservationAuditActor,
 ) {

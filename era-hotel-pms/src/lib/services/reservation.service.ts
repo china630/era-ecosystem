@@ -32,7 +32,7 @@ import {
 } from '@/lib/booking-source-kind';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
-import type { PaymentMethod, ReservationStatus } from '@prisma/client';
+import type { ReservationStatus } from '@prisma/client';
 
 export async function listReservations(
   status?: ReservationStatus | ReservationStatus[],
@@ -140,7 +140,7 @@ export async function createReservation(input: {
   groupId?: string;
   checkInDate: Date;
   checkOutDate: Date;
-  paymentMethod?: PaymentMethod | null;
+  paymentMethod?: string | null;
   adults?: number;
   children11_6?: number;
   children5_2?: number;
@@ -213,7 +213,23 @@ export async function createReservation(input: {
     const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
     if (!contract) throw new Error('Sales contract is not active for check-in date');
     contractForDefaults = contract;
-    ratePlanId = contract.ratePlanId;
+    // Keep FO medical package (Volkin / Merikl / Standart…) when it differs from the
+    // contract's Infotur/leisure tariff — company still tags allotment + payer.
+    const { ratePlanRequiresGuestPackage } = await import(
+      '@/lib/services/medical-package-resolve.service'
+    );
+    const foPlan = await prisma.ratePlan.findUnique({
+      where: { id: ratePlanId },
+      select: { id: true, code: true, medicalFlag: true },
+    });
+    const keepFoMedical =
+      Boolean(foPlan) &&
+      foPlan!.id !== contract.ratePlanId &&
+      ratePlanRequiresGuestPackage({
+        code: foPlan!.code,
+        medicalFlag: foPlan!.medicalFlag,
+      });
+    ratePlanId = keepFoMedical ? foPlan!.id : contract.ratePlanId;
     if (contractCounterpartyType(contract) === 'CORPORATE') {
       companyId = contract.companyId ?? companyId;
     } else if (contract.agencyId) {

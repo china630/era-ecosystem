@@ -1,9 +1,7 @@
 import { prisma } from '@/lib/prisma';
-import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
-import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
 
 export type CityLedgerCounterparty = {
   agencyId?: string | null;
@@ -256,17 +254,6 @@ async function assertCityLedgerParty(
         : 'City Ledger transfer requires agency VÖEN',
     );
   }
-  await ensureFinanceCounterparty({
-    voen,
-    cachedId: card.financeCounterpartyId,
-    save: async (id) => {
-      if (party === 'COMPANY') {
-        await prisma.company.update({ where: { id: partyId }, data: { financeCounterpartyId: id } });
-      } else {
-        await prisma.agency.update({ where: { id: partyId }, data: { financeCounterpartyId: id } });
-      }
-    },
-  });
 
   const exposure = await counterpartyOpenArExposure(
     party === 'COMPANY' ? { companyId: partyId } : { agencyId: partyId },
@@ -276,61 +263,4 @@ async function assertCityLedgerParty(
       `Credit limit exceeded: exposure ${exposure.toFixed(2)} + transfer ${transferAmount.toFixed(2)} > limit ${limit.toFixed(2)} AZN`,
     );
   }
-}
-
-async function ensureFinanceCounterparty(input: {
-  voen: string;
-  cachedId: string | null;
-  save: (id: string) => Promise<void>;
-}): Promise<void> {
-  if (input.cachedId) return;
-  const policy = await getHotelPolicy();
-  const { cityLedgerMissingCounterparty } = policy;
-  const orgId = requestOrganizationId();
-  if (!orgId || orgId === 'demo-org') {
-    throw new Error('ERA_SATELLITE_ORGANIZATION_ID is not configured for Finance lookup');
-  }
-  const financeBase = process.env.NEXT_PUBLIC_FINANCE_WEB_URL?.replace(/\/$/, '').trim();
-  if (!financeBase) {
-    throw new Error('NEXT_PUBLIC_FINANCE_WEB_URL is not configured (needed for Finance counterparty lookup)');
-  }
-  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
-  if (!token) {
-    throw new Error('SATELLITE_EVENT_SERVICE_TOKEN is not configured (needed for Finance internal lookup)');
-  }
-  const headers = { Authorization: `Bearer ${token}`, 'x-organization-id': orgId };
-  let resolved: string | null = null;
-  if (cityLedgerMissingCounterparty === 'AUTO_CREATE') {
-    const res = await fetch(`${financeBase}/api/internal/v1/counterparties/find-or-create-by-voen`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taxId: input.voen, nameFallback: input.voen }),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Finance counterparty auto-create failed: HTTP ${res.status} ${text}`);
-    }
-    resolved = ((await res.json()) as { id?: string | null }).id ?? null;
-  } else {
-    const res = await fetch(
-      `${financeBase}/api/internal/v1/counterparties/by-voen?taxId=${encodeURIComponent(input.voen)}`,
-      { method: 'GET', headers },
-    );
-    if (res.status !== 404) {
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Finance counterparty lookup failed: HTTP ${res.status} ${text}`);
-      }
-      resolved = ((await res.json()) as { id?: string | null }).id ?? null;
-    }
-  }
-  if (!resolved) {
-    if (cityLedgerMissingCounterparty === 'BLOCK_CHECKOUT') {
-      throw new Error(
-        `City Ledger transfer blocked: no Finance counterparty for VOEN=${input.voen} (set cityLedgerMissingCounterparty policy to DEFER_HANDOFF/AUTO_CREATE)`,
-      );
-    }
-    return;
-  }
-  await input.save(resolved);
 }

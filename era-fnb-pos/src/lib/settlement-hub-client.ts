@@ -30,9 +30,22 @@ export async function postHotelSettlementPending(input: PostHotelPendingInput) {
   if (!secret) throw new Error("POS_BRIDGE_SECRET not configured");
   const orgId = requestOrganizationId();
   const hotelOrg = await hotelOrganizationId();
-  const { PEER_SATELLITE_HOTEL, resolvePeerSatelliteBaseUrl } = await import(
-    "@era/satellite-kit"
-  );
+  const {
+    PEER_SATELLITE_HOTEL,
+    resolvePeerSatelliteBaseUrl,
+    checkChannelEnabledLive,
+    SatelliteChannelDisabledError,
+  } = await import("@era/satellite-kit");
+  const channelOk = await checkChannelEnabledLive({
+    fromOrgId: orgId,
+    fromSatelliteKey: "industry_fnb_pos",
+    toOrgId: hotelOrg,
+    toSatelliteKey: "industry_hotel_pms",
+    kind: "SETTLEMENT",
+  });
+  if (!channelOk) {
+    throw new SatelliteChannelDisabledError("SETTLEMENT");
+  }
   const base = (
     await resolvePeerSatelliteBaseUrl({
       organizationId: hotelOrg,

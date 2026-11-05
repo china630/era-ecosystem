@@ -320,6 +320,21 @@ export {
   type SettlementPolicySnapshot,
 } from "./integration/operating-mode";
 export {
+  parseChannels,
+  isChannelEnabled,
+  assertChannelEnabled,
+  checkChannelEnabledLive,
+  SatelliteChannelDisabledError,
+  type SatelliteChannelKind,
+  type SatelliteChannelSnapshotRow,
+} from "./integration/satellite-channels";
+export {
+  labelSatelliteKey,
+  labelChannelKind,
+  labelChannelManagedBy,
+  channelEdgeTitle,
+} from "./integration/satellite-channels-display";
+export {
   searchFinanceCatalog,
   type FinanceCatalogItem,
 } from "./integration/finance-catalog";
@@ -367,6 +382,15 @@ export {
   hydrateFiscalDevicesFromSync,
   type FiscalDeviceSyncRow,
 } from "./integration/fiscal-device-hydrate";
+export {
+  hydratePaymentMethodsFromSync,
+  listPaymentMethodsForSatellite,
+  paymentMethodsSynced,
+  paymentMethodRouting,
+  clearPaymentMethodCatalog,
+  type PaymentMethodSyncRow,
+  type OrgPaymentMethodDesk,
+} from "./integration/payment-method-catalog";
 export { reportPosStationCapacity } from "./integration/report-pos-station-capacity";
 export { reportClinicCapacity } from "./integration/report-clinic-capacity";
 export {

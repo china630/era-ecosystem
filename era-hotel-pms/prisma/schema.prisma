@@ -1589,8 +1589,8 @@ model Reservation {
   status        ReservationStatus @default(CONFIRMED)
   /** B2B / City Ledger financial settlement after physical departure. */
   checkoutSettlementStatus CheckoutSettlementStatus @default(NOT_APPLICABLE)
-  /** Unset until the desk picks a tender. Not defaulted to cash or card. */
-  paymentMethod PaymentMethod?
+  /** Unset until the desk picks a tender. Not defaulted to cash or card. Org catalog code. */
+  paymentMethod String?
   totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
   creditLimitAzn Decimal?         @db.Decimal(12, 2)
   voucherNo     String?
@@ -1771,6 +1771,7 @@ model ReservationGuest {
   /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
   departedAt    DateTime?
   folio         Folio?
+  deposits      FolioDeposit[]
 
   @@index([reservationId])
   @@index([guestId])
@@ -2556,7 +2557,8 @@ model FolioPayment {
   settlementId    String?
   settlement      FolioSettlement? @relation(fields: [settlementId], references: [id], onDelete: SetNull)
   amount          Decimal          @db.Decimal(12, 2)
-  paymentMethod   PaymentMethod
+  /** Org payment method catalog code (CASH, CARD, EPOINT, …). */
+  paymentMethod   String
   kind            FolioPaymentKind @default(PAYMENT)
   /** Original payment when kind=REFUND */
   refundOfPaymentId String?
@@ -2613,7 +2615,7 @@ model GuestDebtPayment {
   entryId         String
   entry           GuestDebtEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
   amount          Decimal         @db.Decimal(12, 2)
-  paymentMethod   PaymentMethod
+  paymentMethod   String
   bankTerminalId  String?
   createdByUserId String?         @map("created_by_user_id")
   /** Hotel cashier business day. The cash desk reads this, not createdAt. */
@@ -2681,8 +2683,11 @@ model FolioDeposit {
   reservation   Reservation        @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   folioId       String?
   folio         Folio?             @relation(fields: [folioId], references: [id], onDelete: SetNull)
+  /** Guest who paid. Party save refuses to drop that guest while status is HELD. */
+  reservationGuestId String?
+  reservationGuest   ReservationGuest? @relation(fields: [reservationGuestId], references: [id], onDelete: SetNull)
   amount        Decimal            @db.Decimal(12, 2)
-  paymentMethod PaymentMethod
+  paymentMethod String
   status        FolioDepositStatus @default(HELD)
   registerRef   String?
   externalRef   String?
@@ -2696,6 +2701,7 @@ model FolioDeposit {
   createdAt     DateTime           @default(now())
 
   @@index([reservationId])
+  @@index([reservationGuestId])
   @@index([status])
   @@index([organizationId])
   @@index([organizationId, businessDate])

@@ -35,6 +35,8 @@ import type {
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { formatNameAndCode } from "@/lib/display-code";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
+import { formatNormDisplay } from "@/lib/lab-analyte-norms";
+import { isUnsetLabValue } from "@/lib/lab-result-flags";
 
 const resultsFormId = "lab-results-form";
 
@@ -45,7 +47,12 @@ type LabResultRow = {
   unit: string | null;
   refMin: string | null;
   refMax: string | null;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
   flag: string | null;
+  /** Numeric pair shown under the blank sentence for this guest. */
+  chosenRange?: string | null;
 };
 
 type LabOrderItem = {
@@ -262,6 +269,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
 
   const resultRows = useMemo<LabResultRow[]>(() => {
     if (!order) return [];
+    const analyteByCode = new Map((catalogItem?.analytes ?? []).map((a) => [a.code, a]));
     const mapRow = (r: {
       code: string;
       label?: string | null;
@@ -269,16 +277,44 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       unit?: string | null;
       refMin?: string | null;
       refMax?: string | null;
+      normTextEn?: string | null;
+      normTextRu?: string | null;
+      normTextAz?: string | null;
       flag?: string | null;
-    }): LabResultRow => ({
-      code: r.code,
-      label: resolveResultLabel(r.code, r.label, catalogItem, metaFields, locale),
-      value: r.value,
-      unit: r.unit ?? null,
-      refMin: r.refMin ?? null,
-      refMax: r.refMax ?? null,
-      flag: r.flag ?? null,
-    });
+    }): LabResultRow => {
+      const analyte = analyteByCode.get(r.code);
+      const dash = isUnsetLabValue(r.value);
+      const hasSentence = Boolean(
+        (r.normTextAz ?? analyte?.normText?.az)?.trim() ||
+          (r.normTextEn ?? analyte?.normText?.en)?.trim() ||
+          (r.normTextRu ?? analyte?.normText?.ru)?.trim(),
+      );
+      const sexPaired = Boolean(
+        analyte?.refMinFemale ||
+          analyte?.refMaxFemale ||
+          analyte?.refMinMale ||
+          analyte?.refMaxMale,
+      );
+      const chosen =
+        r.refMin || r.refMax ? `${r.refMin ?? "?"}–${r.refMax ?? "?"}` : null;
+      return {
+        code: r.code,
+        label: resolveResultLabel(r.code, r.label, catalogItem, metaFields, locale),
+        value: r.value,
+        unit: r.unit ?? null,
+        refMin: dash ? null : r.refMin ?? null,
+        refMax: dash ? null : r.refMax ?? null,
+        normTextEn: dash ? null : r.normTextEn ?? analyte?.normText?.en ?? null,
+        normTextRu: dash ? null : r.normTextRu ?? analyte?.normText?.ru ?? null,
+        normTextAz: dash ? null : r.normTextAz ?? analyte?.normText?.az ?? null,
+        flag: dash ? null : r.flag ?? null,
+        chosenRange: dash
+          ? null
+          : hasSentence
+          ? chosen ?? (sexPaired ? "__SEX_UNKNOWN__" : null)
+          : null,
+      };
+    };
 
     const fromItems = (order.items ?? []).flatMap((it) => it.results ?? []);
     if (fromItems.length > 0) return fromItems.map(mapRow);
@@ -295,7 +331,9 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
 
   const showLabColumns = useMemo(
     () =>
-      resultRows.some((r) => r.unit || r.refMin || r.refMax) || catalogItem?.kind === "lab_panel",
+      resultRows.some(
+        (r) => r.unit || r.refMin || r.refMax || r.normTextAz || r.normTextEn || r.normTextRu,
+      ) || catalogItem?.kind === "lab_panel",
     [resultRows, catalogItem],
   );
 
@@ -540,10 +578,38 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                             {showLabColumns ? (
                               <>
                                 <td className={DATA_TABLE_TD_CLASS}>{row.unit ?? "—"}</td>
-                                <td className={DATA_TABLE_TD_CLASS}>
-                                  {row.refMin || row.refMax
-                                    ? `${row.refMin ?? "?"}–${row.refMax ?? "?"}`
-                                    : "—"}
+                                <td className={`${DATA_TABLE_TD_CLASS} max-w-[14rem] whitespace-pre-wrap`}>
+                                  {(() => {
+                                    const lang = locale.startsWith("ru")
+                                      ? "ru"
+                                      : locale.startsWith("az")
+                                        ? "az"
+                                        : "en";
+                                    const sentence =
+                                      formatNormDisplay(
+                                        {
+                                          normTextEn: row.normTextEn,
+                                          normTextRu: row.normTextRu,
+                                          normTextAz: row.normTextAz,
+                                          refMin: row.refMin,
+                                          refMax: row.refMax,
+                                          unit: row.unit,
+                                        },
+                                        { lang },
+                                      ) || "—";
+                                    return (
+                                      <div>
+                                        <div>{sentence}</div>
+                                        {row.chosenRange ? (
+                                          <div className={`text-[11px] ${TEXT_MUTED_CLASS}`}>
+                                            {row.chosenRange === "__SEX_UNKNOWN__"
+                                              ? t("resultsTable.sexUnknownNorm")
+                                              : row.chosenRange}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    );
+                                  })()}
                                 </td>
                               </>
                             ) : null}

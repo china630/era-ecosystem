@@ -32,6 +32,8 @@ import { BuyerPortalModule } from "./buyer-portal/buyer-portal.module";
 import { AccessModule } from "./access/access.module";
 import { KafeModule } from "./kafe/kafe.module";
 import { VendorsModule } from "./vendors/vendors.module";
+import { StructureModule } from "./structure/structure.module";
+import { ChannelsModule } from "./channels/channels.module";
 
 @Module({
   imports: [
@@ -73,6 +75,8 @@ import { VendorsModule } from "./vendors/vendors.module";
     BuyerPortalModule,
     KafeModule,
     VendorsModule,
+    StructureModule,
+    ChannelsModule,
   ],
   controllers: [AppController],
   providers: [

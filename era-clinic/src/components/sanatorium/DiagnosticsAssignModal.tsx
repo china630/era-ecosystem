@@ -27,6 +27,7 @@ type BalanceRow = {
   procedureCode: string;
   procedureName: string;
   remaining: number;
+  quotaTotal?: number;
   fulfillment?: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
   assignable?: boolean;
 };
@@ -54,6 +55,8 @@ type CatalogItem = {
   code: string;
   kind: string;
   title: L10n;
+  packageOnly?: boolean;
+  categoryActive?: boolean;
 };
 
 type CatalogGroup = {
@@ -108,6 +111,7 @@ export function DiagnosticsAssignModal({
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [pkgDraft, setPkgDraft] = useState<PkgDraft[]>([]);
   const [extraDraft, setExtraDraft] = useState<ExtraDraft[]>([]);
+  const [pendingDrop, setPendingDrop] = useState<Set<string>>(new Set());
   const [visitDate, setVisitDate] = useState(todayBakuYmd());
   const [visitTime, setVisitTime] = useState("");
   const [busy, setBusy] = useState(false);
@@ -187,6 +191,7 @@ export function DiagnosticsAssignModal({
             }),
           ),
         );
+        setPendingDrop(new Set());
         setPrices(
           data.prices && typeof data.prices === "object"
             ? (data.prices as Record<string, number>)
@@ -263,16 +268,17 @@ export function DiagnosticsAssignModal({
     return map;
   }, [studyBalances, pkgDraft]);
 
-  function addPackageBurn(row: BalanceRow) {
+  function addPackageBurn(row: BalanceRow, qty = 1) {
     if (readOnly || clinicalLock || busy) return;
     const rem = draftRemaining.get(row.procedureCode) ?? 0;
-    if (rem < 1) return;
+    const take = Math.min(qty, rem);
+    if (take < 1) return;
     const kind = row.fulfillment === "VISIT" ? "visit" : "lab_panel";
     setPkgDraft((prev) => {
       const hit = prev.find((d) => d.serviceCode === row.procedureCode);
       if (hit) {
         return prev.map((d) =>
-          d.key === hit.key ? { ...d, qty: d.qty + 1 } : d,
+          d.key === hit.key ? { ...d, qty: d.qty + take } : d,
         );
       }
       return [
@@ -281,7 +287,7 @@ export function DiagnosticsAssignModal({
           key: `pkg:${row.procedureCode}:${Date.now()}`,
           serviceCode: row.procedureCode,
           title: row.procedureName,
-          qty: 1,
+          qty: take,
           kind,
         },
       ];
@@ -328,17 +334,17 @@ export function DiagnosticsAssignModal({
       (sum, row) => sum + row.amountNet * row.qty,
       0,
     );
-    const pendingSum = pending.reduce(
-      (sum, row) => sum + Number(row.amountNet || 0),
-      0,
-    );
+    const pendingSum = pending.reduce((sum, row) => {
+      if (pendingDrop.has(row.id)) return sum;
+      return sum + Number(row.amountNet || 0);
+    }, 0);
     return draftSum + pendingSum;
-  }, [extraDraft, pending]);
+  }, [extraDraft, pending, pendingDrop]);
 
   const canSave =
     !readOnly &&
     !busy &&
-    (pkgDraft.length > 0 || extraDraft.length > 0) &&
+    (pkgDraft.length > 0 || extraDraft.length > 0 || pendingDrop.size > 0) &&
     !(pkgDraft.length > 0 && clinicalLock);
 
   async function save() {
@@ -413,29 +419,26 @@ export function DiagnosticsAssignModal({
           return;
         }
       }
+      if (pendingDrop.size > 0) {
+        for (const id of pendingDrop) {
+          const row = pending.find((item) => item.id === id);
+          if (!row) continue;
+          const res = await fetch(
+            `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(row.id)}&kind=${row.kind}`,
+            { method: "DELETE" },
+          );
+          if (!res.ok) {
+            showApiError(await res.json().catch(() => ({})), tc("failed"));
+            return;
+          }
+        }
+      }
       showSuccess(tc("saved"));
       setPkgDraft([]);
       setExtraDraft([]);
+      setPendingDrop(new Set());
       onSaved();
       onClose();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function removePending(row: PendingRow) {
-    setBusy(true);
-    try {
-      const res = await fetch(
-        `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(row.id)}&kind=${row.kind}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) {
-        showApiError(await res.json().catch(() => ({})), tc("failed"));
-        return;
-      }
-      await load();
-      onSaved();
     } finally {
       setBusy(false);
     }
@@ -470,6 +473,7 @@ export function DiagnosticsAssignModal({
       const items = g.itemCodes
         .map((code) => itemByCode.get(code))
         .filter((row): row is CatalogItem => Boolean(row))
+        .filter((row) => row.categoryActive !== false && !row.packageOnly)
         .map((row) => ({
           code: row.code,
           kind: row.kind,
@@ -486,7 +490,7 @@ export function DiagnosticsAssignModal({
       out.push({
         key: "all",
         title: t("diagnosticsExtraTitle", { defaultValue: "Additional (catalog)" }),
-        items: catalogItems.map((row) => ({
+        items: catalogItems.filter((row) => row.categoryActive !== false && !row.packageOnly).map((row) => ({
           code: row.code,
           kind: row.kind,
           label: pickL10n(row.title, locale) || row.code,
@@ -547,6 +551,7 @@ export function DiagnosticsAssignModal({
       lane.extraDraftKey = d.key;
     }
     for (const row of pending) {
+      if (pendingDrop.has(row.id)) continue;
       const lane = ensure(row.serviceCode, row.title, row.kind);
       lane.extraQty += 1;
       if (!(lane.extraUnit > 0)) lane.extraUnit = Number(row.amountNet || 0);
@@ -555,7 +560,7 @@ export function DiagnosticsAssignModal({
     return [...map.values()].filter(
       (lane) => lane.pkgQty > 0 || lane.extraQty > 0,
     );
-  }, [assignedStudies, pkgDraft, extraDraft, pending, unitOf]);
+  }, [assignedStudies, pkgDraft, extraDraft, pending, pendingDrop, unitOf]);
 
   const stepper = (
     qty: number,
@@ -652,9 +657,18 @@ export function DiagnosticsAssignModal({
                         <p
                           className={`text-[11px] leading-tight ${TEXT_MUTED_CLASS}`}
                         >
-                          {t("remaining")}: {rem} / {row.remaining}
+                          {t("remaining")}: {rem} / {row.quotaTotal ?? row.remaining}
                         </p>
                       </div>
+                      <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
+                        disabled={readOnly || busy || clinicalLock || rem < 1}
+                        onClick={() => addPackageBurn(row, rem)}
+                      >
+                        {tc("all")}
+                      </button>
                       <button
                         type="button"
                         className={`${PRIMARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}
@@ -665,6 +679,7 @@ export function DiagnosticsAssignModal({
                       >
                         +
                       </button>
+                      </div>
                     </li>
                   );
                 })}
@@ -868,9 +883,9 @@ export function DiagnosticsAssignModal({
                               className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
                               disabled={busy}
                               onClick={() => {
-                                const id = lane.pendingIds[0];
-                                const row = pending.find((p) => p.id === id);
-                                if (row) void removePending(row);
+                                const id = lane.pendingIds[lane.pendingIds.length - 1];
+                                if (!id) return;
+                                setPendingDrop((prev) => new Set(prev).add(id));
                               }}
                               aria-label={tc("delete")}
                             >

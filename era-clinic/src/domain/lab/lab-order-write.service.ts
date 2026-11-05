@@ -4,13 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import {
   assertLabOrderCanCreate,
-  findEpisodeLabConflict,
+  findPatientLabConflict,
+  lockPatientForLabCreate,
 } from "@/domain/lab/lab-order-conflict.service";
 import {
+  applyAnalyteNormToLine,
   enrichResultLines,
   hasCriticalFlag,
   type ResultLineInput,
 } from "@/lib/lab-result-flags";
+import type { AnalyteBoundKind } from "@/lib/lab-analyte-norms";
 
 export type { ResultLineInput };
 
@@ -26,11 +29,15 @@ type RawResultLine = {
   unit?: string;
   refMin?: string | number;
   refMax?: string | number;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: AnalyteBoundKind;
   flag?: string;
 };
 
 type ServiceWithAnalytes = Prisma.DiagnosticServiceGetPayload<{
-  include: { analytes: true };
+  include: { analytes: { include: { valueOptions: true } } };
 }>;
 
 type ResultTargetItem = {
@@ -58,6 +65,10 @@ export function normalizeResultLines(raw: RawResultLine[]): ResultLineInput[] {
     unit: r.unit,
     refMin: r.refMin != null ? String(r.refMin) : undefined,
     refMax: r.refMax != null ? String(r.refMax) : undefined,
+    normTextEn: r.normTextEn ?? undefined,
+    normTextRu: r.normTextRu ?? undefined,
+    normTextAz: r.normTextAz ?? undefined,
+    boundKind: r.boundKind,
     flag: normalizeFlag(r.flag),
   }));
 }
@@ -75,7 +86,9 @@ export async function resolveDiagnosticServicesByCodes(
   if (codes.length === 0) return new Map();
   const rows = await prisma.diagnosticService.findMany({
     where: { OR: [{ code: { in: codes } }, { serviceCode: { in: codes } }] },
-    include: { analytes: true },
+    include: {
+      analytes: { include: { valueOptions: { orderBy: { sortOrder: "asc" } } } },
+    },
   });
   const map = new Map<string, ServiceWithAnalytes>();
   for (const row of rows) {
@@ -83,6 +96,63 @@ export async function resolveDiagnosticServicesByCodes(
     map.set(row.serviceCode, row);
   }
   return map;
+}
+
+type AnalyteNormRow = {
+  code: string;
+  boundKind?: AnalyteBoundKind | null;
+  refMin?: string | null;
+  refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  zonesJson?: string | null;
+  valueType?: string | null;
+  valueOptions?: { code: string; sortOrder: number }[];
+};
+
+function mergeLinesWithCatalog(
+  lines: ResultLineInput[],
+  servicesByCode: Map<string, ServiceWithAnalytes>,
+  sex?: string | null,
+): ResultLineInput[] {
+  const analyteByCode = new Map<string, AnalyteNormRow>();
+  for (const svc of servicesByCode.values()) {
+    for (const a of svc.analytes) {
+      if (!analyteByCode.has(a.code)) analyteByCode.set(a.code, a);
+    }
+  }
+  return lines.map((line) => {
+    const analyte = analyteByCode.get(line.code);
+    if (!analyte) return { ...line, sex: sex ?? line.sex };
+    const expected =
+      analyte.valueType === "QUALITATIVE"
+        ? [...(analyte.valueOptions ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.code
+        : undefined;
+    return applyAnalyteNormToLine(
+      line,
+      {
+        boundKind: analyte.boundKind ?? undefined,
+        refMin: analyte.refMin,
+        refMax: analyte.refMax,
+        refMinFemale: analyte.refMinFemale,
+        refMaxFemale: analyte.refMaxFemale,
+        refMinMale: analyte.refMinMale,
+        refMaxMale: analyte.refMaxMale,
+        normTextEn: analyte.normTextEn,
+        normTextRu: analyte.normTextRu,
+        normTextAz: analyte.normTextAz,
+        zonesJson: analyte.zonesJson,
+        valueType: analyte.valueType,
+        expectedOptionCode: expected,
+      },
+      sex,
+    );
+  });
 }
 
 /** Picks the item whose service analytes include the line code; falls back to the first item. */
@@ -148,6 +218,9 @@ async function createResultsForItems(
         unit: line.unit,
         refMin: line.refMin,
         refMax: line.refMax,
+        normTextEn: line.normTextEn,
+        normTextRu: line.normTextRu,
+        normTextAz: line.normTextAz,
         flag: line.flag ?? "NORMAL",
       },
     });
@@ -173,6 +246,9 @@ async function upsertResultsForItems(
         unit: line.unit,
         refMin: line.refMin,
         refMax: line.refMax,
+        normTextEn: line.normTextEn,
+        normTextRu: line.normTextRu,
+        normTextAz: line.normTextAz,
         flag: line.flag ?? "NORMAL",
       },
       update: {
@@ -180,6 +256,9 @@ async function upsertResultsForItems(
         unit: line.unit,
         refMin: line.refMin,
         refMax: line.refMax,
+        normTextEn: line.normTextEn,
+        normTextRu: line.normTextRu,
+        normTextAz: line.normTextAz,
         flag: line.flag ?? "NORMAL",
       },
     });
@@ -218,6 +297,8 @@ export type CreateLabOrderWithItemsParams = {
   reservationId?: string | null;
   roomNumber?: string | null;
   paymentReceiptRef?: string | null;
+  /** Paid lab created when the episode opens. Lab sees it before pay; checkout does not cancel it. */
+  autoPaidStay?: boolean;
 };
 
 /**
@@ -229,15 +310,26 @@ export async function createLabOrderWithItems(
   params: CreateLabOrderWithItemsParams,
 ): Promise<Prisma.LabOrderGetPayload<{ include: typeof labOrderFullInclude }>> {
   const codes = params.codes;
-  if (params.clinicalEpisodeId) {
-    const conflict = await findEpisodeLabConflict(params.clinicalEpisodeId, codes);
-    assertLabOrderCanCreate(conflict, params.confirmRepeat);
-  }
   const servicesByCode = await resolveDiagnosticServicesByCodes(codes);
   const isExternal = params.source === "EXTERNAL";
+  const patientSex =
+    isExternal && params.resultLines?.length
+      ? (
+          await prisma.patientRef.findUnique({
+            where: { id: params.patientRefId },
+            select: { sex: true },
+          })
+        )?.sex
+      : undefined;
   const enrichedLines =
     isExternal && params.resultLines?.length
-      ? enrichResultLines(normalizeResultLines(params.resultLines))
+      ? enrichResultLines(
+          mergeLinesWithCatalog(
+            normalizeResultLines(params.resultLines),
+            servicesByCode,
+            patientSex,
+          ),
+        )
       : [];
 
   const stamps = new Map<string, { inPackage: boolean; packageQuotaCode: string | null }>();
@@ -337,11 +429,46 @@ export async function createLabOrderWithItems(
     params.amountNet ??
     Object.values(amountsByCode).reduce((sum, n) => sum + Number(n || 0), 0);
   const headerInPackage = !forcePaid && [...stamps.values()].some((s) => s.inPackage);
+  const releaseAfterPay =
+    params.autoPaidStay === true ||
+    (!headerInPackage &&
+      [...servicesByCode.values()].some((service) => service.guestBlankRelease === "AFTER_PAYMENT"));
   const headerQuota =
     [...stamps.values()].find((s) => s.inPackage && s.packageQuotaCode)?.packageQuotaCode ??
     null;
 
   const orderId = await prisma.$transaction(async (tx) => {
+    await lockPatientForLabCreate(tx, params.patientRefId);
+    let conflict = await findPatientLabConflict(params.patientRefId, codes, tx);
+    if (params.autoPaidStay && conflict) {
+      const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
+      const openNonPackage =
+        existing != null &&
+        !existing.inPackage &&
+        existing.status !== "CANCELLED" &&
+        existing.status !== "PUBLISHED" &&
+        existing.status !== "COMPLETED";
+      if (openNonPackage && existing) {
+        if (!existing.settledAt) {
+          await tx.labOrder.update({
+            where: { id: existing.id },
+            data: { amountNet: orderAmountNet, releaseAfterPay: true, autoPaidStay: true },
+          });
+        }
+        return existing.id;
+      }
+      if (existing?.inPackage || conflict.kind === "COMPLETED") conflict = null;
+    } else if (forcePaid && releaseAfterPay && conflict) {
+      const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
+      if (existing && !existing.inPackage && !existing.settledAt) {
+        await tx.labOrder.update({
+          where: { id: existing.id },
+          data: { amountNet: orderAmountNet, releaseAfterPay: true },
+        });
+      }
+      if (existing) return existing.id;
+    }
+    assertLabOrderCanCreate(conflict, params.confirmRepeat);
     const created = await tx.labOrder.create({
       data: {
         organizationId: requestOrganizationId(),
@@ -356,6 +483,8 @@ export async function createLabOrderWithItems(
         scheduledCollectionAt: params.scheduledCollectionAt,
         inPackage: headerInPackage,
         packageQuotaCode: headerQuota,
+        releaseAfterPay,
+        autoPaidStay: params.autoPaidStay === true,
         prescribedByPractitionerId: params.prescribedByPractitionerId ?? undefined,
         paymentReceiptRef: params.paymentReceiptRef ?? undefined,
         reservationId: reservationId ?? undefined,
@@ -427,15 +556,31 @@ export async function writeLabResultsForOrder(
   const order = await prisma.labOrder.findUnique({
     where: { id: orderId },
     include: {
+      patientRef: { select: { sex: true } },
       items: {
-        include: { diagnosticService: { include: { analytes: true } } },
+        include: {
+          diagnosticService: {
+            include: {
+              analytes: { include: { valueOptions: { orderBy: { sortOrder: "asc" } } } },
+            },
+          },
+        },
         orderBy: { sortOrder: "asc" },
       },
     },
   });
   if (!order) return null;
 
-  const enrichedLines = enrichResultLines(rawLines);
+  const servicesByCode = new Map<string, ServiceWithAnalytes>();
+  for (const item of order.items) {
+    if (item.diagnosticService) {
+      servicesByCode.set(item.diagnosticService.id, item.diagnosticService as ServiceWithAnalytes);
+    }
+  }
+  const sex = order.patientRef?.sex;
+  const enrichedLines = enrichResultLines(
+    mergeLinesWithCatalog(rawLines, servicesByCode, sex),
+  );
 
   await prisma.$transaction(async (tx) => {
     let items: ResultTargetItem[] = order.items.map((it: { id: string; diagnosticService: { analytes: { code: string }[] } | null }) => ({
@@ -493,9 +638,20 @@ export async function createImportedLabOrder(params: {
   resultDate?: Date;
 }): Promise<Prisma.LabOrderGetPayload<{ include: typeof labOrderFullInclude }>> {
   const servicesByCode = await resolveDiagnosticServicesByCodes([params.code]);
-  const enrichedLines = enrichResultLines(normalizeResultLines(params.results));
+  const patientSex = (
+    await prisma.patientRef.findUnique({
+      where: { id: params.patientRefId },
+      select: { sex: true },
+    })
+  )?.sex;
+  const enrichedLines = enrichResultLines(
+    mergeLinesWithCatalog(normalizeResultLines(params.results), servicesByCode, patientSex),
+  );
 
   const orderId = await prisma.$transaction(async (tx) => {
+    await lockPatientForLabCreate(tx, params.patientRefId);
+    const conflict = await findPatientLabConflict(params.patientRefId, [params.code], tx);
+    assertLabOrderCanCreate(conflict, true);
     const created = await tx.labOrder.create({
       data: {
         organizationId: requestOrganizationId(),

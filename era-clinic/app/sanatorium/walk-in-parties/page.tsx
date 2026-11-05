@@ -309,6 +309,8 @@ export default function WalkInPartiesPage() {
             code: string;
             serviceCode?: string;
             kind: string;
+            packageOnly?: boolean;
+            categoryActive?: boolean;
             title?: { en?: string; ru?: string; az?: string };
           }>;
         };
@@ -324,12 +326,12 @@ export default function WalkInPartiesPage() {
         const items = body.items ?? [];
         setLabs(
           items
-            .filter((item) => isLabBlockCatalogKind(item.kind))
+            .filter((item) => isLabBlockCatalogKind(item.kind) && item.categoryActive !== false && !item.packageOnly)
             .map((item) => ({ value: item.code, label: labelOf(item) })),
         );
         setVisits(
           items
-            .filter((item) => item.kind === "visit")
+            .filter((item) => item.kind === "visit" && item.categoryActive !== false)
             .map((item) => ({ value: item.serviceCode || item.code, label: labelOf(item) })),
         );
       }

@@ -41,7 +41,11 @@ import {
   useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { bakuDateDisplay, todayBakuYmd } from "@era/satellite-kit/time";
-import { orchBillingErrorMessage } from "../../../../lib/orch-billing-error";
+import {
+  orchBillingErrorCode,
+  orchBillingErrorMessage,
+  orchBillingErrorPayload,
+} from "../../../../lib/orch-billing-error";
 import { getOrchAccessToken, orchFetch } from "../../../../lib/orch-api";
 import { useSubscription } from "../../../../lib/subscription-context";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
@@ -1677,31 +1681,71 @@ export default function WorkforceEmploymentsPage() {
     setBusy(false);
   }
 
-  async function enableWorkforce() {
+  async function enableWorkforce(
+    confirmLateMonth?: "start_now" | "defer_to_first",
+  ) {
     setEnabling(true);
-    const token = getOrchAccessToken();
-    if (!token) {
+    try {
+      const token = getOrchAccessToken();
+      if (!token) return;
+      const res = await orchFetch("/v1/billing/toggle-module", {
+        token,
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleKey: "platform_workforce",
+          enabled: true,
+          ...(confirmLateMonth ? { confirmLateMonth } : {}),
+        }),
+      }).catch(() => null);
+      if (!res?.ok) {
+        const err = res ? await res.json().catch(() => null) : null;
+        if (
+          !confirmLateMonth &&
+          orchBillingErrorCode(err) === "LATE_MONTH_CONFIRMATION_REQUIRED"
+        ) {
+          const payload = orchBillingErrorPayload(err);
+          const graceEndsAt =
+            typeof payload.graceEndsAt === "string" ? payload.graceEndsAt : null;
+          const startNow = window.confirm(
+            tMods("lateMonthConfirm", {
+              graceEnds: graceEndsAt
+                ? bakuDateDisplay(graceEndsAt)
+                : "—",
+            }),
+          );
+          if (startNow) {
+            await enableWorkforce("start_now");
+          } else if (window.confirm(tMods("lateMonthDefer"))) {
+            await enableWorkforce("defer_to_first");
+            toast.info(tMods("deferredToFirst"));
+          }
+          return;
+        }
+        toast.error(orchBillingErrorMessage(err, tCommon("failed")));
+        return;
+      }
+      const body = (await res.json().catch(() => null)) as {
+        synced?: boolean;
+        inGrace?: boolean;
+        graceEndsAt?: string;
+      } | null;
+      if (body?.synced === false) {
+        toast.message(tMods("syncFailed"));
+      } else if (body?.inGrace) {
+        toast.success(
+          tMods("graceStarted", {
+            graceEnds: body.graceEndsAt
+              ? bakuDateDisplay(body.graceEndsAt)
+              : "—",
+          }),
+        );
+      }
+      setNotEntitled(false);
+      await load();
+    } finally {
       setEnabling(false);
-      return;
     }
-    const res = await orchFetch("/v1/billing/toggle-module", {
-      token,
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ moduleKey: "platform_workforce", enabled: true }),
-    }).catch(() => null);
-    setEnabling(false);
-    if (!res?.ok) {
-      const err = res ? await res.json().catch(() => null) : null;
-      toast.error(orchBillingErrorMessage(err, tCommon("failed")));
-      return;
-    }
-    const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
-    if (body?.synced === false) {
-      toast.message(tMods("syncFailed"));
-    }
-    setNotEntitled(false);
-    await load();
   }
 
   if (!ready) return null;

@@ -105,6 +105,8 @@ model Tenant {
   extraProcedureRoute            ExtraProcedureRoute      @default(PLAN_BEFORE_PAY) @map("extra_procedure_route")
   /// Extra catalog language on the guest procedure sheet. Empty = sheet language only.
   procedurePrintExtraLang        String?                  @map("procedure_print_extra_lang")
+  /// Blank signer name per diagnostic modality code. JSON object, empty = use the result author.
+  printModalitySignersJson       String?                  @map("print_modality_signers_json") @db.Text
   /// Next clinic-native patient refCode sequence (P-000001 …) per org appliance
   nextPatientSeq                 Int                      @default(1) @map("next_patient_seq")
   /// Favorite selectable ICD-10 codes for pickers (does not hide the rest)
@@ -682,6 +684,10 @@ model LabOrder {
   prescribedByPractitionerId String?     @map("prescribed_by_practitioner_id")
   /// Clinic receipt number once reception Pay / walk-in send stamped this order.
   paymentReceiptRef     String?          @map("payment_receipt_ref")
+  /// Lab works before pay; guest blank stays closed until settledAt. Ignored when inPackage.
+  releaseAfterPay       Boolean          @default(false) @map("release_after_pay")
+  /// Created by the paid-on-open flag. Day-end and checkout do not cancel it unpaid.
+  autoPaidStay          Boolean          @default(false) @map("auto_paid_stay")
   reservationId         String?          @map("reservation_id")
   roomNumber            String?          @map("room_number")
   patientOrigin         PatientOrigin    @default(WALK_IN) @map("patient_origin")
@@ -723,6 +729,19 @@ model Modality {
   @@index([organizationId])
 }
 
+/// Shared label on diagnostic services. Inactive categories stay off assignment lists.
+model DiagnosticCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
 /// Diagnostic / lab service from catalog (USG-ABD, LAB-CBC, packages, visit templates).
 model DiagnosticService {
   id             String              @id @default(cuid())
@@ -745,8 +764,23 @@ model DiagnosticService {
   fieldsJson     String?             @map("fields_json") @db.Text
   /// Package composition: child service codes JSON (string[])
   includesJson   String?             @map("includes_json") @db.Text
+  /// PAY_WITH_WORK: lab sees a priced order only after pay.
+  /// AFTER_PAYMENT: lab works immediately; the guest blank waits for pay unless the line is in the package.
+  guestBlankRelease GuestBlankRelease @default(PAY_WITH_WORK) @map("guest_blank_release")
+  /// GUEST bills the stay. INTERNAL stays off the guest folio.
+  usageContour   String              @default("GUEST") @map("usage_contour")
+  /// LAB or DIAGNOSTIC overrides the modality kind when the menu lane is chosen.
+  menuSurface    String?             @map("menu_surface")
+  /// FIXED cabin clock or OPEN day bucket. The resource matrix still seats procedures only.
+  schedulingMode String              @default("FIXED") @map("scheduling_mode")
+  /// On episode open, create one paid lab order the lab can see before the cashier.
+  autoPaidOnOpen Boolean             @default(false) @map("auto_paid_on_open")
+  /// When set, the episode analyses row can accept the guest's own blank not older than this many days.
+  broughtInMaxDays Int?              @map("brought_in_max_days")
   sortOrder      Int                 @default(0) @map("sort_order")
   active         Boolean             @default(true)
+  /// Package composition only. Stays on the course and off the paid-extra catalog.
+  packageOnly    Boolean             @default(false) @map("package_only")
   analytes       DiagnosticAnalyte[]
   labOrderItems  LabOrderItem[]
   createdAt      DateTime            @default(now())
@@ -759,9 +793,39 @@ model DiagnosticService {
   @@index([organizationId])
 }
 
+/// Guest arrived with their own lab blank. Satisfies that panel on the episode without an in-house order.
+model EpisodeBroughtInResult {
+  id             String          @id @default(cuid())
+  organizationId String
+  episodeId      String          @map("episode_id")
+  episode        ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  serviceCode    String          @map("service_code")
+  /// Date printed on the guest's blank (Asia/Baku calendar day).
+  resultOn       DateTime        @map("result_on") @db.Date
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@unique([episodeId, serviceCode])
+  @@index([organizationId])
+  @@map("episode_brought_in_result")
+}
+
+enum GuestBlankRelease {
+  PAY_WITH_WORK
+  AFTER_PAYMENT
+}
+
 enum AnalyteValueType {
   NUMERIC
   QUALITATIVE
+}
+
+/// How numeric/qualitative bounds are interpreted for flags vs print.
+enum AnalyteBoundKind {
+  INTERVAL
+  UPPER_ONLY
+  LOWER_ONLY
+  QUALITATIVE
+  ZONES
 }
 
 model DiagnosticAnalyte {
@@ -774,8 +838,19 @@ model DiagnosticAnalyte {
   labelEn        String               @map("label_en")
   labelRu        String               @map("label_ru")
   labelAz        String               @map("label_az")
+  /// Blank sentence for print (az/ru/en). When set, print does not append unit.
+  normTextEn     String?              @map("norm_text_en") @db.Text
+  normTextRu     String?              @map("norm_text_ru") @db.Text
+  normTextAz     String?              @map("norm_text_az") @db.Text
+  boundKind      AnalyteBoundKind     @default(INTERVAL) @map("bound_kind")
   refMin         String?              @map("ref_min")
   refMax         String?              @map("ref_max")
+  refMinFemale   String?              @map("ref_min_female")
+  refMaxFemale   String?              @map("ref_max_female")
+  refMinMale     String?              @map("ref_min_male")
+  refMaxMale     String?              @map("ref_max_male")
+  /// JSON array of { code, min?, max?, labelEn, labelRu, labelAz } for ZONES (e.g. vitamin D).
+  zonesJson      String?              @map("zones_json") @db.Text
   /// Print grouping within a panel (e.g. physical-chemical / microscopy)
   section        String?
   valueType      AnalyteValueType     @default(NUMERIC) @map("value_type")
@@ -886,19 +961,28 @@ model DiagnosticServiceTemplate {
 }
 
 model DiagnosticAnalyteTemplate {
-  id        String                    @id @default(cuid())
-  serviceId String                    @map("service_id")
-  service   DiagnosticServiceTemplate @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  code      String
-  unit      String?
-  labelEn   String                    @map("label_en")
-  labelRu   String                    @map("label_ru")
-  labelAz   String                    @map("label_az")
-  refMin    String?                   @map("ref_min")
-  refMax    String?                   @map("ref_max")
-  section   String?
-  valueType AnalyteValueType          @default(NUMERIC) @map("value_type")
-  sortOrder Int                       @default(0) @map("sort_order")
+  id           String                    @id @default(cuid())
+  serviceId    String                    @map("service_id")
+  service      DiagnosticServiceTemplate @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  code         String
+  unit         String?
+  labelEn      String                    @map("label_en")
+  labelRu      String                    @map("label_ru")
+  labelAz      String                    @map("label_az")
+  normTextEn   String?                   @map("norm_text_en") @db.Text
+  normTextRu   String?                   @map("norm_text_ru") @db.Text
+  normTextAz   String?                   @map("norm_text_az") @db.Text
+  boundKind    AnalyteBoundKind          @default(INTERVAL) @map("bound_kind")
+  refMin       String?                   @map("ref_min")
+  refMax       String?                   @map("ref_max")
+  refMinFemale String?                   @map("ref_min_female")
+  refMaxFemale String?                   @map("ref_max_female")
+  refMinMale   String?                   @map("ref_min_male")
+  refMaxMale   String?                   @map("ref_max_male")
+  zonesJson    String?                   @map("zones_json") @db.Text
+  section      String?
+  valueType    AnalyteValueType          @default(NUMERIC) @map("value_type")
+  sortOrder    Int                       @default(0) @map("sort_order")
 
   @@unique([serviceId, code])
   @@index([serviceId])
@@ -908,20 +992,29 @@ model DiagnosticAnalyteTemplate {
 /// Unscoped lab analyte dictionary. Shared by every organization.
 /// A panel row copies code, unit, labels, and the usual adult range; the panel keeps its own norms.
 model AnalyteDictionary {
-  id          String           @id @default(cuid())
-  code        String           @unique
-  unit        String?
-  labelEn     String           @map("label_en")
-  labelRu     String           @map("label_ru")
-  labelAz     String           @map("label_az")
-  refMin      String?          @map("ref_min")
-  refMax      String?          @map("ref_max")
-  section     String?
-  valueType   AnalyteValueType @default(NUMERIC) @map("value_type")
-  optionsJson String?          @map("options_json") @db.Text
-  active      Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  code         String           @unique
+  unit         String?
+  labelEn      String           @map("label_en")
+  labelRu      String           @map("label_ru")
+  labelAz      String           @map("label_az")
+  normTextEn   String?          @map("norm_text_en") @db.Text
+  normTextRu   String?          @map("norm_text_ru") @db.Text
+  normTextAz   String?          @map("norm_text_az") @db.Text
+  boundKind    AnalyteBoundKind @default(INTERVAL) @map("bound_kind")
+  refMin       String?          @map("ref_min")
+  refMax       String?          @map("ref_max")
+  refMinFemale String?          @map("ref_min_female")
+  refMaxFemale String?          @map("ref_max_female")
+  refMinMale   String?          @map("ref_min_male")
+  refMaxMale   String?          @map("ref_max_male")
+  zonesJson    String?          @map("zones_json") @db.Text
+  section      String?
+  valueType    AnalyteValueType @default(NUMERIC) @map("value_type")
+  optionsJson  String?          @map("options_json") @db.Text
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([active])
   @@map("analyte_dictionary")
@@ -962,8 +1055,13 @@ model LabResult {
   label           String?
   value           String
   unit            String?
+  /// Chosen numeric pair for this guest (after sex resolve).
   refMin          String?       @map("ref_min")
   refMax          String?       @map("ref_max")
+  /// Blank sentence snapshot at save (print prefers this over min–max glue).
+  normTextEn      String?       @map("norm_text_en") @db.Text
+  normTextRu      String?       @map("norm_text_ru") @db.Text
+  normTextAz      String?       @map("norm_text_az") @db.Text
   flag            LabResultFlag @default(NORMAL)
   enteredByUserId String?       @map("entered_by_user_id")
   enteredAt       DateTime      @default(now()) @map("entered_at")
@@ -986,6 +1084,8 @@ model ClinicalEpisode {
   patientOrigin              PatientOrigin             @default(IN_HOUSE)
   programCode                String?
   checkupCompletedAt         DateTime?
+  /// Paid auto-labs that could not be created (no list price). Shown on the episode.
+  autoPaidLabMisses          String?                   @map("auto_paid_lab_misses") @db.Text
   /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
   anamnesisText              String?                   @map("anamnesis_text") @db.Text
   anamnesisUpdatedAt         DateTime?                 @map("anamnesis_updated_at")
@@ -1002,6 +1102,7 @@ model ClinicalEpisode {
   diagnoses                  ClinicalDiagnosis[]
   contraindications          PatientContraindication[]
   labOrders                  LabOrder[]
+  broughtInResults           EpisodeBroughtInResult[]
   visits                     Visit[]
   procedureOrders            ProcedureOrder[]
   programInstance            ProgramInstance?
@@ -1361,6 +1462,8 @@ model ProcedureType {
   organizationId     String
   code               String
   name               String
+  /// Hidden from assignment lists. Existing orders stay.
+  active             Boolean                    @default(true)
   durationMin        Int                        @default(30)
   /// Cabin/device idle minutes after occupancy ends (0 = back-to-back). ADR clinic-scheduling-time-layers.
   resourceGapMinutes Int                        @default(5) @map("resource_gap_minutes")
@@ -1374,6 +1477,10 @@ model ProcedureType {
   needsSite          Boolean                    @default(true) @map("needs_site")
   /// Day-bucket attendance: no rigid cabin clock until nurse seat (CLI-62).
   openAttendance     Boolean                    @default(false) @map("open_attendance")
+  /// Package block family. Null until classified; the picker falls back to the name heuristic.
+  blockCategory      String?                    @map("block_category")
+  /// GUEST bills the stay. INTERNAL is the sanatorium's own use and does not wait for pay.
+  usageContour       String                     @default("GUEST") @map("usage_contour")
   /// Order-field codes (DEVICE_PROGRAM, SUBSTANCE_OR_ADDITIVE, …). Empty = sites + note only.
   physioOrderFields  String[]                   @default([]) @map("physio_order_fields")
   /// PhysioSite.code allowlist for the doctor picker. Empty + needsSite = legacy all; seed fills concrete lists.
@@ -1912,6 +2019,8 @@ model ProgramTemplateProcedure {
    * PROCEDURE_ORDER | LAB_ORDER | VISIT
    */
   fulfillment    String          @default("PROCEDURE_ORDER")
+  /// When true, fulfillment is the route. When false, LAB/EXAM kind still overrides a procedure default.
+  fulfillmentExplicit Boolean       @default(false) @map("fulfillment_explicit")
   /**
    * PER_NIGHTS | PER_STAY
    */

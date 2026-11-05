@@ -236,10 +236,13 @@ export async function createProcedureType(data: {
   extendedEndHour?: number | null;
   needsSite?: boolean;
   openAttendance?: boolean;
+  blockCategory?: "PHYSIO" | "BATH" | "PARAFFIN" | null;
+  usageContour?: "GUEST" | "INTERNAL";
   physioOrderFields?: string[];
   allowedSiteCodes?: string[];
   financeSku?: string | null;
   hotelRevenueCode?: string | null;
+  active?: boolean;
 }) {
   const settings = await getSchedulingSettings();
   const durationMin =
@@ -319,10 +322,13 @@ export async function updateProcedureType(
     extendedEndHour?: number | null;
     needsSite?: boolean;
     openAttendance?: boolean;
+  blockCategory?: "PHYSIO" | "BATH" | "PARAFFIN" | null;
+  usageContour?: "GUEST" | "INTERNAL";
     physioOrderFields?: string[];
     allowedSiteCodes?: string[];
     financeSku?: string | null;
     hotelRevenueCode?: string | null;
+    active?: boolean;
   },
 ) {
   const settings = await getSchedulingSettings();

@@ -3,6 +3,7 @@ import {
   isLabOrderAwaitingPayment,
   LAB_AWAITING_PAYMENT,
   labAwaitingPaymentDenied,
+  labOrderVisibleToGuestWhere,
   labOrderVisibleToLabWhere,
 } from "@/domain/lab/lab-order-pay-gate";
 
@@ -31,8 +32,26 @@ describe("lab order pay gate", () => {
 
   it("hides unpaid priced rows from the lab journal filter", () => {
     expect(labOrderVisibleToLabWhere()).toEqual({
+      OR: [{ amountNet: { lte: 0 } }, { settledAt: { not: null } }, { releaseAfterPay: true }],
+    });
+    expect(labOrderVisibleToGuestWhere()).toEqual({
       OR: [{ amountNet: { lte: 0 } }, { settledAt: { not: null } }],
     });
+  });
+
+  it("lets the lab work a release-after-pay row and still hides the guest blank", () => {
+    expect(() =>
+      assertLabOrderReadyForWork({ amountNet: 20, settledAt: null, releaseAfterPay: true }),
+    ).not.toThrow();
+    expect(
+      labAwaitingPaymentDenied({ amountNet: 20, settledAt: null, releaseAfterPay: true }),
+    ).toBeNull();
+    expect(
+      labAwaitingPaymentDenied(
+        { amountNet: 20, settledAt: null, releaseAfterPay: true },
+        { guestBlank: true },
+      ),
+    ).toMatchObject({ status: 409 });
   });
 
   it("maps awaiting payment to a 409 HTTP deny shape", () => {

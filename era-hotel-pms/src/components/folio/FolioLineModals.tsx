@@ -6,9 +6,7 @@ import { CatalogField, Field, FieldTextarea, showApiError, showSuccess } from '@
 import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 
-import { DESK_PAYMENT_METHODS } from '@/lib/desk-payment-methods';
-
-const PAY_METHODS = DESK_PAYMENT_METHODS;
+const FALLBACK_PAY_METHODS = ['CASH', 'CARD', 'EPOINT', 'BANK_TRANSFER', 'LOYALTY_POINTS'] as const;
 
 export function FolioVoidModal({
   open,
@@ -155,10 +153,25 @@ export function FolioPayLineModal({
   const [bankTerminals, setBankTerminals] = useState<{ id: string; label: string }[]>([]);
   const [busy, setBusy] = useState(false);
 
+  const [payMethods, setPayMethods] = useState<Array<{ code: string; label: string }>>(
+    FALLBACK_PAY_METHODS.map((code) => ({ code, label: code })),
+  );
+
   useEffect(() => {
     if (!open) return;
     setMethod('CASH');
     setBankTerminalId('');
+    void fetch('/api/payment-methods?guest=1')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.data?.methods ?? body?.methods) as
+          | Array<{ code: string; label?: string }>
+          | undefined;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setPayMethods(rows.map((row) => ({ code: row.code, label: row.label || row.code })));
+        }
+      })
+      .catch(() => undefined);
     void fetch('/api/fiscal/devices?kind=BANK_POS')
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { devices?: { id: string; label: string }[] } | null) => {
@@ -170,7 +183,7 @@ export function FolioPayLineModal({
 
   async function submit() {
     if (!chargeId) return;
-    if (method === 'CARD' && !bankTerminalId.trim()) return;
+    if ((method === 'CARD' || method === 'EPOINT') && !bankTerminalId.trim() && bankTerminals.length > 0) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/folios/charges/${chargeId}/pay`, {
@@ -178,7 +191,8 @@ export function FolioPayLineModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentMethod: method,
-          bankTerminalId: method === 'CARD' ? bankTerminalId.trim() : undefined,
+          bankTerminalId:
+            method === 'CARD' || method === 'EPOINT' ? bankTerminalId.trim() : undefined,
         }),
       });
       const data = await res.json();
@@ -204,7 +218,11 @@ export function FolioPayLineModal({
           onCancel={onClose}
           onSubmit={() => void submit()}
           busy={busy}
-          submitDisabled={method === 'CARD' && !bankTerminalId.trim()}
+          submitDisabled={
+            (method === 'CARD' || method === 'EPOINT') &&
+            bankTerminals.length > 0 &&
+            !bankTerminalId.trim()
+          }
           submitLabel={t('pay')}
         />
       }
@@ -214,10 +232,13 @@ export function FolioPayLineModal({
         label={t('method')}
         value={method}
         onChange={(v) => setMethod(String(v ?? 'CASH'))}
-        options={PAY_METHODS.map((m) => ({ value: m, label: tPay(m) }))}
+        options={payMethods.map((m) => ({
+          value: m.code,
+          label: m.label !== m.code ? m.label : tPay(m.code as 'CASH'),
+        }))}
         emptyLabel={null}
       />
-      {method === 'CARD' ? (
+      {method === 'CARD' || method === 'EPOINT' ? (
         bankTerminals.length > 0 ? (
           <CatalogField
             kind="CLOSED_SMALL"

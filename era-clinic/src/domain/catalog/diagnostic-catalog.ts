@@ -63,7 +63,7 @@ function ensureGroup(
 }
 
 async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<DiagnosticCatalog> {
-  const [modalities, metaFieldRows] = await Promise.all([
+  const [modalities, metaFieldRows, inactiveCategories] = await Promise.all([
     prisma.modality.findMany({
       where: { organizationId, active: true },
       orderBy: { sortOrder: "asc" },
@@ -76,7 +76,12 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
       },
     }),
     prisma.diagnosticMetaField.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.diagnosticCategory.findMany({
+      where: { organizationId, active: false },
+      select: { name: true },
+    }),
   ]);
+  const hiddenCategories = new Set(inactiveCategories.map((row) => row.name));
 
   const items: DiagnosticCatalogItem[] = [];
   const groupMap = new Map<string, DiagnosticCatalogGroup>();
@@ -92,6 +97,8 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
         category: svc.category,
         title,
         serviceCode: svc.serviceCode,
+        packageOnly: svc.packageOnly,
+        categoryActive: !svc.category || !hiddenCategories.has(svc.category),
       };
       if (svc.fieldsJson) {
         item.fields = JSON.parse(svc.fieldsJson) as CatalogFieldDef[];
@@ -104,8 +111,22 @@ async function loadDiagnosticCatalogFromDb(organizationId: string): Promise<Diag
           code: a.code,
           unit: a.unit ?? undefined,
           label: { en: a.labelEn, ru: a.labelRu, az: a.labelAz },
+          normText:
+            a.normTextEn || a.normTextRu || a.normTextAz
+              ? {
+                  en: a.normTextEn ?? "",
+                  ru: a.normTextRu ?? "",
+                  az: a.normTextAz ?? "",
+                }
+              : undefined,
+          boundKind: a.boundKind ?? undefined,
           refMin: a.refMin ?? undefined,
           refMax: a.refMax ?? undefined,
+          refMinFemale: a.refMinFemale ?? undefined,
+          refMaxFemale: a.refMaxFemale ?? undefined,
+          refMinMale: a.refMinMale ?? undefined,
+          refMaxMale: a.refMaxMale ?? undefined,
+          zonesJson: a.zonesJson ?? undefined,
           section: a.section ?? undefined,
           valueType: a.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
           valueOptions: (a.valueOptions ?? []).map((o) => ({

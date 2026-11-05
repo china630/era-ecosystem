@@ -4,11 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { WorkspaceSystemKey } from "@era/satellite-kit/platform/workspace-system-catalog";
+import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   MODAL_FOOTER_OUTLINE_CLASS,
   ModalShell,
 } from "@era/satellite-kit/ui";
-import { orchBillingErrorMessage } from "../../lib/orch-billing-error";
+import {
+  orchBillingErrorCode,
+  orchBillingErrorMessage,
+  orchBillingErrorPayload,
+} from "../../lib/orch-billing-error";
 import { getOrchAccessToken, orchFetch } from "../../lib/orch-api";
 import {
   catalogModulesForSatellite,
@@ -138,7 +143,12 @@ export function WorkspaceSatelliteModulesModal({
     return res.ok;
   }
 
-  async function toggleModule(moduleKey: string, enabled: boolean, quantity?: number) {
+  async function toggleModule(
+    moduleKey: string,
+    enabled: boolean,
+    quantity?: number,
+    confirmLateMonth?: "start_now" | "defer_to_first",
+  ) {
     const token = getOrchAccessToken();
     if (!token) return;
     setBusyKey(moduleKey);
@@ -158,6 +168,7 @@ export function WorkspaceSatelliteModulesModal({
         body: JSON.stringify({
           moduleKey,
           enabled,
+          ...(confirmLateMonth ? { confirmLateMonth } : {}),
           ...(moduleKey === "accounting_book_extra" && enabled
             ? { quantity: quantity ?? bookExtraQuantity }
             : {}),
@@ -166,14 +177,52 @@ export function WorkspaceSatelliteModulesModal({
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
+        if (
+          enabled &&
+          !confirmLateMonth &&
+          orchBillingErrorCode(err) === "LATE_MONTH_CONFIRMATION_REQUIRED"
+        ) {
+          const payload = orchBillingErrorPayload(err);
+          const graceEndsAt =
+            typeof payload.graceEndsAt === "string" ? payload.graceEndsAt : null;
+          const startNow = window.confirm(
+            t("lateMonthConfirm", {
+              graceEnds: graceEndsAt
+                ? bakuDateDisplay(graceEndsAt)
+                : "—",
+            }),
+          );
+          if (startNow) {
+            await toggleModule(moduleKey, true, quantity, "start_now");
+          } else {
+            const defer = window.confirm(t("lateMonthDefer"));
+            if (defer) {
+              await toggleModule(moduleKey, true, quantity, "defer_to_first");
+              toast.info(t("deferredToFirst"));
+            }
+          }
+          return;
+        }
         toast.error(orchBillingErrorMessage(err, tCommon("failed")));
         return;
       }
 
-      const body = (await res.json().catch(() => null)) as { synced?: boolean } | null;
+      const body = (await res.json().catch(() => null)) as {
+        synced?: boolean;
+        inGrace?: boolean;
+        graceEndsAt?: string;
+      } | null;
 
       if (!enabled) {
         toast.info(t("disableBillingNotice"));
+      } else if (body?.inGrace) {
+        toast.success(
+          t("graceStarted", {
+            graceEnds: body.graceEndsAt
+              ? bakuDateDisplay(body.graceEndsAt)
+              : "—",
+          }),
+        );
       } else {
         toast.success(t("enabled"));
       }

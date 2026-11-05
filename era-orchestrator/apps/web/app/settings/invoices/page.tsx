@@ -1,16 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  labelSatelliteKey,
 } from "@era/satellite-kit/ui";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useAuth } from "../../../lib/auth-context";
 import { orchFetch } from "../../../lib/orch-api";
+
+type InvoiceLine = {
+  organizationId: string;
+  organizationName: string;
+  organizationTaxId?: string;
+  parentOrganizationId?: string | null;
+  satelliteKey?: string | null;
+  outletCode?: string | null;
+  catalogKind?: string | null;
+  moduleKey?: string | null;
+  meterKey?: string | null;
+  period?: string | null;
+  ratingBasis?: string | null;
+  description: string;
+  amount: string;
+};
 
 type InvoiceRow = {
   id: string;
@@ -18,8 +35,18 @@ type InvoiceRow = {
   status?: string;
   date?: string;
   billingPeriod?: string | null;
-  pdfUrl?: string | null;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  lines?: InvoiceLine[];
 };
+
+function sumAmounts(lines: InvoiceLine[]): number {
+  return lines.reduce((acc, l) => acc + Number(l.amount || 0), 0);
+}
+
+function formatAzn(n: number): string {
+  return `${n.toFixed(2)} AZN`;
+}
 
 export default function InvoicesPage() {
   const { ready } = useRequireAuth();
@@ -30,6 +57,7 @@ export default function InvoicesPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const pageSize = 20;
 
   const load = useCallback(async () => {
@@ -75,6 +103,54 @@ export default function InvoicesPage() {
     URL.revokeObjectURL(url);
   }
 
+  const trees = useMemo(() => {
+    return items.map((inv) => {
+      const lines = inv.lines ?? [];
+      const byOrg = new Map<string, InvoiceLine[]>();
+      for (const line of lines) {
+        const key = line.organizationId;
+        const arr = byOrg.get(key) ?? [];
+        arr.push(line);
+        byOrg.set(key, arr);
+      }
+      const orgNodes = [...byOrg.entries()].map(([orgId, orgLines]) => {
+        const orgName = orgLines[0]?.organizationName ?? orgId.slice(0, 8);
+        const bySat = new Map<string, InvoiceLine[]>();
+        for (const line of orgLines) {
+          const sat = line.satelliteKey?.trim() || "—";
+          const arr = bySat.get(sat) ?? [];
+          arr.push(line);
+          bySat.set(sat, arr);
+        }
+        const satNodes = [...bySat.entries()].map(([sat, satLines]) => {
+          const byOutlet = new Map<string, InvoiceLine[]>();
+          for (const line of satLines) {
+            const out = line.outletCode?.trim() || "—";
+            const arr = byOutlet.get(out) ?? [];
+            arr.push(line);
+            byOutlet.set(out, arr);
+          }
+          return {
+            sat,
+            total: sumAmounts(satLines),
+            outlets: [...byOutlet.entries()].map(([outlet, outletLines]) => ({
+              outlet,
+              total: sumAmounts(outletLines),
+              lines: outletLines,
+            })),
+          };
+        });
+        return {
+          orgId,
+          orgName,
+          total: sumAmounts(orgLines),
+          sats: satNodes,
+        };
+      });
+      return { inv, orgNodes };
+    });
+  }, [items]);
+
   if (!ready) return null;
 
   return (
@@ -88,28 +164,102 @@ export default function InvoicesPage() {
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
       <div className={CARD_CONTAINER_CLASS}>
         <ul className="divide-y divide-[#EBEDF0]">
-          {items.map((inv) => (
-            <li
-              key={inv.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
-            >
-              <div>
-                <p className="font-medium text-[#34495E]">
-                  {inv.billingPeriod ?? inv.date ?? inv.id.slice(0, 8)}
-                </p>
-                <p className="text-xs text-[#7F8C8D]">
-                  {inv.status ?? "—"} · {String(inv.amount ?? "—")} AZN
-                </p>
-              </div>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                onClick={() => void downloadPdf(inv.id)}
-              >
-                {t("downloadPdf")}
-              </button>
-            </li>
-          ))}
+          {trees.map(({ inv, orgNodes }) => {
+            const open = expanded[inv.id] === true;
+            return (
+              <li key={inv.id} className="px-4 py-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={() =>
+                      setExpanded((prev) => ({ ...prev, [inv.id]: !open }))
+                    }
+                  >
+                    <p className="font-medium text-[#34495E]">
+                      {open ? "▼" : "▶"}{" "}
+                      {inv.billingPeriod ?? inv.date ?? inv.id.slice(0, 8)}
+                    </p>
+                    <p className="text-xs text-[#7F8C8D]">
+                      {inv.status ?? "—"} · {String(inv.amount ?? "—")} AZN
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    className={PRIMARY_BUTTON_CLASS}
+                    onClick={() => void downloadPdf(inv.id)}
+                  >
+                    {t("downloadPdf")}
+                  </button>
+                </div>
+                {open ? (
+                  <div className="mt-3 space-y-3 rounded-lg border border-[#EBEDF0] bg-[#FAFBFC] p-3 text-xs text-[#5D6D7E]">
+                    {orgNodes.length === 0 ? (
+                      <p>{t("noLines")}</p>
+                    ) : (
+                      orgNodes.map((org) => (
+                        <div
+                          key={org.orgId}
+                          className="space-y-2 rounded-md border border-[#EBEDF0] bg-white p-2.5"
+                        >
+                          <p className="text-sm font-semibold text-[#34495E]">
+                            {org.orgName}
+                            <span className="ml-2 font-normal text-[#7F8C8D]">
+                              {formatAzn(org.total)}
+                            </span>
+                          </p>
+                          {org.sats.map((sat) => (
+                            <div key={sat.sat} className="ml-1 space-y-1.5 border-l-2 border-[#D5DADF] pl-3">
+                              <p className="font-medium text-[#475569]">
+                                {t("satNode", {
+                                  sat:
+                                    sat.sat === "—"
+                                      ? sat.sat
+                                      : labelSatelliteKey(sat.sat),
+                                  total: formatAzn(sat.total),
+                                })}
+                              </p>
+                              {sat.outlets.map((out) => (
+                                <div key={out.outlet} className="ml-1 space-y-1">
+                                  <p className="text-[#5D6D7E]">
+                                    {t("outletNode", {
+                                      outlet: out.outlet,
+                                      total: formatAzn(out.total),
+                                    })}
+                                  </p>
+                                  <ul className="space-y-0.5 pl-2">
+                                    {out.lines.map((line, idx) => (
+                                      <li
+                                        key={`${line.description}-${idx}`}
+                                        className="flex flex-wrap justify-between gap-2 text-[#7F8C8D]"
+                                      >
+                                        <span>
+                                          {line.description}
+                                          {line.ratingBasis
+                                            ? ` · ${line.ratingBasis}`
+                                            : ""}
+                                          {line.moduleKey
+                                            ? ` · ${line.moduleKey}`
+                                            : ""}
+                                        </span>
+                                        <span className="tabular-nums text-[#34495E]">
+                                          {line.amount} AZN
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
           {!loading && items.length === 0 ? (
             <li className="p-4 text-sm text-[#7F8C8D]">{t("empty")}</li>
           ) : null}

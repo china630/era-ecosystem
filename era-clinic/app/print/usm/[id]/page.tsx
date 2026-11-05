@@ -27,6 +27,7 @@ export default async function PrintUsmPage({ params, searchParams }: Props) {
       autoPrint={sp.autoprint === "1"}
       signatureLabel={printLabel(lang, "radiologist")}
       signatureName={doc.signatureDoctor}
+      blankDates={{ sampleReceived: doc.sampleReceived, resultDate: doc.resultDate }}
     >
       {doc.rows.length === 0 ? (
         <p className="text-[12px]">—</p>

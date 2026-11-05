@@ -2,7 +2,7 @@ import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { createReservation } from '@/lib/services/reservation.service';
 import type { ReservationAuditActor } from '@/lib/reservation-audit';
-import type { BookingFolioMode, PaymentMethod } from '@prisma/client';
+import type { BookingFolioMode } from '@prisma/client';
 
 export async function listBookingStays(groupId: string) {
   const group = await prisma.reservationGroup.findUnique({
@@ -61,7 +61,7 @@ export async function addStayToBooking(input: {
   mealPlanId?: string;
   checkInDate: Date;
   checkOutDate: Date;
-  paymentMethod: PaymentMethod | null;
+  paymentMethod: string | null;
   agencyId?: string;
   companyId?: string;
   salesContractId?: string;
@@ -117,7 +117,7 @@ export async function createGroupBookingWithStays(input: {
   guestId: string;
   ratePlanId: string;
   mealPlanId?: string;
-  paymentMethod?: PaymentMethod | null;
+  paymentMethod?: string | null;
   sourceId?: string;
   salesContractId?: string;
   roomPayer?: 'GUEST' | 'AGENCY' | 'COMPANY';

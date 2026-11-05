@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     let outlet = await prisma.outlet.findFirst({
       where: { tenantId: tenant.id, code: body.outletCode },
     });
+    let outletCreated = false;
     if (!outlet) {
       outlet = await prisma.outlet.create({
         data: {
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
           preset: body.preset ?? "grocery",
         },
       });
+      outletCreated = true;
     } else if (body.preset) {
       outlet = await prisma.outlet.update({
         where: { id: outlet.id },
@@ -61,6 +63,35 @@ export async function POST(req: Request) {
       await import("@era/satellite-kit");
     const { requestOrganizationId } = await import("@/lib/request-organization");
     const organizationId = requestOrganizationId();
+    if (outletCreated) {
+      const base =
+        process.env.ORCHESTRATOR_URL?.trim() ||
+        process.env.CONTROL_PLANE_URL?.trim() ||
+        "";
+      const token =
+        process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+        process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+        "";
+      if (base && token && organizationId) {
+        await fetch(
+          `${base.replace(/\/$/, "")}/v1/internal/structure/outlets/upsert`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              "x-service-token": token,
+            },
+            body: JSON.stringify({
+              organizationId,
+              satelliteKey: "industry_retail",
+              code: outlet.code,
+              name: outlet.name,
+            }),
+          },
+        ).catch(() => null);
+      }
+    }
     const defaults = resolveDefaultDevicesForSatellite({
       organizationId,
       outletCode: outlet.code,

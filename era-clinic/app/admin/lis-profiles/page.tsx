@@ -35,7 +35,16 @@ type LisProfile = {
   columnMapping: string;
 };
 
-const MAPPING_KEYS = ["testCode", "analyte", "value", "refMin", "refMax"] as const;
+const MAPPING_KEYS = [
+  "testCode",
+  "analyte",
+  "value",
+  "refMin",
+  "refMax",
+  "normTextAz",
+  "normTextRu",
+  "normTextEn",
+] as const;
 
 function parseMapping(raw: string): Record<string, string> {
   try {

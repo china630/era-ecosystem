@@ -166,6 +166,16 @@ export { FilterChips, type FilterChipItem } from "./filter-chips";
 export { VoenLookupField, type VoenLookupResult } from "./voen-lookup-field";
 export { buildVoenLookupLabels, type VoenLookupFieldLabels } from "./voen-lookup-labels";
 export { FxEquivalentBadge, type FxEquivalentPreview } from "./fx-equivalent-badge";
+export {
+  ChannelEdgeCard,
+  type ChannelEdgeCardProps,
+} from "./channel-edge-card";
+export {
+  channelEdgeTitle,
+  labelChannelKind,
+  labelChannelManagedBy,
+  labelSatelliteKey,
+} from "../integration/satellite-channels-display";
 export type {
   EraOpsNavItem,
   EraOpsNavSection,

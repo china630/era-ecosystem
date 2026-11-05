@@ -65,7 +65,13 @@ function lineLabel(
   return pickL10n(label, lang) || code;
 }
 
-function refRange(refMin?: string, refMax?: string): string | undefined {
+function refRange(
+  refMin?: string,
+  refMax?: string,
+  normText?: string | null,
+): string | undefined {
+  const sentence = (normText ?? "").trim();
+  if (sentence) return sentence;
   const a = (refMin ?? "").trim();
   const b = (refMax ?? "").trim();
   if (!a && !b) return undefined;

@@ -40,6 +40,8 @@ export async function buildNurseDayPrint(input: {
   mine?: boolean;
   patient?: string | null;
   procedure?: string | null;
+  /** Exact procedure type code. Reception sheet uses this instead of a text search. */
+  procedureCode?: string | null;
   /** Mine was asked and this login has no practitioner. */
   empty?: boolean;
 }): Promise<NurseDayPrintDocument> {
@@ -95,7 +97,11 @@ export async function buildNurseDayPrint(input: {
       ],
     };
   }
-  const procedureQ = input.procedure?.trim();
+  const procedureCode = input.procedureCode?.trim();
+  if (procedureCode) {
+    where.procedureCode = procedureCode;
+  }
+  const procedureQ = procedureCode ? "" : input.procedure?.trim();
   if (procedureQ) {
     const nameMatch: Prisma.ProcedureOrderWhereInput = {
       OR: [

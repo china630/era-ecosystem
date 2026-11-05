@@ -534,6 +534,7 @@ export async function closeUnpaidDiagnostics(
       amountNet: { gt: 0 },
       settledAt: null,
       inPackage: false,
+      autoPaidStay: false,
       status: "ORDERED",
     },
     data: {

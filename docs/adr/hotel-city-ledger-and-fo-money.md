@@ -22,7 +22,7 @@ Architecture already splits planes ([HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITA
 | Folio types GUEST / COMPANY / AGENCY | SHIPPED | `FolioType`; EQUAL party personal GUEST folios |
 | Folio routing rules | SHIPPED | `FolioRoutingRule` by revenue code; MASTER/SPLIT booking |
 | Credit limit on stay | SHIPPED (gate) | `city-ledger-gate.service` + contract + Agency/stay limit + open AR exposure |
-| Company city ledger | SHIPPED (ops) | Same door as agency: checkout `transferToCityLedger` and tenders `CL_AGENCY` / `CL_COMPANY` both call the gate before any folio write. Company limit is stay, else `Company.creditLimitAzn`, else the hotel default. Open AR is COMPANY folios of that `companyId`. VÖEN and `Company.financeCounterpartyId` follow the agency BLOCK/DEFER/AUTO_CREATE policy. Snapshot event may carry `companyId` or `agencyId`, plus `financeCounterpartyId` when the company card already has one. Finance stores that row on the existing snapshot table (`hotelAgencyId` is the company id when there is no agency). |
+| Company city ledger | SHIPPED (ops) | Same door as agency: checkout `transferToCityLedger` and tenders `CL_AGENCY` / `CL_COMPANY` both call the gate before any folio write. Company limit is stay, else `Company.creditLimitAzn`, else the hotel default. Open AR is COMPANY folios of that `companyId`. Checkout checks the local contract, credit limit, and VÖEN, then leaves the folio `PENDING_AR`. It does not call Finance. Night audit looks the VÖEN up on the Finance API (`ERA_FINANCE_API_URL`). A found card is stored on `financeCounterpartyId`, the folio invoice is issued, the snapshot is sent, and the folio becomes `TRANSFERRED_AR`. A missing card is queued (`counterpartyCardRequest`, source `HOTEL`) and the folio stays `PENDING_AR` until a later night. Night audit does not create the Finance card. The unsettled-departures retry uses the same function for one folio: no card, no transfer. |
 | Settle multi-method | SHIPPED | CASH/CARD/COMPANY/LOYALTY/**DEPOSIT**; hub `/front-cash/pending` |
 | Deposit lifecycle | SHIPPED | HELD→APPLIED@check-in/settle/checkout; REFUNDED leftover HELD |
 | Checkout folio close | SHIPPED | Guest zero or MOVE_PAYER_CL; COMPANY/AGENCY → PENDING_AR→TRANSFERRED_AR only after invoice OK; settlement status PENDING/INVOICED/SETTLED; unsettled departures list |
@@ -46,7 +46,8 @@ Add **operational** folio AR phase in hotel (not GL):
 
 ```
 OPEN → (checkout) → PENDING_AR | CLOSED
-PENDING_AR → TRANSFERRED_AR (invoice/handoff event) → (Finance Paid) → Hotel `payment-applied`
+PENDING_AR → (night audit, Finance card exists) → TRANSFERRED_AR → (Finance Paid) → Hotel `payment-applied`
+PENDING_AR stays when Finance has no card; night audit queues a card request and retries the next night.
 (allocate **and** bank match; durable outbox + hourly reconcile — ADR [satellite-peer-url-resolution.md](./satellite-peer-url-resolution.md); peer hotel URL from SatelliteEndpoint, not env SoR)
 ```
 
@@ -87,6 +88,16 @@ Coverage rows: `HOT-CL-*`, `HOT-CASH-*`, `HOT-CO-04` (STUB), `HOT-NA-01`, `HOT-A
 ### D4 — Honesty rule
 
 Do not mark City Ledger / Night Audit / deposit as SHIPPED until COVERAGE actor columns + UAT-SMOKE UI path match Opera-depth claims in product copy. Ops snapshot ≠ AR.
+
+### D5 — Reservation deposit (2026-11-04)
+
+A deposit is an advance on one reservation and one guest (`FolioDeposit.reservationGuestId`), not a guest wallet. Intake is open again for OPTION, CONFIRMED, and IN_HOUSE (`recordDeposit`, CASH or CARD). Check-in still applies HELD onto the folio. No-show and cancel still use the existing payout.
+
+Checkout with unused guest credit stays blocked until the cashier picks one end: cash/card refund, or carry. Carry writes a HELD row on another open stay (existing id, or a new stay with the same guest, room type, and rate plan and no room) and zeros this stay with a DEPOSIT refund. That transfer row is marked `externalRef` `TRANSFER_FROM:` and is left out of night-audit deposit receipts.
+
+Saving the party refuses to drop a guest who still has a payment or a HELD deposit (`PAYER_HAS_MONEY`). Moving that money is `POST /api/folios/deposits/transfer` (from stay+guest to stay+guest), audited as `DEPOSIT_TRANSFER`. The folio tab lists held rows and the guest's other open stays.
+
+Planned paid clinic rows are on the folio tab (`ClinicPlanPanel`): per-row void, pay the whole plan, or void the whole plan. Checkout only names the count.
 
 ## Consequences
 

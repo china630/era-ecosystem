@@ -244,7 +244,10 @@ async function collectDayDocument(date: Date) {
   const paymentLines = [...payByMethod.values()].filter((row) => row.amount !== 0);
 
   const receipts = await prisma.folioDeposit.findMany({
-    where: { businessDate: date },
+    where: {
+      businessDate: date,
+      NOT: { externalRef: { startsWith: 'TRANSFER_FROM:' } },
+    },
     include: { reservation: { select: { company: { select: { voen: true } } } } },
   });
   const depositReceiptLines = receipts.map((row) => ({
@@ -625,6 +628,14 @@ async function executeLockedNightAudit() {
     }
     const businessDateKey = hotelDateKey(date);
     steps.push(`Step 3 complete: room charges for ${businessDateKey}`);
+    const { handoffPendingCityLedger } = await import(
+      '@/lib/services/city-ledger-night-handoff.service'
+    );
+    const cityLedgerLines = await handoffPendingCityLedger(businessDateKey);
+    for (const line of cityLedgerLines) {
+      steps.push(`Step 3b: ${line.message}`);
+      if (line.level === 'exception') errors.push(line.message);
+    }
     await prisma.nightAuditRun.update({
       where: { id: run.id },
       data: { stepsJson: JSON.stringify(steps) },

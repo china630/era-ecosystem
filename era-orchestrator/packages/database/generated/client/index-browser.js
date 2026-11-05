@@ -166,12 +166,58 @@ exports.Prisma.SubscriptionInvoiceScalarFieldEnum = {
   paymentOrderId: 'paymentOrderId'
 };
 
+exports.Prisma.OrganizationSatelliteChannelScalarFieldEnum = {
+  id: 'id',
+  fromOrgId: 'fromOrgId',
+  fromSatelliteKey: 'fromSatelliteKey',
+  toOrgId: 'toOrgId',
+  toSatelliteKey: 'toSatelliteKey',
+  kind: 'kind',
+  enabled: 'enabled',
+  managedBy: 'managedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.BillingInvoiceItemScalarFieldEnum = {
   id: 'id',
   subscriptionInvoiceId: 'subscriptionInvoiceId',
   organizationId: 'organizationId',
+  parentOrganizationId: 'parentOrganizationId',
+  satelliteKey: 'satelliteKey',
+  outletCode: 'outletCode',
+  catalogKind: 'catalogKind',
+  moduleKey: 'moduleKey',
+  meterKey: 'meterKey',
+  period: 'period',
+  ratingBasis: 'ratingBasis',
+  unitPrice: 'unitPrice',
+  qty: 'qty',
   description: 'description',
-  amount: 'amount'
+  amount: 'amount',
+  priceSnapshot: 'priceSnapshot'
+};
+
+exports.Prisma.OrganizationModuleGraceScalarFieldEnum = {
+  organizationId: 'organizationId',
+  moduleKey: 'moduleKey',
+  graceStartedAt: 'graceStartedAt',
+  graceEndsAt: 'graceEndsAt',
+  graceConsumedAt: 'graceConsumedAt',
+  scheduledEnableAt: 'scheduledEnableAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommercialOutletScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  satelliteKey: 'satelliteKey',
+  code: 'code',
+  name: 'name',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.UsageMeterEventScalarFieldEnum = {
@@ -247,7 +293,8 @@ exports.Prisma.OrganizationSatelliteEntitlementScalarFieldEnum = {
   trialExpiresAt: 'trialExpiresAt',
   trialOverridden: 'trialOverridden',
   connectedAt: 'connectedAt',
-  isTrial: 'isTrial'
+  isTrial: 'isTrial',
+  suspendedAt: 'suspendedAt'
 };
 
 exports.Prisma.SatelliteEndpointScalarFieldEnum = {
@@ -1098,6 +1145,24 @@ exports.Prisma.FiscalHardwareDeviceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrgPaymentMethodScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  nameAz: 'nameAz',
+  nameRu: 'nameRu',
+  nameEn: 'nameEn',
+  sortOrder: 'sortOrder',
+  active: 'active',
+  systemKey: 'systemKey',
+  fiscalHint: 'fiscalHint',
+  fiscalDeviceId: 'fiscalDeviceId',
+  satellitesJson: 'satellitesJson',
+  secretsCipher: 'secretsCipher',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -1148,7 +1213,8 @@ exports.Prisma.OrganizationMembershipScalarFieldEnum = {
   joinedAt: 'joinedAt',
   deletedAt: 'deletedAt',
   deletedByUserId: 'deletedByUserId',
-  deletedReason: 'deletedReason'
+  deletedReason: 'deletedReason',
+  isHome: 'isHome'
 };
 
 exports.Prisma.AccessRequestScalarFieldEnum = {
@@ -1556,6 +1622,32 @@ exports.SubscriptionInvoiceStatus = exports.$Enums.SubscriptionInvoiceStatus = {
   PAID: 'PAID',
   OVERDUE: 'OVERDUE',
   CANCELLED: 'CANCELLED'
+};
+
+exports.SatelliteChannelKind = exports.$Enums.SatelliteChannelKind = {
+  FOLIO_POST: 'FOLIO_POST',
+  SETTLEMENT: 'SETTLEMENT',
+  REVENUE_EVENT: 'REVENUE_EVENT',
+  READ_STATUS: 'READ_STATUS'
+};
+
+exports.SatelliteChannelManagedBy = exports.$Enums.SatelliteChannelManagedBy = {
+  PLATFORM: 'PLATFORM',
+  ACCEPTOR: 'ACCEPTOR'
+};
+
+exports.BillingLineRatingBasis = exports.$Enums.BillingLineRatingBasis = {
+  FULL_MONTH: 'FULL_MONTH',
+  GRACE: 'GRACE',
+  COVERED: 'COVERED',
+  SUSPENDED: 'SUSPENDED',
+  METER: 'METER',
+  OTHER: 'OTHER'
+};
+
+exports.CommercialOutletStatus = exports.$Enums.CommercialOutletStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED'
 };
 
 exports.PricingKind = exports.$Enums.PricingKind = {
@@ -2004,7 +2096,10 @@ exports.Prisma.ModelName = {
   TenantBilling: 'TenantBilling',
   OrganizationSubscription: 'OrganizationSubscription',
   SubscriptionInvoice: 'SubscriptionInvoice',
+  OrganizationSatelliteChannel: 'OrganizationSatelliteChannel',
   BillingInvoiceItem: 'BillingInvoiceItem',
+  OrganizationModuleGrace: 'OrganizationModuleGrace',
+  CommercialOutlet: 'CommercialOutlet',
   UsageMeterEvent: 'UsageMeterEvent',
   OrganizationModule: 'OrganizationModule',
   OrganizationBundle: 'OrganizationBundle',
@@ -2073,6 +2168,7 @@ exports.Prisma.ModelName = {
   ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
   ClinicCutoverPolicy: 'ClinicCutoverPolicy',
   FiscalHardwareDevice: 'FiscalHardwareDevice',
+  OrgPaymentMethod: 'OrgPaymentMethod',
   User: 'User',
   Holding: 'Holding',
   HoldingMembership: 'HoldingMembership',

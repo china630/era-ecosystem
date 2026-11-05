@@ -39,6 +39,10 @@ WORKDIR /workspace
 COPY --from=app-deps /workspace/${SATELLITE_DIR}/node_modules ./${SATELLITE_DIR}/node_modules
 COPY ${SATELLITE_DIR} ./${SATELLITE_DIR}
 WORKDIR /workspace/${SATELLITE_DIR}
+ARG NEXT_PUBLIC_FINANCE_WEB_URL
+# Next inlines NEXT_PUBLIC_* at build. CI passes the public finance origin; without
+# this ARG the hotel image drops it and City Ledger lookup fails at runtime.
+ENV NEXT_PUBLIC_FINANCE_WEB_URL=${NEXT_PUBLIC_FINANCE_WEB_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 # Dummy URL: generate + migrate diff use the datamodel, not a live DB.

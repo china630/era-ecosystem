@@ -148,6 +148,22 @@ export async function postRoomCharge(
 
   const hotelOrg = await resolveHotelOrganizationId();
   if (!hotelOrg) throw new Error("hotelOrganizationId required for hotel room charge");
+  const { requestOrganizationId } = await import("@/lib/request-organization");
+  const fnbOrg = requestOrganizationId();
+  const {
+    checkChannelEnabledLive,
+    SatelliteChannelDisabledError,
+  } = await import("@era/satellite-kit");
+  const channelOk = await checkChannelEnabledLive({
+    fromOrgId: fnbOrg,
+    fromSatelliteKey: "industry_fnb_pos",
+    toOrgId: hotelOrg,
+    toSatelliteKey: "industry_hotel_pms",
+    kind: "FOLIO_POST",
+  });
+  if (!channelOk) {
+    throw new SatelliteChannelDisabledError("FOLIO_POST");
+  }
   const base = await pmsBaseUrl(hotelOrg);
   if (!base) throw new Error("Hotel PMS peer URL is not configured");
   const headers: Record<string, string> = {

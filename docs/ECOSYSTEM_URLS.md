@@ -24,6 +24,8 @@ Bank Core is a regulated **headless engine** (CBS, second core), **not** an indu
 
 ‡ Finance API public route: enable with `ERA_FINANCE_API_PUBLIC=true` (open architecture). Internal always: `http://finance-core:4100`.
 
+**Platform console cutover:** vendor SuperAdmin UI is `platform.era-365.online` only ([ADR platform-console-cutover](./adr/platform-console-cutover.md)). Client `app.era-365.online/super-admin/*` redirects to platform short paths.
+
 Finance Web proxies `/api/*` → `finance-core:4100` and `/cp/*` → `orchestrator:4000`.
 
 ### Orchestrator platform catalog (industry satellites)

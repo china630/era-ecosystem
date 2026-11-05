@@ -160,12 +160,15 @@ export async function getAvailabilityWithContractAllotment(
         },
       });
       if (!allotment) {
+        // No quota row for this type/dates: fall back to hotel sellable so FO can
+        // still tag the corporate contract (Photon etc.) without a hard zero.
+        // Exhausted allotment rows still clamp below.
         dayResults.push({
           date: night.toISOString().slice(0, 10),
-          available: 0,
+          available,
           contractAllotment: 0,
           contractBooked: 0,
-          reason: 'NO_ALLOTMENT',
+          reason: available < 1 ? capReason ?? 'NO_ALLOTMENT' : 'NO_ALLOTMENT_BAR',
         });
         continue;
       }
@@ -228,6 +231,9 @@ export async function assertContractAllotmentAvailable(
     if (reason === 'STOP_SELL' || reason === 'TYPE_CAP' || reason === 'HOUSE_CAP') {
       const { InventoryCapError } = await import('@/lib/services/inventory-guard.service');
       throw new InventoryCapError(reason);
+    }
+    if (reason === 'NO_ALLOTMENT') {
+      throw new Error('No contract allotment for selected dates');
     }
     throw new Error('Contract allotment exhausted for selected dates');
   }

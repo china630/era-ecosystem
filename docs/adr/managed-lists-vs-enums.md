@@ -57,12 +57,12 @@ FK strategy:
 
 | Catalog | SoR | Consumption |
 |---------|-----|-------------|
-| **Tender / payment method** | Prefer org-level definition in finance or orch “org prefs”; satellites consume subset | Hotel FO, clinic cashier, F&B, retail, wholesale |
+| **Tender / payment method** | **Orchestrator** org card (`OrgPaymentMethod` next to KKM / BANK_POS); Sync → satellites; Finance reads code only | Hotel FO, clinic cashier, F&B, retail |
 | **Legal form, UoM kind, tax kind** | `era-data-hub` (align finance enums to hub) | Finance + gateway |
 | **Blood / marital / person segment / statistical** | MDM | Hotel guest cache, clinic patient, HR profiles |
 | **Workforce absence kinds** | Orchestrator workforce seed (T2) + org disable list | Orch UI; finance timesheet types align by `systemKey` |
 
-**Tender types (Phase 0 / A0):** `@era/contracts` `tender` module — `TenderRow`, `TenderOrgEnablement`, `TENDER_SEED_ROWS`. HTTP enablement API is Phase 4.
+**Tender types:** `@era/contracts` `tender` seed remains a fallback label set. Live catalog + satellite enablement = orchestrator `GET/PUT /v1/admin/orgs/:orgId/payment-methods` + Sync `paymentMethods`. DEPARTMENT with `fiscalRouting=PARENT` uses the parent hotel catalog and cash desk. Finance `GET /organization/tenders` is read-only seed; PUT returns 410.
 
 ### T1 Lookup row pattern (canonical)
 
@@ -298,7 +298,7 @@ Definition of done for UI rows: status leaves `text` / `datalist` / `missing`; `
 | A0 | Shared design: `Tender` contract (code, labels, meta for fiscal/GL) + ownership Finance org prefs vs satellite subset | ADR amended if contract changes; kit type in `@era/contracts` if cross-app | ✅ `@era/contracts` tender + kit helpers |
 | A1 | Hotel: Market, Segment, VipType, LoyaltyTier, VisaType models + `/admin/master-data` + FO/guest **Select** pickers; view/bed strict Select; FO prefs/tripReason off text | No hardcoded market/segment arrays; guest/FO catalog fields not `text`/`datalist` | ✅ `HotelLookup` + CatalogField |
 | A2 | Hotel: ReservationNoteType, ConciergeCategory, EventOrderLineKind → catalogs; drop enums | Admin CRUD + retire | ✅ Lookup kinds + admin/seed; Prisma enums **dropped** → String codes |
-| A3 | Tender enablement: Finance SoR + hotel/clinic/fnb/retail(/wholesale) consumers; pay UI stays Select or radio-chips | One code set; clinic `TRANSFER` as catalog row; no divergent tender consts | ✅ Finance `GET/PUT /organization/tenders`; hotel/clinic/fnb/retail consumers; wholesale P1 |
+| A3 | Tender enablement: **Orchestrator org card** SoR + Sync; hotel/clinic/fnb consumers; Finance reads code | One code set; EPOINT system seed; PARENT desk routing | ✅ orch `OrgPaymentMethod` + Sync; Finance PUT gone; wholesale P1 |
 | A4 | Clinic: BodyPart catalog + contraindications/procedure UI | Enum removed or unused; diagnostic category/kind Select where closed | ✅ `ClinicLookup` + admin; Prisma `BodyPart` enum **dropped** → String |
 | A5 | CRM: channels, prospect types, activity sectors; stages owned by pipeline; **expose channel Select on create** | No inferred-only channel; activitySector not free text | ✅ `CrmLookup` + create CatalogFields; stage pipeline P1 |
 | A6 | Finance: PayrollComponent.code String; CashOrder subtypes; ContractType; EmployeeDocumentKind; TaxRate-only VAT UI; GL offset Autocomplete | Custom payroll code create works; no VAT const arrays; offsetAccount not plain text | ✅ Payroll String + UI; cash `CashOrderSubtype` T1 + API/UI; offset Autocomplete; VAT TaxRate API; ContractType/EmployeeDocumentKind still P1 |

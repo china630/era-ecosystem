@@ -13,6 +13,8 @@ export type DepartmentOrgView = {
   name: string;
   operatingMode: string;
   parentOrgId: string | null;
+  fiscalRouting: string;
+  revenueRouting: string;
   publicOrgNumber: number;
   createdAt: Date;
 };
@@ -38,6 +40,8 @@ export class OrgDepartmentsService {
         name: true,
         operatingMode: true,
         parentOrgId: true,
+        fiscalRouting: true,
+        revenueRouting: true,
         publicOrgNumber: true,
         createdAt: true,
       },
@@ -95,6 +99,8 @@ export class OrgDepartmentsService {
         name: true,
         operatingMode: true,
         parentOrgId: true,
+        fiscalRouting: true,
+        revenueRouting: true,
         publicOrgNumber: true,
         createdAt: true,
       },

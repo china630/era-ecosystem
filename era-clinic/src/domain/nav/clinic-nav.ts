@@ -30,6 +30,7 @@ import {
   Grid3x3,
   CalendarRange,
   Trash2,
+  Link2,
 } from "lucide-react";
 import type { EraOpsNavItem, EraOpsNavSection } from "@era/satellite-kit/ui";
 import {
@@ -157,6 +158,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
   {
     href: "/reception/extra-tickets",
     labelKey: "extraTickets",
+    icon: ScrollText,
+    group: "frontdesk",
+    permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
+    href: "/reception/nurse-sheets",
+    labelKey: "nurseSheets",
     icon: ScrollText,
     group: "frontdesk",
     permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
@@ -408,6 +417,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     icon: ScrollText,
     group: "platform",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
+  },
+  {
+    href: "/admin/links",
+    labelKey: "adminLinks",
+    icon: Link2,
+    group: "platform",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   },
   {
     href: "/admin/settings",

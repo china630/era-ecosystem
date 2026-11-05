@@ -25,6 +25,7 @@ import {
   FieldSelect,
   FieldTextarea,
   MODAL_CHECKBOX_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -77,10 +78,24 @@ type DiagnosticService = {
   hotelRevenueCode?: string | null;
   fieldsJson?: string | null;
   includesJson?: string | null;
+  guestBlankRelease?: "PAY_WITH_WORK" | "AFTER_PAYMENT";
+  menuSurface?: "LAB" | "DIAGNOSTIC" | "VISIT" | "";
+  autoPaidOnOpen?: boolean;
+  schedulingMode?: "FIXED" | "OPEN";
+  broughtInMaxDays?: number | null;
   sortOrder: number;
   active: boolean;
+  packageOnly?: boolean;
   _count?: { analytes?: number };
 };
+
+type DiagnosticCategoryRow = {
+  id: string;
+  name: string;
+  active: boolean;
+};
+
+type BoundKind = "INTERVAL" | "UPPER_ONLY" | "LOWER_ONLY" | "QUALITATIVE" | "ZONES";
 
 type DictionaryAnalyte = {
   code: string;
@@ -88,8 +103,17 @@ type DictionaryAnalyte = {
   labelEn: string;
   labelRu: string;
   labelAz: string;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: BoundKind | null;
   refMin?: string | null;
   refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  zonesJson?: string | null;
   section?: string | null;
   valueType?: string;
   optionsJson?: string | null;
@@ -103,8 +127,17 @@ type DiagnosticAnalyte = {
   labelEn: string;
   labelRu: string;
   labelAz: string;
+  normTextEn?: string | null;
+  normTextRu?: string | null;
+  normTextAz?: string | null;
+  boundKind?: BoundKind | null;
   refMin?: string | null;
   refMax?: string | null;
+  refMinFemale?: string | null;
+  refMaxFemale?: string | null;
+  refMinMale?: string | null;
+  refMaxMale?: string | null;
+  zonesJson?: string | null;
   section?: string | null;
   valueType?: string;
   sortOrder: number;
@@ -117,7 +150,7 @@ type DiagnosticAnalyte = {
   }>;
 };
 
-type Tab = "modalities" | "services" | "favorites";
+type Tab = "modalities" | "services" | "categories" | "favorites";
 
 const ORDERABLE_KINDS = new Set([
   "lab_panel",
@@ -177,6 +210,7 @@ export default function DiagnosticCatalogAdminPage() {
   const [favSaving, setFavSaving] = useState(false);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [services, setServices] = useState<DiagnosticService[]>([]);
+  const [categories, setCategories] = useState<DiagnosticCategoryRow[]>([]);
   const [analytes, setAnalytes] = useState<DiagnosticAnalyte[]>([]);
   const [serviceModalityFilter, setServiceModalityFilter] = useState("");
   const [serviceKindFilter, setServiceKindFilter] = useState("");
@@ -224,6 +258,11 @@ export default function DiagnosticCatalogAdminPage() {
     setServices(unwrap<DiagnosticService[]>(await res.json()));
   }, [serviceModalityFilter]);
 
+  const loadCategories = useCallback(async () => {
+    const res = await fetch("/api/admin/diagnostic-catalog/categories");
+    setCategories(unwrap<DiagnosticCategoryRow[]>(await res.json()));
+  }, []);
+
   const loadAnalytes = useCallback(async (serviceId: string) => {
     const res = await fetch(`/api/admin/diagnostic-catalog/services/${serviceId}/analytes`);
     setAnalytes(unwrap<DiagnosticAnalyte[]>(await res.json()));
@@ -231,7 +270,8 @@ export default function DiagnosticCatalogAdminPage() {
 
   useEffect(() => {
     void loadModalities();
-  }, [loadModalities]);
+    void loadCategories();
+  }, [loadModalities, loadCategories]);
 
   useEffect(() => {
     if (!modalOpen || tab !== "services") return;
@@ -448,8 +488,11 @@ export default function DiagnosticCatalogAdminPage() {
             modalityId: serviceModalityFilter || modalities[0]?.id || "",
             kind: serviceKindFilter || "lab_panel",
             active: "true",
+            packageOnly: "false",
           }
-        : { kind: "imaging", active: "true" },
+        : tab === "categories"
+          ? { name: "", active: "true" }
+          : { kind: "imaging", active: "true" },
     );
     setModalOpen(true);
   }
@@ -501,10 +544,19 @@ export default function DiagnosticCatalogAdminPage() {
       titleRu: row.titleRu,
       titleAz: row.titleAz,
       serviceCode: row.serviceCode,
+      guestBlankRelease: row.guestBlankRelease ?? "PAY_WITH_WORK",
+      menuSurface: row.menuSurface ?? "",
+      autoPaidOnOpen: row.autoPaidOnOpen === true ? "1" : "",
+      schedulingMode: row.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
+      broughtInMaxDays:
+        row.broughtInMaxDays != null && row.broughtInMaxDays > 0
+          ? String(row.broughtInMaxDays)
+          : "",
       financeSku: linkedSku,
       includes: includesText,
       sortOrder: String(row.sortOrder),
       active: String(row.active),
+      packageOnly: row.packageOnly ? "true" : "false",
     });
     setModalOpen(true);
   }
@@ -518,8 +570,17 @@ export default function DiagnosticCatalogAdminPage() {
       labelEn: row.labelEn,
       labelRu: row.labelRu,
       labelAz: row.labelAz,
+      normTextEn: row.normTextEn ?? "",
+      normTextRu: row.normTextRu ?? "",
+      normTextAz: row.normTextAz ?? "",
+      boundKind: row.boundKind ?? "INTERVAL",
       refMin: row.refMin ?? "",
       refMax: row.refMax ?? "",
+      refMinFemale: row.refMinFemale ?? "",
+      refMaxFemale: row.refMaxFemale ?? "",
+      refMinMale: row.refMinMale ?? "",
+      refMaxMale: row.refMaxMale ?? "",
+      zonesJson: row.zonesJson ?? "",
       section: row.section ?? "",
       valueType: row.valueType ?? "NUMERIC",
       valueOptionsJson: row.valueOptions?.length
@@ -530,6 +591,32 @@ export default function DiagnosticCatalogAdminPage() {
   }
 
   async function save() {
+    if (tab === "categories") {
+      const name = form.name?.trim() ?? "";
+      if (!name) {
+        showApiError({ error: t("requiredFields", { fields: t("category") }) });
+        return;
+      }
+      const res = await fetch(
+        editingId
+          ? `/api/admin/diagnostic-catalog/categories/${editingId}`
+          : "/api/admin/diagnostic-catalog/categories",
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, active: form.active !== "false" }),
+        },
+      );
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+        return;
+      }
+      setModalOpen(false);
+      showSuccess(tc("saved"));
+      await loadCategories();
+      return;
+    }
+
     if (tab === "modalities") {
       const missingModality = [
         !editingId && !form.code?.trim() ? t("code") : "",
@@ -617,10 +704,22 @@ export default function DiagnosticCatalogAdminPage() {
         titleRu: form.titleRu?.trim(),
         titleAz: form.titleAz?.trim(),
         serviceCode: form.serviceCode?.trim(),
+        guestBlankRelease: form.guestBlankRelease === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
+        autoPaidOnOpen: form.kind === "lab_panel" && form.autoPaidOnOpen === "1",
+        menuSurface:
+          form.menuSurface === "LAB" || form.menuSurface === "DIAGNOSTIC" || form.menuSurface === "VISIT"
+            ? form.menuSurface
+            : null,
+        schedulingMode: form.schedulingMode === "OPEN" ? "OPEN" : "FIXED",
+        broughtInMaxDays:
+          form.broughtInMaxDays != null && Number(form.broughtInMaxDays) > 0
+            ? Number(form.broughtInMaxDays)
+            : null,
         financeSku: form.financeSku?.trim() || null,
         includes,
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
         active: form.active === "false" ? false : true,
+        packageOnly: form.packageOnly === "true",
       };
       const url = editingId
         ? `/api/admin/diagnostic-catalog/services/${editingId}`
@@ -690,8 +789,17 @@ export default function DiagnosticCatalogAdminPage() {
         labelEn: form.labelEn?.trim(),
         labelRu: form.labelRu?.trim(),
         labelAz: form.labelAz?.trim(),
+        normTextEn: form.normTextEn?.trim() || null,
+        normTextRu: form.normTextRu?.trim() || null,
+        normTextAz: form.normTextAz?.trim() || null,
+        boundKind: (form.boundKind as BoundKind) || "INTERVAL",
         refMin: form.refMin?.trim() || null,
         refMax: form.refMax?.trim() || null,
+        refMinFemale: form.refMinFemale?.trim() || null,
+        refMaxFemale: form.refMaxFemale?.trim() || null,
+        refMinMale: form.refMinMale?.trim() || null,
+        refMaxMale: form.refMaxMale?.trim() || null,
+        zonesJson: form.zonesJson?.trim() || null,
         section: form.section?.trim() || null,
         valueType: form.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
         sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
@@ -773,12 +881,32 @@ export default function DiagnosticCatalogAdminPage() {
       labelEn: row.labelEn,
       labelRu: row.labelRu,
       labelAz: row.labelAz,
+      normTextEn: row.normTextEn ?? "",
+      normTextRu: row.normTextRu ?? "",
+      normTextAz: row.normTextAz ?? "",
+      boundKind: row.boundKind ?? "INTERVAL",
       refMin: row.refMin ?? "",
       refMax: row.refMax ?? "",
+      refMinFemale: row.refMinFemale ?? "",
+      refMaxFemale: row.refMaxFemale ?? "",
+      refMinMale: row.refMinMale ?? "",
+      refMaxMale: row.refMaxMale ?? "",
+      zonesJson: row.zonesJson ?? "",
       section: row.section ?? "",
       valueType: row.valueType === "QUALITATIVE" ? "QUALITATIVE" : "NUMERIC",
       valueOptionsJson: row.optionsJson ?? "",
     }));
+  }
+
+  function analyteNormCell(row: DiagnosticAnalyte): string {
+    const sentence = locale.startsWith("ru")
+      ? row.normTextRu
+      : locale.startsWith("az")
+        ? row.normTextAz
+        : row.normTextEn;
+    if (sentence?.trim()) return sentence.trim();
+    if (row.refMin && row.refMax) return `${row.refMin}–${row.refMax}`;
+    return row.refMin || row.refMax || "—";
   }
 
   function dictionaryLabel(row: DictionaryAnalyte) {
@@ -851,10 +979,11 @@ export default function DiagnosticCatalogAdminPage() {
   const tabs: { id: Tab; label: string }[] = [
     { id: "modalities", label: t("tabModalities") },
     { id: "services", label: t("tabServices") },
+    { id: "categories", label: t("tabCategories") },
     { id: "favorites", label: t("tabFavorites") },
   ];
 
-  const showAddButton = tab === "modalities" || tab === "services";
+  const showAddButton = tab === "modalities" || tab === "services" || tab === "categories";
 
   return (
     <>
@@ -1213,6 +1342,75 @@ export default function DiagnosticCatalogAdminPage() {
         </div>
       )}
 
+      {tab === "categories" && (
+        <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("category")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("status")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((row) => (
+                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {row.active ? (
+                      <span className={TEXT_SUCCESS_CLASS}>{t("statusActive")}</span>
+                    ) : (
+                      <span className={TEXT_DANGER_CLASS}>{t("statusInactive")}</span>
+                    )}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={tc("edit")}
+                        onClick={() => {
+                          setEditingId(row.id);
+                          setForm({ name: row.name, active: row.active ? "true" : "false" });
+                          setModalOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className={TABLE_ROW_ICON_BTN_CLASS}
+                        aria-label={row.active ? tc("delete") : t("restore")}
+                        onClick={() => {
+                          void fetch(`/api/admin/diagnostic-catalog/categories/${row.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ active: !row.active }),
+                          }).then(() => loadCategories());
+                        }}
+                      >
+                        {row.active ? (
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {categories.length === 0 ? (
+                <tr>
+                  <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={3}>
+                    {t("emptyCategories")}
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {tab === "favorites" && (
         <div className={`${CARD_CONTAINER_CLASS} space-y-6 p-6`}>
           {favLoading ? (
@@ -1357,6 +1555,15 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.active !== "false"}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                />
+                {t("statusActive")}
+              </label>
               {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
               <CatalogField
                 kind="SEARCHABLE"
@@ -1401,11 +1608,14 @@ export default function DiagnosticCatalogAdminPage() {
                 ))}
               </FieldSelect>
               <FieldRow cols={2}>
-                <Field
+                <CatalogField
+                  kind="SEARCHABLE"
                   label={t("category")}
-                  preset="shortText"
                   value={form.category ?? ""}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  options={categories
+                    .filter((row) => row.active || row.name === form.category)
+                    .map((row) => ({ value: row.name, label: row.name }))}
+                  onChange={(next) => setForm({ ...form, category: String(next ?? "") })}
                 />
                 <FieldSelect
                   label={t("kind")}
@@ -1441,6 +1651,83 @@ export default function DiagnosticCatalogAdminPage() {
                 required
                 value={form.titleAz ?? ""}
                 onChange={(e) => setForm({ ...form, titleAz: e.target.value })}
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("guestBlankRelease")}
+                hint={t("guestBlankReleaseHint")}
+                value={form.guestBlankRelease ?? "PAY_WITH_WORK"}
+                options={[
+                  { value: "PAY_WITH_WORK", label: t("guestBlankPayWithWork") },
+                  { value: "AFTER_PAYMENT", label: t("guestBlankAfterPayment") },
+                ]}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    guestBlankRelease: value === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
+                  })
+                }
+              />
+              {form.kind === "lab_panel" ? (
+                <label className="flex items-start gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={form.autoPaidOnOpen === "1"}
+                    onChange={(e) => setForm({ ...form, autoPaidOnOpen: e.target.checked ? "1" : "" })}
+                  />
+                  <span>
+                    <span className="font-medium">{t("autoPaidOnOpen")}</span>
+                    <span className="mt-0.5 block text-[12px] text-slate-500">{t("autoPaidOnOpenHint")}</span>
+                  </span>
+                </label>
+              ) : null}
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("menuSurface")}
+                hint={t("menuSurfaceHint")}
+                value={form.menuSurface ?? ""}
+                emptyLabel={t("menuSurfaceDefault")}
+                options={[
+                  { value: "LAB", label: t("menuSurfaceLab") },
+                  { value: "DIAGNOSTIC", label: t("menuSurfaceDiagnostic") },
+                  { value: "VISIT", label: t("menuSurfaceVisit") },
+                ]}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    menuSurface:
+                      value === "LAB" || value === "DIAGNOSTIC" || value === "VISIT" ? value : "",
+                  })
+                }
+              />
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("schedulingMode")}
+                hint={t("schedulingModeHint")}
+                value={form.schedulingMode ?? "FIXED"}
+                options={[
+                  { value: "FIXED", label: t("schedulingModeFixed") },
+                  { value: "OPEN", label: t("schedulingModeOpen") },
+                ]}
+                onChange={(value) =>
+                  setForm({ ...form, schedulingMode: value === "OPEN" ? "OPEN" : "FIXED" })
+                }
+              />
+              <Field
+                label={t("broughtInMaxDays")}
+                hint={t("broughtInMaxDaysHint")}
+                preset="count"
+                type="number"
+                min={1}
+                max={365}
+                value={form.broughtInMaxDays ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    broughtInMaxDays: e.target.value.trim(),
+                  })
+                }
               />
               <Field
                 label={t("serviceCode")}
@@ -1495,6 +1782,44 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.sortOrder ?? "0"}
                 onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
               />
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.active !== "false"}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                />
+                {t("statusActive")}
+              </label>
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.packageOnly === "true"}
+                  onChange={(e) => setForm({ ...form, packageOnly: e.target.checked ? "true" : "false" })}
+                />
+                {t("packageOnly")}
+              </label>
+            </>
+          )}
+          {tab === "categories" && (
+            <>
+              <Field
+                label={t("category")}
+                preset="shortText"
+                required
+                value={form.name ?? ""}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={form.active !== "false"}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                />
+                {t("statusActive")}
+              </label>
             </>
           )}
         </div>
@@ -1530,6 +1855,7 @@ export default function DiagnosticCatalogAdminPage() {
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("columnTitle")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("unit")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("normText")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMin")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("refMax")}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("section")}</th>
@@ -1551,6 +1877,9 @@ export default function DiagnosticCatalogAdminPage() {
                             : row.labelEn) || row.labelEn}
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.unit || "—"}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} max-w-[14rem] whitespace-pre-wrap`}>
+                        {analyteNormCell(row)}
+                      </td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.refMin || "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.refMax || "—"}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{row.section || "—"}</td>
@@ -1704,6 +2033,33 @@ export default function DiagnosticCatalogAdminPage() {
                 value={form.labelAz ?? ""}
                 onChange={(e) => setForm({ ...form, labelAz: e.target.value })}
               />
+              <FieldTextarea
+                label={t("normTextEn")}
+                value={form.normTextEn ?? ""}
+                onChange={(e) => setForm({ ...form, normTextEn: e.target.value })}
+              />
+              <FieldTextarea
+                label={t("normTextRu")}
+                value={form.normTextRu ?? ""}
+                onChange={(e) => setForm({ ...form, normTextRu: e.target.value })}
+              />
+              <FieldTextarea
+                label={t("normTextAz")}
+                value={form.normTextAz ?? ""}
+                onChange={(e) => setForm({ ...form, normTextAz: e.target.value })}
+              />
+              <FieldSelect
+                label={t("boundKind")}
+                preset="select"
+                value={form.boundKind ?? "INTERVAL"}
+                onChange={(e) => setForm({ ...form, boundKind: e.target.value })}
+              >
+                <option value="INTERVAL">{t("boundKindInterval")}</option>
+                <option value="UPPER_ONLY">{t("boundKindUpper")}</option>
+                <option value="LOWER_ONLY">{t("boundKindLower")}</option>
+                <option value="QUALITATIVE">{t("boundKindQualitative")}</option>
+                <option value="ZONES">{t("boundKindZones")}</option>
+              </FieldSelect>
               <FieldRow cols={2}>
                 <Field
                   label={t("refMin")}
@@ -1718,6 +2074,40 @@ export default function DiagnosticCatalogAdminPage() {
                   onChange={(e) => setForm({ ...form, refMax: e.target.value })}
                 />
               </FieldRow>
+              <FieldRow cols={2}>
+                <Field
+                  label={t("refMinFemale")}
+                  preset="shortText"
+                  value={form.refMinFemale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMinFemale: e.target.value })}
+                />
+                <Field
+                  label={t("refMaxFemale")}
+                  preset="shortText"
+                  value={form.refMaxFemale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMaxFemale: e.target.value })}
+                />
+              </FieldRow>
+              <FieldRow cols={2}>
+                <Field
+                  label={t("refMinMale")}
+                  preset="shortText"
+                  value={form.refMinMale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMinMale: e.target.value })}
+                />
+                <Field
+                  label={t("refMaxMale")}
+                  preset="shortText"
+                  value={form.refMaxMale ?? ""}
+                  onChange={(e) => setForm({ ...form, refMaxMale: e.target.value })}
+                />
+              </FieldRow>
+              <FieldTextarea
+                label={t("zonesJson")}
+                hint={t("zonesJsonHint")}
+                value={form.zonesJson ?? ""}
+                onChange={(e) => setForm({ ...form, zonesJson: e.target.value })}
+              />
               <Field
                 label={t("sortOrder")}
                 preset="count"

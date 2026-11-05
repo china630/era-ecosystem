@@ -115,6 +115,7 @@ export async function getClinicSettings() {
     printFooterAz: tenant.printFooterAz ?? null,
     printSignatureLab: tenant.printSignatureLab ?? null,
     printSignatureDoctor: tenant.printSignatureDoctor ?? null,
+    printModalitySignersJson: tenant.printModalitySignersJson ?? null,
     checkupSectionsJson: tenant.checkupSectionsJson ?? null,
     doctorBonusPercentInHouse: tenant.doctorBonusPercentInHouse ?? 0,
     doctorBonusPercentWalkIn: tenant.doctorBonusPercentWalkIn ?? 0,
@@ -194,6 +195,7 @@ export async function updateClinicSettings(input: {
   printFooterAz?: string | null;
   printSignatureLab?: string | null;
   printSignatureDoctor?: string | null;
+  printModalitySignersJson?: string | null;
   checkupSectionsJson?: string | null;
   doctorBonusPercentInHouse?: number;
   doctorBonusPercentWalkIn?: number;
@@ -388,6 +390,9 @@ export async function updateClinicSettings(input: {
       ...(input.printSignatureLab !== undefined ? { printSignatureLab: input.printSignatureLab } : {}),
       ...(input.printSignatureDoctor !== undefined
         ? { printSignatureDoctor: input.printSignatureDoctor }
+        : {}),
+      ...(input.printModalitySignersJson !== undefined
+        ? { printModalitySignersJson: input.printModalitySignersJson }
         : {}),
       ...(input.checkupSectionsJson !== undefined
         ? { checkupSectionsJson: input.checkupSectionsJson }

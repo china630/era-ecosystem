@@ -236,10 +236,19 @@ const DIAGNOSTIC_LAB_ALIASES = new Set(["CARDIO-ECG", "USG-ABD"]);
  * ECG/USG blocks saved as CUSTOM + procedure still book CARDIO-ECG / USG-ABD when Auto.
  */
 export function effectiveAutoFulfillment(
-  block: { kind?: string | null; fulfillment?: string | null; procedureCode: string },
+  block: {
+    kind?: string | null;
+    fulfillment?: string | null;
+    fulfillmentExplicit?: boolean | null;
+    procedureCode: string;
+  },
   sex: string | null | undefined,
 ): "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT" {
-  const base = fulfillmentRespectingStudyKind(block.kind, block.fulfillment);
+  const base = fulfillmentRespectingStudyKind(
+    block.kind,
+    block.fulfillment,
+    block.fulfillmentExplicit === true,
+  );
   if (base !== "PROCEDURE_ORDER") return base;
   const resolved = resolveAutoBlockServiceCode(block.procedureCode, sex);
   if (resolved && DIAGNOSTIC_LAB_ALIASES.has(resolved)) return "LAB_ORDER";
@@ -250,6 +259,7 @@ type TemplateAxisRow = {
   procedureCode: string;
   assignMode?: string | null;
   fulfillment?: string | null;
+  fulfillmentExplicit?: boolean | null;
   kind?: string | null;
   requiresDoctor?: boolean | null;
 };
@@ -271,6 +281,7 @@ export function overlayTemplateAxes(
       kind: next.kind ?? row.kind,
       assignMode: next.assignMode,
       fulfillment: next.fulfillment,
+      fulfillmentExplicit: next.fulfillmentExplicit,
       quotaBasis: row.quotaBasis,
       requiresDoctor: next.requiresDoctor,
       showInProcedures: row.showInProcedures,
@@ -317,7 +328,14 @@ function selectAutoBlocks(
 export function fulfillmentRespectingStudyKind(
   kind: string | null | undefined,
   fulfillment: string | null | undefined,
+  explicit = false,
 ): "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT" {
+  if (
+    explicit &&
+    (fulfillment === "LAB_ORDER" || fulfillment === "VISIT" || fulfillment === "PROCEDURE_ORDER")
+  ) {
+    return fulfillment;
+  }
   if (fulfillment === "LAB_ORDER" || fulfillment === "VISIT") return fulfillment;
   if (kind === "LAB") return "LAB_ORDER";
   if (kind === "EXAM") return "VISIT";
@@ -327,6 +345,7 @@ export function fulfillmentRespectingStudyKind(
 function axesFromLegacyTemplateProc(p: {
   assignMode?: string | null;
   fulfillment?: string | null;
+  fulfillmentExplicit?: boolean | null;
   quotaBasis?: string | null;
   requiresDoctor?: boolean | null;
   kind?: string | null;
@@ -344,11 +363,16 @@ function axesFromLegacyTemplateProc(p: {
     p.assignMode === "MANUAL"
       ? p.assignMode
       : "MANUAL";
-  const fulfillment = fulfillmentRespectingStudyKind(p.kind, p.fulfillment);
+  const fulfillment = fulfillmentRespectingStudyKind(
+    p.kind,
+    p.fulfillment,
+    p.fulfillmentExplicit === true,
+  );
   const quotaBasis = p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS";
   const axes: EntitlementBlockAxes = {
     assignMode,
     fulfillment,
+    fulfillmentExplicit: p.fulfillmentExplicit === true,
     quotaBasis,
     requiresDoctor: Boolean(p.requiresDoctor),
   };
@@ -388,6 +412,8 @@ export async function applyPackageAutoBlocks(
   if (!episode?.patientRefId || !episode.patientRef) {
     throw new Error("Episode patient not found");
   }
+  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
+  await seedAutoPaidLabs(episodeId);
   const instance = episode.programInstance;
   const programCode = (instance?.programCode ?? episode.programCode)?.trim() || "";
   if (!instance && (opts.trigger !== "CARE_TEAM" || !programCode)) {
@@ -499,6 +525,8 @@ export async function applyPackageAutoBlocks(
   );
   const patientOrigin =
     episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
+  const { freshBroughtInCodes } = await import("@/domain/lab/brought-in-result");
+  const broughtInFresh = await freshBroughtInCodes(episodeId);
 
   for (const block of selected) {
     if (block.fulfillment === "PROCEDURE_ORDER") {
@@ -542,6 +570,10 @@ export async function applyPackageAutoBlocks(
         });
       }
       if (await hasLabOrder(patientRefId, episodeId, serviceCode)) {
+        skippedLabCodes.push(serviceCode);
+        continue;
+      }
+      if (broughtInFresh.has(serviceCode)) {
         skippedLabCodes.push(serviceCode);
         continue;
       }
@@ -613,7 +645,7 @@ export async function applyPackageAutoBlocks(
         quotaTotal: 1,
         existingCodes: lineCodes,
       });
-      if (await hasLabOrder(patientRefId, episodeId, code)) {
+      if (await hasLabOrder(patientRefId, episodeId, code) || broughtInFresh.has(code)) {
         skippedLabCodes.push(code);
         continue;
       }
@@ -648,6 +680,62 @@ export async function applyPackageAutoBlocks(
         episodeId,
         quotaCode,
       });
+    }
+  }
+
+  const releaseServices = await prisma.diagnosticService.findMany({
+    where: {
+      organizationId,
+      active: true,
+      guestBlankRelease: "AFTER_PAYMENT",
+    },
+    select: { code: true, serviceCode: true },
+  });
+  for (const service of releaseServices) {
+    if (
+      broughtInFresh.has(service.code) ||
+      broughtInFresh.has(service.serviceCode) ||
+      (await hasLabOrder(patientRefId, episodeId, service.code)) ||
+      (service.serviceCode !== service.code &&
+        (await hasLabOrder(patientRefId, episodeId, service.serviceCode)))
+    ) {
+      continue;
+    }
+    const inPackage = lineCodes.has(service.code) || lineCodes.has(service.serviceCode);
+    let amount = 0;
+    if (!inPackage) {
+      const { resolveEntitlementCharge } = await import(
+        "@/domain/sanatorium/entitlement-charge.service"
+      );
+      const charge = await resolveEntitlementCharge({
+        patientOrigin: "WALK_IN",
+        serviceCode: service.serviceCode,
+      });
+      if (charge.priceMissing || !(charge.amountNet > 0)) {
+        console.warn("[package-auto-apply] release lab has no price", service.code);
+        continue;
+      }
+      amount = charge.amountNet;
+    }
+    try {
+      await createLabOrderWithItems({
+        patientRefId,
+        clinicalEpisodeId: episodeId,
+        codes: [service.code],
+        source: "IN_HOUSE",
+        fasting: false,
+        patientOrigin,
+        ...(inPackage
+          ? { packageStamp: { packageQuotaCode: service.code } }
+          : {
+              forcePaid: true,
+              amountNet: amount,
+              amountsByCode: { [service.code]: amount, [service.serviceCode]: amount },
+            }),
+      });
+      createdLabCodes.push(service.code);
+    } catch (err) {
+      console.warn("[package-auto-apply] release lab seed failed", service.code, err);
     }
   }
 

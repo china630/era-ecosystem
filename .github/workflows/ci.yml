@@ -2,7 +2,14 @@ name: CI
 
 on:
   pull_request:
+    # `labeled` re-runs CI when era-ship adds ci-full to an already open PR.
+    types: [opened, synchronize, reopened, labeled]
     branches: [dev, master]
+  # Second run after merge. Needed when someone else landed on dev while the PR
+  # was open, so the merge mix was never tested. While one person owns this
+  # repo, a satellite push uses the same path stubs as the PR and does not
+  # replay finance and every satellite. Remove the stubs only when that
+  # assumption stops being true.
   push:
     branches: [dev, master]
 
@@ -37,6 +44,8 @@ jobs:
         run: npm run test:baku-clock
       - name: GHCR path-filter unit tests
         run: node --test scripts/__tests__/ci-changed-ghcr-services.spec.mjs
+      - name: CI job scope unit tests
+        run: node --test scripts/__tests__/ci-required-job-scope.spec.mjs
       - name: Acceptance consistency
         run: npm run check:acceptance
       - name: Acceptance consistency unit tests
@@ -69,14 +78,31 @@ jobs:
       DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build?schema=public
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide CI scope
+        id: scope
+        env:
+          CI_FULL: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-full') }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: node scripts/ci-required-job-scope.mjs --query data-hub >> "$GITHUB_OUTPUT"
+      - name: Stub
+        if: steps.scope.outputs.run != 'true'
+        run: echo "stub success data-hub"
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: "22"
       - name: "Prepare erafinance database (file dependency)"
+        if: steps.scope.outputs.run == 'true'
         run: chmod +x scripts/ci-prepare-finance-database.sh && ./scripts/ci-prepare-finance-database.sh
       - name: Build shared packages
+        if: steps.scope.outputs.run == 'true'
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Test and build data-hub
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-data-hub
         run: npm ci && npm run test -w @era/data-hub-api && npm run build
 
@@ -118,41 +144,66 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide CI scope
+        id: scope
+        env:
+          CI_FULL: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-full') }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: node scripts/ci-required-job-scope.mjs --query finance >> "$GITHUB_OUTPUT"
+      - name: Stub
+        if: steps.scope.outputs.run != 'true'
+        run: echo "stub success finance"
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: era-finance-core/package-lock.json
       - name: Build shared packages (file dependencies)
+        if: steps.scope.outputs.run == 'true'
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Install
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         run: npm ci
       - name: Prisma migrate deploy
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         run: npm run db:migrate:deploy
       - name: Validate posting role presets
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core/packages/database
         run: npx tsx prisma/scripts/validate-posting-roles.ts
       - name: NAS literal guard (finance API)
+        if: steps.scope.outputs.run == 'true'
         run: node scripts/lint-nas-literals.mjs
       - name: Validate no NAS literals in API
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         run: npm run validate:no-nas-literals
       - name: ESLint API
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         run: npm run lint -w @erafinance/api
       - name: Prepare API test dependencies
+        if: steps.scope.outputs.run == 'true'
         run: chmod +x scripts/ci-prepare-finance-api-tests.sh && ./scripts/ci-prepare-finance-api-tests.sh
       - name: Unit tests
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         env:
           TZ: UTC
         run: npm run test -w @erafinance/api -- --testPathPattern=src/ --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2 --testTimeout=120000
       - name: Integration tests
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         run: npm run test:integration -w @erafinance/api -- --ci
       - name: Build monorepo
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-finance-core
         env:
           NODE_ENV: production
@@ -166,12 +217,28 @@ jobs:
       DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build?schema=public
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide CI scope
+        id: scope
+        env:
+          CI_FULL: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-full') }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: node scripts/ci-required-job-scope.mjs --query bank-core >> "$GITHUB_OUTPUT"
+      - name: Stub
+        if: steps.scope.outputs.run != 'true'
+        run: echo "stub success bank-core"
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: "22"
       - name: Build shared packages
+        if: steps.scope.outputs.run == 'true'
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Install, test, build bank-core
+        if: steps.scope.outputs.run == 'true'
         working-directory: era-bank-core
         run: |
           npm ci
@@ -199,12 +266,28 @@ jobs:
           - era-bank-dbo
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide CI scope
+        id: scope
+        env:
+          CI_FULL: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-full') }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: node scripts/ci-required-job-scope.mjs --query ${{ matrix.dir }} >> "$GITHUB_OUTPUT"
+      - name: Stub
+        if: steps.scope.outputs.run != 'true'
+        run: echo "stub success ${{ matrix.dir }}"
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: "22"
       - name: Build shared packages
+        if: steps.scope.outputs.run == 'true'
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Build and test ${{ matrix.dir }}
+        if: steps.scope.outputs.run == 'true'
         working-directory: ${{ matrix.dir }}
         env:
           CI: "true"

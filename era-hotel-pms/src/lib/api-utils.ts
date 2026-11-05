@@ -157,6 +157,16 @@ export function handleRouteError(err: unknown) {
           { status: 409 },
         );
       }
+      if (
+        code === 'P2002' &&
+        (modelName === 'FolioPaymentAllocation' ||
+          (fields.includes('paymentId') && fields.includes('chargeId')))
+      ) {
+        return NextResponse.json(
+          { error: 'This payment is already applied to that charge', code: 'ALLOCATION_EXISTS' },
+          { status: 409 },
+        );
+      }
       // Surface the real Prisma code for desk ops (timeouts, unique) — do not
       // mask cash-shift / settle failures as a generic stay-save error.
       if (code === 'P2028' || lower.includes('transaction') || lower.includes('timeout')) {

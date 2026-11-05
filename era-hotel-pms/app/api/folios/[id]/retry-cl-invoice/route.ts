@@ -1,13 +1,14 @@
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { prisma } from '@/lib/prisma';
-import { issueFolioInvoice } from '@/lib/services/fiscal-document.service';
+import { todayBakuYmd } from '@era/satellite-kit/time';
+import { handoffPendingCityLedger } from '@/lib/services/city-ledger-night-handoff.service';
 import { getSatelliteSession } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
 /**
- * Re-issue City Ledger invoice for a folio stuck in PENDING_AR after a failed handoff.
+ * Same rule as night audit: transfer this PENDING_AR folio only when Finance already has the VÖEN card.
  */
 export async function POST(
   _request: Request,
@@ -30,26 +31,19 @@ export async function POST(
         { status: 409 },
       );
     }
-    if (folio.status !== 'PENDING_AR' && folio.status !== 'TRANSFERRED_AR') {
+    if (folio.status !== 'PENDING_AR') {
       return Response.json(
-        { error: 'Folio is not in a City Ledger handoff status', code: 'INVALID_STATUS' },
+        { error: 'Folio is not waiting for the night City Ledger handoff', code: 'INVALID_STATUS' },
         { status: 409 },
       );
     }
 
-    const doc = await issueFolioInvoice(folio.id);
-    if (folio.status === 'PENDING_AR') {
-      await prisma.folio.update({ where: { id: folio.id }, data: { status: 'TRANSFERRED_AR' } });
+    const lines = await handoffPendingCityLedger(todayBakuYmd(), folio.id);
+    const failed = lines.find((line) => line.level === 'exception');
+    if (failed) {
+      return Response.json({ error: failed.message, code: 'CL_CARD_MISSING' }, { status: 409 });
     }
-    await prisma.reservation.updateMany({
-      where: {
-        id: folio.reservationId,
-        checkoutSettlementStatus: { in: ['PENDING', 'NOT_APPLICABLE'] },
-      },
-      data: { checkoutSettlementStatus: 'INVOICED' },
-    });
-
-    return jsonOk(serialize({ folioId: folio.id, status: 'TRANSFERRED_AR', document: doc }));
+    return jsonOk(serialize({ folioId: folio.id, status: 'TRANSFERRED_AR', lines }));
   } catch (err) {
     return handleRouteError(err);
   }

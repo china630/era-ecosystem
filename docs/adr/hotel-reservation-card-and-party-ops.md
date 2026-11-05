@@ -82,6 +82,7 @@ Collapse rare Elektraweb residue (option date/state, preferred bed/view, color) 
 
 - Tabs unchanged: Guests · Pricing · Folio · Notes.
 - Guests: compact party grid; **no** PRIMARY/EQUAL billing mode chrome (1 guest → obvious folio; multi → named sections on Folio).
+- Guests attach: New guest / search / ID scan always fills the **clicked** empty row (`placeGuestOnPaxRow`; age may reband counters). Guest-card save must **not** reload the stay and wipe local party; after attach, PATCH party (`paxGuests` + counts) so a later reload keeps the row. A linked `guestId` without a typed name still occupies the slot.
 - Folio: All / Guest / Agency / Company; when party > 1, **named guest folio sections**.
 - Booking stays bar: thin GRP for single door; family navigator when N>1.
 - Bottom chips (card, packages, tasks, folio routing) stay; do not duplicate under Guests only.

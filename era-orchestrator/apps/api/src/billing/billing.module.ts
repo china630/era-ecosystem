@@ -29,6 +29,8 @@ import { PashaBankPaymentProvider } from "./providers/pasha-bank-payment.provide
 
 import { DrakarisModule } from "../integrations/payment-providers/drakaris/drakaris.module";
 import { ReferralsModule } from "../referrals/referrals.module";
+import { ModuleGraceService } from "./module-grace.service";
+import { OperatorFinanceBridgeService } from "./operator-finance-bridge.service";
 
 @Module({
   imports: [
@@ -64,6 +66,8 @@ import { ReferralsModule } from "../referrals/referrals.module";
     BillingPremiumActivationService,
     BillingMeterService,
     BillingSettlementService,
+    ModuleGraceService,
+    OperatorFinanceBridgeService,
   ],
   exports: [
     BillingService,

@@ -10,6 +10,7 @@ import {
   Database,
   Gauge,
   Library,
+  Network,
   Package,
   PanelLeftClose,
   PanelRightClose,
@@ -153,6 +154,13 @@ export function PlatformSidebar({
           label={t("platformOrgs")}
           isActive={pathname.startsWith("/orgs")}
           icon={Building2}
+          onNavClick={onNavClick}
+        />
+        <SideNavItem
+          href="/structure"
+          label={t("platformStructure")}
+          isActive={pathname.startsWith("/structure")}
+          icon={Network}
           onNavClick={onNavClick}
         />
 
