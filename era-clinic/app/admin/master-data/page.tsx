@@ -531,7 +531,6 @@ export default function MasterDataPage() {
     setProcedureActive(true);
     setOpenAttendance(false);
     setBlockCategory("");
-    setUsageContour("GUEST");
     setNeedsExtraFields(false);
     setPhysioOrderFields([]);
     setAllowedSiteCodes([]);

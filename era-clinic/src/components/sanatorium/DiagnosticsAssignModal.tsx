@@ -472,7 +472,8 @@ export function DiagnosticsAssignModal({
     for (const g of catalogGroups) {
       const items = g.itemCodes
         .map((code) => itemByCode.get(code))
-        .filter((row): row is CatalogItem => Boolean(row) && row.categoryActive !== false && !row.packageOnly)
+        .filter((row): row is CatalogItem => Boolean(row))
+        .filter((row) => row.categoryActive !== false && !row.packageOnly)
         .map((row) => ({
           code: row.code,
           kind: row.kind,
