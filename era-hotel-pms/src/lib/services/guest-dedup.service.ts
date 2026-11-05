@@ -135,6 +135,7 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       email: true,
       phone: true,
       nationality: true,
+      sex: true,
       globalPersonId: true,
       documents: { select: { docType: true, docNumber: true, nationality: true } },
     },
