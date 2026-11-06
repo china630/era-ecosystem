@@ -32,22 +32,31 @@ describe("resolveGhcrPlan", () => {
     assert.deepEqual(api.services, ["finance-core"]);
   });
 
-  it("rebuilds all images when packages change", () => {
+  it("rebuilds active images when packages change and leaves paused apps out", () => {
     const plan = resolveGhcrPlan(["packages/satellite-kit/src/index.ts"]);
     assert.equal(plan.all, true);
     assert.equal(plan.rebuildPackages, true);
-    assert.equal(plan.services.length, GHCR_MATRIX.length);
-    assert.equal(plan.deployScope, "all");
     assert.equal(plan.deploySkip, false);
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "sha");
+    const deployed = new Set(plan.deployServices.split(/\s+/));
+    for (const paused of ["logistics", "construction", "crm", "auto-service", "wholesale", "bank", "bank-dbo"]) {
+      assert.equal(plan.services.includes(paused), false, paused);
+      assert.equal(deployed.has(paused), false, paused);
+    }
+    assert.equal(plan.services.includes("bank-core"), true);
+    assert.equal(plan.services.includes("orchestrator"), true);
+    assert.equal(plan.services.length, GHCR_MATRIX.length - 7);
   });
 
-  it("satellite-entrypoint change force-rebuilds all images", () => {
+  it("satellite-entrypoint change force-rebuilds active images only", () => {
     const plan = resolveGhcrPlan(["docker/scripts/satellite-entrypoint.sh"]);
     assert.equal(plan.all, true);
     assert.equal(plan.skipImages, false);
-    assert.equal(plan.deployScope, "all");
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "sha");
+    assert.equal(plan.services.includes("logistics"), false);
+    assert.equal(plan.services.includes("clinic"), true);
   });
 
   it("skips docs-only diffs (no images, no deploy)", () => {
@@ -60,14 +69,15 @@ describe("resolveGhcrPlan", () => {
     assert.deepEqual(plan.services, []);
   });
 
-  it("compose-only: skipImages, deployScope all, floating tag", () => {
+  it("compose-only: skipImages, active services, floating tag", () => {
     const plan = resolveGhcrPlan(["docker-compose.yml"]);
     assert.equal(plan.skipImages, true);
     assert.equal(plan.skip, true);
     assert.equal(plan.deploySkip, false);
-    assert.equal(plan.deployScope, "all");
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "floating");
-    assert.equal(plan.deployServices, "");
+    assert.match(plan.deployServices, /\borchestrator\b/);
+    assert.equal(plan.deployServices.split(/\s+/).includes("bank"), false);
     assert.deepEqual(plan.services, []);
     assert.deepEqual(plan.matrix, []);
     assert.equal(plan.rebuildPackages, false);
@@ -77,24 +87,34 @@ describe("resolveGhcrPlan", () => {
     const plan = resolveGhcrPlan(["docker-compose.prod.yml"]);
     assert.equal(plan.skipImages, true);
     assert.equal(plan.deploySkip, false);
-    assert.equal(plan.deployScope, "all");
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "floating");
+    assert.equal(plan.deployServices.split(/\s+/).includes("wholesale"), false);
   });
 
   it("install-contract yaml-only: deploy all, no rebuild, floating tag", () => {
     const plan = resolveGhcrPlan(["config/satellite-install-contract.yaml"]);
     assert.equal(plan.skipImages, true);
     assert.equal(plan.deploySkip, false);
-    assert.equal(plan.deployScope, "all");
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "floating");
   });
 
-  it("deploy-droplet script-only: deploy all, floating tag", () => {
+  it("paused satellite diff builds and deploys nothing", () => {
+    const plan = resolveGhcrPlan(["era-logistics/src/a.ts", "era-bank/src/b.ts", "era-crm/src/c.ts"]);
+    assert.equal(plan.skipImages, true);
+    assert.equal(plan.deploySkip, true);
+    assert.equal(plan.deployScope, "skip");
+    assert.deepEqual(plan.services, []);
+  });
+
+  it("deploy-droplet script-only: deploy active services, floating tag", () => {
     const plan = resolveGhcrPlan(["docker/scripts/deploy-droplet.sh"]);
     assert.equal(plan.skipImages, true);
     assert.equal(plan.deploySkip, false);
-    assert.equal(plan.deployScope, "all");
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "floating");
+    assert.equal(plan.deployServices.includes("crm"), false);
   });
 
   it("formatDeployScopeArtifact: contract-only keeps SKIP=false (not skipImages)", () => {
@@ -103,7 +123,9 @@ describe("resolveGhcrPlan", () => {
     assert.equal(a.skipImages, true);
     assert.equal(a.deploySkip, false);
     assert.match(a.envText, /^SKIP=false$/m);
-    assert.match(a.envText, /^DEPLOY_SCOPE=all$/m);
+    assert.match(a.envText, /^DEPLOY_SCOPE=custom$/m);
+    assert.match(a.envText, /^DEPLOY_SERVICES=.*orchestrator/m);
+    assert.doesNotMatch(a.envText, /(?:^|\s)logistics(?:\s|$)/);
     assert.match(a.envText, /^IMAGE_TAG_MODE=floating$/m);
   });
 
@@ -115,21 +137,24 @@ describe("resolveGhcrPlan", () => {
     assert.match(a.envText, /^DEPLOY_SCOPE=skip$/m);
   });
 
-  it("clinic + compose → clinic image + deployScope all + floating tag", () => {
+  it("clinic + compose → clinic image, active recreate, floating tag", () => {
     const plan = resolveGhcrPlan(["era-clinic/foo.ts", "docker-compose.yml"]);
     assert.equal(plan.skipImages, false);
     assert.equal(plan.deploySkip, false);
     assert.deepEqual(plan.services, ["clinic"]);
-    assert.equal(plan.deployScope, "all");
+    assert.equal(plan.deployScope, "custom");
     assert.equal(plan.imageTagMode, "floating");
-    assert.equal(plan.deployServices, "");
+    assert.match(plan.deployServices, /\bclinic\b/);
+    assert.match(plan.deployServices, /\borchestrator\b/);
+    assert.equal(plan.deployServices.split(/\s+/).includes("auto-service"), false);
     assert.equal(plan.matrix.length, 1);
   });
 
   it("treats empty workflow_dispatch as all", () => {
     const plan = resolveGhcrPlan([], { dispatchServices: "" });
     assert.equal(plan.all, true);
-    assert.equal(plan.services.length, GHCR_MATRIX.length);
+    assert.equal(plan.services.length, GHCR_MATRIX.length - 7);
+    assert.equal(plan.services.includes("bank"), false);
   });
 
   it("honours explicit dispatch list", () => {
